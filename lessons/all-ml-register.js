@@ -22,16 +22,29 @@
     { key: "mathematics", label: "Mathematics",
       hint: "The formula with every symbol and shape named, plus worked numeric examples shown step by step." },
     { key: "pitfalls", label: "Pitfalls",
-      hint: "Real bugs and their mechanisms, not just symptoms." }
+      hint: "Real bugs and their mechanisms, not just symptoms." },
+    { key: "applications", label: "Real World Applications",
+      hint: "Where this is actually used — five concrete uses, each with real numbers." }
   ];
 
   // The NEW renderer. Returns the lesson HTML for App.open() to inject into #content.
   window.renderAllMLLesson = function (l, prevId, nextId, byId) {
     byId = byId || {};
     function card(s) {
-      var body = l[s.key]
-        ? l[s.key]
-        : '<p class="sec-hint">' + s.hint + '</p><p class="scaffold-note">Content to be authored.</p>';
+      var body;
+      if (s.key === "applications" && Array.isArray(l.applications) && l.applications.length) {
+        body = l.applications.map(function (a) {
+          return '<div class="appitem">' +
+            '<h4>' + a.title + '</h4>' +
+            (a.background || '') +
+            (a.numbers ? '<div class="appnums">' + a.numbers + '</div>' : '') +
+            '</div>';
+        }).join('');
+      } else {
+        body = l[s.key]
+          ? l[s.key]
+          : '<p class="sec-hint">' + s.hint + '</p><p class="scaffold-note">Content to be authored.</p>';
+      }
       return '<div class="card allml ' + s.key + '"><h3>' + s.label + '</h3>' + body + '</div>';
     }
     var colab = l.colab
@@ -64,6 +77,7 @@
       id: t.id, title: t.title, part: t.part, gap: t.gap,
       colab: c.colab || t.colab, tagline: c.tagline,
       context: c.context, intuition: c.intuition, mathematics: c.mathematics, pitfalls: c.pitfalls,
+      applications: c.applications,
       module: partName[t.part], superGroup: "All ML", template: "allml"
     });
     if (!seen[t.part]) { seen[t.part] = true; window.MODULE_ORDER.push(partName[t.part]); }
@@ -81,7 +95,11 @@
     '#content .card.allml table.mini { border-collapse:collapse; margin:16px 0; font-size:15px; line-height:1.45; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }',
     '#content .card.allml table.mini th, #content .card.allml table.mini td { padding:6px 18px 6px 0; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }',
     '#content .card.allml table.mini tr:first-child th { font-weight:700; color:var(--ink); border-bottom:2px solid var(--ink); }',
-    '#content .card.allml table.mini tr:last-child td { border-bottom:none; }'
+    '#content .card.allml table.mini tr:last-child td { border-bottom:none; }',
+    '#content .card.allml.applications .appitem { margin:0 0 20px; padding:0 0 16px; border-bottom:1px solid var(--border); }',
+    '#content .card.allml.applications .appitem:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }',
+    '#content .card.allml.applications .appitem h4 { margin:0 0 6px; font-size:16px; font-weight:700; color:var(--ink); }',
+    '#content .card.allml.applications .appnums { margin:8px 0 0; padding:10px 14px; background:rgba(127,127,127,.08); border-radius:8px; font-variant-numeric:tabular-nums; font-size:15px; line-height:1.55; }'
   ].join('\n');
   var st = document.createElement('style');
   st.id = 'allml-style';
