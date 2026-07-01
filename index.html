@@ -3,7 +3,11 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ML Math Tutor — Learn the Maths of Machine Learning from Scratch</title>
+<title>ML Math — Learn the Maths of Machine Learning from Scratch</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="theme-color" content="#4ea1ff" />
 
 <!-- Apply saved theme BEFORE first paint, so there is no flash of the wrong theme. -->
 <script>
@@ -582,10 +586,8 @@
 <nav id="sidebar">
   <div class="brand">
     <button id="themeToggle" title="Toggle light / dark theme" aria-label="Toggle theme" onclick="Theme.toggle()"></button>
-    <h1>📐 ML Math Tutor</h1>
-    <p>The maths of ML, DL & AI — from zero.</p>
+    <h1>📐 ML Math</h1>
     <input id="search" placeholder="Search lessons…" oninput="App.filter(this.value)" />
-    <p class="usage-legend">Number = how commonly used in practice (0–10). Greener = more common. <b>10</b> = everywhere · <b>0</b> = niche.</p>
     <div class="nav-extra">
       <a href="graph.html" title="See how all concepts connect">🗺️ Concept map</a>
       <a href="applications.html" title="Browse by real-world application">🚀 Applications</a>
@@ -1271,6 +1273,11 @@
 <script src="lessons/math-26-control-theory.js"></script>
 <script src="lessons/math-27-numerical-methods-scientific-computing.js"></script>
 
+<!-- All ML curriculum: data, authored content, and its own (separate) textbook renderer. -->
+<script src="lessons/all-ml.js"></script>
+<script src="lessons/all-ml-content.js"></script>
+<script src="lessons/all-ml-register.js"></script>
+
 <!-- Light / dark theme toggle, persisted in localStorage. -->
 <script>
 const Theme = (function () {
@@ -1794,6 +1801,7 @@ const App = (function () {
     else if (l.template === "pytorch") { html = renderPyTorch(l, id, prev, next); }
     else if (l.template === "book") { html = renderBook(l, id, prev, next); }
     else if (l.template === "math") { html = renderMath(l, id, prev, next); }
+    else if (l.template === "allml") { html = window.renderAllMLLesson(l, prev, next, byId); }
     else { html =
       `<div class="crumbs">${l.module}</div>` +
       `<h2 class="lesson-title">${l.title}</h2>` +
