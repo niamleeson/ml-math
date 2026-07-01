@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ML Math">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5aa8ff"/>
+      <stop offset="1" stop-color="#3b82f6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- Set square (triangular ruler) with a triangular cut-out, matching the 📐 brand -->
+  <path fill="#ffffff" fill-rule="evenodd" d="M16 48 H48 L16 16 Z M23 43 H37 L23 29 Z"/>
+</svg>

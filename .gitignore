@@ -4,6 +4,9 @@ screenshots/
 .playwright-mcp/
 pt-tensors-new-template.png
 *.png
+# …but keep the committed favicon assets
+!favicon-32.png
+!apple-touch-icon.png
 
 # Cached torchvision datasets (local verification only)
 notebooks/data/
