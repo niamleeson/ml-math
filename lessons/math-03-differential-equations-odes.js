@@ -581,7 +581,6 @@
     "definition": "<p>The Laplace transform of $f(t)$ is $$ F(s)=\\mathcal{L}\\{f(t)\\}=\\int_0^\\infty e^{-st}f(t)\\,dt, $$ valid where the integral converges ($\\operatorname{Re}(s)>a$). Here $e^{-st}$ is a probe exponential, $F(s)$ is $f$ re-expressed in the $s$-domain, and the one-sided $\\int_0^\\infty$ means we care about systems starting at $t=0$.</p><p>The property that does all the work turns differentiation into multiplication: $$ \\mathcal{L}\\{f'(t)\\}=sF(s)-f(0). $$ Derive it once by integration by parts ($u=e^{-st},dv=f'dt$): $\\int_0^\\infty e^{-st}f'\\,dt=[e^{-st}f]_0^\\infty+s\\int_0^\\infty e^{-st}f\\,dt=(0-f(0))+sF(s)$. Notice where $f(0)$ enters — that is how the initial condition rides along.</p><p><b>Assumptions:</b> linear, usually constant-coefficient systems (nonlinear gets only a local picture); the region of convergence matters; it is one-sided, so initial conditions are already baked in; inversion needs care with repeated or complex roots.</p>",
     "worked": {
       "problem": "Solve the initial-value problem $y'+2y=2$, with $y(0)=0$. Let $Y=\\mathcal{L}\\{y(t)\\}$.",
-      "difficulty": 4,
       "skills": [
         "derivative property",
         "partial fractions",

@@ -27,7 +27,6 @@
     "definition": "<p>A <b>function</b> $f$ from a set $X$ (the <b>domain</b>) to a set $Y$ assigns to each $x \\in X$ exactly one value $f(x)$. The outputs actually reached form the <b>range</b>. We write $f: X \\to Y$.</p><p><b>The rule that must hold:</b> each input maps to a single output — on a graph, the vertical line test. Inputs must come from the domain (no dividing by zero, no $\\sqrt{-1}$ over the reals).</p>",
     "worked": {
       "problem": "Take $f(x) = x^2$.",
-      "difficulty": 1,
       "skills": [
         "evaluating",
         "domain & range"
@@ -96,7 +95,6 @@
     "definition": "<p>Starting from $y=f(x)$: $f(x)+c$ shifts up by $c$; $f(x-c)$ shifts right by $c$; $a\\,f(x)$ stretches vertically by $a$; $f(-x)$ reflects across the $y$-axis. Watch the counter-intuitive one: inside the function, $x-c$ moves the graph <i>right</i>, not left.</p>",
     "worked": {
       "problem": "Turn $f(x)=x^2$ into $g(x)=(x-2)^2+1$.",
-      "difficulty": 1,
       "skills": [
         "shifts"
       ],
@@ -169,7 +167,6 @@
     "definition": "<p>An <b>exponential</b> is $f(x)=a^x$ with base $a>0$; the natural base $e\\approx 2.718$ gives $e^x$. Its defining property turns sums into products: $e^{x+y}=e^x e^y$. Note $a^0=1$, and $a>0$ keeps the output positive and real.</p>",
     "worked": {
       "problem": "Read off values of $2^x$ and $e^x$.",
-      "difficulty": 1,
       "skills": [
         "powers",
         "decay"
@@ -243,7 +240,6 @@
     "definition": "<p>$\\log_b y = x \\iff b^x = y$; the natural log is $\\ln = \\log_e$. Its defining identity is $\\log(xy)=\\log x+\\log y$. The input must be positive — $\\log$ of zero or a negative number is undefined over the reals.</p>",
     "worked": {
       "problem": "Evaluate a few logarithms.",
-      "difficulty": 1,
       "skills": [
         "inverse of exp",
         "log rules"
@@ -317,7 +313,6 @@
     "definition": "<p>On the unit circle, $\\cos\\theta$ is the $x$-coordinate and $\\sin\\theta$ the $y$-coordinate at angle $\\theta$. Both are <b>periodic</b> with period $2\\pi$. The identity that ties them together: $\\sin^2\\theta+\\cos^2\\theta=1$. Use radians in calculus ($\\pi$ rad $=180^\\circ$).</p>",
     "worked": {
       "problem": "Evaluate sine and cosine at key angles.",
-      "difficulty": 1,
       "skills": [
         "unit circle",
         "periodicity"
@@ -389,7 +384,6 @@
     "definition": "<p>$\\arcsin,\\arccos,\\arctan$ invert $\\sin,\\cos,\\tan$ on restricted ranges so each output is unique: $\\arcsin,\\arctan\\in[-\\tfrac\\pi2,\\tfrac\\pi2]$ and $\\arccos\\in[0,\\pi]$. So $\\arcsin(\\sin\\theta)=\\theta$ only when $\\theta$ lies in that range.</p>",
     "worked": {
       "problem": "Evaluate some inverse-trig values.",
-      "difficulty": 2,
       "skills": [
         "restricted ranges"
       ],
@@ -440,7 +434,7 @@
     ]
   });
 
-  B(Object.assign({
+  B({
     "id": "math-01-07",
     "title": "Limits: definition and computation",
     "tagline": "What value does a function head toward as the input closes in — even if it never arrives?",
@@ -461,7 +455,6 @@
     "definition": "<p>$\\lim_{x\\to a}f(x)=L$ means $f(x)$ can be made as close to $L$ as we like by taking $x$ close enough to $a$ (from both sides), without ever setting $x=a$. Rigorously, the $\\varepsilon$–$\\delta$ statement: for every $\\varepsilon>0$ there is a $\\delta>0$ with $0<|x-a|<\\delta \\Rightarrow |f(x)-L|<\\varepsilon$.</p><p><b>Assumptions that matter:</b> the value $f(a)$ is irrelevant — it may be undefined and the limit can still exist. But the left and right limits must agree, or the limit does not exist.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\lim_{x\\to1}\\frac{x^2-1}{x-1}$.",
-      "difficulty": 2,
       "skills": [
         "factoring",
         "indeterminate forms",
@@ -495,7 +488,7 @@
           "why": "the simplified form is continuous, so plugging in is safe"
         }
       ],
-      "verify": "$x=0.99\\to1.99$ and $x=1.01\\to2.01$ — closing on $2$ from both sides &#10003; (drag the slider below to feel it).",
+      "verify": "$x=0.99\\to1.99$ and $x=1.01\\to2.01$ — closing on $2$ from both sides &#10003;.",
       "answer": "$\\displaystyle\\lim_{x\\to1}\\frac{x^2-1}{x-1}=2$",
       "mistakes": [
         "Declaring the limit \"does not exist\" because $f(1)$ is undefined — the value <i>at</i> the point is irrelevant.",
@@ -693,22 +686,7 @@
     "prereqs": [
       "math-01-06"
     ]
-  }, {
-    demo: function (host) {
-    var lab = document.createElement("label");
-    lab.textContent = "Slide x toward 1 — watch f(x) = (x^2 - 1)/(x - 1) head for 2";
-    var r = document.createElement("input");
-    r.type = "range"; r.min = "0.5"; r.max = "1.5"; r.step = "0.001"; r.value = "0.6";
-    var out = document.createElement("div"); out.className = "out";
-    function upd() {
-      var x = parseFloat(r.value);
-      var f = (Math.abs(x - 1) < 1e-9) ? null : (x * x - 1) / (x - 1);
-      out.textContent = "x = " + x.toFixed(3) + "     f(x) = " + (f === null ? "undefined (0/0)" : f.toFixed(3)) + "     -> heading toward 2";
-    }
-    r.addEventListener("input", upd);
-    host.appendChild(lab); host.appendChild(r); host.appendChild(out); upd();
-  }
-  }));
+  });
 
   B({
     "id": "math-01-08",

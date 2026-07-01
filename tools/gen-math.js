@@ -130,14 +130,10 @@ for (const topic of TOPICS) {
   });
 
   const body = objs.map((o) => {
-    const demo = o.demo;
     const data = Object.assign({}, o);
-    delete data.demo;
+    delete data.demo;   // math track no longer uses interactive demo widgets
     Object.keys(data).forEach((k) => data[k] === undefined && delete data[k]);
-    const literal = JSON.stringify(data, null, 2).replace(/\n/g, "\n  ");
-    return (typeof demo === "function")
-      ? `  B(Object.assign(${literal}, {\n    demo: ${demo.toString()}\n  }));`
-      : `  B(${literal});`;
+    return `  B(${JSON.stringify(data, null, 2).replace(/\n/g, "\n  ")});`;
   }).join("\n\n");
 
   const file =

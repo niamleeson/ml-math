@@ -39,7 +39,6 @@ const t1_functions = {
     "<p><b>The rule that must hold:</b> each input maps to a single output — on a graph, the vertical line test. Inputs must come from the domain (no dividing by zero, no $\\sqrt{-1}$ over the reals).</p>",
   worked: {
     problem: "Take $f(x) = x^2$.",
-    difficulty: 1,
     skills: ["evaluating", "domain & range"],
     steps: [
       { do: "Evaluate", result: "$f(3)=9$, $f(-2)=4$, $f(0)=0$", why: "substitute each input" },
@@ -77,7 +76,6 @@ const t1_transform = {
     "<p>Starting from $y=f(x)$: $f(x)+c$ shifts up by $c$; $f(x-c)$ shifts right by $c$; $a\\,f(x)$ stretches vertically by $a$; $f(-x)$ reflects across the $y$-axis. Watch the counter-intuitive one: inside the function, $x-c$ moves the graph <i>right</i>, not left.</p>",
   worked: {
     problem: "Turn $f(x)=x^2$ into $g(x)=(x-2)^2+1$.",
-    difficulty: 1,
     skills: ["shifts"],
     steps: [
       { do: "Shift right by 2", result: "$(x-2)^2$", why: "the $x-2$ inside the function" },
@@ -115,7 +113,6 @@ const t1_exp = {
     "<p>An <b>exponential</b> is $f(x)=a^x$ with base $a>0$; the natural base $e\\approx 2.718$ gives $e^x$. Its defining property turns sums into products: $e^{x+y}=e^x e^y$. Note $a^0=1$, and $a>0$ keeps the output positive and real.</p>",
   worked: {
     problem: "Read off values of $2^x$ and $e^x$.",
-    difficulty: 1,
     skills: ["powers", "decay"],
     steps: [
       { do: "Growth", result: "$2^{10}=1024$", why: "ten doublings pass a thousand" },
@@ -153,7 +150,6 @@ const t1_log = {
     "<p>$\\log_b y = x \\iff b^x = y$; the natural log is $\\ln = \\log_e$. Its defining identity is $\\log(xy)=\\log x+\\log y$. The input must be positive — $\\log$ of zero or a negative number is undefined over the reals.</p>",
   worked: {
     problem: "Evaluate a few logarithms.",
-    difficulty: 1,
     skills: ["inverse of exp", "log rules"],
     steps: [
       { do: "Power of 2", result: "$\\log_2 1024 = 10$", why: "$2^{10}=1024$" },
@@ -191,7 +187,6 @@ const t1_trig = {
     "<p>On the unit circle, $\\cos\\theta$ is the $x$-coordinate and $\\sin\\theta$ the $y$-coordinate at angle $\\theta$. Both are <b>periodic</b> with period $2\\pi$. The identity that ties them together: $\\sin^2\\theta+\\cos^2\\theta=1$. Use radians in calculus ($\\pi$ rad $=180^\\circ$).</p>",
   worked: {
     problem: "Evaluate sine and cosine at key angles.",
-    difficulty: 1,
     skills: ["unit circle", "periodicity"],
     steps: [
       { do: "Sine", result: "$\\sin 0=0,\\ \\sin(\\pi/2)=1,\\ \\sin\\pi=0$", why: "the $y$-coordinate around the circle" },
@@ -229,7 +224,6 @@ const t1_invtrig = {
     "<p>$\\arcsin,\\arccos,\\arctan$ invert $\\sin,\\cos,\\tan$ on restricted ranges so each output is unique: $\\arcsin,\\arctan\\in[-\\tfrac\\pi2,\\tfrac\\pi2]$ and $\\arccos\\in[0,\\pi]$. So $\\arcsin(\\sin\\theta)=\\theta$ only when $\\theta$ lies in that range.</p>",
   worked: {
     problem: "Evaluate some inverse-trig values.",
-    difficulty: 2,
     skills: ["restricted ranges"],
     steps: [
       { do: "Arctangent", result: "$\\arctan(1)=\\pi/4\\approx0.785$", why: "the angle whose tangent is 1" },
@@ -269,7 +263,6 @@ const t1_limits = {
     "<p><b>Assumptions that matter:</b> the value $f(a)$ is irrelevant — it may be undefined and the limit can still exist. But the left and right limits must agree, or the limit does not exist.</p>",
   worked: {
     problem: "Compute $\\displaystyle\\lim_{x\\to1}\\frac{x^2-1}{x-1}$.",
-    difficulty: 2,
     skills: ["factoring", "indeterminate forms", "one-sided limits"],
     strategy: "Direct substitution gives $\\tfrac00$, an indeterminate form. Rewrite to cancel what causes the $0$, then substitute.",
     hints: [
@@ -283,7 +276,7 @@ const t1_limits = {
       { do: "Cancel $(x-1)$", result: "$x+1$ (for $x\\ne1$)", why: "the limit ignores the single point $x=1$" },
       { do: "Substitute $x=1$", result: "$2$", why: "the simplified form is continuous, so plugging in is safe" }
     ],
-    verify: "$x=0.99\\to1.99$ and $x=1.01\\to2.01$ — closing on $2$ from both sides &#10003; (drag the slider below to feel it).",
+    verify: "$x=0.99\\to1.99$ and $x=1.01\\to2.01$ — closing on $2$ from both sides &#10003;.",
     answer: "$\\displaystyle\\lim_{x\\to1}\\frac{x^2-1}{x-1}=2$",
     mistakes: [
       "Declaring the limit \"does not exist\" because $f(1)$ is undefined — the value <i>at</i> the point is irrelevant.",
@@ -341,21 +334,7 @@ const t1_limits = {
     "If direct substitution gives $\\tfrac00$, rewrite (factor and cancel) then substitute.",
     "Left and right limits must agree for the limit to exist.",
     "The derivative/gradient is a limit; finite differences approximate it (e.g. $4.001\\approx4$)."
-  ],
-  demo: function (host) {
-    var lab = document.createElement("label");
-    lab.textContent = "Slide x toward 1 — watch f(x) = (x^2 - 1)/(x - 1) head for 2";
-    var r = document.createElement("input");
-    r.type = "range"; r.min = "0.5"; r.max = "1.5"; r.step = "0.001"; r.value = "0.6";
-    var out = document.createElement("div"); out.className = "out";
-    function upd() {
-      var x = parseFloat(r.value);
-      var f = (Math.abs(x - 1) < 1e-9) ? null : (x * x - 1) / (x - 1);
-      out.textContent = "x = " + x.toFixed(3) + "     f(x) = " + (f === null ? "undefined (0/0)" : f.toFixed(3)) + "     -> heading toward 2";
-    }
-    r.addEventListener("input", upd);
-    host.appendChild(lab); host.appendChild(r); host.appendChild(out); upd();
-  }
+  ]
 };
 
 /* ---- Topic 3: Differential equations — the Laplace transform ------------- */
@@ -380,7 +359,6 @@ const laplace = {
     "<p><b>Assumptions:</b> linear, usually constant-coefficient systems (nonlinear gets only a local picture); the region of convergence matters; it is one-sided, so initial conditions are already baked in; inversion needs care with repeated or complex roots.</p>",
   worked: {
     problem: "Solve the initial-value problem $y'+2y=2$, with $y(0)=0$. Let $Y=\\mathcal{L}\\{y(t)\\}$.",
-    difficulty: 4,
     skills: ["derivative property", "partial fractions", "table inversion"],
     strategy: "The derivative is the obstacle — transform to turn it into algebra; the initial condition rides along.",
     hints: [

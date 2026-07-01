@@ -62,12 +62,12 @@ property rather than asserting it. Fold in the conditions/assumptions that must 
 *Voice: precise, lightly warm.*
 
 ### 4. Worked Example & Practice
-One fully guided worked example in the **full guided-walkthrough format** (below) — difficulty
-badge, skills tags, strategy cue, **interactive revealable hints**, one-operation-per-step,
-verify, common mistakes, answer, connects-to — then **5 practice problems**, each with a full
-revealable step-by-step solution (see *Practice-set design*). The worked example
-ends with **one sentence** planting the key reading (e.g. "the exponent −2 is a pole; negative
-means it decays — stable") that section 5 builds on.
+One fully guided worked example in the **guided-walkthrough format** (below) — skills tags,
+strategy cue, revealable hints, one-operation-per-step, verify, common mistakes, answer,
+connects-to — then **5 practice problems**, each with a full revealable step-by-step solution
+(see *Practice-set design*). The worked example ends with **one sentence** planting the key
+reading (e.g. "the exponent −2 is a pole; negative means it decays — stable") that section 5
+builds on.
 
 *Voice: patient.*
 
@@ -87,10 +87,9 @@ Close on the transferable thread ("one idea, many uniforms").
 
 ## Guided-walkthrough format (worked example + every practice problem)
 
-1. **Problem** + difficulty badge (`●●●○○`) + skills tags.
+1. **Problem** + skills tags. (No difficulty badge — it added noise, not signal.)
 2. **Strategy cue** — one line naming the obstacle and the tool.
-3. **Hints** — 2–3 progressive and fading, rendered as **interactive** `<details class="hint">`
-   "Show hint" toggles (see *Interactive elements*).
+3. **Hints** — 2–3 progressive and fading, rendered as revealable `<details class="hint">` toggles.
 4. **Step-by-step** — **one operation per step**: `action → result`, then a short italic *why*.
    Define notation up front.
 5. **Verify** — substitute back / sanity check (✓).
@@ -100,45 +99,35 @@ Close on the transferable thread ("one idea, many uniforms").
 
 **Rule: never bundle operations.** "Substitute, factor, and isolate" is three steps, not one.
 
-### HTML patterns for §4
+**Lists are plain.** Use `<ol class="mnum">` (simple numbered) and `<ul class="mbul">` (simple
+bulleted) — never the app's `.steps` class, whose number-circles and vertical connecting line are
+visually distracting. `renderMath` already emits the plain classes; authors only supply the data.
 
-```html
-<!-- difficulty + skills (top of the worked example) -->
-<p class="lesson-meta"><span class="difficulty">●●●○○</span><span class="skills">factoring · limits</span></p>
+### Data for §4 (the renderer builds the HTML)
 
-<!-- strategy cue -->
-<p class="strategy"><b>Strategy.</b> Direct substitution gives 0/0 — rewrite before you plug in.</p>
-
-<!-- interactive revealable hints -->
-<details class="hint"><summary>Hint 1</summary><p>Factor the numerator.</p></details>
-<details class="hint"><summary>Hint 2</summary><p>Cancel the common factor, then substitute.</p></details>
-
-<!-- step-by-step: one operation per <li> -->
-<ol class="steps"><li><b>Factor</b> &rarr; (x-1)(x+1)/(x-1). <i>Difference of squares.</i></li></ol>
-
-<!-- common mistakes -->
-<ul class="steps"><li>❌ Saying the limit doesn't exist because f(1) is undefined.</li></ul>
-
-<!-- connects-to -->
-<p class="connects"><b>Connects to:</b> continuity — the limit is f's continuous extension at x=1.</p>
+```js
+worked: {
+  problem: "Compute …",
+  skills: ["factoring", "indeterminate forms"],
+  strategy: "Direct substitution gives 0/0 — rewrite before you plug in.",
+  hints: ["Factor the numerator.", "Cancel the common factor, then substitute."],
+  steps: [ { do: "Factor", result: "(x-1)(x+1)/(x-1)", why: "difference of squares" } ],
+  verify: "x=0.99 → 1.99 and x=1.01 → 2.01 ✓",
+  answer: "2",
+  mistakes: ["Saying the limit doesn't exist because f(1) is undefined."],
+  connects: "continuity — the limit is f's continuous extension at x=1."
+}
 ```
 
 ---
 
 ## Interactive elements
 
-Lessons may include interactivity **where it aids understanding** — not on every lesson.
-
-- **Revealable hints** — native `<details class="hint"><summary>…</summary>…</details>`. Zero JS,
-  works inside the textbook page, keeps it uncluttered until the learner asks for help.
-- **Interactive widget** — an optional `demo(host)` function on the lesson object. The book
-  template mounts it into a `#demo-host` element (a "Play with it" card after the chapter, or
-  inline if you place `<div class="demo" id="demo-host"></div>` in a section body). Use it for a
-  visual that genuinely helps — drag `x → 1` and watch `f(x) → 2`, a slider over a parameter, a
-  draggable vector. Keep it small and self-contained, and read theme colors from CSS variables
-  (`--ink`, `--accent`, …) so it matches light/dark mode.
-
-*Guideline: reach for a widget only when a static figure can't show the idea moving.*
+- **Revealable hints and step-by-step solutions** — native `<details class="hint">` toggles. Zero
+  JS, work inside the textbook page, keep it uncluttered until the learner asks. This is the only
+  interactivity the math track uses.
+- **No custom widgets.** Do not add sliders, canvases, or `demo(host)` functions — they distract
+  from the reading. If a visual is essential, prefer a static figure.
 
 ---
 
@@ -164,8 +153,10 @@ revealable step-by-step solution; it will not accept trivial answer-only entries
 
 - Readable math: `$...$` inline, `$$...$$` display (MathJax). Avoid heavy custom macros.
 - **Bold** key terms on first meaningful use (*pole*, *eigenfunction*, *stable*).
-- Use `<ul class="steps">` / `<ol class="steps">` for step lists, `<table class="extable">`
-  for tables — these match the app's textbook styling.
+- Use `<ol class="mnum">` (numbered) / `<ul class="mbul">` (bulleted) for lists, and
+  `<table class="extable">` for tables. Never use the app's `.steps` class in math lessons —
+  its number-circles and connecting line are distracting. In authored data you just supply
+  `steps: [{do,result,why}]`; `renderMath` emits the plain markup.
 - ✓ for verified checks, ❌ for pitfalls.
 - **One operation per step, always. Every application shows real numbers.**
 
@@ -198,8 +189,8 @@ B({
   motivation: "…",             // §2  (HTML with $LaTeX$)
   definition: "…",             // §3
   worked: {                    // §4  (renderer lays out the guided-walkthrough)
-    problem: "…", difficulty: 4, skills: ["…"], strategy: "…",
-    hints: ["…"],              // → interactive <details>
+    problem: "…", skills: ["…"], strategy: "…",
+    hints: ["…"],              // → revealable <details>
     steps: [{ do: "…", result: "…", why: "…" }],   // one operation per step
     verify: "…", answer: "…", mistakes: ["…"], connects: "…"
   },
@@ -208,8 +199,7 @@ B({
   ],
   applications: [{ title: "…", background: "…", numbers: "…" }],   // ≥6
   applicationsClose: "…",      // §5 closing thread ("one idea, many uniforms")
-  takeaways: ["…"],
-  demo: function (host) { /* optional interactive widget, mounted into #demo-host */ }
+  takeaways: ["…"]
 });
 // B sets { module, template:"math", superGroup:"Math", book } automatically.
 ```
