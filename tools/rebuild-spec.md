@@ -30,18 +30,20 @@ Delete dead template helpers (`conv2d/iou/edit_distance/ce/kl` etc.) — keep on
 ## Build via a reproducible script
 Write ONE build script `tools/_build_<PART>_<BATCH>.py` that imports nbbuild, embeds the needed
 ladder source as a `code` cell, builds each topic's cells, and `N.write("notebooks/<id>-<slug>.ipynb", cells)`.
+Running this build script is FAST (it only assembles JSON) — that is allowed.
 
-## Verify EVERY notebook runs (mandatory) — fix until clean
-```
-MPLBACKEND=Agg python3 - <<'PY'
-import json
-nb = json.load(open("notebooks/<id>-<slug>.ipynb"))
-code = "\n\n".join("".join(c["source"]) for c in nb["cells"] if c["cell_type"]=="code")
-exec(compile(code, "<nb>", "exec"), {})
-print("RAN OK")
-PY
-```
-Not done until each prints RAN OK and nbbuild.write accepted it (readable). CPU-only, fast, seeded.
+## DO NOT EXECUTE THE NOTEBOOKS (hard rule)
+**Never run the notebook's training/plotting code — no `exec` of notebook cells, no `MPLBACKEND=Agg`
+run, no headless execution, no nbconvert.** Executing the training code throttles the user's machine.
+Generate the notebook and validate it STRUCTURALLY only:
+- `nbbuild.write()` already guarantees valid nbformat JSON + readable one-statement-per-line code
+  (it raises on dense code). If write() succeeds, JSON + readability are proven.
+- Self-check each notebook has: the 8-part spine (intro, setup, build-once md/code/md/code, ladder,
+  run-across-D1–D5, two-part results viz, pitfall, evaluate+practice); the build-once cell embeds the
+  lesson formula in `$…$` and `assert`s the plan's EXACT numbers; `metadata.enhanced_walkthrough=true`.
+- Author carefully so the code WOULD run (use the pre-tested ladder functions verbatim; keep methods
+  CPU-only, seeded, small), but DO NOT run it. Correctness comes from careful authoring + asserts, not
+  from executing.
 
 ## Deliverable (A): lesson applications
 Write `lessons/_apps-<PART>-<BATCH>.js`, one statement per topic:
@@ -56,4 +58,4 @@ Rules: exactly 5; each light background AND a re-derivable number (use the plan'
 Verify: `node --check lessons/_apps-<PART>-<BATCH>.js` passes.
 
 ## Report
-List notebooks written (each RAN OK), the apps file, and any deviation from the plan (one line why).
+List notebooks written, the apps file, and any deviation from the plan (one line why). Do NOT run notebooks.

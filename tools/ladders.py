@@ -230,6 +230,72 @@ def dataquality_ladder():
     return rungs
 
 
+# ---------------------------------------------------------------- unsupervised (part 4: F2/F3)
+
+def cluster_ladder():
+    """D1..D5 clustering ladder of rising difficulty. Returns [(name, X, y_true, k), ...].
+
+    y_true is the generating label (for ARI scoring only — clustering does not see it).
+    Rungs: hand points -> clean blobs -> anisotropic/overlap -> real Iris -> real digits(4-class).
+    """
+    rungs = []
+
+    x1 = np.array([[0.0, 0.0], [0.3, 0.2], [3.0, 3.0], [3.2, 2.8], [0.1, 3.1], [0.2, 2.9]])
+    y1 = np.array([0, 0, 1, 1, 2, 2])
+    rungs.append(("D1 hand 3 clusters", x1, y1, 3))
+
+    x2, y2 = make_blobs(n_samples=200, centers=3, cluster_std=0.7, random_state=1)
+    rungs.append(("D2 clean blobs", x2, y2, 3))
+
+    x3, y3 = make_blobs(n_samples=240, centers=3, cluster_std=1.6, random_state=2)
+    transform = np.array([[0.6, -0.6], [-0.4, 0.8]])
+    x3 = x3 @ transform
+    rungs.append(("D3 anisotropic + overlap", x3, y3, 3))
+
+    iris = load_iris()
+    rungs.append(("D4 Iris (real, 4-D)", iris.data, iris.target, 3))
+
+    digits = load_digits()
+    keep = np.isin(digits.target, [0, 1, 2, 3])
+    rungs.append(("D5 digits 0-3 (real, 64-D)", digits.data[keep] / 16.0, digits.target[keep], 4))
+
+    return rungs
+
+
+def cluster_ari(cluster_fn, X, k):
+    """Call cluster_fn(X, k) -> labels; caller compares to y_true with adjusted_rand_score."""
+    return cluster_fn(X, k)
+
+
+def dimred_ladder():
+    """D1..D5 dimensionality-reduction ladder. Returns [(name, X, y), ...] of rising ambient dim.
+
+    2-D toy -> 3-D swiss-roll-ish -> digits(64-D) -> the same with noise dims -> a wide feature set.
+    y is a color/label for visualization only.
+    """
+    rungs = []
+    rng = np.random.default_rng(3)
+
+    t = np.linspace(0, 4, 120)
+    x1 = np.column_stack([t, 0.5 * t + rng.normal(0, 0.05, 120)])
+    rungs.append(("D1 near-1-D line in 2-D", x1, t))
+
+    tt = np.linspace(0, 3 * np.pi, 200)
+    x2 = np.column_stack([tt * np.cos(tt), 8 * rng.random(200), tt * np.sin(tt)])
+    rungs.append(("D2 swiss-roll (3-D)", x2, tt))
+
+    digits = load_digits()
+    rungs.append(("D3 digits (real, 64-D)", digits.data / 16.0, digits.target))
+
+    xn = np.hstack([digits.data / 16.0, rng.normal(0, 1, size=(digits.data.shape[0], 32))])
+    rungs.append(("D4 digits + 32 noise dims", xn, digits.target))
+
+    bc = load_breast_cancer()
+    rungs.append(("D5 Breast Cancer (30-D)", bc.data, bc.target))
+
+    return rungs
+
+
 if __name__ == "__main__":
     print("clf_ladder:")
     for name, X, y in clf_ladder():
@@ -253,3 +319,14 @@ if __name__ == "__main__":
     for name, X, y in dataquality_ladder():
         acc = clf_accuracy(logistic_baseline, X, y)
         print(f"  {name:36s} X={X.shape} pos_frac={y.mean():.2f} acc={acc:.3f}")
+    print("cluster_ladder:")
+    from sklearn.cluster import KMeans
+    from sklearn.metrics import adjusted_rand_score
+    for name, X, y, k in cluster_ladder():
+        labels = KMeans(n_clusters=k, n_init=10, random_state=0).fit_predict(X)
+        print(f"  {name:36s} X={X.shape} k={k} ARI={adjusted_rand_score(y, labels):.3f}")
+    print("dimred_ladder:")
+    from sklearn.decomposition import PCA
+    for name, X, y in dimred_ladder():
+        ev = PCA(n_components=2).fit(X).explained_variance_ratio_.sum()
+        print(f"  {name:36s} X={X.shape} PCA-2D explained_var={ev:.3f}")
