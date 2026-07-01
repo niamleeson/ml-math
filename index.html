@@ -568,7 +568,7 @@
   #content details.hint > summary::before { content: "\25B8  "; }
   #content details.hint[open] > summary::before { content: "\25BE  "; }
   #content .connects { font-style: italic; color: var(--ink-dim); }
-  #content .practice-tier { margin: 16px 0 4px; font-size: 15px; }
+  #content .practice-item { margin: 12px 0; }
 </style>
 </head>
 <body>
@@ -1720,11 +1720,14 @@ const App = (function () {
     const mistakes = (w.mistakes && w.mistakes.length)
       ? `<p><b>Common mistakes.</b></p><ul class="steps">${w.mistakes.map(m => `<li>\u274C ${m}</li>`).join("")}</ul>` : "";
     const practice = (l.practice && l.practice.length)
-      ? (l.practice[0] && l.practice[0].problems)
-        ? `<p><b>Practice — 20 problems, increasing difficulty.</b> Try each, then reveal the guided solution.</p>` +
-          l.practice.map(t => `<p class="practice-tier"><b>${t.tier}</b></p><ol class="steps">` +
-            t.problems.map(pr => `<li>${pr.problem}<details class="hint"><summary>Solution</summary>${/^\s*<(p|ul|ol|div)/i.test(pr.solution) ? pr.solution : `<p>${pr.solution}</p>`}</details></li>`).join("") + `</ol>`).join("")
-        : `<p><b>Practice</b> (hints fade):</p><ul class="steps">${l.practice.map(p => `<li>${p.problem} &rarr; ${p.answer}</li>`).join("")}</ul>`
+      ? `<p><b>Practice — ${l.practice.length} problems, each fully worked.</b> Try it, then reveal the step-by-step solution.</p>` +
+        l.practice.map((pr, i) =>
+          `<div class="practice-item"><p><b>${i + 1}.</b> ${pr.problem}</p>` +
+          `<details class="hint"><summary>Step-by-step solution</summary>` +
+          ((pr.steps && pr.steps.length) ? `<ol class="steps">${pr.steps.map(s => `<li><b>${s.do}</b>${s.result ? ` &rarr; ${s.result}` : ""}${s.why ? ` <i>${s.why}</i>` : ""}</li>`).join("")}</ol>` : (pr.solution ? `<p>${pr.solution}</p>` : "")) +
+          (pr.answer ? `<p><b>Answer:</b> ${pr.answer}</p>` : "") +
+          `</details></div>`
+        ).join("")
       : "";
     const workedBody = (w.problem || (w.steps && w.steps.length))
       ? meta +

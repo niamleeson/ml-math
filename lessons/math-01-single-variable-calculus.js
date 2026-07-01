@@ -506,109 +506,149 @@
     },
     "practice": [
       {
-        "tier": "Tier 1 — direct substitution",
-        "problems": [
+        "problem": "$\\lim_{x\\to3}\\dfrac{x^2-x-6}{x-3}$",
+        "steps": [
           {
-            "problem": "$\\lim_{x\\to3}(2x+1)$",
-            "solution": "Continuous, so substitute: $2(3)+1=7$."
+            "do": "Try substitution",
+            "result": "$\\frac{9-3-6}{0}=\\frac00$",
+            "why": "indeterminate — rewrite first"
           },
           {
-            "problem": "$\\lim_{x\\to0}(x^2+4)$",
-            "solution": "Substitute: $0+4=4$."
+            "do": "Factor the numerator",
+            "result": "$\\dfrac{(x-3)(x+2)}{x-3}$",
+            "why": "$x^2-x-6=(x-3)(x+2)$"
           },
           {
-            "problem": "$\\lim_{x\\to2}x^3$",
-            "solution": "Substitute: $2^3=8$."
+            "do": "Cancel $(x-3)$",
+            "result": "$x+2$",
+            "why": "valid for $x\\ne3$"
           },
           {
-            "problem": "$\\lim_{x\\to1}5$",
-            "solution": "A constant function — the limit is $5$."
+            "do": "Substitute $x=3$",
+            "result": "$5$",
+            "why": "the simplified form is continuous"
           }
-        ]
+        ],
+        "answer": "$5$"
       },
       {
-        "tier": "Tier 2 — $0/0$: factor and cancel",
-        "problems": [
+        "problem": "$\\lim_{x\\to0}\\dfrac{\\sqrt{x+4}-2}{x}$",
+        "steps": [
           {
-            "problem": "$\\lim_{x\\to2}\\frac{x^2-4}{x-2}$",
-            "solution": "$0/0$; factor $\\frac{(x-2)(x+2)}{x-2}=x+2\\to4$."
+            "do": "Try substitution",
+            "result": "$\\frac{2-2}{0}=\\frac00$",
+            "why": "indeterminate"
           },
           {
-            "problem": "$\\lim_{x\\to3}\\frac{x^2-9}{x-3}$",
-            "solution": "Factor to $x+3\\to6$."
+            "do": "Multiply by the conjugate $\\frac{\\sqrt{x+4}+2}{\\sqrt{x+4}+2}$",
+            "result": "$\\dfrac{(x+4)-4}{x(\\sqrt{x+4}+2)}$",
+            "why": "rationalize the numerator"
           },
           {
-            "problem": "$\\lim_{x\\to0}\\frac{x^2+3x}{x}$",
-            "solution": "Factor $\\frac{x(x+3)}{x}=x+3\\to3$."
+            "do": "Simplify the numerator",
+            "result": "$\\dfrac{x}{x(\\sqrt{x+4}+2)}$",
+            "why": "$(x+4)-4=x$"
           },
           {
-            "problem": "$\\lim_{x\\to-1}\\frac{x^2-1}{x+1}$",
-            "solution": "Factor $\\frac{(x-1)(x+1)}{x+1}=x-1\\to-2$."
+            "do": "Cancel $x$",
+            "result": "$\\dfrac{1}{\\sqrt{x+4}+2}$",
+            "why": "valid for $x\\ne0$"
+          },
+          {
+            "do": "Substitute $x=0$",
+            "result": "$\\frac14$",
+            "why": "$\\sqrt4+2=4$"
           }
-        ]
+        ],
+        "answer": "$\\frac14$"
       },
       {
-        "tier": "Tier 3 — rationalize the tricky ones",
-        "problems": [
+        "problem": "$\\lim_{x\\to0}\\dfrac{\\frac{1}{x+2}-\\frac12}{x}$",
+        "steps": [
           {
-            "problem": "$\\lim_{x\\to0}\\frac{\\sqrt{x+1}-1}{x}$",
-            "solution": "Multiply by the conjugate: $\\frac{x}{x(\\sqrt{x+1}+1)}=\\frac{1}{\\sqrt{x+1}+1}\\to\\frac12$."
+            "do": "Try substitution",
+            "result": "$\\frac00$",
+            "why": "indeterminate"
           },
           {
-            "problem": "$\\lim_{x\\to4}\\frac{\\sqrt{x}-2}{x-4}$",
-            "solution": "$x-4=(\\sqrt{x}-2)(\\sqrt{x}+2)$; cancel to $\\frac{1}{\\sqrt{x}+2}\\to\\frac14$."
+            "do": "Combine the top over a common denominator",
+            "result": "$\\dfrac{2-(x+2)}{2(x+2)\\,x}$",
+            "why": "$\\frac{1}{x+2}-\\frac12=\\frac{2-(x+2)}{2(x+2)}$"
           },
           {
-            "problem": "$\\lim_{x\\to1}\\frac{x-1}{\\sqrt{x}-1}$",
-            "solution": "$x-1=(\\sqrt{x}-1)(\\sqrt{x}+1)$; cancel to $\\sqrt{x}+1\\to2$."
+            "do": "Simplify the numerator",
+            "result": "$\\dfrac{-x}{2(x+2)\\,x}$",
+            "why": "$2-(x+2)=-x$"
           },
           {
-            "problem": "$\\lim_{x\\to0}\\frac{\\frac{1}{x+1}-1}{x}$",
-            "solution": "Combine the top: $\\frac{-x/(x+1)}{x}=\\frac{-1}{x+1}\\to-1$."
+            "do": "Cancel $x$",
+            "result": "$\\dfrac{-1}{2(x+2)}$",
+            "why": "valid for $x\\ne0$"
+          },
+          {
+            "do": "Substitute $x=0$",
+            "result": "$-\\frac14$",
+            "why": "$2\\cdot2=4$"
           }
-        ]
+        ],
+        "answer": "$-\\frac14$"
       },
       {
-        "tier": "Tier 4 — one-sided, infinity, and non-existence",
-        "problems": [
+        "problem": "$\\lim_{x\\to\\infty}\\left(\\sqrt{x^2+3x}-x\\right)$",
+        "steps": [
           {
-            "problem": "$\\lim_{x\\to0}\\frac{\\sin x}{x}$",
-            "solution": "A standard squeeze-theorem limit: $1$ (at $x=0.01$, ratio $=0.99998$)."
+            "do": "Recognize the form",
+            "result": "$\\infty-\\infty$",
+            "why": "both terms grow"
           },
           {
-            "problem": "$\\lim_{x\\to\\infty}\\frac{3x^2+5x}{x^2}$",
-            "solution": "Divide through by $x^2$: $3+\\frac5x\\to3$."
+            "do": "Multiply by the conjugate",
+            "result": "$\\dfrac{(x^2+3x)-x^2}{\\sqrt{x^2+3x}+x}$",
+            "why": "rationalize"
           },
           {
-            "problem": "$\\lim_{x\\to0^{+}}\\frac{1}{x}$",
-            "solution": "From the right, $1/x$ grows without bound: $+\\infty$ (an infinite limit, not a number)."
+            "do": "Simplify the numerator",
+            "result": "$\\dfrac{3x}{\\sqrt{x^2+3x}+x}$",
+            "why": "$(x^2+3x)-x^2=3x$"
           },
           {
-            "problem": "$\\lim_{x\\to0}\\frac{|x|}{x}$",
-            "solution": "Right side $\\to+1$, left side $\\to-1$ — they disagree, so the limit does not exist."
+            "do": "Divide top and bottom by $x$",
+            "result": "$\\dfrac{3}{\\sqrt{1+3/x}+1}$",
+            "why": "$x>0$"
+          },
+          {
+            "do": "Take $x\\to\\infty$",
+            "result": "$\\frac32$",
+            "why": "$3/x\\to0$"
           }
-        ]
+        ],
+        "answer": "$\\frac32$"
       },
       {
-        "tier": "Tier 5 — advanced & the ML connection",
-        "problems": [
+        "problem": "$\\lim_{h\\to0}\\dfrac{(x+h)^3-x^3}{h}$ &nbsp;(the derivative of $x^3$)",
+        "steps": [
           {
-            "problem": "$\\lim_{x\\to\\infty}\\left(1+\\frac1x\\right)^x$",
-            "solution": "This is the very definition of $e\\approx2.718$."
+            "do": "Expand $(x+h)^3$",
+            "result": "$x^3+3x^2h+3xh^2+h^3$",
+            "why": "binomial expansion"
           },
           {
-            "problem": "$\\lim_{x\\to0}\\frac{e^x-1}{x}$",
-            "solution": "$1$ — this limit is exactly the derivative of $e^x$ at $0$."
+            "do": "Subtract $x^3$",
+            "result": "$3x^2h+3xh^2+h^3$",
+            "why": "the $x^3$ terms cancel"
           },
           {
-            "problem": "$\\lim_{h\\to0}\\frac{(x+h)^2-x^2}{h}$",
-            "solution": "Expand: $\\frac{2xh+h^2}{h}=2x+h\\to2x$ — the derivative of $x^2$, i.e. a gradient."
+            "do": "Divide by $h$",
+            "result": "$3x^2+3xh+h^2$",
+            "why": "factor $h$ from every term"
           },
           {
-            "problem": "$\\lim_{x\\to\\infty}\\sigma(x)$ and its slope",
-            "solution": "$\\sigma(x)\\to1$ and the slope $\\sigma(1-\\sigma)\\to0$ — saturation, the vanishing-gradient limit."
+            "do": "Take $h\\to0$",
+            "result": "$3x^2$",
+            "why": "the $h$ terms vanish"
           }
-        ]
+        ],
+        "answer": "$3x^2$ — the gradient of $x^3$, exactly what backprop computes."
       }
     ],
     "applications": [

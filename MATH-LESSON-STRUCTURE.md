@@ -64,8 +64,8 @@ property rather than asserting it. Fold in the conditions/assumptions that must 
 ### 4. Worked Example & Practice
 One fully guided worked example in the **full guided-walkthrough format** (below) — difficulty
 badge, skills tags, strategy cue, **interactive revealable hints**, one-operation-per-step,
-verify, common mistakes, answer, connects-to — then **20 practice problems** (5 tiers of 4, each
-with a revealable guided solution; see *Practice-set design*). The worked example
+verify, common mistakes, answer, connects-to — then **5 practice problems**, each with a full
+revealable step-by-step solution (see *Practice-set design*). The worked example
 ends with **one sentence** planting the key reading (e.g. "the exponent −2 is a pole; negative
 means it decays — stable") that section 5 builds on.
 
@@ -144,20 +144,19 @@ Lessons may include interactivity **where it aids understanding** — not on eve
 
 ## Practice-set design (REQUIRED in every authored §4)
 
-- **Exactly 20 problems, strictly increasing difficulty, in 5 tiers of 4.** This is a hard
-  requirement — not optional, not "a few faded problems." Each tier adds one new wrinkle:
-  1. compute / apply the definition directly
-  2. properties & basic inverses
-  3. harder algebra / rewrites
-  4. one-sided, infinity, structural cases, non-existence
-  5. advanced — and a **capstone** problem that reconnects to the CS/ML big idea
-- Each problem is shown with its statement plus a **revealable `<details>` guided solution**
-  (the key move → the answer), so the page stays clean until the learner asks.
-- The single fully-worked example that opens §4 still uses the complete guided-walkthrough
-  format (badge, skills, strategy, hints, one-op-per-step, verify, mistakes, connects-to).
+- **Exactly 5 practice problems.** Not 20 — five *substantive* problems beat twenty trivial ones.
+  Pick problems that each genuinely need a multi-step solution (a real rewrite, rationalization,
+  or limit process — not a one-line plug-in), and make the last one reach toward the CS/ML idea.
+- **Each problem has a full step-by-step walkthrough**, not a one-liner. The walkthrough uses the
+  same one-operation-per-step format as the lead example: `{ do, result, why }` per step, plus an
+  answer. It is shown in a **revealable `<details>`** ("Step-by-step solution") so the page stays
+  clean until the learner tries it.
+- The single fully-worked example that opens §4 still uses the complete guided-walkthrough format
+  (badge, skills, strategy, hints, one-op-per-step, verify, mistakes, connects-to).
 
-Schema: `practice` is an array of 5 tiers, each `{ tier: "Tier N — label", problems: [ {problem, solution} × 4 ] }`.
-`renderMath` refuses to drift: it renders tier headers and a revealable solution per problem.
+Schema: `practice` is an array of 5 objects, each
+`{ problem, steps: [ {do, result, why} ], answer }`. `renderMath` renders each problem with a
+revealable step-by-step solution; it will not accept trivial answer-only entries as the standard.
 
 ---
 
@@ -204,8 +203,8 @@ B({
     steps: [{ do: "…", result: "…", why: "…" }],   // one operation per step
     verify: "…", answer: "…", mistakes: ["…"], connects: "…"
   },
-  practice: [                  // 20 problems = 5 tiers of 4 (REQUIRED)
-    { tier: "Tier 1 — …", problems: [{ problem: "…", solution: "…" }] }  // ×5 tiers, 4 each
+  practice: [                  // exactly 5 problems, each fully worked (REQUIRED)
+    { problem: "…", steps: [{ do: "…", result: "…", why: "…" }], answer: "…" }  // ×5
   ],
   applications: [{ title: "…", background: "…", numbers: "…" }],   // ≥6
   applicationsClose: "…",      // §5 closing thread ("one idea, many uniforms")
