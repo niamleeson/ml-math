@@ -73,7 +73,6 @@
   .lessons li a:hover { background: var(--panel-2); }
   .lessons li a.active { background: var(--panel-2); border-left-color: var(--accent); color: var(--accent); }
   .lessons li a .tid { color: var(--ink-dim); font-variant-numeric: tabular-nums; font-size: 12px; min-width: 34px; }
-  .lessons li.done a .ttl::after { content: " ✓"; color: var(--good); }
   .gapdot {
     margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--warn);
     box-shadow: 0 0 0 2px rgba(255,180,84,.18);
@@ -86,14 +85,13 @@
   .lesson-title { font-size: 30px; margin: 2px 0 6px; line-height: 1.2; }
   .lesson-sub { color: var(--ink-dim); margin: 0 0 16px; font-size: 16px; }
   .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
-  .colab-btn, .done-btn {
+  .colab-btn {
     display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 8px;
     font-size: 13.5px; cursor: pointer; border: 1px solid var(--border); background: var(--panel);
     color: var(--ink);
   }
   .colab-btn.on { border-color: var(--warn); color: var(--warn); }
   .colab-btn.off { opacity: .55; cursor: not-allowed; }
-  .done-btn.is-done { border-color: var(--good); color: var(--good); }
   .gap-flag {
     font-size: 12px; color: var(--warn); border: 1px solid var(--warn); border-radius: 20px;
     padding: 3px 10px; background: rgba(255,180,84,.08);
@@ -180,11 +178,6 @@ const AllML = (function () {
     { key: "pitfalls",    label: "Pitfalls",
       hint: "Real bugs and their mechanisms, not just symptoms." }
   ];
-  const LS_KEY = "allml_progress_v1";
-  let progress = {};
-  try { progress = JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch (e) { progress = {}; }
-  function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(progress)); } catch (e) {} }
-
   const TOPICS = window.ALLML || [];
   const PARTS = window.ALLML_PARTS || [];
   const CONTENT = window.ALLML_CONTENT || {};
@@ -200,19 +193,17 @@ const AllML = (function () {
     const wrap = document.getElementById("parts");
     wrap.innerHTML = "";
     order.length = 0;
-    const totalDone = TOPICS.filter(t => progress[t.id]).length;
     document.getElementById("umbrellaSub").textContent =
-      TOPICS.length + " topics · " + PARTS.length + " parts · " + totalDone + " done";
+      TOPICS.length + " topics · " + PARTS.length + " parts";
     PARTS.forEach(p => {
       const items = topicsOf(p.num);
       const el = document.createElement("div");
       el.className = "part collapsed";
       el.dataset.part = p.num;
-      const done = items.filter(t => progress[t.id]).length;
       el.innerHTML =
         '<div class="part-head"><span class="chev">▼</span>' +
         '<span>Part ' + p.num + ' — ' + p.name + '</span>' +
-        '<span class="pcount">' + done + '/' + items.length + '</span></div>' +
+        '<span class="pcount">' + items.length + '</span></div>' +
         '<ul class="lessons"></ul>';
       const ul = el.querySelector(".lessons");
       items.forEach(t => {
@@ -220,7 +211,6 @@ const AllML = (function () {
         const li = document.createElement("li");
         li.dataset.id = t.id;
         li.dataset.search = (t.id + " " + t.title + " " + p.name).toLowerCase();
-        if (progress[t.id]) li.className = "done";
         const gap = t.gap ? '<span class="gapdot" title="Not yet in the main app — priority to author"></span>' : "";
         li.innerHTML = '<a class="navlink" href="#' + t.id + '">' +
           '<span class="tid">' + t.id + '</span><span class="ttl">' + t.title + '</span>' + gap + '</a>';
@@ -256,7 +246,6 @@ const AllML = (function () {
     const idx = order.indexOf(id);
     const prev = order[idx - 1], next = order[idx + 1];
     const c = CONTENT[t.id] || {};
-    const isDone = !!progress[t.id];
 
     let html =
       '<div class="crumbs">All ML › Part ' + t.part + ' — ' + partName[t.part] + '</div>' +
@@ -264,8 +253,6 @@ const AllML = (function () {
       (c.tagline ? '<p class="lesson-sub">' + c.tagline + '</p>' : '') +
       '<div class="toolbar">' +
         colabButton(t) +
-        '<button class="done-btn' + (isDone ? ' is-done' : '') + '" onclick="AllML.toggleDone(\'' + t.id + '\')">' +
-          (isDone ? '✓ Completed' : 'Mark complete') + '</button>' +
         (t.gap ? '<span class="gap-flag" title="Not yet covered in the main ml-math-tutor app">app gap</span>' : '') +
       '</div>' +
       SECTIONS.map(s => sectionCard(t, s)).join("") +
@@ -287,10 +274,6 @@ const AllML = (function () {
   }
 
   function go(id) { location.hash = id; }
-  function toggleDone(id) {
-    progress[id] = !progress[id]; save();
-    renderSidebar(); highlight(location.hash.slice(1)); open(location.hash.slice(1));
-  }
   function highlight(id) {
     document.querySelectorAll('.lessons li a').forEach(a =>
       a.classList.toggle('active', a.getAttribute('href') === '#' + id));
@@ -330,7 +313,7 @@ const AllML = (function () {
     route();
   }
 
-  return { init, open, go, filter, toggleDone, toggleTheme };
+  return { init, open, go, filter, toggleTheme };
 })();
 window.AllML = AllML;
 document.addEventListener("DOMContentLoaded", AllML.init);
