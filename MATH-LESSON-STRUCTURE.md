@@ -4,8 +4,8 @@ Canonical spec for authoring lessons in the **Mathematics for ML** track of this
 Every lesson is one instance of this template. This document is the source of truth;
 `tools/gen-math.js` + `tools/math-authored.js` implement it.
 
-> Scope note: this governs the `template:"book"` math lessons under
-> `lessons/math-*.js`. The older interactive lessons use a different template.
+> Scope note: this governs the `template:"math"` lessons under `lessons/math-*.js`, rendered by
+> `renderMath`. The pre-existing app lessons and their renderers are untouched.
 
 ---
 
@@ -179,30 +179,40 @@ ladder is authored per lesson when depth is added.)
 
 ## App implementation mapping
 
-Each lesson is a JS object pushed into `window.LESSONS` with the **book** template:
+Each lesson is a JS object pushed into `window.LESSONS` with the **spec-native `math` template**.
+The renderer (`renderMath` in `index.html`) builds the structure from named fields — the author
+only fills fields, so the 5 sections and every guided-walkthrough element cannot drift.
 
 ```js
 B({
-  id: "math-<TT>-<LL>",     // e.g. "math-03-27" (topic 3, lesson 27)
+  id: "math-<TT>-<LL>",        // e.g. "math-03-27" (topic 3, lesson 27)
   title: "The Laplace transform",
   tagline: "One-line hook.",
-  prereqs: ["math-03-06"],  // optional; auto-chained to previous lesson if omitted
-  sections: [               // the 5 sections, in order
-    { h: "Connections",                          body: "<p>…HTML with $LaTeX$…</p>" },
-    { h: "Motivation & Intuition",               body: "…" },
-    { h: "Definition & Assumptions",             body: "…" },
-    { h: "Worked Example & Practice",            body: "…" },
-    { h: "Real-World Applications in CS & ML",   body: "…" }
-  ],
-  takeaways: [ "…", "…" ],  // rendered as "Key takeaways"
+  prereqs: ["math-03-06"],     // optional; auto-chained to previous lesson if omitted
+  connections: {               // §1
+    buildsOn: ["…"], leadsTo: ["…"], usedWith: ["…"]
+  },
+  motivation: "…",             // §2  (HTML with $LaTeX$)
+  definition: "…",             // §3
+  worked: {                    // §4  (renderer lays out the guided-walkthrough)
+    problem: "…", difficulty: 4, skills: ["…"], strategy: "…",
+    hints: ["…"],              // → interactive <details>
+    steps: [{ do: "…", result: "…", why: "…" }],   // one operation per step
+    verify: "…", answer: "…", mistakes: ["…"], connects: "…"
+  },
+  practice: [{ problem: "…", answer: "…" }],
+  applications: [{ title: "…", background: "…", numbers: "…" }],   // ≥6
+  takeaways: ["…"],
   demo: function (host) { /* optional interactive widget, mounted into #demo-host */ }
 });
-// B sets { module, template:"book", book } automatically.
+// B sets { module, template:"math", superGroup:"Math", book } automatically.
 ```
 
-`module` (the nav section) is the topic name; `book` is the breadcrumb
-(`"Mathematics · <Category>"`). `template:"book"` triggers the monochrome, serif,
-black-and-white textbook renderer (`renderBook` in `index.html`).
+`module` (the topic) is the nav section; `book` is the breadcrumb (`"Mathematics · <Category>"`);
+`superGroup: "Math"` nests all topic sections under one collapsible **Math** parent in the sidebar
+(Math → topic sections → lessons). `template: "math"` triggers `renderMath`, which lays the fields
+out as the monochrome, serif, black-and-white textbook page. Scaffolds fill only `connections`;
+`renderMath` shows a muted "To be authored" note under the remaining sections.
 
 ### Authoring workflow (scaffold → gold standard)
 
