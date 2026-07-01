@@ -37,8 +37,7 @@
     var colab = l.colab
       ? '<a class="colab-btn" href="' + l.colab + '" target="_blank" rel="noopener">\u25B6 Open in Colab</a>'
       : '<span class="colab-btn off" title="Notebook not built yet">\u25B6 Open in Colab (pending)</span>';
-    var toolbar = '<div class="allml-toolbar">' + colab +
-      (l.gap ? '<span class="gap-flag" title="Not yet covered elsewhere in the app">app gap</span>' : '') + '</div>';
+    var toolbar = '<div class="allml-toolbar">' + colab + '</div>';
     var nav = '<div class="nav-row">' +
       '<button ' + (prevId ? 'onclick="App.open(\'' + prevId + '\')"' : 'disabled') + '>' +
         '<span>\u2190 Previous</span>' + (prevId && byId[prevId] ? byId[prevId].title : '') + '</button>' +
@@ -75,7 +74,6 @@
     '#content .allml-doc .lesson-sub { font-style: normal; }',
     '#content .allml-toolbar { display:flex; gap:10px; align-items:center; margin:0 0 34px; flex-wrap:wrap; }',
     '#content .colab-btn.off { opacity:.5; cursor:not-allowed; }',
-    '#content .gap-flag { font-size:12px; color:var(--ink-dim); border:1px solid var(--border); border-radius:20px; padding:3px 10px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }',
     '#content .card.allml .sec-hint { color:var(--ink-dim); font-size:15px; margin:0 0 4px; }',
     '#content .card.allml ol.work { margin:12px 0 16px; padding-left:24px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; font-size:15px; }',
     '#content .card.allml ol.work li { margin:5px 0; font-variant-numeric:tabular-nums; line-height:1.5; }',
