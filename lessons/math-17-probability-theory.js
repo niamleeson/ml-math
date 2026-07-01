@@ -9,37 +9,528 @@
   B({
     "id": "math-17-01",
     "title": "Sample spaces and events",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: sample spaces and events.",
+    "tagline": "Probability begins by naming what could happen before measuring how likely it is.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "sets",
+        "counting",
+        "logical statements"
       ],
       "leadsTo": [
-        "the next lesson, <i>Set operations on events</i>"
+        "Set operations on events",
+        "Axioms of probability",
+        "random variables"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "sets",
+        "Venn diagrams",
+        "counting",
+        "functions"
       ]
-    }
+    },
+    "motivation": "<p>You already sort possibilities all the time: a coin lands heads or tails, an email is spam or not spam, a prediction is correct or incorrect. Probability asks us to name that universe before assigning numbers.</p><p>A <b>sample space</b> is the universe of possible outcomes. An <b>event</b> is a collection of outcomes inside it. Once those are clear, probability becomes careful bookkeeping instead of guesswork.</p>",
+    "definition": "<p>A <b>sample space</b> $S$ is the set of all possible outcomes of an experiment. An outcome is one result, often written $\\omega\\in S$. An <b>event</b> is a subset $A\\subseteq S$; it happens exactly when the observed outcome lies in $A$.</p><p>For a finite experiment with equally likely outcomes, $P(A)=|A|/|S|$. This comes from giving each outcome weight $1/|S|$ and adding those weights over the outcomes in $A$.</p><p><b>Assumptions that matter:</b> $S$ includes every possible outcome exactly once at the chosen detail level; events may contain zero, one, or many outcomes; and the simple counting formula requires equally likely finite outcomes.</p>",
+    "worked": {
+      "problem": "Roll one fair die. Let $A$ be even and $B$ be at least $5$. Write $S$, $A$, $B$, $P(A)$, and $P(B)$.",
+      "skills": [
+        "sample spaces",
+        "events as subsets",
+        "finite probability"
+      ],
+      "strategy": "Name the whole set first, then identify each event as a subset before counting.",
+      "steps": [
+        {
+          "do": "Write the sample space",
+          "result": "$S=\\{1,2,3,4,5,6\\}$",
+          "why": "a die has six possible face values"
+        },
+        {
+          "do": "List even outcomes",
+          "result": "$A=\\{2,4,6\\}$",
+          "why": "these are divisible by $2$"
+        },
+        {
+          "do": "List outcomes at least $5$",
+          "result": "$B=\\{5,6\\}$",
+          "why": "only $5$ and $6$ qualify"
+        },
+        {
+          "do": "Count the sample space",
+          "result": "$|S|=6$",
+          "why": "six outcomes are equally likely"
+        },
+        {
+          "do": "Compute $P(A)$",
+          "result": "$P(A)=3/6=1/2$",
+          "why": "three outcomes are in $A$"
+        },
+        {
+          "do": "Compute $P(B)$",
+          "result": "$P(B)=2/6=1/3$",
+          "why": "two outcomes are in $B$"
+        }
+      ],
+      "verify": "Both probabilities are between $0$ and $1$, and the larger event has the larger probability.",
+      "answer": "$S=\\{1,2,3,4,5,6\\}$, $A=\\{2,4,6\\}$, $B=\\{5,6\\}$, $P(A)=1/2$, and $P(B)=1/3$.",
+      "connects": "Events are sets, so probability begins by deciding which outcomes belong to which set."
+    },
+    "practice": [
+      {
+        "problem": "Flip two coins. Write the event of exactly one head.",
+        "steps": [
+          {
+            "do": "List ordered outcomes",
+            "result": "$S=\\{HH,HT,TH,TT\\}$",
+            "why": "first and second coin are recorded"
+          },
+          {
+            "do": "Select one-head outcomes",
+            "result": "$H=\\{HT,TH\\}$",
+            "why": "each has exactly one $H$"
+          },
+          {
+            "do": "Count all outcomes",
+            "result": "$|S|=4$",
+            "why": "two binary choices give four outcomes"
+          },
+          {
+            "do": "Count favorable outcomes",
+            "result": "$|H|=2$",
+            "why": "two outcomes qualify"
+          },
+          {
+            "do": "Compute probability",
+            "result": "$P(H)=2/4=1/2$",
+            "why": "divide favorable by total"
+          }
+        ],
+        "answer": "$H=\\{HT,TH\\}$ and $P(H)=1/2$"
+      },
+      {
+        "problem": "Draw one card from a $52$-card deck. Find probabilities of red and queen.",
+        "steps": [
+          {
+            "do": "Count all cards",
+            "result": "$|S|=52$",
+            "why": "a standard deck has 52 cards"
+          },
+          {
+            "do": "Count red cards",
+            "result": "$|R|=26$",
+            "why": "hearts and diamonds have 13 each"
+          },
+          {
+            "do": "Count queens",
+            "result": "$|Q|=4$",
+            "why": "one queen per suit"
+          },
+          {
+            "do": "Compute $P(R)$",
+            "result": "$26/52=1/2$",
+            "why": "half the deck is red"
+          },
+          {
+            "do": "Compute $P(Q)$",
+            "result": "$4/52=1/13$",
+            "why": "four queens among 52 cards"
+          }
+        ],
+        "answer": "$P(R)=1/2$ and $P(Q)=1/13$"
+      },
+      {
+        "problem": "Choose uniformly from integers $1$ through $20$. Let $M$ be multiples of $3$.",
+        "steps": [
+          {
+            "do": "Count the sample space",
+            "result": "$|S|=20$",
+            "why": "there are 20 integers"
+          },
+          {
+            "do": "List multiples",
+            "result": "$M=\\{3,6,9,12,15,18\\}$",
+            "why": "multiply $3$ by $1$ through $6$"
+          },
+          {
+            "do": "Count the event",
+            "result": "$|M|=6$",
+            "why": "six integers qualify"
+          },
+          {
+            "do": "Compute probability",
+            "result": "$P(M)=6/20$",
+            "why": "favorable over total"
+          },
+          {
+            "do": "Reduce",
+            "result": "$P(M)=3/10$",
+            "why": "divide by $2$"
+          }
+        ],
+        "answer": "$M=\\{3,6,9,12,15,18\\}$ and $P(M)=3/10$"
+      },
+      {
+        "problem": "A dataset has $80$ cat, $50$ dog, and $70$ car images. Choose one; find the animal event probability.",
+        "steps": [
+          {
+            "do": "Count all images",
+            "result": "$80+50+70=200$",
+            "why": "the sample space is all images"
+          },
+          {
+            "do": "Identify animal classes",
+            "result": "cat and dog",
+            "why": "cars are not animals"
+          },
+          {
+            "do": "Count animal images",
+            "result": "$80+50=130$",
+            "why": "add cats and dogs"
+          },
+          {
+            "do": "Compute probability",
+            "result": "$130/200$",
+            "why": "divide by all images"
+          },
+          {
+            "do": "Convert to decimal",
+            "result": "$0.65$",
+            "why": "$130/200=13/20=0.65$"
+          }
+        ],
+        "answer": "The animal event has probability $0.65$"
+      },
+      {
+        "problem": "A model predicts labels $\\{0,1,2\\}$ for two items. Ordered pairs are equally likely. Let $E$ be matching predictions.",
+        "steps": [
+          {
+            "do": "Count ordered pairs",
+            "result": "$3\\cdot3=9$",
+            "why": "three choices for each item"
+          },
+          {
+            "do": "List matches",
+            "result": "$E=\\{(0,0),(1,1),(2,2)\\}$",
+            "why": "matching means equal entries"
+          },
+          {
+            "do": "Count matches",
+            "result": "$|E|=3$",
+            "why": "one match per label"
+          },
+          {
+            "do": "Compute probability",
+            "result": "$P(E)=3/9$",
+            "why": "favorable over total"
+          },
+          {
+            "do": "Reduce",
+            "result": "$P(E)=1/3$",
+            "why": "divide by $3$"
+          }
+        ],
+        "answer": "$E=\\{(0,0),(1,1),(2,2)\\}$ and $P(E)=1/3$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Coin flips as a first model",
+        "background": "Coin tossing is standard because the sample space is tiny and symmetric.",
+        "numbers": "For two flips, at least one head is $\\{HH,HT,TH\\}$, so $P=3/4$."
+      },
+      {
+        "title": "Quality control",
+        "background": "Factories sample items to reason about defects without inspecting everything.",
+        "numbers": "With $95$ good chips and $5$ defective chips, the defect event has probability $5/100=0.05$."
+      },
+      {
+        "title": "Classification labels",
+        "background": "In ML, the label space is the sample space of possible targets.",
+        "numbers": "For $\\{cat,dog,car,bike\\}$, the vehicle event $\\{car,bike\\}$ has uniform probability $2/4=0.5$."
+      },
+      {
+        "title": "A/B testing",
+        "background": "Experiment teams define outcomes such as purchase before analyzing results.",
+        "numbers": "If $120$ of $1000$ users purchase, the empirical purchase probability is $120/1000=0.12$."
+      },
+      {
+        "title": "Ranking impressions",
+        "background": "Search and feed systems define events such as click, save, or skip per impression.",
+        "numbers": "If $45$ of $900$ impressions get a click, the click event rate is $45/900=0.05$."
+      },
+      {
+        "title": "Robot safety states",
+        "background": "A robot planner can treat grid cells as outcomes and safe cells as an event.",
+        "numbers": "If $9$ of $60$ cells are blocked, the blocked event covers $9/60=0.15$ of the grid."
+      }
+    ],
+    "applicationsClose": "From dice to datasets, the first act is the same: name possible outcomes, then name the subset that matters.",
+    "takeaways": [
+      "A sample space $S$ lists all outcomes at the chosen level of detail.",
+      "An event is a subset of $S$.",
+      "For finite equally likely outcomes, $P(A)=|A|/|S|$.",
+      "Careful event definitions prevent probability errors later."
+    ]
   });
 
   B({
     "id": "math-17-02",
     "title": "Set operations on events",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: set operations on events.",
+    "tagline": "Union, intersection, and complement let events combine without losing their meaning.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Sample spaces and events</i>"
+        "Sample spaces and events",
+        "sets",
+        "Venn diagrams"
       ],
       "leadsTo": [
-        "the next lesson, <i>Axioms of probability</i>"
+        "Axioms of probability",
+        "conditional probability",
+        "inclusion-exclusion"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "logic",
+        "counting",
+        "Venn diagrams",
+        "indicator functions"
       ]
     },
+    "motivation": "<p>After events are sets, everyday words become precise. A user clicks or buys, a card is red and a queen, a test is positive but the patient is healthy. Probability needs exact language for these combined statements.</p><p><b>Set operations</b> give that language: or, and, and not become operations we can count and reason about.</p>",
+    "definition": "<p>For events $A,B\\subseteq S$, the <b>union</b> $A\\cup B$ means $A$ or $B$ or both happen. The <b>intersection</b> $A\\cap B$ means both happen. The <b>complement</b> $A^c$ means $A$ does not happen, relative to $S$.</p><p>The counting identity $|A\\cup B|=|A|+|B|-|A\\cap B|$ subtracts the overlap because outcomes in both sets were counted twice.</p><p><b>Assumptions that matter:</b> all events use the same sample space; complements are relative to that space; and disjoint events have empty intersection.</p>",
+    "worked": {
+      "problem": "From numbers $1$ through $12$, let $A$ be multiples of $2$ and $B$ multiples of $3$. Find $A\\cup B$, $A\\cap B$, and $A^c$.",
+      "skills": [
+        "union",
+        "intersection",
+        "complement"
+      ],
+      "strategy": "List each event, then combine by meaning.",
+      "steps": [
+        {
+          "do": "List $A$",
+          "result": "$A=\\{2,4,6,8,10,12\\}$",
+          "why": "multiples of $2$"
+        },
+        {
+          "do": "List $B$",
+          "result": "$B=\\{3,6,9,12\\}$",
+          "why": "multiples of $3$"
+        },
+        {
+          "do": "Find the intersection",
+          "result": "$A\\cap B=\\{6,12\\}$",
+          "why": "these appear in both lists"
+        },
+        {
+          "do": "Find the union",
+          "result": "$A\\cup B=\\{2,3,4,6,8,9,10,12\\}$",
+          "why": "include outcomes in either list once"
+        },
+        {
+          "do": "Find the complement",
+          "result": "$A^c=\\{1,3,5,7,9,11\\}$",
+          "why": "these are in $S$ but not $A$"
+        }
+      ],
+      "verify": "The union has $6+4-2=8$ elements, matching the list.",
+      "answer": "$A\\cup B=\\{2,3,4,6,8,9,10,12\\}$, $A\\cap B=\\{6,12\\}$, and $A^c=\\{1,3,5,7,9,11\\}$.",
+      "connects": "Compound probability statements are set operations in disguise."
+    },
+    "practice": [
+      {
+        "problem": "In $S=\\{1,2,3,4,5,6\\}$, $A=\\{1,2,3\\}$ and $B=\\{3,4,5\\}$. Find union and intersection.",
+        "steps": [
+          {
+            "do": "Write both sets",
+            "result": "$A=\\{1,2,3\\}$ and $B=\\{3,4,5\\}$",
+            "why": "start from the given events"
+          },
+          {
+            "do": "Collect elements in either set",
+            "result": "$\\{1,2,3,4,5\\}$",
+            "why": "union means or"
+          },
+          {
+            "do": "Collect elements in both",
+            "result": "$\\{3\\}$",
+            "why": "intersection means and"
+          },
+          {
+            "do": "Count the union",
+            "result": "$5$",
+            "why": "five distinct elements appear"
+          },
+          {
+            "do": "Check the count",
+            "result": "$3+3-1=5$",
+            "why": "subtract the overlap"
+          }
+        ],
+        "answer": "$A\\cup B=\\{1,2,3,4,5\\}$ and $A\\cap B=\\{3\\}$"
+      },
+      {
+        "problem": "For a die, let $E$ be even and $L$ be less than $4$. Find $E^c$ and $E\\cap L$.",
+        "steps": [
+          {
+            "do": "List $E$",
+            "result": "$E=\\{2,4,6\\}$",
+            "why": "even rolls"
+          },
+          {
+            "do": "List $L$",
+            "result": "$L=\\{1,2,3\\}$",
+            "why": "rolls less than $4$"
+          },
+          {
+            "do": "Find complement",
+            "result": "$E^c=\\{1,3,5\\}$",
+            "why": "all die outcomes not even"
+          },
+          {
+            "do": "Find intersection",
+            "result": "$E\\cap L=\\{2\\}$",
+            "why": "only $2$ is in both"
+          },
+          {
+            "do": "State sizes",
+            "result": "$|E^c|=3$, $|E\\cap L|=1$",
+            "why": "counts support probabilities"
+          }
+        ],
+        "answer": "$E^c=\\{1,3,5\\}$ and $E\\cap L=\\{2\\}$"
+      },
+      {
+        "problem": "A card is red or a queen. Count the event in a $52$-card deck.",
+        "steps": [
+          {
+            "do": "Count red cards",
+            "result": "$|R|=26$",
+            "why": "two red suits"
+          },
+          {
+            "do": "Count queens",
+            "result": "$|Q|=4$",
+            "why": "one per suit"
+          },
+          {
+            "do": "Count overlap",
+            "result": "$|R\\cap Q|=2$",
+            "why": "two red queens"
+          },
+          {
+            "do": "Apply inclusion-exclusion",
+            "result": "$|R\\cup Q|=26+4-2$",
+            "why": "avoid double counting"
+          },
+          {
+            "do": "Compute",
+            "result": "$28$",
+            "why": "finish arithmetic"
+          }
+        ],
+        "answer": "There are $28$ such cards."
+      },
+      {
+        "problem": "Among $100$ users, $40$ clicked, $25$ purchased, and $10$ did both. Count clicked or purchased.",
+        "steps": [
+          {
+            "do": "Name events",
+            "result": "$C$ and $P$",
+            "why": "clicked and purchased"
+          },
+          {
+            "do": "Write counts",
+            "result": "$|C|=40$, $|P|=25$, $|C\\cap P|=10$",
+            "why": "given data"
+          },
+          {
+            "do": "Use inclusion-exclusion",
+            "result": "$|C\\cup P|=40+25-10$",
+            "why": "subtract overlap"
+          },
+          {
+            "do": "Compute union",
+            "result": "$55$",
+            "why": "$65-10=55$"
+          },
+          {
+            "do": "Compute neither",
+            "result": "$100-55=45$",
+            "why": "complement of the union"
+          }
+        ],
+        "answer": "$55$ users clicked or purchased; $45$ did neither."
+      },
+      {
+        "problem": "For $200$ cases, $|T|=70$, $|\\hat T|=80$, and $|T\\cap\\hat T|=50$. Count false positives and false negatives.",
+        "steps": [
+          {
+            "do": "Read true positives",
+            "result": "$|T\\cap\\hat T|=50$",
+            "why": "both true and predicted positive"
+          },
+          {
+            "do": "Compute false positives",
+            "result": "$80-50=30$",
+            "why": "predicted positive but not truly positive"
+          },
+          {
+            "do": "Compute false negatives",
+            "result": "$70-50=20$",
+            "why": "truly positive but not predicted positive"
+          },
+          {
+            "do": "Count union",
+            "result": "$70+80-50=100$",
+            "why": "positive by truth or prediction"
+          },
+          {
+            "do": "Check totals",
+            "result": "$200-100=100$",
+            "why": "neither positive remains"
+          }
+        ],
+        "answer": "False positives $30$ and false negatives $20$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Database filters",
+        "background": "Query languages combine conditions with AND, OR, and NOT.",
+        "numbers": "If $300$ rows satisfy age, $120$ satisfy region, and $80$ satisfy both, OR returns $300+120-80=340$ rows."
+      },
+      {
+        "title": "Confusion matrices",
+        "background": "Classifier evaluation is set arithmetic on true and predicted label events.",
+        "numbers": "If $80$ are predicted positive and $50$ are true positives, false positives are $30$."
+      },
+      {
+        "title": "Recommendation funnels",
+        "background": "Product funnels track unions and intersections of view, click, save, and buy.",
+        "numbers": "With $200$ clicks, $50$ buys, and $30$ both, click or buy count is $220$."
+      },
+      {
+        "title": "Privacy cohorts",
+        "background": "Access rules often combine allowed groups and exclusions.",
+        "numbers": "If team A has $40$, team B has $35$, and overlap is $10$, the union has $65$ users."
+      },
+      {
+        "title": "Feature flags",
+        "background": "Experiment flags combine targeting rules using set operations.",
+        "numbers": "If $60\\%$ match country, $20\\%$ match employee, and $5\\%$ match both, OR covers $75\\%$."
+      },
+      {
+        "title": "Deduplication",
+        "background": "Data cleaning combines sources without counting repeated records twice.",
+        "numbers": "Source 1 has $900$ ids, source 2 has $700$, overlap $250$, so unique ids are $1350$."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
+    "takeaways": [
+      "$A\\cup B$ means $A$ or $B$ or both.",
+      "$A\\cap B$ means both events happen.",
+      "$A^c$ means not $A$ inside the chosen sample space.",
+      "Inclusion-exclusion subtracts overlap counted twice."
+    ],
     "prereqs": [
       "math-17-01"
     ]
@@ -48,19 +539,245 @@
   B({
     "id": "math-17-03",
     "title": "Axioms of probability",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: axioms of probability.",
+    "tagline": "The axioms are the small rulebook that every valid probability model must obey.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Set operations on events</i>"
+        "Sample spaces and events",
+        "Set operations on events"
       ],
       "leadsTo": [
-        "the next lesson, <i>Combinatorial probability</i>"
+        "Combinatorial probability",
+        "conditional probability",
+        "Bayes theorem"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "sets",
+        "measure",
+        "logic"
       ]
     },
+    "motivation": "<p>It is tempting to treat probabilities as vibes, but useful probability needs rules. The axioms are simple: no negative chances, total chance one, and add disjoint pieces by addition.</p><p>From those rules come the formulas used throughout statistics and ML.</p>",
+    "definition": "<p>A probability measure $P$ assigns each event $A\\subseteq S$ a number. The axioms are: $P(A)\\ge0$; $P(S)=1$; and if $A$ and $B$ are disjoint, then $P(A\\cup B)=P(A)+P(B)$.</p><p>From $S=A\\cup A^c$ with disjoint pieces, $1=P(S)=P(A)+P(A^c)$, so $P(A^c)=1-P(A)$.</p><p><b>Assumptions that matter:</b> events are in one sample space; probabilities are normalized to total $1$; and additivity without subtraction applies only to disjoint events.</p>",
+    "worked": {
+      "problem": "If $P(A)=0.35$, $P(B)=0.20$, and $A,B$ are disjoint, find $P(A^c)$ and $P(A\\cup B)$.",
+      "skills": [
+        "axioms",
+        "complements",
+        "disjoint addition"
+      ],
+      "strategy": "Translate the words into events or formulas, then compute one piece at a time.",
+      "steps": [
+        {
+          "do": "Use complement",
+          "result": "$P(A^c)=1-0.35=0.65$",
+          "why": "total probability is $1$"
+        },
+        {
+          "do": "Use disjoint additivity",
+          "result": "$P(A\\cup B)=0.35+0.20=0.55$",
+          "why": "disjoint events do not overlap"
+        }
+      ],
+      "verify": "The result respects the probability rules and the arithmetic matches the event definition.",
+      "answer": "$P(A\\cup B)=0.35+0.20=0.55$",
+      "connects": "Axioms of probability gives a reusable rule for this calculation."
+    },
+    "practice": [
+      {
+        "problem": "If $P(A)=0.28$, find $P(A^c)$.",
+        "steps": [
+          {
+            "do": "Write the complement rule",
+            "result": "$P(A^c)=1-P(A)$",
+            "why": "the event and its complement fill the sample space"
+          },
+          {
+            "do": "Substitute",
+            "result": "$P(A^c)=1-0.28$",
+            "why": "use the given probability"
+          },
+          {
+            "do": "Subtract",
+            "result": "$P(A^c)=0.72$",
+            "why": "remaining probability goes outside $A$"
+          },
+          {
+            "do": "Check nonnegativity",
+            "result": "$0.72\\ge0$",
+            "why": "axioms require probabilities not be negative"
+          },
+          {
+            "do": "Check total",
+            "result": "$0.28+0.72=1$",
+            "why": "the event and complement sum to one"
+          }
+        ],
+        "answer": "$P(A^c)=0.72$."
+      },
+      {
+        "problem": "Disjoint events have $P(A)=0.15$ and $P(B)=0.40$. Find $P(A\\cup B)$.",
+        "steps": [
+          {
+            "do": "Identify disjointness",
+            "result": "$A\\cap B=\\varnothing$",
+            "why": "there is no overlap to subtract"
+          },
+          {
+            "do": "Use additivity",
+            "result": "$P(A\\cup B)=P(A)+P(B)$",
+            "why": "axiom for disjoint events"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.15+0.40$",
+            "why": "use the given probabilities"
+          },
+          {
+            "do": "Add",
+            "result": "$0.55$",
+            "why": "sum the disjoint pieces"
+          },
+          {
+            "do": "Check the range",
+            "result": "$0.55\\le1$",
+            "why": "the answer is a valid probability"
+          }
+        ],
+        "answer": "$P(A\\cup B)=0.55$."
+      },
+      {
+        "problem": "If $P(A)=0.6$, $P(B)=0.5$, and $P(A\\cap B)=0.2$, find $P(A\\cup B)$.",
+        "steps": [
+          {
+            "do": "Use the general union formula",
+            "result": "$P(A\\cup B)=P(A)+P(B)-P(A\\cap B)$",
+            "why": "overlap is counted twice"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.6+0.5-0.2$",
+            "why": "enter all three probabilities"
+          },
+          {
+            "do": "Add first",
+            "result": "$1.1-0.2$",
+            "why": "combine event probabilities"
+          },
+          {
+            "do": "Subtract overlap",
+            "result": "$0.9$",
+            "why": "remove double count"
+          },
+          {
+            "do": "Check plausibility",
+            "result": "$0.9\\ge0.6$ and $0.9\\ge0.5$",
+            "why": "the union contains both events"
+          }
+        ],
+        "answer": "$P(A\\cup B)=0.9$."
+      },
+      {
+        "problem": "A proposed model says $P(A)=1.2$. Explain why it is invalid.",
+        "steps": [
+          {
+            "do": "Recall nonnegativity and normalization",
+            "result": "$0\\le P(A)\\le1$",
+            "why": "an event cannot exceed the whole sample space"
+          },
+          {
+            "do": "Compare the proposed value",
+            "result": "$1.2>1$",
+            "why": "it is larger than total probability"
+          },
+          {
+            "do": "Apply the axiom",
+            "result": "$P(S)=1$",
+            "why": "the sample space has probability one"
+          },
+          {
+            "do": "Conclude validity",
+            "result": "invalid probability assignment",
+            "why": "the proposal violates the axioms"
+          },
+          {
+            "do": "State a repair idea",
+            "result": "renormalize or correct the model",
+            "why": "probabilities must be calibrated to total one"
+          }
+        ],
+        "answer": "The model is invalid because an event probability cannot exceed $1$."
+      },
+      {
+        "problem": "Three disjoint classes have probabilities $0.2$, $0.3$, and $0.4$. Find the missing other-class probability.",
+        "steps": [
+          {
+            "do": "Add known classes",
+            "result": "$0.2+0.3+0.4=0.9$",
+            "why": "disjoint class probabilities add"
+          },
+          {
+            "do": "Use total probability",
+            "result": "$P(S)=1$",
+            "why": "all classes together must sum to one"
+          },
+          {
+            "do": "Subtract known mass",
+            "result": "$1-0.9=0.1$",
+            "why": "the remainder belongs to other"
+          },
+          {
+            "do": "Check nonnegativity",
+            "result": "$0.1\\ge0$",
+            "why": "the missing probability is valid"
+          },
+          {
+            "do": "Check total",
+            "result": "$0.2+0.3+0.4+0.1=1$",
+            "why": "the completed distribution is normalized"
+          }
+        ],
+        "answer": "The missing probability is $0.1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Probability calibration",
+        "background": "Calibration checks whether predicted probabilities obey real frequencies.",
+        "numbers": "If a model gives ten bins of mass $0.1$ each, the total mass is $10\\cdot0.1=1$."
+      },
+      {
+        "title": "Dataset class priors",
+        "background": "Class probabilities must sum to one before they can be used as priors.",
+        "numbers": "Counts $500,300,200$ out of $1000$ give priors $0.5,0.3,0.2$, summing to $1$."
+      },
+      {
+        "title": "Mutually exclusive labels",
+        "background": "Single-label classification assumes one true class per example.",
+        "numbers": "If class A is $0.7$ and class B is $0.2$, then $P(A\\cup B)=0.9$ because they are disjoint."
+      },
+      {
+        "title": "Anomaly rates",
+        "background": "Complement probabilities are often easier than direct counts.",
+        "numbers": "If normal traffic is $0.995$, anomaly probability is $1-0.995=0.005$."
+      },
+      {
+        "title": "Sampling audits",
+        "background": "A probability table with total above one reveals a data or modeling bug.",
+        "numbers": "Entries $0.4,0.35,0.30$ sum to $1.05$, so they cannot be a valid distribution."
+      },
+      {
+        "title": "Risk aggregation",
+        "background": "Disjoint failure modes can be added safely.",
+        "numbers": "If memory failure is $0.01$ and disk failure is $0.02$ with no overlap in the model, total failure probability is $0.03$."
+      }
+    ],
+    "applicationsClose": "The axioms are small, but they are the guardrails behind every probability table and ML uncertainty estimate.",
+    "takeaways": [
+      "Axioms of probability is a core probability tool for ML mathematics.",
+      "Name the events and assumptions before calculating.",
+      "Check that probability answers stay between $0$ and $1$.",
+      "The same rule works for toy examples and data systems."
+    ],
     "prereqs": [
       "math-17-02"
     ]
@@ -69,19 +786,251 @@
   B({
     "id": "math-17-04",
     "title": "Combinatorial probability",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: combinatorial probability.",
+    "tagline": "Counting carefully lets probability handle large spaces without listing every outcome.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Axioms of probability</i>"
+        "Axioms of probability",
+        "counting",
+        "factorials"
       ],
       "leadsTo": [
-        "the next lesson, <i>Conditional probability</i>"
+        "Conditional probability",
+        "binomial distributions",
+        "sampling"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "combinations",
+        "permutations",
+        "sets"
       ]
     },
+    "motivation": "<p>Listing outcomes is fine for one die, but it collapses for passwords, cards, and mini-batches. Combinatorics gives us a way to count without writing everything down.</p><p>The heart is still $P=\\text{favorable}/\\text{total}$, but the counts now come from permutations and combinations.</p>",
+    "definition": "<p>When outcomes are equally likely, $P(A)=|A|/|S|$. The product rule says $m$ choices followed by $n$ choices give $mn$ ordered outcomes. Combinations count unordered selections: $\\binom{n}{k}=\\dfrac{n!}{k!(n-k)!}$.</p><p>The formula divides $n!$ ordered arrangements by $k!$ reorderings inside the chosen group and $(n-k)!$ reorderings outside it.</p><p><b>Assumptions that matter:</b> decide whether order matters, whether replacement is allowed, and whether all counted outcomes are equally likely.</p>",
+    "worked": {
+      "problem": "From $10$ images, choose $3$ for review uniformly. What is the probability that a particular image is included?",
+      "skills": [
+        "combinations",
+        "symmetry",
+        "finite probability"
+      ],
+      "strategy": "Translate the words into events or formulas, then compute one piece at a time.",
+      "steps": [
+        {
+          "do": "Count all review sets",
+          "result": "$\\binom{10}{3}=120$",
+          "why": "choose 3 unordered images"
+        },
+        {
+          "do": "Count sets including the target",
+          "result": "$\\binom{9}{2}=36$",
+          "why": "after including it, choose 2 of the remaining 9"
+        },
+        {
+          "do": "Divide counts",
+          "result": "$36/120=0.30$",
+          "why": "favorable over total"
+        }
+      ],
+      "verify": "The result respects the probability rules and the arithmetic matches the event definition.",
+      "answer": "$36/120=0.30$",
+      "connects": "Combinatorial probability gives a reusable rule for this calculation."
+    },
+    "practice": [
+      {
+        "problem": "How many $4$-digit PINs are possible if digits may repeat?",
+        "steps": [
+          {
+            "do": "Count choices for digit 1",
+            "result": "$10$",
+            "why": "digits $0$ through $9$ are allowed"
+          },
+          {
+            "do": "Count choices for digit 2",
+            "result": "$10$",
+            "why": "repetition is allowed"
+          },
+          {
+            "do": "Count choices for digit 3",
+            "result": "$10$",
+            "why": "same rule again"
+          },
+          {
+            "do": "Count choices for digit 4",
+            "result": "$10$",
+            "why": "same rule again"
+          },
+          {
+            "do": "Multiply choices",
+            "result": "$10^4=10000$",
+            "why": "product rule for ordered choices"
+          }
+        ],
+        "answer": "There are $10000$ possible PINs."
+      },
+      {
+        "problem": "How many ways can $3$ reviewers be chosen from $8$ people?",
+        "steps": [
+          {
+            "do": "Decide whether order matters",
+            "result": "order does not matter",
+            "why": "a group of reviewers has no first reviewer"
+          },
+          {
+            "do": "Write the combination",
+            "result": "$\\binom{8}{3}$",
+            "why": "choose 3 from 8"
+          },
+          {
+            "do": "Expand",
+            "result": "$\\dfrac{8!}{3!5!}$",
+            "why": "combination formula"
+          },
+          {
+            "do": "Cancel",
+            "result": "$\\dfrac{8\\cdot7\\cdot6}{3\\cdot2\\cdot1}$",
+            "why": "common $5!$ cancels"
+          },
+          {
+            "do": "Compute",
+            "result": "$56$",
+            "why": "the quotient is $336/6$"
+          }
+        ],
+        "answer": "$56$ reviewer groups are possible."
+      },
+      {
+        "problem": "A hand of $5$ cards is drawn. Find the probability all are hearts.",
+        "steps": [
+          {
+            "do": "Count all hands",
+            "result": "$\\binom{52}{5}=2598960$",
+            "why": "five-card hands are unordered"
+          },
+          {
+            "do": "Count all-heart hands",
+            "result": "$\\binom{13}{5}=1287$",
+            "why": "choose all cards from hearts"
+          },
+          {
+            "do": "Set up probability",
+            "result": "$1287/2598960$",
+            "why": "favorable over total"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.000495$",
+            "why": "divide the counts"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $0.0495\\%$",
+            "why": "very rare because all suits must match"
+          }
+        ],
+        "answer": "The probability is $1287/2598960\\approx0.000495$."
+      },
+      {
+        "problem": "From $12$ data points, choose a validation set of $4$. What is the probability a fixed point is included?",
+        "steps": [
+          {
+            "do": "Count all validation sets",
+            "result": "$\\binom{12}{4}=495$",
+            "why": "choose 4 of 12"
+          },
+          {
+            "do": "Force the fixed point in",
+            "result": "choose $3$ of remaining $11$",
+            "why": "one slot is already used"
+          },
+          {
+            "do": "Count favorable sets",
+            "result": "$\\binom{11}{3}=165$",
+            "why": "choose the other validation points"
+          },
+          {
+            "do": "Divide",
+            "result": "$165/495=1/3$",
+            "why": "favorable over total"
+          },
+          {
+            "do": "Check by symmetry",
+            "result": "$4/12=1/3$",
+            "why": "four validation slots among twelve points"
+          }
+        ],
+        "answer": "The fixed point is included with probability $1/3$."
+      },
+      {
+        "problem": "A mini-batch of $2$ is sampled without replacement from $6$ examples, $2$ of which are positive. Find probability both are positive.",
+        "steps": [
+          {
+            "do": "Count all batches",
+            "result": "$\\binom{6}{2}=15$",
+            "why": "unordered sample without replacement"
+          },
+          {
+            "do": "Count positive-only batches",
+            "result": "$\\binom{2}{2}=1$",
+            "why": "must take both positives"
+          },
+          {
+            "do": "Compute probability",
+            "result": "$1/15$",
+            "why": "favorable over total"
+          },
+          {
+            "do": "Convert decimal",
+            "result": "$0.0667$",
+            "why": "one divided by fifteen"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $6.67\\%$",
+            "why": "both positives is uncommon"
+          }
+        ],
+        "answer": "The probability is $1/15\\approx0.0667$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Password spaces",
+        "background": "Security estimates count possible strings before reasoning about attack probability.",
+        "numbers": "An $8$-character lowercase password has $26^8=208827064576$ possibilities."
+      },
+      {
+        "title": "Train-validation splits",
+        "background": "ML workflows choose subsets for validation or test sets.",
+        "numbers": "Choosing $20$ validation points from $100$ gives $\\binom{100}{20}$ possible splits."
+      },
+      {
+        "title": "Random forests",
+        "background": "Feature subsampling in trees is combinatorial.",
+        "numbers": "Choosing $3$ features from $10$ at a split gives $\\binom{10}{3}=120$ possible feature subsets."
+      },
+      {
+        "title": "Card-game baselines",
+        "background": "Combinatorics made probability concrete historically through gambling problems.",
+        "numbers": "A five-card flush in a fixed suit has $\\binom{13}{5}=1287$ hands."
+      },
+      {
+        "title": "Hyperparameter grids",
+        "background": "Grid search counts configurations by multiplying choices.",
+        "numbers": "With $4$ learning rates, $3$ depths, and $5$ seeds, there are $4\\cdot3\\cdot5=60$ runs."
+      },
+      {
+        "title": "Negative sampling",
+        "background": "Sampling examples without replacement uses combinations.",
+        "numbers": "Choosing $5$ negatives from $1000$ possible negatives gives $\\binom{1000}{5}$ possible sets."
+      }
+    ],
+    "applicationsClose": "Combinatorial probability keeps the sample-space idea alive when listing outcomes would be impossible.",
+    "takeaways": [
+      "Combinatorial probability is a core probability tool for ML mathematics.",
+      "Name the events and assumptions before calculating.",
+      "Check that probability answers stay between $0$ and $1$.",
+      "The same rule works for toy examples and data systems."
+    ],
     "prereqs": [
       "math-17-03"
     ]
@@ -90,19 +1039,250 @@
   B({
     "id": "math-17-05",
     "title": "Conditional probability",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: conditional probability.",
+    "tagline": "Conditional probability updates the sample space to the world where new information is true.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Combinatorial probability</i>"
+        "Set operations on events",
+        "Axioms of probability"
       ],
       "leadsTo": [
-        "the next lesson, <i>Independence</i>"
+        "Independence",
+        "Law of total probability",
+        "Bayes theorem"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "fractions",
+        "sets",
+        "ratios"
       ]
     },
+    "motivation": "<p>New information changes the question. If you know a card is a queen, the chance it is red is not counted over all $52$ cards anymore; it is counted over the four queens.</p><p>That is the entire warmth of conditional probability: keep only the cases consistent with what you learned.</p>",
+    "definition": "<p>For events $A$ and $B$ with $P(B)>0$, the <b>conditional probability</b> of $A$ given $B$ is $P(A\\mid B)=\\dfrac{P(A\\cap B)}{P(B)}$.</p><p>The formula comes from restricting attention to $B$: within the $B$ world, the favorable part is $A\\cap B$, and the total part is $B$.</p><p><b>Assumptions that matter:</b> $P(B)$ must be positive; the vertical bar means given, not division by an event; and conditioning can change probabilities dramatically.</p>",
+    "worked": {
+      "problem": "In a deck, given the card is a queen, find the probability it is red.",
+      "skills": [
+        "conditioning",
+        "intersection",
+        "renormalizing"
+      ],
+      "strategy": "Translate the words into events or formulas, then compute one piece at a time.",
+      "steps": [
+        {
+          "do": "Count the given event",
+          "result": "$|Q|=4$",
+          "why": "there are four queens"
+        },
+        {
+          "do": "Count red queens",
+          "result": "$|R\\cap Q|=2$",
+          "why": "hearts and diamonds are red"
+        },
+        {
+          "do": "Compute conditional probability",
+          "result": "$P(R\\mid Q)=2/4=1/2$",
+          "why": "restrict the sample space to queens"
+        }
+      ],
+      "verify": "The result respects the probability rules and the arithmetic matches the event definition.",
+      "answer": "$P(R\\mid Q)=2/4=1/2$",
+      "connects": "Conditional probability gives a reusable rule for this calculation."
+    },
+    "practice": [
+      {
+        "problem": "In $100$ users, $30$ use mobile and $12$ mobile users click. Find $P(click\\mid mobile)$.",
+        "steps": [
+          {
+            "do": "Name events",
+            "result": "$C$ click, $M$ mobile",
+            "why": "conditioning event is mobile"
+          },
+          {
+            "do": "Write counts",
+            "result": "$|C\\cap M|=12$, $|M|=30$",
+            "why": "clicking mobile users over all mobile users"
+          },
+          {
+            "do": "Use formula",
+            "result": "$P(C\\mid M)=|C\\cap M|/|M|$",
+            "why": "restrict to mobile"
+          },
+          {
+            "do": "Substitute",
+            "result": "$12/30$",
+            "why": "use counts"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.4$",
+            "why": "divide by $30$"
+          }
+        ],
+        "answer": "$P(click\\mid mobile)=0.4$."
+      },
+      {
+        "problem": "A card is known to be red. Find probability it is a king.",
+        "steps": [
+          {
+            "do": "Count red cards",
+            "result": "$26$",
+            "why": "hearts and diamonds"
+          },
+          {
+            "do": "Count red kings",
+            "result": "$2$",
+            "why": "king of hearts and diamonds"
+          },
+          {
+            "do": "Use conditional probability",
+            "result": "$2/26$",
+            "why": "given red means red is the denominator"
+          },
+          {
+            "do": "Reduce",
+            "result": "$1/13$",
+            "why": "divide by $2$"
+          },
+          {
+            "do": "Interpret",
+            "result": "same as ordinary king probability",
+            "why": "color does not change rank in a fair deck"
+          }
+        ],
+        "answer": "$1/13$."
+      },
+      {
+        "problem": "If $P(A\\cap B)=0.18$ and $P(B)=0.6$, find $P(A\\mid B)$.",
+        "steps": [
+          {
+            "do": "Write formula",
+            "result": "$P(A\\mid B)=P(A\\cap B)/P(B)$",
+            "why": "definition of conditioning"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.18/0.6$",
+            "why": "use given probabilities"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.3$",
+            "why": "eighteen hundredths over six tenths"
+          },
+          {
+            "do": "Check range",
+            "result": "$0.3\\le1$",
+            "why": "valid conditional probability"
+          },
+          {
+            "do": "State meaning",
+            "result": "inside $B$, $30\\%$ also has $A$",
+            "why": "conditioned sample space"
+          }
+        ],
+        "answer": "$P(A\\mid B)=0.3$."
+      },
+      {
+        "problem": "A confusion matrix has $50$ true positives and $20$ false negatives. Find recall.",
+        "steps": [
+          {
+            "do": "Define recall",
+            "result": "$P(\\hat T\\mid T)$",
+            "why": "predicted positive given truly positive"
+          },
+          {
+            "do": "Count truly positive",
+            "result": "$50+20=70$",
+            "why": "true positives plus false negatives"
+          },
+          {
+            "do": "Set numerator",
+            "result": "$50$",
+            "why": "true positives"
+          },
+          {
+            "do": "Compute",
+            "result": "$50/70=5/7$",
+            "why": "divide by truly positive total"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.714$",
+            "why": "recall is about $71.4\\%$"
+          }
+        ],
+        "answer": "Recall is $5/7\\approx0.714$."
+      },
+      {
+        "problem": "A model score is high for $80$ examples; $60$ of those are actually positive. Find precision.",
+        "steps": [
+          {
+            "do": "Define precision",
+            "result": "$P(T\\mid \\hat T)$",
+            "why": "true positive given predicted positive"
+          },
+          {
+            "do": "Set denominator",
+            "result": "$80$",
+            "why": "all high-score predicted positives"
+          },
+          {
+            "do": "Set numerator",
+            "result": "$60$",
+            "why": "actual positives among them"
+          },
+          {
+            "do": "Divide",
+            "result": "$60/80=0.75$",
+            "why": "conditional fraction"
+          },
+          {
+            "do": "Interpret",
+            "result": "three of four high-score cases are positive",
+            "why": "precision describes reliability of positive predictions"
+          }
+        ],
+        "answer": "Precision is $0.75$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Precision",
+        "background": "Precision is conditional probability in classifier evaluation.",
+        "numbers": "$60$ true positives among $80$ predicted positives gives $P(T\\mid \\hat T)=60/80=0.75$."
+      },
+      {
+        "title": "Recall",
+        "background": "Recall conditions on the true positive class.",
+        "numbers": "$50$ true positives and $20$ false negatives give recall $50/(50+20)=0.714$."
+      },
+      {
+        "title": "Click-through by device",
+        "background": "Product metrics are often conditional on segment.",
+        "numbers": "$12$ clicks among $300$ mobile impressions gives $P(click\\mid mobile)=0.04$."
+      },
+      {
+        "title": "Medical tests",
+        "background": "Diagnostic interpretation depends on conditioning on the test result or disease status.",
+        "numbers": "$95$ positives among $100$ sick patients gives sensitivity $0.95$."
+      },
+      {
+        "title": "Recommendation relevance",
+        "background": "Offline recommendation metrics condition on shown or retrieved items.",
+        "numbers": "If $18$ of $40$ retrieved items are relevant, relevance given retrieval is $18/40=0.45$."
+      },
+      {
+        "title": "Data quality",
+        "background": "Error rates are often reported within a source.",
+        "numbers": "$7$ bad rows among $500$ rows from source A gives $P(error\\mid A)=0.014$."
+      }
+    ],
+    "applicationsClose": "Conditioning is the habit of changing the denominator to match the information you have.",
+    "takeaways": [
+      "Conditional probability is a core probability tool for ML mathematics.",
+      "Name the events and assumptions before calculating.",
+      "Check that probability answers stay between $0$ and $1$.",
+      "The same rule works for toy examples and data systems."
+    ],
     "prereqs": [
       "math-17-04"
     ]
@@ -111,19 +1291,255 @@
   B({
     "id": "math-17-06",
     "title": "Independence",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: independence.",
+    "tagline": "Independent events do not change each other when you condition on one of them.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Conditional probability</i>"
+        "Conditional probability",
+        "Axioms of probability"
       ],
       "leadsTo": [
-        "the next lesson, <i>The law of total probability</i>"
+        "Law of total probability",
+        "Bayes theorem",
+        "random variables"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "products",
+        "conditional probability",
+        "factorization"
       ]
     },
+    "motivation": "<p>Some information matters; some does not. Knowing a fair coin landed heads tells you nothing about an independently rolled die. Knowing a medical test is positive, however, may matter a lot.</p><p>Independence is the precise statement that learning one event leaves the probability of the other unchanged.</p>",
+    "definition": "<p>Events $A$ and $B$ are <b>independent</b> when $P(A\\cap B)=P(A)P(B)$. If $P(B)>0$, this is equivalent to $P(A\\mid B)=P(A)$.</p><p>The equivalence follows by dividing $P(A\\cap B)=P(A)P(B)$ by $P(B)$, giving $P(A\\mid B)=P(A)$.</p><p><b>Assumptions that matter:</b> independence is not the same as disjointness; it must be justified by design or checked from probabilities; and pairwise independence need not imply mutual independence for many events.</p>",
+    "worked": {
+      "problem": "A fair coin and fair die are used. Let $A$ be heads and $B$ be rolling $6$. Check independence.",
+      "skills": [
+        "product rule",
+        "conditioning",
+        "finite spaces"
+      ],
+      "strategy": "Translate the words into events or formulas, then compute one piece at a time.",
+      "steps": [
+        {
+          "do": "Compute $P(A)$",
+          "result": "$1/2$",
+          "why": "one head outcome out of two"
+        },
+        {
+          "do": "Compute $P(B)$",
+          "result": "$1/6$",
+          "why": "one die face out of six"
+        },
+        {
+          "do": "Compute the joint probability",
+          "result": "$P(A\\cap B)=1/12$",
+          "why": "one combined outcome among twelve"
+        },
+        {
+          "do": "Multiply marginals",
+          "result": "$P(A)P(B)=(1/2)(1/6)=1/12$",
+          "why": "compare with the joint"
+        }
+      ],
+      "verify": "The result respects the probability rules and the arithmetic matches the event definition.",
+      "answer": "$P(A)P(B)=(1/2)(1/6)=1/12$",
+      "connects": "Independence gives a reusable rule for this calculation."
+    },
+    "practice": [
+      {
+        "problem": "A fair coin and die are tossed. Check whether heads and even are independent.",
+        "steps": [
+          {
+            "do": "Compute $P(H)$",
+            "result": "$1/2$",
+            "why": "one side of coin"
+          },
+          {
+            "do": "Compute $P(E)$",
+            "result": "$3/6=1/2$",
+            "why": "three even die faces"
+          },
+          {
+            "do": "Compute joint probability",
+            "result": "$P(H\\cap E)=3/12=1/4$",
+            "why": "heads with an even die face"
+          },
+          {
+            "do": "Multiply marginals",
+            "result": "$(1/2)(1/2)=1/4$",
+            "why": "product matches joint"
+          },
+          {
+            "do": "Conclude",
+            "result": "independent",
+            "why": "joint equals product"
+          }
+        ],
+        "answer": "They are independent."
+      },
+      {
+        "problem": "If $P(A)=0.4$, $P(B)=0.5$, and $P(A\\cap B)=0.2$, are they independent?",
+        "steps": [
+          {
+            "do": "Multiply marginals",
+            "result": "$0.4\\cdot0.5=0.2$",
+            "why": "independence product"
+          },
+          {
+            "do": "Compare to joint",
+            "result": "$P(A\\cap B)=0.2$",
+            "why": "given joint probability"
+          },
+          {
+            "do": "Check equality",
+            "result": "$0.2=0.2$",
+            "why": "the test passes"
+          },
+          {
+            "do": "Compute conditional",
+            "result": "$0.2/0.5=0.4$",
+            "why": "conditioning on $B$ leaves $A$ unchanged"
+          },
+          {
+            "do": "Conclude",
+            "result": "independent",
+            "why": "both criteria agree"
+          }
+        ],
+        "answer": "Yes, the events are independent."
+      },
+      {
+        "problem": "If $P(A)=0.4$, $P(B)=0.5$, and $A,B$ are disjoint, can they be independent?",
+        "steps": [
+          {
+            "do": "Use disjointness",
+            "result": "$P(A\\cap B)=0$",
+            "why": "disjoint events never happen together"
+          },
+          {
+            "do": "Multiply marginals",
+            "result": "$0.4\\cdot0.5=0.2$",
+            "why": "independence would require this joint"
+          },
+          {
+            "do": "Compare",
+            "result": "$0\\ne0.2$",
+            "why": "the product test fails"
+          },
+          {
+            "do": "Check positivity",
+            "result": "both events have positive probability",
+            "why": "nonzero disjoint events exclude each other"
+          },
+          {
+            "do": "Conclude",
+            "result": "not independent",
+            "why": "learning one happened rules out the other"
+          }
+        ],
+        "answer": "No, positive-probability disjoint events are not independent."
+      },
+      {
+        "problem": "Two independent failures have probabilities $0.01$ and $0.03$. Find probability both fail.",
+        "steps": [
+          {
+            "do": "Name events",
+            "result": "$A$ and $B$ failures",
+            "why": "two components"
+          },
+          {
+            "do": "Use independence",
+            "result": "$P(A\\cap B)=P(A)P(B)$",
+            "why": "joint factors"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.01\\cdot0.03$",
+            "why": "use failure probabilities"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.0003$",
+            "why": "three ten-thousandths"
+          },
+          {
+            "do": "Interpret",
+            "result": "$0.03\\%$",
+            "why": "both failing is rarer than either alone"
+          }
+        ],
+        "answer": "The probability both fail is $0.0003$."
+      },
+      {
+        "problem": "Independent dropout masks keep a unit with probability $0.8$ in two layers. Find probability it is kept both times.",
+        "steps": [
+          {
+            "do": "Set probabilities",
+            "result": "$P(K_1)=0.8$, $P(K_2)=0.8$",
+            "why": "same keep rate"
+          },
+          {
+            "do": "Use independence",
+            "result": "$P(K_1\\cap K_2)=0.8\\cdot0.8$",
+            "why": "masks are independent"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.64$",
+            "why": "eighty percent twice"
+          },
+          {
+            "do": "Find not both if useful",
+            "result": "$1-0.64=0.36$",
+            "why": "complement"
+          },
+          {
+            "do": "Interpret",
+            "result": "kept both times in $64\\%$ of trials",
+            "why": "long-run frequency"
+          }
+        ],
+        "answer": "Probability kept both times is $0.64$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Naive Bayes",
+        "background": "Naive Bayes assumes features are conditionally independent given a class.",
+        "numbers": "If word probabilities are $0.2$ and $0.1$ in a class, the joint factor is $0.2\\cdot0.1=0.02$."
+      },
+      {
+        "title": "Dropout",
+        "background": "Neural nets often sample independent dropout masks.",
+        "numbers": "Keep probability $0.9$ for two units gives both kept probability $0.81$."
+      },
+      {
+        "title": "A/B assignment",
+        "background": "Random assignment makes treatment independent of user traits in expectation.",
+        "numbers": "If treatment probability is $0.5$ and mobile share is $0.6$, expected treated mobile share is $0.3$."
+      },
+      {
+        "title": "System reliability",
+        "background": "Independent component failures multiply for joint failure.",
+        "numbers": "Failures $0.01$ and $0.02$ give both-fail probability $0.0002$."
+      },
+      {
+        "title": "Shuffling data",
+        "background": "Random shuffling aims to make batch membership independent of ordering artifacts.",
+        "numbers": "If $10\\%$ of data is positive, an independent draw has positive probability $0.1$ for each slot."
+      },
+      {
+        "title": "Simulation",
+        "background": "Monte Carlo methods often rely on independent repeated samples.",
+        "numbers": "For event probability $0.3$, two independent hits have probability $0.09$."
+      }
+    ],
+    "applicationsClose": "Independence is powerful because it turns joint probabilities into products, but only when the assumption is justified.",
+    "takeaways": [
+      "Independence is a core probability tool for ML mathematics.",
+      "Name the events and assumptions before calculating.",
+      "Check that probability answers stay between $0$ and $1$.",
+      "The same rule works for toy examples and data systems."
+    ],
     "prereqs": [
       "math-17-05"
     ]
@@ -132,19 +1548,250 @@
   B({
     "id": "math-17-07",
     "title": "The law of total probability",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the law of total probability.",
+    "tagline": "Total probability rebuilds an event from clean cases that cover the world.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Independence</i>"
+        "Conditional probability",
+        "Independence"
       ],
       "leadsTo": [
-        "the next lesson, <i>Bayes' theorem</i>"
+        "Bayes theorem",
+        "mixture distributions",
+        "expectation"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "partitions",
+        "weighted averages",
+        "sums"
       ]
     },
+    "motivation": "<p>Large probability questions are often easier after splitting the world into cases. Maybe traffic comes from mobile or desktop; a patient is sick or healthy; a data point comes from class 0 or class 1.</p><p>The law of total probability says: solve the event inside each case, then add the weighted pieces.</p>",
+    "definition": "<p>If $B_1,\\ldots,B_k$ are disjoint events whose union is $S$ and each has positive probability, then $P(A)=\\sum_{i=1}^k P(A\\mid B_i)P(B_i)$.</p><p>This comes from writing $A$ as the disjoint union $(A\\cap B_1)\\cup\\cdots\\cup(A\\cap B_k)$ and using $P(A\\cap B_i)=P(A\\mid B_i)P(B_i)$.</p><p><b>Assumptions that matter:</b> the cases $B_i$ must be mutually disjoint, cover the whole sample space, and have probabilities that sum to $1$.</p>",
+    "worked": {
+      "problem": "A site has $70\\%$ mobile users and $30\\%$ desktop users. Click rates are $4\\%$ mobile and $6\\%$ desktop. Find overall click probability.",
+      "skills": [
+        "partitioning",
+        "weighted averages",
+        "conditional probability"
+      ],
+      "strategy": "Translate the words into events or formulas, then compute one piece at a time.",
+      "steps": [
+        {
+          "do": "Write the mobile contribution",
+          "result": "$0.04\\cdot0.70=0.028$",
+          "why": "mobile clicks weighted by mobile share"
+        },
+        {
+          "do": "Write the desktop contribution",
+          "result": "$0.06\\cdot0.30=0.018$",
+          "why": "desktop clicks weighted by desktop share"
+        },
+        {
+          "do": "Add contributions",
+          "result": "$0.028+0.018=0.046$",
+          "why": "the cases cover all users"
+        }
+      ],
+      "verify": "The result respects the probability rules and the arithmetic matches the event definition.",
+      "answer": "$0.028+0.018=0.046$",
+      "connects": "The law of total probability gives a reusable rule for this calculation."
+    },
+    "practice": [
+      {
+        "problem": "Two user types: $60\\%$ new with $2\\%$ click rate, $40\\%$ returning with $5\\%$ click rate. Find total click rate.",
+        "steps": [
+          {
+            "do": "Write new-user contribution",
+            "result": "$0.60\\cdot0.02=0.012$",
+            "why": "rate weighted by share"
+          },
+          {
+            "do": "Write returning contribution",
+            "result": "$0.40\\cdot0.05=0.020$",
+            "why": "second case weighted by share"
+          },
+          {
+            "do": "Add contributions",
+            "result": "$0.012+0.020=0.032$",
+            "why": "cases partition users"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$3.2\\%$",
+            "why": "decimal to percent"
+          },
+          {
+            "do": "Check range",
+            "result": "between $2\\%$ and $5\\%$",
+            "why": "weighted averages lie between case rates"
+          }
+        ],
+        "answer": "The total click rate is $0.032$ or $3.2\\%$."
+      },
+      {
+        "problem": "A model serves route A $80\\%$ of the time with failure $1\\%$, route B $20\\%$ with failure $4\\%$. Find failure rate.",
+        "steps": [
+          {
+            "do": "Contribution A",
+            "result": "$0.8\\cdot0.01=0.008$",
+            "why": "route A weighted failure"
+          },
+          {
+            "do": "Contribution B",
+            "result": "$0.2\\cdot0.04=0.008$",
+            "why": "route B weighted failure"
+          },
+          {
+            "do": "Add",
+            "result": "$0.016$",
+            "why": "total probability"
+          },
+          {
+            "do": "Convert",
+            "result": "$1.6\\%$",
+            "why": "decimal to percent"
+          },
+          {
+            "do": "Interpret",
+            "result": "overall service failure",
+            "why": "average over routes"
+          }
+        ],
+        "answer": "$1.6\\%$."
+      },
+      {
+        "problem": "Classes have priors $0.7,0.3$ and error rates $0.1,0.2$. Find total error.",
+        "steps": [
+          {
+            "do": "Class 1 contribution",
+            "result": "$0.7\\cdot0.1=0.07$",
+            "why": "weighted error"
+          },
+          {
+            "do": "Class 2 contribution",
+            "result": "$0.3\\cdot0.2=0.06$",
+            "why": "weighted error"
+          },
+          {
+            "do": "Add",
+            "result": "$0.13$",
+            "why": "total error"
+          },
+          {
+            "do": "Check range",
+            "result": "between $0.1$ and $0.2$",
+            "why": "weighted average"
+          },
+          {
+            "do": "State percent",
+            "result": "$13\\%$",
+            "why": "interpretation"
+          }
+        ],
+        "answer": "Total error is $0.13$."
+      },
+      {
+        "problem": "A mixture uses component 1 with weight $0.25$ and event chance $0.8$, component 2 with weight $0.75$ and chance $0.4$.",
+        "steps": [
+          {
+            "do": "Component 1 mass",
+            "result": "$0.25\\cdot0.8=0.20$",
+            "why": "weight times conditional probability"
+          },
+          {
+            "do": "Component 2 mass",
+            "result": "$0.75\\cdot0.4=0.30$",
+            "why": "second component"
+          },
+          {
+            "do": "Add",
+            "result": "$0.50$",
+            "why": "total probability"
+          },
+          {
+            "do": "Check",
+            "result": "between $0.4$ and $0.8$",
+            "why": "weighted average"
+          },
+          {
+            "do": "Conclude",
+            "result": "$P(A)=0.50$",
+            "why": "overall event chance"
+          }
+        ],
+        "answer": "$P(A)=0.50$."
+      },
+      {
+        "problem": "A spam filter sees $30\\%$ promotional mail with flag rate $0.5$ and $70\\%$ normal mail with flag rate $0.1$. Find flag rate.",
+        "steps": [
+          {
+            "do": "Promo contribution",
+            "result": "$0.3\\cdot0.5=0.15$",
+            "why": "promotional case"
+          },
+          {
+            "do": "Normal contribution",
+            "result": "$0.7\\cdot0.1=0.07$",
+            "why": "normal case"
+          },
+          {
+            "do": "Add",
+            "result": "$0.22$",
+            "why": "all mail types"
+          },
+          {
+            "do": "Check",
+            "result": "less than $0.5$ and greater than $0.1$",
+            "why": "weighted average"
+          },
+          {
+            "do": "Interpret",
+            "result": "$22\\%$ flagged",
+            "why": "overall rate"
+          }
+        ],
+        "answer": "The flag rate is $0.22$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Traffic mix",
+        "background": "Overall rates combine segment rates by traffic share.",
+        "numbers": "Mobile $70\\%$ at $4\\%$ click and desktop $30\\%$ at $6\\%$ click gives $0.046$ overall."
+      },
+      {
+        "title": "Class priors",
+        "background": "Expected error can be averaged over classes.",
+        "numbers": "Class shares $0.8,0.2$ with errors $0.05,0.15$ give $0.8\\cdot0.05+0.2\\cdot0.15=0.07$."
+      },
+      {
+        "title": "Mixture models",
+        "background": "Mixtures generate data by first choosing a component.",
+        "numbers": "Weights $0.6,0.4$ with event probabilities $0.2,0.7$ give total $0.40$."
+      },
+      {
+        "title": "Medical screening",
+        "background": "Population rates combine subgroup risks.",
+        "numbers": "Group shares $0.9,0.1$ with risks $0.01,0.08$ give $0.017$ risk."
+      },
+      {
+        "title": "Recommendation channels",
+        "background": "Overall engagement averages over surfaces.",
+        "numbers": "Feed share $0.75$ at $0.03$ save and search share $0.25$ at $0.05$ save gives $0.035$."
+      },
+      {
+        "title": "Data pipelines",
+        "background": "Overall failure rates combine stage-specific routing.",
+        "numbers": "Route A $80\\%$ at $1\\%$ fail and route B $20\\%$ at $4\\%$ fail gives $0.016$."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
+    "takeaways": [
+      "The law of total probability is a core probability tool for ML mathematics.",
+      "Name the events and assumptions before calculating.",
+      "Check that probability answers stay between $0$ and $1$.",
+      "The same rule works for toy examples and data systems."
+    ],
     "prereqs": [
       "math-17-06"
     ]
@@ -152,20 +1799,256 @@
 
   B({
     "id": "math-17-08",
-    "title": "Bayes' theorem",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: bayes' theorem.",
+    "title": "Bayes theorem",
+    "tagline": "Bayes theorem turns evidence around: from likelihoods to updated beliefs.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The law of total probability</i>"
+        "The law of total probability",
+        "Conditional probability"
       ],
       "leadsTo": [
-        "the next lesson, <i>Discrete random variables</i>"
+        "Bayesian inference",
+        "Naive Bayes",
+        "posterior distributions"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "fractions",
+        "weighted averages",
+        "likelihoods"
       ]
     },
+    "motivation": "<p>Often we know how likely evidence is under each cause, but we want the reverse. A test is positive; how likely is the condition? A word appears; how likely is the topic?</p><p>Bayes theorem is the disciplined reversal that combines prior probability with how strongly the evidence points.</p>",
+    "definition": "<p>For $P(B)>0$, <b>Bayes theorem</b> says $P(A\\mid B)=\\dfrac{P(B\\mid A)P(A)}{P(B)}$. With cases $A$ and $A^c$, the denominator is $P(B)=P(B\\mid A)P(A)+P(B\\mid A^c)P(A^c)$.</p><p>The formula follows because $P(A\\cap B)$ can be written as both $P(A\\mid B)P(B)$ and $P(B\\mid A)P(A)$.</p><p><b>Assumptions that matter:</b> priors and likelihoods must refer to the same population; $P(B)$ must be positive; and rare base rates can dominate even accurate evidence.</p>",
+    "worked": {
+      "problem": "A disease affects $1\\%$ of people. A test is $95\\%$ sensitive and has $5\\%$ false positive rate. Given a positive test, find disease probability.",
+      "skills": [
+        "Bayes theorem",
+        "base rates",
+        "normalization"
+      ],
+      "strategy": "Translate the words into events or formulas, then compute one piece at a time.",
+      "steps": [
+        {
+          "do": "Compute true-positive mass",
+          "result": "$0.95\\cdot0.01=0.0095$",
+          "why": "positive and diseased"
+        },
+        {
+          "do": "Compute false-positive mass",
+          "result": "$0.05\\cdot0.99=0.0495$",
+          "why": "positive and healthy"
+        },
+        {
+          "do": "Compute positive-test probability",
+          "result": "$0.0095+0.0495=0.059$",
+          "why": "all ways to test positive"
+        },
+        {
+          "do": "Apply Bayes",
+          "result": "$0.0095/0.059\\approx0.161$",
+          "why": "normalize the diseased positive mass"
+        }
+      ],
+      "verify": "The result respects the probability rules and the arithmetic matches the event definition.",
+      "answer": "$0.0095/0.059\\approx0.161$",
+      "connects": "Bayes theorem gives a reusable rule for this calculation."
+    },
+    "practice": [
+      {
+        "problem": "Prior spam $0.2$, $P(word\\mid spam)=0.6$, $P(word\\mid ham)=0.1$. Find $P(spam\\mid word)$.",
+        "steps": [
+          {
+            "do": "Spam-word mass",
+            "result": "$0.6\\cdot0.2=0.12$",
+            "why": "likelihood times prior"
+          },
+          {
+            "do": "Ham-word mass",
+            "result": "$0.1\\cdot0.8=0.08$",
+            "why": "evidence under ham"
+          },
+          {
+            "do": "Total word probability",
+            "result": "$0.12+0.08=0.20$",
+            "why": "all ways word appears"
+          },
+          {
+            "do": "Normalize",
+            "result": "$0.12/0.20=0.60$",
+            "why": "Bayes theorem"
+          },
+          {
+            "do": "Interpret",
+            "result": "posterior spam $60\\%$",
+            "why": "updated belief"
+          }
+        ],
+        "answer": "$0.60$."
+      },
+      {
+        "problem": "A rare defect has prior $0.02$, test sensitivity $0.9$, false positive $0.1$. Find defect probability given positive.",
+        "steps": [
+          {
+            "do": "True positive mass",
+            "result": "$0.9\\cdot0.02=0.018$",
+            "why": "defect and positive"
+          },
+          {
+            "do": "False positive mass",
+            "result": "$0.1\\cdot0.98=0.098$",
+            "why": "no defect but positive"
+          },
+          {
+            "do": "Total positive",
+            "result": "$0.116$",
+            "why": "sum evidence masses"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.018/0.116\\approx0.155$",
+            "why": "posterior"
+          },
+          {
+            "do": "Notice base rate",
+            "result": "still only about $15.5\\%$",
+            "why": "defect is rare"
+          }
+        ],
+        "answer": "Approximately $0.155$."
+      },
+      {
+        "problem": "Two variants are equally likely. Error rates are $0.04$ for A and $0.01$ for B. Given an error, find probability variant A served it.",
+        "steps": [
+          {
+            "do": "A-error mass",
+            "result": "$0.5\\cdot0.04=0.02$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "B-error mass",
+            "result": "$0.5\\cdot0.01=0.005$",
+            "why": "second cause"
+          },
+          {
+            "do": "Total error",
+            "result": "$0.025$",
+            "why": "sum masses"
+          },
+          {
+            "do": "Normalize",
+            "result": "$0.02/0.025=0.8$",
+            "why": "posterior for A"
+          },
+          {
+            "do": "Interpret",
+            "result": "A explains $80\\%$ of errors",
+            "why": "higher error rate dominates"
+          }
+        ],
+        "answer": "$0.8$."
+      },
+      {
+        "problem": "Prior disease $0.1$, positive likelihood $0.8$ if sick and $0.2$ if healthy. Find posterior.",
+        "steps": [
+          {
+            "do": "Sick positive",
+            "result": "$0.1\\cdot0.8=0.08$",
+            "why": "joint mass"
+          },
+          {
+            "do": "Healthy positive",
+            "result": "$0.9\\cdot0.2=0.18$",
+            "why": "false positive mass"
+          },
+          {
+            "do": "Total positive",
+            "result": "$0.26$",
+            "why": "evidence probability"
+          },
+          {
+            "do": "Posterior",
+            "result": "$0.08/0.26\\approx0.308$",
+            "why": "normalize"
+          },
+          {
+            "do": "Check",
+            "result": "below $0.5$",
+            "why": "false positives are common"
+          }
+        ],
+        "answer": "Approximately $0.308$."
+      },
+      {
+        "problem": "Prior topic sports $0.4$; word likelihoods $0.5$ sports and $0.2$ non-sports. Find posterior sports.",
+        "steps": [
+          {
+            "do": "Sports mass",
+            "result": "$0.4\\cdot0.5=0.20$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "Other mass",
+            "result": "$0.6\\cdot0.2=0.12$",
+            "why": "non-sports evidence"
+          },
+          {
+            "do": "Total word",
+            "result": "$0.32$",
+            "why": "all evidence"
+          },
+          {
+            "do": "Posterior",
+            "result": "$0.20/0.32=0.625$",
+            "why": "Bayes normalization"
+          },
+          {
+            "do": "Interpret",
+            "result": "word raises sports belief",
+            "why": "posterior exceeds prior"
+          }
+        ],
+        "answer": "$0.625$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Spam filtering",
+        "background": "Bayes connects word likelihoods to posterior spam probability.",
+        "numbers": "Prior spam $0.2$, word likelihoods $0.6$ spam and $0.1$ ham give posterior $0.12/(0.12+0.08)=0.6$."
+      },
+      {
+        "title": "Medical diagnosis",
+        "background": "Base rates matter when interpreting positive tests.",
+        "numbers": "Prior $0.01$, sensitivity $0.95$, false positive $0.05$ gives posterior $0.0095/0.059=0.161$."
+      },
+      {
+        "title": "Fraud detection",
+        "background": "Rare fraud can still have modest posterior after an alert.",
+        "numbers": "Prior $0.002$, alert rates $0.8$ fraud and $0.01$ nonfraud give $0.0016/(0.0016+0.00998)=0.138$."
+      },
+      {
+        "title": "A/B debugging",
+        "background": "Bayes updates which variant likely caused an error.",
+        "numbers": "Variant share $0.5$ each, error rates $0.04$ and $0.01$ give posterior variant A given error $0.02/(0.025)=0.8$."
+      },
+      {
+        "title": "Sensor fusion",
+        "background": "Robotics updates belief after noisy observations.",
+        "numbers": "Prior obstacle $0.3$, hit rates $0.9$ obstacle and $0.2$ no obstacle give $0.27/(0.27+0.14)=0.659$."
+      },
+      {
+        "title": "Topic classification",
+        "background": "Text models infer topics from word evidence.",
+        "numbers": "Prior sports $0.4$, word likelihoods $0.5$ sports and $0.1$ other give $0.20/(0.20+0.06)=0.769$."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
+    "takeaways": [
+      "Bayes theorem is a core probability tool for ML mathematics.",
+      "Name the events and assumptions before calculating.",
+      "Check that probability answers stay between $0$ and $1$.",
+      "The same rule works for toy examples and data systems."
+    ],
     "prereqs": [
       "math-17-07"
     ]
@@ -174,19 +2057,260 @@
   B({
     "id": "math-17-09",
     "title": "Discrete random variables",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: discrete random variables.",
+    "tagline": "A discrete random variable turns outcomes into numbers you can tabulate.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Bayes' theorem</i>"
+        "Sample spaces and events",
+        "Axioms of probability"
       ],
       "leadsTo": [
-        "the next lesson, <i>Continuous random variables</i>"
+        "Expectation",
+        "variance",
+        "discrete distributions"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "functions",
+        "tables",
+        "sums"
       ]
     },
+    "motivation": "<p>Events answer yes or no; random variables assign numbers. A die roll can become the number shown, two coin flips can become the number of heads, and an ad impression can become revenue.</p><p>For discrete variables, the whole distribution can be listed as probabilities attached to possible values.</p>",
+    "definition": "<p>A <b>discrete random variable</b> $X$ is a function from the sample space to a countable set of numbers. Its probability mass function is $p_X(x)=P(X=x)$, and the masses satisfy $p_X(x)\\ge0$ and $\\sum_x p_X(x)=1$.</p><p>The distribution groups outcomes that produce the same number, then adds their probabilities.</p><p><b>Assumptions that matter:</b> the possible values are finite or countable; probabilities over all possible values sum to $1$; and $X=x$ is an event.</p>",
+    "worked": {
+      "problem": "Flip two fair coins and let $X$ be the number of heads. Find the distribution of $X$.",
+      "skills": [
+        "random variables",
+        "probability mass functions",
+        "grouping outcomes"
+      ],
+      "strategy": "Translate the words into events or formulas, then compute one piece at a time.",
+      "steps": [
+        {
+          "do": "List outcomes",
+          "result": "$HH,HT,TH,TT$",
+          "why": "four equally likely outcomes"
+        },
+        {
+          "do": "Map to $X$ values",
+          "result": "$2,1,1,0$",
+          "why": "count heads in each outcome"
+        },
+        {
+          "do": "Compute $P(X=0)$",
+          "result": "$1/4$",
+          "why": "only $TT$"
+        },
+        {
+          "do": "Compute $P(X=1)$",
+          "result": "$2/4=1/2$",
+          "why": "$HT$ and $TH$"
+        },
+        {
+          "do": "Compute $P(X=2)$",
+          "result": "$1/4$",
+          "why": "only $HH$"
+        }
+      ],
+      "verify": "The result respects the probability rules and the arithmetic matches the event definition.",
+      "answer": "$1/4$",
+      "connects": "Discrete random variables gives a reusable rule for this calculation."
+    },
+    "practice": [
+      {
+        "problem": "A variable has $P(X=0)=0.2$, $P(X=1)=0.5$, $P(X=2)=0.3$. Check it is a PMF.",
+        "steps": [
+          {
+            "do": "Check nonnegative",
+            "result": "all masses are $0.2,0.5,0.3$",
+            "why": "none are below zero"
+          },
+          {
+            "do": "Add masses",
+            "result": "$0.2+0.5+0.3=1.0$",
+            "why": "total probability"
+          },
+          {
+            "do": "Apply PMF rule",
+            "result": "valid",
+            "why": "nonnegative and sums to one"
+          },
+          {
+            "do": "Name support",
+            "result": "$\\{0,1,2\\}$",
+            "why": "values with positive mass"
+          },
+          {
+            "do": "Interpret",
+            "result": "probability is fully assigned",
+            "why": "no missing mass"
+          }
+        ],
+        "answer": "It is a valid PMF."
+      },
+      {
+        "problem": "For two fair coins, let $X$ be heads. Find $P(X=1)$.",
+        "steps": [
+          {
+            "do": "List outcomes",
+            "result": "$HH,HT,TH,TT$",
+            "why": "four equally likely outcomes"
+          },
+          {
+            "do": "Map to counts",
+            "result": "$2,1,1,0$",
+            "why": "number of heads"
+          },
+          {
+            "do": "Find $X=1$ outcomes",
+            "result": "$HT,TH$",
+            "why": "exactly one head"
+          },
+          {
+            "do": "Compute probability",
+            "result": "$2/4=1/2$",
+            "why": "favorable over total"
+          },
+          {
+            "do": "State PMF value",
+            "result": "$p_X(1)=1/2$",
+            "why": "mass at value one"
+          }
+        ],
+        "answer": "$P(X=1)=1/2$."
+      },
+      {
+        "problem": "A Bernoulli variable has success probability $0.7$. Give its PMF.",
+        "steps": [
+          {
+            "do": "Set success mass",
+            "result": "$P(X=1)=0.7$",
+            "why": "definition of success probability"
+          },
+          {
+            "do": "Use complement",
+            "result": "$P(X=0)=1-0.7=0.3$",
+            "why": "failure is not success"
+          },
+          {
+            "do": "Check sum",
+            "result": "$0.7+0.3=1$",
+            "why": "valid PMF"
+          },
+          {
+            "do": "Check nonnegative",
+            "result": "both masses are nonnegative",
+            "why": "PMF rule"
+          },
+          {
+            "do": "State support",
+            "result": "$\\{0,1\\}$",
+            "why": "Bernoulli values"
+          }
+        ],
+        "answer": "$P(X=1)=0.7$, $P(X=0)=0.3$."
+      },
+      {
+        "problem": "A die roll random variable $X$ is the face value. Find $P(X\\ge5)$.",
+        "steps": [
+          {
+            "do": "List qualifying values",
+            "result": "$5,6$",
+            "why": "faces at least five"
+          },
+          {
+            "do": "Count qualifying outcomes",
+            "result": "$2$",
+            "why": "two die faces"
+          },
+          {
+            "do": "Count all outcomes",
+            "result": "$6$",
+            "why": "six faces"
+          },
+          {
+            "do": "Compute probability",
+            "result": "$2/6=1/3$",
+            "why": "favorable over total"
+          },
+          {
+            "do": "State event",
+            "result": "$P(X\\ge5)=1/3$",
+            "why": "event written using random variable"
+          }
+        ],
+        "answer": "$1/3$."
+      },
+      {
+        "problem": "A classifier outputs number of errors in $3$ items with masses $P(0)=0.7$, $P(1)=0.2$, $P(2)=0.08$, $P(3)=0.02$. Find probability at least one error.",
+        "steps": [
+          {
+            "do": "Define event",
+            "result": "$X\\ge1$",
+            "why": "at least one error"
+          },
+          {
+            "do": "Use complement",
+            "result": "$P(X\\ge1)=1-P(X=0)$",
+            "why": "easier than adding three masses"
+          },
+          {
+            "do": "Substitute",
+            "result": "$1-0.7$",
+            "why": "zero-error mass"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.3$",
+            "why": "remaining probability"
+          },
+          {
+            "do": "Check by addition",
+            "result": "$0.2+0.08+0.02=0.3$",
+            "why": "same result"
+          }
+        ],
+        "answer": "Probability of at least one error is $0.3$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Click counts",
+        "background": "A click indicator is a discrete random variable taking $0$ or $1$.",
+        "numbers": "If click probability is $0.04$, then $P(X=1)=0.04$ and $P(X=0)=0.96$."
+      },
+      {
+        "title": "Binomial batches",
+        "background": "The number of positives in a mini-batch is discrete.",
+        "numbers": "For two independent examples with positive probability $0.5$, probabilities for $0,1,2$ positives are $0.25,0.5,0.25$."
+      },
+      {
+        "title": "Token counts",
+        "background": "Language models often count occurrences of words or tokens.",
+        "numbers": "If a token appears $3$ times in $100$ positions, the empirical mass at that token is $0.03$."
+      },
+      {
+        "title": "Queue lengths",
+        "background": "Systems monitor integer queue sizes.",
+        "numbers": "If queue length probabilities are $P(0)=0.6$, $P(1)=0.3$, $P(2)=0.1$, they sum to $1$."
+      },
+      {
+        "title": "Defect counts",
+        "background": "Manufacturing counts defective items in a sample.",
+        "numbers": "In two items with defect probability $0.1$, probability of zero defects is $0.9^2=0.81$."
+      },
+      {
+        "title": "Rating stars",
+        "background": "User ratings are discrete values.",
+        "numbers": "If ratings $1$ through $5$ have masses $0.05,0.10,0.20,0.30,0.35$, total mass is $1.00$."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
+    "takeaways": [
+      "Discrete random variables is a core probability tool for ML mathematics.",
+      "Name the events and assumptions before calculating.",
+      "Check that probability answers stay between $0$ and $1$.",
+      "The same rule works for toy examples and data systems."
+    ],
     "prereqs": [
       "math-17-08"
     ]
@@ -195,19 +2319,255 @@
   B({
     "id": "math-17-10",
     "title": "Continuous random variables",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: continuous random variables.",
+    "tagline": "A continuous random variable spreads probability across intervals rather than points.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Discrete random variables</i>"
+        "Discrete random variables",
+        "integrals"
       ],
       "leadsTo": [
-        "the next lesson, <i>Probability density functions</i>"
+        "Probability density functions",
+        "Cumulative distribution functions",
+        "Expectation"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "integrals",
+        "functions",
+        "intervals"
       ]
     },
+    "motivation": "<p>Some quantities are not naturally counted one by one: time to load a page, height, temperature, model score. For these, probability lives over intervals.</p><p>The gentle surprise is that a single exact value usually has probability zero, while intervals can have positive probability.</p>",
+    "definition": "<p>A <b>continuous random variable</b> $X$ takes values on an interval or continuum. Probabilities are assigned to intervals such as $P(a\\le X\\le b)$, usually through a density $f$ by $P(a\\le X\\le b)=\\int_a^b f(x)\\,dx$.</p><p>Point probabilities are zero for ordinary continuous variables because an interval with width shrinking to $0$ has area shrinking to $0$.</p><p><b>Assumptions that matter:</b> densities must be nonnegative and integrate to $1$; interval endpoints do not change probabilities for continuous variables; and density height is not itself probability.</p>",
+    "worked": {
+      "problem": "Let $X$ be uniform on $[0,10]$. Find $P(2\\le X\\le5)$ and $P(X=4)$.",
+      "skills": [
+        "interval probability",
+        "uniform distributions",
+        "point probability"
+      ],
+      "strategy": "Translate the words into events or formulas, then compute one piece at a time.",
+      "steps": [
+        {
+          "do": "Find the density",
+          "result": "$f(x)=1/10$",
+          "why": "total area over length $10$ must be $1$"
+        },
+        {
+          "do": "Find interval width",
+          "result": "$5-2=3$",
+          "why": "probability is density times width"
+        },
+        {
+          "do": "Compute interval probability",
+          "result": "$(1/10)\\cdot3=0.3$",
+          "why": "area of a rectangle"
+        },
+        {
+          "do": "State point probability",
+          "result": "$P(X=4)=0$",
+          "why": "a single point has zero width"
+        }
+      ],
+      "verify": "The result respects the probability rules and the arithmetic matches the event definition.",
+      "answer": "$P(X=4)=0$",
+      "connects": "Continuous random variables gives a reusable rule for this calculation."
+    },
+    "practice": [
+      {
+        "problem": "Uniform $X$ on $[0,8]$. Find $P(2\\le X\\le6)$.",
+        "steps": [
+          {
+            "do": "Find interval length",
+            "result": "$8$",
+            "why": "total width"
+          },
+          {
+            "do": "Find target width",
+            "result": "$6-2=4$",
+            "why": "favorable width"
+          },
+          {
+            "do": "Use uniform probability",
+            "result": "$4/8$",
+            "why": "width over total width"
+          },
+          {
+            "do": "Simplify",
+            "result": "$1/2$",
+            "why": "reduce fraction"
+          },
+          {
+            "do": "Interpret",
+            "result": "$0.5$",
+            "why": "half the interval"
+          }
+        ],
+        "answer": "$0.5$."
+      },
+      {
+        "problem": "Uniform $X$ on $[-1,1]$. Find $P(X>0.25)$.",
+        "steps": [
+          {
+            "do": "Total width",
+            "result": "$2$",
+            "why": "from $-1$ to $1$"
+          },
+          {
+            "do": "Favorable width",
+            "result": "$1-0.25=0.75$",
+            "why": "values above $0.25$"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.75/2=0.375$",
+            "why": "uniform interval probability"
+          },
+          {
+            "do": "Check range",
+            "result": "$0.375$",
+            "why": "valid probability"
+          },
+          {
+            "do": "Interpret",
+            "result": "less than half",
+            "why": "threshold is above the midpoint"
+          }
+        ],
+        "answer": "$0.375$."
+      },
+      {
+        "problem": "For continuous $X$, compare $P(1<X<3)$ and $P(1\\le X\\le3)$.",
+        "steps": [
+          {
+            "do": "Point probabilities",
+            "result": "$P(X=1)=P(X=3)=0$",
+            "why": "single points have zero probability"
+          },
+          {
+            "do": "Write closed interval",
+            "result": "open interval plus endpoints",
+            "why": "only endpoints differ"
+          },
+          {
+            "do": "Add endpoint masses",
+            "result": "$0+0$",
+            "why": "no change"
+          },
+          {
+            "do": "Conclude",
+            "result": "the probabilities are equal",
+            "why": "endpoints do not matter"
+          },
+          {
+            "do": "State condition",
+            "result": "ordinary continuous variable",
+            "why": "not a discrete mass"
+          }
+        ],
+        "answer": "They are equal for a continuous random variable."
+      },
+      {
+        "problem": "A score is uniform on $[0,1]$. Find probability it lies within $0.1$ of $0.5$.",
+        "steps": [
+          {
+            "do": "Translate condition",
+            "result": "$0.4\\le X\\le0.6$",
+            "why": "within $0.1$ of $0.5$"
+          },
+          {
+            "do": "Find width",
+            "result": "$0.6-0.4=0.2$",
+            "why": "target interval"
+          },
+          {
+            "do": "Total width",
+            "result": "$1$",
+            "why": "unit interval"
+          },
+          {
+            "do": "Compute probability",
+            "result": "$0.2/1=0.2$",
+            "why": "uniform area"
+          },
+          {
+            "do": "Interpret",
+            "result": "$20\\%$",
+            "why": "one fifth of scores"
+          }
+        ],
+        "answer": "$0.2$."
+      },
+      {
+        "problem": "Latency is uniform from $100$ to $300$ ms. Find probability below $180$ ms.",
+        "steps": [
+          {
+            "do": "Total width",
+            "result": "$300-100=200$",
+            "why": "full latency range"
+          },
+          {
+            "do": "Favorable width",
+            "result": "$180-100=80$",
+            "why": "below threshold"
+          },
+          {
+            "do": "Compute",
+            "result": "$80/200=0.4$",
+            "why": "uniform interval probability"
+          },
+          {
+            "do": "Check",
+            "result": "between $0$ and $1$",
+            "why": "valid probability"
+          },
+          {
+            "do": "Interpret",
+            "result": "$40\\%$ of requests",
+            "why": "under the model"
+          }
+        ],
+        "answer": "$0.4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Latency",
+        "background": "Response time varies continuously enough that interval probabilities are natural.",
+        "numbers": "Uniform $0$ to $500$ ms gives $P(100\\le X\\le200)=100/500=0.2$."
+      },
+      {
+        "title": "Model scores",
+        "background": "Scores such as logits or calibrated probabilities move on continua.",
+        "numbers": "A score uniform on $[0,1]$ exceeds $0.8$ with probability $0.2$."
+      },
+      {
+        "title": "Sensor noise",
+        "background": "Physical sensors produce real-valued measurements.",
+        "numbers": "If error is uniform on $[-1,1]$, probability error lies between $-0.2$ and $0.2$ is $0.4/2=0.2$."
+      },
+      {
+        "title": "Arrival times",
+        "background": "Queueing models treat arrivals as continuous times.",
+        "numbers": "Uniform arrival in a $10$ minute window has probability $3/10=0.3$ of arriving in the first $3$ minutes."
+      },
+      {
+        "title": "Embeddings",
+        "background": "Vector components are real-valued random quantities across data.",
+        "numbers": "If a component is modeled uniform on $[-2,2]$, probability it is positive is $2/4=0.5$."
+      },
+      {
+        "title": "A/B metric changes",
+        "background": "Measured lift can be modeled as a continuous estimate.",
+        "numbers": "If lift is uniform from $-1\\%$ to $3\\%$, probability of positive lift is $3/4=0.75$."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
+    "takeaways": [
+      "Continuous random variables is a core probability tool for ML mathematics.",
+      "Name the events and assumptions before calculating.",
+      "Check that probability answers stay between $0$ and $1$.",
+      "The same rule works for toy examples and data systems."
+    ],
     "prereqs": [
       "math-17-09"
     ]
@@ -216,19 +2576,255 @@
   B({
     "id": "math-17-11",
     "title": "Probability density functions",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: probability density functions.",
+    "tagline": "A density is probability per unit length; areas under it are probabilities.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Continuous random variables</i>"
+        "Continuous random variables",
+        "functions",
+        "integrals"
       ],
       "leadsTo": [
-        "the next lesson, <i>Cumulative distribution functions</i>"
+        "Cumulative distribution functions",
+        "Expectation",
+        "normal distributions"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "area",
+        "integrals",
+        "nonnegative functions"
       ]
     },
+    "motivation": "<p>For continuous variables, probability is not stored at individual points. It is spread like a thin layer of paint over the number line.</p><p>A <b>probability density function</b> tells how thick that paint is. To get probability, you measure area.</p>",
+    "definition": "<p>A <b>probability density function</b> $f$ satisfies $f(x)\\ge0$ and $\\int_{-\\infty}^{\\infty} f(x)\\,dx=1$. For intervals, $P(a\\le X\\le b)=\\int_a^b f(x)\\,dx$.</p><p>The total area must be $1$ because the random variable must land somewhere. Nonnegative area over an interval becomes the probability of landing there.</p><p><b>Assumptions that matter:</b> $f(x)$ may exceed $1$ if concentrated on a short interval; probabilities are areas, not heights; and endpoints do not matter for continuous variables.</p>",
+    "worked": {
+      "problem": "Let $f(x)=2x$ for $0\\le x\\le1$ and $0$ otherwise. Find $P(0.5\\le X\\le1)$.",
+      "skills": [
+        "density",
+        "area",
+        "integration"
+      ],
+      "strategy": "Check the density, then integrate over the requested interval.",
+      "steps": [
+        {
+          "do": "Check total area",
+          "result": "$\\int_0^1 2x\\,dx=1$",
+          "why": "the function is a valid density"
+        },
+        {
+          "do": "Set up the interval area",
+          "result": "$P(0.5\\le X\\le1)=\\int_{0.5}^1 2x\\,dx$",
+          "why": "probability is area under the density"
+        },
+        {
+          "do": "Find an antiderivative",
+          "result": "$\\int 2x\\,dx=x^2$",
+          "why": "power rule"
+        },
+        {
+          "do": "Evaluate the bounds",
+          "result": "$1^2-0.5^2=0.75$",
+          "why": "subtract lower area from upper area"
+        }
+      ],
+      "verify": "The probability is less than $1$ and bigger than half because density is larger near $1$.",
+      "answer": "$P(0.5\\le X\\le1)=0.75$.",
+      "connects": "Density height guides where probability is concentrated; area gives the probability."
+    },
+    "practice": [
+      {
+        "problem": "For $f(x)=1/4$ on $[0,4]$, find $P(1\\le X\\le3)$.",
+        "steps": [
+          {
+            "do": "Check density height",
+            "result": "$1/4$",
+            "why": "uniform on length four"
+          },
+          {
+            "do": "Find interval width",
+            "result": "$3-1=2$",
+            "why": "target interval"
+          },
+          {
+            "do": "Multiply height by width",
+            "result": "$(1/4)\\cdot2$",
+            "why": "rectangle area"
+          },
+          {
+            "do": "Compute",
+            "result": "$1/2$",
+            "why": "two fourths"
+          },
+          {
+            "do": "Interpret",
+            "result": "half the probability mass",
+            "why": "half the interval length"
+          }
+        ],
+        "answer": "$1/2$."
+      },
+      {
+        "problem": "Find $c$ so $f(x)=c$ on $[2,7]$ is a density.",
+        "steps": [
+          {
+            "do": "Find interval length",
+            "result": "$7-2=5$",
+            "why": "support width"
+          },
+          {
+            "do": "Require total area one",
+            "result": "$5c=1$",
+            "why": "rectangle area"
+          },
+          {
+            "do": "Solve for $c$",
+            "result": "$c=1/5$",
+            "why": "divide by five"
+          },
+          {
+            "do": "Check nonnegative",
+            "result": "$1/5>0$",
+            "why": "density cannot be negative"
+          },
+          {
+            "do": "State density",
+            "result": "$0.2$",
+            "why": "decimal form"
+          }
+        ],
+        "answer": "$c=1/5=0.2$."
+      },
+      {
+        "problem": "For $f(x)=2x$ on $[0,1]$, find $P(X\\le0.5)$.",
+        "steps": [
+          {
+            "do": "Set up integral",
+            "result": "$\\int_0^{0.5}2x\\,dx$",
+            "why": "area up to $0.5$"
+          },
+          {
+            "do": "Antiderivative",
+            "result": "$x^2$",
+            "why": "power rule"
+          },
+          {
+            "do": "Evaluate upper bound",
+            "result": "$0.5^2=0.25$",
+            "why": "upper area"
+          },
+          {
+            "do": "Evaluate lower bound",
+            "result": "$0^2=0$",
+            "why": "lower area"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.25$",
+            "why": "probability"
+          }
+        ],
+        "answer": "$0.25$."
+      },
+      {
+        "problem": "A density is $f(x)=3x^2$ on $[0,1]$. Find $P(X>0.5)$.",
+        "steps": [
+          {
+            "do": "Use complement",
+            "result": "$P(X>0.5)=1-P(X\\le0.5)$",
+            "why": "tail is easier"
+          },
+          {
+            "do": "Set up lower area",
+            "result": "$\\int_0^{0.5}3x^2\\,dx$",
+            "why": "CDF up to $0.5$"
+          },
+          {
+            "do": "Antiderivative",
+            "result": "$x^3$",
+            "why": "integral of $3x^2$"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$0.5^3=0.125$",
+            "why": "lower probability"
+          },
+          {
+            "do": "Subtract tail",
+            "result": "$1-0.125=0.875$",
+            "why": "probability above $0.5$"
+          }
+        ],
+        "answer": "$0.875$."
+      },
+      {
+        "problem": "A proposed density is $f(x)=-1$ on $[0,1]$. Is it valid?",
+        "steps": [
+          {
+            "do": "Check nonnegativity",
+            "result": "$f(x)=-1<0$",
+            "why": "densities cannot be negative"
+          },
+          {
+            "do": "Check total area",
+            "result": "$\\int_0^1 -1\\,dx=-1$",
+            "why": "total is not one"
+          },
+          {
+            "do": "Compare with requirements",
+            "result": "fails both",
+            "why": "invalid density"
+          },
+          {
+            "do": "Interpret",
+            "result": "negative probability would result",
+            "why": "not meaningful"
+          },
+          {
+            "do": "Conclude",
+            "result": "not valid",
+            "why": "violates density assumptions"
+          }
+        ],
+        "answer": "It is not a valid density."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Uniform density",
+        "background": "Uniform distributions have constant density over an interval.",
+        "numbers": "On $[0,4]$, density $1/4$ gives $P(1\\le X\\le3)=2/4=0.5$."
+      },
+      {
+        "title": "Triangular density",
+        "background": "Simple increasing densities model values more likely near one end.",
+        "numbers": "For $f(x)=2x$ on $[0,1]$, $P(X>0.5)=1-0.25=0.75$."
+      },
+      {
+        "title": "Normal curves",
+        "background": "Gaussian densities are central in noise models and approximate averages.",
+        "numbers": "About $0.68$ of a normal distribution lies within one standard deviation of the mean."
+      },
+      {
+        "title": "Kernel density estimates",
+        "background": "KDEs estimate an unknown density from data by smoothing observed points.",
+        "numbers": "If estimated area from $0$ to $1$ is $0.42$, then the model assigns probability $0.42$ to that interval."
+      },
+      {
+        "title": "Anomaly scores",
+        "background": "Density models can flag low-density observations.",
+        "numbers": "If density near typical scores is $1.5$ but near an outlier is $0.02$, the outlier lies in a much thinner region."
+      },
+      {
+        "title": "Simulation checks",
+        "background": "A proposed density must integrate to one.",
+        "numbers": "A constant density $c$ on $[2,7]$ needs $5c=1$, so $c=0.2$."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
+    "takeaways": [
+      "Probability density functions translates probability into a numerical function.",
+      "Areas, sums, and accumulated probabilities must be checked against total probability $1$.",
+      "These tools are central for losses, uncertainty, and ML evaluation."
+    ],
     "prereqs": [
       "math-17-10"
     ]
@@ -237,19 +2833,255 @@
   B({
     "id": "math-17-12",
     "title": "Cumulative distribution functions",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: cumulative distribution functions.",
+    "tagline": "A CDF tells how much probability has accumulated up to a point.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Probability density functions</i>"
+        "Continuous random variables",
+        "Discrete random variables",
+        "Probability density functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Expectation</i>"
+        "Expectation",
+        "quantiles",
+        "inverse transform sampling"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "functions",
+        "integrals",
+        "monotonicity"
       ]
     },
+    "motivation": "<p>Sometimes the most useful probability question is not exactly at a value, but up to a value: how likely is the response time at most $200$ ms?</p><p>The <b>cumulative distribution function</b> answers that question for every cutoff.</p>",
+    "definition": "<p>The CDF of $X$ is $F(x)=P(X\\le x)$. For a continuous variable with density $f$, $F(x)=\\int_{-\\infty}^x f(t)\\,dt$. For a discrete variable, $F(x)=\\sum_{v\\le x}P(X=v)$.</p><p>It accumulates probability from left to right, so it never decreases and moves from $0$ toward $1$.</p><p><b>Assumptions that matter:</b> $F$ is right-continuous; jumps represent point masses in discrete distributions; and for continuous variables, interval probability is $F(b)-F(a)$.</p>",
+    "worked": {
+      "problem": "For $X$ uniform on $[0,10]$, find $F(7)$ and $P(3<X\\le7)$.",
+      "skills": [
+        "CDF",
+        "uniform distribution",
+        "interval probability"
+      ],
+      "strategy": "Use the accumulated area up to each cutoff, then subtract.",
+      "steps": [
+        {
+          "do": "Write the CDF inside the interval",
+          "result": "$F(x)=x/10$ for $0\\le x\\le10$",
+          "why": "uniform area grows linearly"
+        },
+        {
+          "do": "Evaluate $F(7)$",
+          "result": "$7/10=0.7$",
+          "why": "seven tenths of the interval lies to the left"
+        },
+        {
+          "do": "Evaluate $F(3)$",
+          "result": "$3/10=0.3$",
+          "why": "three tenths lies to the left"
+        },
+        {
+          "do": "Subtract for the interval",
+          "result": "$F(7)-F(3)=0.4$",
+          "why": "probability between cutoffs is accumulated difference"
+        }
+      ],
+      "verify": "The interval from $3$ to $7$ has width $4$ out of total width $10$, matching $0.4$.",
+      "answer": "$F(7)=0.7$ and $P(3<X\\le7)=0.4$.",
+      "connects": "A CDF converts interval probability into subtraction."
+    },
+    "practice": [
+      {
+        "problem": "A CDF has $F(2)=0.3$ and $F(5)=0.8$. Find $P(2<X\\le5)$.",
+        "steps": [
+          {
+            "do": "Use CDF subtraction",
+            "result": "$P(2<X\\le5)=F(5)-F(2)$",
+            "why": "accumulated probability difference"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.8-0.3$",
+            "why": "given CDF values"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.5$",
+            "why": "subtract"
+          },
+          {
+            "do": "Check range",
+            "result": "$0.5$",
+            "why": "valid probability"
+          },
+          {
+            "do": "Interpret",
+            "result": "half the mass lies in the interval",
+            "why": "between the cutoffs"
+          }
+        ],
+        "answer": "$0.5$."
+      },
+      {
+        "problem": "For uniform $[0,4]$, find $F(3)$.",
+        "steps": [
+          {
+            "do": "Write CDF inside support",
+            "result": "$F(x)=x/4$",
+            "why": "area from $0$ to $x$"
+          },
+          {
+            "do": "Substitute $x=3$",
+            "result": "$F(3)=3/4$",
+            "why": "use cutoff"
+          },
+          {
+            "do": "Convert",
+            "result": "$0.75$",
+            "why": "decimal form"
+          },
+          {
+            "do": "Check",
+            "result": "less than $1$",
+            "why": "cutoff is inside support"
+          },
+          {
+            "do": "Interpret",
+            "result": "$75\\%$ is at or below $3$",
+            "why": "uniform length ratio"
+          }
+        ],
+        "answer": "$F(3)=0.75$."
+      },
+      {
+        "problem": "A discrete variable has $P(X=0)=0.2$, $P(X=1)=0.5$, $P(X=2)=0.3$. Find $F(1)$.",
+        "steps": [
+          {
+            "do": "Define CDF",
+            "result": "$F(1)=P(X\\le1)$",
+            "why": "accumulate up to one"
+          },
+          {
+            "do": "List included masses",
+            "result": "$P(X=0)$ and $P(X=1)$",
+            "why": "values at most one"
+          },
+          {
+            "do": "Add",
+            "result": "$0.2+0.5=0.7$",
+            "why": "sum included probabilities"
+          },
+          {
+            "do": "Check jump",
+            "result": "mass at $1$ is included",
+            "why": "CDF uses $\\le$"
+          },
+          {
+            "do": "Interpret",
+            "result": "$70\\%$ at or below one",
+            "why": "cumulative probability"
+          }
+        ],
+        "answer": "$F(1)=0.7$."
+      },
+      {
+        "problem": "If $F(10)=0.95$, what is $P(X>10)$?",
+        "steps": [
+          {
+            "do": "Use complement",
+            "result": "$P(X>10)=1-P(X\\le10)$",
+            "why": "above cutoff is complement"
+          },
+          {
+            "do": "Substitute CDF",
+            "result": "$1-F(10)$",
+            "why": "definition of CDF"
+          },
+          {
+            "do": "Use value",
+            "result": "$1-0.95$",
+            "why": "given"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.05$",
+            "why": "tail probability"
+          },
+          {
+            "do": "Interpret",
+            "result": "five percent above ten",
+            "why": "right tail"
+          }
+        ],
+        "answer": "$0.05$."
+      },
+      {
+        "problem": "For $F(x)=x^2$ on $[0,1]$, find $P(0.2<X\\le0.6)$.",
+        "steps": [
+          {
+            "do": "Evaluate upper CDF",
+            "result": "$F(0.6)=0.36$",
+            "why": "square the upper bound"
+          },
+          {
+            "do": "Evaluate lower CDF",
+            "result": "$F(0.2)=0.04$",
+            "why": "square the lower bound"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.36-0.04$",
+            "why": "interval probability"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.32$",
+            "why": "difference"
+          },
+          {
+            "do": "Check",
+            "result": "positive and below one",
+            "why": "valid probability"
+          }
+        ],
+        "answer": "$0.32$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Percentiles",
+        "background": "CDFs turn measurements into percentile ranks.",
+        "numbers": "If $F(200\\text{ ms})=0.9$, then $90\\%$ of requests finish by $200$ ms."
+      },
+      {
+        "title": "Threshold rates",
+        "background": "Classifier score thresholds use tail probabilities from a CDF.",
+        "numbers": "If negative scores have $F(0.7)=0.95$, then $5\\%$ exceed $0.7$."
+      },
+      {
+        "title": "Interval probabilities",
+        "background": "CDF subtraction avoids re-integrating densities.",
+        "numbers": "If $F(8)=0.8$ and $F(3)=0.25$, then $P(3<X\\le8)=0.55$."
+      },
+      {
+        "title": "Quantiles",
+        "background": "Monitoring systems report p95 and p99 from inverse CDFs.",
+        "numbers": "If the p95 latency is $400$ ms, then $F(400)=0.95$."
+      },
+      {
+        "title": "Discrete jumps",
+        "background": "For discrete variables, CDF jumps show point masses.",
+        "numbers": "If $P(X=2)=0.3$, then the CDF jumps upward by $0.3$ at $2$."
+      },
+      {
+        "title": "Inverse transform sampling",
+        "background": "Simulators can sample from a distribution by applying an inverse CDF to uniform noise.",
+        "numbers": "If $F(x)=x^2$ on $[0,1]$ and $u=0.64$, then $x=\\sqrt{0.64}=0.8$."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
+    "takeaways": [
+      "Cumulative distribution functions translates probability into a numerical function.",
+      "Areas, sums, and accumulated probabilities must be checked against total probability $1$.",
+      "These tools are central for losses, uncertainty, and ML evaluation."
+    ],
     "prereqs": [
       "math-17-11"
     ]
@@ -258,19 +3090,254 @@
   B({
     "id": "math-17-13",
     "title": "Expectation",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: expectation.",
+    "tagline": "Expectation is the long-run average value, found by weighting outcomes by their probabilities.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Cumulative distribution functions</i>"
+        "Discrete random variables",
+        "Continuous random variables",
+        "Probability density functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Variance</i>"
+        "variance",
+        "loss minimization",
+        "risk"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "sums",
+        "integrals",
+        "weighted averages"
       ]
     },
+    "motivation": "<p>Probability distributions can be large, but often we need one careful summary: the average value we would see over many repetitions.</p><p><b>Expectation</b> is that probability-weighted center. It is not always a value that can occur, but it is the balance point of the distribution.</p>",
+    "definition": "<p>For a discrete random variable, $\\mathbb{E}[X]=\\sum_x xP(X=x)$. For a continuous random variable with density $f$, $\\mathbb{E}[X]=\\int_{-\\infty}^{\\infty} x f(x)\\,dx$ when the sum or integral converges.</p><p>The formula weights each value by how often it occurs. Linearity follows by distributing sums or integrals: $\\mathbb{E}[aX+bY]=a\\mathbb{E}[X]+b\\mathbb{E}[Y]$ when expectations exist.</p><p><b>Assumptions that matter:</b> probabilities must sum or integrate to $1$; the weighted sum or integral must converge; and expectation is a long-run average, not a guaranteed outcome.</p>",
+    "worked": {
+      "problem": "Let $X$ have values $0,1,2$ with probabilities $0.2,0.5,0.3$. Find $\\mathbb{E}[X]$.",
+      "skills": [
+        "weighted averages",
+        "discrete expectation"
+      ],
+      "strategy": "Multiply each value by its probability, then add.",
+      "steps": [
+        {
+          "do": "Write the expectation sum",
+          "result": "$\\mathbb{E}[X]=0\\cdot0.2+1\\cdot0.5+2\\cdot0.3$",
+          "why": "weight each value by its probability"
+        },
+        {
+          "do": "Compute the first term",
+          "result": "$0\\cdot0.2=0$",
+          "why": "zero contributes nothing"
+        },
+        {
+          "do": "Compute the remaining terms",
+          "result": "$1\\cdot0.5=0.5$ and $2\\cdot0.3=0.6$",
+          "why": "multiply value by probability"
+        },
+        {
+          "do": "Add the terms",
+          "result": "$0+0.5+0.6=1.1$",
+          "why": "sum all weighted contributions"
+        }
+      ],
+      "verify": "The answer lies between the smallest value $0$ and largest value $2$, as it should.",
+      "answer": "$\\mathbb{E}[X]=1.1$.",
+      "connects": "Expectation is the distribution balanced on a number line."
+    },
+    "practice": [
+      {
+        "problem": "Find expectation for $X=0,1$ with $P(X=1)=0.3$.",
+        "steps": [
+          {
+            "do": "Find failure probability",
+            "result": "$P(X=0)=0.7$",
+            "why": "complement of success"
+          },
+          {
+            "do": "Write expectation",
+            "result": "$0\\cdot0.7+1\\cdot0.3$",
+            "why": "weighted values"
+          },
+          {
+            "do": "Compute terms",
+            "result": "$0+0.3$",
+            "why": "zero contributes nothing"
+          },
+          {
+            "do": "Add",
+            "result": "$0.3$",
+            "why": "expected value"
+          },
+          {
+            "do": "Interpret",
+            "result": "mean success indicator equals success probability",
+            "why": "Bernoulli fact"
+          }
+        ],
+        "answer": "$\\mathbb{E}[X]=0.3$."
+      },
+      {
+        "problem": "A variable takes $10$ with probability $0.2$ and $0$ with probability $0.8$. Find expectation.",
+        "steps": [
+          {
+            "do": "Write weighted sum",
+            "result": "$10\\cdot0.2+0\\cdot0.8$",
+            "why": "value times probability"
+          },
+          {
+            "do": "Compute first term",
+            "result": "$2$",
+            "why": "ten times point two"
+          },
+          {
+            "do": "Compute second term",
+            "result": "$0$",
+            "why": "zero value"
+          },
+          {
+            "do": "Add",
+            "result": "$2$",
+            "why": "expected value"
+          },
+          {
+            "do": "Interpret",
+            "result": "long-run average payoff",
+            "why": "not necessarily the most common value"
+          }
+        ],
+        "answer": "$2$."
+      },
+      {
+        "problem": "For a fair die, find $\\mathbb{E}[X]$.",
+        "steps": [
+          {
+            "do": "Write sum",
+            "result": "$(1+2+3+4+5+6)/6$",
+            "why": "each face has probability $1/6$"
+          },
+          {
+            "do": "Add faces",
+            "result": "$21/6$",
+            "why": "sum is 21"
+          },
+          {
+            "do": "Divide",
+            "result": "$3.5$",
+            "why": "average face value"
+          },
+          {
+            "do": "Check range",
+            "result": "between $1$ and $6$",
+            "why": "reasonable mean"
+          },
+          {
+            "do": "Interpret",
+            "result": "balance point of die values",
+            "why": "not an actual face"
+          }
+        ],
+        "answer": "$3.5$."
+      },
+      {
+        "problem": "Loss is $0.1$ with probability $0.6$ and $1.0$ with probability $0.4$. Find expected loss.",
+        "steps": [
+          {
+            "do": "Write weighted sum",
+            "result": "$0.1\\cdot0.6+1.0\\cdot0.4$",
+            "why": "loss weighted by probability"
+          },
+          {
+            "do": "Compute first term",
+            "result": "$0.06$",
+            "why": "small-loss contribution"
+          },
+          {
+            "do": "Compute second term",
+            "result": "$0.40$",
+            "why": "large-loss contribution"
+          },
+          {
+            "do": "Add",
+            "result": "$0.46$",
+            "why": "expected loss"
+          },
+          {
+            "do": "Interpret",
+            "result": "average loss over many cases",
+            "why": "training objective style"
+          }
+        ],
+        "answer": "Expected loss is $0.46$."
+      },
+      {
+        "problem": "Use linearity: $\\mathbb{E}[X]=2$ and $\\mathbb{E}[Y]=5$. Find $\\mathbb{E}[3X-2Y+4]$.",
+        "steps": [
+          {
+            "do": "Apply linearity",
+            "result": "$3\\mathbb{E}[X]-2\\mathbb{E}[Y]+4$",
+            "why": "expectation distributes over sums and constants"
+          },
+          {
+            "do": "Substitute",
+            "result": "$3\\cdot2-2\\cdot5+4$",
+            "why": "use given means"
+          },
+          {
+            "do": "Multiply",
+            "result": "$6-10+4$",
+            "why": "compute scaled means"
+          },
+          {
+            "do": "Add",
+            "result": "$0$",
+            "why": "finish arithmetic"
+          },
+          {
+            "do": "Interpret",
+            "result": "no independence needed",
+            "why": "linearity does not require independence"
+          }
+        ],
+        "answer": "$\\mathbb{E}[3X-2Y+4]=0$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Expected loss",
+        "background": "Training minimizes average loss over data and randomness.",
+        "numbers": "Losses $0.2,0.5,1.0$ with probabilities $0.5,0.3,0.2$ give expectation $0.1+0.15+0.2=0.45$."
+      },
+      {
+        "title": "Expected revenue",
+        "background": "Business models often optimize expected value, not one outcome.",
+        "numbers": "Revenue $0$ with probability $0.9$ and $10$ with probability $0.1$ has expectation $1$."
+      },
+      {
+        "title": "Calibration baselines",
+        "background": "A Bernoulli variable has expectation equal to its success probability.",
+        "numbers": "If click probability is $0.04$, expected clicks per impression is $0.04$."
+      },
+      {
+        "title": "A/B testing",
+        "background": "Expected metric lift averages over possible outcomes.",
+        "numbers": "Lift $-1$ with probability $0.3$ and $2$ with probability $0.7$ has expectation $1.1$."
+      },
+      {
+        "title": "Queue load",
+        "background": "Expected arrivals guide capacity planning.",
+        "numbers": "Counts $0,1,2$ with probabilities $0.2,0.5,0.3$ have mean $0+0.5+0.6=1.1$."
+      },
+      {
+        "title": "Ensembles",
+        "background": "Model averaging is expectation over predictors or samples.",
+        "numbers": "Predictions $0.2,0.6,0.7$ averaged uniformly give expected prediction $0.5$."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
+    "takeaways": [
+      "Expectation translates probability into a numerical function.",
+      "Areas, sums, and accumulated probabilities must be checked against total probability $1$.",
+      "These tools are central for losses, uncertainty, and ML evaluation."
+    ],
     "prereqs": [
       "math-17-12"
     ]
@@ -279,19 +3346,267 @@
   B({
     "id": "math-17-14",
     "title": "Variance",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: variance.",
+    "tagline": "Variance measures how widely a random quantity tends to wander around its mean.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Expectation</i>"
+        "Expected value",
+        "random variables",
+        "sums of probabilities"
       ],
       "leadsTo": [
-        "the next lesson, <i>Moments</i>"
+        "Moments",
+        "Gaussian distribution",
+        "covariance and correlation"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "standard deviation",
+        "mean squared error",
+        "centered random variables",
+        "Chebyshev bounds"
       ]
     },
+    "motivation": "<p>You already know an average can hide the story. Two models can both have mean error $0$, while one makes tiny mistakes and the other swings wildly between misses.</p><p><b>Variance</b> gives spread a number. It asks: after we subtract the mean, how large is the squared leftover on average? Squaring keeps positive and negative deviations from canceling, and it makes large surprises count more.</p>",
+    "definition": "<p>For a random variable $X$ with mean $mu=E[X]$, the <b>variance</b> is $Var(X)=E[(X-mu)^2]$. The standard deviation is $sigma=sqrt(Var(X))$, returning the spread to the original units.</p><p>The useful shortcut is $Var(X)=E[X^2]-mu^2$. It comes from expanding $(X-mu)^2=X^2-2mu X+mu^2$, then taking expectation: $E[X^2]-2mu E[X]+mu^2=E[X^2]-mu^2$ because $E[X]=mu$.</p><p><b>Assumptions that matter:</b> the mean and second moment must exist; variance is never negative; adding a constant does not change variance; and multiplying by $a$ changes variance by $a^2$.</p>",
+    "worked": {
+      "problem": "A random variable takes values $1,3,5$ with probabilities $0.2,0.5,0.3$. Find its variance.",
+      "skills": [
+        "expected value",
+        "second moment",
+        "variance shortcut"
+      ],
+      "strategy": "The spread is hidden in weighted squares, so compute $E[X]$ and $E[X^2]$ separately.",
+      "steps": [
+        {
+          "do": "Compute the weighted mean",
+          "result": "$E[X]=1(0.2)+3(0.5)+5(0.3)$",
+          "why": "multiply each value by its probability"
+        },
+        {
+          "do": "Add the mean terms",
+          "result": "$mu=3.2$",
+          "why": "$0.2+1.5+1.5=3.2$"
+        },
+        {
+          "do": "Compute the second moment",
+          "result": "$E[X^2]=1^2(0.2)+3^2(0.5)+5^2(0.3)$",
+          "why": "square first, then weight"
+        },
+        {
+          "do": "Add the second-moment terms",
+          "result": "$E[X^2]=12.2$",
+          "why": "$0.2+4.5+7.5=12.2$"
+        },
+        {
+          "do": "Subtract the squared mean",
+          "result": "$Var(X)=12.2-3.2^2$",
+          "why": "use $E[X^2]-mu^2$"
+        },
+        {
+          "do": "Simplify",
+          "result": "$Var(X)=1.96$",
+          "why": "$3.2^2=10.24$"
+        }
+      ],
+      "verify": "The spread is modest because most mass is near 3; a variance near 2 is plausible on values from 1 to 5.",
+      "answer": "$Var(X)=1.96$, so the standard deviation is $sqrt(1.96)=1.4$.",
+      "connects": "Variance is the expected squared distance from the mean."
+    },
+    "practice": [
+      {
+        "problem": "A fair coin pays $1$ for heads and $0$ for tails. Find the variance of the payout.",
+        "steps": [
+          {
+            "do": "List the probabilities",
+            "result": "$P(X=1)=0.5$ and $P(X=0)=0.5$",
+            "why": "the coin is fair"
+          },
+          {
+            "do": "Compute the mean",
+            "result": "$E[X]=1(0.5)+0(0.5)=0.5$",
+            "why": "use weighted values"
+          },
+          {
+            "do": "Compute the second moment",
+            "result": "$E[X^2]=1^2(0.5)+0^2(0.5)=0.5$",
+            "why": "squares of 0 and 1 are unchanged"
+          },
+          {
+            "do": "Apply the shortcut",
+            "result": "$Var(X)=0.5-0.5^2$",
+            "why": "variance equals second moment minus mean squared"
+          },
+          {
+            "do": "Simplify",
+            "result": "$Var(X)=0.25$",
+            "why": "$0.5-0.25=0.25$"
+          }
+        ],
+        "answer": "The variance is $0.25$."
+      },
+      {
+        "problem": "A variable has mean $4$ and $E[X^2]=21$. Find $Var(X)$ and the standard deviation.",
+        "steps": [
+          {
+            "do": "Write the variance shortcut",
+            "result": "$Var(X)=E[X^2]-mu^2$",
+            "why": "the second moment and mean are given"
+          },
+          {
+            "do": "Substitute the values",
+            "result": "$Var(X)=21-4^2$",
+            "why": "$mu=4$"
+          },
+          {
+            "do": "Square the mean",
+            "result": "$4^2=16$",
+            "why": "variance subtracts the squared mean"
+          },
+          {
+            "do": "Subtract",
+            "result": "$Var(X)=5$",
+            "why": "$21-16=5$"
+          },
+          {
+            "do": "Take the square root",
+            "result": "$sigma=sqrt(5) approx 2.236$",
+            "why": "standard deviation is the square root of variance"
+          }
+        ],
+        "answer": "$Var(X)=5$ and $sigma approx 2.236$."
+      },
+      {
+        "problem": "Let $Y=2X+7$ and $Var(X)=3$. Find $Var(Y)$.",
+        "steps": [
+          {
+            "do": "Identify the scale factor",
+            "result": "$a=2$",
+            "why": "the constant 7 only shifts values"
+          },
+          {
+            "do": "Use the scaling rule",
+            "result": "$Var(2X+7)=2^2 Var(X)$",
+            "why": "variance scales by the square of the multiplier"
+          },
+          {
+            "do": "Square the multiplier",
+            "result": "$2^2=4$",
+            "why": "spread doubles in distance, so squared spread quadruples"
+          },
+          {
+            "do": "Substitute the variance",
+            "result": "$Var(Y)=4(3)$",
+            "why": "$Var(X)=3$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$Var(Y)=12$",
+            "why": "$4 times 3=12$"
+          }
+        ],
+        "answer": "$Var(Y)=12$."
+      },
+      {
+        "problem": "A random variable takes $-1,0,2$ with probabilities $0.25,0.25,0.50$. Find its variance.",
+        "steps": [
+          {
+            "do": "Compute the mean",
+            "result": "$E[X]=(-1)(0.25)+0(0.25)+2(0.50)$",
+            "why": "weight each value"
+          },
+          {
+            "do": "Simplify the mean",
+            "result": "$mu=0.75$",
+            "why": "$-0.25+0+1=0.75$"
+          },
+          {
+            "do": "Compute the second moment",
+            "result": "$E[X^2]=1(0.25)+0(0.25)+4(0.50)$",
+            "why": "square each value before weighting"
+          },
+          {
+            "do": "Simplify the second moment",
+            "result": "$E[X^2]=2.25$",
+            "why": "$0.25+0+2=2.25$"
+          },
+          {
+            "do": "Subtract the squared mean",
+            "result": "$Var(X)=2.25-0.75^2=1.6875$",
+            "why": "$0.75^2=0.5625$"
+          }
+        ],
+        "answer": "$Var(X)=1.6875$."
+      },
+      {
+        "problem": "A model error is $-2$ with probability $0.1$, $0$ with probability $0.8$, and $3$ with probability $0.1$. Find the mean error and variance.",
+        "steps": [
+          {
+            "do": "Compute the mean error",
+            "result": "$E[E]=(-2)(0.1)+0(0.8)+3(0.1)$",
+            "why": "errors can be positive or negative"
+          },
+          {
+            "do": "Simplify the mean",
+            "result": "$mu=0.1$",
+            "why": "$-0.2+0+0.3=0.1$"
+          },
+          {
+            "do": "Compute the second moment",
+            "result": "$E[E^2]=4(0.1)+0(0.8)+9(0.1)$",
+            "why": "squared errors measure size without sign"
+          },
+          {
+            "do": "Simplify the second moment",
+            "result": "$E[E^2]=1.3$",
+            "why": "$0.4+0+0.9=1.3$"
+          },
+          {
+            "do": "Compute variance",
+            "result": "$Var(E)=1.3-0.1^2=1.29$",
+            "why": "remove the squared average bias"
+          }
+        ],
+        "answer": "Mean error is $0.1$ and variance is $1.29$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Model error spread",
+        "background": "Regression teams track not only average error but also how unstable the errors are across examples.",
+        "numbers": "Errors $[-1,0,1]$ with equal probability have mean $0$ and variance $(1+0+1)/3=0.667$."
+      },
+      {
+        "title": "Feature scaling",
+        "background": "Standardization divides by standard deviation so features have comparable spread before optimization.",
+        "numbers": "If click count has mean $20$ and variance $25$, then $x=30$ becomes $z=(30-20)/5=2$."
+      },
+      {
+        "title": "A/B experiment noise",
+        "background": "Experiment analysis separates signal from random variation; high variance makes an effect harder to detect.",
+        "numbers": "If conversion indicators have $p=0.04$, Bernoulli variance is $0.04(0.96)=0.0384$."
+      },
+      {
+        "title": "Portfolio risk",
+        "background": "Finance popularized variance as a risk measure because returns above and below the mean both matter.",
+        "numbers": "Returns $-0.02,0.01,0.04$ have mean $0.01$ and squared deviations $0.0009,0,0.0009$, average $0.0006$."
+      },
+      {
+        "title": "Sensor reliability",
+        "background": "Engineers compare sensors by repeated measurements around a stable value.",
+        "numbers": "Measurements $9,10,11$ have mean $10$ and variance $(1+0+1)/3=0.667$."
+      },
+      {
+        "title": "Mini-batch gradients",
+        "background": "Stochastic gradient methods work with noisy gradient estimates; variance describes that noise.",
+        "numbers": "Gradient samples $2,4,6$ have mean $4$ and variance $(4+0+4)/3=2.667$."
+      }
+    ],
+    "applicationsClose": "Variance is the same spread-measuring idea in losses, features, experiments, finance, sensors, and optimization.",
+    "takeaways": [
+      "$Var(X)=E[(X-mu)^2]$ measures average squared distance from the mean.",
+      "The shortcut $Var(X)=E[X^2]-mu^2$ is often the fastest computation.",
+      "Shifts do not change variance; scaling by $a$ multiplies variance by $a^2$.",
+      "Standard deviation is the square root of variance and uses the original units."
+    ],
     "prereqs": [
       "math-17-13"
     ]
@@ -300,19 +3615,262 @@
   B({
     "id": "math-17-15",
     "title": "Moments",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: moments.",
+    "tagline": "Moments are numerical fingerprints of a distribution, describing center, spread, shape, and tails.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Variance</i>"
+        "Expected value",
+        "Variance",
+        "powers of random variables"
       ],
       "leadsTo": [
-        "the next lesson, <i>Moment generating functions</i>"
+        "Moment generating functions",
+        "Beta and Gamma distributions",
+        "Gaussian distribution"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "central moments",
+        "skewness",
+        "kurtosis",
+        "Taylor polynomials"
       ]
     },
+    "motivation": "<p>You already know the first two summaries: the mean tells where a distribution balances, and variance tells how far it spreads. But distributions can lean left, lean right, or have unusually heavy tails.</p><p><b>Moments</b> extend the same idea. They average powers of the random variable, or powers of its distance from the mean, so each new power notices a different part of the shape.</p>",
+    "definition": "<p>The $k$th raw moment of $X$ is $E[X^k]$. The $k$th central moment is $E[(X-mu)^k]$, where $mu=E[X]$. The first raw moment is the mean. The second central moment is variance. The third central moment helps describe skew, and the fourth helps describe tail weight.</p><p>The link to variance is direct: $E[(X-mu)^2]$ expands to $E[X^2]-mu^2$. Higher central moments similarly recenter the distribution before taking powers, so they describe shape around the mean rather than around zero.</p><p><b>Assumptions that matter:</b> a moment exists only if the relevant expectation is finite; raw moments depend on the origin of the scale; central moments are translation-aware; and odd central moments keep sign information while even central moments measure magnitude.</p>",
+    "worked": {
+      "problem": "For $X$ taking $0,1,2$ with probabilities $0.25,0.50,0.25$, compute the first raw moment, second raw moment, and second central moment.",
+      "skills": [
+        "raw moments",
+        "central moments",
+        "variance"
+      ],
+      "strategy": "Compute powers with probabilities, then recenter for the central moment.",
+      "steps": [
+        {
+          "do": "Compute $E[X]$",
+          "result": "$0(0.25)+1(0.50)+2(0.25)=1$",
+          "why": "the first raw moment is the mean"
+        },
+        {
+          "do": "Compute $E[X^2]$",
+          "result": "$0^2(0.25)+1^2(0.50)+2^2(0.25)=1.5$",
+          "why": "the second raw moment averages squares"
+        },
+        {
+          "do": "Write deviations from the mean",
+          "result": "$-1,0,1$",
+          "why": "subtract $mu=1$ from each value"
+        },
+        {
+          "do": "Square the deviations",
+          "result": "$1,0,1$",
+          "why": "the second central moment uses squared deviations"
+        },
+        {
+          "do": "Weight the squared deviations",
+          "result": "$1(0.25)+0(0.50)+1(0.25)=0.5$",
+          "why": "take the expectation of centered squares"
+        }
+      ],
+      "verify": "The shortcut gives $E[X^2]-mu^2=1.5-1=0.5$, matching the central-moment calculation.",
+      "answer": "$E[X]=1$, $E[X^2]=1.5$, and $E[(X-1)^2]=0.5$.",
+      "connects": "Moments turn a distribution's shape into a sequence of weighted power averages."
+    },
+    "practice": [
+      {
+        "problem": "For a fair coin indicator $X$, find $E[X]$, $E[X^2]$, and $E[X^3]$.",
+        "steps": [
+          {
+            "do": "List possible values",
+            "result": "$X=0$ or $X=1$",
+            "why": "an indicator only has two values"
+          },
+          {
+            "do": "Compute the first moment",
+            "result": "$E[X]=0(0.5)+1(0.5)=0.5$",
+            "why": "average the values"
+          },
+          {
+            "do": "Compute the second powers",
+            "result": "$0^2=0$ and $1^2=1$",
+            "why": "indicators stay the same when squared"
+          },
+          {
+            "do": "Compute the second moment",
+            "result": "$E[X^2]=0.5$",
+            "why": "the powered values match $X$"
+          },
+          {
+            "do": "Compute the third moment",
+            "result": "$E[X^3]=0.5$",
+            "why": "the powered values still match $X$"
+          }
+        ],
+        "answer": "All three moments are $0.5$."
+      },
+      {
+        "problem": "For $X$ taking $1$ and $3$ with equal probability, compute the third raw moment.",
+        "steps": [
+          {
+            "do": "Cube the first value",
+            "result": "$1^3=1$",
+            "why": "third raw moment uses cubes"
+          },
+          {
+            "do": "Cube the second value",
+            "result": "$3^3=27$",
+            "why": "apply the same power"
+          },
+          {
+            "do": "Weight the cubes",
+            "result": "$1(0.5)+27(0.5)$",
+            "why": "both outcomes are equally likely"
+          },
+          {
+            "do": "Add the terms",
+            "result": "$0.5+13.5=14$",
+            "why": "sum weighted powers"
+          },
+          {
+            "do": "Name the moment",
+            "result": "$E[X^3]=14$",
+            "why": "this is the third raw moment"
+          }
+        ],
+        "answer": "$E[X^3]=14$."
+      },
+      {
+        "problem": "For $X$ taking $-1,0,1$ with equal probabilities, find the third central moment.",
+        "steps": [
+          {
+            "do": "Compute the mean",
+            "result": "$(-1+0+1)/3=0$",
+            "why": "the values are symmetric"
+          },
+          {
+            "do": "Write centered values",
+            "result": "$-1,0,1$",
+            "why": "the mean is zero"
+          },
+          {
+            "do": "Cube centered values",
+            "result": "$-1,0,1$",
+            "why": "cubes preserve sign"
+          },
+          {
+            "do": "Average the cubes",
+            "result": "$(-1+0+1)/3=0$",
+            "why": "opposite tails cancel"
+          },
+          {
+            "do": "Interpret",
+            "result": "no skew by this moment",
+            "why": "symmetry makes the third central moment zero"
+          }
+        ],
+        "answer": "The third central moment is $0$."
+      },
+      {
+        "problem": "A variable has $E[X]=2$, $E[X^2]=7$, and $E[X^3]=30$. Compute $E[(X-2)^3]$.",
+        "steps": [
+          {
+            "do": "Expand the centered cube",
+            "result": "$(X-2)^3=X^3-6X^2+12X-8$",
+            "why": "use the binomial formula"
+          },
+          {
+            "do": "Take expectations",
+            "result": "$E[(X-2)^3]=E[X^3]-6E[X^2]+12E[X]-8$",
+            "why": "expectation is linear"
+          },
+          {
+            "do": "Substitute moments",
+            "result": "$30-6(7)+12(2)-8$",
+            "why": "use the given values"
+          },
+          {
+            "do": "Combine terms",
+            "result": "$30-42+24-8$",
+            "why": "multiply before adding"
+          },
+          {
+            "do": "Simplify",
+            "result": "$4$",
+            "why": "the arithmetic gives the third central moment"
+          }
+        ],
+        "answer": "$E[(X-2)^3]=4$."
+      },
+      {
+        "problem": "A model residual has values $-2,0,1$ with probabilities $0.2,0.5,0.3$. Compute the first two raw moments.",
+        "steps": [
+          {
+            "do": "Compute the mean",
+            "result": "$E[R]=(-2)(0.2)+0(0.5)+1(0.3)$",
+            "why": "the first raw moment is the average residual"
+          },
+          {
+            "do": "Simplify the mean",
+            "result": "$E[R]=-0.1$",
+            "why": "$-0.4+0+0.3=-0.1$"
+          },
+          {
+            "do": "Square the residual values",
+            "result": "$4,0,1$",
+            "why": "the second raw moment uses squared residuals"
+          },
+          {
+            "do": "Weight the squares",
+            "result": "$4(0.2)+0(0.5)+1(0.3)$",
+            "why": "take a probability-weighted average"
+          },
+          {
+            "do": "Simplify the second moment",
+            "result": "$E[R^2]=1.1$",
+            "why": "$0.8+0+0.3=1.1$"
+          }
+        ],
+        "answer": "$E[R]=-0.1$ and $E[R^2]=1.1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Mean as first moment",
+        "background": "The mean is the oldest moment and still the first summary people ask for.",
+        "numbers": "Values $2,4,9$ with equal weights have first moment $(2+4+9)/3=5$."
+      },
+      {
+        "title": "Variance as second central moment",
+        "background": "Statistics uses the second central moment because it measures spread around the mean.",
+        "numbers": "For $1,3,5$, mean is $3$ and variance is $(4+0+4)/3=2.667$."
+      },
+      {
+        "title": "Skewness in latency",
+        "background": "Service latency often has a long right tail; third central moments detect that lean.",
+        "numbers": "Latencies $10,10,40$ have mean $20$ and centered cubes $-1000,-1000,8000$, average $2000$."
+      },
+      {
+        "title": "Kurtosis and tail risk",
+        "background": "Fourth moments increase the penalty for rare large deviations, useful when tails matter.",
+        "numbers": "Centered deviations $-1,0,3$ have fourth powers $1,0,81$, so the large value dominates."
+      },
+      {
+        "title": "Method of moments",
+        "background": "Before modern computation, statisticians estimated parameters by matching sample moments to theoretical moments.",
+        "numbers": "If sample mean is $5$ and a model has mean parameter $theta$, set $theta=5$."
+      },
+      {
+        "title": "Feature distribution monitoring",
+        "background": "ML systems monitor moments to detect data drift across training and serving.",
+        "numbers": "A feature mean moving from $0.0$ to $0.6$ and variance from $1.0$ to $1.8$ signals both shift and spread change."
+      }
+    ],
+    "applicationsClose": "Moments are shape summaries: one language for averages, spreads, asymmetry, tails, estimation, and monitoring.",
+    "takeaways": [
+      "Raw moments average powers $E[X^k]$.",
+      "Central moments average powers around the mean, $E[(X-mu)^k]$.",
+      "Variance is the second central moment.",
+      "Higher moments describe shape, but they require finite expectations."
+    ],
     "prereqs": [
       "math-17-14"
     ]
@@ -321,19 +3879,262 @@
   B({
     "id": "math-17-16",
     "title": "Moment generating functions",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: moment generating functions.",
+    "tagline": "A moment generating function packages all moments into one exponential average when it exists.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Moments</i>"
+        "Moments",
+        "Expected value",
+        "Exponential functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Bernoulli distribution</i>"
+        "Gaussian distribution",
+        "sums of independent random variables",
+        "concentration bounds"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "Taylor series",
+        "independence",
+        "derivatives",
+        "cumulants"
       ]
     },
+    "motivation": "<p>You have seen moments one at a time: mean, variance, skew, and beyond. But computing each separately can feel like opening many drawers.</p><p>A <b>moment generating function</b>, or MGF, puts those drawers in one cabinet. It averages $e^{tX}$, and the Taylor series of the exponential stores powers of $X$ as coefficients.</p>",
+    "definition": "<p>The MGF of a random variable $X$ is $M_X(t)=E[e^{tX}]$ for values of $t$ near $0$ where the expectation is finite. Its derivatives at zero generate raw moments: $M_X'(0)=E[X]$, $M_X''(0)=E[X^2]$, and in general the $k$th derivative at zero is $E[X^k]$.</p><p>Why this works: $e^{tX}=1+tX+t^2X^2/2+...$. Taking expectation gives $M_X(t)=1+tE[X]+t^2E[X^2]/2+...$, so derivatives at $0$ pull down the moment coefficients.</p><p><b>Assumptions that matter:</b> the MGF must exist in an open interval around $0$ for the standard uniqueness and derivative facts; independence gives $M_{X+Y}(t)=M_X(t)M_Y(t)$; and not every distribution has an MGF beyond $t=0$.</p>",
+    "worked": {
+      "problem": "A Bernoulli random variable has $P(X=1)=p$ and $P(X=0)=1-p$. Find its MGF and use it to get the mean.",
+      "skills": [
+        "MGF definition",
+        "Bernoulli distribution",
+        "derivatives"
+      ],
+      "strategy": "Average $e^{tX}$ over the two outcomes, then differentiate at zero.",
+      "steps": [
+        {
+          "do": "Write the expectation",
+          "result": "$M_X(t)=E[e^{tX}]$",
+          "why": "this is the MGF definition"
+        },
+        {
+          "do": "Substitute the two outcomes",
+          "result": "$M_X(t)=(1-p)e^{t0}+p e^{t1}$",
+          "why": "weight each exponential by its probability"
+        },
+        {
+          "do": "Simplify exponentials",
+          "result": "$M_X(t)=1-p+p e^t$",
+          "why": "$e^0=1$"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$M_X'(t)=p e^t$",
+          "why": "the constant term disappears"
+        },
+        {
+          "do": "Evaluate at zero",
+          "result": "$M_X'(0)=p$",
+          "why": "$e^0=1$"
+        }
+      ],
+      "verify": "A Bernoulli variable has average $1$ with probability $p$ and $0$ otherwise, so mean $p$ matches the MGF result.",
+      "answer": "$M_X(t)=1-p+p e^t$ and $E[X]=p$.",
+      "connects": "The MGF turns moments into derivatives at zero."
+    },
+    "practice": [
+      {
+        "problem": "For a constant random variable $X=3$, find $M_X(t)$ and $E[X]$ from it.",
+        "steps": [
+          {
+            "do": "Apply the MGF definition",
+            "result": "$M_X(t)=E[e^{tX}]$",
+            "why": "start from the definition"
+          },
+          {
+            "do": "Substitute the constant",
+            "result": "$M_X(t)=E[e^{3t}]$",
+            "why": "$X$ is always 3"
+          },
+          {
+            "do": "Remove the expectation",
+            "result": "$M_X(t)=e^{3t}$",
+            "why": "a constant averages to itself"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$M_X'(t)=3e^{3t}$",
+            "why": "chain rule for the exponential"
+          },
+          {
+            "do": "Evaluate at zero",
+            "result": "$M_X'(0)=3$",
+            "why": "$e^0=1$"
+          }
+        ],
+        "answer": "$M_X(t)=e^{3t}$ and $E[X]=3$."
+      },
+      {
+        "problem": "If $X$ takes $0$ and $2$ with equal probability, find $M_X(t)$.",
+        "steps": [
+          {
+            "do": "Write the weighted expectation",
+            "result": "$M_X(t)=0.5e^{t0}+0.5e^{t2}$",
+            "why": "average over the two outcomes"
+          },
+          {
+            "do": "Simplify the first exponential",
+            "result": "$0.5e^0=0.5$",
+            "why": "$e^0=1$"
+          },
+          {
+            "do": "Simplify the expression",
+            "result": "$M_X(t)=0.5+0.5e^{2t}$",
+            "why": "combine the two weighted terms"
+          },
+          {
+            "do": "Check at zero",
+            "result": "$M_X(0)=0.5+0.5=1$",
+            "why": "every MGF equals 1 at zero"
+          },
+          {
+            "do": "State the MGF",
+            "result": "$0.5+0.5e^{2t}$",
+            "why": "the formula is valid for all real $t$ here"
+          }
+        ],
+        "answer": "$M_X(t)=0.5+0.5e^{2t}$."
+      },
+      {
+        "problem": "For $M(t)=e^{5t}$, find the first two raw moments.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$M'(t)=5e^{5t}$",
+            "why": "first derivative gives first moment at zero"
+          },
+          {
+            "do": "Evaluate at zero",
+            "result": "$M'(0)=5$",
+            "why": "$e^0=1$"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$M''(t)=25e^{5t}$",
+            "why": "differentiate $5e^{5t}$"
+          },
+          {
+            "do": "Evaluate at zero",
+            "result": "$M''(0)=25$",
+            "why": "second derivative gives $E[X^2]$"
+          },
+          {
+            "do": "Name the moments",
+            "result": "$E[X]=5$, $E[X^2]=25$",
+            "why": "derivatives at zero generate raw moments"
+          }
+        ],
+        "answer": "$E[X]=5$ and $E[X^2]=25$."
+      },
+      {
+        "problem": "Independent variables have MGFs $M_X(t)=e^{2t}$ and $M_Y(t)=e^{3t}$. Find the MGF of $X+Y$.",
+        "steps": [
+          {
+            "do": "Use independence",
+            "result": "$M_{X+Y}(t)=M_X(t)M_Y(t)$",
+            "why": "MGFs multiply for independent sums"
+          },
+          {
+            "do": "Substitute the MGFs",
+            "result": "$M_{X+Y}(t)=e^{2t}e^{3t}$",
+            "why": "use the given formulas"
+          },
+          {
+            "do": "Combine exponents",
+            "result": "$e^{5t}$",
+            "why": "$e^a e^b=e^{a+b}$"
+          },
+          {
+            "do": "Interpret the result",
+            "result": "the sum behaves like constant $5$",
+            "why": "$e^{5t}$ is the MGF of $X=5$"
+          },
+          {
+            "do": "Check the mean",
+            "result": "$2+3=5$",
+            "why": "means add for sums"
+          }
+        ],
+        "answer": "$M_{X+Y}(t)=e^{5t}$."
+      },
+      {
+        "problem": "A Bernoulli variable has $p=0.3$. Use its MGF to compute $E[X^2]$.",
+        "steps": [
+          {
+            "do": "Write the MGF",
+            "result": "$M(t)=0.7+0.3e^t$",
+            "why": "use $1-p+p e^t$"
+          },
+          {
+            "do": "Differentiate once",
+            "result": "$M'(t)=0.3e^t$",
+            "why": "prepare for the second derivative"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$M''(t)=0.3e^t$",
+            "why": "the derivative has the same form"
+          },
+          {
+            "do": "Evaluate at zero",
+            "result": "$M''(0)=0.3$",
+            "why": "$e^0=1$"
+          },
+          {
+            "do": "Check with the variable",
+            "result": "$X^2=X$",
+            "why": "a Bernoulli value is 0 or 1"
+          }
+        ],
+        "answer": "$E[X^2]=0.3$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Sums of independent noise",
+        "background": "MGFs simplify sums because independent pieces multiply in MGF space.",
+        "numbers": "If two independent constants have MGFs $e^t$ and $e^{4t}$, the sum MGF is $e^{5t}$."
+      },
+      {
+        "title": "Recovering moments",
+        "background": "Analysts use MGFs as compact containers for moments when derivatives are easier than direct sums.",
+        "numbers": "For $M(t)=e^{2t}$, $M'(0)=2$ and $M''(0)=4$."
+      },
+      {
+        "title": "Identifying distributions",
+        "background": "When MGFs exist near zero, matching MGFs identifies the distribution.",
+        "numbers": "The MGF $1-p+p e^t$ with $p=0.8$ identifies a Bernoulli with success probability $0.8$."
+      },
+      {
+        "title": "Gaussian algebra",
+        "background": "Normal distributions are pleasant partly because their MGFs make sums easy.",
+        "numbers": "Independent means $2$ and $3$ add to $5$; variances $1$ and $4$ add to $5$."
+      },
+      {
+        "title": "Concentration bounds",
+        "background": "Probability tail bounds often start by applying Markov's inequality to $e^{tX}$.",
+        "numbers": "If $E[e^{0.5X}]=2$ then $P(X>=4) <= 2/e^2 approx 0.271$."
+      },
+      {
+        "title": "Queueing and reliability models",
+        "background": "Classical applied probability uses transforms like MGFs to combine waiting times and lifetimes.",
+        "numbers": "Two independent stages with mean times $3$ and $5$ have total mean $8$, visible from first MGF derivatives."
+      }
+    ],
+    "applicationsClose": "MGFs are a transform viewpoint: moments, sums, identities, and tail bounds become easier after exponentiating.",
+    "takeaways": [
+      "$M_X(t)=E[e^{tX}]$ when this expectation exists near $0$.",
+      "Derivatives at $0$ generate raw moments.",
+      "Independent sums have product MGFs.",
+      "MGFs are powerful, but existence near zero matters."
+    ],
     "prereqs": [
       "math-17-15"
     ]
@@ -342,19 +4143,262 @@
   B({
     "id": "math-17-17",
     "title": "The Bernoulli distribution",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the bernoulli distribution.",
+    "tagline": "Bernoulli is the mathematics of one yes-or-no trial.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Moment generating functions</i>"
+        "random variables",
+        "Expected value",
+        "Variance"
       ],
       "leadsTo": [
-        "the next lesson, <i>The binomial distribution</i>"
+        "The binomial distribution",
+        "logistic regression",
+        "cross-entropy"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "indicator variables",
+        "odds",
+        "binary events",
+        "sample proportions"
       ]
     },
+    "motivation": "<p>Many questions begin as a single yes or no: did the user click, did the test pass, did the email open, did the coin land heads?</p><p>The <b>Bernoulli distribution</b> is the clean model for one such trial. It gives the outcome $1$ to success, $0$ to failure, and keeps all uncertainty in one parameter $p$.</p>",
+    "definition": "<p>A random variable $X$ has a Bernoulli distribution with parameter $p$ if $P(X=1)=p$ and $P(X=0)=1-p$, where $0<=p<=1$. Its mean is $E[X]=p$ and its variance is $Var(X)=p(1-p)$.</p><p>The mean follows because $E[X]=1p+0(1-p)=p$. The second moment equals $p$ too, since $X^2=X$ for values $0$ and $1$. Therefore $Var(X)=E[X^2]-E[X]^2=p-p^2=p(1-p)$.</p><p><b>Assumptions that matter:</b> the trial has exactly two coded outcomes; $p$ is the probability of the outcome coded as $1$; repeated Bernoulli trials need independence only if we later combine them as a binomial model.</p>",
+    "worked": {
+      "problem": "A click indicator has click probability $p=0.08$. Find $P(X=0)$, $E[X]$, and $Var(X)$.",
+      "skills": [
+        "Bernoulli probabilities",
+        "mean",
+        "variance"
+      ],
+      "strategy": "A Bernoulli variable is fully determined by $p$, so use the complement and standard formulas.",
+      "steps": [
+        {
+          "do": "Identify success probability",
+          "result": "$p=0.08$",
+          "why": "click is coded as 1"
+        },
+        {
+          "do": "Compute failure probability",
+          "result": "$1-p=0.92$",
+          "why": "the two outcomes must sum to 1"
+        },
+        {
+          "do": "Compute the mean",
+          "result": "$E[X]=p=0.08$",
+          "why": "a Bernoulli mean is its success probability"
+        },
+        {
+          "do": "Write the variance formula",
+          "result": "$Var(X)=p(1-p)$",
+          "why": "Bernoulli variance comes from $X^2=X$"
+        },
+        {
+          "do": "Substitute and multiply",
+          "result": "$Var(X)=0.08(0.92)=0.0736$",
+          "why": "use the click and no-click probabilities"
+        }
+      ],
+      "verify": "The mean is between 0 and 1, and the variance is below the maximum Bernoulli variance $0.25$.",
+      "answer": "$P(X=0)=0.92$, $E[X]=0.08$, and $Var(X)=0.0736$.",
+      "connects": "Bernoulli turns one binary event into a numerical random variable."
+    },
+    "practice": [
+      {
+        "problem": "A biased coin lands heads with probability $0.6$. Let heads be $1$. Find the mean and variance.",
+        "steps": [
+          {
+            "do": "Set the parameter",
+            "result": "$p=0.6$",
+            "why": "heads is the success outcome"
+          },
+          {
+            "do": "Compute the complement",
+            "result": "$1-p=0.4$",
+            "why": "tails is the only other outcome"
+          },
+          {
+            "do": "Find the mean",
+            "result": "$E[X]=0.6$",
+            "why": "Bernoulli mean equals $p$"
+          },
+          {
+            "do": "Find the variance",
+            "result": "$Var(X)=0.6(0.4)$",
+            "why": "use $p(1-p)$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$Var(X)=0.24$",
+            "why": "$0.6 times 0.4=0.24$"
+          }
+        ],
+        "answer": "Mean $0.6$, variance $0.24$."
+      },
+      {
+        "problem": "If $P(X=0)=0.15$ for a Bernoulli variable, find $p$ and $E[X]$.",
+        "steps": [
+          {
+            "do": "Use the complement",
+            "result": "$P(X=1)=1-0.15$",
+            "why": "probabilities of 0 and 1 sum to 1"
+          },
+          {
+            "do": "Subtract",
+            "result": "$p=0.85$",
+            "why": "success is the outcome 1"
+          },
+          {
+            "do": "Use the Bernoulli mean",
+            "result": "$E[X]=p$",
+            "why": "the average indicator equals success probability"
+          },
+          {
+            "do": "Substitute",
+            "result": "$E[X]=0.85$",
+            "why": "use the computed parameter"
+          },
+          {
+            "do": "Check bounds",
+            "result": "$0<=0.85<=1$",
+            "why": "a Bernoulli parameter must be a probability"
+          }
+        ],
+        "answer": "$p=0.85$ and $E[X]=0.85$."
+      },
+      {
+        "problem": "For $p=0.5$, show that Bernoulli variance is maximized among $p=0.2,0.5,0.8$.",
+        "steps": [
+          {
+            "do": "Compute variance at $p=0.2$",
+            "result": "$0.2(0.8)=0.16$",
+            "why": "use $p(1-p)$"
+          },
+          {
+            "do": "Compute variance at $p=0.5$",
+            "result": "$0.5(0.5)=0.25$",
+            "why": "balanced outcomes are most uncertain"
+          },
+          {
+            "do": "Compute variance at $p=0.8$",
+            "result": "$0.8(0.2)=0.16$",
+            "why": "the formula is symmetric around $0.5$"
+          },
+          {
+            "do": "Compare the values",
+            "result": "$0.25>0.16$",
+            "why": "the middle probability has greater spread"
+          },
+          {
+            "do": "State the maximum among these",
+            "result": "$p=0.5$",
+            "why": "it gives the largest variance listed"
+          }
+        ],
+        "answer": "Among those choices, $p=0.5$ has the largest variance, $0.25$."
+      },
+      {
+        "problem": "A classifier predicts probability $0.7$ for the true label $1$. Compute the likelihood for observing $X=1$ and for observing $X=0$.",
+        "steps": [
+          {
+            "do": "Set the Bernoulli parameter",
+            "result": "$p=0.7$",
+            "why": "probability of label 1"
+          },
+          {
+            "do": "Compute likelihood for $X=1$",
+            "result": "$P(X=1)=0.7$",
+            "why": "success likelihood equals $p$"
+          },
+          {
+            "do": "Compute complement",
+            "result": "$1-p=0.3$",
+            "why": "label 0 is failure under this coding"
+          },
+          {
+            "do": "Compute likelihood for $X=0$",
+            "result": "$P(X=0)=0.3$",
+            "why": "use the complement"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.7>0.3$",
+            "why": "the model favors label 1"
+          }
+        ],
+        "answer": "Likelihood is $0.7$ for $X=1$ and $0.3$ for $X=0$."
+      },
+      {
+        "problem": "In 200 impressions, the observed click rate is $0.04$. Model a single impression as Bernoulli and estimate its variance.",
+        "steps": [
+          {
+            "do": "Estimate the parameter",
+            "result": "$p=0.04$",
+            "why": "sample click rate estimates click probability"
+          },
+          {
+            "do": "Compute no-click probability",
+            "result": "$1-p=0.96$",
+            "why": "only click or no click"
+          },
+          {
+            "do": "Use the Bernoulli variance formula",
+            "result": "$Var(X)=0.04(0.96)$",
+            "why": "single impression is a Bernoulli trial"
+          },
+          {
+            "do": "Multiply",
+            "result": "$Var(X)=0.0384$",
+            "why": "$4 percent times 96 percent$"
+          },
+          {
+            "do": "Interpret",
+            "result": "single-impression outcomes are very noisy",
+            "why": "most variance remains despite a low mean"
+          }
+        ],
+        "answer": "Estimated single-trial variance is $0.0384$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Click indicators",
+        "background": "Ads and recommendation systems often start with click or no-click events.",
+        "numbers": "If $p=0.03$, then $E[X]=0.03$ and $Var(X)=0.03(0.97)=0.0291$."
+      },
+      {
+        "title": "Logistic regression labels",
+        "background": "Binary classification treats each label as a Bernoulli outcome with model-predicted parameter.",
+        "numbers": "Prediction $p=0.8$ assigns likelihood $0.8$ to label 1 and $0.2$ to label 0."
+      },
+      {
+        "title": "A/B conversion",
+        "background": "Conversion is naturally coded as 1 for converted and 0 otherwise.",
+        "numbers": "A $12 percent$ conversion probability gives variance $0.12(0.88)=0.1056$."
+      },
+      {
+        "title": "Data quality checks",
+        "background": "Missingness for a field can be modeled as a Bernoulli indicator.",
+        "numbers": "If $7$ of $100$ rows are missing, estimate $p=0.07$ and variance $0.0651$."
+      },
+      {
+        "title": "Unit test pass indicators",
+        "background": "A flaky test can be viewed as pass or fail on each run.",
+        "numbers": "If pass probability is $0.95$, fail probability is $0.05$."
+      },
+      {
+        "title": "Dropout masks",
+        "background": "Neural-network dropout randomly keeps or removes units during training.",
+        "numbers": "With keep probability $0.8$, a mask entry has mean $0.8$ and variance $0.16$."
+      }
+    ],
+    "applicationsClose": "Bernoulli is the small binary brick under clicks, labels, conversions, masks, and many larger count models.",
+    "takeaways": [
+      "Bernoulli has outcomes $0$ and $1$ with success probability $p$.",
+      "Its mean is $p$ and its variance is $p(1-p)$.",
+      "Indicator variables are Bernoulli variables when the event probability is fixed.",
+      "Repeated independent Bernoulli trials lead naturally to the binomial distribution."
+    ],
     "prereqs": [
       "math-17-16"
     ]
@@ -363,19 +4407,267 @@
   B({
     "id": "math-17-18",
     "title": "The binomial distribution",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the binomial distribution.",
+    "tagline": "Binomial counts how many successes appear in a fixed number of independent yes-or-no trials.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Bernoulli distribution</i>"
+        "The Bernoulli distribution",
+        "combinations",
+        "Expected value"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Poisson distribution</i>"
+        "The Poisson distribution",
+        "normal approximation",
+        "confidence intervals for proportions"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "independence",
+        "sample proportions",
+        "combinatorics",
+        "variance"
       ]
     },
+    "motivation": "<p>One Bernoulli trial answers one yes-or-no question. But data rarely arrives as one trial. We ask how many users clicked among 100 impressions, how many tests passed among 20 runs, or how many heads appeared in 10 flips.</p><p>The <b>binomial distribution</b> counts successes across a fixed number of independent Bernoulli trials with the same success probability.</p>",
+    "definition": "<p>A random variable $X$ has a binomial distribution with parameters $n$ and $p$ if it counts successes in $n$ independent Bernoulli trials, each with success probability $p$. For $k=0,1,...,n$, $P(X=k)=C(n,k)p^k(1-p)^{n-k}$.</p><p>The formula has three parts: $p^k$ for the $k$ successes, $(1-p)^{n-k}$ for the failures, and $C(n,k)$ for the number of orders those successes can occupy. Its mean is $np$ and its variance is $np(1-p)$ because it is a sum of $n$ independent Bernoulli variables.</p><p><b>Assumptions that matter:</b> the number of trials $n$ is fixed, trials are independent, every trial has the same $p$, and the variable counts successes rather than measuring waiting time.</p>",
+    "worked": {
+      "problem": "A test has pass probability $0.8$ on each independent run. For $n=3$ runs, find $P(X=2)$ and $E[X]$.",
+      "skills": [
+        "binomial formula",
+        "combinations",
+        "mean"
+      ],
+      "strategy": "Count the orders for exactly two passes, then multiply by pass and fail probabilities.",
+      "steps": [
+        {
+          "do": "Identify parameters",
+          "result": "$n=3$, $p=0.8$, $k=2$",
+          "why": "we count exactly two passes"
+        },
+        {
+          "do": "Compute the combination",
+          "result": "$C(3,2)=3$",
+          "why": "the single failure can be in any of three positions"
+        },
+        {
+          "do": "Write the probability",
+          "result": "$P(X=2)=3(0.8)^2(0.2)^1$",
+          "why": "two passes and one failure"
+        },
+        {
+          "do": "Compute powers",
+          "result": "$3(0.64)(0.2)$",
+          "why": "$0.8^2=0.64$"
+        },
+        {
+          "do": "Multiply",
+          "result": "$P(X=2)=0.384$",
+          "why": "$3 times 0.128=0.384$"
+        },
+        {
+          "do": "Compute the mean",
+          "result": "$E[X]=np=3(0.8)=2.4$",
+          "why": "binomial mean is trials times success probability"
+        }
+      ],
+      "verify": "Exactly two passes is likely but not certain; mean $2.4$ passes is sensible for three high-probability trials.",
+      "answer": "$P(X=2)=0.384$ and $E[X]=2.4$.",
+      "connects": "Binomial is a sum of independent Bernoulli trials."
+    },
+    "practice": [
+      {
+        "problem": "For $X$ binomial with $n=4$, $p=0.5$, find $P(X=2)$.",
+        "steps": [
+          {
+            "do": "Identify $k$",
+            "result": "$k=2$",
+            "why": "we want exactly two successes"
+          },
+          {
+            "do": "Compute combinations",
+            "result": "$C(4,2)=6$",
+            "why": "choose which two trials succeed"
+          },
+          {
+            "do": "Write the formula",
+            "result": "$P(X=2)=6(0.5)^2(0.5)^2$",
+            "why": "two successes and two failures"
+          },
+          {
+            "do": "Combine powers",
+            "result": "$6(0.5)^4$",
+            "why": "all four trials have factor $0.5$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$6/16=0.375$",
+            "why": "$0.5^4=1/16$"
+          }
+        ],
+        "answer": "$P(X=2)=0.375$."
+      },
+      {
+        "problem": "For $n=10$, $p=0.3$, find the mean and variance.",
+        "steps": [
+          {
+            "do": "Use the mean formula",
+            "result": "$E[X]=np$",
+            "why": "binomial counts $n$ Bernoulli trials"
+          },
+          {
+            "do": "Substitute mean values",
+            "result": "$E[X]=10(0.3)=3$",
+            "why": "multiply trials by success probability"
+          },
+          {
+            "do": "Use the variance formula",
+            "result": "$Var(X)=np(1-p)$",
+            "why": "independent Bernoulli variances add"
+          },
+          {
+            "do": "Substitute variance values",
+            "result": "$10(0.3)(0.7)$",
+            "why": "failure probability is $0.7$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$Var(X)=2.1$",
+            "why": "$10 times 0.21=2.1$"
+          }
+        ],
+        "answer": "Mean $3$, variance $2.1$."
+      },
+      {
+        "problem": "A model succeeds with probability $0.9$ on each independent case. Find the probability all $5$ cases succeed.",
+        "steps": [
+          {
+            "do": "Set the count",
+            "result": "$k=5$",
+            "why": "all five are successes"
+          },
+          {
+            "do": "Compute the combination",
+            "result": "$C(5,5)=1$",
+            "why": "there is only one all-success order"
+          },
+          {
+            "do": "Write the probability",
+            "result": "$P(X=5)=1(0.9)^5(0.1)^0$",
+            "why": "five successes and zero failures"
+          },
+          {
+            "do": "Simplify failure factor",
+            "result": "$(0.1)^0=1$",
+            "why": "anything nonzero to the zero power is 1"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$0.9^5=0.59049$",
+            "why": "multiply five success probabilities"
+          }
+        ],
+        "answer": "The probability is $0.59049$."
+      },
+      {
+        "problem": "For $n=6$, $p=0.2$, find $P(X=0)$ and $P(X>=1)$.",
+        "steps": [
+          {
+            "do": "Write $P(X=0)$",
+            "result": "$C(6,0)(0.2)^0(0.8)^6$",
+            "why": "zero successes means all failures"
+          },
+          {
+            "do": "Simplify constants",
+            "result": "$P(X=0)=0.8^6$",
+            "why": "$C(6,0)=1$ and $(0.2)^0=1$"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$0.8^6=0.262144$",
+            "why": "six independent failures"
+          },
+          {
+            "do": "Use the complement",
+            "result": "$P(X>=1)=1-P(X=0)$",
+            "why": "at least one success is the complement of none"
+          },
+          {
+            "do": "Subtract",
+            "result": "$P(X>=1)=0.737856$",
+            "why": "$1-0.262144=0.737856$"
+          }
+        ],
+        "answer": "$P(X=0)=0.262144$ and $P(X>=1)=0.737856$."
+      },
+      {
+        "problem": "Among 100 impressions with click probability $0.04$, estimate the expected clicks and variance under a binomial model.",
+        "steps": [
+          {
+            "do": "Identify parameters",
+            "result": "$n=100$, $p=0.04$",
+            "why": "each impression is one Bernoulli trial"
+          },
+          {
+            "do": "Compute expected clicks",
+            "result": "$E[X]=100(0.04)$",
+            "why": "use $np$"
+          },
+          {
+            "do": "Simplify the mean",
+            "result": "$E[X]=4$",
+            "why": "four percent of 100"
+          },
+          {
+            "do": "Compute the variance",
+            "result": "$Var(X)=100(0.04)(0.96)$",
+            "why": "use $np(1-p)$"
+          },
+          {
+            "do": "Simplify the variance",
+            "result": "$Var(X)=3.84$",
+            "why": "$100 times 0.0384=3.84$"
+          }
+        ],
+        "answer": "Expected clicks $4$ and variance $3.84$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Click counts",
+        "background": "Ad systems count successes over fixed impressions when each impression is treated as a trial.",
+        "numbers": "$100$ impressions with $p=0.03$ have expected clicks $3$ and variance $2.91$."
+      },
+      {
+        "title": "A/B conversions",
+        "background": "Experiments compare conversion counts across treatment groups of fixed size.",
+        "numbers": "$n=200$, $p=0.1$ gives expected conversions $20$."
+      },
+      {
+        "title": "Reliability testing",
+        "background": "Manufacturing and software quality often count how many units pass a fixed test suite.",
+        "numbers": "$10$ independent checks with pass probability $0.95$ all pass with probability $0.95^{10} approx 0.599$."
+      },
+      {
+        "title": "Mini-batch class counts",
+        "background": "Training batches randomly sample examples; class counts can be approximately binomial.",
+        "numbers": "In batch size $32$ with class probability $0.25$, expected class count is $8$."
+      },
+      {
+        "title": "Polling",
+        "background": "Survey counts of yes responses are modeled binomially under simple random sampling.",
+        "numbers": "$n=1000$, $p=0.52$ gives mean $520$ and standard deviation $sqrt(249.6) approx 15.8$."
+      },
+      {
+        "title": "Dropout kept units",
+        "background": "Each unit may be kept independently during dropout training.",
+        "numbers": "With $50$ units and keep probability $0.8$, expected kept units are $40$ and variance $8$."
+      }
+    ],
+    "applicationsClose": "Whenever fixed independent yes-or-no trials become a count, the binomial distribution is the natural first model.",
+    "takeaways": [
+      "Binomial counts successes in fixed independent Bernoulli trials.",
+      "$P(X=k)=C(n,k)p^k(1-p)^{n-k}$.",
+      "Its mean is $np$ and variance is $np(1-p)$.",
+      "The assumptions of fixed $n$, common $p$, and independence are essential."
+    ],
     "prereqs": [
       "math-17-17"
     ]
@@ -384,19 +4676,267 @@
   B({
     "id": "math-17-19",
     "title": "The Poisson distribution",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the poisson distribution.",
+    "tagline": "Poisson models counts of rare events over a fixed window when the average rate is known.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The binomial distribution</i>"
+        "The binomial distribution",
+        "Exponential functions",
+        "Expected value"
       ],
       "leadsTo": [
-        "the next lesson, <i>The geometric distribution</i>"
+        "The exponential distribution",
+        "Poisson processes",
+        "count models"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "rates",
+        "rare-event approximations",
+        "independence",
+        "factorials"
       ]
     },
+    "motivation": "<p>Some counts do not come from a clear fixed number of trials. How many requests arrive in a second? How many typos appear on a page? How many failures happen in a day?</p><p>The <b>Poisson distribution</b> models counts in a fixed window using one number, the average rate $lambda$. It is especially useful when many tiny opportunities each have small chance of producing an event.</p>",
+    "definition": "<p>A random variable $X$ has a Poisson distribution with rate $lambda>0$ if $P(X=k)=e^{-lambda}lambda^k/k!$ for $k=0,1,2,...$. Its mean and variance are both $lambda$.</p><p>The formula can be seen as a rare-event limit of binomial counts: let $n$ be large, $p$ small, and $np=lambda$ fixed. The many combinations and small probabilities settle into $e^{-lambda}lambda^k/k!$.</p><p><b>Assumptions that matter:</b> events are counted in a fixed window, the average rate is stable, events occur independently enough for the model, and two events do not pile up at exactly the same tiny instant in the ideal model.</p>",
+    "worked": {
+      "problem": "A server averages $lambda=2$ errors per hour. Under a Poisson model, find the probability of exactly $3$ errors in an hour.",
+      "skills": [
+        "Poisson formula",
+        "factorials",
+        "rates"
+      ],
+      "strategy": "Use the count formula with $k=3$ and keep the exponential factor attached.",
+      "steps": [
+        {
+          "do": "Identify the rate and count",
+          "result": "$lambda=2$, $k=3$",
+          "why": "we count errors in one hour"
+        },
+        {
+          "do": "Write the formula",
+          "result": "$P(X=3)=e^{-2}2^3/3!$",
+          "why": "use the Poisson probability mass function"
+        },
+        {
+          "do": "Compute the power",
+          "result": "$2^3=8$",
+          "why": "three counted events"
+        },
+        {
+          "do": "Compute the factorial",
+          "result": "$3!=6$",
+          "why": "factorial adjusts for event order"
+        },
+        {
+          "do": "Simplify the coefficient",
+          "result": "$P(X=3)=(8/6)e^{-2}$",
+          "why": "combine non-exponential terms"
+        },
+        {
+          "do": "Approximate",
+          "result": "$P(X=3) approx 0.180$",
+          "why": "$e^{-2} approx 0.1353$"
+        }
+      ],
+      "verify": "With average 2, seeing 3 errors is quite plausible, and a probability around 18 percent is reasonable.",
+      "answer": "$P(X=3)=e^{-2}8/6 approx 0.180$.",
+      "connects": "Poisson turns a rate into probabilities for whole-number counts."
+    },
+    "practice": [
+      {
+        "problem": "For $lambda=4$, find $P(X=0)$.",
+        "steps": [
+          {
+            "do": "Set $k=0$",
+            "result": "$P(X=0)=e^{-4}4^0/0!$",
+            "why": "zero events are requested"
+          },
+          {
+            "do": "Simplify the power",
+            "result": "$4^0=1$",
+            "why": "nonzero numbers to the zero power equal 1"
+          },
+          {
+            "do": "Simplify the factorial",
+            "result": "$0!=1$",
+            "why": "by factorial convention"
+          },
+          {
+            "do": "Reduce the expression",
+            "result": "$P(X=0)=e^{-4}$",
+            "why": "only the no-event exponential remains"
+          },
+          {
+            "do": "Approximate",
+            "result": "$e^{-4} approx 0.0183$",
+            "why": "zero events is rare when the mean is 4"
+          }
+        ],
+        "answer": "$P(X=0)=e^{-4} approx 0.0183$."
+      },
+      {
+        "problem": "For $lambda=3$, find $P(X=1)$.",
+        "steps": [
+          {
+            "do": "Write the probability",
+            "result": "$P(X=1)=e^{-3}3^1/1!$",
+            "why": "use the Poisson formula"
+          },
+          {
+            "do": "Simplify the power",
+            "result": "$3^1=3$",
+            "why": "one event contributes one factor of 3"
+          },
+          {
+            "do": "Simplify the factorial",
+            "result": "$1!=1$",
+            "why": "one item has one order"
+          },
+          {
+            "do": "Reduce the expression",
+            "result": "$P(X=1)=3e^{-3}$",
+            "why": "combine constants"
+          },
+          {
+            "do": "Approximate",
+            "result": "$P(X=1) approx 0.149$",
+            "why": "$e^{-3} approx 0.0498$"
+          }
+        ],
+        "answer": "$P(X=1) approx 0.149$."
+      },
+      {
+        "problem": "If requests arrive at average $6$ per minute, what are the mean and variance of the one-minute count?",
+        "steps": [
+          {
+            "do": "Identify the rate",
+            "result": "$lambda=6$",
+            "why": "the window is one minute"
+          },
+          {
+            "do": "Use the Poisson mean",
+            "result": "$E[X]=lambda$",
+            "why": "Poisson mean equals its rate"
+          },
+          {
+            "do": "Substitute the rate",
+            "result": "$E[X]=6$",
+            "why": "average count per minute"
+          },
+          {
+            "do": "Use the Poisson variance",
+            "result": "$Var(X)=lambda$",
+            "why": "Poisson variance also equals its rate"
+          },
+          {
+            "do": "Substitute the rate",
+            "result": "$Var(X)=6$",
+            "why": "same parameter controls spread"
+          }
+        ],
+        "answer": "Mean $6$, variance $6$."
+      },
+      {
+        "problem": "A rate is $2$ events per hour. Find the Poisson rate for $30$ minutes and $P(X=0)$ in that half hour.",
+        "steps": [
+          {
+            "do": "Convert the time window",
+            "result": "$30$ minutes $=0.5$ hour",
+            "why": "rate is per hour"
+          },
+          {
+            "do": "Scale the rate",
+            "result": "$lambda=2(0.5)=1$",
+            "why": "expected count scales with window length"
+          },
+          {
+            "do": "Write the zero-count probability",
+            "result": "$P(X=0)=e^{-1}1^0/0!$",
+            "why": "use $k=0$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$P(X=0)=e^{-1}$",
+            "why": "the power and factorial are 1"
+          },
+          {
+            "do": "Approximate",
+            "result": "$P(X=0) approx 0.368$",
+            "why": "$e^{-1}$ is about 0.368"
+          }
+        ],
+        "answer": "Half-hour rate $lambda=1$ and $P(X=0) approx 0.368$."
+      },
+      {
+        "problem": "A page has an average of $0.4$ typos. Find the probability of at least one typo.",
+        "steps": [
+          {
+            "do": "Use the complement",
+            "result": "$P(X>=1)=1-P(X=0)$",
+            "why": "at least one is easier through zero"
+          },
+          {
+            "do": "Compute the zero probability",
+            "result": "$P(X=0)=e^{-0.4}$",
+            "why": "Poisson zero-count formula"
+          },
+          {
+            "do": "Approximate the exponential",
+            "result": "$e^{-0.4} approx 0.6703$",
+            "why": "use a calculator value"
+          },
+          {
+            "do": "Subtract from one",
+            "result": "$P(X>=1)=1-0.6703$",
+            "why": "take the complement"
+          },
+          {
+            "do": "Simplify",
+            "result": "$P(X>=1) approx 0.3297$",
+            "why": "about one third of pages have a typo"
+          }
+        ],
+        "answer": "The probability is about $0.330$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Web request counts",
+        "background": "Traffic engineering often models arrivals per short interval as Poisson when rates are stable.",
+        "numbers": "At $12$ requests per second, the expected count in $0.25$ seconds is $lambda=3$."
+      },
+      {
+        "title": "Rare error monitoring",
+        "background": "Operations teams count incidents or exceptions over time windows.",
+        "numbers": "With $lambda=0.5$ errors per hour, no errors in an hour has probability $e^{-0.5}=0.607$."
+      },
+      {
+        "title": "Text typos",
+        "background": "Classical Poisson examples include printing errors across pages.",
+        "numbers": "Average $0.2$ typos per page gives $P(at least one)=1-e^{-0.2}=0.181$."
+      },
+      {
+        "title": "Click counts at low probability",
+        "background": "For many impressions with tiny click probability, binomial counts can be approximated by Poisson.",
+        "numbers": "$n=1000$, $p=0.002$ gives $lambda=2$, so $P(0) approx e^{-2}=0.135$."
+      },
+      {
+        "title": "Biology event counts",
+        "background": "Mutation and particle counts are often modeled by rates over regions or time.",
+        "numbers": "If expected mutations in a segment are $1.5$, variance is also $1.5$."
+      },
+      {
+        "title": "Queue arrivals",
+        "background": "Poisson arrivals are a foundation of queueing theory.",
+        "numbers": "At $5$ arrivals per minute, a two-minute window has $lambda=10$."
+      }
+    ],
+    "applicationsClose": "Poisson is the rate-to-count bridge for rare clicks, errors, arrivals, typos, and other windowed events.",
+    "takeaways": [
+      "$P(X=k)=e^{-lambda}lambda^k/k!$ for counts $k=0,1,2,...$.",
+      "Poisson mean and variance are both $lambda$.",
+      "Rates scale with the size of the time or space window.",
+      "It often approximates binomial counts when $n$ is large and $p$ is small."
+    ],
     "prereqs": [
       "math-17-18"
     ]
@@ -405,19 +4945,267 @@
   B({
     "id": "math-17-20",
     "title": "The geometric distribution",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the geometric distribution.",
+    "tagline": "Geometric measures how long you wait until the first success.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Poisson distribution</i>"
+        "The Bernoulli distribution",
+        "independence",
+        "infinite series"
       ],
       "leadsTo": [
-        "the next lesson, <i>The uniform distribution</i>"
+        "The exponential distribution",
+        "survival functions",
+        "negative binomial models"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "waiting times",
+        "memorylessness",
+        "failure probabilities",
+        "sample paths"
       ]
     },
+    "motivation": "<p>Sometimes the count is not successes in a fixed batch, but the waiting time until success arrives. How many tries until a test passes? How many impressions until the first click?</p><p>The <b>geometric distribution</b> is the discrete waiting-time model for repeated independent Bernoulli trials with the same success probability.</p>",
+    "definition": "<p>Using the common trial-count convention, $X$ has a geometric distribution with parameter $p$ if $X$ is the trial number of the first success. Then $P(X=k)=(1-p)^{k-1}p$ for $k=1,2,3,...$. Its mean is $1/p$ and variance is $(1-p)/p^2$.</p><p>The probability formula says: fail $k-1$ times, then succeed once. The memoryless property says $P(X>s+t | X>s)=P(X>t)$, because after $s$ failures the remaining independent trials look fresh.</p><p><b>Assumptions that matter:</b> trials are independent, $p$ stays constant, this convention counts the success trial itself, and a different convention may count failures before first success instead.</p>",
+    "worked": {
+      "problem": "A model deployment check passes each run with probability $0.25$. Find the probability the first pass occurs on run $4$ and the expected run number.",
+      "skills": [
+        "geometric formula",
+        "waiting time",
+        "mean"
+      ],
+      "strategy": "First pass on run 4 means three failures followed by one success.",
+      "steps": [
+        {
+          "do": "Identify the parameter",
+          "result": "$p=0.25$",
+          "why": "pass is the success event"
+        },
+        {
+          "do": "Compute failure probability",
+          "result": "$1-p=0.75$",
+          "why": "failure is the complement"
+        },
+        {
+          "do": "Write the probability",
+          "result": "$P(X=4)=0.75^3(0.25)$",
+          "why": "three failures, then success"
+        },
+        {
+          "do": "Compute the power",
+          "result": "$0.75^3=0.421875$",
+          "why": "multiply three failures"
+        },
+        {
+          "do": "Multiply by success probability",
+          "result": "$P(X=4)=0.10546875$",
+          "why": "finish with the fourth-run pass"
+        },
+        {
+          "do": "Compute the mean",
+          "result": "$E[X]=1/0.25=4$",
+          "why": "geometric mean under trial-count convention"
+        }
+      ],
+      "verify": "A one-in-four success rate makes an average wait of four runs intuitive; first success exactly on run four has probability about 10.5 percent.",
+      "answer": "$P(X=4) approx 0.1055$ and $E[X]=4$.",
+      "connects": "Geometric counts the waiting time created by repeated Bernoulli trials."
+    },
+    "practice": [
+      {
+        "problem": "For $p=0.5$, find $P(X=3)$ under the first-success trial-count convention.",
+        "steps": [
+          {
+            "do": "Compute failure probability",
+            "result": "$1-p=0.5$",
+            "why": "failure and success are equally likely"
+          },
+          {
+            "do": "Write the formula",
+            "result": "$P(X=3)=(0.5)^{2}(0.5)$",
+            "why": "two failures before the third-trial success"
+          },
+          {
+            "do": "Compute the failure product",
+            "result": "$(0.5)^2=0.25$",
+            "why": "two independent failures"
+          },
+          {
+            "do": "Multiply by success",
+            "result": "$0.25(0.5)=0.125$",
+            "why": "the third trial succeeds"
+          },
+          {
+            "do": "State the probability",
+            "result": "$P(X=3)=0.125$",
+            "why": "one exact sequence is fail, fail, success"
+          }
+        ],
+        "answer": "$0.125$."
+      },
+      {
+        "problem": "For $p=0.2$, find the expected trial number and variance.",
+        "steps": [
+          {
+            "do": "Use the mean formula",
+            "result": "$E[X]=1/p$",
+            "why": "trial-count geometric mean"
+          },
+          {
+            "do": "Substitute $p=0.2$",
+            "result": "$E[X]=5$",
+            "why": "$1/0.2=5$"
+          },
+          {
+            "do": "Use the variance formula",
+            "result": "$Var(X)=(1-p)/p^2$",
+            "why": "standard geometric variance"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$Var(X)=0.8/0.2^2$",
+            "why": "failure probability is $0.8$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$Var(X)=20$",
+            "why": "$0.8/0.04=20$"
+          }
+        ],
+        "answer": "Mean $5$, variance $20$."
+      },
+      {
+        "problem": "With success probability $0.1$, find the probability that success takes more than $3$ trials.",
+        "steps": [
+          {
+            "do": "Translate the event",
+            "result": "$X>3$ means first three trials fail",
+            "why": "success has not appeared by trial 3"
+          },
+          {
+            "do": "Compute failure probability",
+            "result": "$1-p=0.9$",
+            "why": "success probability is $0.1$"
+          },
+          {
+            "do": "Write the survival probability",
+            "result": "$P(X>3)=0.9^3$",
+            "why": "three independent failures"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$0.9^3=0.729$",
+            "why": "multiply three failure probabilities"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $72.9 percent$",
+            "why": "rare success often requires waiting"
+          }
+        ],
+        "answer": "$P(X>3)=0.729$."
+      },
+      {
+        "problem": "If $P(X=1)=0.3$ for a geometric variable, find $P(X=2)$ and $P(X=3)$.",
+        "steps": [
+          {
+            "do": "Identify $p$",
+            "result": "$p=0.3$",
+            "why": "first success on trial 1 has probability $p$"
+          },
+          {
+            "do": "Compute failure probability",
+            "result": "$1-p=0.7$",
+            "why": "the trial either succeeds or fails"
+          },
+          {
+            "do": "Compute $P(X=2)$",
+            "result": "$0.7(0.3)=0.21$",
+            "why": "fail once, then succeed"
+          },
+          {
+            "do": "Compute $P(X=3)$",
+            "result": "$0.7^2(0.3)$",
+            "why": "fail twice, then succeed"
+          },
+          {
+            "do": "Simplify $P(X=3)$",
+            "result": "$0.147$",
+            "why": "$0.49 times 0.3=0.147$"
+          }
+        ],
+        "answer": "$P(X=2)=0.21$ and $P(X=3)=0.147$."
+      },
+      {
+        "problem": "A user clicks an ad with probability $0.04$ per independent impression. Estimate the expected impression number of the first click and $P(X<=2)$.",
+        "steps": [
+          {
+            "do": "Compute expected wait",
+            "result": "$E[X]=1/0.04=25$",
+            "why": "geometric mean is reciprocal success probability"
+          },
+          {
+            "do": "Use complement for $P(X<=2)$",
+            "result": "$P(X<=2)=1-P(X>2)$",
+            "why": "at least one click in two impressions"
+          },
+          {
+            "do": "Compute no click probability for two impressions",
+            "result": "$P(X>2)=0.96^2$",
+            "why": "first two impressions fail"
+          },
+          {
+            "do": "Square",
+            "result": "$0.96^2=0.9216$",
+            "why": "two independent no-clicks"
+          },
+          {
+            "do": "Subtract",
+            "result": "$P(X<=2)=0.0784$",
+            "why": "one minus no click in two impressions"
+          }
+        ],
+        "answer": "Expected first click is impression $25$; $P(X<=2)=0.0784$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Retries until success",
+        "background": "Distributed systems often retry operations until one succeeds.",
+        "numbers": "With success probability $0.8$, expected attempts are $1/0.8=1.25$."
+      },
+      {
+        "title": "First click waiting time",
+        "background": "Ad systems may ask how many impressions precede the first click.",
+        "numbers": "At $p=0.02$, expected first-click impression is $50$."
+      },
+      {
+        "title": "Quality-control testing",
+        "background": "A factory may test items until a defective one is found, or until a good one appears.",
+        "numbers": "If defect probability is $0.01$, expected wait for first defect is $100$ items."
+      },
+      {
+        "title": "Randomized algorithms",
+        "background": "Some algorithms repeat a randomized attempt until it succeeds.",
+        "numbers": "If each attempt succeeds with $0.25$, probability of success within $3$ tries is $1-0.75^3=0.578$."
+      },
+      {
+        "title": "Memoryless modeling",
+        "background": "The geometric distribution is the discrete model where past failures do not change the future chance.",
+        "numbers": "With $p=0.4$, after five failures the chance the next trial succeeds is still $0.4$."
+      },
+      {
+        "title": "Data collection",
+        "background": "Researchers sometimes sample until finding the first positive example.",
+        "numbers": "If positives are $5 percent$, expected samples to first positive are $20$."
+      }
+    ],
+    "applicationsClose": "Geometric waiting times appear anywhere independent repeated attempts continue until the first success.",
+    "takeaways": [
+      "Geometric counts the trial number of the first success under this convention.",
+      "$P(X=k)=(1-p)^{k-1}p$.",
+      "Mean is $1/p$ and variance is $(1-p)/p^2$.",
+      "Its memoryless property is the discrete cousin of the exponential distribution."
+    ],
     "prereqs": [
       "math-17-19"
     ]
@@ -426,19 +5214,267 @@
   B({
     "id": "math-17-21",
     "title": "The uniform distribution",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the uniform distribution.",
+    "tagline": "Uniform distributions make every allowed outcome equally likely, either across a list or across an interval.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The geometric distribution</i>"
+        "random variables",
+        "probability density",
+        "Expected value"
       ],
       "leadsTo": [
-        "the next lesson, <i>The exponential distribution</i>"
+        "The exponential distribution",
+        "simulation",
+        "Monte Carlo methods"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "intervals",
+        "symmetry",
+        "random sampling",
+        "quantiles"
       ]
     },
+    "motivation": "<p>Sometimes fairness is the model: a die has equally likely faces, a random number generator chooses evenly from $0$ to $1$, or a shuffle gives each position the same chance.</p><p>The <b>uniform distribution</b> is the probability model for equal likelihood over an allowed set. It is simple, but it powers simulation, random initialization, and many probability transformations.</p>",
+    "definition": "<p>For a continuous uniform random variable on $[a,b]$, the density is $f(x)=1/(b-a)$ for $a<=x<=b$ and $0$ otherwise. Probabilities are lengths divided by total length: $P(c<=X<=d)=(d-c)/(b-a)$ when $[c,d]$ lies inside $[a,b]$.</p><p>The mean is $(a+b)/2$ by symmetry, and the variance is $(b-a)^2/12$. For a discrete uniform distribution over $n$ equally likely values, each value has probability $1/n$.</p><p><b>Assumptions that matter:</b> continuous uniform probability at any exact point is $0$; probability comes from interval length; the density must integrate to $1$; and equal density over an interval is different from equal probability over infinitely many individual points.</p>",
+    "worked": {
+      "problem": "Let $X$ be uniform on $[2,8]$. Find the density, mean, variance, and $P(3<=X<=5)$.",
+      "skills": [
+        "continuous uniform",
+        "density",
+        "interval probability"
+      ],
+      "strategy": "Use interval length: the whole interval has length 6, and subinterval probabilities are length ratios.",
+      "steps": [
+        {
+          "do": "Compute total length",
+          "result": "$8-2=6$",
+          "why": "uniform density spreads mass over this interval"
+        },
+        {
+          "do": "Find the density",
+          "result": "$f(x)=1/6$ on $[2,8]$",
+          "why": "density times total length must equal 1"
+        },
+        {
+          "do": "Compute the mean",
+          "result": "$(2+8)/2=5$",
+          "why": "the midpoint balances the interval"
+        },
+        {
+          "do": "Compute the variance",
+          "result": "$(8-2)^2/12=36/12=3$",
+          "why": "use the continuous uniform variance formula"
+        },
+        {
+          "do": "Compute subinterval length",
+          "result": "$5-3=2$",
+          "why": "probability is proportional to length"
+        },
+        {
+          "do": "Divide by total length",
+          "result": "$P(3<=X<=5)=2/6=1/3$",
+          "why": "two favorable units out of six"
+        }
+      ],
+      "verify": "The density $1/6$ over length 6 gives total probability 1, and the requested interval is one third of the full length.",
+      "answer": "$f(x)=1/6$, mean $5$, variance $3$, and $P(3<=X<=5)=1/3$.",
+      "connects": "Uniform probability is geometry: favorable length over total length."
+    },
+    "practice": [
+      {
+        "problem": "A die roll is discrete uniform on $1,2,3,4,5,6$. Find $P(X=4)$ and $P(X>=5)$.",
+        "steps": [
+          {
+            "do": "Count outcomes",
+            "result": "$6$",
+            "why": "a standard die has six faces"
+          },
+          {
+            "do": "Assign each probability",
+            "result": "$1/6$",
+            "why": "discrete uniform means equal probabilities"
+          },
+          {
+            "do": "Find $P(X=4)$",
+            "result": "$1/6$",
+            "why": "one favorable face"
+          },
+          {
+            "do": "Count outcomes at least 5",
+            "result": "$2$",
+            "why": "faces 5 and 6 qualify"
+          },
+          {
+            "do": "Compute the probability",
+            "result": "$2/6=1/3$",
+            "why": "favorable over total"
+          }
+        ],
+        "answer": "$P(X=4)=1/6$ and $P(X>=5)=1/3$."
+      },
+      {
+        "problem": "For $X$ uniform on $[0,1]$, find $P(0.2<=X<=0.7)$.",
+        "steps": [
+          {
+            "do": "Compute total length",
+            "result": "$1-0=1$",
+            "why": "the full unit interval has length 1"
+          },
+          {
+            "do": "Compute favorable length",
+            "result": "$0.7-0.2=0.5$",
+            "why": "probability comes from interval length"
+          },
+          {
+            "do": "Divide lengths",
+            "result": "$0.5/1=0.5$",
+            "why": "favorable length over total length"
+          },
+          {
+            "do": "Check endpoints",
+            "result": "including endpoints changes nothing",
+            "why": "single points have probability 0 in a continuous model"
+          },
+          {
+            "do": "State the probability",
+            "result": "$0.5$",
+            "why": "half the unit interval is covered"
+          }
+        ],
+        "answer": "$0.5$."
+      },
+      {
+        "problem": "For $X$ uniform on $[-3,3]$, find the mean and variance.",
+        "steps": [
+          {
+            "do": "Compute the midpoint",
+            "result": "$(-3+3)/2=0$",
+            "why": "the interval is symmetric around zero"
+          },
+          {
+            "do": "Compute interval length",
+            "result": "$3-(-3)=6$",
+            "why": "variance depends on width"
+          },
+          {
+            "do": "Square the length",
+            "result": "$6^2=36$",
+            "why": "variance uses squared distance"
+          },
+          {
+            "do": "Divide by 12",
+            "result": "$36/12=3$",
+            "why": "continuous uniform variance formula"
+          },
+          {
+            "do": "State both values",
+            "result": "mean $0$, variance $3$",
+            "why": "center and spread are now computed"
+          }
+        ],
+        "answer": "Mean $0$, variance $3$."
+      },
+      {
+        "problem": "A random integer is chosen uniformly from $10$ through $19$ inclusive. Find the probability it is even.",
+        "steps": [
+          {
+            "do": "Count total integers",
+            "result": "$10$",
+            "why": "the list is 10 through 19"
+          },
+          {
+            "do": "List even integers",
+            "result": "$10,12,14,16,18$",
+            "why": "these are divisible by 2"
+          },
+          {
+            "do": "Count favorable integers",
+            "result": "$5$",
+            "why": "there are five evens"
+          },
+          {
+            "do": "Compute probability",
+            "result": "$5/10=0.5$",
+            "why": "discrete uniform uses favorable over total"
+          },
+          {
+            "do": "Interpret",
+            "result": "half",
+            "why": "evens and odds are balanced in this range"
+          }
+        ],
+        "answer": "The probability is $0.5$."
+      },
+      {
+        "problem": "Weights are initialized uniformly on $[-0.1,0.1]$. Find the density and probability a weight lies between $-0.02$ and $0.02$.",
+        "steps": [
+          {
+            "do": "Compute total length",
+            "result": "$0.1-(-0.1)=0.2$",
+            "why": "the initialization interval width"
+          },
+          {
+            "do": "Find density",
+            "result": "$1/0.2=5$",
+            "why": "density times length equals 1"
+          },
+          {
+            "do": "Compute favorable length",
+            "result": "$0.02-(-0.02)=0.04$",
+            "why": "the near-zero interval width"
+          },
+          {
+            "do": "Divide by total length",
+            "result": "$0.04/0.2=0.2$",
+            "why": "probability is length ratio"
+          },
+          {
+            "do": "Check using density",
+            "result": "$5(0.04)=0.2$",
+            "why": "density times favorable length agrees"
+          }
+        ],
+        "answer": "Density is $5$ and the probability is $0.2$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Random number generators",
+        "background": "Most simulation begins with numbers designed to look uniform on $[0,1]$.",
+        "numbers": "The chance a generated value lies in $[0.1,0.4]$ is $0.3$."
+      },
+      {
+        "title": "Monte Carlo sampling",
+        "background": "Monte Carlo methods estimate averages by drawing random samples, often starting from uniform draws.",
+        "numbers": "If $10000$ uniform draws estimate an area $0.27$, about $2700$ land in the target region."
+      },
+      {
+        "title": "Weight initialization",
+        "background": "Neural networks often start weights from a small symmetric uniform range.",
+        "numbers": "Uniform $[-0.05,0.05]$ has mean $0$ and variance $0.1^2/12=0.000833$."
+      },
+      {
+        "title": "Hashing",
+        "background": "A good hash spreads keys approximately uniformly across buckets.",
+        "numbers": "With $1000$ keys and $10$ buckets, expected keys per bucket are $100$."
+      },
+      {
+        "title": "Randomized experiments",
+        "background": "Assignment to treatment often uses uniform random numbers for fairness.",
+        "numbers": "Assign treatment if $U<0.5$; then probability of treatment is $0.5$."
+      },
+      {
+        "title": "Quantization noise",
+        "background": "Small rounding errors are sometimes modeled as uniform within one half-step.",
+        "numbers": "Uniform error on $[-0.5,0.5]$ has variance $1/12=0.0833$."
+      }
+    ],
+    "applicationsClose": "Uniform distributions express fairness by length or count, then support simulation, initialization, hashing, experiments, and noise models.",
+    "takeaways": [
+      "Continuous uniform probability is interval length divided by total length.",
+      "Uniform $[a,b]$ has mean $(a+b)/2$ and variance $(b-a)^2/12$.",
+      "Exact points have probability $0$ in a continuous uniform distribution.",
+      "Discrete uniform assigns equal mass to each listed outcome."
+    ],
     "prereqs": [
       "math-17-20"
     ]
@@ -447,19 +5483,267 @@
   B({
     "id": "math-17-22",
     "title": "The exponential distribution",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the exponential distribution.",
+    "tagline": "Exponential is the continuous waiting-time model with a constant event rate.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The uniform distribution</i>"
+        "The Poisson distribution",
+        "Exponential functions",
+        "continuous random variables"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Gaussian distribution</i>"
+        "survival analysis",
+        "Gamma distributions",
+        "Poisson processes"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "rates",
+        "memorylessness",
+        "hazard functions",
+        "waiting times"
       ]
     },
+    "motivation": "<p>The geometric distribution waits through discrete attempts. But many waits happen in continuous time: time until the next request, failure, click, or radioactive decay.</p><p>The <b>exponential distribution</b> is the continuous waiting-time companion to Poisson counts. If events arrive at a steady rate, the time to the next event is exponential.</p>",
+    "definition": "<p>A random variable $T$ has an exponential distribution with rate $lambda>0$ if its density is $f(t)=lambda e^{-lambda t}$ for $t>=0$. Its cumulative probability is $P(T<=t)=1-e^{-lambda t}$, its survival probability is $P(T>t)=e^{-lambda t}$, its mean is $1/lambda$, and its variance is $1/lambda^2$.</p><p>The survival formula matches Poisson zero counts: waiting more than $t$ means no event occurred in time $t$, and a Poisson process with rate $lambda$ has $P(0 events)=e^{-lambda t}$.</p><p><b>Assumptions that matter:</b> the event rate is constant, waiting time is nonnegative, the memoryless property relies on the ideal exponential model, and $lambda$ is a rate per unit time.</p>",
+    "worked": {
+      "problem": "Requests arrive at rate $lambda=0.5$ per second. Find the mean wait and the probability the next request arrives within $3$ seconds.",
+      "skills": [
+        "exponential rate",
+        "CDF",
+        "mean waiting time"
+      ],
+      "strategy": "Use reciprocal rate for the mean and $1-e^{-lambda t}$ for arrival by time $t$.",
+      "steps": [
+        {
+          "do": "Identify the rate",
+          "result": "$lambda=0.5$",
+          "why": "the rate is per second"
+        },
+        {
+          "do": "Compute the mean",
+          "result": "$E[T]=1/0.5=2$ seconds",
+          "why": "exponential mean is reciprocal rate"
+        },
+        {
+          "do": "Write the CDF at $3$",
+          "result": "$P(T<=3)=1-e^{-0.5(3)}$",
+          "why": "arrival within time $3$"
+        },
+        {
+          "do": "Multiply in the exponent",
+          "result": "$1-e^{-1.5}$",
+          "why": "$0.5 times 3=1.5$"
+        },
+        {
+          "do": "Approximate the exponential",
+          "result": "$e^{-1.5} approx 0.223$",
+          "why": "calculator value"
+        },
+        {
+          "do": "Subtract",
+          "result": "$P(T<=3) approx 0.777$",
+          "why": "one minus survival beyond 3 seconds"
+        }
+      ],
+      "verify": "Since 3 seconds is longer than the mean wait of 2 seconds, a probability above one half is sensible.",
+      "answer": "Mean wait is $2$ seconds and $P(T<=3) approx 0.777$.",
+      "connects": "Exponential waiting time is Poisson no-event probability viewed continuously."
+    },
+    "practice": [
+      {
+        "problem": "For rate $lambda=2$ per minute, find the mean and variance.",
+        "steps": [
+          {
+            "do": "Use the mean formula",
+            "result": "$E[T]=1/lambda$",
+            "why": "exponential mean is reciprocal rate"
+          },
+          {
+            "do": "Substitute $lambda=2$",
+            "result": "$E[T]=1/2=0.5$ minutes",
+            "why": "two events per minute means half a minute average wait"
+          },
+          {
+            "do": "Use the variance formula",
+            "result": "$Var(T)=1/lambda^2$",
+            "why": "standard exponential variance"
+          },
+          {
+            "do": "Substitute the rate",
+            "result": "$Var(T)=1/2^2$",
+            "why": "$lambda^2=4$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$Var(T)=0.25$ square minutes",
+            "why": "reciprocal of 4"
+          }
+        ],
+        "answer": "Mean $0.5$ minutes, variance $0.25$ square minutes."
+      },
+      {
+        "problem": "For $lambda=1.5$, find $P(T>2)$.",
+        "steps": [
+          {
+            "do": "Write the survival formula",
+            "result": "$P(T>t)=e^{-lambda t}$",
+            "why": "exponential survival"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$P(T>2)=e^{-1.5(2)}$",
+            "why": "$t=2$"
+          },
+          {
+            "do": "Multiply the exponent",
+            "result": "$e^{-3}$",
+            "why": "$1.5 times 2=3$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$e^{-3} approx 0.0498$",
+            "why": "calculator value"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $5 percent$",
+            "why": "two time units is long at rate 1.5"
+          }
+        ],
+        "answer": "$P(T>2) approx 0.0498$."
+      },
+      {
+        "problem": "For $lambda=0.25$ per hour, find $P(T<=4)$.",
+        "steps": [
+          {
+            "do": "Write the CDF",
+            "result": "$P(T<=4)=1-e^{-0.25(4)}$",
+            "why": "probability event has arrived by 4 hours"
+          },
+          {
+            "do": "Multiply the exponent",
+            "result": "$1-e^{-1}$",
+            "why": "$0.25 times 4=1$"
+          },
+          {
+            "do": "Approximate survival",
+            "result": "$e^{-1} approx 0.368$",
+            "why": "standard exponential value"
+          },
+          {
+            "do": "Subtract",
+            "result": "$1-0.368=0.632$",
+            "why": "arrival by 4 hours is complement of waiting longer"
+          },
+          {
+            "do": "State probability",
+            "result": "$0.632$",
+            "why": "about 63.2 percent"
+          }
+        ],
+        "answer": "$P(T<=4) approx 0.632$."
+      },
+      {
+        "problem": "If the mean waiting time is $10$ seconds, find $lambda$ and $P(T>5)$.",
+        "steps": [
+          {
+            "do": "Use mean-rate relation",
+            "result": "$1/lambda=10$",
+            "why": "mean is reciprocal rate"
+          },
+          {
+            "do": "Solve for the rate",
+            "result": "$lambda=0.1$ per second",
+            "why": "take reciprocal"
+          },
+          {
+            "do": "Write survival at 5",
+            "result": "$P(T>5)=e^{-0.1(5)}$",
+            "why": "use exponential survival"
+          },
+          {
+            "do": "Simplify exponent",
+            "result": "$e^{-0.5}$",
+            "why": "$0.1 times 5=0.5$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.607$",
+            "why": "$e^{-0.5} approx 0.607$"
+          }
+        ],
+        "answer": "$lambda=0.1$ per second and $P(T>5) approx 0.607$."
+      },
+      {
+        "problem": "A service has rate $3$ failures per year. Under an exponential model, find the probability the next failure occurs after $0.5$ years.",
+        "steps": [
+          {
+            "do": "Identify parameters",
+            "result": "$lambda=3$, $t=0.5$",
+            "why": "rate is per year and time is years"
+          },
+          {
+            "do": "Use survival",
+            "result": "$P(T>0.5)=e^{-3(0.5)}$",
+            "why": "after 0.5 years means no failure yet"
+          },
+          {
+            "do": "Multiply exponent",
+            "result": "$e^{-1.5}$",
+            "why": "$3 times 0.5=1.5$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.223$",
+            "why": "calculator value"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $22.3 percent$",
+            "why": "average wait is only one third of a year"
+          }
+        ],
+        "answer": "$P(T>0.5) approx 0.223$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Time to next request",
+        "background": "Queueing models often use exponential waits between Poisson arrivals.",
+        "numbers": "At $5$ requests per second, mean wait is $0.2$ seconds."
+      },
+      {
+        "title": "Reliability lifetimes",
+        "background": "A constant failure rate gives exponential time to failure.",
+        "numbers": "Failure rate $0.01$ per hour gives mean lifetime $100$ hours."
+      },
+      {
+        "title": "Survival analysis",
+        "background": "Medical and product survival models often begin with exponential baselines.",
+        "numbers": "If $lambda=0.2$ per month, survival beyond $6$ months is $e^{-1.2}=0.301$."
+      },
+      {
+        "title": "Timeout settings",
+        "background": "Systems choose timeouts based on wait-time probabilities.",
+        "numbers": "With mean wait $2$ seconds, $lambda=0.5$ and $P(T>5)=e^{-2.5}=0.082$."
+      },
+      {
+        "title": "Simulation",
+        "background": "Poisson process simulations generate interarrival times from exponential distributions.",
+        "numbers": "A uniform draw $u=0.8$ can produce wait $-ln(0.8)/lambda$; with $lambda=2$, wait is about $0.112$."
+      },
+      {
+        "title": "Memoryless service",
+        "background": "The exponential model says an old wait has no extra aging information.",
+        "numbers": "With $lambda=1$, $P(T>5 | T>3)=P(T>2)=e^{-2}=0.135$."
+      }
+    ],
+    "applicationsClose": "Exponential waiting times are the continuous-time partner of Poisson counts, from queues to reliability to simulation.",
+    "takeaways": [
+      "Exponential density is $lambda e^{-lambda t}$ for $t>=0$.",
+      "Mean is $1/lambda$ and variance is $1/lambda^2$.",
+      "Survival is $P(T>t)=e^{-lambda t}$.",
+      "It is memoryless under the constant-rate model."
+    ],
     "prereqs": [
       "math-17-21"
     ]
@@ -468,19 +5752,262 @@
   B({
     "id": "math-17-23",
     "title": "The Gaussian distribution",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the gaussian distribution.",
+    "tagline": "The Gaussian is the bell-shaped model for accumulated small variation.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The exponential distribution</i>"
+        "Expected value",
+        "Variance",
+        "continuous random variables"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Beta and Gamma distributions</i>"
+        "central limit theorem",
+        "linear regression noise",
+        "Bayesian inference"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "standardization",
+        "z-scores",
+        "quadratic forms",
+        "confidence intervals"
       ]
     },
+    "motivation": "<p>You have seen averages, spreads, and common distributions. The Gaussian, or normal distribution, appears when many small independent influences add together: measurement noise, averaged errors, heights, embeddings after normalization, and more.</p><p>Its bell shape is not magic. It is the stable footprint of additive variation, controlled by a mean for location and a variance for spread.</p>",
+    "definition": "<p>A Gaussian random variable $X$ with mean $mu$ and variance $sigma^2$ is written $X ~ N(mu,sigma^2)$. Its density is centered at $mu$, symmetric, and has spread controlled by $sigma$. The standard normal is $Z ~ N(0,1)$.</p><p>Standardization turns any Gaussian into a standard normal: $Z=(X-mu)/sigma$. This works because subtracting $mu$ shifts the center to $0$, and dividing by $sigma$ rescales the spread to $1$.</p><p><b>Assumptions that matter:</b> Gaussian variables are continuous; exact point probabilities are $0$; the mean and variance fully determine a one-dimensional Gaussian; and normal approximations are strongest when many small independent effects accumulate.</p>",
+    "worked": {
+      "problem": "Suppose test scores are $X ~ N(70,10^2)$. Find the z-score for $85$ and estimate $P(X<=85)$ using $P(Z<=1.5) approx 0.9332$.",
+      "skills": [
+        "normal distribution",
+        "standardization",
+        "z-scores"
+      ],
+      "strategy": "Convert the raw score into standard-deviation units, then read the standard normal probability.",
+      "steps": [
+        {
+          "do": "Identify mean and standard deviation",
+          "result": "$mu=70$, $sigma=10$",
+          "why": "variance is $10^2$"
+        },
+        {
+          "do": "Write the z-score formula",
+          "result": "$z=(x-mu)/sigma$",
+          "why": "standardization centers and scales"
+        },
+        {
+          "do": "Substitute $x=85$",
+          "result": "$z=(85-70)/10$",
+          "why": "measure 85 relative to the mean"
+        },
+        {
+          "do": "Simplify",
+          "result": "$z=1.5$",
+          "why": "$15/10=1.5$"
+        },
+        {
+          "do": "Use the given table value",
+          "result": "$P(X<=85)=P(Z<=1.5) approx 0.9332$",
+          "why": "standardized probabilities match"
+        }
+      ],
+      "verify": "A score 1.5 standard deviations above the mean should exceed most observations, so a cumulative probability near 93 percent is sensible.",
+      "answer": "The z-score is $1.5$ and $P(X<=85) approx 0.9332$.",
+      "connects": "Gaussian calculations usually begin by translating raw values into z-scores."
+    },
+    "practice": [
+      {
+        "problem": "For $X ~ N(50,5^2)$, find the z-score of $60$.",
+        "steps": [
+          {
+            "do": "Identify parameters",
+            "result": "$mu=50$, $sigma=5$",
+            "why": "variance is $5^2$"
+          },
+          {
+            "do": "Write the formula",
+            "result": "$z=(x-mu)/sigma$",
+            "why": "z-score measures standard deviations from mean"
+          },
+          {
+            "do": "Substitute $x=60$",
+            "result": "$z=(60-50)/5$",
+            "why": "compare 60 to the center"
+          },
+          {
+            "do": "Subtract",
+            "result": "$10/5$",
+            "why": "$60-50=10$"
+          },
+          {
+            "do": "Divide",
+            "result": "$z=2$",
+            "why": "60 is two standard deviations above the mean"
+          }
+        ],
+        "answer": "$z=2$."
+      },
+      {
+        "problem": "If $Z ~ N(0,1)$ and $P(Z<=1.0)=0.8413$, find $P(Z>1.0)$.",
+        "steps": [
+          {
+            "do": "Use the complement",
+            "result": "$P(Z>1)=1-P(Z<=1)$",
+            "why": "above and at-or-below cover all outcomes"
+          },
+          {
+            "do": "Substitute the table value",
+            "result": "$1-0.8413$",
+            "why": "given cumulative probability"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.1587$",
+            "why": "remaining right tail"
+          },
+          {
+            "do": "Check reasonableness",
+            "result": "less than $0.5$",
+            "why": "one standard deviation above the mean is in the upper tail"
+          },
+          {
+            "do": "State the tail probability",
+            "result": "$P(Z>1)=0.1587$",
+            "why": "complement is complete"
+          }
+        ],
+        "answer": "$0.1587$."
+      },
+      {
+        "problem": "For $X ~ N(100,15^2)$, convert $x=70$ to a z-score.",
+        "steps": [
+          {
+            "do": "Identify parameters",
+            "result": "$mu=100$, $sigma=15$",
+            "why": "standard deviation is 15"
+          },
+          {
+            "do": "Write standardization",
+            "result": "$z=(70-100)/15$",
+            "why": "subtract the mean and divide by standard deviation"
+          },
+          {
+            "do": "Subtract",
+            "result": "$-30/15$",
+            "why": "70 is below the mean"
+          },
+          {
+            "do": "Divide",
+            "result": "$z=-2$",
+            "why": "$-30 divided by 15=-2$"
+          },
+          {
+            "do": "Interpret",
+            "result": "two standard deviations below the mean",
+            "why": "negative z-scores are below center"
+          }
+        ],
+        "answer": "$z=-2$."
+      },
+      {
+        "problem": "A Gaussian has mean $3$ and standard deviation $2$. What interval is within two standard deviations of the mean?",
+        "steps": [
+          {
+            "do": "Compute two standard deviations",
+            "result": "$2sigma=2(2)=4$",
+            "why": "two standard deviations means twice the spread"
+          },
+          {
+            "do": "Find the lower endpoint",
+            "result": "$3-4=-1$",
+            "why": "move left from the mean"
+          },
+          {
+            "do": "Find the upper endpoint",
+            "result": "$3+4=7$",
+            "why": "move right from the mean"
+          },
+          {
+            "do": "Write the interval",
+            "result": "$[-1,7]$",
+            "why": "include values within that distance"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $95 percent$ for a normal model",
+            "why": "empirical rule approximation"
+          }
+        ],
+        "answer": "The interval is $[-1,7]$."
+      },
+      {
+        "problem": "Model residuals are $N(0,4)$. Find the standard deviation and z-score for residual $3$.",
+        "steps": [
+          {
+            "do": "Read the variance",
+            "result": "$sigma^2=4$",
+            "why": "the second parameter is variance"
+          },
+          {
+            "do": "Take the square root",
+            "result": "$sigma=2$",
+            "why": "standard deviation is square root of variance"
+          },
+          {
+            "do": "Write the z-score",
+            "result": "$z=(3-0)/2$",
+            "why": "mean residual is zero"
+          },
+          {
+            "do": "Simplify",
+            "result": "$z=1.5$",
+            "why": "$3/2=1.5$"
+          },
+          {
+            "do": "Interpret",
+            "result": "the residual is moderately high",
+            "why": "it is 1.5 standard deviations above zero"
+          }
+        ],
+        "answer": "Standard deviation $2$ and z-score $1.5$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Measurement noise",
+        "background": "Many instruments have small additive errors from many sources, leading to near-Gaussian noise.",
+        "numbers": "If noise is $N(0,2^2)$, an error of $4$ has z-score $2$."
+      },
+      {
+        "title": "Linear regression errors",
+        "background": "Classical regression often assumes Gaussian residuals to derive likelihoods and intervals.",
+        "numbers": "Residual $-3$ with $sigma=1.5$ has z-score $-2$."
+      },
+      {
+        "title": "Averaging and the central limit effect",
+        "background": "Averages of many independent observations often become approximately normal.",
+        "numbers": "If individual variance is $25$, the average of $100$ has variance $25/100=0.25$."
+      },
+      {
+        "title": "Anomaly detection",
+        "background": "Z-scores flag values unusually far from typical behavior.",
+        "numbers": "Mean latency $100$ ms, standard deviation $10$ ms, observation $140$ ms gives z-score $4$."
+      },
+      {
+        "title": "Bayesian priors",
+        "background": "Gaussian priors are common because they are smooth and algebraically convenient.",
+        "numbers": "A weight prior $N(0,1)$ treats weight $2$ as two standard deviations from zero."
+      },
+      {
+        "title": "Embedding normalization checks",
+        "background": "Large batches of normalized features are often monitored using approximate Gaussian summaries.",
+        "numbers": "Feature mean $0.1$, standard deviation $0.5$, value $1.1$ gives z-score $2$."
+      }
+    ],
+    "applicationsClose": "Gaussian thinking is standardization thinking: center, scale, and reason in standard-deviation units.",
+    "takeaways": [
+      "$X ~ N(mu,sigma^2)$ is centered at $mu$ with spread $sigma$.",
+      "Standardization uses $Z=(X-mu)/sigma$.",
+      "Point probabilities are zero; intervals carry probability.",
+      "Gaussian models often arise from many small additive effects."
+    ],
     "prereqs": [
       "math-17-22"
     ]
@@ -489,19 +6016,262 @@
   B({
     "id": "math-17-24",
     "title": "The Beta and Gamma distributions",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the beta and gamma distributions.",
+    "tagline": "Beta models uncertain probabilities, while Gamma models positive amounts and waiting times.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Gaussian distribution</i>"
+        "continuous random variables",
+        "The exponential distribution",
+        "Expected value"
       ],
       "leadsTo": [
-        "the next lesson, <i>Joint distributions</i>"
+        "Bayesian inference",
+        "conjugate priors",
+        "probabilistic modeling"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "positive variables",
+        "proportions",
+        "shape parameters",
+        "rates"
       ]
     },
+    "motivation": "<p>Some random quantities must stay between $0$ and $1$, like a click probability. Others must be positive, like a waiting time, variance, or rate. Ordinary bell curves can spill outside those boundaries.</p><p>The <b>Beta</b> and <b>Gamma</b> distributions respect those shapes. Beta lives on $[0,1]$ and is natural for probabilities. Gamma lives on positive numbers and is natural for accumulated waiting or positive scale.</p>",
+    "definition": "<p>A Beta distribution with parameters $alpha>0$ and $beta>0$ lives on $0<=X<=1$ and has mean $alpha/(alpha+beta)$. Its parameters can be read like success and failure strength. A Gamma distribution with shape $k>0$ and rate $lambda>0$ lives on $x>=0$ and has mean $k/lambda$ and variance $k/lambda^2$.</p><p>Exponential is the Gamma special case with shape $k=1$. When $k$ is a positive integer, Gamma can represent the waiting time until the $k$th event in a Poisson process with rate $lambda$.</p><p><b>Assumptions that matter:</b> parameterization varies across books, especially Gamma rate versus scale; Beta parameters must be positive; Gamma values are nonnegative; and these distributions are chosen because their support matches the quantity being modeled.</p>",
+    "worked": {
+      "problem": "A Beta prior has $alpha=8$, $beta=2$. A Gamma model has shape $k=3$ and rate $lambda=2$. Find both means and the Gamma variance.",
+      "skills": [
+        "Beta mean",
+        "Gamma mean",
+        "Gamma variance"
+      ],
+      "strategy": "Use the support-aware formulas: Beta mean is a ratio of strengths; Gamma mean and variance use rate powers.",
+      "steps": [
+        {
+          "do": "Compute the Beta denominator",
+          "result": "$alpha+beta=8+2=10$",
+          "why": "total strength combines success and failure parameters"
+        },
+        {
+          "do": "Compute the Beta mean",
+          "result": "$8/10=0.8$",
+          "why": "Beta mean is $alpha/(alpha+beta)$"
+        },
+        {
+          "do": "Compute the Gamma mean",
+          "result": "$k/lambda=3/2=1.5$",
+          "why": "rate parameterization uses division by rate"
+        },
+        {
+          "do": "Compute the squared rate",
+          "result": "$lambda^2=2^2=4$",
+          "why": "Gamma variance divides by squared rate"
+        },
+        {
+          "do": "Compute the Gamma variance",
+          "result": "$k/lambda^2=3/4=0.75$",
+          "why": "substitute shape and rate"
+        }
+      ],
+      "verify": "The Beta mean $0.8$ lies between 0 and 1, and the Gamma mean and variance are positive.",
+      "answer": "Beta mean $0.8$; Gamma mean $1.5$ and variance $0.75$.",
+      "connects": "Beta and Gamma match the natural boundaries of probabilities and positive quantities."
+    },
+    "practice": [
+      {
+        "problem": "Find the mean of $Beta(2,3)$.",
+        "steps": [
+          {
+            "do": "Identify parameters",
+            "result": "$alpha=2$, $beta=3$",
+            "why": "read from $Beta(alpha,beta)$"
+          },
+          {
+            "do": "Add parameters",
+            "result": "$alpha+beta=5$",
+            "why": "total strength is denominator"
+          },
+          {
+            "do": "Write the mean formula",
+            "result": "$alpha/(alpha+beta)$",
+            "why": "standard Beta mean"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$2/5$",
+            "why": "use the two parameters"
+          },
+          {
+            "do": "Convert to decimal",
+            "result": "$0.4$",
+            "why": "two fifths is 0.4"
+          }
+        ],
+        "answer": "The mean is $0.4$."
+      },
+      {
+        "problem": "Find the mean and variance of a Gamma distribution with shape $4$ and rate $2$.",
+        "steps": [
+          {
+            "do": "Identify parameters",
+            "result": "$k=4$, $lambda=2$",
+            "why": "shape and rate are given"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$k/lambda=4/2=2$",
+            "why": "Gamma mean under rate parameterization"
+          },
+          {
+            "do": "Square the rate",
+            "result": "$lambda^2=4$",
+            "why": "variance uses squared rate"
+          },
+          {
+            "do": "Compute variance",
+            "result": "$k/lambda^2=4/4=1$",
+            "why": "substitute values"
+          },
+          {
+            "do": "Check positivity",
+            "result": "mean $2$, variance $1$",
+            "why": "Gamma quantities must be positive"
+          }
+        ],
+        "answer": "Mean $2$, variance $1$."
+      },
+      {
+        "problem": "A Beta model starts with $alpha=1$, $beta=1$. After $6$ successes and $4$ failures, update the parameters and mean.",
+        "steps": [
+          {
+            "do": "Add successes to alpha",
+            "result": "$alpha=1+6=7$",
+            "why": "Beta-Bernoulli updating adds successes"
+          },
+          {
+            "do": "Add failures to beta",
+            "result": "$beta=1+4=5$",
+            "why": "failures strengthen the beta parameter"
+          },
+          {
+            "do": "Add updated parameters",
+            "result": "$7+5=12$",
+            "why": "denominator for the posterior mean"
+          },
+          {
+            "do": "Compute the updated mean",
+            "result": "$7/12$",
+            "why": "Beta mean is $alpha/(alpha+beta)$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.583$",
+            "why": "posterior mean smooths the observed $0.6$ rate"
+          }
+        ],
+        "answer": "Updated distribution is $Beta(7,5)$ with mean about $0.583$."
+      },
+      {
+        "problem": "An exponential distribution with rate $3$ is a Gamma distribution with what shape, mean, and variance?",
+        "steps": [
+          {
+            "do": "Use the special case",
+            "result": "$k=1$",
+            "why": "exponential is Gamma with shape 1"
+          },
+          {
+            "do": "Keep the rate",
+            "result": "$lambda=3$",
+            "why": "the exponential rate becomes Gamma rate"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$1/3$",
+            "why": "$k/lambda=1/3$"
+          },
+          {
+            "do": "Compute variance",
+            "result": "$1/9$",
+            "why": "$k/lambda^2=1/3^2$"
+          },
+          {
+            "do": "State the Gamma form",
+            "result": "$Gamma(k=1,lambda=3)$",
+            "why": "same waiting-time distribution"
+          }
+        ],
+        "answer": "Shape $1$, mean $1/3$, variance $1/9$."
+      },
+      {
+        "problem": "A click-rate prior is $Beta(20,80)$. Find its mean and interpret the total strength.",
+        "steps": [
+          {
+            "do": "Add parameters",
+            "result": "$20+80=100$",
+            "why": "total strength acts like prior sample size"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$20/100=0.2$",
+            "why": "Beta mean is success strength over total"
+          },
+          {
+            "do": "Identify success strength",
+            "result": "$20$",
+            "why": "alpha contributes toward clicks"
+          },
+          {
+            "do": "Identify failure strength",
+            "result": "$80$",
+            "why": "beta contributes toward non-clicks"
+          },
+          {
+            "do": "Interpret",
+            "result": "prior rate $20 percent$ with strength $100$",
+            "why": "the prior is fairly concentrated around 0.2"
+          }
+        ],
+        "answer": "Mean $0.2$ with total strength $100$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Bayesian click-rate priors",
+        "background": "Beta distributions are common priors for unknown Bernoulli probabilities.",
+        "numbers": "$Beta(3,7)$ has mean $3/10=0.3$."
+      },
+      {
+        "title": "A/B smoothing",
+        "background": "Small experiments can have noisy observed rates; Beta priors smooth them.",
+        "numbers": "Prior $Beta(1,1)$ plus $2$ successes and $8$ failures gives $Beta(3,9)$, mean $0.25$."
+      },
+      {
+        "title": "Waiting for several events",
+        "background": "Gamma models time until the $k$th Poisson event.",
+        "numbers": "For $k=5$, rate $2$ per hour, expected wait is $5/2=2.5$ hours."
+      },
+      {
+        "title": "Positive scale parameters",
+        "background": "Bayesian models often need priors on positive quantities like rates or variances.",
+        "numbers": "Gamma shape $2$, rate $0.5$ has mean $4$ and variance $8$."
+      },
+      {
+        "title": "Reliability testing",
+        "background": "Accumulated lifetime before several failures can be modeled with Gamma waiting times.",
+        "numbers": "Rate $0.1$ failures per day, wait for $3$ failures has mean $30$ days."
+      },
+      {
+        "title": "Thompson sampling",
+        "background": "Bandit algorithms sample possible click rates from Beta posteriors to balance exploration and exploitation.",
+        "numbers": "Arm A $Beta(8,2)$ mean $0.8$; arm B $Beta(3,3)$ mean $0.5$."
+      }
+    ],
+    "applicationsClose": "Beta keeps probabilities inside $[0,1]$; Gamma keeps positive times and rates positive, making both natural modeling tools.",
+    "takeaways": [
+      "Beta distributions live on $[0,1]$ and are natural for probabilities.",
+      "Beta mean is $alpha/(alpha+beta)$.",
+      "Gamma distributions live on nonnegative values and model positive amounts or waiting times.",
+      "Gamma shape-rate mean is $k/lambda$ and variance is $k/lambda^2$."
+    ],
     "prereqs": [
       "math-17-23"
     ]
@@ -510,19 +6280,262 @@
   B({
     "id": "math-17-25",
     "title": "Joint distributions",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: joint distributions.",
+    "tagline": "A joint distribution describes how random variables behave together, not just one at a time.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Beta and Gamma distributions</i>"
+        "random variables",
+        "probability rules",
+        "Expected value"
       ],
       "leadsTo": [
-        "the next lesson, <i>Marginal distributions</i>"
+        "Marginal distributions",
+        "Conditional distributions",
+        "covariance"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "tables",
+        "independence",
+        "correlation",
+        "multivariate models"
       ]
     },
+    "motivation": "<p>ML rarely studies one variable alone. A user may have age and click behavior; an image has many pixels; a model output and a true label appear together.</p><p>A <b>joint distribution</b> is the full probability story for multiple variables at once. It tells which combinations are likely, and it is the source from which marginals, conditionals, covariance, and independence are read.</p>",
+    "definition": "<p>For discrete variables $X$ and $Y$, the joint distribution assigns probabilities $P(X=x,Y=y)$ to pairs of values. All joint probabilities are nonnegative and sum to $1$. For continuous variables, a joint density integrates over regions to give probabilities.</p><p>Independence is a special factorization: $X$ and $Y$ are independent if $P(X=x,Y=y)=P(X=x)P(Y=y)$ for all pairs. If the joint does not factor this way, the variables carry information about each other.</p><p><b>Assumptions that matter:</b> every pair probability belongs to the same sample space; rows and columns must cover all possible values being modeled; independence is not assumed unless checked; and joint probabilities must sum or integrate to $1$.</p>",
+    "worked": {
+      "problem": "A joint table has $P(X=0,Y=0)=0.30$, $P(0,1)=0.20$, $P(1,0)=0.10$, and $P(1,1)=0.40$. Find $P(X=1,Y=1)$, $P(X=1)$, $P(Y=1)$, and check whether $X$ and $Y$ are independent.",
+      "skills": [
+        "joint tables",
+        "marginal sums",
+        "independence check"
+      ],
+      "strategy": "Read the joint cell, sum rows and columns for marginals, then compare product to joint.",
+      "steps": [
+        {
+          "do": "Read the joint success cell",
+          "result": "$P(X=1,Y=1)=0.40$",
+          "why": "the table gives pair probabilities directly"
+        },
+        {
+          "do": "Sum the row for $X=1$",
+          "result": "$P(X=1)=0.10+0.40=0.50$",
+          "why": "include both possible $Y$ values"
+        },
+        {
+          "do": "Sum the column for $Y=1$",
+          "result": "$P(Y=1)=0.20+0.40=0.60$",
+          "why": "include both possible $X$ values"
+        },
+        {
+          "do": "Compute the product of marginals",
+          "result": "$0.50(0.60)=0.30$",
+          "why": "independence would require this product"
+        },
+        {
+          "do": "Compare with the joint cell",
+          "result": "$0.40 != 0.30$",
+          "why": "one mismatch disproves independence"
+        }
+      ],
+      "verify": "The four probabilities sum to $1.00$, so the table is valid; the dependence conclusion comes from the failed factorization.",
+      "answer": "$P(1,1)=0.40$, $P(X=1)=0.50$, $P(Y=1)=0.60$, and the variables are not independent.",
+      "connects": "The joint table is the source of both individual and relationship information."
+    },
+    "practice": [
+      {
+        "problem": "A joint table has probabilities $0.1,0.2,0.3,0.4$ across four cells. Check whether it is valid.",
+        "steps": [
+          {
+            "do": "Check nonnegativity",
+            "result": "all entries are nonnegative",
+            "why": "probabilities cannot be negative"
+          },
+          {
+            "do": "Add the first two entries",
+            "result": "$0.1+0.2=0.3$",
+            "why": "start summing total mass"
+          },
+          {
+            "do": "Add the third entry",
+            "result": "$0.3+0.3=0.6$",
+            "why": "continue the total"
+          },
+          {
+            "do": "Add the fourth entry",
+            "result": "$0.6+0.4=1.0$",
+            "why": "all cells are included"
+          },
+          {
+            "do": "Conclude validity",
+            "result": "valid joint distribution",
+            "why": "entries are nonnegative and sum to 1"
+          }
+        ],
+        "answer": "It is valid."
+      },
+      {
+        "problem": "For the table $P(0,0)=0.25$, $P(0,1)=0.25$, $P(1,0)=0.25$, $P(1,1)=0.25$, find $P(X=1,Y=0)$ and $P(X=1)$.",
+        "steps": [
+          {
+            "do": "Read the requested joint cell",
+            "result": "$P(X=1,Y=0)=0.25$",
+            "why": "it is given directly"
+          },
+          {
+            "do": "Identify cells with $X=1$",
+            "result": "$(1,0)$ and $(1,1)$",
+            "why": "sum over all $Y$ values"
+          },
+          {
+            "do": "Add those cells",
+            "result": "$0.25+0.25=0.50$",
+            "why": "marginal probability ignores $Y$"
+          },
+          {
+            "do": "State the marginal",
+            "result": "$P(X=1)=0.50$",
+            "why": "half the mass has $X=1$"
+          },
+          {
+            "do": "Check total symmetry",
+            "result": "each cell is equal",
+            "why": "the table is uniform over pairs"
+          }
+        ],
+        "answer": "$P(X=1,Y=0)=0.25$ and $P(X=1)=0.50$."
+      },
+      {
+        "problem": "Given $P(X=1)=0.4$, $P(Y=1)=0.5$, and independence, find $P(X=1,Y=1)$.",
+        "steps": [
+          {
+            "do": "Write the independence rule",
+            "result": "$P(X=1,Y=1)=P(X=1)P(Y=1)$",
+            "why": "independent joint probabilities factor"
+          },
+          {
+            "do": "Substitute marginals",
+            "result": "$0.4(0.5)$",
+            "why": "use the given probabilities"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.20$",
+            "why": "four tenths of one half"
+          },
+          {
+            "do": "Check range",
+            "result": "$0.20$ is between $0$ and $1$",
+            "why": "valid probability"
+          },
+          {
+            "do": "Interpret",
+            "result": "both events occur with probability $20 percent$",
+            "why": "independence allows multiplication"
+          }
+        ],
+        "answer": "$0.20$."
+      },
+      {
+        "problem": "A joint table has $P(0,0)=0.4$, $P(0,1)=0.1$, $P(1,0)=0.2$, $P(1,1)=0.3$. Find $P(Y=0)$.",
+        "steps": [
+          {
+            "do": "Identify cells with $Y=0$",
+            "result": "$(0,0)$ and $(1,0)$",
+            "why": "the $X$ value can be either 0 or 1"
+          },
+          {
+            "do": "Read their probabilities",
+            "result": "$0.4$ and $0.2$",
+            "why": "from the joint table"
+          },
+          {
+            "do": "Add them",
+            "result": "$0.4+0.2=0.6$",
+            "why": "marginalize over $X$"
+          },
+          {
+            "do": "State the marginal",
+            "result": "$P(Y=0)=0.6$",
+            "why": "total mass in the $Y=0$ column"
+          },
+          {
+            "do": "Check complement",
+            "result": "$P(Y=1)=0.1+0.3=0.4$",
+            "why": "marginals for $Y$ should sum to 1"
+          }
+        ],
+        "answer": "$P(Y=0)=0.6$."
+      },
+      {
+        "problem": "A classifier and label have $P(pred=1,label=1)=0.35$, $P(1,0)=0.15$, $P(0,1)=0.10$, $P(0,0)=0.40$. Find the probability the prediction matches the label.",
+        "steps": [
+          {
+            "do": "Identify matching cells",
+            "result": "$(1,1)$ and $(0,0)$",
+            "why": "prediction equals label in these cells"
+          },
+          {
+            "do": "Read matching probabilities",
+            "result": "$0.35$ and $0.40$",
+            "why": "from the joint table"
+          },
+          {
+            "do": "Add matching mass",
+            "result": "$0.35+0.40=0.75$",
+            "why": "either correct-positive or correct-negative"
+          },
+          {
+            "do": "Check mismatch mass",
+            "result": "$0.15+0.10=0.25$",
+            "why": "the remaining probability is error"
+          },
+          {
+            "do": "Check total",
+            "result": "$0.75+0.25=1$",
+            "why": "matches and mismatches partition outcomes"
+          }
+        ],
+        "answer": "The match probability is $0.75$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Confusion matrices",
+        "background": "Classification evaluation is a joint distribution over predicted and true labels.",
+        "numbers": "Cells $0.35,0.15,0.10,0.40$ give accuracy $0.35+0.40=0.75$."
+      },
+      {
+        "title": "Feature-label relationships",
+        "background": "A joint distribution shows how a feature and label co-occur.",
+        "numbers": "If $P(feature=1,label=1)=0.30$ but $P(feature=1)P(label=1)=0.20$, they are dependent."
+      },
+      {
+        "title": "Recommendation events",
+        "background": "Systems track joint behavior such as viewed and clicked.",
+        "numbers": "$P(view=1,click=1)=0.04$ means four percent of impressions were both viewed and clicked."
+      },
+      {
+        "title": "Fairness auditing",
+        "background": "Audits examine joint distributions of decisions and groups.",
+        "numbers": "If $P(approve=1,group=A)=0.18$ and $P(group=A)=0.30$, later conditionals can compare approval rates."
+      },
+      {
+        "title": "Multivariate sensors",
+        "background": "Joint distributions capture relationships among sensor readings.",
+        "numbers": "If high temperature and high vibration occur together with probability $0.08$, that cell may matter more than either marginal."
+      },
+      {
+        "title": "Language models",
+        "background": "Co-occurrence tables are joint distributions over neighboring tokens before smoothing and modeling.",
+        "numbers": "If $P(word1=deep, word2=learning)=0.002$, the pair has two-tenths of a percent mass."
+      }
+    ],
+    "applicationsClose": "Joint distributions are the full map of co-occurrence, from model evaluation to fairness, sensors, and language.",
+    "takeaways": [
+      "A joint distribution assigns probability to combinations of variable values.",
+      "Discrete joint probabilities must be nonnegative and sum to $1$.",
+      "Marginals and conditionals are derived from the joint.",
+      "Independence requires joint probabilities to factor into marginal products."
+    ],
     "prereqs": [
       "math-17-24"
     ]
@@ -531,19 +6544,262 @@
   B({
     "id": "math-17-26",
     "title": "Marginal distributions",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: marginal distributions.",
+    "tagline": "Marginalization lets one variable step forward by summing or integrating out the others.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Joint distributions</i>"
+        "Joint distributions",
+        "sums of probabilities",
+        "probability density"
       ],
       "leadsTo": [
-        "the next lesson, <i>Conditional distributions</i>"
+        "Conditional distributions",
+        "law of total probability",
+        "Bayesian inference"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "joint tables",
+        "latent variables",
+        "mixture models",
+        "integrals"
       ]
     },
+    "motivation": "<p>A joint distribution tells the whole story, but sometimes you need one character's solo line. If you know probabilities for age and click together, you may still ask: what is the overall click probability?</p><p><b>Marginal distributions</b> answer by summing or integrating over the variables you are not focusing on. The word comes from old tables where row and column totals were written in the margins.</p>",
+    "definition": "<p>For discrete variables, the marginal distribution of $X$ is found by summing the joint distribution over all values of $Y$: $P(X=x)=sum_y P(X=x,Y=y)$. For continuous variables with joint density $f(x,y)$, the marginal density is found by integrating out $y$.</p><p>This is the law of total probability in table form. The event $X=x$ can happen together with exactly one of the possible $Y$ values, so the disjoint joint pieces add up to the total probability for $X=x$.</p><p><b>Assumptions that matter:</b> the values summed over must cover all possibilities for the removed variable; continuous variables require integration rather than point sums; and marginalization loses dependence information even though it preserves the single-variable distribution.</p>",
+    "worked": {
+      "problem": "A joint table has $P(X=0,Y=0)=0.15$, $P(0,1)=0.35$, $P(1,0)=0.25$, $P(1,1)=0.25$. Find the marginal distributions of $X$ and $Y$.",
+      "skills": [
+        "marginalization",
+        "joint tables",
+        "row and column sums"
+      ],
+      "strategy": "Sum across rows for $X$ and down columns for $Y$.",
+      "steps": [
+        {
+          "do": "Sum cells with $X=0$",
+          "result": "$P(X=0)=0.15+0.35=0.50$",
+          "why": "include all $Y$ values"
+        },
+        {
+          "do": "Sum cells with $X=1$",
+          "result": "$P(X=1)=0.25+0.25=0.50$",
+          "why": "again sum over $Y$"
+        },
+        {
+          "do": "Sum cells with $Y=0$",
+          "result": "$P(Y=0)=0.15+0.25=0.40$",
+          "why": "include all $X$ values"
+        },
+        {
+          "do": "Sum cells with $Y=1$",
+          "result": "$P(Y=1)=0.35+0.25=0.60$",
+          "why": "sum the second column"
+        },
+        {
+          "do": "Check totals",
+          "result": "$0.50+0.50=1$ and $0.40+0.60=1$",
+          "why": "each marginal distribution must sum to 1"
+        }
+      ],
+      "verify": "Both marginal distributions are valid, and all four joint cells were used exactly once in each set of totals.",
+      "answer": "$X$ marginal: $0.50,0.50$; $Y$ marginal: $0.40,0.60$.",
+      "connects": "Marginalization turns a joint table into single-variable distributions."
+    },
+    "practice": [
+      {
+        "problem": "For $P(0,0)=0.2$, $P(0,1)=0.1$, $P(1,0)=0.3$, $P(1,1)=0.4$, find $P(X=1)$.",
+        "steps": [
+          {
+            "do": "Identify cells with $X=1$",
+            "result": "$(1,0)$ and $(1,1)$",
+            "why": "all $Y$ values are allowed"
+          },
+          {
+            "do": "Read probabilities",
+            "result": "$0.3$ and $0.4$",
+            "why": "from the joint table"
+          },
+          {
+            "do": "Add them",
+            "result": "$0.3+0.4=0.7$",
+            "why": "sum out $Y$"
+          },
+          {
+            "do": "State marginal",
+            "result": "$P(X=1)=0.7$",
+            "why": "this is the total mass for $X=1$"
+          },
+          {
+            "do": "Check complement",
+            "result": "$P(X=0)=0.2+0.1=0.3$",
+            "why": "$0.7+0.3=1$"
+          }
+        ],
+        "answer": "$P(X=1)=0.7$."
+      },
+      {
+        "problem": "A joint table over $Y=0,1,2$ has row for $X=0$: $0.1,0.2,0.1$ and row for $X=1$: $0.2,0.1,0.3$. Find the marginal of $Y=2$.",
+        "steps": [
+          {
+            "do": "Identify cells with $Y=2$",
+            "result": "$(X=0,Y=2)$ and $(X=1,Y=2)$",
+            "why": "sum over $X$"
+          },
+          {
+            "do": "Read probabilities",
+            "result": "$0.1$ and $0.3$",
+            "why": "from the two rows"
+          },
+          {
+            "do": "Add them",
+            "result": "$0.1+0.3=0.4$",
+            "why": "marginalize out $X$"
+          },
+          {
+            "do": "State marginal",
+            "result": "$P(Y=2)=0.4$",
+            "why": "total probability for that $Y$ value"
+          },
+          {
+            "do": "Check table total",
+            "result": "$0.1+0.2+0.1+0.2+0.1+0.3=1.0$",
+            "why": "the joint table is valid"
+          }
+        ],
+        "answer": "$P(Y=2)=0.4$."
+      },
+      {
+        "problem": "If $P(X=0)=0.6$ and $P(X=1)=0.4$, is this enough to know the joint distribution with $Y$?",
+        "steps": [
+          {
+            "do": "Identify what is known",
+            "result": "only the marginal of $X$",
+            "why": "probabilities for $Y$ and pairs are not given"
+          },
+          {
+            "do": "Recall marginalization",
+            "result": "$P(X=x)=sum_y P(X=x,Y=y)$",
+            "why": "many joint tables can produce the same sums"
+          },
+          {
+            "do": "Construct one possible split for $X=0$",
+            "result": "$0.3+0.3=0.6$",
+            "why": "one joint row could split evenly"
+          },
+          {
+            "do": "Construct another possible split for $X=0$",
+            "result": "$0.5+0.1=0.6$",
+            "why": "a different joint row has the same marginal"
+          },
+          {
+            "do": "Conclude",
+            "result": "not enough information",
+            "why": "marginals lose dependence structure"
+          }
+        ],
+        "answer": "No. A marginal alone does not determine the joint distribution."
+      },
+      {
+        "problem": "A latent group $Z$ has $P(Z=A)=0.7$, $P(click=1 | A)=0.1$, $P(Z=B)=0.3$, $P(click=1 | B)=0.4$. Find the marginal click probability.",
+        "steps": [
+          {
+            "do": "Write total probability",
+            "result": "$P(click)=P(click|A)P(A)+P(click|B)P(B)$",
+            "why": "sum over latent groups"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$0.1(0.7)+0.4(0.3)$",
+            "why": "use group rates and group masses"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.07+0.12$",
+            "why": "compute each group's contribution"
+          },
+          {
+            "do": "Add contributions",
+            "result": "$0.19$",
+            "why": "marginal click probability sums over groups"
+          },
+          {
+            "do": "Interpret",
+            "result": "$19 percent$",
+            "why": "overall rate blends the two segments"
+          }
+        ],
+        "answer": "The marginal click probability is $0.19$."
+      },
+      {
+        "problem": "A joint density is constant $2$ on rectangle $0<=x<=1$, $0<=y<=0.5$. Find the marginal density of $X$ on $[0,1]$.",
+        "steps": [
+          {
+            "do": "Write the marginal integral",
+            "result": "$f_X(x)=integral from 0 to 0.5 of 2 dy$",
+            "why": "integrate out $Y$"
+          },
+          {
+            "do": "Integrate the constant",
+            "result": "$2y$ from $0$ to $0.5$",
+            "why": "antiderivative of 2 with respect to $y$"
+          },
+          {
+            "do": "Evaluate endpoints",
+            "result": "$2(0.5)-2(0)=1$",
+            "why": "use the vertical length"
+          },
+          {
+            "do": "State support",
+            "result": "$f_X(x)=1$ for $0<=x<=1$",
+            "why": "outside this interval density is zero"
+          },
+          {
+            "do": "Check normalization",
+            "result": "area under $f_X$ is $1(1)=1$",
+            "why": "valid marginal density"
+          }
+        ],
+        "answer": "$f_X(x)=1$ on $[0,1]$ and $0$ otherwise."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Overall click rate from segments",
+        "background": "Product metrics often combine segment-specific behavior into one marginal rate.",
+        "numbers": "Rates $0.05$ and $0.20$ with weights $0.8$ and $0.2$ give $0.08$."
+      },
+      {
+        "title": "Latent variable models",
+        "background": "Mixture models hide a component label and marginalize it out to describe observed data.",
+        "numbers": "Component means $0$ and $10$ with weights $0.7$ and $0.3$ give marginal mean $3$."
+      },
+      {
+        "title": "Confusion matrix label rates",
+        "background": "Summing a confusion matrix column gives true label frequency.",
+        "numbers": "True positive $0.30$ plus false negative $0.10$ gives $P(label=1)=0.40$."
+      },
+      {
+        "title": "Missing data summaries",
+        "background": "A joint table of feature value and missingness can be marginalized to get the missing rate.",
+        "numbers": "Missing cells $0.04$ and $0.06$ across groups sum to missing probability $0.10$."
+      },
+      {
+        "title": "Probabilistic graphical models",
+        "background": "Inference in graphical models repeatedly sums out variables not being queried.",
+        "numbers": "If two hidden states contribute $0.12$ and $0.18$ to an observation, its marginal probability is $0.30$."
+      },
+      {
+        "title": "Monte Carlo integration",
+        "background": "Sampling can approximate marginalization when exact sums or integrals are hard.",
+        "numbers": "Average conditional probabilities $0.1,0.2,0.4,0.3$ gives marginal estimate $0.25$."
+      }
+    ],
+    "applicationsClose": "Marginalization is the art of summing away what you are not asking about while preserving the probability of what remains.",
+    "takeaways": [
+      "A marginal distribution comes from a joint distribution by summing or integrating out other variables.",
+      "Row and column totals are discrete marginals.",
+      "Marginalization is the law of total probability in action.",
+      "Marginals do not preserve all dependence information from the joint."
+    ],
     "prereqs": [
       "math-17-25"
     ]
@@ -552,19 +6808,262 @@
   B({
     "id": "math-17-27",
     "title": "Conditional distributions",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: conditional distributions.",
+    "tagline": "A conditional distribution updates the probability story after you are told what is already true.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Marginal distributions</i>"
+        "Joint distributions",
+        "Marginal distributions",
+        "Bayes' rule"
       ],
       "leadsTo": [
-        "the next lesson, <i>Independence of random variables</i>"
+        "Bayesian inference",
+        "Markov chains",
+        "conditional expectation"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "joint tables",
+        "likelihood",
+        "independence",
+        "posterior distributions"
       ]
     },
+    "motivation": "<p>Information changes probability. A click is more likely after a view; a disease is more likely after a positive test; a label is more likely after seeing certain features.</p><p>A <b>conditional distribution</b> is the distribution that remains after we restrict attention to cases where some event or variable value is known. It is probability with context included.</p>",
+    "definition": "<p>For events or discrete variables, $P(X=x | Y=y)=P(X=x,Y=y)/P(Y=y)$ when $P(Y=y)>0$. The denominator renormalizes the slice where $Y=y$ so probabilities within that slice sum to $1$.</p><p>Bayes' rule follows by writing the same joint probability two ways: $P(X,Y)=P(X|Y)P(Y)=P(Y|X)P(X)$. Solving gives $P(X|Y)=P(Y|X)P(X)/P(Y)$.</p><p><b>Assumptions that matter:</b> the conditioning event must have positive probability in the discrete case; conditionals depend on what information is known; independence means conditioning does not change the distribution; and continuous conditioning uses densities rather than point probabilities.</p>",
+    "worked": {
+      "problem": "A joint table has $P(X=1,Y=1)=0.24$, $P(X=0,Y=1)=0.16$, $P(X=1,Y=0)=0.36$, $P(X=0,Y=0)=0.24$. Find $P(X=1 | Y=1)$.",
+      "skills": [
+        "conditional probability",
+        "joint tables",
+        "normalization"
+      ],
+      "strategy": "Restrict to the $Y=1$ slice, then divide the desired cell by the slice total.",
+      "steps": [
+        {
+          "do": "Find the $Y=1$ slice total",
+          "result": "$P(Y=1)=0.24+0.16=0.40$",
+          "why": "sum both $X$ values with $Y=1$"
+        },
+        {
+          "do": "Read the desired joint cell",
+          "result": "$P(X=1,Y=1)=0.24$",
+          "why": "this is the part of the slice where $X=1$"
+        },
+        {
+          "do": "Write the conditional formula",
+          "result": "$P(X=1|Y=1)=0.24/0.40$",
+          "why": "divide joint cell by conditioning probability"
+        },
+        {
+          "do": "Divide",
+          "result": "$0.60$",
+          "why": "$24/40=0.6$"
+        },
+        {
+          "do": "Check the companion conditional",
+          "result": "$P(X=0|Y=1)=0.16/0.40=0.40$",
+          "why": "conditionals inside the slice should sum to 1"
+        }
+      ],
+      "verify": "$0.60+0.40=1$, so the conditional distribution over $X$ given $Y=1$ is normalized.",
+      "answer": "$P(X=1 | Y=1)=0.60$.",
+      "connects": "Conditional probability is a renormalized slice of the joint distribution."
+    },
+    "practice": [
+      {
+        "problem": "If $P(A and B)=0.12$ and $P(B)=0.30$, find $P(A|B)$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$P(A|B)=P(A and B)/P(B)$",
+            "why": "conditional probability divides by the known event"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$0.12/0.30$",
+            "why": "use the joint and conditioning probabilities"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.40$",
+            "why": "$12/30=0.4$"
+          },
+          {
+            "do": "Check denominator",
+            "result": "$0.30>0$",
+            "why": "conditioning event must be possible"
+          },
+          {
+            "do": "Interpret",
+            "result": "$40 percent$",
+            "why": "within event $B$, two fifths also have $A$"
+          }
+        ],
+        "answer": "$P(A|B)=0.40$."
+      },
+      {
+        "problem": "A table has $P(X=0,Y=0)=0.2$, $P(1,0)=0.3$, $P(0,1)=0.1$, $P(1,1)=0.4$. Find $P(Y=1|X=1)$.",
+        "steps": [
+          {
+            "do": "Find the $X=1$ total",
+            "result": "$P(X=1)=0.3+0.4=0.7$",
+            "why": "sum over both $Y$ values"
+          },
+          {
+            "do": "Read desired joint cell",
+            "result": "$P(X=1,Y=1)=0.4$",
+            "why": "both conditions are true"
+          },
+          {
+            "do": "Write the conditional",
+            "result": "$P(Y=1|X=1)=0.4/0.7$",
+            "why": "renormalize the $X=1$ row"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.5714$",
+            "why": "four sevenths is about 0.5714"
+          },
+          {
+            "do": "Check companion",
+            "result": "$P(Y=0|X=1)=0.3/0.7=0.4286$",
+            "why": "the two conditionals sum to 1"
+          }
+        ],
+        "answer": "$P(Y=1|X=1) approx 0.5714$."
+      },
+      {
+        "problem": "If $P(A)=0.2$, $P(B|A)=0.7$, and $P(B)=0.5$, find $P(A|B)$.",
+        "steps": [
+          {
+            "do": "Write Bayes' rule",
+            "result": "$P(A|B)=P(B|A)P(A)/P(B)$",
+            "why": "reverse the conditioning"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$0.7(0.2)/0.5$",
+            "why": "use likelihood, prior, and evidence"
+          },
+          {
+            "do": "Multiply numerator",
+            "result": "$0.14/0.5$",
+            "why": "$0.7 times 0.2=0.14$"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.28$",
+            "why": "$0.14/0.5=0.28$"
+          },
+          {
+            "do": "Interpret",
+            "result": "posterior probability $28 percent$",
+            "why": "observing $B$ raises or lowers belief according to the likelihood"
+          }
+        ],
+        "answer": "$P(A|B)=0.28$."
+      },
+      {
+        "problem": "Check independence if $P(A)=0.4$ and $P(A|B)=0.4$ with $P(B)>0$.",
+        "steps": [
+          {
+            "do": "Recall independence condition",
+            "result": "$P(A|B)=P(A)$",
+            "why": "conditioning on $B$ does not change $A$"
+          },
+          {
+            "do": "Compare the values",
+            "result": "$0.4=0.4$",
+            "why": "the conditional equals the marginal"
+          },
+          {
+            "do": "State implication for this event",
+            "result": "$A$ is independent of $B$ by this check",
+            "why": "for two events, equality with positive $P(B)$ is enough"
+          },
+          {
+            "do": "Compute joint if needed",
+            "result": "$P(A and B)=0.4P(B)$",
+            "why": "multiply both sides by $P(B)$"
+          },
+          {
+            "do": "Interpret",
+            "result": "knowing $B$ gives no change in probability of $A$",
+            "why": "that is the meaning of independence"
+          }
+        ],
+        "answer": "Yes, this equality indicates independence for the two events."
+      },
+      {
+        "problem": "A spam filter has $P(spam)=0.1$, $P(flag|spam)=0.9$, and $P(flag|not spam)=0.2$. Find $P(spam|flag)$.",
+        "steps": [
+          {
+            "do": "Compute non-spam probability",
+            "result": "$P(not spam)=0.9$",
+            "why": "complement of spam"
+          },
+          {
+            "do": "Compute flag probability",
+            "result": "$P(flag)=0.9(0.1)+0.2(0.9)$",
+            "why": "law of total probability over spam status"
+          },
+          {
+            "do": "Simplify evidence",
+            "result": "$P(flag)=0.09+0.18=0.27$",
+            "why": "add spam and non-spam flag contributions"
+          },
+          {
+            "do": "Write Bayes' rule",
+            "result": "$P(spam|flag)=0.9(0.1)/0.27$",
+            "why": "posterior equals likelihood times prior divided by evidence"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.333$",
+            "why": "$0.09/0.27=1/3$"
+          }
+        ],
+        "answer": "$P(spam|flag) approx 0.333$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Bayesian diagnosis",
+        "background": "Medical testing is a classic conditional-probability setting because base rates matter.",
+        "numbers": "Prior $0.01$, sensitivity $0.99$, false positive $0.05$ gives evidence $0.0594$ and posterior $0.0099/0.0594=0.167$."
+      },
+      {
+        "title": "Spam filtering",
+        "background": "Filters update belief in spam after seeing words or model flags.",
+        "numbers": "If $P(spam)=0.1$, $P(flag|spam)=0.9$, $P(flag)=0.27$, then $P(spam|flag)=0.333$."
+      },
+      {
+        "title": "Recommendation after a view",
+        "background": "Click probability changes after conditioning on whether an item was viewed.",
+        "numbers": "$P(click,view)=0.04$ and $P(view)=0.5$ give $P(click|view)=0.08$."
+      },
+      {
+        "title": "Model calibration by segment",
+        "background": "Conditional distributions compare outcomes inside groups or score buckets.",
+        "numbers": "In a bucket with $200$ examples and $30$ positives, observed conditional positive rate is $0.15$."
+      },
+      {
+        "title": "Markov chains",
+        "background": "A Markov chain is built from conditional probabilities of the next state given the current state.",
+        "numbers": "If $P(next=B | current=A)=0.3$, then among $1000$ visits to $A$ expect about $300$ moves to $B$."
+      },
+      {
+        "title": "Naive Bayes",
+        "background": "Naive Bayes classifiers combine conditional feature likelihoods with class priors.",
+        "numbers": "Class prior $0.4$ times likelihoods $0.5$ and $0.2$ gives unnormalized score $0.04$."
+      }
+    ],
+    "applicationsClose": "Conditioning is the math of learning from context: slice the joint story, renormalize, and reason with the information you now have.",
+    "takeaways": [
+      "$P(X=x|Y=y)=P(X=x,Y=y)/P(Y=y)$ when the denominator is positive.",
+      "A conditional distribution is a normalized slice of a joint distribution.",
+      "Bayes' rule reverses conditioning using likelihood, prior, and evidence.",
+      "Independence means conditioning does not change the probability distribution."
+    ],
     "prereqs": [
       "math-17-26"
     ]
@@ -573,19 +7072,262 @@
   B({
     "id": "math-17-28",
     "title": "Independence of random variables",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: independence of random variables.",
+    "tagline": "Independence means that learning one variable does not change the probability story for the other.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Conditional distributions</i>"
+        "events",
+        "conditional probability",
+        "joint and marginal distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Covariance</i>"
+        "Covariance",
+        "Sums of random variables and convolution",
+        "Conditional expectation"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "product rules",
+        "marginalization",
+        "expectation",
+        "joint distributions"
       ]
     },
+    "motivation": "<p>You already know the feeling of separate randomness: a coin toss should not change a die roll. Random-variable independence asks for that separation not just for one event, but for every event the variables can describe.</p><p>This is why independence is so powerful in ML math. It lets a joint model split into smaller pieces, lets samples average cleanly, and lets repeated trials become understandable.</p>",
+    "definition": "<p>Random variables $X$ and $Y$ are <b>independent</b> when $P(X\\in A,Y\\in B)=P(X\\in A)P(Y\\in B)$ for every pair of sets $A,B$. In the discrete case this is $p_{X,Y}(x,y)=p_X(x)p_Y(y)$ for every $x,y$; in the continuous case it is $f_{X,Y}(x,y)=f_X(x)f_Y(y)$ on the support.</p><p>The product rule comes from conditional probability: $P(A\\cap B)=P(A\\mid B)P(B)$. If learning $B$ does not change the chance of $A$, then $P(A\\mid B)=P(A)$ and the product appears.</p><p><b>Assumptions that matter:</b> independence must hold for all events determined by the variables; a single matching cell is not enough; independent does not mean identical; and zero covariance is weaker than independence.</p>",
+    "worked": {
+      "problem": "A joint table has probabilities $0.12,0.18,0.28,0.42$ for $(X,Y)=(0,0),(0,1),(1,0),(1,1)$. Decide whether $X$ and $Y$ are independent.",
+      "skills": [
+        "joint tables",
+        "marginals",
+        "factorization"
+      ],
+      "strategy": "Compute the marginal probabilities, then test whether every joint cell factors as a product.",
+      "steps": [
+        {
+          "do": "Compute $P(X=0)$",
+          "result": "$0.12+0.18=0.30$",
+          "why": "sum the cells with $X=0$"
+        },
+        {
+          "do": "Compute $P(X=1)$",
+          "result": "$0.28+0.42=0.70$",
+          "why": "sum the cells with $X=1$"
+        },
+        {
+          "do": "Compute $P(Y=0)$",
+          "result": "$0.12+0.28=0.40$",
+          "why": "sum the cells with $Y=0$"
+        },
+        {
+          "do": "Compute $P(Y=1)$",
+          "result": "$0.18+0.42=0.60$",
+          "why": "sum the cells with $Y=1$"
+        },
+        {
+          "do": "Check products",
+          "result": "$0.30\\cdot0.40=0.12$, $0.30\\cdot0.60=0.18$, $0.70\\cdot0.40=0.28$, $0.70\\cdot0.60=0.42$",
+          "why": "each product matches the joint table"
+        }
+      ],
+      "verify": "All four cells match the product of their marginals, so the whole table separates.",
+      "answer": "$X$ and $Y$ are independent.",
+      "connects": "Independence says the joint distribution can be rebuilt from the two marginals."
+    },
+    "practice": [
+      {
+        "problem": "A fair coin and a fair die are tossed. Compute $P(H,6)$ and explain the product.",
+        "steps": [
+          {
+            "do": "Write the coin probability",
+            "result": "$P(H)=1/2$",
+            "why": "two coin outcomes are equally likely"
+          },
+          {
+            "do": "Write the die probability",
+            "result": "$P(6)=1/6$",
+            "why": "six die faces are equally likely"
+          },
+          {
+            "do": "Multiply",
+            "result": "$(1/2)(1/6)=1/12$",
+            "why": "the mechanisms are separate"
+          },
+          {
+            "do": "Count outcomes",
+            "result": "$1$ favorable pair out of $12$",
+            "why": "there are $2\\cdot6$ equally likely pairs"
+          },
+          {
+            "do": "Compare",
+            "result": "$1/12=1/12$",
+            "why": "counting agrees with the product rule"
+          }
+        ],
+        "answer": "$P(H,6)=1/12$."
+      },
+      {
+        "problem": "For a table $0.20,0.30,0.10,0.40$ in the same order, show non-independence.",
+        "steps": [
+          {
+            "do": "Compute $P(X=0)$",
+            "result": "$0.20+0.30=0.50$",
+            "why": "row sum"
+          },
+          {
+            "do": "Compute $P(Y=0)$",
+            "result": "$0.20+0.10=0.30$",
+            "why": "column sum"
+          },
+          {
+            "do": "Multiply marginals",
+            "result": "$0.50\\cdot0.30=0.15$",
+            "why": "what independence would require"
+          },
+          {
+            "do": "Read the joint cell",
+            "result": "$P(X=0,Y=0)=0.20$",
+            "why": "from the table"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.20\\ne0.15$",
+            "why": "one failed cell disproves independence"
+          }
+        ],
+        "answer": "The variables are not independent."
+      },
+      {
+        "problem": "If $P(X>2)=0.35$, $P(Y\\le5)=0.80$, and $X,Y$ are independent, find $P(X>2,Y\\le5)$ and $P(X\\le2,Y>5)$.",
+        "steps": [
+          {
+            "do": "Multiply first event",
+            "result": "$0.35\\cdot0.80=0.28$",
+            "why": "independence factors it"
+          },
+          {
+            "do": "Complement $X$",
+            "result": "$P(X\\le2)=0.65$",
+            "why": "subtract from 1"
+          },
+          {
+            "do": "Complement $Y$",
+            "result": "$P(Y>5)=0.20$",
+            "why": "subtract from 1"
+          },
+          {
+            "do": "Multiply complements",
+            "result": "$0.65\\cdot0.20=0.13$",
+            "why": "complement events remain independent"
+          },
+          {
+            "do": "Check scale",
+            "result": "$0.28$ and $0.13$ are valid probabilities",
+            "why": "both lie between 0 and 1"
+          }
+        ],
+        "answer": "The probabilities are $0.28$ and $0.13$."
+      },
+      {
+        "problem": "For density $f(x,y)=6xy^2$ on $0<x<1$, $0<y<1$, decide independence.",
+        "steps": [
+          {
+            "do": "Find $f_X(x)$",
+            "result": "$\\int_0^1 6xy^2\\,dy=2x$",
+            "why": "integrate out $y$"
+          },
+          {
+            "do": "Find $f_Y(y)$",
+            "result": "$\\int_0^1 6xy^2\\,dx=3y^2$",
+            "why": "integrate out $x$"
+          },
+          {
+            "do": "Multiply marginals",
+            "result": "$(2x)(3y^2)=6xy^2$",
+            "why": "test factorization"
+          },
+          {
+            "do": "Compare to joint density",
+            "result": "$6xy^2=f(x,y)$",
+            "why": "the formulas match"
+          },
+          {
+            "do": "Check support",
+            "result": "the support is a rectangle",
+            "why": "the factorization is valid over a product region"
+          }
+        ],
+        "answer": "$X$ and $Y$ are independent."
+      },
+      {
+        "problem": "Two independent error flags each occur with probability $0.10$. Find the chance at least one flag occurs.",
+        "steps": [
+          {
+            "do": "Find no-flag probability for one",
+            "result": "$0.90$",
+            "why": "use the complement"
+          },
+          {
+            "do": "Find no flags for both",
+            "result": "$0.90\\cdot0.90=0.81$",
+            "why": "independence multiplies"
+          },
+          {
+            "do": "Take complement",
+            "result": "$1-0.81=0.19$",
+            "why": "at least one is the opposite of none"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$19\\%$",
+            "why": "interpret the probability"
+          },
+          {
+            "do": "Compare to one flag",
+            "result": "$0.19>0.10$",
+            "why": "two chances raise the risk"
+          }
+        ],
+        "answer": "The probability is $0.19$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Naive Bayes",
+        "background": "Naive Bayes factors feature likelihoods by assuming conditional independence given the class.",
+        "numbers": "If $P(C)=0.4$, $P(x_1\\mid C)=0.8$, and $P(x_2\\mid C)=0.5$, the score is $0.4\\cdot0.8\\cdot0.5=0.16$."
+      },
+      {
+        "title": "Independent validation examples",
+        "background": "Validation averages are easiest to analyze when examples are independent draws.",
+        "numbers": "With error rate $0.2$ over $100$ independent examples, expected errors are $100\\cdot0.2=20$."
+      },
+      {
+        "title": "Dropout masks",
+        "background": "Dropout commonly uses independent Bernoulli masks for units during training.",
+        "numbers": "With keep probability $0.8$ for $5$ units, all are kept with probability $0.8^5=0.32768$."
+      },
+      {
+        "title": "Randomized experiments",
+        "background": "Treatment assignment should be independent of user traits to make groups comparable.",
+        "numbers": "If $30\\%$ get treatment and $12\\%$ are premium, independence predicts $0.30\\cdot0.12=0.036$ are both."
+      },
+      {
+        "title": "Sensor fusion",
+        "background": "Independent sensor failures multiply, but shared causes can break the assumption.",
+        "numbers": "Two independent false-alarm rates of $0.02$ give joint false alarm $0.02^2=0.0004$."
+      },
+      {
+        "title": "Monte Carlo draws",
+        "background": "Monte Carlo estimates usually rely on independent random samples.",
+        "numbers": "For Bernoulli $p=0.3$, the chance the first three draws are all $1$ is $0.3^3=0.027$."
+      }
+    ],
+    "applicationsClose": "Independence is the promise that separate probability stories can be multiplied into a joint story.",
+    "takeaways": [
+      "Independence must hold for all events generated by the variables.",
+      "Discrete independence means every joint mass factors into marginals.",
+      "Continuous independence means the joint density factors on its support.",
+      "Independence powers sampling, experiments, dropout, Naive Bayes, and Monte Carlo."
+    ],
     "prereqs": [
       "math-17-27"
     ]
@@ -594,19 +7336,262 @@
   B({
     "id": "math-17-29",
     "title": "Covariance",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: covariance.",
+    "tagline": "Covariance measures whether two variables tend to sit above and below their means together.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Independence of random variables</i>"
+        "expectation",
+        "variance",
+        "Independence of random variables"
       ],
       "leadsTo": [
-        "the next lesson, <i>Correlation</i>"
+        "Correlation",
+        "The multivariate Gaussian",
+        "principal components"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "centering",
+        "inner products",
+        "joint distributions",
+        "bilinearity"
       ]
     },
+    "motivation": "<p>Variance centers one variable, squares, and averages. Covariance centers two variables, multiplies, and averages.</p><p>A positive product means both variables are on the same side of their means. A negative product means they are on opposite sides. Averaging those products gives a signed summary of linear co-movement.</p>",
+    "definition": "<p>The <b>covariance</b> of $X$ and $Y$ is $\\operatorname{Cov}(X,Y)=E[(X-\\mu_X)(Y-\\mu_Y)]$, where $\\mu_X=E[X]$ and $\\mu_Y=E[Y]$. The computational form is $\\operatorname{Cov}(X,Y)=E[XY]-E[X]E[Y]$.</p><p>Expanding the centered product gives $E[XY-\\mu_XY-\\mu_YX+\\mu_X\\mu_Y]=E[XY]-\\mu_X\\mu_Y$ after like terms combine.</p><p><b>Assumptions that matter:</b> the needed expectations must exist; covariance has product units; independence implies zero covariance when moments exist; and zero covariance does not by itself prove independence.</p>",
+    "worked": {
+      "problem": "Outcomes $(X,Y)=(1,2),(2,4),(3,5)$ are equally likely. Compute $\\operatorname{Cov}(X,Y)$.",
+      "skills": [
+        "expectation",
+        "centering",
+        "covariance"
+      ],
+      "strategy": "Compute $E[X]$, $E[Y]$, and $E[XY]$, then subtract the product of means.",
+      "steps": [
+        {
+          "do": "Compute $E[X]",
+          "result": "$(1+2+3)/3=2$",
+          "why": "average the $X$ values"
+        },
+        {
+          "do": "Compute $E[Y]",
+          "result": "$(2+4+5)/3=11/3$",
+          "why": "average the $Y$ values"
+        },
+        {
+          "do": "Compute products",
+          "result": "$XY=2,8,15$",
+          "why": "multiply paired outcomes"
+        },
+        {
+          "do": "Compute $E[XY]",
+          "result": "$(2+8+15)/3=25/3$",
+          "why": "average the products"
+        },
+        {
+          "do": "Subtract product of means",
+          "result": "$25/3-2\\cdot11/3=1$",
+          "why": "apply the covariance formula"
+        }
+      ],
+      "verify": "Larger $X$ values tend to pair with larger $Y$ values, so the positive sign makes sense.",
+      "answer": "$\\operatorname{Cov}(X,Y)=1$.",
+      "connects": "Covariance is the average product of centered movements."
+    },
+    "practice": [
+      {
+        "problem": "For outcomes $(0,1)$ and $(2,5)$ with probability $1/2$ each, compute covariance.",
+        "steps": [
+          {
+            "do": "Compute $E[X]",
+            "result": "$1$",
+            "why": "average $0$ and $2$"
+          },
+          {
+            "do": "Compute $E[Y]",
+            "result": "$3$",
+            "why": "average $1$ and $5$"
+          },
+          {
+            "do": "Compute $E[XY]",
+            "result": "$(0+10)/2=5$",
+            "why": "average products"
+          },
+          {
+            "do": "Subtract",
+            "result": "$5-1\\cdot3=2$",
+            "why": "use the shortcut"
+          },
+          {
+            "do": "Interpret",
+            "result": "positive",
+            "why": "large pairs with large"
+          }
+        ],
+        "answer": "The covariance is $2$."
+      },
+      {
+        "problem": "If $E[X]=4$, $E[Y]=10$, and $E[XY]=37$, compute covariance.",
+        "steps": [
+          {
+            "do": "Write formula",
+            "result": "$E[XY]-E[X]E[Y]$",
+            "why": "shortcut form"
+          },
+          {
+            "do": "Substitute",
+            "result": "$37-4\\cdot10$",
+            "why": "insert values"
+          },
+          {
+            "do": "Multiply",
+            "result": "$4\\cdot10=40$",
+            "why": "product of means"
+          },
+          {
+            "do": "Subtract",
+            "result": "$-3$",
+            "why": "finish"
+          },
+          {
+            "do": "Read sign",
+            "result": "negative",
+            "why": "opposite-side movement dominates"
+          }
+        ],
+        "answer": "The covariance is $-3$."
+      },
+      {
+        "problem": "Let $Y=3X+2$ and $\\operatorname{Var}(X)=5$. Find $\\operatorname{Cov}(X,Y)$.",
+        "steps": [
+          {
+            "do": "Substitute $Y$",
+            "result": "$\\operatorname{Cov}(X,3X+2)$",
+            "why": "use the relation"
+          },
+          {
+            "do": "Use bilinearity",
+            "result": "$3\\operatorname{Cov}(X,X)+\\operatorname{Cov}(X,2)$",
+            "why": "split terms"
+          },
+          {
+            "do": "Replace self-covariance",
+            "result": "$\\operatorname{Cov}(X,X)=5$",
+            "why": "self-covariance is variance"
+          },
+          {
+            "do": "Remove constant covariance",
+            "result": "$\\operatorname{Cov}(X,2)=0$",
+            "why": "constants do not vary"
+          },
+          {
+            "do": "Compute",
+            "result": "$15$",
+            "why": "multiply by 3"
+          }
+        ],
+        "answer": "$\\operatorname{Cov}(X,Y)=15$."
+      },
+      {
+        "problem": "For Bernoulli $X$ with $P(X=1)=0.4$ and $Y=1-X$, compute covariance.",
+        "steps": [
+          {
+            "do": "Compute $E[X]",
+            "result": "$0.4$",
+            "why": "Bernoulli mean"
+          },
+          {
+            "do": "Compute $E[Y]",
+            "result": "$0.6$",
+            "why": "complement probability"
+          },
+          {
+            "do": "Compute $XY$",
+            "result": "$0$ always",
+            "why": "one factor is always zero"
+          },
+          {
+            "do": "Compute $E[XY]$",
+            "result": "$0$",
+            "why": "product is always zero"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0-0.4\\cdot0.6=-0.24$",
+            "why": "shortcut formula"
+          }
+        ],
+        "answer": "The covariance is $-0.24$."
+      },
+      {
+        "problem": "Centered feature values $[-2,-1,1,2]$ pair with centered residuals $[-3,-1,1,3]$. Average the products.",
+        "steps": [
+          {
+            "do": "Multiply pairs",
+            "result": "$6,1,1,6$",
+            "why": "same signs give positive products"
+          },
+          {
+            "do": "Add products",
+            "result": "$14$",
+            "why": "sum co-movement"
+          },
+          {
+            "do": "Divide by $4$",
+            "result": "$3.5$",
+            "why": "requested average"
+          },
+          {
+            "do": "Check sign",
+            "result": "positive",
+            "why": "all products are positive"
+          },
+          {
+            "do": "Interpret",
+            "result": "residual rises with feature",
+            "why": "model may miss a trend"
+          }
+        ],
+        "answer": "The average product is $3.5$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature association",
+        "background": "Covariance is a numerical scatterplot summary.",
+        "numbers": "Centered ad spend $[-10,0,10]$ and clicks $[-40,0,50]$ give covariance $(400+0+500)/3=300$."
+      },
+      {
+        "title": "Portfolio risk",
+        "background": "Covariance controls whether risks add or offset.",
+        "numbers": "If variances are $4$ and $9$ and covariance is $-2$, variance of the sum is $4+9+2(-2)=9$."
+      },
+      {
+        "title": "Gradient noise",
+        "background": "Covariance between gradient coordinates shows whether updates wobble together.",
+        "numbers": "Centered pairs $(1,2),(-1,-2),(2,4)$ have average product $(2+2+8)/3=4$."
+      },
+      {
+        "title": "PCA",
+        "background": "PCA starts from covariance to find high-variation directions.",
+        "numbers": "Matrix $\\begin{pmatrix}4&3\\\\3&4\\end{pmatrix}$ has variance $7$ along normalized direction $(1,1)/\\sqrt2$."
+      },
+      {
+        "title": "Metric tradeoffs",
+        "background": "Negative covariance can reveal product tradeoffs.",
+        "numbers": "Centered revenue $[2,-1,-1]$ and latency $[-4,2,2]$ average product $(-8-2-2)/3=-4$."
+      },
+      {
+        "title": "Units",
+        "background": "Covariance changes when units change.",
+        "numbers": "A covariance of $12$ meter-kg becomes $1200$ centimeter-kg after multiplying height by $100$."
+      }
+    ],
+    "applicationsClose": "Covariance is useful because it is signed and algebraic, but its scale still depends on units.",
+    "takeaways": [
+      "Covariance is $E[(X-\\mu_X)(Y-\\mu_Y)]$.",
+      "The shortcut is $E[XY]-E[X]E[Y]$.",
+      "Positive means same-direction linear movement; negative means opposite-direction movement.",
+      "Independence implies zero covariance, but zero covariance need not imply independence."
+    ],
     "prereqs": [
       "math-17-28"
     ]
@@ -615,19 +7600,261 @@
   B({
     "id": "math-17-30",
     "title": "Correlation",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: correlation.",
+    "tagline": "Correlation is covariance in standard-deviation units, so linear association becomes unitless.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Covariance</i>"
+        "Covariance",
+        "standard deviation",
+        "linear transformations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Transformations of random variables</i>"
+        "regression",
+        "The multivariate Gaussian",
+        "principal components"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "standardization",
+        "inner products",
+        "Cauchy-Schwarz inequality",
+        "scatterplots"
       ]
     },
+    "motivation": "<p>Covariance has units. Correlation removes those units by dividing by the two standard deviations.</p><p>The result is a number between $-1$ and $1$: sign tells direction, magnitude tells linear strength, and the scale is comparable across problems.</p>",
+    "definition": "<p>The <b>Pearson correlation</b> is $\\rho_{X,Y}=\\dfrac{\\operatorname{Cov}(X,Y)}{\\sigma_X\\sigma_Y}$ when $\\sigma_X,\\sigma_Y>0$.</p><p>Cauchy-Schwarz gives $|\\operatorname{Cov}(X,Y)|\\le\\sigma_X\\sigma_Y$, so $-1\\le\\rho\\le1$.</p><p><b>Assumptions that matter:</b> variances must be finite and nonzero; correlation is linear association; positive rescaling preserves it; negative rescaling flips its sign.</p>",
+    "worked": {
+      "problem": "Given covariance $6$, variances $9$ and $16$, compute correlation.",
+      "skills": [
+        "standard deviation",
+        "normalization"
+      ],
+      "strategy": "Take square roots of variances and divide covariance by their product.",
+      "steps": [
+        {
+          "do": "Find $\\sigma_X$",
+          "result": "$3$",
+          "why": "$\\sqrt9=3$"
+        },
+        {
+          "do": "Find $\\sigma_Y$",
+          "result": "$4$",
+          "why": "$\\sqrt{16}=4$"
+        },
+        {
+          "do": "Multiply standard deviations",
+          "result": "$12$",
+          "why": "normalizing scale"
+        },
+        {
+          "do": "Divide",
+          "result": "$6/12=0.5$",
+          "why": "correlation formula"
+        },
+        {
+          "do": "Check range",
+          "result": "$0.5\\in[-1,1]$",
+          "why": "valid correlation"
+        }
+      ],
+      "verify": "The covariance is positive, so the correlation should be positive.",
+      "answer": "The correlation is $0.5$.",
+      "connects": "Correlation is standardized covariance."
+    },
+    "practice": [
+      {
+        "problem": "Compute correlation for covariance $-8$ and variances $4$ and $16$.",
+        "steps": [
+          {
+            "do": "Find sds",
+            "result": "$2$ and $4$",
+            "why": "square roots"
+          },
+          {
+            "do": "Multiply sds",
+            "result": "$8$",
+            "why": "normalizer"
+          },
+          {
+            "do": "Divide covariance",
+            "result": "$-8/8=-1$",
+            "why": "formula"
+          },
+          {
+            "do": "Check range",
+            "result": "$-1$ is allowed",
+            "why": "endpoint"
+          },
+          {
+            "do": "Interpret",
+            "result": "perfect negative linear relation",
+            "why": "most extreme negative value"
+          }
+        ],
+        "answer": "$-1$."
+      },
+      {
+        "problem": "If $Y=2X+5$ and $\\operatorname{Var}(X)>0$, find correlation.",
+        "steps": [
+          {
+            "do": "Covariance",
+            "result": "$2\\operatorname{Var}(X)$",
+            "why": "positive scaling"
+          },
+          {
+            "do": "Sd of $Y$",
+            "result": "$2\\sigma_X$",
+            "why": "scale sd"
+          },
+          {
+            "do": "Form ratio",
+            "result": "$2\\sigma_X^2/(2\\sigma_X^2)$",
+            "why": "substitute"
+          },
+          {
+            "do": "Simplify",
+            "result": "$1$",
+            "why": "cancel"
+          },
+          {
+            "do": "Interpret",
+            "result": "perfect positive",
+            "why": "increasing line"
+          }
+        ],
+        "answer": "$1$."
+      },
+      {
+        "problem": "If $Y=-3X+7$, find correlation.",
+        "steps": [
+          {
+            "do": "Covariance",
+            "result": "$-3\\operatorname{Var}(X)$",
+            "why": "negative scaling"
+          },
+          {
+            "do": "Sd of $Y$",
+            "result": "$3\\sigma_X$",
+            "why": "absolute scale"
+          },
+          {
+            "do": "Form ratio",
+            "result": "$-3\\sigma_X^2/(3\\sigma_X^2)$",
+            "why": "substitute"
+          },
+          {
+            "do": "Simplify",
+            "result": "$-1$",
+            "why": "cancel"
+          },
+          {
+            "do": "Interpret",
+            "result": "perfect negative",
+            "why": "decreasing line"
+          }
+        ],
+        "answer": "$-1$."
+      },
+      {
+        "problem": "Covariance is $0.024$, sds are $0.20$ and $0.49$. Compute correlation.",
+        "steps": [
+          {
+            "do": "Multiply sds",
+            "result": "$0.098$",
+            "why": "normalizer"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.024/0.098\\approx0.245$",
+            "why": "correlation"
+          },
+          {
+            "do": "Check sign",
+            "result": "positive",
+            "why": "covariance is positive"
+          },
+          {
+            "do": "Check magnitude",
+            "result": "modest",
+            "why": "well below 1"
+          },
+          {
+            "do": "Interpret",
+            "result": "some linear signal",
+            "why": "not a perfect relationship"
+          }
+        ],
+        "answer": "About $0.245$."
+      },
+      {
+        "problem": "A suspicious feature has covariance $0.2475$ with a binary label, and both sds are $0.5$. Compute correlation.",
+        "steps": [
+          {
+            "do": "Multiply sds",
+            "result": "$0.25$",
+            "why": "$0.5\\cdot0.5$"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.2475/0.25=0.99$",
+            "why": "formula"
+          },
+          {
+            "do": "Check range",
+            "result": "near $1$",
+            "why": "very high"
+          },
+          {
+            "do": "Interpret",
+            "result": "possible leakage",
+            "why": "feature almost duplicates label"
+          },
+          {
+            "do": "State caution",
+            "result": "investigate before training",
+            "why": "correlation is a clue"
+          }
+        ],
+        "answer": "The correlation is $0.99$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature screening",
+        "background": "Correlation is a fast first scan for linear signal.",
+        "numbers": "Covariance $1.5$ with sds $3$ and $2$ gives correlation $1.5/6=0.25$."
+      },
+      {
+        "title": "Multicollinearity",
+        "background": "Highly correlated features can make regression coefficients unstable.",
+        "numbers": "Standardized features with average product $0.98$ have correlation $0.98$."
+      },
+      {
+        "title": "Embedding diagnostics",
+        "background": "Correlated embedding dimensions can indicate redundancy.",
+        "numbers": "Covariance $0.03$ with sds $0.2$ and $0.5$ gives $0.03/0.1=0.3$."
+      },
+      {
+        "title": "Metric relationships",
+        "background": "Correlation summarizes whether metrics move together across items.",
+        "numbers": "Covariance $0.015$ with sds $0.1$ and $0.3$ gives correlation $0.5$."
+      },
+      {
+        "title": "Leakage checks",
+        "background": "Near-perfect correlation with a label may reveal leakage.",
+        "numbers": "Correlation $0.99$ means $99\\%$ of a standardized unit moves together linearly."
+      },
+      {
+        "title": "Causality caution",
+        "background": "Correlation is not causation; shared causes can create it.",
+        "numbers": "A correlation of $0.8$ between two seasonal metrics may be driven by temperature."
+      }
+    ],
+    "applicationsClose": "Correlation keeps the useful sign of covariance while putting every linear relationship on the same unitless scale.",
+    "takeaways": [
+      "Correlation is covariance divided by the product of standard deviations.",
+      "It lies between $-1$ and $1$.",
+      "It measures linear association, not all dependence.",
+      "It is unitless and comparable across scales."
+    ],
     "prereqs": [
       "math-17-29"
     ]
@@ -636,19 +7863,261 @@
   B({
     "id": "math-17-31",
     "title": "Transformations of random variables",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: transformations of random variables.",
+    "tagline": "A transformation pushes probability through a function while preserving total probability.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Correlation</i>"
+        "random variables",
+        "CDFs and PDFs",
+        "functions and inverses"
       ],
       "leadsTo": [
-        "the next lesson, <i>Sums of random variables and convolution</i>"
+        "Sums of random variables and convolution",
+        "The multivariate Gaussian",
+        "simulation methods"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "change of variables",
+        "Jacobians",
+        "monotone functions",
+        "expectation"
       ]
     },
+    "motivation": "<p>If $X$ is random and $Y=g(X)$, the function moves probability from input values to output values.</p><p>The important detail is stretching. When a transformation stretches the axis, density thins; when it compresses, density rises.</p>",
+    "definition": "<p>Always valid is the CDF method: $F_Y(y)=P(Y\\le y)=P(g(X)\\le y)$. If $g$ is one-to-one and differentiable, then $f_Y(y)=f_X(g^{-1}(y))\\left|\\dfrac{d}{dy}g^{-1}(y)\\right|$.</p><p>The derivative factor comes from matching small probabilities: $f_Y(y)dy\\approx f_X(x)dx$.</p><p><b>Assumptions that matter:</b> transform the support; use absolute derivative; split into monotone pieces when the map is many-to-one.</p>",
+    "worked": {
+      "problem": "Let $X\\sim\\operatorname{Unif}(0,1)$ and $Y=2X+3$. Find $f_Y$.",
+      "skills": [
+        "change of variables",
+        "support"
+      ],
+      "strategy": "Find the inverse, the new support, and the inverse derivative.",
+      "steps": [
+        {
+          "do": "Map support",
+          "result": "$3\\le Y\\le5$",
+          "why": "endpoints move under $2x+3$"
+        },
+        {
+          "do": "Solve inverse",
+          "result": "$x=(y-3)/2$",
+          "why": "rearrange"
+        },
+        {
+          "do": "Differentiate inverse",
+          "result": "$dx/dy=1/2$",
+          "why": "linear slope"
+        },
+        {
+          "do": "Use $f_X$",
+          "result": "$f_X(x)=1$",
+          "why": "uniform on length one"
+        },
+        {
+          "do": "Apply formula",
+          "result": "$f_Y(y)=1/2$ for $3\\le y\\le5$",
+          "why": "multiply by absolute inverse derivative"
+        }
+      ],
+      "verify": "The density integrates to $(1/2)(2)=1$.",
+      "answer": "$f_Y(y)=1/2$ on $[3,5]$.",
+      "connects": "Transformations preserve mass but rescale density."
+    },
+    "practice": [
+      {
+        "problem": "For $X\\sim\\operatorname{Unif}(0,1)$ and $Y=X^2$, find $F_Y(y)$ on $[0,1]$.",
+        "steps": [
+          {
+            "do": "Start CDF",
+            "result": "$P(Y\\le y)$",
+            "why": "definition"
+          },
+          {
+            "do": "Substitute",
+            "result": "$P(X^2\\le y)$",
+            "why": "use $Y=X^2$"
+          },
+          {
+            "do": "Use $X\\ge0$",
+            "result": "$P(X\\le\\sqrt y)$",
+            "why": "square root"
+          },
+          {
+            "do": "Use uniform CDF",
+            "result": "$\\sqrt y$",
+            "why": "CDF equals input"
+          },
+          {
+            "do": "State support",
+            "result": "$0\\le y\\le1$",
+            "why": "range of square"
+          }
+        ],
+        "answer": "$F_Y(y)=\\sqrt y$."
+      },
+      {
+        "problem": "Differentiate the previous CDF to get density.",
+        "steps": [
+          {
+            "do": "Write CDF",
+            "result": "$F_Y(y)=\\sqrt y$",
+            "why": "from previous"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$1/(2\\sqrt y)$",
+            "why": "power rule"
+          },
+          {
+            "do": "Set support",
+            "result": "$0<y<1$",
+            "why": "density interval"
+          },
+          {
+            "do": "Integrate check",
+            "result": "$\\int_0^1(2\\sqrt y)^{-1}dy=1$",
+            "why": "total mass"
+          },
+          {
+            "do": "Interpret",
+            "result": "higher near 0",
+            "why": "squaring compresses small values"
+          }
+        ],
+        "answer": "$f_Y(y)=1/(2\\sqrt y)$."
+      },
+      {
+        "problem": "If $f_X(x)=2x$ on $(0,1)$ and $Y=1-X$, find $f_Y$.",
+        "steps": [
+          {
+            "do": "Inverse",
+            "result": "$x=1-y$",
+            "why": "solve"
+          },
+          {
+            "do": "Derivative",
+            "result": "$|dx/dy|=1$",
+            "why": "absolute value"
+          },
+          {
+            "do": "Support",
+            "result": "$0<y<1$",
+            "why": "interval maps to itself"
+          },
+          {
+            "do": "Substitute",
+            "result": "$f_Y(y)=2(1-y)$",
+            "why": "evaluate $f_X$ at inverse"
+          },
+          {
+            "do": "Check mass",
+            "result": "$\\int_0^1 2(1-y)dy=1$",
+            "why": "valid density"
+          }
+        ],
+        "answer": "$f_Y(y)=2(1-y)$."
+      },
+      {
+        "problem": "For exponential $f_X(x)=e^{-x}$, $x>0$, and $Y=3X$, find density.",
+        "steps": [
+          {
+            "do": "Inverse",
+            "result": "$x=y/3$",
+            "why": "solve"
+          },
+          {
+            "do": "Derivative",
+            "result": "$1/3$",
+            "why": "inverse slope"
+          },
+          {
+            "do": "Support",
+            "result": "$y>0$",
+            "why": "positive scaling"
+          },
+          {
+            "do": "Substitute",
+            "result": "$e^{-y/3}$",
+            "why": "original density at inverse"
+          },
+          {
+            "do": "Multiply",
+            "result": "$f_Y(y)=\\frac13e^{-y/3}$",
+            "why": "change of variables"
+          }
+        ],
+        "answer": "$f_Y(y)=\\frac13e^{-y/3}$ for $y>0$."
+      },
+      {
+        "problem": "If $Z\\sim\\mathcal{N}(0,1)$ and $X=\\mu+\\sigma Z$, state $X$'s distribution.",
+        "steps": [
+          {
+            "do": "Inverse",
+            "result": "$z=(x-\\mu)/\\sigma$",
+            "why": "solve"
+          },
+          {
+            "do": "Derivative",
+            "result": "$1/\\sigma$",
+            "why": "positive scale"
+          },
+          {
+            "do": "Substitute normal density",
+            "result": "$\\phi((x-\\mu)/\\sigma)$",
+            "why": "preimage"
+          },
+          {
+            "do": "Multiply scale",
+            "result": "$1/\\sigma$",
+            "why": "density adjustment"
+          },
+          {
+            "do": "Name result",
+            "result": "$\\mathcal{N}(\\mu,\\sigma^2)$",
+            "why": "standard normal affine transform"
+          }
+        ],
+        "answer": "$X\\sim\\mathcal{N}(\\mu,\\sigma^2)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature scaling",
+        "background": "Standardization is a transformation of a random feature.",
+        "numbers": "$x=55$ with mean $40$ and sd $10$ maps to $z=1.5$."
+      },
+      {
+        "title": "Log transforms",
+        "background": "Logs compress positive skewed quantities such as latency.",
+        "numbers": "$200$ ms maps to $\\ln200\\approx5.30$."
+      },
+      {
+        "title": "Inverse-CDF simulation",
+        "background": "Uniform random numbers can be transformed into target distributions.",
+        "numbers": "For exponential rate $2$, $U=0.8$ gives $-\\ln(0.2)/2\\approx0.805$."
+      },
+      {
+        "title": "Sigmoid probabilities",
+        "background": "A logit transformation maps scores to probabilities.",
+        "numbers": "Score $1.2$ maps to $1/(1+e^{-1.2})\\approx0.768$."
+      },
+      {
+        "title": "Image gamma correction",
+        "background": "Pixel intensities are transformed to change contrast.",
+        "numbers": "$Y=\\sqrt X$ sends $0.25$ to $0.5$."
+      },
+      {
+        "title": "Uncertainty propagation",
+        "background": "Linear transformations scale standard deviations.",
+        "numbers": "If $Y=3X+2$ and $\\operatorname{sd}(X)=0.4$, then $\\operatorname{sd}(Y)=1.2$."
+      }
+    ],
+    "applicationsClose": "A random-variable transformation is probability conservation in new coordinates.",
+    "takeaways": [
+      "Use CDFs for transformations when in doubt.",
+      "One-to-one density transforms need the absolute derivative of the inverse.",
+      "Always transform the support.",
+      "Many-to-one maps require adding all preimage contributions."
+    ],
     "prereqs": [
       "math-17-30"
     ]
@@ -657,19 +8126,261 @@
   B({
     "id": "math-17-32",
     "title": "Sums of random variables and convolution",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: sums of random variables and convolution.",
+    "tagline": "The distribution of a sum adds all ways the pieces can make the total.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Transformations of random variables</i>"
+        "Independence of random variables",
+        "Transformations of random variables",
+        "discrete and continuous distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Conditional expectation</i>"
+        "The Law of Large Numbers",
+        "The Central Limit Theorem",
+        "Bayesian updating"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "convolution",
+        "generating functions",
+        "integrals",
+        "expectation linearity"
       ]
     },
+    "motivation": "<p>A sum like $7$ from two dice can happen in several ways. Probability must count all compatible pairs.</p><p>Convolution is that counting rule for distributions, in sums for discrete variables and integrals for continuous variables.</p>",
+    "definition": "<p>For independent discrete variables, $P(X+Y=s)=\\sum_x P(X=x)P(Y=s-x)$. For independent densities, $f_{X+Y}(s)=\\int f_X(x)f_Y(s-x)\\,dx$.</p><p>The rule partitions the event by possible $X=x$, then independence turns joint pieces into products.</p><p><b>Assumptions that matter:</b> the product form needs independence; supports set the valid summation or integration range; means add always, but variances add only when covariance is zero.</p>",
+    "worked": {
+      "problem": "Two fair dice are rolled. Find $P(X+Y=7)$ by convolution.",
+      "skills": [
+        "discrete convolution",
+        "independence"
+      ],
+      "strategy": "List all first-die values that produce a valid second-die value.",
+      "steps": [
+        {
+          "do": "Write sum",
+          "result": "$P(X+Y=7)=\\sum_x P(X=x)P(Y=7-x)$",
+          "why": "condition on $X$"
+        },
+        {
+          "do": "List valid $x$",
+          "result": "$1,2,3,4,5,6$",
+          "why": "each gives a valid die value"
+        },
+        {
+          "do": "Compute one product",
+          "result": "$(1/6)(1/6)=1/36$",
+          "why": "independent fair dice"
+        },
+        {
+          "do": "Count products",
+          "result": "$6$",
+          "why": "six valid pairs"
+        },
+        {
+          "do": "Add",
+          "result": "$6/36=1/6$",
+          "why": "sum compatible ways"
+        }
+      ],
+      "verify": "Counting the $36$ die pairs also gives six favorable pairs.",
+      "answer": "$P(X+Y=7)=1/6$.",
+      "connects": "Convolution adds probability over all decompositions of a sum."
+    },
+    "practice": [
+      {
+        "problem": "Independent Bernoulli variables have probabilities $0.3$ and $0.4$. Find distribution of the sum.",
+        "steps": [
+          {
+            "do": "$P(S=0)$",
+            "result": "$0.7\\cdot0.6=0.42$",
+            "why": "both zero"
+          },
+          {
+            "do": "First way for $S=1$",
+            "result": "$0.3\\cdot0.6=0.18$",
+            "why": "one-zero pair"
+          },
+          {
+            "do": "Second way for $S=1$",
+            "result": "$0.7\\cdot0.4=0.28$",
+            "why": "zero-one pair"
+          },
+          {
+            "do": "Add for $S=1$",
+            "result": "$0.46$",
+            "why": "convolution"
+          },
+          {
+            "do": "$P(S=2)$",
+            "result": "$0.3\\cdot0.4=0.12$",
+            "why": "both one"
+          }
+        ],
+        "answer": "$P(S=0)=0.42$, $P(S=1)=0.46$, $P(S=2)=0.12$."
+      },
+      {
+        "problem": "Uniform variables on $\\{0,1,2\\}$ are independent. Find $P(X+Y=2)$.",
+        "steps": [
+          {
+            "do": "List pairs",
+            "result": "$(0,2),(1,1),(2,0)$",
+            "why": "compatible sums"
+          },
+          {
+            "do": "One pair probability",
+            "result": "$1/9$",
+            "why": "independent uniforms"
+          },
+          {
+            "do": "Count pairs",
+            "result": "$3$",
+            "why": "three ways"
+          },
+          {
+            "do": "Add",
+            "result": "$3/9=1/3$",
+            "why": "sum ways"
+          },
+          {
+            "do": "Check",
+            "result": "middle sum is likely",
+            "why": "more ways than extremes"
+          }
+        ],
+        "answer": "$1/3$."
+      },
+      {
+        "problem": "Means are $2,5$ and variances $3,7$ for independent variables. Find mean and variance of sum.",
+        "steps": [
+          {
+            "do": "Add means",
+            "result": "$7$",
+            "why": "linearity"
+          },
+          {
+            "do": "Write variance rule",
+            "result": "$3+7+2\\operatorname{Cov}$",
+            "why": "general"
+          },
+          {
+            "do": "Use independence",
+            "result": "$\\operatorname{Cov}=0$",
+            "why": "independent"
+          },
+          {
+            "do": "Add variances",
+            "result": "$10$",
+            "why": "finish"
+          },
+          {
+            "do": "State",
+            "result": "mean $7$, variance $10$",
+            "why": "summary"
+          }
+        ],
+        "answer": "Mean $7$, variance $10$."
+      },
+      {
+        "problem": "For independent uniforms on $[0,1]$, find $f_{X+Y}(s)$ for $0<s<1$.",
+        "steps": [
+          {
+            "do": "Write integral",
+            "result": "$\\int f_X(x)f_Y(s-x)dx$",
+            "why": "convolution"
+          },
+          {
+            "do": "Use densities",
+            "result": "$1$",
+            "why": "inside support"
+          },
+          {
+            "do": "Find range",
+            "result": "$0<x<s$",
+            "why": "both arguments in $[0,1]$"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\int_0^s1dx=s$",
+            "why": "length of range"
+          },
+          {
+            "do": "Interpret",
+            "result": "rising density",
+            "why": "more pairs make larger small sums"
+          }
+        ],
+        "answer": "$f_{X+Y}(s)=s$ for $0<s<1$."
+      },
+      {
+        "problem": "Three independent zero-mean errors have variance $4$. Find variance of their average.",
+        "steps": [
+          {
+            "do": "Sum variance",
+            "result": "$4+4+4=12$",
+            "why": "independence"
+          },
+          {
+            "do": "Average scale",
+            "result": "$1/3$",
+            "why": "definition"
+          },
+          {
+            "do": "Scale variance",
+            "result": "$12/3^2$",
+            "why": "square scaling"
+          },
+          {
+            "do": "Simplify",
+            "result": "$4/3$",
+            "why": "compute"
+          },
+          {
+            "do": "Mean",
+            "result": "$0$",
+            "why": "zero means average to zero"
+          }
+        ],
+        "answer": "Mean $0$, variance $4/3$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Dice probabilities",
+        "background": "Game sums are classic discrete convolutions.",
+        "numbers": "Two dice make $7$ in $6$ ways and $2$ in $1$ way, so probabilities are $6/36$ and $1/36$."
+      },
+      {
+        "title": "Measurement noise",
+        "background": "Independent noise sources add by convolution.",
+        "numbers": "Variances $1.5$ and $0.5$ add to total variance $2.0$."
+      },
+      {
+        "title": "Mini-batches",
+        "background": "A batch gradient is a scaled sum of example gradients.",
+        "numbers": "Variance $9$ averaged over $16$ examples becomes $9/16=0.5625$."
+      },
+      {
+        "title": "Latency totals",
+        "background": "End-to-end latency is often a sum of component times.",
+        "numbers": "Network mean $20$ ms plus model mean $35$ ms gives total mean $55$ ms."
+      },
+      {
+        "title": "Ensembles",
+        "background": "Averaging independent errors reduces variance.",
+        "numbers": "Four independent errors with variance $0.04$ average to variance $0.01$."
+      },
+      {
+        "title": "Signal filters",
+        "background": "Signal convolution uses the same add-over-alignments pattern.",
+        "numbers": "A moving average of $[6,9,12]$ is $(6+9+12)/3=9$."
+      }
+    ],
+    "applicationsClose": "Convolution is the add-all-compatible-ways pattern behind sums, noise, batches, and filters.",
+    "takeaways": [
+      "Convolution adds all ways independent variables can make a sum.",
+      "Discrete sums use summation; continuous sums use integration.",
+      "Means add always; variances add when covariance is zero.",
+      "Averages reduce variance by scaling sums."
+    ],
     "prereqs": [
       "math-17-31"
     ]
@@ -678,19 +8389,261 @@
   B({
     "id": "math-17-33",
     "title": "Conditional expectation",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: conditional expectation.",
+    "tagline": "Conditional expectation is the average outcome after you account for the information you know.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Sums of random variables and convolution</i>"
+        "conditional probability",
+        "expectation",
+        "joint distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Markov's inequality</i>"
+        "martingales",
+        "regression",
+        "The Law of Large Numbers"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "random variables",
+        "sigma-algebras",
+        "least squares",
+        "total expectation"
       ]
     },
+    "motivation": "<p>Averages change when information arrives. Expected clicks differ for new and returning users; expected return differs by state.</p><p>Conditional expectation turns that updated average into a function of the observed information.</p>",
+    "definition": "<p>For discrete variables, $E[Y\\mid X=x]=\\sum_y yP(Y=y\\mid X=x)$. The object $E[Y\\mid X]$ is a random variable: after $X$ is observed, it returns the corresponding conditional mean.</p><p>The law of total expectation is $E[Y]=E[E[Y\\mid X]]$, because averaging conditional averages with their probabilities recovers the overall average.</p><p><b>Assumptions that matter:</b> the conditional mean must exist; elementary conditioning needs positive-probability events; and under squared loss the best prediction from $X$ is $E[Y\\mid X]$.</p>",
+    "worked": {
+      "problem": "Premium users have mean clicks $12$, free users have mean clicks $4$, and $P(premium)=0.25$. Find overall expected clicks.",
+      "skills": [
+        "conditional means",
+        "total expectation"
+      ],
+      "strategy": "Weight each group mean by the group probability.",
+      "steps": [
+        {
+          "do": "Find free probability",
+          "result": "$0.75$",
+          "why": "complement of premium"
+        },
+        {
+          "do": "Write total expectation",
+          "result": "$12\\cdot0.25+4\\cdot0.75$",
+          "why": "weight group means"
+        },
+        {
+          "do": "Compute premium term",
+          "result": "$3$",
+          "why": "$12\\cdot0.25$"
+        },
+        {
+          "do": "Compute free term",
+          "result": "$3$",
+          "why": "$4\\cdot0.75$"
+        },
+        {
+          "do": "Add",
+          "result": "$6$",
+          "why": "overall mean"
+        }
+      ],
+      "verify": "The answer lies between $4$ and $12$, closer to $4$ because most users are free.",
+      "answer": "Expected clicks are $6$.",
+      "connects": "Conditional expectation re-averages subgroup averages."
+    },
+    "practice": [
+      {
+        "problem": "Coin heads probability $0.6$: $Y=10$ on heads and $2$ on tails. Find $E[Y]$.",
+        "steps": [
+          {
+            "do": "Conditional on heads",
+            "result": "$10$",
+            "why": "given"
+          },
+          {
+            "do": "Conditional on tails",
+            "result": "$2$",
+            "why": "given"
+          },
+          {
+            "do": "Weight heads",
+            "result": "$10\\cdot0.6=6$",
+            "why": "probability weight"
+          },
+          {
+            "do": "Weight tails",
+            "result": "$2\\cdot0.4=0.8$",
+            "why": "complement"
+          },
+          {
+            "do": "Add",
+            "result": "$6.8$",
+            "why": "total expectation"
+          }
+        ],
+        "answer": "$E[Y]=6.8$."
+      },
+      {
+        "problem": "Given $E[Y\\mid X=0]=5$, $E[Y\\mid X=1]=9$, and $P(X=1)=0.3$, find $E[Y]$.",
+        "steps": [
+          {
+            "do": "Find $P(X=0)$",
+            "result": "$0.7$",
+            "why": "complement"
+          },
+          {
+            "do": "Weight first mean",
+            "result": "$5\\cdot0.7=3.5$",
+            "why": "group contribution"
+          },
+          {
+            "do": "Weight second mean",
+            "result": "$9\\cdot0.3=2.7$",
+            "why": "group contribution"
+          },
+          {
+            "do": "Add",
+            "result": "$6.2$",
+            "why": "overall mean"
+          },
+          {
+            "do": "Check",
+            "result": "between $5$ and $9$",
+            "why": "weighted average"
+          }
+        ],
+        "answer": "$E[Y]=6.2$."
+      },
+      {
+        "problem": "For die roll $D$, compute $E[D^2\\mid D$ is even$]$.",
+        "steps": [
+          {
+            "do": "List even outcomes",
+            "result": "$2,4,6$",
+            "why": "condition"
+          },
+          {
+            "do": "Square",
+            "result": "$4,16,36$",
+            "why": "transform"
+          },
+          {
+            "do": "Use equal weights",
+            "result": "$1/3$ each",
+            "why": "conditional uniform"
+          },
+          {
+            "do": "Average",
+            "result": "$(4+16+36)/3=56/3$",
+            "why": "conditional mean"
+          },
+          {
+            "do": "Approximate",
+            "result": "$18.67$",
+            "why": "scale"
+          }
+        ],
+        "answer": "$56/3$."
+      },
+      {
+        "problem": "If $E[Y\\mid X]=2X+1$ and $E[X]=3$, find $E[Y]$.",
+        "steps": [
+          {
+            "do": "Use tower property",
+            "result": "$E[Y]=E[E[Y\\mid X]]$",
+            "why": "total expectation"
+          },
+          {
+            "do": "Substitute",
+            "result": "$E[2X+1]$",
+            "why": "given function"
+          },
+          {
+            "do": "Use linearity",
+            "result": "$2E[X]+1$",
+            "why": "expectation of affine expression"
+          },
+          {
+            "do": "Insert mean",
+            "result": "$2\\cdot3+1$",
+            "why": "given"
+          },
+          {
+            "do": "Compute",
+            "result": "$7$",
+            "why": "finish"
+          }
+        ],
+        "answer": "$7$."
+      },
+      {
+        "problem": "Given $P(Y=0\\mid X=x)=0.2$ and $P(Y=5\\mid X=x)=0.8$, find the squared-loss optimal prediction.",
+        "steps": [
+          {
+            "do": "Recall optimum",
+            "result": "$E[Y\\mid X=x]$",
+            "why": "conditional mean minimizes squared loss"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$0\\cdot0.2+5\\cdot0.8$",
+            "why": "weighted average"
+          },
+          {
+            "do": "Simplify",
+            "result": "$4$",
+            "why": "multiply"
+          },
+          {
+            "do": "Interpret",
+            "result": "balance point",
+            "why": "squared error is minimized"
+          },
+          {
+            "do": "State prediction",
+            "result": "$4$",
+            "why": "answer"
+          }
+        ],
+        "answer": "The optimal prediction is $4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Regression",
+        "background": "The ideal squared-loss predictor is conditional expectation.",
+        "numbers": "If $Y=0$ with probability $0.3$ and $10$ with probability $0.7$, prediction is $7$."
+      },
+      {
+        "title": "Recommendations",
+        "background": "Context-specific averages estimate engagement.",
+        "numbers": "Mobile mean $3$ and desktop mean $5$ with $60\\%$ mobile gives total $3.8$."
+      },
+      {
+        "title": "Imputation",
+        "background": "Missing values are often filled with conditional group means.",
+        "numbers": "Returning-user mean spend $50$ suggests imputing $50$ for a missing returning-user spend."
+      },
+      {
+        "title": "Reinforcement learning",
+        "background": "A value function is expected return conditional on state.",
+        "numbers": "Reward $10$ with probability $0.4$ and $0$ otherwise gives value $4$."
+      },
+      {
+        "title": "Calibration",
+        "background": "Calibration checks conditional label frequency given predicted score.",
+        "numbers": "If $160$ of $200$ examples scored $0.8$ are positive, conditional mean is $0.8$."
+      },
+      {
+        "title": "Segment monitoring",
+        "background": "Overall metrics are weighted averages of segment metrics.",
+        "numbers": "Means $2$ and $8$ with weights $0.75$ and $0.25$ give total $3.5$."
+      }
+    ],
+    "applicationsClose": "Conditional expectation is averaging with information included, then using that average as a prediction.",
+    "takeaways": [
+      "$E[Y\\mid X=x]$ is the average of $Y$ after observing $X=x$.",
+      "$E[Y\\mid X]$ is itself a random variable.",
+      "The law of total expectation says $E[Y]=E[E[Y\\mid X]]$.",
+      "Conditional expectation is the ideal squared-loss predictor."
+    ],
     "prereqs": [
       "math-17-32"
     ]
@@ -699,19 +8652,261 @@
   B({
     "id": "math-17-34",
     "title": "Markov's inequality",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: markov's inequality.",
+    "tagline": "A nonnegative random variable with a small mean cannot be large too often.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Conditional expectation</i>"
+        "expectation",
+        "nonnegative random variables",
+        "probability bounds"
       ],
       "leadsTo": [
-        "the next lesson, <i>Chebyshev's inequality</i>"
+        "Chebyshev's inequality",
+        "Hoeffding's inequality",
+        "generalization bounds"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "tail probabilities",
+        "indicator variables",
+        "moments",
+        "bounding arguments"
       ]
     },
+    "motivation": "<p>Sometimes the mean is all you know. Markov's inequality still gives a tail bound for nonnegative quantities.</p><p>It is blunt, but it is the seed for many sharper concentration inequalities.</p>",
+    "definition": "<p>If $X\\ge0$ and $a>0$, then $P(X\\ge a)\\le E[X]/a$.</p><p>Let $I=\\mathbf{1}_{\\{X\\ge a\\}}$. Since $X\\ge aI$, taking expectations gives $E[X]\\ge aP(X\\ge a)$.</p><p><b>Assumptions that matter:</b> $X$ must be nonnegative; $a$ must be positive; and the bound can be loose because it uses only the mean.</p>",
+    "worked": {
+      "problem": "A nonnegative runtime has mean $40$ ms. Bound $P(T\\ge200\\text{ ms})$.",
+      "skills": [
+        "tail bounds",
+        "expectation"
+      ],
+      "strategy": "Divide the mean by the threshold.",
+      "steps": [
+        {
+          "do": "Identify mean",
+          "result": "$E[T]=40$",
+          "why": "given"
+        },
+        {
+          "do": "Identify threshold",
+          "result": "$a=200$",
+          "why": "tail event"
+        },
+        {
+          "do": "Check nonnegative",
+          "result": "$T\\ge0$",
+          "why": "runtimes cannot be negative"
+        },
+        {
+          "do": "Apply Markov",
+          "result": "$P(T\\ge200)\\le40/200$",
+          "why": "mean over threshold"
+        },
+        {
+          "do": "Simplify",
+          "result": "$0.20$",
+          "why": "one fifth"
+        }
+      ],
+      "verify": "The threshold is five times the mean, so the bound is one fifth.",
+      "answer": "$P(T\\ge200\\text{ ms})\\le0.20$.",
+      "connects": "Markov turns an average size into a universal tail guarantee."
+    },
+    "practice": [
+      {
+        "problem": "Nonnegative loss has mean $0.12$. Bound $P(L\\ge0.6)$.",
+        "steps": [
+          {
+            "do": "Set threshold",
+            "result": "$0.6$",
+            "why": "event"
+          },
+          {
+            "do": "Apply Markov",
+            "result": "$0.12/0.6$",
+            "why": "mean over threshold"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.2$",
+            "why": "divide"
+          },
+          {
+            "do": "Interpret",
+            "result": "at most $20\\%$",
+            "why": "tail fraction"
+          },
+          {
+            "do": "Check condition",
+            "result": "$L\\ge0$",
+            "why": "loss is nonnegative"
+          }
+        ],
+        "answer": "At most $0.2$."
+      },
+      {
+        "problem": "Queue length has average $3$. Bound $P(Q\\ge10)$.",
+        "steps": [
+          {
+            "do": "Mean",
+            "result": "$3$",
+            "why": "given"
+          },
+          {
+            "do": "Threshold",
+            "result": "$10$",
+            "why": "event"
+          },
+          {
+            "do": "Apply",
+            "result": "$3/10$",
+            "why": "Markov"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.3$",
+            "why": "probability bound"
+          },
+          {
+            "do": "Note looseness",
+            "result": "actual may be smaller",
+            "why": "mean-only bound"
+          }
+        ],
+        "answer": "At most $0.3$."
+      },
+      {
+        "problem": "If $E[X^2]=25$, bound $P(|X|\\ge10)$.",
+        "steps": [
+          {
+            "do": "Rewrite event",
+            "result": "$X^2\\ge100$",
+            "why": "square both sides"
+          },
+          {
+            "do": "Set $Z=X^2$",
+            "result": "$Z\\ge0$",
+            "why": "Markov variable"
+          },
+          {
+            "do": "Mean of $Z$",
+            "result": "$25$",
+            "why": "given"
+          },
+          {
+            "do": "Apply Markov",
+            "result": "$25/100$",
+            "why": "threshold"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.25$",
+            "why": "bound"
+          }
+        ],
+        "answer": "At most $0.25$."
+      },
+      {
+        "problem": "Expected failed requests per hour is $2$. Bound probability of at least $8$ and at least $20$.",
+        "steps": [
+          {
+            "do": "At least $8$",
+            "result": "$2/8=0.25$",
+            "why": "Markov"
+          },
+          {
+            "do": "At least $20$",
+            "result": "$2/20=0.10$",
+            "why": "Markov"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.10<0.25$",
+            "why": "higher threshold"
+          },
+          {
+            "do": "Check nonnegative",
+            "result": "counts are nonnegative",
+            "why": "condition"
+          },
+          {
+            "do": "State both",
+            "result": "$0.25$, $0.10$",
+            "why": "summary"
+          }
+        ],
+        "answer": "The bounds are $0.25$ and $0.10$."
+      },
+      {
+        "problem": "Average nonnegative loss is $0.05$. Bound fraction with loss at least $0.5$.",
+        "steps": [
+          {
+            "do": "Set random loss",
+            "result": "$L$",
+            "why": "random example"
+          },
+          {
+            "do": "Threshold",
+            "result": "$0.5$",
+            "why": "high loss"
+          },
+          {
+            "do": "Apply Markov",
+            "result": "$0.05/0.5$",
+            "why": "mean over threshold"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.10$",
+            "why": "one tenth"
+          },
+          {
+            "do": "Interpret",
+            "result": "at most $10\\%$",
+            "why": "population fraction"
+          }
+        ],
+        "answer": "At most $10\\%$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Latency bounds",
+        "background": "Average latency alone bounds the fraction of very slow requests.",
+        "numbers": "Mean $80$ ms gives $P(T\\ge400)\\le0.2$."
+      },
+      {
+        "title": "Loss monitoring",
+        "background": "Nonnegative loss fits Markov directly.",
+        "numbers": "Mean loss $0.02$ gives $P(L\\ge0.2)\\le0.1$."
+      },
+      {
+        "title": "Memory usage",
+        "background": "Memory is nonnegative, so mean memory bounds high usage.",
+        "numbers": "Mean $1.5$ GB gives $P(M\\ge6)\\le0.25$."
+      },
+      {
+        "title": "Bad-event counts",
+        "background": "Counts are nonnegative random variables.",
+        "numbers": "Expected alerts $0.1$ gives probability of at least one at most $0.1$."
+      },
+      {
+        "title": "Randomized algorithms",
+        "background": "Runtime and collision counts often use Markov first.",
+        "numbers": "Expected collisions $0.05$ gives $P(\\text{at least one})\\le0.05$."
+      },
+      {
+        "title": "Path to Chebyshev",
+        "background": "Markov on squared deviation gives Chebyshev.",
+        "numbers": "If variance is $9$, then $P(|X-\\mu|\\ge6)\\le9/36=0.25$."
+      }
+    ],
+    "applicationsClose": "Markov is humble but universal: nonnegative size plus mean already limits extreme frequency.",
+    "takeaways": [
+      "Markov says $P(X\\ge a)\\le E[X]/a$ for $X\\ge0$.",
+      "The proof compares $X$ with $a\\mathbf{1}_{\\{X\\ge a\\}}$.",
+      "It uses very little information and can be loose.",
+      "It is the starting point for several stronger inequalities."
+    ],
     "prereqs": [
       "math-17-33"
     ]
@@ -720,19 +8915,261 @@
   B({
     "id": "math-17-35",
     "title": "Chebyshev's inequality",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: chebyshev's inequality.",
+    "tagline": "Variance limits how often a variable can be far from its mean.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Markov's inequality</i>"
+        "Markov's inequality",
+        "variance",
+        "standard deviation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Jensen's inequality</i>"
+        "The Law of Large Numbers",
+        "Hoeffding's inequality",
+        "confidence intervals"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "tail probabilities",
+        "squared deviations",
+        "moments",
+        "concentration"
       ]
     },
+    "motivation": "<p>To bound distance from a mean, square the distance so it becomes nonnegative.</p><p>Chebyshev applies Markov to squared deviation and works for any distribution with finite variance.</p>",
+    "definition": "<p>If $E[X]=\\mu$ and $\\operatorname{Var}(X)=\\sigma^2$, then $P(|X-\\mu|\\ge k)\\le\\sigma^2/k^2$.</p><p>This is Markov applied to $(X-\\mu)^2$: $P((X-\\mu)^2\\ge k^2)\\le E[(X-\\mu)^2]/k^2$.</p><p><b>Assumptions that matter:</b> mean and variance must exist; the bound is two-sided and distribution-free; it is often conservative.</p>",
+    "worked": {
+      "problem": "Scores have mean $70$ and standard deviation $8$. Bound the chance of being at least $20$ points from the mean.",
+      "skills": [
+        "variance",
+        "tail bounds"
+      ],
+      "strategy": "Use variance over squared distance.",
+      "steps": [
+        {
+          "do": "Set $\\sigma$",
+          "result": "$8$",
+          "why": "given sd"
+        },
+        {
+          "do": "Compute variance",
+          "result": "$64$",
+          "why": "square sd"
+        },
+        {
+          "do": "Set distance",
+          "result": "$k=20$",
+          "why": "tail distance"
+        },
+        {
+          "do": "Apply Chebyshev",
+          "result": "$64/20^2$",
+          "why": "variance over squared distance"
+        },
+        {
+          "do": "Simplify",
+          "result": "$64/400=0.16$",
+          "why": "compute"
+        }
+      ],
+      "verify": "Twenty points is $2.5$ standard deviations, and $1/2.5^2=0.16$.",
+      "answer": "The probability is at most $0.16$.",
+      "connects": "Chebyshev is Markov applied to squared deviation."
+    },
+    "practice": [
+      {
+        "problem": "Mean $5$, variance $9$. Bound $P(|X-5|\\ge6)$.",
+        "steps": [
+          {
+            "do": "Set distance",
+            "result": "$6$",
+            "why": "tail"
+          },
+          {
+            "do": "Apply",
+            "result": "$9/36$",
+            "why": "Chebyshev"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.25$",
+            "why": "bound"
+          },
+          {
+            "do": "Interpret",
+            "result": "outside probability",
+            "why": "two-sided"
+          },
+          {
+            "do": "Check",
+            "result": "finite variance",
+            "why": "given"
+          }
+        ],
+        "answer": "At most $0.25$."
+      },
+      {
+        "problem": "What minimum probability lies within $3$ standard deviations?",
+        "steps": [
+          {
+            "do": "Outside bound",
+            "result": "$1/3^2$",
+            "why": "Chebyshev"
+          },
+          {
+            "do": "Simplify",
+            "result": "$1/9$",
+            "why": "outside"
+          },
+          {
+            "do": "Inside probability",
+            "result": "$1-1/9$",
+            "why": "complement"
+          },
+          {
+            "do": "Simplify",
+            "result": "$8/9$",
+            "why": "inside"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.889$",
+            "why": "percent scale"
+          }
+        ],
+        "answer": "At least $8/9$."
+      },
+      {
+        "problem": "Individual variance $16$, $n=25$. Bound $P(|\\bar X-\\mu|\\ge2)$.",
+        "steps": [
+          {
+            "do": "Mean variance",
+            "result": "$16/25$",
+            "why": "average variance"
+          },
+          {
+            "do": "Apply",
+            "result": "$(16/25)/4$",
+            "why": "Chebyshev"
+          },
+          {
+            "do": "Simplify",
+            "result": "$16/100=0.16$",
+            "why": "compute"
+          },
+          {
+            "do": "Interpret",
+            "result": "at most $16\\%$",
+            "why": "tail"
+          },
+          {
+            "do": "Reason",
+            "result": "averaging helps",
+            "why": "variance shrinks"
+          }
+        ],
+        "answer": "At most $0.16$."
+      },
+      {
+        "problem": "Mean $100$, variance $400$. Bound probability outside $[60,140]$.",
+        "steps": [
+          {
+            "do": "Distance",
+            "result": "$40$",
+            "why": "symmetric interval"
+          },
+          {
+            "do": "Apply",
+            "result": "$400/40^2$",
+            "why": "Chebyshev"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.25$",
+            "why": "bound"
+          },
+          {
+            "do": "Inside bound",
+            "result": "$0.75$",
+            "why": "complement"
+          },
+          {
+            "do": "State event",
+            "result": "outside interval",
+            "why": "tail"
+          }
+        ],
+        "answer": "Outside probability is at most $0.25$."
+      },
+      {
+        "problem": "Variance at most $4$. Find $n$ for $P(|\\bar X-\\mu|\\ge0.5)\\le0.05$ by Chebyshev.",
+        "steps": [
+          {
+            "do": "Mean variance",
+            "result": "$4/n$",
+            "why": "average"
+          },
+          {
+            "do": "Bound",
+            "result": "$(4/n)/0.25=16/n$",
+            "why": "Chebyshev"
+          },
+          {
+            "do": "Set target",
+            "result": "$16/n\\le0.05$",
+            "why": "requirement"
+          },
+          {
+            "do": "Solve",
+            "result": "$n\\ge320$",
+            "why": "divide"
+          },
+          {
+            "do": "State sample size",
+            "result": "$320$",
+            "why": "minimum integer"
+          }
+        ],
+        "answer": "$n=320$ is enough."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Quality control",
+        "background": "Chebyshev works without a normal assumption.",
+        "numbers": "Mean $2$ mm, sd $0.1$ mm gives $P(|X-2|\\ge0.5)\\le0.04$."
+      },
+      {
+        "title": "Sample means",
+        "background": "Chebyshev proves a finite-variance LLN.",
+        "numbers": "Variance $9$, $n=100$ gives $P(|\\bar X-\\mu|\\ge1)\\le0.09$."
+      },
+      {
+        "title": "Monitoring drift",
+        "background": "Far-from-mean metrics can be flagged conservatively.",
+        "numbers": "Mean $50$, sd $5$: outside $[35,65]$ is at most $1/9$."
+      },
+      {
+        "title": "Runtime variation",
+        "background": "Skewed runtimes can still use variance bounds.",
+        "numbers": "Mean $10$, variance $4$ gives $P(|T-10|\\ge6)\\le4/36$."
+      },
+      {
+        "title": "Sensor averaging",
+        "background": "Averaging reduces variance and tail bounds.",
+        "numbers": "Noise variance $25$ over $100$ readings gives average variance $0.25$."
+      },
+      {
+        "title": "Normal comparison",
+        "background": "Chebyshev is conservative but assumption-light.",
+        "numbers": "At $3$ sds, Chebyshev says at most $11.1\\%$ outside; normal tails are about $0.27\\%$."
+      }
+    ],
+    "applicationsClose": "Chebyshev is the variance guarantee: broad, conservative, and strong enough to prove averaging works.",
+    "takeaways": [
+      "Chebyshev says $P(|X-\\mu|\\ge k)\\le\\sigma^2/k^2$.",
+      "It follows from Markov applied to squared deviation.",
+      "It works for any finite-variance distribution.",
+      "For sample means, the bound improves like $1/n$."
+    ],
     "prereqs": [
       "math-17-34"
     ]
@@ -741,19 +9178,261 @@
   B({
     "id": "math-17-36",
     "title": "Jensen's inequality",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: jensen's inequality.",
+    "tagline": "For a convex function, transforming after averaging is no bigger than averaging after transforming.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Chebyshev's inequality</i>"
+        "expectation",
+        "convex functions",
+        "secant lines"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Law of Large Numbers</i>"
+        "optimization",
+        "variational bounds",
+        "information theory"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "convexity",
+        "tangent lines",
+        "loss functions",
+        "logarithms"
       ]
     },
+    "motivation": "<p>A bowl-shaped function punishes spread. The average of squared values is usually larger than the square of the average.</p><p>Jensen's inequality is this curvature fact written for expectations.</p>",
+    "definition": "<p>If $\\varphi$ is convex, then $\\varphi(E[X])\\le E[\\varphi(X)]$. If $\\varphi$ is concave, the inequality reverses.</p><p>For discrete $X$, convexity says $\\varphi(\\sum_i p_ix_i)\\le\\sum_i p_i\\varphi(x_i)$, which is exactly Jensen.</p><p><b>Assumptions that matter:</b> $\\varphi$ must be convex on the range of $X$; expectations must exist; equality holds for affine functions or constant inputs under strict convexity.</p>",
+    "worked": {
+      "problem": "Let $X$ be $0$ or $2$ equally likely and $\\varphi(x)=x^2$. Verify Jensen.",
+      "skills": [
+        "convexity",
+        "expectation"
+      ],
+      "strategy": "Compare the square of the mean to the mean of the squares.",
+      "steps": [
+        {
+          "do": "Compute $E[X]",
+          "result": "$1$",
+          "why": "average $0$ and $2$"
+        },
+        {
+          "do": "Transform the mean",
+          "result": "$1^2=1$",
+          "why": "left side"
+        },
+        {
+          "do": "Transform outcomes",
+          "result": "$0^2=0$, $2^2=4$",
+          "why": "right-side ingredients"
+        },
+        {
+          "do": "Average transformed values",
+          "result": "$(0+4)/2=2$",
+          "why": "right side"
+        },
+        {
+          "do": "Compare",
+          "result": "$1\\le2$",
+          "why": "Jensen holds"
+        }
+      ],
+      "verify": "The inequality is strict because the square is curved and $X$ is not constant.",
+      "answer": "$\\varphi(E[X])=1\\le2=E[\\varphi(X)]$.",
+      "connects": "Jensen says convexity turns variability into extra average cost."
+    },
+    "practice": [
+      {
+        "problem": "$X=1$ with probability $0.25$ and $5$ with probability $0.75$. Verify Jensen for $x^2$.",
+        "steps": [
+          {
+            "do": "Mean",
+            "result": "$4$",
+            "why": "weighted average"
+          },
+          {
+            "do": "Square mean",
+            "result": "$16$",
+            "why": "left side"
+          },
+          {
+            "do": "Average squares",
+            "result": "$0.25\\cdot1+0.75\\cdot25=19$",
+            "why": "right side"
+          },
+          {
+            "do": "Compare",
+            "result": "$16\\le19$",
+            "why": "Jensen"
+          },
+          {
+            "do": "Interpret",
+            "result": "spread costs",
+            "why": "convexity"
+          }
+        ],
+        "answer": "$16\\le19$."
+      },
+      {
+        "problem": "For $X=1,4$ equally likely, compare $E[\\log X]$ and $\\log E[X]$.",
+        "steps": [
+          {
+            "do": "Mean",
+            "result": "$2.5$",
+            "why": "average"
+          },
+          {
+            "do": "Log mean",
+            "result": "$\\log2.5\\approx0.916$",
+            "why": "right side for concave log"
+          },
+          {
+            "do": "Average logs",
+            "result": "$(0+1.386)/2=0.693$",
+            "why": "left side"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.693\\le0.916$",
+            "why": "concave Jensen"
+          },
+          {
+            "do": "Interpret",
+            "result": "log rewards smoothing",
+            "why": "concavity"
+          }
+        ],
+        "answer": "$E[\\log X]\\le\\log E[X]$."
+      },
+      {
+        "problem": "Use Jensen to show $E[X^2]\\ge(E[X])^2$.",
+        "steps": [
+          {
+            "do": "Choose function",
+            "result": "$\\varphi(x)=x^2$",
+            "why": "convex"
+          },
+          {
+            "do": "Apply Jensen",
+            "result": "$\\varphi(E[X])\\le E[\\varphi(X)]$",
+            "why": "the theorem"
+          },
+          {
+            "do": "Substitute",
+            "result": "$(E[X])^2\\le E[X^2]$",
+            "why": "square function"
+          },
+          {
+            "do": "Rearrange",
+            "result": "$E[X^2]-(E[X])^2\\ge0$",
+            "why": "variance nonnegative"
+          },
+          {
+            "do": "Interpret",
+            "result": "spread cannot make negative variance",
+            "why": "core fact"
+          }
+        ],
+        "answer": "$E[X^2]\\ge(E[X])^2$."
+      },
+      {
+        "problem": "Losses $0.2$ and $1.8$ are equally likely. Compare square of mean loss to mean squared loss.",
+        "steps": [
+          {
+            "do": "Mean loss",
+            "result": "$1.0$",
+            "why": "average"
+          },
+          {
+            "do": "Square mean",
+            "result": "$1.0$",
+            "why": "left"
+          },
+          {
+            "do": "Square losses",
+            "result": "$0.04$, $3.24$",
+            "why": "transform"
+          },
+          {
+            "do": "Average squares",
+            "result": "$1.64$",
+            "why": "right"
+          },
+          {
+            "do": "Compare",
+            "result": "$1.00\\le1.64$",
+            "why": "Jensen"
+          }
+        ],
+        "answer": "Square of mean is $1.00$; mean squared loss is $1.64$."
+      },
+      {
+        "problem": "For $X=-1,1$ equally likely, verify Jensen for $e^x$.",
+        "steps": [
+          {
+            "do": "Mean",
+            "result": "$0$",
+            "why": "average"
+          },
+          {
+            "do": "Exponentiate mean",
+            "result": "$1$",
+            "why": "$e^0$"
+          },
+          {
+            "do": "Transform outcomes",
+            "result": "$e^{-1}\\approx0.368$, $e\\approx2.718$",
+            "why": "values"
+          },
+          {
+            "do": "Average",
+            "result": "$1.543$",
+            "why": "right side"
+          },
+          {
+            "do": "Compare",
+            "result": "$1\\le1.543$",
+            "why": "convex exponential"
+          }
+        ],
+        "answer": "$e^{E[X]}\\le E[e^X]$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Convex losses",
+        "background": "Convex losses penalize variability in errors.",
+        "numbers": "Errors $-1$ and $1$ have mean $0$, but mean squared loss $1$."
+      },
+      {
+        "title": "Variational bounds",
+        "background": "Jensen with log creates tractable likelihood lower bounds.",
+        "numbers": "For $1$ and $4$, $E[\\log X]=0.693$ and $\\log E[X]=0.916$."
+      },
+      {
+        "title": "Risk aversion",
+        "background": "Concave utility values certainty.",
+        "numbers": "$u(w)=\\sqrt w$ gives expected utility $5$ for $0$ or $100$, while $u(50)=7.07$."
+      },
+      {
+        "title": "Regularization",
+        "background": "Convex penalties grow with spread.",
+        "numbers": "Weights $0$ and $4$ average squared penalty $8$, but average weight $2$ has penalty $4$."
+      },
+      {
+        "title": "AM-GM",
+        "background": "Jensen for concave log implies arithmetic mean beats geometric mean.",
+        "numbers": "For $2$ and $8$, geometric mean $4$ is below arithmetic mean $5$."
+      },
+      {
+        "title": "Planning under uncertainty",
+        "background": "Convex costs make uncertain demand expensive.",
+        "numbers": "Demand $5$ or $15$ has expected squared cost $125$, above cost at mean $100$."
+      }
+    ],
+    "applicationsClose": "Jensen is curvature meeting uncertainty: convexity makes spread costly, concavity makes smoothing valuable.",
+    "takeaways": [
+      "For convex $\\varphi$, $\\varphi(E[X])\\le E[\\varphi(X)]$.",
+      "For concave functions such as $\\log$, the inequality reverses.",
+      "Jensen explains why $E[X^2]\\ge(E[X])^2$.",
+      "It is central to convex optimization and variational bounds."
+    ],
     "prereqs": [
       "math-17-35"
     ]
@@ -762,19 +9441,262 @@
   B({
     "id": "math-17-37",
     "title": "The Law of Large Numbers",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the law of large numbers.",
+    "tagline": "Averages of independent repeated observations settle near the true mean.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Jensen's inequality</i>"
+        "expectation",
+        "variance",
+        "Chebyshev's inequality",
+        "Sums of random variables and convolution"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Central Limit Theorem</i>"
+        "The Central Limit Theorem",
+        "Monte Carlo methods",
+        "statistical estimation"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "sample means",
+        "independence",
+        "convergence in probability",
+        "estimators"
       ]
     },
+    "motivation": "<p>One toss is noisy; many tosses reveal the coin. That everyday trust in averages is a theorem.</p><p>The Law of Large Numbers says independent sample averages converge toward the population expectation.</p>",
+    "definition": "<p>If $X_1,\\dots,X_n$ are iid with mean $\\mu$ and finite variance $\\sigma^2$, then $\\bar X_n=\\dfrac1n\\sum_iX_i$ satisfies $P(|\\bar X_n-\\mu|\\ge\\varepsilon)\\to0$ for every $\\varepsilon>0$.</p><p>Chebyshev proves this finite-variance version because $E[\\bar X_n]=\\mu$ and $\\operatorname{Var}(\\bar X_n)=\\sigma^2/n$.</p><p><b>Assumptions that matter:</b> this version uses independence, identical distribution, and finite variance; convergence is about large samples, not guaranteed accuracy in every small sample.</p>",
+    "worked": {
+      "problem": "Iid observations have mean $50$ and variance $25$. Bound $P(|\\bar X_{100}-50|\\ge2)$.",
+      "skills": [
+        "sample means",
+        "Chebyshev"
+      ],
+      "strategy": "Find the variance of the average, then apply Chebyshev.",
+      "steps": [
+        {
+          "do": "Mean of average",
+          "result": "$50$",
+          "why": "sample mean preserves mean"
+        },
+        {
+          "do": "Variance of average",
+          "result": "$25/100=0.25$",
+          "why": "independent averaging divides by $n$"
+        },
+        {
+          "do": "Set tolerance",
+          "result": "$2$",
+          "why": "error threshold"
+        },
+        {
+          "do": "Apply Chebyshev",
+          "result": "$0.25/2^2$",
+          "why": "variance over squared error"
+        },
+        {
+          "do": "Simplify",
+          "result": "$0.0625$",
+          "why": "one sixteenth"
+        }
+      ],
+      "verify": "The variance is $100$ times smaller than for one observation.",
+      "answer": "The probability is at most $0.0625$.",
+      "connects": "The LLN comes from average variance shrinking like $1/n$."
+    },
+    "practice": [
+      {
+        "problem": "Iid mean $10$, variance $4$, $n=25$. Find mean and variance of sample mean.",
+        "steps": [
+          {
+            "do": "Mean",
+            "result": "$10$",
+            "why": "sample mean preserves mean"
+          },
+          {
+            "do": "Variance",
+            "result": "$4/25$",
+            "why": "divide by $n$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.16$",
+            "why": "compute"
+          },
+          {
+            "do": "Sd",
+            "result": "$0.4$",
+            "why": "square root"
+          },
+          {
+            "do": "Interpret",
+            "result": "average is less noisy",
+            "why": "variance shrinks"
+          }
+        ],
+        "answer": "Mean $10$, variance $0.16$."
+      },
+      {
+        "problem": "Use Chebyshev with variance $9$ and $n=36$ to bound error at least $1$.",
+        "steps": [
+          {
+            "do": "Mean variance",
+            "result": "$9/36=0.25$",
+            "why": "average"
+          },
+          {
+            "do": "Apply",
+            "result": "$0.25/1^2$",
+            "why": "Chebyshev"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.25$",
+            "why": "bound"
+          },
+          {
+            "do": "Inside probability",
+            "result": "$0.75$",
+            "why": "complement"
+          },
+          {
+            "do": "Connect",
+            "result": "LLN improves with $n$",
+            "why": "larger samples help"
+          }
+        ],
+        "answer": "At most $0.25$."
+      },
+      {
+        "problem": "Find $n$ so variance $1$ and tolerance $0.1$ gives Chebyshev bound at most $0.04$.",
+        "steps": [
+          {
+            "do": "Bound",
+            "result": "$1/(n\\cdot0.1^2)$",
+            "why": "sample mean"
+          },
+          {
+            "do": "Simplify",
+            "result": "$100/n$",
+            "why": "since $0.1^2=0.01$"
+          },
+          {
+            "do": "Set",
+            "result": "$100/n\\le0.04$",
+            "why": "target"
+          },
+          {
+            "do": "Solve",
+            "result": "$n\\ge2500$",
+            "why": "divide"
+          },
+          {
+            "do": "State",
+            "result": "$2500$ samples",
+            "why": "answer"
+          }
+        ],
+        "answer": "$n=2500$."
+      },
+      {
+        "problem": "Observed Monte Carlo average is $0.382$ and true mean is $0.370$. Compute absolute error.",
+        "steps": [
+          {
+            "do": "Subtract",
+            "result": "$0.382-0.370=0.012$",
+            "why": "signed error"
+          },
+          {
+            "do": "Absolute value",
+            "result": "$0.012$",
+            "why": "error magnitude"
+          },
+          {
+            "do": "Percent points",
+            "result": "$1.2$",
+            "why": "as percentage points"
+          },
+          {
+            "do": "Interpret",
+            "result": "close estimate",
+            "why": "small error"
+          },
+          {
+            "do": "Connect",
+            "result": "many samples stabilize averages",
+            "why": "LLN intuition"
+          }
+        ],
+        "answer": "Absolute error is $0.012$."
+      },
+      {
+        "problem": "True accuracy $0.80$, $n=500$. Find expected validation accuracy and variance.",
+        "steps": [
+          {
+            "do": "Model indicators",
+            "result": "$X_i\\sim\\operatorname{Bernoulli}(0.8)$",
+            "why": "correctness"
+          },
+          {
+            "do": "Individual variance",
+            "result": "$0.8\\cdot0.2=0.16$",
+            "why": "Bernoulli"
+          },
+          {
+            "do": "Mean of average",
+            "result": "$0.80$",
+            "why": "preserved"
+          },
+          {
+            "do": "Variance of average",
+            "result": "$0.16/500=0.00032$",
+            "why": "divide by $n$"
+          },
+          {
+            "do": "Sd",
+            "result": "$\\sqrt{0.00032}\\approx0.0179$",
+            "why": "typical fluctuation"
+          }
+        ],
+        "answer": "Mean $0.80$, variance $0.00032$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Monte Carlo integration",
+        "background": "Random integrals are estimated by sample averages.",
+        "numbers": "An average $0.312$ over $10000$ draws estimates $E[g(U)]$ as $0.312$."
+      },
+      {
+        "title": "Validation metrics",
+        "background": "Accuracy and loss are sample averages.",
+        "numbers": "Accuracy $0.9$ with $n=1000$ has variance $0.09/1000=0.00009$."
+      },
+      {
+        "title": "A/B tests",
+        "background": "Group averages estimate population effects.",
+        "numbers": "Conversion mean $0.06$ over $5000$ users gives expected conversions $300$."
+      },
+      {
+        "title": "Stochastic gradients",
+        "background": "Mini-batch gradients average example gradients.",
+        "numbers": "Coordinate variance $16$ with batch $64$ becomes $0.25$."
+      },
+      {
+        "title": "Sensor averaging",
+        "background": "Repeated readings reduce independent noise.",
+        "numbers": "Noise sd $3$ over $9$ readings gives average noise sd $1$."
+      },
+      {
+        "title": "Simulation testing",
+        "background": "Observed failure rates stabilize over many trials.",
+        "numbers": "Failure probability $0.002$ over $100000$ trials gives expected failures $200$."
+      }
+    ],
+    "applicationsClose": "The Law of Large Numbers is why repeated independent measurements become trustworthy averages.",
+    "takeaways": [
+      "Sample averages of iid finite-variance observations converge in probability to the mean.",
+      "The sample mean has variance $\\sigma^2/n$.",
+      "Chebyshev gives a clean proof of the weak law.",
+      "The LLN justifies Monte Carlo, validation metrics, and A/B averages."
+    ],
     "prereqs": [
       "math-17-36"
     ]
@@ -783,19 +9705,261 @@
   B({
     "id": "math-17-38",
     "title": "The Central Limit Theorem",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: the central limit theorem.",
+    "tagline": "Sums of many small independent effects often become approximately normal after centering and scaling.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Law of Large Numbers</i>"
+        "The Law of Large Numbers",
+        "Sums of random variables and convolution",
+        "standardization"
       ],
       "leadsTo": [
-        "the next lesson, <i>Hoeffding's inequality</i>"
+        "confidence intervals",
+        "normal approximations",
+        "The multivariate Gaussian"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "sample means",
+        "z-scores",
+        "normal distribution",
+        "asymptotics"
       ]
     },
+    "motivation": "<p>The Law of Large Numbers says averages get close. The Central Limit Theorem describes the remaining error.</p><p>After centering and scaling, many different source distributions lead to the same bell-shaped normal limit.</p>",
+    "definition": "<p>If $X_1,\\dots,X_n$ are iid with mean $\\mu$ and variance $\\sigma^2>0$, then $\\dfrac{\\sqrt n(\\bar X_n-\\mu)}{\\sigma}$ converges in distribution to $\\mathcal{N}(0,1)$. Thus $\\bar X_n\\approx\\mathcal{N}(\\mu,\\sigma^2/n)$ for large $n$.</p><p>The $\\sqrt n$ appears because the standard deviation of $\\bar X_n$ is $\\sigma/\\sqrt n$.</p><p><b>Assumptions that matter:</b> the classical form uses iid samples and finite nonzero variance; approximation quality depends on tails and sample size.</p>",
+    "worked": {
+      "problem": "A population has mean $100$, sd $15$, and $n=36$. Approximate $P(\\bar X>105)$.",
+      "skills": [
+        "CLT",
+        "z-scores"
+      ],
+      "strategy": "Compute the standard error and convert the threshold to a standard normal tail.",
+      "steps": [
+        {
+          "do": "Compute standard error",
+          "result": "$15/\\sqrt{36}=2.5$",
+          "why": "sd of the mean"
+        },
+        {
+          "do": "Approximate distribution",
+          "result": "$\\bar X\\approx\\mathcal{N}(100,2.5^2)$",
+          "why": "CLT"
+        },
+        {
+          "do": "Compute z-score",
+          "result": "$(105-100)/2.5=2$",
+          "why": "standardize"
+        },
+        {
+          "do": "Use normal tail",
+          "result": "$P(Z>2)\\approx0.0228$",
+          "why": "table value"
+        },
+        {
+          "do": "Translate back",
+          "result": "$P(\\bar X>105)\\approx0.0228$",
+          "why": "same standardized event"
+        }
+      ],
+      "verify": "The threshold is two standard errors above the mean, so a small tail is sensible.",
+      "answer": "Approximately $0.0228$.",
+      "connects": "The CLT turns sample-mean errors into normal tail calculations."
+    },
+    "practice": [
+      {
+        "problem": "Mean $20$, sd $4$, $n=64$. Approximate distribution of sample mean.",
+        "steps": [
+          {
+            "do": "Standard error",
+            "result": "$4/8=0.5$",
+            "why": "$\\sqrt{64}=8$"
+          },
+          {
+            "do": "Mean",
+            "result": "$20$",
+            "why": "center"
+          },
+          {
+            "do": "Variance",
+            "result": "$0.25$",
+            "why": "square standard error"
+          },
+          {
+            "do": "Distribution",
+            "result": "$\\mathcal{N}(20,0.25)$",
+            "why": "CLT"
+          },
+          {
+            "do": "Interpret",
+            "result": "errors around $0.5$",
+            "why": "scale"
+          }
+        ],
+        "answer": "$\\bar X\\approx\\mathcal{N}(20,0.25)$."
+      },
+      {
+        "problem": "Using that setup, approximate $P(\\bar X<19)$.",
+        "steps": [
+          {
+            "do": "Standard error",
+            "result": "$0.5$",
+            "why": "from previous"
+          },
+          {
+            "do": "Z-score",
+            "result": "$(19-20)/0.5=-2$",
+            "why": "standardize"
+          },
+          {
+            "do": "Normal tail",
+            "result": "$0.0228$",
+            "why": "table"
+          },
+          {
+            "do": "Translate",
+            "result": "$P(\\bar X<19)\\approx0.0228$",
+            "why": "answer"
+          },
+          {
+            "do": "Check",
+            "result": "two SEs low",
+            "why": "small tail"
+          }
+        ],
+        "answer": "Approximately $0.0228$."
+      },
+      {
+        "problem": "Bernoulli $p=0.6$, $n=100$. Approximate distribution of sample proportion.",
+        "steps": [
+          {
+            "do": "Mean",
+            "result": "$0.6$",
+            "why": "proportion mean"
+          },
+          {
+            "do": "Variance one draw",
+            "result": "$0.6\\cdot0.4=0.24$",
+            "why": "Bernoulli"
+          },
+          {
+            "do": "Variance average",
+            "result": "$0.0024$",
+            "why": "divide by 100"
+          },
+          {
+            "do": "Sd",
+            "result": "$0.049$",
+            "why": "square root"
+          },
+          {
+            "do": "Distribution",
+            "result": "$\\mathcal{N}(0.6,0.0024)$",
+            "why": "CLT"
+          }
+        ],
+        "answer": "$\\hat p\\approx\\mathcal{N}(0.6,0.0024)$."
+      },
+      {
+        "problem": "Sum of $100$ iid variables with mean $3$ and variance $2$. Approximate distribution.",
+        "steps": [
+          {
+            "do": "Mean sum",
+            "result": "$300$",
+            "why": "add means"
+          },
+          {
+            "do": "Variance sum",
+            "result": "$200$",
+            "why": "add variances"
+          },
+          {
+            "do": "Sd sum",
+            "result": "$\\sqrt{200}\\approx14.14$",
+            "why": "scale"
+          },
+          {
+            "do": "Distribution",
+            "result": "$\\mathcal{N}(300,200)$",
+            "why": "CLT"
+          },
+          {
+            "do": "Interpret",
+            "result": "sum is near 300",
+            "why": "typical spread 14.14"
+          }
+        ],
+        "answer": "$S_{100}\\approx\\mathcal{N}(300,200)$."
+      },
+      {
+        "problem": "Accuracy $0.8$, $n=400$. Approximate $P(\\hat p<0.76)$.",
+        "steps": [
+          {
+            "do": "Variance one draw",
+            "result": "$0.16$",
+            "why": "Bernoulli"
+          },
+          {
+            "do": "Standard error",
+            "result": "$\\sqrt{0.16/400}=0.02$",
+            "why": "proportion"
+          },
+          {
+            "do": "Z-score",
+            "result": "$(0.76-0.80)/0.02=-2$",
+            "why": "standardize"
+          },
+          {
+            "do": "Tail",
+            "result": "$0.0228$",
+            "why": "normal table"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $2.3\\%$",
+            "why": "low estimate chance"
+          }
+        ],
+        "answer": "Approximately $0.0228$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Confidence intervals",
+        "background": "Mean intervals use approximate normality of sample means.",
+        "numbers": "$\\bar x=12$, $s=5$, $n=100$ gives rough $95\\%$ interval $12\\pm0.98$."
+      },
+      {
+        "title": "A/B proportions",
+        "background": "Conversion-rate estimates are often normal for large samples.",
+        "numbers": "For $p=0.10$, $n=1000$, standard error is $\\sqrt{0.09/1000}\\approx0.0095$."
+      },
+      {
+        "title": "Gradient noise",
+        "background": "Averaged gradient coordinates can look normal by aggregation.",
+        "numbers": "Variance $25$ with batch $100$ gives average sd $0.5$."
+      },
+      {
+        "title": "Polling",
+        "background": "Margins of error come from CLT standard errors.",
+        "numbers": "Worst-case $p=0.5$, $n=1600$ gives standard error $0.0125$."
+      },
+      {
+        "title": "Average latency",
+        "background": "Average latency is more normal than individual skewed latency.",
+        "numbers": "Request sd $80$ ms over $64$ requests gives average sd $10$ ms."
+      },
+      {
+        "title": "Bell curves in nature",
+        "background": "Many small independent causes add toward normality.",
+        "numbers": "$50$ sources each variance $0.02$ give total variance $1$."
+      }
+    ],
+    "applicationsClose": "The Central Limit Theorem explains why normal calculations appear whenever many small independent effects are averaged.",
+    "takeaways": [
+      "The standardized sample mean approaches $\\mathcal{N}(0,1)$.",
+      "For large $n$, $\\bar X_n\\approx\\mathcal{N}(\\mu,\\sigma^2/n)$.",
+      "The standard error is $\\sigma/\\sqrt n$.",
+      "The CLT supports normal approximations for means, sums, and proportions."
+    ],
     "prereqs": [
       "math-17-37"
     ]
@@ -804,19 +9968,261 @@
   B({
     "id": "math-17-39",
     "title": "Hoeffding's inequality",
-    "tier": "🟢",
-    "tagline": "One concept from Probability theory: hoeffding's inequality.",
+    "tagline": "Bounded independent averages concentrate exponentially around their means.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Central Limit Theorem</i>"
+        "The Law of Large Numbers",
+        "Chebyshev's inequality",
+        "independent random variables"
       ],
       "leadsTo": [
-        "the next lesson, <i>The multivariate Gaussian</i>"
+        "generalization bounds",
+        "bandits",
+        "PAC learning"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "concentration",
+        "sample means",
+        "bounded variables",
+        "exponential bounds"
       ]
     },
+    "motivation": "<p>Chebyshev uses variance and gives a broad guarantee. If each observation is bounded, we can do better.</p><p>Hoeffding gives an explicit exponential tail bound for independent bounded averages.</p>",
+    "definition": "<p>If independent $X_i\\in[0,1]$ and $\\bar X=\\dfrac1n\\sum_iX_i$, then $P(|\\bar X-E\\bar X|\\ge t)\\le2e^{-2nt^2}$.</p><p>Boundedness prevents a single observation from dominating, and independence makes repeated deviations exponentially unlikely.</p><p><b>Assumptions that matter:</b> observations must be independent and bounded; the displayed form is two-sided for $[0,1]$ variables; it is distribution-free within those limits.</p>",
+    "worked": {
+      "problem": "For $n=1000$ independent $0$-$1$ validation indicators, bound $P(|\\hat p-p|\\ge0.05)$.",
+      "skills": [
+        "bounded variables",
+        "concentration"
+      ],
+      "strategy": "Substitute $n$ and $t$ into the two-sided Hoeffding bound.",
+      "steps": [
+        {
+          "do": "Write bound",
+          "result": "$2e^{-2nt^2}$",
+          "why": "two-sided $[0,1]$ form"
+        },
+        {
+          "do": "Substitute",
+          "result": "$2e^{-2\\cdot1000\\cdot0.05^2}$",
+          "why": "insert values"
+        },
+        {
+          "do": "Square tolerance",
+          "result": "$0.0025$",
+          "why": "compute $0.05^2$"
+        },
+        {
+          "do": "Compute exponent",
+          "result": "$-5$",
+          "why": "$-2\\cdot1000\\cdot0.0025$"
+        },
+        {
+          "do": "Approximate",
+          "result": "$2e^{-5}\\approx0.0135$",
+          "why": "evaluate"
+        }
+      ],
+      "verify": "The probability shrinks exponentially in $n$.",
+      "answer": "The bound is approximately $0.0135$.",
+      "connects": "Hoeffding is a sharp LLN-style guarantee for bounded independent averages."
+    },
+    "practice": [
+      {
+        "problem": "For $n=200$ bounded samples, bound error at least $0.10$.",
+        "steps": [
+          {
+            "do": "Formula",
+            "result": "$2e^{-2nt^2}$",
+            "why": "Hoeffding"
+          },
+          {
+            "do": "Substitute",
+            "result": "$2e^{-2\\cdot200\\cdot0.01}$",
+            "why": "$t^2=0.01$"
+          },
+          {
+            "do": "Exponent",
+            "result": "$-4$",
+            "why": "multiply"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.0366$",
+            "why": "$2e^{-4}$"
+          },
+          {
+            "do": "Interpret",
+            "result": "under $4\\%$",
+            "why": "bound"
+          }
+        ],
+        "answer": "At most about $0.0366$."
+      },
+      {
+        "problem": "Find $n$ for $P(|\\bar X-E\\bar X|\\ge0.05)\\le0.01$.",
+        "steps": [
+          {
+            "do": "Set bound",
+            "result": "$2e^{-2n(0.05)^2}\\le0.01$",
+            "why": "target"
+          },
+          {
+            "do": "Simplify exponent",
+            "result": "$e^{-0.005n}\\le0.005$",
+            "why": "divide by 2"
+          },
+          {
+            "do": "Take logs",
+            "result": "$-0.005n\\le\\ln0.005$",
+            "why": "log"
+          },
+          {
+            "do": "Use value",
+            "result": "$\\ln0.005\\approx-5.298$",
+            "why": "number"
+          },
+          {
+            "do": "Solve",
+            "result": "$n\\ge1060$",
+            "why": "round up"
+          }
+        ],
+        "answer": "$1060$ samples are enough."
+      },
+      {
+        "problem": "One-sided Hoeffding with $n=500$, $t=0.04$.",
+        "steps": [
+          {
+            "do": "Formula",
+            "result": "$e^{-2nt^2}$",
+            "why": "one-sided"
+          },
+          {
+            "do": "Substitute",
+            "result": "$e^{-2\\cdot500\\cdot0.0016}$",
+            "why": "square tolerance"
+          },
+          {
+            "do": "Exponent",
+            "result": "$-1.6$",
+            "why": "compute"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.202$",
+            "why": "evaluate"
+          },
+          {
+            "do": "State",
+            "result": "one-sided bound",
+            "why": "no factor 2"
+          }
+        ],
+        "answer": "At most about $0.202$."
+      },
+      {
+        "problem": "Variables in $[2,5]$, $n=100$, $t=0.3$. Bound one-sided deviation.",
+        "steps": [
+          {
+            "do": "Width",
+            "result": "$3$",
+            "why": "range length"
+          },
+          {
+            "do": "Formula",
+            "result": "$e^{-2nt^2/3^2}$",
+            "why": "equal-width form"
+          },
+          {
+            "do": "Substitute",
+            "result": "$e^{-2\\cdot100\\cdot0.09/9}$",
+            "why": "values"
+          },
+          {
+            "do": "Exponent",
+            "result": "$-2$",
+            "why": "compute"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.135$",
+            "why": "$e^{-2}$"
+          }
+        ],
+        "answer": "At most about $0.135$."
+      },
+      {
+        "problem": "Bandit arm mean estimate $0.62$ after $800$ pulls. Find two-sided Hoeffding radius for failure probability $0.05$.",
+        "steps": [
+          {
+            "do": "Set equation",
+            "result": "$2e^{-1600r^2}=0.05$",
+            "why": "two-sided"
+          },
+          {
+            "do": "Divide",
+            "result": "$e^{-1600r^2}=0.025$",
+            "why": "isolate"
+          },
+          {
+            "do": "Log",
+            "result": "$-1600r^2=\\ln0.025\\approx-3.689$",
+            "why": "take logs"
+          },
+          {
+            "do": "Solve square",
+            "result": "$r^2\\approx0.002306$",
+            "why": "divide"
+          },
+          {
+            "do": "Square root",
+            "result": "$r\\approx0.048$",
+            "why": "radius"
+          }
+        ],
+        "answer": "The radius is about $0.048$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Generalization bounds",
+        "background": "Bounded losses use Hoeffding to compare sample and population averages.",
+        "numbers": "$n=10000$, $t=0.02$ gives $2e^{-8}\\approx0.00067$."
+      },
+      {
+        "title": "A/B dashboards",
+        "background": "Conversion indicators are bounded Bernoulli variables.",
+        "numbers": "$n=5000$, $t=0.01$ gives $2e^{-1}\\approx0.736$."
+      },
+      {
+        "title": "Bandits",
+        "background": "Confidence bounds guide exploration.",
+        "numbers": "After $1000$ pulls, radius $\\sqrt{\\ln40/2000}\\approx0.043$."
+      },
+      {
+        "title": "Randomized tests",
+        "background": "Pass-fail tests fit bounded concentration.",
+        "numbers": "$n=2000$, $t=0.03$ gives $2e^{-3.6}\\approx0.0546$."
+      },
+      {
+        "title": "CTR estimation",
+        "background": "Clicks are $0$-$1$ outcomes.",
+        "numbers": "$n=20000$, $t=0.005$ gives $2e^{-1}\\approx0.736$."
+      },
+      {
+        "title": "Bounded ratings",
+        "background": "Ratings can be rescaled to apply Hoeffding.",
+        "numbers": "For ratings in $[1,5]$, $n=400$, $t=0.5$, one-sided bound is $e^{-12.5}\\approx0.0000037$."
+      }
+    ],
+    "applicationsClose": "Hoeffding turns bounded independent data into explicit confidence, not just eventual convergence.",
+    "takeaways": [
+      "For independent $[0,1]$ variables, $P(|\\bar X-E\\bar X|\\ge t)\\le2e^{-2nt^2}$.",
+      "Boundedness and independence give exponential concentration.",
+      "The exponent grows with $n$ and $t^2$.",
+      "Hoeffding supports learning bounds, bandits, and bounded metric estimates."
+    ],
     "prereqs": [
       "math-17-38"
     ]
@@ -825,19 +10231,268 @@
   B({
     "id": "math-17-40",
     "title": "The multivariate Gaussian",
-    "tier": "🟢",
-    "tagline": "Capstone — how probability theory shows up directly in CS & ML.",
+    "tagline": "The multivariate Gaussian packages means, variances, and correlations into one smooth distribution over vectors.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Hoeffding's inequality</i>"
+        "Correlation",
+        "Covariance",
+        "Transformations of random variables",
+        "The Central Limit Theorem"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "Gaussian processes",
+        "Kalman filters",
+        "linear Gaussian models"
       ],
       "usedWith": [
-        "the other concepts in Probability theory and its capstone"
+        "vectors",
+        "matrices",
+        "quadratic forms",
+        "eigenvalues"
       ]
     },
+    "motivation": "<p>The one-dimensional normal has a mean and variance. ML features are usually vectors, so we also need covariance between coordinates.</p><p>The multivariate Gaussian gives a complete vector normal model: a center point, an uncertainty ellipsoid, and clean behavior under linear transformations.</p>",
+    "definition": "<p>A vector $X\\in\\mathbb{R}^d$ has distribution $\\mathcal{N}(\\mu,\\Sigma)$ with density $f(x)=\\dfrac{1}{(2\\pi)^{d/2}|\\Sigma|^{1/2}}\\exp\\left(-\\dfrac12(x-\\mu)^T\\Sigma^{-1}(x-\\mu)\\right)$ when $\\Sigma$ is positive definite.</p><p>The quadratic form measures distance in covariance units. Linear maps preserve Gaussianity: if $X\\sim\\mathcal{N}(\\mu,\\Sigma)$, then $AX+b\\sim\\mathcal{N}(A\\mu+b,A\\Sigma A^T)$.</p><p><b>Assumptions that matter:</b> the density formula needs positive definite covariance; semidefinite covariance gives a degenerate Gaussian; and for Gaussian vectors, zero covariance implies independence.</p>",
+    "worked": {
+      "problem": "Let $X\\sim\\mathcal{N}(\\mu,\\Sigma)$ with $\\mu=(2,1)^T$ and $\\Sigma=\\begin{pmatrix}4&1\\\\1&9\\end{pmatrix}$. For $S=[1,2]X+3$, find the distribution of $S$.",
+      "skills": [
+        "linear Gaussian models",
+        "covariance matrices"
+      ],
+      "strategy": "A linear score of a Gaussian vector is Gaussian, so compute its mean and variance.",
+      "steps": [
+        {
+          "do": "Set coefficient vector",
+          "result": "$a=(1,2)^T$",
+          "why": "score is $a^TX+3$"
+        },
+        {
+          "do": "Compute mean",
+          "result": "$a^T\\mu+3=2+2+3=7$",
+          "why": "linear mean plus bias"
+        },
+        {
+          "do": "Compute $\\Sigma a$",
+          "result": "$\\begin{pmatrix}6\\\\19\\end{pmatrix}$",
+          "why": "matrix-vector product"
+        },
+        {
+          "do": "Compute variance",
+          "result": "$a^T\\Sigma a=[1,2]\\begin{pmatrix}6\\\\19\\end{pmatrix}=44$",
+          "why": "variance of a linear combination"
+        },
+        {
+          "do": "State distribution",
+          "result": "$S\\sim\\mathcal{N}(7,44)$",
+          "why": "linear image remains Gaussian"
+        }
+      ],
+      "verify": "The variance is positive, and the bias changes only the mean.",
+      "answer": "$S\\sim\\mathcal{N}(7,44)$.",
+      "connects": "Multivariate Gaussian calculations are mean and covariance propagation."
+    },
+    "practice": [
+      {
+        "problem": "For covariance $\\begin{pmatrix}1&0\\\\0&4\\end{pmatrix}$ and mean $0$, find marginals.",
+        "steps": [
+          {
+            "do": "Read means",
+            "result": "$0,0$",
+            "why": "mean vector"
+          },
+          {
+            "do": "Read variances",
+            "result": "$1,4$",
+            "why": "diagonal"
+          },
+          {
+            "do": "First marginal",
+            "result": "$\\mathcal{N}(0,1)$",
+            "why": "Gaussian marginal"
+          },
+          {
+            "do": "Second marginal",
+            "result": "$\\mathcal{N}(0,4)$",
+            "why": "Gaussian marginal"
+          },
+          {
+            "do": "Note covariance",
+            "result": "$0$",
+            "why": "coordinates are independent for Gaussian"
+          }
+        ],
+        "answer": "$X_1\\sim\\mathcal{N}(0,1)$ and $X_2\\sim\\mathcal{N}(0,4)$."
+      },
+      {
+        "problem": "For $\\Sigma=\\begin{pmatrix}9&3\\\\3&4\\end{pmatrix}$, compute coordinate correlation.",
+        "steps": [
+          {
+            "do": "Covariance",
+            "result": "$3$",
+            "why": "off-diagonal"
+          },
+          {
+            "do": "Sds",
+            "result": "$3$ and $2$",
+            "why": "square roots of diagonal"
+          },
+          {
+            "do": "Normalize",
+            "result": "$3/(3\\cdot2)$",
+            "why": "formula"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.5$",
+            "why": "correlation"
+          },
+          {
+            "do": "Interpret",
+            "result": "moderate positive",
+            "why": "coordinates move together"
+          }
+        ],
+        "answer": "Correlation is $0.5$."
+      },
+      {
+        "problem": "Transform $X\\sim\\mathcal{N}((1,2)^T,\\begin{pmatrix}2&0\\\\0&8\\end{pmatrix})$ by $A=\\begin{pmatrix}1&0\\\\0&1/2\\end{pmatrix}$.",
+        "steps": [
+          {
+            "do": "Mean",
+            "result": "$A\\mu=(1,1)^T$",
+            "why": "scale second coordinate"
+          },
+          {
+            "do": "Covariance rule",
+            "result": "$A\\Sigma A^T$",
+            "why": "linear transform"
+          },
+          {
+            "do": "Scale variances",
+            "result": "$2$ and $8(1/2)^2=2$",
+            "why": "diagonal"
+          },
+          {
+            "do": "New covariance",
+            "result": "$\\begin{pmatrix}2&0\\\\0&2\\end{pmatrix}$",
+            "why": "result"
+          },
+          {
+            "do": "State distribution",
+            "result": "$\\mathcal{N}((1,1)^T,\\begin{pmatrix}2&0\\\\0&2\\end{pmatrix})$",
+            "why": "Gaussian preserved"
+          }
+        ],
+        "answer": "$Y\\sim\\mathcal{N}((1,1)^T,\\begin{pmatrix}2&0\\\\0&2\\end{pmatrix})$."
+      },
+      {
+        "problem": "For covariance $\\begin{pmatrix}2&1\\\\1&2\\end{pmatrix}$, find variance of $X_1+X_2$.",
+        "steps": [
+          {
+            "do": "Set vector",
+            "result": "$a=(1,1)^T$",
+            "why": "sum"
+          },
+          {
+            "do": "Use formula",
+            "result": "$a^T\\Sigma a$",
+            "why": "linear variance"
+          },
+          {
+            "do": "Compute $\\Sigma a$",
+            "result": "$(3,3)^T$",
+            "why": "row sums"
+          },
+          {
+            "do": "Dot",
+            "result": "$6$",
+            "why": "$(1,1)\\cdot(3,3)$"
+          },
+          {
+            "do": "Check",
+            "result": "$2+2+2\\cdot1=6$",
+            "why": "sum variance formula"
+          }
+        ],
+        "answer": "Variance is $6$."
+      },
+      {
+        "problem": "Gaussian embedding has mean $0$ and identity covariance. Score $S=0.6X_1-0.8X_2+0.5$. Find score distribution.",
+        "steps": [
+          {
+            "do": "Coefficient",
+            "result": "$a=(0.6,-0.8)^T$",
+            "why": "weights"
+          },
+          {
+            "do": "Mean",
+            "result": "$0.5$",
+            "why": "bias only"
+          },
+          {
+            "do": "Variance",
+            "result": "$0.6^2+(-0.8)^2$",
+            "why": "identity covariance"
+          },
+          {
+            "do": "Simplify",
+            "result": "$1$",
+            "why": "weights have unit length"
+          },
+          {
+            "do": "Distribution",
+            "result": "$\\mathcal{N}(0.5,1)$",
+            "why": "linear Gaussian"
+          }
+        ],
+        "answer": "$S\\sim\\mathcal{N}(0.5,1)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Linear classifiers",
+        "background": "A linear score of Gaussian embeddings is Gaussian.",
+        "numbers": "If $S\\sim\\mathcal{N}(0.5,1)$, then $P(S>1.5)\\approx0.1587$."
+      },
+      {
+        "title": "Mahalanobis anomaly detection",
+        "background": "Gaussian distance accounts for covariance scale.",
+        "numbers": "With variances $4$ and $9$, point $(4,3)$ has score $4^2/4+3^2/9=5$."
+      },
+      {
+        "title": "Kalman filters",
+        "background": "Gaussian state beliefs update by mean and covariance propagation.",
+        "numbers": "Variance $2$ plus process-noise variance $0.5$ predicts variance $2.5$."
+      },
+      {
+        "title": "PCA ellipses",
+        "background": "Covariance eigenvectors are Gaussian ellipse axes.",
+        "numbers": "Covariance $\\begin{pmatrix}5&0\\\\0&1\\end{pmatrix}$ has axis sds $\\sqrt5$ and $1$."
+      },
+      {
+        "title": "Gaussian classifiers",
+        "background": "Class-conditional Gaussians compare likelihoods.",
+        "numbers": "Log-likelihoods $-3.2$ and $-4.5$ with equal priors favor the first by margin $1.3$."
+      },
+      {
+        "title": "Uncertainty propagation",
+        "background": "Linearized models push covariance through matrices.",
+        "numbers": "$A=[2,0]$ and input covariance diag$(0.25,1)$ give output variance $1$."
+      },
+      {
+        "title": "Correlated feature sampling",
+        "background": "Off-diagonal covariance creates realistic feature co-movement.",
+        "numbers": "Variances $1$ and $4$ with correlation $0.75$ imply covariance $0.75\\cdot1\\cdot2=1.5$."
+      }
+    ],
+    "applicationsClose": "The multivariate Gaussian ties together covariance, correlation, transformations, sums, and CLT intuition in one ML-ready distribution.",
+    "takeaways": [
+      "A multivariate Gaussian is determined by $\\mu$ and $\\Sigma$.",
+      "The quadratic form with $\\Sigma^{-1}$ is covariance-adjusted distance.",
+      "Linear maps preserve Gaussianity through $A\\mu+b$ and $A\\Sigma A^T$.",
+      "For Gaussian vectors, zero covariance implies independence.",
+      "It is a capstone model for embeddings, classifiers, PCA, Kalman filters, and anomaly detection."
+    ],
     "prereqs": [
       "math-17-39"
     ]

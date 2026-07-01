@@ -9,37 +9,528 @@
   B({
     "id": "math-15-01",
     "title": "Graphs and their representations",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: graphs and their representations.",
+    "tagline": "A graph is a small language for relationships: dots for objects, lines for connections.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "sets",
+        "relations",
+        "matrices"
       ],
       "leadsTo": [
-        "the next lesson, <i>Degree and the handshake lemma</i>"
+        "Degree and the handshake lemma",
+        "Paths and walks",
+        "Trees"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "adjacency matrices",
+        "incidence matrices",
+        "sets",
+        "functions"
       ]
-    }
+    },
+    "motivation": "<p>You already draw little maps: friends connected to friends, webpages connected by links, cities connected by roads. Graph theory gives those maps a precise vocabulary.</p><p>A <b>graph</b> keeps only what matters for connection. Once the same graph can be written as a picture, a list, or a matrix, algorithms have something exact to compute with.</p>",
+    "definition": "<p>An <b>undirected graph</b> is $G=(V,E)$, where $V$ is a set of vertices and $E$ is a set of edges. In a simple graph, each edge is a two-element set $\\{u,v\\}$ with $u,v\\in V$ and $u\\ne v$. An <b>adjacency list</b> records each vertex's neighbors. An <b>adjacency matrix</b> $A$ has $A_{ij}=1$ when vertices $i$ and $j$ are adjacent, and $0$ otherwise.</p><p>For an undirected simple graph, the matrix is symmetric because $\\{i,j\\}=\\{j,i\\}$: if $i$ is connected to $j$, then $j$ is connected to $i$. The diagonal is zero because simple graphs have no self-loops.</p><p><b>Assumptions that matter:</b> unless stated otherwise, graphs here are finite, undirected, and simple; vertex labels are names, not sizes; and the same graph may have many drawings but one connection structure.</p>",
+    "worked": {
+      "problem": "Represent the graph with $V=\\{A,B,C,D\\}$ and $E=\\{\\{A,B\\},\\{A,C\\},\\{B,D\\}\\}$ as an adjacency list and matrix in the order $A,B,C,D$.",
+      "skills": [
+        "vertex sets",
+        "edge sets",
+        "adjacency matrices"
+      ],
+      "strategy": "Read neighbors from the edge set, then place $1$s exactly where those neighbor pairs occur.",
+      "steps": [
+        {
+          "do": "List neighbors of $A$",
+          "result": "$B,C$",
+          "why": "$A$ appears in edges with $B$ and $C$"
+        },
+        {
+          "do": "List neighbors of $B$",
+          "result": "$A,D$",
+          "why": "$B$ appears with $A$ and $D$"
+        },
+        {
+          "do": "List neighbors of $C$",
+          "result": "$A$",
+          "why": "$C$ appears only with $A$"
+        },
+        {
+          "do": "List neighbors of $D$",
+          "result": "$B$",
+          "why": "$D$ appears only with $B$"
+        },
+        {
+          "do": "Write the first matrix row",
+          "result": "$[0,1,1,0]$",
+          "why": "$A$ is adjacent to $B$ and $C$, not itself or $D$"
+        },
+        {
+          "do": "Write the remaining rows",
+          "result": "$[1,0,0,1]$, $[1,0,0,0]$, $[0,1,0,0]$",
+          "why": "each row marks the listed neighbors in order"
+        }
+      ],
+      "verify": "The matrix is symmetric and has three pairs of matching $1$s, one pair for each undirected edge.",
+      "answer": "Adjacency list: $A:B,C$; $B:A,D$; $C:A$; $D:B$. Matrix rows are $[0,1,1,0]$, $[1,0,0,1]$, $[1,0,0,0]$, $[0,1,0,0]$.",
+      "connects": "A representation is faithful when it preserves exactly the same adjacencies."
+    },
+    "practice": [
+      {
+        "problem": "For $V=\\{1,2,3\\}$ and $E=\\{\\{1,2\\},\\{2,3\\}\\}$, write the adjacency list and matrix.",
+        "steps": [
+          {
+            "do": "List neighbors of $1$",
+            "result": "$2$",
+            "why": "edge $\\{1,2\\}$ touches $1$"
+          },
+          {
+            "do": "List neighbors of $2$",
+            "result": "$1,3$",
+            "why": "both edges touch $2$"
+          },
+          {
+            "do": "List neighbors of $3$",
+            "result": "$2$",
+            "why": "edge $\\{2,3\\}$ touches $3$"
+          },
+          {
+            "do": "Write row $1$",
+            "result": "$[0,1,0]$",
+            "why": "$1$ connects only to $2$"
+          },
+          {
+            "do": "Write rows $2$ and $3$",
+            "result": "$[1,0,1]$ and $[0,1,0]$",
+            "why": "mark each neighbor in vertex order"
+          }
+        ],
+        "answer": "List: $1:2$, $2:1,3$, $3:2$; matrix rows $[0,1,0]$, $[1,0,1]$, $[0,1,0]$."
+      },
+      {
+        "problem": "A matrix in order $A,B,C$ has rows $[0,1,1]$, $[1,0,0]$, $[1,0,0]$. Recover $E$.",
+        "steps": [
+          {
+            "do": "Inspect row $A$",
+            "result": "$A$ touches $B$ and $C$",
+            "why": "row entries $1$ mark neighbors"
+          },
+          {
+            "do": "Record edge to $B$",
+            "result": "$\\{A,B\\}$",
+            "why": "the $A,B$ entry is $1$"
+          },
+          {
+            "do": "Record edge to $C$",
+            "result": "$\\{A,C\\}$",
+            "why": "the $A,C$ entry is $1$"
+          },
+          {
+            "do": "Inspect row $B$",
+            "result": "only $A$ already counted",
+            "why": "undirected edges appear twice"
+          },
+          {
+            "do": "Inspect row $C$",
+            "result": "only $A$ already counted",
+            "why": "avoid duplicate edges"
+          }
+        ],
+        "answer": "$E=\\{\\{A,B\\},\\{A,C\\}\\}$."
+      },
+      {
+        "problem": "For a simple graph with $5$ vertices, what is the largest possible number of edges?",
+        "steps": [
+          {
+            "do": "Count possible partners for vertex $1$",
+            "result": "$4$",
+            "why": "it can connect to all other vertices"
+          },
+          {
+            "do": "Count unordered vertex pairs",
+            "result": "$\\binom52$",
+            "why": "each edge is one two-vertex subset"
+          },
+          {
+            "do": "Compute the numerator",
+            "result": "$5\\cdot4=20$",
+            "why": "choose first and second endpoint"
+          },
+          {
+            "do": "Divide by $2$",
+            "result": "$10$",
+            "why": "each pair was counted in two orders"
+          },
+          {
+            "do": "State the maximum",
+            "result": "$10$ edges",
+            "why": "the complete graph includes every possible pair"
+          }
+        ],
+        "answer": "The largest simple graph on $5$ vertices has $\\binom52=10$ edges."
+      },
+      {
+        "problem": "A directed graph has edges $A\\to B$, $B\\to A$, and $B\\to C$. Write its adjacency matrix in order $A,B,C$.",
+        "steps": [
+          {
+            "do": "Use row as source",
+            "result": "row $A$ records outgoing edges",
+            "why": "directed matrices need an orientation convention"
+          },
+          {
+            "do": "Write row $A$",
+            "result": "$[0,1,0]$",
+            "why": "$A$ points to $B$"
+          },
+          {
+            "do": "Write row $B$",
+            "result": "$[1,0,1]$",
+            "why": "$B$ points to $A$ and $C$"
+          },
+          {
+            "do": "Write row $C$",
+            "result": "$[0,0,0]$",
+            "why": "$C$ has no outgoing edges"
+          },
+          {
+            "do": "Check symmetry",
+            "result": "not symmetric",
+            "why": "$B\\to C$ has no matching $C\\to B$"
+          }
+        ],
+        "answer": "The matrix rows are $[0,1,0]$, $[1,0,1]$, and $[0,0,0]$."
+      },
+      {
+        "problem": "A social network has $1000$ users and $5000$ friendships. Compare storage for an adjacency matrix and an adjacency list count of neighbor entries.",
+        "steps": [
+          {
+            "do": "Count matrix entries",
+            "result": "$1000^2=1,000,000$",
+            "why": "a matrix stores every possible ordered pair"
+          },
+          {
+            "do": "Count list neighbor entries",
+            "result": "$2\\cdot5000=10,000$",
+            "why": "each undirected friendship appears in two lists"
+          },
+          {
+            "do": "Compute the ratio",
+            "result": "$1,000,000/10,000=100$",
+            "why": "compare entry counts"
+          },
+          {
+            "do": "Interpret sparsity",
+            "result": "list is much smaller",
+            "why": "most possible friendships are absent"
+          },
+          {
+            "do": "Name the representation choice",
+            "result": "adjacency list",
+            "why": "sparse graphs favor lists"
+          }
+        ],
+        "answer": "The matrix has $1,000,000$ entries, while the adjacency lists store about $10,000$ neighbor entries, so lists are about $100$ times smaller here."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Web links",
+        "background": "Search engines model pages as vertices and hyperlinks as directed edges, a view that made large-scale ranking possible.",
+        "numbers": "If pages $A,B,C$ have links $A\\to B$, $A\\to C$, $C\\to A$, the adjacency matrix rows are $[0,1,1]$, $[0,0,0]$, $[1,0,0]$."
+      },
+      {
+        "title": "Social recommendations",
+        "background": "Friend and follow graphs record relationships so systems can suggest people or communities.",
+        "numbers": "If user $u$ follows $12$ accounts and $3$ also follow $v$, then a common-neighbor feature can include the number $3$."
+      },
+      {
+        "title": "Sparse ML features",
+        "background": "Many datasets are mostly zeros, just like sparse graphs. Adjacency lists mirror sparse-vector storage.",
+        "numbers": "A graph with $10,000$ vertices and $40,000$ edges stores $80,000$ undirected neighbor entries rather than $100,000,000$ matrix entries."
+      },
+      {
+        "title": "Knowledge graphs",
+        "background": "Knowledge bases represent entities and relations as graph triples. This supports question answering and retrieval.",
+        "numbers": "Triples like $(Ada, wrote, Notes)$ and $(Notes, about, engines)$ form $2$ directed labeled edges among $3$ entities."
+      },
+      {
+        "title": "Molecule graphs",
+        "background": "Chemistry treats atoms as vertices and bonds as edges, letting ML predict molecular properties.",
+        "numbers": "Water has vertices $O,H_1,H_2$ and edges $\\{O,H_1\\}$, $\\{O,H_2\\}$, so its adjacency list has $2+1+1=4$ neighbor entries."
+      },
+      {
+        "title": "Neural network computation graphs",
+        "background": "Automatic differentiation stores operations and dependencies as a directed graph.",
+        "numbers": "For $z=(x+y)y$, edges $x\\to x+y$, $y\\to x+y$, $y\\to z$, and $x+y\\to z$ record $4$ dependencies."
+      }
+    ],
+    "applicationsClose": "The same connection structure can wear many uniforms: links, friends, molecules, features, and computations all become vertices plus edges.",
+    "takeaways": [
+      "A graph is $G=(V,E)$: vertices plus edges.",
+      "Adjacency lists are compact for sparse graphs; matrices make edge lookup direct.",
+      "Undirected simple graph matrices are symmetric with zero diagonal.",
+      "The drawing may change, but the adjacency structure is the graph."
+    ]
   });
 
   B({
     "id": "math-15-02",
     "title": "Degree and the handshake lemma",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: degree and the handshake lemma.",
+    "tagline": "Degree counts local connection, and the handshake lemma turns those local counts into a global truth.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Graphs and their representations</i>"
+        "Graphs and their representations",
+        "counting",
+        "summation notation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Paths and walks</i>"
+        "Paths and walks",
+        "Cycles",
+        "Trees"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "summations",
+        "parity",
+        "adjacency matrices",
+        "induction"
       ]
     },
+    "motivation": "<p>You already know that a busy airport has many routes and a small town may have only one. In a graph, that local busyness is called degree.</p><p>The lovely surprise is that all degrees cannot vary independently. Because every edge touches two endpoints, the total degree count must be exactly twice the number of edges.</p>",
+    "definition": "<p>In an undirected graph, the <b>degree</b> $\\deg(v)$ of a vertex $v$ is the number of edges incident to $v$. For a finite simple graph $G=(V,E)$, the <b>handshake lemma</b> says $$\\sum_{v\\in V}\\deg(v)=2|E|.$$</p><p>Why it is true: count endpoint-edge incidences. Each edge $\\{u,v\\}$ contributes one incidence at $u$ and one at $v$, so it contributes $2$ to the sum of degrees. Adding over all edges gives $2|E|$.</p><p><b>Assumptions that matter:</b> this statement is for finite undirected graphs; a loop would contribute $2$ to degree by convention; and in a simple graph no pair of vertices has more than one edge.</p>",
+    "worked": {
+      "problem": "A graph has degrees $3,2,2,1,0$. How many edges does it have, and how many vertices have odd degree?",
+      "skills": [
+        "degree sequences",
+        "summation",
+        "parity"
+      ],
+      "strategy": "Add the degrees first; the edge count is half that total.",
+      "steps": [
+        {
+          "do": "Add the degrees",
+          "result": "$3+2+2+1+0=8$",
+          "why": "the handshake lemma starts with the total degree"
+        },
+        {
+          "do": "Apply the handshake lemma",
+          "result": "$8=2|E|$",
+          "why": "degree sum equals twice the number of edges"
+        },
+        {
+          "do": "Solve for $|E|$",
+          "result": "$|E|=4$",
+          "why": "divide by $2$"
+        },
+        {
+          "do": "Identify odd degrees",
+          "result": "$3$ and $1$",
+          "why": "odd means not divisible by $2$"
+        },
+        {
+          "do": "Count odd-degree vertices",
+          "result": "$2$",
+          "why": "there are two odd entries"
+        }
+      ],
+      "verify": "The degree sum is even, as it must be, and the number of odd-degree vertices is even.",
+      "answer": "The graph has $4$ edges and $2$ odd-degree vertices.",
+      "connects": "Degree is local, but the handshake lemma makes it globally constrained."
+    },
+    "practice": [
+      {
+        "problem": "Find $|E|$ for degrees $2,2,2,2$.",
+        "steps": [
+          {
+            "do": "Add degrees",
+            "result": "$2+2+2+2=8$",
+            "why": "sum all local counts"
+          },
+          {
+            "do": "Use handshake",
+            "result": "$8=2|E|$",
+            "why": "each edge contributes two degree counts"
+          },
+          {
+            "do": "Divide by $2$",
+            "result": "$|E|=4$",
+            "why": "solve for edges"
+          },
+          {
+            "do": "Check parity",
+            "result": "$8$ is even",
+            "why": "degree sums in undirected graphs are even"
+          },
+          {
+            "do": "Interpret",
+            "result": "four edges total",
+            "why": "the graph may be a $4$-cycle"
+          }
+        ],
+        "answer": "$|E|=4$."
+      },
+      {
+        "problem": "Can a simple graph have degrees $3,3,1$?",
+        "steps": [
+          {
+            "do": "Add degrees",
+            "result": "$3+3+1=7$",
+            "why": "test the handshake condition"
+          },
+          {
+            "do": "Check evenness",
+            "result": "$7$ is odd",
+            "why": "twice the number of edges must be even"
+          },
+          {
+            "do": "Apply contradiction",
+            "result": "impossible",
+            "why": "no integer $|E|$ has $2|E|=7$"
+          },
+          {
+            "do": "Count odd degrees",
+            "result": "$3$ odd vertices",
+            "why": "odd-degree vertices must come in an even count"
+          },
+          {
+            "do": "State conclusion",
+            "result": "not graphical",
+            "why": "it cannot be a finite undirected graph"
+          }
+        ],
+        "answer": "No. The degree sum is odd, so no such undirected graph exists."
+      },
+      {
+        "problem": "A graph has $12$ vertices each of degree $5$. How many edges are there?",
+        "steps": [
+          {
+            "do": "Compute degree sum",
+            "result": "$12\\cdot5=60$",
+            "why": "regular degree times vertex count"
+          },
+          {
+            "do": "Use handshake",
+            "result": "$60=2|E|$",
+            "why": "each edge counted twice"
+          },
+          {
+            "do": "Divide by $2$",
+            "result": "$|E|=30$",
+            "why": "solve for edges"
+          },
+          {
+            "do": "Check plausibility",
+            "result": "maximum is $\\binom{12}{2}=66$",
+            "why": "$30$ is possible by count"
+          },
+          {
+            "do": "State result",
+            "result": "$30$ edges",
+            "why": "attach the graph quantity"
+          }
+        ],
+        "answer": "There are $30$ edges."
+      },
+      {
+        "problem": "In a graph with $9$ edges, all vertices except two have total degree $14$. What is the sum of the two remaining degrees?",
+        "steps": [
+          {
+            "do": "Compute total degree",
+            "result": "$2|E|=18$",
+            "why": "handshake lemma"
+          },
+          {
+            "do": "Subtract known degree",
+            "result": "$18-14=4$",
+            "why": "remaining degrees make up the rest"
+          },
+          {
+            "do": "Check nonnegativity",
+            "result": "$4\\ge0$",
+            "why": "degree sums cannot be negative"
+          },
+          {
+            "do": "Note parity",
+            "result": "remaining sum is even",
+            "why": "it could be $0+4$, $1+3$, or $2+2$"
+          },
+          {
+            "do": "State answer",
+            "result": "$4$",
+            "why": "the exact split is not determined"
+          }
+        ],
+        "answer": "The two remaining degrees sum to $4$."
+      },
+      {
+        "problem": "An undirected user graph has $2,000,000$ friendship edges. What is the average degree among $500,000$ users?",
+        "steps": [
+          {
+            "do": "Compute total degree",
+            "result": "$2\\cdot2,000,000=4,000,000$",
+            "why": "each friendship contributes to two users"
+          },
+          {
+            "do": "Write average degree",
+            "result": "$4,000,000/500,000$",
+            "why": "average is total divided by vertices"
+          },
+          {
+            "do": "Divide",
+            "result": "$8$",
+            "why": "simplify the quotient"
+          },
+          {
+            "do": "Interpret",
+            "result": "average user has $8$ friendships",
+            "why": "individual degrees can differ"
+          },
+          {
+            "do": "Connect to sparsity",
+            "result": "$8\\ll499,999$",
+            "why": "the network is sparse compared with all possible friends"
+          }
+        ],
+        "answer": "The average degree is $8$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Friendship networks",
+        "background": "Undirected friendship graphs are the namesake of the lemma: every friendship raises two people's friend counts.",
+        "numbers": "If there are $10,000$ friendships, the sum of all friend counts is $20,000$."
+      },
+      {
+        "title": "Average degree",
+        "background": "Network scientists summarize sparsity with average degree before choosing algorithms.",
+        "numbers": "A graph with $n=1000$ and $m=3000$ has average degree $2m/n=6000/1000=6$."
+      },
+      {
+        "title": "Molecule valence checks",
+        "background": "Chemical graphs use degrees to approximate valence and catch invalid structures.",
+        "numbers": "Methane has carbon degree $4$ and four hydrogen degrees $1$, so the degree sum is $8$ and there are $4$ bonds."
+      },
+      {
+        "title": "Feature engineering",
+        "background": "Graph ML often uses node degree as a first structural feature.",
+        "numbers": "If a creator connects to $37$ advertisers, the scalar feature $\\deg(v)=37$ can enter a ranking model."
+      },
+      {
+        "title": "Anomaly detection",
+        "background": "Unexpectedly high degree can signal spam, bots, or hubs in network data.",
+        "numbers": "If median degree is $12$ but one account has degree $5000$, its degree is about $417$ times the median."
+      },
+      {
+        "title": "Storage estimates",
+        "background": "Degree sums estimate adjacency-list memory for undirected graphs.",
+        "numbers": "For $m=75,000$ edges, adjacency lists contain $2m=150,000$ neighbor ids."
+      }
+    ],
+    "applicationsClose": "Degree counting is humble but powerful: every local endpoint count is tied to a global edge count.",
+    "takeaways": [
+      "$\\deg(v)$ counts edges incident to vertex $v$.",
+      "The handshake lemma is $\\sum_v\\deg(v)=2|E|$.",
+      "Every finite undirected graph has an even number of odd-degree vertices.",
+      "Average degree is $2|E|/|V|$."
+    ],
     "prereqs": [
       "math-15-01"
     ]
@@ -48,19 +539,272 @@
   B({
     "id": "math-15-03",
     "title": "Paths and walks",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: paths and walks.",
+    "tagline": "Walks let you move through a graph; paths remember not to repeat vertices.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Degree and the handshake lemma</i>"
+        "Graphs and their representations",
+        "Degree and the handshake lemma",
+        "sequences"
       ],
       "leadsTo": [
-        "the next lesson, <i>Cycles</i>"
+        "Cycles",
+        "Connectivity",
+        "Breadth-first search"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "sequences",
+        "relations",
+        "induction",
+        "matrix powers"
       ]
     },
+    "motivation": "<p>You already know the difference between wandering and taking a clean route. A graph makes that distinction precise.</p><p>A walk may revisit places; a path is a no-repeated-vertices route. This simple vocabulary is the foundation for reachability, shortest paths, and graph search.</p>",
+    "definition": "<p>A <b>walk</b> from $v_0$ to $v_k$ is a sequence $v_0,v_1,\\ldots,v_k$ where each consecutive pair is joined by an edge. Its length is $k$, the number of edges traversed. A <b>trail</b> repeats no edge. A <b>path</b> repeats no vertex.</p><p>Every path is a walk because it satisfies the same adjacency condition plus a stricter no-repeat rule. If a walk repeats a vertex, the closed loop between the repeats can be removed to produce a shorter walk with the same endpoints; repeating this gives a path whenever any walk exists.</p><p><b>Assumptions that matter:</b> length counts edges, not vertices; a single vertex is a path of length $0$; and in directed graphs every step must follow edge direction.</p>",
+    "worked": {
+      "problem": "In the graph with edges $AB,BC,CD,BD$, classify the sequence $A,B,C,B,D$ as a walk, trail, or path, and find its length.",
+      "skills": [
+        "walks",
+        "trails",
+        "paths"
+      ],
+      "strategy": "Check adjacency first, then check repeated edges and vertices.",
+      "steps": [
+        {
+          "do": "Check $A$ to $B$",
+          "result": "edge $AB$ exists",
+          "why": "consecutive vertices must be adjacent"
+        },
+        {
+          "do": "Check $B$ to $C$",
+          "result": "edge $BC$ exists",
+          "why": "second step is valid"
+        },
+        {
+          "do": "Check $C$ to $B$",
+          "result": "edge $BC$ exists",
+          "why": "undirected edges can be used in either direction"
+        },
+        {
+          "do": "Check $B$ to $D$",
+          "result": "edge $BD$ exists",
+          "why": "last step is valid"
+        },
+        {
+          "do": "Count steps",
+          "result": "$4$",
+          "why": "length is the number of edge traversals"
+        },
+        {
+          "do": "Check repeated edge",
+          "result": "$BC$ is used twice",
+          "why": "once as $B,C$ and once as $C,B$"
+        },
+        {
+          "do": "Check repeated vertex",
+          "result": "$B$ repeats",
+          "why": "a path cannot repeat vertices"
+        }
+      ],
+      "verify": "It is a valid walk of length $4$, but not a trail or path because it repeats an edge and a vertex.",
+      "answer": "The sequence is a walk of length $4$ only.",
+      "connects": "Paths are walks with memory: they avoid revisiting vertices."
+    },
+    "practice": [
+      {
+        "problem": "Is $A,C,D$ a path if the only edges are $AB,BC,CD$?",
+        "steps": [
+          {
+            "do": "Check first step",
+            "result": "$A$ to $C$",
+            "why": "a path needs every consecutive pair adjacent"
+          },
+          {
+            "do": "Look for edge $AC$",
+            "result": "not present",
+            "why": "only $AB$, $BC$, and $CD$ are available"
+          },
+          {
+            "do": "Stop classification",
+            "result": "not a walk",
+            "why": "failure of adjacency is enough"
+          },
+          {
+            "do": "Explain path status",
+            "result": "not a path",
+            "why": "every path must first be a walk"
+          },
+          {
+            "do": "Offer a valid route",
+            "result": "$A,B,C,D$",
+            "why": "this sequence uses existing edges"
+          }
+        ],
+        "answer": "No. $A,C,D$ is not even a walk; $A,B,C,D$ is a path."
+      },
+      {
+        "problem": "For sequence $1,2,3,4$ with all consecutive edges present and no repeated vertices, classify it and find length.",
+        "steps": [
+          {
+            "do": "Check adjacency",
+            "result": "all consecutive edges exist",
+            "why": "given in the problem"
+          },
+          {
+            "do": "Count vertices",
+            "result": "$4$ vertices",
+            "why": "the sequence lists four positions"
+          },
+          {
+            "do": "Count edges traversed",
+            "result": "$3$",
+            "why": "length is one less than the number of vertices"
+          },
+          {
+            "do": "Check repeated vertices",
+            "result": "none",
+            "why": "path condition is satisfied"
+          },
+          {
+            "do": "Classify",
+            "result": "walk, trail, and path",
+            "why": "a path is also a trail and walk"
+          }
+        ],
+        "answer": "It is a path, trail, and walk of length $3$."
+      },
+      {
+        "problem": "A walk $P,Q,R,Q,S$ uses edges $PQ,QR,QS$. Remove a repeated-vertex loop to get a path from $P$ to $S$.",
+        "steps": [
+          {
+            "do": "Find the repeated vertex",
+            "result": "$Q$",
+            "why": "it appears in positions 2 and 4"
+          },
+          {
+            "do": "Identify the loop segment",
+            "result": "$Q,R,Q$",
+            "why": "it starts and ends at the repeat"
+          },
+          {
+            "do": "Remove that segment interior",
+            "result": "$P,Q,S$",
+            "why": "keep one copy of $Q$ to connect endpoints"
+          },
+          {
+            "do": "Check adjacency",
+            "result": "$PQ$ and $QS$ exist",
+            "why": "the shortened sequence is valid"
+          },
+          {
+            "do": "Check no repeats",
+            "result": "$P,Q,S$ are distinct",
+            "why": "it is a path"
+          }
+        ],
+        "answer": "A path from $P$ to $S$ is $P,Q,S$."
+      },
+      {
+        "problem": "In a directed graph with $A\\to B$, $B\\to C$, and $C\\to A$, is $C,A,B$ a directed path?",
+        "steps": [
+          {
+            "do": "Check $C$ to $A$",
+            "result": "$C\\to A$ exists",
+            "why": "directed steps must follow arrows"
+          },
+          {
+            "do": "Check $A$ to $B$",
+            "result": "$A\\to B$ exists",
+            "why": "the second arrow is present"
+          },
+          {
+            "do": "Count length",
+            "result": "$2$",
+            "why": "two directed edges are traversed"
+          },
+          {
+            "do": "Check repeated vertices",
+            "result": "none",
+            "why": "$C,A,B$ are distinct"
+          },
+          {
+            "do": "Classify",
+            "result": "directed path",
+            "why": "all conditions hold"
+          }
+        ],
+        "answer": "Yes. It is a directed path of length $2$."
+      },
+      {
+        "problem": "A recommender graph has user $U$ connected to item $I_1$, $I_1$ to user $V$, and $V$ to item $I_2$. Interpret the path $U,I_1,V,I_2$.",
+        "steps": [
+          {
+            "do": "Check first edge",
+            "result": "$U$ used $I_1$",
+            "why": "user-item edge exists"
+          },
+          {
+            "do": "Check second edge",
+            "result": "$I_1$ connects to $V$",
+            "why": "another user used the same item"
+          },
+          {
+            "do": "Check third edge",
+            "result": "$V$ connects to $I_2$",
+            "why": "that user used a second item"
+          },
+          {
+            "do": "Count length",
+            "result": "$3$",
+            "why": "three relationships link $U$ to $I_2$"
+          },
+          {
+            "do": "Interpret recommendation",
+            "result": "$I_2$ is reachable through a similar user",
+            "why": "the path gives collaborative evidence"
+          }
+        ],
+        "answer": "The length-$3$ path says $U$ and $V$ share $I_1$, and $V$'s item $I_2$ may be recommendable to $U$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Routing",
+        "background": "Road and packet networks both need legal step-by-step routes through allowed connections.",
+        "numbers": "A route $A,B,D,E$ has length $3$ because it traverses $AB$, $BD$, and $DE$."
+      },
+      {
+        "title": "Collaborative filtering",
+        "background": "User-item graphs use short paths to find similar users and candidate items.",
+        "numbers": "The path user $U\\to$ item $X\\to$ user $V\\to$ item $Y$ has length $3$ and suggests $Y$."
+      },
+      {
+        "title": "Knowledge graph reasoning",
+        "background": "Multi-hop questions follow paths through facts rather than one direct edge.",
+        "numbers": "If $Ada\\to London$ and $London\\to UK$, a length-$2$ path links Ada to UK."
+      },
+      {
+        "title": "Program dependencies",
+        "background": "Build systems walk dependency graphs to decide what must be compiled first.",
+        "numbers": "If app depends on library $B$ and $B$ depends on $C$, the path app,$B$,$C$ has length $2$."
+      },
+      {
+        "title": "Random walks",
+        "background": "Many graph algorithms deliberately wander with walks that may revisit vertices.",
+        "numbers": "A walk $A,B,A,C$ has length $3$ and revisits $A$, so it is useful for sampling but not a path."
+      },
+      {
+        "title": "Matrix powers",
+        "background": "Adjacency matrices count walks algebraically, linking graph movement to linear algebra.",
+        "numbers": "If $(A^2)_{ij}=5$, there are $5$ walks of length $2$ from $i$ to $j$."
+      }
+    ],
+    "applicationsClose": "From routing to recommendations, graph movement begins with the same question: which sequences of adjacent vertices are allowed?",
+    "takeaways": [
+      "A walk is an adjacent vertex sequence; its length is the number of edges used.",
+      "A path is a walk with no repeated vertices.",
+      "If a walk connects two vertices, a path also connects them after removing loops.",
+      "Directed walks must follow edge directions."
+    ],
     "prereqs": [
       "math-15-02"
     ]
@@ -69,19 +813,272 @@
   B({
     "id": "math-15-04",
     "title": "Cycles",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: cycles.",
+    "tagline": "A cycle is a path that comes home, and its presence changes what a graph can guarantee.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Paths and walks</i>"
+        "Paths and walks",
+        "Degree and the handshake lemma",
+        "graphs and their representations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Connectivity</i>"
+        "Connectivity",
+        "Trees",
+        "Spanning trees"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "paths",
+        "closed walks",
+        "parity",
+        "induction"
       ]
     },
+    "motivation": "<p>You know the feeling of walking around a block and ending where you started. In a graph, that closed clean route is a cycle.</p><p>Cycles are the difference between a network with redundancy and a tree-like network with exactly one way between places. They are small loops with big consequences.</p>",
+    "definition": "<p>A <b>cycle</b> is a sequence $v_0,v_1,\\ldots,v_k$ with $k\\ge3$, where $v_0=v_k$, consecutive vertices are adjacent, and $v_0,\\ldots,v_{k-1}$ are distinct. Its length is $k$.</p><p>A cycle is a closed walk with no repeated vertices except the return to the start. The condition $k\\ge3$ rules out immediate backtracking in a simple undirected graph. If every vertex in a finite graph has degree at least $2$, following unused exits must eventually repeat a vertex, and the first repeat contains a cycle.</p><p><b>Assumptions that matter:</b> this lesson uses simple undirected graphs unless stated otherwise; the same cycle can be written starting at different vertices; and reversing a cycle does not make a different undirected cycle.</p>",
+    "worked": {
+      "problem": "Show that $A,B,C,D,A$ is a cycle in a graph with edges $AB,BC,CD,DA,AC$, and state its length.",
+      "skills": [
+        "cycle definition",
+        "closed walks",
+        "length"
+      ],
+      "strategy": "Check closedness, adjacency, distinct interior vertices, and length.",
+      "steps": [
+        {
+          "do": "Check the start and end",
+          "result": "both are $A$",
+          "why": "a cycle returns to its starting vertex"
+        },
+        {
+          "do": "Check $A$ to $B$",
+          "result": "edge $AB$ exists",
+          "why": "each consecutive pair must be adjacent"
+        },
+        {
+          "do": "Check $B$ to $C$",
+          "result": "edge $BC$ exists",
+          "why": "second step is valid"
+        },
+        {
+          "do": "Check $C$ to $D$",
+          "result": "edge $CD$ exists",
+          "why": "third step is valid"
+        },
+        {
+          "do": "Check $D$ to $A$",
+          "result": "edge $DA$ exists",
+          "why": "the return step is valid"
+        },
+        {
+          "do": "Check distinct nonfinal vertices",
+          "result": "$A,B,C,D$ are distinct",
+          "why": "no vertex repeats before returning home"
+        },
+        {
+          "do": "Count edges",
+          "result": "$4$",
+          "why": "four steps are traversed"
+        }
+      ],
+      "verify": "The extra edge $AC$ is a chord, but it does not prevent $A,B,C,D,A$ from being a cycle.",
+      "answer": "$A,B,C,D,A$ is a cycle of length $4$.",
+      "connects": "A cycle is a clean closed path."
+    },
+    "practice": [
+      {
+        "problem": "Is $A,B,A$ a cycle in a simple graph with edge $AB$?",
+        "steps": [
+          {
+            "do": "List the sequence length",
+            "result": "$2$ edges",
+            "why": "it goes $A\\to B\\to A$"
+          },
+          {
+            "do": "Compare to cycle minimum",
+            "result": "need $k\\ge3$",
+            "why": "simple cycles have at least three edges"
+          },
+          {
+            "do": "Check repeated edge",
+            "result": "$AB$ is used twice",
+            "why": "this is immediate backtracking"
+          },
+          {
+            "do": "Classify",
+            "result": "closed walk",
+            "why": "it starts and ends at $A$"
+          },
+          {
+            "do": "State conclusion",
+            "result": "not a cycle",
+            "why": "it fails the length and simplicity idea"
+          }
+        ],
+        "answer": "No. It is a closed walk of length $2$, not a cycle."
+      },
+      {
+        "problem": "Find a cycle in the graph with edges $12,23,31,34$.",
+        "steps": [
+          {
+            "do": "Look for a closed triangle",
+            "result": "$1,2,3,1$",
+            "why": "edges $12$, $23$, and $31$ are present"
+          },
+          {
+            "do": "Check adjacency",
+            "result": "all three edges exist",
+            "why": "each step is legal"
+          },
+          {
+            "do": "Check return",
+            "result": "starts and ends at $1$",
+            "why": "closed condition holds"
+          },
+          {
+            "do": "Check distinct vertices",
+            "result": "$1,2,3$ are distinct",
+            "why": "no repeat before return"
+          },
+          {
+            "do": "State length",
+            "result": "$3$",
+            "why": "three edges are used"
+          }
+        ],
+        "answer": "$1,2,3,1$ is a cycle of length $3$."
+      },
+      {
+        "problem": "A graph has vertices $A,B,C,D$ and edges $AB,BC,CD$. Does it contain a cycle?",
+        "steps": [
+          {
+            "do": "Inspect the structure",
+            "result": "a single chain",
+            "why": "edges connect vertices in a line"
+          },
+          {
+            "do": "Check possible closed route",
+            "result": "none from endpoints",
+            "why": "$A$ and $D$ have degree $1$"
+          },
+          {
+            "do": "Use edge count intuition",
+            "result": "$3$ edges on $4$ connected vertices",
+            "why": "a tree-like count suggests no cycle"
+          },
+          {
+            "do": "Try to return from $A$",
+            "result": "must go back along used edges",
+            "why": "that would repeat vertices before a cycle"
+          },
+          {
+            "do": "Conclude",
+            "result": "acyclic",
+            "why": "no simple closed route exists"
+          }
+        ],
+        "answer": "No. The graph is a path on four vertices and has no cycle."
+      },
+      {
+        "problem": "In a square with one diagonal $AC$, list two different cycles.",
+        "steps": [
+          {
+            "do": "Use the outside square",
+            "result": "$A,B,C,D,A$",
+            "why": "all four boundary edges are present"
+          },
+          {
+            "do": "State its length",
+            "result": "$4$",
+            "why": "four boundary edges"
+          },
+          {
+            "do": "Use the diagonal for a triangle",
+            "result": "$A,B,C,A$",
+            "why": "edges $AB$, $BC$, and $AC$ are present"
+          },
+          {
+            "do": "State triangle length",
+            "result": "$3$",
+            "why": "three edges"
+          },
+          {
+            "do": "Note another triangle",
+            "result": "$A,C,D,A$",
+            "why": "the same diagonal makes a second triangle"
+          }
+        ],
+        "answer": "Examples include $A,B,C,D,A$ and $A,B,C,A$."
+      },
+      {
+        "problem": "A dependency graph for tasks has a directed cycle $A\\to B\\to C\\to A$. Why is scheduling impossible without breaking an edge?",
+        "steps": [
+          {
+            "do": "Read $A\\to B$",
+            "result": "$A$ must precede $B$",
+            "why": "directed edge gives an ordering requirement"
+          },
+          {
+            "do": "Read $B\\to C$",
+            "result": "$B$ must precede $C$",
+            "why": "second requirement"
+          },
+          {
+            "do": "Read $C\\to A$",
+            "result": "$C$ must precede $A$",
+            "why": "third requirement closes the loop"
+          },
+          {
+            "do": "Chain the requirements",
+            "result": "$A$ before $B$ before $C$ before $A$",
+            "why": "the order demands $A$ before itself"
+          },
+          {
+            "do": "Conclude",
+            "result": "impossible as stated",
+            "why": "one dependency must be removed or changed"
+          }
+        ],
+        "answer": "The cycle creates contradictory precedence constraints, so no valid schedule exists until the cycle is broken."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Network redundancy",
+        "background": "Cycles give alternate routes, which is why communication networks often avoid pure tree shapes.",
+        "numbers": "In cycle $A,B,C,D,A$, if edge $AB$ fails, $A$ can still reach $B$ through $A,D,C,B$ with length $3$."
+      },
+      {
+        "title": "Deadlock detection",
+        "background": "Operating systems look for cycles in resource-wait graphs to detect deadlocks.",
+        "numbers": "If process $P_1$ waits for $P_2$, $P_2$ waits for $P_3$, and $P_3$ waits for $P_1$, the length-$3$ cycle signals deadlock risk."
+      },
+      {
+        "title": "Build systems",
+        "background": "Directed cycles in dependencies prevent a clean topological order.",
+        "numbers": "Edges $parser\\to lexer$ and $lexer\\to parser$ form a length-$2$ directed cycle of mutual dependence."
+      },
+      {
+        "title": "Chemistry rings",
+        "background": "Molecular rings are graph cycles and strongly affect chemical properties.",
+        "numbers": "Benzene is modeled as a $6$-cycle of carbon atoms, so it has $6$ ring edges."
+      },
+      {
+        "title": "Graph neural networks",
+        "background": "Cycles affect how messages return to a node through neighbors.",
+        "numbers": "On triangle $A,B,C,A$, a two-layer message from $A$ can return through $A\\to B\\to C$ only with additional steps around the loop."
+      },
+      {
+        "title": "Error-correcting codes",
+        "background": "Factor graphs with short cycles can make belief propagation double-count evidence.",
+        "numbers": "A $4$-cycle variable-check-variable-check-variable lets information return after $4$ messages."
+      }
+    ],
+    "applicationsClose": "Cycles are loops of possibility and constraint: they give redundancy in routes but trouble in dependencies.",
+    "takeaways": [
+      "A cycle is a closed path of length at least $3$ in a simple undirected graph.",
+      "Cycles can be written from different starting points without changing the underlying loop.",
+      "Graphs without cycles are acyclic and lead naturally to trees.",
+      "Directed cycles can represent circular dependencies."
+    ],
     "prereqs": [
       "math-15-03"
     ]
@@ -90,19 +1087,272 @@
   B({
     "id": "math-15-05",
     "title": "Connectivity",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: connectivity.",
+    "tagline": "Connectivity asks whether every place in the graph can reach every other place.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Cycles</i>"
+        "Paths and walks",
+        "Cycles",
+        "graphs and their representations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Trees</i>"
+        "Trees",
+        "Spanning trees",
+        "Breadth-first search"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "equivalence relations",
+        "partitions",
+        "paths",
+        "components"
       ]
     },
+    "motivation": "<p>A map is less useful if it secretly breaks into islands. Graph connectivity names that simple concern: can you get from here to there?</p><p>Once connectivity is clear, a graph can be split into components, searched systematically, or repaired by adding the right edges.</p>",
+    "definition": "<p>An undirected graph is <b>connected</b> if for every pair of vertices $u,v\\in V$, there is a path from $u$ to $v$. A <b>connected component</b> is a largest set of vertices that are mutually reachable.</p><p>Reachability behaves like an equivalence relation: every vertex reaches itself by a length-$0$ path, paths can be reversed in undirected graphs, and two paths can be concatenated. Therefore vertices partition into components.</p><p><b>Assumptions that matter:</b> connected means path-connected in the graph; isolated vertices form one-vertex components; and directed graphs require separate notions such as strong and weak connectivity.</p>",
+    "worked": {
+      "problem": "Find the connected components of a graph with vertices $A,B,C,D,E$ and edges $AB,BC,DE$.",
+      "skills": [
+        "paths",
+        "components",
+        "partitions"
+      ],
+      "strategy": "Start from one vertex, collect everything reachable, then repeat with any unvisited vertex.",
+      "steps": [
+        {
+          "do": "Start at $A$",
+          "result": "reachable vertices include $A$",
+          "why": "a vertex reaches itself"
+        },
+        {
+          "do": "Follow edge $AB$",
+          "result": "add $B$",
+          "why": "$A$ is adjacent to $B$"
+        },
+        {
+          "do": "Follow edge $BC$",
+          "result": "add $C$",
+          "why": "$B$ connects onward to $C$"
+        },
+        {
+          "do": "Stop first component",
+          "result": "$\\{A,B,C\\}$",
+          "why": "no edge from these vertices reaches $D$ or $E$"
+        },
+        {
+          "do": "Start at $D$",
+          "result": "add $D$",
+          "why": "choose an unvisited vertex"
+        },
+        {
+          "do": "Follow edge $DE$",
+          "result": "add $E$",
+          "why": "$D$ and $E$ are adjacent"
+        },
+        {
+          "do": "State components",
+          "result": "$\\{A,B,C\\}$ and $\\{D,E\\}$",
+          "why": "all vertices are now assigned"
+        }
+      ],
+      "verify": "There is no path from $A$ to $D$, so two components are necessary.",
+      "answer": "The components are $\\{A,B,C\\}$ and $\\{D,E\\}$.",
+      "connects": "Connectivity turns many local edges into global reachability."
+    },
+    "practice": [
+      {
+        "problem": "Is the graph with edges $AB,BC,CD$ connected on vertices $A,B,C,D$?",
+        "steps": [
+          {
+            "do": "Trace from $A$",
+            "result": "$A\\to B\\to C\\to D$",
+            "why": "the chain reaches every vertex"
+          },
+          {
+            "do": "Check $B$ to $D$",
+            "result": "$B\\to C\\to D$",
+            "why": "interior pairs are reachable"
+          },
+          {
+            "do": "Check $C$ to $A$",
+            "result": "$C\\to B\\to A$",
+            "why": "undirected paths reverse"
+          },
+          {
+            "do": "Collect component",
+            "result": "$\\{A,B,C,D\\}$",
+            "why": "all vertices are mutually reachable"
+          },
+          {
+            "do": "Conclude",
+            "result": "connected",
+            "why": "there is one component"
+          }
+        ],
+        "answer": "Yes, the graph is connected."
+      },
+      {
+        "problem": "How many components does a graph of $4$ vertices and no edges have?",
+        "steps": [
+          {
+            "do": "Start with one vertex",
+            "result": "it reaches only itself",
+            "why": "no edges leave it"
+          },
+          {
+            "do": "Repeat for each vertex",
+            "result": "four singleton sets",
+            "why": "each vertex is isolated"
+          },
+          {
+            "do": "Check maximality",
+            "result": "no singleton can merge",
+            "why": "no path connects distinct vertices"
+          },
+          {
+            "do": "Count components",
+            "result": "$4$",
+            "why": "one per vertex"
+          },
+          {
+            "do": "State result",
+            "result": "four components",
+            "why": "the graph is totally disconnected"
+          }
+        ],
+        "answer": "It has $4$ connected components."
+      },
+      {
+        "problem": "Edges are $12,23,45,56,64$. List components.",
+        "steps": [
+          {
+            "do": "Start at $1$",
+            "result": "reach $1,2,3$",
+            "why": "edges $12$ and $23$ form a chain"
+          },
+          {
+            "do": "Stop first set",
+            "result": "$\\{1,2,3\\}$",
+            "why": "no listed edge leaves it"
+          },
+          {
+            "do": "Start at $4$",
+            "result": "reach $4,5,6$",
+            "why": "edges form a triangle-like component"
+          },
+          {
+            "do": "Stop second set",
+            "result": "$\\{4,5,6\\}$",
+            "why": "all remaining vertices are included"
+          },
+          {
+            "do": "State partition",
+            "result": "$\\{1,2,3\\}$, $\\{4,5,6\\}$",
+            "why": "components partition vertices"
+          }
+        ],
+        "answer": "The components are $\\{1,2,3\\}$ and $\\{4,5,6\\}$."
+      },
+      {
+        "problem": "A graph has $3$ connected components. What is the fewest edges needed to make it connected?",
+        "steps": [
+          {
+            "do": "Think of components as super-vertices",
+            "result": "$3$ pieces",
+            "why": "inside each piece is already reachable"
+          },
+          {
+            "do": "Connect two components",
+            "result": "one edge reduces component count by $1$",
+            "why": "it merges two pieces"
+          },
+          {
+            "do": "Need one component",
+            "result": "reduce from $3$ to $1$",
+            "why": "two reductions are needed"
+          },
+          {
+            "do": "Compute edges",
+            "result": "$3-1=2$",
+            "why": "a tree on components has $c-1$ edges"
+          },
+          {
+            "do": "State answer",
+            "result": "$2$ edges",
+            "why": "chosen between different components"
+          }
+        ],
+        "answer": "At least $2$ new edges are needed."
+      },
+      {
+        "problem": "A service graph has components of sizes $120$, $75$, and $5$. What fraction of nodes are in the largest component?",
+        "steps": [
+          {
+            "do": "Add sizes",
+            "result": "$120+75+5=200$",
+            "why": "total nodes"
+          },
+          {
+            "do": "Identify largest",
+            "result": "$120$",
+            "why": "largest component size"
+          },
+          {
+            "do": "Write fraction",
+            "result": "$120/200$",
+            "why": "part over whole"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.60$",
+            "why": "divide numerator and denominator by $200$"
+          },
+          {
+            "do": "Interpret",
+            "result": "$60\\%$",
+            "why": "most but not all nodes are connected together"
+          }
+        ],
+        "answer": "The largest component contains $60\\%$ of the nodes."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Network outage analysis",
+        "background": "Engineers measure components after failures to see who remains reachable.",
+        "numbers": "If a $1000$-node network splits into components $920$, $50$, and $30$, then $92\\%$ remain in the largest component."
+      },
+      {
+        "title": "Social communities",
+        "background": "Disconnected components can reveal separate populations or data-ingestion gaps.",
+        "numbers": "A user graph with component sizes $10,000$ and $12$ suggests a tiny isolated group worth inspecting."
+      },
+      {
+        "title": "Image segmentation",
+        "background": "Connected components label neighboring pixels that belong to the same object.",
+        "numbers": "If a binary image has blobs of $35$, $80$, and $12$ pixels, the largest connected component has $80$ pixels."
+      },
+      {
+        "title": "Distributed systems",
+        "background": "Service dependency graphs must stay connected enough for requests to flow.",
+        "numbers": "If frontend reaches API and API reaches database, a path of length $2$ connects frontend to database."
+      },
+      {
+        "title": "Graph ML sampling",
+        "background": "Training often samples from the giant component to avoid isolated nodes with little context.",
+        "numbers": "If $9500$ of $10,000$ nodes are in one component, sampling there covers $95\\%$ of nodes."
+      },
+      {
+        "title": "Transportation planning",
+        "background": "Connectivity checks whether every station can reach the rest of a transit network.",
+        "numbers": "Adding one bridge edge between two subway components reduces components from $2$ to $1$."
+      }
+    ],
+    "applicationsClose": "Connectivity is the graph's answer to belonging: which vertices live in the same reachable world?",
+    "takeaways": [
+      "A graph is connected when every pair of vertices has a path between them.",
+      "Components are maximal mutually reachable vertex sets.",
+      "Reachability partitions an undirected graph into components.",
+      "Connecting $c$ components needs at least $c-1$ new edges."
+    ],
     "prereqs": [
       "math-15-04"
     ]
@@ -111,19 +1361,262 @@
   B({
     "id": "math-15-06",
     "title": "Trees",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: trees.",
+    "tagline": "A tree is connected without waste: exactly enough edges to hold everything together.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Connectivity</i>"
+        "Connectivity",
+        "Cycles",
+        "degree counting"
       ],
       "leadsTo": [
-        "the next lesson, <i>Spanning trees</i>"
+        "Spanning trees",
+        "Breadth-first search",
+        "Minimum spanning trees"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "induction",
+        "recursion",
+        "paths",
+        "acyclic graphs"
       ]
     },
+    "motivation": "<p>You have seen family trees and folder trees: branching structures with no loop that brings you back. Graph theory makes that picture exact.</p><p>Trees matter because they are the simplest connected graphs. Remove any edge and connection breaks; add any new edge and a cycle appears.</p>",
+    "definition": "<p>A <b>tree</b> is a connected undirected graph with no cycles. For a finite tree with $n$ vertices, the number of edges is $n-1$.</p><p>One reason: every tree with at least two vertices has a leaf, a vertex of degree $1$. Removing a leaf and its edge leaves a smaller tree. Repeating this removes one edge per removed vertex, so starting from $n$ vertices ends with $n-1$ edges.</p><p><b>Assumptions that matter:</b> a one-vertex graph is a tree with $0$ edges; finite tree facts may fail for infinite graphs without care; and connected plus acyclic are both required.</p>",
+    "worked": {
+      "problem": "A connected graph has $8$ vertices and $7$ edges. If it has no cycles, is it a tree?",
+      "skills": [
+        "tree definition",
+        "edge count",
+        "acyclicity"
+      ],
+      "strategy": "Use the definition first, then check the tree edge count as a consistency check.",
+      "steps": [
+        {
+          "do": "Read connectedness",
+          "result": "connected",
+          "why": "given by the problem"
+        },
+        {
+          "do": "Read cycle condition",
+          "result": "no cycles",
+          "why": "given by the problem"
+        },
+        {
+          "do": "Apply definition",
+          "result": "tree",
+          "why": "connected plus acyclic means tree"
+        },
+        {
+          "do": "Compute tree edge count",
+          "result": "$8-1=7$",
+          "why": "a tree on $n$ vertices has $n-1$ edges"
+        },
+        {
+          "do": "Compare with given edges",
+          "result": "$7=7$",
+          "why": "the count agrees"
+        }
+      ],
+      "verify": "Both defining conditions hold, and the edge count matches the theorem.",
+      "answer": "Yes. It is a tree.",
+      "connects": "Trees are exactly connected acyclic graphs."
+    },
+    "practice": [
+      {
+        "problem": "How many edges does a tree with $15$ vertices have?",
+        "steps": [
+          {
+            "do": "Name $n$",
+            "result": "$n=15$",
+            "why": "tree formula uses vertex count"
+          },
+          {
+            "do": "Apply formula",
+            "result": "$n-1$",
+            "why": "finite trees have one fewer edge than vertices"
+          },
+          {
+            "do": "Compute",
+            "result": "$15-1=14$",
+            "why": "subtract one"
+          },
+          {
+            "do": "Check positivity",
+            "result": "$14$ edges",
+            "why": "reasonable for connected sparse graph"
+          },
+          {
+            "do": "State result",
+            "result": "$14$",
+            "why": "attach units"
+          }
+        ],
+        "answer": "It has $14$ edges."
+      },
+      {
+        "problem": "Can a connected graph with $6$ vertices and $6$ edges be a tree?",
+        "steps": [
+          {
+            "do": "Compute tree edge count",
+            "result": "$6-1=5$",
+            "why": "a tree with $6$ vertices has $5$ edges"
+          },
+          {
+            "do": "Compare edges",
+            "result": "$6>5$",
+            "why": "one extra edge exists"
+          },
+          {
+            "do": "Use cycle fact",
+            "result": "extra edge creates a cycle",
+            "why": "connected graph beyond $n-1$ edges cannot be acyclic"
+          },
+          {
+            "do": "Apply definition",
+            "result": "not a tree",
+            "why": "acyclicity fails"
+          },
+          {
+            "do": "State conclusion",
+            "result": "no",
+            "why": "it has at least one cycle"
+          }
+        ],
+        "answer": "No. It must contain a cycle."
+      },
+      {
+        "problem": "A tree has degree sequence $3,2,1,1,1$. Verify it is consistent.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$5$",
+            "why": "five degree entries"
+          },
+          {
+            "do": "Compute expected edges",
+            "result": "$5-1=4$",
+            "why": "tree edge count"
+          },
+          {
+            "do": "Compute expected degree sum",
+            "result": "$2\\cdot4=8$",
+            "why": "handshake lemma"
+          },
+          {
+            "do": "Add degrees",
+            "result": "$3+2+1+1+1=8$",
+            "why": "actual sum"
+          },
+          {
+            "do": "Compare",
+            "result": "$8=8$",
+            "why": "the sequence passes this necessary check"
+          }
+        ],
+        "answer": "The degree sum is consistent with a $5$-vertex tree."
+      },
+      {
+        "problem": "Why does removing a leaf from a tree with $n>1$ vertices leave a tree?",
+        "steps": [
+          {
+            "do": "Remove the leaf vertex",
+            "result": "one degree-$1$ vertex disappears",
+            "why": "a leaf has one incident edge"
+          },
+          {
+            "do": "Remove its incident edge",
+            "result": "one edge disappears",
+            "why": "that edge only served the leaf"
+          },
+          {
+            "do": "Check connectivity among remaining vertices",
+            "result": "still connected",
+            "why": "paths between other vertices did not need to pass through the leaf"
+          },
+          {
+            "do": "Check cycles",
+            "result": "none appear",
+            "why": "removing cannot create a cycle"
+          },
+          {
+            "do": "Conclude",
+            "result": "remaining graph is a tree",
+            "why": "connected and acyclic remain true"
+          }
+        ],
+        "answer": "The remaining graph is connected and acyclic, so it is a tree."
+      },
+      {
+        "problem": "A decision tree model has $31$ nodes and is a tree. How many parent-child edges does it have?",
+        "steps": [
+          {
+            "do": "Identify vertex count",
+            "result": "$n=31$",
+            "why": "nodes are vertices"
+          },
+          {
+            "do": "Apply tree formula",
+            "result": "$n-1$",
+            "why": "a tree has one fewer edge"
+          },
+          {
+            "do": "Compute",
+            "result": "$30$",
+            "why": "$31-1=30$"
+          },
+          {
+            "do": "Interpret edges",
+            "result": "parent-child links",
+            "why": "each non-root node has one parent"
+          },
+          {
+            "do": "Check with root view",
+            "result": "$31-1$ non-root nodes",
+            "why": "one incoming edge per non-root node"
+          }
+        ],
+        "answer": "It has $30$ parent-child edges."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Decision trees",
+        "background": "ML decision trees branch without cycles so each input follows one root-to-leaf route.",
+        "numbers": "A tree with $16$ leaves and full binary splits has $31$ total nodes and $30$ edges."
+      },
+      {
+        "title": "File systems",
+        "background": "Directories are organized as trees to give each file a unique path from the root.",
+        "numbers": "If a folder tree has $120$ folders/files, it has $119$ parent-child links."
+      },
+      {
+        "title": "Parse trees",
+        "background": "Compilers represent expressions as trees so nested operations have a clear structure.",
+        "numbers": "Expression $(a+b)c$ has operator nodes $+$ and $\\cdot$ plus leaves $a,b,c$, giving $5$ nodes and $4$ edges."
+      },
+      {
+        "title": "Phylogenetics",
+        "background": "Evolutionary trees model branching ancestry without cycles.",
+        "numbers": "A rooted binary tree with $8$ species leaves has $7$ internal branching nodes and $14$ edges."
+      },
+      {
+        "title": "Broadcast protocols",
+        "background": "A tree-shaped broadcast avoids duplicate messages while reaching everyone.",
+        "numbers": "To reach $100$ machines in a tree, exactly $99$ transmissions along edges suffice."
+      },
+      {
+        "title": "Hierarchical clustering",
+        "background": "Dendrograms are trees showing how clusters merge over thresholds.",
+        "numbers": "Merging $10$ singleton clusters into one requires $9$ merge events, matching the tree idea."
+      }
+    ],
+    "applicationsClose": "Trees are the minimal connected skeletons hiding inside many hierarchical systems.",
+    "takeaways": [
+      "A tree is connected and acyclic.",
+      "A finite tree with $n$ vertices has $n-1$ edges.",
+      "Every edge of a tree is essential for connectivity.",
+      "Adding one edge to a tree creates a cycle."
+    ],
     "prereqs": [
       "math-15-05"
     ]
@@ -132,19 +1625,272 @@
   B({
     "id": "math-15-07",
     "title": "Spanning trees",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: spanning trees.",
+    "tagline": "A spanning tree keeps every vertex connected while trimming away every cycle.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Trees</i>"
+        "Trees",
+        "Connectivity",
+        "Cycles"
       ],
       "leadsTo": [
-        "the next lesson, <i>Breadth-first search</i>"
+        "Breadth-first search",
+        "Depth-first search",
+        "Minimum spanning trees"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "subgraphs",
+        "trees",
+        "cycle removal",
+        "induction"
       ]
     },
+    "motivation": "<p>A connected graph may have many redundant edges. That redundancy is useful, but sometimes you want the clean backbone.</p><p>A spanning tree is that backbone: all vertices remain, just enough edges stay to connect them, and every cycle has been removed.</p>",
+    "definition": "<p>A <b>spanning tree</b> of a connected graph $G=(V,E)$ is a subgraph $T=(V,E_T)$ that uses all vertices, is connected, and is a tree. Therefore if $|V|=n$, then $|E_T|=n-1$.</p><p>Existence comes from cycle removal. Start with a connected graph. If it has a cycle, remove one edge from that cycle; the graph stays connected because the rest of the cycle still gives an alternate route. Repeat until no cycles remain.</p><p><b>Assumptions that matter:</b> a spanning tree exists only for connected undirected graphs; disconnected graphs have spanning forests; and edge weights are irrelevant here until minimum spanning trees.</p>",
+    "worked": {
+      "problem": "Find a spanning tree for the graph with vertices $A,B,C,D$ and edges $AB,BC,CD,DA,AC$.",
+      "skills": [
+        "subgraphs",
+        "cycle removal",
+        "tree edge count"
+      ],
+      "strategy": "Keep all vertices and choose enough edges to connect them without closing a loop.",
+      "steps": [
+        {
+          "do": "Count vertices",
+          "result": "$4$",
+          "why": "the spanning tree must include all four"
+        },
+        {
+          "do": "Compute needed edges",
+          "result": "$4-1=3$",
+          "why": "a tree on four vertices has three edges"
+        },
+        {
+          "do": "Choose edge $AB$",
+          "result": "include $AB$",
+          "why": "start connecting from $A$"
+        },
+        {
+          "do": "Choose edge $BC$",
+          "result": "include $BC$",
+          "why": "now $A,B,C$ are connected"
+        },
+        {
+          "do": "Choose edge $CD$",
+          "result": "include $CD$",
+          "why": "now $D$ is connected too"
+        },
+        {
+          "do": "Check for a cycle",
+          "result": "none",
+          "why": "$A,B,C,D$ forms a simple chain"
+        },
+        {
+          "do": "State subgraph",
+          "result": "edges $AB,BC,CD$",
+          "why": "all vertices are spanned"
+        }
+      ],
+      "verify": "The selected subgraph is connected, has $3$ edges on $4$ vertices, and has no cycle.",
+      "answer": "One spanning tree uses edges $AB,BC,CD$.",
+      "connects": "A spanning tree is the connected graph's cycle-free skeleton."
+    },
+    "practice": [
+      {
+        "problem": "How many edges are in any spanning tree of a connected graph with $20$ vertices?",
+        "steps": [
+          {
+            "do": "Set $n$",
+            "result": "$n=20$",
+            "why": "spanning tree uses all vertices"
+          },
+          {
+            "do": "Use tree edge formula",
+            "result": "$n-1$",
+            "why": "any tree on $n$ vertices has $n-1$ edges"
+          },
+          {
+            "do": "Compute",
+            "result": "$19$",
+            "why": "subtract one"
+          },
+          {
+            "do": "Note independence",
+            "result": "original edge count does not matter",
+            "why": "extra edges are removed"
+          },
+          {
+            "do": "State answer",
+            "result": "$19$ edges",
+            "why": "all spanning trees have this count"
+          }
+        ],
+        "answer": "Every spanning tree has $19$ edges."
+      },
+      {
+        "problem": "Does a disconnected graph have a spanning tree?",
+        "steps": [
+          {
+            "do": "Recall definition",
+            "result": "spanning tree must be connected",
+            "why": "tree condition includes connectivity"
+          },
+          {
+            "do": "Read disconnected graph",
+            "result": "some vertices have no path between them",
+            "why": "components are separate"
+          },
+          {
+            "do": "Consider subgraphs",
+            "result": "removing edges cannot create new paths",
+            "why": "a subgraph cannot connect components"
+          },
+          {
+            "do": "Apply definition",
+            "result": "no spanning tree",
+            "why": "connectivity cannot be achieved"
+          },
+          {
+            "do": "Name alternative",
+            "result": "spanning forest",
+            "why": "one tree per component"
+          }
+        ],
+        "answer": "No. A disconnected graph has a spanning forest, not a spanning tree."
+      },
+      {
+        "problem": "From cycle $A,B,C,A$ plus edge $C,D$, remove one edge to get a spanning tree.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$4$",
+            "why": "need $3$ tree edges"
+          },
+          {
+            "do": "Identify cycle",
+            "result": "$A,B,C,A$",
+            "why": "triangle has redundant edge"
+          },
+          {
+            "do": "Remove edge $AC$",
+            "result": "remaining edges $AB,BC,CD$",
+            "why": "break the cycle"
+          },
+          {
+            "do": "Check connectedness",
+            "result": "$A-B-C-D$",
+            "why": "all vertices are in one chain"
+          },
+          {
+            "do": "Check edge count",
+            "result": "$3$",
+            "why": "matches $n-1$"
+          }
+        ],
+        "answer": "Removing $AC$ leaves spanning tree $AB,BC,CD$."
+      },
+      {
+        "problem": "A connected graph has $8$ vertices and $12$ edges. How many edges must be removed to reach a spanning tree?",
+        "steps": [
+          {
+            "do": "Compute spanning-tree edges",
+            "result": "$8-1=7$",
+            "why": "tree edge count"
+          },
+          {
+            "do": "Compare original edges",
+            "result": "$12-7=5$",
+            "why": "extra edges beyond a tree"
+          },
+          {
+            "do": "Interpret removals",
+            "result": "remove $5$ edges",
+            "why": "cycle edges can be deleted"
+          },
+          {
+            "do": "Check vertices",
+            "result": "none removed",
+            "why": "spanning keeps all vertices"
+          },
+          {
+            "do": "State result",
+            "result": "$5$",
+            "why": "assuming removals preserve connectivity"
+          }
+        ],
+        "answer": "Remove $5$ edges."
+      },
+      {
+        "problem": "A network wants to send one broadcast to all $50$ nodes using a spanning tree. How many transmissions along edges are needed?",
+        "steps": [
+          {
+            "do": "Identify nodes",
+            "result": "$n=50$",
+            "why": "all nodes must be reached"
+          },
+          {
+            "do": "Use spanning tree edge count",
+            "result": "$49$",
+            "why": "tree has $n-1$ edges"
+          },
+          {
+            "do": "Assign one transmission per tree edge",
+            "result": "$49$ transmissions",
+            "why": "broadcast crosses each selected link once"
+          },
+          {
+            "do": "Compare to dense graph",
+            "result": "fewer than all links",
+            "why": "redundant edges are unused"
+          },
+          {
+            "do": "State answer",
+            "result": "$49$",
+            "why": "one per spanning-tree edge"
+          }
+        ],
+        "answer": "A spanning-tree broadcast uses $49$ edge transmissions."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Network broadcast",
+        "background": "Spanning trees prevent broadcast storms by forwarding along a loop-free backbone.",
+        "numbers": "For $500$ switches, a spanning tree uses $499$ active links."
+      },
+      {
+        "title": "Circuit design",
+        "background": "Loop-free connection backbones can reduce redundant wiring while preserving reachability.",
+        "numbers": "Connecting $12$ modules minimally takes $11$ wires in a spanning tree."
+      },
+      {
+        "title": "Clustering",
+        "background": "A graph can be summarized by a tree backbone before cutting weak links into clusters.",
+        "numbers": "A spanning tree on $100$ points has $99$ edges; cutting $4$ edges produces $5$ components."
+      },
+      {
+        "title": "Maze generation",
+        "background": "Perfect mazes are spanning trees of grid graphs: every cell reachable with no loops.",
+        "numbers": "A $10\\times10$ grid has $100$ cells, so a perfect maze has $99$ open passages."
+      },
+      {
+        "title": "Data lineage",
+        "background": "A spanning tree can choose one explanation parent per artifact while keeping all artifacts reachable.",
+        "numbers": "For $30$ artifacts, the lineage tree has $29$ selected dependency links."
+      },
+      {
+        "title": "Approximation algorithms",
+        "background": "Many graph algorithms first build a spanning tree as a cheap connected scaffold.",
+        "numbers": "If a connected graph has $1000$ vertices and $5000$ edges, the scaffold keeps $999$ edges and ignores $4001$."
+      }
+    ],
+    "applicationsClose": "A spanning tree keeps the promise of connectivity while removing every loop of redundancy.",
+    "takeaways": [
+      "A spanning tree includes all vertices and is a tree.",
+      "Every spanning tree on $n$ vertices has $n-1$ edges.",
+      "Connected graphs have spanning trees by repeated cycle removal.",
+      "Disconnected graphs have spanning forests instead."
+    ],
     "prereqs": [
       "math-15-06"
     ]
@@ -153,19 +1899,267 @@
   B({
     "id": "math-15-08",
     "title": "Breadth-first search",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: breadth-first search.",
+    "tagline": "Breadth-first search explores a graph in waves, so the first time it reaches a vertex is by a shortest unweighted path.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Spanning trees</i>"
+        "Spanning trees",
+        "Connectivity",
+        "Paths and walks"
       ],
       "leadsTo": [
-        "the next lesson, <i>Depth-first search</i>"
+        "Depth-first search",
+        "Dijkstra's shortest paths",
+        "Network flows"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "queues",
+        "levels",
+        "shortest paths",
+        "trees"
       ]
     },
+    "motivation": "<p>If you ask who is one friendship away, then two friendships away, then three, you are already thinking breadth-first.</p><p><b>Breadth-first search</b> is the disciplined version: use a queue, explore nearest vertices first, and record levels from the start.</p>",
+    "definition": "<p>Breadth-first search, or <b>BFS</b>, starts at a source vertex $s$, marks $s$ at distance $0$, and repeatedly removes the oldest discovered vertex from a queue. Any undiscovered neighbor gets distance one more than the current vertex and is added to the queue.</p><p>The shortest-path guarantee comes from the queue order. All vertices at distance $d$ are processed before vertices at distance $d+1$, so when a vertex is first discovered, no shorter unweighted path is still waiting.</p><p><b>Assumptions that matter:</b> BFS shortest distances count edges and require unweighted graphs; neighbor order can change the BFS tree but not distances; and disconnected vertices remain undiscovered from the source.</p>",
+    "worked": {
+      "problem": "Run BFS from $A$ on edges $AB,AC,BD,CE,DE$. Give distances from $A$.",
+      "skills": [
+        "queues",
+        "levels",
+        "unweighted shortest paths"
+      ],
+      "strategy": "Process vertices by increasing distance from $A$.",
+      "steps": [
+        {
+          "do": "Initialize",
+          "result": "$d(A)=0$",
+          "why": "the source is zero edges from itself"
+        },
+        {
+          "do": "Discover neighbors of $A$",
+          "result": "$d(B)=1$, $d(C)=1$",
+          "why": "$B$ and $C$ are one edge away"
+        },
+        {
+          "do": "Process $B$",
+          "result": "discover $D$ with $d(D)=2$",
+          "why": "path $A,B,D$ has length $2$"
+        },
+        {
+          "do": "Process $C$",
+          "result": "discover $E$ with $d(E)=2$",
+          "why": "path $A,C,E$ has length $2$"
+        },
+        {
+          "do": "Process $D$",
+          "result": "no shorter new discovery",
+          "why": "$E$ is already at distance $2$"
+        },
+        {
+          "do": "Process $E$",
+          "result": "no new vertices",
+          "why": "all reachable vertices are found"
+        }
+      ],
+      "verify": "Every edge connects vertices whose BFS levels differ by at most one here, so no listed distance can be shortened.",
+      "answer": "Distances are $d(A)=0$, $d(B)=1$, $d(C)=1$, $d(D)=2$, $d(E)=2$.",
+      "connects": "BFS layers are shortest-path layers in unweighted graphs."
+    },
+    "practice": [
+      {
+        "problem": "In a star centered at $S$ with leaves $A,B,C$, run BFS from $S$.",
+        "steps": [
+          {
+            "do": "Start at $S$",
+            "result": "$d(S)=0$",
+            "why": "source level"
+          },
+          {
+            "do": "Inspect neighbors",
+            "result": "$A,B,C$",
+            "why": "all leaves are adjacent to $S$"
+          },
+          {
+            "do": "Assign distances",
+            "result": "$d(A)=d(B)=d(C)=1$",
+            "why": "one edge from source"
+          },
+          {
+            "do": "Process leaves",
+            "result": "no new vertices",
+            "why": "leaves connect only to $S$"
+          },
+          {
+            "do": "State tree edges",
+            "result": "$SA,SB,SC$",
+            "why": "BFS tree is the star"
+          }
+        ],
+        "answer": "Distances are $0$ for $S$ and $1$ for each leaf."
+      },
+      {
+        "problem": "On path $1-2-3-4-5$, run BFS from $1$.",
+        "steps": [
+          {
+            "do": "Start",
+            "result": "$d(1)=0$",
+            "why": "source"
+          },
+          {
+            "do": "Discover $2$",
+            "result": "$d(2)=1$",
+            "why": "one edge away"
+          },
+          {
+            "do": "Discover $3$",
+            "result": "$d(3)=2$",
+            "why": "through $2$"
+          },
+          {
+            "do": "Discover $4$",
+            "result": "$d(4)=3$",
+            "why": "through $3$"
+          },
+          {
+            "do": "Discover $5$",
+            "result": "$d(5)=4$",
+            "why": "through $4$"
+          }
+        ],
+        "answer": "Distances are $0,1,2,3,4$ from vertex $1$."
+      },
+      {
+        "problem": "Why can BFS ignore a later path of length $4$ to a vertex already discovered at length $2$?",
+        "steps": [
+          {
+            "do": "Record first discovery",
+            "result": "distance $2$",
+            "why": "BFS found the vertex in level $2$"
+          },
+          {
+            "do": "Use BFS order",
+            "result": "levels increase by one",
+            "why": "all shorter paths would have been explored first"
+          },
+          {
+            "do": "Compare later path",
+            "result": "$4>2$",
+            "why": "it is not shorter"
+          },
+          {
+            "do": "Keep old distance",
+            "result": "$2$",
+            "why": "shortest known is already better"
+          },
+          {
+            "do": "Conclude",
+            "result": "ignore for distance update",
+            "why": "unweighted BFS first discovery is optimal"
+          }
+        ],
+        "answer": "Because first discovery at level $2$ is already a shortest unweighted distance."
+      },
+      {
+        "problem": "A graph has components $\\{A,B\\}$ and $\\{C,D\\}$. What does BFS from $A$ discover?",
+        "steps": [
+          {
+            "do": "Start at $A$",
+            "result": "discover $A$",
+            "why": "source"
+          },
+          {
+            "do": "Follow component edge",
+            "result": "discover $B$",
+            "why": "$B$ is connected to $A$"
+          },
+          {
+            "do": "Look for cross edges",
+            "result": "none",
+            "why": "components are disconnected"
+          },
+          {
+            "do": "Leave $C,D$",
+            "result": "undiscovered",
+            "why": "no path from $A$"
+          },
+          {
+            "do": "State reachable set",
+            "result": "$\\{A,B\\}$",
+            "why": "BFS finds the source component"
+          }
+        ],
+        "answer": "It discovers only $A$ and $B$."
+      },
+      {
+        "problem": "In a word-ladder graph, changing one letter is one edge. If BFS finds CAT to DOG at level $4$, what does that mean?",
+        "steps": [
+          {
+            "do": "Interpret vertices",
+            "result": "words",
+            "why": "each word is a graph vertex"
+          },
+          {
+            "do": "Interpret edges",
+            "result": "one-letter changes",
+            "why": "unweighted steps"
+          },
+          {
+            "do": "Read BFS level",
+            "result": "$4$",
+            "why": "DOG first appears after four edges"
+          },
+          {
+            "do": "Use BFS guarantee",
+            "result": "shortest ladder length is $4$",
+            "why": "no shorter sequence exists"
+          },
+          {
+            "do": "State meaning",
+            "result": "four single-letter changes",
+            "why": "CAT can become DOG in minimum four moves"
+          }
+        ],
+        "answer": "The shortest word ladder from CAT to DOG uses $4$ one-letter changes."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Unweighted routing",
+        "background": "BFS gives hop counts when every link has equal cost.",
+        "numbers": "If router $T$ is discovered at level $5$, the minimum hop count from the source is $5$."
+      },
+      {
+        "title": "Social distance",
+        "background": "Degrees of separation are BFS levels in a friendship graph.",
+        "numbers": "Your friends are level $1$; friends of friends not already seen are level $2$."
+      },
+      {
+        "title": "Web crawling",
+        "background": "Crawlers often explore links in breadth-first order to cover nearby pages before deep chains.",
+        "numbers": "Starting from one page with $20$ links, the first wave can add up to $20$ level-$1$ pages."
+      },
+      {
+        "title": "Puzzle solving",
+        "background": "For puzzles with equal-cost moves, BFS finds the fewest moves.",
+        "numbers": "If a state appears at depth $12$, then a $12$-move solution exists and no shorter one was missed."
+      },
+      {
+        "title": "Bipartite checking",
+        "background": "BFS levels can color a graph by parity to test bipartiteness.",
+        "numbers": "Assign even levels blue and odd levels red; an edge within the same level reveals an odd cycle."
+      },
+      {
+        "title": "Graph ML neighborhoods",
+        "background": "Many neighborhood features collect nodes within $k$ BFS hops.",
+        "numbers": "A $2$-hop neighborhood may include $10$ one-hop neighbors and $35$ new two-hop neighbors, total $45$ context nodes."
+      }
+    ],
+    "applicationsClose": "BFS is the graph's ripple pattern: distance emerges from the order of discovery.",
+    "takeaways": [
+      "BFS uses a queue to explore vertices by increasing unweighted distance.",
+      "First discovery gives a shortest path length in unweighted graphs.",
+      "BFS from one source finds exactly that source's connected component.",
+      "The BFS tree can vary with neighbor order, but distances do not."
+    ],
     "prereqs": [
       "math-15-07"
     ]
@@ -174,19 +2168,272 @@
   B({
     "id": "math-15-09",
     "title": "Depth-first search",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: depth-first search.",
+    "tagline": "Depth-first search follows one path deeply before backtracking to try the next choice.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Breadth-first search</i>"
+        "Breadth-first search",
+        "Paths and walks",
+        "Trees"
       ],
       "leadsTo": [
-        "the next lesson, <i>Dijkstra's shortest paths</i>"
+        "Dijkstra's shortest paths",
+        "topological order",
+        "connected components"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "recursion",
+        "stacks",
+        "trees",
+        "cycles"
       ]
     },
+    "motivation": "<p>Sometimes you explore a maze by committing to one corridor until it ends, then backing up. That instinct is depth-first search.</p><p><b>Depth-first search</b> is less about nearest distances and more about structure: components, cycles, finishing times, and rooted search trees.</p>",
+    "definition": "<p>Depth-first search, or <b>DFS</b>, starts at a vertex, marks it visited, recursively visits an unvisited neighbor, and backtracks when no unvisited neighbor remains. Equivalently, it uses a stack.</p><p>DFS creates a search forest. Each tree edge records the first time a vertex is discovered. The backtracking order gives finishing times, which are useful because a vertex finishes only after all vertices reachable through its unvisited descendants have been explored.</p><p><b>Assumptions that matter:</b> DFS order depends on neighbor ordering; it does not guarantee shortest paths; and disconnected graphs require restarting DFS from unvisited vertices to cover all components.</p>",
+    "worked": {
+      "problem": "Run DFS from $A$ using alphabetical neighbors on edges $AB,AC,BD,CE$. List discovery order.",
+      "skills": [
+        "recursion",
+        "stacks",
+        "discovery order"
+      ],
+      "strategy": "Always take the alphabetically first unvisited neighbor, and backtrack only when stuck.",
+      "steps": [
+        {
+          "do": "Start at $A$",
+          "result": "discover $A$",
+          "why": "source is visited first"
+        },
+        {
+          "do": "Choose first neighbor of $A$",
+          "result": "discover $B$",
+          "why": "$B$ comes before $C$ alphabetically"
+        },
+        {
+          "do": "Choose neighbor of $B$",
+          "result": "discover $D$",
+          "why": "$A$ is already visited, so go to $D$"
+        },
+        {
+          "do": "Backtrack from $D$",
+          "result": "return to $B$",
+          "why": "$D$ has no unvisited neighbors"
+        },
+        {
+          "do": "Backtrack to $A$",
+          "result": "consider $C$",
+          "why": "$B$ branch is done"
+        },
+        {
+          "do": "Visit $C$",
+          "result": "discover $C$",
+          "why": "$C$ remains unvisited"
+        },
+        {
+          "do": "Visit neighbor of $C$",
+          "result": "discover $E$",
+          "why": "$E$ is unvisited"
+        }
+      ],
+      "verify": "The order follows one branch $A,B,D$ before returning to explore $C,E$.",
+      "answer": "Discovery order: $A,B,D,C,E$.",
+      "connects": "DFS is organized backtracking through graph choices."
+    },
+    "practice": [
+      {
+        "problem": "On path $1-2-3-4$, run DFS from $1$.",
+        "steps": [
+          {
+            "do": "Start at $1$",
+            "result": "discover $1$",
+            "why": "source"
+          },
+          {
+            "do": "Go to $2$",
+            "result": "discover $2$",
+            "why": "only unvisited neighbor"
+          },
+          {
+            "do": "Go to $3$",
+            "result": "discover $3$",
+            "why": "continue down the path"
+          },
+          {
+            "do": "Go to $4$",
+            "result": "discover $4$",
+            "why": "last unvisited neighbor"
+          },
+          {
+            "do": "Backtrack",
+            "result": "finish $4,3,2,1$",
+            "why": "the path is exhausted"
+          }
+        ],
+        "answer": "Discovery order is $1,2,3,4$."
+      },
+      {
+        "problem": "Why is DFS not a shortest-path algorithm?",
+        "steps": [
+          {
+            "do": "Consider choices",
+            "result": "DFS commits to one neighbor",
+            "why": "it may take a long branch first"
+          },
+          {
+            "do": "Compare alternatives",
+            "result": "a shorter edge may wait",
+            "why": "DFS does not process by distance"
+          },
+          {
+            "do": "Name BFS property",
+            "result": "BFS explores levels",
+            "why": "DFS lacks that queue-level order"
+          },
+          {
+            "do": "Conclude",
+            "result": "first discovery may be long",
+            "why": "DFS can find a nonshortest route"
+          },
+          {
+            "do": "State use",
+            "result": "structure, not shortest unweighted distance",
+            "why": "DFS is still valuable"
+          }
+        ],
+        "answer": "DFS may discover a vertex through a long branch before a shorter route is explored."
+      },
+      {
+        "problem": "A DFS sees an edge from a vertex to an already active ancestor in an undirected graph. What does it indicate?",
+        "steps": [
+          {
+            "do": "Identify active ancestor",
+            "result": "currently on recursion stack",
+            "why": "not merely finished"
+          },
+          {
+            "do": "Add the new edge",
+            "result": "connects descendant to ancestor",
+            "why": "it closes a route back"
+          },
+          {
+            "do": "Combine with tree path",
+            "result": "ancestor to descendant path already exists",
+            "why": "tree edges give one route"
+          },
+          {
+            "do": "Form closed route",
+            "result": "tree path plus edge",
+            "why": "this is a cycle"
+          },
+          {
+            "do": "State indication",
+            "result": "cycle present",
+            "why": "DFS detects a loop"
+          }
+        ],
+        "answer": "It indicates a cycle."
+      },
+      {
+        "problem": "How does DFS cover a disconnected graph?",
+        "steps": [
+          {
+            "do": "Start first DFS",
+            "result": "visits one component",
+            "why": "DFS follows reachable edges"
+          },
+          {
+            "do": "Find unvisited vertex",
+            "result": "choose a vertex not reached",
+            "why": "it lies in another component"
+          },
+          {
+            "do": "Restart DFS",
+            "result": "visits that component",
+            "why": "a new search tree begins"
+          },
+          {
+            "do": "Repeat",
+            "result": "until none unvisited",
+            "why": "all components are covered"
+          },
+          {
+            "do": "Name result",
+            "result": "DFS forest",
+            "why": "one tree per discovered component"
+          }
+        ],
+        "answer": "Restart DFS from unvisited vertices; the result is a DFS forest."
+      },
+      {
+        "problem": "A web crawler uses DFS and follows $10$ links down one chain before backtracking. What risk does that create compared with BFS?",
+        "steps": [
+          {
+            "do": "Read DFS behavior",
+            "result": "goes deep first",
+            "why": "one chain can dominate early work"
+          },
+          {
+            "do": "Compare breadth coverage",
+            "result": "nearby pages wait",
+            "why": "other source links are delayed"
+          },
+          {
+            "do": "Quantify delay",
+            "result": "$9$ deeper pages before sibling link",
+            "why": "the crawler spent depth budget on one path"
+          },
+          {
+            "do": "Name risk",
+            "result": "poor early coverage",
+            "why": "important nearby pages may be missed for a while"
+          },
+          {
+            "do": "State tradeoff",
+            "result": "low memory but less balanced",
+            "why": "DFS uses stack-like exploration"
+          }
+        ],
+        "answer": "DFS can delay broad coverage, following a deep chain before visiting other nearby pages."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Maze solving",
+        "background": "DFS is the classic backtracking maze strategy: try a corridor, retreat at dead ends.",
+        "numbers": "In a maze graph, a DFS path of length $12$ may be found before a shortest path of length $8$."
+      },
+      {
+        "title": "Cycle detection",
+        "background": "Compilers and build tools use DFS to find circular dependencies.",
+        "numbers": "If DFS sees $A\\to B\\to C\\to A$, the active-stack edge back to $A$ reports a cycle."
+      },
+      {
+        "title": "Topological sorting",
+        "background": "Directed acyclic graphs can be ordered by reverse DFS finishing times.",
+        "numbers": "If task $C$ finishes before dependency $B$ in DFS, reversing finish order can place $B$ before $C$."
+      },
+      {
+        "title": "Connected components",
+        "background": "DFS labels all vertices reachable from a start, then restarts for other components.",
+        "numbers": "If restarts happen $4$ times, the graph has $4$ components."
+      },
+      {
+        "title": "Program analysis",
+        "background": "Control-flow analysis explores possible execution paths with DFS-like recursion.",
+        "numbers": "A branch graph with two nested if-statements can expose $4$ possible path leaves."
+      },
+      {
+        "title": "Memory tradeoffs",
+        "background": "DFS often stores a path stack rather than a whole frontier.",
+        "numbers": "In a depth-$100$ tree with branching factor $3$, DFS stack can hold about $100$ path nodes while BFS near the bottom may face $3^{10}=59049$ nodes at just level $10$."
+      }
+    ],
+    "applicationsClose": "DFS is the patient explorer: it uncovers graph structure by going deep, finishing, and returning.",
+    "takeaways": [
+      "DFS uses recursion or a stack to explore deeply before backtracking.",
+      "DFS discovery order depends on neighbor order.",
+      "DFS does not guarantee shortest paths.",
+      "DFS forests reveal components, cycles, and useful finishing orders."
+    ],
     "prereqs": [
       "math-15-08"
     ]
@@ -195,19 +2442,277 @@
   B({
     "id": "math-15-10",
     "title": "Dijkstra's shortest paths",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: dijkstra's shortest paths.",
+    "tagline": "Dijkstra's algorithm grows a settled region in order of cheapest known distance.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Depth-first search</i>"
+        "Breadth-first search",
+        "weighted graphs",
+        "paths"
       ],
       "leadsTo": [
-        "the next lesson, <i>Bellman–Ford</i>"
+        "Bellman–Ford",
+        "Minimum spanning trees",
+        "Network flows"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "priority queues",
+        "greedy algorithms",
+        "inequalities",
+        "weighted paths"
       ]
     },
+    "motivation": "<p>BFS treats every edge as one step. But roads have lengths, links have latencies, and actions have costs.</p><p>Dijkstra's algorithm is the weighted version for nonnegative edges. It repeatedly trusts the unsettled vertex with the smallest tentative distance.</p>",
+    "definition": "<p>For a weighted graph with nonnegative edge weights $w(u,v)\\ge0$, Dijkstra's algorithm maintains tentative distances $d(v)$ from a source $s$. It repeatedly selects an unsettled vertex with smallest $d(v)$, settles it, and relaxes its outgoing edges by testing whether $d(u)+w(u,v)<d(v)$.</p><p>The greedy step is safe because weights are nonnegative. Any alternate path to the smallest unsettled vertex would have to pass through another unsettled vertex with distance at least as large, then add a nonnegative edge, so it cannot be cheaper.</p><p><b>Assumptions that matter:</b> edge weights must be nonnegative; unreachable vertices keep distance $\\infty$; and directed graphs relax only outgoing edges.</p>",
+    "worked": {
+      "problem": "Run Dijkstra from $A$ with edges $AB=2$, $AC=5$, $BC=1$, $BD=4$, $CD=1$.",
+      "skills": [
+        "relaxation",
+        "greedy choice",
+        "weighted paths"
+      ],
+      "strategy": "Set tentative distances, then repeatedly settle the smallest unsettled distance.",
+      "steps": [
+        {
+          "do": "Initialize distances",
+          "result": "$d(A)=0$, others $\\infty$",
+          "why": "source starts at zero"
+        },
+        {
+          "do": "Settle $A$",
+          "result": "relax $B$ to $2$ and $C$ to $5$",
+          "why": "use edges out of $A$"
+        },
+        {
+          "do": "Settle $B$",
+          "result": "smallest unsettled distance is $2$",
+          "why": "$2<5$"
+        },
+        {
+          "do": "Relax edge $BC$",
+          "result": "$d(C)=3$",
+          "why": "$2+1=3$ improves $5$"
+        },
+        {
+          "do": "Relax edge $BD$",
+          "result": "$d(D)=6$",
+          "why": "$2+4=6$ improves $\\infty$"
+        },
+        {
+          "do": "Settle $C$",
+          "result": "smallest unsettled distance is $3$",
+          "why": "$3<6$"
+        },
+        {
+          "do": "Relax edge $CD$",
+          "result": "$d(D)=4$",
+          "why": "$3+1=4$ improves $6$"
+        },
+        {
+          "do": "Settle $D$",
+          "result": "final distance $4$",
+          "why": "all vertices are settled"
+        }
+      ],
+      "verify": "The path $A,B,C,D$ costs $2+1+1=4$, matching the final distance to $D$.",
+      "answer": "Distances are $d(A)=0$, $d(B)=2$, $d(C)=3$, $d(D)=4$.",
+      "connects": "Dijkstra is BFS with cost-aware waves, valid when costs never go negative."
+    },
+    "practice": [
+      {
+        "problem": "From $S$, edges $SA=4$, $SB=1$, $BA=2$. Find shortest distance to $A$.",
+        "steps": [
+          {
+            "do": "Initialize",
+            "result": "$d(S)=0$, $d(A)=d(B)=\\infty$",
+            "why": "source setup"
+          },
+          {
+            "do": "Settle $S$",
+            "result": "$d(A)=4$, $d(B)=1$",
+            "why": "relax outgoing edges"
+          },
+          {
+            "do": "Choose next",
+            "result": "$B$",
+            "why": "$1<4$"
+          },
+          {
+            "do": "Relax $BA$",
+            "result": "$d(A)=3$",
+            "why": "$1+2=3$ improves $4$"
+          },
+          {
+            "do": "Settle $A$",
+            "result": "distance $3$",
+            "why": "no smaller unsettled distance remains"
+          }
+        ],
+        "answer": "The shortest distance to $A$ is $3$ via $S,B,A$."
+      },
+      {
+        "problem": "Why does Dijkstra fail with negative edges?",
+        "steps": [
+          {
+            "do": "Name greedy claim",
+            "result": "settled distance is final",
+            "why": "Dijkstra relies on this"
+          },
+          {
+            "do": "Add negative edge possibility",
+            "result": "later path can decrease cost",
+            "why": "a future edge may subtract distance"
+          },
+          {
+            "do": "Break safety proof",
+            "result": "nonnegative inequality fails",
+            "why": "adding an edge need not increase cost"
+          },
+          {
+            "do": "Give tiny example",
+            "result": "$S\\to A=2$, $S\\to B=5$, $B\\to A=-4$",
+            "why": "$A$ settled at $2$ before better cost $1$ appears"
+          },
+          {
+            "do": "Conclude",
+            "result": "negative weights need another method",
+            "why": "Bellman-Ford handles them"
+          }
+        ],
+        "answer": "Negative edges can reveal a cheaper path after a vertex was already settled."
+      },
+      {
+        "problem": "If Dijkstra settles vertices with distances $0,3,7,7,10$, can a later distance be $6$?",
+        "steps": [
+          {
+            "do": "Read order property",
+            "result": "settled distances are nondecreasing",
+            "why": "always choose the smallest tentative value"
+          },
+          {
+            "do": "Compare $6$ to last settled $10$",
+            "result": "$6<10$",
+            "why": "that would be out of order"
+          },
+          {
+            "do": "Use priority rule",
+            "result": "a tentative $6$ would have been chosen earlier",
+            "why": "before $7$ or $10$"
+          },
+          {
+            "do": "Assume no negative weights",
+            "result": "distances cannot later drop below settled order",
+            "why": "Dijkstra setting"
+          },
+          {
+            "do": "Conclude",
+            "result": "no",
+            "why": "not in a correct run"
+          }
+        ],
+        "answer": "No. Settled distances cannot decrease in Dijkstra's algorithm."
+      },
+      {
+        "problem": "A graph has $d(U)=8$ and edge $UV=3$, while current $d(V)=15$. Relax $UV$.",
+        "steps": [
+          {
+            "do": "Compute candidate",
+            "result": "$d(U)+w(U,V)=8+3=11$",
+            "why": "path through $U$"
+          },
+          {
+            "do": "Compare with current",
+            "result": "$11<15$",
+            "why": "candidate is better"
+          },
+          {
+            "do": "Update distance",
+            "result": "$d(V)=11$",
+            "why": "relaxation improves the estimate"
+          },
+          {
+            "do": "Record predecessor",
+            "result": "$pred(V)=U$",
+            "why": "needed to reconstruct path"
+          },
+          {
+            "do": "State result",
+            "result": "$V$ improves to $11$",
+            "why": "the old value is replaced"
+          }
+        ],
+        "answer": "After relaxation, $d(V)=11$ and predecessor of $V$ is $U$."
+      },
+      {
+        "problem": "A latency graph has route $A\\to B\\to D$ costs $12+8$ ms and $A\\to C\\to D$ costs $5+20$ ms. Which route is shorter?",
+        "steps": [
+          {
+            "do": "Compute first route",
+            "result": "$12+8=20$ ms",
+            "why": "sum edge weights"
+          },
+          {
+            "do": "Compute second route",
+            "result": "$5+20=25$ ms",
+            "why": "sum edge weights"
+          },
+          {
+            "do": "Compare costs",
+            "result": "$20<25$",
+            "why": "smaller latency wins"
+          },
+          {
+            "do": "Choose route",
+            "result": "$A\\to B\\to D$",
+            "why": "cost is lower"
+          },
+          {
+            "do": "Interpret",
+            "result": "save $5$ ms",
+            "why": "difference $25-20=5$"
+          }
+        ],
+        "answer": "$A\\to B\\to D$ is shorter at $20$ ms, saving $5$ ms."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Maps",
+        "background": "Road navigation uses Dijkstra-like methods when edge costs are nonnegative travel times.",
+        "numbers": "A route with edges $3.2$, $4.8$, and $2.0$ km has total length $10.0$ km."
+      },
+      {
+        "title": "Network latency",
+        "background": "Routers estimate least-latency paths through links with nonnegative delays.",
+        "numbers": "Path delays $12+7+5=24$ ms beat $10+20=30$ ms."
+      },
+      {
+        "title": "Game AI",
+        "background": "Grid pathfinding uses nonnegative movement costs to guide agents.",
+        "numbers": "Moving over grass cost $2$ and road cost $1$ makes three road steps cost $3$ versus two grass steps cost $4$."
+      },
+      {
+        "title": "Robotics",
+        "background": "Motion planners discretize space into weighted graphs of safe moves.",
+        "numbers": "If turn cost is $0.5$ and move cost is $1$, a path with $6$ moves and $2$ turns costs $7$."
+      },
+      {
+        "title": "Information retrieval",
+        "background": "Weighted graph search can rank paths through entity relationships.",
+        "numbers": "A confidence cost path $0.2+0.4+0.1=0.7$ is preferred over $1.3$ when lower cost is better."
+      },
+      {
+        "title": "Feature pipelines",
+        "background": "Data lineage systems find cheapest recomputation paths when transformations have costs.",
+        "numbers": "If recomputing $X$ costs $6$ and loading cached $Y$ then transforming costs $2+1$, Dijkstra favors cost $3$."
+      }
+    ],
+    "applicationsClose": "Dijkstra turns weighted reachability into an ordered expansion of trustworthy shortest distances.",
+    "takeaways": [
+      "Dijkstra solves single-source shortest paths with nonnegative edge weights.",
+      "Relaxation tests whether going through one vertex improves another distance.",
+      "The smallest unsettled tentative distance becomes final under nonnegative weights.",
+      "Negative edges require a different algorithm."
+    ],
     "prereqs": [
       "math-15-09"
     ]
@@ -216,19 +2721,267 @@
   B({
     "id": "math-15-11",
     "title": "Bellman–Ford",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: bellman–ford.",
+    "tagline": "Bellman-Ford is slower than Dijkstra, but it can face negative edges honestly.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Dijkstra's shortest paths</i>"
+        "Dijkstra's shortest paths",
+        "paths",
+        "weighted graphs"
       ],
       "leadsTo": [
-        "the next lesson, <i>Minimum spanning trees</i>"
+        "Network flows",
+        "dynamic programming",
+        "negative-cycle detection"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "relaxation",
+        "induction",
+        "inequalities",
+        "paths"
       ]
     },
+    "motivation": "<p>Sometimes a cost can be negative: a rebate, a currency exchange gain, or a modeling reward. Dijkstra's greedy certainty no longer works there.</p><p><b>Bellman-Ford</b> takes a steadier route. It relaxes every edge repeatedly, allowing shortest paths with more and more edges to settle into place.</p>",
+    "definition": "<p>Bellman-Ford initializes $d(s)=0$ and all other distances to $\\infty$. Then it relaxes every edge $|V|-1$ times. For edge $u\\to v$ with weight $w(u,v)$, relaxation tests $d(u)+w(u,v)<d(v)$ and updates if true.</p><p>Why $|V|-1$ rounds: any shortest path with no negative cycle can be chosen simple, so it uses at most $|V|-1$ edges. After round $k$, all shortest paths using at most $k$ edges have been accounted for by induction over the last edge.</p><p><b>Assumptions that matter:</b> Bellman-Ford permits negative edges but reports failure if a reachable negative-weight cycle exists; distances to unreachable vertices remain $\\infty$; and edge order can affect intermediate values but not final correct distances.</p>",
+    "worked": {
+      "problem": "Run Bellman-Ford from $S$ on edges $S\\to A=4$, $S\\to B=5$, $B\\to A=-3$.",
+      "skills": [
+        "edge relaxation",
+        "negative weights",
+        "shortest paths"
+      ],
+      "strategy": "Relax all edges enough times for paths with up to two edges, since there are three vertices.",
+      "steps": [
+        {
+          "do": "Initialize",
+          "result": "$d(S)=0$, $d(A)=\\infty$, $d(B)=\\infty$",
+          "why": "source setup"
+        },
+        {
+          "do": "Relax $S\\to A$",
+          "result": "$d(A)=4$",
+          "why": "$0+4$ improves infinity"
+        },
+        {
+          "do": "Relax $S\\to B$",
+          "result": "$d(B)=5$",
+          "why": "$0+5$ improves infinity"
+        },
+        {
+          "do": "Relax $B\\to A$",
+          "result": "$d(A)=2$",
+          "why": "$5-3=2$ improves $4$"
+        },
+        {
+          "do": "Start second round",
+          "result": "distances are $0,2,5$",
+          "why": "one more round checks two-edge paths"
+        },
+        {
+          "do": "Relax all edges again",
+          "result": "no change",
+          "why": "$A=2$ and $B=5$ are already best"
+        }
+      ],
+      "verify": "The path $S,B,A$ costs $5-3=2$, beating direct edge cost $4$.",
+      "answer": "Final distances are $d(S)=0$, $d(B)=5$, and $d(A)=2$.",
+      "connects": "Bellman-Ford lets improvements arrive later through negative edges."
+    },
+    "practice": [
+      {
+        "problem": "Relax edge $U\\to V$ with $d(U)=6$, weight $-2$, and $d(V)=9$.",
+        "steps": [
+          {
+            "do": "Compute candidate",
+            "result": "$6+(-2)=4$",
+            "why": "distance through $U$"
+          },
+          {
+            "do": "Compare",
+            "result": "$4<9$",
+            "why": "candidate improves current value"
+          },
+          {
+            "do": "Update",
+            "result": "$d(V)=4$",
+            "why": "relaxation succeeds"
+          },
+          {
+            "do": "Record predecessor",
+            "result": "$U$",
+            "why": "path to $V$ now comes through $U$"
+          },
+          {
+            "do": "State result",
+            "result": "$4$",
+            "why": "new tentative distance"
+          }
+        ],
+        "answer": "$d(V)$ updates to $4$."
+      },
+      {
+        "problem": "How many relaxation rounds does Bellman-Ford use on $7$ vertices?",
+        "steps": [
+          {
+            "do": "Read vertex count",
+            "result": "$|V|=7$",
+            "why": "given"
+          },
+          {
+            "do": "Use round formula",
+            "result": "$|V|-1$",
+            "why": "simple shortest paths use at most this many edges"
+          },
+          {
+            "do": "Compute",
+            "result": "$6$",
+            "why": "subtract one"
+          },
+          {
+            "do": "Explain purpose",
+            "result": "paths up to $6$ edges",
+            "why": "covers simple paths"
+          },
+          {
+            "do": "State answer",
+            "result": "$6$ rounds",
+            "why": "before negative-cycle check"
+          }
+        ],
+        "answer": "It uses $6$ full relaxation rounds."
+      },
+      {
+        "problem": "Detect a negative cycle if after $|V|-1$ rounds edge $A\\to B$ can still improve $d(B)$ from $3$ to $1$.",
+        "steps": [
+          {
+            "do": "Recall finality condition",
+            "result": "no edge should improve",
+            "why": "after enough rounds without negative cycles"
+          },
+          {
+            "do": "Observe improvement",
+            "result": "$1<3$",
+            "why": "an update remains possible"
+          },
+          {
+            "do": "Interpret extra improvement",
+            "result": "path keeps getting cheaper",
+            "why": "requires a repeated vertex"
+          },
+          {
+            "do": "Connect repeated vertex",
+            "result": "cycle exists",
+            "why": "more than $|V|-1$ useful edges repeat a vertex"
+          },
+          {
+            "do": "Conclude",
+            "result": "reachable negative cycle",
+            "why": "distances are not well-defined finite minima"
+          }
+        ],
+        "answer": "A reachable negative-weight cycle exists."
+      },
+      {
+        "problem": "Why can shortest paths be assumed simple when there is no negative cycle?",
+        "steps": [
+          {
+            "do": "Suppose a path repeats a vertex",
+            "result": "it contains a cycle",
+            "why": "the segment between repeats is closed"
+          },
+          {
+            "do": "Consider cycle weight",
+            "result": "not negative",
+            "why": "no negative cycles exist"
+          },
+          {
+            "do": "Remove the cycle",
+            "result": "cost does not increase",
+            "why": "removing nonnegative weight is safe"
+          },
+          {
+            "do": "Repeat removal",
+            "result": "get a simple path",
+            "why": "no repeated vertices remain"
+          },
+          {
+            "do": "Bound length",
+            "result": "at most $|V|-1$ edges",
+            "why": "simple path visits each vertex once"
+          }
+        ],
+        "answer": "Because any repeated-vertex cycle can be removed without increasing cost."
+      },
+      {
+        "problem": "A currency graph has exchange log-weights around a cycle summing to $-0.04$. What does Bellman-Ford's negative-cycle detection suggest?",
+        "steps": [
+          {
+            "do": "Read cycle weight",
+            "result": "$-0.04$",
+            "why": "total cost around cycle is negative"
+          },
+          {
+            "do": "Repeat cycle twice",
+            "result": "$-0.08$",
+            "why": "cost keeps decreasing"
+          },
+          {
+            "do": "Repeat many times",
+            "result": "unbounded decrease",
+            "why": "no finite shortest distance"
+          },
+          {
+            "do": "Interpret exchange",
+            "result": "arbitrage signal",
+            "why": "the cycle may multiply value above $1$"
+          },
+          {
+            "do": "State algorithm result",
+            "result": "negative cycle reported",
+            "why": "Bellman-Ford flags it"
+          }
+        ],
+        "answer": "It suggests an arbitrage-like negative cycle; repeated traversal keeps reducing total cost."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Currency arbitrage",
+        "background": "Taking negative logs turns profitable exchange cycles into negative cycles.",
+        "numbers": "If rates multiply to $1.05$, the log cost is $-\\ln(1.05)\\u0007pprox-0.049$, a negative cycle."
+      },
+      {
+        "title": "Road rebates",
+        "background": "Some route models include rewards or credits, producing negative edges but usually no negative cycles.",
+        "numbers": "A toll credit of $3$ on a road with base cost $10$ gives edge weight $7$; a larger credit could make it $-2$."
+      },
+      {
+        "title": "ML structured prediction",
+        "background": "Dynamic programs over graphs can include negative scores when higher reward means lower cost.",
+        "numbers": "A transition score $+4$ can be represented as cost $-4$ in a shortest-path formulation."
+      },
+      {
+        "title": "Network protocols",
+        "background": "Distance-vector routing resembles repeated edge relaxation and can suffer from problematic cycles.",
+        "numbers": "If a route improves from $12$ to $9$ through a neighbor, that is exactly a relaxation update."
+      },
+      {
+        "title": "Scheduling constraints",
+        "background": "Difference constraints $x_v\\le x_u+w$ can be solved by Bellman-Ford.",
+        "numbers": "Constraint $x_B\\le x_A+3$ acts like edge $A\\to B$ of weight $3$."
+      },
+      {
+        "title": "Robotics with rewards",
+        "background": "Planning graphs may combine costs and rewards before seeking minimum total value.",
+        "numbers": "A path with costs $5,4$ and reward $3$ has total $5+4-3=6$."
+      }
+    ],
+    "applicationsClose": "Bellman-Ford is the careful listener: it keeps relaxing until every finite simple path has had a chance to speak.",
+    "takeaways": [
+      "Bellman-Ford relaxes every edge $|V|-1$ times.",
+      "It handles negative edge weights.",
+      "A further improvement after those rounds signals a reachable negative cycle.",
+      "Without negative cycles, a shortest path can be chosen simple."
+    ],
     "prereqs": [
       "math-15-10"
     ]
@@ -237,19 +2990,272 @@
   B({
     "id": "math-15-12",
     "title": "Minimum spanning trees",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: minimum spanning trees.",
+    "tagline": "A minimum spanning tree connects everything with the least total edge weight.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Bellman–Ford</i>"
+        "Spanning trees",
+        "weighted graphs",
+        "greedy algorithms"
       ],
       "leadsTo": [
-        "the next lesson, <i>Network flows</i>"
+        "Network flows",
+        "Cuts and the max-flow min-cut theorem",
+        "clustering"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "trees",
+        "cuts",
+        "cycles",
+        "optimization"
       ]
     },
+    "motivation": "<p>A spanning tree gives a connected backbone. If edges have costs, some backbones are cheaper than others.</p><p>A <b>minimum spanning tree</b> is the cheapest connected backbone. It is where graph structure and optimization first meet in a very friendly way.</p>",
+    "definition": "<p>In a connected undirected weighted graph, a <b>minimum spanning tree</b>, or <b>MST</b>, is a spanning tree whose total edge weight is as small as possible. Kruskal's algorithm sorts edges by weight and adds an edge when it connects two different components. Prim's algorithm grows one tree by repeatedly adding the cheapest edge leaving it.</p><p>The cut property explains the greedy choice: for any cut, a lightest edge crossing that cut is safe to include in some MST. If an MST used a heavier crossing edge instead, swapping in the lighter one would preserve connectivity and not increase total weight.</p><p><b>Assumptions that matter:</b> the graph is connected and undirected; weights may tie, so MSTs need not be unique; and MST minimizes total tree weight, not shortest path distances from a source.</p>",
+    "worked": {
+      "problem": "Use Kruskal's algorithm on edges $AB=1$, $BC=2$, $AC=3$, $CD=4$, $BD=5$.",
+      "skills": [
+        "Kruskal's algorithm",
+        "cycles",
+        "total weight"
+      ],
+      "strategy": "Sort edges, then add the cheapest edge that does not create a cycle.",
+      "steps": [
+        {
+          "do": "Sort edges",
+          "result": "$AB=1$, $BC=2$, $AC=3$, $CD=4$, $BD=5$",
+          "why": "Kruskal works from light to heavy"
+        },
+        {
+          "do": "Add $AB$",
+          "result": "selected weight $1$",
+          "why": "it connects two components"
+        },
+        {
+          "do": "Add $BC$",
+          "result": "selected weights $1,2$",
+          "why": "it connects $C$ to $A,B$"
+        },
+        {
+          "do": "Consider $AC$",
+          "result": "skip $AC$",
+          "why": "$A,B,C$ are already connected, so it would form a cycle"
+        },
+        {
+          "do": "Add $CD$",
+          "result": "selected weights $1,2,4$",
+          "why": "it connects $D$"
+        },
+        {
+          "do": "Stop",
+          "result": "$3$ edges selected",
+          "why": "a tree on four vertices needs $3$ edges"
+        },
+        {
+          "do": "Add total",
+          "result": "$1+2+4=7$",
+          "why": "sum selected weights"
+        }
+      ],
+      "verify": "The selected edges connect all four vertices and have no cycle.",
+      "answer": "An MST is $\\{AB,BC,CD\\}$ with total weight $7$.",
+      "connects": "MST algorithms keep connectivity while refusing costly cycle redundancy."
+    },
+    "practice": [
+      {
+        "problem": "How many edges are in an MST of a connected graph with $9$ vertices?",
+        "steps": [
+          {
+            "do": "Use spanning property",
+            "result": "MST is a spanning tree",
+            "why": "it includes all vertices"
+          },
+          {
+            "do": "Set $n$",
+            "result": "$n=9$",
+            "why": "vertex count"
+          },
+          {
+            "do": "Apply tree formula",
+            "result": "$n-1$",
+            "why": "any spanning tree has this many edges"
+          },
+          {
+            "do": "Compute",
+            "result": "$8$",
+            "why": "subtract one"
+          },
+          {
+            "do": "State answer",
+            "result": "$8$ edges",
+            "why": "weights do not change edge count"
+          }
+        ],
+        "answer": "It has $8$ edges."
+      },
+      {
+        "problem": "Kruskal sees edges $1,2,2,5$ on four vertices and the first three do not form a cycle. What is the MST weight?",
+        "steps": [
+          {
+            "do": "Need edges",
+            "result": "$4-1=3$",
+            "why": "spanning tree on four vertices"
+          },
+          {
+            "do": "Add first edge",
+            "result": "weight $1$",
+            "why": "cheapest safe edge"
+          },
+          {
+            "do": "Add second edge",
+            "result": "weight $2$",
+            "why": "safe by problem"
+          },
+          {
+            "do": "Add third edge",
+            "result": "weight $2$",
+            "why": "safe and now tree complete"
+          },
+          {
+            "do": "Sum",
+            "result": "$1+2+2=5$",
+            "why": "total MST weight"
+          }
+        ],
+        "answer": "The MST weight is $5$."
+      },
+      {
+        "problem": "Why does Kruskal skip an edge whose endpoints are already connected?",
+        "steps": [
+          {
+            "do": "Endpoints already connected",
+            "result": "there is a path between them",
+            "why": "current selected edges provide a route"
+          },
+          {
+            "do": "Add the edge",
+            "result": "path plus new edge closes a loop",
+            "why": "that creates a cycle"
+          },
+          {
+            "do": "Tree condition",
+            "result": "spanning tree is acyclic",
+            "why": "cycles are not allowed"
+          },
+          {
+            "do": "Connectivity need",
+            "result": "edge is redundant",
+            "why": "it does not merge components"
+          },
+          {
+            "do": "Conclude",
+            "result": "skip it",
+            "why": "Kruskal only adds component-connecting edges"
+          }
+        ],
+        "answer": "It would create a cycle and would not help connect new vertices."
+      },
+      {
+        "problem": "A graph has distinct edge weights. What can you say about its MST uniqueness?",
+        "steps": [
+          {
+            "do": "Recall tie issue",
+            "result": "multiple MSTs often come from equal choices",
+            "why": "ties allow different safe edges"
+          },
+          {
+            "do": "Use distinct weights",
+            "result": "no equal-weight crossing choices",
+            "why": "greedy comparisons are strict"
+          },
+          {
+            "do": "Apply MST theorem",
+            "result": "unique MST",
+            "why": "distinct weights force one optimal tree"
+          },
+          {
+            "do": "Caution",
+            "result": "not every edge is selected",
+            "why": "distinct does not mean all light edges fit"
+          },
+          {
+            "do": "State result",
+            "result": "MST is unique",
+            "why": "there is exactly one minimum tree"
+          }
+        ],
+        "answer": "With all edge weights distinct, the MST is unique."
+      },
+      {
+        "problem": "A clustering method builds an MST with total weight $42$ on $20$ points, then removes the two largest MST edges of weights $9$ and $7$. What is the remaining forest weight?",
+        "steps": [
+          {
+            "do": "Start total",
+            "result": "$42$",
+            "why": "MST weight"
+          },
+          {
+            "do": "Sum removed edges",
+            "result": "$9+7=16$",
+            "why": "two cuts"
+          },
+          {
+            "do": "Subtract",
+            "result": "$42-16=26$",
+            "why": "remaining selected edges"
+          },
+          {
+            "do": "Count clusters",
+            "result": "$3$",
+            "why": "removing two tree edges creates three components"
+          },
+          {
+            "do": "State result",
+            "result": "weight $26$",
+            "why": "forest has three clusters"
+          }
+        ],
+        "answer": "The remaining forest has total weight $26$ and $3$ components."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Network design",
+        "background": "MSTs model least-cost ways to connect sites when any connected backbone is acceptable.",
+        "numbers": "If selected cable edges cost $4,6,9,10$, the tree cost is $29$."
+      },
+      {
+        "title": "Clustering",
+        "background": "Single-linkage clustering can be built from an MST, then cut large edges.",
+        "numbers": "Removing the largest $3$ edges of an MST creates $4$ clusters."
+      },
+      {
+        "title": "Image segmentation",
+        "background": "Pixels or regions can be connected by similarity edges, then heavy edges are cut.",
+        "numbers": "An MST edge of weight $0.8$ between regions is less similar than one of weight $0.1$."
+      },
+      {
+        "title": "Approximation for tours",
+        "background": "MSTs give lower bounds and building blocks for traveling-salesperson approximations.",
+        "numbers": "Any tour on $10$ cities has at least the MST weight because deleting one tour edge leaves a spanning tree."
+      },
+      {
+        "title": "Sensor networks",
+        "background": "Battery-powered sensors may choose low-cost communication links to maintain connectivity.",
+        "numbers": "Connecting $25$ sensors minimally uses $24$ links in the MST."
+      },
+      {
+        "title": "Feature graph pruning",
+        "background": "Graph-based ML pipelines can prune dense similarity graphs to a sparse backbone.",
+        "numbers": "A complete graph on $100$ examples has $4950$ edges; an MST keeps only $99$."
+      }
+    ],
+    "applicationsClose": "MSTs choose just enough weighted structure: all vertices connected, no cycles, and no cheaper tree left behind.",
+    "takeaways": [
+      "An MST is a minimum-total-weight spanning tree.",
+      "Kruskal adds cheapest safe edges that connect different components.",
+      "Prim grows a tree by cheapest outgoing edges.",
+      "MSTs minimize total tree weight, not source-to-all shortest paths."
+    ],
     "prereqs": [
       "math-15-11"
     ]
@@ -258,19 +3264,267 @@
   B({
     "id": "math-15-13",
     "title": "Network flows",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: network flows.",
+    "tagline": "Network flow measures how much can move from a source to a sink through capacity-limited edges.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Minimum spanning trees</i>"
+        "Directed graphs",
+        "weighted edges",
+        "cuts"
       ],
       "leadsTo": [
-        "the next lesson, <i>Cuts and the max-flow min-cut theorem</i>"
+        "Cuts and the max-flow min-cut theorem",
+        "linear programming",
+        "matching"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "conservation equations",
+        "inequalities",
+        "paths",
+        "cuts"
       ]
     },
+    "motivation": "<p>Pipes, roads, and servers all have limits. A graph with capacities asks a natural question: how much can we send from start to finish without exceeding any limit?</p><p>Network flow turns that question into equations: capacity on each edge and conservation at every intermediate vertex.</p>",
+    "definition": "<p>A <b>flow network</b> is a directed graph with source $s$, sink $t$, and capacities $c(u,v)\\ge0$ on edges. A flow assigns values $f(u,v)$ satisfying capacity constraints $0\\le f(u,v)\\le c(u,v)$ and flow conservation at every vertex except $s,t$: inflow equals outflow. The <b>value</b> of the flow is the total flow leaving $s$.</p><p>Conservation is the graph version of no storage: an intermediate node cannot create or destroy flow. Augmenting-path methods increase flow by finding a path from $s$ to $t$ with unused residual capacity and pushing the minimum residual capacity along it.</p><p><b>Assumptions that matter:</b> capacities are nonnegative; this lesson uses single-source single-sink networks; and reverse residual edges represent the ability to undo previous choices.</p>",
+    "worked": {
+      "problem": "In a network $s\\to a$ capacity $5$, $s\\to b$ capacity $3$, $a\\to t$ capacity $4$, $b\\to t$ capacity $3$, send a feasible maximum-looking flow and compute its value.",
+      "skills": [
+        "capacities",
+        "conservation",
+        "flow value"
+      ],
+      "strategy": "Choose path flows that respect the smallest capacity on each source-to-sink path.",
+      "steps": [
+        {
+          "do": "Use path $s,a,t$",
+          "result": "send $4$",
+          "why": "edge $a\\to t$ caps that path at $4$"
+        },
+        {
+          "do": "Check $s\\to a$ capacity",
+          "result": "$4\\le5$",
+          "why": "source edge has enough room"
+        },
+        {
+          "do": "Use path $s,b,t$",
+          "result": "send $3$",
+          "why": "both edges on this path allow $3$"
+        },
+        {
+          "do": "Check conservation at $a$",
+          "result": "inflow $4$ equals outflow $4$",
+          "why": "intermediate node stores no flow"
+        },
+        {
+          "do": "Check conservation at $b$",
+          "result": "inflow $3$ equals outflow $3$",
+          "why": "flow passes through"
+        },
+        {
+          "do": "Compute value",
+          "result": "$4+3=7$",
+          "why": "total leaving $s$"
+        }
+      ],
+      "verify": "The sink receives $4+3=7$, matching the total that leaves the source.",
+      "answer": "A feasible flow has value $7$.",
+      "connects": "A flow is a capacity-respecting movement plan through a directed graph."
+    },
+    "practice": [
+      {
+        "problem": "Can edge $u\\to v$ with capacity $10$ carry flow $12$?",
+        "steps": [
+          {
+            "do": "Read capacity",
+            "result": "$c(u,v)=10$",
+            "why": "upper bound"
+          },
+          {
+            "do": "Read proposed flow",
+            "result": "$f(u,v)=12$",
+            "why": "given"
+          },
+          {
+            "do": "Apply constraint",
+            "result": "$f(u,v)\\le c(u,v)$",
+            "why": "capacity feasibility"
+          },
+          {
+            "do": "Compare",
+            "result": "$12>10$",
+            "why": "constraint is violated"
+          },
+          {
+            "do": "Conclude",
+            "result": "not feasible",
+            "why": "flow must be at most $10$"
+          }
+        ],
+        "answer": "No. It exceeds capacity by $2$."
+      },
+      {
+        "problem": "A node has inflows $3$ and $5$, and outflows $4$ and $4$. Does it satisfy conservation?",
+        "steps": [
+          {
+            "do": "Add inflows",
+            "result": "$3+5=8$",
+            "why": "total entering"
+          },
+          {
+            "do": "Add outflows",
+            "result": "$4+4=8$",
+            "why": "total leaving"
+          },
+          {
+            "do": "Compare",
+            "result": "$8=8$",
+            "why": "inflow equals outflow"
+          },
+          {
+            "do": "Apply rule",
+            "result": "conservation holds",
+            "why": "assuming it is not source or sink"
+          },
+          {
+            "do": "State result",
+            "result": "yes",
+            "why": "no flow is created or lost"
+          }
+        ],
+        "answer": "Yes, conservation holds."
+      },
+      {
+        "problem": "A path has residual capacities $6,2,5$. How much can one augmentation send?",
+        "steps": [
+          {
+            "do": "List residuals",
+            "result": "$6,2,5$",
+            "why": "available capacity on path edges"
+          },
+          {
+            "do": "Take minimum",
+            "result": "$2$",
+            "why": "the bottleneck limits the whole path"
+          },
+          {
+            "do": "Set augmentation",
+            "result": "$2$",
+            "why": "cannot exceed any edge"
+          },
+          {
+            "do": "Update intuition",
+            "result": "one edge saturates",
+            "why": "the edge with residual $2$ becomes full"
+          },
+          {
+            "do": "State answer",
+            "result": "$2$ units",
+            "why": "path bottleneck"
+          }
+        ],
+        "answer": "It can send $2$ units."
+      },
+      {
+        "problem": "If total flow leaving $s$ is $9$ and one outgoing edge carries $4$, what must the other outgoing edge carry?",
+        "steps": [
+          {
+            "do": "Write total",
+            "result": "$4+x=9$",
+            "why": "two outgoing edges"
+          },
+          {
+            "do": "Subtract $4$",
+            "result": "$x=5$",
+            "why": "solve for unknown flow"
+          },
+          {
+            "do": "Check nonnegative",
+            "result": "$5\\ge0$",
+            "why": "valid flow amount"
+          },
+          {
+            "do": "Interpret",
+            "result": "second edge carries $5$",
+            "why": "remaining source flow"
+          },
+          {
+            "do": "State result",
+            "result": "$5$ units",
+            "why": "assuming no other outgoing edges"
+          }
+        ],
+        "answer": "The other outgoing edge carries $5$ units."
+      },
+      {
+        "problem": "A serving system sends requests through two data centers with capacities $800$ and $1200$ requests/sec. What is the most it can route if both connect directly to the sink with same capacities?",
+        "steps": [
+          {
+            "do": "Identify first path capacity",
+            "result": "$800$",
+            "why": "first data center limit"
+          },
+          {
+            "do": "Identify second path capacity",
+            "result": "$1200$",
+            "why": "second data center limit"
+          },
+          {
+            "do": "Use both in parallel",
+            "result": "$800+1200$",
+            "why": "independent paths add"
+          },
+          {
+            "do": "Compute",
+            "result": "$2000$",
+            "why": "sum capacities"
+          },
+          {
+            "do": "State max-looking flow",
+            "result": "$2000$ requests/sec",
+            "why": "source and sink links match those limits"
+          }
+        ],
+        "answer": "It can route up to $2000$ requests per second."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Traffic routing",
+        "background": "Road networks have capacities, and flow models estimate how many cars can move from origin to destination.",
+        "numbers": "Two parallel roads with capacities $600$ and $900$ cars/hour can carry $1500$ cars/hour together."
+      },
+      {
+        "title": "Data-center serving",
+        "background": "Request routing uses capacity constraints so no service tier is overloaded.",
+        "numbers": "If model server A handles $300$ qps and B handles $500$ qps, total routed flow is $800$ qps."
+      },
+      {
+        "title": "Bipartite matching",
+        "background": "Matching can be written as a flow problem with unit capacities.",
+        "numbers": "Three applicants and three jobs use capacity $1$ edges; a flow value $3$ means a perfect matching."
+      },
+      {
+        "title": "Image segmentation",
+        "background": "Graph-cut vision methods use source-sink flows to separate foreground and background.",
+        "numbers": "A pixel edge capacity $0.2$ is easier to cut than one with capacity $5.0$."
+      },
+      {
+        "title": "Supply chains",
+        "background": "Factories, warehouses, and stores form capacity-limited directed networks.",
+        "numbers": "If warehouse edges to stores carry $40$, $35$, and $25$ units, the outgoing warehouse flow is $100$."
+      },
+      {
+        "title": "Fair allocation",
+        "background": "Flow constraints can enforce quotas across groups or resources.",
+        "numbers": "If group A has capacity $60$ and group B capacity $40$, a feasible allocation cannot send more than $100$ total through them."
+      }
+    ],
+    "applicationsClose": "Flows are movement with bookkeeping: every unit respects capacities and is conserved until it reaches the sink.",
+    "takeaways": [
+      "A flow network has capacities, a source, and a sink.",
+      "Feasible flows obey capacity constraints and conservation.",
+      "Flow value is total flow leaving the source, equivalently entering the sink.",
+      "Augmenting paths push flow by their bottleneck residual capacity."
+    ],
     "prereqs": [
       "math-15-12"
     ]
@@ -279,19 +3533,272 @@
   B({
     "id": "math-15-14",
     "title": "Cuts and the max-flow min-cut theorem",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: cuts and the max-flow min-cut theorem.",
+    "tagline": "The most flow you can send equals the smallest capacity wall separating source from sink.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Network flows</i>"
+        "Network flows",
+        "connectivity",
+        "weighted directed graphs"
       ],
       "leadsTo": [
-        "the next lesson, <i>Bipartite graphs</i>"
+        "linear programming duality",
+        "matching",
+        "graph cuts in ML"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "sets",
+        "inequalities",
+        "optimization",
+        "cuts"
       ]
     },
+    "motivation": "<p>Imagine trying to send water from a source to a sink. No matter how clever the routing is, any wall that separates source from sink limits the total water crossing it.</p><p>The max-flow min-cut theorem says the best routing and the tightest wall meet at the same number. That equality is one of graph theory's great organizing ideas.</p>",
+    "definition": "<p>An <b>$s$-$t$ cut</b> is a partition $(S,T)$ of vertices with $s\\in S$ and $t\\in T$. Its capacity is the sum of capacities of directed edges from $S$ to $T$: $$c(S,T)=\\sum_{u\\in S,\\ v\\in T} c(u,v).$$ Every feasible flow has value at most every cut capacity.</p><p>The upper bound is simple: all flow from $s$ to $t$ must cross from $S$ to $T$ somewhere, and those crossing edges cannot carry more than their capacities. The <b>max-flow min-cut theorem</b> says the maximum flow value equals the minimum $s$-$t$ cut capacity.</p><p><b>Assumptions that matter:</b> cuts are directed from $S$ to $T$ for capacity; reverse edges from $T$ to $S$ do not add to cut capacity; and standard theorem statements assume finite networks with nonnegative capacities.</p>",
+    "worked": {
+      "problem": "For edges $s\\to a=5$, $s\\to b=3$, $a\\to t=4$, $b\\to t=3$, compute the cut capacity for $S=\\{s,a\\}$, $T=\\{b,t\\}$.",
+      "skills": [
+        "cuts",
+        "capacity sums",
+        "flow upper bounds"
+      ],
+      "strategy": "List only edges directed from $S$ to $T$, then add their capacities.",
+      "steps": [
+        {
+          "do": "Identify $S$ vertices",
+          "result": "$s,a$",
+          "why": "given source side"
+        },
+        {
+          "do": "Identify $T$ vertices",
+          "result": "$b,t$",
+          "why": "given sink side"
+        },
+        {
+          "do": "Check edge $s\\to a$",
+          "result": "not counted",
+          "why": "both endpoints are in $S$"
+        },
+        {
+          "do": "Check edge $s\\to b$",
+          "result": "count capacity $3$",
+          "why": "it goes from $S$ to $T$"
+        },
+        {
+          "do": "Check edge $a\\to t$",
+          "result": "count capacity $4$",
+          "why": "it goes from $S$ to $T$"
+        },
+        {
+          "do": "Check edge $b\\to t$",
+          "result": "not counted",
+          "why": "both endpoints are in $T$"
+        },
+        {
+          "do": "Add counted capacities",
+          "result": "$3+4=7$",
+          "why": "cut capacity is the crossing sum"
+        }
+      ],
+      "verify": "Any flow value is at most $7$ for this cut, and the previous network can achieve value $7$.",
+      "answer": "The cut capacity is $7$.",
+      "connects": "Cuts are capacity bottlenecks that upper-bound all possible flows."
+    },
+    "practice": [
+      {
+        "problem": "For cut $S=\\{s\\}$, $T=\\{a,b,t\\}$ with edges $s\\to a=5$ and $s\\to b=3$, find capacity.",
+        "steps": [
+          {
+            "do": "List crossing edges",
+            "result": "$s\\to a$, $s\\to b$",
+            "why": "both go from $S$ to $T$"
+          },
+          {
+            "do": "Write capacities",
+            "result": "$5$ and $3$",
+            "why": "given"
+          },
+          {
+            "do": "Add",
+            "result": "$5+3=8$",
+            "why": "cut capacity sum"
+          },
+          {
+            "do": "Ignore other edges",
+            "result": "not from $S$ to $T$",
+            "why": "only source-side to sink-side edges count"
+          },
+          {
+            "do": "State result",
+            "result": "$8$",
+            "why": "capacity of this cut"
+          }
+        ],
+        "answer": "The cut capacity is $8$."
+      },
+      {
+        "problem": "If a cut has capacity $12$, can a feasible flow have value $15$?",
+        "steps": [
+          {
+            "do": "Recall cut bound",
+            "result": "flow value $\\le$ cut capacity",
+            "why": "every flow crosses the cut"
+          },
+          {
+            "do": "Substitute capacity",
+            "result": "flow value $\\le12$",
+            "why": "this cut is an upper bound"
+          },
+          {
+            "do": "Compare proposed value",
+            "result": "$15>12$",
+            "why": "violates the bound"
+          },
+          {
+            "do": "Conclude",
+            "result": "not feasible",
+            "why": "some crossing capacity would be exceeded"
+          },
+          {
+            "do": "State answer",
+            "result": "no",
+            "why": "value $15$ is impossible"
+          }
+        ],
+        "answer": "No. Any flow is at most $12$ across that cut."
+      },
+      {
+        "problem": "A flow of value $9$ and a cut of capacity $9$ are found. What can you conclude?",
+        "steps": [
+          {
+            "do": "Use weak dual bound",
+            "result": "max flow $\\le$ min cut",
+            "why": "all cuts upper-bound flows"
+          },
+          {
+            "do": "Use found flow",
+            "result": "max flow $\\ge9$",
+            "why": "a feasible value $9$ exists"
+          },
+          {
+            "do": "Use found cut",
+            "result": "max flow $\\le9$",
+            "why": "capacity $9$ upper-bounds it"
+          },
+          {
+            "do": "Combine inequalities",
+            "result": "max flow $=9$",
+            "why": "both bounds meet"
+          },
+          {
+            "do": "Conclude cut status",
+            "result": "minimum cut capacity is $9$",
+            "why": "no smaller cut can exist"
+          }
+        ],
+        "answer": "The flow is maximum and the cut is minimum, both with value $9$."
+      },
+      {
+        "problem": "Why are edges from $T$ to $S$ not included in an $s$-$t$ cut capacity?",
+        "steps": [
+          {
+            "do": "Define cut direction",
+            "result": "capacity counts $S\\to T$",
+            "why": "the goal is source side to sink side"
+          },
+          {
+            "do": "Consider $T\\to S$ edge",
+            "result": "points backward",
+            "why": "it does not carry net necessary crossing toward $t$"
+          },
+          {
+            "do": "Flow accounting",
+            "result": "net flow from $S$ to $T$ matters",
+            "why": "backward flow subtracts rather than limits forward escape"
+          },
+          {
+            "do": "Apply definition",
+            "result": "exclude reverse edges",
+            "why": "standard directed cut capacity"
+          },
+          {
+            "do": "State reason",
+            "result": "only forward crossing capacity blocks $s$-$t$ flow",
+            "why": "reverse edges are not bottleneck capacity"
+          }
+        ],
+        "answer": "Directed cut capacity counts only edges from $S$ to $T$."
+      },
+      {
+        "problem": "An image cut has boundary edges with capacities $0.7$, $1.2$, $0.4$, and $2.0$. What is the cut cost?",
+        "steps": [
+          {
+            "do": "List capacities",
+            "result": "$0.7,1.2,0.4,2.0$",
+            "why": "edges crossed by the cut"
+          },
+          {
+            "do": "Add first two",
+            "result": "$0.7+1.2=1.9$",
+            "why": "partial sum"
+          },
+          {
+            "do": "Add third",
+            "result": "$1.9+0.4=2.3$",
+            "why": "continue sum"
+          },
+          {
+            "do": "Add fourth",
+            "result": "$2.3+2.0=4.3$",
+            "why": "final sum"
+          },
+          {
+            "do": "Interpret",
+            "result": "cut cost $4.3$",
+            "why": "lower cuts are preferred in min-cut segmentation"
+          }
+        ],
+        "answer": "The cut capacity is $4.3$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Bottleneck analysis",
+        "background": "Cuts identify the tightest separator limiting total throughput.",
+        "numbers": "If all traffic must cross links of capacities $10$, $15$, and $5$, that cut permits at most $30$ units."
+      },
+      {
+        "title": "Image segmentation",
+        "background": "Graph cuts separate foreground and background by minimizing boundary plus label costs.",
+        "numbers": "Cutting edges of weights $0.3$, $0.6$, and $1.1$ costs $2.0$."
+      },
+      {
+        "title": "Bipartite matching certificates",
+        "background": "A max flow paired with an equal cut proves no larger matching exists.",
+        "numbers": "If matching flow is $42$ and a cut has capacity $42$, the maximum matching size is $42$."
+      },
+      {
+        "title": "Data-center capacity planning",
+        "background": "Min cuts reveal which service tier limits end-to-end throughput.",
+        "numbers": "If API-to-model edges total $900$ qps while frontend-to-API totals $1500$ qps, the $900$ qps cut is tighter."
+      },
+      {
+        "title": "Reliability",
+        "background": "Small cuts point to fragile separators in infrastructure graphs.",
+        "numbers": "A cut with two links of capacity $100$ each limits cross-region traffic to $200$ units."
+      },
+      {
+        "title": "Fairness constraints",
+        "background": "Flow cuts can certify that quota constraints cap feasible assignments.",
+        "numbers": "If a group quota cut has capacity $60$, no feasible assignment can route more than $60$ units through that group."
+      }
+    ],
+    "applicationsClose": "Max-flow min-cut is a perfect meeting of construction and certificate: a routing plan and a bottleneck wall prove each other optimal.",
+    "takeaways": [
+      "An $s$-$t$ cut partitions vertices with $s$ on one side and $t$ on the other.",
+      "Cut capacity sums directed edges from the source side to the sink side.",
+      "Every cut upper-bounds every feasible flow.",
+      "The maximum flow value equals the minimum cut capacity."
+    ],
     "prereqs": [
       "math-15-13"
     ]
@@ -300,19 +3807,262 @@
   B({
     "id": "math-15-15",
     "title": "Bipartite graphs",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: bipartite graphs.",
+    "tagline": "A bipartite graph separates vertices into two sides, with every edge crossing between the sides.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Cuts and the max-flow min-cut theorem</i>"
+        "graphs and their representations",
+        "cycles",
+        "cuts and the max-flow min-cut theorem"
       ],
       "leadsTo": [
-        "the next lesson, <i>Matching</i>"
+        "Matching",
+        "Graph coloring",
+        "The adjacency matrix"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "partitions",
+        "parity",
+        "cycles",
+        "incidence relations"
       ]
     },
+    "motivation": "<p>You already sort many relationships into two kinds of things: students and projects, users and items, documents and words. In those settings, the meaningful links go across the two kinds.</p><p>A <b>bipartite graph</b> keeps that separation visible. Once you can see the two sides, matching, recommendations, and two-coloring become much easier to reason about.</p>",
+    "definition": "<p>A graph $G=(V,E)$ is <b>bipartite</b> if $V=L\\cup R$, $L\\cap R=\\emptyset$, and every edge has one endpoint in $L$ and one endpoint in $R$. Edges inside $L$ or inside $R$ are not allowed.</p><p>The key test is that a graph is bipartite if and only if it has no odd cycle. A cycle in a bipartite graph must alternate $L,R,L,R,\\ldots$, so it returns to the starting side only after an even number of edges. If no odd cycle exists, parity of graph distance gives a consistent two-coloring in each component.</p><p><b>Assumptions that matter:</b> graphs are simple and undirected unless stated otherwise; isolated vertices may go on either side; and the two parts do not need equal size.</p>",
+    "worked": {
+      "problem": "Decide whether $C_6$ with vertices $1,2,3,4,5,6$ in order is bipartite, and give a bipartition.",
+      "skills": [
+        "cycle parity",
+        "bipartitions",
+        "edge checking"
+      ],
+      "strategy": "Use the even cycle to alternate sides, then check the closing edge.",
+      "steps": [
+        {
+          "do": "Put odd vertices on one side",
+          "result": "$L=\\{1,3,5\\}$",
+          "why": "odd labels alternate around the cycle"
+        },
+        {
+          "do": "Put even vertices on the other side",
+          "result": "$R=\\{2,4,6\\}$",
+          "why": "every vertex is assigned once"
+        },
+        {
+          "do": "Check edge $1$--$2$",
+          "result": "it crosses from $L$ to $R$",
+          "why": "legal bipartite edges cross the split"
+        },
+        {
+          "do": "Check the middle edges",
+          "result": "$2$--$3$, $3$--$4$, $4$--$5$, $5$--$6$ all cross",
+          "why": "consecutive labels have opposite parity"
+        },
+        {
+          "do": "Check the closing edge",
+          "result": "$6$--$1$ crosses from $R$ to $L$",
+          "why": "the even cycle closes without conflict"
+        }
+      ],
+      "verify": "Every edge crosses the proposed partition, so no same-side edge remains.",
+      "answer": "Yes. One bipartition is $L=\\{1,3,5\\}$ and $R=\\{2,4,6\\}$.",
+      "connects": "Bipartiteness is a global alternating pattern."
+    },
+    "practice": [
+      {
+        "problem": "Is the path $1$--$2$--$3$--$4$--$5$ bipartite? Give a bipartition.",
+        "steps": [
+          {
+            "do": "Choose a starting side",
+            "result": "$1\\in L$",
+            "why": "the first side is arbitrary"
+          },
+          {
+            "do": "Alternate along the path",
+            "result": "$2\\in R$",
+            "why": "adjacent vertices must be opposite"
+          },
+          {
+            "do": "Continue alternating",
+            "result": "$3\\in L$, $4\\in R$, $5\\in L$",
+            "why": "each edge flips side"
+          },
+          {
+            "do": "Collect the parts",
+            "result": "$L=\\{1,3,5\\}$ and $R=\\{2,4\\}$",
+            "why": "all vertices are assigned"
+          },
+          {
+            "do": "Check the edges",
+            "result": "all four edges cross",
+            "why": "there is no same-side edge"
+          }
+        ],
+        "answer": "Yes; $L=\\{1,3,5\\}$ and $R=\\{2,4\\}$ works."
+      },
+      {
+        "problem": "Show that the triangle $K_3$ is not bipartite.",
+        "steps": [
+          {
+            "do": "Count the cycle length",
+            "result": "$3$",
+            "why": "a triangle is a three-cycle"
+          },
+          {
+            "do": "Apply the parity test",
+            "result": "odd cycle found",
+            "why": "bipartite graphs have no odd cycles"
+          },
+          {
+            "do": "Try placing $a$ and $b$",
+            "result": "$a\\in L$, $b\\in R$",
+            "why": "edge $ab$ forces opposite sides"
+          },
+          {
+            "do": "Use edge $bc$",
+            "result": "$c\\in L$",
+            "why": "edge $bc$ forces $c$ opposite $b$"
+          },
+          {
+            "do": "Check edge $ca$",
+            "result": "both endpoints would be in $L$",
+            "why": "that violates the rule"
+          }
+        ],
+        "answer": "$K_3$ is not bipartite."
+      },
+      {
+        "problem": "For the four-cycle $ab,bc,cd,da$, give a bipartition.",
+        "steps": [
+          {
+            "do": "Recognize the graph",
+            "result": "$C_4$",
+            "why": "the edges form an even cycle"
+          },
+          {
+            "do": "Place alternating vertices",
+            "result": "$a,c\\in L$",
+            "why": "opposite vertices share a side"
+          },
+          {
+            "do": "Place the remaining vertices",
+            "result": "$b,d\\in R$",
+            "why": "the cycle alternates"
+          },
+          {
+            "do": "Check the closing edge",
+            "result": "$d$--$a$ crosses",
+            "why": "the last edge is legal"
+          },
+          {
+            "do": "State the split",
+            "result": "$L=\\{a,c\\}$ and $R=\\{b,d\\}$",
+            "why": "all edges cross"
+          }
+        ],
+        "answer": "One bipartition is $L=\\{a,c\\}$ and $R=\\{b,d\\}$."
+      },
+      {
+        "problem": "A bipartite graph has $|L|=4$ and $|R|=3$. What is the maximum possible number of edges?",
+        "steps": [
+          {
+            "do": "Identify allowed pairs",
+            "result": "only $L$-$R$ pairs",
+            "why": "same-side edges are forbidden"
+          },
+          {
+            "do": "Count left choices",
+            "result": "$4$",
+            "why": "choose the left endpoint"
+          },
+          {
+            "do": "Count right choices",
+            "result": "$3$",
+            "why": "choose the right endpoint"
+          },
+          {
+            "do": "Multiply",
+            "result": "$4\\cdot3=12$",
+            "why": "each crossing pair can be an edge"
+          },
+          {
+            "do": "Name the extremal graph",
+            "result": "$K_{4,3}$",
+            "why": "it contains every allowed crossing edge"
+          }
+        ],
+        "answer": "The maximum is $12$ edges."
+      },
+      {
+        "problem": "A user-item graph has users $u_1,u_2$ and items $i_1,i_2,i_3$, with edges $u_1i_1,u_1i_3,u_2i_2$. Is it bipartite, and what is $\\deg(u_1)$?",
+        "steps": [
+          {
+            "do": "Choose the parts",
+            "result": "$L=\\{u_1,u_2\\}$ and $R=\\{i_1,i_2,i_3\\}$",
+            "why": "users and items are different types"
+          },
+          {
+            "do": "Check edge types",
+            "result": "each edge joins a user to an item",
+            "why": "all edges cross"
+          },
+          {
+            "do": "List neighbors of $u_1$",
+            "result": "$i_1$ and $i_3$",
+            "why": "degree counts incident edges"
+          },
+          {
+            "do": "Count them",
+            "result": "$\\deg(u_1)=2$",
+            "why": "there are two incident edges"
+          },
+          {
+            "do": "Interpret",
+            "result": "two observed interactions for $u_1$",
+            "why": "the graph records relationships"
+          }
+        ],
+        "answer": "Yes. It is bipartite, and $\\deg(u_1)=2$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Recommendation systems",
+        "background": "User-item interactions form a natural bipartite graph because users and items are different kinds of vertices.",
+        "numbers": "If $1000$ users each click $12$ items on average, the graph has about $12000$ edges."
+      },
+      {
+        "title": "Document-word incidence",
+        "background": "Search engines can connect documents to the words they contain.",
+        "numbers": "A document containing $80$ distinct words has degree $80$ in the document-word graph."
+      },
+      {
+        "title": "Course assignment",
+        "background": "Students connect to projects they are eligible for, and matching later chooses assignments.",
+        "numbers": "With $30$ students and $8$ projects, the complete eligibility graph has $240$ possible edges."
+      },
+      {
+        "title": "Rating matrices",
+        "background": "A bipartite graph can be stored as a rectangular matrix.",
+        "numbers": "For $5$ users and $4$ items, there are $20$ possible entries; $6$ ratings leave $14$ missing."
+      },
+      {
+        "title": "Odd-cycle tests",
+        "background": "Two-team scheduling fails exactly when conflicts contain an odd cycle.",
+        "numbers": "Conflicts $A$--$B$, $B$--$C$, $C$--$A$ form a length-$3$ obstruction."
+      },
+      {
+        "title": "Flow models",
+        "background": "Assignment flow networks often contain a bipartite layer between sources and sinks.",
+        "numbers": "If three workers each supply $1$ unit and three tasks each demand $1$, a perfect assignment flow has value $3$."
+      }
+    ],
+    "applicationsClose": "Bipartite graphs keep two kinds of objects separate, and that separation powers matching, matrices, and recommendation models.",
+    "takeaways": [
+      "A bipartite graph has two disjoint vertex parts and only crossing edges.",
+      "A graph is bipartite exactly when it has no odd cycle.",
+      "$K_{m,n}$ has $mn$ possible crossing edges.",
+      "Many rectangular datasets are bipartite graphs in disguise."
+    ],
     "prereqs": [
       "math-15-14"
     ]
@@ -321,19 +4071,262 @@
   B({
     "id": "math-15-16",
     "title": "Matching",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: matching.",
+    "tagline": "A matching chooses compatible edges with no shared endpoints, pairing things without double-booking anyone.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Bipartite graphs</i>"
+        "Bipartite graphs",
+        "degree",
+        "network flows"
       ],
       "leadsTo": [
-        "the next lesson, <i>Graph coloring</i>"
+        "Graph coloring",
+        "assignment algorithms",
+        "Hall's theorem"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "augmenting paths",
+        "cuts",
+        "partitions",
+        "optimization"
       ]
     },
+    "motivation": "<p>You already know the scheduling rule: one applicant cannot take two jobs, and one GPU cannot run two exclusive jobs at the same time. We need choices that do not collide.</p><p>A <b>matching</b> is exactly that collision-free set of chosen edges.</p>",
+    "definition": "<p>A <b>matching</b> in a graph $G=(V,E)$ is a set $M\\subseteq E$ such that no two edges in $M$ share a vertex. A matched vertex is incident to an edge of $M$; an unmatched vertex is not.</p><p>A matching is <b>maximum</b> if no larger matching exists and <b>perfect</b> if every vertex is matched. An augmenting path starts and ends at unmatched vertices and alternates outside and inside $M$; flipping its edges increases the matching size by one.</p><p><b>Assumptions that matter:</b> matching size counts selected edges; perfect may mean covering all vertices or all vertices on one specified side; and weights matter only in weighted matching problems.</p>",
+    "worked": {
+      "problem": "In a bipartite graph with $L=\\{a,b,c\\}$, $R=\\{1,2,3\\}$, and edges $a1,a2,b2,c2,c3$, find a matching of size $3$.",
+      "skills": [
+        "matching",
+        "bipartite graphs",
+        "constraint reasoning"
+      ],
+      "strategy": "Assign the most constrained vertex first, then fill the remaining choices.",
+      "steps": [
+        {
+          "do": "Find the most constrained left vertex",
+          "result": "$b$ only connects to $2$",
+          "why": "scarce choices should be protected"
+        },
+        {
+          "do": "Choose edge $b2$",
+          "result": "$M=\\{b2\\}$",
+          "why": "this matches $b$ and $2$"
+        },
+        {
+          "do": "Assign $a$ without using $2$",
+          "result": "choose $a1$",
+          "why": "edge $a2$ would collide with $b2$"
+        },
+        {
+          "do": "Assign $c$ without using $2$",
+          "result": "choose $c3$",
+          "why": "vertex $3$ is free"
+        },
+        {
+          "do": "List the matching",
+          "result": "$M=\\{a1,b2,c3\\}$",
+          "why": "the selected edges have no shared endpoints"
+        }
+      ],
+      "verify": "Each of the six vertices appears in exactly one selected edge.",
+      "answer": "A matching of size $3$ is $\\{a1,b2,c3\\}$, and it is perfect.",
+      "connects": "Matching is compatible selection under endpoint constraints."
+    },
+    "practice": [
+      {
+        "problem": "Is $\\{ab,cd\\}$ a matching in the path $a$--$b$--$c$--$d$?",
+        "steps": [
+          {
+            "do": "List endpoints of $ab$",
+            "result": "$a,b$",
+            "why": "selected edges cannot share endpoints"
+          },
+          {
+            "do": "List endpoints of $cd$",
+            "result": "$c,d$",
+            "why": "compare with the first edge"
+          },
+          {
+            "do": "Check intersection",
+            "result": "$\\{a,b\\}\\cap\\{c,d\\}=\\emptyset$",
+            "why": "there is no shared vertex"
+          },
+          {
+            "do": "Apply the definition",
+            "result": "valid matching",
+            "why": "no selected edges collide"
+          },
+          {
+            "do": "Count size",
+            "result": "$2$",
+            "why": "two edges were selected"
+          }
+        ],
+        "answer": "Yes; it is a matching of size $2$."
+      },
+      {
+        "problem": "Find a maximum matching size in the path $1$--$2$--$3$--$4$--$5$.",
+        "steps": [
+          {
+            "do": "Choose edge $12$",
+            "result": "$M=\\{12\\}$",
+            "why": "start at one end"
+          },
+          {
+            "do": "Skip edge $23$",
+            "result": "it shares vertex $2$",
+            "why": "matching edges cannot share endpoints"
+          },
+          {
+            "do": "Choose edge $34$",
+            "result": "$M=\\{12,34\\}$",
+            "why": "it is disjoint from $12$"
+          },
+          {
+            "do": "Bound the size",
+            "result": "$\\lfloor5/2\\rfloor=2$",
+            "why": "five vertices make at most two disjoint pairs"
+          },
+          {
+            "do": "Conclude maximum",
+            "result": "$2$",
+            "why": "the construction reaches the upper bound"
+          }
+        ],
+        "answer": "The maximum matching size is $2$."
+      },
+      {
+        "problem": "Can $x,y,z$ be matched to $1,2,3$ if $N(x)=\\{1\\}$, $N(y)=\\{1\\}$, and $N(z)=\\{2,3\\}$?",
+        "steps": [
+          {
+            "do": "Check subset $S=\\{x,y\\}$",
+            "result": "two left vertices",
+            "why": "Hall-style obstructions come from subsets"
+          },
+          {
+            "do": "Find its neighbors",
+            "result": "$N(S)=\\{1\\}$",
+            "why": "both vertices only reach $1$"
+          },
+          {
+            "do": "Compare sizes",
+            "result": "$|N(S)|=1<2=|S|$",
+            "why": "there are too few available right vertices"
+          },
+          {
+            "do": "State the obstruction",
+            "result": "no left-perfect matching",
+            "why": "one of $x,y$ must remain unmatched"
+          },
+          {
+            "do": "Interpret",
+            "result": "both compete for vertex $1$",
+            "why": "one endpoint cannot serve two matching edges"
+          }
+        ],
+        "answer": "No. The subset $\\{x,y\\}$ has only one neighbor."
+      },
+      {
+        "problem": "Given $M=\\{a1,b2\\}$ and available edge $c3$, augment the matching.",
+        "steps": [
+          {
+            "do": "Identify unmatched vertices",
+            "result": "$c$ and $3$",
+            "why": "they are not endpoints in $M$"
+          },
+          {
+            "do": "Use the new edge",
+            "result": "$c3$",
+            "why": "it joins two unmatched vertices"
+          },
+          {
+            "do": "Add it to $M$",
+            "result": "$M^{\\prime}=\\{a1,b2,c3\\}$",
+            "why": "no endpoint conflict is created"
+          },
+          {
+            "do": "Count the new size",
+            "result": "$3$",
+            "why": "one edge was added"
+          },
+          {
+            "do": "Check coverage",
+            "result": "all three left and all three right vertices are matched",
+            "why": "the matching is perfect"
+          }
+        ],
+        "answer": "The augmented matching is $\\{a1,b2,c3\\}$."
+      },
+      {
+        "problem": "Assign models $m_1,m_2,m_3$ to GPUs $g_1,g_2,g_3$ with edges $m_1g_1,m_1g_2,m_2g_2,m_3g_2,m_3g_3$.",
+        "steps": [
+          {
+            "do": "Assign the constrained model",
+            "result": "$m_2g_2$",
+            "why": "$m_2$ has only one compatible GPU"
+          },
+          {
+            "do": "Assign $m_1$",
+            "result": "$m_1g_1$",
+            "why": "$g_1$ is compatible and free"
+          },
+          {
+            "do": "Assign $m_3$",
+            "result": "$m_3g_3$",
+            "why": "$g_3$ is compatible and free"
+          },
+          {
+            "do": "Check endpoint conflicts",
+            "result": "none",
+            "why": "each model and GPU appears once"
+          },
+          {
+            "do": "State the matching",
+            "result": "$\\{m_1g_1,m_2g_2,m_3g_3\\}$",
+            "why": "three noncolliding assignments are selected"
+          }
+        ],
+        "answer": "One full assignment is $m_1$ to $g_1$, $m_2$ to $g_2$, and $m_3$ to $g_3$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Job placement",
+        "background": "Matching theory models one-to-one assignment in labor markets and scheduling systems.",
+        "numbers": "A perfect matching between $6$ interns and $6$ projects contains exactly $6$ selected edges."
+      },
+      {
+        "title": "GPU scheduling",
+        "background": "ML platforms match jobs to compatible machines under hardware constraints.",
+        "numbers": "If $8$ jobs are assigned to $8$ GPUs, the matching has size $8$ and covers $16$ vertices."
+      },
+      {
+        "title": "Ad serving",
+        "background": "An impression can show at most one ad, so selected impression-campaign edges must not reuse impressions.",
+        "numbers": "For $100$ impressions, a matching of size $92$ fills $92\\%$ of opportunities."
+      },
+      {
+        "title": "Entity resolution",
+        "background": "Databases often require one source record to link to at most one target record.",
+        "numbers": "If $1000$ records produce $940$ accepted one-to-one links, $60$ source records remain unmatched."
+      },
+      {
+        "title": "Object detection evaluation",
+        "background": "Predicted boxes are matched to ground-truth boxes so one object is not counted twice.",
+        "numbers": "With IoU threshold $0.5$, detections scoring $0.8,0.6,0.3$ against distinct objects give $2$ matches."
+      },
+      {
+        "title": "Kidney exchange",
+        "background": "Compatibility graphs help pair donors and recipients with disjoint selected exchanges.",
+        "numbers": "Three disjoint compatible pairs represent $3$ transplants involving $6$ people."
+      }
+    ],
+    "applicationsClose": "Matching turns compatibility into a careful set of yes decisions with no repeated endpoint.",
+    "takeaways": [
+      "A matching is a set of edges with no shared vertices.",
+      "A perfect matching covers every relevant vertex.",
+      "Augmenting paths are the engine behind growing matchings.",
+      "Assignments in computing and ML often reduce to matching."
+    ],
     "prereqs": [
       "math-15-15"
     ]
@@ -342,19 +4335,262 @@
   B({
     "id": "math-15-17",
     "title": "Graph coloring",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: graph coloring.",
+    "tagline": "Graph coloring assigns labels so adjacent vertices differ, measuring how many conflict-free groups are needed.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Matching</i>"
+        "Bipartite graphs",
+        "cycles",
+        "degree"
       ],
       "leadsTo": [
-        "the next lesson, <i>Planar graphs</i>"
+        "Planar graphs",
+        "Euler's formula",
+        "scheduling problems"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "cliques",
+        "independent sets",
+        "greedy algorithms",
+        "partitions"
       ]
     },
+    "motivation": "<p>You already use coloring logic when you schedule exams or color a map: things that touch or conflict need different labels. The labels might be colors, times, frequencies, or registers.</p><p><b>Graph coloring</b> makes that everyday constraint mathematical.</p>",
+    "definition": "<p>A <b>proper vertex coloring</b> assigns a color to every vertex so adjacent vertices have different colors. The <b>chromatic number</b> $\\chi(G)$ is the minimum number of colors in a proper coloring.</p><p>A clique of size $k$ forces at least $k$ colors because every pair is adjacent. Bipartite graphs with at least one edge have $\\chi(G)=2$. Odd cycles need $3$ colors because two-color alternation fails at the closing edge.</p><p><b>Assumptions that matter:</b> this lesson uses vertex coloring; loops make proper coloring impossible; and greedy coloring can depend on vertex order.</p>",
+    "worked": {
+      "problem": "Find the chromatic number of the cycle $C_5$.",
+      "skills": [
+        "cycles",
+        "chromatic number",
+        "lower and upper bounds"
+      ],
+      "strategy": "Show two colors cannot work, then exhibit a three-coloring.",
+      "steps": [
+        {
+          "do": "Try two-color alternation",
+          "result": "$A,B,A,B,\\ldots$",
+          "why": "a cycle with two colors must alternate"
+        },
+        {
+          "do": "Reach the fifth vertex",
+          "result": "it is adjacent to vertices colored $B$ and $A$",
+          "why": "the odd closing creates a conflict"
+        },
+        {
+          "do": "Conclude a lower bound",
+          "result": "$\\chi(C_5)\\ge3$",
+          "why": "two colors fail"
+        },
+        {
+          "do": "Give a coloring",
+          "result": "$A,B,A,B,C$",
+          "why": "the last vertex differs from both neighbors"
+        },
+        {
+          "do": "Conclude equality",
+          "result": "$\\chi(C_5)=3$",
+          "why": "three works and two does not"
+        }
+      ],
+      "verify": "The coloring uses no equal colors across edges, and the odd-cycle argument rules out two.",
+      "answer": "$\\chi(C_5)=3$.",
+      "connects": "Coloring asks how many independent color classes cover the graph."
+    },
+    "practice": [
+      {
+        "problem": "Find $\\chi(P_4)$ for a path on four vertices.",
+        "steps": [
+          {
+            "do": "Color the first vertex",
+            "result": "$A$",
+            "why": "start freely"
+          },
+          {
+            "do": "Color the second vertex",
+            "result": "$B$",
+            "why": "it is adjacent to the first"
+          },
+          {
+            "do": "Color the third vertex",
+            "result": "$A$",
+            "why": "it is not adjacent to the first"
+          },
+          {
+            "do": "Color the fourth vertex",
+            "result": "$B$",
+            "why": "alternate along the path"
+          },
+          {
+            "do": "Rule out one color",
+            "result": "the path has edges",
+            "why": "an edge needs two different colors"
+          }
+        ],
+        "answer": "$\\chi(P_4)=2$."
+      },
+      {
+        "problem": "Find $\\chi(K_4)$.",
+        "steps": [
+          {
+            "do": "Use completeness",
+            "result": "every pair of vertices is adjacent",
+            "why": "no two vertices may share a color"
+          },
+          {
+            "do": "Count vertices",
+            "result": "$4$",
+            "why": "there are four mutually adjacent vertices"
+          },
+          {
+            "do": "Set a lower bound",
+            "result": "$\\chi(K_4)\\ge4$",
+            "why": "a $4$-clique needs four colors"
+          },
+          {
+            "do": "Color with four colors",
+            "result": "$A,B,C,D$",
+            "why": "this is proper"
+          },
+          {
+            "do": "Conclude",
+            "result": "$\\chi(K_4)=4$",
+            "why": "the lower bound is achieved"
+          }
+        ],
+        "answer": "$\\chi(K_4)=4$."
+      },
+      {
+        "problem": "Find $\\chi(K_{3,2})$ and explain why.",
+        "steps": [
+          {
+            "do": "Recognize bipartite structure",
+            "result": "parts of sizes $3$ and $2$",
+            "why": "all edges cross the split"
+          },
+          {
+            "do": "Color the first part",
+            "result": "$A$",
+            "why": "no edges lie inside it"
+          },
+          {
+            "do": "Color the second part",
+            "result": "$B$",
+            "why": "crossing edges now differ"
+          },
+          {
+            "do": "Rule out one color",
+            "result": "the graph has an edge",
+            "why": "adjacent endpoints must differ"
+          },
+          {
+            "do": "State the value",
+            "result": "$\\chi(K_{3,2})=2$",
+            "why": "two colors work and one cannot"
+          }
+        ],
+        "answer": "$K_{3,2}$ has chromatic number $2$."
+      },
+      {
+        "problem": "Greedily color edges $ab,ac,bc,cd$ in vertex order $a,b,c,d$; vertices mean conflicts.",
+        "steps": [
+          {
+            "do": "Color $a$",
+            "result": "$a:A$",
+            "why": "no colored neighbors yet"
+          },
+          {
+            "do": "Color $b$",
+            "result": "$b:B$",
+            "why": "it conflicts with $a$"
+          },
+          {
+            "do": "Color $c$",
+            "result": "$c:C$",
+            "why": "it conflicts with both $a$ and $b$"
+          },
+          {
+            "do": "Color $d$",
+            "result": "$d:A$",
+            "why": "it only conflicts with $c$ among colored vertices"
+          },
+          {
+            "do": "Count colors",
+            "result": "$3$",
+            "why": "triangle $abc$ forces three colors"
+          }
+        ],
+        "answer": "Greedy uses $3$ colors, and $3$ is optimal."
+      },
+      {
+        "problem": "Five exams conflict in a cycle $E_1$--$E_2$--$E_3$--$E_4$--$E_5$--$E_1$. How many time slots are needed?",
+        "steps": [
+          {
+            "do": "Model exams as vertices",
+            "result": "conflicts are edges",
+            "why": "same-slot exams must be nonadjacent"
+          },
+          {
+            "do": "Identify the graph",
+            "result": "$C_5$",
+            "why": "there are five conflicts around a cycle"
+          },
+          {
+            "do": "Use odd-cycle coloring",
+            "result": "$\\chi(C_5)=3$",
+            "why": "odd cycles need three colors"
+          },
+          {
+            "do": "Interpret colors",
+            "result": "time slots",
+            "why": "adjacent exams get different slots"
+          },
+          {
+            "do": "State the number",
+            "result": "$3$",
+            "why": "two slots cannot close the odd cycle"
+          }
+        ],
+        "answer": "The exams need $3$ time slots."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Exam scheduling",
+        "background": "Coloring arose naturally in timetabling because shared students create conflict edges.",
+        "numbers": "A triangle of three mutually conflicting exams requires $3$ slots."
+      },
+      {
+        "title": "Compiler registers",
+        "background": "Register allocation colors variables that are live at the same time.",
+        "numbers": "If an interference graph contains a $6$-clique, at least $6$ registers are needed."
+      },
+      {
+        "title": "Map coloring",
+        "background": "Maps become planar graphs whose neighboring regions must differ in color.",
+        "numbers": "A ring of $8$ regions can alternate two colors, so that subgraph needs only $2$ colors."
+      },
+      {
+        "title": "Wireless channels",
+        "background": "Transmitters that interfere cannot share a frequency.",
+        "numbers": "If four towers form $K_4$, then $4$ channels are necessary."
+      },
+      {
+        "title": "Parallel batches",
+        "background": "Tasks with conflict edges can run in the same batch only when they share no edge.",
+        "numbers": "A path of $10$ tasks can be batched in $2$ alternating groups of $5$ tasks each."
+      },
+      {
+        "title": "Feature buckets",
+        "background": "Systems sometimes color conflict graphs to prevent incompatible features from sharing a bucket.",
+        "numbers": "Four disjoint triangles still need only $3$ colors total because colors can be reused across components."
+      }
+    ],
+    "applicationsClose": "Colors may look cosmetic, but mathematically they are scarce resources assigned under adjacency constraints.",
+    "takeaways": [
+      "A proper coloring gives adjacent vertices different colors.",
+      "$\\chi(G)$ is the minimum number of colors needed.",
+      "Cliques give lower bounds, while explicit colorings give upper bounds.",
+      "Scheduling, registers, maps, and frequencies all use coloring logic."
+    ],
     "prereqs": [
       "math-15-16"
     ]
@@ -363,19 +4599,262 @@
   B({
     "id": "math-15-18",
     "title": "Planar graphs",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: planar graphs.",
+    "tagline": "A planar graph can be drawn so edges meet only at endpoints.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Graph coloring</i>"
+        "Graph coloring",
+        "cycles",
+        "graphs and their representations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Euler's formula</i>"
+        "Euler's formula",
+        "Eulerian graphs",
+        "planar graph bounds"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "cycles",
+        "degree",
+        "connectivity",
+        "paths"
       ]
     },
+    "motivation": "<p>You already know the graph picture: dots connected by lines. Planar graphs ask whether a graph has some crossing-free drawing, not whether the first sketch has crossings.</p><p><b>Planar graphs</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
+    "definition": "<p>A graph is <b>planar</b> if it can be drawn in the plane with edges intersecting only at shared endpoints. A crossing-free drawing is a plane embedding and its regions are faces, including the outside face.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "worked": {
+      "problem": "Decide whether $K_4$ is planar and find its face count.",
+      "skills": [
+        "planarity",
+        "graph reasoning",
+        "numerical checking"
+      ],
+      "strategy": "Draw a triangle, place the fourth vertex inside, and connect it to all corners.",
+      "steps": [
+        {
+          "do": "Identify the relevant graph data",
+          "result": "vertices, edges, degrees, or matrix entries",
+          "why": "the definition tells us what to inspect"
+        },
+        {
+          "do": "Apply the key rule",
+          "result": "$V=4$, $E=6$, so $F=2-V+E=4$",
+          "why": "use the lesson's central criterion"
+        },
+        {
+          "do": "Check the arithmetic",
+          "result": "the stated numbers are consistent",
+          "why": "graph counts should balance known identities"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Planarity is proved by a crossing-free embedding.",
+          "why": "translate the computation back to the graph"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "the required property or value has been found",
+          "why": "the final answer follows from the checked rule"
+        }
+      ],
+      "verify": "The conclusion matches the defining condition for planar graphs.",
+      "answer": "$V=4$, $E=6$, so $F=2-V+E=4$.",
+      "connects": "Planarity is proved by a crossing-free embedding."
+    },
+    "practice": [
+      {
+        "problem": "Basic check for Planar graphs: a graph has $V=4$ and $E=3$. Compute the average degree.",
+        "steps": [
+          {
+            "do": "Use the average-degree formula",
+            "result": "$2E/V$",
+            "why": "each edge contributes two degree counts"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$2\\cdot3/4$",
+            "why": "use $E=3$ and $V=4$"
+          },
+          {
+            "do": "Multiply numerator",
+            "result": "$6/4$",
+            "why": "compute $2E$"
+          },
+          {
+            "do": "Divide",
+            "result": "$1.5$",
+            "why": "average degree may be non-integer"
+          },
+          {
+            "do": "Interpret",
+            "result": "typical vertex has degree $1.5$",
+            "why": "an average summarizes the graph"
+          }
+        ],
+        "answer": "The average degree is $1.5$."
+      },
+      {
+        "problem": "Use a four-cycle while thinking about Planar graphs. Count vertices, edges, and degrees.",
+        "steps": [
+          {
+            "do": "List vertices",
+            "result": "$4$",
+            "why": "a four-cycle has four corners"
+          },
+          {
+            "do": "List edges",
+            "result": "$4$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Find each degree",
+            "result": "$2$",
+            "why": "each vertex has two cycle neighbors"
+          },
+          {
+            "do": "Sum degrees",
+            "result": "$8$",
+            "why": "four vertices times degree two"
+          },
+          {
+            "do": "Check handshake",
+            "result": "$2E=8$",
+            "why": "the count matches"
+          }
+        ],
+        "answer": "$V=4$, $E=4$, and every degree is $2$."
+      },
+      {
+        "problem": "For a path on five vertices, relate Planar graphs to endpoint behavior.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$5$",
+            "why": "given path size"
+          },
+          {
+            "do": "Count edges",
+            "result": "$4$",
+            "why": "a path has $V-1$ edges"
+          },
+          {
+            "do": "Find endpoint degrees",
+            "result": "$1$ and $1$",
+            "why": "the two ends have one neighbor"
+          },
+          {
+            "do": "Find internal degrees",
+            "result": "$2,2,2$",
+            "why": "three internal vertices have two neighbors"
+          },
+          {
+            "do": "Check degree sum",
+            "result": "$1+1+2+2+2=8=2E$",
+            "why": "handshake lemma holds"
+          }
+        ],
+        "answer": "The path has two degree-$1$ endpoints and three degree-$2$ internal vertices."
+      },
+      {
+        "problem": "A graph has two components, one triangle and one single edge. Compute total $V$ and $E$ for use in Planar graphs.",
+        "steps": [
+          {
+            "do": "Count triangle vertices",
+            "result": "$3$",
+            "why": "three-cycle"
+          },
+          {
+            "do": "Count triangle edges",
+            "result": "$3$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Count single-edge vertices",
+            "result": "$2$",
+            "why": "two endpoints"
+          },
+          {
+            "do": "Count single-edge edges",
+            "result": "$1$",
+            "why": "one edge"
+          },
+          {
+            "do": "Add totals",
+            "result": "$V=5$, $E=4$",
+            "why": "combine components"
+          }
+        ],
+        "answer": "The graph has $V=5$ and $E=4$."
+      },
+      {
+        "problem": "ML-style use of Planar graphs: a node has neighbor feature values $1,4,7$. Compute sum and mean aggregates.",
+        "steps": [
+          {
+            "do": "Sum neighbor features",
+            "result": "$1+4+7=12$",
+            "why": "sum aggregation adds messages"
+          },
+          {
+            "do": "Count neighbors",
+            "result": "$3$",
+            "why": "there are three values"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$12/3=4$",
+            "why": "mean normalizes by degree"
+          },
+          {
+            "do": "Compare sum and mean",
+            "result": "$12$ versus $4$",
+            "why": "normalization changes scale"
+          },
+          {
+            "do": "Interpret",
+            "result": "sum depends on degree while mean controls for degree",
+            "why": "this matters in graph ML"
+          }
+        ],
+        "answer": "The sum aggregate is $12$ and the mean aggregate is $4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Small network sanity checks",
+        "background": "Engineers often test planar graphs on tiny graphs before trusting code on large ones.",
+        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+      },
+      {
+        "title": "Recommendation graphs",
+        "background": "Recommender systems use planar graphs ideas because user-item data is naturally relational.",
+        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+      },
+      {
+        "title": "Social networks",
+        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
+        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+      },
+      {
+        "title": "Molecular graphs",
+        "background": "Chemistry represents atoms and bonds as graphs, so planar graphs can become a model feature.",
+        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+      },
+      {
+        "title": "Infrastructure routing",
+        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
+        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+      },
+      {
+        "title": "ML preprocessing",
+        "background": "Many ML pipelines build graph features before training a downstream model.",
+        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+      }
+    ],
+    "applicationsClose": "Planar graphs is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
+    "takeaways": [
+      "Planar graphs has a precise definition that should be checked before using it.",
+      "Small graphs are enough to test the arithmetic and the assumptions.",
+      "The same structure scales to networks, matrices, and ML pipelines.",
+      "Always separate the graph property from a particular drawing or implementation."
+    ],
     "prereqs": [
       "math-15-17"
     ]
@@ -384,19 +4863,262 @@
   B({
     "id": "math-15-19",
     "title": "Euler's formula",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: euler's formula.",
+    "tagline": "Euler's formula balances every connected planar drawing by $V-E+F=2$.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Planar graphs</i>"
+        "Planar graphs",
+        "cycles",
+        "trees"
       ],
       "leadsTo": [
-        "the next lesson, <i>Eulerian graphs</i>"
+        "Eulerian graphs",
+        "planar graph bounds",
+        "topology"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "cycles",
+        "degree",
+        "connectivity",
+        "paths"
       ]
     },
+    "motivation": "<p>You already know the graph picture: dots connected by lines. Euler found that connected planar drawings keep one invariant no matter how the graph bends.</p><p><b>Euler's formula</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
+    "definition": "<p>For a connected planar graph with $V$ vertices, $E$ edges, and $F$ faces, <b>Euler's formula</b> is $V-E+F=2$. A tree has $E=V-1$ and $F=1$, and adding an edge inside a face increases both $E$ and $F$ by one.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "worked": {
+      "problem": "A connected planar graph has $V=10$ and $E=15$. Find $F$.",
+      "skills": [
+        "Euler formula",
+        "graph reasoning",
+        "numerical checking"
+      ],
+      "strategy": "Substitute into $V-E+F=2$ and solve.",
+      "steps": [
+        {
+          "do": "Identify the relevant graph data",
+          "result": "vertices, edges, degrees, or matrix entries",
+          "why": "the definition tells us what to inspect"
+        },
+        {
+          "do": "Apply the key rule",
+          "result": "$10-15+F=2$, so $F=7$",
+          "why": "use the lesson's central criterion"
+        },
+        {
+          "do": "Check the arithmetic",
+          "result": "the stated numbers are consistent",
+          "why": "graph counts should balance known identities"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Euler's formula turns planar geometry into arithmetic.",
+          "why": "translate the computation back to the graph"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "the required property or value has been found",
+          "why": "the final answer follows from the checked rule"
+        }
+      ],
+      "verify": "The conclusion matches the defining condition for euler's formula.",
+      "answer": "$10-15+F=2$, so $F=7$.",
+      "connects": "Euler's formula turns planar geometry into arithmetic."
+    },
+    "practice": [
+      {
+        "problem": "Basic check for Euler's formula: a graph has $V=4$ and $E=3$. Compute the average degree.",
+        "steps": [
+          {
+            "do": "Use the average-degree formula",
+            "result": "$2E/V$",
+            "why": "each edge contributes two degree counts"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$2\\cdot3/4$",
+            "why": "use $E=3$ and $V=4$"
+          },
+          {
+            "do": "Multiply numerator",
+            "result": "$6/4$",
+            "why": "compute $2E$"
+          },
+          {
+            "do": "Divide",
+            "result": "$1.5$",
+            "why": "average degree may be non-integer"
+          },
+          {
+            "do": "Interpret",
+            "result": "typical vertex has degree $1.5$",
+            "why": "an average summarizes the graph"
+          }
+        ],
+        "answer": "The average degree is $1.5$."
+      },
+      {
+        "problem": "Use a four-cycle while thinking about Euler's formula. Count vertices, edges, and degrees.",
+        "steps": [
+          {
+            "do": "List vertices",
+            "result": "$4$",
+            "why": "a four-cycle has four corners"
+          },
+          {
+            "do": "List edges",
+            "result": "$4$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Find each degree",
+            "result": "$2$",
+            "why": "each vertex has two cycle neighbors"
+          },
+          {
+            "do": "Sum degrees",
+            "result": "$8$",
+            "why": "four vertices times degree two"
+          },
+          {
+            "do": "Check handshake",
+            "result": "$2E=8$",
+            "why": "the count matches"
+          }
+        ],
+        "answer": "$V=4$, $E=4$, and every degree is $2$."
+      },
+      {
+        "problem": "For a path on five vertices, relate Euler's formula to endpoint behavior.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$5$",
+            "why": "given path size"
+          },
+          {
+            "do": "Count edges",
+            "result": "$4$",
+            "why": "a path has $V-1$ edges"
+          },
+          {
+            "do": "Find endpoint degrees",
+            "result": "$1$ and $1$",
+            "why": "the two ends have one neighbor"
+          },
+          {
+            "do": "Find internal degrees",
+            "result": "$2,2,2$",
+            "why": "three internal vertices have two neighbors"
+          },
+          {
+            "do": "Check degree sum",
+            "result": "$1+1+2+2+2=8=2E$",
+            "why": "handshake lemma holds"
+          }
+        ],
+        "answer": "The path has two degree-$1$ endpoints and three degree-$2$ internal vertices."
+      },
+      {
+        "problem": "A graph has two components, one triangle and one single edge. Compute total $V$ and $E$ for use in Euler's formula.",
+        "steps": [
+          {
+            "do": "Count triangle vertices",
+            "result": "$3$",
+            "why": "three-cycle"
+          },
+          {
+            "do": "Count triangle edges",
+            "result": "$3$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Count single-edge vertices",
+            "result": "$2$",
+            "why": "two endpoints"
+          },
+          {
+            "do": "Count single-edge edges",
+            "result": "$1$",
+            "why": "one edge"
+          },
+          {
+            "do": "Add totals",
+            "result": "$V=5$, $E=4$",
+            "why": "combine components"
+          }
+        ],
+        "answer": "The graph has $V=5$ and $E=4$."
+      },
+      {
+        "problem": "ML-style use of Euler's formula: a node has neighbor feature values $1,4,7$. Compute sum and mean aggregates.",
+        "steps": [
+          {
+            "do": "Sum neighbor features",
+            "result": "$1+4+7=12$",
+            "why": "sum aggregation adds messages"
+          },
+          {
+            "do": "Count neighbors",
+            "result": "$3$",
+            "why": "there are three values"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$12/3=4$",
+            "why": "mean normalizes by degree"
+          },
+          {
+            "do": "Compare sum and mean",
+            "result": "$12$ versus $4$",
+            "why": "normalization changes scale"
+          },
+          {
+            "do": "Interpret",
+            "result": "sum depends on degree while mean controls for degree",
+            "why": "this matters in graph ML"
+          }
+        ],
+        "answer": "The sum aggregate is $12$ and the mean aggregate is $4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Small network sanity checks",
+        "background": "Engineers often test euler's formula on tiny graphs before trusting code on large ones.",
+        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+      },
+      {
+        "title": "Recommendation graphs",
+        "background": "Recommender systems use euler's formula ideas because user-item data is naturally relational.",
+        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+      },
+      {
+        "title": "Social networks",
+        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
+        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+      },
+      {
+        "title": "Molecular graphs",
+        "background": "Chemistry represents atoms and bonds as graphs, so euler's formula can become a model feature.",
+        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+      },
+      {
+        "title": "Infrastructure routing",
+        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
+        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+      },
+      {
+        "title": "ML preprocessing",
+        "background": "Many ML pipelines build graph features before training a downstream model.",
+        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+      }
+    ],
+    "applicationsClose": "Euler's formula is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
+    "takeaways": [
+      "Euler's formula has a precise definition that should be checked before using it.",
+      "Small graphs are enough to test the arithmetic and the assumptions.",
+      "The same structure scales to networks, matrices, and ML pipelines.",
+      "Always separate the graph property from a particular drawing or implementation."
+    ],
     "prereqs": [
       "math-15-18"
     ]
@@ -405,19 +5127,262 @@
   B({
     "id": "math-15-20",
     "title": "Eulerian graphs",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: eulerian graphs.",
+    "tagline": "An Eulerian graph lets you traverse every edge exactly once.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Euler's formula</i>"
+        "Euler's formula",
+        "degree and the handshake lemma",
+        "connectivity"
       ],
       "leadsTo": [
-        "the next lesson, <i>Hamiltonian graphs</i>"
+        "Hamiltonian graphs",
+        "route inspection",
+        "network design"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "cycles",
+        "degree",
+        "connectivity",
+        "paths"
       ]
     },
+    "motivation": "<p>You already know the graph picture: dots connected by lines. The one-stroke drawing puzzle is graph theory: can one walk use every edge exactly once?</p><p><b>Eulerian graphs</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
+    "definition": "<p>An <b>Eulerian circuit</b> is a closed walk using every edge exactly once. A connected graph has one exactly when every vertex has even degree; it has an open Eulerian trail exactly when exactly two vertices have odd degree.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "worked": {
+      "problem": "Degrees are $2,2,4,4$ in a connected graph. Does an Eulerian circuit exist?",
+      "skills": [
+        "Eulerian routing",
+        "graph reasoning",
+        "numerical checking"
+      ],
+      "strategy": "Check connectedness and degree parity.",
+      "steps": [
+        {
+          "do": "Identify the relevant graph data",
+          "result": "vertices, edges, degrees, or matrix entries",
+          "why": "the definition tells us what to inspect"
+        },
+        {
+          "do": "Apply the key rule",
+          "result": "all degrees are even, so an Eulerian circuit exists",
+          "why": "use the lesson's central criterion"
+        },
+        {
+          "do": "Check the arithmetic",
+          "result": "the stated numbers are consistent",
+          "why": "graph counts should balance known identities"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Eulerian structure is edge routing controlled by parity.",
+          "why": "translate the computation back to the graph"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "the required property or value has been found",
+          "why": "the final answer follows from the checked rule"
+        }
+      ],
+      "verify": "The conclusion matches the defining condition for eulerian graphs.",
+      "answer": "all degrees are even, so an Eulerian circuit exists.",
+      "connects": "Eulerian structure is edge routing controlled by parity."
+    },
+    "practice": [
+      {
+        "problem": "Basic check for Eulerian graphs: a graph has $V=4$ and $E=3$. Compute the average degree.",
+        "steps": [
+          {
+            "do": "Use the average-degree formula",
+            "result": "$2E/V$",
+            "why": "each edge contributes two degree counts"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$2\\cdot3/4$",
+            "why": "use $E=3$ and $V=4$"
+          },
+          {
+            "do": "Multiply numerator",
+            "result": "$6/4$",
+            "why": "compute $2E$"
+          },
+          {
+            "do": "Divide",
+            "result": "$1.5$",
+            "why": "average degree may be non-integer"
+          },
+          {
+            "do": "Interpret",
+            "result": "typical vertex has degree $1.5$",
+            "why": "an average summarizes the graph"
+          }
+        ],
+        "answer": "The average degree is $1.5$."
+      },
+      {
+        "problem": "Use a four-cycle while thinking about Eulerian graphs. Count vertices, edges, and degrees.",
+        "steps": [
+          {
+            "do": "List vertices",
+            "result": "$4$",
+            "why": "a four-cycle has four corners"
+          },
+          {
+            "do": "List edges",
+            "result": "$4$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Find each degree",
+            "result": "$2$",
+            "why": "each vertex has two cycle neighbors"
+          },
+          {
+            "do": "Sum degrees",
+            "result": "$8$",
+            "why": "four vertices times degree two"
+          },
+          {
+            "do": "Check handshake",
+            "result": "$2E=8$",
+            "why": "the count matches"
+          }
+        ],
+        "answer": "$V=4$, $E=4$, and every degree is $2$."
+      },
+      {
+        "problem": "For a path on five vertices, relate Eulerian graphs to endpoint behavior.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$5$",
+            "why": "given path size"
+          },
+          {
+            "do": "Count edges",
+            "result": "$4$",
+            "why": "a path has $V-1$ edges"
+          },
+          {
+            "do": "Find endpoint degrees",
+            "result": "$1$ and $1$",
+            "why": "the two ends have one neighbor"
+          },
+          {
+            "do": "Find internal degrees",
+            "result": "$2,2,2$",
+            "why": "three internal vertices have two neighbors"
+          },
+          {
+            "do": "Check degree sum",
+            "result": "$1+1+2+2+2=8=2E$",
+            "why": "handshake lemma holds"
+          }
+        ],
+        "answer": "The path has two degree-$1$ endpoints and three degree-$2$ internal vertices."
+      },
+      {
+        "problem": "A graph has two components, one triangle and one single edge. Compute total $V$ and $E$ for use in Eulerian graphs.",
+        "steps": [
+          {
+            "do": "Count triangle vertices",
+            "result": "$3$",
+            "why": "three-cycle"
+          },
+          {
+            "do": "Count triangle edges",
+            "result": "$3$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Count single-edge vertices",
+            "result": "$2$",
+            "why": "two endpoints"
+          },
+          {
+            "do": "Count single-edge edges",
+            "result": "$1$",
+            "why": "one edge"
+          },
+          {
+            "do": "Add totals",
+            "result": "$V=5$, $E=4$",
+            "why": "combine components"
+          }
+        ],
+        "answer": "The graph has $V=5$ and $E=4$."
+      },
+      {
+        "problem": "ML-style use of Eulerian graphs: a node has neighbor feature values $1,4,7$. Compute sum and mean aggregates.",
+        "steps": [
+          {
+            "do": "Sum neighbor features",
+            "result": "$1+4+7=12$",
+            "why": "sum aggregation adds messages"
+          },
+          {
+            "do": "Count neighbors",
+            "result": "$3$",
+            "why": "there are three values"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$12/3=4$",
+            "why": "mean normalizes by degree"
+          },
+          {
+            "do": "Compare sum and mean",
+            "result": "$12$ versus $4$",
+            "why": "normalization changes scale"
+          },
+          {
+            "do": "Interpret",
+            "result": "sum depends on degree while mean controls for degree",
+            "why": "this matters in graph ML"
+          }
+        ],
+        "answer": "The sum aggregate is $12$ and the mean aggregate is $4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Small network sanity checks",
+        "background": "Engineers often test eulerian graphs on tiny graphs before trusting code on large ones.",
+        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+      },
+      {
+        "title": "Recommendation graphs",
+        "background": "Recommender systems use eulerian graphs ideas because user-item data is naturally relational.",
+        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+      },
+      {
+        "title": "Social networks",
+        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
+        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+      },
+      {
+        "title": "Molecular graphs",
+        "background": "Chemistry represents atoms and bonds as graphs, so eulerian graphs can become a model feature.",
+        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+      },
+      {
+        "title": "Infrastructure routing",
+        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
+        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+      },
+      {
+        "title": "ML preprocessing",
+        "background": "Many ML pipelines build graph features before training a downstream model.",
+        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+      }
+    ],
+    "applicationsClose": "Eulerian graphs is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
+    "takeaways": [
+      "Eulerian graphs has a precise definition that should be checked before using it.",
+      "Small graphs are enough to test the arithmetic and the assumptions.",
+      "The same structure scales to networks, matrices, and ML pipelines.",
+      "Always separate the graph property from a particular drawing or implementation."
+    ],
     "prereqs": [
       "math-15-19"
     ]
@@ -426,19 +5391,262 @@
   B({
     "id": "math-15-21",
     "title": "Hamiltonian graphs",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: hamiltonian graphs.",
+    "tagline": "A Hamiltonian graph contains a cycle visiting every vertex exactly once.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Eulerian graphs</i>"
+        "Eulerian graphs",
+        "cycles",
+        "paths and walks"
       ],
       "leadsTo": [
-        "the next lesson, <i>The adjacency matrix</i>"
+        "The adjacency matrix",
+        "traveling salesperson problem",
+        "complexity"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "cycles",
+        "degree",
+        "connectivity",
+        "paths"
       ]
     },
+    "motivation": "<p>You already know the graph picture: dots connected by lines. Hamiltonian questions care about visiting places once, not using roads once.</p><p><b>Hamiltonian graphs</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
+    "definition": "<p>A <b>Hamiltonian cycle</b> visits every vertex exactly once and returns to the start. Unlike Eulerian circuits, there is no simple degree-parity characterization, and finding one is computationally hard in general.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "worked": {
+      "problem": "Show that $K_5$ has a Hamiltonian cycle.",
+      "skills": [
+        "Hamiltonian cycles",
+        "graph reasoning",
+        "numerical checking"
+      ],
+      "strategy": "Use the fact that every pair of vertices is adjacent.",
+      "steps": [
+        {
+          "do": "Identify the relevant graph data",
+          "result": "vertices, edges, degrees, or matrix entries",
+          "why": "the definition tells us what to inspect"
+        },
+        {
+          "do": "Apply the key rule",
+          "result": "$1$--$2$--$3$--$4$--$5$--$1$ is a valid cycle",
+          "why": "use the lesson's central criterion"
+        },
+        {
+          "do": "Check the arithmetic",
+          "result": "the stated numbers are consistent",
+          "why": "graph counts should balance known identities"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Hamiltonian structure is about spanning vertex cycles.",
+          "why": "translate the computation back to the graph"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "the required property or value has been found",
+          "why": "the final answer follows from the checked rule"
+        }
+      ],
+      "verify": "The conclusion matches the defining condition for hamiltonian graphs.",
+      "answer": "$1$--$2$--$3$--$4$--$5$--$1$ is a valid cycle.",
+      "connects": "Hamiltonian structure is about spanning vertex cycles."
+    },
+    "practice": [
+      {
+        "problem": "Basic check for Hamiltonian graphs: a graph has $V=4$ and $E=3$. Compute the average degree.",
+        "steps": [
+          {
+            "do": "Use the average-degree formula",
+            "result": "$2E/V$",
+            "why": "each edge contributes two degree counts"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$2\\cdot3/4$",
+            "why": "use $E=3$ and $V=4$"
+          },
+          {
+            "do": "Multiply numerator",
+            "result": "$6/4$",
+            "why": "compute $2E$"
+          },
+          {
+            "do": "Divide",
+            "result": "$1.5$",
+            "why": "average degree may be non-integer"
+          },
+          {
+            "do": "Interpret",
+            "result": "typical vertex has degree $1.5$",
+            "why": "an average summarizes the graph"
+          }
+        ],
+        "answer": "The average degree is $1.5$."
+      },
+      {
+        "problem": "Use a four-cycle while thinking about Hamiltonian graphs. Count vertices, edges, and degrees.",
+        "steps": [
+          {
+            "do": "List vertices",
+            "result": "$4$",
+            "why": "a four-cycle has four corners"
+          },
+          {
+            "do": "List edges",
+            "result": "$4$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Find each degree",
+            "result": "$2$",
+            "why": "each vertex has two cycle neighbors"
+          },
+          {
+            "do": "Sum degrees",
+            "result": "$8$",
+            "why": "four vertices times degree two"
+          },
+          {
+            "do": "Check handshake",
+            "result": "$2E=8$",
+            "why": "the count matches"
+          }
+        ],
+        "answer": "$V=4$, $E=4$, and every degree is $2$."
+      },
+      {
+        "problem": "For a path on five vertices, relate Hamiltonian graphs to endpoint behavior.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$5$",
+            "why": "given path size"
+          },
+          {
+            "do": "Count edges",
+            "result": "$4$",
+            "why": "a path has $V-1$ edges"
+          },
+          {
+            "do": "Find endpoint degrees",
+            "result": "$1$ and $1$",
+            "why": "the two ends have one neighbor"
+          },
+          {
+            "do": "Find internal degrees",
+            "result": "$2,2,2$",
+            "why": "three internal vertices have two neighbors"
+          },
+          {
+            "do": "Check degree sum",
+            "result": "$1+1+2+2+2=8=2E$",
+            "why": "handshake lemma holds"
+          }
+        ],
+        "answer": "The path has two degree-$1$ endpoints and three degree-$2$ internal vertices."
+      },
+      {
+        "problem": "A graph has two components, one triangle and one single edge. Compute total $V$ and $E$ for use in Hamiltonian graphs.",
+        "steps": [
+          {
+            "do": "Count triangle vertices",
+            "result": "$3$",
+            "why": "three-cycle"
+          },
+          {
+            "do": "Count triangle edges",
+            "result": "$3$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Count single-edge vertices",
+            "result": "$2$",
+            "why": "two endpoints"
+          },
+          {
+            "do": "Count single-edge edges",
+            "result": "$1$",
+            "why": "one edge"
+          },
+          {
+            "do": "Add totals",
+            "result": "$V=5$, $E=4$",
+            "why": "combine components"
+          }
+        ],
+        "answer": "The graph has $V=5$ and $E=4$."
+      },
+      {
+        "problem": "ML-style use of Hamiltonian graphs: a node has neighbor feature values $1,4,7$. Compute sum and mean aggregates.",
+        "steps": [
+          {
+            "do": "Sum neighbor features",
+            "result": "$1+4+7=12$",
+            "why": "sum aggregation adds messages"
+          },
+          {
+            "do": "Count neighbors",
+            "result": "$3$",
+            "why": "there are three values"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$12/3=4$",
+            "why": "mean normalizes by degree"
+          },
+          {
+            "do": "Compare sum and mean",
+            "result": "$12$ versus $4$",
+            "why": "normalization changes scale"
+          },
+          {
+            "do": "Interpret",
+            "result": "sum depends on degree while mean controls for degree",
+            "why": "this matters in graph ML"
+          }
+        ],
+        "answer": "The sum aggregate is $12$ and the mean aggregate is $4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Small network sanity checks",
+        "background": "Engineers often test hamiltonian graphs on tiny graphs before trusting code on large ones.",
+        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+      },
+      {
+        "title": "Recommendation graphs",
+        "background": "Recommender systems use hamiltonian graphs ideas because user-item data is naturally relational.",
+        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+      },
+      {
+        "title": "Social networks",
+        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
+        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+      },
+      {
+        "title": "Molecular graphs",
+        "background": "Chemistry represents atoms and bonds as graphs, so hamiltonian graphs can become a model feature.",
+        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+      },
+      {
+        "title": "Infrastructure routing",
+        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
+        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+      },
+      {
+        "title": "ML preprocessing",
+        "background": "Many ML pipelines build graph features before training a downstream model.",
+        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+      }
+    ],
+    "applicationsClose": "Hamiltonian graphs is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
+    "takeaways": [
+      "Hamiltonian graphs has a precise definition that should be checked before using it.",
+      "Small graphs are enough to test the arithmetic and the assumptions.",
+      "The same structure scales to networks, matrices, and ML pipelines.",
+      "Always separate the graph property from a particular drawing or implementation."
+    ],
     "prereqs": [
       "math-15-20"
     ]
@@ -447,19 +5655,262 @@
   B({
     "id": "math-15-22",
     "title": "The adjacency matrix",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: the adjacency matrix.",
+    "tagline": "The adjacency matrix stores a graph as numbers for linear algebra.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Hamiltonian graphs</i>"
+        "Hamiltonian graphs",
+        "matrices",
+        "graphs and their representations"
       ],
       "leadsTo": [
-        "the next lesson, <i>The graph Laplacian</i>"
+        "The graph Laplacian",
+        "Spectral graph theory",
+        "Graph neural networks & message passing"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "matrices",
+        "eigenvectors",
+        "degree",
+        "linear algebra"
       ]
     },
+    "motivation": "<p>You already know the graph picture: dots connected by lines. A drawing helps people, but matrices help computers count walks and run algorithms.</p><p><b>The adjacency matrix</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
+    "definition": "<p>For vertices $1,\\ldots,n$, the <b>adjacency matrix</b> $A$ has $A_{ij}=1$ if $i$ and $j$ are adjacent and $0$ otherwise. For a simple undirected graph, $A$ is symmetric with zero diagonal, and $(A^k)_{ij}$ counts length-$k$ walks.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "worked": {
+      "problem": "Write the adjacency matrix for path $1$--$2$--$3$.",
+      "skills": [
+        "adjacency matrices",
+        "graph reasoning",
+        "numerical checking"
+      ],
+      "strategy": "Fill symmetric ones for edges and zeros elsewhere.",
+      "steps": [
+        {
+          "do": "Identify the relevant graph data",
+          "result": "vertices, edges, degrees, or matrix entries",
+          "why": "the definition tells us what to inspect"
+        },
+        {
+          "do": "Apply the key rule",
+          "result": "$A=\\begin{bmatrix}0&1&0\\\\1&0&1\\\\0&1&0\\end{bmatrix}$",
+          "why": "use the lesson's central criterion"
+        },
+        {
+          "do": "Check the arithmetic",
+          "result": "the stated numbers are consistent",
+          "why": "graph counts should balance known identities"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "The adjacency matrix is the graph as arithmetic data.",
+          "why": "translate the computation back to the graph"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "the required property or value has been found",
+          "why": "the final answer follows from the checked rule"
+        }
+      ],
+      "verify": "The conclusion matches the defining condition for the adjacency matrix.",
+      "answer": "$A=\\begin{bmatrix}0&1&0\\\\1&0&1\\\\0&1&0\\end{bmatrix}$.",
+      "connects": "The adjacency matrix is the graph as arithmetic data."
+    },
+    "practice": [
+      {
+        "problem": "Basic check for The adjacency matrix: a graph has $V=4$ and $E=3$. Compute the average degree.",
+        "steps": [
+          {
+            "do": "Use the average-degree formula",
+            "result": "$2E/V$",
+            "why": "each edge contributes two degree counts"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$2\\cdot3/4$",
+            "why": "use $E=3$ and $V=4$"
+          },
+          {
+            "do": "Multiply numerator",
+            "result": "$6/4$",
+            "why": "compute $2E$"
+          },
+          {
+            "do": "Divide",
+            "result": "$1.5$",
+            "why": "average degree may be non-integer"
+          },
+          {
+            "do": "Interpret",
+            "result": "typical vertex has degree $1.5$",
+            "why": "an average summarizes the graph"
+          }
+        ],
+        "answer": "The average degree is $1.5$."
+      },
+      {
+        "problem": "Use a four-cycle while thinking about The adjacency matrix. Count vertices, edges, and degrees.",
+        "steps": [
+          {
+            "do": "List vertices",
+            "result": "$4$",
+            "why": "a four-cycle has four corners"
+          },
+          {
+            "do": "List edges",
+            "result": "$4$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Find each degree",
+            "result": "$2$",
+            "why": "each vertex has two cycle neighbors"
+          },
+          {
+            "do": "Sum degrees",
+            "result": "$8$",
+            "why": "four vertices times degree two"
+          },
+          {
+            "do": "Check handshake",
+            "result": "$2E=8$",
+            "why": "the count matches"
+          }
+        ],
+        "answer": "$V=4$, $E=4$, and every degree is $2$."
+      },
+      {
+        "problem": "For a path on five vertices, relate The adjacency matrix to endpoint behavior.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$5$",
+            "why": "given path size"
+          },
+          {
+            "do": "Count edges",
+            "result": "$4$",
+            "why": "a path has $V-1$ edges"
+          },
+          {
+            "do": "Find endpoint degrees",
+            "result": "$1$ and $1$",
+            "why": "the two ends have one neighbor"
+          },
+          {
+            "do": "Find internal degrees",
+            "result": "$2,2,2$",
+            "why": "three internal vertices have two neighbors"
+          },
+          {
+            "do": "Check degree sum",
+            "result": "$1+1+2+2+2=8=2E$",
+            "why": "handshake lemma holds"
+          }
+        ],
+        "answer": "The path has two degree-$1$ endpoints and three degree-$2$ internal vertices."
+      },
+      {
+        "problem": "A graph has two components, one triangle and one single edge. Compute total $V$ and $E$ for use in The adjacency matrix.",
+        "steps": [
+          {
+            "do": "Count triangle vertices",
+            "result": "$3$",
+            "why": "three-cycle"
+          },
+          {
+            "do": "Count triangle edges",
+            "result": "$3$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Count single-edge vertices",
+            "result": "$2$",
+            "why": "two endpoints"
+          },
+          {
+            "do": "Count single-edge edges",
+            "result": "$1$",
+            "why": "one edge"
+          },
+          {
+            "do": "Add totals",
+            "result": "$V=5$, $E=4$",
+            "why": "combine components"
+          }
+        ],
+        "answer": "The graph has $V=5$ and $E=4$."
+      },
+      {
+        "problem": "ML-style use of The adjacency matrix: a node has neighbor feature values $1,4,7$. Compute sum and mean aggregates.",
+        "steps": [
+          {
+            "do": "Sum neighbor features",
+            "result": "$1+4+7=12$",
+            "why": "sum aggregation adds messages"
+          },
+          {
+            "do": "Count neighbors",
+            "result": "$3$",
+            "why": "there are three values"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$12/3=4$",
+            "why": "mean normalizes by degree"
+          },
+          {
+            "do": "Compare sum and mean",
+            "result": "$12$ versus $4$",
+            "why": "normalization changes scale"
+          },
+          {
+            "do": "Interpret",
+            "result": "sum depends on degree while mean controls for degree",
+            "why": "this matters in graph ML"
+          }
+        ],
+        "answer": "The sum aggregate is $12$ and the mean aggregate is $4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Small network sanity checks",
+        "background": "Engineers often test the adjacency matrix on tiny graphs before trusting code on large ones.",
+        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+      },
+      {
+        "title": "Recommendation graphs",
+        "background": "Recommender systems use the adjacency matrix ideas because user-item data is naturally relational.",
+        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+      },
+      {
+        "title": "Social networks",
+        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
+        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+      },
+      {
+        "title": "Molecular graphs",
+        "background": "Chemistry represents atoms and bonds as graphs, so the adjacency matrix can become a model feature.",
+        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+      },
+      {
+        "title": "Infrastructure routing",
+        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
+        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+      },
+      {
+        "title": "ML preprocessing",
+        "background": "Many ML pipelines build graph features before training a downstream model.",
+        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+      }
+    ],
+    "applicationsClose": "The adjacency matrix is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
+    "takeaways": [
+      "The adjacency matrix has a precise definition that should be checked before using it.",
+      "Small graphs are enough to test the arithmetic and the assumptions.",
+      "The same structure scales to networks, matrices, and ML pipelines.",
+      "Always separate the graph property from a particular drawing or implementation."
+    ],
     "prereqs": [
       "math-15-21"
     ]
@@ -468,19 +5919,262 @@
   B({
     "id": "math-15-23",
     "title": "The graph Laplacian",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: the graph laplacian.",
+    "tagline": "The graph Laplacian $L=D-A$ measures how a vertex differs from its neighbors.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The adjacency matrix</i>"
+        "The adjacency matrix",
+        "degree",
+        "linear algebra"
       ],
       "leadsTo": [
-        "the next lesson, <i>Spectral graph theory</i>"
+        "Spectral graph theory",
+        "Spectral clustering",
+        "diffusion on graphs"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "matrices",
+        "eigenvectors",
+        "degree",
+        "linear algebra"
       ]
     },
+    "motivation": "<p>You already know the graph picture: dots connected by lines. Adjacency says who touches whom; the Laplacian measures local disagreement across those touches.</p><p><b>The graph Laplacian</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
+    "definition": "<p>For adjacency matrix $A$ and degree matrix $D$, the unnormalized <b>graph Laplacian</b> is $L=D-A$. For a signal $x$, $(Lx)_i=\\sum_{j\\sim i}(x_i-x_j)$ and $x^TLx=\\sum_{(i,j)\\in E}(x_i-x_j)^2$.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "worked": {
+      "problem": "Compute $L$ for path $1$--$2$--$3$.",
+      "skills": [
+        "graph Laplacians",
+        "graph reasoning",
+        "numerical checking"
+      ],
+      "strategy": "Build $D$ and $A$, then subtract.",
+      "steps": [
+        {
+          "do": "Identify the relevant graph data",
+          "result": "vertices, edges, degrees, or matrix entries",
+          "why": "the definition tells us what to inspect"
+        },
+        {
+          "do": "Apply the key rule",
+          "result": "$L=\\begin{bmatrix}1&-1&0\\\\-1&2&-1\\\\0&-1&1\\end{bmatrix}$",
+          "why": "use the lesson's central criterion"
+        },
+        {
+          "do": "Check the arithmetic",
+          "result": "the stated numbers are consistent",
+          "why": "graph counts should balance known identities"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "The Laplacian encodes neighbor differences.",
+          "why": "translate the computation back to the graph"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "the required property or value has been found",
+          "why": "the final answer follows from the checked rule"
+        }
+      ],
+      "verify": "The conclusion matches the defining condition for the graph laplacian.",
+      "answer": "$L=\\begin{bmatrix}1&-1&0\\\\-1&2&-1\\\\0&-1&1\\end{bmatrix}$.",
+      "connects": "The Laplacian encodes neighbor differences."
+    },
+    "practice": [
+      {
+        "problem": "Basic check for The graph Laplacian: a graph has $V=4$ and $E=3$. Compute the average degree.",
+        "steps": [
+          {
+            "do": "Use the average-degree formula",
+            "result": "$2E/V$",
+            "why": "each edge contributes two degree counts"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$2\\cdot3/4$",
+            "why": "use $E=3$ and $V=4$"
+          },
+          {
+            "do": "Multiply numerator",
+            "result": "$6/4$",
+            "why": "compute $2E$"
+          },
+          {
+            "do": "Divide",
+            "result": "$1.5$",
+            "why": "average degree may be non-integer"
+          },
+          {
+            "do": "Interpret",
+            "result": "typical vertex has degree $1.5$",
+            "why": "an average summarizes the graph"
+          }
+        ],
+        "answer": "The average degree is $1.5$."
+      },
+      {
+        "problem": "Use a four-cycle while thinking about The graph Laplacian. Count vertices, edges, and degrees.",
+        "steps": [
+          {
+            "do": "List vertices",
+            "result": "$4$",
+            "why": "a four-cycle has four corners"
+          },
+          {
+            "do": "List edges",
+            "result": "$4$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Find each degree",
+            "result": "$2$",
+            "why": "each vertex has two cycle neighbors"
+          },
+          {
+            "do": "Sum degrees",
+            "result": "$8$",
+            "why": "four vertices times degree two"
+          },
+          {
+            "do": "Check handshake",
+            "result": "$2E=8$",
+            "why": "the count matches"
+          }
+        ],
+        "answer": "$V=4$, $E=4$, and every degree is $2$."
+      },
+      {
+        "problem": "For a path on five vertices, relate The graph Laplacian to endpoint behavior.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$5$",
+            "why": "given path size"
+          },
+          {
+            "do": "Count edges",
+            "result": "$4$",
+            "why": "a path has $V-1$ edges"
+          },
+          {
+            "do": "Find endpoint degrees",
+            "result": "$1$ and $1$",
+            "why": "the two ends have one neighbor"
+          },
+          {
+            "do": "Find internal degrees",
+            "result": "$2,2,2$",
+            "why": "three internal vertices have two neighbors"
+          },
+          {
+            "do": "Check degree sum",
+            "result": "$1+1+2+2+2=8=2E$",
+            "why": "handshake lemma holds"
+          }
+        ],
+        "answer": "The path has two degree-$1$ endpoints and three degree-$2$ internal vertices."
+      },
+      {
+        "problem": "A graph has two components, one triangle and one single edge. Compute total $V$ and $E$ for use in The graph Laplacian.",
+        "steps": [
+          {
+            "do": "Count triangle vertices",
+            "result": "$3$",
+            "why": "three-cycle"
+          },
+          {
+            "do": "Count triangle edges",
+            "result": "$3$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Count single-edge vertices",
+            "result": "$2$",
+            "why": "two endpoints"
+          },
+          {
+            "do": "Count single-edge edges",
+            "result": "$1$",
+            "why": "one edge"
+          },
+          {
+            "do": "Add totals",
+            "result": "$V=5$, $E=4$",
+            "why": "combine components"
+          }
+        ],
+        "answer": "The graph has $V=5$ and $E=4$."
+      },
+      {
+        "problem": "ML-style use of The graph Laplacian: a node has neighbor feature values $1,4,7$. Compute sum and mean aggregates.",
+        "steps": [
+          {
+            "do": "Sum neighbor features",
+            "result": "$1+4+7=12$",
+            "why": "sum aggregation adds messages"
+          },
+          {
+            "do": "Count neighbors",
+            "result": "$3$",
+            "why": "there are three values"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$12/3=4$",
+            "why": "mean normalizes by degree"
+          },
+          {
+            "do": "Compare sum and mean",
+            "result": "$12$ versus $4$",
+            "why": "normalization changes scale"
+          },
+          {
+            "do": "Interpret",
+            "result": "sum depends on degree while mean controls for degree",
+            "why": "this matters in graph ML"
+          }
+        ],
+        "answer": "The sum aggregate is $12$ and the mean aggregate is $4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Small network sanity checks",
+        "background": "Engineers often test the graph laplacian on tiny graphs before trusting code on large ones.",
+        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+      },
+      {
+        "title": "Recommendation graphs",
+        "background": "Recommender systems use the graph laplacian ideas because user-item data is naturally relational.",
+        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+      },
+      {
+        "title": "Social networks",
+        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
+        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+      },
+      {
+        "title": "Molecular graphs",
+        "background": "Chemistry represents atoms and bonds as graphs, so the graph laplacian can become a model feature.",
+        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+      },
+      {
+        "title": "Infrastructure routing",
+        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
+        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+      },
+      {
+        "title": "ML preprocessing",
+        "background": "Many ML pipelines build graph features before training a downstream model.",
+        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+      }
+    ],
+    "applicationsClose": "The graph Laplacian is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
+    "takeaways": [
+      "The graph Laplacian has a precise definition that should be checked before using it.",
+      "Small graphs are enough to test the arithmetic and the assumptions.",
+      "The same structure scales to networks, matrices, and ML pipelines.",
+      "Always separate the graph property from a particular drawing or implementation."
+    ],
     "prereqs": [
       "math-15-22"
     ]
@@ -489,19 +6183,262 @@
   B({
     "id": "math-15-24",
     "title": "Spectral graph theory",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: spectral graph theory.",
+    "tagline": "Spectral graph theory reads graph structure from eigenvalues and eigenvectors.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The graph Laplacian</i>"
+        "The graph Laplacian",
+        "eigenvalues",
+        "linear algebra"
       ],
       "leadsTo": [
-        "the next lesson, <i>Random graphs</i>"
+        "Random graphs",
+        "Spectral clustering",
+        "graph signal processing"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "matrices",
+        "eigenvectors",
+        "degree",
+        "linear algebra"
       ]
     },
+    "motivation": "<p>You already know the graph picture: dots connected by lines. A graph matrix can speak through its eigenvalues, revealing components and bottlenecks.</p><p><b>Spectral graph theory</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
+    "definition": "<p><b>Spectral graph theory</b> studies eigenvalues and eigenvectors of graph matrices such as $A$ and $L$. For an undirected Laplacian, $0=\\lambda_1\\le\\lambda_2\\le\\cdots$, and the number of zero eigenvalues equals the number of connected components.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "worked": {
+      "problem": "A graph has Laplacian eigenvalues $0,0,3,5$. How many components?",
+      "skills": [
+        "spectra",
+        "graph reasoning",
+        "numerical checking"
+      ],
+      "strategy": "Count the multiplicity of eigenvalue zero.",
+      "steps": [
+        {
+          "do": "Identify the relevant graph data",
+          "result": "vertices, edges, degrees, or matrix entries",
+          "why": "the definition tells us what to inspect"
+        },
+        {
+          "do": "Apply the key rule",
+          "result": "two zero eigenvalues mean two components",
+          "why": "use the lesson's central criterion"
+        },
+        {
+          "do": "Check the arithmetic",
+          "result": "the stated numbers are consistent",
+          "why": "graph counts should balance known identities"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "The Laplacian spectrum counts connected pieces before measuring bottlenecks.",
+          "why": "translate the computation back to the graph"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "the required property or value has been found",
+          "why": "the final answer follows from the checked rule"
+        }
+      ],
+      "verify": "The conclusion matches the defining condition for spectral graph theory.",
+      "answer": "two zero eigenvalues mean two components.",
+      "connects": "The Laplacian spectrum counts connected pieces before measuring bottlenecks."
+    },
+    "practice": [
+      {
+        "problem": "Basic check for Spectral graph theory: a graph has $V=4$ and $E=3$. Compute the average degree.",
+        "steps": [
+          {
+            "do": "Use the average-degree formula",
+            "result": "$2E/V$",
+            "why": "each edge contributes two degree counts"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$2\\cdot3/4$",
+            "why": "use $E=3$ and $V=4$"
+          },
+          {
+            "do": "Multiply numerator",
+            "result": "$6/4$",
+            "why": "compute $2E$"
+          },
+          {
+            "do": "Divide",
+            "result": "$1.5$",
+            "why": "average degree may be non-integer"
+          },
+          {
+            "do": "Interpret",
+            "result": "typical vertex has degree $1.5$",
+            "why": "an average summarizes the graph"
+          }
+        ],
+        "answer": "The average degree is $1.5$."
+      },
+      {
+        "problem": "Use a four-cycle while thinking about Spectral graph theory. Count vertices, edges, and degrees.",
+        "steps": [
+          {
+            "do": "List vertices",
+            "result": "$4$",
+            "why": "a four-cycle has four corners"
+          },
+          {
+            "do": "List edges",
+            "result": "$4$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Find each degree",
+            "result": "$2$",
+            "why": "each vertex has two cycle neighbors"
+          },
+          {
+            "do": "Sum degrees",
+            "result": "$8$",
+            "why": "four vertices times degree two"
+          },
+          {
+            "do": "Check handshake",
+            "result": "$2E=8$",
+            "why": "the count matches"
+          }
+        ],
+        "answer": "$V=4$, $E=4$, and every degree is $2$."
+      },
+      {
+        "problem": "For a path on five vertices, relate Spectral graph theory to endpoint behavior.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$5$",
+            "why": "given path size"
+          },
+          {
+            "do": "Count edges",
+            "result": "$4$",
+            "why": "a path has $V-1$ edges"
+          },
+          {
+            "do": "Find endpoint degrees",
+            "result": "$1$ and $1$",
+            "why": "the two ends have one neighbor"
+          },
+          {
+            "do": "Find internal degrees",
+            "result": "$2,2,2$",
+            "why": "three internal vertices have two neighbors"
+          },
+          {
+            "do": "Check degree sum",
+            "result": "$1+1+2+2+2=8=2E$",
+            "why": "handshake lemma holds"
+          }
+        ],
+        "answer": "The path has two degree-$1$ endpoints and three degree-$2$ internal vertices."
+      },
+      {
+        "problem": "A graph has two components, one triangle and one single edge. Compute total $V$ and $E$ for use in Spectral graph theory.",
+        "steps": [
+          {
+            "do": "Count triangle vertices",
+            "result": "$3$",
+            "why": "three-cycle"
+          },
+          {
+            "do": "Count triangle edges",
+            "result": "$3$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Count single-edge vertices",
+            "result": "$2$",
+            "why": "two endpoints"
+          },
+          {
+            "do": "Count single-edge edges",
+            "result": "$1$",
+            "why": "one edge"
+          },
+          {
+            "do": "Add totals",
+            "result": "$V=5$, $E=4$",
+            "why": "combine components"
+          }
+        ],
+        "answer": "The graph has $V=5$ and $E=4$."
+      },
+      {
+        "problem": "ML-style use of Spectral graph theory: a node has neighbor feature values $1,4,7$. Compute sum and mean aggregates.",
+        "steps": [
+          {
+            "do": "Sum neighbor features",
+            "result": "$1+4+7=12$",
+            "why": "sum aggregation adds messages"
+          },
+          {
+            "do": "Count neighbors",
+            "result": "$3$",
+            "why": "there are three values"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$12/3=4$",
+            "why": "mean normalizes by degree"
+          },
+          {
+            "do": "Compare sum and mean",
+            "result": "$12$ versus $4$",
+            "why": "normalization changes scale"
+          },
+          {
+            "do": "Interpret",
+            "result": "sum depends on degree while mean controls for degree",
+            "why": "this matters in graph ML"
+          }
+        ],
+        "answer": "The sum aggregate is $12$ and the mean aggregate is $4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Small network sanity checks",
+        "background": "Engineers often test spectral graph theory on tiny graphs before trusting code on large ones.",
+        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+      },
+      {
+        "title": "Recommendation graphs",
+        "background": "Recommender systems use spectral graph theory ideas because user-item data is naturally relational.",
+        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+      },
+      {
+        "title": "Social networks",
+        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
+        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+      },
+      {
+        "title": "Molecular graphs",
+        "background": "Chemistry represents atoms and bonds as graphs, so spectral graph theory can become a model feature.",
+        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+      },
+      {
+        "title": "Infrastructure routing",
+        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
+        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+      },
+      {
+        "title": "ML preprocessing",
+        "background": "Many ML pipelines build graph features before training a downstream model.",
+        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+      }
+    ],
+    "applicationsClose": "Spectral graph theory is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
+    "takeaways": [
+      "Spectral graph theory has a precise definition that should be checked before using it.",
+      "Small graphs are enough to test the arithmetic and the assumptions.",
+      "The same structure scales to networks, matrices, and ML pipelines.",
+      "Always separate the graph property from a particular drawing or implementation."
+    ],
     "prereqs": [
       "math-15-23"
     ]
@@ -510,19 +6447,262 @@
   B({
     "id": "math-15-25",
     "title": "Random graphs",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: random graphs.",
+    "tagline": "Random graphs make edges probabilistic so typical network structure can be calculated.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Spectral graph theory</i>"
+        "probability",
+        "graphs and their representations",
+        "expectation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Spectral clustering</i>"
+        "Spectral clustering",
+        "network science",
+        "probabilistic methods"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "matrices",
+        "eigenvectors",
+        "degree",
+        "linear algebra"
       ]
     },
+    "motivation": "<p>You already know the graph picture: dots connected by lines. Probability gives a clean laboratory for asking what a typical network looks like.</p><p><b>Random graphs</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
+    "definition": "<p>In the Erdos-Renyi model $G(n,p)$, each possible undirected edge among $n$ vertices appears independently with probability $p$. Expected edges are $p\\binom n2$, and expected degree is $(n-1)p$.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "worked": {
+      "problem": "In $G(6,0.4)$, find expected edges and expected degree.",
+      "skills": [
+        "random graphs",
+        "graph reasoning",
+        "numerical checking"
+      ],
+      "strategy": "Count possible edges and multiply by probability.",
+      "steps": [
+        {
+          "do": "Identify the relevant graph data",
+          "result": "vertices, edges, degrees, or matrix entries",
+          "why": "the definition tells us what to inspect"
+        },
+        {
+          "do": "Apply the key rule",
+          "result": "$\\binom62=15$, so expected edges are $6$ and expected degree is $5\\cdot0.4=2$",
+          "why": "use the lesson's central criterion"
+        },
+        {
+          "do": "Check the arithmetic",
+          "result": "the stated numbers are consistent",
+          "why": "graph counts should balance known identities"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Random graphs replace exact structure with re-derivable averages.",
+          "why": "translate the computation back to the graph"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "the required property or value has been found",
+          "why": "the final answer follows from the checked rule"
+        }
+      ],
+      "verify": "The conclusion matches the defining condition for random graphs.",
+      "answer": "$\\binom62=15$, so expected edges are $6$ and expected degree is $5\\cdot0.4=2$.",
+      "connects": "Random graphs replace exact structure with re-derivable averages."
+    },
+    "practice": [
+      {
+        "problem": "Basic check for Random graphs: a graph has $V=4$ and $E=3$. Compute the average degree.",
+        "steps": [
+          {
+            "do": "Use the average-degree formula",
+            "result": "$2E/V$",
+            "why": "each edge contributes two degree counts"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$2\\cdot3/4$",
+            "why": "use $E=3$ and $V=4$"
+          },
+          {
+            "do": "Multiply numerator",
+            "result": "$6/4$",
+            "why": "compute $2E$"
+          },
+          {
+            "do": "Divide",
+            "result": "$1.5$",
+            "why": "average degree may be non-integer"
+          },
+          {
+            "do": "Interpret",
+            "result": "typical vertex has degree $1.5$",
+            "why": "an average summarizes the graph"
+          }
+        ],
+        "answer": "The average degree is $1.5$."
+      },
+      {
+        "problem": "Use a four-cycle while thinking about Random graphs. Count vertices, edges, and degrees.",
+        "steps": [
+          {
+            "do": "List vertices",
+            "result": "$4$",
+            "why": "a four-cycle has four corners"
+          },
+          {
+            "do": "List edges",
+            "result": "$4$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Find each degree",
+            "result": "$2$",
+            "why": "each vertex has two cycle neighbors"
+          },
+          {
+            "do": "Sum degrees",
+            "result": "$8$",
+            "why": "four vertices times degree two"
+          },
+          {
+            "do": "Check handshake",
+            "result": "$2E=8$",
+            "why": "the count matches"
+          }
+        ],
+        "answer": "$V=4$, $E=4$, and every degree is $2$."
+      },
+      {
+        "problem": "For a path on five vertices, relate Random graphs to endpoint behavior.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$5$",
+            "why": "given path size"
+          },
+          {
+            "do": "Count edges",
+            "result": "$4$",
+            "why": "a path has $V-1$ edges"
+          },
+          {
+            "do": "Find endpoint degrees",
+            "result": "$1$ and $1$",
+            "why": "the two ends have one neighbor"
+          },
+          {
+            "do": "Find internal degrees",
+            "result": "$2,2,2$",
+            "why": "three internal vertices have two neighbors"
+          },
+          {
+            "do": "Check degree sum",
+            "result": "$1+1+2+2+2=8=2E$",
+            "why": "handshake lemma holds"
+          }
+        ],
+        "answer": "The path has two degree-$1$ endpoints and three degree-$2$ internal vertices."
+      },
+      {
+        "problem": "A graph has two components, one triangle and one single edge. Compute total $V$ and $E$ for use in Random graphs.",
+        "steps": [
+          {
+            "do": "Count triangle vertices",
+            "result": "$3$",
+            "why": "three-cycle"
+          },
+          {
+            "do": "Count triangle edges",
+            "result": "$3$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Count single-edge vertices",
+            "result": "$2$",
+            "why": "two endpoints"
+          },
+          {
+            "do": "Count single-edge edges",
+            "result": "$1$",
+            "why": "one edge"
+          },
+          {
+            "do": "Add totals",
+            "result": "$V=5$, $E=4$",
+            "why": "combine components"
+          }
+        ],
+        "answer": "The graph has $V=5$ and $E=4$."
+      },
+      {
+        "problem": "ML-style use of Random graphs: a node has neighbor feature values $1,4,7$. Compute sum and mean aggregates.",
+        "steps": [
+          {
+            "do": "Sum neighbor features",
+            "result": "$1+4+7=12$",
+            "why": "sum aggregation adds messages"
+          },
+          {
+            "do": "Count neighbors",
+            "result": "$3$",
+            "why": "there are three values"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$12/3=4$",
+            "why": "mean normalizes by degree"
+          },
+          {
+            "do": "Compare sum and mean",
+            "result": "$12$ versus $4$",
+            "why": "normalization changes scale"
+          },
+          {
+            "do": "Interpret",
+            "result": "sum depends on degree while mean controls for degree",
+            "why": "this matters in graph ML"
+          }
+        ],
+        "answer": "The sum aggregate is $12$ and the mean aggregate is $4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Small network sanity checks",
+        "background": "Engineers often test random graphs on tiny graphs before trusting code on large ones.",
+        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+      },
+      {
+        "title": "Recommendation graphs",
+        "background": "Recommender systems use random graphs ideas because user-item data is naturally relational.",
+        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+      },
+      {
+        "title": "Social networks",
+        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
+        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+      },
+      {
+        "title": "Molecular graphs",
+        "background": "Chemistry represents atoms and bonds as graphs, so random graphs can become a model feature.",
+        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+      },
+      {
+        "title": "Infrastructure routing",
+        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
+        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+      },
+      {
+        "title": "ML preprocessing",
+        "background": "Many ML pipelines build graph features before training a downstream model.",
+        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+      }
+    ],
+    "applicationsClose": "Random graphs is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
+    "takeaways": [
+      "Random graphs has a precise definition that should be checked before using it.",
+      "Small graphs are enough to test the arithmetic and the assumptions.",
+      "The same structure scales to networks, matrices, and ML pipelines.",
+      "Always separate the graph property from a particular drawing or implementation."
+    ],
     "prereqs": [
       "math-15-24"
     ]
@@ -531,19 +6711,262 @@
   B({
     "id": "math-15-26",
     "title": "Spectral clustering",
-    "tier": "🟢",
-    "tagline": "One concept from Graph theory: spectral clustering.",
+    "tagline": "Spectral clustering uses Laplacian eigenvectors to turn graph connectivity into cluster coordinates.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Random graphs</i>"
+        "Spectral graph theory",
+        "The graph Laplacian",
+        "clustering"
       ],
       "leadsTo": [
-        "the next lesson, <i>Graph neural networks & message passing</i>"
+        "Graph neural networks & message passing",
+        "community detection",
+        "manifold learning"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "matrices",
+        "eigenvectors",
+        "degree",
+        "linear algebra"
       ]
     },
+    "motivation": "<p>You already know the graph picture: dots connected by lines. Some clusters are curved or network-shaped; connectivity can matter more than raw distance.</p><p><b>Spectral clustering</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
+    "definition": "<p>Spectral clustering builds a similarity graph, forms a Laplacian such as $L=D-W$, computes a few small-eigenvalue eigenvectors, and clusters rows of that spectral embedding. Low-energy vectors change slowly across strong edges and can jump across weak cuts.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "worked": {
+      "problem": "Fiedler values are $[-0.8,-0.7,0.6,0.9]$. Split into two clusters by sign.",
+      "skills": [
+        "spectral clustering",
+        "graph reasoning",
+        "numerical checking"
+      ],
+      "strategy": "Group negative and positive entries.",
+      "steps": [
+        {
+          "do": "Identify the relevant graph data",
+          "result": "vertices, edges, degrees, or matrix entries",
+          "why": "the definition tells us what to inspect"
+        },
+        {
+          "do": "Apply the key rule",
+          "result": "$\\{1,2\\}$ are negative and $\\{3,4\\}$ are positive",
+          "why": "use the lesson's central criterion"
+        },
+        {
+          "do": "Check the arithmetic",
+          "result": "the stated numbers are consistent",
+          "why": "graph counts should balance known identities"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Spectral clustering turns graph cuts into coordinates.",
+          "why": "translate the computation back to the graph"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "the required property or value has been found",
+          "why": "the final answer follows from the checked rule"
+        }
+      ],
+      "verify": "The conclusion matches the defining condition for spectral clustering.",
+      "answer": "$\\{1,2\\}$ are negative and $\\{3,4\\}$ are positive.",
+      "connects": "Spectral clustering turns graph cuts into coordinates."
+    },
+    "practice": [
+      {
+        "problem": "A graph has two disconnected components $\\{1,2\\}$ and $\\{3,4,5\\}$. How many zero Laplacian eigenvalues should spectral clustering see?",
+        "steps": [
+          {
+            "do": "Count connected components",
+            "result": "two",
+            "why": "there are two disconnected pieces"
+          },
+          {
+            "do": "Use the Laplacian theorem",
+            "result": "zero eigenvalue multiplicity equals component count",
+            "why": "for undirected graphs"
+          },
+          {
+            "do": "State the multiplicity",
+            "result": "two zero eigenvalues",
+            "why": "one per component"
+          },
+          {
+            "do": "Interpret for clustering",
+            "result": "two exact clusters",
+            "why": "no edge crosses the cut"
+          },
+          {
+            "do": "Name the clusters",
+            "result": "$\\{1,2\\}$ and $\\{3,4,5\\}$",
+            "why": "components are recovered exactly"
+          }
+        ],
+        "answer": "There should be two zero eigenvalues, and the exact clusters are the two components."
+      },
+      {
+        "problem": "Fiedler vector values are $[-0.6,-0.4,0.2,0.8]$. Split by sign.",
+        "steps": [
+          {
+            "do": "List negative entries",
+            "result": "vertices $1$ and $2$",
+            "why": "negative Fiedler values go to one side"
+          },
+          {
+            "do": "List positive entries",
+            "result": "vertices $3$ and $4$",
+            "why": "positive values go to the other side"
+          },
+          {
+            "do": "Apply the sign cut",
+            "result": "$\\{1,2\\}$ and $\\{3,4\\}$",
+            "why": "two-way spectral clustering often uses this rule"
+          },
+          {
+            "do": "Check separation",
+            "result": "the gap crosses $0$",
+            "why": "the signs are unambiguous"
+          },
+          {
+            "do": "State clusters",
+            "result": "two groups",
+            "why": "the embedding is one-dimensional"
+          }
+        ],
+        "answer": "The sign split gives clusters $\\{1,2\\}$ and $\\{3,4\\}$."
+      },
+      {
+        "problem": "Distances from a point are $0.2$ and $1.5$. With weight $w=e^{-d^2}$, compare weights using $e^{-0.04}\\approx0.961$ and $e^{-2.25}\\approx0.105$.",
+        "steps": [
+          {
+            "do": "Square the near distance",
+            "result": "$0.2^2=0.04$",
+            "why": "Gaussian weights use squared distance"
+          },
+          {
+            "do": "Compute near weight",
+            "result": "$e^{-0.04}\\approx0.961$",
+            "why": "use the given value"
+          },
+          {
+            "do": "Square the far distance",
+            "result": "$1.5^2=2.25$",
+            "why": "larger distance"
+          },
+          {
+            "do": "Compute far weight",
+            "result": "$e^{-2.25}\\approx0.105$",
+            "why": "use the given value"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.961>0.105$",
+            "why": "near points get much stronger graph edges"
+          }
+        ],
+        "answer": "The near edge weight is about $0.961$, much larger than $0.105$."
+      },
+      {
+        "problem": "Spectral coordinates are $(0,0),(0.1,0),(5,5),(5.2,5.1)$. Cluster into two groups.",
+        "steps": [
+          {
+            "do": "Inspect the first pair",
+            "result": "points $1$ and $2$ are near $(0,0)$",
+            "why": "their distance is small"
+          },
+          {
+            "do": "Inspect the second pair",
+            "result": "points $3$ and $4$ are near $(5,5)$",
+            "why": "their distance is small"
+          },
+          {
+            "do": "Compare cross distances",
+            "result": "about $7$",
+            "why": "cross-cluster distances are much larger"
+          },
+          {
+            "do": "Assign clusters",
+            "result": "$\\{1,2\\}$ and $\\{3,4\\}$",
+            "why": "ordinary clustering works in spectral space"
+          },
+          {
+            "do": "Interpret",
+            "result": "the embedding exposed the cut",
+            "why": "graph structure became geometric"
+          }
+        ],
+        "answer": "The two clusters are $\\{1,2\\}$ and $\\{3,4\\}$."
+      },
+      {
+        "problem": "On two moons, spectral clustering scores ARI $0.88$ and k-means scores $0.22$. How much higher is spectral clustering?",
+        "steps": [
+          {
+            "do": "Write the scores",
+            "result": "$0.88$ and $0.22$",
+            "why": "given adjusted Rand indices"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.88-0.22$",
+            "why": "difference in performance"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.66$",
+            "why": "arithmetic"
+          },
+          {
+            "do": "Interpret",
+            "result": "spectral is much better",
+            "why": "it follows graph connectivity"
+          },
+          {
+            "do": "State result",
+            "result": "higher by $0.66$",
+            "why": "ARI ranges roughly from chance near $0$ to perfect at $1$"
+          }
+        ],
+        "answer": "Spectral clustering is higher by $0.66$ ARI."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Small network sanity checks",
+        "background": "Engineers often test spectral clustering on tiny graphs before trusting code on large ones.",
+        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+      },
+      {
+        "title": "Recommendation graphs",
+        "background": "Recommender systems use spectral clustering ideas because user-item data is naturally relational.",
+        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+      },
+      {
+        "title": "Social networks",
+        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
+        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+      },
+      {
+        "title": "Molecular graphs",
+        "background": "Chemistry represents atoms and bonds as graphs, so spectral clustering can become a model feature.",
+        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+      },
+      {
+        "title": "Infrastructure routing",
+        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
+        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+      },
+      {
+        "title": "ML preprocessing",
+        "background": "Many ML pipelines build graph features before training a downstream model.",
+        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+      }
+    ],
+    "applicationsClose": "Spectral clustering is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
+    "takeaways": [
+      "Spectral clustering has a precise definition that should be checked before using it.",
+      "Small graphs are enough to test the arithmetic and the assumptions.",
+      "The same structure scales to networks, matrices, and ML pipelines.",
+      "Always separate the graph property from a particular drawing or implementation."
+    ],
     "prereqs": [
       "math-15-25"
     ]
@@ -552,19 +6975,262 @@
   B({
     "id": "math-15-27",
     "title": "Graph neural networks & message passing",
-    "tier": "🟢",
-    "tagline": "Capstone — how graph theory shows up directly in CS & ML.",
+    "tagline": "Graph neural networks update each node by combining its features with messages from neighbors.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Spectral clustering</i>"
+        "Spectral clustering",
+        "The adjacency matrix",
+        "vectors and matrices"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "geometric deep learning",
+        "recommendation models",
+        "node classification"
       ],
       "usedWith": [
-        "the other concepts in Graph theory and its capstone"
+        "matrices",
+        "eigenvectors",
+        "degree",
+        "linear algebra"
       ]
     },
+    "motivation": "<p>You already know the graph picture: dots connected by lines. Many ML examples are not isolated rows: papers cite papers, molecules have bonds, and users connect to items.</p><p><b>Graph neural networks & message passing</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
+    "definition": "<p>A basic <b>message passing</b> layer updates node $v$ by aggregating neighbor features: $h_v^{(t+1)}=\\sigma(W_{self}h_v^{(t)}+W_{nbr}\\sum_{u\\in N(v)}h_u^{(t)})$. Aggregation should be permutation-invariant, and after $k$ layers information can travel about $k$ hops.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "worked": {
+      "problem": "A scalar layer uses $h_v^{new}=0.5h_v+0.25\\sum_{u\\in N(v)}h_u$. If $h_v=4$ and neighbors are $2,6,8$, compute the update.",
+      "skills": [
+        "message passing",
+        "graph reasoning",
+        "numerical checking"
+      ],
+      "strategy": "Sum neighbor messages, weight self and neighbors, then add.",
+      "steps": [
+        {
+          "do": "Identify the relevant graph data",
+          "result": "vertices, edges, degrees, or matrix entries",
+          "why": "the definition tells us what to inspect"
+        },
+        {
+          "do": "Apply the key rule",
+          "result": "$2+6+8=16$, so $0.5\\cdot4+0.25\\cdot16=6$",
+          "why": "use the lesson's central criterion"
+        },
+        {
+          "do": "Check the arithmetic",
+          "result": "the stated numbers are consistent",
+          "why": "graph counts should balance known identities"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Message passing is local aggregation plus learned transformation.",
+          "why": "translate the computation back to the graph"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "the required property or value has been found",
+          "why": "the final answer follows from the checked rule"
+        }
+      ],
+      "verify": "The conclusion matches the defining condition for graph neural networks & message passing.",
+      "answer": "$2+6+8=16$, so $0.5\\cdot4+0.25\\cdot16=6$.",
+      "connects": "Message passing is local aggregation plus learned transformation."
+    },
+    "practice": [
+      {
+        "problem": "Use mean aggregation for neighbor scalar features $3,5,10$ in a GNN layer.",
+        "steps": [
+          {
+            "do": "Sum the neighbor features",
+            "result": "$3+5+10=18$",
+            "why": "mean aggregation starts with a sum"
+          },
+          {
+            "do": "Count neighbors",
+            "result": "$3$",
+            "why": "the node has degree three"
+          },
+          {
+            "do": "Divide by degree",
+            "result": "$18/3=6$",
+            "why": "mean normalizes the sum"
+          },
+          {
+            "do": "Check permutation invariance",
+            "result": "any order gives $6$",
+            "why": "neighbor order should not matter"
+          },
+          {
+            "do": "State the message",
+            "result": "$6$",
+            "why": "this is the aggregated neighbor message"
+          }
+        ],
+        "answer": "The mean neighbor message is $6$."
+      },
+      {
+        "problem": "A node has self value $2$ and mean neighbor value $6$. Compute $0.4h_v+0.6m_v$.",
+        "steps": [
+          {
+            "do": "Compute self contribution",
+            "result": "$0.4\\cdot2=0.8$",
+            "why": "apply the self weight"
+          },
+          {
+            "do": "Compute neighbor contribution",
+            "result": "$0.6\\cdot6=3.6$",
+            "why": "apply the neighbor weight"
+          },
+          {
+            "do": "Add contributions",
+            "result": "$0.8+3.6=4.4$",
+            "why": "combine self and neighbor information"
+          },
+          {
+            "do": "No activation is specified",
+            "result": "the value remains $4.4$",
+            "why": "nothing clips or bends it"
+          },
+          {
+            "do": "Interpret",
+            "result": "neighbors pull the node upward",
+            "why": "the neighbor mean is larger than the self value"
+          }
+        ],
+        "answer": "The updated scalar feature is $4.4$."
+      },
+      {
+        "problem": "After two standard message-passing layers, how far can information from another node travel?",
+        "steps": [
+          {
+            "do": "Analyze one layer",
+            "result": "one edge",
+            "why": "a node receives messages from one-hop neighbors"
+          },
+          {
+            "do": "Analyze the second layer",
+            "result": "one more edge",
+            "why": "neighbors now carry information from their neighbors"
+          },
+          {
+            "do": "Combine hops",
+            "result": "two hops",
+            "why": "information crosses at most two edges"
+          },
+          {
+            "do": "Exclude farther nodes",
+            "result": "three-hop nodes need a third layer",
+            "why": "one layer adds one hop of reach"
+          },
+          {
+            "do": "State the receptive field",
+            "result": "the two-hop neighborhood",
+            "why": "for ordinary local message passing"
+          }
+        ],
+        "answer": "After two layers, information can travel at most two hops."
+      },
+      {
+        "problem": "A node of degree $4$ has neighbor risk scores $0.1,0.9,0.8,0.2$. Compute the mean message.",
+        "steps": [
+          {
+            "do": "Sum scores",
+            "result": "$0.1+0.9+0.8+0.2=2.0$",
+            "why": "add all neighbor messages"
+          },
+          {
+            "do": "Count neighbors",
+            "result": "$4$",
+            "why": "degree is four"
+          },
+          {
+            "do": "Normalize",
+            "result": "$2.0/4=0.5$",
+            "why": "mean aggregation divides by degree"
+          },
+          {
+            "do": "Interpret risk",
+            "result": "average neighbor risk is $0.5$",
+            "why": "neighbors are mixed"
+          },
+          {
+            "do": "State message",
+            "result": "$0.5$",
+            "why": "the scalar message passed forward"
+          }
+        ],
+        "answer": "The mean neighbor risk message is $0.5$."
+      },
+      {
+        "problem": "A citation GNN uses $h_p^{new}=h_p+0.5\\operatorname{mean}(N(p))$. If $h_p=10$ and neighbor features are $4$ and $8$, compute the update.",
+        "steps": [
+          {
+            "do": "Average neighbors",
+            "result": "$(4+8)/2=6$",
+            "why": "mean neighbor feature"
+          },
+          {
+            "do": "Scale the message",
+            "result": "$0.5\\cdot6=3$",
+            "why": "apply the layer weight"
+          },
+          {
+            "do": "Add the self value",
+            "result": "$10+3=13$",
+            "why": "residual update"
+          },
+          {
+            "do": "State updated feature",
+            "result": "$13$",
+            "why": "new paper representation"
+          },
+          {
+            "do": "Interpret",
+            "result": "citation context increased the feature",
+            "why": "neighbors contributed positive evidence"
+          }
+        ],
+        "answer": "The updated feature is $13$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Node classification",
+        "background": "GNNs classify nodes by combining their own features with neighborhood context.",
+        "numbers": "If a paper has $5$ cited neighbors and $4$ are AI papers, a simple neighbor label fraction is $4/5=0.8$."
+      },
+      {
+        "title": "Molecular property prediction",
+        "background": "Atoms are nodes and bonds are edges, so message passing follows chemical bonds.",
+        "numbers": "A carbon atom bonded to $4$ atoms receives $4$ incoming messages in one layer."
+      },
+      {
+        "title": "Recommendation graphs",
+        "background": "Users and items form bipartite graphs where messages pass between preferences and content.",
+        "numbers": "If a user connects to $12$ items, mean aggregation averages $12$ item embeddings."
+      },
+      {
+        "title": "Fraud detection",
+        "background": "Risk can be estimated from transaction or device-sharing neighborhoods.",
+        "numbers": "Neighbor risk scores $0.1,0.9,0.8$ have mean $0.6$."
+      },
+      {
+        "title": "Knowledge graphs",
+        "background": "Entities exchange typed messages along relation edges for completion tasks.",
+        "numbers": "An entity with $7$ outgoing relation edges sends or receives $7$ typed messages."
+      },
+      {
+        "title": "Oversmoothing",
+        "background": "Too many averaging layers can make connected node embeddings too similar.",
+        "numbers": "On a single edge with values $0$ and $1$, full averaging sends both endpoints to $0.5$."
+      }
+    ],
+    "applicationsClose": "Graph neural networks & message passing is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
+    "takeaways": [
+      "Graph neural networks & message passing has a precise definition that should be checked before using it.",
+      "Small graphs are enough to test the arithmetic and the assumptions.",
+      "The same structure scales to networks, matrices, and ML pipelines.",
+      "Always separate the graph property from a particular drawing or implementation."
+    ],
     "prereqs": [
       "math-15-26"
     ]

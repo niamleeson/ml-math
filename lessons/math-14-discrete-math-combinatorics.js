@@ -9,37 +9,528 @@
   B({
     "id": "math-14-01",
     "title": "Propositional logic",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: propositional logic.",
+    "tagline": "Propositional logic teaches you to reason with whole statements before the statements become complicated.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "truth values",
+        "basic algebraic substitution",
+        "careful reading of conditions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Predicate logic</i>"
+        "Predicate logic",
+        "Proof by contradiction",
+        "Boolean algebra"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "truth tables",
+        "sets",
+        "relations",
+        "proof methods"
       ]
-    }
+    },
+    "motivation": "<p>You already make logical decisions every day: if it is raining and you have to walk, take an umbrella. The words if, and, or, and not carry structure that can be studied without knowing anything about weather.</p><p><b>Propositional logic</b> keeps the statements simple and studies how their truth values combine. That small discipline pays off later when code branches, proofs, database filters, and ML rules all need conditions that mean exactly what we think they mean.</p>",
+    "definition": "<p>A <b>proposition</b> is a statement that is either true or false. If $p$ and $q$ are propositions, then $\\neg p$ means not $p$, $p\\land q$ means both are true, $p\\lor q$ means at least one is true, $p\\to q$ means if $p$ then $q$, and $p\\leftrightarrow q$ means they have the same truth value.</p><p>The conditional $p\\to q$ is false only when $p$ is true and $q$ is false. One way to see the equivalence $p\\to q\\equiv \\neg p\\lor q$ is to check the four rows: only the row $p=T,q=F$ makes both expressions false; all other rows are true.</p><p><b>Assumptions that matter:</b> each proposition has exactly one truth value in the situation being analyzed; $\\lor$ is inclusive or unless stated otherwise; and logical equivalence means two formulas have the same truth value in every possible assignment.</p>",
+    "worked": {
+      "problem": "Build the truth table for $(p\\to q)\\land p$ and decide whether it logically implies $q$.",
+      "skills": [
+        "truth tables",
+        "conditionals",
+        "logical implication"
+      ],
+      "strategy": "The expression has nested logic, so evaluate the conditional first, then the conjunction, then compare with $q$.",
+      "steps": [
+        {
+          "do": "List all truth assignments",
+          "result": "$(T,T),(T,F),(F,T),(F,F)$",
+          "why": "two propositions give $2^2=4$ rows"
+        },
+        {
+          "do": "Evaluate $p\\to q$ on the rows",
+          "result": "$T,F,T,T$",
+          "why": "a conditional is false only for $p=T,q=F$"
+        },
+        {
+          "do": "Combine with $p$ using $\\land$",
+          "result": "$(p\\to q)\\land p$ has values $T,F,F,F$",
+          "why": "and is true only when both parts are true"
+        },
+        {
+          "do": "Compare the true rows to $q$",
+          "result": "the only true row has $q=T$",
+          "why": "logical implication checks rows where the premise is true"
+        },
+        {
+          "do": "State the implication",
+          "result": "$(p\\to q)\\land p\\Rightarrow q$",
+          "why": "there is no row with true premise and false conclusion"
+        }
+      ],
+      "verify": "This is modus ponens: if the rule holds and the condition happens, the conclusion must happen.",
+      "answer": "Yes. $(p\\to q)\\land p$ logically implies $q$.",
+      "connects": "Truth tables turn informal if-then reasoning into row-by-row arithmetic with truth values."
+    },
+    "practice": [
+      {
+        "problem": "Make the truth table for $p\\land \\neg q$.",
+        "steps": [
+          {
+            "do": "List assignments",
+            "result": "$(T,T),(T,F),(F,T),(F,F)$",
+            "why": "there are two propositions"
+          },
+          {
+            "do": "Compute $\\neg q$",
+            "result": "$F,T,F,T$",
+            "why": "negation flips $q$"
+          },
+          {
+            "do": "Apply $\\land$ with $p$",
+            "result": "$F,T,F,F$",
+            "why": "both $p$ and $\\neg q$ must be true"
+          },
+          {
+            "do": "Identify the true row",
+            "result": "$p=T,q=F$",
+            "why": "that is the only row with values $T$ and $T$ before and"
+          },
+          {
+            "do": "State the meaning",
+            "result": "true exactly when $p$ is true and $q$ is false",
+            "why": "the formula accepts one case"
+          }
+        ],
+        "answer": "$p\\land\\neg q$ has truth values $F,T,F,F$ in the listed row order."
+      },
+      {
+        "problem": "Show that $\\neg(p\\land q)$ and $\\neg p\\lor\\neg q$ agree by truth table.",
+        "steps": [
+          {
+            "do": "List values of $p\\land q$",
+            "result": "$T,F,F,F$",
+            "why": "and needs both propositions true"
+          },
+          {
+            "do": "Negate that column",
+            "result": "$F,T,T,T$",
+            "why": "this gives $\\neg(p\\land q)$"
+          },
+          {
+            "do": "List $\\neg p$",
+            "result": "$F,F,T,T$",
+            "why": "flip the $p$ column"
+          },
+          {
+            "do": "List $\\neg q$",
+            "result": "$F,T,F,T$",
+            "why": "flip the $q$ column"
+          },
+          {
+            "do": "Compute $\\neg p\\lor\\neg q$",
+            "result": "$F,T,T,T$",
+            "why": "or is true if at least one negation is true"
+          }
+        ],
+        "answer": "They are logically equivalent; both columns are $F,T,T,T$."
+      },
+      {
+        "problem": "Evaluate $(p\\lor q)\\to r$ when $p=F$, $q=T$, and $r=F$.",
+        "steps": [
+          {
+            "do": "Evaluate the disjunction",
+            "result": "$p\\lor q=T$",
+            "why": "one of $p,q$ is true"
+          },
+          {
+            "do": "Substitute into the conditional",
+            "result": "$(p\\lor q)\\to r$ becomes $T\\to F$",
+            "why": "the antecedent is true and $r$ is false"
+          },
+          {
+            "do": "Apply the conditional rule",
+            "result": "$F$",
+            "why": "true antecedent with false consequent is the one false case"
+          },
+          {
+            "do": "Check against English",
+            "result": "the promised result did not happen",
+            "why": "the condition was met"
+          },
+          {
+            "do": "State the value",
+            "result": "false",
+            "why": "the formula fails under this assignment"
+          }
+        ],
+        "answer": "The proposition is false."
+      },
+      {
+        "problem": "Decide whether $p\\to q$ and $q\\to p$ are equivalent.",
+        "steps": [
+          {
+            "do": "Choose a test row",
+            "result": "$p=T,q=F$",
+            "why": "one counterexample is enough to disprove equivalence"
+          },
+          {
+            "do": "Evaluate $p\\to q$",
+            "result": "$T\\to F=F$",
+            "why": "this is the false conditional case"
+          },
+          {
+            "do": "Evaluate $q\\to p$",
+            "result": "$F\\to T=T$",
+            "why": "a false antecedent makes the conditional true"
+          },
+          {
+            "do": "Compare the values",
+            "result": "$F\\ne T$",
+            "why": "equivalent formulas must agree on every row"
+          },
+          {
+            "do": "State the conclusion",
+            "result": "not equivalent",
+            "why": "the converse is not the same as the original conditional"
+          }
+        ],
+        "answer": "$p\\to q$ and $q\\to p$ are not logically equivalent."
+      },
+      {
+        "problem": "A model rule says deploy if validation passes and not flagged: $d=v\\land\\neg f$. Evaluate $d$ for $(v,f)=(T,F),(T,T),(F,F)$.",
+        "steps": [
+          {
+            "do": "Evaluate the first case",
+            "result": "$T\\land\\neg F=T\\land T=T$",
+            "why": "validation passes and there is no flag"
+          },
+          {
+            "do": "Evaluate the second case",
+            "result": "$T\\land\\neg T=T\\land F=F$",
+            "why": "the flag blocks deployment"
+          },
+          {
+            "do": "Evaluate the third case",
+            "result": "$F\\land\\neg F=F\\land T=F$",
+            "why": "failed validation blocks deployment"
+          },
+          {
+            "do": "List the outputs",
+            "result": "$T,F,F$",
+            "why": "only the first case deploys"
+          },
+          {
+            "do": "Interpret",
+            "result": "both safety conditions are required",
+            "why": "and is strict"
+          }
+        ],
+        "answer": "The deployment decisions are deploy, do not deploy, do not deploy."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Program branches",
+        "background": "Programming languages inherited Boolean logic from mathematical logic. Every if statement evaluates a proposition before choosing a path.",
+        "numbers": "If $p$ is user authenticated and $q$ is quota remaining, then $p\\land q$ is true for $(T,T)$ and false for $(T,F),(F,T),(F,F)$."
+      },
+      {
+        "title": "Database filters",
+        "background": "Query systems use logical connectives to filter rows. A small mistake in and versus or can change many results.",
+        "numbers": "For 1000 rows, suppose 300 satisfy $p$, 200 satisfy $q$, and 80 satisfy both. The inclusive-or count is $300+200-80=420$."
+      },
+      {
+        "title": "Circuit gates",
+        "background": "Digital circuits implement logic physically. AND, OR, and NOT gates are propositions made out of voltage levels.",
+        "numbers": "An AND gate with inputs $1$ and $0$ outputs $0$; an OR gate on the same inputs outputs $1$."
+      },
+      {
+        "title": "Rule-based alerts",
+        "background": "Monitoring systems combine conditions to avoid noisy pages. Logic states exactly when an alert should fire.",
+        "numbers": "If error rate high is $T$, traffic high is $T$, and maintenance is $F$, then $T\\land T\\land\\neg F=T$."
+      },
+      {
+        "title": "Feature flags",
+        "background": "Large systems often enable features only when several safety propositions hold. Logic keeps rollout criteria auditable.",
+        "numbers": "If eligible users are 20 percent of 50,000 users and kill switch is false, then about $0.20\\cdot50000=10000$ users can see the feature."
+      },
+      {
+        "title": "ML decision rules",
+        "background": "Even learned systems often end with logical gates, such as thresholds and policy checks. The learned score is numeric, but the release rule is Boolean.",
+        "numbers": "If score above $0.8$ is $T$ for 120 items and policy pass is $T$ for 100 of those, an AND rule selects 100 items."
+      }
+    ],
+    "applicationsClose": "Propositional logic is the small grammar behind precise decisions in proofs, programs, circuits, and deployed models.",
+    "takeaways": [
+      "A proposition has one truth value: true or false.",
+      "$\\neg$, $\\land$, $\\lor$, $\\to$, and $\\leftrightarrow$ combine propositions in defined ways.",
+      "$p\\to q$ is false only when $p$ is true and $q$ is false.",
+      "Truth tables prove equivalence and implication by checking every assignment."
+    ]
   });
 
   B({
     "id": "math-14-02",
     "title": "Predicate logic",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: predicate logic.",
+    "tagline": "Predicate logic lets a statement speak about many objects without losing precision.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Propositional logic</i>"
+        "Propositional logic",
+        "sets",
+        "variables"
       ],
       "leadsTo": [
-        "the next lesson, <i>Sets</i>"
+        "Sets",
+        "Relations",
+        "Proof by contradiction"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "quantifiers",
+        "proof methods",
+        "relations",
+        "functions"
       ]
     },
+    "motivation": "<p>Propositional logic treats a sentence as one block. But mathematics often needs a sentence with a variable: $x$ is even, $n$ is prime, user $u$ clicked item $i$. The truth depends on which object you plug in.</p><p><b>Predicate logic</b> adds variables and quantifiers, so we can say all, some, or none with care. This is the language of definitions, database queries, correctness statements, and many ML data conditions.</p>",
+    "definition": "<p>A <b>predicate</b> $P(x)$ is a statement whose truth depends on the object $x$ from a specified <b>domain</b>. The universal statement $\\forall x\\,P(x)$ means $P(x)$ is true for every $x$ in the domain. The existential statement $\\exists x\\,P(x)$ means at least one domain element makes $P(x)$ true.</p><p>Negation swaps the quantifier and negates the predicate: $\\neg\\forall x\\,P(x)\\equiv\\exists x\\,\\neg P(x)$ and $\\neg\\exists x\\,P(x)\\equiv\\forall x\\,\\neg P(x)$. This follows because one counterexample disproves an all-statement, while disproving existence means every possible example fails.</p><p><b>Assumptions that matter:</b> the domain must be stated or understood; the order of mixed quantifiers matters; and a witness for $\\exists$ is one concrete object that makes the predicate true.</p>",
+    "worked": {
+      "problem": "Let the domain be $\\{1,2,3,4\\}$ and let $P(x)$ mean $x^2<10$. Evaluate $\\forall x\\,P(x)$ and $\\exists x\\,\\neg P(x)$.",
+      "skills": [
+        "domains",
+        "universal quantifiers",
+        "existential quantifiers"
+      ],
+      "strategy": "A finite domain can be checked directly: test every object, then look for a counterexample.",
+      "steps": [
+        {
+          "do": "Evaluate $P(1)$",
+          "result": "$1^2=1<10$, so $P(1)$ is true",
+          "why": "substitute the first domain element"
+        },
+        {
+          "do": "Evaluate $P(2)$",
+          "result": "$2^2=4<10$, so $P(2)$ is true",
+          "why": "substitute the second element"
+        },
+        {
+          "do": "Evaluate $P(3)$",
+          "result": "$3^2=9<10$, so $P(3)$ is true",
+          "why": "substitute the third element"
+        },
+        {
+          "do": "Evaluate $P(4)$",
+          "result": "$4^2=16\\not<10$, so $P(4)$ is false",
+          "why": "one element breaks the predicate"
+        },
+        {
+          "do": "Decide the universal statement",
+          "result": "$\\forall x\\,P(x)$ is false",
+          "why": "universal claims need every element true"
+        },
+        {
+          "do": "Decide the existential negation",
+          "result": "$\\exists x\\,\\neg P(x)$ is true",
+          "why": "$x=4$ is a witness"
+        }
+      ],
+      "verify": "The two answers agree with the negation rule: the universal statement is false exactly because a counterexample exists.",
+      "answer": "$\\forall x\\,P(x)$ is false, and $\\exists x\\,\\neg P(x)$ is true with witness $x=4$.",
+      "connects": "Predicate logic turns counterexamples and witnesses into precise mathematical objects."
+    },
+    "practice": [
+      {
+        "problem": "On domain $\\{2,4,6\\}$, let $E(x)$ mean $x$ is even. Evaluate $\\forall x\\,E(x)$.",
+        "steps": [
+          {
+            "do": "Check $x=2$",
+            "result": "$E(2)$ is true",
+            "why": "2 is divisible by 2"
+          },
+          {
+            "do": "Check $x=4$",
+            "result": "$E(4)$ is true",
+            "why": "4 is divisible by 2"
+          },
+          {
+            "do": "Check $x=6$",
+            "result": "$E(6)$ is true",
+            "why": "6 is divisible by 2"
+          },
+          {
+            "do": "Apply the universal quantifier",
+            "result": "$\\forall x\\,E(x)$ is true",
+            "why": "every domain element passed"
+          },
+          {
+            "do": "Name the domain dependence",
+            "result": "true on $\\{2,4,6\\}$",
+            "why": "a different domain could change the truth"
+          }
+        ],
+        "answer": "$\\forall x\\,E(x)$ is true on the given domain."
+      },
+      {
+        "problem": "Negate the statement $\\forall n\\in\\mathbb{Z},\\ n^2\\ge n$.",
+        "steps": [
+          {
+            "do": "Identify the quantifier",
+            "result": "$\\forall n$",
+            "why": "the statement claims all integers"
+          },
+          {
+            "do": "Swap the quantifier",
+            "result": "$\\exists n$",
+            "why": "negating an all-statement asks for a counterexample"
+          },
+          {
+            "do": "Negate the predicate",
+            "result": "$n^2<n$",
+            "why": "the opposite of $n^2\\ge n$ is $n^2<n$"
+          },
+          {
+            "do": "Keep the domain",
+            "result": "$n\\in\\mathbb{Z}$",
+            "why": "negation does not change where $n$ lives"
+          },
+          {
+            "do": "Write the full negation",
+            "result": "$\\exists n\\in\\mathbb{Z}$ such that $n^2<n$",
+            "why": "one integer would disprove the original"
+          }
+        ],
+        "answer": "$\\exists n\\in\\mathbb{Z}$ such that $n^2<n$."
+      },
+      {
+        "problem": "Let $R(x,y)$ mean $x<y$ on domain $\\{1,2,3\\}$. Is $\\forall x\\,\\exists y\\,R(x,y)$ true?",
+        "steps": [
+          {
+            "do": "Test $x=1$",
+            "result": "choose $y=2$",
+            "why": "$1<2$"
+          },
+          {
+            "do": "Test $x=2$",
+            "result": "choose $y=3$",
+            "why": "$2<3$"
+          },
+          {
+            "do": "Test $x=3$",
+            "result": "no $y$ in the domain has $3<y$",
+            "why": "3 is the largest element"
+          },
+          {
+            "do": "Apply the universal quantifier",
+            "result": "false",
+            "why": "every $x$ needed a witness"
+          },
+          {
+            "do": "Name the counterexample",
+            "result": "$x=3$",
+            "why": "it has no larger domain element"
+          }
+        ],
+        "answer": "The statement is false; $x=3$ is a counterexample."
+      },
+      {
+        "problem": "Compare $\\forall x\\,\\exists y\\,(x<y)$ and $\\exists y\\,\\forall x\\,(x<y)$ on domain $\\{1,2\\}$.",
+        "steps": [
+          {
+            "do": "Evaluate the first for $x=1$",
+            "result": "choose $y=2$",
+            "why": "$1<2$"
+          },
+          {
+            "do": "Evaluate the first for $x=2$",
+            "result": "no witness",
+            "why": "neither 1 nor 2 is greater than 2"
+          },
+          {
+            "do": "State the first truth value",
+            "result": "false",
+            "why": "$x=2$ fails"
+          },
+          {
+            "do": "Test the second with $y=1$",
+            "result": "fails for $x=1$",
+            "why": "$1<1$ is false"
+          },
+          {
+            "do": "Test the second with $y=2$",
+            "result": "fails for $x=2$",
+            "why": "$2<2$ is false"
+          }
+        ],
+        "answer": "Both are false on $\\{1,2\\}$, but they fail for different quantifier reasons."
+      },
+      {
+        "problem": "A dataset rule says $\\forall$ rows $r$, if $r$ is in training then $r$ has a label. In 500 training rows, 497 have labels. Is the rule true?",
+        "steps": [
+          {
+            "do": "State the predicate",
+            "result": "$T(r)\\to L(r)$",
+            "why": "training rows should imply labels"
+          },
+          {
+            "do": "Count failures",
+            "result": "$500-497=3$",
+            "why": "three training rows lack labels"
+          },
+          {
+            "do": "Identify counterexamples",
+            "result": "three rows have $T(r)=T$ and $L(r)=F$",
+            "why": "that is the false conditional case"
+          },
+          {
+            "do": "Evaluate the universal claim",
+            "result": "false",
+            "why": "one counterexample would be enough"
+          },
+          {
+            "do": "Interpret",
+            "result": "the dataset violates the rule",
+            "why": "all training rows were required to have labels"
+          }
+        ],
+        "answer": "No. The universal data-quality rule is false because 3 training rows have no label."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Database queries",
+        "background": "Predicate logic is the mathematical ancestor of query languages. A WHERE clause is a predicate evaluated on each row.",
+        "numbers": "If 10,000 rows are checked and 420 satisfy $P(r)$, then $\\exists r\\,P(r)$ is true and $\\forall r\\,P(r)$ is false unless 420 equals 10,000."
+      },
+      {
+        "title": "Type and contract checking",
+        "background": "Software contracts often say every input satisfying a precondition produces an output satisfying a postcondition.",
+        "numbers": "If 200 tests satisfy the precondition and 199 satisfy the postcondition, the universal tested claim has 1 observed counterexample."
+      },
+      {
+        "title": "Data validation",
+        "background": "ML pipelines use predicates to state schema rules before training. This prevents silent garbage from entering a model.",
+        "numbers": "For predicate $0\\le x\\le1$, values $0.2,0.9,1.3$ give two passes and one counterexample."
+      },
+      {
+        "title": "Graph properties",
+        "background": "Relations on nodes are described with quantifiers. Connectivity and reachability both use there exists a path language.",
+        "numbers": "In a 5-node graph, the claim every node has degree at least 2 requires checking 5 degrees; degrees $2,3,2,1,4$ disprove it."
+      },
+      {
+        "title": "Fairness statements",
+        "background": "Fairness constraints often quantify over groups or individuals. The domain must be explicit to avoid vague promises.",
+        "numbers": "If 4 groups have selection rates $0.51,0.50,0.49,0.52$, the predicate rate at least $0.50$ fails for one group."
+      },
+      {
+        "title": "Optimization guarantees",
+        "background": "Mathematical ML uses quantified claims such as every gradient step decreases loss under assumptions. The assumptions define the domain.",
+        "numbers": "If $L$ drops on 8 of 10 tested steps, that supports but does not prove $\\forall t, L_{t+1}<L_t$; two failures refute it for those steps."
+      }
+    ],
+    "applicationsClose": "Predicate logic is how mathematics says every, some, and none without leaving the domain or witness ambiguous.",
+    "takeaways": [
+      "A predicate becomes true or false only after its variables receive domain values.",
+      "$\\forall$ means every domain element; $\\exists$ means at least one witness.",
+      "Negating a quantified statement swaps $\\forall$ with $\\exists$ and negates the predicate.",
+      "The order of mixed quantifiers can change the meaning."
+    ],
     "prereqs": [
       "math-14-01"
     ]
@@ -48,19 +539,263 @@
   B({
     "id": "math-14-03",
     "title": "Sets",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: sets.",
+    "tagline": "Sets give mathematics a clean way to talk about collections, membership, overlap, and choice.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Predicate logic</i>"
+        "Predicate logic",
+        "Propositional logic",
+        "counting finite objects"
       ],
       "leadsTo": [
-        "the next lesson, <i>Relations</i>"
+        "Relations",
+        "Functions",
+        "The sum rule"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "logic",
+        "Venn diagrams",
+        "cardinality",
+        "Cartesian products"
       ]
     },
+    "motivation": "<p>You already sort things into collections: clicked users, training examples, even numbers, tokens in a vocabulary. A set is the simplest careful version of that idea.</p><p>Once collections have names, we can ask what belongs, what overlaps, what is excluded, and how many possibilities remain. That is the start of both discrete math and practical data reasoning.</p>",
+    "definition": "<p>A <b>set</b> is a collection of distinct objects called elements. We write $x\\in A$ when $x$ is in $A$. The union $A\\cup B$ contains elements in $A$ or $B$; the intersection $A\\cap B$ contains elements in both; the difference $A\\setminus B$ contains elements in $A$ but not $B$.</p><p>For finite sets, the inclusion-exclusion rule $|A\\cup B|=|A|+|B|-|A\\cap B|$ prevents double-counting. Adding $|A|$ and $|B|$ counts the overlap twice, so subtracting the intersection once leaves each element counted exactly once.</p><p><b>Assumptions that matter:</b> sets do not count duplicates; the universe determines complements; $\\subseteq$ allows equality; and cardinality $|A|$ means the number of distinct elements in a finite set.</p>",
+    "worked": {
+      "problem": "Let $A=\\{1,2,3,5\\}$ and $B=\\{3,4,5,6\\}$. Find $A\\cup B$, $A\\cap B$, $A\\setminus B$, and $|A\\cup B|$.",
+      "skills": [
+        "membership",
+        "union",
+        "intersection",
+        "cardinality"
+      ],
+      "strategy": "List distinct elements carefully, then count the union without double-counting the overlap.",
+      "steps": [
+        {
+          "do": "List elements in either set",
+          "result": "$A\\cup B=\\{1,2,3,4,5,6\\}$",
+          "why": "union keeps every distinct element that appears"
+        },
+        {
+          "do": "List elements in both sets",
+          "result": "$A\\cap B=\\{3,5\\}$",
+          "why": "intersection keeps common elements"
+        },
+        {
+          "do": "List elements in $A$ not in $B$",
+          "result": "$A\\setminus B=\\{1,2\\}$",
+          "why": "remove the common elements from $A$"
+        },
+        {
+          "do": "Count the union directly",
+          "result": "$|A\\cup B|=6$",
+          "why": "there are six distinct elements"
+        },
+        {
+          "do": "Check by inclusion-exclusion",
+          "result": "$4+4-2=6$",
+          "why": "the overlap $\\{3,5\\}$ was counted twice before subtraction"
+        }
+      ],
+      "verify": "Every element from both original sets appears once in the union, and only 3 and 5 are shared.",
+      "answer": "$A\\cup B=\\{1,2,3,4,5,6\\}$, $A\\cap B=\\{3,5\\}$, $A\\setminus B=\\{1,2\\}$, and $|A\\cup B|=6$.",
+      "connects": "Set operations are logical operations applied to membership."
+    },
+    "practice": [
+      {
+        "problem": "For $C=\\{a,b,c\\}$ and $D=\\{b,c,d,e\\}$, find $C\\cap D$ and $C\\cup D$.",
+        "steps": [
+          {
+            "do": "Compare elements",
+            "result": "$b$ and $c$ appear in both",
+            "why": "intersection requires shared membership"
+          },
+          {
+            "do": "Write the intersection",
+            "result": "$C\\cap D=\\{b,c\\}$",
+            "why": "only common elements remain"
+          },
+          {
+            "do": "Collect all elements",
+            "result": "$a,b,c,d,e$",
+            "why": "union includes either set"
+          },
+          {
+            "do": "Remove duplicates",
+            "result": "$C\\cup D=\\{a,b,c,d,e\\}$",
+            "why": "sets list distinct elements"
+          },
+          {
+            "do": "Count if needed",
+            "result": "$|C\\cup D|=5$",
+            "why": "there are five distinct elements"
+          }
+        ],
+        "answer": "$C\\cap D=\\{b,c\\}$ and $C\\cup D=\\{a,b,c,d,e\\}$."
+      },
+      {
+        "problem": "If $|A|=40$, $|B|=25$, and $|A\\cap B|=10$, find $|A\\cup B|$.",
+        "steps": [
+          {
+            "do": "Write inclusion-exclusion",
+            "result": "$|A\\cup B|=|A|+|B|-|A\\cap B|$",
+            "why": "overlap is counted twice in the sum"
+          },
+          {
+            "do": "Substitute the counts",
+            "result": "$40+25-10$",
+            "why": "use the given cardinalities"
+          },
+          {
+            "do": "Add the first two counts",
+            "result": "$65-10$",
+            "why": "$40+25=65$"
+          },
+          {
+            "do": "Subtract the overlap",
+            "result": "$55$",
+            "why": "remove one duplicate count of the intersection"
+          },
+          {
+            "do": "Check bounds",
+            "result": "$55\\le65$",
+            "why": "the union cannot exceed the raw sum"
+          }
+        ],
+        "answer": "$|A\\cup B|=55$."
+      },
+      {
+        "problem": "Let the universe be $U=\\{1,2,3,4,5,6\\}$ and $A=\\{2,4,6\\}$. Find $A^c$.",
+        "steps": [
+          {
+            "do": "State the universe",
+            "result": "$U=\\{1,2,3,4,5,6\\}$",
+            "why": "complement depends on the universe"
+          },
+          {
+            "do": "Remove elements of $A$",
+            "result": "remove $2,4,6$",
+            "why": "the complement contains what is not in $A$"
+          },
+          {
+            "do": "List remaining elements",
+            "result": "$1,3,5$",
+            "why": "these are in $U$ but not in $A$"
+          },
+          {
+            "do": "Write the complement",
+            "result": "$A^c=\\{1,3,5\\}$",
+            "why": "set notation records the result"
+          },
+          {
+            "do": "Check the partition",
+            "result": "$A\\cup A^c=U$",
+            "why": "every universe element is either in $A$ or not"
+          }
+        ],
+        "answer": "$A^c=\\{1,3,5\\}$."
+      },
+      {
+        "problem": "Find $A\\times B$ for $A=\\{0,1\\}$ and $B=\\{x,y,z\\}$, and count it.",
+        "steps": [
+          {
+            "do": "Pair $0$ with every element of $B$",
+            "result": "$(0,x),(0,y),(0,z)$",
+            "why": "Cartesian product uses ordered pairs"
+          },
+          {
+            "do": "Pair $1$ with every element of $B$",
+            "result": "$(1,x),(1,y),(1,z)$",
+            "why": "repeat for the second element of $A$"
+          },
+          {
+            "do": "List the product",
+            "result": "$A\\times B=\\{(0,x),(0,y),(0,z),(1,x),(1,y),(1,z)\\}$",
+            "why": "include all ordered pairs"
+          },
+          {
+            "do": "Count using multiplication",
+            "result": "$2\\cdot3=6$",
+            "why": "each of 2 first choices has 3 second choices"
+          },
+          {
+            "do": "Notice order",
+            "result": "$(0,x)$ is not the same type of choice as $(x,0)$",
+            "why": "Cartesian pairs are ordered"
+          }
+        ],
+        "answer": "$A\\times B$ has the six listed ordered pairs."
+      },
+      {
+        "problem": "In a dataset of 1000 users, 300 clicked, 180 purchased, and 75 did both. How many clicked or purchased?",
+        "steps": [
+          {
+            "do": "Define the sets",
+            "result": "$C=$ clicked users, $P=$ purchased users",
+            "why": "translate the words into sets"
+          },
+          {
+            "do": "Write the desired count",
+            "result": "$|C\\cup P|$",
+            "why": "clicked or purchased is a union"
+          },
+          {
+            "do": "Use inclusion-exclusion",
+            "result": "$|C\\cup P|=300+180-75$",
+            "why": "subtract users counted in both groups"
+          },
+          {
+            "do": "Add and subtract",
+            "result": "$405$",
+            "why": "$480-75=405$"
+          },
+          {
+            "do": "Interpret",
+            "result": "405 users",
+            "why": "each user is counted once in the union"
+          }
+        ],
+        "answer": "405 users clicked or purchased."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Training and validation splits",
+        "background": "ML workflows separate examples into sets so evaluation is honest. Overlap between train and test can leak information.",
+        "numbers": "If train has 80,000 ids, test has 20,000 ids, and overlap is 50 ids, then the distinct total is $80000+20000-50=99950$."
+      },
+      {
+        "title": "Vocabulary sets",
+        "background": "Natural language systems track sets of tokens. Comparing vocabularies reveals coverage and missing words.",
+        "numbers": "If vocabulary A has 12,000 tokens, B has 9,000, and overlap has 7,500, the union has $12000+9000-7500=13500$ tokens."
+      },
+      {
+        "title": "Recommendation candidates",
+        "background": "A recommender may union candidates from several retrieval systems before ranking them.",
+        "numbers": "If source A returns 100 items, source B returns 80, and 30 overlap, the union has $100+80-30=150$ items."
+      },
+      {
+        "title": "Access-control groups",
+        "background": "Security policies often grant permissions by membership in groups. Sets make the policy auditable.",
+        "numbers": "If 25 engineers are in group A and 18 in group B with 5 in both, then 38 distinct people are in at least one group."
+      },
+      {
+        "title": "Image labels",
+        "background": "Multilabel datasets attach a set of labels to each example. Intersection measures shared concepts.",
+        "numbers": "For labels $\\{cat,indoor,pet\\}$ and $\\{dog,indoor,pet\\}$, intersection size is 2 and union size is 4."
+      },
+      {
+        "title": "A/B experiment audiences",
+        "background": "Experiment platforms reason about sets of eligible users, excluded users, and assigned users.",
+        "numbers": "From 1,000,000 users, excluding a set of 40,000 leaves $960000$ eligible users if the exclusion set is fully inside the universe."
+      }
+    ],
+    "applicationsClose": "Sets are the quiet bookkeeping behind membership, overlap, exclusion, and finite counting.",
+    "takeaways": [
+      "Sets contain distinct elements; duplicates do not change membership.",
+      "Union means in either set; intersection means in both; difference means in the first but not the second.",
+      "For finite sets, $|A\\cup B|=|A|+|B|-|A\\cap B|$.",
+      "Complements require a universe, and Cartesian products create ordered pairs."
+    ],
     "prereqs": [
       "math-14-02"
     ]
@@ -69,19 +804,272 @@
   B({
     "id": "math-14-04",
     "title": "Relations",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: relations.",
+    "tagline": "A relation records which objects are connected to which other objects.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Sets</i>"
+        "Sets",
+        "Predicate logic",
+        "Cartesian products"
       ],
       "leadsTo": [
-        "the next lesson, <i>Functions</i>"
+        "Functions",
+        "equivalence relations",
+        "graphs"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "ordered pairs",
+        "sets",
+        "matrices",
+        "directed graphs"
       ]
     },
+    "motivation": "<p>Many ideas are not single-object properties. User follows user, number divides number, point is near point, item is similar to item. Each sentence relates two objects.</p><p>A <b>relation</b> is the mathematical container for those pairwise connections. Once we name the pairs, we can test patterns like reflexive, symmetric, and transitive, which later become graph structure, equivalence classes, and database joins.</p>",
+    "definition": "<p>A <b>binary relation</b> from set $A$ to set $B$ is a subset $R\\subseteq A\\times B$. If $(a,b)\\in R$, we may write $aRb$. When $R$ is on one set $A$, it is a subset of $A\\times A$.</p><p>For a relation on $A$, <b>reflexive</b> means every $a\\in A$ has $(a,a)\\in R$; <b>symmetric</b> means $(a,b)\\in R$ implies $(b,a)\\in R$; <b>transitive</b> means $(a,b)$ and $(b,c)$ imply $(a,c)$. These definitions are just quantified statements over ordered pairs.</p><p><b>Assumptions that matter:</b> ordered pairs remember order; properties such as symmetry are checked relative to the chosen set; and absence of a pair is meaningful information.</p>",
+    "worked": {
+      "problem": "On $A=\\{1,2,3\\}$, let $R=\\{(1,1),(2,2),(3,3),(1,2),(2,1)\\}$. Decide whether $R$ is reflexive, symmetric, and transitive.",
+      "skills": [
+        "relation properties",
+        "ordered pairs",
+        "counterexamples"
+      ],
+      "strategy": "Check each property from its definition and look for missing required pairs.",
+      "steps": [
+        {
+          "do": "Check diagonal pairs",
+          "result": "$(1,1),(2,2),(3,3)$ are all present",
+          "why": "reflexivity needs every element related to itself"
+        },
+        {
+          "do": "State reflexivity",
+          "result": "reflexive",
+          "why": "all required diagonal pairs appear"
+        },
+        {
+          "do": "Check non-diagonal pair $(1,2)$",
+          "result": "$(2,1)$ is present",
+          "why": "symmetry requires the reverse pair"
+        },
+        {
+          "do": "Check non-diagonal pair $(2,1)$",
+          "result": "$(1,2)$ is present",
+          "why": "the reverse condition works both ways"
+        },
+        {
+          "do": "State symmetry",
+          "result": "symmetric",
+          "why": "every listed pair has its reverse"
+        },
+        {
+          "do": "Test a transitive chain",
+          "result": "$(2,1)$ and $(1,2)$ require $(2,2)$",
+          "why": "the middle element matches"
+        },
+        {
+          "do": "Check all new requirements",
+          "result": "required pairs are already present",
+          "why": "chains involving diagonal pairs add nothing new"
+        }
+      ],
+      "verify": "The relation connects 1 and 2 as a small two-way cluster, while 3 only relates to itself, so all three properties are plausible.",
+      "answer": "$R$ is reflexive, symmetric, and transitive.",
+      "connects": "Relation properties are quantified logic applied to ordered pairs."
+    },
+    "practice": [
+      {
+        "problem": "Let $A=\\{a,b\\}$ and $R=\\{(a,a),(a,b)\\}$. Is $R$ reflexive?",
+        "steps": [
+          {
+            "do": "List required diagonal pairs",
+            "result": "$(a,a)$ and $(b,b)$",
+            "why": "reflexivity needs one for each element"
+          },
+          {
+            "do": "Check $(a,a)$",
+            "result": "present",
+            "why": "it is listed in $R$"
+          },
+          {
+            "do": "Check $(b,b)$",
+            "result": "missing",
+            "why": "it is not listed"
+          },
+          {
+            "do": "Apply the definition",
+            "result": "not reflexive",
+            "why": "one missing diagonal pair is enough"
+          },
+          {
+            "do": "Name the counterexample",
+            "result": "$b$",
+            "why": "$b$ is not related to itself"
+          }
+        ],
+        "answer": "No. $R$ is not reflexive because $(b,b)$ is missing."
+      },
+      {
+        "problem": "For $R=\\{(1,2),(2,1),(2,3)\\}$ on $\\{1,2,3\\}$, is $R$ symmetric?",
+        "steps": [
+          {
+            "do": "Check $(1,2)$",
+            "result": "$(2,1)$ is present",
+            "why": "the reverse exists"
+          },
+          {
+            "do": "Check $(2,1)$",
+            "result": "$(1,2)$ is present",
+            "why": "the reverse exists"
+          },
+          {
+            "do": "Check $(2,3)$",
+            "result": "$(3,2)$ is missing",
+            "why": "symmetry requires every reverse"
+          },
+          {
+            "do": "Apply the definition",
+            "result": "not symmetric",
+            "why": "one listed pair lacks its reverse"
+          },
+          {
+            "do": "State the counterexample",
+            "result": "$(2,3)$",
+            "why": "it points one way only"
+          }
+        ],
+        "answer": "No. $(2,3)$ is in $R$ but $(3,2)$ is not."
+      },
+      {
+        "problem": "Let $R$ be the divides relation on $\\{1,2,4\\}$: $aRb$ means $a$ divides $b$. List $R$.",
+        "steps": [
+          {
+            "do": "Find pairs starting with 1",
+            "result": "$(1,1),(1,2),(1,4)$",
+            "why": "1 divides every integer"
+          },
+          {
+            "do": "Find pairs starting with 2",
+            "result": "$(2,2),(2,4)$",
+            "why": "2 divides 2 and 4"
+          },
+          {
+            "do": "Find pairs starting with 4",
+            "result": "$(4,4)$",
+            "why": "4 divides itself in the set"
+          },
+          {
+            "do": "Combine the pairs",
+            "result": "$R=\\{(1,1),(1,2),(1,4),(2,2),(2,4),(4,4)\\}$",
+            "why": "relations are sets of ordered pairs"
+          },
+          {
+            "do": "Count the relation",
+            "result": "$|R|=6$",
+            "why": "six ordered pairs are listed"
+          }
+        ],
+        "answer": "$R=\\{(1,1),(1,2),(1,4),(2,2),(2,4),(4,4)\\}$."
+      },
+      {
+        "problem": "On $\\{1,2,3\\}$, $R=\\{(1,2),(2,3),(1,3)\\}$. Is $R$ transitive?",
+        "steps": [
+          {
+            "do": "Find a chain",
+            "result": "$(1,2)$ and $(2,3)$",
+            "why": "the second coordinate of the first matches the first of the second"
+          },
+          {
+            "do": "Find the required shortcut",
+            "result": "$(1,3)$",
+            "why": "transitivity requires connecting start to finish"
+          },
+          {
+            "do": "Check whether it is present",
+            "result": "present",
+            "why": "$(1,3)$ is listed"
+          },
+          {
+            "do": "Look for other chains",
+            "result": "none with matching middle that create new requirements",
+            "why": "no pair starts with 3"
+          },
+          {
+            "do": "State transitivity",
+            "result": "transitive",
+            "why": "all chain requirements are met"
+          }
+        ],
+        "answer": "Yes. The only nontrivial chain requires $(1,3)$, which is present."
+      },
+      {
+        "problem": "A similarity relation links items if cosine similarity is at least $0.9$. For similarities $s(A,B)=0.92$, $s(B,C)=0.91$, and $s(A,C)=0.84$, is the relation transitive on these three items?",
+        "steps": [
+          {
+            "do": "Convert similarities to pairs",
+            "result": "$A R B$ and $B R C$ are true",
+            "why": "$0.92$ and $0.91$ exceed $0.9$"
+          },
+          {
+            "do": "Check the shortcut",
+            "result": "$A R C$ is false",
+            "why": "$0.84<0.9$"
+          },
+          {
+            "do": "Apply transitivity",
+            "result": "transitivity fails",
+            "why": "$A R B$ and $B R C$ would require $A R C$"
+          },
+          {
+            "do": "Name the counterexample",
+            "result": "$A,B,C$",
+            "why": "they form a broken chain"
+          },
+          {
+            "do": "Interpret",
+            "result": "high similarity is not automatically transitive",
+            "why": "near-to-near need not be near"
+          }
+        ],
+        "answer": "No. The threshold similarity relation is not transitive in this example."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Social graphs",
+        "background": "Follow and friendship data are relations on users. Directed follow is not necessarily symmetric; friendship usually is designed to be symmetric.",
+        "numbers": "If user 1 follows 2 and 2 follows 3, transitivity would require 1 follows 3, which many social graphs do not require."
+      },
+      {
+        "title": "Database joins",
+        "background": "A join table stores related pairs such as user enrolled in course. It is literally a finite relation.",
+        "numbers": "With 4 users and 3 courses, the Cartesian product has 12 possible pairs; a relation might store only 7 actual enrollments."
+      },
+      {
+        "title": "Equivalence classes",
+        "background": "Relations that are reflexive, symmetric, and transitive group objects into classes. This is how equality-like behavior is generalized.",
+        "numbers": "Modulo 3 on $\\{0,1,2,3,4,5\\}$ creates classes $\\{0,3\\}$, $\\{1,4\\}$, and $\\{2,5\\}$."
+      },
+      {
+        "title": "Partial orders",
+        "background": "Relations like subset and divides organize objects without requiring every pair to be comparable.",
+        "numbers": "For sets $\\{1\\}$, $\\{1,2\\}$, and $\\{2\\}$, the first is subset of the second, but $\\{1\\}$ and $\\{2\\}$ are not comparable."
+      },
+      {
+        "title": "Recommendation similarity",
+        "background": "Item-item similarity graphs are relations after thresholding scores. Graph algorithms then explore neighborhoods.",
+        "numbers": "If 10,000 item pairs are scored and 640 exceed threshold $0.85$, the relation contains 640 ordered or unordered links depending on design."
+      },
+      {
+        "title": "Program dependencies",
+        "background": "Build systems use depends-on relations. Transitive closure tells which files must rebuild after a change.",
+        "numbers": "If A depends on B and B depends on C, then C is in A's transitive dependency chain even if A does not directly mention C."
+      }
+    ],
+    "applicationsClose": "Relations are pair bookkeeping; their properties explain patterns in graphs, data, order, and similarity.",
+    "takeaways": [
+      "A binary relation from $A$ to $B$ is a subset of $A\\times B$.",
+      "Reflexive means every element relates to itself.",
+      "Symmetric means every pair comes with its reverse.",
+      "Transitive means every two-step chain has the corresponding shortcut."
+    ],
     "prereqs": [
       "math-14-03"
     ]
@@ -90,19 +1078,272 @@
   B({
     "id": "math-14-05",
     "title": "Functions",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: functions.",
+    "tagline": "In discrete math, a function is a relation with one output chosen for every allowed input.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Relations</i>"
+        "Relations",
+        "Sets",
+        "Predicate logic"
       ],
       "leadsTo": [
-        "the next lesson, <i>Proof by induction</i>"
+        "Proof by induction",
+        "counting functions",
+        "permutations"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "sets",
+        "relations",
+        "composition",
+        "cardinality"
       ]
     },
+    "motivation": "<p>You met functions as formulas and graphs. Discrete math widens the picture: a function can map usernames to ids, states to next states, or feature vectors to labels. No formula is required.</p><p>The essential promise is still the same: each input in the domain gets exactly one output. That promise is what makes lookup, composition, inversion, and counting possible.</p>",
+    "definition": "<p>A <b>function</b> $f:A\\to B$ assigns every element $a\\in A$ exactly one element $f(a)\\in B$. As a relation, it is a subset of $A\\times B$ where each $a\\in A$ appears as the first coordinate in exactly one ordered pair.</p><p>The function is <b>injective</b> if different inputs have different outputs; <b>surjective</b> if every element of $B$ is hit by at least one input; and <b>bijective</b> if both hold. For finite sets with $|A|=m$ and $|B|=n$, the number of all functions $A\\to B$ is $n^m$ because each of $m$ inputs has $n$ independent output choices.</p><p><b>Assumptions that matter:</b> the codomain $B$ is part of the function data; every domain element must be assigned; and a many-to-one assignment may still be a function even though it is not injective.</p>",
+    "worked": {
+      "problem": "Let $A=\\{1,2,3\\}$ and $B=\\{a,b,c\\}$. The relation $R=\\{(1,a),(2,a),(3,c)\\}$ is from $A$ to $B$. Is it a function? Is it injective or surjective?",
+      "skills": [
+        "function test",
+        "injective",
+        "surjective"
+      ],
+      "strategy": "First check the one-output rule for every input, then inspect repeated outputs and missed codomain values.",
+      "steps": [
+        {
+          "do": "List first coordinates",
+          "result": "$1,2,3$",
+          "why": "every domain element must appear"
+        },
+        {
+          "do": "Check uniqueness of outputs",
+          "result": "each input appears once",
+          "why": "a function gives exactly one output per input"
+        },
+        {
+          "do": "State function status",
+          "result": "function",
+          "why": "the one-output rule holds"
+        },
+        {
+          "do": "Check repeated outputs",
+          "result": "$1$ and $2$ both map to $a$",
+          "why": "injectivity forbids different inputs sharing an output"
+        },
+        {
+          "do": "State injectivity",
+          "result": "not injective",
+          "why": "two inputs share $a$"
+        },
+        {
+          "do": "Check codomain coverage",
+          "result": "$b$ is not hit",
+          "why": "surjectivity requires every codomain element"
+        },
+        {
+          "do": "State surjectivity",
+          "result": "not surjective",
+          "why": "one codomain element has no preimage"
+        }
+      ],
+      "verify": "The relation can be a perfectly valid function while still failing both one-to-one and onto tests.",
+      "answer": "$R$ is a function, but it is neither injective nor surjective.",
+      "connects": "Functions are special relations; injective and surjective describe how outputs are used."
+    },
+    "practice": [
+      {
+        "problem": "Is $R=\\{(1,a),(1,b),(2,c)\\}$ a function from $\\{1,2\\}$ to $\\{a,b,c\\}$?",
+        "steps": [
+          {
+            "do": "List pairs with first coordinate 1",
+            "result": "$(1,a)$ and $(1,b)$",
+            "why": "input 1 appears twice"
+          },
+          {
+            "do": "Compare outputs for input 1",
+            "result": "$a\\ne b$",
+            "why": "the same input gets two outputs"
+          },
+          {
+            "do": "Apply the function rule",
+            "result": "not a function",
+            "why": "exactly one output per input is required"
+          },
+          {
+            "do": "Check input 2",
+            "result": "$(2,c)$ is fine",
+            "why": "one correct input does not repair another"
+          },
+          {
+            "do": "State the failure",
+            "result": "input 1 violates uniqueness",
+            "why": "that is enough to fail"
+          }
+        ],
+        "answer": "No. Input 1 is assigned to both $a$ and $b$."
+      },
+      {
+        "problem": "For $f:\\{1,2,3\\}\\to\\{x,y,z\\}$ with $f(1)=x$, $f(2)=y$, $f(3)=z$, decide injective and surjective.",
+        "steps": [
+          {
+            "do": "List outputs",
+            "result": "$x,y,z$",
+            "why": "read off each function value"
+          },
+          {
+            "do": "Check repeats",
+            "result": "no output repeats",
+            "why": "each input has a different output"
+          },
+          {
+            "do": "State injectivity",
+            "result": "injective",
+            "why": "different inputs have different outputs"
+          },
+          {
+            "do": "Check codomain coverage",
+            "result": "all of $x,y,z$ are hit",
+            "why": "every codomain element appears"
+          },
+          {
+            "do": "State surjectivity",
+            "result": "surjective",
+            "why": "nothing in the codomain is missed"
+          }
+        ],
+        "answer": "$f$ is both injective and surjective, so it is bijective."
+      },
+      {
+        "problem": "How many functions are there from a 4-element set to a 3-element set?",
+        "steps": [
+          {
+            "do": "Identify domain size",
+            "result": "$m=4$",
+            "why": "there are four inputs"
+          },
+          {
+            "do": "Identify codomain size",
+            "result": "$n=3$",
+            "why": "each input has three output choices"
+          },
+          {
+            "do": "Use the counting formula",
+            "result": "$n^m=3^4$",
+            "why": "choices are independent for each input"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$3^4=81$",
+            "why": "$3\\cdot3\\cdot3\\cdot3=81$"
+          },
+          {
+            "do": "Interpret",
+            "result": "81 functions",
+            "why": "every assignment pattern counts"
+          }
+        ],
+        "answer": "There are $81$ functions."
+      },
+      {
+        "problem": "If $f:A\\to B$ is injective and $|A|=5$, what is the smallest possible $|B|$?",
+        "steps": [
+          {
+            "do": "Recall injectivity",
+            "result": "different inputs need different outputs",
+            "why": "no sharing is allowed"
+          },
+          {
+            "do": "Count needed outputs",
+            "result": "5 distinct outputs",
+            "why": "there are 5 inputs"
+          },
+          {
+            "do": "Compare with codomain size",
+            "result": "$|B|\\ge5$",
+            "why": "the codomain must contain all used outputs"
+          },
+          {
+            "do": "Find the smallest size",
+            "result": "$5$",
+            "why": "five outputs are enough for five inputs"
+          },
+          {
+            "do": "Give an example",
+            "result": "map each input to a different element",
+            "why": "this shows the bound can be achieved"
+          }
+        ],
+        "answer": "The smallest possible codomain size is $5$."
+      },
+      {
+        "problem": "A classifier maps 6 examples to labels $\\{0,1\\}$. How many label functions are possible, and how many have exactly two positives?",
+        "steps": [
+          {
+            "do": "Count all label functions",
+            "result": "$2^6=64$",
+            "why": "each example independently gets label 0 or 1"
+          },
+          {
+            "do": "Translate exactly two positives",
+            "result": "choose 2 of the 6 examples",
+            "why": "the chosen examples receive label 1"
+          },
+          {
+            "do": "Use combinations",
+            "result": "$\\binom{6}{2}$",
+            "why": "order of chosen positive examples does not matter"
+          },
+          {
+            "do": "Compute",
+            "result": "$\\binom{6}{2}=15$",
+            "why": "$6\\cdot5/2=15$"
+          },
+          {
+            "do": "Interpret",
+            "result": "15 special label functions",
+            "why": "each chosen pair determines one labeling"
+          }
+        ],
+        "answer": "There are 64 label functions total, and 15 have exactly two positives."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Hash functions",
+        "background": "Hashing maps keys to buckets for fast lookup. Collisions mean the function is usually not injective.",
+        "numbers": "Mapping 1000 keys into 100 buckets cannot be injective because $1000>100$; at least one bucket receives multiple keys."
+      },
+      {
+        "title": "Classification models",
+        "background": "A classifier is a function from features to labels. The same label can be assigned to many examples.",
+        "numbers": "For 3 binary features there are $2^3=8$ possible inputs; with 2 labels, there are $2^8=256$ possible classifiers on that finite input set."
+      },
+      {
+        "title": "Embeddings",
+        "background": "An embedding function maps tokens or items into vectors. It need not be injective, though collisions can lose information.",
+        "numbers": "A vocabulary of 50,000 tokens mapped to 768-dimensional vectors assigns one vector per token, so 50,000 function values are stored or learned."
+      },
+      {
+        "title": "Database primary keys",
+        "background": "A primary-key lookup maps each key to one row. If keys are unique, the key-to-row map is injective into stored rows.",
+        "numbers": "If 20,000 keys return 20,000 distinct rows, no two keys share a row in that table."
+      },
+      {
+        "title": "State transitions",
+        "background": "Deterministic automata use transition functions: current state and input symbol determine exactly one next state.",
+        "numbers": "With 5 states and 3 input symbols, the transition table has $5\\cdot3=15$ entries."
+      },
+      {
+        "title": "Feature preprocessing",
+        "background": "Normalization maps raw feature values to transformed values. It may be invertible or may collapse information.",
+        "numbers": "Rounding ages to decades maps ages 21 and 29 both to 20, so the map is a function but not injective."
+      }
+    ],
+    "applicationsClose": "The function promise, exactly one output per input, underlies lookup tables, models, transitions, and finite counting.",
+    "takeaways": [
+      "A function $f:A\\to B$ assigns every input in $A$ exactly one output in $B$.",
+      "Injective means no two inputs share an output; surjective means every codomain element is hit.",
+      "A finite set of size $m$ mapping to a set of size $n$ has $n^m$ possible functions.",
+      "Every function is a relation, but not every relation is a function."
+    ],
     "prereqs": [
       "math-14-04"
     ]
@@ -111,19 +1352,272 @@
   B({
     "id": "math-14-06",
     "title": "Proof by induction",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: proof by induction.",
+    "tagline": "Induction proves an infinite line of claims by securing the first step and the step from one to the next.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Functions</i>"
+        "Predicate logic",
+        "Functions",
+        "integer sequences"
       ],
       "leadsTo": [
-        "the next lesson, <i>Proof by contradiction</i>"
+        "Proof by contradiction",
+        "recurrences",
+        "The binomial theorem"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "sequences",
+        "recursion",
+        "summations",
+        "divisibility"
       ]
     },
+    "motivation": "<p>Some claims come in an infinite row: one for $n=1$, one for $n=2$, one for $n=3$, and so on. Checking ten cases can build confidence, but it cannot check forever.</p><p><b>Proof by induction</b> is the domino method. Prove the first domino falls, then prove any falling domino knocks down the next one. Together, those two facts carry the claim through all positive integers.</p>",
+    "definition": "<p>To prove a statement $P(n)$ for all integers $n\\ge n_0$, induction has two parts. The <b>base case</b> proves $P(n_0)$. The <b>inductive step</b> assumes $P(k)$ for an arbitrary $k\\ge n_0$ and proves $P(k+1)$.</p><p>The logic works because the base case gives $P(n_0)$; the step then gives $P(n_0+1)$; applying the step again gives $P(n_0+2)$; and so on. The arbitrary $k$ is what makes one step reusable infinitely many times.</p><p><b>Assumptions that matter:</b> induction applies to well-ordered integer domains such as $n\\ge n_0$; the inductive hypothesis is assumed only for the chosen $k$ during the step; and the base case must match the claimed starting value.</p>",
+    "worked": {
+      "problem": "Prove by induction that $1+2+\\cdots+n=\\dfrac{n(n+1)}{2}$ for all $n\\ge1$.",
+      "skills": [
+        "base case",
+        "inductive hypothesis",
+        "summation formulas"
+      ],
+      "strategy": "Assume the formula for $k$, then add the next term $k+1$ and simplify to the same formula with $k+1$.",
+      "steps": [
+        {
+          "do": "Check the base case $n=1$",
+          "result": "$1=\\dfrac{1(2)}{2}=1$",
+          "why": "the formula starts correctly"
+        },
+        {
+          "do": "State the inductive hypothesis",
+          "result": "$1+2+\\cdots+k=\\dfrac{k(k+1)}{2}$",
+          "why": "assume the claim for an arbitrary $k\\ge1$"
+        },
+        {
+          "do": "Add the next term",
+          "result": "$1+2+\\cdots+k+(k+1)=\\dfrac{k(k+1)}{2}+(k+1)$",
+          "why": "use the hypothesis for the first $k$ terms"
+        },
+        {
+          "do": "Factor $k+1$",
+          "result": "$(k+1)(\\dfrac{k}{2}+1)$",
+          "why": "both terms contain $k+1$"
+        },
+        {
+          "do": "Combine inside the parentheses",
+          "result": "$(k+1)\\dfrac{k+2}{2}$",
+          "why": "$k/2+1=(k+2)/2$"
+        },
+        {
+          "do": "Rewrite in target form",
+          "result": "$\\dfrac{(k+1)(k+2)}{2}$",
+          "why": "this is the formula with $n=k+1$"
+        }
+      ],
+      "verify": "The base case starts the chain, and the step proves the exact next formula, not just something similar.",
+      "answer": "By induction, $1+2+\\cdots+n=\\dfrac{n(n+1)}{2}$ for every $n\\ge1$.",
+      "connects": "Induction turns a finite algebraic step into an infinite proof."
+    },
+    "practice": [
+      {
+        "problem": "Prove $1+3+5+\\cdots+(2n-1)=n^2$ for all $n\\ge1$.",
+        "steps": [
+          {
+            "do": "Check $n=1$",
+            "result": "$1=1^2$",
+            "why": "base case holds"
+          },
+          {
+            "do": "Assume the formula for $k$",
+            "result": "$1+3+\\cdots+(2k-1)=k^2$",
+            "why": "inductive hypothesis"
+          },
+          {
+            "do": "Add the next odd number",
+            "result": "$k^2+(2(k+1)-1)$",
+            "why": "the next term after $2k-1$ is $2k+1$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$k^2+2k+1$",
+            "why": "expand the next term"
+          },
+          {
+            "do": "Factor",
+            "result": "$(k+1)^2$",
+            "why": "this is the target for $k+1$"
+          }
+        ],
+        "answer": "The identity holds for all $n\\ge1$ by induction."
+      },
+      {
+        "problem": "Prove $2^n\\ge n+1$ for all $n\\ge0$.",
+        "steps": [
+          {
+            "do": "Check $n=0$",
+            "result": "$2^0=1\\ge1$",
+            "why": "base case holds"
+          },
+          {
+            "do": "Assume for $k$",
+            "result": "$2^k\\ge k+1$",
+            "why": "inductive hypothesis"
+          },
+          {
+            "do": "Multiply by 2",
+            "result": "$2^{k+1}\\ge2(k+1)$",
+            "why": "multiplying by positive 2 preserves inequality"
+          },
+          {
+            "do": "Compare with the target",
+            "result": "$2(k+1)=2k+2\\ge k+2$",
+            "why": "$k\\ge0$"
+          },
+          {
+            "do": "Conclude the next case",
+            "result": "$2^{k+1}\\ge(k+1)+1$",
+            "why": "chain the inequalities"
+          }
+        ],
+        "answer": "$2^n\\ge n+1$ for every integer $n\\ge0$."
+      },
+      {
+        "problem": "Prove $3$ divides $4^n-1$ for all $n\\ge1$.",
+        "steps": [
+          {
+            "do": "Check $n=1$",
+            "result": "$4^1-1=3$",
+            "why": "3 divides 3"
+          },
+          {
+            "do": "Assume divisibility for $k$",
+            "result": "$4^k-1=3m$ for some integer $m$",
+            "why": "definition of divisible"
+          },
+          {
+            "do": "Rewrite the next expression",
+            "result": "$4^{k+1}-1=4\\cdot4^k-1$",
+            "why": "separate one factor of 4"
+          },
+          {
+            "do": "Add and subtract 4",
+            "result": "$4(4^k-1)+3$",
+            "why": "this exposes the inductive hypothesis"
+          },
+          {
+            "do": "Use the hypothesis",
+            "result": "$4(3m)+3=3(4m+1)$",
+            "why": "factor out 3"
+          }
+        ],
+        "answer": "Since $4^{k+1}-1$ is divisible by 3, the result holds for all $n\\ge1$."
+      },
+      {
+        "problem": "Prove $1^2+2^2+\\cdots+n^2=\\dfrac{n(n+1)(2n+1)}{6}$ for all $n\\ge1$.",
+        "steps": [
+          {
+            "do": "Check $n=1$",
+            "result": "$1=\\dfrac{1\\cdot2\\cdot3}{6}$",
+            "why": "base case holds"
+          },
+          {
+            "do": "Assume for $k$",
+            "result": "$\\sum_{i=1}^k i^2=\\dfrac{k(k+1)(2k+1)}{6}$",
+            "why": "inductive hypothesis"
+          },
+          {
+            "do": "Add $(k+1)^2$",
+            "result": "$\\dfrac{k(k+1)(2k+1)}{6}+(k+1)^2$",
+            "why": "move to the next sum"
+          },
+          {
+            "do": "Factor $k+1$",
+            "result": "$(k+1)\\left(\\dfrac{k(2k+1)}{6}+k+1\\right)$",
+            "why": "both terms contain $k+1$"
+          },
+          {
+            "do": "Combine the bracket",
+            "result": "$(k+1)\\dfrac{2k^2+7k+6}{6}$",
+            "why": "put terms over denominator 6"
+          },
+          {
+            "do": "Factor the numerator",
+            "result": "$\\dfrac{(k+1)(k+2)(2k+3)}{6}$",
+            "why": "$2k^2+7k+6=(k+2)(2k+3)$"
+          }
+        ],
+        "answer": "The square-sum formula holds for all $n\\ge1$."
+      },
+      {
+        "problem": "A recursive training job doubles checkpoints each round: $c_0=1$, $c_{n+1}=2c_n$. Prove $c_n=2^n$.",
+        "steps": [
+          {
+            "do": "Check $n=0$",
+            "result": "$c_0=1=2^0$",
+            "why": "base case matches the formula"
+          },
+          {
+            "do": "Assume $c_k=2^k$",
+            "result": "inductive hypothesis",
+            "why": "assume the formula at round $k$"
+          },
+          {
+            "do": "Use the recurrence",
+            "result": "$c_{k+1}=2c_k$",
+            "why": "given update rule"
+          },
+          {
+            "do": "Substitute the hypothesis",
+            "result": "$c_{k+1}=2\\cdot2^k$",
+            "why": "replace $c_k$"
+          },
+          {
+            "do": "Combine powers",
+            "result": "$c_{k+1}=2^{k+1}$",
+            "why": "multiplying by 2 increases the exponent by 1"
+          }
+        ],
+        "answer": "$c_n=2^n$ for every $n\\ge0$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Recursive algorithms",
+        "background": "Induction is the natural proof method for recursive code because the code calls itself on smaller inputs.",
+        "numbers": "If a recursive function handles size 1 and reduces size $n$ to $n-1$, induction proves correctness for sizes 1 through 1000 and beyond."
+      },
+      {
+        "title": "Loop invariants",
+        "background": "A loop invariant is induction in programming clothing: true before the loop, preserved by one iteration.",
+        "numbers": "If a sum loop starts at 0 and adds $a_i$ on iteration $i$, after 5 iterations it holds $a_1+\\cdots+a_5$."
+      },
+      {
+        "title": "Binary tree sizes",
+        "background": "Data structures often have recursive shape. Induction proves node-count formulas.",
+        "numbers": "A full binary tree of height 3 has $1+2+4+8=15=2^4-1$ nodes."
+      },
+      {
+        "title": "Geometric growth in systems",
+        "background": "Repeated doubling appears in search, memory, and parallel branching. Induction confirms the exact count.",
+        "numbers": "Starting with 1 task and doubling for 10 rounds gives $2^{10}=1024$ tasks."
+      },
+      {
+        "title": "Dynamic programming correctness",
+        "background": "DP fills solutions for increasing subproblem sizes. Induction proves each filled entry is correct after smaller entries are correct.",
+        "numbers": "If entries for lengths 0 through 4 are correct and the recurrence uses only shorter lengths, it proves length 5 next."
+      },
+      {
+        "title": "Gradient-step recurrences",
+        "background": "Simple optimization recurrences can be unrolled and proved by induction.",
+        "numbers": "If error satisfies $e_{t+1}=0.8e_t$ with $e_0=5$, induction gives $e_4=5(0.8)^4=2.048$."
+      }
+    ],
+    "applicationsClose": "Induction is the proof engine for anything built one integer step, recursive call, or iteration at a time.",
+    "takeaways": [
+      "Induction needs a base case and an inductive step.",
+      "The inductive hypothesis assumes $P(k)$ only to prove $P(k+1)$.",
+      "The base case must match the first value in the claim.",
+      "Recursion, loops, summations, and recurrences are natural induction settings."
+    ],
     "prereqs": [
       "math-14-05"
     ]
@@ -132,19 +1626,277 @@
   B({
     "id": "math-14-07",
     "title": "Proof by contradiction",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: proof by contradiction.",
+    "tagline": "Contradiction proves a claim by showing that denying it breaks something already known.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Proof by induction</i>"
+        "Propositional logic",
+        "Predicate logic",
+        "Proof by induction"
       ],
       "leadsTo": [
-        "the next lesson, <i>The sum rule</i>"
+        "irrationality proofs",
+        "existence proofs",
+        "graph arguments"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "negation",
+        "quantifiers",
+        "divisibility",
+        "sets"
       ]
     },
+    "motivation": "<p>Sometimes a direct proof feels like pushing a door from the wrong side. Instead, assume the claim is false and follow that assumption honestly. If it forces an impossibility, the false assumption must be the part that failed.</p><p><b>Proof by contradiction</b> is especially useful for impossibility, uniqueness, irrationality, and no-counterexample statements. It rewards careful negation and calm bookkeeping.</p>",
+    "definition": "<p>To prove a statement $P$ by contradiction, assume $\\neg P$ and derive a contradiction such as $Q\\land\\neg Q$, $0=1$, or violation of a known theorem. Since $\\neg P$ cannot be true, conclude $P$.</p><p>The logical backbone is that $\\neg P\\to F$ is equivalent to $P$, where $F$ is a false statement. In words: if denying $P$ inevitably leads to falsehood, then $P$ must be true.</p><p><b>Assumptions that matter:</b> the negation must be exact; the contradiction must follow from the assumption and accepted facts; and contradiction proves truth in ordinary two-valued logic where every proposition is true or false.</p>",
+    "worked": {
+      "problem": "Prove that $\\sqrt2$ is irrational.",
+      "skills": [
+        "contradiction",
+        "parity",
+        "divisibility"
+      ],
+      "strategy": "Assume $\\sqrt2$ is a reduced fraction, then show both numerator and denominator must be even.",
+      "steps": [
+        {
+          "do": "Assume the opposite",
+          "result": "$\\sqrt2=\\dfrac{a}{b}$ with integers $a,b$ in lowest terms",
+          "why": "rational numbers can be written as reduced fractions"
+        },
+        {
+          "do": "Square both sides",
+          "result": "$2=\\dfrac{a^2}{b^2}$",
+          "why": "remove the square root"
+        },
+        {
+          "do": "Multiply by $b^2$",
+          "result": "$a^2=2b^2$",
+          "why": "clear the denominator"
+        },
+        {
+          "do": "Infer parity of $a$",
+          "result": "$a$ is even",
+          "why": "$a^2$ is even, so $a$ must be even"
+        },
+        {
+          "do": "Write $a=2k$",
+          "result": "$4k^2=2b^2$",
+          "why": "substitute the even form"
+        },
+        {
+          "do": "Divide by 2",
+          "result": "$b^2=2k^2$",
+          "why": "simplify the equation"
+        },
+        {
+          "do": "Infer parity of $b$",
+          "result": "$b$ is even",
+          "why": "$b^2$ is even"
+        },
+        {
+          "do": "State the contradiction",
+          "result": "$a$ and $b$ are both even",
+          "why": "a reduced fraction cannot have a common factor 2"
+        }
+      ],
+      "verify": "Every step followed from the rational assumption, and the final result contradicts lowest terms.",
+      "answer": "$\\sqrt2$ is irrational.",
+      "connects": "Contradiction is powerful when the false alternative has rigid structure."
+    },
+    "practice": [
+      {
+        "problem": "Prove there is no smallest positive real number.",
+        "steps": [
+          {
+            "do": "Assume the opposite",
+            "result": "there is a smallest positive real number $s$",
+            "why": "start contradiction"
+          },
+          {
+            "do": "Construct a smaller candidate",
+            "result": "$s/2$",
+            "why": "halving a positive number stays positive"
+          },
+          {
+            "do": "Compare",
+            "result": "$0<s/2<s$",
+            "why": "division by 2 preserves positivity and makes it smaller"
+          },
+          {
+            "do": "Find the contradiction",
+            "result": "$s$ is not smallest",
+            "why": "$s/2$ is a smaller positive real"
+          },
+          {
+            "do": "Conclude",
+            "result": "no smallest positive real exists",
+            "why": "the opposite assumption failed"
+          }
+        ],
+        "answer": "There is no smallest positive real number."
+      },
+      {
+        "problem": "Prove that if $n^2$ is odd, then $n$ is odd.",
+        "steps": [
+          {
+            "do": "Assume the opposite of the conclusion",
+            "result": "$n$ is even",
+            "why": "contradiction starts by denying what we want"
+          },
+          {
+            "do": "Write the even form",
+            "result": "$n=2k$",
+            "why": "definition of even"
+          },
+          {
+            "do": "Square",
+            "result": "$n^2=4k^2$",
+            "why": "substitute and square"
+          },
+          {
+            "do": "Factor out 2",
+            "result": "$n^2=2(2k^2)$",
+            "why": "show divisibility by 2"
+          },
+          {
+            "do": "Contradict the premise",
+            "result": "$n^2$ is even",
+            "why": "the problem says $n^2$ is odd"
+          }
+        ],
+        "answer": "Therefore $n$ must be odd."
+      },
+      {
+        "problem": "Prove that no integer is both even and odd.",
+        "steps": [
+          {
+            "do": "Assume both properties",
+            "result": "$n=2a$ and $n=2b+1$",
+            "why": "definitions of even and odd"
+          },
+          {
+            "do": "Set the forms equal",
+            "result": "$2a=2b+1$",
+            "why": "both equal $n$"
+          },
+          {
+            "do": "Rearrange",
+            "result": "$2(a-b)=1$",
+            "why": "subtract $2b$"
+          },
+          {
+            "do": "Inspect parity",
+            "result": "left side is even, right side is odd",
+            "why": "a multiple of 2 cannot equal 1"
+          },
+          {
+            "do": "State the contradiction",
+            "result": "even equals odd",
+            "why": "impossible for integers"
+          }
+        ],
+        "answer": "No integer can be both even and odd."
+      },
+      {
+        "problem": "Prove that if $a+b$ is odd, then at least one of $a,b$ is odd.",
+        "steps": [
+          {
+            "do": "Assume the opposite",
+            "result": "$a$ and $b$ are both not odd",
+            "why": "negating at least one odd means both are even"
+          },
+          {
+            "do": "Write even forms",
+            "result": "$a=2m$ and $b=2n$",
+            "why": "definition of even"
+          },
+          {
+            "do": "Add",
+            "result": "$a+b=2m+2n$",
+            "why": "substitute the forms"
+          },
+          {
+            "do": "Factor",
+            "result": "$a+b=2(m+n)$",
+            "why": "show the sum is even"
+          },
+          {
+            "do": "Contradict the premise",
+            "result": "$a+b$ is even",
+            "why": "the premise says it is odd"
+          }
+        ],
+        "answer": "At least one of $a,b$ must be odd."
+      },
+      {
+        "problem": "A classifier must assign each of 11 items to one of 10 buckets. Prove some bucket gets at least two items.",
+        "steps": [
+          {
+            "do": "Assume the opposite",
+            "result": "every bucket gets at most one item",
+            "why": "deny the claim"
+          },
+          {
+            "do": "Count maximum items under that assumption",
+            "result": "$10\\cdot1=10$",
+            "why": "10 buckets with at most one each hold at most 10 items"
+          },
+          {
+            "do": "Compare with actual items",
+            "result": "$11>10$",
+            "why": "there are 11 assigned items"
+          },
+          {
+            "do": "State the contradiction",
+            "result": "11 items fit into at most 10 slots",
+            "why": "impossible under the assumption"
+          },
+          {
+            "do": "Conclude",
+            "result": "some bucket has at least two items",
+            "why": "the opposite assumption failed"
+          }
+        ],
+        "answer": "At least one bucket contains two or more items."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Impossibility proofs",
+        "background": "Computer science often needs to prove something cannot exist, such as a perfect compressor for all files. Contradiction is a natural tool.",
+        "numbers": "There are $2^8=256$ one-byte strings but only $1+2+4+8+16+32+64+128=255$ strings shorter than 8 bits, so not every byte can compress."
+      },
+      {
+        "title": "Pigeonhole reasoning",
+        "background": "Pigeonhole arguments are often contradiction proofs: assume no container is crowded, then total capacity is too small.",
+        "numbers": "101 users assigned to 100 shards force one shard to have at least 2 users."
+      },
+      {
+        "title": "Uniqueness of solutions",
+        "background": "To prove a solution is unique, assume two different solutions and show they must be equal. The contradiction is the word different.",
+        "numbers": "If $2x=6$ and $2y=6$, then $x=3$ and $y=3$, so two solutions are actually the same."
+      },
+      {
+        "title": "Security reasoning",
+        "background": "Proofs of protocol flaws often assume an attacker cannot do something, then construct a case that violates the assumption.",
+        "numbers": "If 2 distinct messages produce the same 4-bit hash among 17 messages, collision resistance at that size is contradicted because only 16 hashes exist."
+      },
+      {
+        "title": "Data validation",
+        "background": "Contradiction helps detect impossible records created by inconsistent constraints.",
+        "numbers": "If age must be at least 0 and a row has age $-3$, assuming the row is valid gives $-3\\ge0$, a contradiction."
+      },
+      {
+        "title": "Optimization lower bounds",
+        "background": "Some lower bounds show that a faster algorithm would imply an impossible distinction among too many inputs.",
+        "numbers": "If an algorithm with one yes-or-no question tried to distinguish 3 cases, it has only $2$ possible answer patterns, so two cases collide."
+      }
+    ],
+    "applicationsClose": "Contradiction is disciplined refusal: when the denial collapses, the original claim stands.",
+    "takeaways": [
+      "To prove $P$ by contradiction, assume $\\neg P$ and derive an impossibility.",
+      "The negation must be exact, especially with quantifiers.",
+      "Contradiction is useful for impossibility, irrationality, uniqueness, and pigeonhole claims.",
+      "The contradiction must follow from accepted facts and the temporary assumption."
+    ],
     "prereqs": [
       "math-14-06"
     ]
@@ -153,19 +1905,262 @@
   B({
     "id": "math-14-08",
     "title": "The sum rule",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: the sum rule.",
+    "tagline": "The sum rule counts choices from separate cases by adding their counts.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Proof by contradiction</i>"
+        "Sets",
+        "Propositional logic",
+        "cardinality"
       ],
       "leadsTo": [
-        "the next lesson, <i>The product rule</i>"
+        "The product rule",
+        "Permutations",
+        "Combinations"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "unions",
+        "casework",
+        "inclusion-exclusion",
+        "partitions"
       ]
     },
+    "motivation": "<p>Counting becomes easier when choices split into cases: choose a red item or a blue item, take a bus or a train, select a model from family A or family B. If the cases do not overlap, adding is exactly right.</p><p>The <b>sum rule</b> is the counting version of union for disjoint sets. It teaches a habit that matters everywhere in combinatorics: first define the cases so nothing is missed and nothing is counted twice.</p>",
+    "definition": "<p>If a task can be done in one of $m$ ways or in one of $n$ other ways, and no way belongs to both cases, then the task can be done in $m+n$ ways. More generally, if finite sets $A_1,\\ldots,A_k$ are pairwise disjoint, then $|A_1\\cup\\cdots\\cup A_k|=|A_1|+\\cdots+|A_k|$.</p><p>The rule follows because disjoint cases have no shared elements. Placing the cases side by side does not create duplicates, so counting each case separately and adding counts each outcome exactly once.</p><p><b>Assumptions that matter:</b> the cases must be disjoint for the plain sum rule; if cases overlap, use inclusion-exclusion; and the cases together must cover exactly the outcomes you want to count.</p>",
+    "worked": {
+      "problem": "A menu offers 4 soups, 6 salads, and 5 sandwiches. If you choose exactly one item from exactly one category, how many choices are there?",
+      "skills": [
+        "casework",
+        "disjoint sets",
+        "addition"
+      ],
+      "strategy": "The categories are mutually exclusive because one item is chosen from one category, so add the case counts.",
+      "steps": [
+        {
+          "do": "Name the cases",
+          "result": "soup, salad, sandwich",
+          "why": "the choice belongs to exactly one category"
+        },
+        {
+          "do": "Record the counts",
+          "result": "$4,6,5$",
+          "why": "these are the numbers of choices in each case"
+        },
+        {
+          "do": "Check disjointness",
+          "result": "no chosen item is in two categories",
+          "why": "the problem separates the menu categories"
+        },
+        {
+          "do": "Apply the sum rule",
+          "result": "$4+6+5$",
+          "why": "disjoint case counts add"
+        },
+        {
+          "do": "Compute",
+          "result": "$15$",
+          "why": "sum the choices"
+        }
+      ],
+      "verify": "Choosing one category first and one item inside it gives a list with no duplicates across categories.",
+      "answer": "There are 15 possible one-item choices.",
+      "connects": "The sum rule is disjoint union counting in everyday clothing."
+    },
+    "practice": [
+      {
+        "problem": "A student can attend 3 morning sessions or 4 afternoon sessions, but not both. How many session choices are possible?",
+        "steps": [
+          {
+            "do": "Identify the cases",
+            "result": "morning or afternoon",
+            "why": "the choice is made from one time block"
+          },
+          {
+            "do": "Record morning choices",
+            "result": "$3$",
+            "why": "given count"
+          },
+          {
+            "do": "Record afternoon choices",
+            "result": "$4$",
+            "why": "given count"
+          },
+          {
+            "do": "Check disjointness",
+            "result": "a session is not both morning and afternoon",
+            "why": "the time blocks do not overlap"
+          },
+          {
+            "do": "Add",
+            "result": "$3+4=7$",
+            "why": "sum rule"
+          }
+        ],
+        "answer": "There are 7 possible choices."
+      },
+      {
+        "problem": "How many integers from 1 to 30 are divisible by 2 or by 5, if 3 numbers are divisible by both?",
+        "steps": [
+          {
+            "do": "Count multiples of 2",
+            "result": "$15$",
+            "why": "half of the numbers 1 through 30 are even"
+          },
+          {
+            "do": "Count multiples of 5",
+            "result": "$6$",
+            "why": "$5,10,15,20,25,30$"
+          },
+          {
+            "do": "Notice overlap",
+            "result": "$3$",
+            "why": "10, 20, and 30 are counted in both groups"
+          },
+          {
+            "do": "Use inclusion-exclusion",
+            "result": "$15+6-3$",
+            "why": "plain sum rule would double-count overlap"
+          },
+          {
+            "do": "Compute",
+            "result": "$18$",
+            "why": "$21-3=18$"
+          }
+        ],
+        "answer": "18 integers are divisible by 2 or 5."
+      },
+      {
+        "problem": "A password recovery method is either email, SMS, or backup code: 2 email addresses, 1 phone, and 8 codes. How many methods?",
+        "steps": [
+          {
+            "do": "List cases",
+            "result": "email, SMS, backup code",
+            "why": "the user chooses one method type"
+          },
+          {
+            "do": "Count email methods",
+            "result": "$2$",
+            "why": "two addresses"
+          },
+          {
+            "do": "Count SMS methods",
+            "result": "$1$",
+            "why": "one phone"
+          },
+          {
+            "do": "Count backup-code methods",
+            "result": "$8$",
+            "why": "eight codes"
+          },
+          {
+            "do": "Add disjoint cases",
+            "result": "$2+1+8=11$",
+            "why": "each method has one type"
+          }
+        ],
+        "answer": "There are 11 recovery methods."
+      },
+      {
+        "problem": "A dataset has 120 image examples, 80 text examples, and 50 audio examples, with no example in two modalities. How many examples total?",
+        "steps": [
+          {
+            "do": "Identify disjoint sets",
+            "result": "images, text, audio",
+            "why": "no example has two modalities"
+          },
+          {
+            "do": "Write the union count",
+            "result": "$|I\\cup T\\cup A|$",
+            "why": "total examples are in any modality"
+          },
+          {
+            "do": "Apply the sum rule",
+            "result": "$120+80+50$",
+            "why": "the sets are disjoint"
+          },
+          {
+            "do": "Add first two counts",
+            "result": "$200+50$",
+            "why": "$120+80=200$"
+          },
+          {
+            "do": "Compute total",
+            "result": "$250$",
+            "why": "finish the sum"
+          }
+        ],
+        "answer": "There are 250 examples total."
+      },
+      {
+        "problem": "A model family choice is one of 5 linear models, 7 tree models, or 4 neural models. Two neural models are also counted in the tree list by mistake. How many distinct models are listed?",
+        "steps": [
+          {
+            "do": "Add the raw counts",
+            "result": "$5+7+4=16$",
+            "why": "start with the listed cases"
+          },
+          {
+            "do": "Identify overlap",
+            "result": "$2$",
+            "why": "two models appear in both tree and neural lists"
+          },
+          {
+            "do": "Subtract the duplicate count",
+            "result": "$16-2$",
+            "why": "overlapping items were counted twice"
+          },
+          {
+            "do": "Compute",
+            "result": "$14$",
+            "why": "distinct models count once"
+          },
+          {
+            "do": "Interpret",
+            "result": "14 unique model choices",
+            "why": "the corrected count is a union count"
+          }
+        ],
+        "answer": "There are 14 distinct model choices."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Case-based counting",
+        "background": "Combinatorics often starts by partitioning a hard count into simpler cases. The sum rule is the arithmetic of that partition.",
+        "numbers": "If a search result is from 12 documents, 8 images, or 5 videos with no overlap, total results are $12+8+5=25$."
+      },
+      {
+        "title": "Dataset composition",
+        "background": "ML teams report totals by disjoint splits or modalities. The sum rule keeps these summaries transparent.",
+        "numbers": "Train 70,000, validation 15,000, and test 15,000 examples sum to 100,000 examples."
+      },
+      {
+        "title": "Error taxonomies",
+        "background": "Model errors are often assigned to one primary category so teams can count causes without double-counting.",
+        "numbers": "If 18 errors are labeling issues, 25 are retrieval issues, and 7 are ranking issues, disjoint categories give 50 errors."
+      },
+      {
+        "title": "User funnels",
+        "background": "A funnel can split users into mutually exclusive paths. Adding path counts gives the total population covered.",
+        "numbers": "If 300 users enter by search, 120 by ads, and 80 by referral with no duplicated attribution, total entrants are 500."
+      },
+      {
+        "title": "File-type indexing",
+        "background": "Search systems often shard by type. If shards are disjoint, total indexed files are a sum.",
+        "numbers": "1.2 million HTML files plus 0.4 million PDFs plus 0.1 million images gives 1.7 million files."
+      },
+      {
+        "title": "Model selection menus",
+        "background": "AutoML systems may offer families of candidate models. Counting candidates by family uses the sum rule when families are distinct.",
+        "numbers": "10 linear choices, 24 tree choices, and 6 kernel choices give 40 candidates."
+      }
+    ],
+    "applicationsClose": "The sum rule is simple because its discipline comes before the arithmetic: make clean cases, then add.",
+    "takeaways": [
+      "Use the sum rule when outcomes split into disjoint cases.",
+      "Pairwise disjoint finite sets satisfy $|A_1\\cup\\cdots\\cup A_k|=|A_1|+\\cdots+|A_k|$.",
+      "If cases overlap, subtract overlap with inclusion-exclusion instead of using the plain sum rule.",
+      "Good counting starts by defining cases that cover exactly the desired outcomes."
+    ],
     "prereqs": [
       "math-14-07"
     ]
@@ -174,19 +2169,262 @@
   B({
     "id": "math-14-09",
     "title": "The product rule",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: the product rule.",
+    "tagline": "The product rule counts step-by-step choices by multiplying the number of options at each step.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The sum rule</i>"
+        "The sum rule",
+        "Sets",
+        "Functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Permutations</i>"
+        "Permutations",
+        "Combinations",
+        "The binomial theorem"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "Cartesian products",
+        "decision trees",
+        "independent choices",
+        "counting functions"
       ]
     },
+    "motivation": "<p>Some choices happen in sequence: choose a shirt then pants, a username then a password, a model then a learning rate. Each first choice opens a set of second choices.</p><p>The <b>product rule</b> says to multiply when choices are chained and the number of options at each step is known. It is the counting heart of Cartesian products, search spaces, and combinatorial explosions.</p>",
+    "definition": "<p>If a task has $m$ choices for step 1 and, after each such choice, $n$ choices for step 2, then the two-step task has $mn$ outcomes. More generally, $k$ sequential steps with $n_1,n_2,\\ldots,n_k$ choices have $n_1n_2\\cdots n_k$ outcomes.</p><p>The rule follows by arranging outcomes in rows: each of the $m$ first choices has $n$ partners, so there are $n$ outcomes in each row and $m$ rows total. This is the size rule for Cartesian products: $|A\\times B|=|A||B|$.</p><p><b>Assumptions that matter:</b> the choice counts must apply at the relevant step; if later counts depend on earlier choices, split into cases or multiply the conditional counts along each branch; and outcomes are ordered by the sequence of choices.</p>",
+    "worked": {
+      "problem": "A login code has 2 uppercase letters followed by 3 digits. Repetition is allowed. How many codes are possible?",
+      "skills": [
+        "sequential choices",
+        "repetition",
+        "multiplication"
+      ],
+      "strategy": "Each position is a step; because repetition is allowed, every letter position has 26 choices and every digit position has 10 choices.",
+      "steps": [
+        {
+          "do": "Count choices for the first letter",
+          "result": "$26$",
+          "why": "there are 26 uppercase letters"
+        },
+        {
+          "do": "Count choices for the second letter",
+          "result": "$26$",
+          "why": "repetition is allowed"
+        },
+        {
+          "do": "Count choices for each digit",
+          "result": "$10,10,10$",
+          "why": "digits 0 through 9 are allowed at each position"
+        },
+        {
+          "do": "Apply the product rule",
+          "result": "$26\\cdot26\\cdot10\\cdot10\\cdot10$",
+          "why": "the positions are sequential choices"
+        },
+        {
+          "do": "Compute",
+          "result": "$676000$",
+          "why": "$26^2=676$ and $10^3=1000$"
+        }
+      ],
+      "verify": "The code length and order matter: AB123 and BA123 are different outcomes.",
+      "answer": "There are 676,000 possible codes.",
+      "connects": "The product rule counts ordered sequences of choices."
+    },
+    "practice": [
+      {
+        "problem": "How many outfits can be made from 4 shirts and 3 pants?",
+        "steps": [
+          {
+            "do": "Choose a shirt",
+            "result": "$4$ choices",
+            "why": "first step"
+          },
+          {
+            "do": "Choose pants",
+            "result": "$3$ choices",
+            "why": "second step"
+          },
+          {
+            "do": "Apply product rule",
+            "result": "$4\\cdot3$",
+            "why": "each shirt pairs with each pair of pants"
+          },
+          {
+            "do": "Compute",
+            "result": "$12$",
+            "why": "multiply the choices"
+          },
+          {
+            "do": "Interpret",
+            "result": "12 outfits",
+            "why": "an outfit is an ordered pair of category choices"
+          }
+        ],
+        "answer": "There are 12 outfits."
+      },
+      {
+        "problem": "How many binary strings of length 5 are there?",
+        "steps": [
+          {
+            "do": "Count choices per position",
+            "result": "$2$",
+            "why": "each bit is 0 or 1"
+          },
+          {
+            "do": "Count positions",
+            "result": "$5$",
+            "why": "the string length is 5"
+          },
+          {
+            "do": "Apply product rule",
+            "result": "$2^5$",
+            "why": "five independent binary choices"
+          },
+          {
+            "do": "Compute",
+            "result": "$32$",
+            "why": "$2\\cdot2\\cdot2\\cdot2\\cdot2=32$"
+          },
+          {
+            "do": "Interpret",
+            "result": "32 strings",
+            "why": "order of bits matters"
+          }
+        ],
+        "answer": "There are 32 binary strings of length 5."
+      },
+      {
+        "problem": "A route has 3 choices for the first leg and 5 choices for the second leg. How many two-leg routes?",
+        "steps": [
+          {
+            "do": "Count first-leg choices",
+            "result": "$3$",
+            "why": "given"
+          },
+          {
+            "do": "Count second-leg choices",
+            "result": "$5$",
+            "why": "given for each first leg"
+          },
+          {
+            "do": "Multiply",
+            "result": "$3\\cdot5$",
+            "why": "each first leg can pair with each second leg"
+          },
+          {
+            "do": "Compute",
+            "result": "$15$",
+            "why": "product rule"
+          },
+          {
+            "do": "Interpret",
+            "result": "15 routes",
+            "why": "a route records both legs"
+          }
+        ],
+        "answer": "There are 15 two-leg routes."
+      },
+      {
+        "problem": "How many functions are there from a 3-element set to a 4-element set?",
+        "steps": [
+          {
+            "do": "Identify inputs",
+            "result": "$3$",
+            "why": "the domain has three elements"
+          },
+          {
+            "do": "Count output choices per input",
+            "result": "$4$",
+            "why": "each input maps to one of four codomain elements"
+          },
+          {
+            "do": "Apply product rule",
+            "result": "$4\\cdot4\\cdot4$",
+            "why": "one choice for each input"
+          },
+          {
+            "do": "Write as a power",
+            "result": "$4^3$",
+            "why": "same count repeated three times"
+          },
+          {
+            "do": "Compute",
+            "result": "$64$",
+            "why": "$4^3=64$"
+          }
+        ],
+        "answer": "There are 64 functions."
+      },
+      {
+        "problem": "A hyperparameter grid has 4 learning rates, 3 batch sizes, 5 depths, and 2 optimizers. How many runs are in the full grid?",
+        "steps": [
+          {
+            "do": "List the step counts",
+            "result": "$4,3,5,2$",
+            "why": "one choice from each hyperparameter"
+          },
+          {
+            "do": "Multiply learning rates and batch sizes",
+            "result": "$4\\cdot3=12$",
+            "why": "first two independent choices"
+          },
+          {
+            "do": "Include depths",
+            "result": "$12\\cdot5=60$",
+            "why": "each partial setting has five depths"
+          },
+          {
+            "do": "Include optimizers",
+            "result": "$60\\cdot2=120$",
+            "why": "each setting has two optimizer choices"
+          },
+          {
+            "do": "Interpret",
+            "result": "120 runs",
+            "why": "each run is one tuple of hyperparameters"
+          }
+        ],
+        "answer": "The full grid contains 120 runs."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Hyperparameter grids",
+        "background": "Grid search tries every combination of selected hyperparameter values. Product-rule growth is why grids become expensive quickly.",
+        "numbers": "6 learning rates, 4 depths, and 3 regularization values create $6\\cdot4\\cdot3=72$ runs."
+      },
+      {
+        "title": "Password spaces",
+        "background": "Security estimates often count possible strings. More positions multiply the search space.",
+        "numbers": "An 8-character lowercase password has $26^8=208827064576$ possibilities."
+      },
+      {
+        "title": "Feature crosses",
+        "background": "Categorical feature crosses combine categories from multiple fields. The number of crossed buckets multiplies.",
+        "numbers": "20 cities crossed with 5 device types and 3 membership tiers gives $20\\cdot5\\cdot3=300$ buckets."
+      },
+      {
+        "title": "Cartesian product datasets",
+        "background": "Testing sometimes generates all pairs or tuples of parameter settings. The product rule predicts test count.",
+        "numbers": "7 browsers, 3 locales, and 4 screen sizes make $7\\cdot3\\cdot4=84$ configurations."
+      },
+      {
+        "title": "Neural architecture choices",
+        "background": "Architecture search can choose layer count, width, activation, and optimizer. Each independent menu multiplies the candidates.",
+        "numbers": "3 depths, 4 widths, 2 activations, and 2 optimizers give $3\\cdot4\\cdot2\\cdot2=48$ candidates."
+      },
+      {
+        "title": "State spaces",
+        "background": "Discrete systems have states described by several variables. Total states are often a Cartesian product.",
+        "numbers": "A robot with 10 positions, 4 headings, and 2 gripper states has $10\\cdot4\\cdot2=80$ states."
+      }
+    ],
+    "applicationsClose": "The product rule explains both elegant counting and painful explosion: every independent step multiplies the space.",
+    "takeaways": [
+      "Use the product rule for sequential choices.",
+      "For sets, $|A\\times B|=|A||B|$.",
+      "Repeated equal choices give powers, such as $n^k$.",
+      "If later choice counts depend on earlier choices, count each branch carefully."
+    ],
     "prereqs": [
       "math-14-08"
     ]
@@ -195,19 +2433,267 @@
   B({
     "id": "math-14-10",
     "title": "Permutations",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: permutations.",
+    "tagline": "Permutations count arrangements where order matters.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The product rule</i>"
+        "The product rule",
+        "Functions",
+        "sets"
       ],
       "leadsTo": [
-        "the next lesson, <i>Combinations</i>"
+        "Combinations",
+        "The binomial theorem",
+        "probability over rankings"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "factorials",
+        "ordered samples",
+        "bijections",
+        "ranking"
       ]
     },
+    "motivation": "<p>Choosing Alice, Bo, and Chen for a committee is different from ranking them first, second, and third. Same people, different order question.</p><p><b>Permutations</b> count arrangements. They appear whenever order, position, ranking, schedule, or sequence matters, and they grow quickly because each position leaves fewer remaining choices.</p>",
+    "definition": "<p>A <b>permutation</b> of $n$ distinct objects is an ordering of all $n$ objects. The number is $n!=n(n-1)(n-2)\\cdots1$. The number of ordered selections of $r$ objects from $n$ distinct objects without replacement is $P(n,r)=\\dfrac{n!}{(n-r)!}$.</p><p>The formula comes from the product rule. The first position has $n$ choices, the second has $n-1$, and so on until $r$ positions are filled. Multiplying gives $n(n-1)\\cdots(n-r+1)$, which equals $n!/(n-r)!$.</p><p><b>Assumptions that matter:</b> the objects are distinct unless stated otherwise; order matters; and without replacement means an object cannot be used twice in the same arrangement.</p>",
+    "worked": {
+      "problem": "How many ways can gold, silver, and bronze medals be awarded among 8 runners, assuming no ties?",
+      "skills": [
+        "ordered selections",
+        "factorials",
+        "product rule"
+      ],
+      "strategy": "Medal positions are ordered and no runner can receive two medals, so multiply decreasing choices.",
+      "steps": [
+        {
+          "do": "Count gold choices",
+          "result": "$8$",
+          "why": "any runner can win gold"
+        },
+        {
+          "do": "Count silver choices after gold",
+          "result": "$7$",
+          "why": "the gold winner is no longer available"
+        },
+        {
+          "do": "Count bronze choices after two medals",
+          "result": "$6$",
+          "why": "two runners have already been chosen"
+        },
+        {
+          "do": "Apply the product rule",
+          "result": "$8\\cdot7\\cdot6$",
+          "why": "medal positions are sequential ordered choices"
+        },
+        {
+          "do": "Compute",
+          "result": "$336$",
+          "why": "$56\\cdot6=336$"
+        },
+        {
+          "do": "Write in permutation notation",
+          "result": "$P(8,3)=\\dfrac{8!}{5!}=336$",
+          "why": "ordered selection of 3 from 8"
+        }
+      ],
+      "verify": "Changing gold and silver winners changes the outcome, so order really matters.",
+      "answer": "There are 336 possible medal outcomes.",
+      "connects": "Permutations are product-rule counts with shrinking choices."
+    },
+    "practice": [
+      {
+        "problem": "How many ways can 5 distinct books be arranged on a shelf?",
+        "steps": [
+          {
+            "do": "Count first position choices",
+            "result": "$5$",
+            "why": "any book can go first"
+          },
+          {
+            "do": "Count second position choices",
+            "result": "$4$",
+            "why": "one book has been used"
+          },
+          {
+            "do": "Continue the pattern",
+            "result": "$5\\cdot4\\cdot3\\cdot2\\cdot1$",
+            "why": "choices shrink by one each time"
+          },
+          {
+            "do": "Write as factorial",
+            "result": "$5!$",
+            "why": "all distinct objects are arranged"
+          },
+          {
+            "do": "Compute",
+            "result": "$120$",
+            "why": "$5!=120$"
+          }
+        ],
+        "answer": "There are 120 arrangements."
+      },
+      {
+        "problem": "How many 4-letter codes can be made from 10 distinct letters without repetition?",
+        "steps": [
+          {
+            "do": "Count first letter choices",
+            "result": "$10$",
+            "why": "any letter can start"
+          },
+          {
+            "do": "Count second choices",
+            "result": "$9$",
+            "why": "no repetition"
+          },
+          {
+            "do": "Count third choices",
+            "result": "$8$",
+            "why": "two letters used"
+          },
+          {
+            "do": "Count fourth choices",
+            "result": "$7$",
+            "why": "three letters used"
+          },
+          {
+            "do": "Multiply",
+            "result": "$10\\cdot9\\cdot8\\cdot7=5040$",
+            "why": "ordered positions matter"
+          }
+        ],
+        "answer": "There are 5040 codes."
+      },
+      {
+        "problem": "Compute $P(7,3)$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$P(7,3)=\\dfrac{7!}{(7-3)!}$",
+            "why": "ordered selection of 3 from 7"
+          },
+          {
+            "do": "Simplify the denominator",
+            "result": "$\\dfrac{7!}{4!}$",
+            "why": "$7-3=4$"
+          },
+          {
+            "do": "Cancel $4!$",
+            "result": "$7\\cdot6\\cdot5$",
+            "why": "$7!=7\\cdot6\\cdot5\\cdot4!$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$42\\cdot5=210$",
+            "why": "$7\\cdot6=42$"
+          },
+          {
+            "do": "Interpret",
+            "result": "210 ordered selections",
+            "why": "order matters"
+          }
+        ],
+        "answer": "$P(7,3)=210$."
+      },
+      {
+        "problem": "How many ways can 6 people line up if Alex must be first?",
+        "steps": [
+          {
+            "do": "Fix Alex's position",
+            "result": "1 choice",
+            "why": "Alex must be first"
+          },
+          {
+            "do": "Count remaining people",
+            "result": "$5$",
+            "why": "six total minus Alex"
+          },
+          {
+            "do": "Arrange remaining people",
+            "result": "$5!$",
+            "why": "five distinct people fill five positions"
+          },
+          {
+            "do": "Compute",
+            "result": "$120$",
+            "why": "$5!=120$"
+          },
+          {
+            "do": "Include fixed choice",
+            "result": "$1\\cdot120=120$",
+            "why": "the fixed position does not multiply the count"
+          }
+        ],
+        "answer": "There are 120 lineups."
+      },
+      {
+        "problem": "A recommender displays an ordered top-5 list from 20 candidates with no repeats. How many possible lists?",
+        "steps": [
+          {
+            "do": "Recognize ordered selection",
+            "result": "$P(20,5)$",
+            "why": "rank positions 1 through 5 matter"
+          },
+          {
+            "do": "Expand the product",
+            "result": "$20\\cdot19\\cdot18\\cdot17\\cdot16$",
+            "why": "choices shrink after each displayed item"
+          },
+          {
+            "do": "Multiply first two factors",
+            "result": "$380\\cdot18\\cdot17\\cdot16$",
+            "why": "$20\\cdot19=380$"
+          },
+          {
+            "do": "Continue multiplying",
+            "result": "$6840\\cdot17\\cdot16$",
+            "why": "$380\\cdot18=6840$"
+          },
+          {
+            "do": "Finish",
+            "result": "$1860480$",
+            "why": "$6840\\cdot17\\cdot16=1860480$"
+          }
+        ],
+        "answer": "There are 1,860,480 possible ordered top-5 lists."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Ranked search results",
+        "background": "Search and recommendation systems care about order because users see rank 1 before rank 2. Permutations count possible rankings.",
+        "numbers": "Choosing an ordered top 3 from 50 candidates gives $50\\cdot49\\cdot48=117600$ rankings."
+      },
+      {
+        "title": "Experiment ordering",
+        "background": "When tasks are shown in sequence, order can affect behavior. Permutations count possible presentation orders.",
+        "numbers": "Six survey questions can appear in $6!=720$ orders."
+      },
+      {
+        "title": "Scheduling jobs",
+        "background": "Schedulers arrange distinct jobs on a machine. Even small job sets create many possible schedules.",
+        "numbers": "Eight jobs have $8!=40320$ possible full orders."
+      },
+      {
+        "title": "Random shuffling",
+        "background": "Shuffling datasets before training samples one permutation of the examples. This can reduce ordering artifacts.",
+        "numbers": "A mini dataset of 10 examples has $10!=3628800$ possible shuffles."
+      },
+      {
+        "title": "Access-token characters without repetition",
+        "background": "Some code systems forbid repeated symbols. Ordered positions make permutations relevant.",
+        "numbers": "A 6-character code from 36 symbols without repetition has $36\\cdot35\\cdot34\\cdot33\\cdot32\\cdot31$ possibilities."
+      },
+      {
+        "title": "Feature ordering in pipelines",
+        "background": "Some preprocessing pipelines apply transformations in order, and different orders can produce different outputs.",
+        "numbers": "Four distinct transformations can be ordered in $4!=24$ ways."
+      }
+    ],
+    "applicationsClose": "Whenever position changes identity, permutations give the count.",
+    "takeaways": [
+      "Permutations count ordered arrangements of distinct objects.",
+      "All $n$ objects can be arranged in $n!$ ways.",
+      "Ordered selections without replacement use $P(n,r)=n!/(n-r)!$.",
+      "The formula comes from the product rule with shrinking choices."
+    ],
     "prereqs": [
       "math-14-09"
     ]
@@ -216,19 +2702,262 @@
   B({
     "id": "math-14-11",
     "title": "Combinations",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: combinations.",
+    "tagline": "Combinations count selections where the group matters but the order does not.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Permutations</i>"
+        "Permutations",
+        "The product rule",
+        "sets"
       ],
       "leadsTo": [
-        "the next lesson, <i>The binomial theorem</i>"
+        "The binomial theorem",
+        "probability",
+        "sampling"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "factorials",
+        "subsets",
+        "binomial coefficients",
+        "counting events"
       ]
     },
+    "motivation": "<p>If you pick three features for a model, the set {age, country, device} is the same choice no matter which one you wrote first. That is not a permutation question anymore.</p><p><b>Combinations</b> count unordered selections. They are the mathematics of committees, subsets, mini-batches, feature choices, and the binomial coefficients that appear throughout probability and ML.</p>",
+    "definition": "<p>The number of ways to choose $r$ objects from $n$ distinct objects without regard to order is $\\binom{n}{r}=\\dfrac{n!}{r!(n-r)!}$. This is read $n$ choose $r$.</p><p>The formula starts with ordered selections $P(n,r)=n!/(n-r)!$. Each unordered group of $r$ objects can be internally ordered in $r!$ ways, so the ordered count overcounts each group by $r!$. Dividing by $r!$ gives $\\binom{n}{r}$.</p><p><b>Assumptions that matter:</b> objects are distinct unless stated otherwise; order does not matter inside the selected group; and $0\\le r\\le n$ for the standard finite formula.</p>",
+    "worked": {
+      "problem": "How many 3-person committees can be chosen from 8 people?",
+      "skills": [
+        "unordered selection",
+        "binomial coefficients",
+        "factorials"
+      ],
+      "strategy": "A committee has no first, second, or third position, so divide the ordered selection count by the internal orderings.",
+      "steps": [
+        {
+          "do": "Write the combination",
+          "result": "$\\binom{8}{3}$",
+          "why": "choose 3 people from 8 without order"
+        },
+        {
+          "do": "Use the formula",
+          "result": "$\\binom{8}{3}=\\dfrac{8!}{3!5!}$",
+          "why": "$n=8$ and $r=3$"
+        },
+        {
+          "do": "Cancel $5!$",
+          "result": "$\\dfrac{8\\cdot7\\cdot6}{3!}$",
+          "why": "$8!=8\\cdot7\\cdot6\\cdot5!$"
+        },
+        {
+          "do": "Compute the denominator",
+          "result": "$3!=6$",
+          "why": "three selected people can be ordered six ways"
+        },
+        {
+          "do": "Divide",
+          "result": "$\\dfrac{8\\cdot7\\cdot6}{6}=56$",
+          "why": "remove internal order"
+        }
+      ],
+      "verify": "If Alice, Bo, and Chen are chosen, all six orderings name the same committee, so division by 6 is necessary.",
+      "answer": "There are 56 committees.",
+      "connects": "Combinations are permutations with order intentionally forgotten."
+    },
+    "practice": [
+      {
+        "problem": "Compute $\\binom{5}{2}$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$\\binom{5}{2}=\\dfrac{5!}{2!3!}$",
+            "why": "choose 2 from 5"
+          },
+          {
+            "do": "Cancel $3!$",
+            "result": "$\\dfrac{5\\cdot4}{2!}$",
+            "why": "$5!=5\\cdot4\\cdot3!$"
+          },
+          {
+            "do": "Compute $2!$",
+            "result": "$2$",
+            "why": "two selected items have two orders"
+          },
+          {
+            "do": "Divide",
+            "result": "$20/2=10$",
+            "why": "remove order"
+          },
+          {
+            "do": "Interpret",
+            "result": "10 pairs",
+            "why": "each pair is unordered"
+          }
+        ],
+        "answer": "$\\binom{5}{2}=10$."
+      },
+      {
+        "problem": "How many ways can 4 features be chosen from 10 candidate features?",
+        "steps": [
+          {
+            "do": "Identify unordered choice",
+            "result": "$\\binom{10}{4}$",
+            "why": "the selected feature set has no order"
+          },
+          {
+            "do": "Use the formula",
+            "result": "$\\dfrac{10!}{4!6!}$",
+            "why": "$n=10,r=4$"
+          },
+          {
+            "do": "Cancel $6!$",
+            "result": "$\\dfrac{10\\cdot9\\cdot8\\cdot7}{4!}$",
+            "why": "keep four factors"
+          },
+          {
+            "do": "Compute denominator",
+            "result": "$4!=24$",
+            "why": "four selected features can be ordered 24 ways"
+          },
+          {
+            "do": "Divide",
+            "result": "$5040/24=210$",
+            "why": "unordered feature subsets"
+          }
+        ],
+        "answer": "There are 210 possible 4-feature subsets."
+      },
+      {
+        "problem": "Show that $\\binom{6}{2}=\\binom{6}{4}$.",
+        "steps": [
+          {
+            "do": "Compute $\\binom{6}{2}$",
+            "result": "$\\dfrac{6\\cdot5}{2}=15$",
+            "why": "choose 2 objects"
+          },
+          {
+            "do": "Write $\\binom{6}{4}$",
+            "result": "$\\dfrac{6!}{4!2!}$",
+            "why": "choose 4 objects"
+          },
+          {
+            "do": "Cancel $4!$",
+            "result": "$\\dfrac{6\\cdot5}{2}$",
+            "why": "same remaining factors"
+          },
+          {
+            "do": "Compute",
+            "result": "$15$",
+            "why": "same arithmetic"
+          },
+          {
+            "do": "Interpret",
+            "result": "choosing 2 to include equals choosing 4 to exclude",
+            "why": "each choice determines the complement"
+          }
+        ],
+        "answer": "Both values are 15."
+      },
+      {
+        "problem": "How many 5-card hands can be dealt from a 52-card deck?",
+        "steps": [
+          {
+            "do": "Recognize unordered hand",
+            "result": "$\\binom{52}{5}$",
+            "why": "card order in the hand does not matter"
+          },
+          {
+            "do": "Use the formula",
+            "result": "$\\dfrac{52\\cdot51\\cdot50\\cdot49\\cdot48}{5!}$",
+            "why": "cancel $47!$"
+          },
+          {
+            "do": "Compute the denominator",
+            "result": "$5!=120$",
+            "why": "five cards have 120 orders"
+          },
+          {
+            "do": "Compute numerator",
+            "result": "$311875200$",
+            "why": "multiply the five factors"
+          },
+          {
+            "do": "Divide",
+            "result": "$2598960$",
+            "why": "remove ordering"
+          }
+        ],
+        "answer": "There are 2,598,960 five-card hands."
+      },
+      {
+        "problem": "A mini-batch chooses 32 examples from 1000 without order. Express the count and explain why it is not $P(1000,32)$.",
+        "steps": [
+          {
+            "do": "Identify the selected object",
+            "result": "a set of 32 examples",
+            "why": "training batch order is not part of the batch identity"
+          },
+          {
+            "do": "Write the count",
+            "result": "$\\binom{1000}{32}$",
+            "why": "choose 32 from 1000"
+          },
+          {
+            "do": "Compare to permutations",
+            "result": "$P(1000,32)$ counts ordered lists",
+            "why": "it treats the same batch in many orders as different"
+          },
+          {
+            "do": "Find the overcount factor",
+            "result": "$32!$",
+            "why": "each chosen batch can be ordered in $32!$ ways"
+          },
+          {
+            "do": "Relate the counts",
+            "result": "$\\binom{1000}{32}=P(1000,32)/32!$",
+            "why": "divide out internal order"
+          }
+        ],
+        "answer": "The count is $\\binom{1000}{32}$, not $P(1000,32)$, because order inside the mini-batch does not matter."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature subset selection",
+        "background": "Model builders may search over subsets of features. Combinations count possible subsets when order is irrelevant.",
+        "numbers": "Choosing 5 features from 30 gives $\\binom{30}{5}=142506$ subsets."
+      },
+      {
+        "title": "Mini-batch sampling",
+        "background": "A mini-batch is usually treated as a set or multiset of examples. Without replacement and without order, combinations apply.",
+        "numbers": "Choosing 4 examples from 20 gives $\\binom{20}{4}=4845$ batches."
+      },
+      {
+        "title": "Committee and reviewer assignment",
+        "background": "Selecting reviewers or committee members is unordered unless roles are assigned afterward.",
+        "numbers": "Choosing 3 reviewers from 12 candidates gives $\\binom{12}{3}=220$ panels."
+      },
+      {
+        "title": "Pairwise comparisons",
+        "background": "Many algorithms compare all unordered pairs of items. The count is a combination.",
+        "numbers": "100 items have $\\binom{100}{2}=4950$ unordered pairs."
+      },
+      {
+        "title": "A/B test segment choices",
+        "background": "Experiment designers may choose subsets of segments for targeting. The order of chosen segments is irrelevant.",
+        "numbers": "Choosing 3 segments from 9 gives $\\binom{9}{3}=84$ segment sets."
+      },
+      {
+        "title": "Graph edges",
+        "background": "An undirected simple graph has possible edges equal to unordered pairs of vertices.",
+        "numbers": "A graph with 50 vertices has $\\binom{50}{2}=1225$ possible undirected edges."
+      }
+    ],
+    "applicationsClose": "Combinations count chosen groups after removing all the orderings that do not change the group.",
+    "takeaways": [
+      "Combinations count unordered selections.",
+      "$\\binom{n}{r}=\\dfrac{n!}{r!(n-r)!}$.",
+      "The division by $r!$ removes the internal orderings of the selected group.",
+      "$\\binom{n}{r}=\\binom{n}{n-r}$ because choosing a group also chooses its complement."
+    ],
     "prereqs": [
       "math-14-10"
     ]
@@ -237,19 +2966,277 @@
   B({
     "id": "math-14-12",
     "title": "The binomial theorem",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: the binomial theorem.",
+    "tagline": "The binomial theorem explains why combinations appear when a two-choice expression is multiplied many times.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Combinations</i>"
+        "Combinations",
+        "Permutations",
+        "Proof by induction"
       ],
       "leadsTo": [
-        "the next lesson, <i>Combinatorial identities</i>"
+        "binomial distributions",
+        "Taylor expansions",
+        "probability generating functions"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "combinations",
+        "summations",
+        "polynomials",
+        "probability"
       ]
     },
+    "motivation": "<p>You know how to expand $(x+y)^2$: it becomes $x^2+2xy+y^2$. The coefficient 2 appears because $xy$ can happen in two orders: choose $x$ then $y$, or $y$ then $x$.</p><p>The <b>binomial theorem</b> generalizes that story. In $(x+y)^n$, each factor offers a choice of $x$ or $y$, and combinations count how many ways lead to the same power pattern.</p>",
+    "definition": "<p>For every integer $n\\ge0$, $$ (x+y)^n=\\sum_{k=0}^{n}\\binom{n}{k}x^{n-k}y^k. $$ Here $k$ is the number of factors contributing $y$, so $n-k$ factors contribute $x$.</p><p>Why the coefficient is $\\binom{n}{k}$: expanding $(x+y)^n$ means choosing one term from each of $n$ factors. To produce $x^{n-k}y^k$, choose exactly which $k$ of the $n$ factors supply $y$. There are $\\binom{n}{k}$ such choices.</p><p><b>Assumptions that matter:</b> $n$ is a nonnegative integer in this finite form; $x$ and $y$ commute under multiplication; and each term's coefficient counts choices of factor positions, not new algebraic variables.</p>",
+    "worked": {
+      "problem": "Expand $(2a-b)^4$.",
+      "skills": [
+        "binomial coefficients",
+        "powers",
+        "signs"
+      ],
+      "strategy": "Treat the binomial as $x+y$ with $x=2a$ and $y=-b$, then apply coefficients $1,4,6,4,1$.",
+      "steps": [
+        {
+          "do": "Identify $x$ and $y$",
+          "result": "$x=2a$, $y=-b$",
+          "why": "write the expression in binomial form"
+        },
+        {
+          "do": "Write the theorem for $n=4$",
+          "result": "$x^4+4x^3y+6x^2y^2+4xy^3+y^4$",
+          "why": "row 4 coefficients are $1,4,6,4,1$"
+        },
+        {
+          "do": "Substitute $x=2a,y=-b$",
+          "result": "$(2a)^4+4(2a)^3(-b)+6(2a)^2(-b)^2+4(2a)(-b)^3+(-b)^4$",
+          "why": "replace each binomial part"
+        },
+        {
+          "do": "Simplify the first term",
+          "result": "$16a^4$",
+          "why": "$(2a)^4=16a^4$"
+        },
+        {
+          "do": "Simplify the second term",
+          "result": "$-32a^3b$",
+          "why": "$4\\cdot8a^3\\cdot(-b)=-32a^3b$"
+        },
+        {
+          "do": "Simplify the third term",
+          "result": "$24a^2b^2$",
+          "why": "$6\\cdot4a^2\\cdot b^2=24a^2b^2$"
+        },
+        {
+          "do": "Simplify the fourth term",
+          "result": "$-8ab^3$",
+          "why": "$4\\cdot2a\\cdot(-b^3)=-8ab^3$"
+        },
+        {
+          "do": "Simplify the fifth term",
+          "result": "$b^4$",
+          "why": "the fourth power removes the sign"
+        }
+      ],
+      "verify": "The signs alternate because $-b$ has odd powers in the second and fourth terms.",
+      "answer": "$(2a-b)^4=16a^4-32a^3b+24a^2b^2-8ab^3+b^4$.",
+      "connects": "Every coefficient counts which factors supplied the second term of the binomial."
+    },
+    "practice": [
+      {
+        "problem": "Expand $(x+y)^3$.",
+        "steps": [
+          {
+            "do": "List coefficients for $n=3$",
+            "result": "$1,3,3,1$",
+            "why": "$\\binom30,\\binom31,\\binom32,\\binom33$"
+          },
+          {
+            "do": "Write the power pattern",
+            "result": "$x^3,x^2y,xy^2,y^3$",
+            "why": "powers of $x$ decrease while powers of $y$ increase"
+          },
+          {
+            "do": "Attach coefficients",
+            "result": "$x^3+3x^2y+3xy^2+y^3$",
+            "why": "apply the binomial theorem"
+          },
+          {
+            "do": "Check total degree",
+            "result": "each term has degree 3",
+            "why": "the original expression is cubed"
+          },
+          {
+            "do": "Interpret the middle coefficient",
+            "result": "$3$ choices",
+            "why": "choose which one of three factors supplies $y$"
+          }
+        ],
+        "answer": "$(x+y)^3=x^3+3x^2y+3xy^2+y^3$."
+      },
+      {
+        "problem": "Find the coefficient of $x^3y^2$ in $(x+y)^5$.",
+        "steps": [
+          {
+            "do": "Match the term form",
+            "result": "$x^{5-k}y^k$",
+            "why": "binomial theorem pattern"
+          },
+          {
+            "do": "Set the $y$ exponent",
+            "result": "$k=2$",
+            "why": "the term has $y^2$"
+          },
+          {
+            "do": "Check the $x$ exponent",
+            "result": "$5-k=3$",
+            "why": "consistent with $x^3$"
+          },
+          {
+            "do": "Write the coefficient",
+            "result": "$\\binom52$",
+            "why": "choose which 2 factors supply $y$"
+          },
+          {
+            "do": "Compute",
+            "result": "$10$",
+            "why": "$5\\cdot4/2=10$"
+          }
+        ],
+        "answer": "The coefficient is 10."
+      },
+      {
+        "problem": "Expand $(1+t)^4$.",
+        "steps": [
+          {
+            "do": "Use row 4 coefficients",
+            "result": "$1,4,6,4,1$",
+            "why": "binomial coefficients for $n=4$"
+          },
+          {
+            "do": "Write the power pattern",
+            "result": "$1,t,t^2,t^3,t^4$",
+            "why": "powers of 1 stay 1"
+          },
+          {
+            "do": "Attach coefficients",
+            "result": "$1+4t+6t^2+4t^3+t^4$",
+            "why": "apply the theorem"
+          },
+          {
+            "do": "Check by setting $t=1$",
+            "result": "$1+4+6+4+1=16$",
+            "why": "$(1+1)^4=16$"
+          },
+          {
+            "do": "Interpret",
+            "result": "coefficients sum to $2^4$",
+            "why": "each factor offers two choices"
+          }
+        ],
+        "answer": "$(1+t)^4=1+4t+6t^2+4t^3+t^4$."
+      },
+      {
+        "problem": "Find the coefficient of $a^2b^3$ in $(3a+2b)^5$.",
+        "steps": [
+          {
+            "do": "Match $b$ exponent",
+            "result": "$k=3$",
+            "why": "the term has $b^3$"
+          },
+          {
+            "do": "Write the general term",
+            "result": "$\\binom53(3a)^{2}(2b)^3$",
+            "why": "$5-k=2$"
+          },
+          {
+            "do": "Compute the binomial coefficient",
+            "result": "$\\binom53=10$",
+            "why": "choose 3 factors for $2b$"
+          },
+          {
+            "do": "Compute scalar powers",
+            "result": "$3^2\\cdot2^3=9\\cdot8=72$",
+            "why": "separate coefficients from variables"
+          },
+          {
+            "do": "Multiply scalars",
+            "result": "$10\\cdot72=720$",
+            "why": "combine coefficient contributions"
+          }
+        ],
+        "answer": "The coefficient of $a^2b^3$ is 720."
+      },
+      {
+        "problem": "Use the binomial theorem to compute the probability of exactly 2 heads in 5 fair coin flips.",
+        "steps": [
+          {
+            "do": "Count successful head positions",
+            "result": "$\\binom52$",
+            "why": "choose which 2 of 5 flips are heads"
+          },
+          {
+            "do": "Compute the count",
+            "result": "$10$",
+            "why": "$\\binom52=10$"
+          },
+          {
+            "do": "Compute probability of one exact pattern",
+            "result": "$(1/2)^5=1/32$",
+            "why": "five independent fair flips"
+          },
+          {
+            "do": "Multiply count by pattern probability",
+            "result": "$10/32$",
+            "why": "there are 10 disjoint successful patterns"
+          },
+          {
+            "do": "Simplify",
+            "result": "$5/16=0.3125$",
+            "why": "divide numerator and denominator by 2"
+          }
+        ],
+        "answer": "The probability is $5/16$, or $0.3125$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Binomial probabilities",
+        "background": "The binomial distribution counts successes in independent yes-or-no trials. Its probabilities come directly from the binomial theorem.",
+        "numbers": "For 10 trials with success probability $0.3$, exactly 4 successes has probability $\\binom{10}{4}(0.3)^4(0.7)^6\\approx0.2001$."
+      },
+      {
+        "title": "Dropout masks",
+        "background": "Neural-network dropout randomly keeps or drops units. Counting how many units are kept is a binomial question.",
+        "numbers": "With 8 units and keep probability $0.75$, exactly 6 kept has probability $\\binom86(0.75)^6(0.25)^2\\approx0.3115$."
+      },
+      {
+        "title": "Feature subset probabilities",
+        "background": "Random feature selection chooses each feature independently in some methods. The number selected follows binomial coefficients.",
+        "numbers": "If 20 features are each chosen with probability $0.1$, exactly 2 chosen has probability $\\binom{20}{2}(0.1)^2(0.9)^{18}\\approx0.2852$."
+      },
+      {
+        "title": "Polynomial expansion",
+        "background": "Algebra systems and symbolic ML methods expand powers of sums. The theorem supplies coefficients without repeated multiplication.",
+        "numbers": "The coefficient of $x^7y^3$ in $(x+y)^{10}$ is $\\binom{10}{3}=120$."
+      },
+      {
+        "title": "Ensemble voting",
+        "background": "A majority vote among independent classifiers can be analyzed with binomial probabilities when each classifier has the same accuracy.",
+        "numbers": "For 5 classifiers each correct with probability $0.8$, majority correctness is $\\binom53(0.8)^3(0.2)^2+\\binom54(0.8)^4(0.2)+\\binom55(0.8)^5=0.94208$."
+      },
+      {
+        "title": "Counting subsets",
+        "background": "Setting $x=y=1$ in the binomial theorem proves that the total number of subsets of an $n$-element set is $2^n$.",
+        "numbers": "For $n=6$, $\\sum_{k=0}^6\\binom6k=(1+1)^6=64$ subsets."
+      }
+    ],
+    "applicationsClose": "The binomial theorem is the bridge from two choices per factor to coefficients, probabilities, subsets, and polynomial structure.",
+    "takeaways": [
+      "$(x+y)^n=\\sum_{k=0}^n\\binom{n}{k}x^{n-k}y^k$ for nonnegative integer $n$.",
+      "The coefficient $\\binom{n}{k}$ counts which $k$ factors contribute the $y$ term.",
+      "Binomial coefficients power subset counts and binomial probabilities.",
+      "Signs and scalar coefficients must be carried through the powers carefully."
+    ],
     "prereqs": [
       "math-14-11"
     ]
@@ -258,19 +3245,262 @@
   B({
     "id": "math-14-13",
     "title": "Combinatorial identities",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: combinatorial identities.",
+    "tagline": "Combinatorial identities let one counting story reveal another, so algebra becomes a proof by re-counting.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The binomial theorem</i>"
+        "binomial coefficients",
+        "factorials",
+        "Pascal's rule"
       ],
       "leadsTo": [
-        "the next lesson, <i>Inclusion–exclusion</i>"
+        "Inclusion–exclusion",
+        "Generating functions",
+        "discrete probability"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "set counting",
+        "Pascal's triangle",
+        "algebraic proofs",
+        "recurrences"
       ]
     },
+    "motivation": "<p>You already know that $\\binom{n}{k}$ counts ways to choose $k$ items from $n$. The lovely surprise is that the same collection can often be counted in two different ways.</p><p>A <b>combinatorial identity</b> is an equality that becomes trustworthy when both sides count the same thing. Instead of pushing symbols alone, we ask what story the symbols are telling.</p>",
+    "definition": "<p>A <b>combinatorial identity</b> is an equation between counting expressions, such as $$\\sum_{k=0}^n \\binom{n}{k}=2^n.$$ Here $n$ is the number of available objects and $k$ is a chosen subset size. The left side counts all subsets by first grouping them according to size; the right side counts each object as either in or out.</p><p>Vandermonde's identity says $\\sum_{k=0}^r \\binom{m}{k}\\binom{n}{r-k}=\\binom{m+n}{r}$. It follows by choosing $r$ people from two groups: choose $k$ from the first group and $r-k$ from the second, then sum over possible $k$.</p><p><b>Assumptions that matter:</b> counts are finite; $\\binom{n}{k}=0$ when $k<0$ or $k>n$; and a valid combinatorial proof must count every object exactly once on each side.</p>",
+    "worked": {
+      "problem": "Prove and evaluate $\\sum_{k=0}^5 \\binom{5}{k}=2^5$.",
+      "skills": [
+        "binomial coefficients",
+        "counting by cases",
+        "subset counting"
+      ],
+      "strategy": "The sum looks algebraic — count all subsets once by size and once by yes-or-no decisions.",
+      "steps": [
+        {
+          "do": "Name the set size",
+          "result": "$n=5$",
+          "why": "there are five distinct objects"
+        },
+        {
+          "do": "Interpret one term",
+          "result": "$\\binom{5}{k}$",
+          "why": "it counts subsets with exactly $k$ objects"
+        },
+        {
+          "do": "Interpret the sum",
+          "result": "$\\sum_{k=0}^5\\binom{5}{k}$",
+          "why": "it counts all subsets after grouping by size"
+        },
+        {
+          "do": "Count by decisions",
+          "result": "$2^5$",
+          "why": "each of five objects is either chosen or not chosen"
+        },
+        {
+          "do": "Compute the value",
+          "result": "$2^5=32$",
+          "why": "five binary choices give 32 subsets"
+        }
+      ],
+      "verify": "For three objects the same idea gives $1+3+3+1=8$, so the pattern is believable before $n=5$.",
+      "answer": "The sum equals $32$, and both sides count all subsets of a 5-element set.",
+      "connects": "The identity is not a magic formula; it is two honest counts of the same subsets."
+    },
+    "practice": [
+      {
+        "problem": "Use Pascal's identity to compute $\\binom{8}{3}$ from smaller binomial coefficients.",
+        "steps": [
+          {
+            "do": "Write Pascal's identity",
+            "result": "$\\binom{8}{3}=\\binom{7}{2}+\\binom{7}{3}$",
+            "why": "choose whether a distinguished item is included"
+          },
+          {
+            "do": "Compute the first term",
+            "result": "$\\binom{7}{2}=21$",
+            "why": "choose two of seven"
+          },
+          {
+            "do": "Compute the second term",
+            "result": "$\\binom{7}{3}=35$",
+            "why": "choose three of seven"
+          },
+          {
+            "do": "Add the terms",
+            "result": "$21+35=56$",
+            "why": "the two cases are disjoint"
+          },
+          {
+            "do": "State the count",
+            "result": "$\\binom{8}{3}=56$",
+            "why": "Pascal's split preserves the total"
+          }
+        ],
+        "answer": "$\\binom{8}{3}=56$."
+      },
+      {
+        "problem": "Evaluate $\\sum_{k=0}^4\\binom{4}{k}$ and explain the count.",
+        "steps": [
+          {
+            "do": "Identify the identity",
+            "result": "$\\sum_{k=0}^n\\binom{n}{k}=2^n$",
+            "why": "all subsets grouped by size"
+          },
+          {
+            "do": "Substitute $n=4$",
+            "result": "$\\sum_{k=0}^4\\binom{4}{k}=2^4$",
+            "why": "there are four objects"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$2^4=16$",
+            "why": "four in-or-out decisions"
+          },
+          {
+            "do": "Expand to check",
+            "result": "$1+4+6+4+1=16$",
+            "why": "Pascal row 4 agrees"
+          },
+          {
+            "do": "Interpret the result",
+            "result": "16 subsets",
+            "why": "including the empty set and full set"
+          }
+        ],
+        "answer": "There are $16$ subsets."
+      },
+      {
+        "problem": "Use Vandermonde to compute $\\sum_{k=0}^2\\binom{3}{k}\\binom{4}{2-k}$.",
+        "steps": [
+          {
+            "do": "Match the groups",
+            "result": "$m=3$, $n=4$, $r=2$",
+            "why": "choose two from two groups"
+          },
+          {
+            "do": "Apply Vandermonde",
+            "result": "$\\sum_{k=0}^2\\binom{3}{k}\\binom{4}{2-k}=\\binom{7}{2}$",
+            "why": "choose both items from all seven at once"
+          },
+          {
+            "do": "Compute the binomial coefficient",
+            "result": "$\\binom{7}{2}=21$",
+            "why": "use $7\\cdot6/2$"
+          },
+          {
+            "do": "Check by expansion",
+            "result": "$1\\cdot6+3\\cdot4+3\\cdot1=21$",
+            "why": "the cases are $k=0,1,2$"
+          },
+          {
+            "do": "State the counted object",
+            "result": "two-person committees from seven people",
+            "why": "each committee has a unique number from the first group"
+          }
+        ],
+        "answer": "The sum equals $21$."
+      },
+      {
+        "problem": "Count the number of even-size subsets of a 6-element set.",
+        "steps": [
+          {
+            "do": "Pair subsets with complements",
+            "result": "each subset has a complement",
+            "why": "complements preserve parity when $n=6$ is even"
+          },
+          {
+            "do": "Use the binomial sum for even sizes",
+            "result": "$\\binom60+\\binom62+\\binom64+\\binom66$",
+            "why": "group by even cardinality"
+          },
+          {
+            "do": "Compute terms",
+            "result": "$1+15+15+1$",
+            "why": "from row 6 of Pascal's triangle"
+          },
+          {
+            "do": "Add the terms",
+            "result": "$32$",
+            "why": "sum the even-size counts"
+          },
+          {
+            "do": "Compare to all subsets",
+            "result": "$32=2^5$",
+            "why": "half of the $2^6$ subsets have even size"
+          }
+        ],
+        "answer": "There are $32$ even-size subsets."
+      },
+      {
+        "problem": "A model ensemble chooses any nonempty subset of 5 base models. Use an identity to count the choices.",
+        "steps": [
+          {
+            "do": "Count all subsets",
+            "result": "$2^5$",
+            "why": "each model is in or out"
+          },
+          {
+            "do": "Compute all subsets",
+            "result": "$2^5=32$",
+            "why": "five binary choices"
+          },
+          {
+            "do": "Identify the forbidden subset",
+            "result": "empty subset",
+            "why": "the ensemble must choose at least one model"
+          },
+          {
+            "do": "Subtract the forbidden case",
+            "result": "$32-1=31$",
+            "why": "remove the empty choice"
+          },
+          {
+            "do": "Write as a binomial sum",
+            "result": "$\\sum_{k=1}^5\\binom5k=31$",
+            "why": "group valid ensembles by size"
+          }
+        ],
+        "answer": "There are $31$ nonempty ensembles."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature subset search",
+        "background": "Feature selection tries many subsets of variables before training. Combinatorial identities keep the count visible.",
+        "numbers": "With $12$ candidate features, all subsets number $2^{12}=4096$; nonempty subsets number $4095$."
+      },
+      {
+        "title": "Ensemble model choices",
+        "background": "Bagging and ensemble methods often combine groups of base learners. Counting by size says how many candidate ensembles exist.",
+        "numbers": "From $8$ trained models, exactly three-model ensembles number $\\binom83=56$."
+      },
+      {
+        "title": "A/B test segment combinations",
+        "background": "Experiment platforms can define audiences by selected attributes. Subset identities count possible segment definitions.",
+        "numbers": "With $6$ binary attributes, there are $2^6=64$ possible attribute-inclusion patterns."
+      },
+      {
+        "title": "Polynomial feature expansion",
+        "background": "A degree-limited feature map counts monomials using combinations with repetition.",
+        "numbers": "For $d=4$ inputs and degree $2$, the number of degree-2 monomials is $\\binom{4+2-1}{2}=10$."
+      },
+      {
+        "title": "Database projection lists",
+        "background": "Query planners may consider sets of columns to materialize. Subset counting gives the planning space.",
+        "numbers": "Choosing any 4 columns from 20 gives $\\binom{20}{4}=4845$ possible projections."
+      },
+      {
+        "title": "Counting labels in multi-label ML",
+        "background": "A multi-label classifier may assign any subset of labels. The basic subset identity gives output-space size.",
+        "numbers": "With $10$ labels, possible label sets total $2^{10}=1024$; excluding no-label gives $1023$."
+      }
+    ],
+    "applicationsClose": "The common thread is re-counting: when two expressions count the same finite choices, an identity becomes a reliable tool.",
+    "takeaways": [
+      "A combinatorial identity is often best proved by counting one set in two ways.",
+      "Pascal's identity splits choices by whether a special item is included.",
+      "The binomial sum $\\sum_k\\binom nk=2^n$ counts all subsets.",
+      "Vandermonde counts selections from two groups either separately or all at once."
+    ],
     "prereqs": [
       "math-14-12"
     ]
@@ -279,19 +3509,262 @@
   B({
     "id": "math-14-14",
     "title": "Inclusion–exclusion",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: inclusion–exclusion.",
+    "tagline": "Inclusion–exclusion counts unions by adding what you want and repairing the overcount.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Combinatorial identities</i>"
+        "sets",
+        "unions and intersections",
+        "Combinatorial identities"
       ],
       "leadsTo": [
-        "the next lesson, <i>The pigeonhole principle</i>"
+        "The pigeonhole principle",
+        "Discrete probability",
+        "Boolean algebra"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "Venn diagrams",
+        "indicator variables",
+        "set complements",
+        "probability rules"
       ]
     },
+    "motivation": "<p>You already know a small overcount: if 12 students like tea and 9 like coffee, adding gives 21, but students who like both were counted twice.</p><p><b>Inclusion–exclusion</b> is the careful repair. Add the single sets, subtract overlaps, then add back triple overlaps when needed. It is bookkeeping with integrity.</p>",
+    "definition": "<p>For two finite sets, $$|A\\cup B|=|A|+|B|-|A\\cap B|.$$ The subtraction is needed because every element in $A\\cap B$ appears once in $|A|$ and once in $|B|$.</p><p>For three sets, $$|A\\cup B\\cup C|=|A|+|B|+|C|-|A\\cap B|-|A\\cap C|-|B\\cap C|+|A\\cap B\\cap C|.$$ A triple-overlap element is added three times, subtracted three times, and added once, so it is counted exactly once.</p><p><b>Assumptions that matter:</b> the sets are finite or have well-defined sizes; intersections are counted consistently; and complements must be taken relative to a stated universe.</p>",
+    "worked": {
+      "problem": "In a group of 100 users, 55 use mobile, 40 use desktop, and 20 use both. How many use at least one of the two?",
+      "skills": [
+        "two-set formula",
+        "overcount repair",
+        "set interpretation"
+      ],
+      "strategy": "The overlap is counted twice by the first addition — subtract it once.",
+      "steps": [
+        {
+          "do": "Name the sets",
+          "result": "$M$ for mobile and $D$ for desktop",
+          "why": "short names keep the formula readable"
+        },
+        {
+          "do": "Write the formula",
+          "result": "$|M\\cup D|=|M|+|D|-|M\\cap D|$",
+          "why": "union means at least one"
+        },
+        {
+          "do": "Substitute the numbers",
+          "result": "$55+40-20$",
+          "why": "use the given counts"
+        },
+        {
+          "do": "Add the single counts",
+          "result": "$95-20$",
+          "why": "mobile plus desktop overcounts shared users"
+        },
+        {
+          "do": "Subtract the overlap",
+          "result": "$75$",
+          "why": "each both-device user is now counted once"
+        }
+      ],
+      "verify": "The result cannot exceed 100 and is at least 55, so 75 is plausible.",
+      "answer": "75 users use at least one of mobile or desktop.",
+      "connects": "Inclusion–exclusion turns a naive sum into an exact union count."
+    },
+    "practice": [
+      {
+        "problem": "A class has 18 students in algebra, 14 in statistics, and 6 in both. Count students in at least one course.",
+        "steps": [
+          {
+            "do": "Let the sets be $A$ and $S$",
+            "result": "$|A|=18$, $|S|=14$, $|A\\cap S|=6$",
+            "why": "translate the words"
+          },
+          {
+            "do": "Write inclusion–exclusion",
+            "result": "$|A\\cup S|=18+14-6$",
+            "why": "subtract the double-counted overlap"
+          },
+          {
+            "do": "Add first",
+            "result": "$32-6$",
+            "why": "combine single memberships"
+          },
+          {
+            "do": "Subtract",
+            "result": "$26$",
+            "why": "repair the overcount"
+          },
+          {
+            "do": "Interpret",
+            "result": "26 students",
+            "why": "the union means at least one course"
+          }
+        ],
+        "answer": "26 students are in at least one course."
+      },
+      {
+        "problem": "Out of 60 files, 25 are compressed, 30 are encrypted, and 10 are both. How many are neither?",
+        "steps": [
+          {
+            "do": "Compute at least one",
+            "result": "$25+30-10=45$",
+            "why": "use the two-set union formula"
+          },
+          {
+            "do": "Name the universe",
+            "result": "$60$ files",
+            "why": "neither is a complement"
+          },
+          {
+            "do": "Subtract from the universe",
+            "result": "$60-45$",
+            "why": "remove files with at least one property"
+          },
+          {
+            "do": "Compute",
+            "result": "$15$",
+            "why": "simple subtraction"
+          },
+          {
+            "do": "State the complement",
+            "result": "15 files are neither",
+            "why": "they are not compressed and not encrypted"
+          }
+        ],
+        "answer": "15 files are neither compressed nor encrypted."
+      },
+      {
+        "problem": "In 50 requests, 20 fail validation, 15 time out, and 5 do both. Count requests with exactly one problem.",
+        "steps": [
+          {
+            "do": "Count validation-only",
+            "result": "$20-5=15$",
+            "why": "remove requests that also timed out"
+          },
+          {
+            "do": "Count timeout-only",
+            "result": "$15-5=10$",
+            "why": "remove requests that also failed validation"
+          },
+          {
+            "do": "Add exact-one cases",
+            "result": "$15+10=25$",
+            "why": "the two cases are disjoint"
+          },
+          {
+            "do": "Alternative union count",
+            "result": "$20+15-5=30$",
+            "why": "requests with at least one problem"
+          },
+          {
+            "do": "Remove both from union",
+            "result": "$30-5=25$",
+            "why": "exactly one excludes the overlap"
+          }
+        ],
+        "answer": "25 requests have exactly one problem."
+      },
+      {
+        "problem": "For sets with $|A|=30$, $|B|=25$, $|C|=20$, pairwise intersections $8,7,6$, and triple intersection $3$, find $|A\\cup B\\cup C|$.",
+        "steps": [
+          {
+            "do": "Write the three-set formula",
+            "result": "$|A\\cup B\\cup C|=30+25+20-8-7-6+3$",
+            "why": "include singles, exclude pairs, include triples"
+          },
+          {
+            "do": "Add singles",
+            "result": "$75$",
+            "why": "total before repairs"
+          },
+          {
+            "do": "Add pair overlaps",
+            "result": "$8+7+6=21$",
+            "why": "total overcount to subtract"
+          },
+          {
+            "do": "Subtract pair overlaps",
+            "result": "$75-21=54$",
+            "why": "triple elements were subtracted too much"
+          },
+          {
+            "do": "Add triple overlap",
+            "result": "$54+3=57$",
+            "why": "restore triple elements once"
+          }
+        ],
+        "answer": "The union has size $57$."
+      },
+      {
+        "problem": "A classifier flags 120 items for policy A, 90 for policy B, 50 for policy C; pair overlaps are 35, 20, 15, and 8 items hit all three. How many unique items are flagged?",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$120+90+50-35-20-15+8$",
+            "why": "three-set inclusion–exclusion"
+          },
+          {
+            "do": "Add single flags",
+            "result": "$260$",
+            "why": "naive total alerts"
+          },
+          {
+            "do": "Add pair overlaps",
+            "result": "$35+20+15=70$",
+            "why": "alerts counted twice"
+          },
+          {
+            "do": "Subtract and add triple",
+            "result": "$260-70+8$",
+            "why": "repair pair and triple counts"
+          },
+          {
+            "do": "Compute unique flagged items",
+            "result": "$198$",
+            "why": "final union size"
+          }
+        ],
+        "answer": "198 unique items are flagged."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Deduplicating alerts",
+        "background": "Monitoring systems often emit several alerts for one incident. Inclusion–exclusion estimates unique incidents from overlapping alert streams.",
+        "numbers": "If CPU alerts hit 40 hosts, memory 30, and both 12, unique alerted hosts are $40+30-12=58$."
+      },
+      {
+        "title": "Search result blending",
+        "background": "Search engines merge results from several retrievers. Overlap must be removed before counting unique documents.",
+        "numbers": "Retriever A returns 100 docs, B returns 80, overlap 25; union size is $155$."
+      },
+      {
+        "title": "Data quality checks",
+        "background": "Datasets may fail multiple validation rules. Inclusion–exclusion separates total bad rows from duplicated failure counts.",
+        "numbers": "Rule counts 300 and 220 with 75 overlap give $300+220-75=445$ bad rows."
+      },
+      {
+        "title": "Probability of events",
+        "background": "The same formula works for probabilities when events overlap. It prevents probabilities from exceeding 1.",
+        "numbers": "$P(A)=0.4$, $P(B)=0.3$, $P(A\\cap B)=0.1$ gives $P(A\\cup B)=0.6$."
+      },
+      {
+        "title": "Cache coverage",
+        "background": "Systems may ask how many requests are served by either of two caches. Shared hits should not be counted twice.",
+        "numbers": "Cache 1 hits 700 requests, cache 2 hits 500, both hit 250, so at least one hits $950$."
+      },
+      {
+        "title": "Multi-label evaluation",
+        "background": "An item can be assigned several labels. Counting items with any sensitive label needs overlap-aware union counts.",
+        "numbers": "Labels have counts 45, 35, 20, pair overlaps 10, 5, 4, triple 2; union is $45+35+20-19+2=83$."
+      }
+    ],
+    "applicationsClose": "Wherever categories overlap, inclusion–exclusion is the quiet discipline that counts people, rows, requests, and events once.",
+    "takeaways": [
+      "For two sets, add the sizes and subtract the intersection.",
+      "For three sets, subtract pairwise overlaps and add back the triple overlap.",
+      "Exactly-one and neither questions often use inclusion–exclusion plus complements.",
+      "Always state the universe when using complements."
+    ],
     "prereqs": [
       "math-14-13"
     ]
@@ -300,19 +3773,262 @@
   B({
     "id": "math-14-15",
     "title": "The pigeonhole principle",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: the pigeonhole principle.",
+    "tagline": "The pigeonhole principle finds certainty in crowding: too many objects for too few boxes forces a repeat.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Inclusion–exclusion</i>"
+        "functions between finite sets",
+        "Counting basics",
+        "Inclusion–exclusion"
       ],
       "leadsTo": [
-        "the next lesson, <i>Recurrence relations</i>"
+        "Recurrence relations",
+        "Discrete probability",
+        "Counting, complexity, and Big-O"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "ceilings",
+        "modular arithmetic",
+        "graph coloring",
+        "hashing"
       ]
     },
+    "motivation": "<p>You already trust the idea: if 13 people choose birth months, at least two share a month. There are only 12 months.</p><p>The <b>pigeonhole principle</b> gives that intuition a clean mathematical voice. It is a proof method for guarantees, especially when the exact repeated item is not known.</p>",
+    "definition": "<p>If $N$ objects are placed into $k$ boxes and $N>k$, then at least one box contains at least two objects. More generally, at least one box contains at least $\\lceil N/k\\rceil$ objects.</p><p>The generalized version follows because if every box had at most $\\lceil N/k\\rceil-1$ objects, then the total would be at most $k(\\lceil N/k\\rceil-1)$, which is less than $N$ when $\\lceil N/k\\rceil$ is the smallest integer not below $N/k$.</p><p><b>Assumptions that matter:</b> every object must be assigned to a box; boxes must cover all possible categories; and the conclusion guarantees existence, not which box is crowded.</p>",
+    "worked": {
+      "problem": "How many people guarantee that at least 4 share a birth month?",
+      "skills": [
+        "generalized pigeonhole",
+        "ceilings",
+        "guarantee arguments"
+      ],
+      "strategy": "To force four in some month, find the largest crowd that could avoid four, then add one.",
+      "steps": [
+        {
+          "do": "Name the boxes",
+          "result": "12 months",
+          "why": "birth months are the categories"
+        },
+        {
+          "do": "Set the avoidance limit",
+          "result": "at most 3 people per month",
+          "why": "this avoids having four in any month"
+        },
+        {
+          "do": "Compute the largest avoiding total",
+          "result": "$12\\cdot3=36$",
+          "why": "fill every month with three people"
+        },
+        {
+          "do": "Add one person",
+          "result": "$36+1=37$",
+          "why": "one more must enter a month already holding three"
+        },
+        {
+          "do": "State the guarantee",
+          "result": "37 people force at least 4 in one month",
+          "why": "this is the smallest guaranteed number"
+        }
+      ],
+      "verify": "With 36 people, three in each month is possible, so 37 is the first forced value.",
+      "answer": "37 people guarantee that at least 4 share a birth month.",
+      "connects": "Pigeonhole proofs often ask how long a pattern can avoid the crowded outcome."
+    },
+    "practice": [
+      {
+        "problem": "Show that among 8 people, at least two were born on the same day of the week.",
+        "steps": [
+          {
+            "do": "Name the objects",
+            "result": "8 people",
+            "why": "these are placed into categories"
+          },
+          {
+            "do": "Name the boxes",
+            "result": "7 weekdays",
+            "why": "birth weekdays are the possible boxes"
+          },
+          {
+            "do": "Compare counts",
+            "result": "$8>7$",
+            "why": "more objects than boxes"
+          },
+          {
+            "do": "Apply pigeonhole",
+            "result": "some weekday has at least 2 people",
+            "why": "a repeat is forced"
+          },
+          {
+            "do": "Interpret",
+            "result": "two people share a birth weekday",
+            "why": "the exact weekday is not specified"
+          }
+        ],
+        "answer": "At least two people share a birth weekday."
+      },
+      {
+        "problem": "How many integers must be chosen to guarantee two have the same remainder modulo 5?",
+        "steps": [
+          {
+            "do": "Name the boxes",
+            "result": "remainders $0,1,2,3,4$",
+            "why": "modulo 5 has five categories"
+          },
+          {
+            "do": "Find the avoiding maximum",
+            "result": "5 integers",
+            "why": "one can occupy each remainder"
+          },
+          {
+            "do": "Add one",
+            "result": "$5+1=6$",
+            "why": "the sixth repeats a remainder"
+          },
+          {
+            "do": "Apply pigeonhole",
+            "result": "two integers share a remainder",
+            "why": "same box means same remainder"
+          },
+          {
+            "do": "State the guarantee",
+            "result": "6 integers",
+            "why": "this is minimal"
+          }
+        ],
+        "answer": "6 integers guarantee a shared remainder modulo 5."
+      },
+      {
+        "problem": "If 41 files are assigned to 10 servers, prove some server gets at least 5 files.",
+        "steps": [
+          {
+            "do": "Compute the average load",
+            "result": "$41/10=4.1$",
+            "why": "average above 4 forces a higher integer"
+          },
+          {
+            "do": "Take the ceiling",
+            "result": "$\\lceil4.1\\rceil=5$",
+            "why": "loads are whole numbers"
+          },
+          {
+            "do": "Apply generalized pigeonhole",
+            "result": "some server has at least 5 files",
+            "why": "one box reaches the ceiling"
+          },
+          {
+            "do": "Check avoidance",
+            "result": "10 servers with at most 4 files hold only 40",
+            "why": "that is not enough for 41 files"
+          },
+          {
+            "do": "Conclude",
+            "result": "at least one server has 5 or more files",
+            "why": "the guarantee follows"
+          }
+        ],
+        "answer": "Some server receives at least 5 files."
+      },
+      {
+        "problem": "Prove that among any 6 integers, two differ by a multiple of 5.",
+        "steps": [
+          {
+            "do": "Assign each integer to a remainder modulo 5",
+            "result": "boxes are $0$ through $4$",
+            "why": "same remainder means difference divisible by 5"
+          },
+          {
+            "do": "Count boxes",
+            "result": "5 remainder classes",
+            "why": "there are only five"
+          },
+          {
+            "do": "Compare objects to boxes",
+            "result": "$6>5$",
+            "why": "six integers crowd five classes"
+          },
+          {
+            "do": "Apply pigeonhole",
+            "result": "two integers have the same remainder",
+            "why": "a repeated box is forced"
+          },
+          {
+            "do": "Subtract the two integers",
+            "result": "their difference is $0\\bmod 5$",
+            "why": "equal remainders cancel"
+          }
+        ],
+        "answer": "Two of the integers differ by a multiple of 5."
+      },
+      {
+        "problem": "A hash table maps 1001 keys into 100 buckets. What load is guaranteed in some bucket?",
+        "steps": [
+          {
+            "do": "Identify objects and boxes",
+            "result": "1001 keys and 100 buckets",
+            "why": "hashing assigns each key to a bucket"
+          },
+          {
+            "do": "Compute average load",
+            "result": "$1001/100=10.01$",
+            "why": "average keys per bucket"
+          },
+          {
+            "do": "Take the ceiling",
+            "result": "$\\lceil10.01\\rceil=11$",
+            "why": "bucket counts are integers"
+          },
+          {
+            "do": "Apply generalized pigeonhole",
+            "result": "some bucket has at least 11 keys",
+            "why": "one bucket meets or exceeds the ceiling"
+          },
+          {
+            "do": "Interpret for hashing",
+            "result": "a collision chain of length at least 11 exists",
+            "why": "if all keys are stored in buckets"
+          }
+        ],
+        "answer": "At least one bucket contains at least 11 keys."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Hash collisions",
+        "background": "Hash tables deliberately map a huge key space into fewer buckets. Pigeonhole says collisions are unavoidable.",
+        "numbers": "Mapping 10,000 user ids to 1,024 buckets guarantees a bucket with at least $\\lceil10000/1024\\rceil=10$ ids."
+      },
+      {
+        "title": "Birthday paradox setup",
+        "background": "Probability refines pigeonhole, but the deterministic floor is simple. With more people than days, a shared birthday is certain.",
+        "numbers": "With 367 people and 366 possible birthdays including leap day, at least two share a birthday."
+      },
+      {
+        "title": "Load balancing",
+        "background": "Distributed systems spread tasks across machines. Average load gives a minimum worst-case guarantee.",
+        "numbers": "101 tasks on 20 workers force some worker to hold at least $\\lceil101/20\\rceil=6$ tasks."
+      },
+      {
+        "title": "Remainder arguments",
+        "background": "Number theory uses pigeonholes for congruence guarantees. Same remainder means divisible difference.",
+        "numbers": "Choosing 11 integers guarantees two share a remainder modulo 10, so their difference is a multiple of 10."
+      },
+      {
+        "title": "Cache slots",
+        "background": "Limited cache slots cannot hold all active items uniquely. Pigeonhole predicts conflict pressure.",
+        "numbers": "250 active keys in 64 cache sets force at least $\\lceil250/64\\rceil=4$ keys in one set."
+      },
+      {
+        "title": "Mini-batch grouping",
+        "background": "ML training may bucket examples by sequence length. Too many examples for few buckets forces a crowded bucket.",
+        "numbers": "513 sequences placed into 32 length buckets force some bucket to contain at least $\\lceil513/32\\rceil=17$ sequences."
+      }
+    ],
+    "applicationsClose": "The pigeonhole principle is small but sturdy: when finite capacity is exceeded, repetition or crowding is not an accident but a certainty.",
+    "takeaways": [
+      "If $N>k$, placing $N$ objects in $k$ boxes forces a shared box.",
+      "The generalized guarantee is at least $\\lceil N/k\\rceil$ objects in some box.",
+      "Many proofs choose boxes as remainders, categories, buckets, or labels.",
+      "The principle proves existence without identifying the crowded box."
+    ],
     "prereqs": [
       "math-14-14"
     ]
@@ -321,19 +4037,267 @@
   B({
     "id": "math-14-16",
     "title": "Recurrence relations",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: recurrence relations.",
+    "tagline": "A recurrence describes a sequence by telling each term how to grow from earlier terms.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The pigeonhole principle</i>"
+        "sequences",
+        "functions",
+        "Counting basics"
       ],
       "leadsTo": [
-        "the next lesson, <i>Solving linear recurrences</i>"
+        "Solving linear recurrences",
+        "Generating functions",
+        "Counting, complexity, and Big-O"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "induction",
+        "dynamic programming",
+        "trees",
+        "difference equations"
       ]
     },
+    "motivation": "<p>You already compute patterns step by step: today's balance depends on yesterday's balance, and today's dynamic-programming table entry depends on earlier entries.</p><p>A <b>recurrence relation</b> turns that dependency into a definition. It is a natural language for counting processes that unfold one size at a time.</p>",
+    "definition": "<p>A recurrence relation defines a sequence $a_0,a_1,a_2,\\ldots$ by giving initial values and a rule for later terms, such as $a_n=a_{n-1}+2$ with $a_0=3$. Initial values anchor the sequence; the recurrence propagates it.</p><p>For counting binary strings with no consecutive 1s, let $a_n$ be the number of valid length-$n$ strings. A valid string ending in 0 follows any valid length $n-1$ string; a valid string ending in 10 follows any valid length $n-2$ string. Thus $a_n=a_{n-1}+a_{n-2}$.</p><p><b>Assumptions that matter:</b> the recurrence rule must apply only where earlier terms exist; initial conditions must be enough to start the rule; and $a_n$ should have a consistent meaning for every $n$.</p>",
+    "worked": {
+      "problem": "Find $a_1$ through $a_5$ for $a_n=3a_{n-1}+2$ with $a_0=1$.",
+      "skills": [
+        "iteration",
+        "initial conditions",
+        "sequence notation"
+      ],
+      "strategy": "The rule gives one new term at a time — start from the anchor and iterate carefully.",
+      "steps": [
+        {
+          "do": "Start from the initial value",
+          "result": "$a_0=1$",
+          "why": "the recurrence needs a first term"
+        },
+        {
+          "do": "Compute $a_1$",
+          "result": "$3\\cdot1+2=5$",
+          "why": "use $a_0$"
+        },
+        {
+          "do": "Compute $a_2$",
+          "result": "$3\\cdot5+2=17$",
+          "why": "use $a_1$"
+        },
+        {
+          "do": "Compute $a_3$",
+          "result": "$3\\cdot17+2=53$",
+          "why": "use $a_2$"
+        },
+        {
+          "do": "Compute $a_4$",
+          "result": "$3\\cdot53+2=161$",
+          "why": "use $a_3$"
+        },
+        {
+          "do": "Compute $a_5$",
+          "result": "$3\\cdot161+2=485$",
+          "why": "use $a_4$"
+        }
+      ],
+      "verify": "Each term is a little more than triple the previous term, so fast growth from 1 to 485 is expected.",
+      "answer": "$a_1=5$, $a_2=17$, $a_3=53$, $a_4=161$, $a_5=485$.",
+      "connects": "A recurrence is an engine: initial values start it, and the rule drives the sequence."
+    },
+    "practice": [
+      {
+        "problem": "For $a_n=a_{n-1}+4$ with $a_0=2$, compute $a_1$ through $a_4$ and guess a formula.",
+        "steps": [
+          {
+            "do": "Compute $a_1$",
+            "result": "$2+4=6$",
+            "why": "add 4 once"
+          },
+          {
+            "do": "Compute $a_2$",
+            "result": "$6+4=10$",
+            "why": "apply the recurrence again"
+          },
+          {
+            "do": "Compute $a_3$",
+            "result": "$10+4=14$",
+            "why": "continue the pattern"
+          },
+          {
+            "do": "Compute $a_4$",
+            "result": "$14+4=18$",
+            "why": "four additions of 4"
+          },
+          {
+            "do": "Guess the closed form",
+            "result": "$a_n=2+4n$",
+            "why": "start at 2 and add 4 for each step"
+          }
+        ],
+        "answer": "$a_1=6$, $a_2=10$, $a_3=14$, $a_4=18$, and $a_n=2+4n$."
+      },
+      {
+        "problem": "For $b_n=2b_{n-1}$ with $b_0=3$, compute $b_1$ through $b_5$.",
+        "steps": [
+          {
+            "do": "Compute $b_1$",
+            "result": "$2\\cdot3=6$",
+            "why": "double the initial term"
+          },
+          {
+            "do": "Compute $b_2$",
+            "result": "$2\\cdot6=12$",
+            "why": "double again"
+          },
+          {
+            "do": "Compute $b_3$",
+            "result": "$2\\cdot12=24$",
+            "why": "apply the same rule"
+          },
+          {
+            "do": "Compute $b_4$",
+            "result": "$2\\cdot24=48$",
+            "why": "continue doubling"
+          },
+          {
+            "do": "Compute $b_5$",
+            "result": "$2\\cdot48=96$",
+            "why": "one more step"
+          }
+        ],
+        "answer": "The terms are $6,12,24,48,96$."
+      },
+      {
+        "problem": "Let $F_0=0$, $F_1=1$, and $F_n=F_{n-1}+F_{n-2}$. Compute $F_2$ through $F_7$.",
+        "steps": [
+          {
+            "do": "Compute $F_2$",
+            "result": "$1+0=1$",
+            "why": "add the previous two terms"
+          },
+          {
+            "do": "Compute $F_3$",
+            "result": "$1+1=2$",
+            "why": "use $F_2$ and $F_1$"
+          },
+          {
+            "do": "Compute $F_4$",
+            "result": "$2+1=3$",
+            "why": "use the two latest terms"
+          },
+          {
+            "do": "Compute $F_5$",
+            "result": "$3+2=5$",
+            "why": "continue the recurrence"
+          },
+          {
+            "do": "Compute $F_6$ and $F_7$",
+            "result": "$F_6=8$, $F_7=13$",
+            "why": "add adjacent previous terms"
+          }
+        ],
+        "answer": "$F_2=1$, $F_3=2$, $F_4=3$, $F_5=5$, $F_6=8$, $F_7=13$."
+      },
+      {
+        "problem": "A valid password string of length $n$ over $\\{0,1\\}$ cannot contain consecutive 1s. Derive the recurrence for $a_n$.",
+        "steps": [
+          {
+            "do": "Define $a_n$",
+            "result": "number of valid length-$n$ strings",
+            "why": "clear meaning for the sequence"
+          },
+          {
+            "do": "Split by final symbol",
+            "result": "ending in 0 or ending in 1",
+            "why": "these cases are disjoint"
+          },
+          {
+            "do": "Count strings ending in 0",
+            "result": "$a_{n-1}$",
+            "why": "append 0 to any valid shorter string"
+          },
+          {
+            "do": "Count strings ending in 1",
+            "result": "$a_{n-2}$",
+            "why": "the previous symbol must be 0, so append 01 to a valid length $n-2$ string"
+          },
+          {
+            "do": "Add the cases",
+            "result": "$a_n=a_{n-1}+a_{n-2}$",
+            "why": "disjoint cases cover all valid strings"
+          }
+        ],
+        "answer": "The recurrence is $a_n=a_{n-1}+a_{n-2}$ with $a_0=1$ and $a_1=2$."
+      },
+      {
+        "problem": "A dynamic program has cost $T(n)=T(n-1)+n$ with $T(0)=0$. Compute $T(5)$ by iteration.",
+        "steps": [
+          {
+            "do": "Compute $T(1)$",
+            "result": "$0+1=1$",
+            "why": "use the recurrence"
+          },
+          {
+            "do": "Compute $T(2)$",
+            "result": "$1+2=3$",
+            "why": "add the new size"
+          },
+          {
+            "do": "Compute $T(3)$",
+            "result": "$3+3=6$",
+            "why": "continue accumulating"
+          },
+          {
+            "do": "Compute $T(4)$",
+            "result": "$6+4=10$",
+            "why": "add 4"
+          },
+          {
+            "do": "Compute $T(5)$",
+            "result": "$10+5=15$",
+            "why": "add 5"
+          }
+        ],
+        "answer": "$T(5)=15$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Dynamic programming tables",
+        "background": "Dynamic programming defines each table cell from smaller subproblems. Recurrences are the blueprint.",
+        "numbers": "If $D(n)=D(n-1)+n$ and $D(0)=0$, then $D(4)=1+2+3+4=10$ operations."
+      },
+      {
+        "title": "Fibonacci growth",
+        "background": "The Fibonacci recurrence appears in tilings and branching processes. It is a first friendly second-order recurrence.",
+        "numbers": "$F_5=5$ and $F_6=8$, so $F_7=13$."
+      },
+      {
+        "title": "Tree node counts",
+        "background": "Complete binary trees grow recursively: each level doubles. A recurrence expresses that expansion.",
+        "numbers": "With $N_h=2N_{h-1}+1$ and $N_0=1$, $N_3=15$ nodes."
+      },
+      {
+        "title": "Training checkpoints",
+        "background": "A schedule may update a budget from the previous epoch. Recurrences make the schedule reproducible.",
+        "numbers": "If batch size follows $b_n=2b_{n-1}$ from $32$, then after 3 doublings it is $256$."
+      },
+      {
+        "title": "Queue backlogs",
+        "background": "Backlog today depends on yesterday plus arrivals minus service. This is a practical recurrence.",
+        "numbers": "With $q_n=q_{n-1}+12-10$ and $q_0=5$, $q_4=13$."
+      },
+      {
+        "title": "Autoregressive models",
+        "background": "Sequence models often predict from previous tokens or states. The indexing mirrors recurrence thinking.",
+        "numbers": "If hidden size update cost is $c_n=c_{n-1}+64$ from $0$, then 10 steps accumulate $640$ units."
+      }
+    ],
+    "applicationsClose": "Recurrences let discrete processes speak step by step, from simple schedules to dynamic programs and sequence models.",
+    "takeaways": [
+      "A recurrence needs both a rule and enough initial conditions.",
+      "First-order rules use one previous term; second-order rules use two.",
+      "Counting recurrences often come from splitting the last step into cases.",
+      "Iteration is the safest first way to understand a recurrence."
+    ],
     "prereqs": [
       "math-14-15"
     ]
@@ -342,19 +4306,302 @@
   B({
     "id": "math-14-17",
     "title": "Solving linear recurrences",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: solving linear recurrences.",
+    "tagline": "Solving a linear recurrence turns a step-by-step rule into a formula you can evaluate directly.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Recurrence relations</i>"
+        "Recurrence relations",
+        "algebra",
+        "sequences"
       ],
       "leadsTo": [
-        "the next lesson, <i>Generating functions</i>"
+        "Generating functions",
+        "Counting, complexity, and Big-O",
+        "discrete probability"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "characteristic equations",
+        "geometric sequences",
+        "induction",
+        "dynamic programming"
       ]
     },
+    "motivation": "<p>Iterating a recurrence is honest but slow. If you need the 1000th term, computing every previous term may hide the pattern.</p><p>For many linear recurrences, a special guess unlocks the formula. Geometric sequences are the key: if each term is a power, the recurrence becomes an algebra equation.</p>",
+    "definition": "<p>A homogeneous linear recurrence with constant coefficients has the form $a_n=c_1a_{n-1}+\\cdots+c_da_{n-d}$. Trying $a_n=r^n$ gives a <b>characteristic equation</b>. For $a_n=5a_{n-1}-6a_{n-2}$, the equation is $r^2=5r-6$, or $r^2-5r+6=0$.</p><p>If the characteristic roots are distinct, say $r_1$ and $r_2$, then $a_n=A r_1^n+B r_2^n$, and the constants come from initial conditions. The reason is linearity: each root-power sequence satisfies the recurrence, and sums of solutions also satisfy it.</p><p><b>Assumptions that matter:</b> this lesson focuses on homogeneous recurrences with constant coefficients and distinct roots; repeated roots and nonhomogeneous terms need extra modifications; and initial conditions determine the constants.</p>",
+    "worked": {
+      "problem": "Solve $a_n=5a_{n-1}-6a_{n-2}$ with $a_0=2$ and $a_1=5$.",
+      "skills": [
+        "characteristic equation",
+        "factoring",
+        "initial conditions"
+      ],
+      "strategy": "The recurrence is linear and homogeneous — try $a_n=r^n$, then fit constants.",
+      "steps": [
+        {
+          "do": "Substitute $a_n=r^n$",
+          "result": "$r^n=5r^{n-1}-6r^{n-2}$",
+          "why": "look for geometric solutions"
+        },
+        {
+          "do": "Divide by $r^{n-2}$",
+          "result": "$r^2=5r-6$",
+          "why": "remove the common power"
+        },
+        {
+          "do": "Move all terms to one side",
+          "result": "$r^2-5r+6=0$",
+          "why": "form the characteristic equation"
+        },
+        {
+          "do": "Factor",
+          "result": "$(r-2)(r-3)=0$",
+          "why": "find the roots"
+        },
+        {
+          "do": "Write the general solution",
+          "result": "$a_n=A2^n+B3^n$",
+          "why": "distinct roots give a linear combination"
+        },
+        {
+          "do": "Use $a_0=2$",
+          "result": "$A+B=2$",
+          "why": "both powers equal 1 at $n=0$"
+        },
+        {
+          "do": "Use $a_1=5$",
+          "result": "$2A+3B=5$",
+          "why": "substitute $n=1$"
+        },
+        {
+          "do": "Solve the constants",
+          "result": "$A=1$, $B=1$",
+          "why": "subtract twice the first equation from the second"
+        },
+        {
+          "do": "State the formula",
+          "result": "$a_n=2^n+3^n$",
+          "why": "insert the constants"
+        }
+      ],
+      "verify": "The formula gives $a_0=2$ and $a_1=5$, and $a_2=4+9=13$, matching $5\\cdot5-6\\cdot2=13$.",
+      "answer": "$a_n=2^n+3^n$.",
+      "connects": "Characteristic roots reveal the geometric pieces inside a linear recurrence."
+    },
+    "practice": [
+      {
+        "problem": "Solve $a_n=2a_{n-1}$ with $a_0=7$ by recognizing the pattern.",
+        "steps": [
+          {
+            "do": "Compute the first few terms",
+            "result": "$7,14,28$",
+            "why": "each term doubles"
+          },
+          {
+            "do": "Identify the ratio",
+            "result": "$2$",
+            "why": "successive terms multiply by 2"
+          },
+          {
+            "do": "Write the geometric form",
+            "result": "$a_n=7\\cdot2^n$",
+            "why": "start at $a_0=7$"
+          },
+          {
+            "do": "Check $n=1$",
+            "result": "$7\\cdot2=14$",
+            "why": "matches the recurrence"
+          },
+          {
+            "do": "Check $n=2$",
+            "result": "$7\\cdot4=28$",
+            "why": "the formula stays consistent"
+          }
+        ],
+        "answer": "$a_n=7\\cdot2^n$."
+      },
+      {
+        "problem": "Solve $a_n=4a_{n-1}$ with $a_0=3$.",
+        "steps": [
+          {
+            "do": "Try $a_n=r^n$",
+            "result": "$r^n=4r^{n-1}$",
+            "why": "geometric trial"
+          },
+          {
+            "do": "Divide by $r^{n-1}$",
+            "result": "$r=4$",
+            "why": "characteristic root"
+          },
+          {
+            "do": "Write the general solution",
+            "result": "$a_n=A4^n$",
+            "why": "one first-order root"
+          },
+          {
+            "do": "Use $a_0=3$",
+            "result": "$A=3$",
+            "why": "because $4^0=1$"
+          },
+          {
+            "do": "State the formula",
+            "result": "$a_n=3\\cdot4^n$",
+            "why": "constant fitted"
+          }
+        ],
+        "answer": "$a_n=3\\cdot4^n$."
+      },
+      {
+        "problem": "Solve $a_n=3a_{n-1}-2a_{n-2}$ with $a_0=1$, $a_1=4$.",
+        "steps": [
+          {
+            "do": "Form the characteristic equation",
+            "result": "$r^2=3r-2$",
+            "why": "try $r^n$"
+          },
+          {
+            "do": "Move terms",
+            "result": "$r^2-3r+2=0$",
+            "why": "standard polynomial form"
+          },
+          {
+            "do": "Factor",
+            "result": "$(r-1)(r-2)=0$",
+            "why": "roots are 1 and 2"
+          },
+          {
+            "do": "Write the solution",
+            "result": "$a_n=A+B2^n$",
+            "why": "since $1^n=1$"
+          },
+          {
+            "do": "Use initial values",
+            "result": "$A+B=1$ and $A+2B=4$",
+            "why": "substitute $n=0,1$"
+          },
+          {
+            "do": "Solve constants",
+            "result": "$B=3$, $A=-2$",
+            "why": "subtract the equations"
+          },
+          {
+            "do": "State formula",
+            "result": "$a_n=-2+3\\cdot2^n$",
+            "why": "insert constants"
+          }
+        ],
+        "answer": "$a_n=-2+3\\cdot2^n$."
+      },
+      {
+        "problem": "Solve $a_n=7a_{n-1}-10a_{n-2}$ with $a_0=0$, $a_1=1$.",
+        "steps": [
+          {
+            "do": "Write the characteristic equation",
+            "result": "$r^2-7r+10=0$",
+            "why": "move all terms to one side"
+          },
+          {
+            "do": "Factor",
+            "result": "$(r-5)(r-2)=0$",
+            "why": "roots are 5 and 2"
+          },
+          {
+            "do": "Write the general solution",
+            "result": "$a_n=A5^n+B2^n$",
+            "why": "distinct roots"
+          },
+          {
+            "do": "Use $a_0=0$",
+            "result": "$A+B=0$",
+            "why": "initial value"
+          },
+          {
+            "do": "Use $a_1=1$",
+            "result": "$5A+2B=1$",
+            "why": "second initial value"
+          },
+          {
+            "do": "Solve",
+            "result": "$A=1/3$, $B=-1/3$",
+            "why": "use $B=-A$"
+          },
+          {
+            "do": "State formula",
+            "result": "$a_n=\\dfrac{5^n-2^n}{3}$",
+            "why": "combine constants"
+          }
+        ],
+        "answer": "$a_n=(5^n-2^n)/3$."
+      },
+      {
+        "problem": "A divide-and-conquer counter satisfies $T_n=2T_{n-1}$ for levels $n$ with $T_0=1$. Find $T_{10}$.",
+        "steps": [
+          {
+            "do": "Recognize first-order growth",
+            "result": "$T_n=2T_{n-1}$",
+            "why": "each level doubles"
+          },
+          {
+            "do": "Write the formula",
+            "result": "$T_n=2^n$",
+            "why": "starts at $1$"
+          },
+          {
+            "do": "Substitute $n=10$",
+            "result": "$T_{10}=2^{10}$",
+            "why": "ten doublings"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$2^{10}=1024$",
+            "why": "standard power of two"
+          },
+          {
+            "do": "Interpret",
+            "result": "1024 subproblems at level 10",
+            "why": "direct formula avoids iterating all levels"
+          }
+        ],
+        "answer": "$T_{10}=1024$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Fibonacci formulas",
+        "background": "The Fibonacci recurrence has characteristic roots involving the golden ratio. The formula explains its growth rate.",
+        "numbers": "$F_{20}=6765$, while $\\varphi^{20}/\\sqrt5\\approx6765$ gives a close integer."
+      },
+      {
+        "title": "Algorithm recurrences",
+        "background": "Some algorithm costs follow linear recurrences. Solving them reveals the growth rate.",
+        "numbers": "If $T_n=2T_{n-1}$ and $T_0=1$, then $T_{30}=2^{30}=1,073,741,824$."
+      },
+      {
+        "title": "Population models",
+        "background": "Age-structured populations can be approximated by recurrence rules. Characteristic roots describe long-run growth.",
+        "numbers": "If $a_n=3a_{n-1}$ from $100$, then after 5 periods $a_5=100\\cdot3^5=24,300$."
+      },
+      {
+        "title": "Signal filters",
+        "background": "Simple digital filters update from previous outputs. Linear recurrences describe their impulse response.",
+        "numbers": "For $y_n=0.5y_{n-1}$ with $y_0=1$, $y_6=0.5^6=0.015625$."
+      },
+      {
+        "title": "Gradient momentum memory",
+        "background": "Exponential moving averages are first-order recurrences. Solving shows how old gradients fade.",
+        "numbers": "With $m_n=0.9m_{n-1}$ and $m_0=1$, the weight after 10 steps is $0.9^{10}\\approx0.349$."
+      },
+      {
+        "title": "Branching search trees",
+        "background": "A search that branches by a fixed factor has geometric recurrence behavior.",
+        "numbers": "If nodes per depth satisfy $N_d=3N_{d-1}$ and $N_0=1$, depth 6 has $729$ nodes."
+      }
+    ],
+    "applicationsClose": "Solving recurrences changes perspective: from marching term by term to seeing the powers that control growth.",
+    "takeaways": [
+      "For homogeneous constant-coefficient recurrences, try $a_n=r^n$.",
+      "The characteristic equation turns the recurrence into algebra.",
+      "Distinct roots give a sum of geometric terms.",
+      "Initial conditions determine the constants in the closed form."
+    ],
     "prereqs": [
       "math-14-16"
     ]
@@ -363,19 +4610,262 @@
   B({
     "id": "math-14-18",
     "title": "Generating functions",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: generating functions.",
+    "tagline": "Generating functions store a whole sequence inside one power series, so algebra can do counting work.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Solving linear recurrences</i>"
+        "sequences",
+        "Recurrence relations",
+        "power series notation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Discrete probability</i>"
+        "Discrete probability",
+        "Counting, complexity, and Big-O",
+        "combinatorial identities"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "polynomials",
+        "convolutions",
+        "recurrences",
+        "coefficient extraction"
       ]
     },
+    "motivation": "<p>You already use lists of numbers: $1,1,2,3,5,8$ tells a story term by term. A generating function packages that list as coefficients of powers of $x$.</p><p>The gift is that counting choices become multiplication, and recurrence rules become algebra. We do not evaluate $x$ so much as use it as a label for size.</p>",
+    "definition": "<p>The ordinary generating function for a sequence $a_0,a_1,a_2,\\ldots$ is $$A(x)=\\sum_{n\\ge0}a_nx^n.$$ The notation $[x^n]A(x)$ means the coefficient of $x^n$ in $A(x)$.</p><p>For example, $1+x+x^2+\\cdots=1/(1-x)$ as a formal power series because multiplying by $(1-x)$ cancels all terms after the constant: $(1-x)(1+x+x^2+\\cdots)=1$.</p><p><b>Assumptions that matter:</b> in combinatorics, power series may be treated formally without worrying about numerical convergence; coefficients must match the counted sizes; and multiplication of generating functions corresponds to splitting size between independent choices.</p>",
+    "worked": {
+      "problem": "Use generating functions to count ways to make total 4 using parts of size 1 and 2, with unlimited copies and order ignored.",
+      "skills": [
+        "coefficient extraction",
+        "geometric series",
+        "counting partitions"
+      ],
+      "strategy": "Each part size contributes a geometric series — multiply and read the coefficient of $x^4$.",
+      "steps": [
+        {
+          "do": "Write the size-1 factor",
+          "result": "$1+x+x^2+x^3+x^4+\\cdots$",
+          "why": "choose any number of ones"
+        },
+        {
+          "do": "Write the size-2 factor",
+          "result": "$1+x^2+x^4+\\cdots$",
+          "why": "choose any number of twos"
+        },
+        {
+          "do": "Multiply the factors",
+          "result": "$A(x)=(1+x+x^2+\\cdots)(1+x^2+x^4+\\cdots)$",
+          "why": "independent choices combine by multiplication"
+        },
+        {
+          "do": "List contributions to $x^4$",
+          "result": "$x^4\\cdot1$, $x^2\\cdot x^2$, $1\\cdot x^4$",
+          "why": "the exponents must add to 4"
+        },
+        {
+          "do": "Count contributions",
+          "result": "$3$",
+          "why": "there are three coefficient contributions"
+        }
+      ],
+      "verify": "The actual combinations are $1+1+1+1$, $1+1+2$, and $2+2$, so the coefficient 3 is right.",
+      "answer": "There are 3 ways.",
+      "connects": "Generating functions turn size bookkeeping into coefficient extraction."
+    },
+    "practice": [
+      {
+        "problem": "Find the generating function for the constant sequence $1,1,1,\\ldots$.",
+        "steps": [
+          {
+            "do": "Write the definition",
+            "result": "$A(x)=\\sum_{n\\ge0}1\\cdot x^n$",
+            "why": "each coefficient is 1"
+          },
+          {
+            "do": "Expand the sum",
+            "result": "$1+x+x^2+\\cdots$",
+            "why": "ordinary power series"
+          },
+          {
+            "do": "Multiply by $1-x$",
+            "result": "$(1-x)A(x)=1$",
+            "why": "all later terms cancel formally"
+          },
+          {
+            "do": "Solve for $A(x)$",
+            "result": "$A(x)=1/(1-x)$",
+            "why": "divide by $1-x$"
+          },
+          {
+            "do": "State the coefficient rule",
+            "result": " $[x^n]A(x)=1$",
+            "why": "every size has one object"
+          }
+        ],
+        "answer": "$A(x)=1/(1-x)$."
+      },
+      {
+        "problem": "Find the coefficient of $x^3$ in $(1+x)^5$.",
+        "steps": [
+          {
+            "do": "Recognize the binomial theorem",
+            "result": "$(1+x)^5=\\sum_{k=0}^5\\binom5k x^k$",
+            "why": "coefficients count choices"
+          },
+          {
+            "do": "Identify the needed coefficient",
+            "result": "$[x^3](1+x)^5=\\binom53$",
+            "why": "choose which 3 factors contribute $x$"
+          },
+          {
+            "do": "Compute $\\binom53$",
+            "result": "$10$",
+            "why": "use $5\\cdot4\\cdot3/(3\\cdot2\\cdot1)$"
+          },
+          {
+            "do": "Interpret",
+            "result": "choose 3 of 5 factors",
+            "why": "each chosen factor supplies $x$"
+          },
+          {
+            "do": "State the coefficient",
+            "result": "10",
+            "why": "coefficient extraction complete"
+          }
+        ],
+        "answer": "The coefficient is $10$."
+      },
+      {
+        "problem": "Count nonnegative solutions to $a+b+c=4$ using a generating function.",
+        "steps": [
+          {
+            "do": "Give each variable a factor",
+            "result": "$1+x+x^2+\\cdots$",
+            "why": "one variable can contribute any nonnegative amount"
+          },
+          {
+            "do": "Multiply three factors",
+            "result": "$(1+x+x^2+\\cdots)^3$",
+            "why": "three independent variables"
+          },
+          {
+            "do": "Use the closed form",
+            "result": "$(1-x)^{-3}$",
+            "why": "geometric series cubed"
+          },
+          {
+            "do": "Use stars and bars coefficient",
+            "result": "$[x^4](1-x)^{-3}=\\binom{4+3-1}{3-1}$",
+            "why": "standard coefficient"
+          },
+          {
+            "do": "Compute",
+            "result": "$\\binom62=15$",
+            "why": "choose separator positions"
+          }
+        ],
+        "answer": "There are $15$ solutions."
+      },
+      {
+        "problem": "Find the coefficient of $x^5$ in $(1+x+x^2)(1+x^3)$.",
+        "steps": [
+          {
+            "do": "List the first factor exponents",
+            "result": "$0,1,2$",
+            "why": "possible contributions"
+          },
+          {
+            "do": "List the second factor exponents",
+            "result": "$0,3$",
+            "why": "possible contributions"
+          },
+          {
+            "do": "Find pairs summing to 5",
+            "result": "$2+3=5$",
+            "why": "only one pair works"
+          },
+          {
+            "do": "Count the pairs",
+            "result": "$1$",
+            "why": "coefficient equals number of valid exponent splits"
+          },
+          {
+            "do": "State coefficient",
+            "result": "$[x^5]=1$",
+            "why": "one product term gives $x^5$"
+          }
+        ],
+        "answer": "The coefficient is $1$."
+      },
+      {
+        "problem": "A model can choose 0, 1, or 2 text features and 0 or 1 image feature. Use a generating function to count ways to choose exactly 2 features by type-count only.",
+        "steps": [
+          {
+            "do": "Write text factor",
+            "result": "$1+x+x^2$",
+            "why": "choose 0, 1, or 2 text features"
+          },
+          {
+            "do": "Write image factor",
+            "result": "$1+x$",
+            "why": "choose 0 or 1 image feature"
+          },
+          {
+            "do": "Multiply",
+            "result": "$(1+x+x^2)(1+x)$",
+            "why": "combine independent type choices"
+          },
+          {
+            "do": "Collect the $x^2$ terms",
+            "result": "$x\\cdot x$ and $x^2\\cdot1$",
+            "why": "two exponent splits give total 2"
+          },
+          {
+            "do": "Count coefficient",
+            "result": "$2$",
+            "why": "the type-count choices are text+image or two text"
+          }
+        ],
+        "answer": "There are 2 type-count patterns for exactly 2 features."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Polynomial multiplication as convolution",
+        "background": "Signal processing and probability use the same coefficient rule: multiplication combines independent sizes.",
+        "numbers": "$ (1+2x)(3+4x)$ has $x$ coefficient $1\\cdot4+2\\cdot3=10$."
+      },
+      {
+        "title": "Counting feature budgets",
+        "background": "Feature selection with budgets can be encoded by powers of $x$. Coefficients count feasible totals.",
+        "numbers": "If text choices contribute $1+x+x^2$ and image choices $1+x$, coefficient of $x^2$ is $2$."
+      },
+      {
+        "title": "Dice sums",
+        "background": "A die has generating function $x+x^2+\\cdots+x^6$. Two dice use its square.",
+        "numbers": "The coefficient of $x^7$ in $(x+\\cdots+x^6)^2$ is $6$, matching sums to 7."
+      },
+      {
+        "title": "Integer partitions with limited parts",
+        "background": "Generating functions count ways to build totals from allowed part sizes.",
+        "numbers": "Using parts 1 and 3 for total 6 gives coefficient of $x^6$ in $(1+x+x^2+\\cdots)(1+x^3+x^6+\\cdots)$, which is $3$."
+      },
+      {
+        "title": "Binomial coefficients",
+        "background": "The polynomial $(1+x)^n$ stores subset counts. Coefficients are binomial coefficients.",
+        "numbers": "In $(1+x)^8$, coefficient of $x^3$ is $\\binom83=56$."
+      },
+      {
+        "title": "Dynamic programming compression",
+        "background": "Generating functions can summarize a DP table by size. Algebraic operations mirror transitions.",
+        "numbers": "If current counts are $1+3x+2x^2$ and a choice adds 0 or 1, multiplying by $1+x$ gives coefficient of $x^2$ equal $3+2=5$."
+      }
+    ],
+    "applicationsClose": "Generating functions are counting ledgers: coefficients hold answers, while algebra moves entire families of answers at once.",
+    "takeaways": [
+      "An ordinary generating function is $A(x)=\\sum a_nx^n$.",
+      "Coefficient notation $[x^n]A(x)$ means the coefficient of $x^n$.",
+      "Multiplication combines independent choices by adding exponents.",
+      "Formal power series can be used for counting even when numerical convergence is not the focus."
+    ],
     "prereqs": [
       "math-14-17"
     ]
@@ -384,19 +4874,262 @@
   B({
     "id": "math-14-19",
     "title": "Discrete probability",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: discrete probability.",
+    "tagline": "Discrete probability assigns weights to countable outcomes and turns counting into a measure of chance.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Generating functions</i>"
+        "sets",
+        "Counting basics",
+        "Inclusion–exclusion"
       ],
       "leadsTo": [
-        "the next lesson, <i>Posets and lattices</i>"
+        "Posets and lattices",
+        "Modular arithmetic",
+        "Counting, complexity, and Big-O"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "random variables",
+        "expectation",
+        "combinatorics",
+        "Bayes rule"
       ]
     },
+    "motivation": "<p>You already reason with chance when you say a fair coin has two equally likely outcomes. Discrete probability keeps that common sense precise when there are many outcomes.</p><p>In ML, probability is the language of uncertainty: labels, tokens, model errors, sampled batches, and randomized algorithms all live here.</p>",
+    "definition": "<p>A discrete probability space has a countable sample space $\\Omega$ and probabilities $P(\\omega)\\ge0$ for outcomes $\\omega$, with $\\sum_{\\omega\\in\\Omega}P(\\omega)=1$. For an event $A\\subseteq\\Omega$, $P(A)=\\sum_{\\omega\\in A}P(\\omega)$.</p><p>If all outcomes are equally likely, then $P(A)=|A|/|\\Omega|$. The complement rule $P(A^c)=1-P(A)$ follows because $A$ and $A^c$ are disjoint and together cover the whole sample space.</p><p><b>Assumptions that matter:</b> probabilities must be nonnegative and sum to 1; equally likely formulas require genuine symmetry; and independence means $P(A\\cap B)=P(A)P(B)$, not merely that events feel unrelated.</p>",
+    "worked": {
+      "problem": "A fair die is rolled twice. What is the probability the sum is 7?",
+      "skills": [
+        "sample spaces",
+        "equally likely outcomes",
+        "counting favorable cases"
+      ],
+      "strategy": "The outcomes are ordered pairs — count all pairs and then count pairs whose sum is 7.",
+      "steps": [
+        {
+          "do": "Count all outcomes",
+          "result": "$6\\cdot6=36$",
+          "why": "each roll has six possibilities"
+        },
+        {
+          "do": "List favorable pairs",
+          "result": "$(1,6),(2,5),(3,4),(4,3),(5,2),(6,1)$",
+          "why": "ordered pairs with sum 7"
+        },
+        {
+          "do": "Count favorable outcomes",
+          "result": "$6$",
+          "why": "six listed pairs"
+        },
+        {
+          "do": "Form the probability",
+          "result": "$6/36$",
+          "why": "favorable over total for equally likely outcomes"
+        },
+        {
+          "do": "Simplify",
+          "result": "$1/6$",
+          "why": "divide numerator and denominator by 6"
+        }
+      ],
+      "verify": "A sum of 7 is common but not dominant; probability $1/6$ matches the classic dice table.",
+      "answer": "The probability is $1/6$.",
+      "connects": "Discrete probability is counting with normalized weights."
+    },
+    "practice": [
+      {
+        "problem": "A fair coin is flipped 3 times. Find the probability of exactly 2 heads.",
+        "steps": [
+          {
+            "do": "Count all outcomes",
+            "result": "$2^3=8$",
+            "why": "three binary flips"
+          },
+          {
+            "do": "Count head positions",
+            "result": "$\\binom32=3$",
+            "why": "choose which two flips are heads"
+          },
+          {
+            "do": "Form the probability",
+            "result": "$3/8$",
+            "why": "favorable over total"
+          },
+          {
+            "do": "Convert to decimal",
+            "result": "$0.375$",
+            "why": "divide 3 by 8"
+          },
+          {
+            "do": "Interpret",
+            "result": "37.5 percent",
+            "why": "less than half but substantial"
+          }
+        ],
+        "answer": "The probability is $3/8=0.375$."
+      },
+      {
+        "problem": "From 5 red and 3 blue balls, choose one uniformly. Find $P(\\text{blue})$ and $P(\\text{not blue})$.",
+        "steps": [
+          {
+            "do": "Count total balls",
+            "result": "$5+3=8$",
+            "why": "all equally likely draws"
+          },
+          {
+            "do": "Count blue balls",
+            "result": "$3$",
+            "why": "favorable outcomes"
+          },
+          {
+            "do": "Compute blue probability",
+            "result": "$3/8$",
+            "why": "favorable over total"
+          },
+          {
+            "do": "Use complement rule",
+            "result": "$1-3/8=5/8$",
+            "why": "not blue is the complement"
+          },
+          {
+            "do": "Check with red count",
+            "result": "$5/8$",
+            "why": "not blue means red here"
+          }
+        ],
+        "answer": "$P(\\text{blue})=3/8$ and $P(\\text{not blue})=5/8$."
+      },
+      {
+        "problem": "Two independent events have $P(A)=0.4$ and $P(B)=0.25$. Find $P(A\\cap B)$ and $P(A\\cup B)$.",
+        "steps": [
+          {
+            "do": "Use independence",
+            "result": "$P(A\\cap B)=0.4\\cdot0.25$",
+            "why": "independent events multiply"
+          },
+          {
+            "do": "Compute intersection",
+            "result": "$0.10$",
+            "why": "multiply decimals"
+          },
+          {
+            "do": "Use inclusion–exclusion",
+            "result": "$P(A\\cup B)=P(A)+P(B)-P(A\\cap B)$",
+            "why": "avoid double-counting overlap"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.4+0.25-0.10$",
+            "why": "use computed intersection"
+          },
+          {
+            "do": "Compute union",
+            "result": "$0.55$",
+            "why": "add and subtract"
+          }
+        ],
+        "answer": "$P(A\\cap B)=0.10$ and $P(A\\cup B)=0.55$."
+      },
+      {
+        "problem": "A random variable takes values 0, 1, 2 with probabilities 0.2, 0.5, 0.3. Compute its expectation.",
+        "steps": [
+          {
+            "do": "Write expectation",
+            "result": "$E[X]=\\sum xP(X=x)$",
+            "why": "weighted average"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$0\\cdot0.2+1\\cdot0.5+2\\cdot0.3$",
+            "why": "multiply each value by its probability"
+          },
+          {
+            "do": "Compute products",
+            "result": "$0+0.5+0.6$",
+            "why": "term by term"
+          },
+          {
+            "do": "Add",
+            "result": "$1.1$",
+            "why": "total expected value"
+          },
+          {
+            "do": "Interpret",
+            "result": "average value is 1.1 over many trials",
+            "why": "expectation need not be an observed value"
+          }
+        ],
+        "answer": "$E[X]=1.1$."
+      },
+      {
+        "problem": "A classifier is correct with probability 0.9 independently on each of 4 examples. Find the probability it gets all 4 correct and exactly 3 correct.",
+        "steps": [
+          {
+            "do": "Compute all-correct probability",
+            "result": "$0.9^4=0.6561$",
+            "why": "independent correct events multiply"
+          },
+          {
+            "do": "Choose the incorrect position for exactly 3 correct",
+            "result": "$\\binom41=4$",
+            "why": "one of four examples is wrong"
+          },
+          {
+            "do": "Write one pattern probability",
+            "result": "$0.9^3\\cdot0.1$",
+            "why": "three correct and one wrong"
+          },
+          {
+            "do": "Multiply by patterns",
+            "result": "$4\\cdot0.9^3\\cdot0.1$",
+            "why": "disjoint positions"
+          },
+          {
+            "do": "Compute",
+            "result": "$4\\cdot0.729\\cdot0.1=0.2916$",
+            "why": "decimal arithmetic"
+          }
+        ],
+        "answer": "All 4 correct has probability $0.6561$; exactly 3 correct has probability $0.2916$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Model accuracy as probability",
+        "background": "Accuracy estimates the probability a model is correct on a random example from a distribution.",
+        "numbers": "If 460 of 500 validation examples are correct, estimated accuracy is $460/500=0.92$."
+      },
+      {
+        "title": "Mini-batch sampling",
+        "background": "Training samples batches from data. Hypergeometric or binomial counts describe label mixes.",
+        "numbers": "With class rate $0.2$, expected positives in a batch of 64 are $64\\cdot0.2=12.8$."
+      },
+      {
+        "title": "Dropout masks",
+        "background": "Dropout randomly keeps or removes activations. A Bernoulli variable models each unit.",
+        "numbers": "With keep probability $0.8$ across 100 units, expected kept units are $80$."
+      },
+      {
+        "title": "Randomized hashing",
+        "background": "Hash functions are often analyzed probabilistically. Collision chance is a discrete event.",
+        "numbers": "Two independent keys into 1000 buckets collide with probability $1/1000=0.001$."
+      },
+      {
+        "title": "A/B testing",
+        "background": "Experiment outcomes are random variables. Counts become estimated probabilities.",
+        "numbers": "If 52 conversions occur among 1000 users, conversion estimate is $0.052$."
+      },
+      {
+        "title": "Language-model tokens",
+        "background": "A next-token distribution assigns probabilities to a finite vocabulary slice.",
+        "numbers": "If token probabilities are $0.50,0.30,0.20$, their sum is $1.00$ and the top-token chance is $0.50$."
+      }
+    ],
+    "applicationsClose": "Discrete probability is the bridge from counting possibilities to quantifying uncertainty in data, algorithms, and models.",
+    "takeaways": [
+      "A discrete probability space assigns nonnegative probabilities summing to 1.",
+      "For equally likely outcomes, probability is favorable count divided by total count.",
+      "Complements and inclusion–exclusion work for probabilities just as they do for counts.",
+      "Expectation is a probability-weighted average."
+    ],
     "prereqs": [
       "math-14-18"
     ]
@@ -405,19 +5138,262 @@
   B({
     "id": "math-14-20",
     "title": "Posets and lattices",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: posets and lattices.",
+    "tagline": "Posets organize objects by partial order, and lattices guarantee shared upper and lower summaries.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Discrete probability</i>"
+        "sets",
+        "relations",
+        "functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Modular arithmetic</i>"
+        "Modular arithmetic",
+        "Boolean algebra",
+        "Counting, complexity, and Big-O"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "Hasse diagrams",
+        "subsets",
+        "divisibility",
+        "Boolean algebra"
       ]
     },
+    "motivation": "<p>You already know some comparisons are incomplete. Two feature sets may not contain each other; two tasks may not depend on each other. A total line is too strict.</p><p>A <b>partially ordered set</b> lets some pairs be comparable and others remain independent. A lattice adds reliable meet and join operations, which is why these ideas appear in logic, permissions, and dataflow.</p>",
+    "definition": "<p>A <b>poset</b> is a set $P$ with a relation $\\le$ that is reflexive, antisymmetric, and transitive. Reflexive means $a\\le a$; antisymmetric means $a\\le b$ and $b\\le a$ imply $a=b$; transitive means $a\\le b$ and $b\\le c$ imply $a\\le c$.</p><p>A <b>lattice</b> is a poset where every pair $a,b$ has a greatest lower bound $a\\wedge b$ called the meet, and a least upper bound $a\\vee b$ called the join. For subsets ordered by inclusion, meet is intersection and join is union.</p><p><b>Assumptions that matter:</b> the order relation must be stated; comparable does not mean equal; not every poset is a lattice; and meet/join are defined by the order, not by ordinary arithmetic unless the order says so.</p>",
+    "worked": {
+      "problem": "In the subset poset of $\\{1,2,3\\}$ ordered by inclusion, find the meet and join of $A=\\{1,2\\}$ and $B=\\{2,3\\}$.",
+      "skills": [
+        "subset order",
+        "meet",
+        "join"
+      ],
+      "strategy": "For subset inclusion, lower means contained in both and upper means containing both.",
+      "steps": [
+        {
+          "do": "State the order",
+          "result": "$X\\le Y$ means $X\\subseteq Y$",
+          "why": "the poset uses inclusion"
+        },
+        {
+          "do": "Find common lower elements",
+          "result": "subsets contained in both $A$ and $B$",
+          "why": "lower bounds must be inside each set"
+        },
+        {
+          "do": "Compute the meet",
+          "result": "$A\\cap B=\\{2\\}$",
+          "why": "intersection is the greatest common subset"
+        },
+        {
+          "do": "Find common upper elements",
+          "result": "sets containing both $A$ and $B$",
+          "why": "upper bounds must include all elements in either set"
+        },
+        {
+          "do": "Compute the join",
+          "result": "$A\\cup B=\\{1,2,3\\}$",
+          "why": "union is the least common superset"
+        }
+      ],
+      "verify": "$\\{2\\}$ is contained in both sets, and $\\{1,2,3\\}$ contains both while no smaller set can contain all elements from both.",
+      "answer": "The meet is $\\{2\\}$ and the join is $\\{1,2,3\\}$.",
+      "connects": "A lattice gives a clean way to combine partial information from below and above."
+    },
+    "practice": [
+      {
+        "problem": "Check whether divisibility on $\\{1,2,3,6\\}$ is a partial order.",
+        "steps": [
+          {
+            "do": "Check reflexive",
+            "result": "$a\\mid a$ for each listed $a$",
+            "why": "every number divides itself"
+          },
+          {
+            "do": "Check antisymmetric",
+            "result": "if $a\\mid b$ and $b\\mid a$, then $a=b$",
+            "why": "positive divisibility has no two-way relation except equality"
+          },
+          {
+            "do": "Check transitive",
+            "result": "if $a\\mid b$ and $b\\mid c$, then $a\\mid c$",
+            "why": "divisibility composes"
+          },
+          {
+            "do": "Apply to the set",
+            "result": "all three properties hold",
+            "why": "the listed set is positive integers"
+          },
+          {
+            "do": "Conclude",
+            "result": "divisibility is a partial order",
+            "why": "some pairs like 2 and 3 are incomparable"
+          }
+        ],
+        "answer": "Yes, divisibility is a partial order on this set."
+      },
+      {
+        "problem": "In subsets of $\\{a,b\\}$, find the meet and join of $\\{a\\}$ and $\\{b\\}$.",
+        "steps": [
+          {
+            "do": "Use subset order",
+            "result": "meet is intersection",
+            "why": "lower means contained in both"
+          },
+          {
+            "do": "Compute intersection",
+            "result": "$\\{a\\}\\cap\\{b\\}=\\varnothing$",
+            "why": "they share no elements"
+          },
+          {
+            "do": "Use subset order",
+            "result": "join is union",
+            "why": "upper means contains both"
+          },
+          {
+            "do": "Compute union",
+            "result": "$\\{a\\}\\cup\\{b\\}=\\{a,b\\}$",
+            "why": "include both elements"
+          },
+          {
+            "do": "State results",
+            "result": "meet $\\varnothing$, join $\\{a,b\\}$",
+            "why": "subset lattice result"
+          }
+        ],
+        "answer": "Meet is $\\varnothing$ and join is $\\{a,b\\}$."
+      },
+      {
+        "problem": "For divisibility on $\\{1,2,3,6\\}$, find meet and join of 2 and 3.",
+        "steps": [
+          {
+            "do": "Interpret meet",
+            "result": "greatest common divisor",
+            "why": "lower bounds divide both numbers"
+          },
+          {
+            "do": "Compute common divisors of 2 and 3",
+            "result": "$\\{1\\}$",
+            "why": "only 1 divides both"
+          },
+          {
+            "do": "State meet",
+            "result": "$1$",
+            "why": "greatest common divisor is 1"
+          },
+          {
+            "do": "Interpret join",
+            "result": "least common multiple inside the set",
+            "why": "upper bounds are multiples of both"
+          },
+          {
+            "do": "Compute join",
+            "result": "$6$",
+            "why": "6 is the least listed multiple of both"
+          }
+        ],
+        "answer": "Meet is $1$ and join is $6$."
+      },
+      {
+        "problem": "In the dependency order where $a\\le b$ means task $a$ must finish before task $b$, explain why two independent tasks may be incomparable.",
+        "steps": [
+          {
+            "do": "State comparability",
+            "result": "tasks are comparable if one must precede the other",
+            "why": "order gives a dependency direction"
+          },
+          {
+            "do": "Consider independent tasks",
+            "result": "neither depends on the other",
+            "why": "no required order exists"
+          },
+          {
+            "do": "Check $a\\le b$",
+            "result": "false",
+            "why": "task $a$ need not finish before $b$"
+          },
+          {
+            "do": "Check $b\\le a$",
+            "result": "false",
+            "why": "task $b$ need not finish before $a$"
+          },
+          {
+            "do": "Conclude",
+            "result": "the tasks are incomparable",
+            "why": "partial orders allow this"
+          }
+        ],
+        "answer": "Independent tasks are incomparable because neither must precede the other."
+      },
+      {
+        "problem": "Feature sets $A=\\{x_1,x_3\\}$ and $B=\\{x_2,x_3,x_4\\}$ are ordered by inclusion. Find meet and join sizes.",
+        "steps": [
+          {
+            "do": "Compute meet",
+            "result": "$A\\cap B=\\{x_3\\}$",
+            "why": "shared features only"
+          },
+          {
+            "do": "Find meet size",
+            "result": "$1$",
+            "why": "one shared feature"
+          },
+          {
+            "do": "Compute join",
+            "result": "$A\\cup B=\\{x_1,x_2,x_3,x_4\\}$",
+            "why": "features appearing in either set"
+          },
+          {
+            "do": "Find join size",
+            "result": "$4$",
+            "why": "four distinct features"
+          },
+          {
+            "do": "Interpret",
+            "result": "meet is common information and join is combined information",
+            "why": "lattice language fits feature sets"
+          }
+        ],
+        "answer": "Meet size is $1$ and join size is $4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature-set lattices",
+        "background": "Feature subsets ordered by inclusion form a lattice. Meet keeps common features; join combines candidates.",
+        "numbers": "For $A=\\{1,2,5\\}$ and $B=\\{2,3\\}$, meet size is $1$ and join size is $4$."
+      },
+      {
+        "title": "Permission systems",
+        "background": "Access rights often form partial orders. Joining permissions combines capabilities safely.",
+        "numbers": "If role A grants $\\{read,write\\}$ and role B grants $\\{read,delete\\}$, the join grants 3 distinct permissions."
+      },
+      {
+        "title": "Dataflow analysis",
+        "background": "Compilers use lattices to merge facts from different control-flow paths. Meet or join summarizes safe information.",
+        "numbers": "If path facts are variables initialized $\\{x,y\\}$ and $\\{y,z\\}$, definitely initialized variables are intersection $\\{y\\}$."
+      },
+      {
+        "title": "Divisibility lattices",
+        "background": "Divisibility uses gcd as meet and lcm as join. This gives a number-theoretic lattice on divisors of a fixed number.",
+        "numbers": "For 12 and 18, meet is $\\gcd(12,18)=6$ and join is $\\operatorname{lcm}(12,18)=36$."
+      },
+      {
+        "title": "Version constraints",
+        "background": "Package versions with dependency constraints are partially ordered. Some versions are incomparable when neither satisfies the other's constraints.",
+        "numbers": "Constraint $\\{1.0,1.1\\}$ joined with $\\{1.1,1.2\\}$ by union has 3 allowed versions."
+      },
+      {
+        "title": "Concept hierarchies",
+        "background": "Ontologies and taxonomies are often partial, not total. Least common ancestors behave like joins when they exist.",
+        "numbers": "If two labels share one parent among 20 class labels, their common abstraction can reduce two labels to one parent category."
+      }
+    ],
+    "applicationsClose": "Posets respect partial information, and lattices add dependable ways to merge or compare that information.",
+    "takeaways": [
+      "A poset relation is reflexive, antisymmetric, and transitive.",
+      "Pairs in a poset need not be comparable.",
+      "A lattice gives every pair a meet and a join.",
+      "Subset lattices use intersection as meet and union as join."
+    ],
     "prereqs": [
       "math-14-19"
     ]
@@ -426,19 +5402,267 @@
   B({
     "id": "math-14-21",
     "title": "Modular arithmetic",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: modular arithmetic.",
+    "tagline": "Modular arithmetic keeps the remainder and lets cyclic patterns become ordinary algebra.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Posets and lattices</i>"
+        "integers",
+        "division with remainder",
+        "The pigeonhole principle"
       ],
       "leadsTo": [
-        "the next lesson, <i>Boolean algebra</i>"
+        "Boolean algebra",
+        "Counting, complexity, and Big-O",
+        "Discrete probability"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "congruences",
+        "remainders",
+        "cyclic groups",
+        "hashing"
       ]
     },
+    "motivation": "<p>You already use modular arithmetic whenever a clock wraps: 10 hours after 5 o'clock is 3 o'clock, not 15. The clock kept the remainder modulo 12.</p><p>Modulo arithmetic is the mathematics of wraparound. It is essential for hashing, checksums, cryptography, periodic schedules, and many discrete proofs.</p>",
+    "definition": "<p>For integers $a,b$ and positive integer $m$, we write $a\\equiv b\\pmod m$ when $m$ divides $a-b$. Equivalently, $a$ and $b$ have the same remainder after division by $m$.</p><p>Congruences respect addition and multiplication: if $a\\equiv b\\pmod m$ and $c\\equiv d\\pmod m$, then $a+c\\equiv b+d\\pmod m$ and $ac\\equiv bd\\pmod m$. This works because the differences contain factors of $m$.</p><p><b>Assumptions that matter:</b> the modulus $m$ is positive; division is delicate because not every number has a modular inverse; and congruence classes group infinitely many integers by the same remainder.</p>",
+    "worked": {
+      "problem": "Compute $37+58\\pmod{12}$ and $37\\cdot58\\pmod{12}$.",
+      "skills": [
+        "remainders",
+        "modular addition",
+        "modular multiplication"
+      ],
+      "strategy": "Reduce each number to a remainder first, then do arithmetic with smaller numbers.",
+      "steps": [
+        {
+          "do": "Reduce 37 modulo 12",
+          "result": "$37\\equiv1\\pmod{12}$",
+          "why": "36 is divisible by 12"
+        },
+        {
+          "do": "Reduce 58 modulo 12",
+          "result": "$58\\equiv10\\pmod{12}$",
+          "why": "48 is divisible by 12"
+        },
+        {
+          "do": "Add remainders",
+          "result": "$1+10=11$",
+          "why": "addition respects congruence"
+        },
+        {
+          "do": "Multiply remainders",
+          "result": "$1\\cdot10=10$",
+          "why": "multiplication respects congruence"
+        },
+        {
+          "do": "State results",
+          "result": "$37+58\\equiv11$, $37\\cdot58\\equiv10\\pmod{12}$",
+          "why": "remainders are between 0 and 11"
+        }
+      ],
+      "verify": "Directly, $37+58=95$ and $95$ leaves remainder 11; $37\\cdot58=2146$ leaves remainder 10.",
+      "answer": "The sum is $11\\pmod{12}$ and the product is $10\\pmod{12}$.",
+      "connects": "Modulo arithmetic lets us replace large integers with their remainder classes."
+    },
+    "practice": [
+      {
+        "problem": "Find the remainder of 83 modulo 7.",
+        "steps": [
+          {
+            "do": "Find a nearby multiple",
+            "result": "$7\\cdot11=77$",
+            "why": "largest convenient multiple below 83"
+          },
+          {
+            "do": "Subtract",
+            "result": "$83-77=6$",
+            "why": "remainder after division"
+          },
+          {
+            "do": "Write congruence",
+            "result": "$83\\equiv6\\pmod7$",
+            "why": "same remainder"
+          },
+          {
+            "do": "Check range",
+            "result": "$0\\le6<7$",
+            "why": "valid remainder"
+          },
+          {
+            "do": "State answer",
+            "result": "6",
+            "why": "the remainder is 6"
+          }
+        ],
+        "answer": "The remainder is $6$."
+      },
+      {
+        "problem": "Compute $25+44\\pmod9$.",
+        "steps": [
+          {
+            "do": "Reduce 25",
+            "result": "$25\\equiv7\\pmod9$",
+            "why": "subtract 18"
+          },
+          {
+            "do": "Reduce 44",
+            "result": "$44\\equiv8\\pmod9$",
+            "why": "subtract 36"
+          },
+          {
+            "do": "Add remainders",
+            "result": "$7+8=15$",
+            "why": "modular addition"
+          },
+          {
+            "do": "Reduce 15",
+            "result": "$15\\equiv6\\pmod9$",
+            "why": "subtract 9"
+          },
+          {
+            "do": "State result",
+            "result": "$25+44\\equiv6\\pmod9$",
+            "why": "final remainder"
+          }
+        ],
+        "answer": "$25+44\\equiv6\\pmod9$."
+      },
+      {
+        "problem": "Compute $13\\cdot17\\pmod5$.",
+        "steps": [
+          {
+            "do": "Reduce 13",
+            "result": "$13\\equiv3\\pmod5$",
+            "why": "subtract 10"
+          },
+          {
+            "do": "Reduce 17",
+            "result": "$17\\equiv2\\pmod5$",
+            "why": "subtract 15"
+          },
+          {
+            "do": "Multiply remainders",
+            "result": "$3\\cdot2=6$",
+            "why": "multiplication respects congruence"
+          },
+          {
+            "do": "Reduce 6",
+            "result": "$6\\equiv1\\pmod5$",
+            "why": "subtract 5"
+          },
+          {
+            "do": "State product",
+            "result": "$13\\cdot17\\equiv1\\pmod5$",
+            "why": "final remainder"
+          }
+        ],
+        "answer": "$13\\cdot17\\equiv1\\pmod5$."
+      },
+      {
+        "problem": "Solve $3x\\equiv1\\pmod7$ by testing small residues.",
+        "steps": [
+          {
+            "do": "List residues",
+            "result": "0 through 6",
+            "why": "solutions repeat modulo 7"
+          },
+          {
+            "do": "Test $x=1$",
+            "result": "$3\\cdot1\\equiv3$",
+            "why": "not 1"
+          },
+          {
+            "do": "Test $x=2$",
+            "result": "$3\\cdot2=6\\equiv6$",
+            "why": "not 1"
+          },
+          {
+            "do": "Test $x=3$",
+            "result": "$3\\cdot3=9\\equiv2$",
+            "why": "not 1"
+          },
+          {
+            "do": "Test $x=5$",
+            "result": "$3\\cdot5=15\\equiv1$",
+            "why": "15 leaves remainder 1"
+          },
+          {
+            "do": "State solution",
+            "result": "$x\\equiv5\\pmod7$",
+            "why": "all congruent residues work"
+          }
+        ],
+        "answer": "$x\\equiv5\\pmod7$."
+      },
+      {
+        "problem": "A hash function is $h(k)=k\\bmod 10$. Find buckets for keys 314, 271, and 999, then identify any collision.",
+        "steps": [
+          {
+            "do": "Compute $314\\bmod10$",
+            "result": "4",
+            "why": "last digit gives remainder modulo 10"
+          },
+          {
+            "do": "Compute $271\\bmod10$",
+            "result": "1",
+            "why": "last digit is 1"
+          },
+          {
+            "do": "Compute $999\\bmod10$",
+            "result": "9",
+            "why": "last digit is 9"
+          },
+          {
+            "do": "Compare buckets",
+            "result": "4, 1, and 9",
+            "why": "all buckets differ"
+          },
+          {
+            "do": "State collision status",
+            "result": "no collision among these keys",
+            "why": "no two keys share a bucket"
+          }
+        ],
+        "answer": "Buckets are 4, 1, and 9; there is no collision among these keys."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Hash tables",
+        "background": "Hashing often uses remainders to assign keys to buckets. Modulo arithmetic makes bucket indices finite.",
+        "numbers": "With $h(k)=k\\bmod100$, key 12345 maps to bucket 45."
+      },
+      {
+        "title": "Checksums",
+        "background": "Simple checksums reduce sums modulo a base to catch transcription errors.",
+        "numbers": "Digits 4, 8, 2 sum to 14; modulo 10 checksum remainder is 4."
+      },
+      {
+        "title": "Clock arithmetic",
+        "background": "Scheduling systems wrap times around daily or weekly cycles.",
+        "numbers": "A job 50 hours after Monday 09:00 is Wednesday 11:00 because $9+50=59\\equiv11\\pmod{24}$ with two extra days."
+      },
+      {
+        "title": "Cryptography",
+        "background": "Many cryptographic systems use modular multiplication and inverses. The arithmetic is exact but wrapped.",
+        "numbers": "Modulo 11, $3\\cdot4=12\\equiv1$, so 4 is the inverse of 3."
+      },
+      {
+        "title": "Sharding",
+        "background": "Databases often assign records to shards by modulo. It is simple and deterministic.",
+        "numbers": "User id 987 with 16 shards goes to shard $987\\bmod16=11$."
+      },
+      {
+        "title": "Cyclic positional features",
+        "background": "Periodic features can be represented by remainders before encoding.",
+        "numbers": "Hour 27 maps to hour $27\\bmod24=3$, so it has the same daily position as 03:00."
+      }
+    ],
+    "applicationsClose": "Modular arithmetic is the disciplined version of wraparound: reduce, operate, and interpret the remainder.",
+    "takeaways": [
+      "$a\\equiv b\\pmod m$ means $m$ divides $a-b$.",
+      "Addition and multiplication preserve congruence.",
+      "Every integer belongs to exactly one residue class modulo $m$.",
+      "Division modulo $m$ requires an inverse, which may not exist."
+    ],
     "prereqs": [
       "math-14-20"
     ]
@@ -447,19 +5671,262 @@
   B({
     "id": "math-14-22",
     "title": "Boolean algebra",
-    "tier": "🟢",
-    "tagline": "One concept from Discrete math / combinatorics: boolean algebra.",
+    "tagline": "Boolean algebra turns true-or-false logic into algebraic laws for simplifying conditions.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Modular arithmetic</i>"
+        "sets",
+        "logic",
+        "Posets and lattices"
       ],
       "leadsTo": [
-        "the next lesson, <i>Counting, complexity, and Big-O</i>"
+        "Counting, complexity, and Big-O",
+        "discrete probability",
+        "Boolean circuits"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "truth tables",
+        "set operations",
+        "lattices",
+        "binary variables"
       ]
     },
+    "motivation": "<p>You already combine conditions: a filter might keep rows where age is high and country is allowed, or where a trusted flag is true. Boolean algebra is the arithmetic of those conditions.</p><p>It matters because logic grows quickly. Algebraic laws let us simplify predicates, reason about circuits, and make model rules easier to audit.</p>",
+    "definition": "<p>Boolean algebra uses values $0$ and $1$ or false and true, with operations AND ($\\land$), OR ($\\lor$), and NOT ($\\neg$). Key laws include identity, commutativity, associativity, distributivity, and complements such as $x\\land\\neg x=0$ and $x\\lor\\neg x=1$.</p><p>De Morgan's laws say $\\neg(x\\land y)=\\neg x\\lor\\neg y$ and $\\neg(x\\lor y)=\\neg x\\land\\neg y$. They follow from checking the four possible truth assignments for $x,y$; in every row, both sides match.</p><p><b>Assumptions that matter:</b> variables are Boolean unless stated otherwise; AND binds like intersection, OR like union, and NOT like complement; and simplification must preserve the truth value for every assignment.</p>",
+    "worked": {
+      "problem": "Simplify $x\\land(y\\lor\\neg y)$.",
+      "skills": [
+        "Boolean laws",
+        "complements",
+        "identity law"
+      ],
+      "strategy": "Use the complement law inside the parentheses, then the identity law for AND.",
+      "steps": [
+        {
+          "do": "Identify the inner expression",
+          "result": "$y\\lor\\neg y$",
+          "why": "a variable or its negation is always true"
+        },
+        {
+          "do": "Apply the complement law",
+          "result": "$y\\lor\\neg y=1$",
+          "why": "one of $y$ or not $y$ must hold"
+        },
+        {
+          "do": "Substitute",
+          "result": "$x\\land1$",
+          "why": "replace the inner expression"
+        },
+        {
+          "do": "Apply the identity law",
+          "result": "$x\\land1=x$",
+          "why": "AND with true leaves a value unchanged"
+        },
+        {
+          "do": "State the simplified form",
+          "result": "$x$",
+          "why": "the condition depends only on $x$"
+        }
+      ],
+      "verify": "If $x=0$, the original is false; if $x=1$, the original is true, no matter what $y$ is.",
+      "answer": "The expression simplifies to $x$.",
+      "connects": "Boolean algebra removes irrelevant logical clutter while preserving every truth assignment."
+    },
+    "practice": [
+      {
+        "problem": "Simplify $x\\lor(x\\land y)$.",
+        "steps": [
+          {
+            "do": "Factor using distributivity",
+            "result": "$x\\lor(x\\land y)=(x\\land1)\\lor(x\\land y)$",
+            "why": "write $x$ as $x\\land1$"
+          },
+          {
+            "do": "Factor out $x$",
+            "result": "$x\\land(1\\lor y)$",
+            "why": "reverse distributivity"
+          },
+          {
+            "do": "Simplify inside",
+            "result": "$1\\lor y=1$",
+            "why": "true OR anything is true"
+          },
+          {
+            "do": "Apply identity",
+            "result": "$x\\land1=x$",
+            "why": "AND with true leaves $x$"
+          },
+          {
+            "do": "Name the law",
+            "result": "absorption",
+            "why": "the larger condition absorbs the smaller one"
+          }
+        ],
+        "answer": "$x\\lor(x\\land y)=x$."
+      },
+      {
+        "problem": "Use De Morgan's law to rewrite $\\neg(a\\lor b)$.",
+        "steps": [
+          {
+            "do": "Identify the form",
+            "result": "$\\neg(a\\lor b)$",
+            "why": "NOT of an OR"
+          },
+          {
+            "do": "Apply De Morgan",
+            "result": "$\\neg a\\land\\neg b$",
+            "why": "to make an OR false, both parts must be false"
+          },
+          {
+            "do": "Check row $a=0,b=0$",
+            "result": "both sides are true",
+            "why": "only row where neither is true"
+          },
+          {
+            "do": "Check a row with $a=1$",
+            "result": "both sides are false",
+            "why": "the OR is true, so its negation is false"
+          },
+          {
+            "do": "State rewrite",
+            "result": "$\\neg(a\\lor b)=\\neg a\\land\\neg b$",
+            "why": "law confirmed"
+          }
+        ],
+        "answer": "$\\neg(a\\lor b)=\\neg a\\land\\neg b$."
+      },
+      {
+        "problem": "Simplify $(x\\land y)\\lor(x\\land\\neg y)$.",
+        "steps": [
+          {
+            "do": "Factor out $x$",
+            "result": "$x\\land(y\\lor\\neg y)$",
+            "why": "distributivity"
+          },
+          {
+            "do": "Apply complement",
+            "result": "$y\\lor\\neg y=1$",
+            "why": "one of the pair is true"
+          },
+          {
+            "do": "Substitute",
+            "result": "$x\\land1$",
+            "why": "replace the parenthesis"
+          },
+          {
+            "do": "Apply identity",
+            "result": "$x$",
+            "why": "AND with true"
+          },
+          {
+            "do": "Interpret",
+            "result": "whether $y$ is true or false, $x$ is required",
+            "why": "the condition depends only on $x$"
+          }
+        ],
+        "answer": "The expression simplifies to $x$."
+      },
+      {
+        "problem": "Make a truth table for $x\\oplus y$ defined as $(x\\land\\neg y)\\lor(\\neg x\\land y)$.",
+        "steps": [
+          {
+            "do": "Evaluate $x=0,y=0$",
+            "result": "0",
+            "why": "neither exactly-one case holds"
+          },
+          {
+            "do": "Evaluate $x=0,y=1$",
+            "result": "1",
+            "why": "the second term holds"
+          },
+          {
+            "do": "Evaluate $x=1,y=0$",
+            "result": "1",
+            "why": "the first term holds"
+          },
+          {
+            "do": "Evaluate $x=1,y=1$",
+            "result": "0",
+            "why": "both exactly-one terms fail"
+          },
+          {
+            "do": "State pattern",
+            "result": "true exactly when inputs differ",
+            "why": "this is XOR"
+          }
+        ],
+        "answer": "The truth values are 0, 1, 1, 0 for 00, 01, 10, 11."
+      },
+      {
+        "problem": "A rule triggers when $(A\\lor B)\\land\\neg B$ is true. Simplify and interpret it.",
+        "steps": [
+          {
+            "do": "Distribute AND over OR",
+            "result": "$(A\\land\\neg B)\\lor(B\\land\\neg B)$",
+            "why": "split the condition"
+          },
+          {
+            "do": "Apply complement to second term",
+            "result": "$B\\land\\neg B=0$",
+            "why": "cannot both hold"
+          },
+          {
+            "do": "Substitute",
+            "result": "$(A\\land\\neg B)\\lor0$",
+            "why": "remove impossible case"
+          },
+          {
+            "do": "Apply identity for OR",
+            "result": "$A\\land\\neg B$",
+            "why": "OR with false changes nothing"
+          },
+          {
+            "do": "Interpret",
+            "result": "A is true and B is false",
+            "why": "the trigger is stricter than $A\\lor B$"
+          }
+        ],
+        "answer": "The rule simplifies to $A\\land\\neg B$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature filters",
+        "background": "Data pipelines combine Boolean predicates to include or exclude rows. Simplification reduces redundant checks.",
+        "numbers": "Rule $age\\_ok\\land(country\\_ok\\lor\\neg country\\_ok)$ simplifies to $age\\_ok$."
+      },
+      {
+        "title": "Decision trees",
+        "background": "Each path in a decision tree is a conjunction of tests. Boolean algebra can detect impossible or redundant paths.",
+        "numbers": "A path containing $x>5$ and not $x>5$ has form $p\\land\\neg p=0$, so it covers 0 rows."
+      },
+      {
+        "title": "Circuit design",
+        "background": "Digital circuits implement Boolean expressions. Fewer gates mean lower cost and delay.",
+        "numbers": "Expression $(x\\land y)\\lor(x\\land\\neg y)$ uses two ANDs and one OR before simplifying to just wire $x$."
+      },
+      {
+        "title": "Search query logic",
+        "background": "Search systems parse AND, OR, and NOT. De Morgan's laws help rewrite excluded conditions.",
+        "numbers": "NOT(red OR blue) equals NOT red AND NOT blue, so two exclusions replace one grouped exclusion."
+      },
+      {
+        "title": "Access control",
+        "background": "Permissions are Boolean combinations of roles and resource flags. Simplification improves audits.",
+        "numbers": "$(admin\\lor owner)\\land\\neg admin$ simplifies to $owner\\land\\neg admin$."
+      },
+      {
+        "title": "Binary indicators in ML",
+        "background": "Boolean features often become 0/1 variables. Logical relations can remove duplicate features.",
+        "numbers": "If feature $z=x\\land1$, then $z=x$, so storing both adds no information."
+      }
+    ],
+    "applicationsClose": "Boolean algebra is logic with a calculator: every simplification is valid only if it preserves all possible truth assignments.",
+    "takeaways": [
+      "Boolean values use AND, OR, and NOT as algebraic operations.",
+      "Complement laws give $x\\land\\neg x=0$ and $x\\lor\\neg x=1$.",
+      "De Morgan's laws move NOT across AND and OR by switching the operation.",
+      "Absorption and distributivity simplify redundant rules and circuits."
+    ],
     "prereqs": [
       "math-14-21"
     ]
@@ -468,19 +5935,267 @@
   B({
     "id": "math-14-23",
     "title": "Counting, complexity, and Big-O",
-    "tier": "🟢",
-    "tagline": "Capstone — how discrete math / combinatorics shows up directly in CS & ML.",
+    "tagline": "Big-O uses counting to describe how work grows, which is the practical heartbeat of scalable ML systems.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Boolean algebra</i>"
+        "Counting basics",
+        "Recurrence relations",
+        "Combinatorial identities"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "algorithm analysis",
+        "scalable ML",
+        "randomized methods"
       ],
       "usedWith": [
-        "the other concepts in Discrete math / combinatorics and its capstone"
+        "summations",
+        "recurrences",
+        "discrete probability",
+        "graphs"
       ]
     },
+    "motivation": "<p>You already feel the difference between checking 10 examples and checking 10 million. The exact seconds depend on hardware, but the growth pattern often decides whether an idea can run at all.</p><p><b>Big-O</b> is a language for upper-bounding growth. Counting operations, pairs, subsets, or states lets us predict when an ML pipeline will scale and when it will collapse.</p>",
+    "definition": "<p>We write $f(n)=O(g(n))$ if there are constants $C>0$ and $n_0$ such that $0\\le f(n)\\le Cg(n)$ for all $n\\ge n_0$. The function $n$ usually measures input size, such as examples, features, tokens, or graph nodes.</p><p>The definition ignores constant factors and lower-order terms because it studies eventual growth. For example, $3n^2+10n+5=O(n^2)$ since for $n\\ge1$, $3n^2+10n+5\\le18n^2$.</p><p><b>Assumptions that matter:</b> Big-O is an upper bound, not an exact runtime; the variable $n$ must be stated; constants can matter in real systems even when asymptotics hide them; and different resources such as time, memory, and communication may have different bounds.</p>",
+    "worked": {
+      "problem": "An ML validation job compares every pair of $n=5000$ embeddings once, and each cosine comparison costs $d=128$ multiply-adds. Estimate the operation count and Big-O in $n$ and $d$.",
+      "skills": [
+        "pair counting",
+        "operation counting",
+        "Big-O"
+      ],
+      "strategy": "The obstacle is the pair count — count unordered pairs, then multiply by the vector dimension.",
+      "steps": [
+        {
+          "do": "Count unordered pairs",
+          "result": "$\\binom{5000}{2}$",
+          "why": "each pair is compared once"
+        },
+        {
+          "do": "Expand the binomial coefficient",
+          "result": "$5000\\cdot4999/2$",
+          "why": "use $\\binom n2=n(n-1)/2$"
+        },
+        {
+          "do": "Compute pairs",
+          "result": "$12,497,500$",
+          "why": "half of $24,995,000$"
+        },
+        {
+          "do": "Multiply by dimension",
+          "result": "$12,497,500\\cdot128$",
+          "why": "each comparison uses 128 multiply-adds"
+        },
+        {
+          "do": "Compute operations",
+          "result": "$1,599,680,000$",
+          "why": "about 1.6 billion multiply-adds"
+        },
+        {
+          "do": "State Big-O",
+          "result": "$O(n^2d)$",
+          "why": "pair count grows quadratically and each pair costs $d$"
+        }
+      ],
+      "verify": "The pair count is roughly $5000^2/2=12.5$ million, so the billion-scale operation estimate is reasonable.",
+      "answer": "About $1.60$ billion multiply-adds; asymptotic cost $O(n^2d)$.",
+      "connects": "Counting the objects being processed is the first step toward a meaningful complexity bound."
+    },
+    "practice": [
+      {
+        "problem": "Show that $7n+20=O(n)$.",
+        "steps": [
+          {
+            "do": "Choose a threshold",
+            "result": "$n\\ge1$",
+            "why": "keep the algebra simple"
+          },
+          {
+            "do": "Bound the constant term",
+            "result": "$20\\le20n$",
+            "why": "true when $n\\ge1$"
+          },
+          {
+            "do": "Combine terms",
+            "result": "$7n+20\\le27n$",
+            "why": "replace 20 by 20n"
+          },
+          {
+            "do": "Choose the Big-O constant",
+            "result": "$C=27$",
+            "why": "matches the definition"
+          },
+          {
+            "do": "State the result",
+            "result": "$7n+20=O(n)$",
+            "why": "for all $n\\ge1$"
+          }
+        ],
+        "answer": "$7n+20=O(n)$."
+      },
+      {
+        "problem": "Count loop iterations for nested loops: for each $i=1$ to $n$, for each $j=1$ to $n$, do one operation.",
+        "steps": [
+          {
+            "do": "Count inner iterations for one $i$",
+            "result": "$n$",
+            "why": "the $j$ loop runs $n$ times"
+          },
+          {
+            "do": "Count outer iterations",
+            "result": "$n$",
+            "why": "there are $n$ choices of $i$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$n\\cdot n=n^2$",
+            "why": "independent nested loops multiply"
+          },
+          {
+            "do": "State exact count",
+            "result": "$n^2$ operations",
+            "why": "one operation per pair"
+          },
+          {
+            "do": "State Big-O",
+            "result": "$O(n^2)$",
+            "why": "exact quadratic count"
+          }
+        ],
+        "answer": "The loop does $n^2$ operations, so it is $O(n^2)$."
+      },
+      {
+        "problem": "A dataset has $n=100000$ examples and $d=50$ features. A linear scan computes one score using all features for each example. Count multiply-adds and Big-O.",
+        "steps": [
+          {
+            "do": "Count work per example",
+            "result": "$d=50$",
+            "why": "one multiply-add per feature"
+          },
+          {
+            "do": "Count examples",
+            "result": "$n=100000$",
+            "why": "scan all rows"
+          },
+          {
+            "do": "Multiply",
+            "result": "$100000\\cdot50=5,000,000$",
+            "why": "total feature operations"
+          },
+          {
+            "do": "Write symbolic cost",
+            "result": "$nd$",
+            "why": "examples times features"
+          },
+          {
+            "do": "State Big-O",
+            "result": "$O(nd)$",
+            "why": "linear in both examples and features"
+          }
+        ],
+        "answer": "The scan uses about $5,000,000$ multiply-adds and costs $O(nd)$."
+      },
+      {
+        "problem": "Compare checking all feature subsets for $d=20$ features with checking all single features.",
+        "steps": [
+          {
+            "do": "Count all subsets",
+            "result": "$2^{20}$",
+            "why": "each feature is included or excluded"
+          },
+          {
+            "do": "Compute $2^{20}$",
+            "result": "$1,048,576$",
+            "why": "standard power of two"
+          },
+          {
+            "do": "Count single features",
+            "result": "$20$",
+            "why": "choose one feature"
+          },
+          {
+            "do": "Compute ratio",
+            "result": "$1,048,576/20\\approx52,429$",
+            "why": "exhaustive subset search is far larger"
+          },
+          {
+            "do": "State growth",
+            "result": "all subsets are $O(2^d)$, singles are $O(d)$",
+            "why": "exponential versus linear"
+          }
+        ],
+        "answer": "All subsets: $1,048,576$; singles: $20$; the growth is $O(2^d)$ versus $O(d)$."
+      },
+      {
+        "problem": "A transformer attention layer forms all token-token scores for sequence length $L=1024$ with head dimension $d=64$. Count score multiply-adds and give Big-O.",
+        "steps": [
+          {
+            "do": "Count token pairs",
+            "result": "$L^2=1024^2$",
+            "why": "attention scores every query-key pair"
+          },
+          {
+            "do": "Compute pairs",
+            "result": "$1,048,576$",
+            "why": "square of 1024"
+          },
+          {
+            "do": "Multiply by head dimension",
+            "result": "$1,048,576\\cdot64$",
+            "why": "dot product length is 64"
+          },
+          {
+            "do": "Compute operations",
+            "result": "$67,108,864$",
+            "why": "about 67 million multiply-adds"
+          },
+          {
+            "do": "State Big-O",
+            "result": "$O(L^2d)$",
+            "why": "quadratic in sequence length"
+          }
+        ],
+        "answer": "About $67.1$ million multiply-adds; attention score cost is $O(L^2d)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Linear model inference",
+        "background": "A linear model scores each example by a dot product. Counting features gives the cost.",
+        "numbers": "For $n=1,000,000$ examples and $d=100$ features, inference uses $100,000,000$ multiply-adds, or $O(nd)$."
+      },
+      {
+        "title": "Pairwise retrieval evaluation",
+        "background": "Evaluating all query-document pairs can become quadratic or bilinear. Counting pairs warns before launching.",
+        "numbers": "10,000 queries against 50,000 documents gives $5\\times10^8$ scores."
+      },
+      {
+        "title": "Transformer attention",
+        "background": "Self-attention compares every token with every token. This is why long contexts are expensive.",
+        "numbers": "For $L=4096$ and $d=128$, score work is $4096^2\\cdot128=2,147,483,648$ multiply-adds."
+      },
+      {
+        "title": "Hyperparameter grid search",
+        "background": "Grid search multiplies choices across parameters. Combinatorics gives total trials.",
+        "numbers": "Learning rates 5 choices, batch sizes 4, depths 6 gives $5\\cdot4\\cdot6=120$ runs."
+      },
+      {
+        "title": "Feature subset explosion",
+        "background": "Trying every feature subset is usually infeasible because the count is exponential.",
+        "numbers": "With 30 features, subsets total $2^{30}=1,073,741,824$."
+      },
+      {
+        "title": "Mini-batch training epochs",
+        "background": "Epoch cost is often examples times per-example model cost. Big-O separates scalable pieces.",
+        "numbers": "If one example costs 20,000 operations and an epoch has 200,000 examples, the epoch costs $4\\times10^9$ operations."
+      }
+    ],
+    "applicationsClose": "Big-O is not a stopwatch, but it is a compass: counting the work tells you which ML designs can survive scale.",
+    "takeaways": [
+      "Big-O gives an eventual upper bound after constants and lower-order terms are controlled.",
+      "Always say what $n$ measures: examples, features, tokens, nodes, or something else.",
+      "Loops, pairs, subsets, and recurrences are common sources of complexity counts.",
+      "In ML, $O(nd)$, $O(n^2d)$, and $O(2^d)$ describe very different scaling realities."
+    ],
     "prereqs": [
       "math-14-22"
     ]
