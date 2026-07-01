@@ -21,7 +21,7 @@ window.ALLML_CONTENT["11.1"] = {
   mathematics: String.raw`
     <p>The core object for <b>Agent, environment, action, reward, and return</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -29,7 +29,7 @@ window.ALLML_CONTENT["11.1"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -48,7 +48,7 @@ window.ALLML_CONTENT["11.1"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -73,7 +73,7 @@ window.ALLML_CONTENT["11.2"] = {
   mathematics: String.raw`
     <p>The core object for <b>States, actions, transition probabilities, rewards, and discount</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -81,7 +81,7 @@ window.ALLML_CONTENT["11.2"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -100,7 +100,7 @@ window.ALLML_CONTENT["11.2"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -125,7 +125,7 @@ window.ALLML_CONTENT["11.3"] = {
   mathematics: String.raw`
     <p>The core object for <b>One-step reward plus discounted future value</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -133,7 +133,7 @@ window.ALLML_CONTENT["11.3"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -152,7 +152,7 @@ window.ALLML_CONTENT["11.3"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -177,7 +177,7 @@ window.ALLML_CONTENT["11.4"] = {
   mathematics: String.raw`
     <p>The core object for <b>Repeated Bellman backups with a known model</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -185,7 +185,7 @@ window.ALLML_CONTENT["11.4"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -204,7 +204,7 @@ window.ALLML_CONTENT["11.4"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -229,7 +229,7 @@ window.ALLML_CONTENT["11.5"] = {
   mathematics: String.raw`
     <p>The core object for <b>Learning values from complete sampled returns</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -237,7 +237,7 @@ window.ALLML_CONTENT["11.5"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -256,7 +256,7 @@ window.ALLML_CONTENT["11.5"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -281,7 +281,7 @@ window.ALLML_CONTENT["11.6"] = {
   mathematics: String.raw`
     <p>The core object for <b>Bootstrapping from reward plus the next estimate</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -289,7 +289,7 @@ window.ALLML_CONTENT["11.6"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -308,7 +308,7 @@ window.ALLML_CONTENT["11.6"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -333,7 +333,7 @@ window.ALLML_CONTENT["11.7"] = {
   mathematics: String.raw`
     <p>The core object for <b>Credit assignment with a decaying trace</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -341,7 +341,7 @@ window.ALLML_CONTENT["11.7"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -360,7 +360,7 @@ window.ALLML_CONTENT["11.7"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -385,7 +385,7 @@ window.ALLML_CONTENT["11.8"] = {
   mathematics: String.raw`
     <p>The core object for <b>Updating action values from the action actually taken next</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -393,7 +393,7 @@ window.ALLML_CONTENT["11.8"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -412,7 +412,7 @@ window.ALLML_CONTENT["11.8"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -437,7 +437,7 @@ window.ALLML_CONTENT["11.9"] = {
   mathematics: String.raw`
     <p>The core object for <b>Updating toward the best next action regardless of behavior</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -445,7 +445,7 @@ window.ALLML_CONTENT["11.9"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -464,7 +464,7 @@ window.ALLML_CONTENT["11.9"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -489,7 +489,7 @@ window.ALLML_CONTENT["11.10"] = {
   mathematics: String.raw`
     <p>The core object for <b>Approximating values with features instead of tables</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -497,7 +497,7 @@ window.ALLML_CONTENT["11.10"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -516,7 +516,7 @@ window.ALLML_CONTENT["11.10"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -541,7 +541,7 @@ window.ALLML_CONTENT["11.11"] = {
   mathematics: String.raw`
     <p>The core object for <b>A neural approximator trained on Bellman targets</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -549,7 +549,7 @@ window.ALLML_CONTENT["11.11"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -568,7 +568,7 @@ window.ALLML_CONTENT["11.11"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -593,7 +593,7 @@ window.ALLML_CONTENT["11.12"] = {
   mathematics: String.raw`
     <p>The core object for <b>Stabilizing or enriching the DQN target</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -601,7 +601,7 @@ window.ALLML_CONTENT["11.12"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -620,7 +620,7 @@ window.ALLML_CONTENT["11.12"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -645,7 +645,7 @@ window.ALLML_CONTENT["11.13"] = {
   mathematics: String.raw`
     <p>The core object for <b>Learning a return distribution instead of only its mean</b> is summarized by:</p>
     <div class="formula-box">$$Z(s,a)\stackrel{D}{=}R(s,a)+\gamma Z(s',a')$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -653,7 +653,7 @@ window.ALLML_CONTENT["11.13"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -672,7 +672,7 @@ window.ALLML_CONTENT["11.13"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -697,7 +697,7 @@ window.ALLML_CONTENT["11.14"] = {
   mathematics: String.raw`
     <p>The core object for <b>Directly increasing log-probability of rewarded actions</b> is summarized by:</p>
     <div class="formula-box">$$\nabla_\theta J(\theta)=\mathbb{E}[\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,A_t]$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -705,7 +705,7 @@ window.ALLML_CONTENT["11.14"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -724,7 +724,7 @@ window.ALLML_CONTENT["11.14"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -749,7 +749,7 @@ window.ALLML_CONTENT["11.15"] = {
   mathematics: String.raw`
     <p>The core object for <b>A policy actor guided by a value critic</b> is summarized by:</p>
     <div class="formula-box">$$\nabla_\theta J(\theta)=\mathbb{E}[\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,A_t]$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -757,7 +757,7 @@ window.ALLML_CONTENT["11.15"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -776,7 +776,7 @@ window.ALLML_CONTENT["11.15"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -801,7 +801,7 @@ window.ALLML_CONTENT["11.16"] = {
   mathematics: String.raw`
     <p>The core object for <b>Exponentially weighted TD residuals</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -809,7 +809,7 @@ window.ALLML_CONTENT["11.16"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -828,7 +828,7 @@ window.ALLML_CONTENT["11.16"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -853,7 +853,7 @@ window.ALLML_CONTENT["11.17"] = {
   mathematics: String.raw`
     <p>The core object for <b>Constrained or clipped policy updates</b> is summarized by:</p>
     <div class="formula-box">$$\nabla_\theta J(\theta)=\mathbb{E}[\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,A_t]$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -861,7 +861,7 @@ window.ALLML_CONTENT["11.17"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -880,7 +880,7 @@ window.ALLML_CONTENT["11.17"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -905,7 +905,7 @@ window.ALLML_CONTENT["11.18"] = {
   mathematics: String.raw`
     <p>The core object for <b>Deterministic continuous-action control</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -913,7 +913,7 @@ window.ALLML_CONTENT["11.18"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -932,7 +932,7 @@ window.ALLML_CONTENT["11.18"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -957,7 +957,7 @@ window.ALLML_CONTENT["11.19"] = {
   mathematics: String.raw`
     <p>The core object for <b>Reward plus entropy for robust exploration</b> is summarized by:</p>
     <div class="formula-box">$$\nabla_\theta J(\theta)=\mathbb{E}[\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,A_t]$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -965,7 +965,7 @@ window.ALLML_CONTENT["11.19"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -984,7 +984,7 @@ window.ALLML_CONTENT["11.19"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1009,7 +1009,7 @@ window.ALLML_CONTENT["11.20"] = {
   mathematics: String.raw`
     <p>The core object for <b>Learning or using a transition model to plan</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1017,7 +1017,7 @@ window.ALLML_CONTENT["11.20"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1036,7 +1036,7 @@ window.ALLML_CONTENT["11.20"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1061,7 +1061,7 @@ window.ALLML_CONTENT["11.21"] = {
   mathematics: String.raw`
     <p>The core object for <b>Balancing exploitation with information gathering</b> is summarized by:</p>
     <div class="formula-box">$$a_t=\arg\max_a\left(\hat\mu_a+c\sqrt{\frac{2\ln t}{N_a}}\right)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1069,7 +1069,7 @@ window.ALLML_CONTENT["11.21"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1088,7 +1088,7 @@ window.ALLML_CONTENT["11.21"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1113,7 +1113,7 @@ window.ALLML_CONTENT["11.22"] = {
   mathematics: String.raw`
     <p>The core object for <b>One-step decisions with uncertain arms or contexts</b> is summarized by:</p>
     <div class="formula-box">$$a_t=\arg\max_a\left(\hat\mu_a+c\sqrt{\frac{2\ln t}{N_a}}\right)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1121,7 +1121,7 @@ window.ALLML_CONTENT["11.22"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1140,7 +1140,7 @@ window.ALLML_CONTENT["11.22"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1165,7 +1165,7 @@ window.ALLML_CONTENT["11.23"] = {
   mathematics: String.raw`
     <p>The core object for <b>Temporally extended actions with their own stopping rules</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1173,7 +1173,7 @@ window.ALLML_CONTENT["11.23"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1192,7 +1192,7 @@ window.ALLML_CONTENT["11.23"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1217,7 +1217,7 @@ window.ALLML_CONTENT["11.24"] = {
   mathematics: String.raw`
     <p>The core object for <b>Belief states under partial observability</b> is summarized by:</p>
     <div class="formula-box">$$b'(s')=\eta\,O(o\mid s',a)\sum_s P(s'\mid s,a)b(s)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1225,7 +1225,7 @@ window.ALLML_CONTENT["11.24"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1244,7 +1244,7 @@ window.ALLML_CONTENT["11.24"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1269,7 +1269,7 @@ window.ALLML_CONTENT["11.25"] = {
   mathematics: String.raw`
     <p>The core object for <b>Adding potential-based guidance without changing the optimum</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1277,7 +1277,7 @@ window.ALLML_CONTENT["11.25"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1296,7 +1296,7 @@ window.ALLML_CONTENT["11.25"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1321,7 +1321,7 @@ window.ALLML_CONTENT["11.26"] = {
   mathematics: String.raw`
     <p>The core object for <b>Policies and replay indexed by goals</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1329,7 +1329,7 @@ window.ALLML_CONTENT["11.26"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1348,7 +1348,7 @@ window.ALLML_CONTENT["11.26"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1373,7 +1373,7 @@ window.ALLML_CONTENT["11.27"] = {
   mathematics: String.raw`
     <p>The core object for <b>Learning when other learners change the environment</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1381,7 +1381,7 @@ window.ALLML_CONTENT["11.27"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1400,7 +1400,7 @@ window.ALLML_CONTENT["11.27"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1425,7 +1425,7 @@ window.ALLML_CONTENT["11.28"] = {
   mathematics: String.raw`
     <p>The core object for <b>Learning from demonstrations or inferred rewards</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1433,7 +1433,7 @@ window.ALLML_CONTENT["11.28"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1452,7 +1452,7 @@ window.ALLML_CONTENT["11.28"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1477,7 +1477,7 @@ window.ALLML_CONTENT["11.29"] = {
   mathematics: String.raw`
     <p>The core object for <b>Learning from a fixed dataset without new exploration</b> is summarized by:</p>
     <div class="formula-box">$$\max_\pi J(\pi)\quad \text{subject to}\quad C(\pi)\le d$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1485,7 +1485,7 @@ window.ALLML_CONTENT["11.29"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1504,7 +1504,7 @@ window.ALLML_CONTENT["11.29"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1529,7 +1529,7 @@ window.ALLML_CONTENT["11.30"] = {
   mathematics: String.raw`
     <p>The core object for <b>Learning an update strategy across related tasks</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1537,7 +1537,7 @@ window.ALLML_CONTENT["11.30"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1556,7 +1556,7 @@ window.ALLML_CONTENT["11.30"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1581,7 +1581,7 @@ window.ALLML_CONTENT["11.31"] = {
   mathematics: String.raw`
     <p>The core object for <b>Optimizing reward subject to cost limits</b> is summarized by:</p>
     <div class="formula-box">$$\max_\pi J(\pi)\quad \text{subject to}\quad C(\pi)\le d$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1589,7 +1589,7 @@ window.ALLML_CONTENT["11.31"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1608,7 +1608,7 @@ window.ALLML_CONTENT["11.31"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1633,7 +1633,7 @@ window.ALLML_CONTENT["11.32"] = {
   mathematics: String.raw`
     <p>The core object for <b>Training in simulation while surviving real mismatch</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1641,7 +1641,7 @@ window.ALLML_CONTENT["11.32"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1660,7 +1660,7 @@ window.ALLML_CONTENT["11.32"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1685,7 +1685,7 @@ window.ALLML_CONTENT["11.33"] = {
   mathematics: String.raw`
     <p>The core object for <b>Conditioning actions on desired return and history</b> is summarized by:</p>
     <div class="formula-box">$$p(a_t\mid R_t,s_1,a_1,\ldots,s_t)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1693,7 +1693,7 @@ window.ALLML_CONTENT["11.33"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1712,7 +1712,7 @@ window.ALLML_CONTENT["11.33"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1737,7 +1737,7 @@ window.ALLML_CONTENT["11.34"] = {
   mathematics: String.raw`
     <p>The core object for <b>Improving by training against evolving opponents</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1745,7 +1745,7 @@ window.ALLML_CONTENT["11.34"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1764,7 +1764,7 @@ window.ALLML_CONTENT["11.34"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
@@ -1789,7 +1789,7 @@ window.ALLML_CONTENT["11.35"] = {
   mathematics: String.raw`
     <p>The core object for <b>Search guided by learned value, policy, and dynamics</b> is summarized by:</p>
     <div class="formula-box">$$V^\pi(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\bigl(R(s,a,s')+\gamma V^\pi(s')\bigr)$$</div>
-    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s\prime\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
+    <p>Here $s$ is a state, $a$ is an action, $\pi(a\mid s)$ is the policy probability, $P(s'\mid s,a)$ is a transition probability, $R$ is reward, $\gamma$ is the discount with $0\le\gamma\lt 1$, $V$ is a state value, $Q$ is an action value, and $A$ is an advantage. In a table with $|S|$ states and $|A|$ actions, $V$ has shape $|S|$ and $Q$ has shape $|S|\times |A|$.</p>
     <p><b>Discounted consequence.</b> With rewards $[1,0,2]$ and $\gamma=0.9$, the three-step return is:</p>
     <ol class="work">
       <li>$G=1+0.9\cdot0+0.9^2\cdot2=1+0+1.620=2.620$</li>
@@ -1797,7 +1797,7 @@ window.ALLML_CONTENT["11.35"] = {
     <p>The delayed reward still matters, but discounting makes the reward two steps away count as $1.620$ instead of $2.000$, which is why RL can prefer durable plans without pretending the future is free.</p>
     <p><b>One-step target.</b> If the observed reward is $1$, the next estimate is $0.8$, and $\gamma=0.9$, the bootstrap target is:</p>
     <ol class="work">
-      <li>$y=r+\gamma V(s\prime)=1+0.9\cdot0.8=1.720$</li>
+      <li>$y=r+\gamma V(s')=1+0.9\cdot0.8=1.720$</li>
       <li>with $Q_{old}=0.4$ and $\alpha=0.5$: $Q_{new}=0.4+0.5(1.720-0.4)=1.060$</li>
     </ol>
     <p>The update moves halfway toward the target, so the estimate improves without letting one noisy transition overwrite everything the table already knew.</p>
@@ -1816,7 +1816,7 @@ window.ALLML_CONTENT["11.35"] = {
   pitfalls: String.raw`
     <ul>
       <li><b>Confusing reward with return.</b> The term $G$ includes discounted future rewards; optimizing only immediate $r$ changes the objective.</li>
-      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s\prime)$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
+      <li><b>Bootstrapping from a moving target.</b> The target $r+\gamma V(s')$ uses the learner's own estimate, so large steps can amplify error instead of correcting it.</li>
       <li><b>Ignoring policy support.</b> Off-policy or offline estimates become unreliable when the action being evaluated was rarely or never sampled.</li>
       <li><b>Letting notation hide shapes.</b> A scalar value update and a $|S|\times |A|$ action-value update are different objects; mixing them silently corrupts the backup.</li>
     </ul>`
