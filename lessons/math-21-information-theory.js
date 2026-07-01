@@ -9,37 +9,526 @@
   B({
     "id": "math-21-01",
     "title": "Information and surprise",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: information and surprise.",
+    "tagline": "Information measures how startled you should be when an outcome arrives.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "probability",
+        "logarithmic functions",
+        "random variables"
       ],
       "leadsTo": [
-        "the next lesson, <i>Entropy</i>"
+        "Entropy",
+        "KL divergence",
+        "Cross-entropy"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "logarithms",
+        "expected value",
+        "probability distributions"
       ]
-    }
+    },
+    "motivation": "<p>You already know that some news is more surprising than other news. A fair coin landing heads is ordinary; a model assigning only probability $0.01$ to the true class and then seeing it happen feels like a bigger lesson.</p><p><b>Information</b> gives that feeling a number. It rewards rare events with more bits and common events with fewer bits, using a logarithm so independent surprises add instead of multiply.</p>",
+    "definition": "<p>The self-information of an event $A$ with probability $p(A)$ is $I(A)=-\\log_2 p(A)=\\log_2(1/p(A))$ bits. Here $p(A)$ is between $0$ and $1$, and a bit is the information unit tied to base $2$ logarithms.</p><p>The minus sign matters because $\\log_2 p(A)$ is nonpositive for probabilities at most $1$. If two independent events have probabilities $p$ and $q$, their joint probability is $pq$, and $-\\log_2(pq)=-\\log_2 p-\\log_2 q$, so independent information adds.</p><p><b>Assumptions that matter:</b> the event probability must be positive; base $2$ gives bits, natural logs give nats; and the additivity statement uses independence.</p>",
+    "worked": {
+      "problem": "A classifier gives the true label probability $0.125$. How many bits of surprise is the correct label?",
+      "skills": [
+        "probability",
+        "base-2 logs",
+        "self-information"
+      ],
+      "strategy": "Convert the probability to a reciprocal power of $2$, then read the exponent.",
+      "steps": [
+        {
+          "do": "Write the formula",
+          "result": "$I=-\\log_2(0.125)$",
+          "why": "self-information is negative log probability"
+        },
+        {
+          "do": "Rewrite the probability",
+          "result": "$0.125=1/8$",
+          "why": "one eighth is easier to read in base 2"
+        },
+        {
+          "do": "Rewrite as a power",
+          "result": "$1/8=2^{-3}$",
+          "why": "base-2 logs read exponents"
+        },
+        {
+          "do": "Take the log",
+          "result": "$\\log_2(2^{-3})=-3$",
+          "why": "the logarithm returns the exponent"
+        },
+        {
+          "do": "Apply the minus sign",
+          "result": "$I=3$ bits",
+          "why": "surprise is nonnegative"
+        }
+      ],
+      "verify": "Probability $1/8$ means one success among eight equally likely choices, which takes three yes-or-no bits to identify.",
+      "answer": "$3$ bits of surprise.",
+      "connects": "Information is the log-scaled surprise of one outcome."
+    },
+    "practice": [
+      {
+        "problem": "Compute the information in bits of an event with probability $1/2$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$I=-\\log_2(1/2)$",
+            "why": "use self-information"
+          },
+          {
+            "do": "Rewrite the probability",
+            "result": "$1/2=2^{-1}$",
+            "why": "base 2 makes the log direct"
+          },
+          {
+            "do": "Take the log",
+            "result": "$\\log_2(2^{-1})=-1$",
+            "why": "the exponent is returned"
+          },
+          {
+            "do": "Negate",
+            "result": "$I=1$",
+            "why": "negative log probability is positive"
+          },
+          {
+            "do": "Attach units",
+            "result": "$1$ bit",
+            "why": "base 2 measures bits"
+          }
+        ],
+        "answer": "$1$ bit."
+      },
+      {
+        "problem": "Compute the information in bits of an event with probability $1/16$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$I=-\\log_2(1/16)$",
+            "why": "self-information uses negative log"
+          },
+          {
+            "do": "Rewrite the probability",
+            "result": "$1/16=2^{-4}$",
+            "why": "$16$ is $2^4$"
+          },
+          {
+            "do": "Take the log",
+            "result": "$\\log_2(2^{-4})=-4$",
+            "why": "logs read exponents"
+          },
+          {
+            "do": "Negate",
+            "result": "$I=4$",
+            "why": "surprise cannot be negative"
+          },
+          {
+            "do": "Interpret",
+            "result": "four yes-or-no answers",
+            "why": "$2^4=16$ equally likely possibilities"
+          }
+        ],
+        "answer": "$4$ bits."
+      },
+      {
+        "problem": "An event has probability $0.2$. Approximate its information using $\\log_2 5\\approx2.322$.",
+        "steps": [
+          {
+            "do": "Rewrite the probability",
+            "result": "$0.2=1/5$",
+            "why": "reciprocal form is convenient"
+          },
+          {
+            "do": "Write information",
+            "result": "$I=\\log_2 5$",
+            "why": "$-\\log_2(1/5)=\\log_2 5$"
+          },
+          {
+            "do": "Substitute the given value",
+            "result": "$I\\approx2.322$",
+            "why": "use the supplied approximation"
+          },
+          {
+            "do": "Compare to two bits",
+            "result": "$2.322>2$",
+            "why": "probability $0.2$ is rarer than $1/4$"
+          },
+          {
+            "do": "Attach units",
+            "result": "$2.322$ bits",
+            "why": "base 2 logs measure bits"
+          }
+        ],
+        "answer": "Approximately $2.322$ bits."
+      },
+      {
+        "problem": "Two independent events have probabilities $1/4$ and $1/8$. Compute the information of seeing both.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$(1/4)(1/8)=1/32$",
+            "why": "independent joint probabilities multiply"
+          },
+          {
+            "do": "Write the information",
+            "result": "$I=-\\log_2(1/32)$",
+            "why": "the joint event is the outcome"
+          },
+          {
+            "do": "Rewrite the probability",
+            "result": "$1/32=2^{-5}$",
+            "why": "$32=2^5$"
+          },
+          {
+            "do": "Take and negate the log",
+            "result": "$I=5$ bits",
+            "why": "$-\\log_2(2^{-5})=5$"
+          },
+          {
+            "do": "Check by adding",
+            "result": "$2+3=5$",
+            "why": "independent surprises add"
+          }
+        ],
+        "answer": "$5$ bits."
+      },
+      {
+        "problem": "A model assigns probabilities $0.8$, $0.1$, and $0.1$ to classes, and the second class occurs. Approximate the surprise using $\\log_2 10\\approx3.322$.",
+        "steps": [
+          {
+            "do": "Identify the true-class probability",
+            "result": "$p=0.1$",
+            "why": "surprise depends on the outcome that occurred"
+          },
+          {
+            "do": "Rewrite as reciprocal",
+            "result": "$0.1=1/10$",
+            "why": "negative log becomes log of 10"
+          },
+          {
+            "do": "Compute information",
+            "result": "$I=\\log_2 10$",
+            "why": "$-\\log_2(1/10)=\\log_2 10$"
+          },
+          {
+            "do": "Substitute the approximation",
+            "result": "$I\\approx3.322$ bits",
+            "why": "use the given value"
+          },
+          {
+            "do": "Interpret",
+            "result": "larger than a fair coin flip",
+            "why": "$3.322>1$"
+          }
+        ],
+        "answer": "The observed class carries about $3.322$ bits of surprise."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Binary codes",
+        "background": "Information theory grew from communication engineering, where engineers wanted to count how many yes-or-no choices identify a message.",
+        "numbers": "Eight equally likely symbols each have $-\\log_2(1/8)=3$ bits, so fixed-length codes need $3$ bits per symbol."
+      },
+      {
+        "title": "Classification confidence",
+        "background": "ML classifiers output probabilities; the true label's surprise shows how costly a miss was.",
+        "numbers": "True-class probability $0.9$ gives $-\\log_2 0.9\\approx0.152$ bits, whi\\le $0.1$ gives $3.322$ bits."
+      },
+      {
+        "title": "Password search",
+        "background": "Security often counts uncertainty in bits because attackers eliminate possibilities by binary choices.",
+        "numbers": "A uniformly random choice among $2^{20}$ strings has $20$ bits of surprise for the exact password."
+      },
+      {
+        "title": "Compression intuition",
+        "background": "Compression assigns shorter codes to common messages and longer codes to rare messages.",
+        "numbers": "A symbol with probability $1/4$ suggests about $2$ bits; probability $1/64$ suggests $6$ bits."
+      },
+      {
+        "title": "Anomaly detection",
+        "background": "Rare observations can be flagged by high information content before more detailed modeling begins.",
+        "numbers": "An event with estimated probability $0.005=1/200$ has $\\log_2 200\\approx7.64$ bits."
+      },
+      {
+        "title": "Decision trees",
+        "background": "A split asks a question and reduces uncertainty; bits are the natural bookkeeping unit.",
+        "numbers": "A yes-or-no split with outcomes $0.5$ and $0.5$ gives $1$ bit for either branch."
+      }
+    ],
+    "applicationsClose": "Surprise, code length, confidence, security, and anomaly scores all use the same negative-log scale.",
+    "takeaways": [
+      "Self-information is $-\\log_2 p$ bits.",
+      "Rarer events carry more information.",
+      "Independent surprises add because logs turn products into sums.",
+      "The base of the logarithm chooses the unit."
+    ]
   });
 
   B({
     "id": "math-21-02",
     "title": "Entropy",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: entropy.",
+    "tagline": "Entropy is the average surprise you expect before the outcome is revealed.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Information and surprise</i>"
+        "Information and surprise",
+        "expected value",
+        "discrete probability distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Joint entropy</i>"
+        "Joint entropy",
+        "Conditional entropy",
+        "Cross-entropy"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "expected value",
+        "logarithms",
+        "probability mass functions"
       ]
     },
+    "motivation": "<p>One surprising event is useful to measure, but a random variable asks a broader question: how much surprise should you expect on average? A fair coin feels more uncertain than a coin that lands heads $99$ percent of the time.</p><p><b>Entropy</b> turns that intuition into an expected value. It is the average number of bits needed to learn, describe, or encode the outcome when the probabilities are known.</p>",
+    "definition": "<p>For a discrete random variab\\le $X$ with outcomes $x$ and probabilities $p(x)$, entropy is $H(X)=-\\sum_x p(x)\\log_2 p(x)$ bits. Each term weights an outcome's surprise by how often that outcome occurs.</p><p>The formula is an expected value: $H(X)=E[I(X)]$. Since $I(x)=-\\log_2 p(x)$, averaging over outcomes gives the entropy. Terms with $p(x)=0$ are treated as $0$ because impossible outcomes do not occur.</p><p><b>Assumptions that matter:</b> probabilities are nonnegative and sum to $1$; the formula here is for discrete variables; base $2$ gives bits; and entropy depends on the distribution, not on the names of the outcomes.</p>",
+    "worked": {
+      "problem": "Compute the entropy of a biased coin with $P(H)=0.75$ and $P(T)=0.25$, using $\\log_2(0.75)\\approx-0.415$ and $\\log_2(0.25)=-2$.",
+      "skills": [
+        "expected value",
+        "logs",
+        "entropy"
+      ],
+      "strategy": "Compute each weighted surprise, then add them.",
+      "steps": [
+        {
+          "do": "Write the entropy formula",
+          "result": "$H=-[0.75\\log_2(0.75)+0.25\\log_2(0.25)]$",
+          "why": "there are two outcomes"
+        },
+        {
+          "do": "Substitute the log values",
+          "result": "$H=-[0.75(-0.415)+0.25(-2)]$",
+          "why": "use the given approximations"
+        },
+        {
+          "do": "Multiply the first term",
+          "result": "$0.75(-0.415)=-0.311$",
+          "why": "weight heads by its probability"
+        },
+        {
+          "do": "Multiply the second term",
+          "result": "$0.25(-2)=-0.5$",
+          "why": "weight tails by its probability"
+        },
+        {
+          "do": "Add inside the brackets",
+          "result": "$-0.311-0.5=-0.811$",
+          "why": "expected log probability"
+        },
+        {
+          "do": "Negate",
+          "result": "$H\\approx0.811$ bits",
+          "why": "entropy is expected surprise"
+        }
+      ],
+      "verify": "A fair coin has $1$ bit, and this biased coin is more predictable, so $0.811$ bits is sensible.",
+      "answer": "$H(X)\\approx0.811$ bits.",
+      "connects": "Entropy averages self-information over the distribution."
+    },
+    "practice": [
+      {
+        "problem": "Compute the entropy of a fair coin.",
+        "steps": [
+          {
+            "do": "List probabilities",
+            "result": "$0.5,0.5$",
+            "why": "a fair coin has two equal outcomes"
+          },
+          {
+            "do": "Write entropy",
+            "result": "$H=-[0.5\\log_2 0.5+0.5\\log_2 0.5]$",
+            "why": "sum over both outcomes"
+          },
+          {
+            "do": "Evaluate the log",
+            "result": "$\\log_2 0.5=-1$",
+            "why": "$0.5=2^{-1}$"
+          },
+          {
+            "do": "Multiply and add",
+            "result": "$0.5(-1)+0.5(-1)=-1$",
+            "why": "take the expected log"
+          },
+          {
+            "do": "Negate",
+            "result": "$H=1$ bit",
+            "why": "entropy is negative expected log probability"
+          }
+        ],
+        "answer": "$1$ bit."
+      },
+      {
+        "problem": "Compute the entropy of a uniform four-symbol source.",
+        "steps": [
+          {
+            "do": "List each probability",
+            "result": "$p=1/4$",
+            "why": "four equally likely symbols"
+          },
+          {
+            "do": "Write the entropy",
+            "result": "$H=-4(1/4)\\log_2(1/4)$",
+            "why": "all four terms are equal"
+          },
+          {
+            "do": "Simplify the coefficient",
+            "result": "$H=-\\log_2(1/4)$",
+            "why": "$4(1/4)=1$"
+          },
+          {
+            "do": "Evaluate the log",
+            "result": "$\\log_2(1/4)=-2$",
+            "why": "$1/4=2^{-2}$"
+          },
+          {
+            "do": "Negate",
+            "result": "$H=2$ bits",
+            "why": "two bits identify four possibilities"
+          }
+        ],
+        "answer": "$2$ bits."
+      },
+      {
+        "problem": "Compute entropy for probabilities $0.5,0.25,0.25$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$H=-[0.5\\log_2 0.5+0.25\\log_2 0.25+0.25\\log_2 0.25]$",
+            "why": "sum weighted surprises"
+          },
+          {
+            "do": "Evaluate logs",
+            "result": "$\\log_2 0.5=-1$, $\\log_2 0.25=-2$",
+            "why": "both are powers of 2"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.5(-1)=-0.5$, $0.25(-2)=-0.5$",
+            "why": "weight by probability"
+          },
+          {
+            "do": "Add all three terms",
+            "result": "$-0.5-0.5-0.5=-1.5$",
+            "why": "there are two quarter-probability terms"
+          },
+          {
+            "do": "Negate",
+            "result": "$H=1.5$ bits",
+            "why": "entropy is nonnegative"
+          }
+        ],
+        "answer": "$1.5$ bits."
+      },
+      {
+        "problem": "A distribution is $P(A)=0.8$, $P(B)=0.2$. Approximate entropy using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-[0.8\\log_2 0.8+0.2\\log_2 0.2]$",
+            "why": "two outcomes"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$H=-[0.8(-0.322)+0.2(-2.322)]$",
+            "why": "use approximations"
+          },
+          {
+            "do": "Multiply",
+            "result": "$-0.258$ and $-0.464$",
+            "why": "compute weighted logs"
+          },
+          {
+            "do": "Add",
+            "result": "$-0.722$",
+            "why": "combine expected log terms"
+          },
+          {
+            "do": "Negate",
+            "result": "$0.722$ bits",
+            "why": "average surprise"
+          }
+        ],
+        "answer": "Approximately $0.722$ bits."
+      },
+      {
+        "problem": "A 3-class label distribution is $0.7,0.2,0.1$. Approximate entropy using logs $-0.515,-2.322,-3.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-\\sum p \\log_2 p$",
+            "why": "use the distribution"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.7(-0.515)=-0.361$",
+            "why": "weight class 1"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.2(-2.322)=-0.464$",
+            "why": "weight class 2"
+          },
+          {
+            "do": "Multiply the third term",
+            "result": "$0.1(-3.322)=-0.332$",
+            "why": "weight class 3"
+          },
+          {
+            "do": "Add and negate",
+            "result": "$H\\approx1.157$ bits",
+            "why": "$-(-0.361-0.464-0.332)=1.157$"
+          }
+        ],
+        "answer": "Approximately $1.157$ bits."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Average code length",
+        "background": "Shannon's source coding theorem connects entropy to compression: no lossless code can beat entropy on average in the long run.",
+        "numbers": "A fair four-symbol source has entropy $2$ bits, matching fixed codes like $00,01,10,11$."
+      },
+      {
+        "title": "Class imbalance",
+        "background": "Dataset labels with one dominant class contain less label uncertainty than balanced labels.",
+        "numbers": "Binary labels $0.5,0.5$ have $1$ bit; labels $0.9,0.1$ have about $0.469$ bits."
+      },
+      {
+        "title": "Decision-tree splits",
+        "background": "Classical trees choose splits that reduce entropy, making child nodes purer.",
+        "numbers": "A node with labels $6$ yes and $2$ no has probabilities $0.75,0.25$ and entropy about $0.811$ bits."
+      },
+      {
+        "title": "Language modeling",
+        "background": "Text prediction quality is often summarized by average surprise per token.",
+        "numbers": "If average token entropy is $4$ bits, perplexity is $2^4=16$ effective choices per token."
+      },
+      {
+        "title": "Random number quality",
+        "background": "A generator with biased outputs has lower entropy than a uniform source.",
+        "numbers": "A byte uniformly distributed over $256$ values has $\\log_2 256=8$ bits of entropy."
+      },
+      {
+        "title": "Feature discretization",
+        "background": "When continuous features are binned, entropy describes how spread the bin counts are.",
+        "numbers": "Bin counts $50,25,25$ out of $100$ give probabilities $0.5,0.25,0.25$ and entropy $1.5$ bits."
+      }
+    ],
+    "applicationsClose": "Entropy is the average surprise behind compression, purity, balance, language modeling, and randomness.",
+    "takeaways": [
+      "Entropy is expected self-information.",
+      "Uniform distributions have high entropy for a fixed number of outcomes.",
+      "More predictable distributions have lower entropy.",
+      "Entropy is measured in bits when logs use base 2."
+    ],
     "prereqs": [
       "math-21-01"
     ]
@@ -48,19 +537,266 @@
   B({
     "id": "math-21-03",
     "title": "Joint entropy",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: joint entropy.",
+    "tagline": "Joint entropy measures the uncertainty in a pair of outcomes learned together.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Entropy</i>"
+        "Entropy",
+        "joint probability",
+        "two-way tables"
       ],
       "leadsTo": [
-        "the next lesson, <i>Conditional entropy</i>"
+        "Conditional entropy",
+        "Mutual information",
+        "Chain rules for entropy"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "joint distributions",
+        "marginal distributions",
+        "expected value"
       ]
     },
+    "motivation": "<p>Often one variable is not enough. A data point may have a class label and a sensitive group, or a word and its part of speech. You may need to know the uncertainty in the pair, not just in either piece alone.</p><p><b>Joint entropy</b> asks how much surprise is expected when the outcome is $(X,Y)$ together. It is the entropy formula applied to the joint probability table.</p>",
+    "definition": "<p>For discrete variables $X$ and $Y$ with joint probabilities $p(x,y)$, joint entropy is $H(X,Y)=-\\sum_x \\sum_y p(x,y)\\log_2 p(x,y)$ bits.</p><p>This is ordinary entropy over combined outcomes. If the pair can be viewed as one larger random variable, then each cell $(x,y)$ has surprise $-\\log_2 p(x,y)$, and joint entropy averages those cell surprises.</p><p><b>Assumptions that matter:</b> all joint probabilities are nonnegative and sum to $1$; zero-probability cells contribute $0$; and if $X$ and $Y$ are independent, then $H(X,Y)=H(X)+H(Y)$.</p>",
+    "worked": {
+      "problem": "A joint distribution over four pairs has probabilities $1/2,1/4,1/8,1/8$. Compute $H(X,Y)$.",
+      "skills": [
+        "joint probability",
+        "entropy",
+        "base-2 logs"
+      ],
+      "strategy": "Treat the four pairs as four outcomes and add their weighted surprises.",
+      "steps": [
+        {
+          "do": "Write joint entropy",
+          "result": "$H=-\\sum p \\log_2 p$",
+          "why": "the pair is one combined outcome"
+        },
+        {
+          "do": "Compute the $1/2$ term",
+          "result": "$(1/2)\\log_2(1/2)=-1/2$",
+          "why": "$\\log_2(1/2)=-1$"
+        },
+        {
+          "do": "Compute the $1/4$ term",
+          "result": "$(1/4)\\log_2(1/4)=-1/2$",
+          "why": "$\\log_2(1/4)=-2$"
+        },
+        {
+          "do": "Compute each $1/8$ term",
+          "result": "$(1/8)\\log_2(1/8)=-3/8$",
+          "why": "$\\log_2(1/8)=-3$"
+        },
+        {
+          "do": "Add the log terms",
+          "result": "$-1/2-1/2-3/8-3/8=-1.75$",
+          "why": "include both eighth-probability cells"
+        },
+        {
+          "do": "Negate",
+          "result": "$H(X,Y)=1.75$ bits",
+          "why": "entropy is negative expected log probability"
+        }
+      ],
+      "verify": "The value is between $1$ and $2$ bits, reasonable for four outcomes that are not uniform.",
+      "answer": "$1.75$ bits.",
+      "connects": "Joint entropy is entropy over cells of a joint table."
+    },
+    "practice": [
+      {
+        "problem": "Compute joint entropy for a uniform table with four cells each probability $1/4$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-4(1/4)\\log_2(1/4)$",
+            "why": "all four cells match"
+          },
+          {
+            "do": "Simplify coefficient",
+            "result": "$H=-\\log_2(1/4)$",
+            "why": "$4(1/4)=1$"
+          },
+          {
+            "do": "Evaluate log",
+            "result": "$\\log_2(1/4)=-2$",
+            "why": "$1/4=2^{-2}$"
+          },
+          {
+            "do": "Negate",
+            "result": "$H=2$",
+            "why": "entropy is positive"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ bits",
+            "why": "four equally likely pairs need two bits"
+          }
+        ],
+        "answer": "$2$ bits."
+      },
+      {
+        "problem": "A joint table has two possible pairs with probabilities $0.5$ and $0.5$. Compute joint entropy.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-[0.5\\log_2 0.5+0.5\\log_2 0.5]$",
+            "why": "only two nonzero cells"
+          },
+          {
+            "do": "Evaluate log",
+            "result": "$\\log_2 0.5=-1$",
+            "why": "half is $2^{-1}$"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$-0.5$ and $-0.5$",
+            "why": "weight each cell"
+          },
+          {
+            "do": "Add",
+            "result": "$-1$",
+            "why": "combine the two cells"
+          },
+          {
+            "do": "Negate",
+            "result": "$1$ bit",
+            "why": "two equally likely pairs"
+          }
+        ],
+        "answer": "$1$ bit."
+      },
+      {
+        "problem": "Independent variables have $H(X)=1$ bit and $H(Y)=2$ bits. Find $H(X,Y)$.",
+        "steps": [
+          {
+            "do": "State independence rule",
+            "result": "$H(X,Y)=H(X)+H(Y)$",
+            "why": "independent pair uncertainty adds"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$H(X,Y)=1+2$",
+            "why": "use the given entropies"
+          },
+          {
+            "do": "Add",
+            "result": "$3$",
+            "why": "sum the independent uncertainties"
+          },
+          {
+            "do": "Attach units",
+            "result": "$3$ bits",
+            "why": "both inputs are in bits"
+          },
+          {
+            "do": "Interpret",
+            "result": "eight effective pairs",
+            "why": "$2^3=8$"
+          }
+        ],
+        "answer": "$3$ bits."
+      },
+      {
+        "problem": "A joint table has probabilities $0.5,0.25,0.25,0$. Compute joint entropy.",
+        "steps": [
+          {
+            "do": "Drop the zero cell",
+            "result": "zero contribution",
+            "why": "impossible outcomes do not occur"
+          },
+          {
+            "do": "Write nonzero terms",
+            "result": "$H=-[0.5\\log_2 0.5+0.25\\log_2 0.25+0.25\\log_2 0.25]$",
+            "why": "sum over nonzero cells"
+          },
+          {
+            "do": "Evaluate logs",
+            "result": "$-1,-2,-2$",
+            "why": "powers of 2"
+          },
+          {
+            "do": "Multiply and add",
+            "result": "$-0.5-0.5-0.5=-1.5$",
+            "why": "weighted log sum"
+          },
+          {
+            "do": "Negate",
+            "result": "$1.5$ bits",
+            "why": "joint entropy"
+          }
+        ],
+        "answer": "$1.5$ bits."
+      },
+      {
+        "problem": "Two binary features have counts $40,10,10,40$ out of $100$. Approximate joint entropy using $\\log_2 0.4\\approx-1.322$ and $\\log_2 0.1\\approx-3.322$.",
+        "steps": [
+          {
+            "do": "Convert counts to probabilities",
+            "result": "$0.4,0.1,0.1,0.4$",
+            "why": "divide each count by 100"
+          },
+          {
+            "do": "Group equal terms",
+            "result": "$H=-[2(0.4\\log_2 0.4)+2(0.1\\log_2 0.1)]$",
+            "why": "two cells of each size"
+          },
+          {
+            "do": "Compute $0.4$ terms",
+            "result": "$2(0.4)(-1.322)=-1.058$",
+            "why": "use the approximation"
+          },
+          {
+            "do": "Compute $0.1$ terms",
+            "result": "$2(0.1)(-3.322)=-0.664$",
+            "why": "use the approximation"
+          },
+          {
+            "do": "Add and negate",
+            "result": "$H\\approx1.722$ bits",
+            "why": "$-(-1.058-0.664)=1.722$"
+          }
+        ],
+        "answer": "Approximately $1.722$ bits."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Encoding paired labels",
+        "background": "Compression systems may encode tuples, such as color and shape, rather than separate fields.",
+        "numbers": "Four uniform pairs require $H=2$ bits per pair."
+      },
+      {
+        "title": "Dataset audits",
+        "background": "Joint label and group distributions show whether uncertainty comes from labels, groups, or both.",
+        "numbers": "Counts $50,25,25,0$ out of $100$ give joint entropy $1.5$ bits."
+      },
+      {
+        "title": "Image pixels",
+        "background": "Neighboring pixels form joint distributions used in image compression and texture modeling.",
+        "numbers": "If pixel pairs $00,01,10,11$ occur $0.7,0.1,0.1,0.1$, joint entropy is about $1.357$ bits."
+      },
+      {
+        "title": "Language bigrams",
+        "background": "A bigram model treats adjacent words as paired outcomes.",
+        "numbers": "If four bigrams have probabilities $0.5,0.25,0.125,0.125$, their joint entropy is $1.75$ bits."
+      },
+      {
+        "title": "Feature co-occurrence",
+        "background": "Recommender systems often study whether two binary events co-occur, such as view and click.",
+        "numbers": "Probabilities $0.9,0.05,0.04,0.01$ have much less than $2$ bits because one pair dominates."
+      },
+      {
+        "title": "Multi-output prediction",
+        "background": "Models that predict several labels need uncertainty over the combined target.",
+        "numbers": "Independent outputs with entropies $0.8$ and $0.6$ bits have joint entropy $1.4$ bits."
+      }
+    ],
+    "applicationsClose": "Whenever outcomes travel together, joint entropy measures the uncertainty of the whole package.",
+    "takeaways": [
+      "Joint entropy applies entropy to joint probability cells.",
+      "Independent variables have additive joint entropy.",
+      "Dependence can make joint entropy smaller than the sum of separate entropies.",
+      "Zero-probability cells contribute nothing."
+    ],
     "prereqs": [
       "math-21-02"
     ]
@@ -69,19 +805,261 @@
   B({
     "id": "math-21-04",
     "title": "Conditional entropy",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: conditional entropy.",
+    "tagline": "Conditional entropy is the uncertainty left after you are told another variable.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Joint entropy</i>"
+        "Joint entropy",
+        "conditional probability",
+        "expected value"
       ],
       "leadsTo": [
-        "the next lesson, <i>Mutual information</i>"
+        "Mutual information",
+        "Chain rules for entropy",
+        "The data processing inequality"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "conditional probability",
+        "joint entropy",
+        "Bayes rule"
       ]
     },
+    "motivation": "<p>Information often arrives in stages. If someone tells you the weather is rainy, your uncertainty about whether traffic is slow may change. If a label is already known, a feature may become easier to predict.</p><p><b>Conditional entropy</b> measures the average uncertainty in $Y$ after $X$ has been revealed. It is the mathematical form of the phrase, how much is still unknown?</p>",
+    "definition": "<p>Conditional entropy is $H(Y|X)=\\sum_x p(x)H(Y|X=x)$. Equivalently, $H(Y|X)=-\\sum_x \\sum_y p(x,y)\\log_2 p(y|x)$ bits.</p><p>The formula averages over the value of $X$. For each known $x$, compute the entropy of the conditional distribution of $Y$; then weight that entropy by how often $x$ occurs. It also satisfies $H(X,Y)=H(X)+H(Y|X)$.</p><p><b>Assumptions that matter:</b> conditional probabilities require $p(x)>0$; the variables here are discrete; and conditioning cannot increase entropy on average for the same variable, so $H(Y|X)\\le H(Y)$.</p>",
+    "worked": {
+      "problem": "Suppose $P(X=0)=0.5$ and then $Y$ is certain, whi\\le $P(X=1)=0.5$ and then $Y$ is a fair coin. Compute $H(Y|X)$.",
+      "skills": [
+        "conditional distributions",
+        "weighted averages",
+        "entropy"
+      ],
+      "strategy": "Find the entropy inside each branch of $X$, then average by the branch probabilities.",
+      "steps": [
+        {
+          "do": "Compute entropy when $X=0$",
+          "result": "$H(Y|X=0)=0$",
+          "why": "a certain outcome has no uncertainty"
+        },
+        {
+          "do": "Compute entropy when $X=1$",
+          "result": "$H(Y|X=1)=1$ bit",
+          "why": "a fair binary outcome has entropy 1"
+        },
+        {
+          "do": "Write the weighted average",
+          "result": "$H(Y|X)=0.5(0)+0.5(1)$",
+          "why": "each branch has probability 0.5"
+        },
+        {
+          "do": "Multiply",
+          "result": "$0+0.5$",
+          "why": "weight each branch entropy"
+        },
+        {
+          "do": "Add",
+          "result": "$0.5$ bits",
+          "why": "average uncertainty remains"
+        }
+      ],
+      "verify": "The answer lies between $0$ and $1$ bit because sometimes $X$ tells us everything and sometimes it tells us only the branch.",
+      "answer": "$H(Y|X)=0.5$ bits.",
+      "connects": "Conditional entropy averages the uncertainty left after observing the condition."
+    },
+    "practice": [
+      {
+        "problem": "If $Y$ is completely determined by $X$, what is $H(Y|X)$?",
+        "steps": [
+          {
+            "do": "Describe each conditional distribution",
+            "result": "one outcome has probability $1$",
+            "why": "deterministic means no remaining choice"
+          },
+          {
+            "do": "Compute each branch entropy",
+            "result": "$0$ bits",
+            "why": "certainty has zero entropy"
+          },
+          {
+            "do": "Write the average",
+            "result": "$\\sum_x p(x)0$",
+            "why": "conditional entropy averages branch entropies"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0$",
+            "why": "all terms are zero"
+          },
+          {
+            "do": "Attach units",
+            "result": "$0$ bits",
+            "why": "no uncertainty remains"
+          }
+        ],
+        "answer": "$H(Y|X)=0$ bits."
+      },
+      {
+        "problem": "If $X$ and $Y$ are independent and $H(Y)=1.5$ bits, find $H(Y|X)$.",
+        "steps": [
+          {
+            "do": "Use independence",
+            "result": "$p(y|x)=p(y)$",
+            "why": "knowing $X$ does not change $Y$"
+          },
+          {
+            "do": "Match conditional distributions",
+            "result": "$H(Y|X=x)=H(Y)$",
+            "why": "each branch has the original distribution"
+          },
+          {
+            "do": "Average over $X$",
+            "result": "$H(Y|X)=\\sum_x p(x)H(Y)$",
+            "why": "branch entropy is constant"
+          },
+          {
+            "do": "Use probabilities summing to one",
+            "result": "$H(Y|X)=H(Y)$",
+            "why": "$\\sum_x p(x)=1$"
+          },
+          {
+            "do": "Substitute",
+            "result": "$1.5$ bits",
+            "why": "given entropy"
+          }
+        ],
+        "answer": "$1.5$ bits."
+      },
+      {
+        "problem": "Use $H(X,Y)=3$ bits and $H(X)=1.2$ bits to find $H(Y|X)$.",
+        "steps": [
+          {
+            "do": "Write the chain identity",
+            "result": "$H(X,Y)=H(X)+H(Y|X)$",
+            "why": "joint uncertainty splits into first variable plus remaining uncertainty"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$3=1.2+H(Y|X)$",
+            "why": "use the given entropies"
+          },
+          {
+            "do": "Subtract $1.2$",
+            "result": "$H(Y|X)=1.8$",
+            "why": "isolate the conditional entropy"
+          },
+          {
+            "do": "Attach units",
+            "result": "$1.8$ bits",
+            "why": "inputs were in bits"
+          },
+          {
+            "do": "Check sign",
+            "result": "nonnegative",
+            "why": "conditional entropy cannot be negative"
+          }
+        ],
+        "answer": "$1.8$ bits."
+      },
+      {
+        "problem": "For $P(X=0)=0.25$ with $H(Y|X=0)=2$ bits and $P(X=1)=0.75$ with $H(Y|X=1)=0.4$ bits, compute $H(Y|X)$.",
+        "steps": [
+          {
+            "do": "Write the weighted average",
+            "result": "$0.25(2)+0.75(0.4)$",
+            "why": "average branch entropies by $P(X)$"
+          },
+          {
+            "do": "Compute the first product",
+            "result": "$0.5$",
+            "why": "$0.25\\cdot2=0.5$"
+          },
+          {
+            "do": "Compute the second product",
+            "result": "$0.3$",
+            "why": "$0.75\\cdot0.4=0.3$"
+          },
+          {
+            "do": "Add",
+            "result": "$0.8$",
+            "why": "combine branch contributions"
+          },
+          {
+            "do": "Attach units",
+            "result": "$0.8$ bits",
+            "why": "branch entropies were in bits"
+          }
+        ],
+        "answer": "$0.8$ bits."
+      },
+      {
+        "problem": "A feature $X$ has $P(X=0)=0.6$, and within that branch labels are $0.5,0.5$; for $X=1$, labels are $0.75,0.25$ with entropy $0.811$ bits. Compute $H(Y|X)$.",
+        "steps": [
+          {
+            "do": "Compute entropy for $X=0$",
+            "result": "$H(Y|X=0)=1$ bit",
+            "why": "the labels are fair"
+          },
+          {
+            "do": "Use entropy for $X=1$",
+            "result": "$H(Y|X=1)=0.811$ bits",
+            "why": "given in the problem"
+          },
+          {
+            "do": "Write the average",
+            "result": "$0.6(1)+0.4(0.811)$",
+            "why": "$P(X=1)=1-0.6=0.4$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.6+0.324$",
+            "why": "weight branch entropies"
+          },
+          {
+            "do": "Add",
+            "result": "$0.924$ bits",
+            "why": "remaining label uncertainty"
+          }
+        ],
+        "answer": "Approximately $0.924$ bits."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Decision-tree information gain",
+        "background": "A tree split is useful when it lowers label entropy after conditioning on the split result.",
+        "numbers": "If $H(Y)=1$ and $H(Y|X)=0.4$, the split removes $0.6$ bits."
+      },
+      {
+        "title": "Feature usefulness",
+        "background": "A feature that leaves low conditional entropy makes labels easier to predict.",
+        "numbers": "If knowing device type leaves label entropy $0.2$ bits from an original $0.9$, it explains $0.7$ bits."
+      },
+      {
+        "title": "Noisy channels",
+        "background": "Communication systems ask how uncertain the sent bit remains after observing the received bit.",
+        "numbers": "If a received bit is wrong with probability $0.1$, the conditional entropy is about $0.469$ bits."
+      },
+      {
+        "title": "Language context",
+        "background": "Next-token uncertainty drops when previous words are known.",
+        "numbers": "A unigram entropy of $10$ bits and context entropy of $5$ bits means context removes $5$ bits per token."
+      },
+      {
+        "title": "Fairness slices",
+        "background": "Auditors may check label uncertainty inside groups rather than only overall.",
+        "numbers": "Group weights $0.7,0.3$ with label entropies $0.8,0.2$ give conditional entropy $0.62$ bits."
+      },
+      {
+        "title": "Sensor fusion",
+        "background": "A sensor reading can reduce uncertainty about a hidden state but usually not remove it completely.",
+        "numbers": "If prior state entropy is $2.0$ bits and after the sensor it is $0.6$, the reading leaves $0.6$ bits."
+      }
+    ],
+    "applicationsClose": "Conditional entropy is the honest measure of what remains unknown after helpful context is revealed.",
+    "takeaways": [
+      "$H(Y|X)$ averages the entropy of $Y$ inside each value of $X$.",
+      "If $Y$ is determined by $X$, conditional entropy is zero.",
+      "If $X$ and $Y$ are independent, conditioning on $X$ does not reduce $Y$ entropy.",
+      "The chain identity is $H(X,Y)=H(X)+H(Y|X)$."
+    ],
     "prereqs": [
       "math-21-03"
     ]
@@ -90,19 +1068,261 @@
   B({
     "id": "math-21-05",
     "title": "Mutual information",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: mutual information.",
+    "tagline": "Mutual information counts how many bits one variable tells you about another.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Conditional entropy</i>"
+        "Entropy",
+        "Conditional entropy",
+        "Joint entropy"
       ],
       "leadsTo": [
-        "the next lesson, <i>KL divergence</i>"
+        "KL divergence",
+        "The data processing inequality",
+        "feature selection"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "conditional entropy",
+        "joint distributions",
+        "Bayes rule"
       ]
     },
+    "motivation": "<p>Some variables travel together. Knowing a medical test result changes uncertainty about disease; knowing a word changes uncertainty about the next word. Other variables barely help.</p><p><b>Mutual information</b> measures the average reduction in uncertainty. It is symmetric: the information $X$ gives about $Y$ is the same amount $Y$ gives about $X$.</p>",
+    "definition": "<p>The mutual information between discrete variables $X$ and $Y$ is $I(X;Y)=H(Y)-H(Y|X)$. Equivalent forms are $I(X;Y)=H(X)+H(Y)-H(X,Y)$ and $I(X;Y)=sum_{x,y}p(x,y)\\log_2[p(x,y)/(p(x)p(y))]$.</p><p>The first formula says information is entropy reduction. The ratio form compares the actual joint probability to what it would be under independence. If $p(x,y)=p(x)p(y)$ everywhere, the log ratio is $0$ and mutual information is $0$.</p><p><b>Assumptions that matter:</b> probabilities must come from the same joint distribution; terms with zero joint probability contribute $0$; and mutual information is nonnegative, with $0$ meaning independence for discrete variables.</p>",
+    "worked": {
+      "problem": "A label has $H(Y)=1$ bit. After observing feature $X$, the remaining uncertainty is $H(Y|X)=0.25$ bits. Find $I(X;Y)$.",
+      "skills": [
+        "entropy reduction",
+        "conditional entropy",
+        "interpretation"
+      ],
+      "strategy": "Use the reduction form: original uncertainty minus remaining uncertainty.",
+      "steps": [
+        {
+          "do": "Write the definition",
+          "result": "$I(X;Y)=H(Y)-H(Y|X)$",
+          "why": "mutual information is uncertainty reduction"
+        },
+        {
+          "do": "Substitute values",
+          "result": "$I(X;Y)=1-0.25$",
+          "why": "use the given entropies"
+        },
+        {
+          "do": "Subtract",
+          "result": "$0.75$",
+          "why": "compute the reduction"
+        },
+        {
+          "do": "Attach units",
+          "result": "$0.75$ bits",
+          "why": "the entropy units are bits"
+        },
+        {
+          "do": "Interpret",
+          "result": "feature $X$ removes three quarters of a bit",
+          "why": "remaining uncertainty is smaller than prior uncertainty"
+        }
+      ],
+      "verify": "The value is between $0$ and $H(Y)=1$, so it is a plausible amount learned about a binary label.",
+      "answer": "$I(X;Y)=0.75$ bits.",
+      "connects": "Mutual information is the amount conditioning helps on average."
+    },
+    "practice": [
+      {
+        "problem": "If $H(Y)=2$ bits and $H(Y|X)=2$ bits, find $I(X;Y)$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$I=H(Y)-H(Y|X)$",
+            "why": "use entropy reduction"
+          },
+          {
+            "do": "Substitute",
+            "result": "$I=2-2$",
+            "why": "conditioning did not lower entropy"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0$",
+            "why": "no reduction occurred"
+          },
+          {
+            "do": "Attach units",
+            "result": "$0$ bits",
+            "why": "information is measured in bits"
+          },
+          {
+            "do": "Interpret",
+            "result": "no dependence detected",
+            "why": "zero mutual information means independence in the discrete case"
+          }
+        ],
+        "answer": "$0$ bits."
+      },
+      {
+        "problem": "If $H(X)=1$, $H(Y)=1.5$, and $H(X,Y)=2$, compute $I(X;Y)$.",
+        "steps": [
+          {
+            "do": "Write the joint formula",
+            "result": "$I=H(X)+H(Y)-H(X,Y)$",
+            "why": "use the provided quantities"
+          },
+          {
+            "do": "Substitute",
+            "result": "$I=1+1.5-2$",
+            "why": "insert values"
+          },
+          {
+            "do": "Add first two terms",
+            "result": "$2.5-2$",
+            "why": "combine marginal entropies"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.5$",
+            "why": "overlap in uncertainty"
+          },
+          {
+            "do": "Attach units",
+            "result": "$0.5$ bits",
+            "why": "entropy units are bits"
+          }
+        ],
+        "answer": "$0.5$ bits."
+      },
+      {
+        "problem": "If $Y$ is a deterministic function of binary $X$ and $H(Y)=0.8$ bits, find $I(X;Y)$.",
+        "steps": [
+          {
+            "do": "Use determinism",
+            "result": "$H(Y|X)=0$",
+            "why": "knowing $X$ fixes $Y$"
+          },
+          {
+            "do": "Write mutual information",
+            "result": "$I=H(Y)-H(Y|X)$",
+            "why": "entropy reduction form"
+          },
+          {
+            "do": "Substitute",
+            "result": "$I=0.8-0$",
+            "why": "use the given entropy"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.8$ bits",
+            "why": "all uncertainty in $Y$ is removed"
+          },
+          {
+            "do": "Interpret",
+            "result": "maximum possible about $Y$",
+            "why": "information cannot exceed $H(Y)$"
+          }
+        ],
+        "answer": "$0.8$ bits."
+      },
+      {
+        "problem": "A split has parent entropy $0.95$ bits and weighted child entropy $0.35$ bits. Compute its mutual information with the label.",
+        "steps": [
+          {
+            "do": "Identify $H(Y)$",
+            "result": "$0.95$ bits",
+            "why": "parent label entropy is before the split"
+          },
+          {
+            "do": "Identify $H(Y|X)$",
+            "result": "$0.35$ bits",
+            "why": "weighted child entropy is after the split"
+          },
+          {
+            "do": "Write reduction",
+            "result": "$I=0.95-0.35$",
+            "why": "the split feature is $X$"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.60$ bits",
+            "why": "compute information gain"
+          },
+          {
+            "do": "Interpret",
+            "result": "the split removes $0.60$ bits",
+            "why": "child nodes are purer"
+          }
+        ],
+        "answer": "$0.60$ bits."
+      },
+      {
+        "problem": "For a perfectly copied fair bit, $X=Y$ with $P(0)=P(1)=0.5$. Compute $I(X;Y)$.",
+        "steps": [
+          {
+            "do": "Compute $H(Y)$",
+            "result": "$1$ bit",
+            "why": "a fair bit has entropy 1"
+          },
+          {
+            "do": "Compute $H(Y|X)$",
+            "result": "$0$ bits",
+            "why": "knowing the copy tells the original exactly"
+          },
+          {
+            "do": "Subtract",
+            "result": "$I=1-0$",
+            "why": "use entropy reduction"
+          },
+          {
+            "do": "Simplify",
+            "result": "$1$ bit",
+            "why": "one bit is fully shared"
+          },
+          {
+            "do": "Check symmetry",
+            "result": "$I(Y;X)=1$ bit",
+            "why": "the copy relation works both ways"
+          }
+        ],
+        "answer": "$1$ bit."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature selection",
+        "background": "Filters rank features by how much they reduce label uncertainty before fitting a heavy model.",
+        "numbers": "If $H(Y)=1.2$ and $H(Y|X)=0.7$, the feature has $0.5$ bits of mutual information."
+      },
+      {
+        "title": "Decision trees",
+        "background": "Information gain is mutual information between the chosen split and the class label.",
+        "numbers": "A split reducing entropy from $0.9$ to $0.4$ has gain $0.5$ bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Learning useful embeddings often means retaining information about labels while discarding nuisance details.",
+        "numbers": "An embedding with $I(Z;Y)=0.8$ bits carries more label signal than one with $0.2$ bits."
+      },
+      {
+        "title": "A/B diagnostics",
+        "background": "Engineers can measure whether a treatment assignment is associated with a downstream binary event.",
+        "numbers": "If event entropy is $0.6$ and conditioning on treatment leaves $0.58$, the association is only $0.02$ bits."
+      },
+      {
+        "title": "Communication channels",
+        "background": "Channel capacity is the maximum mutual information between sent and received symbols.",
+        "numbers": "If sent entropy is $1$ bit and noise leaves $0.3$ bits uncertain, received symbols carry $0.7$ bits."
+      },
+      {
+        "title": "Privacy leakage",
+        "background": "A released variable leaks private information when it has mutual information with a sensitive attribute.",
+        "numbers": "Reducing $I(Z;S)$ from $0.4$ to $0.05$ bits means much less sensitive signal remains."
+      }
+    ],
+    "applicationsClose": "Mutual information is the shared part of uncertainty, useful wherever signal must be separated from noise.",
+    "takeaways": [
+      "$I(X;Y)=H(Y)-H(Y|X)$ measures entropy reduction.",
+      "Mutual information is symmetric even when written with conditioning.",
+      "Zero mutual information means independence for discrete variables.",
+      "Information gain in trees is mutual information."
+    ],
     "prereqs": [
       "math-21-04"
     ]
@@ -111,19 +1331,266 @@
   B({
     "id": "math-21-06",
     "title": "KL divergence",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: kl divergence.",
+    "tagline": "KL divergence measures the extra surprise from using one distribution as if it were another.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Mutual information</i>"
+        "Entropy",
+        "Cross-entropy",
+        "logarithmic functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Cross-entropy</i>"
+        "Jensen's inequality in information theory",
+        "variational inference",
+        "maximum likelihood"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "expectation",
+        "convexity",
+        "probability distributions"
       ]
     },
+    "motivation": "<p>Models are rarely exactly right. A true distribution $P$ might say an event has probability $0.8$, while a model $Q$ says $0.6$. We need a way to score the mismatch across all outcomes.</p><p><b>KL divergence</b> compares two distributions by asking how many extra bits are spent when data from $P$ is encoded using probabilities from $Q$.</p>",
+    "definition": "<p>For discrete distributions $P$ and $Q$ over the same outcomes, $D_KL(P||Q)=\\sum_x P(x)\\log_2[P(x)/Q(x)]$ bits. It is also $H(P,Q)-H(P)$, cross-entropy minus entropy.</p><p>The ratio $P(x)/Q(x)$ is greater than $1$ where $Q$ underestimates a true-probable outcome and less than $1$ where $Q$ overestimates it. Averaging the log ratio under $P$ gives the expected extra code length.</p><p><b>Assumptions that matter:</b> if $P(x)>0$, then $Q(x)$ must also be positive; KL is not symmetric; and $D_KL(P||Q)\\ge0$, equaling $0$ only when the distributions match on all positive-probability outcomes.</p>",
+    "worked": {
+      "problem": "Let $P=(0.5,0.5)$ and $Q=(0.25,0.75)$. Compute $D_KL(P||Q)$ using $\\log_2(2)=1$ and $\\log_2(2/3)\\approx-0.585$.",
+      "skills": [
+        "distribution comparison",
+        "log ratios",
+        "KL divergence"
+      ],
+      "strategy": "Compute one weighted log ratio per outcome, then add.",
+      "steps": [
+        {
+          "do": "Write the KL formula",
+          "result": "$D=\\sum P \\log_2(P/Q)$",
+          "why": "average log ratio under $P$"
+        },
+        {
+          "do": "Compute the first ratio",
+          "result": "$0.5/0.25=2$",
+          "why": "compare true and model probabilities"
+        },
+        {
+          "do": "Compute the first term",
+          "result": "$0.5\\log_2 2=0.5$",
+          "why": "$\\log_2 2=1$"
+        },
+        {
+          "do": "Compute the second ratio",
+          "result": "$0.5/0.75=2/3$",
+          "why": "compare the second probabilities"
+        },
+        {
+          "do": "Compute the second term",
+          "result": "$0.5\\log_2(2/3)\\approx-0.293$",
+          "why": "half of $-0.585$"
+        },
+        {
+          "do": "Add terms",
+          "result": "$D\\approx0.207$ bits",
+          "why": "$0.5-0.293=0.207$"
+        }
+      ],
+      "verify": "The divergence is positive and small because $Q$ is wrong but not wildly wrong.",
+      "answer": "$D_KL(P||Q)\\approx0.207$ bits.",
+      "connects": "KL is expected log-ratio mismatch measured under the true distribution."
+    },
+    "practice": [
+      {
+        "problem": "Compute $D_KL(P||Q)$ when $P=(0.5,0.5)$ and $Q=(0.5,0.5)$.",
+        "steps": [
+          {
+            "do": "Write each ratio",
+            "result": "$0.5/0.5=1$ and $0.5/0.5=1$",
+            "why": "the distributions match"
+          },
+          {
+            "do": "Take logs",
+            "result": "$\\log_2 1=0$",
+            "why": "no outcome has a mismatch"
+          },
+          {
+            "do": "Weight first term",
+            "result": "$0.5\\cdot0=0$",
+            "why": "average under $P$"
+          },
+          {
+            "do": "Weight second term",
+            "result": "$0.5\\cdot0=0$",
+            "why": "same calculation"
+          },
+          {
+            "do": "Add",
+            "result": "$0$ bits",
+            "why": "matching distributions have zero KL"
+          }
+        ],
+        "answer": "$0$ bits."
+      },
+      {
+        "problem": "Let $P=(1,0)$ and $Q=(0.25,0.75)$. Compute $D_KL(P||Q)$.",
+        "steps": [
+          {
+            "do": "Keep only positive $P$ outcomes",
+            "result": "first outcome only",
+            "why": "the zero-probability outcome contributes $0$"
+          },
+          {
+            "do": "Compute the ratio",
+            "result": "$1/0.25=4$",
+            "why": "compare true to model probability"
+          },
+          {
+            "do": "Take the log",
+            "result": "$\\log_2 4=2$",
+            "why": "$4=2^2$"
+          },
+          {
+            "do": "Weight by $P$",
+            "result": "$1\\cdot2=2$",
+            "why": "the first outcome always occurs"
+          },
+          {
+            "do": "Attach units",
+            "result": "$2$ bits",
+            "why": "base 2 log"
+          }
+        ],
+        "answer": "$2$ bits."
+      },
+      {
+        "problem": "Using $H(P)=1.5$ bits and cross-entropy $H(P,Q)=2.1$ bits, find $D_KL(P||Q)$.",
+        "steps": [
+          {
+            "do": "Write the identity",
+            "result": "$D_KL(P||Q)=H(P,Q)-H(P)$",
+            "why": "KL is extra code length"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$D=2.1-1.5$",
+            "why": "use the given quantities"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.6$",
+            "why": "extra bits from using $Q$"
+          },
+          {
+            "do": "Attach units",
+            "result": "$0.6$ bits",
+            "why": "both entropies use bits"
+          },
+          {
+            "do": "Check nonnegativity",
+            "result": "$0.6\\ge0$",
+            "why": "KL cannot be negative"
+          }
+        ],
+        "answer": "$0.6$ bits."
+      },
+      {
+        "problem": "Show why KL is not symmetric for $P=(1,0)$ and $Q=(0.25,0.75)$.",
+        "steps": [
+          {
+            "do": "Compute $D_KL(P||Q)$",
+            "result": "$2$ bits",
+            "why": "from the previous style calculation"
+          },
+          {
+            "do": "Inspect $D_KL(Q||P)$",
+            "result": "second outcome has $Q=0.75$ and $P=0$",
+            "why": "the reverse ratio needs $Q(x)/P(x)$"
+          },
+          {
+            "do": "Apply the support rule",
+            "result": "$D_KL(Q||P)=\\infty$",
+            "why": "positive probability under $Q$ is assigned zero by $P$"
+          },
+          {
+            "do": "Compare directions",
+            "result": "$2$ bits versus \\infty",
+            "why": "the two directions differ"
+          },
+          {
+            "do": "Conclude",
+            "result": "KL is not symmetric",
+            "why": "order matters"
+          }
+        ],
+        "answer": "$D_KL(P||Q)=2$ bits but $D_KL(Q||P)=\\infty$."
+      },
+      {
+        "problem": "For $P=(0.8,0.2)$ and $Q=(0.6,0.4)$, approximate KL using $\\log_2(4/3)\\approx0.415$ and $\\log_2(1/2)=-1$.",
+        "steps": [
+          {
+            "do": "Compute ratios",
+            "result": "$0.8/0.6=4/3$, $0.2/0.4=1/2$",
+            "why": "compare each probability"
+          },
+          {
+            "do": "Write weighted logs",
+            "result": "$0.8\\log_2(4/3)+0.2\\log_2(1/2)$",
+            "why": "KL formula"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.8(0.415)+0.2(-1)$",
+            "why": "use approximations"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.332-0.2$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Add",
+            "result": "$0.132$ bits",
+            "why": "expected mismatch"
+          }
+        ],
+        "answer": "Approximately $0.132$ bits."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Maximum likelihood",
+        "background": "Fitting by likelihood can be seen as choosing a model distribution close to the empirical data distribution.",
+        "numbers": "If model A has KL $0.05$ bits and model B has $0.20$, A is closer by $0.15$ bits per sample."
+      },
+      {
+        "title": "Variational inference",
+        "background": "Bayesian ML often approximates a hard posterior with a simpler distribution by minimizing a KL-related objective.",
+        "numbers": "A variational family improving KL from $1.4$ to $0.6$ nats removes $0.8$ nats of mismatch."
+      },
+      {
+        "title": "Distribution shift",
+        "background": "Monitoring compares today's feature distribution to training data to detect drift.",
+        "numbers": "A categorical feature shifting from $P=(0.8,0.2)$ to $Q=(0.6,0.4)$ gives about $0.132$ bits in one direction."
+      },
+      {
+        "title": "Knowledge distillation",
+        "background": "Student models are trained to match teacher probability distributions, not only hard labels.",
+        "numbers": "Teacher $(0.7,0.2,0.1)$ and student $(0.6,0.3,0.1)$ produce a small KL because the main class remains close."
+      },
+      {
+        "title": "Language-model evaluation",
+        "background": "Cross-entropy above the true entropy corresponds to KL from data distribution to model distribution.",
+        "numbers": "If data entropy is $3.5$ bits/token and model cross-entropy is $4.0$, the model pays $0.5$ extra bits/token."
+      },
+      {
+        "title": "Alert calibration",
+        "background": "A predicted alert distribution should match observed frequencies across alert types.",
+        "numbers": "Observed $(0.5,0.5)$ versus predicted $(0.25,0.75)$ has KL about $0.207$ bits."
+      }
+    ],
+    "applicationsClose": "KL divergence is the accounting ledger for distribution mismatch and extra coding cost.",
+    "takeaways": [
+      "$D_KL(P||Q)=\\sum P log(P/Q)$.",
+      "KL is nonnegative but not symmetric.",
+      "It equals cross-entropy minus entropy.",
+      "If $Q$ assigns zero probability where $P$ is positive, KL is infinite."
+    ],
     "prereqs": [
       "math-21-05"
     ]
@@ -132,19 +1599,261 @@
   B({
     "id": "math-21-07",
     "title": "Cross-entropy",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: cross-entropy.",
+    "tagline": "Cross-entropy is the average negative log probability assigned to the truth.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>KL divergence</i>"
+        "Information and surprise",
+        "Entropy",
+        "KL divergence"
       ],
       "leadsTo": [
-        "the next lesson, <i>Chain rules for entropy</i>"
+        "maximum likelihood",
+        "softmax loss",
+        "Jensen's inequality in information theory"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "log-likelihood",
+        "softmax",
+        "one-hot vectors"
       ]
     },
+    "motivation": "<p>Classification training needs a loss that rewards confidence in the correct label and sharply penalizes confident mistakes. Accuracy is too blunt; it says $0.51$ and $0.99$ are both correct.</p><p><b>Cross-entropy</b> listens to the probability assigned to the truth. It is small when the model gives the true outcome high probability and large when it gives the truth low probability.</p>",
+    "definition": "<p>For a true distribution $P$ and model distribution $Q$, cross-entropy is $H(P,Q)=-\\sum_x P(x)\\log_2 Q(x)$. For one observed class $y$, the common classification loss is $-log Q(y)$, often with natural logs.</p><p>The formula averages the surprise assigned by $Q$ to outcomes drawn from $P$. It decomposes as $H(P,Q)=H(P)+D_KL(P||Q)$, so it is minimized when $Q=P$.</p><p><b>Assumptions that matter:</b> $Q(x)>0$ wherever $P(x)>0$; log base changes units but not the minimizer; and one-hot classification uses only the true class term because $P(y)=1$ for that observed label.</p>",
+    "worked": {
+      "problem": "A three-class model predicts $Q=(0.7,0.2,0.1)$ and the true class is the second one. Compute natural-log cross-entropy using $\\ln(0.2)\\approx-1.609$.",
+      "skills": [
+        "one-hot labels",
+        "negative log loss",
+        "classification"
+      ],
+      "strategy": "For a one-hot label, keep only the true-class probability and take its negative log.",
+      "steps": [
+        {
+          "do": "Identify the true-class probability",
+          "result": "$Q(y)=0.2$",
+          "why": "the second class occurred"
+        },
+        {
+          "do": "Write the loss",
+          "result": "$L=-\\ln Q(y)$",
+          "why": "one-hot cross-entropy"
+        },
+        {
+          "do": "Substitute the probability",
+          "result": "$L=-\\ln(0.2)$",
+          "why": "use the model's probability on the truth"
+        },
+        {
+          "do": "Use the log value",
+          "result": "$L=-(-1.609)$",
+          "why": "given approximation"
+        },
+        {
+          "do": "Negate",
+          "result": "$L=1.609$ nats",
+          "why": "natural logs measure nats"
+        }
+      ],
+      "verify": "Probability $0.2$ is not confident, so a loss above $1$ nat is reasonable.",
+      "answer": "$1.609$ nats.",
+      "connects": "Cross-entropy turns true-class probability into a smooth training penalty."
+    },
+    "practice": [
+      {
+        "problem": "Compute one-hot cross-entropy with true-class probability $0.5$ using natural logs, $\\ln(0.5)\\approx-0.693$.",
+        "steps": [
+          {
+            "do": "Write the loss",
+            "result": "$L=-\\ln p$",
+            "why": "one-hot cross-entropy"
+          },
+          {
+            "do": "Substitute $p=0.5$",
+            "result": "$L=-\\ln(0.5)$",
+            "why": "use true-class probability"
+          },
+          {
+            "do": "Use the approximation",
+            "result": "$L=-(-0.693)$",
+            "why": "given log value"
+          },
+          {
+            "do": "Negate",
+            "result": "$0.693$",
+            "why": "loss is positive"
+          },
+          {
+            "do": "Attach units",
+            "result": "$0.693$ nats",
+            "why": "natural log units"
+          }
+        ],
+        "answer": "$0.693$ nats."
+      },
+      {
+        "problem": "A batch has true-class probabilities $0.9$ and $0.3$. Compute average loss using $\\ln0.9\\approx-0.105$ and $\\ln0.3\\approx-1.204$.",
+        "steps": [
+          {
+            "do": "Write per-example losses",
+            "result": "$-\\ln0.9$ and $-\\ln0.3$",
+            "why": "one loss per observed label"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.105$ and $1.204$",
+            "why": "negate each log"
+          },
+          {
+            "do": "Add losses",
+            "result": "$1.309$",
+            "why": "batch total"
+          },
+          {
+            "do": "Divide by batch size",
+            "result": "$1.309/2=0.6545$",
+            "why": "average over two examples"
+          },
+          {
+            "do": "Round",
+            "result": "$0.655$ nats",
+            "why": "three decimals"
+          }
+        ],
+        "answer": "Average cross-entropy is about $0.655$ nats."
+      },
+      {
+        "problem": "For true distribution $P=(0.75,0.25)$ and model $Q=(0.5,0.5)$, compute cross-entropy in bits.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$H(P,Q)=-[0.75\\log_2 0.5+0.25\\log_2 0.5]$",
+            "why": "use model probabilities inside the log"
+          },
+          {
+            "do": "Evaluate the logs",
+            "result": "$\\log_2 0.5=-1$",
+            "why": "both model probabilities are one half"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.75(-1)+0.25(-1)=-1$",
+            "why": "weighted log sum"
+          },
+          {
+            "do": "Negate",
+            "result": "$1$ bit",
+            "why": "cross-entropy is positive"
+          },
+          {
+            "do": "Interpret",
+            "result": "one bit per draw",
+            "why": "the model uses a fair-code for both outcomes"
+          }
+        ],
+        "answer": "$1$ bit."
+      },
+      {
+        "problem": "Using $H(P)=0.811$ bits and $D_KL(P||Q)=0.189$ bits, find $H(P,Q)$.",
+        "steps": [
+          {
+            "do": "Write decomposition",
+            "result": "$H(P,Q)=H(P)+D_KL(P||Q)$",
+            "why": "cross-entropy equals entropy plus mismatch"
+          },
+          {
+            "do": "Substitute",
+            "result": "$H(P,Q)=0.811+0.189$",
+            "why": "use given values"
+          },
+          {
+            "do": "Add",
+            "result": "$1.000$",
+            "why": "sum entropy and extra cost"
+          },
+          {
+            "do": "Attach units",
+            "result": "$1$ bit",
+            "why": "both terms are bits"
+          },
+          {
+            "do": "Interpret",
+            "result": "model coding costs one bit per outcome",
+            "why": "cross-entropy is expected code length under $Q$"
+          }
+        ],
+        "answer": "$1$ bit."
+      },
+      {
+        "problem": "A softmax outputs probabilities $[0.1,0.6,0.3]$ for a label whose one-hot vector is $[0,1,0]$. Compute loss using $\\ln0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Multiply label and log probability terms",
+            "result": "$0\\ln0.1+1\\ln0.6+0\\ln0.3$",
+            "why": "one-hot labels keep only the true class"
+          },
+          {
+            "do": "Simplify the sum",
+            "result": "$\\ln0.6$",
+            "why": "zero-label terms vanish"
+          },
+          {
+            "do": "Apply the negative sign",
+            "result": "$L=-\\ln0.6$",
+            "why": "cross-entropy is negative expected log probability"
+          },
+          {
+            "do": "Use the approximation",
+            "result": "$L=0.511$",
+            "why": "negate $-0.511$"
+          },
+          {
+            "do": "Interpret",
+            "result": "moderate penalty",
+            "why": "the model gave the truth probability $0.6$"
+          }
+        ],
+        "answer": "$0.511$ nats."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Softmax classification",
+        "background": "Modern neural classifiers usually combine softmax outputs with cross-entropy because it gives smooth gradients.",
+        "numbers": "True-class probability $0.8$ gives loss $-\\ln0.8\\approx0.223$ nats."
+      },
+      {
+        "title": "Logistic regression",
+        "background": "Binary logistic regression is maximum likelihood for Bernoulli labels, which becomes cross-entropy loss.",
+        "numbers": "For label $1$ and prediction $0.7$, loss is $-\\ln0.7\\approx0.357$ nats."
+      },
+      {
+        "title": "Language modeling",
+        "background": "Next-token models are trained to put high probability on the observed next token.",
+        "numbers": "Average cross-entropy $3$ bits/token corresponds to perplexity $2^3=8$."
+      },
+      {
+        "title": "Calibration",
+        "background": "Cross-entropy rewards assigning probabilities that match long-run frequencies, not only choosing the top class.",
+        "numbers": "Ten events predicted at $0.9$ that occur nine times fit better than predicting $0.6$ for all ten."
+      },
+      {
+        "title": "Knowledge distillation",
+        "background": "When labels are soft teacher probabilities, cross-entropy uses the whole target distribution.",
+        "numbers": "Target $(0.7,0.3)$ and student $(0.6,0.4)$ uses $-[0.7\\ln0.6+0.3\\ln0.4]$."
+      },
+      {
+        "title": "Imbalanced data",
+        "background": "Weighted cross-entropy increases the cost of rare classes so their mistakes matter during training.",
+        "numbers": "If a rare-class example has loss $2.0$ and weight $5$, its weighted contribution is $10.0$."
+      }
+    ],
+    "applicationsClose": "Cross-entropy is the workhorse loss that turns probability on the truth into trainable pressure.",
+    "takeaways": [
+      "Cross-entropy is $-\\sum P log Q$.",
+      "For one-hot labels it is just negative log true-class probability.",
+      "It equals entropy plus KL divergence.",
+      "Lower cross-entropy means the model assigns better probabilities to observed outcomes."
+    ],
     "prereqs": [
       "math-21-06"
     ]
@@ -153,19 +1862,266 @@
   B({
     "id": "math-21-08",
     "title": "Chain rules for entropy",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: chain rules for entropy.",
+    "tagline": "Chain rules split uncertainty into what you learn first and what remains after.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Cross-entropy</i>"
+        "Joint entropy",
+        "Conditional entropy",
+        "Mutual information"
       ],
       "leadsTo": [
-        "the next lesson, <i>The data processing inequality</i>"
+        "The data processing inequality",
+        "Bayesian networks",
+        "sequence modeling"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "conditional probability",
+        "joint distributions",
+        "expectation"
       ]
     },
+    "motivation": "<p>Complicated outcomes often arrive piece by piece: first a topic, then a word; first a user segment, then a click; first one bit, then another. The total uncertainty should be splittable in the same order.</p><p>The <b>chain rule for entropy</b> says exactly that. Learn $X$ first, then count the uncertainty left in $Y$ after $X$ is known.</p>",
+    "definition": "<p>For discrete variables, $H(X,Y)=H(X)+H(Y|X)=H(Y)+H(X|Y)$. For a sequence, $H(X_1,...,X_n)=\\sum_i H(X_i|X_1,...,X_{i-1})$.</p><p>The two-variable rule follows from $p(x,y)=p(x)p(y|x)$. Taking negative logs turns the product into a sum, and averaging under the joint distribution gives joint entropy as first uncertainty plus remaining uncertainty.</p><p><b>Assumptions that matter:</b> conditional probabilities are defined only where the conditioning event has positive probability; order can change the individual terms but not the total joint entropy; and independence is the special case where conditioning terms do not shrink.</p>",
+    "worked": {
+      "problem": "Given $H(X)=1.2$ bits and $H(Y|X)=0.7$ bits, compute $H(X,Y)$. If $H(Y)=1.5$, compute $H(X|Y)$.",
+      "skills": [
+        "chain rule",
+        "conditional entropy",
+        "joint entropy"
+      ],
+      "strategy": "Use the chain rule in one order, then rearrange it in the other order.",
+      "steps": [
+        {
+          "do": "Write the first chain rule",
+          "result": "$H(X,Y)=H(X)+H(Y|X)$",
+          "why": "joint entropy splits in the order $X$ then $Y$"
+        },
+        {
+          "do": "Substitute values",
+          "result": "$H(X,Y)=1.2+0.7$",
+          "why": "use the given numbers"
+        },
+        {
+          "do": "Add",
+          "result": "$H(X,Y)=1.9$ bits",
+          "why": "total uncertainty"
+        },
+        {
+          "do": "Write the second chain rule",
+          "result": "$H(X,Y)=H(Y)+H(X|Y)$",
+          "why": "the order can be reversed"
+        },
+        {
+          "do": "Substitute known values",
+          "result": "$1.9=1.5+H(X|Y)$",
+          "why": "use joint entropy and $H(Y)$"
+        },
+        {
+          "do": "Subtract",
+          "result": "$H(X|Y)=0.4$ bits",
+          "why": "isolate the remaining uncertainty"
+        }
+      ],
+      "verify": "Both decompositions give the same joint entropy $1.9$ bits, as they must.",
+      "answer": "$H(X,Y)=1.9$ bits and $H(X|Y)=0.4$ bits.",
+      "connects": "The chain rule lets uncertainty be counted in any valid order."
+    },
+    "practice": [
+      {
+        "problem": "If $H(A)=2$ and $H(B|A)=1$, find $H(A,B)$.",
+        "steps": [
+          {
+            "do": "Write chain rule",
+            "result": "$H(A,B)=H(A)+H(B|A)$",
+            "why": "count $A$ then remaining $B$"
+          },
+          {
+            "do": "Substitute",
+            "result": "$2+1$",
+            "why": "given values"
+          },
+          {
+            "do": "Add",
+            "result": "$3$",
+            "why": "total uncertainty"
+          },
+          {
+            "do": "Attach units",
+            "result": "$3$ bits",
+            "why": "entropy units"
+          },
+          {
+            "do": "Interpret",
+            "result": "three bits for the pair",
+            "why": "joint entropy combines both parts"
+          }
+        ],
+        "answer": "$3$ bits."
+      },
+      {
+        "problem": "If $H(X,Y)=2.4$ and $H(X)=1.0$, find $H(Y|X)$.",
+        "steps": [
+          {
+            "do": "Write chain rule",
+            "result": "$H(X,Y)=H(X)+H(Y|X)$",
+            "why": "use available quantities"
+          },
+          {
+            "do": "Substitute",
+            "result": "$2.4=1.0+H(Y|X)$",
+            "why": "insert values"
+          },
+          {
+            "do": "Subtract $1.0$",
+            "result": "$H(Y|X)=1.4$",
+            "why": "isolate conditional entropy"
+          },
+          {
+            "do": "Attach units",
+            "result": "$1.4$ bits",
+            "why": "joint entropy is in bits"
+          },
+          {
+            "do": "Check",
+            "result": "$1.0+1.4=2.4$",
+            "why": "verify the decomposition"
+          }
+        ],
+        "answer": "$1.4$ bits."
+      },
+      {
+        "problem": "For independent variables with $H(X)=0.8$ and $H(Y)=1.1$, use the chain rule to find $H(X,Y)$.",
+        "steps": [
+          {
+            "do": "Use independence",
+            "result": "$H(Y|X)=H(Y)$",
+            "why": "knowing $X$ does not change $Y$"
+          },
+          {
+            "do": "Substitute",
+            "result": "$H(Y|X)=1.1$",
+            "why": "given $H(Y)$"
+          },
+          {
+            "do": "Write chain rule",
+            "result": "$H(X,Y)=0.8+1.1$",
+            "why": "count $X$ then $Y$"
+          },
+          {
+            "do": "Add",
+            "result": "$1.9$",
+            "why": "independent entropies add"
+          },
+          {
+            "do": "Attach units",
+            "result": "$1.9$ bits",
+            "why": "units are bits"
+          }
+        ],
+        "answer": "$1.9$ bits."
+      },
+      {
+        "problem": "A three-token process has $H(X_1)=3$, $H(X_2|X_1)=2$, and $H(X_3|X_1,X_2)=1.5$ bits. Find total sequence entropy.",
+        "steps": [
+          {
+            "do": "Write sequence chain rule",
+            "result": "$H(X_1,X_2,X_3)=H(X_1)+H(X_2|X_1)+H(X_3|X_1,X_2)$",
+            "why": "count each token after its history"
+          },
+          {
+            "do": "Substitute",
+            "result": "$3+2+1.5$",
+            "why": "use given conditional entropies"
+          },
+          {
+            "do": "Add first two",
+            "result": "$5+1.5$",
+            "why": "combine terms"
+          },
+          {
+            "do": "Add final term",
+            "result": "$6.5$ bits",
+            "why": "total sequence uncertainty"
+          },
+          {
+            "do": "Interpret",
+            "result": "average code length for three tokens",
+            "why": "entropy measures expected coding cost"
+          }
+        ],
+        "answer": "$6.5$ bits."
+      },
+      {
+        "problem": "A language model has context-free next-token entropy $8$ bits and context-conditioned entropy $4$ bits. For a two-token pair with first-token entropy $8$ bits, find pair entropy.",
+        "steps": [
+          {
+            "do": "Identify $H(X_1)$",
+            "result": "$8$ bits",
+            "why": "first token has no previous context"
+          },
+          {
+            "do": "Identify $H(X_2|X_1)$",
+            "result": "$4$ bits",
+            "why": "second token is conditioned on the first"
+          },
+          {
+            "do": "Apply chain rule",
+            "result": "$H(X_1,X_2)=8+4$",
+            "why": "pair entropy counts first token plus remaining second-token uncertainty"
+          },
+          {
+            "do": "Add",
+            "result": "$12$ bits",
+            "why": "sum the two pieces"
+          },
+          {
+            "do": "Compare to no context",
+            "result": "$12<16$",
+            "why": "conditioning reduces the second-token uncertainty"
+          }
+        ],
+        "answer": "$12$ bits."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Autoregressive language models",
+        "background": "Language models factor text into one conditional distribution per next token.",
+        "numbers": "Entropies $5,4,3$ bits for three positions give total $12$ bits."
+      },
+      {
+        "title": "Bayesian networks",
+        "background": "Graphical models use conditional factors to represent a high-dimensional joint distribution compactly.",
+        "numbers": "If $H(A)=1$, $H(B|A)=0.5$, and $H(C|A,B)=0.2$, the joint entropy is $1.7$ bits."
+      },
+      {
+        "title": "Data compression",
+        "background": "Adaptive compressors encode later symbols using context from earlier symbols.",
+        "numbers": "A character entropy dropping from $6$ to $3$ bits with context saves $3$ bits per character."
+      },
+      {
+        "title": "Sensor pipelines",
+        "background": "A first sensor reading may reduce how much uncertainty remains for later measurements.",
+        "numbers": "If $H(S_1)=2$ and $H(S_2|S_1)=0.8$, the pair has $2.8$ bits."
+      },
+      {
+        "title": "Feature logging",
+        "background": "Adding a feature to logs increases total uncertainty only by what is not predictable from existing features.",
+        "numbers": "Existing features have $10$ bits; a new feature has conditional entropy $1.2$ bits, so total becomes $11.2$ bits."
+      },
+      {
+        "title": "Multi-label targets",
+        "background": "Predicting labels in an order lets a model use earlier labels to reduce later uncertainty.",
+        "numbers": "If $H(Y_1)=0.9$ and $H(Y_2|Y_1)=0.4$, joint label entropy is $1.3$ bits."
+      }
+    ],
+    "applicationsClose": "Chain rules teach a calm habit: count what is unknown now, then what remains unknown after that is known.",
+    "takeaways": [
+      "$H(X,Y)=H(X)+H(Y|X)$.",
+      "The order can change conditional pieces but not total joint entropy.",
+      "For sequences, add each variable's entropy conditioned on its past.",
+      "Independence makes conditional entropy equal ordinary entropy."
+    ],
     "prereqs": [
       "math-21-07"
     ]
@@ -174,19 +2130,261 @@
   B({
     "id": "math-21-09",
     "title": "The data processing inequality",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: the data processing inequality.",
+    "tagline": "Processing data cannot create new information about the original source.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Chain rules for entropy</i>"
+        "Mutual information",
+        "conditional probability",
+        "Markov chains"
       ],
       "leadsTo": [
-        "the next lesson, <i>Jensen's inequality in information theory</i>"
+        "representation learning",
+        "sufficient statistics",
+        "information bottleneck"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "Markov chains",
+        "conditional independence",
+        "KL divergence"
       ]
     },
+    "motivation": "<p>When you summarize a signal, blur an image, or pass features through a model layer, you may keep useful information or lose it. But you cannot magically create information about the original source by only processing what you already had.</p><p>The <b>data processing inequality</b> is that sober promise. If $X$ influences $Y$, and $Y$ is then transformed into $Z$, then $Z$ cannot know more about $X$ than $Y$ did.</p>",
+    "definition": "<p>If $X -> Y -> Z$ forms a Markov chain, meaning $Z$ depends on $X$ only through $Y$, then $I(X;Z)\\le I(X;Y)$. Equivalently, processing $Y$ into $Z$ cannot increase mutual information with $X$.</p><p>The intuition comes from conditional independence: once $Y$ is known, $Z$ has no extra direct access to $X$. Any signal about $X$ in $Z$ must have passed through $Y$, so it cannot exceed the signal $Y$ already carried.</p><p><b>Assumptions that matter:</b> the Markov condition is essential; adding outside side information can break the setup; randomized processing is allowed as long as it uses only $Y$; and equality can occur when the processing preserves all information about $X$ contained in $Y$.</p>",
+    "worked": {
+      "problem": "Suppose $X -> Y -> Z$ and $I(X;Y)=0.8$ bits. A proposed analysis claims $I(X;Z)=1.1$ bits. Is that possible?",
+      "skills": [
+        "mutual information",
+        "Markov chains",
+        "inequality reasoning"
+      ],
+      "strategy": "Check whether the claimed downstream information exceeds the upstream information.",
+      "steps": [
+        {
+          "do": "State the Markov chain",
+          "result": "$X -> Y -> Z$",
+          "why": "the inequality applies to this order"
+        },
+        {
+          "do": "Write the data processing inequality",
+          "result": "$I(X;Z)\\le I(X;Y)$",
+          "why": "$Z$ is produced from $Y$"
+        },
+        {
+          "do": "Substitute the upstream information",
+          "result": "$I(X;Z)\\le0.8$",
+          "why": "$I(X;Y)=0.8$ bits"
+        },
+        {
+          "do": "Compare the claim",
+          "result": "$1.1>0.8$",
+          "why": "the proposed value exceeds the bound"
+        },
+        {
+          "do": "Decide",
+          "result": "not possible under the Markov assumption",
+          "why": "processing cannot create extra information"
+        }
+      ],
+      "verify": "The conclusion depends on the Markov chain; if $Z$ had separate access to $X$, the inequality would not apply.",
+      "answer": "No. Under $X -> Y -> Z$, $I(X;Z)$ must be at most $0.8$ bits.",
+      "connects": "The data processing inequality turns information flow into a numerical upper bound."
+    },
+    "practice": [
+      {
+        "problem": "If $X -> Y -> Z$ and $I(X;Y)=2$ bits, what is the largest possib\\le $I(X;Z)$?",
+        "steps": [
+          {
+            "do": "Write DPI",
+            "result": "$I(X;Z)\\le I(X;Y)$",
+            "why": "$Z$ is processed from $Y$"
+          },
+          {
+            "do": "Substitute",
+            "result": "$I(X;Z)\\le2$",
+            "why": "given upstream information"
+          },
+          {
+            "do": "Identify maximum",
+            "result": "$2$ bits",
+            "why": "equality is possible if processing preserves information"
+          },
+          {
+            "do": "State condition",
+            "result": "no more than $2$ bits",
+            "why": "processing cannot increase information"
+          },
+          {
+            "do": "Interpret",
+            "result": "downstream can tie but not beat upstream",
+            "why": "information may be preserved or lost"
+          }
+        ],
+        "answer": "At most $2$ bits."
+      },
+      {
+        "problem": "A compressed representation $Z$ is computed from features $Y$, and $I(X;Y)=1.5$ whi\\le $I(X;Z)=1.0$. Does this violate DPI?",
+        "steps": [
+          {
+            "do": "State the assumed chain",
+            "result": "$X -> Y -> Z$",
+            "why": "$Z$ is computed from $Y$"
+          },
+          {
+            "do": "Write the bound",
+            "result": "$I(X;Z)\\le1.5$",
+            "why": "use $I(X;Y)$"
+          },
+          {
+            "do": "Compare",
+            "result": "$1.0\\le1.5$",
+            "why": "downstream information is smaller"
+          },
+          {
+            "do": "Decide",
+            "result": "no violation",
+            "why": "information loss is allowed"
+          },
+          {
+            "do": "Interpret loss",
+            "result": "$0.5$ bits lost",
+            "why": "$1.5-1.0=0.5$"
+          }
+        ],
+        "answer": "No violation; the compression lost $0.5$ bits about $X$."
+      },
+      {
+        "problem": "If a deterministic invertible transform maps $Y$ to $Z$, what can happen to $I(X;Z)$ compared with $I(X;Y)$?",
+        "steps": [
+          {
+            "do": "Use DPI forward",
+            "result": "$I(X;Z)\\le I(X;Y)$",
+            "why": "$Z$ is computed from $Y$"
+          },
+          {
+            "do": "Use invertibility",
+            "result": "$Y$ is computed from $Z$",
+            "why": "an inverse transform exists"
+          },
+          {
+            "do": "Apply DPI backward",
+            "result": "$I(X;Y)\\le I(X;Z)$",
+            "why": "$Y$ is processed from $Z$"
+          },
+          {
+            "do": "Combine inequalities",
+            "result": "$I(X;Z)=I(X;Y)$",
+            "why": "each is at most the other"
+          },
+          {
+            "do": "Interpret",
+            "result": "information is preserved",
+            "why": "invertible processing loses nothing"
+          }
+        ],
+        "answer": "They are equal."
+      },
+      {
+        "problem": "A pipeline has $X -> Y -> Z -> W$ with $I(X;Y)=3$ and $I(X;Z)=2.2$. Give an upper bound for $I(X;W)$.",
+        "steps": [
+          {
+            "do": "Apply DPI to $X -> Z -> W$",
+            "result": "$I(X;W)\\le I(X;Z)$",
+            "why": "$W$ is processed after $Z$"
+          },
+          {
+            "do": "Substitute",
+            "result": "$I(X;W)\\le2.2$",
+            "why": "given information at $Z$"
+          },
+          {
+            "do": "Compare with earlier bound",
+            "result": "$2.2le3$",
+            "why": "the tighter downstream bound is smaller"
+          },
+          {
+            "do": "State tightest given bound",
+            "result": "$2.2$ bits",
+            "why": "use the smallest applicable upper bound"
+          },
+          {
+            "do": "Interpret",
+            "result": "later stages cannot recover lost $0.8$ bits",
+            "why": "$3-2.2=0.8$ was already lost by $Z$"
+          }
+        ],
+        "answer": "$I(X;W)$ is at most $2.2$ bits."
+      },
+      {
+        "problem": "A model layer $Z$ is computed from input $Y$, but it also receives a skip connection directly from $X$. Can you apply $X -> Y -> Z$ DPI?",
+        "steps": [
+          {
+            "do": "Check the Markov condition",
+            "result": "$Z$ depends directly on $X$",
+            "why": "the skip connection bypasses $Y$"
+          },
+          {
+            "do": "Compare to required chain",
+            "result": "$X -> Y -> Z$ fails",
+            "why": "$Z$ is not conditionally independent of $X$ given $Y$"
+          },
+          {
+            "do": "Assess DPI",
+            "result": "cannot apply this bound",
+            "why": "the assumption is missing"
+          },
+          {
+            "do": "Explain possible information",
+            "result": "$I(X;Z)$ may exceed $I(X;Y)$",
+            "why": "$Z$ has extra access to $X$"
+          },
+          {
+            "do": "State conclusion",
+            "result": "no valid violation claim",
+            "why": "the theorem was not applicable"
+          }
+        ],
+        "answer": "No. The Markov assumption fails because $Z$ has direct side information from $X$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Representation learning",
+        "background": "Layers transform input representations. DPI says a layer cannot contain more information about the original input than its source representation unless extra paths exist.",
+        "numbers": "If $I(X;Y)=5$ bits, any $Z=f(Y)$ has $I(X;Z)\\le5$ bits."
+      },
+      {
+        "title": "Image compression",
+        "background": "JPEG-like compression processes an image into fewer stored values, usually discarding detail.",
+        "numbers": "If the compressed file preserves $1.2$ megabits of information about an image from a $2.0$ megabit representation, later decoding cannot exceed $1.2$ megabits."
+      },
+      {
+        "title": "Privacy filters",
+        "background": "Sanitizing a feature aims to reduce information about a sensitive attribute.",
+        "numbers": "If raw features carry $0.7$ bits about $S$ and filtered features carry $0.1$, postprocessing the filtered features cannot exceed $0.1$ bits about $S$."
+      },
+      {
+        "title": "Sufficient statistics",
+        "background": "A statistic is sufficient when it preserves all information in data about a parameter for the modeling task.",
+        "numbers": "If $I(\\theta;Y)=4$ bits and $I(\\theta;Z)=4$ bits, $Z$ has not lost parameter information measured this way."
+      },
+      {
+        "title": "Noisy communication",
+        "background": "Passing messages through additional noisy channels cannot improve information about the original message.",
+        "numbers": "A first channel carrying $0.9$ bits per bit and a second postprocessing channel yields at most $0.9$ bits per bit."
+      },
+      {
+        "title": "Feature hashing",
+        "background": "Hashing maps many features into fewer buckets, a deterministic processing step that can collide values.",
+        "numbers": "If original features carry $3$ bits about the label, hashed features cannot carry more than $3$ bits."
+      }
+    ],
+    "applicationsClose": "DPI is a guardrail: transformations may preserve or discard information, but without new access they cannot create it.",
+    "takeaways": [
+      "For $X -> Y -> Z$, $I(X;Z)\\le I(X;Y)$.",
+      "The Markov condition is essential.",
+      "Invertible processing preserves mutual information.",
+      "Compression, filtering, hashing, and model layers are natural examples."
+    ],
     "prereqs": [
       "math-21-08"
     ]
@@ -195,19 +2393,266 @@
   B({
     "id": "math-21-10",
     "title": "Jensen's inequality in information theory",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: jensen's inequality in information theory.",
+    "tagline": "Jensen's inequality explains why information losses bend in the right direction.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The data processing inequality</i>"
+        "convexity",
+        "expected value",
+        "KL divergence"
       ],
       "leadsTo": [
-        "the next lesson, <i>Source coding and Shannon's theorem</i>"
+        "nonnegative KL",
+        "variational bounds",
+        "maximum entropy"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "convex functions",
+        "logarithms",
+        "expectation"
       ]
     },
+    "motivation": "<p>Information theory is full of inequalities: KL is never negative, conditioning reduces entropy, and mixture bounds appear in variational inference. These facts are not magic; many come from the shape of the logarithm.</p><p><b>Jensen's inequality</b> is the bridge between shape and averages. It tells us how a curved function treats an average compared with the average of function values.</p>",
+    "definition": "<p>If $f$ is convex, then $f(E[X])\\le E[f(X)]$. If $g$ is concave, then $g(E[X])\\ge E[g(X)]$. Since $-log x$ is convex on positive $x$, it is central to information-theoretic losses.</p><p>For KL nonnegativity, let $R=Q(X)/P(X)$ with $X$ drawn from $P$. Then $E_P[R]=\\sum_x P(x)Q(x)/P(x)=\\sum_x Q(x)=1$. Jensen for convex $-log$ gives $E_P[-log R]\\ge -log E_P[R]=0$, which is exactly $D_KL(P||Q)\\ge0$.</p><p><b>Assumptions that matter:</b> the function must be convex or concave on the values being averaged; expectations must exist; and ratios like $Q(x)/P(x)$ require positive probabilities on the relevant support.</p>",
+    "worked": {
+      "problem": "Use Jensen's inequality to compare $-\\log_2(E[R])$ and $E[-\\log_2 R]$ for $R$ taking values $0.5$ and $1.5$ with equal probability.",
+      "skills": [
+        "convexity",
+        "expectation",
+        "negative logarithms"
+      ],
+      "strategy": "Average before and after the convex function, then compare.",
+      "steps": [
+        {
+          "do": "Compute the mean of $R$",
+          "result": "$E[R]=0.5(0.5)+0.5(1.5)=1$",
+          "why": "equal probabilities"
+        },
+        {
+          "do": "Apply $-\\log_2$ to the mean",
+          "result": "$-\\log_2(E[R])=-\\log_2 1=0$",
+          "why": "$\\log_2 1=0$"
+        },
+        {
+          "do": "Compute the first transformed value",
+          "result": "$-\\log_2(0.5)=1$",
+          "why": "$0.5=2^{-1}$"
+        },
+        {
+          "do": "Compute the second transformed value",
+          "result": "$-\\log_2(1.5)\\approx-0.585$",
+          "why": "$\\log_2 1.5\\approx0.585$"
+        },
+        {
+          "do": "Average transformed values",
+          "result": "$E[-\\log_2 R]\\approx0.5(1)+0.5(-0.585)=0.2075$",
+          "why": "average after applying the function"
+        },
+        {
+          "do": "Compare",
+          "result": "$0\\le0.2075$",
+          "why": "Jensen holds for convex $-log$"
+        }
+      ],
+      "verify": "The transformed average is larger, exactly the convex-shape behavior Jensen predicts.",
+      "answer": "$-\\log_2(E[R])=0$ and $E[-\\log_2 R]\\approx0.208$, so $-\\log_2(E[R])\\le E[-\\log_2 R]$.",
+      "connects": "This is the same curvature fact behind nonnegative KL divergence."
+    },
+    "practice": [
+      {
+        "problem": "For convex $f(x)=x^2$ and $X$ equally likely to be $1$ or $3$, verify Jensen.",
+        "steps": [
+          {
+            "do": "Compute the mean",
+            "result": "$E[X]=(1+3)/2=2$",
+            "why": "equal probabilities"
+          },
+          {
+            "do": "Apply $f$ to the mean",
+            "result": "$f(E[X])=2^2=4$",
+            "why": "square the average"
+          },
+          {
+            "do": "Compute transformed values",
+            "result": "$f(1)=1$, $f(3)=9$",
+            "why": "square each outcome"
+          },
+          {
+            "do": "Average transformed values",
+            "result": "$E[f(X)]=(1+9)/2=5$",
+            "why": "equal probabilities"
+          },
+          {
+            "do": "Compare",
+            "result": "$4\\le5$",
+            "why": "convex Jensen inequality"
+          }
+        ],
+        "answer": "$f(E[X])=4\\le5=E[f(X)]$."
+      },
+      {
+        "problem": "For concave $g(x)=\\log_2 x$ and values $1$ and $4$ equally likely, verify Jensen using $\\log_2 2.5\\approx1.322$.",
+        "steps": [
+          {
+            "do": "Compute the mean",
+            "result": "$E[X]=(1+4)/2=2.5$",
+            "why": "average the inputs"
+          },
+          {
+            "do": "Apply log to the mean",
+            "result": "$\\log_2(2.5)\\approx1.322$",
+            "why": "given approximation"
+          },
+          {
+            "do": "Compute logs first",
+            "result": "$\\log_2 1=0$, $\\log_2 4=2$",
+            "why": "known powers"
+          },
+          {
+            "do": "Average logs",
+            "result": "$(0+2)/2=1$",
+            "why": "equal probabilities"
+          },
+          {
+            "do": "Compare",
+            "result": "$1.322\\ge1$",
+            "why": "log is concave"
+          }
+        ],
+        "answer": "$\\log_2(E[X])\\approx1.322\\ge E[\\log_2 X]=1$."
+      },
+      {
+        "problem": "Use Jensen to show $E[-\\log_2 R]\\ge0$ when $E[R]=1$ and $R>0$.",
+        "steps": [
+          {
+            "do": "Name the convex function",
+            "result": "$f(r)=-\\log_2 r$",
+            "why": "negative log is convex"
+          },
+          {
+            "do": "Apply Jensen",
+            "result": "$f(E[R])\\le E[f(R)]$",
+            "why": "convex functions put the function of the mean below the mean of the function"
+          },
+          {
+            "do": "Substitute $E[R]=1$",
+            "result": "$-\\log_2 1\\le E[-\\log_2 R]$",
+            "why": "use the condition"
+          },
+          {
+            "do": "Evaluate the left side",
+            "result": "$0\\le E[-\\log_2 R]$",
+            "why": "$\\log_2 1=0$"
+          },
+          {
+            "do": "Conclude",
+            "result": "$E[-\\log_2 R]\\ge0$",
+            "why": "rearrange the inequality"
+          }
+        ],
+        "answer": "$E[-\\log_2 R]\\ge0$."
+      },
+      {
+        "problem": "Given $H(P,Q)=1.4$ bits and Jensen-derived $D_KL(P||Q)\\ge0$, what lower bound does this give for $H(P)$?",
+        "steps": [
+          {
+            "do": "Write decomposition",
+            "result": "$H(P,Q)=H(P)+D_KL(P||Q)$",
+            "why": "cross-entropy splits into entropy plus KL"
+          },
+          {
+            "do": "Use nonnegative KL",
+            "result": "$H(P,Q)\\ge H(P)$",
+            "why": "adding KL cannot decrease the value"
+          },
+          {
+            "do": "Substitute cross-entropy",
+            "result": "$1.4\\ge H(P)$",
+            "why": "given $H(P,Q)=1.4$"
+          },
+          {
+            "do": "Rewrite as a bound",
+            "result": "$H(P)\\le1.4$ bits",
+            "why": "entropy cannot exceed this cross-entropy"
+          },
+          {
+            "do": "Interpret",
+            "result": "model code length is at least true entropy",
+            "why": "mismatch costs extra or zero"
+          }
+        ],
+        "answer": "$H(P)\\le1.4$ bits."
+      },
+      {
+        "problem": "For $P=(0.5,0.5)$ and $Q=(0.25,0.75)$, define $R=Q(X)/P(X)$ under $P$. Compute $E[R]$ and connect to KL nonnegativity.",
+        "steps": [
+          {
+            "do": "Compute $R$ for first outcome",
+            "result": "$0.25/0.5=0.5$",
+            "why": "ratio $Q/P$"
+          },
+          {
+            "do": "Compute $R$ for second outcome",
+            "result": "$0.75/0.5=1.5$",
+            "why": "ratio $Q/P$"
+          },
+          {
+            "do": "Average under $P$",
+            "result": "$E[R]=0.5(0.5)+0.5(1.5)=1$",
+            "why": "weight by true probabilities"
+          },
+          {
+            "do": "Apply Jensen to $-log R$",
+            "result": "$E[-\\log_2 R]\\ge -\\log_2 1=0$",
+            "why": "negative log is convex"
+          },
+          {
+            "do": "Identify KL",
+            "result": "$E[-\\log_2 R]=D_KL(P||Q)$",
+            "why": "$-log(Q/P)=log(P/Q)$"
+          }
+        ],
+        "answer": "$E[R]=1$, so Jensen gives $D_KL(P||Q)\\ge0$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Nonnegative KL divergence",
+        "background": "The fact that KL cannot be negative is one of the foundations of probabilistic ML.",
+        "numbers": "For ratios $0.5$ and $1.5$ under equal $P$, Jensen gives KL about $0.208$ bits, not below $0$."
+      },
+      {
+        "title": "Cross-entropy lower bound",
+        "background": "Training loss cannot beat the true data entropy unless the data distribution itself changes.",
+        "numbers": "If true entropy is $2.3$ bits/token, any model cross-entropy is at least $2.3$ bits/token."
+      },
+      {
+        "title": "Variational inference bounds",
+        "background": "Evidence lower bounds use Jensen to move a log outside an expectation in a controlled direction.",
+        "numbers": "If a bound is $-120$ nats and improves to $-100$ nats, it moved $20$ nats closer to the log evidence."
+      },
+      {
+        "title": "Mixture models",
+        "background": "Log of an average likelihood behaves differently from average log likelihood because log is concave.",
+        "numbers": "Likelihoods $0.1$ and $0.9$ average to $0.5$ with $\\ln0.5=-0.693$, while average logs are about $(-2.303-0.105)/2=-1.204$."
+      },
+      {
+        "title": "Regularized objectives",
+        "background": "Convex penalties are predictable under averaging, which supports stable optimization arguments.",
+        "numbers": "For weights $1$ and $3$, squared penalty at the average is $4$, below average penalty $5$."
+      },
+      {
+        "title": "Calibration and proper losses",
+        "background": "Log loss is shaped so truthful probabilities minimize expected loss; Jensen helps prove these proper-scoring properties.",
+        "numbers": "A true Bernoulli rate $0.7$ has expected log loss minimized at predicted $0.7$, not $0.5$ or $0.9$."
+      }
+    ],
+    "applicationsClose": "Jensen's inequality is the quiet curvature principle behind many guarantees that make information-theoretic losses trustworthy.",
+    "takeaways": [
+      "Convex functions satisfy $f(E[X])\\le E[f(X)]$; concave functions reverse the inequality.",
+      "The negative logarithm is convex, while the logarithm is concave.",
+      "Jensen proves KL divergence is nonnegative.",
+      "Many ML bounds and log-loss facts come from moving a curved function across an expectation carefully."
+    ],
     "prereqs": [
       "math-21-09"
     ]
@@ -216,19 +2661,260 @@
   B({
     "id": "math-21-11",
     "title": "Source coding and Shannon's theorem",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: source coding and shannon's theorem.",
+    "tagline": "Good lossless compression matches short descriptions to common symbols and cannot beat entropy on average.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Jensen's inequality in information theory</i>"
+        "Jensen's inequality in information theory",
+        "entropy",
+        "expected value"
       ],
       "leadsTo": [
-        "the next lesson, <i>Huffman coding</i>"
+        "Huffman coding",
+        "Arithmetic coding"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "Kraft inequality",
+        "prefix-free codes",
+        "typical sets"
       ]
     },
+    "motivation": "<p>You already abbreviate common words because they are worth making short. Source coding gives that instinct a precise limit.</p><p>Shannon's theorem says entropy is the best possible long-run lossless rate, and careful block codes can approach it as closely as we like.</p>",
+    "definition": "<p>For a discrete source $X$, entropy is $H(X)=-\\sum_x p(x)\\log_2 p(x)$ bits. A binary code with lengths $\\ell(x)$ has expected length $L=\\sum_x p(x)\\ell(x)$.</p><p>Uniquely decodable codes must satisfy length-packing constraints, so $L\\ge H(X)$. Shannon's source coding theorem adds the positive side: for long enough blocks, rates below $H(X)+\\epsilon$ are achievable for any $\\epsilon>0$.</p><p><b>Assumptions that matter:</b> the clean theorem uses a known stationary source; logs are base $2$ for bits; prefix-free codes are the usual practical setting; and the guarantee is asymptotic in block length.</p>",
+    "worked": {
+      "problem": "For $P(A)=1/2$, $P(B)=1/4$, $P(C)=1/4$, compare entropy with code $A\\mapsto0$, $B\\mapsto10$, $C\\mapsto11$.",
+      "skills": [
+        "entropy",
+        "expected code length",
+        "prefix codes"
+      ],
+      "strategy": "Compute the source entropy, then compute the average length of the proposed code.",
+      "steps": [
+        {
+          "do": "Compute $A$ contribution",
+          "result": "$-(1/2)\\log_2(1/2)=0.5$",
+          "why": "probability $1/2$ has surprise 1 bit"
+        },
+        {
+          "do": "Compute $B$ contribution",
+          "result": "$-(1/4)\\log_2(1/4)=0.5$",
+          "why": "probability $1/4$ has surprise 2 bits"
+        },
+        {
+          "do": "Compute $C$ contribution",
+          "result": "$0.5$",
+          "why": "same probability as $B$"
+        },
+        {
+          "do": "Add entropy",
+          "result": "$H=1.5$ bits",
+          "why": "sum the three contributions"
+        },
+        {
+          "do": "Compute expected length",
+          "result": "$L=(1/2)1+(1/4)2+(1/4)2=1.5$ bits",
+          "why": "weight lengths by probabilities"
+        }
+      ],
+      "verify": "No codeword is a prefix of another, and the expected length equals the entropy lower bound.",
+      "answer": "$H(X)=1.5$ bits and $L=1.5$ bits.",
+      "connects": "This is the rare case where a simple prefix code reaches Shannon's limit exactly."
+    },
+    "practice": [
+      {
+        "problem": "Compute entropy for a binary source with $P(1)=0.8$ and $P(0)=0.2$ using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\log_2 0.8-0.2\\log_2 0.2$",
+            "why": "entropy is average surprise"
+          },
+          {
+            "do": "Substitute the logs",
+            "result": "$H=-0.8(-0.322)-0.2(-2.322)$",
+            "why": "use the provided values"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.2576$",
+            "why": "$0.8\\cdot0.322=0.2576$"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.4644$",
+            "why": "$0.2\\cdot2.322=0.4644$"
+          },
+          {
+            "do": "Add the contributions",
+            "result": "$H\\approx0.722$ bits",
+            "why": "average uncertainty is the sum"
+          }
+        ],
+        "answer": "$H\\approx0.722$ bits."
+      },
+      {
+        "problem": "For distributions $P=(0.7,0.3)$ and $Q=(0.5,0.5)$, compute $D_{KL}(P\\|Q)$ using $\\log 1.4\\approx0.336$ and $\\log 0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Write the KL formula",
+            "result": "$D_{KL}(P\\|Q)=0.7\\log(0.7/0.5)+0.3\\log(0.3/0.5)$",
+            "why": "compare probabilities component by component"
+          },
+          {
+            "do": "Compute the ratios",
+            "result": "$1.4$ and $0.6$",
+            "why": "divide $P_i$ by $Q_i$"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.7(0.336)+0.3(-0.511)$",
+            "why": "use the approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.2352-0.1533$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0819$ nats",
+            "why": "KL is small but positive"
+          }
+        ],
+        "answer": "$D_{KL}(P\\|Q)\\approx0.082$ nats."
+      },
+      {
+        "problem": "A code uses lengths $1,2,3,3$ for probabilities $0.4,0.3,0.2,0.1$. Compute expected length.",
+        "steps": [
+          {
+            "do": "Write the average",
+            "result": "$L=0.4(1)+0.3(2)+0.2(3)+0.1(3)$",
+            "why": "expected length weights each code length"
+          },
+          {
+            "do": "Compute first two terms",
+            "result": "$0.4+0.6=1.0$",
+            "why": "common symbols dominate the average"
+          },
+          {
+            "do": "Compute last two terms",
+            "result": "$0.6+0.3=0.9$",
+            "why": "rare symbols have longer codewords"
+          },
+          {
+            "do": "Add totals",
+            "result": "$L=1.9$ bits",
+            "why": "sum all weighted lengths"
+          },
+          {
+            "do": "Compare to two-bit fixed coding",
+            "result": "$2-1.9=0.1$ bit saved",
+            "why": "variable length helps"
+          }
+        ],
+        "answer": "The expected length is $1.9$ bits per symbol."
+      },
+      {
+        "problem": "A sequence receives model probabilities $0.9$, $0.5$, and $0.25$ for its actual symbols. Compute the negative log probability in bits.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9\\cdot0.5\\cdot0.25=0.1125$",
+            "why": "independent sequence probabilities multiply"
+          },
+          {
+            "do": "Write code length",
+            "result": "$-\\log_2(0.1125)$",
+            "why": "negative log probability is ideal length"
+          },
+          {
+            "do": "Split the log",
+            "result": "$-\\log_2(0.9)-\\log_2(0.5)-\\log_2(0.25)$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Use common values",
+            "result": "$0.152+1+2$",
+            "why": "$-\\log_2(0.9)\\approx0.152$"
+          },
+          {
+            "do": "Add",
+            "result": "$3.152$ bits",
+            "why": "total sequence surprise"
+          }
+        ],
+        "answer": "The sequence costs about $3.152$ bits."
+      },
+      {
+        "problem": "A loss has reconstruction term $1.6$ and KL term $0.4$. Compute the negative ELBO, then recompute with KL weight $0.25$.",
+        "steps": [
+          {
+            "do": "Add unweighted terms",
+            "result": "$1.6+0.4=2.0$",
+            "why": "negative ELBO combines fit and KL"
+          },
+          {
+            "do": "Scale the KL term",
+            "result": "$0.25\\cdot0.4=0.1$",
+            "why": "apply the weight"
+          },
+          {
+            "do": "Add weighted terms",
+            "result": "$1.6+0.1=1.7$",
+            "why": "combine reconstruction and weighted KL"
+          },
+          {
+            "do": "Compare objectives",
+            "result": "$2.0-1.7=0.3$",
+            "why": "down-weighting KL lowers the loss"
+          },
+          {
+            "do": "Interpret the tradeoff",
+            "result": "less regularization",
+            "why": "the model is allowed to use the latent code more freely"
+          }
+        ],
+        "answer": "Unweighted loss is $2.0$; with KL weight $0.25$, loss is $1.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Compression budgets",
+        "background": "Source coding and Shannon's theorem helps turn probability models into concrete storage expectations rather than vague compression hopes.",
+        "numbers": "At $1.3$ bits per symbol, $10,000$ symbols need about $13,000$ bits before headers."
+      },
+      {
+        "title": "Classifier losses",
+        "background": "In ML, Source coding and Shannon's theorem connects naturally to negative log probabilities used for supervised learning.",
+        "numbers": "If the true-class probability is $0.8$, the loss is $-\\log(0.8)\\approx0.223$ nats."
+      },
+      {
+        "title": "Latent-variable models",
+        "background": "Variational models use information terms to decide how much a latent representation should remember.",
+        "numbers": "A reconstruction cost $2.1$ plus KL $0.3$ gives negative ELBO $2.4$."
+      },
+      {
+        "title": "Reinforcement learning policies",
+        "background": "Policy optimization often measures how far a new action distribution moved from an old one.",
+        "numbers": "Old policy $(0.6,0.4)$ and new $(0.5,0.5)$ have KL about $0.020$ nats."
+      },
+      {
+        "title": "Communication systems",
+        "background": "Rates, capacities, and code lengths make noisy links analyzable before hardware is built.",
+        "numbers": "A rate of $0.7$ bits/use over $2000$ uses carries $1400$ information bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Information constraints explain bottlenecks in embeddings, autoencoders, and quantizers.",
+        "numbers": "An $8$-bit code can name $2^8=256$ clusters; a $10$-bit code can name $1024$."
+      }
+    ],
+    "applicationsClose": "Across these examples, one idea keeps changing clothes: probabilities become logarithmic costs, and averages become operational limits.",
+    "takeaways": [
+      "Information-theoretic quantities turn uncertainty into arithmetic.",
+      "Logarithms convert probability products into additive costs.",
+      "The same entropy and KL terms appear in compression, inference, and ML losses.",
+      "Always check the modeling assumptions before treating a bound as a guarantee."
+    ],
     "prereqs": [
       "math-21-10"
     ]
@@ -237,19 +2923,265 @@
   B({
     "id": "math-21-12",
     "title": "Huffman coding",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: huffman coding.",
+    "tagline": "Huffman coding is the greedy tree algorithm that makes common symbols shallow and rare symbols deep.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Source coding and Shannon's theorem</i>"
+        "Source coding and Shannon's theorem",
+        "entropy",
+        "logarithms"
       ],
       "leadsTo": [
-        "the next lesson, <i>Arithmetic coding</i>"
+        "Arithmetic coding",
+        "information-theoretic ML objectives"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "priority queues",
+        "KL divergence",
+        "expected value"
       ]
     },
+    "motivation": "<p>Once entropy sets the target, the next question is how to build a real code. Huffman coding is the classic answer.</p><p>It repeatedly merges the two least likely symbols, building an optimal prefix tree from the bottom up.</p>",
+    "definition": "<p>A <b>Huffman code</b> starts with symbol probabilities as leaf weights. Repeatedly combine the two smallest weights; the final binary tree assigns codeword lengths by depth.</p><p>The greedy step is valid because in some optimal tree the two least likely symbols can be deepest siblings. Merging them leaves a smaller problem of the same kind.</p><p><b>Assumptions that matter:</b> probabilities are known or estimated; the optimization is over binary prefix codes for individual symbols; ties may produce different equally optimal codes; and lengths are integer numbers of bits.</p>",
+    "worked": {
+      "problem": "Build Huffman lengths for probabilities $0.4,0.3,0.2,0.1$.",
+      "skills": [
+        "priority queues",
+        "logs",
+        "probability arithmetic"
+      ],
+      "strategy": "Translate the definition into one small calculation at a time, keeping units and direction clear.",
+      "steps": [
+        {
+          "do": "Merge the two smallest",
+          "result": "$0.1+0.2=0.3$",
+          "why": "Huffman begins with least likely symbols"
+        },
+        {
+          "do": "List remaining weights",
+          "result": "$0.3,0.3,0.4$",
+          "why": "replace the pair by its sum"
+        },
+        {
+          "do": "Merge two smallest again",
+          "result": "$0.3+0.3=0.6$",
+          "why": "continue greedily"
+        },
+        {
+          "do": "Merge the final pair",
+          "result": "$0.4+0.6=1.0$",
+          "why": "complete the tree"
+        },
+        {
+          "do": "Read lengths",
+          "result": "$1,2,3,3$",
+          "why": "the largest probability can be closest to the root"
+        },
+        {
+          "do": "Compute average",
+          "result": "$0.4+0.6+0.6+0.3=1.9$ bits",
+          "why": "weight each length"
+        }
+      ],
+      "verify": "The result has the right sign and agrees with the qualitative meaning of the definition.",
+      "answer": "One optimal expected length is $1.9$ bits.",
+      "connects": "This calculation shows the lesson's abstract quantity acting as a concrete numerical guide."
+    },
+    "practice": [
+      {
+        "problem": "Compute entropy for a binary source with $P(1)=0.8$ and $P(0)=0.2$ using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\log_2 0.8-0.2\\log_2 0.2$",
+            "why": "entropy is average surprise"
+          },
+          {
+            "do": "Substitute the logs",
+            "result": "$H=-0.8(-0.322)-0.2(-2.322)$",
+            "why": "use the provided values"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.2576$",
+            "why": "$0.8\\cdot0.322=0.2576$"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.4644$",
+            "why": "$0.2\\cdot2.322=0.4644$"
+          },
+          {
+            "do": "Add the contributions",
+            "result": "$H\\approx0.722$ bits",
+            "why": "average uncertainty is the sum"
+          }
+        ],
+        "answer": "$H\\approx0.722$ bits."
+      },
+      {
+        "problem": "For distributions $P=(0.7,0.3)$ and $Q=(0.5,0.5)$, compute $D_{KL}(P\\|Q)$ using $\\log 1.4\\approx0.336$ and $\\log 0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Write the KL formula",
+            "result": "$D_{KL}(P\\|Q)=0.7\\log(0.7/0.5)+0.3\\log(0.3/0.5)$",
+            "why": "compare probabilities component by component"
+          },
+          {
+            "do": "Compute the ratios",
+            "result": "$1.4$ and $0.6$",
+            "why": "divide $P_i$ by $Q_i$"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.7(0.336)+0.3(-0.511)$",
+            "why": "use the approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.2352-0.1533$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0819$ nats",
+            "why": "KL is small but positive"
+          }
+        ],
+        "answer": "$D_{KL}(P\\|Q)\\approx0.082$ nats."
+      },
+      {
+        "problem": "A code uses lengths $1,2,3,3$ for probabilities $0.4,0.3,0.2,0.1$. Compute expected length.",
+        "steps": [
+          {
+            "do": "Write the average",
+            "result": "$L=0.4(1)+0.3(2)+0.2(3)+0.1(3)$",
+            "why": "expected length weights each code length"
+          },
+          {
+            "do": "Compute first two terms",
+            "result": "$0.4+0.6=1.0$",
+            "why": "common symbols dominate the average"
+          },
+          {
+            "do": "Compute last two terms",
+            "result": "$0.6+0.3=0.9$",
+            "why": "rare symbols have longer codewords"
+          },
+          {
+            "do": "Add totals",
+            "result": "$L=1.9$ bits",
+            "why": "sum all weighted lengths"
+          },
+          {
+            "do": "Compare to two-bit fixed coding",
+            "result": "$2-1.9=0.1$ bit saved",
+            "why": "variable length helps"
+          }
+        ],
+        "answer": "The expected length is $1.9$ bits per symbol."
+      },
+      {
+        "problem": "A sequence receives model probabilities $0.9$, $0.5$, and $0.25$ for its actual symbols. Compute the negative log probability in bits.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9\\cdot0.5\\cdot0.25=0.1125$",
+            "why": "independent sequence probabilities multiply"
+          },
+          {
+            "do": "Write code length",
+            "result": "$-\\log_2(0.1125)$",
+            "why": "negative log probability is ideal length"
+          },
+          {
+            "do": "Split the log",
+            "result": "$-\\log_2(0.9)-\\log_2(0.5)-\\log_2(0.25)$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Use common values",
+            "result": "$0.152+1+2$",
+            "why": "$-\\log_2(0.9)\\approx0.152$"
+          },
+          {
+            "do": "Add",
+            "result": "$3.152$ bits",
+            "why": "total sequence surprise"
+          }
+        ],
+        "answer": "The sequence costs about $3.152$ bits."
+      },
+      {
+        "problem": "A loss has reconstruction term $1.6$ and KL term $0.4$. Compute the negative ELBO, then recompute with KL weight $0.25$.",
+        "steps": [
+          {
+            "do": "Add unweighted terms",
+            "result": "$1.6+0.4=2.0$",
+            "why": "negative ELBO combines fit and KL"
+          },
+          {
+            "do": "Scale the KL term",
+            "result": "$0.25\\cdot0.4=0.1$",
+            "why": "apply the weight"
+          },
+          {
+            "do": "Add weighted terms",
+            "result": "$1.6+0.1=1.7$",
+            "why": "combine reconstruction and weighted KL"
+          },
+          {
+            "do": "Compare objectives",
+            "result": "$2.0-1.7=0.3$",
+            "why": "down-weighting KL lowers the loss"
+          },
+          {
+            "do": "Interpret the tradeoff",
+            "result": "less regularization",
+            "why": "the model is allowed to use the latent code more freely"
+          }
+        ],
+        "answer": "Unweighted loss is $2.0$; with KL weight $0.25$, loss is $1.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Compression budgets",
+        "background": "Huffman coding helps turn probability models into concrete storage expectations rather than vague compression hopes.",
+        "numbers": "At $1.3$ bits per symbol, $10,000$ symbols need about $13,000$ bits before headers."
+      },
+      {
+        "title": "Classifier losses",
+        "background": "In ML, Huffman coding connects naturally to negative log probabilities used for supervised learning.",
+        "numbers": "If the true-class probability is $0.8$, the loss is $-\\log(0.8)\\approx0.223$ nats."
+      },
+      {
+        "title": "Latent-variable models",
+        "background": "Variational models use information terms to decide how much a latent representation should remember.",
+        "numbers": "A reconstruction cost $2.1$ plus KL $0.3$ gives negative ELBO $2.4$."
+      },
+      {
+        "title": "Reinforcement learning policies",
+        "background": "Policy optimization often measures how far a new action distribution moved from an old one.",
+        "numbers": "Old policy $(0.6,0.4)$ and new $(0.5,0.5)$ have KL about $0.020$ nats."
+      },
+      {
+        "title": "Communication systems",
+        "background": "Rates, capacities, and code lengths make noisy links analyzable before hardware is built.",
+        "numbers": "A rate of $0.7$ bits/use over $2000$ uses carries $1400$ information bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Information constraints explain bottlenecks in embeddings, autoencoders, and quantizers.",
+        "numbers": "An $8$-bit code can name $2^8=256$ clusters; a $10$-bit code can name $1024$."
+      }
+    ],
+    "applicationsClose": "Across these examples, one idea keeps changing clothes: probabilities become logarithmic costs, and averages become operational limits.",
+    "takeaways": [
+      "Information-theoretic quantities turn uncertainty into arithmetic.",
+      "Logarithms convert probability products into additive costs.",
+      "The same entropy and KL terms appear in compression, inference, and ML losses.",
+      "Always check the modeling assumptions before treating a bound as a guarantee."
+    ],
     "prereqs": [
       "math-21-11"
     ]
@@ -258,19 +3190,265 @@
   B({
     "id": "math-21-13",
     "title": "Arithmetic coding",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: arithmetic coding.",
+    "tagline": "Arithmetic coding encodes a whole message as a small interval, allowing fractional bits per symbol.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Huffman coding</i>"
+        "Huffman coding",
+        "entropy",
+        "logarithms"
       ],
       "leadsTo": [
-        "the next lesson, <i>Channel capacity</i>"
+        "Channel capacity",
+        "information-theoretic ML objectives"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "binary intervals",
+        "KL divergence",
+        "expected value"
       ]
     },
+    "motivation": "<p>Huffman codes are practical, but each symbol receives an integer-length codeword. Arithmetic coding smooths that rough edge.</p><p>It narrows an interval according to the probabilities of the symbols in the whole message.</p>",
+    "definition": "<p>An <b>arithmetic code</b> begins with $[0,1)$. Each symbol selects a probability-sized subinterval inside the current interval. For a memoryless model, the final interval width is $\\prod_i p(x_i)$.</p><p>A number inside an interval of width $w$ needs about $-\\log_2 w$ bits to specify. Thus arithmetic coding turns sequence probability directly into code length.</p><p><b>Assumptions that matter:</b> encoder and decoder share the model; finite-precision implementations must renormalize carefully; intervals use a consistent endpoint convention; and better probabilities give better compression.</p>",
+    "worked": {
+      "problem": "Encode $BA$ when $P(A)=0.75$, $P(B)=0.25$, with $A:[0,0.75)$ and $B:[0.75,1)$.",
+      "skills": [
+        "binary intervals",
+        "logs",
+        "probability arithmetic"
+      ],
+      "strategy": "Translate the definition into one small calculation at a time, keeping units and direction clear.",
+      "steps": [
+        {
+          "do": "Start with the full interval",
+          "result": "$[0,1)$",
+          "why": "all messages begin here"
+        },
+        {
+          "do": "Choose $B$",
+          "result": "$[0.75,1)$",
+          "why": "the first symbol selects its range"
+        },
+        {
+          "do": "Find the width",
+          "result": "$0.25$",
+          "why": "the current interval length"
+        },
+        {
+          "do": "Choose $A$ inside the interval",
+          "result": "$[0.75,0.9375)$",
+          "why": "take the first $75\\%$ of the current interval"
+        },
+        {
+          "do": "Compute final width",
+          "result": "$0.1875$",
+          "why": "$0.25\\cdot0.75=0.1875$"
+        },
+        {
+          "do": "Convert width to bits",
+          "result": "$-\\log_2(0.1875)\\approx2.415$",
+          "why": "narrower intervals need more bits"
+        }
+      ],
+      "verify": "The result has the right sign and agrees with the qualitative meaning of the definition.",
+      "answer": "The interval is $[0.75,0.9375)$ and its ideal length is about $2.415$ bits.",
+      "connects": "This calculation shows the lesson's abstract quantity acting as a concrete numerical guide."
+    },
+    "practice": [
+      {
+        "problem": "Compute entropy for a binary source with $P(1)=0.8$ and $P(0)=0.2$ using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\log_2 0.8-0.2\\log_2 0.2$",
+            "why": "entropy is average surprise"
+          },
+          {
+            "do": "Substitute the logs",
+            "result": "$H=-0.8(-0.322)-0.2(-2.322)$",
+            "why": "use the provided values"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.2576$",
+            "why": "$0.8\\cdot0.322=0.2576$"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.4644$",
+            "why": "$0.2\\cdot2.322=0.4644$"
+          },
+          {
+            "do": "Add the contributions",
+            "result": "$H\\approx0.722$ bits",
+            "why": "average uncertainty is the sum"
+          }
+        ],
+        "answer": "$H\\approx0.722$ bits."
+      },
+      {
+        "problem": "For distributions $P=(0.7,0.3)$ and $Q=(0.5,0.5)$, compute $D_{KL}(P\\|Q)$ using $\\log 1.4\\approx0.336$ and $\\log 0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Write the KL formula",
+            "result": "$D_{KL}(P\\|Q)=0.7\\log(0.7/0.5)+0.3\\log(0.3/0.5)$",
+            "why": "compare probabilities component by component"
+          },
+          {
+            "do": "Compute the ratios",
+            "result": "$1.4$ and $0.6$",
+            "why": "divide $P_i$ by $Q_i$"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.7(0.336)+0.3(-0.511)$",
+            "why": "use the approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.2352-0.1533$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0819$ nats",
+            "why": "KL is small but positive"
+          }
+        ],
+        "answer": "$D_{KL}(P\\|Q)\\approx0.082$ nats."
+      },
+      {
+        "problem": "A code uses lengths $1,2,3,3$ for probabilities $0.4,0.3,0.2,0.1$. Compute expected length.",
+        "steps": [
+          {
+            "do": "Write the average",
+            "result": "$L=0.4(1)+0.3(2)+0.2(3)+0.1(3)$",
+            "why": "expected length weights each code length"
+          },
+          {
+            "do": "Compute first two terms",
+            "result": "$0.4+0.6=1.0$",
+            "why": "common symbols dominate the average"
+          },
+          {
+            "do": "Compute last two terms",
+            "result": "$0.6+0.3=0.9$",
+            "why": "rare symbols have longer codewords"
+          },
+          {
+            "do": "Add totals",
+            "result": "$L=1.9$ bits",
+            "why": "sum all weighted lengths"
+          },
+          {
+            "do": "Compare to two-bit fixed coding",
+            "result": "$2-1.9=0.1$ bit saved",
+            "why": "variable length helps"
+          }
+        ],
+        "answer": "The expected length is $1.9$ bits per symbol."
+      },
+      {
+        "problem": "A sequence receives model probabilities $0.9$, $0.5$, and $0.25$ for its actual symbols. Compute the negative log probability in bits.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9\\cdot0.5\\cdot0.25=0.1125$",
+            "why": "independent sequence probabilities multiply"
+          },
+          {
+            "do": "Write code length",
+            "result": "$-\\log_2(0.1125)$",
+            "why": "negative log probability is ideal length"
+          },
+          {
+            "do": "Split the log",
+            "result": "$-\\log_2(0.9)-\\log_2(0.5)-\\log_2(0.25)$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Use common values",
+            "result": "$0.152+1+2$",
+            "why": "$-\\log_2(0.9)\\approx0.152$"
+          },
+          {
+            "do": "Add",
+            "result": "$3.152$ bits",
+            "why": "total sequence surprise"
+          }
+        ],
+        "answer": "The sequence costs about $3.152$ bits."
+      },
+      {
+        "problem": "A loss has reconstruction term $1.6$ and KL term $0.4$. Compute the negative ELBO, then recompute with KL weight $0.25$.",
+        "steps": [
+          {
+            "do": "Add unweighted terms",
+            "result": "$1.6+0.4=2.0$",
+            "why": "negative ELBO combines fit and KL"
+          },
+          {
+            "do": "Scale the KL term",
+            "result": "$0.25\\cdot0.4=0.1$",
+            "why": "apply the weight"
+          },
+          {
+            "do": "Add weighted terms",
+            "result": "$1.6+0.1=1.7$",
+            "why": "combine reconstruction and weighted KL"
+          },
+          {
+            "do": "Compare objectives",
+            "result": "$2.0-1.7=0.3$",
+            "why": "down-weighting KL lowers the loss"
+          },
+          {
+            "do": "Interpret the tradeoff",
+            "result": "less regularization",
+            "why": "the model is allowed to use the latent code more freely"
+          }
+        ],
+        "answer": "Unweighted loss is $2.0$; with KL weight $0.25$, loss is $1.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Compression budgets",
+        "background": "Arithmetic coding helps turn probability models into concrete storage expectations rather than vague compression hopes.",
+        "numbers": "At $1.3$ bits per symbol, $10,000$ symbols need about $13,000$ bits before headers."
+      },
+      {
+        "title": "Classifier losses",
+        "background": "In ML, Arithmetic coding connects naturally to negative log probabilities used for supervised learning.",
+        "numbers": "If the true-class probability is $0.8$, the loss is $-\\log(0.8)\\approx0.223$ nats."
+      },
+      {
+        "title": "Latent-variable models",
+        "background": "Variational models use information terms to decide how much a latent representation should remember.",
+        "numbers": "A reconstruction cost $2.1$ plus KL $0.3$ gives negative ELBO $2.4$."
+      },
+      {
+        "title": "Reinforcement learning policies",
+        "background": "Policy optimization often measures how far a new action distribution moved from an old one.",
+        "numbers": "Old policy $(0.6,0.4)$ and new $(0.5,0.5)$ have KL about $0.020$ nats."
+      },
+      {
+        "title": "Communication systems",
+        "background": "Rates, capacities, and code lengths make noisy links analyzable before hardware is built.",
+        "numbers": "A rate of $0.7$ bits/use over $2000$ uses carries $1400$ information bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Information constraints explain bottlenecks in embeddings, autoencoders, and quantizers.",
+        "numbers": "An $8$-bit code can name $2^8=256$ clusters; a $10$-bit code can name $1024$."
+      }
+    ],
+    "applicationsClose": "Across these examples, one idea keeps changing clothes: probabilities become logarithmic costs, and averages become operational limits.",
+    "takeaways": [
+      "Information-theoretic quantities turn uncertainty into arithmetic.",
+      "Logarithms convert probability products into additive costs.",
+      "The same entropy and KL terms appear in compression, inference, and ML losses.",
+      "Always check the modeling assumptions before treating a bound as a guarantee."
+    ],
     "prereqs": [
       "math-21-12"
     ]
@@ -279,19 +3457,260 @@
   B({
     "id": "math-21-14",
     "title": "Channel capacity",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: channel capacity.",
+    "tagline": "Channel capacity is the maximum reliable information rate through a noisy channel.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Arithmetic coding</i>"
+        "Arithmetic coding",
+        "entropy",
+        "logarithms"
       ],
       "leadsTo": [
-        "the next lesson, <i>The noisy-channel coding theorem</i>"
+        "The noisy-channel coding theorem",
+        "information-theoretic ML objectives"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "mutual information",
+        "KL divergence",
+        "expected value"
       ]
     },
+    "motivation": "<p>A noisy channel may flip or blur symbols. Capacity asks how much information survives if we choose the best input distribution.</p><p>It is not one clever message; it is the best achievable rate per channel use.</p>",
+    "definition": "<p>For channel input $X$ and output $Y$, capacity is $C=\\max_{p(x)} I(X;Y)$ bits per use. For a binary symmetric channel with flip probability $p$, $C=1-H_2(p)$.</p><p>The formula says a clean binary channel carries one bit, while output uncertainty caused by flips subtracts $H_2(p)$ bits.</p><p><b>Assumptions that matter:</b> the channel law is known; uses are independent in the basic model; logs are base $2$ for bits; and capacity is an optimized limit, not the performance of every code.</p>",
+    "worked": {
+      "problem": "Compute capacity for a binary symmetric channel with flip probability $0.1$ and $H_2(0.1)\\approx0.469$.",
+      "skills": [
+        "mutual information",
+        "logs",
+        "probability arithmetic"
+      ],
+      "strategy": "Translate the definition into one small calculation at a time, keeping units and direction clear.",
+      "steps": [
+        {
+          "do": "Write the formula",
+          "result": "$C=1-H_2(p)$",
+          "why": "binary symmetric channel capacity"
+        },
+        {
+          "do": "Substitute $p=0.1$",
+          "result": "$C=1-H_2(0.1)$",
+          "why": "use the flip probability"
+        },
+        {
+          "do": "Use the entropy value",
+          "result": "$C=1-0.469$",
+          "why": "given binary entropy"
+        },
+        {
+          "do": "Subtract",
+          "result": "$C=0.531$ bits/use",
+          "why": "noise reduces one clean bit"
+        },
+        {
+          "do": "Scale to $1000$ uses",
+          "result": "$531$ bits",
+          "why": "capacity times uses"
+        }
+      ],
+      "verify": "The result has the right sign and agrees with the qualitative meaning of the definition.",
+      "answer": "Capacity is about $0.531$ bits per channel use.",
+      "connects": "This calculation shows the lesson's abstract quantity acting as a concrete numerical guide."
+    },
+    "practice": [
+      {
+        "problem": "Compute entropy for a binary source with $P(1)=0.8$ and $P(0)=0.2$ using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\log_2 0.8-0.2\\log_2 0.2$",
+            "why": "entropy is average surprise"
+          },
+          {
+            "do": "Substitute the logs",
+            "result": "$H=-0.8(-0.322)-0.2(-2.322)$",
+            "why": "use the provided values"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.2576$",
+            "why": "$0.8\\cdot0.322=0.2576$"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.4644$",
+            "why": "$0.2\\cdot2.322=0.4644$"
+          },
+          {
+            "do": "Add the contributions",
+            "result": "$H\\approx0.722$ bits",
+            "why": "average uncertainty is the sum"
+          }
+        ],
+        "answer": "$H\\approx0.722$ bits."
+      },
+      {
+        "problem": "For distributions $P=(0.7,0.3)$ and $Q=(0.5,0.5)$, compute $D_{KL}(P\\|Q)$ using $\\log 1.4\\approx0.336$ and $\\log 0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Write the KL formula",
+            "result": "$D_{KL}(P\\|Q)=0.7\\log(0.7/0.5)+0.3\\log(0.3/0.5)$",
+            "why": "compare probabilities component by component"
+          },
+          {
+            "do": "Compute the ratios",
+            "result": "$1.4$ and $0.6$",
+            "why": "divide $P_i$ by $Q_i$"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.7(0.336)+0.3(-0.511)$",
+            "why": "use the approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.2352-0.1533$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0819$ nats",
+            "why": "KL is small but positive"
+          }
+        ],
+        "answer": "$D_{KL}(P\\|Q)\\approx0.082$ nats."
+      },
+      {
+        "problem": "A code uses lengths $1,2,3,3$ for probabilities $0.4,0.3,0.2,0.1$. Compute expected length.",
+        "steps": [
+          {
+            "do": "Write the average",
+            "result": "$L=0.4(1)+0.3(2)+0.2(3)+0.1(3)$",
+            "why": "expected length weights each code length"
+          },
+          {
+            "do": "Compute first two terms",
+            "result": "$0.4+0.6=1.0$",
+            "why": "common symbols dominate the average"
+          },
+          {
+            "do": "Compute last two terms",
+            "result": "$0.6+0.3=0.9$",
+            "why": "rare symbols have longer codewords"
+          },
+          {
+            "do": "Add totals",
+            "result": "$L=1.9$ bits",
+            "why": "sum all weighted lengths"
+          },
+          {
+            "do": "Compare to two-bit fixed coding",
+            "result": "$2-1.9=0.1$ bit saved",
+            "why": "variable length helps"
+          }
+        ],
+        "answer": "The expected length is $1.9$ bits per symbol."
+      },
+      {
+        "problem": "A sequence receives model probabilities $0.9$, $0.5$, and $0.25$ for its actual symbols. Compute the negative log probability in bits.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9\\cdot0.5\\cdot0.25=0.1125$",
+            "why": "independent sequence probabilities multiply"
+          },
+          {
+            "do": "Write code length",
+            "result": "$-\\log_2(0.1125)$",
+            "why": "negative log probability is ideal length"
+          },
+          {
+            "do": "Split the log",
+            "result": "$-\\log_2(0.9)-\\log_2(0.5)-\\log_2(0.25)$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Use common values",
+            "result": "$0.152+1+2$",
+            "why": "$-\\log_2(0.9)\\approx0.152$"
+          },
+          {
+            "do": "Add",
+            "result": "$3.152$ bits",
+            "why": "total sequence surprise"
+          }
+        ],
+        "answer": "The sequence costs about $3.152$ bits."
+      },
+      {
+        "problem": "A loss has reconstruction term $1.6$ and KL term $0.4$. Compute the negative ELBO, then recompute with KL weight $0.25$.",
+        "steps": [
+          {
+            "do": "Add unweighted terms",
+            "result": "$1.6+0.4=2.0$",
+            "why": "negative ELBO combines fit and KL"
+          },
+          {
+            "do": "Scale the KL term",
+            "result": "$0.25\\cdot0.4=0.1$",
+            "why": "apply the weight"
+          },
+          {
+            "do": "Add weighted terms",
+            "result": "$1.6+0.1=1.7$",
+            "why": "combine reconstruction and weighted KL"
+          },
+          {
+            "do": "Compare objectives",
+            "result": "$2.0-1.7=0.3$",
+            "why": "down-weighting KL lowers the loss"
+          },
+          {
+            "do": "Interpret the tradeoff",
+            "result": "less regularization",
+            "why": "the model is allowed to use the latent code more freely"
+          }
+        ],
+        "answer": "Unweighted loss is $2.0$; with KL weight $0.25$, loss is $1.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Compression budgets",
+        "background": "Channel capacity helps turn probability models into concrete storage expectations rather than vague compression hopes.",
+        "numbers": "At $1.3$ bits per symbol, $10,000$ symbols need about $13,000$ bits before headers."
+      },
+      {
+        "title": "Classifier losses",
+        "background": "In ML, Channel capacity connects naturally to negative log probabilities used for supervised learning.",
+        "numbers": "If the true-class probability is $0.8$, the loss is $-\\log(0.8)\\approx0.223$ nats."
+      },
+      {
+        "title": "Latent-variable models",
+        "background": "Variational models use information terms to decide how much a latent representation should remember.",
+        "numbers": "A reconstruction cost $2.1$ plus KL $0.3$ gives negative ELBO $2.4$."
+      },
+      {
+        "title": "Reinforcement learning policies",
+        "background": "Policy optimization often measures how far a new action distribution moved from an old one.",
+        "numbers": "Old policy $(0.6,0.4)$ and new $(0.5,0.5)$ have KL about $0.020$ nats."
+      },
+      {
+        "title": "Communication systems",
+        "background": "Rates, capacities, and code lengths make noisy links analyzable before hardware is built.",
+        "numbers": "A rate of $0.7$ bits/use over $2000$ uses carries $1400$ information bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Information constraints explain bottlenecks in embeddings, autoencoders, and quantizers.",
+        "numbers": "An $8$-bit code can name $2^8=256$ clusters; a $10$-bit code can name $1024$."
+      }
+    ],
+    "applicationsClose": "Across these examples, one idea keeps changing clothes: probabilities become logarithmic costs, and averages become operational limits.",
+    "takeaways": [
+      "Information-theoretic quantities turn uncertainty into arithmetic.",
+      "Logarithms convert probability products into additive costs.",
+      "The same entropy and KL terms appear in compression, inference, and ML losses.",
+      "Always check the modeling assumptions before treating a bound as a guarantee."
+    ],
     "prereqs": [
       "math-21-13"
     ]
@@ -300,19 +3719,260 @@
   B({
     "id": "math-21-15",
     "title": "The noisy-channel coding theorem",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: the noisy-channel coding theorem.",
+    "tagline": "Shannon's noisy-channel theorem draws the line between possible reliable rates and impossible ones.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Channel capacity</i>"
+        "Channel capacity",
+        "entropy",
+        "logarithms"
       ],
       "leadsTo": [
-        "the next lesson, <i>Rate–distortion theory</i>"
+        "Rate–distortion theory",
+        "information-theoretic ML objectives"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "block codes",
+        "KL divergence",
+        "expected value"
       ]
     },
+    "motivation": "<p>Noise does not end communication. Shannon showed that long, carefully separated codewords can make errors vanish below a precise rate.</p><p>Above that rate, no amount of cleverness can make reliability asymptotically perfect.</p>",
+    "definition": "<p>If a channel has capacity $C$, the noisy-channel coding theorem says every rate $R<C$ is achievable with error probability tending to zero using long block codes. The converse says rates $R>C$ cannot be made reliable.</p><p>The geometry is packing: codewords have noisy clouds around them. Below capacity, the clouds can be separated; above capacity, too many messages are packed into the output space.</p><p><b>Assumptions that matter:</b> statements are asymptotic in block length; the channel follows the modeled law; encoding and decoding may be complex; and the theorem proves existence, not a simple construction.</p>",
+    "worked": {
+      "problem": "A channel has capacity $0.75$ bits/use. Classify rates $0.6$ and $0.9$.",
+      "skills": [
+        "block codes",
+        "logs",
+        "probability arithmetic"
+      ],
+      "strategy": "Translate the definition into one small calculation at a time, keeping units and direction clear.",
+      "steps": [
+        {
+          "do": "State capacity",
+          "result": "$C=0.75$ bits/use",
+          "why": "given boundary"
+        },
+        {
+          "do": "Compare $0.6$",
+          "result": "$0.6<0.75$",
+          "why": "below capacity"
+        },
+        {
+          "do": "Classify $0.6$",
+          "result": "achievable in principle",
+          "why": "the theorem allows rates below $C$"
+        },
+        {
+          "do": "Compare $0.9$",
+          "result": "$0.9>0.75$",
+          "why": "above capacity"
+        },
+        {
+          "do": "Classify $0.9$",
+          "result": "not reliably achievable asymptotically",
+          "why": "the converse rules it out"
+        }
+      ],
+      "verify": "The result has the right sign and agrees with the qualitative meaning of the definition.",
+      "answer": "Rate $0.6$ is possible in principle; rate $0.9$ is not.",
+      "connects": "This calculation shows the lesson's abstract quantity acting as a concrete numerical guide."
+    },
+    "practice": [
+      {
+        "problem": "Compute entropy for a binary source with $P(1)=0.8$ and $P(0)=0.2$ using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\log_2 0.8-0.2\\log_2 0.2$",
+            "why": "entropy is average surprise"
+          },
+          {
+            "do": "Substitute the logs",
+            "result": "$H=-0.8(-0.322)-0.2(-2.322)$",
+            "why": "use the provided values"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.2576$",
+            "why": "$0.8\\cdot0.322=0.2576$"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.4644$",
+            "why": "$0.2\\cdot2.322=0.4644$"
+          },
+          {
+            "do": "Add the contributions",
+            "result": "$H\\approx0.722$ bits",
+            "why": "average uncertainty is the sum"
+          }
+        ],
+        "answer": "$H\\approx0.722$ bits."
+      },
+      {
+        "problem": "For distributions $P=(0.7,0.3)$ and $Q=(0.5,0.5)$, compute $D_{KL}(P\\|Q)$ using $\\log 1.4\\approx0.336$ and $\\log 0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Write the KL formula",
+            "result": "$D_{KL}(P\\|Q)=0.7\\log(0.7/0.5)+0.3\\log(0.3/0.5)$",
+            "why": "compare probabilities component by component"
+          },
+          {
+            "do": "Compute the ratios",
+            "result": "$1.4$ and $0.6$",
+            "why": "divide $P_i$ by $Q_i$"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.7(0.336)+0.3(-0.511)$",
+            "why": "use the approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.2352-0.1533$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0819$ nats",
+            "why": "KL is small but positive"
+          }
+        ],
+        "answer": "$D_{KL}(P\\|Q)\\approx0.082$ nats."
+      },
+      {
+        "problem": "A code uses lengths $1,2,3,3$ for probabilities $0.4,0.3,0.2,0.1$. Compute expected length.",
+        "steps": [
+          {
+            "do": "Write the average",
+            "result": "$L=0.4(1)+0.3(2)+0.2(3)+0.1(3)$",
+            "why": "expected length weights each code length"
+          },
+          {
+            "do": "Compute first two terms",
+            "result": "$0.4+0.6=1.0$",
+            "why": "common symbols dominate the average"
+          },
+          {
+            "do": "Compute last two terms",
+            "result": "$0.6+0.3=0.9$",
+            "why": "rare symbols have longer codewords"
+          },
+          {
+            "do": "Add totals",
+            "result": "$L=1.9$ bits",
+            "why": "sum all weighted lengths"
+          },
+          {
+            "do": "Compare to two-bit fixed coding",
+            "result": "$2-1.9=0.1$ bit saved",
+            "why": "variable length helps"
+          }
+        ],
+        "answer": "The expected length is $1.9$ bits per symbol."
+      },
+      {
+        "problem": "A sequence receives model probabilities $0.9$, $0.5$, and $0.25$ for its actual symbols. Compute the negative log probability in bits.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9\\cdot0.5\\cdot0.25=0.1125$",
+            "why": "independent sequence probabilities multiply"
+          },
+          {
+            "do": "Write code length",
+            "result": "$-\\log_2(0.1125)$",
+            "why": "negative log probability is ideal length"
+          },
+          {
+            "do": "Split the log",
+            "result": "$-\\log_2(0.9)-\\log_2(0.5)-\\log_2(0.25)$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Use common values",
+            "result": "$0.152+1+2$",
+            "why": "$-\\log_2(0.9)\\approx0.152$"
+          },
+          {
+            "do": "Add",
+            "result": "$3.152$ bits",
+            "why": "total sequence surprise"
+          }
+        ],
+        "answer": "The sequence costs about $3.152$ bits."
+      },
+      {
+        "problem": "A loss has reconstruction term $1.6$ and KL term $0.4$. Compute the negative ELBO, then recompute with KL weight $0.25$.",
+        "steps": [
+          {
+            "do": "Add unweighted terms",
+            "result": "$1.6+0.4=2.0$",
+            "why": "negative ELBO combines fit and KL"
+          },
+          {
+            "do": "Scale the KL term",
+            "result": "$0.25\\cdot0.4=0.1$",
+            "why": "apply the weight"
+          },
+          {
+            "do": "Add weighted terms",
+            "result": "$1.6+0.1=1.7$",
+            "why": "combine reconstruction and weighted KL"
+          },
+          {
+            "do": "Compare objectives",
+            "result": "$2.0-1.7=0.3$",
+            "why": "down-weighting KL lowers the loss"
+          },
+          {
+            "do": "Interpret the tradeoff",
+            "result": "less regularization",
+            "why": "the model is allowed to use the latent code more freely"
+          }
+        ],
+        "answer": "Unweighted loss is $2.0$; with KL weight $0.25$, loss is $1.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Compression budgets",
+        "background": "The noisy-channel coding theorem helps turn probability models into concrete storage expectations rather than vague compression hopes.",
+        "numbers": "At $1.3$ bits per symbol, $10,000$ symbols need about $13,000$ bits before headers."
+      },
+      {
+        "title": "Classifier losses",
+        "background": "In ML, The noisy-channel coding theorem connects naturally to negative log probabilities used for supervised learning.",
+        "numbers": "If the true-class probability is $0.8$, the loss is $-\\log(0.8)\\approx0.223$ nats."
+      },
+      {
+        "title": "Latent-variable models",
+        "background": "Variational models use information terms to decide how much a latent representation should remember.",
+        "numbers": "A reconstruction cost $2.1$ plus KL $0.3$ gives negative ELBO $2.4$."
+      },
+      {
+        "title": "Reinforcement learning policies",
+        "background": "Policy optimization often measures how far a new action distribution moved from an old one.",
+        "numbers": "Old policy $(0.6,0.4)$ and new $(0.5,0.5)$ have KL about $0.020$ nats."
+      },
+      {
+        "title": "Communication systems",
+        "background": "Rates, capacities, and code lengths make noisy links analyzable before hardware is built.",
+        "numbers": "A rate of $0.7$ bits/use over $2000$ uses carries $1400$ information bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Information constraints explain bottlenecks in embeddings, autoencoders, and quantizers.",
+        "numbers": "An $8$-bit code can name $2^8=256$ clusters; a $10$-bit code can name $1024$."
+      }
+    ],
+    "applicationsClose": "Across these examples, one idea keeps changing clothes: probabilities become logarithmic costs, and averages become operational limits.",
+    "takeaways": [
+      "Information-theoretic quantities turn uncertainty into arithmetic.",
+      "Logarithms convert probability products into additive costs.",
+      "The same entropy and KL terms appear in compression, inference, and ML losses.",
+      "Always check the modeling assumptions before treating a bound as a guarantee."
+    ],
     "prereqs": [
       "math-21-14"
     ]
@@ -321,19 +3981,260 @@
   B({
     "id": "math-21-16",
     "title": "Rate–distortion theory",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: rate–distortion theory.",
+    "tagline": "Rate–distortion theory asks how many bits are needed when small errors are allowed.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The noisy-channel coding theorem</i>"
+        "The noisy-channel coding theorem",
+        "entropy",
+        "logarithms"
       ],
       "leadsTo": [
-        "the next lesson, <i>The maximum entropy principle</i>"
+        "The maximum entropy principle",
+        "information-theoretic ML objectives"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "constrained optimization",
+        "KL divergence",
+        "expected value"
       ]
     },
+    "motivation": "<p>Lossless compression is not always the goal. Audio, images, embeddings, and weights can often change a little while staying useful.</p><p>Rate–distortion theory makes that tradeoff precise: fewer bits mean more distortion, and a distortion budget implies a minimum rate.</p>",
+    "definition": "<p>For source $X$, reconstruction $\\hat X$, and distortion $d(x,\\hat x)$, the rate-distortion function is $R(D)=\\min I(X;\\hat X)$ subject to $E[d(X,\\hat X)]\\le D$.</p><p>The minimization keeps only the information needed to meet the allowed average distortion. Loosening $D$ cannot increase the minimum required rate.</p><p><b>Assumptions that matter:</b> the distortion measure must match the task; expectations use the source distribution; the theorem is asymptotic over long blocks; and different applications need different distortion definitions.</p>",
+    "worked": {
+      "problem": "For a fair binary source with Hamming distortion $D=0.1$, use $R(D)=1-H_2(D)$ and $H_2(0.1)\\approx0.469$.",
+      "skills": [
+        "constrained optimization",
+        "logs",
+        "probability arithmetic"
+      ],
+      "strategy": "Translate the definition into one small calculation at a time, keeping units and direction clear.",
+      "steps": [
+        {
+          "do": "Write the formula",
+          "result": "$R(D)=1-H_2(D)$",
+          "why": "binary fair source with Hamming distortion"
+        },
+        {
+          "do": "Substitute $D=0.1$",
+          "result": "$R(0.1)=1-H_2(0.1)$",
+          "why": "allowed error probability"
+        },
+        {
+          "do": "Use the entropy value",
+          "result": "$R(0.1)=1-0.469$",
+          "why": "given value"
+        },
+        {
+          "do": "Subtract",
+          "result": "$R(0.1)=0.531$ bits/symbol",
+          "why": "minimum rate at that distortion"
+        },
+        {
+          "do": "Scale to $1000$ symbols",
+          "result": "$531$ bits",
+          "why": "rate times symbols"
+        }
+      ],
+      "verify": "The result has the right sign and agrees with the qualitative meaning of the definition.",
+      "answer": "The minimum asymptotic rate is about $0.531$ bits per symbol.",
+      "connects": "This calculation shows the lesson's abstract quantity acting as a concrete numerical guide."
+    },
+    "practice": [
+      {
+        "problem": "Compute entropy for a binary source with $P(1)=0.8$ and $P(0)=0.2$ using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\log_2 0.8-0.2\\log_2 0.2$",
+            "why": "entropy is average surprise"
+          },
+          {
+            "do": "Substitute the logs",
+            "result": "$H=-0.8(-0.322)-0.2(-2.322)$",
+            "why": "use the provided values"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.2576$",
+            "why": "$0.8\\cdot0.322=0.2576$"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.4644$",
+            "why": "$0.2\\cdot2.322=0.4644$"
+          },
+          {
+            "do": "Add the contributions",
+            "result": "$H\\approx0.722$ bits",
+            "why": "average uncertainty is the sum"
+          }
+        ],
+        "answer": "$H\\approx0.722$ bits."
+      },
+      {
+        "problem": "For distributions $P=(0.7,0.3)$ and $Q=(0.5,0.5)$, compute $D_{KL}(P\\|Q)$ using $\\log 1.4\\approx0.336$ and $\\log 0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Write the KL formula",
+            "result": "$D_{KL}(P\\|Q)=0.7\\log(0.7/0.5)+0.3\\log(0.3/0.5)$",
+            "why": "compare probabilities component by component"
+          },
+          {
+            "do": "Compute the ratios",
+            "result": "$1.4$ and $0.6$",
+            "why": "divide $P_i$ by $Q_i$"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.7(0.336)+0.3(-0.511)$",
+            "why": "use the approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.2352-0.1533$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0819$ nats",
+            "why": "KL is small but positive"
+          }
+        ],
+        "answer": "$D_{KL}(P\\|Q)\\approx0.082$ nats."
+      },
+      {
+        "problem": "A code uses lengths $1,2,3,3$ for probabilities $0.4,0.3,0.2,0.1$. Compute expected length.",
+        "steps": [
+          {
+            "do": "Write the average",
+            "result": "$L=0.4(1)+0.3(2)+0.2(3)+0.1(3)$",
+            "why": "expected length weights each code length"
+          },
+          {
+            "do": "Compute first two terms",
+            "result": "$0.4+0.6=1.0$",
+            "why": "common symbols dominate the average"
+          },
+          {
+            "do": "Compute last two terms",
+            "result": "$0.6+0.3=0.9$",
+            "why": "rare symbols have longer codewords"
+          },
+          {
+            "do": "Add totals",
+            "result": "$L=1.9$ bits",
+            "why": "sum all weighted lengths"
+          },
+          {
+            "do": "Compare to two-bit fixed coding",
+            "result": "$2-1.9=0.1$ bit saved",
+            "why": "variable length helps"
+          }
+        ],
+        "answer": "The expected length is $1.9$ bits per symbol."
+      },
+      {
+        "problem": "A sequence receives model probabilities $0.9$, $0.5$, and $0.25$ for its actual symbols. Compute the negative log probability in bits.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9\\cdot0.5\\cdot0.25=0.1125$",
+            "why": "independent sequence probabilities multiply"
+          },
+          {
+            "do": "Write code length",
+            "result": "$-\\log_2(0.1125)$",
+            "why": "negative log probability is ideal length"
+          },
+          {
+            "do": "Split the log",
+            "result": "$-\\log_2(0.9)-\\log_2(0.5)-\\log_2(0.25)$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Use common values",
+            "result": "$0.152+1+2$",
+            "why": "$-\\log_2(0.9)\\approx0.152$"
+          },
+          {
+            "do": "Add",
+            "result": "$3.152$ bits",
+            "why": "total sequence surprise"
+          }
+        ],
+        "answer": "The sequence costs about $3.152$ bits."
+      },
+      {
+        "problem": "A loss has reconstruction term $1.6$ and KL term $0.4$. Compute the negative ELBO, then recompute with KL weight $0.25$.",
+        "steps": [
+          {
+            "do": "Add unweighted terms",
+            "result": "$1.6+0.4=2.0$",
+            "why": "negative ELBO combines fit and KL"
+          },
+          {
+            "do": "Scale the KL term",
+            "result": "$0.25\\cdot0.4=0.1$",
+            "why": "apply the weight"
+          },
+          {
+            "do": "Add weighted terms",
+            "result": "$1.6+0.1=1.7$",
+            "why": "combine reconstruction and weighted KL"
+          },
+          {
+            "do": "Compare objectives",
+            "result": "$2.0-1.7=0.3$",
+            "why": "down-weighting KL lowers the loss"
+          },
+          {
+            "do": "Interpret the tradeoff",
+            "result": "less regularization",
+            "why": "the model is allowed to use the latent code more freely"
+          }
+        ],
+        "answer": "Unweighted loss is $2.0$; with KL weight $0.25$, loss is $1.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Compression budgets",
+        "background": "Rate–distortion theory helps turn probability models into concrete storage expectations rather than vague compression hopes.",
+        "numbers": "At $1.3$ bits per symbol, $10,000$ symbols need about $13,000$ bits before headers."
+      },
+      {
+        "title": "Classifier losses",
+        "background": "In ML, Rate–distortion theory connects naturally to negative log probabilities used for supervised learning.",
+        "numbers": "If the true-class probability is $0.8$, the loss is $-\\log(0.8)\\approx0.223$ nats."
+      },
+      {
+        "title": "Latent-variable models",
+        "background": "Variational models use information terms to decide how much a latent representation should remember.",
+        "numbers": "A reconstruction cost $2.1$ plus KL $0.3$ gives negative ELBO $2.4$."
+      },
+      {
+        "title": "Reinforcement learning policies",
+        "background": "Policy optimization often measures how far a new action distribution moved from an old one.",
+        "numbers": "Old policy $(0.6,0.4)$ and new $(0.5,0.5)$ have KL about $0.020$ nats."
+      },
+      {
+        "title": "Communication systems",
+        "background": "Rates, capacities, and code lengths make noisy links analyzable before hardware is built.",
+        "numbers": "A rate of $0.7$ bits/use over $2000$ uses carries $1400$ information bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Information constraints explain bottlenecks in embeddings, autoencoders, and quantizers.",
+        "numbers": "An $8$-bit code can name $2^8=256$ clusters; a $10$-bit code can name $1024$."
+      }
+    ],
+    "applicationsClose": "Across these examples, one idea keeps changing clothes: probabilities become logarithmic costs, and averages become operational limits.",
+    "takeaways": [
+      "Information-theoretic quantities turn uncertainty into arithmetic.",
+      "Logarithms convert probability products into additive costs.",
+      "The same entropy and KL terms appear in compression, inference, and ML losses.",
+      "Always check the modeling assumptions before treating a bound as a guarantee."
+    ],
     "prereqs": [
       "math-21-15"
     ]
@@ -342,19 +4243,260 @@
   B({
     "id": "math-21-17",
     "title": "The maximum entropy principle",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: the maximum entropy principle.",
+    "tagline": "Maximum entropy says: honor the constraints, then add no extra certainty.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Rate–distortion theory</i>"
+        "Rate–distortion theory",
+        "entropy",
+        "logarithms"
       ],
       "leadsTo": [
-        "the next lesson, <i>f-divergences</i>"
+        "f-divergences",
+        "information-theoretic ML objectives"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "Lagrange multipliers",
+        "KL divergence",
+        "expected value"
       ]
     },
+    "motivation": "<p>Sometimes you know only a few facts, such as a mean or a support. The maximum entropy principle is a disciplined way to avoid inventing details.</p><p>Among all distributions satisfying the known constraints, choose the one with largest entropy.</p>",
+    "definition": "<p>The <b>maximum entropy principle</b> maximizes $H(p)=-\\sum_i p_i\\log p_i$ subject to constraints such as $\\sum_i p_i=1$ and $\\sum_i p_i a_i=\\mu$.</p><p>With only finite support and normalization, the maximizer is uniform. Entropy is concave, so spreading mass evenly creates the largest uncertainty when no outcome is distinguished.</p><p><b>Assumptions that matter:</b> the support is part of the model; constraints must be correct; logs may use any base without changing the maximizer; and maximum entropy is a modeling principle, not a guarantee about nature.</p>",
+    "worked": {
+      "problem": "Find the maximum-entropy distribution on three outcomes with no constraints except total probability $1$.",
+      "skills": [
+        "Lagrange multipliers",
+        "logs",
+        "probability arithmetic"
+      ],
+      "strategy": "Translate the definition into one small calculation at a time, keeping units and direction clear.",
+      "steps": [
+        {
+          "do": "State support size",
+          "result": "$n=3$",
+          "why": "three outcomes"
+        },
+        {
+          "do": "Use symmetry",
+          "result": "$p_1=p_2=p_3$",
+          "why": "no outcome is distinguished"
+        },
+        {
+          "do": "Enforce normalization",
+          "result": "$3p_i=1$",
+          "why": "probabilities sum to 1"
+        },
+        {
+          "do": "Solve",
+          "result": "$p_i=1/3$",
+          "why": "divide by 3"
+        },
+        {
+          "do": "Compute entropy",
+          "result": "$H=\\log_2 3\\approx1.585$ bits",
+          "why": "uniform distribution on three outcomes"
+        }
+      ],
+      "verify": "The result has the right sign and agrees with the qualitative meaning of the definition.",
+      "answer": "The distribution is $(1/3,1/3,1/3)$ with entropy $\\log_2 3\\approx1.585$ bits.",
+      "connects": "This calculation shows the lesson's abstract quantity acting as a concrete numerical guide."
+    },
+    "practice": [
+      {
+        "problem": "Compute entropy for a binary source with $P(1)=0.8$ and $P(0)=0.2$ using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\log_2 0.8-0.2\\log_2 0.2$",
+            "why": "entropy is average surprise"
+          },
+          {
+            "do": "Substitute the logs",
+            "result": "$H=-0.8(-0.322)-0.2(-2.322)$",
+            "why": "use the provided values"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.2576$",
+            "why": "$0.8\\cdot0.322=0.2576$"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.4644$",
+            "why": "$0.2\\cdot2.322=0.4644$"
+          },
+          {
+            "do": "Add the contributions",
+            "result": "$H\\approx0.722$ bits",
+            "why": "average uncertainty is the sum"
+          }
+        ],
+        "answer": "$H\\approx0.722$ bits."
+      },
+      {
+        "problem": "For distributions $P=(0.7,0.3)$ and $Q=(0.5,0.5)$, compute $D_{KL}(P\\|Q)$ using $\\log 1.4\\approx0.336$ and $\\log 0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Write the KL formula",
+            "result": "$D_{KL}(P\\|Q)=0.7\\log(0.7/0.5)+0.3\\log(0.3/0.5)$",
+            "why": "compare probabilities component by component"
+          },
+          {
+            "do": "Compute the ratios",
+            "result": "$1.4$ and $0.6$",
+            "why": "divide $P_i$ by $Q_i$"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.7(0.336)+0.3(-0.511)$",
+            "why": "use the approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.2352-0.1533$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0819$ nats",
+            "why": "KL is small but positive"
+          }
+        ],
+        "answer": "$D_{KL}(P\\|Q)\\approx0.082$ nats."
+      },
+      {
+        "problem": "A code uses lengths $1,2,3,3$ for probabilities $0.4,0.3,0.2,0.1$. Compute expected length.",
+        "steps": [
+          {
+            "do": "Write the average",
+            "result": "$L=0.4(1)+0.3(2)+0.2(3)+0.1(3)$",
+            "why": "expected length weights each code length"
+          },
+          {
+            "do": "Compute first two terms",
+            "result": "$0.4+0.6=1.0$",
+            "why": "common symbols dominate the average"
+          },
+          {
+            "do": "Compute last two terms",
+            "result": "$0.6+0.3=0.9$",
+            "why": "rare symbols have longer codewords"
+          },
+          {
+            "do": "Add totals",
+            "result": "$L=1.9$ bits",
+            "why": "sum all weighted lengths"
+          },
+          {
+            "do": "Compare to two-bit fixed coding",
+            "result": "$2-1.9=0.1$ bit saved",
+            "why": "variable length helps"
+          }
+        ],
+        "answer": "The expected length is $1.9$ bits per symbol."
+      },
+      {
+        "problem": "A sequence receives model probabilities $0.9$, $0.5$, and $0.25$ for its actual symbols. Compute the negative log probability in bits.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9\\cdot0.5\\cdot0.25=0.1125$",
+            "why": "independent sequence probabilities multiply"
+          },
+          {
+            "do": "Write code length",
+            "result": "$-\\log_2(0.1125)$",
+            "why": "negative log probability is ideal length"
+          },
+          {
+            "do": "Split the log",
+            "result": "$-\\log_2(0.9)-\\log_2(0.5)-\\log_2(0.25)$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Use common values",
+            "result": "$0.152+1+2$",
+            "why": "$-\\log_2(0.9)\\approx0.152$"
+          },
+          {
+            "do": "Add",
+            "result": "$3.152$ bits",
+            "why": "total sequence surprise"
+          }
+        ],
+        "answer": "The sequence costs about $3.152$ bits."
+      },
+      {
+        "problem": "A loss has reconstruction term $1.6$ and KL term $0.4$. Compute the negative ELBO, then recompute with KL weight $0.25$.",
+        "steps": [
+          {
+            "do": "Add unweighted terms",
+            "result": "$1.6+0.4=2.0$",
+            "why": "negative ELBO combines fit and KL"
+          },
+          {
+            "do": "Scale the KL term",
+            "result": "$0.25\\cdot0.4=0.1$",
+            "why": "apply the weight"
+          },
+          {
+            "do": "Add weighted terms",
+            "result": "$1.6+0.1=1.7$",
+            "why": "combine reconstruction and weighted KL"
+          },
+          {
+            "do": "Compare objectives",
+            "result": "$2.0-1.7=0.3$",
+            "why": "down-weighting KL lowers the loss"
+          },
+          {
+            "do": "Interpret the tradeoff",
+            "result": "less regularization",
+            "why": "the model is allowed to use the latent code more freely"
+          }
+        ],
+        "answer": "Unweighted loss is $2.0$; with KL weight $0.25$, loss is $1.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Compression budgets",
+        "background": "The maximum entropy principle helps turn probability models into concrete storage expectations rather than vague compression hopes.",
+        "numbers": "At $1.3$ bits per symbol, $10,000$ symbols need about $13,000$ bits before headers."
+      },
+      {
+        "title": "Classifier losses",
+        "background": "In ML, The maximum entropy principle connects naturally to negative log probabilities used for supervised learning.",
+        "numbers": "If the true-class probability is $0.8$, the loss is $-\\log(0.8)\\approx0.223$ nats."
+      },
+      {
+        "title": "Latent-variable models",
+        "background": "Variational models use information terms to decide how much a latent representation should remember.",
+        "numbers": "A reconstruction cost $2.1$ plus KL $0.3$ gives negative ELBO $2.4$."
+      },
+      {
+        "title": "Reinforcement learning policies",
+        "background": "Policy optimization often measures how far a new action distribution moved from an old one.",
+        "numbers": "Old policy $(0.6,0.4)$ and new $(0.5,0.5)$ have KL about $0.020$ nats."
+      },
+      {
+        "title": "Communication systems",
+        "background": "Rates, capacities, and code lengths make noisy links analyzable before hardware is built.",
+        "numbers": "A rate of $0.7$ bits/use over $2000$ uses carries $1400$ information bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Information constraints explain bottlenecks in embeddings, autoencoders, and quantizers.",
+        "numbers": "An $8$-bit code can name $2^8=256$ clusters; a $10$-bit code can name $1024$."
+      }
+    ],
+    "applicationsClose": "Across these examples, one idea keeps changing clothes: probabilities become logarithmic costs, and averages become operational limits.",
+    "takeaways": [
+      "Information-theoretic quantities turn uncertainty into arithmetic.",
+      "Logarithms convert probability products into additive costs.",
+      "The same entropy and KL terms appear in compression, inference, and ML losses.",
+      "Always check the modeling assumptions before treating a bound as a guarantee."
+    ],
     "prereqs": [
       "math-21-16"
     ]
@@ -363,19 +4505,265 @@
   B({
     "id": "math-21-18",
     "title": "f-divergences",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: f-divergences.",
+    "tagline": "f-divergences compare distributions by applying a convex penalty to probability ratios.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The maximum entropy principle</i>"
+        "The maximum entropy principle",
+        "entropy",
+        "logarithms"
       ],
       "leadsTo": [
-        "the next lesson, <i>The evidence lower bound (ELBO)</i>"
+        "The evidence lower bound (ELBO)",
+        "information-theoretic ML objectives"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "convexity",
+        "KL divergence",
+        "expected value"
       ]
     },
+    "motivation": "<p>KL divergence is famous, but it is one member of a larger family. Different choices punish different mismatches.</p><p>f-divergences organize these measures with one convex-function template.</p>",
+    "definition": "<p>For distributions $P$ and $Q$, an $f$-divergence is $D_f(P\\|Q)=\\sum_x Q(x)f(P(x)/Q(x))$, where $f$ is convex and $f(1)=0$.</p><p>If $P=Q$, every ratio equals $1$, so the divergence is zero. Convexity and Jensen's inequality give nonnegativity under the usual support conditions.</p><p><b>Assumptions that matter:</b> $Q(x)>0$ wherever $P(x)>0$ for finite ratios; $P$ and $Q$ share support; $f$ is convex; and the direction can matter.</p>",
+    "worked": {
+      "problem": "Compute $D_f$ for $f(t)=(t-1)^2$, $P=(0.6,0.4)$, and $Q=(0.5,0.5)$.",
+      "skills": [
+        "convexity",
+        "logs",
+        "probability arithmetic"
+      ],
+      "strategy": "Translate the definition into one small calculation at a time, keeping units and direction clear.",
+      "steps": [
+        {
+          "do": "Compute first ratio",
+          "result": "$0.6/0.5=1.2$",
+          "why": "divide $P$ by $Q$"
+        },
+        {
+          "do": "Evaluate first penalty",
+          "result": "$(1.2-1)^2=0.04$",
+          "why": "apply $f$"
+        },
+        {
+          "do": "Weight first penalty",
+          "result": "$0.5\\cdot0.04=0.02$",
+          "why": "definition weights by $Q$"
+        },
+        {
+          "do": "Compute second ratio",
+          "result": "$0.4/0.5=0.8$",
+          "why": "second component"
+        },
+        {
+          "do": "Weight second penalty",
+          "result": "$0.5(0.8-1)^2=0.02$",
+          "why": "same squared difference"
+        },
+        {
+          "do": "Add terms",
+          "result": "$D_f=0.04$",
+          "why": "sum weighted penalties"
+        }
+      ],
+      "verify": "The result has the right sign and agrees with the qualitative meaning of the definition.",
+      "answer": "The divergence is $0.04$.",
+      "connects": "This calculation shows the lesson's abstract quantity acting as a concrete numerical guide."
+    },
+    "practice": [
+      {
+        "problem": "Compute entropy for a binary source with $P(1)=0.8$ and $P(0)=0.2$ using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\log_2 0.8-0.2\\log_2 0.2$",
+            "why": "entropy is average surprise"
+          },
+          {
+            "do": "Substitute the logs",
+            "result": "$H=-0.8(-0.322)-0.2(-2.322)$",
+            "why": "use the provided values"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.2576$",
+            "why": "$0.8\\cdot0.322=0.2576$"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.4644$",
+            "why": "$0.2\\cdot2.322=0.4644$"
+          },
+          {
+            "do": "Add the contributions",
+            "result": "$H\\approx0.722$ bits",
+            "why": "average uncertainty is the sum"
+          }
+        ],
+        "answer": "$H\\approx0.722$ bits."
+      },
+      {
+        "problem": "For distributions $P=(0.7,0.3)$ and $Q=(0.5,0.5)$, compute $D_{KL}(P\\|Q)$ using $\\log 1.4\\approx0.336$ and $\\log 0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Write the KL formula",
+            "result": "$D_{KL}(P\\|Q)=0.7\\log(0.7/0.5)+0.3\\log(0.3/0.5)$",
+            "why": "compare probabilities component by component"
+          },
+          {
+            "do": "Compute the ratios",
+            "result": "$1.4$ and $0.6$",
+            "why": "divide $P_i$ by $Q_i$"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.7(0.336)+0.3(-0.511)$",
+            "why": "use the approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.2352-0.1533$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0819$ nats",
+            "why": "KL is small but positive"
+          }
+        ],
+        "answer": "$D_{KL}(P\\|Q)\\approx0.082$ nats."
+      },
+      {
+        "problem": "A code uses lengths $1,2,3,3$ for probabilities $0.4,0.3,0.2,0.1$. Compute expected length.",
+        "steps": [
+          {
+            "do": "Write the average",
+            "result": "$L=0.4(1)+0.3(2)+0.2(3)+0.1(3)$",
+            "why": "expected length weights each code length"
+          },
+          {
+            "do": "Compute first two terms",
+            "result": "$0.4+0.6=1.0$",
+            "why": "common symbols dominate the average"
+          },
+          {
+            "do": "Compute last two terms",
+            "result": "$0.6+0.3=0.9$",
+            "why": "rare symbols have longer codewords"
+          },
+          {
+            "do": "Add totals",
+            "result": "$L=1.9$ bits",
+            "why": "sum all weighted lengths"
+          },
+          {
+            "do": "Compare to two-bit fixed coding",
+            "result": "$2-1.9=0.1$ bit saved",
+            "why": "variable length helps"
+          }
+        ],
+        "answer": "The expected length is $1.9$ bits per symbol."
+      },
+      {
+        "problem": "A sequence receives model probabilities $0.9$, $0.5$, and $0.25$ for its actual symbols. Compute the negative log probability in bits.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9\\cdot0.5\\cdot0.25=0.1125$",
+            "why": "independent sequence probabilities multiply"
+          },
+          {
+            "do": "Write code length",
+            "result": "$-\\log_2(0.1125)$",
+            "why": "negative log probability is ideal length"
+          },
+          {
+            "do": "Split the log",
+            "result": "$-\\log_2(0.9)-\\log_2(0.5)-\\log_2(0.25)$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Use common values",
+            "result": "$0.152+1+2$",
+            "why": "$-\\log_2(0.9)\\approx0.152$"
+          },
+          {
+            "do": "Add",
+            "result": "$3.152$ bits",
+            "why": "total sequence surprise"
+          }
+        ],
+        "answer": "The sequence costs about $3.152$ bits."
+      },
+      {
+        "problem": "A loss has reconstruction term $1.6$ and KL term $0.4$. Compute the negative ELBO, then recompute with KL weight $0.25$.",
+        "steps": [
+          {
+            "do": "Add unweighted terms",
+            "result": "$1.6+0.4=2.0$",
+            "why": "negative ELBO combines fit and KL"
+          },
+          {
+            "do": "Scale the KL term",
+            "result": "$0.25\\cdot0.4=0.1$",
+            "why": "apply the weight"
+          },
+          {
+            "do": "Add weighted terms",
+            "result": "$1.6+0.1=1.7$",
+            "why": "combine reconstruction and weighted KL"
+          },
+          {
+            "do": "Compare objectives",
+            "result": "$2.0-1.7=0.3$",
+            "why": "down-weighting KL lowers the loss"
+          },
+          {
+            "do": "Interpret the tradeoff",
+            "result": "less regularization",
+            "why": "the model is allowed to use the latent code more freely"
+          }
+        ],
+        "answer": "Unweighted loss is $2.0$; with KL weight $0.25$, loss is $1.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Compression budgets",
+        "background": "f-divergences helps turn probability models into concrete storage expectations rather than vague compression hopes.",
+        "numbers": "At $1.3$ bits per symbol, $10,000$ symbols need about $13,000$ bits before headers."
+      },
+      {
+        "title": "Classifier losses",
+        "background": "In ML, f-divergences connects naturally to negative log probabilities used for supervised learning.",
+        "numbers": "If the true-class probability is $0.8$, the loss is $-\\log(0.8)\\approx0.223$ nats."
+      },
+      {
+        "title": "Latent-variable models",
+        "background": "Variational models use information terms to decide how much a latent representation should remember.",
+        "numbers": "A reconstruction cost $2.1$ plus KL $0.3$ gives negative ELBO $2.4$."
+      },
+      {
+        "title": "Reinforcement learning policies",
+        "background": "Policy optimization often measures how far a new action distribution moved from an old one.",
+        "numbers": "Old policy $(0.6,0.4)$ and new $(0.5,0.5)$ have KL about $0.020$ nats."
+      },
+      {
+        "title": "Communication systems",
+        "background": "Rates, capacities, and code lengths make noisy links analyzable before hardware is built.",
+        "numbers": "A rate of $0.7$ bits/use over $2000$ uses carries $1400$ information bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Information constraints explain bottlenecks in embeddings, autoencoders, and quantizers.",
+        "numbers": "An $8$-bit code can name $2^8=256$ clusters; a $10$-bit code can name $1024$."
+      }
+    ],
+    "applicationsClose": "Across these examples, one idea keeps changing clothes: probabilities become logarithmic costs, and averages become operational limits.",
+    "takeaways": [
+      "Information-theoretic quantities turn uncertainty into arithmetic.",
+      "Logarithms convert probability products into additive costs.",
+      "The same entropy and KL terms appear in compression, inference, and ML losses.",
+      "Always check the modeling assumptions before treating a bound as a guarantee."
+    ],
     "prereqs": [
       "math-21-17"
     ]
@@ -384,19 +4772,260 @@
   B({
     "id": "math-21-19",
     "title": "The evidence lower bound (ELBO)",
-    "tier": "🟢",
-    "tagline": "One concept from Information theory: the evidence lower bound (elbo).",
+    "tagline": "The ELBO is a tractable lower bound whose gap is exactly a KL divergence.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>f-divergences</i>"
+        "f-divergences",
+        "entropy",
+        "logarithms"
       ],
       "leadsTo": [
-        "the next lesson, <i>Cross-entropy loss, KL in VAEs and RL</i>"
+        "Cross-entropy loss, KL in VAEs and RL",
+        "information-theoretic ML objectives"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "Jensen's inequality",
+        "KL divergence",
+        "expected value"
       ]
     },
+    "motivation": "<p>Latent-variable models hide variables we wish we knew. The evidence $\\log p(x)$ can be hard to compute because it sums or integrates over those hidden variables.</p><p>The ELBO gives a lower bound we can optimize, and the KL gap tells us how tight it is.</p>",
+    "definition": "<p>For latent $z$, model $p(x,z)$, and variational distribution $q(z\\mid x)$, $\\text{ELBO}=E_q[\\log p(x,z)-\\log q(z\\mid x)]$.</p><p>The decomposition $\\log p(x)=\\text{ELBO}+D_{KL}(q(z\\mid x)\\|p(z\\mid x))$ makes the lower bound clear because KL divergence is nonnegative.</p><p><b>Assumptions that matter:</b> expectations are under $q$; support must make logs finite; the variational family may limit tightness; and ML usually uses natural logs.</p>",
+    "worked": {
+      "problem": "If $\\log p(x)=-2.0$ and the KL gap is $0.3$, find the ELBO.",
+      "skills": [
+        "Jensen's inequality",
+        "logs",
+        "probability arithmetic"
+      ],
+      "strategy": "Translate the definition into one small calculation at a time, keeping units and direction clear.",
+      "steps": [
+        {
+          "do": "Write the decomposition",
+          "result": "$\\log p(x)=\\text{ELBO}+D_{KL}$",
+          "why": "evidence equals bound plus gap"
+        },
+        {
+          "do": "Substitute values",
+          "result": "$-2.0=\\text{ELBO}+0.3$",
+          "why": "use given numbers"
+        },
+        {
+          "do": "Subtract the gap",
+          "result": "$\\text{ELBO}=-2.0-0.3$",
+          "why": "isolate the bound"
+        },
+        {
+          "do": "Compute",
+          "result": "$\\text{ELBO}=-2.3$",
+          "why": "arithmetic"
+        },
+        {
+          "do": "Check direction",
+          "result": "$-2.3\\le -2.0$",
+          "why": "the bound is below the evidence"
+        }
+      ],
+      "verify": "The result has the right sign and agrees with the qualitative meaning of the definition.",
+      "answer": "The ELBO is $-2.3$.",
+      "connects": "This calculation shows the lesson's abstract quantity acting as a concrete numerical guide."
+    },
+    "practice": [
+      {
+        "problem": "Compute entropy for a binary source with $P(1)=0.8$ and $P(0)=0.2$ using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\log_2 0.8-0.2\\log_2 0.2$",
+            "why": "entropy is average surprise"
+          },
+          {
+            "do": "Substitute the logs",
+            "result": "$H=-0.8(-0.322)-0.2(-2.322)$",
+            "why": "use the provided values"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.2576$",
+            "why": "$0.8\\cdot0.322=0.2576$"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.4644$",
+            "why": "$0.2\\cdot2.322=0.4644$"
+          },
+          {
+            "do": "Add the contributions",
+            "result": "$H\\approx0.722$ bits",
+            "why": "average uncertainty is the sum"
+          }
+        ],
+        "answer": "$H\\approx0.722$ bits."
+      },
+      {
+        "problem": "For distributions $P=(0.7,0.3)$ and $Q=(0.5,0.5)$, compute $D_{KL}(P\\|Q)$ using $\\log 1.4\\approx0.336$ and $\\log 0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Write the KL formula",
+            "result": "$D_{KL}(P\\|Q)=0.7\\log(0.7/0.5)+0.3\\log(0.3/0.5)$",
+            "why": "compare probabilities component by component"
+          },
+          {
+            "do": "Compute the ratios",
+            "result": "$1.4$ and $0.6$",
+            "why": "divide $P_i$ by $Q_i$"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.7(0.336)+0.3(-0.511)$",
+            "why": "use the approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.2352-0.1533$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0819$ nats",
+            "why": "KL is small but positive"
+          }
+        ],
+        "answer": "$D_{KL}(P\\|Q)\\approx0.082$ nats."
+      },
+      {
+        "problem": "A code uses lengths $1,2,3,3$ for probabilities $0.4,0.3,0.2,0.1$. Compute expected length.",
+        "steps": [
+          {
+            "do": "Write the average",
+            "result": "$L=0.4(1)+0.3(2)+0.2(3)+0.1(3)$",
+            "why": "expected length weights each code length"
+          },
+          {
+            "do": "Compute first two terms",
+            "result": "$0.4+0.6=1.0$",
+            "why": "common symbols dominate the average"
+          },
+          {
+            "do": "Compute last two terms",
+            "result": "$0.6+0.3=0.9$",
+            "why": "rare symbols have longer codewords"
+          },
+          {
+            "do": "Add totals",
+            "result": "$L=1.9$ bits",
+            "why": "sum all weighted lengths"
+          },
+          {
+            "do": "Compare to two-bit fixed coding",
+            "result": "$2-1.9=0.1$ bit saved",
+            "why": "variable length helps"
+          }
+        ],
+        "answer": "The expected length is $1.9$ bits per symbol."
+      },
+      {
+        "problem": "A sequence receives model probabilities $0.9$, $0.5$, and $0.25$ for its actual symbols. Compute the negative log probability in bits.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9\\cdot0.5\\cdot0.25=0.1125$",
+            "why": "independent sequence probabilities multiply"
+          },
+          {
+            "do": "Write code length",
+            "result": "$-\\log_2(0.1125)$",
+            "why": "negative log probability is ideal length"
+          },
+          {
+            "do": "Split the log",
+            "result": "$-\\log_2(0.9)-\\log_2(0.5)-\\log_2(0.25)$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Use common values",
+            "result": "$0.152+1+2$",
+            "why": "$-\\log_2(0.9)\\approx0.152$"
+          },
+          {
+            "do": "Add",
+            "result": "$3.152$ bits",
+            "why": "total sequence surprise"
+          }
+        ],
+        "answer": "The sequence costs about $3.152$ bits."
+      },
+      {
+        "problem": "A loss has reconstruction term $1.6$ and KL term $0.4$. Compute the negative ELBO, then recompute with KL weight $0.25$.",
+        "steps": [
+          {
+            "do": "Add unweighted terms",
+            "result": "$1.6+0.4=2.0$",
+            "why": "negative ELBO combines fit and KL"
+          },
+          {
+            "do": "Scale the KL term",
+            "result": "$0.25\\cdot0.4=0.1$",
+            "why": "apply the weight"
+          },
+          {
+            "do": "Add weighted terms",
+            "result": "$1.6+0.1=1.7$",
+            "why": "combine reconstruction and weighted KL"
+          },
+          {
+            "do": "Compare objectives",
+            "result": "$2.0-1.7=0.3$",
+            "why": "down-weighting KL lowers the loss"
+          },
+          {
+            "do": "Interpret the tradeoff",
+            "result": "less regularization",
+            "why": "the model is allowed to use the latent code more freely"
+          }
+        ],
+        "answer": "Unweighted loss is $2.0$; with KL weight $0.25$, loss is $1.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Compression budgets",
+        "background": "The evidence lower bound (ELBO) helps turn probability models into concrete storage expectations rather than vague compression hopes.",
+        "numbers": "At $1.3$ bits per symbol, $10,000$ symbols need about $13,000$ bits before headers."
+      },
+      {
+        "title": "Classifier losses",
+        "background": "In ML, The evidence lower bound (ELBO) connects naturally to negative log probabilities used for supervised learning.",
+        "numbers": "If the true-class probability is $0.8$, the loss is $-\\log(0.8)\\approx0.223$ nats."
+      },
+      {
+        "title": "Latent-variable models",
+        "background": "Variational models use information terms to decide how much a latent representation should remember.",
+        "numbers": "A reconstruction cost $2.1$ plus KL $0.3$ gives negative ELBO $2.4$."
+      },
+      {
+        "title": "Reinforcement learning policies",
+        "background": "Policy optimization often measures how far a new action distribution moved from an old one.",
+        "numbers": "Old policy $(0.6,0.4)$ and new $(0.5,0.5)$ have KL about $0.020$ nats."
+      },
+      {
+        "title": "Communication systems",
+        "background": "Rates, capacities, and code lengths make noisy links analyzable before hardware is built.",
+        "numbers": "A rate of $0.7$ bits/use over $2000$ uses carries $1400$ information bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Information constraints explain bottlenecks in embeddings, autoencoders, and quantizers.",
+        "numbers": "An $8$-bit code can name $2^8=256$ clusters; a $10$-bit code can name $1024$."
+      }
+    ],
+    "applicationsClose": "Across these examples, one idea keeps changing clothes: probabilities become logarithmic costs, and averages become operational limits.",
+    "takeaways": [
+      "Information-theoretic quantities turn uncertainty into arithmetic.",
+      "Logarithms convert probability products into additive costs.",
+      "The same entropy and KL terms appear in compression, inference, and ML losses.",
+      "Always check the modeling assumptions before treating a bound as a guarantee."
+    ],
     "prereqs": [
       "math-21-18"
     ]
@@ -405,19 +5034,260 @@
   B({
     "id": "math-21-20",
     "title": "Cross-entropy loss, KL in VAEs and RL",
-    "tier": "🟢",
-    "tagline": "Capstone — how information theory shows up directly in CS & ML.",
+    "tagline": "Cross-entropy and KL are the information penalties that quietly train much of modern ML.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The evidence lower bound (ELBO)</i>"
+        "The evidence lower bound (ELBO)",
+        "entropy",
+        "logarithms"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "optimization objectives",
+        "information-theoretic ML objectives"
       ],
       "usedWith": [
-        "the other concepts in Information theory and its capstone"
+        "regularization",
+        "KL divergence",
+        "expected value"
       ]
     },
+    "motivation": "<p>This capstone connects the whole topic to training loops. Classifiers use cross-entropy, VAEs use reconstruction plus KL, and RL methods use KL to keep policy updates controlled.</p><p>The shared idea is simple: a model pays when it assigns low probability to what happened or moves too far from a reference distribution.</p>",
+    "definition": "<p>For one-hot label $y$ and predicted probabilities $\\hat p$, cross-entropy is $L=-\\sum_k y_k\\log \\hat p_k$, which becomes $-\\log$ of the true-class probability. KL is $D_{KL}(q\\|p)=\\sum_i q_i\\log(q_i/p_i)$.</p><p>In VAEs, negative ELBO is reconstruction loss plus $D_{KL}(q(z\\mid x)\\|p(z))$. In RL, a policy KL such as $D_{KL}(\\pi_{old}\\|\\pi_{new})$ measures how far the new action distribution moved.</p><p><b>Assumptions that matter:</b> logs are usually natural in optimization; probabilities being logged must be positive; KL is asymmetric; and loss weights change the tradeoff between fit and regularization.</p>",
+    "worked": {
+      "problem": "A classifier predicts $[0.1,0.7,0.2]$ and the true class is the second class. Compute the cross-entropy loss.",
+      "skills": [
+        "regularization",
+        "logs",
+        "probability arithmetic"
+      ],
+      "strategy": "Translate the definition into one small calculation at a time, keeping units and direction clear.",
+      "steps": [
+        {
+          "do": "Select the true-class probability",
+          "result": "$0.7$",
+          "why": "one-hot labels pick one component"
+        },
+        {
+          "do": "Write cross-entropy",
+          "result": "$L=-\\log(0.7)$",
+          "why": "negative log likelihood"
+        },
+        {
+          "do": "Use the log value",
+          "result": "$\\log(0.7)\\approx-0.357$",
+          "why": "natural log"
+        },
+        {
+          "do": "Negate",
+          "result": "$L\\approx0.357$ nats",
+          "why": "loss is positive"
+        },
+        {
+          "do": "Compare with probability $0.2$",
+          "result": "$-\\log(0.2)\\approx1.609$",
+          "why": "worse confidence pays more"
+        }
+      ],
+      "verify": "The result has the right sign and agrees with the qualitative meaning of the definition.",
+      "answer": "The loss is about $0.357$ nats.",
+      "connects": "This calculation shows the lesson's abstract quantity acting as a concrete numerical guide."
+    },
+    "practice": [
+      {
+        "problem": "Compute entropy for a binary source with $P(1)=0.8$ and $P(0)=0.2$ using $\\log_2 0.8\\approx-0.322$ and $\\log_2 0.2\\approx-2.322$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\log_2 0.8-0.2\\log_2 0.2$",
+            "why": "entropy is average surprise"
+          },
+          {
+            "do": "Substitute the logs",
+            "result": "$H=-0.8(-0.322)-0.2(-2.322)$",
+            "why": "use the provided values"
+          },
+          {
+            "do": "Multiply the first term",
+            "result": "$0.2576$",
+            "why": "$0.8\\cdot0.322=0.2576$"
+          },
+          {
+            "do": "Multiply the second term",
+            "result": "$0.4644$",
+            "why": "$0.2\\cdot2.322=0.4644$"
+          },
+          {
+            "do": "Add the contributions",
+            "result": "$H\\approx0.722$ bits",
+            "why": "average uncertainty is the sum"
+          }
+        ],
+        "answer": "$H\\approx0.722$ bits."
+      },
+      {
+        "problem": "For distributions $P=(0.7,0.3)$ and $Q=(0.5,0.5)$, compute $D_{KL}(P\\|Q)$ using $\\log 1.4\\approx0.336$ and $\\log 0.6\\approx-0.511$.",
+        "steps": [
+          {
+            "do": "Write the KL formula",
+            "result": "$D_{KL}(P\\|Q)=0.7\\log(0.7/0.5)+0.3\\log(0.3/0.5)$",
+            "why": "compare probabilities component by component"
+          },
+          {
+            "do": "Compute the ratios",
+            "result": "$1.4$ and $0.6$",
+            "why": "divide $P_i$ by $Q_i$"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$0.7(0.336)+0.3(-0.511)$",
+            "why": "use the approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.2352-0.1533$",
+            "why": "weight each log ratio"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0819$ nats",
+            "why": "KL is small but positive"
+          }
+        ],
+        "answer": "$D_{KL}(P\\|Q)\\approx0.082$ nats."
+      },
+      {
+        "problem": "A code uses lengths $1,2,3,3$ for probabilities $0.4,0.3,0.2,0.1$. Compute expected length.",
+        "steps": [
+          {
+            "do": "Write the average",
+            "result": "$L=0.4(1)+0.3(2)+0.2(3)+0.1(3)$",
+            "why": "expected length weights each code length"
+          },
+          {
+            "do": "Compute first two terms",
+            "result": "$0.4+0.6=1.0$",
+            "why": "common symbols dominate the average"
+          },
+          {
+            "do": "Compute last two terms",
+            "result": "$0.6+0.3=0.9$",
+            "why": "rare symbols have longer codewords"
+          },
+          {
+            "do": "Add totals",
+            "result": "$L=1.9$ bits",
+            "why": "sum all weighted lengths"
+          },
+          {
+            "do": "Compare to two-bit fixed coding",
+            "result": "$2-1.9=0.1$ bit saved",
+            "why": "variable length helps"
+          }
+        ],
+        "answer": "The expected length is $1.9$ bits per symbol."
+      },
+      {
+        "problem": "A sequence receives model probabilities $0.9$, $0.5$, and $0.25$ for its actual symbols. Compute the negative log probability in bits.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9\\cdot0.5\\cdot0.25=0.1125$",
+            "why": "independent sequence probabilities multiply"
+          },
+          {
+            "do": "Write code length",
+            "result": "$-\\log_2(0.1125)$",
+            "why": "negative log probability is ideal length"
+          },
+          {
+            "do": "Split the log",
+            "result": "$-\\log_2(0.9)-\\log_2(0.5)-\\log_2(0.25)$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Use common values",
+            "result": "$0.152+1+2$",
+            "why": "$-\\log_2(0.9)\\approx0.152$"
+          },
+          {
+            "do": "Add",
+            "result": "$3.152$ bits",
+            "why": "total sequence surprise"
+          }
+        ],
+        "answer": "The sequence costs about $3.152$ bits."
+      },
+      {
+        "problem": "A loss has reconstruction term $1.6$ and KL term $0.4$. Compute the negative ELBO, then recompute with KL weight $0.25$.",
+        "steps": [
+          {
+            "do": "Add unweighted terms",
+            "result": "$1.6+0.4=2.0$",
+            "why": "negative ELBO combines fit and KL"
+          },
+          {
+            "do": "Scale the KL term",
+            "result": "$0.25\\cdot0.4=0.1$",
+            "why": "apply the weight"
+          },
+          {
+            "do": "Add weighted terms",
+            "result": "$1.6+0.1=1.7$",
+            "why": "combine reconstruction and weighted KL"
+          },
+          {
+            "do": "Compare objectives",
+            "result": "$2.0-1.7=0.3$",
+            "why": "down-weighting KL lowers the loss"
+          },
+          {
+            "do": "Interpret the tradeoff",
+            "result": "less regularization",
+            "why": "the model is allowed to use the latent code more freely"
+          }
+        ],
+        "answer": "Unweighted loss is $2.0$; with KL weight $0.25$, loss is $1.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Compression budgets",
+        "background": "Cross-entropy loss, KL in VAEs and RL helps turn probability models into concrete storage expectations rather than vague compression hopes.",
+        "numbers": "At $1.3$ bits per symbol, $10,000$ symbols need about $13,000$ bits before headers."
+      },
+      {
+        "title": "Classifier losses",
+        "background": "In ML, Cross-entropy loss, KL in VAEs and RL connects naturally to negative log probabilities used for supervised learning.",
+        "numbers": "If the true-class probability is $0.8$, the loss is $-\\log(0.8)\\approx0.223$ nats."
+      },
+      {
+        "title": "Latent-variable models",
+        "background": "Variational models use information terms to decide how much a latent representation should remember.",
+        "numbers": "A reconstruction cost $2.1$ plus KL $0.3$ gives negative ELBO $2.4$."
+      },
+      {
+        "title": "Reinforcement learning policies",
+        "background": "Policy optimization often measures how far a new action distribution moved from an old one.",
+        "numbers": "Old policy $(0.6,0.4)$ and new $(0.5,0.5)$ have KL about $0.020$ nats."
+      },
+      {
+        "title": "Communication systems",
+        "background": "Rates, capacities, and code lengths make noisy links analyzable before hardware is built.",
+        "numbers": "A rate of $0.7$ bits/use over $2000$ uses carries $1400$ information bits."
+      },
+      {
+        "title": "Representation learning",
+        "background": "Information constraints explain bottlenecks in embeddings, autoencoders, and quantizers.",
+        "numbers": "An $8$-bit code can name $2^8=256$ clusters; a $10$-bit code can name $1024$."
+      }
+    ],
+    "applicationsClose": "Across these examples, one idea keeps changing clothes: probabilities become logarithmic costs, and averages become operational limits.",
+    "takeaways": [
+      "Information-theoretic quantities turn uncertainty into arithmetic.",
+      "Logarithms convert probability products into additive costs.",
+      "The same entropy and KL terms appear in compression, inference, and ML losses.",
+      "Always check the modeling assumptions before treating a bound as a guarantee."
+    ],
     "prereqs": [
       "math-21-19"
     ]

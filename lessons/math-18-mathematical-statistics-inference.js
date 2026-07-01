@@ -9,37 +9,533 @@
   B({
     "id": "math-18-01",
     "title": "Populations and samples",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: populations and samples.",
+    "tagline": "Inference begins by admitting that we usually see a small window, not the whole world.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "random variables",
+        "probability distributions",
+        "sets and averages"
       ],
       "leadsTo": [
-        "the next lesson, <i>Statistics and estimators</i>"
+        "Statistics and estimators",
+        "Sampling distributions",
+        "Bias of an estimator"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "expectation",
+        "variance",
+        "independence",
+        "descriptive statistics"
       ]
-    }
+    },
+    "motivation": "<p>You already know how to average a list you can see. If all five quiz scores are $80,84,90,92,94$, the class mean is available by direct arithmetic.</p><p>Statistics becomes necessary when the full list is too large, too expensive, or still being created. A <b>population</b> is the full target we care about; a <b>sample</b> is the part we observe. The art is learning what the sample can honestly say about the population.</p>",
+    "definition": "<p>A <b>population</b> is the complete collection of units or outcomes relevant to a question. A <b>sample</b> is an observed subset, often written $X_1,\\ldots,X_n$, where $n$ is the sample size. A <b>parameter</b>, such as the population mean $\\mu$, describes the population; a <b>statistic</b>, such as the sample mean $\\bar{X}$, is computed from the sample.</p><p>If the sample is random and representative, then sample summaries can estimate population parameters. For example, $\\bar{X}=\\dfrac{1}{n}\\sum_{i=1}^n X_i$ uses observed values to approximate $\\mu=\\mathbb{E}[X]$. Random sampling matters because it gives each draw a known chance mechanism, letting probability quantify sampling error.</p><p><b>Assumptions that matter:</b> define the population before sampling; know whether sampling is random, stratified, clustered, or biased; distinguish finite populations from conceptual data-generating distributions; and remember that a sample statistic changes from sample to sample.</p>",
+    "worked": {
+      "problem": "A product team has a population of $10{,}000$ users. A random sample of $8$ users has session lengths, in minutes, $4,5,5,6,7,8,9,10$. Identify the population, sample, parameter of interest, statistic, and compute the sample mean.",
+      "skills": [
+        "population versus sample",
+        "parameters",
+        "sample mean"
+      ],
+      "strategy": "Separate the target from the observed data, then compute the statistic from the sample only.",
+      "steps": [
+        {
+          "do": "Name the population",
+          "result": "$10{,}000$ users",
+          "why": "the question targets all users in the product group"
+        },
+        {
+          "do": "Name the sample",
+          "result": "$8$ observed users",
+          "why": "only these users have measured session lengths"
+        },
+        {
+          "do": "Name the parameter",
+          "result": "$\\mu$, the mean session length for all $10{,}000$ users",
+          "why": "parameters describe populations"
+        },
+        {
+          "do": "Write the statistic",
+          "result": "$\\bar{x}=\\dfrac{4+5+5+6+7+8+9+10}{8}$",
+          "why": "the sample mean averages observed values"
+        },
+        {
+          "do": "Add the sample values",
+          "result": "$54$",
+          "why": "$4+5+5+6+7+8+9+10=54$"
+        },
+        {
+          "do": "Divide by sample size",
+          "result": "$\\bar{x}=54/8=6.75$ minutes",
+          "why": "there are eight observed users"
+        }
+      ],
+      "verify": "The answer is between the smallest and largest sample values, and it describes the sample, not the whole population with certainty.",
+      "answer": "Population: all $10{,}000$ users; sample: the $8$ observed users; parameter: population mean $\\mu$; statistic: $\\bar{x}=6.75$ minutes.",
+      "connects": "Sampling turns an impossible full-population calculation into a probabilistic estimate."
+    },
+    "practice": [
+      {
+        "problem": "A school has $1200$ students. A random sample of $6$ students reports study hours $1,2,2,3,4,6$. Identify population and sample, then compute $\\bar{x}$.",
+        "steps": [
+          {
+            "do": "Name the population",
+            "result": "$1200$ students",
+            "why": "the question concerns the whole school"
+          },
+          {
+            "do": "Name the sample",
+            "result": "$6$ students",
+            "why": "only six study-hour values are observed"
+          },
+          {
+            "do": "Write the sample mean",
+            "result": "$\\bar{x}=\\dfrac{1+2+2+3+4+6}{6}$",
+            "why": "average the observed hours"
+          },
+          {
+            "do": "Add the observations",
+            "result": "$18$",
+            "why": "sum the six reported hours"
+          },
+          {
+            "do": "Divide by $6$",
+            "result": "$\\bar{x}=3$ hours",
+            "why": "mean equals total divided by count"
+          }
+        ],
+        "answer": "Population: all $1200$ students; sample: the $6$ observed students; $\\bar{x}=3$ hours."
+      },
+      {
+        "problem": "A hospital wants the population proportion of appointments that start late. In a random sample of $50$ appointments, $12$ start late. Identify $p$ and compute $\\hat{p}$.",
+        "steps": [
+          {
+            "do": "Define the population parameter",
+            "result": "$p=$ proportion of all appointments that start late",
+            "why": "the parameter describes the full process"
+          },
+          {
+            "do": "Define the sample statistic",
+            "result": "$\\hat{p}=12/50$",
+            "why": "sample proportion equals successes over sample size"
+          },
+          {
+            "do": "Simplify the fraction",
+            "result": "$\\hat{p}=0.24$",
+            "why": "divide $12$ by $50$"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$24\\%$",
+            "why": "$0.24$ means 24 per 100"
+          },
+          {
+            "do": "State uncertainty",
+            "result": "$\\hat{p}$ estimates $p$",
+            "why": "a sample proportion is not guaranteed to equal the population proportion"
+          }
+        ],
+        "answer": "$p$ is the true late-start proportion; $\\hat{p}=0.24$ or $24\\%$."
+      },
+      {
+        "problem": "A dataset has three strata: $500$ mobile users, $300$ desktop users, and $200$ tablet users. A stratified $10\\%$ sample is drawn. How many users come from each stratum and what is the total sample size?",
+        "steps": [
+          {
+            "do": "Compute mobile sample count",
+            "result": "$0.10\\cdot500=50$",
+            "why": "take 10 percent of the mobile stratum"
+          },
+          {
+            "do": "Compute desktop sample count",
+            "result": "$0.10\\cdot300=30$",
+            "why": "take 10 percent of the desktop stratum"
+          },
+          {
+            "do": "Compute tablet sample count",
+            "result": "$0.10\\cdot200=20$",
+            "why": "take 10 percent of the tablet stratum"
+          },
+          {
+            "do": "Add the sample counts",
+            "result": "$50+30+20=100$",
+            "why": "total sample size sums across strata"
+          },
+          {
+            "do": "Check the population total",
+            "result": "$500+300+200=1000$",
+            "why": "10 percent of 1000 is also 100"
+          }
+        ],
+        "answer": "Sample $50$ mobile, $30$ desktop, and $20$ tablet users, for total $n=100$."
+      },
+      {
+        "problem": "A finite population has values $2,4,6,8,10$. A sample without replacement contains $4,8$. Compute the population mean and the sample mean.",
+        "steps": [
+          {
+            "do": "Write the population mean",
+            "result": "$\\mu=\\dfrac{2+4+6+8+10}{5}$",
+            "why": "all five population values are known"
+          },
+          {
+            "do": "Add population values",
+            "result": "$30$",
+            "why": "sum the complete population"
+          },
+          {
+            "do": "Divide by population size",
+            "result": "$\\mu=6$",
+            "why": "there are five values"
+          },
+          {
+            "do": "Write the sample mean",
+            "result": "$\\bar{x}=\\dfrac{4+8}{2}$",
+            "why": "average the observed sample"
+          },
+          {
+            "do": "Compute the sample mean",
+            "result": "$\\bar{x}=6$",
+            "why": "the two sampled values average to 6"
+          }
+        ],
+        "answer": "The population mean is $6$ and this sample mean is also $6$."
+      },
+      {
+        "problem": "An ML team evaluates a classifier on a sample of $200$ labeled examples from a future production population. It gets $172$ correct. Identify the target population and compute sample accuracy.",
+        "steps": [
+          {
+            "do": "Name the target population",
+            "result": "future production examples",
+            "why": "the goal is performance after deployment"
+          },
+          {
+            "do": "Name the sample",
+            "result": "$200$ labeled evaluation examples",
+            "why": "these are the observed cases"
+          },
+          {
+            "do": "Write sample accuracy",
+            "result": "$\\hat{a}=172/200$",
+            "why": "accuracy is correct predictions divided by evaluated cases"
+          },
+          {
+            "do": "Divide",
+            "result": "$\\hat{a}=0.86$",
+            "why": "$172/200=0.86$"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$86\\%$",
+            "why": "accuracy is often reported as a percent"
+          }
+        ],
+        "answer": "The population is future production examples; the sample accuracy is $0.86$ or $86\\%$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "A/B testing",
+        "background": "Experimentation grew from agricultural trials and is now central to product decisions. Users in an experiment are a sample from a larger future-use population.",
+        "numbers": "If $800$ sampled users see variant A and $96$ click, $\\hat{p}_A=96/800=0.12$."
+      },
+      {
+        "title": "Model evaluation",
+        "background": "A test set is a sample meant to represent future cases. Its accuracy is a statistic estimating deployment accuracy.",
+        "numbers": "With $450$ correct predictions out of $500$, test accuracy is $450/500=0.90$."
+      },
+      {
+        "title": "Polling",
+        "background": "Survey statistics became famous through election polling. A few respondents are used to estimate a much larger electorate.",
+        "numbers": "If $540$ of $1000$ sampled voters prefer a candidate, $\\hat{p}=0.54$."
+      },
+      {
+        "title": "Data labeling quality",
+        "background": "Label audits inspect a sample because checking every label may be expensive. The sample error rate estimates corpus error.",
+        "numbers": "Finding $7$ bad labels in $200$ audited examples gives $7/200=0.035$."
+      },
+      {
+        "title": "System latency monitoring",
+        "background": "Observability systems sample requests to estimate the behavior of all traffic. The sample needs to cover busy and quiet periods.",
+        "numbers": "A sample of latencies $80,90,110,120$ ms has mean $(80+90+110+120)/4=100$ ms."
+      },
+      {
+        "title": "Stratified recommender audits",
+        "background": "Recommenders may behave differently across device types or regions. Stratified samples protect smaller groups from being washed out.",
+        "numbers": "Sampling $40$ from each of $5$ regions gives $200$ audited recommendations total."
+      }
+    ],
+    "applicationsClose": "Every inference starts with the same honest map: what world do we care about, and what part of it did we actually observe?",
+    "takeaways": [
+      "A population is the full target; a sample is the observed subset.",
+      "Parameters describe populations; statistics are computed from samples.",
+      "Random and representative sampling is what lets probability quantify uncertainty.",
+      "ML test sets, experiments, polls, and audits are all sample-to-population reasoning."
+    ]
   });
 
   B({
     "id": "math-18-02",
     "title": "Statistics and estimators",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: statistics and estimators.",
+    "tagline": "A statistic is a recipe applied to data; an estimator is that recipe used to learn an unknown parameter.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Populations and samples</i>"
+        "Populations and samples",
+        "random variables",
+        "expectation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Descriptive statistics</i>"
+        "Point estimation",
+        "Bias of an estimator",
+        "Variance of an estimator"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "sample mean",
+        "sample proportion",
+        "functions of random variables",
+        "sampling distributions"
       ]
     },
+    "motivation": "<p>You can compute many things from the same sample: a mean, median, maximum, variance, or error rate. Each is a statistic because each is a function of observed data.</p><p>An <b>estimator</b> adds purpose. It is a statistic chosen to estimate an unknown parameter. This distinction is small but powerful: the same formula is random before data arrive, numerical after data arrive, and judged by how well it targets the population quantity.</p>",
+    "definition": "<p>A <b>statistic</b> is any function $T(X_1,\\ldots,X_n)$ of the sample that does not contain unknown parameters. An <b>estimator</b> is a statistic used to estimate a parameter, such as $\\hat{\\theta}=T(X_1,\\ldots,X_n)$ for an unknown $\\theta$. Once data are observed, the estimator produces an <b>estimate</b>, a number.</p><p>For example, $\\bar{X}=\\dfrac{1}{n}\\sum_{i=1}^n X_i$ is a statistic. If the target parameter is the population mean $\\mu$, then $\\bar{X}$ is an estimator of $\\mu$. Before observing data, $\\bar{X}$ is random because it depends on random sample values; after observing $x_1,\\ldots,x_n$, $\\bar{x}$ is fixed.</p><p><b>Assumptions that matter:</b> an estimator must be computable from the sample; its quality depends on the sampling model; the notation $\\hat{\\theta}$ means an estimate of $\\theta$, not necessarily a correct one; and different estimators can target the same parameter.</p>",
+    "worked": {
+      "problem": "For sample data $3,5,8,8$, compute three statistics: $\\bar{x}$, the sample maximum, and the sample proportion at least $6$. Then identify which estimate the population mean if $\\theta=\\mu$.",
+      "skills": [
+        "statistics",
+        "estimators",
+        "sample summaries"
+      ],
+      "strategy": "Compute each function of the data, then match the formula to the target parameter.",
+      "steps": [
+        {
+          "do": "Write the sample mean",
+          "result": "$\\bar{x}=\\dfrac{3+5+8+8}{4}$",
+          "why": "the mean is one statistic computed from all values"
+        },
+        {
+          "do": "Compute the mean",
+          "result": "$\\bar{x}=6$",
+          "why": "the sum is 24 and $24/4=6$"
+        },
+        {
+          "do": "Find the maximum",
+          "result": "$8$",
+          "why": "8 is the largest observed value"
+        },
+        {
+          "do": "Count values at least $6$",
+          "result": "$2$",
+          "why": "the two values 8 and 8 meet the rule"
+        },
+        {
+          "do": "Compute the sample proportion",
+          "result": "$2/4=0.5$",
+          "why": "proportion equals count divided by sample size"
+        },
+        {
+          "do": "Match the target $\\mu$",
+          "result": "$\\bar{x}=6$ estimates $\\mu$",
+          "why": "the population mean is naturally estimated by the sample mean"
+        }
+      ],
+      "verify": "All three quantities are statistics, but only the mean is being used here as the estimator of the population mean.",
+      "answer": "The statistics are $\\bar{x}=6$, maximum $8$, and proportion $0.5$; for $\\theta=\\mu$, the estimate is $6$.",
+      "connects": "An estimator is a statistic with a target."
+    },
+    "practice": [
+      {
+        "problem": "For data $2,4,4,10$, compute the sample mean and sample median. If the target is $\\mu$, which is the usual estimator?",
+        "steps": [
+          {
+            "do": "Write the mean",
+            "result": "$\\bar{x}=\\dfrac{2+4+4+10}{4}$",
+            "why": "average all observations"
+          },
+          {
+            "do": "Compute the mean",
+            "result": "$\\bar{x}=5$",
+            "why": "$20/4=5$"
+          },
+          {
+            "do": "Order the values",
+            "result": "$2,4,4,10$",
+            "why": "median needs sorted data"
+          },
+          {
+            "do": "Average the middle two",
+            "result": "$(4+4)/2=4$",
+            "why": "there are four observations"
+          },
+          {
+            "do": "Choose the usual estimator",
+            "result": "$\\bar{x}$",
+            "why": "the sample mean is the standard estimator for $\\mu$"
+          }
+        ],
+        "answer": "Mean $5$, median $4$; the usual estimator of $\\mu$ is $\\bar{x}$."
+      },
+      {
+        "problem": "A Bernoulli sample is $1,0,1,1,0$. Compute $\\hat{p}$ for the population success probability $p$.",
+        "steps": [
+          {
+            "do": "Count successes",
+            "result": "$3$",
+            "why": "three observations equal 1"
+          },
+          {
+            "do": "Count observations",
+            "result": "$n=5$",
+            "why": "there are five Bernoulli trials"
+          },
+          {
+            "do": "Write the estimator",
+            "result": "$\\hat{p}=\\bar{X}$",
+            "why": "the sample mean estimates Bernoulli probability"
+          },
+          {
+            "do": "Compute the estimate",
+            "result": "$\\hat{p}=3/5=0.6$",
+            "why": "successes divided by trials"
+          },
+          {
+            "do": "Interpret",
+            "result": "$60\\%$ sample success rate",
+            "why": "$0.6$ is six tenths"
+          }
+        ],
+        "answer": "$\\hat{p}=0.6$."
+      },
+      {
+        "problem": "For data $6,7,9$, compute $T_1=\\bar{x}$ and $T_2=(\\min+\\max)/2$. Both estimate a center. Find both estimates.",
+        "steps": [
+          {
+            "do": "Compute $T_1$",
+            "result": "$T_1=(6+7+9)/3$",
+            "why": "sample mean formula"
+          },
+          {
+            "do": "Simplify $T_1$",
+            "result": "$T_1=22/3\\approx7.33$",
+            "why": "sum is 22"
+          },
+          {
+            "do": "Find the minimum",
+            "result": "$6$",
+            "why": "smallest observed value"
+          },
+          {
+            "do": "Find the maximum",
+            "result": "$9$",
+            "why": "largest observed value"
+          },
+          {
+            "do": "Compute $T_2$",
+            "result": "$(6+9)/2=7.5$",
+            "why": "midrange averages endpoints"
+          }
+        ],
+        "answer": "$T_1\\approx7.33$ and $T_2=7.5$."
+      },
+      {
+        "problem": "A sample has losses $0.2,0.4,1.0,1.4$. Compute the statistic $T=\\dfrac{1}{n}\\sum_i \\mathbf{1}\\{X_i>0.5\\}$.",
+        "steps": [
+          {
+            "do": "Apply the indicator rule",
+            "result": "$0,0,1,1$",
+            "why": "only $1.0$ and $1.4$ exceed $0.5$"
+          },
+          {
+            "do": "Sum indicators",
+            "result": "$2$",
+            "why": "two losses exceed the threshold"
+          },
+          {
+            "do": "Identify sample size",
+            "result": "$n=4$",
+            "why": "four losses are observed"
+          },
+          {
+            "do": "Divide by $n$",
+            "result": "$T=2/4=0.5$",
+            "why": "the statistic is an average of indicators"
+          },
+          {
+            "do": "Interpret",
+            "result": "$50\\%$ exceed $0.5$",
+            "why": "indicator averages are proportions"
+          }
+        ],
+        "answer": "$T=0.5$."
+      },
+      {
+        "problem": "Before seeing data, is $\\bar{X}$ random? After observing $x_1=4,x_2=6,x_3=8$, what estimate does it produce?",
+        "steps": [
+          {
+            "do": "State pre-data status",
+            "result": "$\\bar{X}$ is random",
+            "why": "it depends on random variables $X_1,X_2,X_3$"
+          },
+          {
+            "do": "Write the observed estimate",
+            "result": "$\\bar{x}=\\dfrac{4+6+8}{3}$",
+            "why": "replace random variables with observed values"
+          },
+          {
+            "do": "Add the observations",
+            "result": "$18$",
+            "why": "sum the three numbers"
+          },
+          {
+            "do": "Divide by $3$",
+            "result": "$\\bar{x}=6$",
+            "why": "mean equals total over count"
+          },
+          {
+            "do": "Name the distinction",
+            "result": "estimator versus estimate",
+            "why": "$\\bar{X}$ is the rule; $6$ is its observed value"
+          }
+        ],
+        "answer": "Yes, $\\bar{X}$ is random before data; the observed estimate is $6$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Click-through-rate estimation",
+        "background": "Advertising systems estimate click probabilities from samples of impressions. The statistic is clicks divided by impressions.",
+        "numbers": "$37$ clicks in $1000$ impressions gives $\\hat{p}=37/1000=0.037$."
+      },
+      {
+        "title": "Average latency estimation",
+        "background": "Infrastructure teams estimate service latency using request samples rather than all requests forever.",
+        "numbers": "Latencies $40,50,70,80$ ms give $\\bar{x}=240/4=60$ ms."
+      },
+      {
+        "title": "Robust center with medians",
+        "background": "The median is often used when outliers make the mean unstable, especially in income, latency, and loss distributions.",
+        "numbers": "For $2,3,4,100$, the mean is $27.25$ but the median is $(3+4)/2=3.5$."
+      },
+      {
+        "title": "Error-rate estimation",
+        "background": "ML monitoring estimates the population error rate from reviewed examples. The estimator is a sample proportion.",
+        "numbers": "$9$ errors in $150$ reviewed cases gives $\\hat{e}=9/150=0.06$."
+      },
+      {
+        "title": "Quantile statistics",
+        "background": "Percentiles summarize tails and are statistics even when they are not simple averages.",
+        "numbers": "In sorted latencies $10,20,30,40,50$, the sample median is $30$."
+      },
+      {
+        "title": "Feature mean estimation",
+        "background": "Preprocessing often stores estimated feature means from training data for centering future inputs.",
+        "numbers": "Feature values $1.2,1.5,1.8$ give estimated mean $1.5$."
+      }
+    ],
+    "applicationsClose": "Once you see statistics as recipes, inference asks which recipes are trustworthy estimators for the parameter you care about.",
+    "takeaways": [
+      "A statistic is any function of the sample with no unknown parameters.",
+      "An estimator is a statistic used to estimate a parameter.",
+      "An estimator is random before data and an estimate after data.",
+      "Different statistics can estimate the same target with different tradeoffs."
+    ],
     "prereqs": [
       "math-18-01"
     ]
@@ -48,19 +544,273 @@
   B({
     "id": "math-18-03",
     "title": "Descriptive statistics",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: descriptive statistics.",
+    "tagline": "Descriptive statistics turn a pile of data into shape, center, spread, and context.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Statistics and estimators</i>"
+        "Statistics and estimators",
+        "averages",
+        "variance"
       ],
       "leadsTo": [
-        "the next lesson, <i>Sampling distributions</i>"
+        "Sampling distributions",
+        "Point estimation",
+        "Mean squared error"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "sample mean",
+        "sample variance",
+        "quantiles",
+        "histograms"
       ]
     },
+    "motivation": "<p>A raw dataset can feel like a crowded room where everyone talks at once. Descriptive statistics help you listen: where is the center, how spread out are the values, and are there extremes?</p><p>They do not by themselves prove a population claim, but they are the first honest look. In ML, descriptive summaries catch scaling issues, class imbalance, outliers, and drift before a model hides them.</p>",
+    "definition": "<p><b>Descriptive statistics</b> summarize observed data. Common measures of center include the sample mean $\\bar{x}=\\dfrac{1}{n}\\sum_{i=1}^n x_i$ and median. Common measures of spread include range, interquartile range, and sample variance $s^2=\\dfrac{1}{n-1}\\sum_{i=1}^n (x_i-\\bar{x})^2$.</p><p>The denominator $n-1$ in $s^2$ appears because the deviations from $\\bar{x}$ sum to zero, leaving only $n-1$ freely varying deviations. Descriptions should also include units, sample size, and plots or quantiles when shape matters.</p><p><b>Assumptions that matter:</b> descriptive statistics describe the observed sample; outliers can strongly affect the mean and variance; medians and quantiles are more robust to extremes; and summaries without units or sample size can mislead.</p>",
+    "worked": {
+      "problem": "For data $2,4,4,6,9$, compute the mean, median, range, and sample variance.",
+      "skills": [
+        "mean",
+        "median",
+        "range",
+        "sample variance"
+      ],
+      "strategy": "Find center first, then measure squared deviations from that center.",
+      "steps": [
+        {
+          "do": "Compute the mean",
+          "result": "$\\bar{x}=\\dfrac{2+4+4+6+9}{5}=5$",
+          "why": "the sum is 25"
+        },
+        {
+          "do": "Find the median",
+          "result": "$4$",
+          "why": "the ordered middle value is the third value"
+        },
+        {
+          "do": "Compute the range",
+          "result": "$9-2=7$",
+          "why": "range is maximum minus minimum"
+        },
+        {
+          "do": "Compute deviations",
+          "result": "$-3,-1,-1,1,4$",
+          "why": "subtract the mean 5 from each value"
+        },
+        {
+          "do": "Square deviations",
+          "result": "$9,1,1,1,16$",
+          "why": "variance uses squared distances"
+        },
+        {
+          "do": "Sum squared deviations",
+          "result": "$28$",
+          "why": "$9+1+1+1+16=28$"
+        },
+        {
+          "do": "Divide by $n-1$",
+          "result": "$s^2=28/4=7$",
+          "why": "sample variance uses four degrees of freedom"
+        }
+      ],
+      "verify": "The mean and median sit inside the data range, and the large value 9 contributes the biggest squared deviation.",
+      "answer": "Mean $5$, median $4$, range $7$, sample variance $7$.",
+      "connects": "Description turns data into interpretable center and spread before inference begins."
+    },
+    "practice": [
+      {
+        "problem": "For data $1,3,5,7$, compute the mean and range.",
+        "steps": [
+          {
+            "do": "Add the values",
+            "result": "$1+3+5+7=16$",
+            "why": "mean starts with the total"
+          },
+          {
+            "do": "Divide by count",
+            "result": "$\\bar{x}=16/4=4$",
+            "why": "there are four observations"
+          },
+          {
+            "do": "Find the maximum",
+            "result": "$7$",
+            "why": "largest observed value"
+          },
+          {
+            "do": "Find the minimum",
+            "result": "$1$",
+            "why": "smallest observed value"
+          },
+          {
+            "do": "Subtract",
+            "result": "$7-1=6$",
+            "why": "range measures full spread"
+          }
+        ],
+        "answer": "Mean $4$, range $6$."
+      },
+      {
+        "problem": "For sorted data $2,2,5,9,12,20$, compute the median and interquartile range using lower and upper halves.",
+        "steps": [
+          {
+            "do": "Identify middle two values",
+            "result": "$5$ and $9$",
+            "why": "there are six observations"
+          },
+          {
+            "do": "Compute the median",
+            "result": "$(5+9)/2=7$",
+            "why": "average the two middle values"
+          },
+          {
+            "do": "Find lower-half median",
+            "result": "$Q_1=2$",
+            "why": "lower half is $2,2,5$"
+          },
+          {
+            "do": "Find upper-half median",
+            "result": "$Q_3=12$",
+            "why": "upper half is $9,12,20$"
+          },
+          {
+            "do": "Compute IQR",
+            "result": "$12-2=10$",
+            "why": "interquartile range is $Q_3-Q_1$"
+          }
+        ],
+        "answer": "Median $7$, IQR $10$."
+      },
+      {
+        "problem": "For data $3,3,6$, compute the sample variance.",
+        "steps": [
+          {
+            "do": "Compute the mean",
+            "result": "$\\bar{x}=(3+3+6)/3=4$",
+            "why": "sum is 12"
+          },
+          {
+            "do": "Compute deviations",
+            "result": "$-1,-1,2$",
+            "why": "subtract 4"
+          },
+          {
+            "do": "Square deviations",
+            "result": "$1,1,4$",
+            "why": "variance uses squared deviations"
+          },
+          {
+            "do": "Sum squares",
+            "result": "$6$",
+            "why": "$1+1+4=6$"
+          },
+          {
+            "do": "Divide by $n-1$",
+            "result": "$s^2=6/2=3$",
+            "why": "sample variance uses denominator 2"
+          }
+        ],
+        "answer": "The sample variance is $3$."
+      },
+      {
+        "problem": "A batch has class counts $70$ negative and $30$ positive. Compute positive rate and imbalance ratio negative-to-positive.",
+        "steps": [
+          {
+            "do": "Compute total count",
+            "result": "$70+30=100$",
+            "why": "combine both classes"
+          },
+          {
+            "do": "Compute positive rate",
+            "result": "$30/100=0.30$",
+            "why": "positive count over total"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$30\\%$",
+            "why": "$0.30$ means 30 per 100"
+          },
+          {
+            "do": "Write imbalance ratio",
+            "result": "$70:30$",
+            "why": "compare negative to positive counts"
+          },
+          {
+            "do": "Simplify ratio",
+            "result": "$7:3$",
+            "why": "divide both parts by 10"
+          }
+        ],
+        "answer": "Positive rate $30\\%$; negative-to-positive ratio $7:3$."
+      },
+      {
+        "problem": "Training losses are $0.9,0.8,0.8,0.7,4.0$. Compare mean and median to spot the outlier effect.",
+        "steps": [
+          {
+            "do": "Compute the mean numerator",
+            "result": "$0.9+0.8+0.8+0.7+4.0=7.2$",
+            "why": "add all losses"
+          },
+          {
+            "do": "Compute the mean",
+            "result": "$7.2/5=1.44$",
+            "why": "divide by five"
+          },
+          {
+            "do": "Order the values",
+            "result": "$0.7,0.8,0.8,0.9,4.0$",
+            "why": "median needs sorted values"
+          },
+          {
+            "do": "Find the median",
+            "result": "$0.8$",
+            "why": "the third value is the middle"
+          },
+          {
+            "do": "Compare",
+            "result": "$1.44$ is much larger than $0.8$",
+            "why": "the outlier $4.0$ pulls the mean upward"
+          }
+        ],
+        "answer": "Mean $1.44$, median $0.8$; the outlier raises the mean strongly."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature scaling audits",
+        "background": "Before training, practitioners inspect feature centers and spreads so optimization is not dominated by one large-scale feature.",
+        "numbers": "Feature values $10,12,18$ have mean $40/3\\approx13.33$ and range $8$."
+      },
+      {
+        "title": "Class imbalance",
+        "background": "Classification metrics are hard to interpret without base rates. Descriptive counts reveal whether a dataset is skewed.",
+        "numbers": "$950$ negatives and $50$ positives give positive rate $50/1000=0.05$."
+      },
+      {
+        "title": "Latency percentiles",
+        "background": "System reliability often cares about tail behavior, not just average latency. Quantiles summarize user experience at the tail.",
+        "numbers": "If the 95th percentile is $240$ ms, then about $95\\%$ of sampled requests are at or below $240$ ms."
+      },
+      {
+        "title": "Outlier detection",
+        "background": "Descriptive summaries often reveal sensors, logs, or labels that are inconsistent with the rest of the data.",
+        "numbers": "Values $5,6,5,7,100$ have median $6$ but mean $24.6$, suggesting an extreme value."
+      },
+      {
+        "title": "Experiment balance checks",
+        "background": "Randomized experiments compare treatment and control covariates before outcome analysis. Large descriptive differences warn of assignment problems.",
+        "numbers": "Mean age $35.2$ in control and $35.5$ in treatment differ by $0.3$ years."
+      },
+      {
+        "title": "Loss monitoring",
+        "background": "ML teams track mean and spread of losses to catch unstable batches or bad labels.",
+        "numbers": "Batch losses $0.2,0.3,0.5$ average $1.0/3\\approx0.333$."
+      }
+    ],
+    "applicationsClose": "Good descriptions do not replace inference; they make inference safer by showing what the data look like first.",
+    "takeaways": [
+      "Descriptive statistics summarize observed data center, spread, shape, and counts.",
+      "Means and variances are sensitive to outliers; medians and quantiles are more robust.",
+      "Always report sample size and units with summaries.",
+      "In ML, descriptive checks catch scaling, imbalance, drift, and data-quality problems early."
+    ],
     "prereqs": [
       "math-18-02"
     ]
@@ -69,19 +819,262 @@
   B({
     "id": "math-18-04",
     "title": "Sampling distributions",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: sampling distributions.",
+    "tagline": "A sampling distribution describes how an estimator would vary if you repeated the sampling process.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Descriptive statistics</i>"
+        "Populations and samples",
+        "Statistics and estimators",
+        "expectation and variance"
       ],
       "leadsTo": [
-        "the next lesson, <i>Point estimation</i>"
+        "Bias of an estimator",
+        "Variance of an estimator",
+        "Consistency"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "sample mean",
+        "central limit theorem",
+        "standard error",
+        "normal approximation"
       ]
     },
+    "motivation": "<p>One sample gives one statistic. But if another team drew a different sample, their statistic would usually be a little different. That variation is not a mistake; it is the heartbeat of inference.</p><p>A <b>sampling distribution</b> imagines repeating the whole sampling process many times and watching the statistic move. Once you see that distribution, uncertainty becomes something you can measure rather than fear.</p>",
+    "definition": "<p>The <b>sampling distribution</b> of a statistic $T(X_1,\\ldots,X_n)$ is the probability distribution of $T$ over repeated random samples of size $n$. For independent draws with mean $\\mu$ and variance $\\sigma^2$, the sample mean satisfies $\\mathbb{E}[\\bar{X}]=\\mu$ and $\\operatorname{Var}(\\bar{X})=\\sigma^2/n$.</p><p>The variance formula follows from independence: $\\operatorname{Var}(\\bar{X})=\\operatorname{Var}\\left(\\dfrac{1}{n}\\sum_i X_i\\right)=\\dfrac{1}{n^2}\\sum_i \\operatorname{Var}(X_i)=\\dfrac{n\\sigma^2}{n^2}=\\dfrac{\\sigma^2}{n}$. The standard deviation of a statistic is called its <b>standard error</b>.</p><p><b>Assumptions that matter:</b> the exact sampling distribution depends on the statistic, population distribution, sample size, dependence, and replacement scheme; $\\sigma/\\sqrt{n}$ for $\\bar{X}$ uses independent identical draws; and larger samples usually reduce sampling variation.</p>",
+    "worked": {
+      "problem": "A population has mean $50$ and standard deviation $12$. For independent samples of size $36$, find the mean and standard error of $\\bar{X}$.",
+      "skills": [
+        "sampling distribution",
+        "standard error",
+        "sample mean"
+      ],
+      "strategy": "The sample mean stays centered at $\\mu$ while its spread shrinks by $\\sqrt{n}$.",
+      "steps": [
+        {
+          "do": "State the sampling-distribution mean",
+          "result": "$\\mathbb{E}[\\bar{X}]=50$",
+          "why": "the sample mean is centered at the population mean"
+        },
+        {
+          "do": "Write the standard error formula",
+          "result": "$\\operatorname{SE}(\\bar{X})=\\sigma/\\sqrt{n}$",
+          "why": "independent sample means have variance $\\sigma^2/n$"
+        },
+        {
+          "do": "Substitute the values",
+          "result": "$12/\\sqrt{36}$",
+          "why": "$\\sigma=12$ and $n=36$"
+        },
+        {
+          "do": "Compute the square root",
+          "result": "$\\sqrt{36}=6$",
+          "why": "36 is a perfect square"
+        },
+        {
+          "do": "Divide",
+          "result": "$\\operatorname{SE}(\\bar{X})=2$",
+          "why": "$12/6=2$"
+        }
+      ],
+      "verify": "The standard error $2$ is smaller than the individual standard deviation $12$, as averaging should reduce variation.",
+      "answer": "The sampling distribution of $\\bar{X}$ has mean $50$ and standard error $2$.",
+      "connects": "Sampling distributions quantify how much an estimator moves across repeated samples."
+    },
+    "practice": [
+      {
+        "problem": "If $\\sigma=20$ and $n=25$, compute $\\operatorname{SE}(\\bar{X})$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$\\operatorname{SE}=\\sigma/\\sqrt{n}$",
+            "why": "sample mean spread shrinks by $\\sqrt{n}$"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$20/\\sqrt{25}$",
+            "why": "$\\sigma=20$ and $n=25$"
+          },
+          {
+            "do": "Compute the root",
+            "result": "$\\sqrt{25}=5$",
+            "why": "25 is a square"
+          },
+          {
+            "do": "Divide",
+            "result": "$20/5=4$",
+            "why": "finish the standard error calculation"
+          },
+          {
+            "do": "Compare to $\\sigma$",
+            "result": "$4<20$",
+            "why": "averaging reduces spread"
+          }
+        ],
+        "answer": "$\\operatorname{SE}(\\bar{X})=4$."
+      },
+      {
+        "problem": "A sample proportion has true $p=0.30$ and $n=100$. Compute its approximate standard error $\\sqrt{p(1-p)/n}$.",
+        "steps": [
+          {
+            "do": "Compute $1-p$",
+            "result": "$0.70$",
+            "why": "failure probability complements success"
+          },
+          {
+            "do": "Multiply $p(1-p)$",
+            "result": "$0.30\\cdot0.70=0.21$",
+            "why": "Bernoulli variance"
+          },
+          {
+            "do": "Divide by $n$",
+            "result": "$0.21/100=0.0021$",
+            "why": "average of 100 Bernoulli variables"
+          },
+          {
+            "do": "Take the square root",
+            "result": "$\\sqrt{0.0021}\\approx0.0458$",
+            "why": "standard error is standard deviation"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $4.6$ percentage points",
+            "why": "proportions are often read in percentage points"
+          }
+        ],
+        "answer": "Approximate standard error $0.0458$."
+      },
+      {
+        "problem": "A population has $\\mu=10$, $\\sigma=3$. For $n=9$, give the mean and variance of $\\bar{X}$.",
+        "steps": [
+          {
+            "do": "State the mean",
+            "result": "$\\mathbb{E}[\\bar{X}]=10$",
+            "why": "sample mean is centered at $\\mu$"
+          },
+          {
+            "do": "Write the variance formula",
+            "result": "$\\operatorname{Var}(\\bar{X})=\\sigma^2/n$",
+            "why": "independent draws"
+          },
+          {
+            "do": "Square $\\sigma$",
+            "result": "$3^2=9$",
+            "why": "variance is squared standard deviation"
+          },
+          {
+            "do": "Divide by $n$",
+            "result": "$9/9=1$",
+            "why": "sample size is 9"
+          },
+          {
+            "do": "Name standard error",
+            "result": "$\\sqrt{1}=1$",
+            "why": "useful check on the variance"
+          }
+        ],
+        "answer": "Mean $10$, variance $1$, standard error $1$."
+      },
+      {
+        "problem": "If sample size increases from $25$ to $100$ with the same $\\sigma$, by what factor does $\\operatorname{SE}(\\bar{X})$ change?",
+        "steps": [
+          {
+            "do": "Write old standard error",
+            "result": "$\\sigma/\\sqrt{25}=\\sigma/5$",
+            "why": "old sample size is 25"
+          },
+          {
+            "do": "Write new standard error",
+            "result": "$\\sigma/\\sqrt{100}=\\sigma/10$",
+            "why": "new sample size is 100"
+          },
+          {
+            "do": "Form the ratio",
+            "result": "$(\\sigma/10)/(\\sigma/5)$",
+            "why": "compare new to old"
+          },
+          {
+            "do": "Simplify",
+            "result": "$1/2$",
+            "why": "doubling the square root halves the standard error"
+          },
+          {
+            "do": "Interpret",
+            "result": "standard error is cut in half",
+            "why": "quadrupling sample size halves mean uncertainty"
+          }
+        ],
+        "answer": "It changes by factor $1/2$; it is halved."
+      },
+      {
+        "problem": "A validation accuracy estimate has approximate sampling standard error $\\sqrt{0.8\\cdot0.2/400}$. Compute it.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.8\\cdot0.2=0.16$",
+            "why": "Bernoulli variance term"
+          },
+          {
+            "do": "Divide by sample size",
+            "result": "$0.16/400=0.0004$",
+            "why": "average over 400 examples"
+          },
+          {
+            "do": "Take the square root",
+            "result": "$\\sqrt{0.0004}=0.02$",
+            "why": "$0.02^2=0.0004$"
+          },
+          {
+            "do": "Convert to percentage points",
+            "result": "$2$ percentage points",
+            "why": "$0.02$ accuracy is 2 percent"
+          },
+          {
+            "do": "Interpret repeated tests",
+            "result": "accuracy estimates vary by about $0.02$",
+            "why": "standard error is across repeated samples"
+          }
+        ],
+        "answer": "The approximate standard error is $0.02$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Confidence intervals",
+        "background": "Modern interval estimation depends on the sampling distribution of an estimator. The standard error sets the interval width.",
+        "numbers": "With estimate $0.60$ and SE $0.05$, a rough $95\\%$ interval is $0.60\\pm2(0.05)=[0.50,0.70]$."
+      },
+      {
+        "title": "A/B test uncertainty",
+        "background": "Experiment lifts fluctuate because treatment and control are samples. Sampling distributions describe that fluctuation.",
+        "numbers": "If each conversion rate has SE $0.01$, a difference has SE about $\\sqrt{0.01^2+0.01^2}=0.0141$."
+      },
+      {
+        "title": "Model leaderboard noise",
+        "background": "Small test sets make model rankings noisy. Two models can swap order under a different sample.",
+        "numbers": "Accuracy SE for $p=0.90,n=100$ is $\\sqrt{0.09/100}=0.03$."
+      },
+      {
+        "title": "Monte Carlo estimates",
+        "background": "Simulation estimates expectations by sample averages. The sampling distribution tells how many simulations are enough.",
+        "numbers": "If simulation output has $\\sigma=5$ and $n=10{,}000$, SE is $5/100=0.05$."
+      },
+      {
+        "title": "Survey margins",
+        "background": "Polling reports margins of error because sample proportions vary across possible samples.",
+        "numbers": "For $p\\approx0.5,n=1600$, SE is $\\sqrt{0.25/1600}=0.0125$."
+      },
+      {
+        "title": "Batch metric monitoring",
+        "background": "Online metrics measured on batches move even when the system is stable. Standard errors help separate noise from signal.",
+        "numbers": "A mean latency with sample SD $30$ ms and $n=900$ has SE $30/30=1$ ms."
+      }
+    ],
+    "applicationsClose": "Sampling distributions are the bridge from one observed statistic to a measured account of uncertainty.",
+    "takeaways": [
+      "A sampling distribution is the distribution of a statistic over repeated samples.",
+      "For independent draws, $\\mathbb{E}[\\bar{X}]=\\mu$ and $\\operatorname{Var}(\\bar{X})=\\sigma^2/n$.",
+      "The standard error is the standard deviation of an estimator.",
+      "Larger samples reduce sampling variation at a square-root rate."
+    ],
     "prereqs": [
       "math-18-03"
     ]
@@ -90,19 +1083,267 @@
   B({
     "id": "math-18-05",
     "title": "Point estimation",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: point estimation.",
+    "tagline": "A point estimate is one carefully computed number standing in for an unknown parameter.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Sampling distributions</i>"
+        "Statistics and estimators",
+        "Sampling distributions",
+        "Descriptive statistics"
       ],
       "leadsTo": [
-        "the next lesson, <i>Bias of an estimator</i>"
+        "Bias of an estimator",
+        "Variance of an estimator",
+        "Mean squared error"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "sample mean",
+        "sample proportion",
+        "likelihood",
+        "method of moments"
       ]
     },
+    "motivation": "<p>Often you need a single number before you can make a decision: the average demand tomorrow, the conversion rate of a page, or the noise variance of a sensor.</p><p><b>Point estimation</b> is the discipline of choosing that number from data. It is compact, useful, and incomplete unless you remember the uncertainty around it.</p>",
+    "definition": "<p>A <b>point estimator</b> is a statistic $\\hat{\\theta}=T(X_1,\\ldots,X_n)$ used to estimate an unknown parameter $\\theta$. The observed value $\\hat{\\theta}=T(x_1,\\ldots,x_n)$ is a <b>point estimate</b>. Common examples are $\\bar{X}$ for a mean $\\mu$ and $\\hat{p}=X/n$ for a Bernoulli probability $p$.</p><p>Good point estimators are judged by properties such as bias, variance, mean squared error, consistency, and sometimes computational stability. A point estimate should be read as the center of an uncertainty story, not as a magical exact answer.</p><p><b>Assumptions that matter:</b> the target parameter must be defined; the estimator must be computable from available data; the sampling design affects the estimate; and point estimates alone do not show sampling uncertainty.</p>",
+    "worked": {
+      "problem": "A Bernoulli sample has $18$ successes in $60$ trials. Give the point estimate of $p$ and the estimated standard error using $\\sqrt{\\hat{p}(1-\\hat{p})/n}$.",
+      "skills": [
+        "point estimate",
+        "sample proportion",
+        "standard error"
+      ],
+      "strategy": "Estimate the parameter first, then plug the estimate into the uncertainty formula.",
+      "steps": [
+        {
+          "do": "Write the estimator",
+          "result": "$\\hat{p}=X/n$",
+          "why": "success probability is estimated by sample success rate"
+        },
+        {
+          "do": "Substitute counts",
+          "result": "$\\hat{p}=18/60$",
+          "why": "18 successes out of 60 trials"
+        },
+        {
+          "do": "Compute the estimate",
+          "result": "$\\hat{p}=0.30$",
+          "why": "$18/60=0.30$"
+        },
+        {
+          "do": "Compute $1-\\hat{p}$",
+          "result": "$0.70$",
+          "why": "the complement of 0.30"
+        },
+        {
+          "do": "Plug into standard error",
+          "result": "$\\sqrt{0.30\\cdot0.70/60}$",
+          "why": "use the estimated Bernoulli variance"
+        },
+        {
+          "do": "Evaluate",
+          "result": "$\\sqrt{0.0035}\\approx0.059$",
+          "why": "$0.21/60=0.0035$"
+        }
+      ],
+      "verify": "The estimate is between 0 and 1, and a sample of only 60 gives a visible standard error.",
+      "answer": "The point estimate is $\\hat{p}=0.30$ with estimated standard error about $0.059$.",
+      "connects": "A point estimate is useful, but its sampling spread tells you how seriously to take its precision."
+    },
+    "practice": [
+      {
+        "problem": "Sample values $10,12,14,16$ estimate a population mean. Compute the point estimate.",
+        "steps": [
+          {
+            "do": "Choose the estimator",
+            "result": "$\\bar{X}$",
+            "why": "sample mean estimates population mean"
+          },
+          {
+            "do": "Write the observed mean",
+            "result": "$\\bar{x}=(10+12+14+16)/4$",
+            "why": "average observed values"
+          },
+          {
+            "do": "Add values",
+            "result": "$52$",
+            "why": "sum the sample"
+          },
+          {
+            "do": "Divide by $4$",
+            "result": "$13$",
+            "why": "there are four observations"
+          },
+          {
+            "do": "State as estimate",
+            "result": "$\\hat{\\mu}=13$",
+            "why": "the point estimate targets $\\mu$"
+          }
+        ],
+        "answer": "$\\hat{\\mu}=13$."
+      },
+      {
+        "problem": "A classifier makes $45$ errors on $300$ examples. Estimate the error probability.",
+        "steps": [
+          {
+            "do": "Write the estimator",
+            "result": "$\\hat{e}=45/300$",
+            "why": "sample error rate estimates population error"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.15$",
+            "why": "$45/300=15/100$"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$15\\%$",
+            "why": "proportions are often reported as percents"
+          },
+          {
+            "do": "Compute correct rate",
+            "result": "$1-0.15=0.85$",
+            "why": "accuracy complements error"
+          },
+          {
+            "do": "Interpret",
+            "result": "estimated error is $0.15$",
+            "why": "this is one-number summary of test performance"
+          }
+        ],
+        "answer": "Estimated error probability $0.15$."
+      },
+      {
+        "problem": "For normal data with known mean $0$, a natural point estimator of variance is $\\hat{\\sigma}^2=\\frac{1}{n}\\sum x_i^2$. Compute it for $1,-2,3$.",
+        "steps": [
+          {
+            "do": "Square observations",
+            "result": "$1,4,9$",
+            "why": "variance around known zero uses squared values"
+          },
+          {
+            "do": "Sum squares",
+            "result": "$14$",
+            "why": "$1+4+9=14$"
+          },
+          {
+            "do": "Count observations",
+            "result": "$n=3$",
+            "why": "three values are observed"
+          },
+          {
+            "do": "Divide by $n$",
+            "result": "$14/3\\approx4.667$",
+            "why": "use the stated estimator"
+          },
+          {
+            "do": "Attach parameter",
+            "result": "$\\hat{\\sigma}^2\\approx4.667$",
+            "why": "the estimate targets variance"
+          }
+        ],
+        "answer": "$\\hat{\\sigma}^2=14/3\\approx4.667$."
+      },
+      {
+        "problem": "A Poisson count model has parameter $\\lambda$ and estimator $\\hat{\\lambda}=\\bar{X}$. Counts are $2,0,3,5$. Compute the estimate.",
+        "steps": [
+          {
+            "do": "Write the estimator",
+            "result": "$\\hat{\\lambda}=\\bar{x}$",
+            "why": "Poisson mean equals $\\lambda$"
+          },
+          {
+            "do": "Add counts",
+            "result": "$2+0+3+5=10$",
+            "why": "sum observed event counts"
+          },
+          {
+            "do": "Divide by sample size",
+            "result": "$10/4=2.5$",
+            "why": "four observations"
+          },
+          {
+            "do": "State estimate",
+            "result": "$\\hat{\\lambda}=2.5$",
+            "why": "sample mean estimates event rate"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $2.5$ events per unit",
+            "why": "Poisson parameter is a rate per observation unit"
+          }
+        ],
+        "answer": "$\\hat{\\lambda}=2.5$."
+      },
+      {
+        "problem": "Two validation samples estimate accuracy: model A has $88/100$, model B has $174/200$. Compute both point estimates and the difference A minus B.",
+        "steps": [
+          {
+            "do": "Compute A accuracy",
+            "result": "$88/100=0.88$",
+            "why": "correct over total"
+          },
+          {
+            "do": "Compute B accuracy",
+            "result": "$174/200=0.87$",
+            "why": "correct over total"
+          },
+          {
+            "do": "Write the difference",
+            "result": "$0.88-0.87$",
+            "why": "A minus B"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.01$",
+            "why": "one percentage point"
+          },
+          {
+            "do": "Interpret cautiously",
+            "result": "A is higher by $0.01$ in point estimates",
+            "why": "uncertainty is not yet assessed"
+          }
+        ],
+        "answer": "A: $0.88$, B: $0.87$, difference $0.01$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "CTR reporting",
+        "background": "Ads systems need a single current estimate of click-through rate for dashboards and forecasts.",
+        "numbers": "$240$ clicks in $20{,}000$ impressions gives $\\hat{p}=0.012$."
+      },
+      {
+        "title": "Demand forecasting",
+        "background": "A sample mean can be a baseline point forecast before richer time-series modeling.",
+        "numbers": "Orders $90,110,100$ average to $100$."
+      },
+      {
+        "title": "Reliability estimation",
+        "background": "Manufacturing and services estimate failure probabilities from inspected units.",
+        "numbers": "$3$ failures among $500$ units gives $\\hat{p}=0.006$."
+      },
+      {
+        "title": "Noise variance",
+        "background": "Signal processing estimates noise variance to set filters and thresholds.",
+        "numbers": "Residuals $1,-1,2,-2$ around zero give variance estimate $(1+1+4+4)/4=2.5$."
+      },
+      {
+        "title": "Average loss",
+        "background": "Training dashboards report average loss as a point estimate of expected loss under the data distribution.",
+        "numbers": "Losses $0.2,0.3,0.4$ average to $0.3$."
+      },
+      {
+        "title": "Embedding coverage",
+        "background": "A sample can estimate how often an item has a usable embedding in a large catalog.",
+        "numbers": "$965$ usable embeddings in $1000$ checked items gives $\\hat{p}=0.965$."
+      }
+    ],
+    "applicationsClose": "Point estimates are the numbers we act on, while later lessons teach how to judge their reliability.",
+    "takeaways": [
+      "A point estimator is a statistic used to estimate a parameter.",
+      "A point estimate is the observed numerical value of that estimator.",
+      "Point estimates should be paired with uncertainty when decisions matter.",
+      "Common point estimates include sample means, proportions, rates, and variances."
+    ],
     "prereqs": [
       "math-18-04"
     ]
@@ -111,19 +1352,262 @@
   B({
     "id": "math-18-06",
     "title": "Bias of an estimator",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: bias of an estimator.",
+    "tagline": "Bias asks whether an estimator is centered on the truth over repeated samples.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Point estimation</i>"
+        "Point estimation",
+        "Sampling distributions",
+        "expectation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Variance of an estimator</i>"
+        "Variance of an estimator",
+        "Mean squared error",
+        "Consistency"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "expected value",
+        "sample mean",
+        "sample variance",
+        "estimator comparison"
       ]
     },
+    "motivation": "<p>A single estimate can be too high or too low by luck. Bias is not about one lucky sample; it is about the long-run center of the estimator.</p><p>If an estimator systematically aims above or below the parameter, more repetition reveals the tilt. Seeing that tilt helps you separate random scatter from directional error.</p>",
+    "definition": "<p>The <b>bias</b> of an estimator $\\hat{\\theta}$ for parameter $\\theta$ is $\\operatorname{Bias}(\\hat{\\theta})=\\mathbb{E}[\\hat{\\theta}]-\\theta$. If this equals $0$, the estimator is <b>unbiased</b>. Bias is measured over the sampling distribution.</p><p>For independent draws with mean $\\mu$, $\\bar{X}$ is unbiased because $\\mathbb{E}[\\bar{X}]=\\dfrac{1}{n}\\sum_i \\mathbb{E}[X_i]=\\mu$. Bias can sometimes be traded for lower variance, so unbiased is not automatically best.</p><p><b>Assumptions that matter:</b> the expectation is under a specified data-generating model; bias depends on the target parameter; finite-sample bias can vanish asymptotically; and a biased estimator may still have low mean squared error.</p>",
+    "worked": {
+      "problem": "Let $X_1,X_2$ have mean $\\mu$. Compare $T_1=(X_1+X_2)/2$ and $T_2=(X_1+X_2)/2+3$ as estimators of $\\mu$.",
+      "skills": [
+        "bias",
+        "linearity of expectation",
+        "unbiasedness"
+      ],
+      "strategy": "Take expectations of each estimator and subtract the target.",
+      "steps": [
+        {
+          "do": "Compute $\\mathbb{E}[T_1]$",
+          "result": "$\\mathbb{E}[(X_1+X_2)/2]$",
+          "why": "start from the estimator definition"
+        },
+        {
+          "do": "Use linearity",
+          "result": "$(\\mu+\\mu)/2=\\mu$",
+          "why": "each observation has mean $\\mu$"
+        },
+        {
+          "do": "Compute bias of $T_1$",
+          "result": "$\\mu-\\mu=0$",
+          "why": "bias is expectation minus target"
+        },
+        {
+          "do": "Compute $\\mathbb{E}[T_2]$",
+          "result": "$\\mu+3$",
+          "why": "adding 3 shifts the expectation by 3"
+        },
+        {
+          "do": "Compute bias of $T_2$",
+          "result": "$(\\mu+3)-\\mu=3$",
+          "why": "subtract the target"
+        }
+      ],
+      "verify": "Adding a constant $3$ to every estimate must move the long-run center up by $3$.",
+      "answer": "$T_1$ is unbiased; $T_2$ has bias $3$.",
+      "connects": "Bias is the long-run aiming error of an estimator."
+    },
+    "practice": [
+      {
+        "problem": "If $\\mathbb{E}[\\hat{\\theta}]=12$ and $\\theta=10$, compute bias.",
+        "steps": [
+          {
+            "do": "Write the bias formula",
+            "result": "$\\mathbb{E}[\\hat{\\theta}]-\\theta$",
+            "why": "definition of bias"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$12-10$",
+            "why": "use the given expectation and target"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2$",
+            "why": "the estimator is centered two units high"
+          },
+          {
+            "do": "Classify",
+            "result": "biased upward",
+            "why": "positive bias means overestimation on average"
+          },
+          {
+            "do": "State units",
+            "result": "same units as $\\theta$",
+            "why": "bias is an error in the parameter scale"
+          }
+        ],
+        "answer": "Bias is $2$, upward."
+      },
+      {
+        "problem": "Let $T=0.9\\bar{X}$ estimate $\\mu$ when $\\mathbb{E}[\\bar{X}]=\\mu$. Find the bias.",
+        "steps": [
+          {
+            "do": "Take expectation",
+            "result": "$\\mathbb{E}[T]=0.9\\mathbb{E}[\\bar{X}]$",
+            "why": "constants factor out"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.9\\mu$",
+            "why": "$\\bar{X}$ is unbiased for $\\mu$"
+          },
+          {
+            "do": "Subtract target",
+            "result": "$0.9\\mu-\\mu$",
+            "why": "bias definition"
+          },
+          {
+            "do": "Simplify",
+            "result": "$-0.1\\mu$",
+            "why": "combine like terms"
+          },
+          {
+            "do": "Interpret",
+            "result": "downward if $\\mu>0$",
+            "why": "negative bias under positive mean"
+          }
+        ],
+        "answer": "Bias is $-0.1\\mu$."
+      },
+      {
+        "problem": "A sample variance with denominator $n$ has expectation $\\frac{n-1}{n}\\sigma^2$. Find its bias for $\\sigma^2$ when $n=5$.",
+        "steps": [
+          {
+            "do": "Substitute $n=5$",
+            "result": "$\\mathbb{E}[T]=\\frac{4}{5}\\sigma^2$",
+            "why": "use the given expectation"
+          },
+          {
+            "do": "Write bias",
+            "result": "$\\frac{4}{5}\\sigma^2-\\sigma^2$",
+            "why": "subtract target variance"
+          },
+          {
+            "do": "Use common terms",
+            "result": "$(\\frac{4}{5}-1)\\sigma^2$",
+            "why": "factor $\\sigma^2$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$-\\frac{1}{5}\\sigma^2$",
+            "why": "$4/5-1=-1/5$"
+          },
+          {
+            "do": "Interpret",
+            "result": "biased low",
+            "why": "the bias is negative"
+          }
+        ],
+        "answer": "Bias is $-\\sigma^2/5$."
+      },
+      {
+        "problem": "An estimator takes values $8,10,12$ with probabilities $0.25,0.50,0.25$. If $\\theta=10$, compute its bias.",
+        "steps": [
+          {
+            "do": "Write the expectation",
+            "result": "$8(0.25)+10(0.50)+12(0.25)$",
+            "why": "weighted average over sampling distribution"
+          },
+          {
+            "do": "Multiply",
+            "result": "$2+5+3$",
+            "why": "compute each contribution"
+          },
+          {
+            "do": "Add",
+            "result": "$10$",
+            "why": "sum weighted values"
+          },
+          {
+            "do": "Subtract target",
+            "result": "$10-10=0$",
+            "why": "bias formula"
+          },
+          {
+            "do": "Classify",
+            "result": "unbiased",
+            "why": "zero bias"
+          }
+        ],
+        "answer": "Bias is $0$; the estimator is unbiased."
+      },
+      {
+        "problem": "A validation estimator reports accuracy plus $0.02$ due to a known logging bug. If the ordinary sample accuracy is unbiased for $a$, what is the bugged estimator's bias?",
+        "steps": [
+          {
+            "do": "Let ordinary estimator be $\\hat{a}$",
+            "result": "$\\mathbb{E}[\\hat{a}]=a$",
+            "why": "given unbiasedness"
+          },
+          {
+            "do": "Write bugged estimator",
+            "result": "$B=\\hat{a}+0.02$",
+            "why": "the bug adds a constant"
+          },
+          {
+            "do": "Take expectation",
+            "result": "$\\mathbb{E}[B]=a+0.02$",
+            "why": "constant shifts expectation"
+          },
+          {
+            "do": "Subtract target",
+            "result": "$(a+0.02)-a$",
+            "why": "bias formula"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.02$",
+            "why": "the target cancels"
+          }
+        ],
+        "answer": "The bias is $0.02$, or two percentage points upward."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Survey nonresponse",
+        "background": "Polling bias appears when sampled respondents differ systematically from the target population.",
+        "numbers": "If true support is $0.48$ but expected poll estimate is $0.51$, bias is $0.03$."
+      },
+      {
+        "title": "Biased validation sets",
+        "background": "A test set with easier examples can overestimate deployment accuracy.",
+        "numbers": "Expected test accuracy $0.92$ versus true production $0.87$ gives bias $0.05$."
+      },
+      {
+        "title": "Regularization shrinkage",
+        "background": "Shrinkage estimators deliberately introduce bias to reduce variance, a central idea in ML.",
+        "numbers": "If true weight is $10$ and expected ridge estimate is $8$, bias is $-2$."
+      },
+      {
+        "title": "Variance estimation",
+        "background": "Using denominator $n$ for sample variance is biased low; denominator $n-1$ corrects finite-sample bias.",
+        "numbers": "At $n=10$, expectation is $0.9\\sigma^2$, so bias is $-0.1\\sigma^2$."
+      },
+      {
+        "title": "Sensor calibration",
+        "background": "A miscalibrated sensor can have a systematic offset even if random noise averages out.",
+        "numbers": "Expected reading $101.5$ for true value $100$ has bias $1.5$."
+      },
+      {
+        "title": "Selection bias in logs",
+        "background": "Logged recommender data overrepresent items the old system chose, biasing estimates for unseen items.",
+        "numbers": "If observed click rate is expected $0.08$ but full-catalog rate is $0.05$, bias is $0.03$."
+      }
+    ],
+    "applicationsClose": "Bias is not noise; it is where the estimator aims when the noise averages away.",
+    "takeaways": [
+      "Bias equals $\\mathbb{E}[\\hat{\\theta}]-\\theta$.",
+      "Unbiased estimators are centered on the target over repeated samples.",
+      "Bias depends on the model, target, and estimator.",
+      "A little bias can sometimes reduce variance enough to improve overall error."
+    ],
     "prereqs": [
       "math-18-05"
     ]
@@ -132,19 +1616,262 @@
   B({
     "id": "math-18-07",
     "title": "Variance of an estimator",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: variance of an estimator.",
+    "tagline": "Estimator variance measures how much the estimate jitters from sample to sample.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Bias of an estimator</i>"
+        "Bias of an estimator",
+        "Sampling distributions",
+        "variance"
       ],
       "leadsTo": [
-        "the next lesson, <i>Mean squared error</i>"
+        "Mean squared error",
+        "Efficiency",
+        "Fisher information"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "standard error",
+        "sample mean",
+        "independence",
+        "estimator comparison"
       ]
     },
+    "motivation": "<p>Two estimators can both aim at the truth and still feel very different. One lands close to the target almost every time; another swings wildly around it.</p><p>The variance of an estimator measures that swing. It is the mathematical version of asking, if we repeated the study, how much would this estimate move?</p>",
+    "definition": "<p>The <b>variance of an estimator</b> $\\hat{\\theta}$ is $\\operatorname{Var}(\\hat{\\theta})=\\mathbb{E}[(\\hat{\\theta}-\\mathbb{E}[\\hat{\\theta}])^2]$. Its square root is the standard error. For independent observations with variance $\\sigma^2$, $\\operatorname{Var}(\\bar{X})=\\sigma^2/n$.</p><p>The sample mean formula comes from linearity of variance under independence: averaging divides the sum by $n$, so the variance is multiplied by $1/n^2$ while the sum of $n$ variances contributes $n\\sigma^2$.</p><p><b>Assumptions that matter:</b> independence is needed for the simple $\\sigma^2/n$ formula; dependence can increase or decrease variance; lower variance is valuable only relative to the same target and bias; and standard error is in the parameter's units.</p>",
+    "worked": {
+      "problem": "If independent data have variance $25$, find $\\operatorname{Var}(\\bar{X})$ and $\\operatorname{SE}(\\bar{X})$ for $n=100$.",
+      "skills": [
+        "estimator variance",
+        "standard error",
+        "sample mean"
+      ],
+      "strategy": "Use the sample-mean variance formula, then take a square root.",
+      "steps": [
+        {
+          "do": "Write the variance formula",
+          "result": "$\\operatorname{Var}(\\bar{X})=\\sigma^2/n$",
+          "why": "the sample mean averages independent draws"
+        },
+        {
+          "do": "Substitute values",
+          "result": "$25/100$",
+          "why": "$\\sigma^2=25$ and $n=100$"
+        },
+        {
+          "do": "Divide",
+          "result": "$0.25$",
+          "why": "variance shrinks by sample size"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$\\operatorname{SE}=\\sqrt{0.25}=0.5$",
+          "why": "standard error is the estimator standard deviation"
+        },
+        {
+          "do": "Compare to individual SD",
+          "result": "$0.5<5$",
+          "why": "averaging 100 observations greatly reduces spread"
+        }
+      ],
+      "verify": "The individual standard deviation is $\\sqrt{25}=5$; averaging 100 independent values divides it by 10.",
+      "answer": "$\\operatorname{Var}(\\bar{X})=0.25$ and $\\operatorname{SE}=0.5$.",
+      "connects": "Estimator variance is the repeat-sampling wiggle of the estimate."
+    },
+    "practice": [
+      {
+        "problem": "An estimator has values $9,10,11$ with probabilities $0.25,0.50,0.25$. Compute its variance.",
+        "steps": [
+          {
+            "do": "Compute the expectation",
+            "result": "$9(0.25)+10(0.50)+11(0.25)=10$",
+            "why": "weighted average"
+          },
+          {
+            "do": "Compute squared deviations",
+            "result": "$1,0,1$",
+            "why": "subtract 10 and square"
+          },
+          {
+            "do": "Weight squared deviations",
+            "result": "$1(0.25)+0(0.50)+1(0.25)$",
+            "why": "variance averages squared deviations"
+          },
+          {
+            "do": "Add",
+            "result": "$0.5$",
+            "why": "$0.25+0.25=0.5$"
+          },
+          {
+            "do": "Take optional standard error",
+            "result": "$\\sqrt{0.5}\\approx0.707$",
+            "why": "square root gives spread in original units"
+          }
+        ],
+        "answer": "Variance $0.5$."
+      },
+      {
+        "problem": "If $\\sigma^2=16$ and $n=4$, compute $\\operatorname{Var}(\\bar{X})$ and SE.",
+        "steps": [
+          {
+            "do": "Use the formula",
+            "result": "$16/4$",
+            "why": "variance of independent sample mean"
+          },
+          {
+            "do": "Divide",
+            "result": "$4$",
+            "why": "sample size is 4"
+          },
+          {
+            "do": "Take square root",
+            "result": "$2$",
+            "why": "$\\sqrt{4}=2$"
+          },
+          {
+            "do": "Compare individual SD",
+            "result": "$4$",
+            "why": "individual SD is $\\sqrt{16}$"
+          },
+          {
+            "do": "Interpret",
+            "result": "SE is half the individual SD",
+            "why": "averaging four values divides SD by $2$"
+          }
+        ],
+        "answer": "Variance $4$, SE $2$."
+      },
+      {
+        "problem": "Two unbiased estimators have variances $1.44$ and $2.25$. Which is more stable and what are their standard errors?",
+        "steps": [
+          {
+            "do": "Compare variances",
+            "result": "$1.44<2.25$",
+            "why": "smaller variance means less sampling spread"
+          },
+          {
+            "do": "Compute first SE",
+            "result": "$\\sqrt{1.44}=1.2$",
+            "why": "standard error is square root"
+          },
+          {
+            "do": "Compute second SE",
+            "result": "$\\sqrt{2.25}=1.5$",
+            "why": "standard error is square root"
+          },
+          {
+            "do": "Choose stable estimator",
+            "result": "first estimator",
+            "why": "it has lower variance and lower SE"
+          },
+          {
+            "do": "Use unbiased condition",
+            "result": "lower variance is preferred here",
+            "why": "both target the same parameter without bias"
+          }
+        ],
+        "answer": "The first is more stable; SEs are $1.2$ and $1.5$."
+      },
+      {
+        "problem": "A proportion estimator has $p=0.2$ and $n=50$. Compute $\\operatorname{Var}(\\hat{p})=p(1-p)/n$.",
+        "steps": [
+          {
+            "do": "Compute $1-p$",
+            "result": "$0.8$",
+            "why": "complement probability"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.2\\cdot0.8=0.16$",
+            "why": "Bernoulli variance"
+          },
+          {
+            "do": "Divide by $n$",
+            "result": "$0.16/50=0.0032$",
+            "why": "sample proportion averages 50 trials"
+          },
+          {
+            "do": "Compute SE",
+            "result": "$\\sqrt{0.0032}\\approx0.0566$",
+            "why": "square root gives standard error"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $5.7$ percentage points",
+            "why": "proportion units"
+          }
+        ],
+        "answer": "Variance $0.0032$, SE about $0.0566$."
+      },
+      {
+        "problem": "A test accuracy estimate uses $n=1600$ examples and true accuracy near $0.75$. Approximate the estimator variance.",
+        "steps": [
+          {
+            "do": "Compute $p(1-p)$",
+            "result": "$0.75\\cdot0.25=0.1875$",
+            "why": "Bernoulli variance for correctness"
+          },
+          {
+            "do": "Divide by $n$",
+            "result": "$0.1875/1600$",
+            "why": "accuracy is a sample proportion"
+          },
+          {
+            "do": "Calculate",
+            "result": "$0.0001171875$",
+            "why": "perform the division"
+          },
+          {
+            "do": "Compute SE",
+            "result": "$\\sqrt{0.0001171875}\\approx0.0108$",
+            "why": "standard error is square root"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $1.08$ percentage points",
+            "why": "accuracy variation is small with 1600 examples"
+          }
+        ],
+        "answer": "Approximate variance $0.0001171875$, SE about $0.0108$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Experiment power",
+        "background": "A/B tests need enough users so estimator variance is small enough to detect meaningful lifts.",
+        "numbers": "Reducing SE from $0.02$ to $0.01$ requires about four times the sample size."
+      },
+      {
+        "title": "Model comparison",
+        "background": "Leaderboard differences smaller than standard errors may be noise rather than real improvement.",
+        "numbers": "A $0.003$ accuracy gain with SE $0.006$ is only half a standard error."
+      },
+      {
+        "title": "Ensembling",
+        "background": "Averaging independent model predictions can reduce variance, which is one reason ensembles stabilize results.",
+        "numbers": "Four independent estimates with variance $0.04$ average to variance $0.04/4=0.01$."
+      },
+      {
+        "title": "Sensor fusion",
+        "background": "Combining repeated noisy measurements reduces estimator variance when errors are independent.",
+        "numbers": "Averaging $9$ readings with individual SD $3$ gives SE $3/3=1$."
+      },
+      {
+        "title": "Monte Carlo error",
+        "background": "Simulation estimates become more stable as runs increase, but only at square-root speed.",
+        "numbers": "Increasing runs from $10{,}000$ to $40{,}000$ halves SE."
+      },
+      {
+        "title": "Mini-batch gradients",
+        "background": "Stochastic gradient estimates vary across mini-batches. Larger batches reduce gradient variance.",
+        "numbers": "If coordinate variance is $64$ per example and batch size is $256$, mean-gradient variance is $64/256=0.25$."
+      }
+    ],
+    "applicationsClose": "Variance is the price of learning from finite samples: it falls with information, but never by wishful thinking.",
+    "takeaways": [
+      "Estimator variance is variance over repeated samples.",
+      "The standard error is the square root of estimator variance.",
+      "For independent means, variance shrinks as $1/n$ and SE as $1/\\sqrt{n}$.",
+      "Lower variance is most meaningful when comparing estimators of the same target and bias behavior."
+    ],
     "prereqs": [
       "math-18-06"
     ]
@@ -153,19 +1880,262 @@
   B({
     "id": "math-18-08",
     "title": "Mean squared error",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: mean squared error.",
+    "tagline": "Mean squared error combines aiming error and wobble into one measure of estimator accuracy.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Variance of an estimator</i>"
+        "Bias of an estimator",
+        "Variance of an estimator",
+        "expectation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Consistency</i>"
+        "Consistency",
+        "Efficiency",
+        "Maximum Likelihood Estimation (MLE)"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "bias-variance decomposition",
+        "loss functions",
+        "quadratic error",
+        "estimator comparison"
       ]
     },
+    "motivation": "<p>An estimator can be centered but noisy, or biased but very stable. Which is better? Mean squared error gives one principled way to compare them.</p><p>It asks for the average squared distance from the truth. Squaring treats high and low errors symmetrically and punishes large misses.</p>",
+    "definition": "<p>The <b>mean squared error</b> of $\\hat{\\theta}$ for $\\theta$ is $\\operatorname{MSE}(\\hat{\\theta})=\\mathbb{E}[(\\hat{\\theta}-\\theta)^2]$. It decomposes as $$\\operatorname{MSE}(\\hat{\\theta})=\\operatorname{Var}(\\hat{\\theta})+\\operatorname{Bias}(\\hat{\\theta})^2.$$</p><p>To derive it, write $\\hat{\\theta}-\\theta=(\\hat{\\theta}-\\mathbb{E}[\\hat{\\theta}])+(\\mathbb{E}[\\hat{\\theta}]-\\theta)$. Squaring and taking expectation makes the cross term vanish because $\\mathbb{E}[\\hat{\\theta}-\\mathbb{E}[\\hat{\\theta}]]=0$.</p><p><b>Assumptions that matter:</b> MSE depends on the true parameter value; squared-error loss must be appropriate for the decision; finite MSE requires the relevant second moments; and lower MSE can favor a slightly biased estimator over an unbiased noisy one.</p>",
+    "worked": {
+      "problem": "Estimator A has bias $0$ and variance $9$. Estimator B has bias $1$ and variance $4$. Compare MSEs.",
+      "skills": [
+        "MSE",
+        "bias-variance decomposition",
+        "estimator comparison"
+      ],
+      "strategy": "Add variance and squared bias for each estimator.",
+      "steps": [
+        {
+          "do": "Write MSE for A",
+          "result": "$9+0^2$",
+          "why": "MSE equals variance plus squared bias"
+        },
+        {
+          "do": "Compute A's MSE",
+          "result": "$9$",
+          "why": "zero bias adds nothing"
+        },
+        {
+          "do": "Write MSE for B",
+          "result": "$4+1^2$",
+          "why": "B has variance 4 and bias 1"
+        },
+        {
+          "do": "Compute B's MSE",
+          "result": "$5$",
+          "why": "$4+1=5$"
+        },
+        {
+          "do": "Compare",
+          "result": "$5<9$",
+          "why": "B has lower MSE despite bias"
+        }
+      ],
+      "verify": "B is biased, but its variance reduction is larger than its squared-bias cost.",
+      "answer": "A has MSE $9$; B has MSE $5$, so B is better under squared error.",
+      "connects": "MSE makes the bias-variance tradeoff explicit."
+    },
+    "practice": [
+      {
+        "problem": "Compute MSE for bias $2$ and variance $3$.",
+        "steps": [
+          {
+            "do": "Write formula",
+            "result": "$\\operatorname{MSE}=\\operatorname{Var}+\\operatorname{Bias}^2$",
+            "why": "bias-variance decomposition"
+          },
+          {
+            "do": "Substitute",
+            "result": "$3+2^2$",
+            "why": "variance is 3 and bias is 2"
+          },
+          {
+            "do": "Square bias",
+            "result": "$4$",
+            "why": "$2^2=4$"
+          },
+          {
+            "do": "Add",
+            "result": "$7$",
+            "why": "$3+4=7$"
+          },
+          {
+            "do": "Interpret",
+            "result": "average squared error is $7$",
+            "why": "MSE is in squared parameter units"
+          }
+        ],
+        "answer": "MSE $7$."
+      },
+      {
+        "problem": "An unbiased estimator has variance $0.04$. What is its MSE and RMSE?",
+        "steps": [
+          {
+            "do": "Use zero bias",
+            "result": "$\\operatorname{MSE}=0.04+0^2$",
+            "why": "unbiased means bias is zero"
+          },
+          {
+            "do": "Compute MSE",
+            "result": "$0.04$",
+            "why": "variance remains"
+          },
+          {
+            "do": "Write RMSE",
+            "result": "$\\sqrt{0.04}$",
+            "why": "root mean squared error returns original units"
+          },
+          {
+            "do": "Compute root",
+            "result": "$0.2$",
+            "why": "$0.2^2=0.04$"
+          },
+          {
+            "do": "Interpret",
+            "result": "typical error scale about $0.2$",
+            "why": "RMSE is an error scale"
+          }
+        ],
+        "answer": "MSE $0.04$, RMSE $0.2$."
+      },
+      {
+        "problem": "Estimator A has bias $-3$, variance $1$; B has bias $0$, variance $12$. Which has lower MSE?",
+        "steps": [
+          {
+            "do": "Compute A squared bias",
+            "result": "$(-3)^2=9$",
+            "why": "MSE uses squared bias"
+          },
+          {
+            "do": "Compute A MSE",
+            "result": "$1+9=10$",
+            "why": "add variance"
+          },
+          {
+            "do": "Compute B MSE",
+            "result": "$12+0^2=12$",
+            "why": "B is unbiased"
+          },
+          {
+            "do": "Compare",
+            "result": "$10<12$",
+            "why": "A has lower squared error on average"
+          },
+          {
+            "do": "State tradeoff",
+            "result": "biased A wins by MSE",
+            "why": "its variance saving outweighs bias"
+          }
+        ],
+        "answer": "Estimator A has lower MSE, $10$ versus $12$."
+      },
+      {
+        "problem": "A shrinkage estimate of a weight has expected value $8$ when true weight is $10$, and variance $5$. Compute MSE.",
+        "steps": [
+          {
+            "do": "Compute bias",
+            "result": "$8-10=-2$",
+            "why": "expectation minus truth"
+          },
+          {
+            "do": "Square bias",
+            "result": "$4$",
+            "why": "negative direction does not matter for MSE"
+          },
+          {
+            "do": "Add variance",
+            "result": "$5+4$",
+            "why": "decomposition"
+          },
+          {
+            "do": "Compute MSE",
+            "result": "$9$",
+            "why": "sum of variance and squared bias"
+          },
+          {
+            "do": "Compute RMSE",
+            "result": "$3$",
+            "why": "$\\sqrt{9}=3$"
+          }
+        ],
+        "answer": "MSE $9$ and RMSE $3$."
+      },
+      {
+        "problem": "A model's predicted probabilities for true outcomes $1,0,1$ are $0.8,0.3,0.6$. Compute empirical squared-error loss.",
+        "steps": [
+          {
+            "do": "Compute first error",
+            "result": "$0.8-1=-0.2$",
+            "why": "prediction minus truth"
+          },
+          {
+            "do": "Compute second error",
+            "result": "$0.3-0=0.3$",
+            "why": "prediction minus truth"
+          },
+          {
+            "do": "Compute third error",
+            "result": "$0.6-1=-0.4$",
+            "why": "prediction minus truth"
+          },
+          {
+            "do": "Square and sum",
+            "result": "$0.04+0.09+0.16=0.29$",
+            "why": "MSE averages squared errors"
+          },
+          {
+            "do": "Divide by $3$",
+            "result": "$0.29/3\\approx0.0967$",
+            "why": "average over examples"
+          }
+        ],
+        "answer": "Empirical MSE is about $0.0967$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Bias-variance tradeoff",
+        "background": "ML model selection often balances flexible low-bias models against stable low-variance models.",
+        "numbers": "Variance $0.10$ plus bias squared $0.04$ gives MSE $0.14$."
+      },
+      {
+        "title": "Ridge regression",
+        "background": "Ridge shrinks coefficients, adding bias but often lowering variance enough to reduce prediction error.",
+        "numbers": "Changing variance from $9$ to $4$ while adding bias $1$ lowers MSE from $9$ to $5$."
+      },
+      {
+        "title": "Forecast evaluation",
+        "background": "Squared error is common when large misses are especially costly.",
+        "numbers": "Errors $2,-1,3$ give MSE $(4+1+9)/3=14/3$."
+      },
+      {
+        "title": "Image reconstruction",
+        "background": "Pixel MSE measures average squared difference between reconstructed and original images.",
+        "numbers": "Pixel errors $5,-3,1$ have MSE $(25+9+1)/3=35/3$."
+      },
+      {
+        "title": "Estimator choice",
+        "background": "Statistics often chooses between estimators by MSE when exact unbiasedness is less important than total error.",
+        "numbers": "Bias $0.5$ and variance $1$ gives MSE $1.25$."
+      },
+      {
+        "title": "Calibration smoothing",
+        "background": "Smoothing probability estimates may bias extreme bins but reduce noisy fluctuations.",
+        "numbers": "Raw MSE $0.020$ versus smoothed MSE $0.015$ favors smoothing under squared loss."
+      }
+    ],
+    "applicationsClose": "MSE teaches a mature lesson: accuracy is both where you aim and how much you shake.",
+    "takeaways": [
+      "MSE is $\\mathbb{E}[(\\hat{\\theta}-\\theta)^2]$.",
+      "MSE equals variance plus squared bias.",
+      "Unbiased estimators have MSE equal to variance.",
+      "A biased estimator can have lower MSE than an unbiased one."
+    ],
     "prereqs": [
       "math-18-07"
     ]
@@ -174,19 +2144,262 @@
   B({
     "id": "math-18-09",
     "title": "Consistency",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: consistency.",
+    "tagline": "A consistent estimator gets closer to the truth as the sample size grows.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Mean squared error</i>"
+        "Mean squared error",
+        "Sampling distributions",
+        "limits in probability"
       ],
       "leadsTo": [
-        "the next lesson, <i>Efficiency</i>"
+        "Efficiency",
+        "Asymptotics of MLE",
+        "Fisher information"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "law of large numbers",
+        "convergence in probability",
+        "sample mean",
+        "asymptotic analysis"
       ]
     },
+    "motivation": "<p>Small samples are allowed to be noisy. The deeper question is whether more data eventually fixes the problem.</p><p><b>Consistency</b> is that long-run promise. If the sample size grows without bound, a consistent estimator concentrates near the true parameter.</p>",
+    "definition": "<p>An estimator sequence $\\hat{\\theta}_n$ is <b>consistent</b> for $\\theta$ if $\\hat{\\theta}_n \\xrightarrow{p} \\theta$, meaning for every $\\epsilon>0$, $\\Pr(|\\hat{\\theta}_n-\\theta|>\\epsilon)\\to0$ as $n\\to\\infty$.</p><p>A useful sufficient condition is $\\operatorname{MSE}(\\hat{\\theta}_n)\\to0$, because Markov's inequality gives $\\Pr(|\\hat{\\theta}_n-\\theta|>\\epsilon)\\le \\operatorname{MSE}(\\hat{\\theta}_n)/\\epsilon^2$. For the sample mean with finite variance, $\\operatorname{MSE}(\\bar{X})=\\sigma^2/n\\to0$.</p><p><b>Assumptions that matter:</b> consistency is asymptotic and does not guarantee small finite-sample error; the data-generating model must remain stable; dependence or bias may break consistency; and convergence can be slow.</p>",
+    "worked": {
+      "problem": "Show that $\\bar{X}_n$ is consistent for $\\mu$ when observations are independent with mean $\\mu$ and variance $\\sigma^2=16$.",
+      "skills": [
+        "consistency",
+        "MSE",
+        "sample mean"
+      ],
+      "strategy": "Show the sample mean's MSE goes to zero.",
+      "steps": [
+        {
+          "do": "State bias",
+          "result": "$\\operatorname{Bias}(\\bar{X}_n)=0$",
+          "why": "the sample mean is unbiased for $\\mu$"
+        },
+        {
+          "do": "Write variance",
+          "result": "$\\operatorname{Var}(\\bar{X}_n)=16/n$",
+          "why": "variance of an independent sample mean"
+        },
+        {
+          "do": "Compute MSE",
+          "result": "$16/n+0^2=16/n$",
+          "why": "MSE equals variance plus squared bias"
+        },
+        {
+          "do": "Take the limit",
+          "result": "$16/n\\to0$",
+          "why": "the denominator grows without bound"
+        },
+        {
+          "do": "Conclude",
+          "result": "$\\bar{X}_n$ is consistent",
+          "why": "MSE tending to zero implies convergence in probability"
+        }
+      ],
+      "verify": "The result matches intuition: averaging more independent observations makes the estimate settle around the mean.",
+      "answer": "$\\bar{X}_n$ is consistent for $\\mu$ because its MSE is $16/n\\to0$.",
+      "connects": "Consistency is the large-sample version of learning from more data."
+    },
+    "practice": [
+      {
+        "problem": "An estimator has bias $1/n$ and variance $4/n$. Does its MSE go to zero?",
+        "steps": [
+          {
+            "do": "Square the bias",
+            "result": "$(1/n)^2=1/n^2$",
+            "why": "MSE uses squared bias"
+          },
+          {
+            "do": "Add variance",
+            "result": "$4/n+1/n^2$",
+            "why": "MSE decomposition"
+          },
+          {
+            "do": "Take first limit",
+            "result": "$4/n\\to0$",
+            "why": "denominator grows"
+          },
+          {
+            "do": "Take second limit",
+            "result": "$1/n^2\\to0$",
+            "why": "squared denominator grows faster"
+          },
+          {
+            "do": "Conclude",
+            "result": "MSE goes to $0$",
+            "why": "sum of two vanishing terms vanishes"
+          }
+        ],
+        "answer": "Yes. MSE $=4/n+1/n^2\\to0$, so this condition supports consistency."
+      },
+      {
+        "problem": "An estimator has bias $0.2$ for every $n$ and variance $1/n$. Is MSE consistent?",
+        "steps": [
+          {
+            "do": "Square the bias",
+            "result": "$0.2^2=0.04$",
+            "why": "bias does not shrink"
+          },
+          {
+            "do": "Write MSE",
+            "result": "$1/n+0.04$",
+            "why": "variance plus squared bias"
+          },
+          {
+            "do": "Take variance limit",
+            "result": "$1/n\\to0$",
+            "why": "sample size grows"
+          },
+          {
+            "do": "Take MSE limit",
+            "result": "$0.04$",
+            "why": "constant squared bias remains"
+          },
+          {
+            "do": "Conclude",
+            "result": "not consistent by MSE",
+            "why": "MSE does not go to zero"
+          }
+        ],
+        "answer": "No. The MSE tends to $0.04$, not $0$."
+      },
+      {
+        "problem": "For $\\hat{p}_n$ from Bernoulli data with true $p=0.6$, compute $\\operatorname{Var}(\\hat{p}_n)$ and its limit.",
+        "steps": [
+          {
+            "do": "Compute Bernoulli variance",
+            "result": "$p(1-p)=0.6\\cdot0.4=0.24$",
+            "why": "success indicator variance"
+          },
+          {
+            "do": "Write estimator variance",
+            "result": "$0.24/n$",
+            "why": "sample proportion is a mean"
+          },
+          {
+            "do": "Take limit",
+            "result": "$0.24/n\\to0$",
+            "why": "denominator grows"
+          },
+          {
+            "do": "State bias",
+            "result": "$0$",
+            "why": "sample proportion is unbiased"
+          },
+          {
+            "do": "Conclude",
+            "result": "$\\hat{p}_n$ is consistent",
+            "why": "variance and MSE vanish"
+          }
+        ],
+        "answer": "$\\operatorname{Var}(\\hat{p}_n)=0.24/n\\to0$, so $\\hat{p}_n$ is consistent."
+      },
+      {
+        "problem": "If $\\Pr(|\\hat{\\theta}_n-\\theta|>0.1)\\le 25/n$, how large should $n$ be to make the bound at most $0.05$?",
+        "steps": [
+          {
+            "do": "Set the inequality",
+            "result": "$25/n\\le0.05$",
+            "why": "use the requested probability bound"
+          },
+          {
+            "do": "Multiply by $n$",
+            "result": "$25\\le0.05n$",
+            "why": "isolate $n$"
+          },
+          {
+            "do": "Divide by $0.05$",
+            "result": "$n\\ge500$",
+            "why": "$25/0.05=500$"
+          },
+          {
+            "do": "Check",
+            "result": "$25/500=0.05$",
+            "why": "the bound meets the target"
+          },
+          {
+            "do": "Interpret",
+            "result": "at least $500$ samples",
+            "why": "larger $n$ makes the bound smaller"
+          }
+        ],
+        "answer": "$n\\ge500$."
+      },
+      {
+        "problem": "A training-data mean estimates a feature mean. If sample variance is about $9$, what is the SE at $n=100$ and $n=10{,}000$?",
+        "steps": [
+          {
+            "do": "Compute SD",
+            "result": "$\\sigma=\\sqrt{9}=3$",
+            "why": "standard deviation is square root of variance"
+          },
+          {
+            "do": "Compute SE for $n=100$",
+            "result": "$3/\\sqrt{100}=0.3$",
+            "why": "sample mean standard error"
+          },
+          {
+            "do": "Compute SE for $n=10{,}000$",
+            "result": "$3/\\sqrt{10{,}000}=0.03$",
+            "why": "larger sample lowers SE"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.03$ is one tenth of $0.3$",
+            "why": "sample size grew by factor 100"
+          },
+          {
+            "do": "Connect to consistency",
+            "result": "SE shrinks toward $0$",
+            "why": "the mean concentrates as data grow"
+          }
+        ],
+        "answer": "SE is $0.3$ at $n=100$ and $0.03$ at $n=10{,}000$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Training-set statistics",
+        "background": "Feature means and variances estimated from large training sets stabilize as the dataset grows.",
+        "numbers": "With variance $25$, mean SE is $5/\\sqrt{2500}=0.1$."
+      },
+      {
+        "title": "Polling at scale",
+        "background": "Larger random polls reduce sampling error, though not nonresponse bias.",
+        "numbers": "For $p=0.5,n=10{,}000$, SE is $0.5/100=0.005$."
+      },
+      {
+        "title": "Monte Carlo integration",
+        "background": "Simulation averages converge to expected values under the law of large numbers.",
+        "numbers": "If output variance is $1$, $n=1{,}000{,}000$ gives SE $0.001$."
+      },
+      {
+        "title": "Online metric dashboards",
+        "background": "Daily metrics based on more traffic are usually more stable than small-segment metrics.",
+        "numbers": "A rate with $p=0.1,n=100$ has SE $0.03$, while $n=10{,}000$ gives SE $0.003$."
+      },
+      {
+        "title": "Model evaluation",
+        "background": "Test accuracy estimates become more reliable with more representative test examples.",
+        "numbers": "At $p=0.8$, increasing $n$ from $400$ to $1600$ lowers SE from $0.02$ to $0.01$."
+      },
+      {
+        "title": "Streaming estimates",
+        "background": "Running averages in streaming systems are consistent when the stream is stable and observations are well-behaved.",
+        "numbers": "A mean estimate with variance $100/n$ has MSE $0.01$ at $n=10{,}000$."
+      }
+    ],
+    "applicationsClose": "Consistency is why more good data can be a mathematical remedy, not just a hopeful slogan.",
+    "takeaways": [
+      "Consistency means $\\hat{\\theta}_n\\xrightarrow{p}\\theta$.",
+      "MSE going to zero is a useful sufficient condition for consistency.",
+      "Shrinking variance alone is not enough if bias does not vanish.",
+      "Consistency is asymptotic; finite samples still need uncertainty analysis."
+    ],
     "prereqs": [
       "math-18-08"
     ]
@@ -195,19 +2408,262 @@
   B({
     "id": "math-18-10",
     "title": "Efficiency",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: efficiency.",
+    "tagline": "Efficiency asks how much information an estimator extracts from the same data.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Consistency</i>"
+        "Variance of an estimator",
+        "Mean squared error",
+        "Consistency"
       ],
       "leadsTo": [
-        "the next lesson, <i>The method of moments</i>"
+        "The method of moments",
+        "Maximum Likelihood Estimation (MLE)",
+        "Fisher information"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "unbiased estimators",
+        "Cramer-Rao bound",
+        "asymptotic variance",
+        "relative efficiency"
       ]
     },
+    "motivation": "<p>If two estimators are both reasonable, the one with smaller variance gets more precision from the same sample size. That is efficiency in its simplest form.</p><p>The idea matters because data can be expensive. An efficient estimator wastes less information, giving tighter uncertainty without collecting more observations.</p>",
+    "definition": "<p>Among unbiased estimators of the same parameter, a more <b>efficient</b> estimator has smaller variance. The relative efficiency of $T_1$ to $T_2$ is often measured by $\\operatorname{Var}(T_2)/\\operatorname{Var}(T_1)$ when both estimate the same target.</p><p>In large samples, efficiency often compares asymptotic variances. The Cramer-Rao lower bound says that under regularity conditions, any unbiased estimator has variance at least $1/I(\\theta)$ for one observation's information adjusted by sample size. Estimators that achieve the relevant bound are called efficient.</p><p><b>Assumptions that matter:</b> compare estimators for the same parameter under the same model; unbiased finite-sample efficiency and asymptotic efficiency are different claims; regularity conditions matter for information bounds; and lower variance should be weighed with bias if estimators are biased.</p>",
+    "worked": {
+      "problem": "Two unbiased estimators of $\\theta$ have variances $6/n$ and $10/n$. Which is more efficient, and what is the relative efficiency of the first to the second using $\\operatorname{Var}(T_2)/\\operatorname{Var}(T_1)$?",
+      "skills": [
+        "efficiency",
+        "relative efficiency",
+        "variance comparison"
+      ],
+      "strategy": "For unbiased estimators, smaller variance means greater efficiency.",
+      "steps": [
+        {
+          "do": "Identify first variance",
+          "result": "$6/n$",
+          "why": "given for $T_1$"
+        },
+        {
+          "do": "Identify second variance",
+          "result": "$10/n$",
+          "why": "given for $T_2$"
+        },
+        {
+          "do": "Compare variances",
+          "result": "$6/n<10/n$",
+          "why": "$n$ is positive"
+        },
+        {
+          "do": "Choose efficient estimator",
+          "result": "$T_1$",
+          "why": "it has lower variance while both are unbiased"
+        },
+        {
+          "do": "Compute relative efficiency",
+          "result": "$(10/n)/(6/n)=10/6=5/3$",
+          "why": "divide variances and cancel $n$"
+        }
+      ],
+      "verify": "A relative efficiency above 1 means the first estimator needs less variance for the same sample size.",
+      "answer": "$T_1$ is more efficient; relative efficiency is $5/3\\approx1.67$.",
+      "connects": "Efficiency compares how tightly estimators concentrate around the same target."
+    },
+    "practice": [
+      {
+        "problem": "Unbiased estimators have variances $4$ and $9$. Which is more efficient and by what variance ratio?",
+        "steps": [
+          {
+            "do": "Compare variances",
+            "result": "$4<9$",
+            "why": "smaller variance is better for unbiased estimators"
+          },
+          {
+            "do": "Choose estimator",
+            "result": "first estimator",
+            "why": "it has less sampling spread"
+          },
+          {
+            "do": "Compute ratio",
+            "result": "$9/4=2.25$",
+            "why": "relative efficiency of first to second"
+          },
+          {
+            "do": "Interpret",
+            "result": "second has $2.25$ times the variance",
+            "why": "variance ratio compares precision"
+          },
+          {
+            "do": "Name condition",
+            "result": "both must estimate the same parameter",
+            "why": "efficiency comparisons need a common target"
+          }
+        ],
+        "answer": "The first is more efficient; relative efficiency $2.25$."
+      },
+      {
+        "problem": "Estimator A has asymptotic variance $1/n$ and B has $1.5/n$. Which is asymptotically more efficient?",
+        "steps": [
+          {
+            "do": "Compare constants",
+            "result": "$1<1.5$",
+            "why": "same $1/n$ rate"
+          },
+          {
+            "do": "Compare variances",
+            "result": "$1/n<1.5/n$",
+            "why": "$n>0$"
+          },
+          {
+            "do": "Choose estimator",
+            "result": "A",
+            "why": "lower asymptotic variance"
+          },
+          {
+            "do": "Compute ratio",
+            "result": "$(1.5/n)/(1/n)=1.5$",
+            "why": "relative efficiency"
+          },
+          {
+            "do": "Interpret",
+            "result": "A is $1.5$ times as efficient by this ratio",
+            "why": "B has larger variance"
+          }
+        ],
+        "answer": "A is asymptotically more efficient; ratio $1.5$."
+      },
+      {
+        "problem": "An unbiased estimator has variance $0.08$. A lower bound is $0.05$. Is it efficient relative to the bound?",
+        "steps": [
+          {
+            "do": "State estimator variance",
+            "result": "$0.08$",
+            "why": "given"
+          },
+          {
+            "do": "State lower bound",
+            "result": "$0.05$",
+            "why": "given information bound"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.08>0.05$",
+            "why": "variance exceeds the bound"
+          },
+          {
+            "do": "Assess equality",
+            "result": "not equal",
+            "why": "efficiency at the bound requires achieving it"
+          },
+          {
+            "do": "Conclude",
+            "result": "not efficient relative to this bound",
+            "why": "there is room above the theoretical minimum"
+          }
+        ],
+        "answer": "No. It does not achieve the $0.05$ lower bound."
+      },
+      {
+        "problem": "If an efficient estimator has variance $2/n$, what sample size gives variance $0.01$?",
+        "steps": [
+          {
+            "do": "Set equation",
+            "result": "$2/n=0.01$",
+            "why": "target variance"
+          },
+          {
+            "do": "Multiply by $n$",
+            "result": "$2=0.01n$",
+            "why": "isolate sample size"
+          },
+          {
+            "do": "Divide",
+            "result": "$n=200$",
+            "why": "$2/0.01=200$"
+          },
+          {
+            "do": "Check",
+            "result": "$2/200=0.01$",
+            "why": "substitute back"
+          },
+          {
+            "do": "Interpret",
+            "result": "$200$ observations",
+            "why": "sample size controls variance"
+          }
+        ],
+        "answer": "$n=200$."
+      },
+      {
+        "problem": "Two unbiased model-risk estimators have SEs $0.03$ and $0.05$. Compare variances and efficiency.",
+        "steps": [
+          {
+            "do": "Square first SE",
+            "result": "$0.03^2=0.0009$",
+            "why": "variance is SE squared"
+          },
+          {
+            "do": "Square second SE",
+            "result": "$0.05^2=0.0025$",
+            "why": "variance is SE squared"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.0009<0.0025$",
+            "why": "first has lower variance"
+          },
+          {
+            "do": "Compute ratio",
+            "result": "$0.0025/0.0009\\approx2.78$",
+            "why": "relative efficiency"
+          },
+          {
+            "do": "Conclude",
+            "result": "first estimator is more efficient",
+            "why": "same target and lower variance"
+          }
+        ],
+        "answer": "The first is more efficient; variance ratio about $2.78$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Choosing estimators",
+        "background": "Statisticians compare estimators not only by correctness but by how much data they need for a given precision.",
+        "numbers": "Variance $4/n$ reaches $0.04$ at $n=100$, while $8/n$ needs $n=200$."
+      },
+      {
+        "title": "A/B testing sample size",
+        "background": "More efficient estimators can reduce experiment duration by lowering variance at fixed traffic.",
+        "numbers": "A $25\\%$ variance reduction changes SE from $0.020$ to $\\sqrt{0.0003}\\approx0.0173$ if variance falls from $0.0004$ to $0.0003$."
+      },
+      {
+        "title": "Control variates",
+        "background": "Monte Carlo methods use correlated auxiliary variables to reduce variance without changing the target expectation.",
+        "numbers": "Reducing variance from $1.00$ to $0.25$ doubles precision because SE halves."
+      },
+      {
+        "title": "Sufficient statistics",
+        "background": "Classical inference often finds statistics that preserve all information about a parameter, supporting efficient estimation.",
+        "numbers": "For normal data with known variance, $\\bar{X}$ has variance $\\sigma^2/n$, using all $n$ values through their sum."
+      },
+      {
+        "title": "Model monitoring",
+        "background": "Efficient metric estimators make small regressions visible sooner in production dashboards.",
+        "numbers": "SE $0.005$ detects a $0.015$ shift as three SEs; SE $0.010$ sees only $1.5$ SEs."
+      },
+      {
+        "title": "Gradient estimation",
+        "background": "Variance-reduced gradient estimators can reach the same optimization accuracy with fewer samples.",
+        "numbers": "Gradient variance $100/b$ at batch $b=100$ is $1$; cutting the constant to $25$ gives variance $0.25$."
+      }
+    ],
+    "applicationsClose": "Efficiency is the economy of inference: how much precision you get for the information you paid to collect.",
+    "takeaways": [
+      "For unbiased estimators of the same target, lower variance means higher efficiency.",
+      "Relative efficiency is commonly a ratio of variances.",
+      "Asymptotic efficiency compares large-sample variance constants.",
+      "Information bounds describe the best possible variance under regularity conditions."
+    ],
     "prereqs": [
       "math-18-09"
     ]
@@ -216,19 +2672,262 @@
   B({
     "id": "math-18-11",
     "title": "The method of moments",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: the method of moments.",
+    "tagline": "The method of moments estimates parameters by making model moments match sample moments.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Efficiency</i>"
+        "Point estimation",
+        "Descriptive statistics",
+        "expectation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Maximum Likelihood Estimation (MLE)</i>"
+        "Maximum Likelihood Estimation (MLE)",
+        "Asymptotics of MLE",
+        "Fisher information"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "sample mean",
+        "variance",
+        "systems of equations",
+        "distribution moments"
       ]
     },
+    "motivation": "<p>If a model says its mean should equal a parameter, and your data have a sample mean, the most direct estimate is to set them equal. That simple instinct is the method of moments.</p><p>It is often not the most efficient method, but it is transparent, fast, and a wonderful first estimator when likelihood calculations feel heavy.</p>",
+    "definition": "<p>The <b>method of moments</b> chooses parameter estimates by equating population moments to sample moments. The $k$th raw population moment is $\\mathbb{E}[X^k]$; the sample version is $\\dfrac{1}{n}\\sum_{i=1}^n X_i^k$. With $r$ unknown parameters, set up $r$ moment equations and solve.</p><p>For example, if $X\\sim\\operatorname{Exponential}(\\lambda)$ has $\\mathbb{E}[X]=1/\\lambda$, then setting $\\bar{X}=1/\\lambda$ gives $\\hat{\\lambda}_{MM}=1/\\bar{X}$. The method turns distribution facts into algebra.</p><p><b>Assumptions that matter:</b> the needed moments must exist; the equations should identify the parameters; sample moments can be sensitive to outliers; and method-of-moments estimators may be less efficient than MLE.</p>",
+    "worked": {
+      "problem": "For exponential data $2,3,5$, use the method of moments to estimate $\\lambda$ where $\\mathbb{E}[X]=1/\\lambda$.",
+      "skills": [
+        "method of moments",
+        "sample mean",
+        "exponential distribution"
+      ],
+      "strategy": "Match the model mean to the sample mean and solve for the parameter.",
+      "steps": [
+        {
+          "do": "Compute the sample mean",
+          "result": "$\\bar{x}=(2+3+5)/3=10/3$",
+          "why": "first sample moment"
+        },
+        {
+          "do": "Write the population moment",
+          "result": "$\\mathbb{E}[X]=1/\\lambda$",
+          "why": "given exponential mean"
+        },
+        {
+          "do": "Set moments equal",
+          "result": "$10/3=1/\\lambda$",
+          "why": "method of moments matches model and sample moments"
+        },
+        {
+          "do": "Invert both sides",
+          "result": "$\\hat{\\lambda}=3/10$",
+          "why": "solve for $\\lambda$"
+        },
+        {
+          "do": "Convert to decimal",
+          "result": "$0.3$",
+          "why": "$3/10=0.3$"
+        }
+      ],
+      "verify": "A mean around $3.33$ implies a rate around $0.3$, since exponential mean is reciprocal rate.",
+      "answer": "$\\hat{\\lambda}_{MM}=0.3$.",
+      "connects": "Moment matching turns observed averages into parameter estimates."
+    },
+    "practice": [
+      {
+        "problem": "For Poisson data $1,2,2,5$, estimate $\\lambda$ using $\\mathbb{E}[X]=\\lambda$.",
+        "steps": [
+          {
+            "do": "Add counts",
+            "result": "$1+2+2+5=10$",
+            "why": "sample mean numerator"
+          },
+          {
+            "do": "Divide by $n$",
+            "result": "$\\bar{x}=10/4=2.5$",
+            "why": "four observations"
+          },
+          {
+            "do": "Write model moment",
+            "result": "$\\mathbb{E}[X]=\\lambda$",
+            "why": "Poisson mean equals rate"
+          },
+          {
+            "do": "Set equal",
+            "result": "$\\hat{\\lambda}=\\bar{x}$",
+            "why": "moment matching"
+          },
+          {
+            "do": "State estimate",
+            "result": "$\\hat{\\lambda}=2.5$",
+            "why": "plug in the sample mean"
+          }
+        ],
+        "answer": "$\\hat{\\lambda}_{MM}=2.5$."
+      },
+      {
+        "problem": "For uniform $[0,\\theta]$, $\\mathbb{E}[X]=\\theta/2$. Data are $4,6,8$. Estimate $\\theta$.",
+        "steps": [
+          {
+            "do": "Compute mean",
+            "result": "$\\bar{x}=(4+6+8)/3=6$",
+            "why": "first sample moment"
+          },
+          {
+            "do": "Write moment equation",
+            "result": "$6=\\theta/2$",
+            "why": "match sample mean to population mean"
+          },
+          {
+            "do": "Multiply by 2",
+            "result": "$\\hat{\\theta}=12$",
+            "why": "solve for endpoint"
+          },
+          {
+            "do": "Check data support",
+            "result": "$12\\ge8$",
+            "why": "uniform endpoint should exceed sample maximum"
+          },
+          {
+            "do": "State estimate",
+            "result": "$12$",
+            "why": "method-of-moments endpoint"
+          }
+        ],
+        "answer": "$\\hat{\\theta}_{MM}=12$."
+      },
+      {
+        "problem": "For normal data with unknown $\\mu$ and $\\sigma^2$, method of moments uses $\\bar{x}$ and $\\frac1n\\sum(x_i-\\bar{x})^2$. Compute them for $2,4,6$.",
+        "steps": [
+          {
+            "do": "Compute mean",
+            "result": "$\\bar{x}=12/3=4$",
+            "why": "estimate $\\mu$"
+          },
+          {
+            "do": "Compute deviations",
+            "result": "$-2,0,2$",
+            "why": "subtract mean"
+          },
+          {
+            "do": "Square deviations",
+            "result": "$4,0,4$",
+            "why": "second central moment"
+          },
+          {
+            "do": "Average squares with $n$",
+            "result": "$(4+0+4)/3=8/3$",
+            "why": "method of moments uses denominator $n$ here"
+          },
+          {
+            "do": "State estimates",
+            "result": "$\\hat{\\mu}=4$, $\\hat{\\sigma}^2=8/3$",
+            "why": "match first two moments"
+          }
+        ],
+        "answer": "$\\hat{\\mu}=4$ and $\\hat{\\sigma}^2=8/3$."
+      },
+      {
+        "problem": "A Bernoulli model has $\\mathbb{E}[X]=p$. Data are $1,1,0,1,0,0$. Estimate $p$.",
+        "steps": [
+          {
+            "do": "Count successes",
+            "result": "$3$",
+            "why": "three ones"
+          },
+          {
+            "do": "Compute sample mean",
+            "result": "$3/6=0.5$",
+            "why": "Bernoulli sample mean is success proportion"
+          },
+          {
+            "do": "Write model moment",
+            "result": "$\\mathbb{E}[X]=p$",
+            "why": "Bernoulli mean"
+          },
+          {
+            "do": "Match moments",
+            "result": "$\\hat{p}=0.5$",
+            "why": "set $p$ equal to sample mean"
+          },
+          {
+            "do": "Interpret",
+            "result": "$50\\%$ success probability estimate",
+            "why": "proportion scale"
+          }
+        ],
+        "answer": "$\\hat{p}_{MM}=0.5$."
+      },
+      {
+        "problem": "For Gamma parameters with moments $\\mathbb{E}[X]=\\alpha\\beta$ and $\\operatorname{Var}(X)=\\alpha\\beta^2$, suppose sample mean is $6$ and moment variance is $18$. Solve for $\\alpha,\\beta$.",
+        "steps": [
+          {
+            "do": "Write equations",
+            "result": "$\\alpha\\beta=6$ and $\\alpha\\beta^2=18$",
+            "why": "match model moments to sample moments"
+          },
+          {
+            "do": "Divide variance equation by mean equation",
+            "result": "$\\beta=18/6=3$",
+            "why": "common factor $\\alpha\\beta$ cancels"
+          },
+          {
+            "do": "Substitute into mean equation",
+            "result": "$3\\alpha=6$",
+            "why": "$\\beta=3$"
+          },
+          {
+            "do": "Solve for $\\alpha$",
+            "result": "$\\alpha=2$",
+            "why": "divide by 3"
+          },
+          {
+            "do": "State estimates",
+            "result": "$\\hat{\\alpha}=2$, $\\hat{\\beta}=3$",
+            "why": "both moment equations are satisfied"
+          }
+        ],
+        "answer": "$\\hat{\\alpha}=2$ and $\\hat{\\beta}=3$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Fast distribution fitting",
+        "background": "Before numerical optimization, moment matching was a practical way to fit distributions by hand.",
+        "numbers": "Exponential sample mean $4$ gives rate estimate $1/4=0.25$."
+      },
+      {
+        "title": "Initialization for MLE",
+        "background": "Optimization often starts from method-of-moments estimates to avoid poor initial guesses.",
+        "numbers": "A Poisson sample mean $7.2$ starts MLE search at $\\lambda=7.2$."
+      },
+      {
+        "title": "Queueing models",
+        "background": "Arrival and service models often estimate rates from observed average interarrival times.",
+        "numbers": "Mean interarrival time $0.5$ seconds gives exponential rate $2$ per second."
+      },
+      {
+        "title": "Topic and language models",
+        "background": "Some latent-variable methods use moment equations when likelihoods are difficult.",
+        "numbers": "A word indicator appearing in $120$ of $1000$ documents has moment estimate $0.12$."
+      },
+      {
+        "title": "Simulation calibration",
+        "background": "Simulators are tuned so simulated means and variances match observed summaries.",
+        "numbers": "Observed mean $10$ and model mean $2\\theta$ give $\\hat{\\theta}=5$."
+      },
+      {
+        "title": "Sensor noise",
+        "background": "Noise models can estimate variance by matching observed second moments.",
+        "numbers": "Residual squares summing to $45$ over $15$ cases give moment variance $3$."
+      }
+    ],
+    "applicationsClose": "The method of moments is inference by handshake: the model offers moments, the data answer with sample moments, and parameters are chosen where they meet.",
+    "takeaways": [
+      "Method of moments sets population moments equal to sample moments.",
+      "Use as many moment equations as unknown parameters.",
+      "The method is often simple and transparent.",
+      "Moment estimators can be sensitive to outliers and less efficient than MLE."
+    ],
     "prereqs": [
       "math-18-10"
     ]
@@ -237,19 +2936,267 @@
   B({
     "id": "math-18-12",
     "title": "Maximum Likelihood Estimation (MLE)",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: maximum likelihood estimation (mle).",
+    "tagline": "MLE chooses the parameter value that makes the observed data most plausible under the model.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The method of moments</i>"
+        "Point estimation",
+        "The method of moments",
+        "logarithmic functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Asymptotics of MLE</i>"
+        "Asymptotics of MLE",
+        "Fisher information",
+        "Maximum a Posteriori (MAP) estimation"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "likelihood",
+        "log-likelihood",
+        "optimization",
+        "score equations"
       ]
     },
+    "motivation": "<p>Suppose several parameter values could have produced your data. MLE asks a direct question: under which parameter would these exact observations be most likely?</p><p>This idea powers much of statistics and ML. Training by cross-entropy, fitting logistic regression, and estimating noise in probabilistic models all wear likelihood clothing.</p>",
+    "definition": "<p>Given data $x_1,\\ldots,x_n$ from model density or mass $f(x\\mid\\theta)$, the <b>likelihood</b> is $\\mathcal{L}(\\theta)=\\prod_{i=1}^n f(x_i\\mid\\theta)$, viewed as a function of $\\theta$. The <b>maximum likelihood estimator</b> is $\\hat{\\theta}_{MLE}=\\arg\\max_\\theta \\mathcal{L}(\\theta)$.</p><p>Because logs are increasing, maximizing $\\mathcal{L}(\\theta)$ is equivalent to maximizing $\\ell(\\theta)=\\log\\mathcal{L}(\\theta)=\\sum_i \\log f(x_i\\mid\\theta)$. Products become sums, which are easier and more stable to optimize.</p><p><b>Assumptions that matter:</b> the likelihood comes from a specified model; observations are often assumed independent; the maximum may occur at a boundary; differentiating requires regularity; and MLE can be biased in small samples while still excellent asymptotically.</p>",
+    "worked": {
+      "problem": "For Bernoulli data with $7$ successes in $10$ trials, find the MLE of $p$.",
+      "skills": [
+        "likelihood",
+        "log-likelihood",
+        "Bernoulli MLE"
+      ],
+      "strategy": "Write the likelihood for successes and failures, take logs, differentiate, and solve.",
+      "steps": [
+        {
+          "do": "Write the likelihood",
+          "result": "$\\mathcal{L}(p)=p^7(1-p)^3$",
+          "why": "seven successes and three failures"
+        },
+        {
+          "do": "Take logs",
+          "result": "$\\ell(p)=7\\log p+3\\log(1-p)$",
+          "why": "logs turn products into sums"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$\\ell'(p)=7/p-3/(1-p)$",
+          "why": "differentiate each log term"
+        },
+        {
+          "do": "Set derivative to zero",
+          "result": "$7/p=3/(1-p)$",
+          "why": "interior maximum solves the score equation"
+        },
+        {
+          "do": "Cross multiply",
+          "result": "$7(1-p)=3p$",
+          "why": "clear denominators"
+        },
+        {
+          "do": "Solve",
+          "result": "$7=10p$, so $\\hat{p}=0.7$",
+          "why": "collect terms"
+        }
+      ],
+      "verify": "The MLE equals the observed success proportion, which is plausible for Bernoulli data.",
+      "answer": "$\\hat{p}_{MLE}=0.7$.",
+      "connects": "MLE turns parameter estimation into likelihood optimization."
+    },
+    "practice": [
+      {
+        "problem": "For Bernoulli data with $12$ successes in $20$ trials, give the MLE of $p$.",
+        "steps": [
+          {
+            "do": "Count successes",
+            "result": "$12$",
+            "why": "success count"
+          },
+          {
+            "do": "Count trials",
+            "result": "$20$",
+            "why": "sample size"
+          },
+          {
+            "do": "Use Bernoulli MLE",
+            "result": "$\\hat{p}=12/20$",
+            "why": "MLE is sample proportion"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.6$",
+            "why": "$12/20=0.6$"
+          },
+          {
+            "do": "Interpret",
+            "result": "$60\\%$ success probability estimate",
+            "why": "parameter is a probability"
+          }
+        ],
+        "answer": "$\\hat{p}_{MLE}=0.6$."
+      },
+      {
+        "problem": "For Poisson counts $2,3,5$, use the fact that the Poisson MLE is $\\bar{x}$. Compute it.",
+        "steps": [
+          {
+            "do": "Add counts",
+            "result": "$2+3+5=10$",
+            "why": "sample mean numerator"
+          },
+          {
+            "do": "Count observations",
+            "result": "$3$",
+            "why": "three counts"
+          },
+          {
+            "do": "Divide",
+            "result": "$10/3\\approx3.333$",
+            "why": "sample mean"
+          },
+          {
+            "do": "Name estimator",
+            "result": "$\\hat{\\lambda}_{MLE}=\\bar{x}$",
+            "why": "Poisson rate MLE"
+          },
+          {
+            "do": "State estimate",
+            "result": "$\\hat{\\lambda}\\approx3.333$",
+            "why": "events per observation interval"
+          }
+        ],
+        "answer": "$\\hat{\\lambda}_{MLE}=10/3\\approx3.333$."
+      },
+      {
+        "problem": "For exponential data with mean $\\bar{x}=4$, the MLE is $1/\\bar{x}$. Compute $\\hat{\\lambda}$.",
+        "steps": [
+          {
+            "do": "Write formula",
+            "result": "$\\hat{\\lambda}=1/\\bar{x}$",
+            "why": "exponential rate MLE"
+          },
+          {
+            "do": "Substitute mean",
+            "result": "$1/4$",
+            "why": "sample mean is 4"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.25$",
+            "why": "reciprocal of 4"
+          },
+          {
+            "do": "Check units",
+            "result": "rate per unit",
+            "why": "exponential $\\lambda$ is a rate"
+          },
+          {
+            "do": "Interpret",
+            "result": "average waiting time $4$ implies rate $0.25$",
+            "why": "mean is reciprocal rate"
+          }
+        ],
+        "answer": "$\\hat{\\lambda}_{MLE}=0.25$."
+      },
+      {
+        "problem": "A normal model has known variance and unknown mean. For data $1,2,6$, the MLE of $\\mu$ is $\\bar{x}$. Compute it.",
+        "steps": [
+          {
+            "do": "Add data",
+            "result": "$1+2+6=9$",
+            "why": "mean numerator"
+          },
+          {
+            "do": "Count data",
+            "result": "$n=3$",
+            "why": "three observations"
+          },
+          {
+            "do": "Divide",
+            "result": "$9/3=3$",
+            "why": "sample mean"
+          },
+          {
+            "do": "Name estimate",
+            "result": "$\\hat{\\mu}_{MLE}=3$",
+            "why": "normal mean MLE"
+          },
+          {
+            "do": "Interpret",
+            "result": "center estimate is $3$",
+            "why": "MLE chooses the most plausible center"
+          }
+        ],
+        "answer": "$\\hat{\\mu}_{MLE}=3$."
+      },
+      {
+        "problem": "A binary classifier assigns true-label probabilities $0.9,0.8,0.5$. Compute log-likelihood and negative log-likelihood using $\\ln0.9=-0.105$, $\\ln0.8=-0.223$, $\\ln0.5=-0.693$.",
+        "steps": [
+          {
+            "do": "Write log-likelihood",
+            "result": "$\\ln0.9+\\ln0.8+\\ln0.5$",
+            "why": "independent probabilities multiply, logs add"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$-0.105-0.223-0.693$",
+            "why": "use provided logs"
+          },
+          {
+            "do": "Add",
+            "result": "$-1.021$",
+            "why": "sum the log probabilities"
+          },
+          {
+            "do": "Negate",
+            "result": "$1.021$",
+            "why": "negative log-likelihood is minimized in training"
+          },
+          {
+            "do": "Interpret",
+            "result": "smaller NLL is better",
+            "why": "larger likelihood means smaller negative log"
+          }
+        ],
+        "answer": "Log-likelihood $-1.021$; negative log-likelihood $1.021$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Logistic regression",
+        "background": "Logistic regression is usually fit by maximizing Bernoulli likelihood, or equivalently minimizing cross-entropy.",
+        "numbers": "True-label probabilities $0.8$ and $0.6$ give NLL $-\\ln0.8-\\ln0.6\\approx0.223+0.511=0.734$."
+      },
+      {
+        "title": "Naive Bayes",
+        "background": "Naive Bayes estimates class and feature probabilities by likelihood under conditional independence assumptions.",
+        "numbers": "$30$ word occurrences in $1000$ class tokens gives MLE probability $0.03$."
+      },
+      {
+        "title": "Poisson traffic modeling",
+        "background": "Count data such as requests per second are often modeled with Poisson likelihoods.",
+        "numbers": "Counts $4,5,6$ give $\\hat{\\lambda}=15/3=5$."
+      },
+      {
+        "title": "Gaussian noise fitting",
+        "background": "Many regression models assume Gaussian residuals, making least squares equivalent to MLE for the mean parameters.",
+        "numbers": "Residual sum of squares $20$ over $10$ points gives variance MLE $20/10=2$."
+      },
+      {
+        "title": "Language modeling",
+        "background": "Neural language models train by maximizing likelihood of the next token over massive corpora.",
+        "numbers": "Token probabilities $0.1,0.2$ give log-likelihood $\\ln0.1+\\ln0.2\\approx-3.912$."
+      },
+      {
+        "title": "Survival and waiting times",
+        "background": "Exponential likelihood estimates event rates for waiting-time data.",
+        "numbers": "Waiting times with mean $8$ minutes give rate MLE $1/8=0.125$ per minute."
+      }
+    ],
+    "applicationsClose": "MLE is the likelihood principle in action: choose the parameter that makes the observed data least surprising under the model.",
+    "takeaways": [
+      "The likelihood treats observed data as fixed and parameters as the variable.",
+      "MLE maximizes $\\mathcal{L}(\\theta)$ or equivalently log-likelihood $\\ell(\\theta)$.",
+      "For Bernoulli data, the MLE is the sample proportion.",
+      "Many ML losses are negative log-likelihoods in disguise."
+    ],
     "prereqs": [
       "math-18-11"
     ]
@@ -258,19 +3205,262 @@
   B({
     "id": "math-18-13",
     "title": "Asymptotics of MLE",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: asymptotics of mle.",
+    "tagline": "Under regular conditions, MLE becomes accurate, normal, and optimally precise as data grow.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Maximum Likelihood Estimation (MLE)</i>"
+        "Maximum Likelihood Estimation (MLE)",
+        "Consistency",
+        "Efficiency"
       ],
       "leadsTo": [
-        "the next lesson, <i>Fisher information</i>"
+        "Fisher information",
+        "Maximum a Posteriori (MAP) estimation",
+        "confidence intervals"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "central limit theorem",
+        "Taylor expansion",
+        "standard errors",
+        "normal approximation"
       ]
     },
+    "motivation": "<p>MLE can be hard to understand exactly in small samples. But as $n$ grows, a remarkably orderly picture appears.</p><p>The estimate converges to the truth, its errors become approximately normal, and its variance is governed by Fisher information. This is why likelihood methods come with standard errors and confidence intervals.</p>",
+    "definition": "<p>Under regularity conditions, the MLE $\\hat{\\theta}_n$ is consistent and asymptotically normal: $$\\sqrt{n}(\\hat{\\theta}_n-\\theta_0)\\xrightarrow{d}N\\left(0,\\frac{1}{I(\\theta_0)}\\right).$$ Equivalently, $\\hat{\\theta}_n\\approx N\\left(\\theta_0,\\frac{1}{nI(\\theta_0)}\\right)$ for large $n$.</p><p>The idea comes from expanding the score equation around the true parameter. The score's random fluctuation is approximately normal, while the curvature of log-likelihood is information, so error is fluctuation divided by curvature.</p><p><b>Assumptions that matter:</b> the model must be correctly specified or interpreted with care; parameters should be identifiable and interior; derivatives and information must behave well; and asymptotic approximations can be poor for small or boundary-heavy samples.</p>",
+    "worked": {
+      "problem": "Suppose one-observation Fisher information is $I(\\theta_0)=4$ and $n=100$. Use MLE asymptotics to approximate the standard error of $\\hat{\\theta}$.",
+      "skills": [
+        "asymptotic normality",
+        "Fisher information",
+        "standard error"
+      ],
+      "strategy": "Use variance $1/(nI)$, then take the square root.",
+      "steps": [
+        {
+          "do": "Write asymptotic variance",
+          "result": "$1/(nI(\\theta_0))$",
+          "why": "large-sample MLE variance"
+        },
+        {
+          "do": "Substitute values",
+          "result": "$1/(100\\cdot4)$",
+          "why": "$n=100$ and $I=4$"
+        },
+        {
+          "do": "Multiply denominator",
+          "result": "$1/400$",
+          "why": "$100\\cdot4=400$"
+        },
+        {
+          "do": "Compute variance",
+          "result": "$0.0025$",
+          "why": "$1/400=0.0025$"
+        },
+        {
+          "do": "Take square root",
+          "result": "$0.05$",
+          "why": "standard error is square root of variance"
+        }
+      ],
+      "verify": "A sample of 100 with information 4 per observation gives total information 400, so a small SE is expected.",
+      "answer": "The approximate standard error is $0.05$.",
+      "connects": "Asymptotic MLE theory converts likelihood curvature into uncertainty."
+    },
+    "practice": [
+      {
+        "problem": "If $I(\\theta_0)=9$ and $n=25$, approximate MLE variance and SE.",
+        "steps": [
+          {
+            "do": "Write variance",
+            "result": "$1/(nI)$",
+            "why": "large-sample MLE approximation"
+          },
+          {
+            "do": "Substitute",
+            "result": "$1/(25\\cdot9)$",
+            "why": "use given $n$ and information"
+          },
+          {
+            "do": "Multiply",
+            "result": "$1/225$",
+            "why": "$25\\cdot9=225$"
+          },
+          {
+            "do": "Compute SE",
+            "result": "$1/15\\approx0.0667$",
+            "why": "square root of $1/225$"
+          },
+          {
+            "do": "State variance",
+            "result": "$0.00444$",
+            "why": "$1/225\\approx0.00444$"
+          }
+        ],
+        "answer": "Variance about $0.00444$, SE about $0.0667$."
+      },
+      {
+        "problem": "An MLE is approximately $N(2,0.01)$. Give an approximate $95\\%$ interval using $\\pm2$ SE.",
+        "steps": [
+          {
+            "do": "Identify variance",
+            "result": "$0.01$",
+            "why": "normal approximation gives estimator variance"
+          },
+          {
+            "do": "Compute SE",
+            "result": "$\\sqrt{0.01}=0.1$",
+            "why": "standard deviation of estimator"
+          },
+          {
+            "do": "Compute two SEs",
+            "result": "$2\\cdot0.1=0.2$",
+            "why": "rough 95 percent rule"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2-0.2=1.8$",
+            "why": "lower endpoint"
+          },
+          {
+            "do": "Add",
+            "result": "$2+0.2=2.2$",
+            "why": "upper endpoint"
+          }
+        ],
+        "answer": "Approximate interval $[1.8,2.2]$."
+      },
+      {
+        "problem": "For Bernoulli MLE with true $p=0.4$, information is $1/[p(1-p)]$ per observation. Compute approximate variance at $n=1000$.",
+        "steps": [
+          {
+            "do": "Compute $p(1-p)$",
+            "result": "$0.4\\cdot0.6=0.24$",
+            "why": "Bernoulli variance term"
+          },
+          {
+            "do": "Use known result",
+            "result": "$\\operatorname{Var}(\\hat{p})\\approx p(1-p)/n$",
+            "why": "inverse of total information"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.24/1000$",
+            "why": "sample size 1000"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.00024$",
+            "why": "compute variance"
+          },
+          {
+            "do": "Compute SE",
+            "result": "$\\sqrt{0.00024}\\approx0.0155$",
+            "why": "standard error"
+          }
+        ],
+        "answer": "Approximate variance $0.00024$, SE about $0.0155$."
+      },
+      {
+        "problem": "If sample size quadruples, what happens to asymptotic MLE SE?",
+        "steps": [
+          {
+            "do": "Write old SE",
+            "result": "$1/\\sqrt{nI}$",
+            "why": "large-sample formula"
+          },
+          {
+            "do": "Write new SE",
+            "result": "$1/\\sqrt{4nI}$",
+            "why": "sample size becomes $4n$"
+          },
+          {
+            "do": "Simplify root",
+            "result": "$\\sqrt{4nI}=2\\sqrt{nI}$",
+            "why": "square root of 4 is 2"
+          },
+          {
+            "do": "Compare",
+            "result": "new SE is half old SE",
+            "why": "denominator doubles"
+          },
+          {
+            "do": "Interpret",
+            "result": "quadruple data halves uncertainty",
+            "why": "square-root rate"
+          }
+        ],
+        "answer": "The asymptotic SE is halved."
+      },
+      {
+        "problem": "A logistic model coefficient MLE is $0.50$ with SE $0.20$. Compute a rough $z$ score for testing coefficient $0$.",
+        "steps": [
+          {
+            "do": "Write statistic",
+            "result": "$z=(\\hat{\\beta}-0)/SE$",
+            "why": "normal approximation"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.50/0.20$",
+            "why": "estimate and standard error"
+          },
+          {
+            "do": "Divide",
+            "result": "$2.5$",
+            "why": "compute standardized distance"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2.5$ SEs from zero",
+            "why": "z measures distance in SE units"
+          },
+          {
+            "do": "Connect",
+            "result": "evidence against zero",
+            "why": "large absolute z is unlikely under null"
+          }
+        ],
+        "answer": "The rough $z$ score is $2.5$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Wald confidence intervals",
+        "background": "MLE software often reports estimates and standard errors using asymptotic normality.",
+        "numbers": "Estimate $1.2$ with SE $0.3$ gives rough interval $1.2\\pm0.6=[0.6,1.8]$."
+      },
+      {
+        "title": "Logistic regression summaries",
+        "background": "Coefficient tables use asymptotic standard errors to assess which features have reliable effects.",
+        "numbers": "Coefficient $0.8$ and SE $0.2$ gives $z=4$."
+      },
+      {
+        "title": "Large-scale A/B models",
+        "background": "With enough users, likelihood estimates for treatment effects are often treated as normal.",
+        "numbers": "Effect estimate $0.015$ with SE $0.005$ is three SEs from zero."
+      },
+      {
+        "title": "Uncertainty in calibration",
+        "background": "Probability calibration models fit by likelihood rely on large-sample approximations for parameter uncertainty.",
+        "numbers": "Slope estimate $0.90$ with SE $0.04$ gives rough interval $[0.82,0.98]$."
+      },
+      {
+        "title": "Information and sample planning",
+        "background": "Asymptotic variance formulas translate desired precision into needed sample size.",
+        "numbers": "If $I=2$ and target SE $0.05$, solve $1/\\sqrt{2n}=0.05$ to get $n=200$."
+      },
+      {
+        "title": "Cautions at boundaries",
+        "background": "MLE asymptotics can fail when parameters lie on boundaries, such as probabilities near zero.",
+        "numbers": "With $0$ successes in $10$ trials, $\\hat{p}=0$ sits on the boundary, so normal intervals can behave poorly."
+      }
+    ],
+    "applicationsClose": "Asymptotic MLE theory is powerful because it turns complex likelihoods into a local normal picture, while reminding us to check the conditions.",
+    "takeaways": [
+      "Regular MLEs are consistent and asymptotically normal.",
+      "Large-sample variance is approximately $1/(nI(\\theta_0))$.",
+      "Standard errors shrink at the $1/\\sqrt{n}$ rate.",
+      "Boundary cases, small samples, and misspecification can weaken the approximation."
+    ],
     "prereqs": [
       "math-18-12"
     ]
@@ -279,19 +3469,262 @@
   B({
     "id": "math-18-14",
     "title": "Fisher information",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: fisher information.",
+    "tagline": "Fisher information measures how sharply the data can distinguish nearby parameter values.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Asymptotics of MLE</i>"
+        "Maximum Likelihood Estimation (MLE)",
+        "Asymptotics of MLE",
+        "variance of an estimator"
       ],
       "leadsTo": [
-        "the next lesson, <i>Maximum a Posteriori (MAP) estimation</i>"
+        "Maximum a Posteriori (MAP) estimation",
+        "confidence intervals",
+        "Bayesian inference"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "score function",
+        "log-likelihood curvature",
+        "Cramer-Rao bound",
+        "standard errors"
       ]
     },
+    "motivation": "<p>Some data are more informative than others. A sharp likelihood peak tells you the parameter is pinned down; a flat likelihood says many values explain the data nearly equally well.</p><p><b>Fisher information</b> puts a number on that sharpness. It connects likelihood curvature, estimator variance, and the best precision you can hope for.</p>",
+    "definition": "<p>For one observation with log-likelihood $\\ell(\\theta)=\\log f(X\\mid\\theta)$, the <b>score</b> is $S(\\theta)=\\dfrac{\\partial}{\\partial\\theta}\\ell(\\theta)$. The Fisher information is $I(\\theta)=\\mathbb{E}[S(\\theta)^2]$. Under regularity conditions, it also equals $-\\mathbb{E}\\left[\\dfrac{\\partial^2}{\\partial\\theta^2}\\ell(\\theta)\\right]$.</p><p>For $n$ independent observations, information adds: $I_n(\\theta)=nI(\\theta)$. More information means lower achievable variance; the Cramer-Rao bound says unbiased estimators have variance at least $1/I_n(\\theta)$ under regularity conditions.</p><p><b>Assumptions that matter:</b> derivatives must exist and be exchangeable with expectation; the support should not change badly with $\\theta$; information depends on the parameter value; and model misspecification changes the interpretation.</p>",
+    "worked": {
+      "problem": "For one observation $X\\sim N(\\mu,\\sigma^2)$ with known $\\sigma^2=9$, the Fisher information for $\\mu$ is $1/\\sigma^2$. Find one-observation information, total information for $n=25$, and the Cramer-Rao lower bound.",
+      "skills": [
+        "Fisher information",
+        "independent samples",
+        "Cramer-Rao bound"
+      ],
+      "strategy": "Compute one-observation information, add across observations, then invert.",
+      "steps": [
+        {
+          "do": "Write one-observation information",
+          "result": "$I(\\mu)=1/\\sigma^2$",
+          "why": "normal mean with known variance"
+        },
+        {
+          "do": "Substitute variance",
+          "result": "$I(\\mu)=1/9$",
+          "why": "$\\sigma^2=9$"
+        },
+        {
+          "do": "Compute total information",
+          "result": "$I_n(\\mu)=25\\cdot(1/9)=25/9$",
+          "why": "independent information adds"
+        },
+        {
+          "do": "Invert total information",
+          "result": "$1/I_n=9/25$",
+          "why": "Cramer-Rao lower bound"
+        },
+        {
+          "do": "Convert to decimal",
+          "result": "$0.36$",
+          "why": "$9/25=0.36$"
+        }
+      ],
+      "verify": "The sample mean has variance $\\sigma^2/n=9/25$, so it reaches this bound in the normal-known-variance model.",
+      "answer": "One-observation information is $1/9$, total information is $25/9$, and the lower bound is $9/25=0.36$.",
+      "connects": "Information is the reciprocal scale of best possible variance."
+    },
+    "practice": [
+      {
+        "problem": "If one-observation information is $0.5$ and $n=40$, compute total information and the lower variance bound.",
+        "steps": [
+          {
+            "do": "Multiply by sample size",
+            "result": "$I_n=40\\cdot0.5$",
+            "why": "independent information adds"
+          },
+          {
+            "do": "Compute total information",
+            "result": "$20$",
+            "why": "half of 40"
+          },
+          {
+            "do": "Write lower bound",
+            "result": "$1/I_n$",
+            "why": "Cramer-Rao form"
+          },
+          {
+            "do": "Invert",
+            "result": "$1/20=0.05$",
+            "why": "reciprocal of total information"
+          },
+          {
+            "do": "Interpret",
+            "result": "variance cannot be below $0.05$ for unbiased estimators",
+            "why": "under regularity conditions"
+          }
+        ],
+        "answer": "Total information $20$; lower bound $0.05$."
+      },
+      {
+        "problem": "For Bernoulli parameter $p$, information is $1/[p(1-p)]$. Compute it at $p=0.25$.",
+        "steps": [
+          {
+            "do": "Compute complement",
+            "result": "$1-p=0.75$",
+            "why": "Bernoulli failure probability"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.25\\cdot0.75=0.1875$",
+            "why": "denominator of information"
+          },
+          {
+            "do": "Invert",
+            "result": "$1/0.1875$",
+            "why": "information formula"
+          },
+          {
+            "do": "Compute",
+            "result": "$5.333\\ldots$",
+            "why": "one divided by three sixteenths"
+          },
+          {
+            "do": "State exactly",
+            "result": "$16/3$",
+            "why": "$0.1875=3/16$"
+          }
+        ],
+        "answer": "$I(0.25)=16/3\\approx5.333$."
+      },
+      {
+        "problem": "If total information is $400$, what asymptotic SE corresponds to it?",
+        "steps": [
+          {
+            "do": "Write variance approximation",
+            "result": "$1/400$",
+            "why": "variance is inverse information"
+          },
+          {
+            "do": "Compute variance",
+            "result": "$0.0025$",
+            "why": "reciprocal of 400"
+          },
+          {
+            "do": "Take square root",
+            "result": "$0.05$",
+            "why": "SE is square root of variance"
+          },
+          {
+            "do": "Check",
+            "result": "$0.05^2=0.0025$",
+            "why": "verify square"
+          },
+          {
+            "do": "Interpret",
+            "result": "high information gives small SE",
+            "why": "precision grows with information"
+          }
+        ],
+        "answer": "The asymptotic SE is $0.05$."
+      },
+      {
+        "problem": "A log-likelihood near its maximum is approximately $\\ell(\\theta)=C-50(\\theta-2)^2$. Estimate observed information from curvature.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$\\ell'(\\theta)=-100(\\theta-2)$",
+            "why": "derivative of quadratic"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$\\ell''(\\theta)=-100$",
+            "why": "curvature is constant"
+          },
+          {
+            "do": "Negate curvature",
+            "result": "$100$",
+            "why": "observed information is often $-\\ell''$"
+          },
+          {
+            "do": "Compute variance approximation",
+            "result": "$1/100=0.01$",
+            "why": "inverse observed information"
+          },
+          {
+            "do": "Compute SE",
+            "result": "$0.1$",
+            "why": "square root of variance"
+          }
+        ],
+        "answer": "Observed information is $100$, giving approximate SE $0.1$."
+      },
+      {
+        "problem": "For a normal mean with known $\\sigma^2=4$ and $n=100$, compute information and the efficient SE.",
+        "steps": [
+          {
+            "do": "Compute one information",
+            "result": "$1/4$",
+            "why": "normal mean information"
+          },
+          {
+            "do": "Compute total information",
+            "result": "$100/4=25$",
+            "why": "add over independent observations"
+          },
+          {
+            "do": "Invert for variance",
+            "result": "$1/25=0.04$",
+            "why": "efficient variance bound"
+          },
+          {
+            "do": "Take square root",
+            "result": "$0.2$",
+            "why": "standard error"
+          },
+          {
+            "do": "Check with sample mean",
+            "result": "$\\sigma/\\sqrt{n}=2/10=0.2$",
+            "why": "sample mean reaches bound"
+          }
+        ],
+        "answer": "Total information $25$ and efficient SE $0.2$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Standard errors from likelihood",
+        "background": "Statistical software often estimates SEs by inverting the observed information matrix at the MLE.",
+        "numbers": "Observed curvature $-25$ gives information $25$ and SE $1/5=0.2$."
+      },
+      {
+        "title": "Experiment design",
+        "background": "Designs with more information need fewer samples for the same precision.",
+        "numbers": "Information per user $0.02$ means $10{,}000$ users give total information $200$ and SE $1/\\sqrt{200}\\approx0.071$."
+      },
+      {
+        "title": "Logistic regression",
+        "background": "Feature values affect information; near-certain predicted probabilities often add little information for slope estimation.",
+        "numbers": "For Bernoulli variance $p(1-p)$, $p=0.5$ gives $0.25$, while $p=0.99$ gives $0.0099$."
+      },
+      {
+        "title": "Active learning",
+        "background": "Active learning seeks labels that are informative about model parameters, not merely numerous.",
+        "numbers": "Choosing a point with information $3$ instead of $1$ triples that observation's contribution."
+      },
+      {
+        "title": "Sensor precision",
+        "background": "In normal measurement models, smaller noise variance means more information about the mean.",
+        "numbers": "Noise variance $4$ gives information $0.25$; variance $1$ gives information $1$."
+      },
+      {
+        "title": "Bayesian approximations",
+        "background": "Laplace approximations use likelihood curvature, closely tied to information, to approximate posterior spread.",
+        "numbers": "Posterior curvature $64$ gives approximate posterior SD $1/8=0.125$."
+      }
+    ],
+    "applicationsClose": "Fisher information is the curvature-language of certainty: sharper likelihood, more information, smaller possible error.",
+    "takeaways": [
+      "Fisher information can be written as expected squared score.",
+      "For independent samples, information adds across observations.",
+      "Inverse information gives a lower-bound scale for estimator variance.",
+      "MLE standard errors often come from likelihood curvature and Fisher information."
+    ],
     "prereqs": [
       "math-18-13"
     ]
@@ -300,19 +3733,267 @@
   B({
     "id": "math-18-15",
     "title": "Maximum a Posteriori (MAP) estimation",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: maximum a posteriori (map) estimation.",
+    "tagline": "MAP estimation chooses the parameter most plausible after combining data with prior belief.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Fisher information</i>"
+        "Maximum Likelihood Estimation (MLE)",
+        "Fisher information",
+        "conditional probability"
       ],
       "leadsTo": [
-        "the next lesson, <i>Sufficiency</i>"
+        "Bayesian inference",
+        "regularization",
+        "probabilistic ML"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "Bayes' rule",
+        "priors",
+        "posterior distributions",
+        "optimization"
       ]
     },
+    "motivation": "<p>MLE listens only to the likelihood. Sometimes you also have prior information: probabilities should not be extreme with little data, weights should be small unless evidence says otherwise, or rates should be positive and stable.</p><p><b>MAP estimation</b> combines the data with a prior distribution and chooses the posterior mode. In ML, this is the probabilistic face of regularization.</p>",
+    "definition": "<p>Bayes' rule gives $p(\\theta\\mid x)\\propto p(x\\mid\\theta)p(\\theta)$, where $p(\\theta)$ is the prior and $p(x\\mid\\theta)$ is the likelihood. The <b>MAP estimator</b> is $\\hat{\\theta}_{MAP}=\\arg\\max_\\theta p(\\theta\\mid x)=\\arg\\max_\\theta \\{\\log p(x\\mid\\theta)+\\log p(\\theta)\\}$.</p><p>If the prior is flat, MAP agrees with MLE. If the prior favors smaller or smoother parameters, MAP pulls estimates toward those values. For a Bernoulli probability with Beta$(\\alpha,\\beta)$ prior and $s$ successes, $f$ failures, the posterior is Beta$(\\alpha+s,\\beta+f)$ and the interior mode is $\\dfrac{\\alpha+s-1}{\\alpha+\\beta+s+f-2}$ when both posterior shape parameters exceed $1$.</p><p><b>Assumptions that matter:</b> the prior is part of the model and affects finite-sample estimates; MAP reports a mode, not a posterior mean or interval; boundary cases need care; and reparameterization can change a MAP value.</p>",
+    "worked": {
+      "problem": "A Bernoulli experiment has $s=8$ successes and $f=2$ failures. With Beta$(2,2)$ prior, find the MAP estimate of $p$.",
+      "skills": [
+        "Bayes' rule",
+        "Beta-Bernoulli MAP",
+        "regularization"
+      ],
+      "strategy": "Update the Beta prior with counts, then compute the posterior mode.",
+      "steps": [
+        {
+          "do": "Update success shape",
+          "result": "$\\alpha'=2+8=10$",
+          "why": "successes add to the first Beta parameter"
+        },
+        {
+          "do": "Update failure shape",
+          "result": "$\\beta'=2+2=4$",
+          "why": "failures add to the second Beta parameter"
+        },
+        {
+          "do": "Write posterior",
+          "result": "$\\operatorname{Beta}(10,4)$",
+          "why": "Beta prior is conjugate to Bernoulli likelihood"
+        },
+        {
+          "do": "Write mode formula",
+          "result": "$(\\alpha'-1)/(\\alpha'+\\beta'-2)$",
+          "why": "both shapes exceed 1"
+        },
+        {
+          "do": "Substitute",
+          "result": "$(10-1)/(10+4-2)=9/12$",
+          "why": "plug in posterior shapes"
+        },
+        {
+          "do": "Simplify",
+          "result": "$0.75$",
+          "why": "$9/12=3/4$"
+        }
+      ],
+      "verify": "The MLE is $8/10=0.8$; the symmetric prior pulls the MAP slightly toward $0.5$.",
+      "answer": "$\\hat{p}_{MAP}=0.75$.",
+      "connects": "MAP is likelihood estimation with a prior-shaped pull."
+    },
+    "practice": [
+      {
+        "problem": "With $s=3$, $f=1$, and Beta$(1,1)$ prior, compute the MAP when the posterior mode is interior if possible.",
+        "steps": [
+          {
+            "do": "Update shapes",
+            "result": "$\\alpha'=1+3=4$, $\\beta'=1+1=2$",
+            "why": "add successes and failures"
+          },
+          {
+            "do": "Check interior condition",
+            "result": "$4>1$ and $2>1$",
+            "why": "mode formula applies"
+          },
+          {
+            "do": "Write mode",
+            "result": "$(4-1)/(4+2-2)$",
+            "why": "Beta posterior mode"
+          },
+          {
+            "do": "Simplify",
+            "result": "$3/4$",
+            "why": "denominator is 4"
+          },
+          {
+            "do": "Compare MLE",
+            "result": "$3/4$",
+            "why": "uniform prior makes this case match the sample proportion"
+          }
+        ],
+        "answer": "$\\hat{p}_{MAP}=0.75$."
+      },
+      {
+        "problem": "With $s=0$, $f=10$, and Beta$(2,2)$ prior, compute the MAP.",
+        "steps": [
+          {
+            "do": "Update shapes",
+            "result": "$\\alpha'=2$, $\\beta'=12$",
+            "why": "no successes, ten failures"
+          },
+          {
+            "do": "Check mode condition",
+            "result": "$2>1$ and $12>1$",
+            "why": "interior formula applies"
+          },
+          {
+            "do": "Write mode",
+            "result": "$(2-1)/(2+12-2)$",
+            "why": "posterior Beta mode"
+          },
+          {
+            "do": "Compute",
+            "result": "$1/12\\approx0.0833$",
+            "why": "prior prevents zero estimate"
+          },
+          {
+            "do": "Compare MLE",
+            "result": "$0/10=0$",
+            "why": "MAP is pulled away from boundary"
+          }
+        ],
+        "answer": "$\\hat{p}_{MAP}=1/12\\approx0.0833$."
+      },
+      {
+        "problem": "A Gaussian prior on a weight leads to objective $\\frac12(y-w)^2+\\frac{\\lambda}{2}w^2$. For $y=6$, $\\lambda=2$, minimize to find MAP $w$.",
+        "steps": [
+          {
+            "do": "Differentiate objective",
+            "result": "$(w-6)+2w$",
+            "why": "derivative of data term plus penalty"
+          },
+          {
+            "do": "Set derivative to zero",
+            "result": "$w-6+2w=0$",
+            "why": "minimum first-order condition"
+          },
+          {
+            "do": "Combine terms",
+            "result": "$3w-6=0$",
+            "why": "collect $w$ terms"
+          },
+          {
+            "do": "Solve",
+            "result": "$w=2$",
+            "why": "add 6 and divide by 3"
+          },
+          {
+            "do": "Compare unregularized",
+            "result": "$6$ shrinks to $2$",
+            "why": "prior penalty pulls weight toward zero"
+          }
+        ],
+        "answer": "The MAP estimate is $w=2$."
+      },
+      {
+        "problem": "A prior log-density contributes $-\\theta^2/2$ and log-likelihood contributes $-2(\\theta-3)^2$. Find the MAP by maximizing their sum.",
+        "steps": [
+          {
+            "do": "Write negative objective",
+            "result": "$2(\\theta-3)^2+\\theta^2/2$",
+            "why": "maximizing log posterior equals minimizing negative log posterior"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$4(\\theta-3)+\\theta$",
+            "why": "derivative of both quadratic terms"
+          },
+          {
+            "do": "Set to zero",
+            "result": "$4\\theta-12+\\theta=0$",
+            "why": "first-order condition"
+          },
+          {
+            "do": "Combine",
+            "result": "$5\\theta=12$",
+            "why": "move constant to other side"
+          },
+          {
+            "do": "Solve",
+            "result": "$\\theta=12/5=2.4$",
+            "why": "divide by 5"
+          }
+        ],
+        "answer": "The MAP estimate is $2.4$."
+      },
+      {
+        "problem": "A click model has MLE $0.02$ from $2$ clicks in $100$ impressions. With Beta$(5,95)$ prior, compute posterior mean and explain why it differs from MAP conceptually.",
+        "steps": [
+          {
+            "do": "Update success shape",
+            "result": "$5+2=7$",
+            "why": "add clicks"
+          },
+          {
+            "do": "Update failure shape",
+            "result": "$95+98=193$",
+            "why": "add non-clicks"
+          },
+          {
+            "do": "Compute posterior mean",
+            "result": "$7/(7+193)=7/200$",
+            "why": "Beta mean is first shape over total"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.035$",
+            "why": "$7/200=0.035$"
+          },
+          {
+            "do": "Distinguish from MAP",
+            "result": "mean averages posterior, MAP chooses posterior mode",
+            "why": "different summaries can be used after Bayes updating"
+          }
+        ],
+        "answer": "Posterior mean is $0.035$; MAP would be the posterior mode, a different point summary."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Regularized regression",
+        "background": "Ridge regression is MAP estimation with a Gaussian prior on weights in a Gaussian-noise model.",
+        "numbers": "Penalty $\\lambda w^2/2$ with $\\lambda=4$ adds curvature 4 toward $w=0$."
+      },
+      {
+        "title": "Sparse models",
+        "background": "Laplace priors lead to L1 penalties, encouraging many coefficients to be exactly zero.",
+        "numbers": "Objective loss $10$ plus penalty $0.5|w|$ gives total $11.5$ when $w=3$."
+      },
+      {
+        "title": "CTR smoothing",
+        "background": "MAP or Bayesian smoothing prevents tiny samples from producing extreme probability estimates.",
+        "numbers": "Beta$(2,2)$ with $1$ click and $0$ failures gives posterior Beta$(3,2)$ and MAP $(3-1)/(3+2-2)=2/3$."
+      },
+      {
+        "title": "Cold-start recommendations",
+        "background": "Prior preferences stabilize estimates for new users or items before much behavioral data arrives.",
+        "numbers": "Prior count $20$ with mean $0.10$ acts like $2$ successes and $18$ failures before new data."
+      },
+      {
+        "title": "Language-model smoothing",
+        "background": "Classical language models used priors or pseudo-counts so unseen words did not receive zero probability.",
+        "numbers": "Add-one smoothing with vocabulary $1000$ changes count $0$ in $10{,}000$ tokens to probability $1/11{,}000$."
+      },
+      {
+        "title": "Bayesian neural networks",
+        "background": "Weight priors encode preference for smaller or structured weights; MAP gives a single optimized network under that prior.",
+        "numbers": "A weight $w=0.4$ under penalty $5w^2/2$ contributes $5(0.16)/2=0.4$ to the objective."
+      }
+    ],
+    "applicationsClose": "MAP is the meeting point of evidence and prior structure: likelihood says what the data want, the prior says what was plausible before seeing them.",
+    "takeaways": [
+      "MAP maximizes posterior density, proportional to likelihood times prior.",
+      "Log MAP maximizes log-likelihood plus log-prior.",
+      "Flat priors often make MAP match MLE.",
+      "Regularization in ML is frequently MAP estimation with a prior interpretation."
+    ],
     "prereqs": [
       "math-18-14"
     ]
@@ -321,19 +4002,261 @@
   B({
     "id": "math-18-16",
     "title": "Sufficiency",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: sufficiency.",
+    "tagline": "A sufficient statistic keeps exactly the sample information needed for the parameter question.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Maximum a Posteriori (MAP) estimation</i>"
+        "likelihood",
+        "conditional probability",
+        "estimators"
       ],
       "leadsTo": [
-        "the next lesson, <i>The exponential family</i>"
+        "The exponential family",
+        "The Cramér-Rao bound",
+        "Rao-Blackwellization"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "factorization theorem",
+        "maximum likelihood",
+        "conditional distributions"
       ]
     },
+    "motivation": "<p>You already know that data can often be summarized. For Bernoulli trials, the order $1,0,1,1,0$ may matter less than the count of successes, $3$.</p><p><b>Sufficiency</b> makes that compression precise. Once a sufficient statistic is known, the remaining sample pattern carries no further information about the parameter inside the assumed model.</p>",
+    "definition": "<p>For data $X=(X_1,\\dots,X_n)$ and parameter $\\theta$, a statistic $T(X)$ is <b>sufficient</b> if the conditional distribution of $X$ given $T(X)$ does not depend on $\\theta$. The factorization theorem gives the common test: $$f_\\theta(x)=g_\\theta(T(x))h(x).$$ All parameter dependence flows through $T(x)$.</p><p>Why this works: if two samples have the same $T$, their likelihood ratio cancels the $g_\\theta$ part and leaves only $h(x)/h(y)$, which is parameter-free. The leftover arrangement is then not evidence about $\\theta$.</p><p><b>Assumptions that matter:</b> sufficiency is model-dependent; support conditions must be handled carefully; $T$ may be vector-valued; and a sufficient statistic need not be minimal.</p>",
+    "worked": {
+      "problem": "For $X_i\\sim\\operatorname{Bernoulli}(p)$, show $T=\\sum_iX_i$ is sufficient for $p$.",
+      "skills": [
+        "joint likelihood",
+        "factorization theorem",
+        "Bernoulli models"
+      ],
+      "strategy": "The order looks distracting — collect the likelihood so all dependence on $p$ passes through the success count.",
+      "steps": [
+        {
+          "do": "Write the joint mass",
+          "result": "$f_p(x)=\\prod_i p^{x_i}(1-p)^{1-x_i}$",
+          "why": "independent Bernoulli probabilities multiply"
+        },
+        {
+          "do": "Combine powers of $p$",
+          "result": "$p^{\\sum_i x_i}$",
+          "why": "multiplying equal bases adds exponents"
+        },
+        {
+          "do": "Combine powers of $1-p$",
+          "result": "$(1-p)^{n-\\sum_i x_i}$",
+          "why": "there are $n-sum_i x_i$ failures"
+        },
+        {
+          "do": "Name the statistic",
+          "result": "$T(x)=\\sum_i x_i$",
+          "why": "the likelihood uses the sample through this count"
+        },
+        {
+          "do": "Factor the likelihood",
+          "result": "$f_p(x)=p^{T(x)}(1-p)^{n-T(x)}\\cdot1$",
+          "why": "this has $g_p(T(x))h(x)$ form"
+        }
+      ],
+      "verify": "Two samples with the same number of successes have the same likelihood for every $p$.",
+      "answer": "$T=\\sum_iX_i$ is sufficient for $p$.",
+      "connects": "Sufficiency is a proof-backed way to compress data for inference."
+    },
+    "practice": [
+      {
+        "problem": "For $X_i\\sim\\operatorname{Poisson}(\\lambda)$, show $T=\\sum_iX_i$ is sufficient.",
+        "steps": [
+          {
+            "do": "Write the joint mass",
+            "result": "$\\prod_i e^{-\\lambda}\\lambda^{x_i}/x_i!$",
+            "why": "independence multiplies probabilities"
+          },
+          {
+            "do": "Combine exponential factors",
+            "result": "$e^{-n\\lambda}$",
+            "why": "there are $n$ identical factors"
+          },
+          {
+            "do": "Combine powers of $lambda$",
+            "result": "$\\lambda^{\\sum_i x_i}$",
+            "why": "exponents add"
+          },
+          {
+            "do": "Separate factorial terms",
+            "result": "$\\prod_i1/x_i!$",
+            "why": "these do not contain $lambda$"
+          },
+          {
+            "do": "State the factorization",
+            "result": "$e^{-n\\lambda}\\lambda^{T(x)}\\prod_i1/x_i!$",
+            "why": "all parameter dependence is through $T$"
+          }
+        ],
+        "answer": "$T=\\sum_iX_i$ is sufficient for $\\lambda$."
+      },
+      {
+        "problem": "For Normal$(\\mu,\\sigma^2)$ with known $\\sigma^2$, show $\\bar X$ is sufficient for $\\mu$.",
+        "steps": [
+          {
+            "do": "Write the likelihood kernel",
+            "result": "$\\exp\\{-\\sum_i(x_i-\\mu)^2/(2\\sigma^2)\\}$",
+            "why": "normal densities multiply"
+          },
+          {
+            "do": "Expand the square sum",
+            "result": "$\\sum_i x_i^2-2\\mu\\sum_i x_i+n\\mu^2$",
+            "why": "collect terms with $mu$"
+          },
+          {
+            "do": "Separate factors",
+            "result": "$\\exp\\{\\mu\\sum_i x_i/\\sigma^2-n\\mu^2/(2\\sigma^2)\\}\\exp\\{-\\sum_i x_i^2/(2\\sigma^2)\\}$",
+            "why": "split parameter and parameter-free parts"
+          },
+          {
+            "do": "Identify the sufficient statistic",
+            "result": "$T=\\sum_i x_i$",
+            "why": "the parameter part uses only the sum"
+          },
+          {
+            "do": "Convert to mean",
+            "result": "$\\bar X=T/n$",
+            "why": "one-to-one transformations preserve information"
+          }
+        ],
+        "answer": "$\\bar X$ is sufficient for $\\mu$."
+      },
+      {
+        "problem": "Two Bernoulli samples are $x=(1,0,1,0)$ and $y=(1,1,0,0)$. Compare their likelihoods.",
+        "steps": [
+          {
+            "do": "Compute $T(x)$",
+            "result": "$T(x)=2$",
+            "why": "two successes"
+          },
+          {
+            "do": "Compute $T(y)$",
+            "result": "$T(y)=2$",
+            "why": "two successes again"
+          },
+          {
+            "do": "Write $L_x(p)$",
+            "result": "$p^2(1-p)^2$",
+            "why": "two successes and two failures"
+          },
+          {
+            "do": "Write $L_y(p)$",
+            "result": "$p^2(1-p)^2$",
+            "why": "same count gives same likelihood"
+          },
+          {
+            "do": "Compare the ratio",
+            "result": "$L_x(p)/L_y(p)=1$",
+            "why": "the order is parameter-free"
+          }
+        ],
+        "answer": "They contain the same information about $p$ under the Bernoulli model."
+      },
+      {
+        "problem": "For exponential data with density $\\lambda e^{-\\lambda x}$ on $x\\ge0$, find a sufficient statistic.",
+        "steps": [
+          {
+            "do": "Write the joint density",
+            "result": "$\\prod_i\\lambda e^{-\\lambda x_i}$",
+            "why": "independence multiplies densities"
+          },
+          {
+            "do": "Combine powers",
+            "result": "$\\lambda^n$",
+            "why": "one factor per observation"
+          },
+          {
+            "do": "Combine exponents",
+            "result": "$e^{-\\lambda\\sum_i x_i}$",
+            "why": "exponents add"
+          },
+          {
+            "do": "Include support",
+            "result": "$\\mathbf{1}\\{x_i\\ge0\\ \\text{for all }i\\}$",
+            "why": "the support is parameter-free"
+          },
+          {
+            "do": "Identify the statistic",
+            "result": "$T=\\sum_iX_i$",
+            "why": "the parameter enters through the sum"
+          }
+        ],
+        "answer": "$T=\\sum_iX_i$ is sufficient for $\\lambda$."
+      },
+      {
+        "problem": "A Bernoulli dataset has $n=10$ and $T=7$. Write the likelihood and find the MLE.",
+        "steps": [
+          {
+            "do": "Write the likelihood",
+            "result": "$L(p)=p^7(1-p)^3$",
+            "why": "seven successes and three failures"
+          },
+          {
+            "do": "Write the log-likelihood",
+            "result": "$\\ell(p)=7\\log p+3\\log(1-p)$",
+            "why": "logs simplify products"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$\\ell'(p)=7/p-3/(1-p)$",
+            "why": "basic log derivatives"
+          },
+          {
+            "do": "Set to zero",
+            "result": "$7/p=3/(1-p)$",
+            "why": "interior maximum condition"
+          },
+          {
+            "do": "Solve",
+            "result": "$7(1-p)=3p\\Rightarrow p=0.7$",
+            "why": "combine like terms"
+          }
+        ],
+        "answer": "$L(p)=p^7(1-p)^3$ and $\\hat p=0.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Click-through counts",
+        "background": "A/B dashboards often store impressions and clicks rather than every click sequence when a constant Bernoulli rate is the model.",
+        "numbers": "With $1000$ impressions and $63$ clicks, the likelihood is $p^{63}(1-p)^{937}$."
+      },
+      {
+        "title": "Failure monitoring",
+        "background": "If requests fail independently with constant probability, the total failure count is sufficient for that probability.",
+        "numbers": "In $500$ requests with $8$ failures, the MLE is $8/500=0.016$."
+      },
+      {
+        "title": "Poisson arrivals",
+        "background": "Queueing models often use Poisson rates, where total arrivals across windows summarize the rate.",
+        "numbers": "Counts $[3,4,2,6]$ have total $15$, so $\\hat\\lambda=15/4=3.75$ per hour."
+      },
+      {
+        "title": "Sensor calibration",
+        "background": "Known-variance Gaussian readings can be summarized by their mean for estimating the offset.",
+        "numbers": "Readings $[10.1,9.9,10.0,10.2]$ have $\\bar x=10.05$."
+      },
+      {
+        "title": "Rao-Blackwellization",
+        "background": "Conditioning on a sufficient statistic can reduce estimator variance while preserving unbiasedness.",
+        "numbers": "Variance dropping from $0.040$ to $0.025$ is a $37.5\\%$ reduction."
+      },
+      {
+        "title": "Privacy-aware aggregation",
+        "background": "A sufficient summary can reduce raw-data exposure when the model truly only needs that summary.",
+        "numbers": "For $200$ binary responses with $118$ yes responses, inference for constant $p$ uses $118$ and $200$."
+      }
+    ],
+    "applicationsClose": "Sufficiency is compression with a mathematical warranty: what remains after the statistic is parameter-free detail.",
+    "takeaways": [
+      "A sufficient statistic makes the conditional distribution of the data parameter-free.",
+      "The factorization theorem is the main practical proof tool.",
+      "Counts and sums are sufficient in many classical models.",
+      "Sufficiency depends on the assumed statistical model."
+    ],
     "prereqs": [
       "math-18-15"
     ]
@@ -342,19 +4265,261 @@
   B({
     "id": "math-18-17",
     "title": "The exponential family",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: the exponential family.",
+    "tagline": "The exponential family is the common grammar behind Bernoulli, Poisson, normal, and many ML likelihoods.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Sufficiency</i>"
+        "sampling distributions",
+        "likelihood",
+        "standard error"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Cramér–Rao bound</i>"
+        "model comparison",
+        "linear regression inference",
+        "generalization analysis"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "estimators",
+        "quantiles",
+        "degrees of freedom"
       ]
     },
+    "motivation": "<p>Many distributions look unrelated until you rewrite their likelihoods. Bernoulli uses powers of $p$, Poisson uses $\\lambda^x e^{-\\lambda}$, and normal models use squared errors.</p><p>The <b>exponential family</b> shows their shared shape: a statistic times a natural parameter, minus a log-normalizer. That shared shape powers GLMs and many ML losses.</p>",
+    "definition": "<p>A regular exponential family has density or mass $$f_\\eta(x)=h(x)\\exp\\{\\eta^\\top T(x)-A(\\eta)\\}.$$ Here $T(x)$ is the sufficient statistic, $\\eta$ is the natural parameter, $A(\\eta)$ is the log-normalizer, and $h(x)$ is the base measure.</p><p>The normalizer is forced by total probability: $A(\\eta)=\\log\\int h(x)e^{\\eta^\\top T(x)}dx$. Its derivatives give moments, which is why optimization and inference become so clean.</p><p><b>Assumptions that matter:</b> $A(\\eta)$ must be finite; support should not change with $\\eta$ in the regular case; and vector families use dot products.</p>",
+    "worked": {
+      "problem": "Write Bernoulli$(p)$ as an exponential family.",
+      "skills": [
+        "exponential-family form",
+        "standard errors",
+        "statistical interpretation"
+      ],
+      "strategy": "Use the exponential-family form definition, compute one quantity at a time, and interpret the number in context.",
+      "steps": [
+        {
+          "do": "Start with the mass",
+          "result": "$p^x(1-p)^{1-x}$",
+          "why": "Bernoulli probability"
+        },
+        {
+          "do": "Factor out $1-p$",
+          "result": "$(1-p)(p/(1-p))^x$",
+          "why": "isolate the term raised to $x$"
+        },
+        {
+          "do": "Convert to exponential form",
+          "result": "$\\exp\\{x\\log(p/(1-p))+\\log(1-p)\\}$",
+          "why": "powers become exponentials"
+        },
+        {
+          "do": "Name the natural parameter",
+          "result": "$\\eta=\\log(p/(1-p))$",
+          "why": "the log-odds parameter"
+        },
+        {
+          "do": "Name the normalizer",
+          "result": "$A(\\eta)=\\log(1+e^\\eta)$",
+          "why": "this makes probabilities sum to one"
+        }
+      ],
+      "verify": "The number has the expected scale and direction for the stated data.",
+      "answer": "Bernoulli has $T(x)=x$, $\\eta=\\log(p/(1-p))$, and $A(\\eta)=\\log(1+e^\\eta)$.",
+      "connects": "This example shows exponential-family form as a concrete calculation rather than a slogan."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "The exponential family: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "The exponential family in experiments",
+        "background": "probability models appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "The exponential family for model evaluation",
+        "background": "probability models helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "The exponential family in monitoring",
+        "background": "probability models turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "The exponential family for sample planning",
+        "background": "probability models supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "The exponential family in fairness analysis",
+        "background": "probability models is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "The exponential family in scientific reporting",
+        "background": "probability models gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "The exponential family is one more uniform for the same habit: quantify uncertainty before making the decision.",
+    "takeaways": [
+      "Know the statistic and the distribution it is compared with.",
+      "Check assumptions before trusting the reference distribution.",
+      "Separate statistical significance from practical importance.",
+      "Use real numbers to keep uncertainty interpretable."
+    ],
     "prereqs": [
       "math-18-16"
     ]
@@ -362,20 +4527,262 @@
 
   B({
     "id": "math-18-18",
-    "title": "The Cramér–Rao bound",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: the cramér–rao bound.",
+    "title": "The Cramér-Rao bound",
+    "tagline": "The Cramér-Rao bound gives a best-possible variance benchmark for unbiased estimators.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The exponential family</i>"
+        "sampling distributions",
+        "likelihood",
+        "standard error"
       ],
       "leadsTo": [
-        "the next lesson, <i>Confidence intervals</i>"
+        "model comparison",
+        "linear regression inference",
+        "generalization analysis"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "estimators",
+        "quantiles",
+        "degrees of freedom"
       ]
     },
+    "motivation": "<p>After choosing an estimator, you naturally ask whether another unbiased estimator could be much less noisy. The answer is sometimes no, and that is powerful.</p><p>The <b>Cramér-Rao bound</b> uses Fisher information to set a floor on unbiased estimator variance.</p>",
+    "definition": "<p>For an unbiased scalar estimator $\\hat\\theta$, regularity conditions give $$\\operatorname{Var}(\\hat\\theta)\\ge\\frac{1}{I_n(\\theta)},$$ where $I_n(\\theta)=E[(\\partial_\\theta\\log L(\\theta;X))^2]$ is Fisher information.</p><p>The proof uses the score $S=\\partial_\\theta\\log L$: regularity gives $E[S]=0$ and $\\operatorname{Cov}(\\hat\\theta,S)=1$. Cauchy-Schwarz then forces $1\\le\\operatorname{Var}(\\hat\\theta)I_n(\\theta)$.</p><p><b>Assumptions that matter:</b> the estimator is unbiased; the model is regular; support issues are controlled; and equality is special.</p>",
+    "worked": {
+      "problem": "For Normal$(\\mu,\\sigma^2)$ with known $\\sigma^2$, find the CRLB for estimating $\\mu$.",
+      "skills": [
+        "Cramér-Rao bound",
+        "standard errors",
+        "statistical interpretation"
+      ],
+      "strategy": "Use the Cramér-Rao bound definition, compute one quantity at a time, and interpret the number in context.",
+      "steps": [
+        {
+          "do": "Write the score",
+          "result": "$S=(X-\\mu)/\\sigma^2$",
+          "why": "differentiate the log-density"
+        },
+        {
+          "do": "Square the score",
+          "result": "$S^2=(X-\\mu)^2/\\sigma^4$",
+          "why": "information is expected squared score"
+        },
+        {
+          "do": "Take expectation",
+          "result": "$I_1=\\sigma^2/\\sigma^4=1/\\sigma^2$",
+          "why": "normal variance is $sigma^2$"
+        },
+        {
+          "do": "Multiply by $n$",
+          "result": "$I_n=n/\\sigma^2$",
+          "why": "independent information adds"
+        },
+        {
+          "do": "Invert",
+          "result": "$1/I_n=\\sigma^2/n$",
+          "why": "CRLB is reciprocal information"
+        }
+      ],
+      "verify": "The number has the expected scale and direction for the stated data.",
+      "answer": "The variance of any unbiased estimator is at least $\\sigma^2/n$.",
+      "connects": "This example shows Cramér-Rao bound as a concrete calculation rather than a slogan."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "The Cramér-Rao bound: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "The Cramér-Rao bound in experiments",
+        "background": "estimator precision appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "The Cramér-Rao bound for model evaluation",
+        "background": "estimator precision helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "The Cramér-Rao bound in monitoring",
+        "background": "estimator precision turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "The Cramér-Rao bound for sample planning",
+        "background": "estimator precision supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "The Cramér-Rao bound in fairness analysis",
+        "background": "estimator precision is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "The Cramér-Rao bound in scientific reporting",
+        "background": "estimator precision gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "The Cramér-Rao bound is one more uniform for the same habit: quantify uncertainty before making the decision.",
+    "takeaways": [
+      "Know the statistic and the distribution it is compared with.",
+      "Check assumptions before trusting the reference distribution.",
+      "Separate statistical significance from practical importance.",
+      "Use real numbers to keep uncertainty interpretable."
+    ],
     "prereqs": [
       "math-18-17"
     ]
@@ -384,19 +4791,261 @@
   B({
     "id": "math-18-19",
     "title": "Confidence intervals",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: confidence intervals.",
+    "tagline": "A confidence interval attaches a repeatable uncertainty promise to an estimate.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Cramér–Rao bound</i>"
+        "sampling distributions",
+        "likelihood",
+        "standard error"
       ],
       "leadsTo": [
-        "the next lesson, <i>Hypothesis testing</i>"
+        "model comparison",
+        "linear regression inference",
+        "generalization analysis"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "estimators",
+        "quantiles",
+        "degrees of freedom"
       ]
     },
+    "motivation": "<p>A point estimate is a start, not a finish. Saying a model accuracy is $0.84$ matters more when you know whether the standard error is $0.002$ or $0.02$.</p><p>A <b>confidence interval</b> gives a calibrated range produced by a procedure with long-run coverage.</p>",
+    "definition": "<p>A $100(1-\\alpha)\\%$ confidence interval is a random interval $[L(X),U(X)]$ whose procedure covers the fixed parameter with probability about $1-\\alpha$. A common large-sample form is $$\\hat\\theta\\pm z_{1-\\alpha/2}SE(\\hat\\theta).$$</p><p>This comes from the approximate pivot $(\\hat\\theta-\\theta)/SE\\approx N(0,1)$ and solving the central probability statement for $\\theta$.</p><p><b>Assumptions that matter:</b> the standard error must be appropriate; the approximation must be justified; and the confidence level describes the procedure, not a personal probability after seeing the interval.</p>",
+    "worked": {
+      "problem": "Find a $95\\%$ interval for $\\bar x=52$, known $\\sigma=10$, $n=100$.",
+      "skills": [
+        "confidence intervals",
+        "standard errors",
+        "statistical interpretation"
+      ],
+      "strategy": "Use the confidence intervals definition, compute one quantity at a time, and interpret the number in context.",
+      "steps": [
+        {
+          "do": "Compute SE",
+          "result": "$10/\\sqrt{100}=1$",
+          "why": "average spread"
+        },
+        {
+          "do": "Choose critical value",
+          "result": "$1.96$",
+          "why": "two-sided 95 percent normal value"
+        },
+        {
+          "do": "Compute margin",
+          "result": "$1.96\\cdot1=1.96$",
+          "why": "critical value times SE"
+        },
+        {
+          "do": "Compute lower endpoint",
+          "result": "$52-1.96=50.04$",
+          "why": "subtract margin"
+        },
+        {
+          "do": "Compute upper endpoint",
+          "result": "$52+1.96=53.96$",
+          "why": "add margin"
+        }
+      ],
+      "verify": "The number has the expected scale and direction for the stated data.",
+      "answer": "The interval is $[50.04,53.96]$.",
+      "connects": "This example shows confidence intervals as a concrete calculation rather than a slogan."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "Confidence intervals: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Confidence intervals in experiments",
+        "background": "uncertainty reporting appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "Confidence intervals for model evaluation",
+        "background": "uncertainty reporting helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "Confidence intervals in monitoring",
+        "background": "uncertainty reporting turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "Confidence intervals for sample planning",
+        "background": "uncertainty reporting supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "Confidence intervals in fairness analysis",
+        "background": "uncertainty reporting is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "Confidence intervals in scientific reporting",
+        "background": "uncertainty reporting gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "Confidence intervals is one more uniform for the same habit: quantify uncertainty before making the decision.",
+    "takeaways": [
+      "Know the statistic and the distribution it is compared with.",
+      "Check assumptions before trusting the reference distribution.",
+      "Separate statistical significance from practical importance.",
+      "Use real numbers to keep uncertainty interpretable."
+    ],
     "prereqs": [
       "math-18-18"
     ]
@@ -405,19 +5054,261 @@
   B({
     "id": "math-18-20",
     "title": "Hypothesis testing",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: hypothesis testing.",
+    "tagline": "Hypothesis testing asks whether data are surprising under a baseline claim.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Confidence intervals</i>"
+        "sampling distributions",
+        "likelihood",
+        "standard error"
       ],
       "leadsTo": [
-        "the next lesson, <i>Type I and II errors</i>"
+        "model comparison",
+        "linear regression inference",
+        "generalization analysis"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "estimators",
+        "quantiles",
+        "degrees of freedom"
       ]
     },
+    "motivation": "<p>When data differ from a baseline, the gentle question is whether the difference is bigger than ordinary sampling noise. Hypothesis testing makes that question precise.</p><p>We assume a null model, compute a statistic, and measure how extreme it is under that null.</p>",
+    "definition": "<p>A test specifies $H_0$, $H_1$, a statistic, and a rejection rule. A <b>p-value</b> is the probability under $H_0$ of data at least as extreme as observed. Reject at level $\\alpha$ when $p\\le\\alpha$.</p><p>Many tests use $$z=(\\hat\\theta-\\theta_0)/SE.$$ Tail areas of the null distribution turn this standardized distance into a decision.</p><p><b>Assumptions that matter:</b> the null distribution must be valid; hypotheses should be chosen before peeking; and failing to reject does not prove the null.</p>",
+    "worked": {
+      "problem": "Test $H_0:\\mu=100$ versus two-sided $H_1$ with $\\bar x=104$, $\\sigma=15$, $n=100$.",
+      "skills": [
+        "hypothesis testing",
+        "standard errors",
+        "statistical interpretation"
+      ],
+      "strategy": "Use the hypothesis testing definition, compute one quantity at a time, and interpret the number in context.",
+      "steps": [
+        {
+          "do": "Compute SE",
+          "result": "$15/\\sqrt{100}=1.5$",
+          "why": "known standard deviation"
+        },
+        {
+          "do": "Compute z",
+          "result": "$(104-100)/1.5=2.667$",
+          "why": "standardized difference"
+        },
+        {
+          "do": "Approximate p-value",
+          "result": "$p\\approx0.0076$",
+          "why": "two-sided normal tail"
+        },
+        {
+          "do": "Compare to $0.05$",
+          "result": "$0.0076<0.05$",
+          "why": "small enough to reject"
+        },
+        {
+          "do": "State decision",
+          "result": "$\\text{reject }H_0$",
+          "why": "evidence against the null"
+        }
+      ],
+      "verify": "The number has the expected scale and direction for the stated data.",
+      "answer": "Reject $H_0$ at the 5 percent level.",
+      "connects": "This example shows hypothesis testing as a concrete calculation rather than a slogan."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "Hypothesis testing: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Hypothesis testing in experiments",
+        "background": "evidence decisions appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "Hypothesis testing for model evaluation",
+        "background": "evidence decisions helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "Hypothesis testing in monitoring",
+        "background": "evidence decisions turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "Hypothesis testing for sample planning",
+        "background": "evidence decisions supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "Hypothesis testing in fairness analysis",
+        "background": "evidence decisions is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "Hypothesis testing in scientific reporting",
+        "background": "evidence decisions gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "Hypothesis testing is one more uniform for the same habit: quantify uncertainty before making the decision.",
+    "takeaways": [
+      "Know the statistic and the distribution it is compared with.",
+      "Check assumptions before trusting the reference distribution.",
+      "Separate statistical significance from practical importance.",
+      "Use real numbers to keep uncertainty interpretable."
+    ],
     "prereqs": [
       "math-18-19"
     ]
@@ -426,19 +5317,261 @@
   B({
     "id": "math-18-21",
     "title": "Type I and II errors",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: type i and ii errors.",
+    "tagline": "Type I and Type II errors name the two ways an uncertain test can be wrong.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Hypothesis testing</i>"
+        "sampling distributions",
+        "likelihood",
+        "standard error"
       ],
       "leadsTo": [
-        "the next lesson, <i>Statistical power</i>"
+        "model comparison",
+        "linear regression inference",
+        "generalization analysis"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "estimators",
+        "quantiles",
+        "degrees of freedom"
       ]
     },
+    "motivation": "<p>A spam filter can block a real email or let spam through. Statistical tests face the same two-direction risk.</p><p><b>Type I</b> means rejecting a true null. <b>Type II</b> means failing to reject a false null.</p>",
+    "definition": "<p>The Type I error rate is $$\\alpha=P(\\text{reject }H_0\\mid H_0\\text{ true}).$$ The Type II error rate at an alternative is $$\\beta=P(\\text{fail to reject }H_0\\mid H_1\\text{ true}).$$ Power is $1-\\beta$.</p><p>Moving the cutoff to reduce $\\alpha$ usually raises $\\beta$ at fixed sample size. More data can reduce both by separating the null and alternative distributions.</p><p><b>Assumptions that matter:</b> $\\beta$ depends on a specific alternative; costs should guide the chosen cutoff; and these are long-run error rates.</p>",
+    "worked": {
+      "problem": "If $\\alpha=0.05$ and $\\beta=0.20$ for an alternative, find power and expected false positives among $1000$ true null tests.",
+      "skills": [
+        "error rates",
+        "standard errors",
+        "statistical interpretation"
+      ],
+      "strategy": "Use the error rates definition, compute one quantity at a time, and interpret the number in context.",
+      "steps": [
+        {
+          "do": "Compute power",
+          "result": "$1-0.20=0.80$",
+          "why": "power complements Type II error"
+        },
+        {
+          "do": "Write expected false positives",
+          "result": "$\\alpha\\cdot1000$",
+          "why": "Type I rate times true nulls"
+        },
+        {
+          "do": "Substitute alpha",
+          "result": "$0.05\\cdot1000$",
+          "why": "given level"
+        },
+        {
+          "do": "Multiply",
+          "result": "$50$",
+          "why": "expected Type I errors"
+        },
+        {
+          "do": "Interpret",
+          "result": "$80\\%$ detection and $50$ expected false alarms",
+          "why": "two different truths"
+        }
+      ],
+      "verify": "The number has the expected scale and direction for the stated data.",
+      "answer": "Power is $0.80$, and about $50$ Type I errors are expected among $1000$ true nulls.",
+      "connects": "This example shows error rates as a concrete calculation rather than a slogan."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "Type I and II errors: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Type I and II errors in experiments",
+        "background": "decision risk appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "Type I and II errors for model evaluation",
+        "background": "decision risk helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "Type I and II errors in monitoring",
+        "background": "decision risk turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "Type I and II errors for sample planning",
+        "background": "decision risk supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "Type I and II errors in fairness analysis",
+        "background": "decision risk is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "Type I and II errors in scientific reporting",
+        "background": "decision risk gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "Type I and II errors is one more uniform for the same habit: quantify uncertainty before making the decision.",
+    "takeaways": [
+      "Know the statistic and the distribution it is compared with.",
+      "Check assumptions before trusting the reference distribution.",
+      "Separate statistical significance from practical importance.",
+      "Use real numbers to keep uncertainty interpretable."
+    ],
     "prereqs": [
       "math-18-20"
     ]
@@ -447,19 +5580,261 @@
   B({
     "id": "math-18-22",
     "title": "Statistical power",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: statistical power.",
+    "tagline": "Power is the probability that a test notices an effect when that effect is real.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Type I and II errors</i>"
+        "sampling distributions",
+        "likelihood",
+        "standard error"
       ],
       "leadsTo": [
-        "the next lesson, <i>The z-test and t-test</i>"
+        "model comparison",
+        "linear regression inference",
+        "generalization analysis"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "estimators",
+        "quantiles",
+        "degrees of freedom"
       ]
     },
+    "motivation": "<p>A non-significant result may mean there is no effect, or it may mean the study was too small to see it. Power tells those stories apart before the experiment starts.</p><p><b>Statistical power</b> is the detection probability at a specified alternative.</p>",
+    "definition": "<p>Power at $\\theta_1$ is $$P_{\\theta_1}(\\text{reject }H_0)=1-\\beta(\\theta_1).$$ For a one-sided known-variance mean test, compute the rejection cutoff under $H_0$, then evaluate the probability of crossing it under $\\theta_1$.</p><p>Power increases with larger effects, larger samples, lower noise, or a larger significance level.</p><p><b>Assumptions that matter:</b> power is tied to a chosen alternative and model; planned power is not a guarantee; and increasing $\\alpha$ buys power by allowing more false positives.</p>",
+    "worked": {
+      "problem": "A one-sided test has $\\sigma=4$, $n=64$, $\\alpha=0.05$, and true $\\mu=1.5$ under the alternative to $H_0:\\mu=0$. Compute power using $z_{0.95}=1.645$ and $\\Phi(1.355)=0.912$.",
+      "skills": [
+        "statistical power",
+        "standard errors",
+        "statistical interpretation"
+      ],
+      "strategy": "Use the statistical power definition, compute one quantity at a time, and interpret the number in context.",
+      "steps": [
+        {
+          "do": "Compute SE",
+          "result": "$4/\\sqrt{64}=0.5$",
+          "why": "sample mean spread"
+        },
+        {
+          "do": "Find cutoff",
+          "result": "$1.645\\cdot0.5=0.8225$",
+          "why": "null rejection threshold"
+        },
+        {
+          "do": "Standardize under alternative",
+          "result": "$(0.8225-1.5)/0.5=-1.355$",
+          "why": "use alternative mean"
+        },
+        {
+          "do": "Convert to exceedance",
+          "result": "$P(Z>-1.355)=\\Phi(1.355)$",
+          "why": "normal symmetry"
+        },
+        {
+          "do": "Substitute value",
+          "result": "$0.912$",
+          "why": "given CDF"
+        }
+      ],
+      "verify": "The number has the expected scale and direction for the stated data.",
+      "answer": "Power is about $0.912$.",
+      "connects": "This example shows statistical power as a concrete calculation rather than a slogan."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "Statistical power: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Statistical power in experiments",
+        "background": "experiment planning appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "Statistical power for model evaluation",
+        "background": "experiment planning helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "Statistical power in monitoring",
+        "background": "experiment planning turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "Statistical power for sample planning",
+        "background": "experiment planning supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "Statistical power in fairness analysis",
+        "background": "experiment planning is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "Statistical power in scientific reporting",
+        "background": "experiment planning gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "Statistical power is one more uniform for the same habit: quantify uncertainty before making the decision.",
+    "takeaways": [
+      "Know the statistic and the distribution it is compared with.",
+      "Check assumptions before trusting the reference distribution.",
+      "Separate statistical significance from practical importance.",
+      "Use real numbers to keep uncertainty interpretable."
+    ],
     "prereqs": [
       "math-18-21"
     ]
@@ -468,19 +5843,261 @@
   B({
     "id": "math-18-23",
     "title": "The z-test and t-test",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: the z-test and t-test.",
+    "tagline": "The z-test and t-test both standardize means; the t-test also accounts for estimating the noise.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Statistical power</i>"
+        "sampling distributions",
+        "likelihood",
+        "standard error"
       ],
       "leadsTo": [
-        "the next lesson, <i>The χ² and F tests</i>"
+        "model comparison",
+        "linear regression inference",
+        "generalization analysis"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "estimators",
+        "quantiles",
+        "degrees of freedom"
       ]
     },
+    "motivation": "<p>You already know the core statistic: estimate minus null, divided by standard error. The next question is which reference curve to use.</p><p>Use a <b>z-test</b> when the standard deviation is known or the large-sample normal approximation is strong. Use a <b>t-test</b> when the standard deviation is estimated, especially in small samples.</p>",
+    "definition": "<p>For known $\\sigma$, $$z=\\frac{\\bar X-\\mu_0}{\\sigma/\\sqrt n}.$$ For unknown $\\sigma$, $$t=\\frac{\\bar X-\\mu_0}{s/\\sqrt n},$$ which follows a $t$ distribution with $n-1$ degrees of freedom under normal assumptions.</p><p>The $t$ distribution has heavier tails because $s$ is random. As $n$ grows, it approaches the standard normal.</p><p><b>Assumptions that matter:</b> independence matters; small-sample t tests need approximate normality; and paired tests should analyze differences.</p>",
+    "worked": {
+      "problem": "For $n=16$, $\\bar x=10.5$, $s=2$, test against $\\mu_0=9.5$ with a t statistic.",
+      "skills": [
+        "z and t tests",
+        "standard errors",
+        "statistical interpretation"
+      ],
+      "strategy": "Use the z and t tests definition, compute one quantity at a time, and interpret the number in context.",
+      "steps": [
+        {
+          "do": "Compute SE",
+          "result": "$2/\\sqrt{16}=0.5$",
+          "why": "estimated standard error"
+        },
+        {
+          "do": "Compute difference",
+          "result": "$10.5-9.5=1$",
+          "why": "mean minus null"
+        },
+        {
+          "do": "Compute statistic",
+          "result": "$t=1/0.5=2$",
+          "why": "standardized difference"
+        },
+        {
+          "do": "Compute df",
+          "result": "$16-1=15$",
+          "why": "one-sample t degrees of freedom"
+        },
+        {
+          "do": "Interpret",
+          "result": "$t=2$ with $15$ df",
+          "why": "moderate evidence"
+        }
+      ],
+      "verify": "The number has the expected scale and direction for the stated data.",
+      "answer": "The statistic is $t=2$ with $15$ degrees of freedom.",
+      "connects": "This example shows z and t tests as a concrete calculation rather than a slogan."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "The z-test and t-test: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "The z-test and t-test in experiments",
+        "background": "mean comparisons appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "The z-test and t-test for model evaluation",
+        "background": "mean comparisons helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "The z-test and t-test in monitoring",
+        "background": "mean comparisons turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "The z-test and t-test for sample planning",
+        "background": "mean comparisons supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "The z-test and t-test in fairness analysis",
+        "background": "mean comparisons is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "The z-test and t-test in scientific reporting",
+        "background": "mean comparisons gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "The z-test and t-test is one more uniform for the same habit: quantify uncertainty before making the decision.",
+    "takeaways": [
+      "Know the statistic and the distribution it is compared with.",
+      "Check assumptions before trusting the reference distribution.",
+      "Separate statistical significance from practical importance.",
+      "Use real numbers to keep uncertainty interpretable."
+    ],
     "prereqs": [
       "math-18-22"
     ]
@@ -489,19 +6106,261 @@
   B({
     "id": "math-18-24",
     "title": "The χ² and F tests",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: the χ² and f tests.",
+    "tagline": "Chi-square tests measure squared count discrepancies; F tests compare variance-like quantities.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The z-test and t-test</i>"
+        "sampling distributions",
+        "likelihood",
+        "standard error"
       ],
       "leadsTo": [
-        "the next lesson, <i>The likelihood ratio test</i>"
+        "model comparison",
+        "linear regression inference",
+        "generalization analysis"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "estimators",
+        "quantiles",
+        "degrees of freedom"
       ]
     },
+    "motivation": "<p>Not every inference question is about a mean. Sometimes you ask whether category counts match expectations, or whether explained variation is large compared with noise.</p><p><b>$\\chi^2$</b> tests and <b>F</b> tests answer those questions with squared discrepancies and variance ratios.</p>",
+    "definition": "<p>A goodness-of-fit statistic is $$\\chi^2=\\sum_i\\frac{(O_i-E_i)^2}{E_i}.$$ Large values indicate observed counts far from expected counts. An F statistic is a ratio of variance estimates or mean squares, such as $$F=MS_{\\text{between}}/MS_{\\text{within}}.$$</p><p>Chi-square distributions come from sums of squared standard normals; F distributions come from ratios of scaled chi-square variables.</p><p><b>Assumptions that matter:</b> observations should be independent; expected counts should be large enough; F variance tests are sensitive to non-normality; and degrees of freedom must match the design.</p>",
+    "worked": {
+      "problem": "A fair die is rolled $60$ times with counts $[8,12,9,11,10,10]$. Compute $\\chi^2$.",
+      "skills": [
+        "chi-square and F tests",
+        "standard errors",
+        "statistical interpretation"
+      ],
+      "strategy": "Use the chi-square and F tests definition, compute one quantity at a time, and interpret the number in context.",
+      "steps": [
+        {
+          "do": "Compute expected count",
+          "result": "$60/6=10$",
+          "why": "six equally likely faces"
+        },
+        {
+          "do": "Compute deviations",
+          "result": "$[-2,2,-1,1,0,0]$",
+          "why": "observed minus expected"
+        },
+        {
+          "do": "Square deviations",
+          "result": "$[4,4,1,1,0,0]$",
+          "why": "chi-square uses squares"
+        },
+        {
+          "do": "Divide by expected and sum",
+          "result": "$(4+4+1+1)/10=1$",
+          "why": "each expected count is 10"
+        },
+        {
+          "do": "Find df",
+          "result": "$6-1=5$",
+          "why": "fixed total across six categories"
+        }
+      ],
+      "verify": "The number has the expected scale and direction for the stated data.",
+      "answer": "$\\chi^2=1$ with $5$ degrees of freedom.",
+      "connects": "This example shows chi-square and F tests as a concrete calculation rather than a slogan."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "The χ² and F tests: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "The χ² and F tests in experiments",
+        "background": "count and variance inference appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "The χ² and F tests for model evaluation",
+        "background": "count and variance inference helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "The χ² and F tests in monitoring",
+        "background": "count and variance inference turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "The χ² and F tests for sample planning",
+        "background": "count and variance inference supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "The χ² and F tests in fairness analysis",
+        "background": "count and variance inference is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "The χ² and F tests in scientific reporting",
+        "background": "count and variance inference gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "The χ² and F tests is one more uniform for the same habit: quantify uncertainty before making the decision.",
+    "takeaways": [
+      "Know the statistic and the distribution it is compared with.",
+      "Check assumptions before trusting the reference distribution.",
+      "Separate statistical significance from practical importance.",
+      "Use real numbers to keep uncertainty interpretable."
+    ],
     "prereqs": [
       "math-18-23"
     ]
@@ -510,19 +6369,261 @@
   B({
     "id": "math-18-25",
     "title": "The likelihood ratio test",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: the likelihood ratio test.",
+    "tagline": "The likelihood ratio test compares the best null explanation with the best unrestricted explanation.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The χ² and F tests</i>"
+        "estimators",
+        "loss functions",
+        "sampling distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Nonparametric methods</i>"
+        "regularization",
+        "model selection",
+        "ML deployment"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "risk",
+        "empirical averages",
+        "concentration inequalities"
       ]
     },
+    "motivation": "<p>You already know that a model can fit observed data and still face uncertainty. The lesson here is to make that uncertainty measurable rather than mysterious.</p><p><b>The likelihood ratio test</b> gives a practical mathematical lens for ML: compare explanations, reduce assumptions, resample, fit, balance complexity, or bound future error.</p>",
+    "definition": "<p>The central object is an estimate computed from data and judged against a population target. In likelihood ratio testing, we write the data calculation clearly, identify what randomness remains, and ask how the result would change on new samples.</p><p>The guiding derivation is the same across inference: define a statistic, understand its sampling behavior, and use that behavior to make a calibrated statement about the unknown target.</p><p><b>Assumptions that matter:</b> observations should match the sampling story; dependence and selection bias change the calculation; finite samples can be noisy; and ML use requires checking both statistical and practical error.</p>",
+    "worked": {
+      "problem": "A validation experiment reports training error $0.08$ and test error $0.12$ on $1000$ test examples. Use likelihood ratio testing thinking to compute the generalization gap and an approximate SE for the test error as a proportion.",
+      "skills": [
+        "likelihood ratio testing",
+        "ML metrics",
+        "standard error"
+      ],
+      "strategy": "Compute the observed gap first, then quantify the sampling noise in the held-out test estimate.",
+      "steps": [
+        {
+          "do": "Compute the gap",
+          "result": "$0.12-0.08=0.04$",
+          "why": "test error minus training error"
+        },
+        {
+          "do": "Compute binomial variance estimate",
+          "result": "$0.12\\cdot0.88=0.1056$",
+          "why": "error is a proportion"
+        },
+        {
+          "do": "Divide by test size",
+          "result": "$0.1056/1000=0.0001056$",
+          "why": "variance of the sample proportion"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$SE\\approx0.0103$",
+          "why": "standard error of test error"
+        },
+        {
+          "do": "Compare gap to SE",
+          "result": "$0.04/0.0103\\approx3.88$",
+          "why": "gap is several SEs"
+        }
+      ],
+      "verify": "A four-point gap is much larger than one standard error, so it deserves attention.",
+      "answer": "The gap is $0.04$, and the test-error SE is about $0.0103$.",
+      "connects": "The likelihood ratio test turns model behavior into quantities you can recompute."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "The likelihood ratio test: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "The likelihood ratio test in experiments",
+        "background": "model comparison appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "The likelihood ratio test for model evaluation",
+        "background": "model comparison helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "The likelihood ratio test in monitoring",
+        "background": "model comparison turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "The likelihood ratio test for sample planning",
+        "background": "model comparison supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "The likelihood ratio test in fairness analysis",
+        "background": "model comparison is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "The likelihood ratio test in scientific reporting",
+        "background": "model comparison gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "The likelihood ratio test keeps ML inference grounded: the calculation matters because new data are the real exam.",
+    "takeaways": [
+      "Start from the data statistic and the target it estimates.",
+      "Use standard errors, resampling, or bounds to quantify sample-to-sample variation.",
+      "Model complexity helps training fit but can hurt new-data performance.",
+      "For ML, always connect the statistical number to deployment consequences."
+    ],
     "prereqs": [
       "math-18-24"
     ]
@@ -531,19 +6632,261 @@
   B({
     "id": "math-18-26",
     "title": "Nonparametric methods",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: nonparametric methods.",
+    "tagline": "Nonparametric methods trade strict distribution formulas for rank, order, and resampling ideas.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The likelihood ratio test</i>"
+        "estimators",
+        "loss functions",
+        "sampling distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>The bootstrap</i>"
+        "regularization",
+        "model selection",
+        "ML deployment"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "risk",
+        "empirical averages",
+        "concentration inequalities"
       ]
     },
+    "motivation": "<p>You already know that a model can fit observed data and still face uncertainty. The lesson here is to make that uncertainty measurable rather than mysterious.</p><p><b>Nonparametric methods</b> gives a practical mathematical lens for ML: compare explanations, reduce assumptions, resample, fit, balance complexity, or bound future error.</p>",
+    "definition": "<p>The central object is an estimate computed from data and judged against a population target. In nonparametric methods, we write the data calculation clearly, identify what randomness remains, and ask how the result would change on new samples.</p><p>The guiding derivation is the same across inference: define a statistic, understand its sampling behavior, and use that behavior to make a calibrated statement about the unknown target.</p><p><b>Assumptions that matter:</b> observations should match the sampling story; dependence and selection bias change the calculation; finite samples can be noisy; and ML use requires checking both statistical and practical error.</p>",
+    "worked": {
+      "problem": "A validation experiment reports training error $0.08$ and test error $0.12$ on $1000$ test examples. Use nonparametric methods thinking to compute the generalization gap and an approximate SE for the test error as a proportion.",
+      "skills": [
+        "nonparametric methods",
+        "ML metrics",
+        "standard error"
+      ],
+      "strategy": "Compute the observed gap first, then quantify the sampling noise in the held-out test estimate.",
+      "steps": [
+        {
+          "do": "Compute the gap",
+          "result": "$0.12-0.08=0.04$",
+          "why": "test error minus training error"
+        },
+        {
+          "do": "Compute binomial variance estimate",
+          "result": "$0.12\\cdot0.88=0.1056$",
+          "why": "error is a proportion"
+        },
+        {
+          "do": "Divide by test size",
+          "result": "$0.1056/1000=0.0001056$",
+          "why": "variance of the sample proportion"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$SE\\approx0.0103$",
+          "why": "standard error of test error"
+        },
+        {
+          "do": "Compare gap to SE",
+          "result": "$0.04/0.0103\\approx3.88$",
+          "why": "gap is several SEs"
+        }
+      ],
+      "verify": "A four-point gap is much larger than one standard error, so it deserves attention.",
+      "answer": "The gap is $0.04$, and the test-error SE is about $0.0103$.",
+      "connects": "Nonparametric methods turns model behavior into quantities you can recompute."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "Nonparametric methods: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Nonparametric methods in experiments",
+        "background": "assumption-light inference appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "Nonparametric methods for model evaluation",
+        "background": "assumption-light inference helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "Nonparametric methods in monitoring",
+        "background": "assumption-light inference turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "Nonparametric methods for sample planning",
+        "background": "assumption-light inference supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "Nonparametric methods in fairness analysis",
+        "background": "assumption-light inference is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "Nonparametric methods in scientific reporting",
+        "background": "assumption-light inference gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "Nonparametric methods keeps ML inference grounded: the calculation matters because new data are the real exam.",
+    "takeaways": [
+      "Start from the data statistic and the target it estimates.",
+      "Use standard errors, resampling, or bounds to quantify sample-to-sample variation.",
+      "Model complexity helps training fit but can hurt new-data performance.",
+      "For ML, always connect the statistical number to deployment consequences."
+    ],
     "prereqs": [
       "math-18-25"
     ]
@@ -552,19 +6895,261 @@
   B({
     "id": "math-18-27",
     "title": "The bootstrap",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: the bootstrap.",
+    "tagline": "The bootstrap estimates sampling variation by resampling from the data you actually observed.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Nonparametric methods</i>"
+        "estimators",
+        "loss functions",
+        "sampling distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Linear regression</i>"
+        "regularization",
+        "model selection",
+        "ML deployment"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "risk",
+        "empirical averages",
+        "concentration inequalities"
       ]
     },
+    "motivation": "<p>You already know that a model can fit observed data and still face uncertainty. The lesson here is to make that uncertainty measurable rather than mysterious.</p><p><b>The bootstrap</b> gives a practical mathematical lens for ML: compare explanations, reduce assumptions, resample, fit, balance complexity, or bound future error.</p>",
+    "definition": "<p>The central object is an estimate computed from data and judged against a population target. In bootstrap resampling, we write the data calculation clearly, identify what randomness remains, and ask how the result would change on new samples.</p><p>The guiding derivation is the same across inference: define a statistic, understand its sampling behavior, and use that behavior to make a calibrated statement about the unknown target.</p><p><b>Assumptions that matter:</b> observations should match the sampling story; dependence and selection bias change the calculation; finite samples can be noisy; and ML use requires checking both statistical and practical error.</p>",
+    "worked": {
+      "problem": "A validation experiment reports training error $0.08$ and test error $0.12$ on $1000$ test examples. Use bootstrap resampling thinking to compute the generalization gap and an approximate SE for the test error as a proportion.",
+      "skills": [
+        "bootstrap resampling",
+        "ML metrics",
+        "standard error"
+      ],
+      "strategy": "Compute the observed gap first, then quantify the sampling noise in the held-out test estimate.",
+      "steps": [
+        {
+          "do": "Compute the gap",
+          "result": "$0.12-0.08=0.04$",
+          "why": "test error minus training error"
+        },
+        {
+          "do": "Compute binomial variance estimate",
+          "result": "$0.12\\cdot0.88=0.1056$",
+          "why": "error is a proportion"
+        },
+        {
+          "do": "Divide by test size",
+          "result": "$0.1056/1000=0.0001056$",
+          "why": "variance of the sample proportion"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$SE\\approx0.0103$",
+          "why": "standard error of test error"
+        },
+        {
+          "do": "Compare gap to SE",
+          "result": "$0.04/0.0103\\approx3.88$",
+          "why": "gap is several SEs"
+        }
+      ],
+      "verify": "A four-point gap is much larger than one standard error, so it deserves attention.",
+      "answer": "The gap is $0.04$, and the test-error SE is about $0.0103$.",
+      "connects": "The bootstrap turns model behavior into quantities you can recompute."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "The bootstrap: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "The bootstrap in experiments",
+        "background": "simulation-based uncertainty appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "The bootstrap for model evaluation",
+        "background": "simulation-based uncertainty helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "The bootstrap in monitoring",
+        "background": "simulation-based uncertainty turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "The bootstrap for sample planning",
+        "background": "simulation-based uncertainty supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "The bootstrap in fairness analysis",
+        "background": "simulation-based uncertainty is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "The bootstrap in scientific reporting",
+        "background": "simulation-based uncertainty gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "The bootstrap keeps ML inference grounded: the calculation matters because new data are the real exam.",
+    "takeaways": [
+      "Start from the data statistic and the target it estimates.",
+      "Use standard errors, resampling, or bounds to quantify sample-to-sample variation.",
+      "Model complexity helps training fit but can hurt new-data performance.",
+      "For ML, always connect the statistical number to deployment consequences."
+    ],
     "prereqs": [
       "math-18-26"
     ]
@@ -573,19 +7158,261 @@
   B({
     "id": "math-18-28",
     "title": "Linear regression",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: linear regression.",
+    "tagline": "Linear regression fits the best line by minimizing squared prediction errors.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The bootstrap</i>"
+        "estimators",
+        "loss functions",
+        "sampling distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>The bias–variance tradeoff</i>"
+        "regularization",
+        "model selection",
+        "ML deployment"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "risk",
+        "empirical averages",
+        "concentration inequalities"
       ]
     },
+    "motivation": "<p>You already know that a model can fit observed data and still face uncertainty. The lesson here is to make that uncertainty measurable rather than mysterious.</p><p><b>Linear regression</b> gives a practical mathematical lens for ML: compare explanations, reduce assumptions, resample, fit, balance complexity, or bound future error.</p>",
+    "definition": "<p>The central object is an estimate computed from data and judged against a population target. In linear regression, we write the data calculation clearly, identify what randomness remains, and ask how the result would change on new samples.</p><p>The guiding derivation is the same across inference: define a statistic, understand its sampling behavior, and use that behavior to make a calibrated statement about the unknown target.</p><p><b>Assumptions that matter:</b> observations should match the sampling story; dependence and selection bias change the calculation; finite samples can be noisy; and ML use requires checking both statistical and practical error.</p>",
+    "worked": {
+      "problem": "A validation experiment reports training error $0.08$ and test error $0.12$ on $1000$ test examples. Use linear regression thinking to compute the generalization gap and an approximate SE for the test error as a proportion.",
+      "skills": [
+        "linear regression",
+        "ML metrics",
+        "standard error"
+      ],
+      "strategy": "Compute the observed gap first, then quantify the sampling noise in the held-out test estimate.",
+      "steps": [
+        {
+          "do": "Compute the gap",
+          "result": "$0.12-0.08=0.04$",
+          "why": "test error minus training error"
+        },
+        {
+          "do": "Compute binomial variance estimate",
+          "result": "$0.12\\cdot0.88=0.1056$",
+          "why": "error is a proportion"
+        },
+        {
+          "do": "Divide by test size",
+          "result": "$0.1056/1000=0.0001056$",
+          "why": "variance of the sample proportion"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$SE\\approx0.0103$",
+          "why": "standard error of test error"
+        },
+        {
+          "do": "Compare gap to SE",
+          "result": "$0.04/0.0103\\approx3.88$",
+          "why": "gap is several SEs"
+        }
+      ],
+      "verify": "A four-point gap is much larger than one standard error, so it deserves attention.",
+      "answer": "The gap is $0.04$, and the test-error SE is about $0.0103$.",
+      "connects": "Linear regression turns model behavior into quantities you can recompute."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "Linear regression: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Linear regression in experiments",
+        "background": "least squares modeling appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "Linear regression for model evaluation",
+        "background": "least squares modeling helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "Linear regression in monitoring",
+        "background": "least squares modeling turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "Linear regression for sample planning",
+        "background": "least squares modeling supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "Linear regression in fairness analysis",
+        "background": "least squares modeling is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "Linear regression in scientific reporting",
+        "background": "least squares modeling gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "Linear regression keeps ML inference grounded: the calculation matters because new data are the real exam.",
+    "takeaways": [
+      "Start from the data statistic and the target it estimates.",
+      "Use standard errors, resampling, or bounds to quantify sample-to-sample variation.",
+      "Model complexity helps training fit but can hurt new-data performance.",
+      "For ML, always connect the statistical number to deployment consequences."
+    ],
     "prereqs": [
       "math-18-27"
     ]
@@ -594,19 +7421,261 @@
   B({
     "id": "math-18-29",
     "title": "The bias–variance tradeoff",
-    "tier": "🟢",
-    "tagline": "One concept from Mathematical statistics / inference: the bias–variance tradeoff.",
+    "tagline": "The bias-variance tradeoff explains why models can fail by being too rigid or too sensitive.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Linear regression</i>"
+        "estimators",
+        "loss functions",
+        "sampling distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Statistical learning theory & generalization</i>"
+        "regularization",
+        "model selection",
+        "ML deployment"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "risk",
+        "empirical averages",
+        "concentration inequalities"
       ]
     },
+    "motivation": "<p>You already know that a model can fit observed data and still face uncertainty. The lesson here is to make that uncertainty measurable rather than mysterious.</p><p><b>The bias–variance tradeoff</b> gives a practical mathematical lens for ML: compare explanations, reduce assumptions, resample, fit, balance complexity, or bound future error.</p>",
+    "definition": "<p>The central object is an estimate computed from data and judged against a population target. In bias-variance tradeoff, we write the data calculation clearly, identify what randomness remains, and ask how the result would change on new samples.</p><p>The guiding derivation is the same across inference: define a statistic, understand its sampling behavior, and use that behavior to make a calibrated statement about the unknown target.</p><p><b>Assumptions that matter:</b> observations should match the sampling story; dependence and selection bias change the calculation; finite samples can be noisy; and ML use requires checking both statistical and practical error.</p>",
+    "worked": {
+      "problem": "A validation experiment reports training error $0.08$ and test error $0.12$ on $1000$ test examples. Use bias-variance tradeoff thinking to compute the generalization gap and an approximate SE for the test error as a proportion.",
+      "skills": [
+        "bias-variance tradeoff",
+        "ML metrics",
+        "standard error"
+      ],
+      "strategy": "Compute the observed gap first, then quantify the sampling noise in the held-out test estimate.",
+      "steps": [
+        {
+          "do": "Compute the gap",
+          "result": "$0.12-0.08=0.04$",
+          "why": "test error minus training error"
+        },
+        {
+          "do": "Compute binomial variance estimate",
+          "result": "$0.12\\cdot0.88=0.1056$",
+          "why": "error is a proportion"
+        },
+        {
+          "do": "Divide by test size",
+          "result": "$0.1056/1000=0.0001056$",
+          "why": "variance of the sample proportion"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$SE\\approx0.0103$",
+          "why": "standard error of test error"
+        },
+        {
+          "do": "Compare gap to SE",
+          "result": "$0.04/0.0103\\approx3.88$",
+          "why": "gap is several SEs"
+        }
+      ],
+      "verify": "A four-point gap is much larger than one standard error, so it deserves attention.",
+      "answer": "The gap is $0.04$, and the test-error SE is about $0.0103$.",
+      "connects": "The bias–variance tradeoff turns model behavior into quantities you can recompute."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "The bias–variance tradeoff: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "The bias–variance tradeoff in experiments",
+        "background": "prediction error decomposition appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "The bias–variance tradeoff for model evaluation",
+        "background": "prediction error decomposition helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "The bias–variance tradeoff in monitoring",
+        "background": "prediction error decomposition turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "The bias–variance tradeoff for sample planning",
+        "background": "prediction error decomposition supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "The bias–variance tradeoff in fairness analysis",
+        "background": "prediction error decomposition is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "The bias–variance tradeoff in scientific reporting",
+        "background": "prediction error decomposition gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "The bias–variance tradeoff keeps ML inference grounded: the calculation matters because new data are the real exam.",
+    "takeaways": [
+      "Start from the data statistic and the target it estimates.",
+      "Use standard errors, resampling, or bounds to quantify sample-to-sample variation.",
+      "Model complexity helps training fit but can hurt new-data performance.",
+      "For ML, always connect the statistical number to deployment consequences."
+    ],
     "prereqs": [
       "math-18-28"
     ]
@@ -615,19 +7684,261 @@
   B({
     "id": "math-18-30",
     "title": "Statistical learning theory & generalization",
-    "tier": "🟢",
-    "tagline": "Capstone — how mathematical statistics / inference shows up directly in CS & ML.",
+    "tagline": "Generalization theory asks why a model trained on one sample can work on new data.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The bias–variance tradeoff</i>"
+        "estimators",
+        "loss functions",
+        "sampling distributions"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "regularization",
+        "model selection",
+        "ML deployment"
       ],
       "usedWith": [
-        "the other concepts in Mathematical statistics / inference and its capstone"
+        "risk",
+        "empirical averages",
+        "concentration inequalities"
       ]
     },
+    "motivation": "<p>You already know that a model can fit observed data and still face uncertainty. The lesson here is to make that uncertainty measurable rather than mysterious.</p><p><b>Statistical learning theory & generalization</b> gives a practical mathematical lens for ML: compare explanations, reduce assumptions, resample, fit, balance complexity, or bound future error.</p>",
+    "definition": "<p>The central object is an estimate computed from data and judged against a population target. In statistical learning theory, we write the data calculation clearly, identify what randomness remains, and ask how the result would change on new samples.</p><p>The guiding derivation is the same across inference: define a statistic, understand its sampling behavior, and use that behavior to make a calibrated statement about the unknown target.</p><p><b>Assumptions that matter:</b> observations should match the sampling story; dependence and selection bias change the calculation; finite samples can be noisy; and ML use requires checking both statistical and practical error.</p>",
+    "worked": {
+      "problem": "A validation experiment reports training error $0.08$ and test error $0.12$ on $1000$ test examples. Use statistical learning theory thinking to compute the generalization gap and an approximate SE for the test error as a proportion.",
+      "skills": [
+        "statistical learning theory",
+        "ML metrics",
+        "standard error"
+      ],
+      "strategy": "Compute the observed gap first, then quantify the sampling noise in the held-out test estimate.",
+      "steps": [
+        {
+          "do": "Compute the gap",
+          "result": "$0.12-0.08=0.04$",
+          "why": "test error minus training error"
+        },
+        {
+          "do": "Compute binomial variance estimate",
+          "result": "$0.12\\cdot0.88=0.1056$",
+          "why": "error is a proportion"
+        },
+        {
+          "do": "Divide by test size",
+          "result": "$0.1056/1000=0.0001056$",
+          "why": "variance of the sample proportion"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$SE\\approx0.0103$",
+          "why": "standard error of test error"
+        },
+        {
+          "do": "Compare gap to SE",
+          "result": "$0.04/0.0103\\approx3.88$",
+          "why": "gap is several SEs"
+        }
+      ],
+      "verify": "A four-point gap is much larger than one standard error, so it deserves attention.",
+      "answer": "The gap is $0.04$, and the test-error SE is about $0.0103$.",
+      "connects": "Statistical learning theory & generalization turns model behavior into quantities you can recompute."
+    },
+    "practice": [
+      {
+        "problem": "Compute a standardized statistic for estimate $12$, null $10$, and SE $1$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$(\\hat\\theta-\\theta_0)/SE$",
+            "why": "standardized discrepancy"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$(12-10)/1$",
+            "why": "use the estimate, null, and standard error"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2/1$",
+            "why": "compute the numerator"
+          },
+          {
+            "do": "Divide",
+            "result": "$2$",
+            "why": "standard-error units"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2$ SE above the null",
+            "why": "positive means above the null"
+          }
+        ],
+        "answer": "The statistic is $2$."
+      },
+      {
+        "problem": "Compute a two-sided normal p-value for $z=2$ using upper tail $0.0228$.",
+        "steps": [
+          {
+            "do": "Identify one tail",
+            "result": "$0.0228$",
+            "why": "given normal upper-tail probability"
+          },
+          {
+            "do": "Double it",
+            "result": "$2\\cdot0.0228=0.0456$",
+            "why": "two-sided test counts both directions"
+          },
+          {
+            "do": "Compare to $0.05$",
+            "result": "$0.0456<0.05$",
+            "why": "small enough for 5 percent"
+          },
+          {
+            "do": "State the decision",
+            "result": "$\\text{reject}$",
+            "why": "p-value below alpha"
+          },
+          {
+            "do": "Name the evidence",
+            "result": "$\\text{moderate evidence}$",
+            "why": "near the conventional cutoff"
+          }
+        ],
+        "answer": "The p-value is $0.0456$, so reject at $5\\%$."
+      },
+      {
+        "problem": "Find a $95%$ interval for estimate $5$ with SE $0.5$.",
+        "steps": [
+          {
+            "do": "Choose the critical value",
+            "result": "$1.96$",
+            "why": "standard normal 95 percent value"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "critical value times SE"
+          },
+          {
+            "do": "Compute the lower endpoint",
+            "result": "$5-0.98=4.02$",
+            "why": "subtract the margin"
+          },
+          {
+            "do": "Compute the upper endpoint",
+            "result": "$5+0.98=5.98$",
+            "why": "add the margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[4.02,5.98]$",
+            "why": "combine endpoints"
+          }
+        ],
+        "answer": "The interval is $[4.02,5.98]$."
+      },
+      {
+        "problem": "A sample size increase cuts SE from $0.10$ to $0.05$. What happens to a fixed effect $0.20$ in SE units?",
+        "steps": [
+          {
+            "do": "Compute old signal",
+            "result": "$0.20/0.10=2$",
+            "why": "effect divided by old SE"
+          },
+          {
+            "do": "Compute new signal",
+            "result": "$0.20/0.05=4$",
+            "why": "effect divided by new SE"
+          },
+          {
+            "do": "Compare signals",
+            "result": "$4/2=2$",
+            "why": "standardized evidence doubled"
+          },
+          {
+            "do": "Relate to variance",
+            "result": "$0.05^2/0.10^2=0.25$",
+            "why": "variance is one quarter as large"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\text{more precision}$",
+            "why": "same effect is easier to detect"
+          }
+        ],
+        "answer": "The signal grows from $2$ SE to $4$ SE."
+      },
+      {
+        "problem": "Statistical learning theory & generalization: a validation lift is $0.015$ with SE $0.006$. Test zero lift two-sided at $5%$.",
+        "steps": [
+          {
+            "do": "Compute statistic",
+            "result": "$0.015/0.006=2.5$",
+            "why": "lift divided by standard error"
+          },
+          {
+            "do": "Approximate p-value",
+            "result": "$p\\approx0.0124$",
+            "why": "two-sided normal tail for 2.5"
+          },
+          {
+            "do": "Compare to alpha",
+            "result": "$0.0124<0.05$",
+            "why": "below the threshold"
+          },
+          {
+            "do": "State decision",
+            "result": "$\\text{reject zero lift}$",
+            "why": "evidence supports a nonzero lift"
+          },
+          {
+            "do": "Interpret practically",
+            "result": "$1.5\\%$ estimated lift",
+            "why": "statistical and practical meaning should both be considered"
+          }
+        ],
+        "answer": "Reject zero lift; the estimated lift is statistically significant."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Statistical learning theory & generalization in experiments",
+        "background": "ML generalization appears whenever teams need a calibrated numerical decision rather than a hunch.",
+        "numbers": "With estimate $0.12$ and SE $0.03$, the standardized value is $0.12/0.03=4$."
+      },
+      {
+        "title": "Statistical learning theory & generalization for model evaluation",
+        "background": "ML generalization helps compare models on finite validation data, where random variation can mimic improvement.",
+        "numbers": "A metric change $0.006$ with SE $0.002$ equals $3$ standard errors."
+      },
+      {
+        "title": "Statistical learning theory & generalization in monitoring",
+        "background": "ML generalization turns noisy production measurements into thresholds that can be audited.",
+        "numbers": "A baseline $10$ and current mean $10.6$ with SE $0.2$ gives statistic $3$."
+      },
+      {
+        "title": "Statistical learning theory & generalization for sample planning",
+        "background": "ML generalization supports deciding whether more data are needed before trusting a conclusion.",
+        "numbers": "Halving SE from $0.04$ to $0.02$ makes the same $0.06$ effect grow from $1.5$ to $3$ SE."
+      },
+      {
+        "title": "Statistical learning theory & generalization in fairness analysis",
+        "background": "ML generalization is useful when rate differences across groups must be separated from sampling noise.",
+        "numbers": "A gap $0.04$ with SE $0.015$ gives $z\\approx2.67$."
+      },
+      {
+        "title": "Statistical learning theory & generalization in scientific reporting",
+        "background": "ML generalization gives a shared language for uncertainty, so readers can recompute the evidence.",
+        "numbers": "An interval $0.20\\pm1.96(0.05)$ is $[0.102,0.298]$."
+      }
+    ],
+    "applicationsClose": "Statistical learning theory & generalization keeps ML inference grounded: the calculation matters because new data are the real exam.",
+    "takeaways": [
+      "Start from the data statistic and the target it estimates.",
+      "Use standard errors, resampling, or bounds to quantify sample-to-sample variation.",
+      "Model complexity helps training fit but can hurt new-data performance.",
+      "For ML, always connect the statistical number to deployment consequences."
+    ],
     "prereqs": [
       "math-18-29"
     ]

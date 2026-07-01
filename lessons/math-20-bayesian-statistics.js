@@ -9,37 +9,533 @@
   B({
     "id": "math-20-01",
     "title": "The Bayesian view of probability",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: the bayesian view of probability.",
+    "tagline": "Bayesian probability treats uncertainty as something you can update carefully when new evidence arrives.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "conditional probability",
+        "probability rules",
+        "basic algebra with ratios"
       ],
       "leadsTo": [
-        "the next lesson, <i>Priors</i>"
+        "Priors",
+        "Likelihoods",
+        "Posteriors"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "conditional probability",
+        "Bayes rule",
+        "odds",
+        "normalization"
       ]
-    }
+    },
+    "motivation": "<p>You already know how to revise a belief. If dark clouds gather, rain becomes more plausible; if the radar is clear, it becomes less plausible. Bayesian statistics gives that everyday updating a precise arithmetic language.</p><p>The heart of the view is gentle but powerful: probability measures a state of information. Data do not replace judgment by magic; data update a prior state into a posterior state. The goal is not certainty. The goal is honest uncertainty that improves when evidence arrives.</p>",
+    "definition": "<p>In the Bayesian view, an unknown quantity θ has a probability distribution before and after data. The prior $p(θ)$ describes what was plausible before observing data $D$. The likelihood $p(D|θ)$ says how compatible the data are with each possible θ. The posterior $p(θ|D)$ is the updated distribution after seeing the data.</p><p>Bayes rule comes from the multiplication rule: $p(θ,D)=p(D|θ)p(θ)$ and also $p(θ,D)=p(θ|D)p(D)$. Setting these equal gives $p(θ|D)=p(D|θ)p(θ)/p(D)$. The denominator $p(D)$ normalizes the probabilities so they add or integrate to 1.</p><p><b>Assumptions that matter:</b> θ is treated as uncertain, the data model must assign probabilities to possible observations, prior probabilities must be nonnegative and normalized, and conditioning on data with positive probability is required.</p>",
+    "worked": {
+      "problem": "A test for a rare condition has sensitivity 0.90 and false-positive rate 0.05. The condition rate is 0.02. Find the probability of the condition after a positive test.",
+      "skills": [
+        "Bayes rule",
+        "base rates",
+        "normalization"
+      ],
+      "strategy": "The positive test sounds persuasive, but the rare base rate matters — compute the two ways a positive result can happen.",
+      "steps": [
+        {
+          "do": "Write the prior condition probability",
+          "result": "$P(C)=0.02$",
+          "why": "2 percent of the population has the condition"
+        },
+        {
+          "do": "Write the no-condition probability",
+          "result": "$P(no C)=0.98$",
+          "why": "probabilities of complementary cases sum to 1"
+        },
+        {
+          "do": "Compute true-positive probability",
+          "result": "$P(+ and C)=0.90*0.02=0.018$",
+          "why": "multiply sensitivity by the prior"
+        },
+        {
+          "do": "Compute false-positive probability",
+          "result": "$P(+ and no C)=0.05*0.98=0.049$",
+          "why": "a positive test can also happen without the condition"
+        },
+        {
+          "do": "Compute total positive probability",
+          "result": "$P(+)=0.018+0.049=0.067$",
+          "why": "add the mutually exclusive positive-test paths"
+        },
+        {
+          "do": "Normalize the condition path",
+          "result": "$P(C|+)=0.018/0.067=0.269$",
+          "why": "posterior probability is the favorable path divided by all positive paths"
+        }
+      ],
+      "verify": "The answer is below 0.5 even with a good test because false positives among the 98 percent without the condition are numerous.",
+      "answer": "$P(C|+) approx 0.269$, about 26.9 percent.",
+      "connects": "Bayesian updating combines prior plausibility with evidence strength, then normalizes."
+    },
+    "practice": [
+      {
+        "problem": "A spam filter has prior $P(spam)=0.20$. A word appears in 60 percent of spam emails and 10 percent of non-spam emails. Find $P(spam|word)$.",
+        "steps": [
+          {
+            "do": "Write the non-spam prior",
+            "result": "$P(not spam)=0.80$",
+            "why": "the two classes are complements"
+          },
+          {
+            "do": "Compute spam-and-word",
+            "result": "$0.60*0.20=0.12$",
+            "why": "word likelihood times spam prior"
+          },
+          {
+            "do": "Compute non-spam-and-word",
+            "result": "$0.10*0.80=0.08$",
+            "why": "word can appear in legitimate email too"
+          },
+          {
+            "do": "Add word probability",
+            "result": "$0.12+0.08=0.20$",
+            "why": "sum the two paths to the observed word"
+          },
+          {
+            "do": "Normalize",
+            "result": "$0.12/0.20=0.60$",
+            "why": "posterior is the spam path among all word cases"
+          }
+        ],
+        "answer": "$P(spam|word)=0.60$."
+      },
+      {
+        "problem": "A factory has machines A and B. A makes 70 percent of parts with defect rate 3 percent; B makes 30 percent with defect rate 8 percent. Given a defect, find $P(B|defect)$.",
+        "steps": [
+          {
+            "do": "Compute A-defect probability",
+            "result": "$0.70*0.03=0.021$",
+            "why": "production share times defect rate"
+          },
+          {
+            "do": "Compute B-defect probability",
+            "result": "$0.30*0.08=0.024$",
+            "why": "same calculation for machine B"
+          },
+          {
+            "do": "Compute total defect probability",
+            "result": "$0.021+0.024=0.045$",
+            "why": "a defect came from A or B"
+          },
+          {
+            "do": "Normalize the B path",
+            "result": "$0.024/0.045=0.533$",
+            "why": "condition on having seen a defect"
+          },
+          {
+            "do": "Interpret",
+            "result": "$53.3 percent$",
+            "why": "B is less common but more defect-prone"
+          }
+        ],
+        "answer": "$P(B|defect) approx 0.533$."
+      },
+      {
+        "problem": "A model has two hypotheses, H1 and H2, with prior probabilities 0.6 and 0.4. Observed data are twice as likely under H2 as H1, with likelihoods 0.2 and 0.4. Find posterior probabilities.",
+        "steps": [
+          {
+            "do": "Weight H1",
+            "result": "$0.6*0.2=0.12$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "Weight H2",
+            "result": "$0.4*0.4=0.16$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "Add weights",
+            "result": "$0.12+0.16=0.28$",
+            "why": "normalizing constant"
+          },
+          {
+            "do": "Normalize H1",
+            "result": "$0.12/0.28=0.429$",
+            "why": "divide by total evidence"
+          },
+          {
+            "do": "Normalize H2",
+            "result": "$0.16/0.28=0.571$",
+            "why": "posterior probabilities must sum to 1"
+          }
+        ],
+        "answer": "$P(H1|D) approx 0.429$ and $P(H2|D) approx 0.571$."
+      },
+      {
+        "problem": "A prior belief assigns $P(θ=1)=0.25$ and $P(θ=2)=0.75$. Data have likelihoods $p(D|θ=1)=0.8$ and $p(D|θ=2)=0.2$. Compute the posterior mean of θ.",
+        "steps": [
+          {
+            "do": "Weight θ=1",
+            "result": "$0.25*0.8=0.20$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "Weight θ=2",
+            "result": "$0.75*0.2=0.15$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "Normalize total",
+            "result": "$0.20+0.15=0.35$",
+            "why": "evidence probability"
+          },
+          {
+            "do": "Compute posterior probabilities",
+            "result": "$P(1|D)=0.20/0.35=0.571$, $P(2|D)=0.429$",
+            "why": "divide each weight by the total"
+          },
+          {
+            "do": "Compute posterior mean",
+            "result": "$1*0.571+2*0.429=1.429$",
+            "why": "average θ under the posterior"
+          }
+        ],
+        "answer": "The posterior mean is about $1.429$."
+      },
+      {
+        "problem": "A classifier has prior odds of fraud 1:99. A signal has likelihood ratio 20 in favor of fraud. Convert to posterior probability.",
+        "steps": [
+          {
+            "do": "Write prior odds",
+            "result": "$1/99$",
+            "why": "odds are probability of fraud divided by probability of no fraud"
+          },
+          {
+            "do": "Multiply by likelihood ratio",
+            "result": "$20/99$",
+            "why": "Bayesian updating multiplies odds by the likelihood ratio"
+          },
+          {
+            "do": "Convert odds to probability",
+            "result": "$(20/99)/(1+20/99)$",
+            "why": "probability equals odds divided by one plus odds"
+          },
+          {
+            "do": "Simplify denominator",
+            "result": "$1+20/99=119/99$",
+            "why": "put terms over a common denominator"
+          },
+          {
+            "do": "Divide",
+            "result": "$(20/99)/(119/99)=20/119=0.168$",
+            "why": "the 99 cancels"
+          }
+        ],
+        "answer": "Posterior fraud probability is about $0.168$, or 16.8 percent."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Medical screening",
+        "background": "Bayesian reasoning became famous in screening because positive tests can mislead when a condition is rare. The base rate is not a footnote; it is part of the arithmetic.",
+        "numbers": "With prevalence 1 percent, sensitivity 95 percent, and false-positive rate 4 percent, $P(disease|+)=0.0095/(0.0095+0.0396)=0.193$."
+      },
+      {
+        "title": "Spam filtering",
+        "background": "Early spam filters used word frequencies as evidence. Each word nudges the odds rather than deciding alone.",
+        "numbers": "Prior spam 30 percent, word likelihood 0.50 in spam and 0.05 in ham gives posterior $0.15/(0.15+0.035)=0.811$."
+      },
+      {
+        "title": "A/B experiment interpretation",
+        "background": "A Bayesian experiment can ask directly which variant has the higher conversion rate after data arrive.",
+        "numbers": "If prior odds are 1:1 and data are 3 times as likely under B as A, posterior odds become 3:1, so $P(B better)=3/4=0.75$."
+      },
+      {
+        "title": "Sensor fusion",
+        "background": "Robotics combines uncertain sensors with prior location beliefs. A surprising reading is weighed against where the robot already probably was.",
+        "numbers": "Prior location odds room 1 versus room 2 are 2:1. A sensor likelihood ratio 0.5 changes odds to 1:1, so each room has probability 0.5."
+      },
+      {
+        "title": "Fraud detection",
+        "background": "Rare-event systems must be especially Bayesian because most alerts may be false even when the detector is useful.",
+        "numbers": "Prior fraud 0.5 percent, hit rate 80 percent, false alarm 2 percent gives $0.004/(0.004+0.0199)=0.167$."
+      },
+      {
+        "title": "Model comparison",
+        "background": "Bayesian model comparison updates probabilities over candidate explanations, not just parameter values.",
+        "numbers": "Priors 0.5 and 0.5 with likelihoods 0.12 and 0.04 give posterior for model 1 equal to $0.06/(0.06+0.02)=0.75$."
+      }
+    ],
+    "applicationsClose": "Across tests, classifiers, sensors, and experiments, the same motion appears: prior information meets evidence, then normalization turns weighted plausibility into probability.",
+    "takeaways": [
+      "Bayesian probability represents uncertainty as a distribution over unknowns.",
+      "Bayes rule follows from the multiplication rule for joint probability.",
+      "The prior and likelihood are both needed; ignoring either can distort the posterior.",
+      "Normalization makes updated weights sum or integrate to 1."
+    ]
   });
 
   B({
     "id": "math-20-02",
     "title": "Priors",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: priors.",
+    "tagline": "A prior is not a guess to hide; it is the starting distribution you are willing to update in public.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Bayesian view of probability</i>"
+        "The Bayesian view of probability",
+        "probability distributions",
+        "expected value"
       ],
       "leadsTo": [
-        "the next lesson, <i>Likelihoods</i>"
+        "Likelihoods",
+        "Posteriors",
+        "Conjugate priors"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "Beta distributions",
+        "Normal distributions",
+        "moments",
+        "regularization"
       ]
     },
+    "motivation": "<p>You already bring background knowledge to problems. If a coin comes from a normal mint, you do not begin by thinking every bias from 0 to 1 is equally realistic. If a new web page has no data, you still have experience from past pages.</p><p>A <b>prior</b> makes that starting information explicit. Good priors are not stubborn; they are updateable. They give the model a reasonable first posture, especially when data are scarce.</p>",
+    "definition": "<p>A prior distribution $p(θ)$ assigns probability to possible values of an unknown parameter θ before the current data are observed. For a discrete θ, prior probabilities add to 1. For a continuous θ, the prior density integrates to 1, and intervals get probabilities from area under the density.</p><p>The prior contributes to the posterior through Bayes rule: posterior is proportional to likelihood times prior. If two parameter values explain the data equally well, the prior decides which was more plausible beforehand. If data are abundant and informative, the likelihood often dominates.</p><p><b>Assumptions that matter:</b> the prior must be chosen before seeing the data used for updating, it must put probability on values the model might need, and its scale should match the parameter being modeled. A prior can be weak, strong, informative, or intentionally broad, but it should be stated honestly.</p>",
+    "worked": {
+      "problem": "A click-through rate θ has a Beta prior with alpha 2 and beta 8. Interpret the prior mean and the effective prior counts.",
+      "skills": [
+        "Beta prior",
+        "prior mean",
+        "pseudo-counts"
+      ],
+      "strategy": "For a Bernoulli rate, a Beta prior acts like prior successes and failures — translate alpha and beta into a mean and total strength.",
+      "steps": [
+        {
+          "do": "Write the prior parameters",
+          "result": "$alpha=2$, $beta=8$",
+          "why": "the Beta prior has two positive shape parameters"
+        },
+        {
+          "do": "Compute the total prior count",
+          "result": "$alpha+beta=10$",
+          "why": "the sum measures prior concentration"
+        },
+        {
+          "do": "Compute the prior mean",
+          "result": "$alpha/(alpha+beta)=2/10=0.20$",
+          "why": "the mean of a Beta distribution is alpha over total"
+        },
+        {
+          "do": "Translate successes",
+          "result": "$alpha=2$",
+          "why": "for intuition, alpha behaves like prior successes"
+        },
+        {
+          "do": "Translate failures",
+          "result": "$beta=8$",
+          "why": "beta behaves like prior failures"
+        },
+        {
+          "do": "State the belief",
+          "result": "about 20 percent with strength 10",
+          "why": "the prior center and strength are separate ideas"
+        }
+      ],
+      "verify": "A 20 percent mean does not mean certainty; total count 10 is modest, so real data can still move the belief.",
+      "answer": "The prior mean is 0.20, with an effective 2 prior successes and 8 prior failures.",
+      "connects": "A prior supplies both a center and a strength before the likelihood arrives."
+    },
+    "practice": [
+      {
+        "problem": "A Bernoulli rate has Beta prior alpha 1, beta 1. Find the prior mean and describe its strength.",
+        "steps": [
+          {
+            "do": "Compute total",
+            "result": "$1+1=2$",
+            "why": "add the two shape parameters"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$1/2=0.5$",
+            "why": "Beta mean is alpha divided by total"
+          },
+          {
+            "do": "Read pseudo-successes",
+            "result": "$1$",
+            "why": "alpha behaves like one success"
+          },
+          {
+            "do": "Read pseudo-failures",
+            "result": "$1$",
+            "why": "beta behaves like one failure"
+          },
+          {
+            "do": "Interpret strength",
+            "result": "weak and symmetric",
+            "why": "only two effective counts are easy for data to move"
+          }
+        ],
+        "answer": "Mean 0.5, with weak symmetric strength 2."
+      },
+      {
+        "problem": "A prior over three models is $[0.5,0.3,0.2]$. Data likelihoods are $[0.1,0.2,0.4]$. Compute the unnormalized posterior weights.",
+        "steps": [
+          {
+            "do": "Weight model 1",
+            "result": "$0.5*0.1=0.05$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "Weight model 2",
+            "result": "$0.3*0.2=0.06$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "Weight model 3",
+            "result": "$0.2*0.4=0.08$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "List weights",
+            "result": "$[0.05,0.06,0.08]$",
+            "why": "these are not yet probabilities"
+          },
+          {
+            "do": "Add weights",
+            "result": "$0.19$",
+            "why": "the total would normalize them later"
+          }
+        ],
+        "answer": "Unnormalized weights are $[0.05,0.06,0.08]$."
+      },
+      {
+        "problem": "A Normal prior for a weight has mean 0 and standard deviation 2. What prior probability intuition does this give for weights near 0 versus 6?",
+        "steps": [
+          {
+            "do": "Write the standard deviation",
+            "result": "$sigma=2$",
+            "why": "the prior scale is 2"
+          },
+          {
+            "do": "Convert weight 6 to z-score",
+            "result": "$(6-0)/2=3$",
+            "why": "measure distance in standard deviations"
+          },
+          {
+            "do": "Compare weight 0",
+            "result": "$z=0$",
+            "why": "the prior is centered at 0"
+          },
+          {
+            "do": "Use the Normal rule of thumb",
+            "result": "3 standard deviations is far",
+            "why": "Normal mass is concentrated near its mean"
+          },
+          {
+            "do": "Interpret",
+            "result": "0 is much more plausible than 6",
+            "why": "the prior shrinks weights toward zero"
+          }
+        ],
+        "answer": "The prior strongly favors weights near 0 over weights near 6."
+      },
+      {
+        "problem": "A Beta prior alpha 20, beta 80 and a Beta prior alpha 2, beta 8 have the same mean. Compare their strengths.",
+        "steps": [
+          {
+            "do": "Compute first mean",
+            "result": "$20/(20+80)=0.20$",
+            "why": "mean is alpha over total"
+          },
+          {
+            "do": "Compute second mean",
+            "result": "$2/(2+8)=0.20$",
+            "why": "same center"
+          },
+          {
+            "do": "Compute first total",
+            "result": "$20+80=100$",
+            "why": "prior strength"
+          },
+          {
+            "do": "Compute second total",
+            "result": "$2+8=10$",
+            "why": "prior strength"
+          },
+          {
+            "do": "Compare",
+            "result": "first is 10 times stronger",
+            "why": "100 effective counts versus 10"
+          }
+        ],
+        "answer": "Both are centered at 0.20, but Beta(20,80) is 10 times more concentrated."
+      },
+      {
+        "problem": "A two-hypothesis prior has odds 4:1 for H1 over H2. Evidence has likelihood ratio 1:8 favoring H2 over H1. Find posterior odds for H1:H2.",
+        "steps": [
+          {
+            "do": "Write prior odds H1:H2",
+            "result": "$4:1$",
+            "why": "the prior favors H1"
+          },
+          {
+            "do": "Convert evidence to H1:H2 ratio",
+            "result": "$1:8$",
+            "why": "evidence favors H2"
+          },
+          {
+            "do": "Multiply odds",
+            "result": "$4/1 * 1/8=4/8$",
+            "why": "posterior odds equal prior odds times likelihood ratio"
+          },
+          {
+            "do": "Simplify",
+            "result": "$4/8=1/2$",
+            "why": "reduce the fraction"
+          },
+          {
+            "do": "State odds",
+            "result": "$1:2$",
+            "why": "H2 is now twice as likely as H1"
+          }
+        ],
+        "answer": "Posterior odds are 1:2 for H1:H2."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Cold-start recommendation",
+        "background": "New items have little interaction data, so systems borrow information from similar items through priors.",
+        "numbers": "If past videos average 4 percent click rate, a Beta(4,96) prior starts at mean $4/(4+96)=0.04$ before the new video gathers clicks."
+      },
+      {
+        "title": "Regularizing regression weights",
+        "background": "Gaussian priors on weights are the Bayesian face of shrinkage. They discourage extreme weights unless data justify them.",
+        "numbers": "A weight $w=3$ under Normal(0,1) is 3 standard deviations from the mean; $w=0.5$ is only 0.5 standard deviations away."
+      },
+      {
+        "title": "A/B tests with historical baselines",
+        "background": "When traffic is low, a prior based on previous launches keeps early random noise from dominating the story.",
+        "numbers": "A Beta(30,970) prior has mean $30/1000=0.03$. After 4 clicks in 100 visits, the updated mean would be $34/1100=0.0309$."
+      },
+      {
+        "title": "Bayesian spam filters",
+        "background": "Word probabilities can be initialized with priors so rare words do not get impossible probabilities from tiny samples.",
+        "numbers": "With Beta(1,1), seeing 0 word occurrences in 8 spam emails gives posterior mean $1/(1+9)=0.10$ instead of 0."
+      },
+      {
+        "title": "Risk modeling",
+        "background": "Insurance and reliability teams often encode engineering experience before a new product has much failure data.",
+        "numbers": "A prior of 2 failures per 1000 units can be Beta(2,998), with mean $0.002$ and total strength 1000."
+      },
+      {
+        "title": "Hierarchical modeling",
+        "background": "Large systems often share information across groups. A group-level prior lets small groups learn from the population without being erased by it.",
+        "numbers": "If a city has 3 events in 20 trials and a prior Beta(10,90), posterior mean is $(10+3)/(100+20)=13/120=0.108$."
+      }
+    ],
+    "applicationsClose": "Priors are the mathematical way to say what was plausible before this dataset, while leaving room for evidence to teach you something new.",
+    "takeaways": [
+      "A prior is a probability distribution over unknown parameters before current data.",
+      "Prior mean and prior strength are different: one gives the center, the other gives resistance to movement.",
+      "Weak priors stabilize scarce data; strong priors need stronger justification.",
+      "Bayesian transparency improves when priors are stated and checked, not hidden."
+    ],
     "prereqs": [
       "math-20-01"
     ]
@@ -48,19 +544,267 @@
   B({
     "id": "math-20-03",
     "title": "Likelihoods",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: likelihoods.",
+    "tagline": "A likelihood asks how well each possible parameter would have predicted the data you actually saw.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Priors</i>"
+        "The Bayesian view of probability",
+        "Priors",
+        "conditional probability"
       ],
       "leadsTo": [
-        "the next lesson, <i>Posteriors</i>"
+        "Posteriors",
+        "Conjugate priors",
+        "The Beta–Binomial model"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "probability mass functions",
+        "probability densities",
+        "logarithms",
+        "optimization"
       ]
     },
+    "motivation": "<p>You already compare explanations. If a coin lands heads 9 times in 10 tosses, a 50 percent heads coin can explain it, but a 90 percent heads coin explains it more comfortably. That comparative comfort is likelihood.</p><p>The likelihood is not a probability distribution over the parameter by itself. It is a score for parameter values after the data are fixed. Bayesian updating multiplies this score by the prior and then normalizes.</p>",
+    "definition": "<p>For data $D$ and parameter θ, the <b>likelihood</b> is $L(θ)=p(D|θ)$, read as the probability or density of the observed data assuming θ were true. When observations are conditionally independent, likelihoods multiply: $p(x1,...,xn|θ)=p(x1|θ)*...*p(xn|θ)$.</p><p>For Bernoulli data with s successes and f failures, the likelihood as a function of success rate θ is proportional to $θ^s(1-θ)^f$. Constants that do not depend on θ can be ignored for comparing parameter values, but not when computing exact data probabilities.</p><p><b>Assumptions that matter:</b> the data are fixed when viewing likelihood as a function of θ, the sampling model must be specified, independence claims must be justified, and likelihood values need not sum to 1 over θ.</p>",
+    "worked": {
+      "problem": "A coin is flipped 5 times and gives 4 heads and 1 tail. Compare the likelihood at θ=0.5 and θ=0.8, ignoring the common ordering constant.",
+      "skills": [
+        "Bernoulli likelihood",
+        "parameter comparison",
+        "powers"
+      ],
+      "strategy": "The observed counts are fixed — plug each θ into $θ^4(1-θ)^1$ and compare.",
+      "steps": [
+        {
+          "do": "Write the count likelihood",
+          "result": "$L(θ) proportional to θ^4(1-θ)$",
+          "why": "four heads contribute θ and one tail contributes 1-θ"
+        },
+        {
+          "do": "Evaluate at 0.5",
+          "result": "$L(0.5) proportional to 0.5^4*0.5$",
+          "why": "substitute θ=0.5"
+        },
+        {
+          "do": "Simplify first value",
+          "result": "$0.5^5=0.03125$",
+          "why": "multiply five halves"
+        },
+        {
+          "do": "Evaluate at 0.8",
+          "result": "$L(0.8) proportional to 0.8^4*0.2$",
+          "why": "tail probability is 0.2"
+        },
+        {
+          "do": "Simplify second value",
+          "result": "$0.4096*0.2=0.08192$",
+          "why": "0.8 to the fourth is 0.4096"
+        },
+        {
+          "do": "Compare",
+          "result": "$0.08192/0.03125=2.621$",
+          "why": "the data are about 2.6 times as likely under θ=0.8"
+        }
+      ],
+      "verify": "Both parameter values remain possible; likelihood compares support from these data, not posterior probability by itself.",
+      "answer": "Ignoring the common constant, θ=0.8 has likelihood 0.08192 versus 0.03125 for θ=0.5.",
+      "connects": "The likelihood is the data model turned around to score parameter values."
+    },
+    "practice": [
+      {
+        "problem": "For 3 successes and 2 failures, write the Bernoulli likelihood up to a constant and evaluate it at θ=0.6.",
+        "steps": [
+          {
+            "do": "Write success factor",
+            "result": "$θ^3$",
+            "why": "three successes"
+          },
+          {
+            "do": "Write failure factor",
+            "result": "$(1-θ)^2$",
+            "why": "two failures"
+          },
+          {
+            "do": "Combine",
+            "result": "$L(θ) proportional to θ^3(1-θ)^2$",
+            "why": "independent factors multiply"
+          },
+          {
+            "do": "Substitute θ=0.6",
+            "result": "$0.6^3*0.4^2$",
+            "why": "1-0.6 is 0.4"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.216*0.16=0.03456$",
+            "why": "multiply the powers"
+          }
+        ],
+        "answer": "$L(θ) proportional to θ^3(1-θ)^2$ and $L(0.6) proportional to 0.03456$."
+      },
+      {
+        "problem": "A die model says probability of rolling a six is θ. In 20 rolls, six appears 5 times. Compare likelihoods at θ=0.2 and θ=0.25 up to a constant.",
+        "steps": [
+          {
+            "do": "Write likelihood",
+            "result": "$θ^5(1-θ)^15$",
+            "why": "five sixes and fifteen non-sixes"
+          },
+          {
+            "do": "Evaluate θ=0.2",
+            "result": "$0.2^5*0.8^15$",
+            "why": "substitute first value"
+          },
+          {
+            "do": "Approximate first",
+            "result": "$0.00032*0.0352=0.0000113$",
+            "why": "powers rounded"
+          },
+          {
+            "do": "Evaluate θ=0.25",
+            "result": "$0.25^5*0.75^15$",
+            "why": "substitute second value"
+          },
+          {
+            "do": "Approximate second",
+            "result": "$0.0009766*0.01336=0.0000130$",
+            "why": "powers rounded"
+          }
+        ],
+        "answer": "θ=0.25 has the slightly larger likelihood, about $0.0000130$ versus $0.0000113$."
+      },
+      {
+        "problem": "For independent observations with probabilities 0.9, 0.8, and 0.5 under a model, compute the likelihood and log-likelihood.",
+        "steps": [
+          {
+            "do": "Multiply probabilities",
+            "result": "$0.9*0.8*0.5$",
+            "why": "independent observation probabilities multiply"
+          },
+          {
+            "do": "Compute likelihood",
+            "result": "$0.36$",
+            "why": "0.9 times 0.8 times 0.5"
+          },
+          {
+            "do": "Write log-likelihood",
+            "result": "$log(0.9)+log(0.8)+log(0.5)$",
+            "why": "log turns product into sum"
+          },
+          {
+            "do": "Use approximations",
+            "result": "$-0.105-0.223-0.693$",
+            "why": "natural logs"
+          },
+          {
+            "do": "Add",
+            "result": "$-1.021$",
+            "why": "sum the log terms"
+          }
+        ],
+        "answer": "Likelihood is 0.36; log-likelihood is about -1.021."
+      },
+      {
+        "problem": "Two models give likelihoods 0.03 and 0.12 for the same data. With equal priors, find posterior probabilities.",
+        "steps": [
+          {
+            "do": "Write prior weights",
+            "result": "$0.5*0.03$ and $0.5*0.12$",
+            "why": "posterior weights use prior times likelihood"
+          },
+          {
+            "do": "Compute weights",
+            "result": "$0.015$ and $0.060$",
+            "why": "multiply"
+          },
+          {
+            "do": "Add weights",
+            "result": "$0.075$",
+            "why": "normalizer"
+          },
+          {
+            "do": "Normalize model 1",
+            "result": "$0.015/0.075=0.20$",
+            "why": "divide by total"
+          },
+          {
+            "do": "Normalize model 2",
+            "result": "$0.060/0.075=0.80$",
+            "why": "remaining probability"
+          }
+        ],
+        "answer": "Posterior probabilities are 0.20 and 0.80."
+      },
+      {
+        "problem": "For a Normal model with known sigma 2 and mean μ, one observation is x=7. Compare likelihoods at μ=5 and μ=8 using only the exponential distance factor $exp(- (x-μ)^2/(2 sigma^2))$.",
+        "steps": [
+          {
+            "do": "Compute distance for μ=5",
+            "result": "$7-5=2$",
+            "why": "residual from the proposed mean"
+          },
+          {
+            "do": "Compute exponent",
+            "result": "$-2^2/(2*2^2)=-4/8=-0.5$",
+            "why": "use sigma=2"
+          },
+          {
+            "do": "Compute distance for μ=8",
+            "result": "$7-8=-1$",
+            "why": "second residual"
+          },
+          {
+            "do": "Compute exponent",
+            "result": "$-1^2/8=-0.125$",
+            "why": "square the residual"
+          },
+          {
+            "do": "Compare",
+            "result": "$exp(-0.125)>exp(-0.5)$",
+            "why": "less negative exponent gives larger likelihood"
+          }
+        ],
+        "answer": "μ=8 has the larger likelihood for x=7."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Maximum likelihood estimation",
+        "background": "Classical statistics often chooses the parameter that maximizes likelihood. Bayesian statistics uses the same likelihood, then combines it with a prior.",
+        "numbers": "For 8 heads in 10 flips, the Bernoulli maximum likelihood estimate is $8/10=0.8$."
+      },
+      {
+        "title": "Log-likelihood in training",
+        "background": "ML systems usually sum log-likelihoods because products of many probabilities get tiny and hard to compute.",
+        "numbers": "Three predicted true-label probabilities 0.7, 0.9, 0.8 give log-likelihood $log(0.7)+log(0.9)+log(0.8) approx -0.685$."
+      },
+      {
+        "title": "Language models",
+        "background": "A language model assigns probabilities to tokens. The likelihood of a sentence is the product of token probabilities under the model.",
+        "numbers": "Token probabilities 0.10, 0.25, 0.40 give sentence likelihood $0.10*0.25*0.40=0.010$."
+      },
+      {
+        "title": "Anomaly detection",
+        "background": "Low likelihood under a fitted model can flag data that the model finds surprising.",
+        "numbers": "If typical points have likelihood around 0.05 and a point has likelihood 0.0005, it is 100 times less supported by the model."
+      },
+      {
+        "title": "Sensor calibration",
+        "background": "Engineers compare calibration settings by how probable the observed sensor errors are under each setting.",
+        "numbers": "If setting A gives error density 0.18 and setting B gives 0.06 for the same reading, the reading supports A by a likelihood ratio of 3."
+      },
+      {
+        "title": "Model comparison",
+        "background": "Likelihood ratios are a clean way to report how much the data favor one model before priors enter.",
+        "numbers": "Likelihoods 0.004 and 0.001 produce a likelihood ratio of 4:1 in favor of the first model."
+      }
+    ],
+    "applicationsClose": "Likelihood is evidence in model form: the data stay fixed while each parameter is asked how well it would have expected them.",
+    "takeaways": [
+      "A likelihood is $p(D|θ)$ viewed as a function of θ.",
+      "Likelihoods compare parameter values but are not automatically probabilities over θ.",
+      "Independent observations make likelihoods multiply and log-likelihoods add.",
+      "Bayesian posteriors come from likelihood times prior, followed by normalization."
+    ],
     "prereqs": [
       "math-20-02"
     ]
@@ -69,19 +813,272 @@
   B({
     "id": "math-20-04",
     "title": "Posteriors",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: posteriors.",
+    "tagline": "The posterior is the updated uncertainty you get after the prior and likelihood have both had their say.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Likelihoods</i>"
+        "Priors",
+        "Likelihoods",
+        "Bayes rule"
       ],
       "leadsTo": [
-        "the next lesson, <i>Conjugate priors</i>"
+        "Conjugate priors",
+        "Credible intervals",
+        "Posterior predictive distributions"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "normalization",
+        "expected value",
+        "variance",
+        "odds"
       ]
     },
+    "motivation": "<p>You have now met the two voices in a Bayesian update. The prior says what was plausible before this dataset. The likelihood says what the data support. The posterior is what remains after those voices are combined honestly.</p><p>This is the distribution you use for decisions, intervals, predictions, and model comparison. It does not pretend the uncertainty vanished. It tells you how uncertainty changed.</p>",
+    "definition": "<p>The <b>posterior</b> distribution is $p(θ|D)=p(D|θ)p(θ)/p(D)$. The numerator gives an unnormalized weight for each θ. The denominator $p(D)$ is the sum or integral of those weights over all θ, making the posterior a valid probability distribution.</p><p>For discrete hypotheses, compute weights $w_i=p(D|H_i)P(H_i)$ and normalize: $P(H_i|D)=w_i/(w_1+...+w_k)$. For continuous θ, the same idea uses area under a density instead of a finite sum.</p><p><b>Assumptions that matter:</b> posterior conclusions depend on both prior and likelihood, the normalizing constant must be finite and positive, and all conditioning is relative to the chosen model. A posterior is only as good as the assumptions that created it.</p>",
+    "worked": {
+      "problem": "Three hypotheses have priors 0.5, 0.3, 0.2 and likelihoods 0.2, 0.5, 0.1. Compute the posterior distribution.",
+      "skills": [
+        "posterior weights",
+        "normalization",
+        "discrete hypotheses"
+      ],
+      "strategy": "The weights are not probabilities yet — multiply, add, then divide each weight by the total.",
+      "steps": [
+        {
+          "do": "Compute first weight",
+          "result": "$0.5*0.2=0.10$",
+          "why": "prior times likelihood"
+        },
+        {
+          "do": "Compute second weight",
+          "result": "$0.3*0.5=0.15$",
+          "why": "prior times likelihood"
+        },
+        {
+          "do": "Compute third weight",
+          "result": "$0.2*0.1=0.02$",
+          "why": "prior times likelihood"
+        },
+        {
+          "do": "Add weights",
+          "result": "$0.10+0.15+0.02=0.27$",
+          "why": "normalizing constant"
+        },
+        {
+          "do": "Normalize first",
+          "result": "$0.10/0.27=0.370$",
+          "why": "divide by total"
+        },
+        {
+          "do": "Normalize second",
+          "result": "$0.15/0.27=0.556$",
+          "why": "divide by total"
+        },
+        {
+          "do": "Normalize third",
+          "result": "$0.02/0.27=0.074$",
+          "why": "divide by total"
+        }
+      ],
+      "verify": "The posterior probabilities add to 1 up to rounding: 0.370+0.556+0.074=1.000.",
+      "answer": "$[0.370,0.556,0.074]$ approximately.",
+      "connects": "The posterior is normalized evidence-weighted prior belief."
+    },
+    "practice": [
+      {
+        "problem": "Two hypotheses have priors 0.7 and 0.3 with likelihoods 0.4 and 0.8. Compute the posterior.",
+        "steps": [
+          {
+            "do": "Weight H1",
+            "result": "$0.7*0.4=0.28$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "Weight H2",
+            "result": "$0.3*0.8=0.24$",
+            "why": "prior times likelihood"
+          },
+          {
+            "do": "Add weights",
+            "result": "$0.52$",
+            "why": "normalizer"
+          },
+          {
+            "do": "Normalize H1",
+            "result": "$0.28/0.52=0.538$",
+            "why": "divide by total"
+          },
+          {
+            "do": "Normalize H2",
+            "result": "$0.24/0.52=0.462$",
+            "why": "posterior probabilities sum to 1"
+          }
+        ],
+        "answer": "$P(H1|D)=0.538$, $P(H2|D)=0.462$."
+      },
+      {
+        "problem": "A prior over θ=0,1,2 is $[0.2,0.5,0.3]$. Likelihoods are $[0.1,0.2,0.4]$. Compute posterior mean.",
+        "steps": [
+          {
+            "do": "Compute weights",
+            "result": "$[0.02,0.10,0.12]$",
+            "why": "multiply prior by likelihood elementwise"
+          },
+          {
+            "do": "Add weights",
+            "result": "$0.24$",
+            "why": "normalizer"
+          },
+          {
+            "do": "Normalize",
+            "result": "$[0.083,0.417,0.500]$",
+            "why": "divide each weight by 0.24"
+          },
+          {
+            "do": "Multiply by θ values",
+            "result": "$0*0.083+1*0.417+2*0.500$",
+            "why": "posterior mean formula"
+          },
+          {
+            "do": "Add",
+            "result": "$1.417$",
+            "why": "sum weighted values"
+          }
+        ],
+        "answer": "Posterior mean is about 1.417."
+      },
+      {
+        "problem": "Prior odds for A versus B are 3:2. Data likelihood ratio A:B is 4:1. Find posterior odds and probability of A.",
+        "steps": [
+          {
+            "do": "Convert prior odds",
+            "result": "$3/2$",
+            "why": "A divided by B"
+          },
+          {
+            "do": "Multiply likelihood ratio",
+            "result": "$(3/2)*4=6$",
+            "why": "posterior odds equal prior odds times likelihood ratio"
+          },
+          {
+            "do": "Write odds",
+            "result": "$6:1$",
+            "why": "A is six times B"
+          },
+          {
+            "do": "Convert to probability",
+            "result": "$6/(6+1)$",
+            "why": "odds a:b means probability a/(a+b)"
+          },
+          {
+            "do": "Compute",
+            "result": "$6/7=0.857$",
+            "why": "divide"
+          }
+        ],
+        "answer": "Posterior odds are 6:1 and $P(A|D)=0.857$."
+      },
+      {
+        "problem": "A Beta(2,3) prior sees 4 successes and 1 failure. Use the update rule to find posterior alpha, beta, and mean.",
+        "steps": [
+          {
+            "do": "Update alpha",
+            "result": "$2+4=6$",
+            "why": "successes add to alpha"
+          },
+          {
+            "do": "Update beta",
+            "result": "$3+1=4$",
+            "why": "failures add to beta"
+          },
+          {
+            "do": "Write posterior",
+            "result": "$Beta(6,4)$",
+            "why": "same family after Bernoulli data"
+          },
+          {
+            "do": "Compute total",
+            "result": "$6+4=10$",
+            "why": "denominator of mean"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$6/10=0.60$",
+            "why": "Beta mean"
+          }
+        ],
+        "answer": "Posterior is Beta(6,4) with mean 0.60."
+      },
+      {
+        "problem": "A posterior over θ has probabilities 0.25 at θ=1, 0.50 at θ=2, and 0.25 at θ=5. Compute posterior mean and variance.",
+        "steps": [
+          {
+            "do": "Compute mean",
+            "result": "$1*0.25+2*0.50+5*0.25=2.50$",
+            "why": "weighted average"
+          },
+          {
+            "do": "Compute squared deviation for 1",
+            "result": "$(1-2.5)^2=2.25$",
+            "why": "distance squared"
+          },
+          {
+            "do": "Compute squared deviation for 2",
+            "result": "$(2-2.5)^2=0.25$",
+            "why": "distance squared"
+          },
+          {
+            "do": "Compute squared deviation for 5",
+            "result": "$(5-2.5)^2=6.25$",
+            "why": "distance squared"
+          },
+          {
+            "do": "Weight and add",
+            "result": "$0.25*2.25+0.50*0.25+0.25*6.25=2.25$",
+            "why": "posterior variance"
+          }
+        ],
+        "answer": "Posterior mean is 2.50 and variance is 2.25."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Decision thresholds",
+        "background": "Posteriors support decisions because they are actual probabilities after evidence. A team can set a threshold before acting.",
+        "numbers": "If posterior defect probability is 0.82 and the action threshold is 0.80, the Bayesian rule triggers action."
+      },
+      {
+        "title": "Uncertainty after an A/B test",
+        "background": "Instead of only asking for a p-value, Bayesian analysis keeps a distribution over each conversion rate.",
+        "numbers": "If 95 percent of posterior samples have B>A, then an estimated $P(B>A)=0.95$ is directly decision-facing."
+      },
+      {
+        "title": "Personalized ranking",
+        "background": "A recommendation system can maintain a posterior over a user's preference for a category and update after clicks.",
+        "numbers": "Prior Beta(3,7) plus 2 clicks and 3 skips gives Beta(5,10), posterior mean $5/15=0.333$."
+      },
+      {
+        "title": "Reliability estimation",
+        "background": "After observing failures, posterior distributions combine old engineering knowledge with new test data.",
+        "numbers": "Prior Beta(1,999) plus 2 failures in 1000 tests gives Beta(3,1997), mean $3/2000=0.0015$."
+      },
+      {
+        "title": "Forecasting demand",
+        "background": "Posterior distributions represent uncertainty in demand parameters rather than a single best guess.",
+        "numbers": "If posterior demand mean is 120 units with standard deviation 15, a rough 2-sigma planning range is 90 to 150 units."
+      },
+      {
+        "title": "Model monitoring",
+        "background": "Posteriors can track whether a live metric has drifted beyond an acceptable region.",
+        "numbers": "If posterior probability that error rate exceeds 5 percent is 0.93, an alert threshold of 0.90 would fire."
+      }
+    ],
+    "applicationsClose": "The posterior is the Bayesian workbench: every later interval, prediction, and decision is shaped by this updated distribution.",
+    "takeaways": [
+      "Posterior equals normalized prior times likelihood.",
+      "Compute unnormalized weights first, then divide by their sum or integral.",
+      "Posterior means, variances, and probabilities summarize updated uncertainty.",
+      "A posterior is conditional on the model assumptions used to build it."
+    ],
     "prereqs": [
       "math-20-03"
     ]
@@ -90,19 +1087,267 @@
   B({
     "id": "math-20-05",
     "title": "Conjugate priors",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: conjugate priors.",
+    "tagline": "Conjugacy is the rare algebraic kindness where updating changes parameters but keeps the same distribution family.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Posteriors</i>"
+        "Priors",
+        "Likelihoods",
+        "Posteriors"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Beta–Binomial model</i>"
+        "The Beta–Binomial model",
+        "The Normal–Normal model",
+        "Posterior predictive distributions"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "exponential families",
+        "sufficient statistics",
+        "Beta distributions",
+        "Normal distributions"
       ]
     },
+    "motivation": "<p>Bayesian updating can involve difficult integrals, but sometimes the algebra smiles. You start with one distribution family, observe data, and the posterior stays in that same family.</p><p>That pattern is called <b>conjugacy</b>. It matters because it turns updating into adding counts, sums, or precisions. You still learn from data; you just do the bookkeeping cleanly.</p>",
+    "definition": "<p>A prior family is <b>conjugate</b> to a likelihood family when the posterior belongs to the same family as the prior. Symbolically, if prior $p(θ)$ is in family F and likelihood $p(D|θ)$ has the matching form, then posterior $p(θ|D)$ is also in family F with updated parameters.</p><p>For Bernoulli data, a Beta prior is conjugate because $θ^(alpha-1)(1-θ)^(beta-1)$ times $θ^s(1-θ)^f$ becomes $θ^(alpha+s-1)(1-θ)^(beta+f-1)$. The exponents simply add.</p><p><b>Assumptions that matter:</b> conjugacy depends on the likelihood model, parameters must stay in their valid ranges, and computational convenience does not make the model true. It is an algebraic match, not a guarantee of realism.</p>",
+    "worked": {
+      "problem": "A Bernoulli rate has prior Beta(3,7). You observe 12 successes and 8 failures. Find the conjugate posterior and its mean.",
+      "skills": [
+        "conjugate updating",
+        "Beta prior",
+        "posterior mean"
+      ],
+      "strategy": "Conjugacy turns the update into adding successes to alpha and failures to beta.",
+      "steps": [
+        {
+          "do": "Write prior",
+          "result": "$Beta(3,7)$",
+          "why": "alpha is 3 and beta is 7"
+        },
+        {
+          "do": "Add successes to alpha",
+          "result": "$3+12=15$",
+          "why": "Bernoulli successes increase alpha"
+        },
+        {
+          "do": "Add failures to beta",
+          "result": "$7+8=15$",
+          "why": "Bernoulli failures increase beta"
+        },
+        {
+          "do": "Write posterior",
+          "result": "$Beta(15,15)$",
+          "why": "same family after updating"
+        },
+        {
+          "do": "Compute total",
+          "result": "$15+15=30$",
+          "why": "mean denominator"
+        },
+        {
+          "do": "Compute mean",
+          "result": "$15/30=0.50$",
+          "why": "Beta mean is alpha over total"
+        }
+      ],
+      "verify": "The posterior mean lands at 0.50 because the data pulled the prior center upward from 0.30.",
+      "answer": "Posterior is Beta(15,15), with mean 0.50.",
+      "connects": "Conjugacy keeps the family fixed while sufficient statistics update the parameters."
+    },
+    "practice": [
+      {
+        "problem": "Update Beta(1,1) after 6 successes and 4 failures.",
+        "steps": [
+          {
+            "do": "Add successes",
+            "result": "$1+6=7$",
+            "why": "successes update alpha"
+          },
+          {
+            "do": "Add failures",
+            "result": "$1+4=5$",
+            "why": "failures update beta"
+          },
+          {
+            "do": "Write posterior",
+            "result": "$Beta(7,5)$",
+            "why": "same family"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$7/(7+5)=7/12=0.583$",
+            "why": "Beta mean"
+          },
+          {
+            "do": "Interpret",
+            "result": "above 0.5",
+            "why": "more successes than failures"
+          }
+        ],
+        "answer": "Posterior Beta(7,5), mean about 0.583."
+      },
+      {
+        "problem": "A Poisson rate has Gamma prior with shape 2 and rate 1. Observed counts are 3, 0, and 2 over unit exposures. Update shape and rate.",
+        "steps": [
+          {
+            "do": "Sum counts",
+            "result": "$3+0+2=5$",
+            "why": "Poisson counts add to shape"
+          },
+          {
+            "do": "Count exposures",
+            "result": "$3$",
+            "why": "three unit observations"
+          },
+          {
+            "do": "Update shape",
+            "result": "$2+5=7$",
+            "why": "prior shape plus total count"
+          },
+          {
+            "do": "Update rate",
+            "result": "$1+3=4$",
+            "why": "prior rate plus total exposure"
+          },
+          {
+            "do": "Compute posterior mean",
+            "result": "$7/4=1.75$",
+            "why": "Gamma mean is shape over rate"
+          }
+        ],
+        "answer": "Posterior Gamma shape 7, rate 4, mean 1.75."
+      },
+      {
+        "problem": "A Normal mean has known variance. Prior mean is 10 with precision 2; data mean is 14 with precision contribution 6. Compute posterior mean.",
+        "steps": [
+          {
+            "do": "Add precisions",
+            "result": "$2+6=8$",
+            "why": "Normal conjugacy weights by precision"
+          },
+          {
+            "do": "Compute prior weighted contribution",
+            "result": "$2*10=20$",
+            "why": "precision times mean"
+          },
+          {
+            "do": "Compute data weighted contribution",
+            "result": "$6*14=84$",
+            "why": "data precision times mean"
+          },
+          {
+            "do": "Add contributions",
+            "result": "$20+84=104$",
+            "why": "posterior numerator"
+          },
+          {
+            "do": "Divide by total precision",
+            "result": "$104/8=13$",
+            "why": "posterior mean"
+          }
+        ],
+        "answer": "Posterior mean is 13."
+      },
+      {
+        "problem": "A Dirichlet prior over three categories is (2,2,2). Observed counts are (5,1,4). Find posterior parameters.",
+        "steps": [
+          {
+            "do": "Add first category",
+            "result": "$2+5=7$",
+            "why": "category counts update matching parameter"
+          },
+          {
+            "do": "Add second category",
+            "result": "$2+1=3$",
+            "why": "same rule"
+          },
+          {
+            "do": "Add third category",
+            "result": "$2+4=6$",
+            "why": "same rule"
+          },
+          {
+            "do": "Write posterior",
+            "result": "Dirichlet(7,3,6)",
+            "why": "same family"
+          },
+          {
+            "do": "Compute posterior mean for category 1",
+            "result": "$7/(7+3+6)=7/16=0.438$",
+            "why": "Dirichlet mean"
+          }
+        ],
+        "answer": "Posterior is Dirichlet(7,3,6); first category mean is 0.438."
+      },
+      {
+        "problem": "A Beta(4,6) prior sees 0 successes and 10 failures. Find posterior mean and compare to sample rate.",
+        "steps": [
+          {
+            "do": "Update alpha",
+            "result": "$4+0=4$",
+            "why": "no successes added"
+          },
+          {
+            "do": "Update beta",
+            "result": "$6+10=16$",
+            "why": "failures add to beta"
+          },
+          {
+            "do": "Write posterior",
+            "result": "$Beta(4,16)$",
+            "why": "conjugate update"
+          },
+          {
+            "do": "Compute posterior mean",
+            "result": "$4/20=0.20$",
+            "why": "Beta mean"
+          },
+          {
+            "do": "Compare sample rate",
+            "result": "$0/10=0$",
+            "why": "prior prevents collapse to zero"
+          }
+        ],
+        "answer": "Posterior mean is 0.20, while the sample rate is 0."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Online click-rate updates",
+        "background": "Conjugacy lets production systems update rates with counts instead of expensive sampling.",
+        "numbers": "Beta(2,98) plus 12 clicks and 188 non-clicks becomes Beta(14,286), mean $14/300=0.0467$."
+      },
+      {
+        "title": "Multiclass text models",
+        "background": "Naive Bayes often uses Dirichlet-multinomial conjugacy to smooth word probabilities.",
+        "numbers": "Prior counts (1,1,1) plus word counts (10,4,0) gives posterior (11,5,1), so the unseen word still has mean $1/17$."
+      },
+      {
+        "title": "Queue arrival rates",
+        "background": "Poisson arrivals with Gamma priors model calls, requests, or defects when counts arrive over exposure time.",
+        "numbers": "Gamma(3,2) plus 9 arrivals in 4 hours gives Gamma(12,6), mean rate $12/6=2$ per hour."
+      },
+      {
+        "title": "Gaussian measurement fusion",
+        "background": "Normal-Normal conjugacy underlies simple sensor fusion when variances are known.",
+        "numbers": "Prior mean 0 precision 1 and sensor mean 6 precision 2 give posterior mean $(0+12)/3=4$."
+      },
+      {
+        "title": "Fast dashboards",
+        "background": "Conjugate updates are useful when dashboards must refresh uncertainty quickly from aggregated counts.",
+        "numbers": "A conversion prior Beta(50,950) plus 7 conversions in 100 visits gives Beta(57,1043), mean $57/1100=0.0518$."
+      },
+      {
+        "title": "Bayesian bandits",
+        "background": "Bandit algorithms often use conjugate posteriors so each arm can update after rewards.",
+        "numbers": "Arm prior Beta(1,1), after 3 wins and 2 losses, becomes Beta(4,3), mean $4/7=0.571$."
+      }
+    ],
+    "applicationsClose": "Conjugacy is not the whole of Bayesian statistics, but it is a beautiful training ground: it lets the update be visible in the arithmetic.",
+    "takeaways": [
+      "A conjugate prior keeps the posterior in the same distribution family.",
+      "For Beta-Bernoulli updates, successes add to alpha and failures add to beta.",
+      "Conjugacy works because likelihood factors match prior algebra.",
+      "Convenience is helpful, but the likelihood assumptions still need to fit the problem."
+    ],
     "prereqs": [
       "math-20-04"
     ]
@@ -111,19 +1356,267 @@
   B({
     "id": "math-20-06",
     "title": "The Beta–Binomial model",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: the beta–binomial model.",
+    "tagline": "The Beta-Binomial model is Bayesian counting for yes-or-no outcomes, with uncertainty that shrinks as evidence accumulates.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Conjugate priors</i>"
+        "Conjugate priors",
+        "Bernoulli trials",
+        "Binomial coefficients"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Normal–Normal model</i>"
+        "Credible intervals",
+        "Posterior predictive distributions",
+        "Bayesian bandits"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "Beta distributions",
+        "Binomial distributions",
+        "proportions",
+        "sample means"
       ]
     },
+    "motivation": "<p>Many ML and product questions are yes-or-no: click or no click, convert or not, defect or not, pass or fail. A plain sample rate is useful, but it can be jumpy when the sample is small.</p><p>The Beta-Binomial model gives a calm update for an unknown probability θ. The Beta prior supplies starting counts, and Binomial data add observed successes and failures.</p>",
+    "definition": "<p>In the <b>Beta-Binomial model</b>, θ is an unknown probability of success. The prior is $θ ~ Beta(alpha,beta)$. Given θ, data contain s successes and f failures from Bernoulli or Binomial trials. The posterior is $Beta(alpha+s,beta+f)$.</p><p>The posterior mean is $(alpha+s)/(alpha+beta+s+f)$. This is a weighted compromise between the prior mean and the sample proportion. The posterior predictive probability of success on the next trial is the same posterior mean.</p><p><b>Assumptions that matter:</b> trials are conditionally independent given θ, the success probability is stable across trials, alpha and beta are positive, and success must be defined consistently before counting.</p>",
+    "worked": {
+      "problem": "A feature has prior Beta(2,8). In 20 users, 7 click and 13 do not. Find posterior parameters, posterior mean, and next-click predictive probability.",
+      "skills": [
+        "Beta-Binomial update",
+        "posterior mean",
+        "prediction"
+      ],
+      "strategy": "Treat the prior as starting counts, then add observed clicks and non-clicks.",
+      "steps": [
+        {
+          "do": "Update alpha",
+          "result": "$2+7=9$",
+          "why": "clicks are successes"
+        },
+        {
+          "do": "Update beta",
+          "result": "$8+13=21$",
+          "why": "non-clicks are failures"
+        },
+        {
+          "do": "Write posterior",
+          "result": "$Beta(9,21)$",
+          "why": "conjugate update"
+        },
+        {
+          "do": "Compute total",
+          "result": "$9+21=30$",
+          "why": "posterior effective count"
+        },
+        {
+          "do": "Compute posterior mean",
+          "result": "$9/30=0.30$",
+          "why": "mean of Beta posterior"
+        },
+        {
+          "do": "State predictive probability",
+          "result": "$0.30$",
+          "why": "next success probability equals posterior mean"
+        }
+      ],
+      "verify": "The raw click rate is 7/20=0.35, but the prior mean 0.20 pulls the posterior mean to 0.30.",
+      "answer": "Posterior Beta(9,21); posterior mean and next-click predictive probability are 0.30.",
+      "connects": "The Beta-Binomial model turns binary data into updated uncertainty about a rate."
+    },
+    "practice": [
+      {
+        "problem": "Prior Beta(1,1), data 8 successes and 2 failures. Find posterior and mean.",
+        "steps": [
+          {
+            "do": "Update alpha",
+            "result": "$1+8=9$",
+            "why": "add successes"
+          },
+          {
+            "do": "Update beta",
+            "result": "$1+2=3$",
+            "why": "add failures"
+          },
+          {
+            "do": "Write posterior",
+            "result": "$Beta(9,3)$",
+            "why": "same family"
+          },
+          {
+            "do": "Compute total",
+            "result": "$12$",
+            "why": "9+3"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$9/12=0.75$",
+            "why": "posterior average rate"
+          }
+        ],
+        "answer": "Posterior Beta(9,3), mean 0.75."
+      },
+      {
+        "problem": "Prior Beta(5,5), data 0 successes and 10 failures. Find posterior mean.",
+        "steps": [
+          {
+            "do": "Update alpha",
+            "result": "$5+0=5$",
+            "why": "no successes"
+          },
+          {
+            "do": "Update beta",
+            "result": "$5+10=15$",
+            "why": "add failures"
+          },
+          {
+            "do": "Posterior",
+            "result": "$Beta(5,15)$",
+            "why": "conjugate update"
+          },
+          {
+            "do": "Total",
+            "result": "$20$",
+            "why": "5+15"
+          },
+          {
+            "do": "Mean",
+            "result": "$5/20=0.25$",
+            "why": "not zero because of prior"
+          }
+        ],
+        "answer": "Posterior mean is 0.25."
+      },
+      {
+        "problem": "A posterior is Beta(12,18). Compute mean and a rough variance using $ab/((a+b)^2(a+b+1))$.",
+        "steps": [
+          {
+            "do": "Compute total",
+            "result": "$12+18=30$",
+            "why": "sum parameters"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$12/30=0.40$",
+            "why": "Beta mean"
+          },
+          {
+            "do": "Compute numerator",
+            "result": "$12*18=216$",
+            "why": "variance numerator"
+          },
+          {
+            "do": "Compute denominator",
+            "result": "$30^2*31=27900$",
+            "why": "variance denominator"
+          },
+          {
+            "do": "Divide",
+            "result": "$216/27900=0.00774$",
+            "why": "rough posterior variance"
+          }
+        ],
+        "answer": "Mean 0.40 and variance about 0.00774."
+      },
+      {
+        "problem": "Two ads have posteriors Beta(9,21) and Beta(15,35). Compare their posterior means.",
+        "steps": [
+          {
+            "do": "Mean ad A",
+            "result": "$9/(9+21)=9/30=0.30$",
+            "why": "Beta mean"
+          },
+          {
+            "do": "Mean ad B",
+            "result": "$15/(15+35)=15/50=0.30$",
+            "why": "Beta mean"
+          },
+          {
+            "do": "Compare totals",
+            "result": "$30$ versus $50$",
+            "why": "posterior strength differs"
+          },
+          {
+            "do": "Interpret equal means",
+            "result": "same center",
+            "why": "both predict 30 percent"
+          },
+          {
+            "do": "Interpret strength",
+            "result": "B is more concentrated",
+            "why": "more effective observations"
+          }
+        ],
+        "answer": "Both means are 0.30; ad B has stronger evidence."
+      },
+      {
+        "problem": "Prior Beta(3,7). How many successes in 10 trials are needed for posterior mean 0.40?",
+        "steps": [
+          {
+            "do": "Let successes be s",
+            "result": "failures are $10-s$",
+            "why": "ten total trials"
+          },
+          {
+            "do": "Write posterior alpha",
+            "result": "$3+s$",
+            "why": "add successes"
+          },
+          {
+            "do": "Write posterior total",
+            "result": "$3+7+10=20$",
+            "why": "prior plus data total"
+          },
+          {
+            "do": "Set mean",
+            "result": "$(3+s)/20=0.40$",
+            "why": "target posterior mean"
+          },
+          {
+            "do": "Solve",
+            "result": "$3+s=8$, so $s=5$",
+            "why": "multiply by 20 and subtract 3"
+          }
+        ],
+        "answer": "You need 5 successes in 10 trials."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Click-through-rate estimation",
+        "background": "CTR is a natural binary rate, and sparse items benefit from prior smoothing.",
+        "numbers": "Prior Beta(5,95) plus 3 clicks in 20 impressions gives Beta(8,112), mean $8/120=0.0667$."
+      },
+      {
+        "title": "A/B conversion rates",
+        "background": "Each variant can have its own Beta posterior over conversion probability.",
+        "numbers": "Variant A Beta(31,969) has mean 0.031; variant B Beta(45,955) has mean 0.045."
+      },
+      {
+        "title": "Bayesian bandits",
+        "background": "Thompson sampling often samples from each arm's Beta posterior to balance exploration and exploitation.",
+        "numbers": "Arm with Beta(4,6) has mean 0.40; arm with Beta(8,12) also has mean 0.40 but less uncertainty."
+      },
+      {
+        "title": "Defect-rate monitoring",
+        "background": "Manufacturing defect counts are binary and can be updated as batches arrive.",
+        "numbers": "Prior Beta(2,198) plus 1 defect in 100 parts gives Beta(3,297), mean $0.010$."
+      },
+      {
+        "title": "Email open rates",
+        "background": "Marketing systems estimate open probability for campaigns while avoiding extreme early estimates.",
+        "numbers": "With Beta(10,90), 6 opens in 50 sends gives Beta(16,134), mean $16/150=0.1067$."
+      },
+      {
+        "title": "Classifier accuracy",
+        "background": "Accuracy on a validation set is a binomial success rate when examples are fixed and scored once.",
+        "numbers": "Prior Beta(1,1), 87 correct out of 100 gives Beta(88,14), posterior mean $88/102=0.863$."
+      }
+    ],
+    "applicationsClose": "From clicks to defects to accuracy, the Beta-Binomial model teaches the same lesson: count evidence, keep uncertainty, and let confidence grow with data.",
+    "takeaways": [
+      "Beta prior plus Binomial data gives a Beta posterior.",
+      "Successes add to alpha; failures add to beta.",
+      "The posterior mean balances prior mean and sample proportion.",
+      "The next-trial predictive probability equals the posterior mean."
+    ],
     "prereqs": [
       "math-20-05"
     ]
@@ -132,19 +1625,267 @@
   B({
     "id": "math-20-07",
     "title": "The Normal–Normal model",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: the normal–normal model.",
+    "tagline": "The Normal-Normal model updates a noisy average by weighting prior belief and data by precision.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Beta–Binomial model</i>"
+        "Conjugate priors",
+        "Normal distributions",
+        "weighted averages"
       ],
       "leadsTo": [
-        "the next lesson, <i>Noninformative priors</i>"
+        "Noninformative priors",
+        "Credible intervals",
+        "Bayesian linear regression"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "variance",
+        "precision",
+        "sample means",
+        "Gaussian models"
       ]
     },
+    "motivation": "<p>Suppose you are estimating an average delivery time, model weight, or sensor bias. A few noisy measurements should move your belief, but not all measurements deserve equal trust.</p><p>The Normal-Normal model gives a clean rule: means are averaged using <b>precision</b>, which is inverse variance. More precise information gets more weight.</p>",
+    "definition": "<p>In the Normal-Normal model, observations have known variance sigma2 and unknown mean μ. A Normal prior $μ ~ Normal(m0,v0)$ combines with n observations whose sample mean is xbar. The posterior for μ is Normal with precision $1/vn = 1/v0 + n/sigma2$ and mean $mn = vn(m0/v0 + n*xbar/sigma2)$.</p><p>This is a weighted average. The prior contributes precision $1/v0$; the data contribute precision $n/sigma2$. The posterior variance shrinks because precisions add.</p><p><b>Assumptions that matter:</b> observations are conditionally independent Normal draws, observation variance is known or treated as known, the prior is Normal, and precision means inverse variance, not ordinary confidence as a feeling.</p>",
+    "worked": {
+      "problem": "Prior for μ is Normal mean 10, variance 4. Observations have known variance 9, with n=9 and sample mean 13. Find posterior mean and variance.",
+      "skills": [
+        "precision weighting",
+        "Normal conjugacy",
+        "posterior variance"
+      ],
+      "strategy": "Convert variances to precisions, add them, then compute the precision-weighted mean.",
+      "steps": [
+        {
+          "do": "Compute prior precision",
+          "result": "$1/4=0.25$",
+          "why": "precision is inverse variance"
+        },
+        {
+          "do": "Compute data precision",
+          "result": "$9/9=1$",
+          "why": "n divided by observation variance"
+        },
+        {
+          "do": "Add precisions",
+          "result": "$0.25+1=1.25$",
+          "why": "posterior precision"
+        },
+        {
+          "do": "Compute posterior variance",
+          "result": "$1/1.25=0.8$",
+          "why": "variance is inverse precision"
+        },
+        {
+          "do": "Compute weighted numerator",
+          "result": "$10/4 + 9*13/9 = 2.5+13=15.5$",
+          "why": "prior and data precision contributions"
+        },
+        {
+          "do": "Compute posterior mean",
+          "result": "$15.5/1.25=12.4$",
+          "why": "divide numerator by total precision"
+        }
+      ],
+      "verify": "The posterior mean 12.4 lies between the prior mean 10 and data mean 13, closer to the data because data precision is larger.",
+      "answer": "Posterior is Normal with mean 12.4 and variance 0.8.",
+      "connects": "Normal-Normal updating is precision-weighted averaging with shrinking variance."
+    },
+    "practice": [
+      {
+        "problem": "Prior mean 0 variance 1; one observation x=2 with variance 1. Find posterior mean and variance.",
+        "steps": [
+          {
+            "do": "Prior precision",
+            "result": "$1/1=1$",
+            "why": "inverse variance"
+          },
+          {
+            "do": "Data precision",
+            "result": "$1/1=1$",
+            "why": "one observation"
+          },
+          {
+            "do": "Posterior precision",
+            "result": "$2$",
+            "why": "add precisions"
+          },
+          {
+            "do": "Posterior variance",
+            "result": "$1/2=0.5$",
+            "why": "invert precision"
+          },
+          {
+            "do": "Posterior mean",
+            "result": "$(0*1+2*1)/2=1$",
+            "why": "equal precision average"
+          }
+        ],
+        "answer": "Posterior mean 1, variance 0.5."
+      },
+      {
+        "problem": "Prior mean 5 variance 4; n=4 observations have mean 9 and observation variance 4. Find posterior mean.",
+        "steps": [
+          {
+            "do": "Prior precision",
+            "result": "$1/4=0.25$",
+            "why": "inverse prior variance"
+          },
+          {
+            "do": "Data precision",
+            "result": "$4/4=1$",
+            "why": "n over observation variance"
+          },
+          {
+            "do": "Total precision",
+            "result": "$1.25$",
+            "why": "add"
+          },
+          {
+            "do": "Weighted numerator",
+            "result": "$5/4 + 4*9/4=1.25+9=10.25$",
+            "why": "prior plus data contributions"
+          },
+          {
+            "do": "Divide",
+            "result": "$10.25/1.25=8.2$",
+            "why": "posterior mean"
+          }
+        ],
+        "answer": "Posterior mean is 8.2."
+      },
+      {
+        "problem": "A posterior precision is 5. What is posterior variance? If mean is 3, give a rough 2-standard-deviation interval.",
+        "steps": [
+          {
+            "do": "Invert precision",
+            "result": "$1/5=0.2$",
+            "why": "variance is inverse precision"
+          },
+          {
+            "do": "Compute standard deviation",
+            "result": "$sqrt(0.2)=0.447$",
+            "why": "square root of variance"
+          },
+          {
+            "do": "Double standard deviation",
+            "result": "$2*0.447=0.894$",
+            "why": "rough 95 percent scale"
+          },
+          {
+            "do": "Lower bound",
+            "result": "$3-0.894=2.106$",
+            "why": "subtract"
+          },
+          {
+            "do": "Upper bound",
+            "result": "$3+0.894=3.894$",
+            "why": "add"
+          }
+        ],
+        "answer": "Variance 0.2; rough interval 2.106 to 3.894."
+      },
+      {
+        "problem": "Prior mean 100 variance 25. Data mean 112 has data precision 4. Find posterior mean.",
+        "steps": [
+          {
+            "do": "Prior precision",
+            "result": "$1/25=0.04$",
+            "why": "inverse variance"
+          },
+          {
+            "do": "Total precision",
+            "result": "$0.04+4=4.04$",
+            "why": "add data precision"
+          },
+          {
+            "do": "Prior contribution",
+            "result": "$100*0.04=4$",
+            "why": "mean times precision"
+          },
+          {
+            "do": "Data contribution",
+            "result": "$112*4=448$",
+            "why": "mean times precision"
+          },
+          {
+            "do": "Divide",
+            "result": "$(4+448)/4.04=111.881$",
+            "why": "posterior mean"
+          }
+        ],
+        "answer": "Posterior mean is about 111.881."
+      },
+      {
+        "problem": "Two independent Normal information sources estimate μ. Source A mean 6 variance 4; source B mean 10 variance 1. With a flat prior approximation, combine them by precision.",
+        "steps": [
+          {
+            "do": "Precision A",
+            "result": "$1/4=0.25$",
+            "why": "inverse variance"
+          },
+          {
+            "do": "Precision B",
+            "result": "$1/1=1$",
+            "why": "inverse variance"
+          },
+          {
+            "do": "Total precision",
+            "result": "$1.25$",
+            "why": "add"
+          },
+          {
+            "do": "Weighted numerator",
+            "result": "$6*0.25+10*1=1.5+10=11.5$",
+            "why": "precision-weighted sum"
+          },
+          {
+            "do": "Combined mean",
+            "result": "$11.5/1.25=9.2$",
+            "why": "divide by total precision"
+          }
+        ],
+        "answer": "Combined mean is 9.2."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Sensor averaging",
+        "background": "Sensors with lower variance should count more. Normal-Normal updating is the algebra behind that trust weighting.",
+        "numbers": "Prior mean 20 variance 4 and sensor mean 23 variance 1 combine to mean $(20/4+23/1)/(0.25+1)=22.4$."
+      },
+      {
+        "title": "Online metric smoothing",
+        "background": "A noisy daily metric can be updated from yesterday's posterior and today's measurements.",
+        "numbers": "Prior variance 9 and daily mean variance 1 gives total precision $1/9+1=1.111$, posterior variance about 0.9."
+      },
+      {
+        "title": "Model weight estimates",
+        "background": "Bayesian linear models use Gaussian priors to shrink coefficients toward plausible values.",
+        "numbers": "Prior weight 0 variance 1 and data estimate 3 variance 0.25 combine to mean $(0+12)/(1+4)=2.4$."
+      },
+      {
+        "title": "Experiment measurement error",
+        "background": "When an experiment result has a known standard error, Normal updating can combine it with historical belief.",
+        "numbers": "Prior lift 1 percent variance 4 and estimate 5 percent variance 1 gives posterior mean $(1/4+5)/(1.25)=4.2 percent."
+      },
+      {
+        "title": "Kalman filtering",
+        "background": "The scalar Kalman filter is a repeated Normal-Normal update for state estimates over time.",
+        "numbers": "Prediction variance 4 and measurement variance 1 gives posterior variance $1/(1/4+1)=0.8$."
+      },
+      {
+        "title": "Human rating aggregation",
+        "background": "Ratings can be modeled as noisy measurements of latent quality, with prior quality preventing overreaction to one review.",
+        "numbers": "Prior quality 3.5 variance 1 and 4 reviews mean 4.5 with rating variance 1 gives data precision 4 and posterior mean $(3.5+18)/5=4.3$."
+      }
+    ],
+    "applicationsClose": "The Normal-Normal model is a beautiful reminder that uncertainty has units: variance controls how strongly each source pulls the posterior mean.",
+    "takeaways": [
+      "Normal prior plus Normal likelihood for a mean gives a Normal posterior.",
+      "Precision is inverse variance, and precisions add.",
+      "The posterior mean is a precision-weighted average of prior mean and data mean.",
+      "Posterior variance shrinks as more precise data arrive."
+    ],
     "prereqs": [
       "math-20-06"
     ]
@@ -153,19 +1894,267 @@
   B({
     "id": "math-20-08",
     "title": "Noninformative priors",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: noninformative priors.",
+    "tagline": "A noninformative prior tries to step lightly, while still admitting that every analysis starts somewhere.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Normal–Normal model</i>"
+        "Priors",
+        "Posteriors",
+        "The Normal–Normal model"
       ],
       "leadsTo": [
-        "the next lesson, <i>Credible intervals</i>"
+        "Credible intervals",
+        "Posterior predictive distributions",
+        "Bayesian workflow"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "uniform distributions",
+        "Jeffreys priors",
+        "improper integrals",
+        "invariance"
       ]
     },
+    "motivation": "<p>Sometimes you want the data to speak as loudly as possible. That desire leads to broad, weak, or noninformative priors. The phrase sounds like no assumptions, but that is too strong.</p><p>A noninformative prior is better understood as a careful attempt to add little information on a chosen scale. The scale matters. Flat in θ is not the same as flat in log θ.</p>",
+    "definition": "<p>A <b>noninformative prior</b> is a prior intended to contribute minimal information relative to the likelihood. Examples include a uniform prior on a bounded probability θ, a very wide Normal prior for a location parameter, and certain improper priors whose total area is infinite but can still lead to a proper posterior.</p><p>For a Bernoulli rate, Beta(1,1) is uniform on θ. Jeffreys prior Beta(0.5,0.5) is invariant under smooth reparameterization and puts more mass near 0 and 1. Neither is magic; each expresses a different notion of being neutral.</p><p><b>Assumptions that matter:</b> improper priors require checking that the posterior is proper, flatness depends on parameterization, and weak priors can still influence small datasets. Noninformative does not mean assumption-free.</p>",
+    "worked": {
+      "problem": "Compare the posterior means after 8 successes and 2 failures using Beta(1,1) and Jeffreys Beta(0.5,0.5) priors.",
+      "skills": [
+        "weak priors",
+        "Beta updates",
+        "posterior comparison"
+      ],
+      "strategy": "Both priors are weak — update each by adding the same successes and failures, then compare means.",
+      "steps": [
+        {
+          "do": "Update uniform alpha",
+          "result": "$1+8=9$",
+          "why": "successes add to alpha"
+        },
+        {
+          "do": "Update uniform beta",
+          "result": "$1+2=3$",
+          "why": "failures add to beta"
+        },
+        {
+          "do": "Compute uniform posterior mean",
+          "result": "$9/(9+3)=0.75$",
+          "why": "Beta mean"
+        },
+        {
+          "do": "Update Jeffreys alpha",
+          "result": "$0.5+8=8.5$",
+          "why": "successes add to alpha"
+        },
+        {
+          "do": "Update Jeffreys beta",
+          "result": "$0.5+2=2.5$",
+          "why": "failures add to beta"
+        },
+        {
+          "do": "Compute Jeffreys posterior mean",
+          "result": "$8.5/11=0.773$",
+          "why": "total is 11"
+        }
+      ],
+      "verify": "Both answers are near the sample rate 0.8 because the dataset has 10 observations and the priors are weak.",
+      "answer": "Uniform gives 0.750; Jeffreys gives about 0.773.",
+      "connects": "Noninformative priors can be close but not identical, especially with small samples."
+    },
+    "practice": [
+      {
+        "problem": "With Beta(1,1), observe 0 successes and 0 failures. What is the prior mean and why is it weak?",
+        "steps": [
+          {
+            "do": "Compute total",
+            "result": "$1+1=2$",
+            "why": "prior strength"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$1/2=0.5$",
+            "why": "Beta mean"
+          },
+          {
+            "do": "Identify successes",
+            "result": "$1$",
+            "why": "pseudo-success count"
+          },
+          {
+            "do": "Identify failures",
+            "result": "$1$",
+            "why": "pseudo-failure count"
+          },
+          {
+            "do": "Interpret",
+            "result": "only two pseudo-counts",
+            "why": "small strength is easy to overwhelm"
+          }
+        ],
+        "answer": "Mean 0.5, weak strength 2."
+      },
+      {
+        "problem": "Use Beta(0.5,0.5) with 0 successes and 4 failures. Find posterior mean.",
+        "steps": [
+          {
+            "do": "Update alpha",
+            "result": "$0.5+0=0.5$",
+            "why": "no successes"
+          },
+          {
+            "do": "Update beta",
+            "result": "$0.5+4=4.5$",
+            "why": "add failures"
+          },
+          {
+            "do": "Total",
+            "result": "$5$",
+            "why": "0.5+4.5"
+          },
+          {
+            "do": "Mean",
+            "result": "$0.5/5=0.10$",
+            "why": "Beta mean"
+          },
+          {
+            "do": "Compare sample rate",
+            "result": "$0/4=0$",
+            "why": "prior keeps mean above zero"
+          }
+        ],
+        "answer": "Posterior mean is 0.10."
+      },
+      {
+        "problem": "A wide Normal prior has mean 0 and variance 10000. One measurement has mean 7 and variance 4. Approximate posterior mean.",
+        "steps": [
+          {
+            "do": "Prior precision",
+            "result": "$1/10000=0.0001$",
+            "why": "very small"
+          },
+          {
+            "do": "Data precision",
+            "result": "$1/4=0.25$",
+            "why": "much larger"
+          },
+          {
+            "do": "Total precision",
+            "result": "$0.2501$",
+            "why": "add"
+          },
+          {
+            "do": "Weighted numerator",
+            "result": "$0*0.0001+7*0.25=1.75$",
+            "why": "data dominates"
+          },
+          {
+            "do": "Posterior mean",
+            "result": "$1.75/0.2501=6.997$",
+            "why": "almost the data mean"
+          }
+        ],
+        "answer": "Posterior mean is about 6.997."
+      },
+      {
+        "problem": "A flat prior on θ in [0,1] is Beta(1,1). After 3 successes and 1 failure, find posterior and mean.",
+        "steps": [
+          {
+            "do": "Update alpha",
+            "result": "$1+3=4$",
+            "why": "add successes"
+          },
+          {
+            "do": "Update beta",
+            "result": "$1+1=2$",
+            "why": "add failures"
+          },
+          {
+            "do": "Write posterior",
+            "result": "$Beta(4,2)$",
+            "why": "conjugate update"
+          },
+          {
+            "do": "Total",
+            "result": "$6$",
+            "why": "4+2"
+          },
+          {
+            "do": "Mean",
+            "result": "$4/6=0.667$",
+            "why": "posterior mean"
+          }
+        ],
+        "answer": "Posterior Beta(4,2), mean 0.667."
+      },
+      {
+        "problem": "An improper flat prior for a Normal mean combines with n=4 observations of known variance 9 and sample mean 12. What posterior mean and variance result?",
+        "steps": [
+          {
+            "do": "Use data precision",
+            "result": "$4/9$",
+            "why": "flat prior contributes zero precision"
+          },
+          {
+            "do": "Compute posterior variance",
+            "result": "$1/(4/9)=9/4=2.25$",
+            "why": "invert precision"
+          },
+          {
+            "do": "Posterior mean",
+            "result": "$12$",
+            "why": "with no prior pull, mean equals sample mean"
+          },
+          {
+            "do": "Compute standard deviation",
+            "result": "$sqrt(2.25)=1.5$",
+            "why": "uncertainty in μ"
+          },
+          {
+            "do": "Interpret",
+            "result": "proper posterior",
+            "why": "Normal data make the posterior finite"
+          }
+        ],
+        "answer": "Posterior mean 12 and variance 2.25."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Default conversion-rate priors",
+        "background": "Uniform Beta(1,1) is a common simple default for binary rates when little is known.",
+        "numbers": "After 2 conversions in 10 visits, posterior mean is $(1+2)/(2+10)=3/12=0.25$."
+      },
+      {
+        "title": "Jeffreys prior in small samples",
+        "background": "Jeffreys prior is often used because it behaves more consistently under reparameterization.",
+        "numbers": "After 2 successes in 10 trials, Beta(0.5,0.5) gives mean $2.5/11=0.227$."
+      },
+      {
+        "title": "Wide priors in regression",
+        "background": "A wide Normal prior lets coefficients move freely while still keeping the computation Bayesian.",
+        "numbers": "Normal(0,100^2) has standard deviation 100, so coefficient 2 is only 0.02 standard deviations from the mean."
+      },
+      {
+        "title": "Improper location priors",
+        "background": "Flat improper priors are sometimes used for location parameters, but the posterior must be checked.",
+        "numbers": "For n=5 Normal observations with variance 10, posterior variance under flat prior is $10/5=2$."
+      },
+      {
+        "title": "Scale sensitivity",
+        "background": "Flat on one scale is not flat on another, which matters for positive rates and variances.",
+        "numbers": "A value from 1 to 10 spans 9 units on θ scale but only $log(10)-log(1)=2.303$ on log scale."
+      },
+      {
+        "title": "Sparse data caution",
+        "background": "Weak priors can still visibly affect very small datasets, which is usually a feature, not a bug.",
+        "numbers": "With one success in one trial, Beta(1,1) posterior mean is $2/3=0.667$, not 1."
+      }
+    ],
+    "applicationsClose": "Noninformative priors are humility in mathematical form: useful, often necessary, but still choices that deserve to be named.",
+    "takeaways": [
+      "Noninformative priors aim to add little information, not zero assumptions.",
+      "Flatness depends on the parameter scale.",
+      "Improper priors require a proper posterior check.",
+      "Weak priors matter most when data are scarce."
+    ],
     "prereqs": [
       "math-20-07"
     ]
@@ -174,19 +2163,267 @@
   B({
     "id": "math-20-09",
     "title": "Credible intervals",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: credible intervals.",
+    "tagline": "A credible interval is a probability statement about the parameter, made after the data have updated your uncertainty.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Noninformative priors</i>"
+        "Posteriors",
+        "The Beta–Binomial model",
+        "The Normal–Normal model"
       ],
       "leadsTo": [
-        "the next lesson, <i>Posterior predictive distributions</i>"
+        "Posterior predictive distributions",
+        "Bayesian decision rules",
+        "Bayesian workflow"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "quantiles",
+        "posterior probability",
+        "Normal intervals",
+        "Beta distributions"
       ]
     },
+    "motivation": "<p>You already know that a single estimate can be too thin. Saying a click rate is 0.12 is helpful, but saying most posterior mass lies between 0.08 and 0.17 tells a richer story.</p><p>A <b>credible interval</b> is Bayesian uncertainty in interval form. After observing data, it gives a range that contains a chosen amount of posterior probability.</p>",
+    "definition": "<p>A 95 percent credible interval for θ is an interval [a,b] such that posterior probability $P(a <= θ <= b | D)=0.95$. Equal-tailed intervals put 2.5 percent posterior probability below a and 2.5 percent above b. Highest posterior density intervals choose the shortest high-density region, when appropriate.</p><p>For a Normal posterior with mean m and standard deviation s, a rough 95 percent credible interval is $m ± 1.96s$. Unlike a frequentist confidence interval, the Bayesian statement is directly about θ under the posterior model.</p><p><b>Assumptions that matter:</b> the interval is conditional on the prior, likelihood, and model; approximate Normal intervals need a roughly Normal posterior; and 95 percent credible does not mean every value inside is equally plausible.</p>",
+    "worked": {
+      "problem": "A posterior for μ is Normal with mean 12.4 and variance 0.8. Compute an approximate 95 percent credible interval using 1.96 standard deviations.",
+      "skills": [
+        "Normal posterior",
+        "standard deviation",
+        "credible interval"
+      ],
+      "strategy": "Turn variance into standard deviation, multiply by 1.96, then move that distance around the posterior mean.",
+      "steps": [
+        {
+          "do": "Compute standard deviation",
+          "result": "$sqrt(0.8)=0.894$",
+          "why": "standard deviation is the square root of variance"
+        },
+        {
+          "do": "Compute margin",
+          "result": "$1.96*0.894=1.752$",
+          "why": "95 percent Normal multiplier"
+        },
+        {
+          "do": "Compute lower endpoint",
+          "result": "$12.4-1.752=10.648$",
+          "why": "subtract margin from mean"
+        },
+        {
+          "do": "Compute upper endpoint",
+          "result": "$12.4+1.752=14.152$",
+          "why": "add margin to mean"
+        },
+        {
+          "do": "Round endpoints",
+          "result": "$[10.65,14.15]$",
+          "why": "two decimals are enough for reporting"
+        },
+        {
+          "do": "Interpret",
+          "result": "posterior probability is about 0.95",
+          "why": "under the Normal posterior model"
+        }
+      ],
+      "verify": "The interval is centered at the posterior mean and narrower than the prior uncertainty because data increased precision.",
+      "answer": "Approximate 95 percent credible interval: [10.65, 14.15].",
+      "connects": "Credible intervals summarize posterior mass, not repeated-sampling coverage by default."
+    },
+    "practice": [
+      {
+        "problem": "Posterior Normal mean 5, variance 1.44. Compute an approximate 90 percent credible interval using multiplier 1.645.",
+        "steps": [
+          {
+            "do": "Standard deviation",
+            "result": "$sqrt(1.44)=1.2$",
+            "why": "square root of variance"
+          },
+          {
+            "do": "Margin",
+            "result": "$1.645*1.2=1.974$",
+            "why": "90 percent Normal multiplier"
+          },
+          {
+            "do": "Lower",
+            "result": "$5-1.974=3.026$",
+            "why": "subtract"
+          },
+          {
+            "do": "Upper",
+            "result": "$5+1.974=6.974$",
+            "why": "add"
+          },
+          {
+            "do": "Round",
+            "result": "$[3.03,6.97]$",
+            "why": "report neatly"
+          }
+        ],
+        "answer": "Approximate 90 percent interval is [3.03, 6.97]."
+      },
+      {
+        "problem": "A posterior has samples sorted so the 25th of 1000 samples is 0.08 and the 975th is 0.19. State the equal-tailed 95 percent credible interval.",
+        "steps": [
+          {
+            "do": "Find lower tail",
+            "result": "$25/1000=0.025$",
+            "why": "2.5 percent below"
+          },
+          {
+            "do": "Find upper tail",
+            "result": "$975/1000=0.975$",
+            "why": "97.5 percent quantile"
+          },
+          {
+            "do": "Read lower endpoint",
+            "result": "$0.08$",
+            "why": "given sample quantile"
+          },
+          {
+            "do": "Read upper endpoint",
+            "result": "$0.19$",
+            "why": "given sample quantile"
+          },
+          {
+            "do": "State interval",
+            "result": "$[0.08,0.19]$",
+            "why": "middle 95 percent"
+          }
+        ],
+        "answer": "The equal-tailed 95 percent credible interval is [0.08, 0.19]."
+      },
+      {
+        "problem": "Posterior Normal mean 0.30, standard deviation 0.05. Is θ=0.20 inside the rough 95 percent credible interval?",
+        "steps": [
+          {
+            "do": "Compute margin",
+            "result": "$1.96*0.05=0.098$",
+            "why": "95 percent multiplier"
+          },
+          {
+            "do": "Lower endpoint",
+            "result": "$0.30-0.098=0.202$",
+            "why": "subtract"
+          },
+          {
+            "do": "Upper endpoint",
+            "result": "$0.30+0.098=0.398$",
+            "why": "add"
+          },
+          {
+            "do": "Compare θ",
+            "result": "$0.20<0.202$",
+            "why": "slightly below lower endpoint"
+          },
+          {
+            "do": "Decide",
+            "result": "not inside",
+            "why": "it misses by 0.002"
+          }
+        ],
+        "answer": "No. The rough interval is [0.202, 0.398], so 0.20 is just outside."
+      },
+      {
+        "problem": "A 95 percent credible interval for lift is [-0.01,0.07]. Interpret it for a launch decision requiring at least 0.02 lift.",
+        "steps": [
+          {
+            "do": "Read lower endpoint",
+            "result": "$-0.01$",
+            "why": "negative lift remains plausible"
+          },
+          {
+            "do": "Read upper endpoint",
+            "result": "$0.07$",
+            "why": "meaningful positive lift is plausible"
+          },
+          {
+            "do": "Locate threshold",
+            "result": "$0.02$ lies inside",
+            "why": "the decision threshold is within the interval"
+          },
+          {
+            "do": "Assess certainty",
+            "result": "not enough by interval alone",
+            "why": "posterior mass spans both below and above threshold"
+          },
+          {
+            "do": "State next step",
+            "result": "compute $P(lift>0.02)$",
+            "why": "decision needs posterior probability above target"
+          }
+        ],
+        "answer": "The interval is promising but not decisive for a 0.02 lift requirement."
+      },
+      {
+        "problem": "A posterior Normal has a 95 percent credible interval [8,12]. Assuming symmetry and multiplier 1.96, recover mean and standard deviation.",
+        "steps": [
+          {
+            "do": "Compute mean",
+            "result": "$(8+12)/2=10$",
+            "why": "center of symmetric interval"
+          },
+          {
+            "do": "Compute half-width",
+            "result": "$(12-8)/2=2$",
+            "why": "margin"
+          },
+          {
+            "do": "Set margin equation",
+            "result": "$1.96s=2$",
+            "why": "Normal interval form"
+          },
+          {
+            "do": "Solve for s",
+            "result": "$s=2/1.96=1.020$",
+            "why": "divide"
+          },
+          {
+            "do": "Check",
+            "result": "$10 ± 1.96*1.020$ gives about [8,12]",
+            "why": "substitute back"
+          }
+        ],
+        "answer": "Mean is 10 and standard deviation is about 1.02."
+      }
+    ],
+    "applications": [
+      {
+        "title": "A/B test reporting",
+        "background": "Credible intervals help teams see practical uncertainty around conversion lift.",
+        "numbers": "If posterior lift mean is 0.03 and sd is 0.015, rough 95 percent interval is $0.03 ± 0.0294$, or [0.0006,0.0594]."
+      },
+      {
+        "title": "CTR uncertainty",
+        "background": "A smoothed click-rate estimate should include uncertainty, especially for low-traffic items.",
+        "numbers": "Posterior mean 0.10 and sd 0.03 gives rough 95 percent interval [0.041,0.159]."
+      },
+      {
+        "title": "Model latency",
+        "background": "Bayesian intervals can summarize uncertainty in average latency after noisy measurements.",
+        "numbers": "Posterior mean 120 ms and sd 5 ms gives 95 percent interval about [110.2,129.8] ms."
+      },
+      {
+        "title": "Calibration error",
+        "background": "Intervals around calibration parameters show whether a model may be overconfident or underconfident.",
+        "numbers": "Posterior slope mean 0.92 sd 0.04 gives 95 percent interval [0.842,0.998], mostly below 1."
+      },
+      {
+        "title": "Reliability bounds",
+        "background": "For defect or failure rates, intervals communicate risk better than a single rate.",
+        "numbers": "If posterior failure-rate interval is [0.001,0.006], then in 10,000 units that corresponds to about 10 to 60 failures."
+      },
+      {
+        "title": "Forecast ranges",
+        "background": "Forecasting systems often report posterior intervals so planners can prepare for uncertainty.",
+        "numbers": "Demand posterior mean 500 and sd 40 gives rough 95 percent credible range [421.6,578.4]."
+      }
+    ],
+    "applicationsClose": "A credible interval is not a decoration on an estimate; it is the posterior distribution made compact enough to guide judgment.",
+    "takeaways": [
+      "A credible interval contains a chosen amount of posterior probability.",
+      "For Normal posteriors, use mean plus or minus a multiplier times posterior standard deviation.",
+      "Equal-tailed and highest-density intervals can differ for skewed posteriors.",
+      "Credible intervals are conditional on the prior, likelihood, and model assumptions."
+    ],
     "prereqs": [
       "math-20-08"
     ]
@@ -195,19 +2432,267 @@
   B({
     "id": "math-20-10",
     "title": "Posterior predictive distributions",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: posterior predictive distributions.",
+    "tagline": "A posterior predictive distribution carries parameter uncertainty forward into uncertainty about the next data point.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Credible intervals</i>"
+        "Posteriors",
+        "Credible intervals",
+        "The Beta–Binomial model"
       ],
       "leadsTo": [
-        "the next lesson, <i>Hierarchical models</i>"
+        "Bayesian decision making",
+        "Bayesian model checking",
+        "probabilistic forecasting"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "expectation",
+        "mixtures",
+        "predictive intervals",
+        "marginalization"
       ]
     },
+    "motivation": "<p>After learning about a parameter, the next natural question is practical: what might happen next? A point estimate of θ is not enough, because θ is still uncertain.</p><p>The <b>posterior predictive distribution</b> answers by averaging predictions over the whole posterior. It is the Bayesian way to say: account for what we learned and for what we still do not know.</p>",
+    "definition": "<p>The posterior predictive distribution for new data xnew is $p(xnew|D)=average of p(xnew|θ) over the posterior p(θ|D)$. In words, each possible θ predicts xnew, and the posterior weights those predictions.</p><p>For a Beta-Binomial model, if θ|D is Beta(a,b), the predictive probability that the next trial succeeds is $a/(a+b)$. For multiple future trials, the Beta-Binomial predictive distribution is wider than a Binomial with θ fixed at the posterior mean because it includes parameter uncertainty.</p><p><b>Assumptions that matter:</b> future data must follow the same data-generating model conditional on θ, posterior uncertainty must be integrated rather than ignored, and predictions are conditional on the model being appropriate for the future setting.</p>",
+    "worked": {
+      "problem": "A click-rate posterior is Beta(9,21). Find the predictive probability of a click on the next impression and the predictive mean number of clicks in 10 impressions.",
+      "skills": [
+        "posterior predictive",
+        "Beta-Binomial",
+        "expected count"
+      ],
+      "strategy": "Use the posterior mean as the next-trial predictive probability, then multiply by the number of future trials for the predictive mean count.",
+      "steps": [
+        {
+          "do": "Identify posterior parameters",
+          "result": "$a=9$, $b=21$",
+          "why": "from Beta(a,b)"
+        },
+        {
+          "do": "Compute total",
+          "result": "$9+21=30$",
+          "why": "posterior effective count"
+        },
+        {
+          "do": "Compute next-click probability",
+          "result": "$9/30=0.30$",
+          "why": "posterior predictive success probability"
+        },
+        {
+          "do": "Set future trials",
+          "result": "$m=10$",
+          "why": "ten impressions"
+        },
+        {
+          "do": "Compute predictive mean count",
+          "result": "$10*0.30=3$",
+          "why": "expected successes equals trials times success probability"
+        },
+        {
+          "do": "Interpret",
+          "result": "about 3 clicks",
+          "why": "prediction includes posterior uncertainty through the averaged rate"
+        }
+      ],
+      "verify": "The predictive probability matches the posterior mean for one Bernoulli trial, but the full predictive distribution would also describe variability around 3.",
+      "answer": "Next-click probability is 0.30; expected clicks in 10 impressions is 3.",
+      "connects": "Posterior prediction moves from uncertainty about θ to uncertainty about future observations."
+    },
+    "practice": [
+      {
+        "problem": "Posterior Beta(4,6). Find predictive probability of success on the next trial.",
+        "steps": [
+          {
+            "do": "Read a",
+            "result": "$4$",
+            "why": "posterior alpha"
+          },
+          {
+            "do": "Read b",
+            "result": "$6$",
+            "why": "posterior beta"
+          },
+          {
+            "do": "Compute total",
+            "result": "$10$",
+            "why": "a+b"
+          },
+          {
+            "do": "Divide",
+            "result": "$4/10=0.40$",
+            "why": "predictive success probability"
+          },
+          {
+            "do": "State",
+            "result": "40 percent",
+            "why": "next trial averages over θ"
+          }
+        ],
+        "answer": "Predictive probability is 0.40."
+      },
+      {
+        "problem": "Posterior Beta(12,18). Find expected successes in 50 future trials.",
+        "steps": [
+          {
+            "do": "Compute predictive probability",
+            "result": "$12/(12+18)=0.40$",
+            "why": "posterior mean"
+          },
+          {
+            "do": "Set future trials",
+            "result": "$50$",
+            "why": "given"
+          },
+          {
+            "do": "Multiply",
+            "result": "$50*0.40=20$",
+            "why": "expected count"
+          },
+          {
+            "do": "Attach units",
+            "result": "20 successes",
+            "why": "future binary outcomes"
+          },
+          {
+            "do": "Interpret",
+            "result": "mean, not guarantee",
+            "why": "actual count varies"
+          }
+        ],
+        "answer": "Expected future successes: 20."
+      },
+      {
+        "problem": "A posterior over models gives probabilities 0.7 and 0.3. Model A predicts rain with probability 0.2; model B predicts rain with probability 0.6. Find posterior predictive rain probability.",
+        "steps": [
+          {
+            "do": "Weight model A prediction",
+            "result": "$0.7*0.2=0.14$",
+            "why": "posterior model probability times prediction"
+          },
+          {
+            "do": "Weight model B prediction",
+            "result": "$0.3*0.6=0.18$",
+            "why": "same for model B"
+          },
+          {
+            "do": "Add",
+            "result": "$0.14+0.18=0.32$",
+            "why": "average over model uncertainty"
+          },
+          {
+            "do": "Check range",
+            "result": "$0.32$ is between 0.2 and 0.6",
+            "why": "weighted average sanity check"
+          },
+          {
+            "do": "State probability",
+            "result": "32 percent",
+            "why": "posterior predictive probability"
+          }
+        ],
+        "answer": "Predictive rain probability is 0.32."
+      },
+      {
+        "problem": "A Normal posterior for μ has mean 10 and variance 1. Future observation noise variance is 4. Find predictive mean and variance for one new observation.",
+        "steps": [
+          {
+            "do": "Predictive mean",
+            "result": "$10$",
+            "why": "future observation is centered at posterior mean"
+          },
+          {
+            "do": "Parameter variance",
+            "result": "$1$",
+            "why": "uncertainty about μ"
+          },
+          {
+            "do": "Noise variance",
+            "result": "$4$",
+            "why": "new observation noise"
+          },
+          {
+            "do": "Add variances",
+            "result": "$1+4=5$",
+            "why": "prediction includes both sources"
+          },
+          {
+            "do": "State standard deviation",
+            "result": "$sqrt(5)=2.236$",
+            "why": "optional scale"
+          }
+        ],
+        "answer": "Predictive mean is 10 and predictive variance is 5."
+      },
+      {
+        "problem": "Posterior Beta(2,8). Compute probability of exactly one success in two future trials using the Beta-Binomial formula $2ab/((a+b)(a+b+1))$.",
+        "steps": [
+          {
+            "do": "Set parameters",
+            "result": "$a=2$, $b=8$",
+            "why": "posterior parameters"
+          },
+          {
+            "do": "Compute numerator",
+            "result": "$2*a*b=2*2*8=32$",
+            "why": "exactly one success can occur in two orders"
+          },
+          {
+            "do": "Compute denominator",
+            "result": "$(a+b)(a+b+1)=10*11=110$",
+            "why": "Beta-Binomial denominator"
+          },
+          {
+            "do": "Divide",
+            "result": "$32/110=0.291$",
+            "why": "predictive probability"
+          },
+          {
+            "do": "Interpret",
+            "result": "about 29.1 percent",
+            "why": "parameter uncertainty is integrated"
+          }
+        ],
+        "answer": "Probability of exactly one success in two future trials is about 0.291."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Forecasting clicks",
+        "background": "Ad systems care about future clicks, not only the latent click rate. Posterior predictive distributions answer that operational question.",
+        "numbers": "Posterior Beta(20,180) gives next-click probability $20/200=0.10$ and expected clicks in 100 impressions equal 10."
+      },
+      {
+        "title": "Inventory planning",
+        "background": "Predictive distributions turn parameter uncertainty into demand uncertainty for future periods.",
+        "numbers": "If predictive demand mean is 500 with sd 60, stocking 620 units is about 2 predictive standard deviations above the mean."
+      },
+      {
+        "title": "Model checking",
+        "background": "Posterior predictive checks simulate future-looking datasets and compare them with observed data.",
+        "numbers": "If observed maximum count is 18 but 950 of 1000 predictive simulations have maximum below 12, the model may understate extremes."
+      },
+      {
+        "title": "Risk alerts",
+        "background": "Predictive probabilities can trigger action when future bad outcomes are sufficiently likely.",
+        "numbers": "If posterior predictive probability of more than 5 failures tomorrow is 0.12 and threshold is 0.10, an alert fires."
+      },
+      {
+        "title": "Bayesian ensembling",
+        "background": "Averaging predictions over model posterior probabilities is a Bayesian ensemble.",
+        "numbers": "Models predict 0.1, 0.4, 0.8 with posterior weights 0.2, 0.5, 0.3, giving predictive probability $0.02+0.20+0.24=0.46$."
+      },
+      {
+        "title": "Predictive intervals for latency",
+        "background": "A parameter credible interval is not the same as a future-observation interval; new noise makes predictions wider.",
+        "numbers": "If mean latency posterior variance is 4 and observation noise variance is 25, predictive variance is 29, sd about 5.39 ms."
+      }
+    ],
+    "applicationsClose": "Posterior prediction is the capstone move: learn uncertainty about the hidden quantity, then carry that uncertainty into the next observable outcome.",
+    "takeaways": [
+      "A posterior predictive distribution averages future-data probabilities over the posterior.",
+      "For one future Bernoulli trial under Beta(a,b), predictive success probability is a/(a+b).",
+      "Predictive uncertainty includes both parameter uncertainty and observation noise.",
+      "Posterior predictive checks compare simulated future data with real observed patterns."
+    ],
     "prereqs": [
       "math-20-09"
     ]
@@ -216,19 +2701,268 @@
   B({
     "id": "math-20-11",
     "title": "Hierarchical models",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: hierarchical models.",
+    "tagline": "Hierarchical Bayes lets related groups learn together without pretending they are identical.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Posterior predictive distributions</i>"
+        "Bayes' theorem",
+        "conditional probability",
+        "conjugate priors",
+        "posterior distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Bayesian model comparison</i>"
+        "Bayesian model comparison",
+        "MCMC for Bayesian inference",
+        "Gaussian process regression"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "conditional independence",
+        "exchangeability",
+        "marginalization",
+        "variance decomposition"
       ]
     },
+    "motivation": "<p>You already know how to estimate one probability from one dataset. If 7 of 10 trials succeed, $0.7$ feels like a natural estimate.</p><p>But real data often comes in related groups: hospitals, classrooms, users, markets. A tiny group should borrow strength from the others, while a large group should be trusted more. A <b>hierarchical model</b> gives us that careful middle path.</p>",
+    "definition": "<p>A <b>hierarchical Bayesian model</b> puts priors on group parameters and then puts a higher-level prior on the parameters of those priors. A common form is $y_{ij}\\mid \\theta_j\\sim p(y\\mid\\theta_j)$, $\\theta_j\\mid\\phi\\sim p(\\theta\\mid\\phi)$, and $\\phi\\sim p(\\phi)$, where $j$ indexes a group and $i$ indexes observations inside that group.</p><p>The key effect is <b>partial pooling</b>. Each group estimate is pulled toward the shared population pattern. In the normal-normal case with known variances, if $\\bar y_j\\sim\\mathcal{N}(\\theta_j,\\sigma^2/n_j)$ and $\\theta_j\\sim\\mathcal{N}(\\mu,\\tau^2)$, then the posterior mean is a weighted average of $\\bar y_j$ and $\\mu$; the group receives more pull when $n_j$ is small or group noise is large.</p><p><b>Assumptions that matter:</b> groups are treated as exchangeable after conditioning on the population parameters; the higher-level prior must describe plausible between-group variation; and partial pooling is helpful only when the groups are meaningfully related.</p>",
+    "worked": {
+      "problem": "A hospital has $n=4$ patient outcomes with sample mean $\\bar y=12$. Across hospitals, the prior for its true mean is $\\theta\\sim\\mathcal{N}(10,3^2)$. Individual outcomes have known standard deviation $\\sigma=6$. Find the posterior mean for $\\theta$.",
+      "skills": [
+        "normal-normal updating",
+        "precision weights",
+        "partial pooling"
+      ],
+      "strategy": "The sample is small, so combine the group mean with the population mean using precision weights.",
+      "steps": [
+        {
+          "do": "Compute the data variance for $\\bar y$",
+          "result": "$\\sigma^2/n=36/4=9$",
+          "why": "the sample mean is less noisy than one observation"
+        },
+        {
+          "do": "Compute the data precision",
+          "result": "$1/9$",
+          "why": "precision is inverse variance"
+        },
+        {
+          "do": "Compute the prior precision",
+          "result": "$1/3^2=1/9$",
+          "why": "the prior variance is also 9"
+        },
+        {
+          "do": "Add the precisions",
+          "result": "$1/9+1/9=2/9$",
+          "why": "independent normal information adds in precision"
+        },
+        {
+          "do": "Weight the two means",
+          "result": "$(12/9+10/9)/(2/9)=11$",
+          "why": "equal precisions give an equal average"
+        },
+        {
+          "do": "State the posterior mean",
+          "result": "$\\mathbb{E}[\\theta\\mid y]=11$",
+          "why": "the hospital estimate is pulled halfway toward the population mean"
+        }
+      ],
+      "verify": "The answer lies between the hospital mean 12 and population mean 10, exactly halfway because the precisions match.",
+      "answer": "The posterior mean is $11$.",
+      "connects": "Hierarchical modeling turns isolated estimates into shared learning with measured shrinkage."
+    },
+    "practice": [
+      {
+        "problem": "A school has $n=9$ test scores with $\\bar y=82$. The population prior is $\\theta\\sim\\mathcal{N}(75,5^2)$ and individual standard deviation is $\\sigma=15$. Find the posterior mean.",
+        "steps": [
+          {
+            "do": "Compute the variance of $\\bar y$",
+            "result": "$15^2/9=25$",
+            "why": "divide observation variance by sample size"
+          },
+          {
+            "do": "Compute data precision",
+            "result": "$1/25$",
+            "why": "precision is inverse variance"
+          },
+          {
+            "do": "Compute prior precision",
+            "result": "$1/25$",
+            "why": "the prior variance is $5^2=25$"
+          },
+          {
+            "do": "Combine weighted means",
+            "result": "$(82/25+75/25)/(2/25)=78.5$",
+            "why": "equal precision averages the two means"
+          },
+          {
+            "do": "Check the direction",
+            "result": "$78.5$ is between $75$ and $82$",
+            "why": "partial pooling should not overshoot"
+          }
+        ],
+        "answer": "The posterior mean is $78.5$."
+      },
+      {
+        "problem": "A small product segment has $n=3$, $\\bar y=20$, prior mean $15$, prior standard deviation $4$, and observation standard deviation $8$. Find the posterior mean.",
+        "steps": [
+          {
+            "do": "Compute data variance",
+            "result": "$8^2/3=64/3$",
+            "why": "the sample mean variance uses $n=3$"
+          },
+          {
+            "do": "Compute data precision",
+            "result": "$3/64$",
+            "why": "invert $64/3$"
+          },
+          {
+            "do": "Compute prior precision",
+            "result": "$1/16$",
+            "why": "the prior variance is $4^2=16$"
+          },
+          {
+            "do": "Add precisions",
+            "result": "$3/64+1/16=7/64$",
+            "why": "$1/16=4/64$"
+          },
+          {
+            "do": "Compute posterior mean",
+            "result": "$(20\\cdot3/64+15\\cdot4/64)/(7/64)=120/7\\approx17.14$",
+            "why": "weighted averages use precisions"
+          }
+        ],
+        "answer": "The posterior mean is approximately $17.14$."
+      },
+      {
+        "problem": "For a Beta-binomial hierarchy, group A has prior $\\theta_A\\sim\\operatorname{Beta}(4,6)$ and observes $8$ successes in $10$ trials. Find its posterior mean.",
+        "steps": [
+          {
+            "do": "Add successes to $\\alpha$",
+            "result": "$\\alpha'=4+8=12$",
+            "why": "Beta-binomial updating counts successes"
+          },
+          {
+            "do": "Add failures to $\\beta$",
+            "result": "$\\beta'=6+2=8$",
+            "why": "there are $10-8=2$ failures"
+          },
+          {
+            "do": "Write the posterior",
+            "result": "$\\operatorname{Beta}(12,8)$",
+            "why": "conjugacy keeps the Beta form"
+          },
+          {
+            "do": "Compute the posterior mean",
+            "result": "$12/(12+8)=0.60$",
+            "why": "a Beta mean is $\\alpha/(\\alpha+\\beta)$"
+          },
+          {
+            "do": "Compare to raw rate",
+            "result": "$0.60<0.80$",
+            "why": "the population prior pulls the small group down"
+          }
+        ],
+        "answer": "The posterior mean is $0.60$."
+      },
+      {
+        "problem": "Two groups have raw rates $1/2=0.50$ and $40/50=0.80$. With prior $\\operatorname{Beta}(8,2)$ for each group, find both posterior means and explain the different shrinkage.",
+        "steps": [
+          {
+            "do": "Update group 1",
+            "result": "$\\operatorname{Beta}(9,3)$",
+            "why": "add 1 success and 1 failure"
+          },
+          {
+            "do": "Compute group 1 mean",
+            "result": "$9/12=0.75$",
+            "why": "use the Beta mean"
+          },
+          {
+            "do": "Update group 2",
+            "result": "$\\operatorname{Beta}(48,12)$",
+            "why": "add 40 successes and 10 failures"
+          },
+          {
+            "do": "Compute group 2 mean",
+            "result": "$48/60=0.80$",
+            "why": "many observations dominate the same prior"
+          },
+          {
+            "do": "Compare shrinkage",
+            "result": "group 1 moves from $0.50$ to $0.75$; group 2 stays near $0.80$",
+            "why": "small groups borrow more strength"
+          }
+        ],
+        "answer": "The posterior means are $0.75$ and $0.80$; the smaller group shrinks more."
+      },
+      {
+        "problem": "An ad model has three campaign click rates: $0.02$ from $10$ clicks, $0.05$ from $100$ clicks, and $0.08$ from $1000$ clicks. A hierarchy uses population mean $0.04$. Which campaign should be pulled most toward $0.04$, and why?",
+        "steps": [
+          {
+            "do": "List sample sizes",
+            "result": "$10$, $100$, and $1000$",
+            "why": "sample size controls data precision"
+          },
+          {
+            "do": "Identify the smallest sample",
+            "result": "$10$ clicks",
+            "why": "the first campaign has the least information"
+          },
+          {
+            "do": "Compare raw rate to population",
+            "result": "$0.02$ is below $0.04$",
+            "why": "the pull will be upward"
+          },
+          {
+            "do": "Identify the largest sample",
+            "result": "$1000$ clicks",
+            "why": "the third campaign has the most information"
+          },
+          {
+            "do": "State the pooling pattern",
+            "result": "the $10$-click campaign shrinks most; the $1000$-click campaign shrinks least",
+            "why": "hierarchical pooling trusts large groups more"
+          }
+        ],
+        "answer": "The first campaign should be pulled most, upward toward $0.04$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Hospital quality estimates",
+        "background": "Public health comparisons can overreact to tiny hospitals. Hierarchical models became popular because they stabilize noisy group estimates without erasing real differences.",
+        "numbers": "A hospital with $2$ complications in $5$ cases has raw rate $0.40$; with prior $\\operatorname{Beta}(8,92)$, posterior mean is $10/105\\approx0.095$."
+      },
+      {
+        "title": "A/B tests across markets",
+        "background": "Product experiments often run in many countries or segments. A hierarchy lets each segment learn from the global pattern.",
+        "numbers": "With prior lift $1.0\\%$ and segment estimate $3.0\\%$, equal precision gives posterior mean $2.0\\%$."
+      },
+      {
+        "title": "Recommender systems for sparse users",
+        "background": "Many users have only a few actions. Hierarchical priors pull a user's preference toward a population preference until enough evidence arrives.",
+        "numbers": "A user with 1 like in 1 view and prior $\\operatorname{Beta}(9,11)$ has posterior mean $10/21\\approx0.476$, not $1.0$."
+      },
+      {
+        "title": "Classroom and teacher effects",
+        "background": "Education studies use multilevel models because students are nested in classrooms and schools. The method separates local variation from shared background.",
+        "numbers": "A class mean $88$ with standard error $4$ and district prior $80\\pm4$ has posterior mean $84$."
+      },
+      {
+        "title": "Fraud rates by merchant",
+        "background": "Risk systems need estimates for merchants with very different transaction counts. Partial pooling prevents tiny merchants from looking extreme by accident.",
+        "numbers": "Prior $\\operatorname{Beta}(2,198)$ plus $1$ fraud in $5$ transactions gives posterior mean $3/205\\approx0.0146$."
+      },
+      {
+        "title": "Meta-analysis of studies",
+        "background": "Scientific studies estimate related effects with different sample sizes. Hierarchical Bayes combines them while allowing true study-to-study variation.",
+        "numbers": "A study estimate $0.30$ with variance $0.04$ and population prior $0.10$ with variance $0.01$ gives mean $(0.30/0.04+0.10/0.01)/(25+100)=0.14$."
+      }
+    ],
+    "applicationsClose": "Hierarchies are a disciplined way to say: related groups should share information, but evidence still matters.",
+    "takeaways": [
+      "Hierarchical models place priors on group parameters and higher-level priors on population parameters.",
+      "Partial pooling pulls small or noisy groups toward the shared population pattern.",
+      "Exchangeability means groups are comparable after conditioning on the hierarchy.",
+      "The strength of shrinkage is controlled by data precision and between-group variation."
+    ],
     "prereqs": [
       "math-20-10"
     ]
@@ -237,19 +2971,263 @@
   B({
     "id": "math-20-12",
     "title": "Bayesian model comparison",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: bayesian model comparison.",
+    "tagline": "Bayesian comparison asks which model predicts the observed data best after paying for its flexibility.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Hierarchical models</i>"
+        "posterior distributions",
+        "conditional probability",
+        "model evidence",
+        "odds ratios"
       ],
       "leadsTo": [
-        "the next lesson, <i>The model evidence</i>"
+        "The model evidence",
+        "The Laplace approximation",
+        "Bayesian deep learning & uncertainty"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "marginal probability",
+        "Bayes factors",
+        "decision rules",
+        "predictive distributions"
       ]
     },
+    "motivation": "<p>You already compare explanations informally. If a coin lands heads 9 times out of 10, a fair coin still could do that, but a biased coin sounds more plausible.</p><p>Bayesian model comparison makes that instinct precise. It updates beliefs over whole models, not just parameters, and it rewards models that predicted the data well before seeing it.</p>",
+    "definition": "<p>For candidate models $M_1,\\ldots,M_K$, Bayesian comparison uses $$p(M_k\\mid y)=\\dfrac{p(y\\mid M_k)p(M_k)}{\\sum_{r=1}^K p(y\\mid M_r)p(M_r)}.$$ Here $p(M_k)$ is the prior probability of model $k$, and $p(y\\mid M_k)$ is the <b>model evidence</b>, the probability the model assigned to the observed data after averaging over its parameters.</p><p>For two models, posterior odds equal prior odds times the Bayes factor: $$\\dfrac{p(M_1\\mid y)}{p(M_2\\mid y)}=\\dfrac{p(M_1)}{p(M_2)}\\cdot\\dfrac{p(y\\mid M_1)}{p(y\\mid M_2)}.$$ The evidence automatically penalizes wasted flexibility because a very spread-out model assigns its probability mass across many possible datasets.</p><p><b>Assumptions that matter:</b> the candidate list must include the models you are willing to compare; model priors affect posterior model probabilities; and evidence is not the same as best-fit likelihood because evidence averages over parameter uncertainty.</p>",
+    "worked": {
+      "problem": "Two models have prior probabilities $p(M_1)=0.6$ and $p(M_2)=0.4$. Their evidences for the data are $p(y\\mid M_1)=0.03$ and $p(y\\mid M_2)=0.01$. Find the posterior probability of $M_1$.",
+      "skills": [
+        "posterior model probability",
+        "normalization",
+        "Bayes factors"
+      ],
+      "strategy": "Compute each model's unnormalized posterior weight, then normalize the weights.",
+      "steps": [
+        {
+          "do": "Compute the weight for $M_1$",
+          "result": "$0.6\\cdot0.03=0.018$",
+          "why": "posterior weight is prior times evidence"
+        },
+        {
+          "do": "Compute the weight for $M_2$",
+          "result": "$0.4\\cdot0.01=0.004$",
+          "why": "use the same rule for the second model"
+        },
+        {
+          "do": "Add the weights",
+          "result": "$0.018+0.004=0.022$",
+          "why": "the total weight normalizes probabilities"
+        },
+        {
+          "do": "Normalize $M_1$",
+          "result": "$0.018/0.022\\approx0.818$",
+          "why": "divide its weight by total weight"
+        },
+        {
+          "do": "Compute the Bayes factor",
+          "result": "$0.03/0.01=3$",
+          "why": "the data favor $M_1$ three to one before model priors"
+        }
+      ],
+      "verify": "The posterior probability is above the prior $0.6$ because the data evidence favored $M_1$.",
+      "answer": "$p(M_1\\mid y)\\approx0.818$.",
+      "connects": "Model comparison is Bayes' theorem with the hypotheses replaced by whole models."
+    },
+    "practice": [
+      {
+        "problem": "Two models have equal priors. The evidences are $0.12$ and $0.04$. Find the Bayes factor and posterior probability of the first model.",
+        "steps": [
+          {
+            "do": "Compute the Bayes factor",
+            "result": "$0.12/0.04=3$",
+            "why": "evidence ratio measures data support"
+          },
+          {
+            "do": "Write equal prior weights",
+            "result": "$0.5\\cdot0.12=0.06$ and $0.5\\cdot0.04=0.02$",
+            "why": "equal priors still multiply evidence"
+          },
+          {
+            "do": "Add weights",
+            "result": "$0.06+0.02=0.08$",
+            "why": "normalize over models"
+          },
+          {
+            "do": "Normalize model 1",
+            "result": "$0.06/0.08=0.75$",
+            "why": "posterior probability is its share of total weight"
+          },
+          {
+            "do": "Check with odds",
+            "result": "$3/(3+1)=0.75$",
+            "why": "equal priors make posterior odds equal the Bayes factor"
+          }
+        ],
+        "answer": "Bayes factor $3$; posterior probability $0.75$."
+      },
+      {
+        "problem": "Model A has prior $0.2$ and evidence $0.50$. Model B has prior $0.8$ and evidence $0.10$. Find $p(A\\mid y)$.",
+        "steps": [
+          {
+            "do": "Compute A weight",
+            "result": "$0.2\\cdot0.50=0.10$",
+            "why": "prior times evidence"
+          },
+          {
+            "do": "Compute B weight",
+            "result": "$0.8\\cdot0.10=0.08$",
+            "why": "B starts with a larger prior"
+          },
+          {
+            "do": "Add weights",
+            "result": "$0.10+0.08=0.18$",
+            "why": "total posterior mass before normalization"
+          },
+          {
+            "do": "Normalize A",
+            "result": "$0.10/0.18\\approx0.556$",
+            "why": "A's share of total weight"
+          },
+          {
+            "do": "Interpret",
+            "result": "$A$ becomes more likely than $B$",
+            "why": "its evidence overcame its smaller prior"
+          }
+        ],
+        "answer": "$p(A\\mid y)\\approx0.556$."
+      },
+      {
+        "problem": "Three models have equal priors and evidences $0.2$, $0.5$, and $0.3$. Find all posterior model probabilities.",
+        "steps": [
+          {
+            "do": "Use equal priors",
+            "result": "weights are proportional to $0.2,0.5,0.3$",
+            "why": "multiplying by the same prior does not change ratios"
+          },
+          {
+            "do": "Add evidences",
+            "result": "$0.2+0.5+0.3=1.0$",
+            "why": "normalize the proportional weights"
+          },
+          {
+            "do": "Normalize model 1",
+            "result": "$0.2/1.0=0.2$",
+            "why": "divide by total"
+          },
+          {
+            "do": "Normalize model 2",
+            "result": "$0.5/1.0=0.5$",
+            "why": "divide by total"
+          },
+          {
+            "do": "Normalize model 3",
+            "result": "$0.3/1.0=0.3$",
+            "why": "divide by total"
+          }
+        ],
+        "answer": "The posterior probabilities are $0.2$, $0.5$, and $0.3$."
+      },
+      {
+        "problem": "Prior odds favor $M_1$ over $M_2$ by $4:1$, but the Bayes factor $BF_{12}=0.5$. Find the posterior odds and posterior probability of $M_1$.",
+        "steps": [
+          {
+            "do": "Write prior odds",
+            "result": "$4:1$",
+            "why": "prior odds compare $M_1$ to $M_2$"
+          },
+          {
+            "do": "Multiply by Bayes factor",
+            "result": "$4\\cdot0.5=2$",
+            "why": "posterior odds equal prior odds times Bayes factor"
+          },
+          {
+            "do": "Write posterior odds",
+            "result": "$2:1$",
+            "why": "$M_1$ is still favored, but less strongly"
+          },
+          {
+            "do": "Convert odds to probability",
+            "result": "$2/(2+1)=2/3$",
+            "why": "probability is favorable odds over total odds"
+          },
+          {
+            "do": "Approximate",
+            "result": "$2/3\\approx0.667$",
+            "why": "decimal form helps interpret strength"
+          }
+        ],
+        "answer": "Posterior odds are $2:1$ and $p(M_1\\mid y)\\approx0.667$."
+      },
+      {
+        "problem": "An ML team compares a linear model and a tree model with equal priors. Validation data gives approximate evidences $0.006$ and $0.018$. What are the posterior probabilities?",
+        "steps": [
+          {
+            "do": "Assign weights",
+            "result": "$0.5\\cdot0.006=0.003$ and $0.5\\cdot0.018=0.009$",
+            "why": "equal model priors multiply each evidence"
+          },
+          {
+            "do": "Add weights",
+            "result": "$0.003+0.009=0.012$",
+            "why": "normalize across candidates"
+          },
+          {
+            "do": "Normalize the linear model",
+            "result": "$0.003/0.012=0.25$",
+            "why": "its weight is one quarter of the total"
+          },
+          {
+            "do": "Normalize the tree model",
+            "result": "$0.009/0.012=0.75$",
+            "why": "its weight is three quarters of the total"
+          },
+          {
+            "do": "Compute the Bayes factor",
+            "result": "$0.018/0.006=3$",
+            "why": "the data favor the tree three to one"
+          }
+        ],
+        "answer": "Linear model $0.25$; tree model $0.75$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Choosing regression features",
+        "background": "Bayesian regression can compare feature sets by their evidence, rather than only by training error. This discourages adding features that fit noise.",
+        "numbers": "If feature set A has evidence $0.004$ and B has $0.012$ with equal priors, B has posterior probability $0.75$."
+      },
+      {
+        "title": "A/B testing with model uncertainty",
+        "background": "Instead of asking only which variant has a higher posterior conversion rate, teams can compare models such as no lift versus positive lift.",
+        "numbers": "Prior odds $1:1$ and Bayes factor $5$ for lift give posterior probability $5/(5+1)=0.833$."
+      },
+      {
+        "title": "Scientific theory comparison",
+        "background": "Bayes factors have long been used to compare scientific hypotheses while accounting for how sharply each hypothesis predicted the data.",
+        "numbers": "Evidence ratio $20$ and prior odds $1:4$ yield posterior odds $5:1$ for the new theory."
+      },
+      {
+        "title": "Forecasting model selection",
+        "background": "Time-series analysts compare simple and flexible forecasts. Evidence rewards good predictive density, not just close point forecasts.",
+        "numbers": "Weights $0.7\\cdot0.02=0.014$ and $0.3\\cdot0.03=0.009$ give posterior $0.609$ for the first model."
+      },
+      {
+        "title": "Mixture-of-experts gating",
+        "background": "A Bayesian view can treat experts as candidate models and update their weights after seeing data.",
+        "numbers": "Three expert weights proportional to $0.1,0.2,0.7$ normalize to posterior model probabilities $0.1,0.2,0.7$."
+      },
+      {
+        "title": "Neural architecture comparison",
+        "background": "Fully Bayesian architecture comparison is expensive, but the principle remains useful: predictive evidence matters more than raw parameter count.",
+        "numbers": "Approximate log evidences $-120$ and $-118$ give Bayes factor $e^2\\approx7.39$ for the second architecture."
+      }
+    ],
+    "applicationsClose": "Bayesian comparison keeps the question honest: what did each model predict before it was allowed to fit the data too closely?",
+    "takeaways": [
+      "Posterior model probability is proportional to prior model probability times model evidence.",
+      "A Bayes factor is an evidence ratio between two models.",
+      "Evidence averages over parameters and therefore penalizes unnecessary flexibility.",
+      "Model priors matter, especially when evidence is not overwhelming."
+    ],
     "prereqs": [
       "math-20-11"
     ]
@@ -258,19 +3236,263 @@
   B({
     "id": "math-20-13",
     "title": "The model evidence",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: the model evidence.",
+    "tagline": "Evidence is the model's prior predictive probability for the data you actually observed.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Bayesian model comparison</i>"
+        "Bayesian model comparison",
+        "marginalization",
+        "likelihood",
+        "prior distributions"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Laplace approximation</i>"
+        "The Laplace approximation",
+        "Variational inference",
+        "Bayesian deep learning & uncertainty"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "integrals",
+        "posterior normalization",
+        "predictive distributions",
+        "Bayes factors"
       ]
     },
+    "motivation": "<p>You already know a likelihood scores parameters after data arrive. If a coin parameter is $\\theta=0.8$, then many heads are likely.</p><p>The model evidence asks a broader question: before choosing one parameter value, how much probability did the whole model assign to this dataset? That single number is the denominator of Bayes' theorem and the fuel for model comparison.</p>",
+    "definition": "<p>The <b>model evidence</b>, also called the marginal likelihood, is $$p(y\\mid M)=\\int p(y\\mid\\theta,M)p(\\theta\\mid M)\\,d\\theta.$$ It averages the likelihood over the prior distribution of the parameter $\\theta$. For discrete parameters, the integral becomes a sum.</p><p>Evidence is also the normalizing constant of the posterior: $p(\\theta\\mid y,M)=p(y\\mid\\theta,M)p(\\theta\\mid M)/p(y\\mid M)$. The same value makes posterior probabilities add or integrate to $1$.</p><p><b>Assumptions that matter:</b> the prior must be proper for evidence-based model comparison; evidence depends on the chosen prior, not only the likelihood; and high maximum likelihood does not guarantee high evidence if the model spreads prior mass over many datasets.</p>",
+    "worked": {
+      "problem": "A coin model has prior $\\theta\\sim\\operatorname{Beta}(1,1)$. You observe $k=2$ heads in $n=3$ flips, in a specific sequence such as HHT. Compute the evidence for that exact sequence.",
+      "skills": [
+        "marginal likelihood",
+        "Beta integrals",
+        "Bayesian normalization"
+      ],
+      "strategy": "Average the Bernoulli sequence likelihood $\\theta^2(1-\\theta)$ over the uniform prior.",
+      "steps": [
+        {
+          "do": "Write the evidence integral",
+          "result": "$p(y)=\\int_0^1 \\theta^2(1-\\theta)\\,d\\theta$",
+          "why": "the prior density is 1 on $[0,1]$"
+        },
+        {
+          "do": "Expand the integrand",
+          "result": "$\\theta^2-\\theta^3$",
+          "why": "distribute $\\theta^2$"
+        },
+        {
+          "do": "Integrate the first term",
+          "result": "$\\int_0^1\\theta^2\\,d\\theta=1/3$",
+          "why": "use the power rule"
+        },
+        {
+          "do": "Integrate the second term",
+          "result": "$\\int_0^1\\theta^3\\,d\\theta=1/4$",
+          "why": "use the power rule again"
+        },
+        {
+          "do": "Subtract",
+          "result": "$1/3-1/4=1/12$",
+          "why": "the evidence is the averaged likelihood"
+        }
+      ],
+      "verify": "There are three sequences with exactly two heads; their total prior predictive probability is $3\\cdot1/12=1/4$, which is plausible under a uniform random coin bias.",
+      "answer": "The evidence for the exact sequence is $1/12\\approx0.0833$.",
+      "connects": "Evidence is likelihood averaged over the parameter values the prior considered plausible."
+    },
+    "practice": [
+      {
+        "problem": "With the same uniform coin prior, compute the evidence for the exact sequence HH in two flips.",
+        "steps": [
+          {
+            "do": "Write the likelihood",
+            "result": "$p(y\\mid\\theta)=\\theta^2$",
+            "why": "two heads multiply two head probabilities"
+          },
+          {
+            "do": "Write the evidence integral",
+            "result": "$\\int_0^1\\theta^2\\,d\\theta$",
+            "why": "average over the uniform prior"
+          },
+          {
+            "do": "Apply the power rule",
+            "result": "$[\\theta^3/3]_0^1$",
+            "why": "integrate $\\theta^2$"
+          },
+          {
+            "do": "Evaluate the bounds",
+            "result": "$1/3-0=1/3$",
+            "why": "substitute 1 and 0"
+          },
+          {
+            "do": "Check size",
+            "result": "$1/3>1/4$",
+            "why": "a random bias prior makes repeated heads less surprising than a fixed fair coin does"
+          }
+        ],
+        "answer": "The evidence is $1/3$."
+      },
+      {
+        "problem": "A discrete model has $\\theta\\in\\{0.25,0.75\\}$ with prior probabilities $0.5$ and $0.5$. For the exact sequence HH, compute evidence.",
+        "steps": [
+          {
+            "do": "Compute likelihood at $0.25$",
+            "result": "$0.25^2=0.0625$",
+            "why": "two heads"
+          },
+          {
+            "do": "Compute likelihood at $0.75$",
+            "result": "$0.75^2=0.5625$",
+            "why": "two heads under a head-heavy coin"
+          },
+          {
+            "do": "Weight the first likelihood",
+            "result": "$0.5\\cdot0.0625=0.03125$",
+            "why": "multiply by prior probability"
+          },
+          {
+            "do": "Weight the second likelihood",
+            "result": "$0.5\\cdot0.5625=0.28125$",
+            "why": "multiply by prior probability"
+          },
+          {
+            "do": "Add weighted likelihoods",
+            "result": "$0.3125$",
+            "why": "discrete evidence is a sum"
+          }
+        ],
+        "answer": "The evidence is $0.3125$."
+      },
+      {
+        "problem": "For a normal model, suppose the prior predictive distribution for one observation is $Y\\sim\\mathcal{N}(0,2^2)$. Approximate the density evidence at $y=1$ using $1/\\sqrt{8\\pi}\\approx0.1995$ and $e^{-1/8}\\approx0.8825$.",
+        "steps": [
+          {
+            "do": "Write the normal density",
+            "result": "$p(1)=\\dfrac{1}{\\sqrt{8\\pi}}e^{-1^2/(2\\cdot2^2)}$",
+            "why": "variance is $4$"
+          },
+          {
+            "do": "Simplify the exponent",
+            "result": "$-1/8$",
+            "why": "$2\\cdot2^2=8$"
+          },
+          {
+            "do": "Substitute constants",
+            "result": "$0.1995\\cdot0.8825$",
+            "why": "use the given approximations"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.1761$",
+            "why": "density values can exceed or fall below probabilities"
+          },
+          {
+            "do": "Name the quantity",
+            "result": "prior predictive density",
+            "why": "continuous evidence is a density at the observed value"
+          }
+        ],
+        "answer": "The evidence density is approximately $0.176$."
+      },
+      {
+        "problem": "Model 1 has evidence $0.08$. Model 2 has evidence $0.02$. With equal priors, compute the posterior probability of Model 1 using evidence.",
+        "steps": [
+          {
+            "do": "Assign unnormalized weights",
+            "result": "$0.5\\cdot0.08=0.04$ and $0.5\\cdot0.02=0.01$",
+            "why": "model posterior weights use evidence"
+          },
+          {
+            "do": "Add weights",
+            "result": "$0.04+0.01=0.05$",
+            "why": "normalize across models"
+          },
+          {
+            "do": "Normalize Model 1",
+            "result": "$0.04/0.05=0.80$",
+            "why": "divide by total weight"
+          },
+          {
+            "do": "Compute evidence ratio",
+            "result": "$0.08/0.02=4$",
+            "why": "the Bayes factor is four"
+          },
+          {
+            "do": "Check with odds",
+            "result": "$4/(4+1)=0.80$",
+            "why": "equal priors make odds match the evidence ratio"
+          }
+        ],
+        "answer": "Model 1 has posterior probability $0.80$."
+      },
+      {
+        "problem": "A classifier's Bayesian model gives prior predictive probabilities $0.7$, $0.2$, and $0.1$ to labels A, B, and C before seeing the true label. If the true label is B, what is the evidence contribution and negative log evidence using $\\ln0.2\\approx-1.609$?",
+        "steps": [
+          {
+            "do": "Identify the observed label",
+            "result": "B",
+            "why": "evidence uses probability assigned to what happened"
+          },
+          {
+            "do": "Read its predictive probability",
+            "result": "$p(y)=0.2$",
+            "why": "the model assigned B probability 0.2"
+          },
+          {
+            "do": "Write the log evidence",
+            "result": "$\\ln p(y)=\\ln0.2$",
+            "why": "logs are used for numerical stability"
+          },
+          {
+            "do": "Substitute the approximation",
+            "result": "$\\ln p(y)\\approx-1.609$",
+            "why": "given natural log"
+          },
+          {
+            "do": "Negate",
+            "result": "$-\\ln p(y)\\approx1.609$",
+            "why": "negative log evidence is a loss-like score"
+          }
+        ],
+        "answer": "Evidence contribution $0.2$; negative log evidence approximately $1.609$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Posterior normalization",
+        "background": "Every Bayesian posterior needs a denominator. Evidence is that denominator, even when we avoid computing it directly in MCMC.",
+        "numbers": "If likelihood times prior integrates to $0.05$, dividing by $0.05$ makes posterior area equal $1$."
+      },
+      {
+        "title": "Bayes factors",
+        "background": "Model comparison uses evidence ratios to update model odds. This is one reason evidence matters beyond parameter estimation.",
+        "numbers": "Evidences $0.009$ and $0.003$ give Bayes factor $3$ for the first model."
+      },
+      {
+        "title": "Occam's razor",
+        "background": "Evidence rewards models that concentrate probability near the observed data. Flexible models can be penalized because they spread mass widely.",
+        "numbers": "A simple model assigning $0.10$ to the data beats a flexible model assigning $0.02$ by evidence ratio $5$."
+      },
+      {
+        "title": "Anomaly detection",
+        "background": "Prior predictive probability is a natural anomaly score: data that the model found unlikely deserve attention.",
+        "numbers": "If normal traffic has predictive probability $0.04$ but an event has $0.0004$, the event is $100$ times less expected."
+      },
+      {
+        "title": "Language modeling",
+        "background": "A language model assigns predictive probability to a token sequence. The product is an evidence-like score for the observed text under that model.",
+        "numbers": "Token probabilities $0.5$, $0.2$, $0.1$ give sequence probability $0.01$ and log score $\\ln0.01\\approx-4.605$."
+      },
+      {
+        "title": "Hyperparameter tuning",
+        "background": "Empirical Bayes often selects hyperparameters by maximizing evidence, asking which prior setting best predicts the data overall.",
+        "numbers": "If prior scale $1$ gives evidence $0.006$ and scale $5$ gives $0.002$, evidence favors scale $1$ by factor $3$."
+      }
+    ],
+    "applicationsClose": "Evidence is the quiet bridge between parameter learning, model comparison, prediction, and anomaly scoring.",
+    "takeaways": [
+      "Model evidence is $p(y\\mid M)=\\int p(y\\mid\\theta,M)p(\\theta\\mid M)\\,d\\theta$.",
+      "It is the prior predictive probability or density of the observed data.",
+      "Evidence normalizes the posterior and drives Bayes factors.",
+      "Because it averages over the prior, evidence depends strongly on prior choices."
+    ],
     "prereqs": [
       "math-20-12"
     ]
@@ -279,19 +3501,268 @@
   B({
     "id": "math-20-14",
     "title": "The Laplace approximation",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: the laplace approximation.",
+    "tagline": "Laplace's method turns a peaked posterior into a local Gaussian you can compute with.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The model evidence</i>"
+        "Taylor expansions",
+        "posterior modes",
+        "normal distributions",
+        "optimization"
       ],
       "leadsTo": [
-        "the next lesson, <i>Variational inference</i>"
+        "Variational inference",
+        "MCMC for Bayesian inference",
+        "Bayesian deep learning & uncertainty"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "Hessians",
+        "quadratic approximation",
+        "Gaussian integrals",
+        "model evidence"
       ]
     },
+    "motivation": "<p>You already know a smooth curve can look like a parabola when you zoom in near its top or bottom. That local shape is often enough to do useful calculation.</p><p>Bayesian posteriors can be hard to integrate, but many are sharply peaked near a mode. The <b>Laplace approximation</b> says: find the peak, fit a quadratic to the log posterior there, and use the matching Gaussian.</p>",
+    "definition": "<p>Suppose the unnormalized posterior is $\\tilde p(\\theta)=p(y\\mid\\theta)p(\\theta)$ and the log density $\\ell(\\theta)=\\log\\tilde p(\\theta)$ has a mode $\\hat\\theta$. A second-order Taylor expansion gives $\\ell(\\theta)\\approx\\ell(\\hat\\theta)-\\tfrac12(\\theta-\\hat\\theta)^T H(\\theta-\\hat\\theta)$, where $H=-\\nabla^2\\ell(\\hat\\theta)$ is the negative Hessian at the mode.</p><p>Exponentiating the quadratic produces a Gaussian approximation: $p(\\theta\\mid y)\\approx\\mathcal{N}(\\hat\\theta,H^{-1})$. In one dimension, the approximate variance is $1/H$.</p><p><b>Assumptions that matter:</b> the posterior should be smooth and concentrated near one dominant mode; the Hessian must be positive definite at that mode; and skewed, heavy-tailed, or multimodal posteriors can be poorly represented by one Gaussian.</p>",
+    "worked": {
+      "problem": "An unnormalized log posterior near its mode is $\\ell(\\theta)=C-8(\\theta-3)^2$. Find the Laplace Gaussian approximation.",
+      "skills": [
+        "posterior mode",
+        "curvature",
+        "Gaussian variance"
+      ],
+      "strategy": "Match the quadratic log posterior to the log of a normal density.",
+      "steps": [
+        {
+          "do": "Identify the mode",
+          "result": "$\\hat\\theta=3$",
+          "why": "the squared term is smallest at 3"
+        },
+        {
+          "do": "Differentiate once",
+          "result": "$\\ell'(\\theta)=-16(\\theta-3)$",
+          "why": "use the chain rule"
+        },
+        {
+          "do": "Differentiate twice",
+          "result": "$\\ell''(\\theta)=-16$",
+          "why": "curvature is constant for this quadratic"
+        },
+        {
+          "do": "Compute negative curvature",
+          "result": "$H=-\\ell''(3)=16$",
+          "why": "Laplace uses the negative Hessian at the mode"
+        },
+        {
+          "do": "Invert curvature",
+          "result": "$H^{-1}=1/16=0.0625$",
+          "why": "one-dimensional Gaussian variance is inverse curvature"
+        },
+        {
+          "do": "Write the approximation",
+          "result": "$\\theta\\mid y\\approx\\mathcal{N}(3,0.0625)$",
+          "why": "mean is the mode and variance is inverse curvature"
+        }
+      ],
+      "verify": "The standard deviation is $0.25$, small because curvature $16$ means a sharp peak.",
+      "answer": "$\\theta\\mid y\\approx\\mathcal{N}(3,1/16)$.",
+      "connects": "Laplace converts local log-posterior curvature into approximate posterior uncertainty."
+    },
+    "practice": [
+      {
+        "problem": "If $\\ell(\\theta)=C-2(\\theta+1)^2$, find the Laplace approximation.",
+        "steps": [
+          {
+            "do": "Identify the mode",
+            "result": "$\\hat\\theta=-1$",
+            "why": "the squared term is zero at $-1$"
+          },
+          {
+            "do": "Differentiate once",
+            "result": "$\\ell'(\\theta)=-4(\\theta+1)$",
+            "why": "differentiate the quadratic"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$\\ell''(\\theta)=-4$",
+            "why": "curvature is constant"
+          },
+          {
+            "do": "Compute negative curvature",
+            "result": "$H=4$",
+            "why": "negative second derivative at the mode"
+          },
+          {
+            "do": "Invert",
+            "result": "$H^{-1}=1/4$",
+            "why": "variance is inverse curvature"
+          }
+        ],
+        "answer": "$\\theta\\mid y\\approx\\mathcal{N}(-1,1/4)$."
+      },
+      {
+        "problem": "A log posterior has mode $5$ and second derivative $\\ell''(5)=-25$. Find the approximate posterior standard deviation.",
+        "steps": [
+          {
+            "do": "Compute negative curvature",
+            "result": "$H=-\\ell''(5)=25$",
+            "why": "Laplace uses positive curvature of the negative log density"
+          },
+          {
+            "do": "Compute variance",
+            "result": "$H^{-1}=1/25=0.04$",
+            "why": "one-dimensional inverse curvature"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\sqrt{0.04}=0.2$",
+            "why": "standard deviation is square root of variance"
+          },
+          {
+            "do": "Attach the mode",
+            "result": "$\\mathcal{N}(5,0.04)$",
+            "why": "the approximate mean is the mode"
+          },
+          {
+            "do": "Interpret sharpness",
+            "result": "standard deviation $0.2$",
+            "why": "large curvature gives tight uncertainty"
+          }
+        ],
+        "answer": "The approximate standard deviation is $0.2$."
+      },
+      {
+        "problem": "Approximate the evidence contribution for a one-dimensional mode with unnormalized density $\\tilde p(\\hat\\theta)=0.20$ and curvature $H=50$ using $\\sqrt{2\\pi/50}\\approx0.354$.",
+        "steps": [
+          {
+            "do": "Write Laplace evidence formula",
+            "result": "$p(y)\\approx\\tilde p(\\hat\\theta)\\sqrt{2\\pi/H}$",
+            "why": "one-dimensional Gaussian area multiplies peak height"
+          },
+          {
+            "do": "Substitute peak height",
+            "result": "$0.20\\sqrt{2\\pi/50}$",
+            "why": "use the given unnormalized density"
+          },
+          {
+            "do": "Use the approximation",
+            "result": "$0.20\\cdot0.354$",
+            "why": "given square-root factor"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.0708$",
+            "why": "area is height times effective width"
+          },
+          {
+            "do": "Interpret",
+            "result": "evidence approximately $0.071$",
+            "why": "sharp peaks have small effective width"
+          }
+        ],
+        "answer": "The approximate evidence is $0.0708$."
+      },
+      {
+        "problem": "For a two-parameter posterior, the negative Hessian at the mode is $H=\\begin{pmatrix}4&0\\\\0&9\\end{pmatrix}$. Find the covariance matrix of the Laplace approximation.",
+        "steps": [
+          {
+            "do": "Recognize the matrix form",
+            "result": "$\\Sigma=H^{-1}$",
+            "why": "multivariate Laplace uses inverse negative Hessian"
+          },
+          {
+            "do": "Invert the first diagonal entry",
+            "result": "$1/4$",
+            "why": "diagonal matrices invert entry by entry"
+          },
+          {
+            "do": "Invert the second diagonal entry",
+            "result": "$1/9$",
+            "why": "same diagonal rule"
+          },
+          {
+            "do": "Keep off-diagonal entries",
+            "result": "$0$",
+            "why": "there is no coupling in this Hessian"
+          },
+          {
+            "do": "Write the covariance",
+            "result": "$\\begin{pmatrix}1/4&0\\\\0&1/9\\end{pmatrix}$",
+            "why": "assemble the inverse matrix"
+          }
+        ],
+        "answer": "The covariance is $\\begin{pmatrix}1/4&0\\\\0&1/9\\end{pmatrix}$."
+      },
+      {
+        "problem": "A Bayesian logistic regression has MAP weight $\\hat w=1.2$ and negative log-posterior curvature $H=4$. Approximate a $95\\%$ interval using $1.96$ standard deviations.",
+        "steps": [
+          {
+            "do": "Compute variance",
+            "result": "$1/H=1/4=0.25$",
+            "why": "Laplace variance is inverse curvature"
+          },
+          {
+            "do": "Compute standard deviation",
+            "result": "$\\sqrt{0.25}=0.5$",
+            "why": "intervals use standard deviation"
+          },
+          {
+            "do": "Compute the margin",
+            "result": "$1.96\\cdot0.5=0.98$",
+            "why": "normal $95\\%$ interval rule"
+          },
+          {
+            "do": "Subtract the margin",
+            "result": "$1.2-0.98=0.22$",
+            "why": "lower endpoint"
+          },
+          {
+            "do": "Add the margin",
+            "result": "$1.2+0.98=2.18$",
+            "why": "upper endpoint"
+          }
+        ],
+        "answer": "The approximate interval is $[0.22,2.18]$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Fast posterior intervals",
+        "background": "When MCMC is too slow, Laplace gives a quick Gaussian uncertainty estimate around a MAP solution.",
+        "numbers": "MAP $2.0$ with curvature $100$ gives variance $0.01$ and standard deviation $0.1$."
+      },
+      {
+        "title": "Approximate model evidence",
+        "background": "Laplace's method was historically developed for integrals with sharp peaks. Bayesian evidence is exactly such an integral in many large-data problems.",
+        "numbers": "Peak $0.5$ and width factor $0.1$ give evidence about $0.05$."
+      },
+      {
+        "title": "Bayesian logistic regression",
+        "background": "Logistic regression posteriors are not usually conjugate. A quadratic expansion around the MAP makes approximate inference practical.",
+        "numbers": "If $H=25$, the weight variance is $0.04$ and standard deviation $0.2$."
+      },
+      {
+        "title": "Neural-network last-layer uncertainty",
+        "background": "Some Bayesian deep-learning systems fit a neural network, then place a Laplace approximation over the final layer.",
+        "numbers": "A final-layer weight with MAP $0.7$ and curvature $16$ has approximate standard deviation $0.25$."
+      },
+      {
+        "title": "Occam factors",
+        "background": "The evidence approximation includes an effective width term. Wide uncertainty can raise area, while wasted prior volume can lower model support.",
+        "numbers": "Two models with same peak $0.1$ but width factors $0.2$ and $0.05$ have evidence $0.02$ and $0.005$."
+      },
+      {
+        "title": "Optimization diagnostics",
+        "background": "The Hessian tells whether a found point is a usable mode for Laplace. Negative or zero curvature signals trouble.",
+        "numbers": "If $\\ell''(\\hat\\theta)=-9$, variance is $1/9$; if $\\ell''(\\hat\\theta)=0$, the Gaussian approximation has no finite curvature."
+      }
+    ],
+    "applicationsClose": "Laplace is a local bargain: when the posterior is mostly one smooth peak, curvature buys fast approximate uncertainty.",
+    "takeaways": [
+      "Laplace approximates a posterior by a Gaussian centered at the posterior mode.",
+      "The covariance is the inverse negative Hessian of the log posterior at the mode.",
+      "It also approximates evidence by peak height times Gaussian width.",
+      "The approximation can fail for skewed, heavy-tailed, or multimodal posteriors."
+    ],
     "prereqs": [
       "math-20-13"
     ]
@@ -300,19 +3771,263 @@
   B({
     "id": "math-20-15",
     "title": "Variational inference",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: variational inference.",
+    "tagline": "Variational inference turns Bayesian inference into optimization over a family of approximate posteriors.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Laplace approximation</i>"
+        "KL divergence",
+        "posterior distributions",
+        "optimization",
+        "expectations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Expectation–maximization (EM)</i>"
+        "Expectation–maximization (EM)",
+        "Bayesian deep learning & uncertainty",
+        "MCMC for Bayesian inference"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "Jensen's inequality",
+        "coordinate ascent",
+        "mean-field approximations",
+        "evidence lower bounds"
       ]
     },
+    "motivation": "<p>You already know that exact Bayesian posteriors can be beautiful but hard to compute. Integrals grow painful when models have many hidden variables or parameters.</p><p><b>Variational inference</b> chooses a simpler family $q(\\theta)$ and searches for the member closest to the true posterior. It trades exact sampling for a faster optimization problem, which is why it shows up in large-scale Bayesian ML.</p>",
+    "definition": "<p>Variational inference chooses $q(\\theta)$ from a tractable family $\\mathcal{Q}$ to approximate $p(\\theta\\mid y)$. A common objective is to minimize $\\operatorname{KL}(q(\\theta)\\|p(\\theta\\mid y))$, which is equivalent to maximizing the evidence lower bound, $$\\operatorname{ELBO}(q)=\\mathbb{E}_q[\\log p(y,\\theta)]-\\mathbb{E}_q[\\log q(\\theta)].$$</p><p>The identity $\\log p(y)=\\operatorname{ELBO}(q)+\\operatorname{KL}(q(\\theta)\\|p(\\theta\\mid y))$ explains the name. Since KL divergence is nonnegative, the ELBO is always a lower bound on the log evidence. Raising the ELBO moves $q$ closer to the posterior in the chosen direction.</p><p><b>Assumptions that matter:</b> the approximation quality is limited by the family $\\mathcal{Q}$; mean-field factorizations can underestimate dependence and uncertainty; and maximizing the ELBO finds an approximation, not the exact posterior unless the true posterior lies in the family.</p>",
+    "worked": {
+      "problem": "For a proposed variational distribution, suppose $\\mathbb{E}_q[\\log p(y,\\theta)]=-120$ and $\\mathbb{E}_q[\\log q(\\theta)]=-30$. Compute the ELBO. If $\\log p(y)=-80$, compute the KL gap.",
+      "skills": [
+        "ELBO",
+        "KL gap",
+        "log evidence"
+      ],
+      "strategy": "Use the ELBO definition first, then compare it to log evidence.",
+      "steps": [
+        {
+          "do": "Write the ELBO formula",
+          "result": "$\\operatorname{ELBO}=\\mathbb{E}_q[\\log p(y,\\theta)]-\\mathbb{E}_q[\\log q(\\theta)]$",
+          "why": "definition of the variational objective"
+        },
+        {
+          "do": "Substitute the values",
+          "result": "$-120-(-30)$",
+          "why": "the entropy-like term is subtracted"
+        },
+        {
+          "do": "Compute the ELBO",
+          "result": "$-90$",
+          "why": "subtracting a negative adds"
+        },
+        {
+          "do": "Use the decomposition",
+          "result": "$\\operatorname{KL}=\\log p(y)-\\operatorname{ELBO}$",
+          "why": "log evidence equals ELBO plus KL"
+        },
+        {
+          "do": "Compute the gap",
+          "result": "$-80-(-90)=10$",
+          "why": "the ELBO is 10 nats below log evidence"
+        }
+      ],
+      "verify": "The KL gap is nonnegative, so the ELBO being below $\\log p(y)$ is consistent.",
+      "answer": "The ELBO is $-90$ and the KL gap is $10$ nats.",
+      "connects": "VI measures progress by lifting a lower bound toward the log evidence."
+    },
+    "practice": [
+      {
+        "problem": "A candidate $q$ has $\\mathbb{E}_q[\\log p(y,\\theta)]=-50$ and $\\mathbb{E}_q[\\log q(\\theta)]=-12$. Compute the ELBO.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$\\operatorname{ELBO}=\\mathbb{E}_q[\\log p]-\\mathbb{E}_q[\\log q]$",
+            "why": "use the standard VI objective"
+          },
+          {
+            "do": "Substitute",
+            "result": "$-50-(-12)$",
+            "why": "insert the two expectations"
+          },
+          {
+            "do": "Simplify signs",
+            "result": "$-50+12$",
+            "why": "subtracting a negative adds"
+          },
+          {
+            "do": "Add",
+            "result": "$-38$",
+            "why": "combine the terms"
+          },
+          {
+            "do": "Interpret",
+            "result": "ELBO $=-38$",
+            "why": "higher values are better among candidates"
+          }
+        ],
+        "answer": "The ELBO is $-38$."
+      },
+      {
+        "problem": "Two variational distributions have ELBOs $-102$ and $-97$. Which is preferred and by how much?",
+        "steps": [
+          {
+            "do": "Compare the objectives",
+            "result": "$-97>-102$",
+            "why": "ELBO is maximized"
+          },
+          {
+            "do": "Choose the better distribution",
+            "result": "the second $q$",
+            "why": "it has the larger lower bound"
+          },
+          {
+            "do": "Compute the difference",
+            "result": "$-97-(-102)=5$",
+            "why": "measure improvement in nats"
+          },
+          {
+            "do": "Interpret the gap",
+            "result": "$5$ nats",
+            "why": "the lower bound increased by 5"
+          },
+          {
+            "do": "State the preference",
+            "result": "prefer the second candidate",
+            "why": "within the same family, higher ELBO means closer by the VI objective"
+          }
+        ],
+        "answer": "Prefer the second candidate by $5$ nats of ELBO."
+      },
+      {
+        "problem": "If $\\log p(y)=-40$ and a variational approximation has ELBO $-43.5$, what is $\\operatorname{KL}(q\\|p)$?",
+        "steps": [
+          {
+            "do": "Write the decomposition",
+            "result": "$\\log p(y)=\\operatorname{ELBO}+\\operatorname{KL}$",
+            "why": "ELBO plus KL equals log evidence"
+          },
+          {
+            "do": "Solve for KL",
+            "result": "$\\operatorname{KL}=\\log p(y)-\\operatorname{ELBO}$",
+            "why": "subtract ELBO from both sides"
+          },
+          {
+            "do": "Substitute",
+            "result": "$-40-(-43.5)$",
+            "why": "use the given numbers"
+          },
+          {
+            "do": "Compute",
+            "result": "$3.5$",
+            "why": "subtracting a negative adds"
+          },
+          {
+            "do": "Check sign",
+            "result": "$3.5\\ge0$",
+            "why": "KL divergence cannot be negative"
+          }
+        ],
+        "answer": "$\\operatorname{KL}(q\\|p)=3.5$."
+      },
+      {
+        "problem": "A mean-field approximation uses $q(z_1,z_2)=q_1(z_1)q_2(z_2)$. If $q_1(1)=0.7$ and $q_2(1)=0.4$, what probability does it assign to $(z_1,z_2)=(1,1)$?",
+        "steps": [
+          {
+            "do": "Write the factorization",
+            "result": "$q(1,1)=q_1(1)q_2(1)$",
+            "why": "mean-field assumes independence under $q$"
+          },
+          {
+            "do": "Substitute probabilities",
+            "result": "$0.7\\cdot0.4$",
+            "why": "use the two marginal variational probabilities"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.28$",
+            "why": "independent probabilities multiply"
+          },
+          {
+            "do": "Name the assumption",
+            "result": "variational independence",
+            "why": "the true posterior may still be dependent"
+          },
+          {
+            "do": "Interpret",
+            "result": "$28\\%$",
+            "why": "convert probability to an intuitive percent"
+          }
+        ],
+        "answer": "The mean-field approximation assigns probability $0.28$."
+      },
+      {
+        "problem": "A Bayesian neural net trains with objective negative ELBO. If expected negative log joint is $240$ and expected log $q$ penalty contributes $-60$ in the ELBO formula, compute ELBO and negative ELBO from $\\mathbb{E}_q[\\log p]=-240$, $\\mathbb{E}_q[\\log q]=60$.",
+        "steps": [
+          {
+            "do": "Write the ELBO",
+            "result": "$\\operatorname{ELBO}=\\mathbb{E}_q[\\log p]-\\mathbb{E}_q[\\log q]$",
+            "why": "same objective, different model scale"
+          },
+          {
+            "do": "Substitute",
+            "result": "$-240-60$",
+            "why": "the expectation of $\\log q$ is positive here"
+          },
+          {
+            "do": "Compute ELBO",
+            "result": "$-300$",
+            "why": "combine terms"
+          },
+          {
+            "do": "Negate",
+            "result": "$300$",
+            "why": "optimizers often minimize negative ELBO"
+          },
+          {
+            "do": "Interpret",
+            "result": "lower negative ELBO is better",
+            "why": "minimizing negative ELBO maximizes ELBO"
+          }
+        ],
+        "answer": "The ELBO is $-300$ and the negative ELBO is $300$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Topic models",
+        "background": "Latent Dirichlet allocation popularized VI because documents have hidden topic mixtures and exact inference is expensive.",
+        "numbers": "If one document has topic probabilities $[0.7,0.2,0.1]$, mean-field VI stores those three variational weights."
+      },
+      {
+        "title": "Bayesian neural networks",
+        "background": "Large neural networks have too many weights for exact Bayes. VI fits distributions over weights by stochastic optimization.",
+        "numbers": "A weight posterior $q(w)=\\mathcal{N}(0.8,0.1^2)$ can be sampled as $0.8+0.1\\epsilon$ during training."
+      },
+      {
+        "title": "Recommendation systems",
+        "background": "Matrix factorization with uncertainty can use VI to estimate latent user and item factors at scale.",
+        "numbers": "A user factor mean $[1.0,0.5]$ and item mean $[0.2,2.0]$ predict score $1.2$ by dot product."
+      },
+      {
+        "title": "Streaming approximate Bayes",
+        "background": "VI supports fast updates when data arrive continuously, because optimization can be warm-started.",
+        "numbers": "An ELBO moving from $-1000$ to $-940$ over a new batch improves the bound by $60$ nats."
+      },
+      {
+        "title": "Amortized inference",
+        "background": "Variational autoencoders use a neural network to output variational distributions quickly for each data point.",
+        "numbers": "An encoder outputs $\\mu=2$ and $\\sigma=0.5$; a latent sample is $z=2+0.5\\epsilon$."
+      },
+      {
+        "title": "Scalable uncertainty dashboards",
+        "background": "Businesses often need approximate uncertainty for many segments. VI is faster than exact posterior computation in large hierarchies.",
+        "numbers": "If a segment lift has $q(\\theta)=\\mathcal{N}(0.03,0.01^2)$, an approximate $95\\%$ interval is $[0.0104,0.0496]$."
+      }
+    ],
+    "applicationsClose": "VI is the optimization-shaped face of Bayes: fast, scalable, approximate, and always limited by the family you choose.",
+    "takeaways": [
+      "Variational inference approximates the posterior with a tractable distribution $q(\\theta)$.",
+      "Maximizing the ELBO is equivalent to minimizing $\\operatorname{KL}(q\\|p)$ up to the log evidence.",
+      "Mean-field assumptions speed computation but can miss posterior dependence.",
+      "VI is widely used when exact Bayes or MCMC is too expensive."
+    ],
     "prereqs": [
       "math-20-14"
     ]
@@ -321,19 +4036,268 @@
   B({
     "id": "math-20-16",
     "title": "Expectation–maximization (EM)",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: expectation–maximization (em).",
+    "tagline": "EM alternates between estimating hidden structure and refitting parameters as if that structure were softly observed.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Variational inference</i>"
+        "latent variables",
+        "maximum likelihood",
+        "conditional expectation",
+        "Jensen's inequality"
       ],
       "leadsTo": [
-        "the next lesson, <i>MCMC for Bayesian inference</i>"
+        "Variational inference",
+        "MCMC for Bayesian inference",
+        "Bayesian deep learning & uncertainty"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "mixture models",
+        "coordinate ascent",
+        "lower bounds",
+        "incomplete data"
       ]
     },
+    "motivation": "<p>You already know how to fit a mean when every data point belongs to one group. But what if the group labels are hidden?</p><p><b>Expectation–maximization</b> handles incomplete data by taking turns. The E-step computes soft beliefs about hidden variables; the M-step updates parameters using those soft beliefs. It is patient bookkeeping for uncertainty.</p>",
+    "definition": "<p>For observed data $y$, latent variables $z$, and parameters $\\theta$, EM maximizes the observed-data likelihood $p(y\\mid\\theta)=\\sum_z p(y,z\\mid\\theta)$. At iteration $t$, the E-step computes $q_t(z)=p(z\\mid y,\\theta^{(t)})$. The M-step chooses $\\theta^{(t+1)}$ to maximize $\\mathbb{E}_{q_t}[\\log p(y,z\\mid\\theta)]$.</p><p>The reason this works is a lower-bound argument: any distribution $q(z)$ gives an ELBO for $\\log p(y\\mid\\theta)$. The E-step makes the bound tight at the current parameters, and the M-step raises that bound. Therefore the observed likelihood does not decrease under exact EM.</p><p><b>Assumptions that matter:</b> exact EM requires tractable posterior responsibilities and an exact or improving M-step; it can converge to local optima; and soft assignments are probabilities, not hard labels, unless the posterior is degenerate.</p>",
+    "worked": {
+      "problem": "In a two-cluster Gaussian mixture with known variance and current means $0$ and $10$, a point $x=2$ has responsibilities $r_1=0.8$ and $r_2=0.2$. A second point $x=8$ has responsibilities $r_1=0.3$ and $r_2=0.7$. Compute the M-step mean updates.",
+      "skills": [
+        "responsibilities",
+        "weighted means",
+        "mixture models"
+      ],
+      "strategy": "Use each cluster's responsibilities as fractional counts in a weighted average.",
+      "steps": [
+        {
+          "do": "Compute cluster 1 weighted sum",
+          "result": "$0.8\\cdot2+0.3\\cdot8=4.0$",
+          "why": "each point contributes fractionally to cluster 1"
+        },
+        {
+          "do": "Compute cluster 1 total weight",
+          "result": "$0.8+0.3=1.1$",
+          "why": "responsibilities act like soft counts"
+        },
+        {
+          "do": "Update cluster 1 mean",
+          "result": "$4.0/1.1\\approx3.64$",
+          "why": "weighted mean equals weighted sum over total weight"
+        },
+        {
+          "do": "Compute cluster 2 weighted sum",
+          "result": "$0.2\\cdot2+0.7\\cdot8=6.0$",
+          "why": "use cluster 2 responsibilities"
+        },
+        {
+          "do": "Compute cluster 2 total weight",
+          "result": "$0.2+0.7=0.9$",
+          "why": "sum the soft memberships"
+        },
+        {
+          "do": "Update cluster 2 mean",
+          "result": "$6.0/0.9\\approx6.67$",
+          "why": "weighted mean for cluster 2"
+        }
+      ],
+      "verify": "The first updated mean is closer to 2, and the second is closer to 8, matching the larger responsibilities.",
+      "answer": "The updated means are approximately $3.64$ and $6.67$.",
+      "connects": "EM turns uncertain labels into weighted complete-data updates."
+    },
+    "practice": [
+      {
+        "problem": "Three points $1,4,7$ have responsibilities for cluster A of $0.9,0.5,0.1$. Compute the M-step mean for cluster A.",
+        "steps": [
+          {
+            "do": "Compute the weighted sum",
+            "result": "$0.9\\cdot1+0.5\\cdot4+0.1\\cdot7$",
+            "why": "responsibilities weight observations"
+          },
+          {
+            "do": "Simplify the weighted sum",
+            "result": "$0.9+2.0+0.7=3.6$",
+            "why": "multiply then add"
+          },
+          {
+            "do": "Compute total weight",
+            "result": "$0.9+0.5+0.1=1.5$",
+            "why": "soft count for cluster A"
+          },
+          {
+            "do": "Divide",
+            "result": "$3.6/1.5=2.4$",
+            "why": "weighted mean formula"
+          },
+          {
+            "do": "Interpret",
+            "result": "$2.4$ is closer to $1$ than to $7$",
+            "why": "point 1 has the largest responsibility"
+          }
+        ],
+        "answer": "The updated cluster A mean is $2.4$."
+      },
+      {
+        "problem": "In a Bernoulli mixture, four observations have values $1,1,0,1$ and responsibilities for component 1 of $0.8,0.6,0.4,0.2$. Update the component 1 success probability.",
+        "steps": [
+          {
+            "do": "Compute weighted successes",
+            "result": "$0.8\\cdot1+0.6\\cdot1+0.4\\cdot0+0.2\\cdot1=1.6$",
+            "why": "only observed successes contribute to numerator"
+          },
+          {
+            "do": "Compute total responsibility",
+            "result": "$0.8+0.6+0.4+0.2=2.0$",
+            "why": "soft component count"
+          },
+          {
+            "do": "Divide",
+            "result": "$1.6/2.0=0.8$",
+            "why": "Bernoulli M-step is weighted success rate"
+          },
+          {
+            "do": "Check bounds",
+            "result": "$0.8\\in[0,1]$",
+            "why": "a probability must lie between 0 and 1"
+          },
+          {
+            "do": "Interpret",
+            "result": "component 1 is success-heavy",
+            "why": "most of its responsibility is on successes"
+          }
+        ],
+        "answer": "The updated success probability is $0.8$."
+      },
+      {
+        "problem": "A two-component mixture has responsibilities for component 1 summing to $12$ across $20$ observations. Update the mixing weights.",
+        "steps": [
+          {
+            "do": "Write component 1 soft count",
+            "result": "$N_1=12$",
+            "why": "sum of responsibilities gives expected membership"
+          },
+          {
+            "do": "Compute component 2 soft count",
+            "result": "$N_2=20-12=8$",
+            "why": "responsibilities across two components sum to one per point"
+          },
+          {
+            "do": "Update component 1 weight",
+            "result": "$\\pi_1=12/20=0.6$",
+            "why": "mixing weight is soft count over total count"
+          },
+          {
+            "do": "Update component 2 weight",
+            "result": "$\\pi_2=8/20=0.4$",
+            "why": "same rule for component 2"
+          },
+          {
+            "do": "Check normalization",
+            "result": "$0.6+0.4=1$",
+            "why": "mixture weights must sum to one"
+          }
+        ],
+        "answer": "The updated mixing weights are $0.6$ and $0.4$."
+      },
+      {
+        "problem": "For one data point, component likelihoods are $p(x\\mid z=1)=0.06$ and $p(x\\mid z=2)=0.02$, with current mixing weights $0.5$ and $0.5$. Compute the E-step responsibilities.",
+        "steps": [
+          {
+            "do": "Compute component 1 unnormalized weight",
+            "result": "$0.5\\cdot0.06=0.03$",
+            "why": "mixing weight times likelihood"
+          },
+          {
+            "do": "Compute component 2 unnormalized weight",
+            "result": "$0.5\\cdot0.02=0.01$",
+            "why": "same calculation"
+          },
+          {
+            "do": "Add weights",
+            "result": "$0.03+0.01=0.04$",
+            "why": "normalize responsibilities"
+          },
+          {
+            "do": "Normalize component 1",
+            "result": "$0.03/0.04=0.75$",
+            "why": "responsibility is posterior component probability"
+          },
+          {
+            "do": "Normalize component 2",
+            "result": "$0.01/0.04=0.25$",
+            "why": "remaining posterior probability"
+          }
+        ],
+        "answer": "The responsibilities are $0.75$ and $0.25$."
+      },
+      {
+        "problem": "A missing-feature model imputes a hidden value with posterior mean $3.5$ in the E-step. The complete-data linear update needs the average of observed values $2$, $4$, and the hidden value. Compute the M-step average.",
+        "steps": [
+          {
+            "do": "Replace the hidden value by its expectation",
+            "result": "$3.5$",
+            "why": "EM uses expected complete data"
+          },
+          {
+            "do": "Add all three values",
+            "result": "$2+4+3.5=9.5$",
+            "why": "the M-step average uses completed data"
+          },
+          {
+            "do": "Count values",
+            "result": "$3$",
+            "why": "two observed and one expected hidden value"
+          },
+          {
+            "do": "Divide",
+            "result": "$9.5/3\\approx3.17$",
+            "why": "compute the average"
+          },
+          {
+            "do": "Interpret",
+            "result": "updated mean about $3.17$",
+            "why": "the hidden value contributes softly through its expectation"
+          }
+        ],
+        "answer": "The M-step average is approximately $3.17$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Gaussian mixture clustering",
+        "background": "EM is the classic algorithm for fitting mixtures, where cluster labels are hidden and assignments should be soft.",
+        "numbers": "Responsibilities $0.8$ and $0.2$ mean one point contributes $80\\%$ to one cluster's mean and $20\\%$ to the other."
+      },
+      {
+        "title": "Missing data imputation",
+        "background": "Before modern deep learning, EM was a standard way to fit models with missing entries by averaging over plausible completions.",
+        "numbers": "If a missing value has posterior mean $5$, a mean update over $[3,7,5]$ gives $5$."
+      },
+      {
+        "title": "Hidden Markov models",
+        "background": "Speech recognition and biosequence models used EM through the Baum-Welch algorithm to learn transition probabilities from hidden states.",
+        "numbers": "Expected transitions A to B of $12$ out of expected A transitions $40$ update probability to $0.30$."
+      },
+      {
+        "title": "Image segmentation",
+        "background": "Mixture models segment pixels into materials or regions when labels are unknown. EM updates region colors and memberships.",
+        "numbers": "A pixel intensity $100$ with responsibility $0.7$ for foreground contributes $70$ intensity-units to the foreground sum."
+      },
+      {
+        "title": "Crowdsourcing labels",
+        "background": "When worker reliability and true labels are both unknown, EM can alternate between inferred true labels and worker accuracy estimates.",
+        "numbers": "If a worker is expected correct on $45$ of $50$ tasks, reliability updates to $0.90$."
+      },
+      {
+        "title": "Latent variable recommender models",
+        "background": "Some recommenders infer hidden user types. EM estimates type memberships, then updates type-specific preferences.",
+        "numbers": "User type responsibilities $[0.2,0.8]$ and item likes $[0.1,0.6]$ give expected like rate $0.50$."
+      }
+    ],
+    "applicationsClose": "EM is the rhythm of incomplete-data modeling: infer soft hidden structure, then update as though that softness were data.",
+    "takeaways": [
+      "The E-step computes posterior responsibilities for hidden variables using current parameters.",
+      "The M-step maximizes expected complete-data log likelihood.",
+      "Exact EM does not decrease the observed-data likelihood.",
+      "EM is useful but can converge to local optima."
+    ],
     "prereqs": [
       "math-20-15"
     ]
@@ -342,19 +4306,263 @@
   B({
     "id": "math-20-17",
     "title": "MCMC for Bayesian inference",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: mcmc for bayesian inference.",
+    "tagline": "MCMC learns a posterior by walking through parameter space so that time spent in a region matches posterior probability.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Expectation–maximization (EM)</i>"
+        "posterior distributions",
+        "Markov chains",
+        "conditional probability",
+        "Monte Carlo averages"
       ],
       "leadsTo": [
-        "the next lesson, <i>Gaussian process regression</i>"
+        "Gaussian process regression",
+        "Bayesian deep learning & uncertainty",
+        "posterior predictive checks"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "stationary distributions",
+        "acceptance ratios",
+        "autocorrelation",
+        "expectations"
       ]
     },
+    "motivation": "<p>You already know how to average numbers if someone gives you samples. The hard Bayesian question is how to get samples from a posterior that is known only up to a constant.</p><p><b>Markov chain Monte Carlo</b> builds a dependent sequence of draws whose long-run distribution is the posterior. The samples are not independent, but if the chain is well behaved, their averages estimate posterior expectations.</p>",
+    "definition": "<p>MCMC constructs a Markov chain $\\theta^{(1)},\\theta^{(2)},\\ldots$ with stationary distribution $p(\\theta\\mid y)$. In Metropolis-Hastings, propose $\\theta'$ from $q(\\theta'\\mid\\theta)$ and accept it with probability $$a=\\min\\left(1,\\dfrac{p(y\\mid\\theta')p(\\theta')q(\\theta\\mid\\theta')}{p(y\\mid\\theta)p(\\theta)q(\\theta'\\mid\\theta)}\\right).$$ The evidence cancels, which is why MCMC can sample from unnormalized posteriors.</p><p>After burn-in and convergence checks, posterior expectations are estimated by sample averages: $\\mathbb{E}[g(\\theta)\\mid y]\\approx \\frac1S\\sum_{s=1}^S g(\\theta^{(s)})$.</p><p><b>Assumptions that matter:</b> the chain must be able to reach the important posterior regions; samples are correlated, so effective sample size is smaller than raw sample count; and diagnostics are essential because finite chains can look convincing while missing modes.</p>",
+    "worked": {
+      "problem": "A symmetric Metropolis proposal moves from $\\theta=1$ to $\\theta'=2$. The unnormalized posterior density is $0.04$ at $1$ and $0.10$ at $2$. Find the acceptance probability.",
+      "skills": [
+        "Metropolis ratio",
+        "unnormalized density",
+        "acceptance probability"
+      ],
+      "strategy": "With a symmetric proposal, the proposal terms cancel and only the posterior density ratio remains.",
+      "steps": [
+        {
+          "do": "Write the acceptance rule",
+          "result": "$a=\\min(1,\\tilde p(\\theta')/\\tilde p(\\theta))$",
+          "why": "the proposal is symmetric"
+        },
+        {
+          "do": "Substitute densities",
+          "result": "$a=\\min(1,0.10/0.04)$",
+          "why": "use unnormalized posterior values"
+        },
+        {
+          "do": "Compute the ratio",
+          "result": "$0.10/0.04=2.5$",
+          "why": "the proposal moves to a denser point"
+        },
+        {
+          "do": "Apply the minimum",
+          "result": "$a=1$",
+          "why": "ratios above 1 are accepted with probability 1"
+        },
+        {
+          "do": "Interpret",
+          "result": "always accept this proposal",
+          "why": "uphill posterior moves are accepted in Metropolis"
+        }
+      ],
+      "verify": "The unknown normalizing constant would multiply both densities and cancel in the ratio.",
+      "answer": "The acceptance probability is $1$.",
+      "connects": "MCMC uses local accept-reject steps to make the posterior the chain's long-run distribution."
+    },
+    "practice": [
+      {
+        "problem": "A symmetric proposal moves from density $0.20$ to density $0.05$. Find the acceptance probability.",
+        "steps": [
+          {
+            "do": "Write the symmetric rule",
+            "result": "$a=\\min(1,0.05/0.20)$",
+            "why": "proposal terms cancel"
+          },
+          {
+            "do": "Compute the ratio",
+            "result": "$0.25$",
+            "why": "$0.05$ is one quarter of $0.20$"
+          },
+          {
+            "do": "Apply the minimum",
+            "result": "$a=0.25$",
+            "why": "downhill moves are sometimes accepted"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$25\\%$",
+            "why": "acceptance probability is easier to read"
+          },
+          {
+            "do": "Interpret",
+            "result": "accept one time in four on average",
+            "why": "occasional downhill moves help exploration"
+          }
+        ],
+        "answer": "The acceptance probability is $0.25$."
+      },
+      {
+        "problem": "A chain keeps samples $2,3,5,6$ after burn-in. Estimate the posterior mean of $\\theta$.",
+        "steps": [
+          {
+            "do": "Add the samples",
+            "result": "$2+3+5+6=16$",
+            "why": "Monte Carlo mean uses the sample sum"
+          },
+          {
+            "do": "Count samples",
+            "result": "$4$",
+            "why": "there are four retained draws"
+          },
+          {
+            "do": "Divide",
+            "result": "$16/4=4$",
+            "why": "sample average estimates posterior mean"
+          },
+          {
+            "do": "Name the estimator",
+            "result": "$\\hat{\\mathbb{E}}[\\theta]=4$",
+            "why": "MCMC averages estimate posterior expectations"
+          },
+          {
+            "do": "Note dependence",
+            "result": "estimate uses correlated draws",
+            "why": "MCMC samples are usually not independent"
+          }
+        ],
+        "answer": "The posterior mean estimate is $4$."
+      },
+      {
+        "problem": "For samples $1,2,4,5$, estimate $\\mathbb{E}[\\theta^2\\mid y]$.",
+        "steps": [
+          {
+            "do": "Square the samples",
+            "result": "$1,4,16,25$",
+            "why": "apply $g(\\theta)=\\theta^2$ to each draw"
+          },
+          {
+            "do": "Add squared values",
+            "result": "$1+4+16+25=46$",
+            "why": "Monte Carlo average uses transformed samples"
+          },
+          {
+            "do": "Count samples",
+            "result": "$4$",
+            "why": "four draws are retained"
+          },
+          {
+            "do": "Divide",
+            "result": "$46/4=11.5$",
+            "why": "average the transformed values"
+          },
+          {
+            "do": "State the estimate",
+            "result": "$11.5$",
+            "why": "this estimates the posterior second moment"
+          }
+        ],
+        "answer": "$\\mathbb{E}[\\theta^2\\mid y]\\approx11.5$."
+      },
+      {
+        "problem": "A nonsymmetric proposal has density ratio $q(\\theta\\mid\\theta')/q(\\theta'\\mid\\theta)=0.5$. The target density ratio is $3$. Find the Metropolis-Hastings acceptance probability.",
+        "steps": [
+          {
+            "do": "Write the full ratio",
+            "result": "$3\\cdot0.5$",
+            "why": "multiply target ratio by reverse-over-forward proposal ratio"
+          },
+          {
+            "do": "Compute",
+            "result": "$1.5$",
+            "why": "combine target and proposal correction"
+          },
+          {
+            "do": "Apply the cap",
+            "result": "$\\min(1,1.5)=1$",
+            "why": "acceptance probabilities cannot exceed 1"
+          },
+          {
+            "do": "Interpret",
+            "result": "always accept",
+            "why": "after correction the move is favorable"
+          },
+          {
+            "do": "Check role of proposal",
+            "result": "correction lowered $3$ to $1.5$",
+            "why": "asymmetry must be accounted for"
+          }
+        ],
+        "answer": "The acceptance probability is $1$."
+      },
+      {
+        "problem": "A Bayesian model's MCMC posterior predictive samples for next-day demand are $90,110,120,80,100$. Estimate the predictive mean and the probability demand exceeds $100$.",
+        "steps": [
+          {
+            "do": "Add samples",
+            "result": "$90+110+120+80+100=500$",
+            "why": "predictive mean uses sample average"
+          },
+          {
+            "do": "Divide by sample count",
+            "result": "$500/5=100$",
+            "why": "there are five predictive samples"
+          },
+          {
+            "do": "Count samples above $100$",
+            "result": "$2$",
+            "why": "$110$ and $120$ exceed $100$"
+          },
+          {
+            "do": "Divide by total samples",
+            "result": "$2/5=0.4$",
+            "why": "Monte Carlo probability is a fraction of samples"
+          },
+          {
+            "do": "Interpret",
+            "result": "$40\\%$ chance",
+            "why": "sample frequency estimates posterior predictive probability"
+          }
+        ],
+        "answer": "Predictive mean $100$; estimated probability above $100$ is $0.4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Hierarchical model inference",
+        "background": "Hierarchical posteriors are often high-dimensional and nonconjugate. MCMC is a standard way to preserve uncertainty across all levels.",
+        "numbers": "If 4000 draws give group-effect mean $1.2$ and standard deviation $0.3$, a rough interval is $1.2\\pm0.6$."
+      },
+      {
+        "title": "Posterior predictive checks",
+        "background": "Bayesian workflow uses simulated replicated data to see whether the model can reproduce observed patterns.",
+        "numbers": "If 30 of 100 replicated datasets have a statistic above the observed value, the posterior predictive tail probability is $0.30$."
+      },
+      {
+        "title": "Uncertainty in small experiments",
+        "background": "MCMC can summarize posteriors when exact formulas are unavailable for experiment metrics.",
+        "numbers": "Samples of lift with 950 of 1000 above zero estimate $p(\\text{lift}>0)=0.95$."
+      },
+      {
+        "title": "Bayesian logistic regression",
+        "background": "Regression with priors and nonlinear likelihoods is a natural MCMC use case, especially when uncertainty matters more than speed.",
+        "numbers": "If coefficient samples have mean $0.4$ and sd $0.1$, odds multiplier is about $e^{0.4}\\approx1.49$."
+      },
+      {
+        "title": "Reliability engineering",
+        "background": "Failure-rate models with censoring often use MCMC because latent lifetimes and parameters interact.",
+        "numbers": "If 1200 of 2000 posterior samples have failure rate below $0.01$, estimated probability is $0.60$."
+      },
+      {
+        "title": "Bayesian decision analysis",
+        "background": "Decisions can be evaluated over posterior samples, averaging utility rather than using one point estimate.",
+        "numbers": "Utilities $10,8,-2,6$ average to $5.5$, estimating expected utility under posterior uncertainty."
+      }
+    ],
+    "applicationsClose": "MCMC is slower than a formula, but it gives the precious thing Bayes promises: samples from uncertainty itself.",
+    "takeaways": [
+      "MCMC builds a Markov chain whose stationary distribution is the posterior.",
+      "Metropolis-Hastings uses density ratios, so the evidence cancels.",
+      "Posterior expectations are estimated by averages over retained samples.",
+      "Convergence, autocorrelation, and effective sample size must be checked."
+    ],
     "prereqs": [
       "math-20-16"
     ]
@@ -363,19 +4571,263 @@
   B({
     "id": "math-20-18",
     "title": "Gaussian process regression",
-    "tier": "🟢",
-    "tagline": "One concept from Bayesian statistics: gaussian process regression.",
+    "tagline": "A Gaussian process is a distribution over functions, updated by data into smooth predictions with uncertainty.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>MCMC for Bayesian inference</i>"
+        "multivariate normal distributions",
+        "conditional distributions",
+        "kernels",
+        "Bayesian regression"
       ],
       "leadsTo": [
-        "the next lesson, <i>Bayesian deep learning & uncertainty</i>"
+        "Bayesian deep learning & uncertainty",
+        "kernel methods",
+        "Bayesian optimization"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "covariance matrices",
+        "matrix inversion",
+        "conditioning",
+        "smoothness assumptions"
       ]
     },
+    "motivation": "<p>You already know Bayesian linear regression puts a distribution over possible lines. Gaussian process regression takes the same idea and removes the fixed line shape.</p><p>A <b>Gaussian process</b> puts a prior over functions. Points close together in input space are encouraged to have similar outputs through a kernel. After observing data, the model predicts both a mean and an uncertainty at new inputs.</p>",
+    "definition": "<p>A Gaussian process is written $f\\sim\\mathcal{GP}(m,k)$, where $m(x)$ is a mean function and $k(x,x')$ is a covariance kernel. For any finite inputs $x_1,\\ldots,x_n$, the vector $(f(x_1),\\ldots,f(x_n))$ is multivariate normal with mean entries $m(x_i)$ and covariance entries $k(x_i,x_j)$.</p><p>For noisy observations $y=f(X)+\\epsilon$ with $\\epsilon\\sim\\mathcal{N}(0,\\sigma_n^2I)$, the predictive mean at $x_*$ is $k_*^T(K+\\sigma_n^2I)^{-1}y$, assuming zero prior mean. The predictive variance is $k(x_*,x_*)-k_*^T(K+\\sigma_n^2I)^{-1}k_*$. These are just multivariate-normal conditioning formulas.</p><p><b>Assumptions that matter:</b> the kernel encodes smoothness and similarity assumptions; matrix inversion scales poorly with many training points; and predictive uncertainty is meaningful only if the kernel and noise model are reasonable for the data.</p>",
+    "worked": {
+      "problem": "A zero-mean noiseless GP has one training point $x_1=0$ with $y_1=2$. For a new point $x_*$, suppose $k(x_1,x_1)=1$, $k(x_*,x_1)=0.5$, and $k(x_*,x_*)=1$. Find the predictive mean and variance.",
+      "skills": [
+        "GP conditioning",
+        "kernel covariance",
+        "predictive uncertainty"
+      ],
+      "strategy": "With one training point, the matrix formula reduces to scalar covariance ratios.",
+      "steps": [
+        {
+          "do": "Write the predictive mean",
+          "result": "$\\mu_*=k_*K^{-1}y$",
+          "why": "zero-mean noiseless GP formula"
+        },
+        {
+          "do": "Substitute scalars",
+          "result": "$\\mu_*=0.5\\cdot1^{-1}\\cdot2$",
+          "why": "the training covariance is $1$"
+        },
+        {
+          "do": "Compute the mean",
+          "result": "$\\mu_*=1$",
+          "why": "the new point is half correlated with the observed point"
+        },
+        {
+          "do": "Write the variance",
+          "result": "$\\sigma_*^2=1-0.5\\cdot1^{-1}\\cdot0.5$",
+          "why": "conditioned variance subtracts explained covariance"
+        },
+        {
+          "do": "Compute the variance",
+          "result": "$\\sigma_*^2=1-0.25=0.75$",
+          "why": "some uncertainty remains away from the observed point"
+        }
+      ],
+      "verify": "At the training point the covariance would be $1$, giving mean $2$ and variance $0$ in the noiseless case; here weaker covariance gives partial learning.",
+      "answer": "Predictive mean $1$ and predictive variance $0.75$.",
+      "connects": "GP regression is multivariate normal conditioning applied to function values."
+    },
+    "practice": [
+      {
+        "problem": "In the same one-point noiseless setup, let $y_1=3$ and $k(x_*,x_1)=0.2$ with unit variances. Compute predictive mean and variance.",
+        "steps": [
+          {
+            "do": "Write the mean formula",
+            "result": "$\\mu_*=0.2\\cdot1^{-1}\\cdot3$",
+            "why": "one-point scalar conditioning"
+          },
+          {
+            "do": "Compute the mean",
+            "result": "$0.6$",
+            "why": "$0.2\\cdot3=0.6$"
+          },
+          {
+            "do": "Write the variance formula",
+            "result": "$\\sigma_*^2=1-0.2\\cdot1^{-1}\\cdot0.2$",
+            "why": "subtract covariance explained by the observation"
+          },
+          {
+            "do": "Compute the subtraction",
+            "result": "$1-0.04=0.96$",
+            "why": "weak covariance leaves high uncertainty"
+          },
+          {
+            "do": "Interpret",
+            "result": "prediction is close to prior mean",
+            "why": "the new point is only weakly related to the observed point"
+          }
+        ],
+        "answer": "Mean $0.6$ and variance $0.96$."
+      },
+      {
+        "problem": "A noisy one-point GP has $k(x_1,x_1)=1$, noise variance $0.25$, $y_1=4$, $k(x_*,x_1)=0.5$, and $k(x_*,x_*)=1$. Compute predictive mean and variance.",
+        "steps": [
+          {
+            "do": "Add noise to training variance",
+            "result": "$1+0.25=1.25$",
+            "why": "observed $y$ includes noise"
+          },
+          {
+            "do": "Compute inverse scalar",
+            "result": "$1/1.25=0.8$",
+            "why": "scalar matrix inverse"
+          },
+          {
+            "do": "Compute mean",
+            "result": "$0.5\\cdot0.8\\cdot4=1.6$",
+            "why": "use noisy GP mean formula"
+          },
+          {
+            "do": "Compute variance reduction",
+            "result": "$0.5\\cdot0.8\\cdot0.5=0.2$",
+            "why": "noise reduces how much is learned"
+          },
+          {
+            "do": "Compute variance",
+            "result": "$1-0.2=0.8$",
+            "why": "subtract reduction from prior variance"
+          }
+        ],
+        "answer": "Mean $1.6$ and variance $0.8$."
+      },
+      {
+        "problem": "Using squared-exponential kernel $k(x,x')=\\exp(-(x-x')^2/2)$, compute $k(0,1)$ and $k(0,2)$ using $e^{-0.5}\\approx0.607$ and $e^{-2}\\approx0.135$.",
+        "steps": [
+          {
+            "do": "Compute distance for $0$ and $1$",
+            "result": "$(0-1)^2=1$",
+            "why": "kernel depends on squared distance"
+          },
+          {
+            "do": "Evaluate first exponent",
+            "result": "$-1/2=-0.5$",
+            "why": "divide squared distance by 2"
+          },
+          {
+            "do": "Read first covariance",
+            "result": "$k(0,1)\\approx0.607$",
+            "why": "use the given exponential"
+          },
+          {
+            "do": "Compute distance for $0$ and $2$",
+            "result": "$(0-2)^2=4$",
+            "why": "farther points are less similar"
+          },
+          {
+            "do": "Read second covariance",
+            "result": "$k(0,2)=e^{-2}\\approx0.135$",
+            "why": "larger distance gives smaller covariance"
+          }
+        ],
+        "answer": "$k(0,1)\\approx0.607$ and $k(0,2)\\approx0.135$."
+      },
+      {
+        "problem": "A GP prediction has mean $5$ and variance $4$. Give an approximate $95\\%$ predictive interval using $\\mu\\pm2\\sigma$.",
+        "steps": [
+          {
+            "do": "Compute standard deviation",
+            "result": "$\\sigma=\\sqrt4=2$",
+            "why": "standard deviation is square root of variance"
+          },
+          {
+            "do": "Compute two standard deviations",
+            "result": "$2\\sigma=4$",
+            "why": "rough $95\\%$ normal interval"
+          },
+          {
+            "do": "Compute lower endpoint",
+            "result": "$5-4=1$",
+            "why": "subtract uncertainty margin"
+          },
+          {
+            "do": "Compute upper endpoint",
+            "result": "$5+4=9$",
+            "why": "add uncertainty margin"
+          },
+          {
+            "do": "State interval",
+            "result": "$[1,9]$",
+            "why": "predictive intervals include output uncertainty"
+          }
+        ],
+        "answer": "An approximate $95\\%$ interval is $[1,9]$."
+      },
+      {
+        "problem": "In Bayesian optimization, a candidate has GP mean $0.70$ and standard deviation $0.10$; another has mean $0.60$ and standard deviation $0.40$. Compute upper confidence score $\\mu+2\\sigma$ for each and choose the exploratory candidate.",
+        "steps": [
+          {
+            "do": "Score first candidate",
+            "result": "$0.70+2\\cdot0.10=0.90$",
+            "why": "upper confidence adds uncertainty bonus"
+          },
+          {
+            "do": "Score second candidate",
+            "result": "$0.60+2\\cdot0.40=1.40$",
+            "why": "larger uncertainty raises exploration value"
+          },
+          {
+            "do": "Compare scores",
+            "result": "$1.40>0.90$",
+            "why": "choose the larger acquisition score"
+          },
+          {
+            "do": "Identify choice",
+            "result": "second candidate",
+            "why": "it has more upside under uncertainty"
+          },
+          {
+            "do": "Interpret",
+            "result": "exploration wins",
+            "why": "Bayesian optimization balances mean and uncertainty"
+          }
+        ],
+        "answer": "The scores are $0.90$ and $1.40$; choose the second candidate."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Bayesian optimization",
+        "background": "GPs are widely used to optimize expensive black-box functions because they provide both prediction and uncertainty.",
+        "numbers": "With mean $0.6$ and sd $0.2$, upper confidence $\\mu+2\\sigma=1.0$."
+      },
+      {
+        "title": "Spatial interpolation",
+        "background": "Kriging in geostatistics is an ancestor of GP regression. Nearby locations tend to have correlated measurements.",
+        "numbers": "A location half-correlated with a measured value $10$ has zero-mean prediction $5$ in the one-point noiseless case."
+      },
+      {
+        "title": "Time-series smoothing",
+        "background": "GP kernels can encode smooth trends over time without choosing a fixed polynomial degree.",
+        "numbers": "With length scale $2$, times one unit apart have covariance $e^{-1/8}\\approx0.882$."
+      },
+      {
+        "title": "Active learning",
+        "background": "A GP can ask for labels where uncertainty is high, saving labeling effort.",
+        "numbers": "A point with variance $0.9$ is more informative than one with variance $0.1$ if costs are equal."
+      },
+      {
+        "title": "Robotics calibration",
+        "background": "Robots can model unknown terrain or sensor bias as a smooth function learned from measurements.",
+        "numbers": "Bias prediction mean $0.03$ m with sd $0.01$ gives rough interval $[0.01,0.05]$ m."
+      },
+      {
+        "title": "Small-data regression",
+        "background": "When data are scarce, GP priors can express smoothness and produce calibrated uncertainty better than a high-parameter black box.",
+        "numbers": "One observation with covariance $0.8$ to a test point and value $5$ gives noiseless prediction $4$."
+      }
+    ],
+    "applicationsClose": "Gaussian processes make uncertainty visible in function learning: close data guide the mean, and unexplored regions keep their doubt.",
+    "takeaways": [
+      "A Gaussian process is a distribution over functions defined by a mean function and kernel.",
+      "Finite collections of function values are multivariate normal.",
+      "GP regression predicts by conditioning a joint Gaussian over observed and test values.",
+      "Kernels encode assumptions about similarity, smoothness, and uncertainty."
+    ],
     "prereqs": [
       "math-20-17"
     ]
@@ -384,19 +4836,274 @@
   B({
     "id": "math-20-19",
     "title": "Bayesian deep learning & uncertainty",
-    "tier": "🟢",
-    "tagline": "Capstone — how bayesian statistics shows up directly in CS & ML.",
+    "tagline": "Bayesian deep learning asks neural networks not just for predictions, but for honest uncertainty around them.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Gaussian process regression</i>"
+        "Bayesian inference",
+        "variational inference",
+        "posterior predictive distributions",
+        "neural networks"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "calibration",
+        "decision theory",
+        "active learning",
+        "safe deployment"
       ],
       "usedWith": [
-        "the other concepts in Bayesian statistics and its capstone"
+        "predictive distributions",
+        "Monte Carlo averages",
+        "entropy",
+        "credible intervals"
       ]
     },
+    "motivation": "<p>You already know a neural network can output a class probability or a regression value. But a confident number is not always a trustworthy number.</p><p><b>Bayesian deep learning</b> treats weights, functions, or last-layer parameters as uncertain. Instead of one prediction, it averages predictions across plausible models. That gives both a mean prediction and a measure of uncertainty, which matters when decisions are costly.</p>",
+    "definition": "<p>In Bayesian deep learning, the posterior predictive distribution is $$p(y_*\\mid x_*,D)=\\int p(y_*\\mid x_*,w)p(w\\mid D)\\,dw,$$ where $D$ is training data and $w$ are neural-network weights or Bayesian parameters. Because the integral is usually impossible exactly, methods such as variational inference, Laplace approximations, ensembles, dropout approximations, or MCMC estimate it.</p><p>A Monte Carlo approximation draws $w^{(1)},\\ldots,w^{(S)}$ from an approximate posterior and averages predictions: $p(y_*\\mid x_*,D)\\approx\\frac1S\\sum_s p(y_*\\mid x_*,w^{(s)})$. Disagreement across draws is epistemic uncertainty; randomness that remains even for a fixed model is aleatoric uncertainty.</p><p><b>Assumptions that matter:</b> approximate Bayesian neural methods can be miscalibrated; ensembles and dropout are approximations, not magic guarantees; and uncertainty should be validated with calibration, out-of-distribution tests, and decision-focused metrics.</p>",
+    "worked": {
+      "problem": "A Bayesian classifier makes three posterior weight-sample predictions for the probability of class 1: $0.70$, $0.60$, and $0.20$. Estimate the posterior predictive probability, sample variance of the probabilities, and entropy using $-p\\ln p-(1-p)\\ln(1-p)$ with $p=0.50$ giving entropy about $0.693$.",
+      "skills": [
+        "Monte Carlo prediction",
+        "epistemic uncertainty",
+        "classification entropy"
+      ],
+      "strategy": "Average the sampled probabilities first, then measure disagreement around that average.",
+      "steps": [
+        {
+          "do": "Add sampled probabilities",
+          "result": "$0.70+0.60+0.20=1.50$",
+          "why": "posterior predictive probability averages model predictions"
+        },
+        {
+          "do": "Divide by sample count",
+          "result": "$1.50/3=0.50$",
+          "why": "there are three posterior samples"
+        },
+        {
+          "do": "Compute deviations",
+          "result": "$0.20,0.10,-0.30$",
+          "why": "subtract the mean $0.50$ from each probability"
+        },
+        {
+          "do": "Square deviations",
+          "result": "$0.04,0.01,0.09$",
+          "why": "variance measures squared disagreement"
+        },
+        {
+          "do": "Average squared deviations",
+          "result": "$(0.04+0.01+0.09)/3\\approx0.0467$",
+          "why": "use a simple Monte Carlo variance summary"
+        },
+        {
+          "do": "Read entropy at the mean",
+          "result": "$0.693$ nats",
+          "why": "mean probability $0.50$ is maximally uncertain for two classes"
+        }
+      ],
+      "verify": "The average prediction is uncertain because it is near $0.5$, and the sample predictions also disagree substantially.",
+      "answer": "Predictive probability $0.50$, probability-disagreement variance about $0.0467$, and entropy about $0.693$ nats.",
+      "connects": "Bayesian deep learning separates what the average model predicts from how much plausible models disagree."
+    },
+    "practice": [
+      {
+        "problem": "Four posterior samples predict regression values $10,12,9,13$. Estimate the predictive mean and sample standard deviation using denominator $4$.",
+        "steps": [
+          {
+            "do": "Add predictions",
+            "result": "$10+12+9+13=44$",
+            "why": "Monte Carlo mean uses all posterior predictions"
+          },
+          {
+            "do": "Divide by count",
+            "result": "$44/4=11$",
+            "why": "there are four samples"
+          },
+          {
+            "do": "Compute deviations",
+            "result": "$-1,1,-2,2$",
+            "why": "subtract the mean 11"
+          },
+          {
+            "do": "Average squared deviations",
+            "result": "$(1+1+4+4)/4=2.5$",
+            "why": "variance summarizes model disagreement"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\sqrt{2.5}\\approx1.58$",
+            "why": "standard deviation is easier to interpret"
+          }
+        ],
+        "answer": "Predictive mean $11$ and standard deviation about $1.58$."
+      },
+      {
+        "problem": "An ensemble gives class-1 probabilities $0.9,0.8,0.7,0.6,0.5$. Estimate the predictive probability and decide whether it exceeds threshold $0.7$.",
+        "steps": [
+          {
+            "do": "Add probabilities",
+            "result": "$0.9+0.8+0.7+0.6+0.5=3.5$",
+            "why": "average ensemble predictions"
+          },
+          {
+            "do": "Divide by five",
+            "result": "$3.5/5=0.7$",
+            "why": "five models contribute"
+          },
+          {
+            "do": "Compare to threshold",
+            "result": "$0.7$ equals $0.7$",
+            "why": "the score is exactly at the cutoff"
+          },
+          {
+            "do": "Apply an exceeds rule",
+            "result": "does not exceed",
+            "why": "exceeds means strictly greater than the threshold"
+          },
+          {
+            "do": "Interpret",
+            "result": "borderline decision",
+            "why": "uncertainty policy matters near cutoffs"
+          }
+        ],
+        "answer": "The predictive probability is $0.7$; it does not strictly exceed $0.7$."
+      },
+      {
+        "problem": "A binary classifier predicts $p=0.8$. Compute entropy using $\\ln0.8\\approx-0.223$ and $\\ln0.2\\approx-1.609$.",
+        "steps": [
+          {
+            "do": "Write entropy",
+            "result": "$H=-0.8\\ln0.8-0.2\\ln0.2$",
+            "why": "binary entropy formula"
+          },
+          {
+            "do": "Substitute logs",
+            "result": "$H=-0.8(-0.223)-0.2(-1.609)$",
+            "why": "use the given approximations"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$0.1784+0.3218$",
+            "why": "negative times negative becomes positive"
+          },
+          {
+            "do": "Add",
+            "result": "$0.5002$",
+            "why": "combine entropy contributions"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $0.50$ nats",
+            "why": "less uncertain than $p=0.5$ with entropy $0.693$"
+          }
+        ],
+        "answer": "The entropy is approximately $0.500$ nats."
+      },
+      {
+        "problem": "A model reports aleatoric variance $4$ and epistemic variance $9$ for a regression prediction. Compute total predictive standard deviation.",
+        "steps": [
+          {
+            "do": "Add variances",
+            "result": "$4+9=13$",
+            "why": "independent uncertainty sources add in variance"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\sqrt{13}\\approx3.61$",
+            "why": "standard deviation is square root of variance"
+          },
+          {
+            "do": "Identify aleatoric source",
+            "result": "$4$",
+            "why": "data noise remains even with known model"
+          },
+          {
+            "do": "Identify epistemic source",
+            "result": "$9$",
+            "why": "model uncertainty can shrink with more data"
+          },
+          {
+            "do": "Interpret",
+            "result": "total uncertainty about $3.61$",
+            "why": "decision thresholds should account for both sources"
+          }
+        ],
+        "answer": "Total predictive standard deviation is about $3.61$."
+      },
+      {
+        "problem": "An active-learning system has two unlabeled points. Point A has predictive probabilities $[0.5,0.5]$. Point B has $[0.9,0.1]$. Using entropies $0.693$ and about $0.325$, which point should be labeled first?",
+        "steps": [
+          {
+            "do": "Read entropy for A",
+            "result": "$H_A=0.693$",
+            "why": "balanced probabilities are highly uncertain"
+          },
+          {
+            "do": "Read entropy for B",
+            "result": "$H_B\\approx0.325$",
+            "why": "confident probabilities have lower entropy"
+          },
+          {
+            "do": "Compare entropies",
+            "result": "$0.693>0.325$",
+            "why": "active learning often chooses highest uncertainty"
+          },
+          {
+            "do": "Select point",
+            "result": "Point A",
+            "why": "its label should be more informative"
+          },
+          {
+            "do": "Connect to Bayesian uncertainty",
+            "result": "query high-uncertainty examples",
+            "why": "labels are most valuable where the model is unsure"
+          }
+        ],
+        "answer": "Label Point A first."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Medical triage models",
+        "background": "Clinical ML needs calibrated uncertainty because a wrong confident prediction can harm patients. Bayesian predictive intervals can trigger human review.",
+        "numbers": "Risk samples $0.12,0.18,0.30$ average to $0.20$; the spread warns that the estimate is not settled."
+      },
+      {
+        "title": "Autonomous driving perception",
+        "background": "A vision system should know when rain, glare, or rare objects make predictions unreliable. Epistemic uncertainty can flag unfamiliar situations.",
+        "numbers": "If five models predict pedestrian probability $0.1,0.2,0.8,0.7,0.2$, the mean is $0.4$ but disagreement is high."
+      },
+      {
+        "title": "Out-of-distribution detection",
+        "background": "Bayesian methods can help identify inputs far from training data, where model uncertainty should rise.",
+        "numbers": "An in-domain image entropy $0.15$ versus OOD entropy $1.05$ gives a measurable uncertainty gap of $0.90$ nats."
+      },
+      {
+        "title": "Active learning for labels",
+        "background": "Labels are expensive. Bayesian uncertainty helps choose examples that are expected to teach the model most.",
+        "numbers": "A point with entropy $0.69$ is a better query than one with entropy $0.10$ under uncertainty sampling."
+      },
+      {
+        "title": "Forecasting with neural nets",
+        "background": "Bayesian deep forecasting reports intervals, not only point predictions, which helps staffing, inventory, and risk planning.",
+        "numbers": "Demand mean $500$ with sd $40$ gives rough $95\\%$ interval $[420,580]$."
+      },
+      {
+        "title": "Calibration in classifiers",
+        "background": "A calibrated model's $70\\%$ predictions should be correct about $70\\%$ of the time. Bayesian averaging can improve calibration but must be checked.",
+        "numbers": "Among 100 examples predicted at $0.7$, about 70 correct is calibrated; 55 correct is overconfident."
+      },
+      {
+        "title": "Bayesian last-layer methods",
+        "background": "A practical compromise is to keep a deep feature extractor fixed and put a Bayesian model on the last layer.",
+        "numbers": "Feature value $2$ with weight samples $0.4,0.5,0.7$ gives logit samples $0.8,1.0,1.4$."
+      }
+    ],
+    "applicationsClose": "The capstone lesson is this: powerful models are more useful when they can say both what they think and how sure they are.",
+    "takeaways": [
+      "Bayesian deep learning averages predictions over uncertain weights or functions.",
+      "Monte Carlo predictive means summarize predictions; disagreement summarizes epistemic uncertainty.",
+      "Aleatoric uncertainty is data noise; epistemic uncertainty is model uncertainty that more data can reduce.",
+      "Approximate Bayesian neural methods must be validated for calibration and deployment safety."
+    ],
     "prereqs": [
       "math-20-18"
     ]
