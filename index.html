@@ -1324,10 +1324,17 @@ const App = (function () {
     return names.map(n => ({ name: n, lessons: mods[n] }));
   }
 
-  // Nest the Capstones and every "Papers · …" category under one collapsible
-  // "Papers" parent in the sidebar. The lesson's own `module` is unchanged.
+  // Nest sections under collapsible umbrella groups in the sidebar. The lesson's own
+  // `module` is unchanged. Two rule-based umbrellas:
+  //  • "Course"  — every taught section from Foundations through PyTorch
+  //                (i.e. everything in MODULE_ORDER before Capstones).
+  //  • "Papers"  — the Capstones plus every "Papers · …" category.
+  // (A third, "Math", is assigned per-lesson via the `superGroup` field.)
   function superGroupOf(name) {
-    return (name === "Capstones" || /^Papers\s*·/.test(name)) ? "Papers" : null;
+    if (name === "Capstones" || /^Papers\s*·/.test(name)) return "Papers";
+    const i = MODULE_ORDER.indexOf(name), cap = MODULE_ORDER.indexOf("Capstones");
+    if (i !== -1 && cap !== -1 && i < cap) return "Course";
+    return null;
   }
   // Under the "Papers" parent, drop the redundant "Papers · " prefix from a
   // child's label so it reads e.g. "Papers › Foundations & Optimization".
@@ -1901,7 +1908,11 @@ const App = (function () {
     } else {
       welcome();
       const first = document.querySelector("#modules .module");
-      if (first) first.classList.remove("collapsed");   // default landing: first section open
+      if (first) {
+        first.classList.remove("collapsed");                       // default landing: first section open
+        const fsg = first.closest(".supergroup");
+        if (fsg) fsg.classList.remove("collapsed");                // …and expand its umbrella so it's visible
+      }
     }
     // In-tab nav-anchor clicks (and browser back/forward) change the hash; route them here.
     window.addEventListener("hashchange", () => {
