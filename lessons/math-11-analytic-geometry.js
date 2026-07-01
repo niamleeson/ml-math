@@ -9,37 +9,538 @@
   B({
     "id": "math-11-01",
     "title": "Cartesian coordinates",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: cartesian coordinates.",
+    "tagline": "Cartesian coordinates turn location into numbers you can measure, compare, and compute with.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "number lines",
+        "ordered pairs",
+        "basic algebra"
       ],
       "leadsTo": [
-        "the next lesson, <i>Polar coordinates</i>"
+        "Distance and midpoints",
+        "Lines in the plane",
+        "Vectors"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "graphs",
+        "functions",
+        "systems of equations",
+        "transformations"
       ]
-    }
+    },
+    "motivation": "<p>You already know how to find a seat by row and number, or a cell in a spreadsheet by column and row. The coordinate plane is the same kindness: it gives every point a dependable address.</p><p><b>Cartesian coordinates</b> let geometry and algebra talk to each other. A point becomes $(x,y)$, a movement becomes a change in those numbers, and a picture becomes something we can calculate. This is the doorway to almost every geometric idea used in ML.</p>",
+    "definition": "<p>In the Cartesian plane, two perpendicular number lines meet at the <b>origin</b> $(0,0)$. The horizontal axis is the $x$-axis, the vertical axis is the $y$-axis, and a point $P=(x,y)$ means: move $x$ units horizontally from the origin, then $y$ units vertically. Positive $x$ points right, positive $y$ points up.</p><p>The four quadrants come from the signs of the coordinates: quadrant I has $(+,+)$, quadrant II has $(-,+)$, quadrant III has $(-,-)$, and quadrant IV has $(+,-)$. A displacement from $A=(x_1,y_1)$ to $B=(x_2,y_2)$ is measured component by component as $(x_2-x_1, y_2-y_1)$.</p><p><b>Assumptions that matter:</b> the axes are perpendicular and use the same unit scale unless stated otherwise; an ordered pair is ordered, so $(2,5)$ and $(5,2)$ are different points; and coordinates describe location relative to the chosen origin and axes.</p>",
+    "worked": {
+      "problem": "Plot $A=(-3,2)$ and $B=(4,-1)$ mentally, identify their quadrants, and find the displacement from $A$ to $B$.",
+      "skills": [
+        "ordered pairs",
+        "quadrants",
+        "coordinate differences"
+      ],
+      "strategy": "Read each coordinate as horizontal then vertical, then subtract start from finish component by component.",
+      "steps": [
+        {
+          "do": "Read point $A$",
+          "result": "$x=-3$, $y=2$",
+          "why": "the first coordinate is horizontal and the second is vertical"
+        },
+        {
+          "do": "Classify $A$ by signs",
+          "result": "quadrant II",
+          "why": "negative $x$ and positive $y$ put the point left and up"
+        },
+        {
+          "do": "Read point $B$",
+          "result": "$x=4$, $y=-1$",
+          "why": "the ordered pair gives right-left first, then up-down"
+        },
+        {
+          "do": "Classify $B$ by signs",
+          "result": "quadrant IV",
+          "why": "positive $x$ and negative $y$ put the point right and down"
+        },
+        {
+          "do": "Subtract $x$-coordinates",
+          "result": "$4-(-3)=7$",
+          "why": "horizontal displacement is final $x$ minus initial $x$"
+        },
+        {
+          "do": "Subtract $y$-coordinates",
+          "result": "$-1-2=-3$",
+          "why": "vertical displacement is final $y$ minus initial $y$"
+        },
+        {
+          "do": "Write the displacement",
+          "result": "$(7,-3)$",
+          "why": "go 7 units right and 3 units down from $A$ to reach $B$"
+        }
+      ],
+      "verify": "Starting at $(-3,2)$ and adding $(7,-3)$ gives $(-3+7,2-3)=(4,-1)$, which is $B$.",
+      "answer": "$A$ is in quadrant II, $B$ is in quadrant IV, and the displacement from $A$ to $B$ is $(7,-3)$.",
+      "connects": "Coordinates make location arithmetic: movement becomes subtraction and addition of ordered pairs."
+    },
+    "practice": [
+      {
+        "problem": "For $P=(6,-4)$, identify the quadrant and describe how to reach it from the origin.",
+        "steps": [
+          {
+            "do": "Read the $x$-coordinate",
+            "result": "$x=6$",
+            "why": "the first coordinate is horizontal"
+          },
+          {
+            "do": "Read the $y$-coordinate",
+            "result": "$y=-4$",
+            "why": "the second coordinate is vertical"
+          },
+          {
+            "do": "Translate the horizontal coordinate",
+            "result": "move 6 units right",
+            "why": "positive $x$ points right"
+          },
+          {
+            "do": "Translate the vertical coordinate",
+            "result": "move 4 units down",
+            "why": "negative $y$ points downward"
+          },
+          {
+            "do": "Classify the signs",
+            "result": "quadrant IV",
+            "why": "$(+,-)$ belongs to quadrant IV"
+          }
+        ],
+        "answer": "$P$ is in quadrant IV; move 6 units right and 4 units down from the origin."
+      },
+      {
+        "problem": "Find the coordinates after starting at $(2,-3)$ and moving left $5$ units and up $7$ units.",
+        "steps": [
+          {
+            "do": "Convert the horizontal move",
+            "result": "$-5$",
+            "why": "left means a negative change in $x$"
+          },
+          {
+            "do": "Convert the vertical move",
+            "result": "$+7$",
+            "why": "up means a positive change in $y$"
+          },
+          {
+            "do": "Add the $x$ change",
+            "result": "$2+(-5)=-3$",
+            "why": "new horizontal location is old plus change"
+          },
+          {
+            "do": "Add the $y$ change",
+            "result": "$-3+7=4$",
+            "why": "new vertical location is old plus change"
+          },
+          {
+            "do": "Write the point",
+            "result": "$(-3,4)$",
+            "why": "coordinates are listed as $(x,y)$"
+          }
+        ],
+        "answer": "The new point is $(-3,4)$."
+      },
+      {
+        "problem": "Find the displacement from $C=(1,8)$ to $D=(-6,3)$ and describe it in words.",
+        "steps": [
+          {
+            "do": "Subtract final minus initial for $x$",
+            "result": "$-6-1=-7$",
+            "why": "horizontal displacement uses the $x$-coordinates"
+          },
+          {
+            "do": "Subtract final minus initial for $y$",
+            "result": "$3-8=-5$",
+            "why": "vertical displacement uses the $y$-coordinates"
+          },
+          {
+            "do": "Combine the components",
+            "result": "$(-7,-5)$",
+            "why": "a displacement is an ordered pair of changes"
+          },
+          {
+            "do": "Interpret the first component",
+            "result": "7 units left",
+            "why": "negative horizontal change points left"
+          },
+          {
+            "do": "Interpret the second component",
+            "result": "5 units down",
+            "why": "negative vertical change points down"
+          }
+        ],
+        "answer": "The displacement is $(-7,-5)$: 7 units left and 5 units down."
+      },
+      {
+        "problem": "A rectangle has opposite corners $(-2,-1)$ and $(5,4)$, with sides parallel to the axes. Find the other two corners.",
+        "steps": [
+          {
+            "do": "Name the given coordinates",
+            "result": "$x$-values $-2,5$ and $y$-values $-1,4$",
+            "why": "axis-parallel corners mix these coordinate choices"
+          },
+          {
+            "do": "Keep the first $x$ with the second $y$",
+            "result": "$(-2,4)$",
+            "why": "one missing corner is above the left given corner"
+          },
+          {
+            "do": "Keep the second $x$ with the first $y$",
+            "result": "$(5,-1)$",
+            "why": "the other missing corner is right of the lower given corner"
+          },
+          {
+            "do": "Check horizontal sides",
+            "result": "$y=-1$ and $y=4$",
+            "why": "top and bottom sides have constant $y$"
+          },
+          {
+            "do": "Check vertical sides",
+            "result": "$x=-2$ and $x=5$",
+            "why": "left and right sides have constant $x$"
+          }
+        ],
+        "answer": "The other corners are $(-2,4)$ and $(5,-1)$."
+      },
+      {
+        "problem": "A tiny image patch has pixel coordinates with origin at the upper-left, $x$ right and $y$ down. A feature moves from $(12,20)$ to $(17,14)$. Find the coordinate change and interpret it.",
+        "steps": [
+          {
+            "do": "Subtract the $x$ coordinates",
+            "result": "$17-12=5$",
+            "why": "positive $x$ still means right"
+          },
+          {
+            "do": "Subtract the $y$ coordinates",
+            "result": "$14-20=-6$",
+            "why": "final minus initial gives vertical coordinate change"
+          },
+          {
+            "do": "Write the coordinate change",
+            "result": "$(5,-6)$",
+            "why": "the feature's address changed by these components"
+          },
+          {
+            "do": "Interpret the horizontal change",
+            "result": "5 pixels right",
+            "why": "positive $x$ points right"
+          },
+          {
+            "do": "Interpret the vertical change",
+            "result": "6 pixels up",
+            "why": "in image coordinates, smaller $y$ is higher"
+          }
+        ],
+        "answer": "The change is $(5,-6)$: 5 pixels right and 6 pixels up in that image coordinate system."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Image pixels",
+        "background": "Computer vision treats an image as values attached to coordinate locations. The coordinate convention may place the origin at the top-left instead of the mathematical center, but the address idea is the same.",
+        "numbers": "A pixel at $(40,25)$ shifted by $(8,-3)$ moves to $(48,22)$."
+      },
+      {
+        "title": "Scatter plots in data analysis",
+        "background": "A scatter plot turns two measured features into points, so patterns become visible before a model is fit.",
+        "numbers": "A user with feature values age $30$ and score $0.82$ becomes the point $(30,0.82)$."
+      },
+      {
+        "title": "Screen and UI layout",
+        "background": "Interfaces place buttons, text, and images by coordinates, often with $y$ increasing downward on the screen.",
+        "numbers": "A button at $(120,80)$ with width $200$ and height $40$ has lower-right corner $(320,120)$."
+      },
+      {
+        "title": "Robotics position tracking",
+        "background": "A robot map needs a coordinate frame so sensor readings and planned moves agree.",
+        "numbers": "If a robot at $(2.0,1.5)$ meters moves by $(0.7,-0.4)$ meters, its new position is $(2.7,1.1)$."
+      },
+      {
+        "title": "Feature spaces",
+        "background": "ML often represents each example as a point whose coordinates are feature values. Two-feature examples are easy to picture in the plane.",
+        "numbers": "A house with size feature $1.6$ and commute feature $0.3$ is the point $(1.6,0.3)$."
+      },
+      {
+        "title": "Bounding boxes",
+        "background": "Object detectors describe regions using coordinate corners or centers and sizes.",
+        "numbers": "A box with top-left $(10,15)$ and bottom-right $(70,55)$ has width $60$ and height $40$."
+      }
+    ],
+    "applicationsClose": "Coordinates are the quiet address system behind graphs, images, maps, screens, and feature spaces.",
+    "takeaways": [
+      "A Cartesian point $(x,y)$ records horizontal position first and vertical position second.",
+      "Signs locate quadrants and directions of movement.",
+      "Displacement from $A$ to $B$ is final coordinates minus initial coordinates.",
+      "Changing the origin or axis convention changes coordinates, not the underlying point."
+    ]
   });
 
   B({
     "id": "math-11-02",
     "title": "Polar coordinates",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: polar coordinates.",
+    "tagline": "Polar coordinates locate a point by distance and direction, which is often the most natural way to see it.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Cartesian coordinates</i>"
+        "Cartesian coordinates",
+        "trigonometric functions",
+        "angles in radians"
       ],
       "leadsTo": [
-        "the next lesson, <i>Distance and midpoints</i>"
+        "Vectors",
+        "The dot product",
+        "complex numbers"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "unit circle",
+        "rotations",
+        "parametric curves",
+        "trigonometry"
       ]
     },
+    "motivation": "<p>Sometimes a point feels less like a row-and-column address and more like a direction and a distance: walk 5 meters at a $30^\\circ$ angle, or point a radar beam 12 km northeast.</p><p><b>Polar coordinates</b> honor that instinct. Instead of $(x,y)$, a point is described by $(r,\\theta)$, where $r$ is how far from the origin and $\\theta$ is the angle from the positive $x$-axis. Circles, rotations, waves, and directions become easier to read.</p>",
+    "definition": "<p>A polar coordinate pair $(r,\\theta)$ describes a point by radius $r$ and angle $\\theta$. The conversion to Cartesian coordinates is $$x=r\\cos\\theta,\\qquad y=r\\sin\\theta.$$ For a Cartesian point $(x,y)$, the radius satisfies $r=\\sqrt{x^2+y^2}$, and the angle satisfies $\\tan\\theta=y/x$ with quadrant chosen carefully.</p><p>The conversion comes from the right triangle formed by the point, the origin, and the $x$-axis: cosine gives adjacent over hypotenuse, so $\\cos\\theta=x/r$; sine gives opposite over hypotenuse, so $\\sin\\theta=y/r$. Multiplying by $r$ gives $x$ and $y$.</p><p><b>Assumptions that matter:</b> angles are measured from the positive $x$-axis, usually in radians; $(r,\\theta)$ is not unique because adding $2\\pi$ to $\\theta$ gives the same point; and when converting from $(x,y)$, use quadrant information rather than trusting plain arctangent alone.</p>",
+    "worked": {
+      "problem": "Convert the polar point $(6,\\pi/3)$ to Cartesian coordinates.",
+      "skills": [
+        "polar-to-Cartesian conversion",
+        "unit-circle values",
+        "exact coordinates"
+      ],
+      "strategy": "Use $x=r\\cos\\theta$ and $y=r\\sin\\theta$, then plug in the familiar angle values.",
+      "steps": [
+        {
+          "do": "Identify the radius",
+          "result": "$r=6$",
+          "why": "the first polar coordinate is distance from the origin"
+        },
+        {
+          "do": "Identify the angle",
+          "result": "$\\theta=\\pi/3$",
+          "why": "the second polar coordinate is direction"
+        },
+        {
+          "do": "Write the $x$ conversion",
+          "result": "$x=6\\cos(\\pi/3)$",
+          "why": "horizontal coordinate is radius times cosine"
+        },
+        {
+          "do": "Use the cosine value",
+          "result": "$x=6\\cdot\\dfrac12=3$",
+          "why": "$\\cos(\\pi/3)=1/2$"
+        },
+        {
+          "do": "Write the $y$ conversion",
+          "result": "$y=6\\sin(\\pi/3)$",
+          "why": "vertical coordinate is radius times sine"
+        },
+        {
+          "do": "Use the sine value",
+          "result": "$y=6\\cdot\\dfrac{\\sqrt3}{2}=3\\sqrt3$",
+          "why": "$\\sin(\\pi/3)=\\sqrt3/2$"
+        }
+      ],
+      "verify": "The radius of $(3,3\\sqrt3)$ is $\\sqrt{9+27}=6$, so the distance matches the polar radius.",
+      "answer": "The Cartesian coordinates are $(3,3\\sqrt3)$.",
+      "connects": "Polar and Cartesian coordinates are two descriptions of the same point: one by direction and distance, one by horizontal and vertical components."
+    },
+    "practice": [
+      {
+        "problem": "Convert $(4,\\pi/2)$ from polar to Cartesian coordinates.",
+        "steps": [
+          {
+            "do": "Write the $x$ formula",
+            "result": "$x=4\\cos(\\pi/2)$",
+            "why": "polar-to-Cartesian uses cosine for horizontal coordinate"
+          },
+          {
+            "do": "Evaluate cosine",
+            "result": "$x=4\\cdot0=0$",
+            "why": "$\\cos(\\pi/2)=0$"
+          },
+          {
+            "do": "Write the $y$ formula",
+            "result": "$y=4\\sin(\\pi/2)$",
+            "why": "sine gives the vertical component"
+          },
+          {
+            "do": "Evaluate sine",
+            "result": "$y=4\\cdot1=4$",
+            "why": "$\\sin(\\pi/2)=1$"
+          },
+          {
+            "do": "Write the point",
+            "result": "$(0,4)$",
+            "why": "Cartesian coordinates are $(x,y)$"
+          }
+        ],
+        "answer": "$(4,\\pi/2)$ is $(0,4)$ in Cartesian coordinates."
+      },
+      {
+        "problem": "Convert the Cartesian point $(-3,3)$ to polar form with $r>0$ and $0\\le\\theta<2\\pi$.",
+        "steps": [
+          {
+            "do": "Compute the radius",
+            "result": "$r=\\sqrt{(-3)^2+3^2}$",
+            "why": "distance from the origin uses the Pythagorean theorem"
+          },
+          {
+            "do": "Simplify the radius",
+            "result": "$r=\\sqrt{18}=3\\sqrt2$",
+            "why": "add the squared coordinates"
+          },
+          {
+            "do": "Compute the tangent ratio",
+            "result": "$y/x=3/(-3)=-1$",
+            "why": "the angle has tangent $-1$"
+          },
+          {
+            "do": "Use the quadrant",
+            "result": "quadrant II",
+            "why": "$x<0$ and $y>0$"
+          },
+          {
+            "do": "Choose the angle",
+            "result": "$\\theta=3\\pi/4$",
+            "why": "quadrant II with reference angle $\\pi/4$"
+          }
+        ],
+        "answer": "One polar form is $(3\\sqrt2,3\\pi/4)$."
+      },
+      {
+        "problem": "Show that $(5,7\\pi/6)$ and $(5,-5\\pi/6)$ describe the same point.",
+        "steps": [
+          {
+            "do": "Compare the angles",
+            "result": "$7\\pi/6-(-5\\pi/6)=12\\pi/6$",
+            "why": "subtract to see how far apart they are"
+          },
+          {
+            "do": "Simplify the difference",
+            "result": "$2\\pi$",
+            "why": "$12\\pi/6=2\\pi$"
+          },
+          {
+            "do": "Use angle periodicity",
+            "result": "$\\cos(\\theta+2\\pi)=\\cos\\theta$",
+            "why": "cosine repeats every full turn"
+          },
+          {
+            "do": "Use sine periodicity",
+            "result": "$\\sin(\\theta+2\\pi)=\\sin\\theta$",
+            "why": "sine also repeats every full turn"
+          },
+          {
+            "do": "Keep the radius",
+            "result": "$r=5$ for both",
+            "why": "same radius and coterminal angles give the same point"
+          }
+        ],
+        "answer": "They describe the same point because the angles differ by $2\\pi$."
+      },
+      {
+        "problem": "Convert the polar point $(8,5\\pi/6)$ to Cartesian coordinates.",
+        "steps": [
+          {
+            "do": "Write the $x$ formula",
+            "result": "$x=8\\cos(5\\pi/6)$",
+            "why": "horizontal component uses cosine"
+          },
+          {
+            "do": "Evaluate cosine",
+            "result": "$x=8\\cdot(-\\sqrt3/2)=-4\\sqrt3$",
+            "why": "$5\\pi/6$ is in quadrant II"
+          },
+          {
+            "do": "Write the $y$ formula",
+            "result": "$y=8\\sin(5\\pi/6)$",
+            "why": "vertical component uses sine"
+          },
+          {
+            "do": "Evaluate sine",
+            "result": "$y=8\\cdot(1/2)=4$",
+            "why": "sine is positive in quadrant II"
+          },
+          {
+            "do": "Write the ordered pair",
+            "result": "$(-4\\sqrt3,4)$",
+            "why": "combine $x$ and $y$"
+          }
+        ],
+        "answer": "The Cartesian point is $(-4\\sqrt3,4)$."
+      },
+      {
+        "problem": "A sensor detects an object $10$ meters away at angle $30^\\circ$ from the positive $x$-axis. Convert the location to Cartesian coordinates using $30^\\circ=\\pi/6$.",
+        "steps": [
+          {
+            "do": "Set the polar coordinates",
+            "result": "$(r,\\theta)=(10,\\pi/6)$",
+            "why": "distance is radius and direction is angle"
+          },
+          {
+            "do": "Compute $x$",
+            "result": "$x=10\\cos(\\pi/6)$",
+            "why": "horizontal location uses cosine"
+          },
+          {
+            "do": "Evaluate $x$",
+            "result": "$x=10\\cdot\\sqrt3/2=5\\sqrt3\\approx8.66$",
+            "why": "$\\cos(\\pi/6)=\\sqrt3/2$"
+          },
+          {
+            "do": "Compute $y$",
+            "result": "$y=10\\sin(\\pi/6)$",
+            "why": "vertical location uses sine"
+          },
+          {
+            "do": "Evaluate $y$",
+            "result": "$y=10\\cdot1/2=5$",
+            "why": "$\\sin(\\pi/6)=1/2$"
+          }
+        ],
+        "answer": "The object is at approximately $(8.66,5)$ meters."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Radar and lidar",
+        "background": "Range sensors often measure distance and bearing directly, so polar form matches the instrument before conversion to a map.",
+        "numbers": "A return at $r=20$ m and $\\theta=\\pi/6$ has coordinates $(20\\cdot0.866,20\\cdot0.5)\\approx(17.32,10)$."
+      },
+      {
+        "title": "Rotations",
+        "background": "Rotating a point is especially simple in polar coordinates because the radius stays fixed and the angle changes.",
+        "numbers": "Rotating $(r,\\theta)=(5,\\pi/4)$ by $\\pi/2$ gives $(5,3\\pi/4)$."
+      },
+      {
+        "title": "Computer graphics circles",
+        "background": "Circles are easier to generate by sweeping an angle and keeping a constant radius.",
+        "numbers": "A circle of radius $12$ has point $(12\\cos\\pi,12\\sin\\pi)=(-12,0)$ at angle $\\pi$."
+      },
+      {
+        "title": "Audio phase",
+        "background": "Sinusoidal signals use amplitude and phase, a polar-like way to represent oscillation.",
+        "numbers": "Amplitude $3$ and phase $\\pi/2$ gives value $3\\sin(0+\\pi/2)=3$ at time zero."
+      },
+      {
+        "title": "Complex numbers",
+        "background": "Complex numbers can be written as distance and angle, which makes multiplication behave like scaling plus rotation.",
+        "numbers": "Magnitude $2$ at angle $\\pi/3$ corresponds to $2\\cos\\pi/3+i2\\sin\\pi/3=1+i\\sqrt3$."
+      },
+      {
+        "title": "Directional features in ML",
+        "background": "Cyclic features such as time of day or heading should wrap around smoothly; sine and cosine coordinates do that.",
+        "numbers": "Hour $6$ on a 24-hour clock has angle $2\\pi(6/24)=\\pi/2$, so features are $(\\cos\\theta,\\sin\\theta)=(0,1)$."
+      }
+    ],
+    "applicationsClose": "Polar coordinates shine whenever distance, direction, rotation, or circular structure is the natural story.",
+    "takeaways": [
+      "Polar coordinates $(r,\\theta)$ describe distance from the origin and direction from the positive $x$-axis.",
+      "Convert by $x=r\\cos\\theta$ and $y=r\\sin\\theta$.",
+      "Convert back with $r=\\sqrt{x^2+y^2}$ and careful quadrant choice for $\\theta$.",
+      "The same point has many polar descriptions because angles repeat every $2\\pi$."
+    ],
     "prereqs": [
       "math-11-01"
     ]
@@ -48,19 +549,272 @@
   B({
     "id": "math-11-03",
     "title": "Distance and midpoints",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: distance and midpoints.",
+    "tagline": "Distance measures how far apart two points are, and the midpoint finds the balanced point between them.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Polar coordinates</i>"
+        "Cartesian coordinates",
+        "the Pythagorean theorem",
+        "ordered pairs"
       ],
       "leadsTo": [
-        "the next lesson, <i>Lines in the plane</i>"
+        "Lines in the plane",
+        "Vectors",
+        "The dot product"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "circles",
+        "nearest neighbors",
+        "coordinate geometry",
+        "averages"
       ]
     },
+    "motivation": "<p>Once points have coordinates, the next natural questions are simple and powerful: how far apart are they, and where is halfway between them?</p><p>The distance formula is the Pythagorean theorem wearing coordinate clothing. The midpoint formula is averaging applied separately to the horizontal and vertical coordinates. Together, they make geometry computable.</p>",
+    "definition": "<p>For points $A=(x_1,y_1)$ and $B=(x_2,y_2)$ in the plane, their distance is $$d(A,B)=\\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}.$$ Their midpoint is $$M=\\left(\\dfrac{x_1+x_2}{2},\\dfrac{y_1+y_2}{2}\\right).$$</p><p>The distance formula comes from drawing a right triangle: the horizontal leg has length $|x_2-x_1|$, the vertical leg has length $|y_2-y_1|$, and the segment $AB$ is the hypotenuse. Squaring removes sign, so the formula works in every quadrant. The midpoint averages coordinates because halfway means halfway in each independent direction.</p><p><b>Assumptions that matter:</b> the coordinate axes are perpendicular with the same unit scale; distance is nonnegative; and the midpoint formula gives the point exactly halfway along the straight segment from $A$ to $B$.</p>",
+    "worked": {
+      "problem": "Find the distance and midpoint between $A=(-2,5)$ and $B=(4,-3)$.",
+      "skills": [
+        "distance formula",
+        "midpoint formula",
+        "coordinate differences"
+      ],
+      "strategy": "Subtract coordinates for distance, then average coordinates for the midpoint.",
+      "steps": [
+        {
+          "do": "Compute the horizontal difference",
+          "result": "$x_2-x_1=4-(-2)=6$",
+          "why": "distance uses change in $x$"
+        },
+        {
+          "do": "Compute the vertical difference",
+          "result": "$y_2-y_1=-3-5=-8$",
+          "why": "distance uses change in $y$"
+        },
+        {
+          "do": "Substitute into the distance formula",
+          "result": "$d=\\sqrt{6^2+(-8)^2}$",
+          "why": "the segment is the hypotenuse of a right triangle"
+        },
+        {
+          "do": "Square and add",
+          "result": "$d=\\sqrt{36+64}=\\sqrt{100}$",
+          "why": "squares make both changes positive"
+        },
+        {
+          "do": "Simplify the distance",
+          "result": "$d=10$",
+          "why": "$\\sqrt{100}=10$"
+        },
+        {
+          "do": "Average the $x$-coordinates",
+          "result": "$(-2+4)/2=1$",
+          "why": "midpoint is halfway horizontally"
+        },
+        {
+          "do": "Average the $y$-coordinates",
+          "result": "$(5+(-3))/2=1$",
+          "why": "midpoint is halfway vertically"
+        }
+      ],
+      "verify": "From $(1,1)$ to $A$ the change is $(-3,4)$, and from $(1,1)$ to $B$ the change is $(3,-4)$, equal and opposite as a midpoint should be.",
+      "answer": "The distance is $10$, and the midpoint is $(1,1)$.",
+      "connects": "Distance and midpoint turn straight-line geometry into arithmetic on coordinate differences and averages."
+    },
+    "practice": [
+      {
+        "problem": "Find the distance between $(1,2)$ and $(4,6)$.",
+        "steps": [
+          {
+            "do": "Compute the $x$ difference",
+            "result": "$4-1=3$",
+            "why": "horizontal leg length comes from $x$-coordinates"
+          },
+          {
+            "do": "Compute the $y$ difference",
+            "result": "$6-2=4$",
+            "why": "vertical leg length comes from $y$-coordinates"
+          },
+          {
+            "do": "Substitute into the formula",
+            "result": "$d=\\sqrt{3^2+4^2}$",
+            "why": "use Pythagoras"
+          },
+          {
+            "do": "Square and add",
+            "result": "$d=\\sqrt{9+16}=\\sqrt{25}$",
+            "why": "combine squared legs"
+          },
+          {
+            "do": "Simplify",
+            "result": "$d=5$",
+            "why": "this is the $3$-$4$-$5$ triangle"
+          }
+        ],
+        "answer": "The distance is $5$."
+      },
+      {
+        "problem": "Find the midpoint of $(-7,3)$ and $(5,11)$.",
+        "steps": [
+          {
+            "do": "Add the $x$-coordinates",
+            "result": "$-7+5=-2$",
+            "why": "midpoint averages horizontal positions"
+          },
+          {
+            "do": "Divide by $2$",
+            "result": "$-2/2=-1$",
+            "why": "average means sum divided by two"
+          },
+          {
+            "do": "Add the $y$-coordinates",
+            "result": "$3+11=14$",
+            "why": "midpoint averages vertical positions"
+          },
+          {
+            "do": "Divide by $2$",
+            "result": "$14/2=7$",
+            "why": "average the vertical positions"
+          },
+          {
+            "do": "Write the midpoint",
+            "result": "$(-1,7)$",
+            "why": "combine the averaged coordinates"
+          }
+        ],
+        "answer": "The midpoint is $(-1,7)$."
+      },
+      {
+        "problem": "A segment has endpoint $A=(2,-5)$ and midpoint $M=(6,1)$. Find the other endpoint $B$.",
+        "steps": [
+          {
+            "do": "Use the midpoint $x$ equation",
+            "result": "$(2+x_B)/2=6$",
+            "why": "midpoint averages endpoint $x$-coordinates"
+          },
+          {
+            "do": "Solve for $x_B$",
+            "result": "$2+x_B=12$, so $x_B=10$",
+            "why": "multiply by 2, then subtract 2"
+          },
+          {
+            "do": "Use the midpoint $y$ equation",
+            "result": "$(-5+y_B)/2=1$",
+            "why": "midpoint averages endpoint $y$-coordinates"
+          },
+          {
+            "do": "Solve for $y_B$",
+            "result": "$-5+y_B=2$, so $y_B=7$",
+            "why": "multiply by 2, then add 5"
+          },
+          {
+            "do": "Write the endpoint",
+            "result": "$B=(10,7)$",
+            "why": "combine the solved coordinates"
+          }
+        ],
+        "answer": "The other endpoint is $(10,7)$."
+      },
+      {
+        "problem": "Determine whether $(0,0)$, $(6,0)$, and $(3,3\\sqrt3)$ form an equilateral triangle.",
+        "steps": [
+          {
+            "do": "Find the base length",
+            "result": "$\\sqrt{(6-0)^2+(0-0)^2}=6$",
+            "why": "distance between the first two points"
+          },
+          {
+            "do": "Find the left side length",
+            "result": "$\\sqrt{(3-0)^2+(3\\sqrt3-0)^2}$",
+            "why": "distance from origin to the top point"
+          },
+          {
+            "do": "Simplify the left side",
+            "result": "$\\sqrt{9+27}=6$",
+            "why": "$(3\\sqrt3)^2=27$"
+          },
+          {
+            "do": "Find the right side length",
+            "result": "$\\sqrt{(3-6)^2+(3\\sqrt3-0)^2}$",
+            "why": "distance from $(6,0)$ to the top point"
+          },
+          {
+            "do": "Simplify the right side",
+            "result": "$\\sqrt{9+27}=6$",
+            "why": "all three side lengths match"
+          }
+        ],
+        "answer": "Yes. All three side lengths are $6$."
+      },
+      {
+        "problem": "Two normalized data points are $p=(1.2,-0.5)$ and $q=(-0.8,1.0)$. Find their Euclidean distance and midpoint.",
+        "steps": [
+          {
+            "do": "Compute the $x$ difference",
+            "result": "$-0.8-1.2=-2.0$",
+            "why": "distance uses final minus initial"
+          },
+          {
+            "do": "Compute the $y$ difference",
+            "result": "$1.0-(-0.5)=1.5$",
+            "why": "subtract the second coordinate"
+          },
+          {
+            "do": "Compute the distance",
+            "result": "$d=\\sqrt{(-2.0)^2+1.5^2}$",
+            "why": "Euclidean distance squares component changes"
+          },
+          {
+            "do": "Simplify the distance",
+            "result": "$d=\\sqrt{4+2.25}=2.5$",
+            "why": "$\\sqrt{6.25}=2.5$"
+          },
+          {
+            "do": "Average the coordinates",
+            "result": "$M=((1.2-0.8)/2,(-0.5+1.0)/2)=(0.2,0.25)$",
+            "why": "midpoint averages each feature"
+          }
+        ],
+        "answer": "The distance is $2.5$, and the midpoint is $(0.2,0.25)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Nearest-neighbor classification",
+        "background": "A basic ML classifier can assign a label by looking at the closest labeled example in feature space.",
+        "numbers": "Distance from $(1,2)$ to $(4,6)$ is $5$, while distance to $(2,3)$ is $\\sqrt2\\approx1.41$, so $(2,3)$ is nearer."
+      },
+      {
+        "title": "Clustering centers",
+        "background": "Cluster centers are often averages of point coordinates, a many-point version of the midpoint idea.",
+        "numbers": "The average of $(1,2)$, $(3,4)$, and $(5,0)$ is $((1+3+5)/3,(2+4+0)/3)=(3,2)$."
+      },
+      {
+        "title": "Computer graphics interpolation",
+        "background": "Animations often place an object halfway between two positions for a smooth transition.",
+        "numbers": "Halfway between $(10,20)$ and $(30,50)$ is $(20,35)$."
+      },
+      {
+        "title": "Collision detection",
+        "background": "Games and simulations use distances to decide whether objects touch or overlap.",
+        "numbers": "Two circular objects with centers distance $7$ and radii $3$ and $5$ overlap because $7<3+5=8$."
+      },
+      {
+        "title": "GPS-style planar approximation",
+        "background": "Over small regions, map coordinates can approximate local positions in meters.",
+        "numbers": "Points $(100,40)$ and $(130,80)$ meters apart have distance $\\sqrt{30^2+40^2}=50$ meters."
+      },
+      {
+        "title": "Embedding similarity by distance",
+        "background": "Some embedding systems compare vectors by Euclidean distance after normalization or projection.",
+        "numbers": "Embeddings $(0.2,0.9)$ and $(0.5,0.5)$ are $\\sqrt{0.3^2+(-0.4)^2}=0.5$ apart."
+      }
+    ],
+    "applicationsClose": "Distance and midpoint are the small formulas behind proximity, averaging, interpolation, and many geometric ML routines.",
+    "takeaways": [
+      "Distance between two plane points is $\\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}$.",
+      "The midpoint is found by averaging corresponding coordinates.",
+      "Distance comes from the Pythagorean theorem on coordinate differences.",
+      "Midpoints and averages are coordinate-wise balance points."
+    ],
     "prereqs": [
       "math-11-02"
     ]
@@ -69,19 +823,272 @@
   B({
     "id": "math-11-04",
     "title": "Lines in the plane",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: lines in the plane.",
+    "tagline": "A line is a constant direction written as an equation, a slope, or a set of points.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Distance and midpoints</i>"
+        "Cartesian coordinates",
+        "Distance and midpoints",
+        "linear equations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Vectors</i>"
+        "Vectors",
+        "Planes in 3D",
+        "linear regression"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "slope",
+        "systems of equations",
+        "intercepts",
+        "normal vectors"
       ]
     },
+    "motivation": "<p>You already recognize a straight path: every step keeps the same direction. In coordinates, that steady direction becomes a slope, and the entire path becomes an equation.</p><p>Lines matter because they are the simplest models of change. They separate regions, approximate curves, define trends, and become the building blocks for higher-dimensional geometry.</p>",
+    "definition": "<p>A nonvertical line in the plane can be written as $y=mx+b$, where $m$ is the <b>slope</b> and $b$ is the $y$-intercept. The slope between two points $(x_1,y_1)$ and $(x_2,y_2)$ with $x_2\\ne x_1$ is $$m=\\dfrac{y_2-y_1}{x_2-x_1}.$$ A line through $(x_1,y_1)$ with slope $m$ can also be written $y-y_1=m(x-x_1)$.</p><p>The slope formula is rise over run: when $x$ changes by $\\Delta x$, $y$ changes by $m\\Delta x$. Vertical lines have equations $x=c$ and no finite slope. The general form $Ax+By=C$ includes vertical and nonvertical lines; $(A,B)$ is perpendicular to the line.</p><p><b>Assumptions that matter:</b> slope is defined only when the run is nonzero; parallel lines have equal slopes when both slopes exist; and perpendicular nonvertical lines have slopes whose product is $-1$.</p>",
+    "worked": {
+      "problem": "Find the equation of the line through $(-1,4)$ and $(3,-2)$ in slope-intercept form.",
+      "skills": [
+        "slope",
+        "point-slope form",
+        "slope-intercept form"
+      ],
+      "strategy": "Use the two points to find the slope, then use one point to solve for the intercept.",
+      "steps": [
+        {
+          "do": "Compute the rise",
+          "result": "$-2-4=-6$",
+          "why": "rise is the change in $y$"
+        },
+        {
+          "do": "Compute the run",
+          "result": "$3-(-1)=4$",
+          "why": "run is the change in $x$"
+        },
+        {
+          "do": "Compute the slope",
+          "result": "$m=-6/4=-3/2$",
+          "why": "slope is rise over run"
+        },
+        {
+          "do": "Start slope-intercept form",
+          "result": "$y=-\\dfrac32x+b$",
+          "why": "use the slope in $y=mx+b$"
+        },
+        {
+          "do": "Substitute point $(-1,4)$",
+          "result": "$4=-\\dfrac32(-1)+b$",
+          "why": "the point lies on the line"
+        },
+        {
+          "do": "Simplify",
+          "result": "$4=\\dfrac32+b$",
+          "why": "multiply the slope by $-1$"
+        },
+        {
+          "do": "Solve for $b$",
+          "result": "$b=\\dfrac52$",
+          "why": "subtract $3/2$ from both sides"
+        }
+      ],
+      "verify": "At $x=3$, the equation gives $y=-\\tfrac32\\cdot3+\\tfrac52=-2$, so the second point fits.",
+      "answer": "The line is $y=-\\dfrac32x+\\dfrac52$.",
+      "connects": "A line is determined by one point plus one constant slope, or by two distinct points that reveal that slope."
+    },
+    "practice": [
+      {
+        "problem": "Find the slope of the line through $(2,1)$ and $(8,13)$.",
+        "steps": [
+          {
+            "do": "Compute the change in $y$",
+            "result": "$13-1=12$",
+            "why": "rise is final $y$ minus initial $y$"
+          },
+          {
+            "do": "Compute the change in $x$",
+            "result": "$8-2=6$",
+            "why": "run is final $x$ minus initial $x$"
+          },
+          {
+            "do": "Form rise over run",
+            "result": "$12/6$",
+            "why": "slope is vertical change divided by horizontal change"
+          },
+          {
+            "do": "Simplify",
+            "result": "$2$",
+            "why": "divide numerator and denominator by $6$"
+          },
+          {
+            "do": "Interpret",
+            "result": "rise 2 for each run 1",
+            "why": "slope measures change in $y$ per unit $x$"
+          }
+        ],
+        "answer": "The slope is $2$."
+      },
+      {
+        "problem": "Write the line with slope $-4$ through $(2,7)$ in slope-intercept form.",
+        "steps": [
+          {
+            "do": "Use point-slope form",
+            "result": "$y-7=-4(x-2)$",
+            "why": "a point and slope determine the line"
+          },
+          {
+            "do": "Distribute",
+            "result": "$y-7=-4x+8$",
+            "why": "expand the right side"
+          },
+          {
+            "do": "Add $7$",
+            "result": "$y=-4x+15$",
+            "why": "isolate $y$"
+          },
+          {
+            "do": "Check the point",
+            "result": "$7=-4\\cdot2+15$",
+            "why": "the given point should satisfy the equation"
+          },
+          {
+            "do": "Simplify the check",
+            "result": "$7=7$",
+            "why": "the equation is consistent"
+          }
+        ],
+        "answer": "$y=-4x+15$."
+      },
+      {
+        "problem": "Find the $x$- and $y$-intercepts of $2x+3y=12$.",
+        "steps": [
+          {
+            "do": "Set $y=0$",
+            "result": "$2x=12$",
+            "why": "the $x$-intercept lies on the $x$-axis"
+          },
+          {
+            "do": "Solve for $x$",
+            "result": "$x=6$",
+            "why": "divide by 2"
+          },
+          {
+            "do": "Write the $x$-intercept",
+            "result": "$(6,0)$",
+            "why": "the $y$-coordinate is zero"
+          },
+          {
+            "do": "Set $x=0$",
+            "result": "$3y=12$",
+            "why": "the $y$-intercept lies on the $y$-axis"
+          },
+          {
+            "do": "Solve and write the point",
+            "result": "$y=4$, so $(0,4)$",
+            "why": "divide by 3 and attach $x=0$"
+          }
+        ],
+        "answer": "The intercepts are $(6,0)$ and $(0,4)$."
+      },
+      {
+        "problem": "Find the equation of the line perpendicular to $y=\\dfrac23x-1$ through $(4,5)$.",
+        "steps": [
+          {
+            "do": "Read the given slope",
+            "result": "$m=2/3$",
+            "why": "slope-intercept form displays the slope"
+          },
+          {
+            "do": "Find the perpendicular slope",
+            "result": "$m_\\perp=-3/2$",
+            "why": "perpendicular slopes are negative reciprocals"
+          },
+          {
+            "do": "Use point-slope form",
+            "result": "$y-5=-\\dfrac32(x-4)$",
+            "why": "use the required point and slope"
+          },
+          {
+            "do": "Distribute",
+            "result": "$y-5=-\\dfrac32x+6$",
+            "why": "$(-3/2)(-4)=6$"
+          },
+          {
+            "do": "Add $5$",
+            "result": "$y=-\\dfrac32x+11$",
+            "why": "solve for $y$"
+          }
+        ],
+        "answer": "$y=-\\dfrac32x+11$."
+      },
+      {
+        "problem": "A linear model predicts $\\hat y=1.8x+0.7$. Find the prediction at $x=4$ and the input where $\\hat y=10.6$.",
+        "steps": [
+          {
+            "do": "Substitute $x=4$",
+            "result": "$\\hat y=1.8\\cdot4+0.7$",
+            "why": "evaluate the line"
+          },
+          {
+            "do": "Simplify the prediction",
+            "result": "$\\hat y=7.9$",
+            "why": "$7.2+0.7=7.9$"
+          },
+          {
+            "do": "Set the output to $10.6$",
+            "result": "$1.8x+0.7=10.6$",
+            "why": "solve for the input that gives that prediction"
+          },
+          {
+            "do": "Subtract $0.7$",
+            "result": "$1.8x=9.9$",
+            "why": "isolate the slope term"
+          },
+          {
+            "do": "Divide by $1.8$",
+            "result": "$x=5.5$",
+            "why": "$9.9/1.8=5.5$"
+          }
+        ],
+        "answer": "The prediction at $x=4$ is $7.9$; prediction $10.6$ occurs at $x=5.5$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Linear regression",
+        "background": "The simplest supervised model fits a line to data, treating slope as change in prediction per feature unit.",
+        "numbers": "For $\\hat y=2.4x+1.1$, increasing $x$ from $3$ to $4$ raises prediction by $2.4$."
+      },
+      {
+        "title": "Decision boundaries",
+        "background": "A linear classifier in two features separates the plane by a line.",
+        "numbers": "The boundary $2x-y=1$ can be written $y=2x-1$; point $(1,0)$ gives $2(1)-0=2>1$ on one side."
+      },
+      {
+        "title": "Trend lines in monitoring",
+        "background": "Systems dashboards often fit local linear trends to latency or traffic.",
+        "numbers": "Latency rising from $80$ ms at noon to $95$ ms at 12:30 has slope $15/30=0.5$ ms per minute."
+      },
+      {
+        "title": "Computer graphics edges",
+        "background": "Rasterizers draw straight edges using line equations to decide which pixels are inside a triangle.",
+        "numbers": "Line through $(0,0)$ and $(4,2)$ has slope $1/2$, so at $x=6$ the continuation has $y=3$."
+      },
+      {
+        "title": "Interpolation",
+        "background": "Linear interpolation estimates values between two known samples by assuming constant slope.",
+        "numbers": "Between $(10,50)$ and $(20,70)$, slope is $2$, so at $x=13$ the value is $56$."
+      },
+      {
+        "title": "Perpendicular constraints",
+        "background": "Normals to lines are used in optimization and geometry to express constraints compactly.",
+        "numbers": "For $3x+4y=12$, the normal vector is $(3,4)$, and point $(0,3)$ lies on the line because $12=12$."
+      }
+    ],
+    "applicationsClose": "Lines are the first geometry of models: constant rate, straight boundary, and a compact equation for direction.",
+    "takeaways": [
+      "Slope is rise over run: $m=(y_2-y_1)/(x_2-x_1)$ when the run is nonzero.",
+      "Point-slope form uses one point and one slope; slope-intercept form displays $m$ and $b$.",
+      "Vertical lines have equations $x=c$ and no finite slope.",
+      "Parallel and perpendicular relationships can be read from slopes or normal vectors."
+    ],
     "prereqs": [
       "math-11-03"
     ]
@@ -90,19 +1097,267 @@
   B({
     "id": "math-11-05",
     "title": "Vectors",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: vectors.",
+    "tagline": "A vector is a directed quantity: it tells how much, and in which direction.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Lines in the plane</i>"
+        "Cartesian coordinates",
+        "Distance and midpoints",
+        "Lines in the plane"
       ],
       "leadsTo": [
-        "the next lesson, <i>The dot product</i>"
+        "The dot product",
+        "The cross product",
+        "Lines in 3D"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "matrices",
+        "linear combinations",
+        "unit vectors",
+        "coordinate transformations"
       ]
     },
+    "motivation": "<p>A point says where something is. A vector says how to move, push, change, or represent. From one location to another, from one feature vector to another, from a gradient step to a velocity, vectors carry direction and size together.</p><p>That small shift is enormous for ML. A data example can be a vector of features, a model parameter can be a vector of weights, and learning can be a sequence of vector updates.</p>",
+    "definition": "<p>A <b>vector</b> in the plane is an ordered pair $\\mathbf{v}=\\langle v_1,v_2\\rangle$ representing a displacement with horizontal component $v_1$ and vertical component $v_2$. In $n$ dimensions, $\\mathbf{v}=\\langle v_1,\\ldots,v_n\\rangle$. Vector addition and scalar multiplication are componentwise: $$\\mathbf{u}+\\mathbf{v}=\\langle u_1+v_1,u_2+v_2\\rangle,\\qquad c\\mathbf{v}=\\langle cv_1,cv_2\\rangle.$$</p><p>The length, or norm, of a plane vector is $\\|\\mathbf{v}\\|=\\sqrt{v_1^2+v_2^2}$. This is the distance from the origin to the vector's tip when its tail is placed at the origin. A unit vector has length $1$ and records direction without scale.</p><p><b>Assumptions that matter:</b> vectors can be moved without changing them as long as their components stay the same; componentwise operations require matching dimensions; and the zero vector has length $0$ but no unique direction.</p>",
+    "worked": {
+      "problem": "Let $\\mathbf{u}=\\langle 3,-2\\rangle$ and $\\mathbf{v}=\\langle -1,5\\rangle$. Compute $2\\mathbf{u}+\\mathbf{v}$ and its length.",
+      "skills": [
+        "scalar multiplication",
+        "vector addition",
+        "vector norm"
+      ],
+      "strategy": "Scale first, add component by component, then use the norm formula.",
+      "steps": [
+        {
+          "do": "Scale $\\mathbf{u}$ by $2$",
+          "result": "$2\\mathbf{u}=\\langle 6,-4\\rangle$",
+          "why": "multiply each component by 2"
+        },
+        {
+          "do": "Add the first components",
+          "result": "$6+(-1)=5$",
+          "why": "vector addition is componentwise"
+        },
+        {
+          "do": "Add the second components",
+          "result": "$-4+5=1$",
+          "why": "add vertical components separately"
+        },
+        {
+          "do": "Write the resulting vector",
+          "result": "$2\\mathbf{u}+\\mathbf{v}=\\langle 5,1\\rangle$",
+          "why": "combine the two components"
+        },
+        {
+          "do": "Apply the length formula",
+          "result": "$\\|\\langle5,1\\rangle\\|=\\sqrt{5^2+1^2}$",
+          "why": "norm is Pythagorean length"
+        },
+        {
+          "do": "Simplify",
+          "result": "$\\sqrt{26}$",
+          "why": "$25+1=26$"
+        }
+      ],
+      "verify": "The result points mostly right with a small upward component, so a length a little above $5$ is sensible; $\\sqrt{26}\\approx5.10$.",
+      "answer": "$2\\mathbf{u}+\\mathbf{v}=\\langle5,1\\rangle$, with length $\\sqrt{26}$.",
+      "connects": "Vector algebra lets you combine directions and sizes by working cleanly with components."
+    },
+    "practice": [
+      {
+        "problem": "For $\\mathbf{a}=\\langle 4,3\\rangle$, find $\\|\\mathbf{a}\\|$ and a unit vector in the same direction.",
+        "steps": [
+          {
+            "do": "Apply the norm formula",
+            "result": "$\\|\\mathbf{a}\\|=\\sqrt{4^2+3^2}$",
+            "why": "length comes from Pythagoras"
+          },
+          {
+            "do": "Simplify the norm",
+            "result": "$\\|\\mathbf{a}\\|=5$",
+            "why": "$16+9=25$"
+          },
+          {
+            "do": "Divide the first component by the norm",
+            "result": "$4/5$",
+            "why": "unit vector scales length to one"
+          },
+          {
+            "do": "Divide the second component by the norm",
+            "result": "$3/5$",
+            "why": "scale every component equally"
+          },
+          {
+            "do": "Write the unit vector",
+            "result": "$\\langle4/5,3/5\\rangle$",
+            "why": "same direction, length one"
+          }
+        ],
+        "answer": "$\\|\\mathbf{a}\\|=5$ and the unit vector is $\\langle4/5,3/5\\rangle$."
+      },
+      {
+        "problem": "Find the vector from $P=(-2,7)$ to $Q=(4,1)$.",
+        "steps": [
+          {
+            "do": "Subtract the $x$ coordinates",
+            "result": "$4-(-2)=6$",
+            "why": "displacement uses final minus initial"
+          },
+          {
+            "do": "Subtract the $y$ coordinates",
+            "result": "$1-7=-6$",
+            "why": "vertical component is final $y$ minus initial $y$"
+          },
+          {
+            "do": "Write the displacement vector",
+            "result": "$\\langle6,-6\\rangle$",
+            "why": "vectors record component changes"
+          },
+          {
+            "do": "Interpret the first component",
+            "result": "6 units right",
+            "why": "positive horizontal component points right"
+          },
+          {
+            "do": "Interpret the second component",
+            "result": "6 units down",
+            "why": "negative vertical component points down"
+          }
+        ],
+        "answer": "The vector from $P$ to $Q$ is $\\langle6,-6\\rangle$."
+      },
+      {
+        "problem": "Compute $3\\langle1,-2,4\\rangle-\\langle5,0,-1\\rangle$.",
+        "steps": [
+          {
+            "do": "Scale the first vector",
+            "result": "$3\\langle1,-2,4\\rangle=\\langle3,-6,12\\rangle$",
+            "why": "multiply each component by 3"
+          },
+          {
+            "do": "Subtract first components",
+            "result": "$3-5=-2$",
+            "why": "operate component by component"
+          },
+          {
+            "do": "Subtract second components",
+            "result": "$-6-0=-6$",
+            "why": "the middle component stays $-6$"
+          },
+          {
+            "do": "Subtract third components",
+            "result": "$12-(-1)=13$",
+            "why": "subtracting a negative adds"
+          },
+          {
+            "do": "Write the vector",
+            "result": "$\\langle-2,-6,13\\rangle$",
+            "why": "combine all three components"
+          }
+        ],
+        "answer": "$\\langle-2,-6,13\\rangle$."
+      },
+      {
+        "problem": "Write $\\langle 7,-1\\rangle$ as a linear combination of $\\mathbf{i}=\\langle1,0\\rangle$ and $\\mathbf{j}=\\langle0,1\\rangle$.",
+        "steps": [
+          {
+            "do": "Match the first component",
+            "result": "$7\\mathbf{i}=\\langle7,0\\rangle$",
+            "why": "$\\mathbf{i}$ carries horizontal direction"
+          },
+          {
+            "do": "Match the second component",
+            "result": "$-1\\mathbf{j}=\\langle0,-1\\rangle$",
+            "why": "$\\mathbf{j}$ carries vertical direction"
+          },
+          {
+            "do": "Add the pieces",
+            "result": "$\\langle7,0\\rangle+\\langle0,-1\\rangle$",
+            "why": "component vectors combine independently"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\langle7,-1\\rangle$",
+            "why": "the sum matches the target vector"
+          },
+          {
+            "do": "Write the combination",
+            "result": "$7\\mathbf{i}-\\mathbf{j}$",
+            "why": "basis vectors name the coordinate directions"
+          }
+        ],
+        "answer": "$\\langle7,-1\\rangle=7\\mathbf{i}-\\mathbf{j}$."
+      },
+      {
+        "problem": "A gradient step uses $\\mathbf{w}_{new}=\\mathbf{w}-0.1\\mathbf{g}$ with $\\mathbf{w}=\\langle2,-1,3\\rangle$ and $\\mathbf{g}=\\langle4,-2,1\\rangle$. Find $\\mathbf{w}_{new}$.",
+        "steps": [
+          {
+            "do": "Scale the gradient",
+            "result": "$0.1\\mathbf{g}=\\langle0.4,-0.2,0.1\\rangle$",
+            "why": "learning rate scales the update"
+          },
+          {
+            "do": "Subtract first components",
+            "result": "$2-0.4=1.6$",
+            "why": "update each weight component"
+          },
+          {
+            "do": "Subtract second components",
+            "result": "$-1-(-0.2)=-0.8$",
+            "why": "subtracting a negative increases the value"
+          },
+          {
+            "do": "Subtract third components",
+            "result": "$3-0.1=2.9$",
+            "why": "apply the same rule to the third component"
+          },
+          {
+            "do": "Write the new vector",
+            "result": "$\\langle1.6,-0.8,2.9\\rangle$",
+            "why": "combine updated weights"
+          }
+        ],
+        "answer": "$\\mathbf{w}_{new}=\\langle1.6,-0.8,2.9\\rangle$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature vectors",
+        "background": "ML examples are often stored as vectors so algorithms can add, scale, and compare them.",
+        "numbers": "A user vector $\\langle0.2,1.5,3.0\\rangle$ scaled by $2$ becomes $\\langle0.4,3.0,6.0\\rangle$."
+      },
+      {
+        "title": "Gradient descent",
+        "background": "Training updates parameters by moving opposite a gradient vector.",
+        "numbers": "With $\\mathbf{w}=\\langle1,2\\rangle$, gradient $\\langle0.3,-0.5\\rangle$, and step $0.1$, the new weight is $\\langle0.97,2.05\\rangle$."
+      },
+      {
+        "title": "Velocity in physics engines",
+        "background": "Games and simulations use velocity vectors to update positions frame by frame.",
+        "numbers": "Position $(10,4)$ plus velocity $\\langle3,-1\\rangle$ for $0.5$ seconds gives $(11.5,3.5)$."
+      },
+      {
+        "title": "Embeddings",
+        "background": "Words, images, and ads can be embedded as high-dimensional vectors so similarity becomes geometry.",
+        "numbers": "A 3D embedding might be $\\langle0.1,-0.4,0.9\\rangle$ with norm $\\sqrt{0.01+0.16+0.81}=0.99$."
+      },
+      {
+        "title": "Forces and motion",
+        "background": "Several forces acting on an object add as vectors, combining directions component by component.",
+        "numbers": "Forces $\\langle5,0\\rangle$ and $\\langle-2,3\\rangle$ sum to $\\langle3,3\\rangle$."
+      },
+      {
+        "title": "Recommendation profiles",
+        "background": "A profile can average vectors for content a member liked, creating a direction of preference.",
+        "numbers": "Averaging $\\langle1,0\\rangle$ and $\\langle0.6,0.8\\rangle$ gives $\\langle0.8,0.4\\rangle$."
+      }
+    ],
+    "applicationsClose": "Vectors are the shared language of displacement, features, gradients, embeddings, forces, and updates.",
+    "takeaways": [
+      "A vector records components of a directed quantity.",
+      "Addition and scalar multiplication happen component by component.",
+      "The norm $\\|\\mathbf{v}\\|$ measures vector length.",
+      "Unit vectors keep direction while normalizing length to $1$."
+    ],
     "prereqs": [
       "math-11-04"
     ]
@@ -111,19 +1366,267 @@
   B({
     "id": "math-11-06",
     "title": "The dot product",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: the dot product.",
+    "tagline": "The dot product measures how much two vectors point in the same direction.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Vectors</i>"
+        "Vectors",
+        "trigonometric functions",
+        "vector length"
       ],
       "leadsTo": [
-        "the next lesson, <i>The cross product</i>"
+        "The cross product",
+        "Planes in 3D",
+        "orthogonal projections"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "cosine similarity",
+        "projections",
+        "normal vectors",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>Two vectors can both be long but point in very different directions. To compare directions, we need more than length. We need a number that says aligned, opposed, or perpendicular.</p><p>The <b>dot product</b> gives exactly that. It is simple component arithmetic, but it secretly contains angle information. That is why it appears everywhere from projections to attention scores.</p>",
+    "definition": "<p>For vectors $\\mathbf{a}=\\langle a_1,a_2,\\ldots,a_n\\rangle$ and $\\mathbf{b}=\\langle b_1,b_2,\\ldots,b_n\\rangle$, the <b>dot product</b> is $$\\mathbf{a}\\cdot\\mathbf{b}=a_1b_1+a_2b_2+\\cdots+a_nb_n.$$ Geometrically, $$\\mathbf{a}\\cdot\\mathbf{b}=\\|\\mathbf{a}\\|\\,\\|\\mathbf{b}\\|\\cos\\theta,$$ where $\\theta$ is the angle between the vectors.</p><p>The geometric formula says the dot product is positive when the angle is acute, zero when the vectors are perpendicular, and negative when the angle is obtuse. If both vectors are unit vectors, the dot product is exactly $\\cos\\theta$.</p><p><b>Assumptions that matter:</b> the vectors must have the same dimension; the angle formula uses Euclidean length; and zero dot product means orthogonal, though the zero vector has zero dot product with every vector without having a meaningful direction.</p>",
+    "worked": {
+      "problem": "For $\\mathbf{a}=\\langle2,3\\rangle$ and $\\mathbf{b}=\\langle4,-1\\rangle$, compute $\\mathbf{a}\\cdot\\mathbf{b}$ and decide whether the angle is acute, right, or obtuse.",
+      "skills": [
+        "component multiplication",
+        "angle interpretation",
+        "orthogonality"
+      ],
+      "strategy": "Multiply matching components, add them, then read the sign of the result.",
+      "steps": [
+        {
+          "do": "Multiply first components",
+          "result": "$2\\cdot4=8$",
+          "why": "dot product pairs matching coordinates"
+        },
+        {
+          "do": "Multiply second components",
+          "result": "$3\\cdot(-1)=-3$",
+          "why": "include the sign of each component"
+        },
+        {
+          "do": "Add the products",
+          "result": "$8+(-3)=5$",
+          "why": "the dot product is the sum of matching products"
+        },
+        {
+          "do": "State the dot product",
+          "result": "$\\mathbf{a}\\cdot\\mathbf{b}=5$",
+          "why": "combine the component contributions"
+        },
+        {
+          "do": "Read the sign",
+          "result": "positive",
+          "why": "$5>0$"
+        },
+        {
+          "do": "Interpret the angle",
+          "result": "acute",
+          "why": "positive dot product means $\\cos\\theta>0$"
+        }
+      ],
+      "verify": "The vectors share a strong rightward component, so a positive dot product and acute angle are reasonable.",
+      "answer": "$\\mathbf{a}\\cdot\\mathbf{b}=5$, so the angle between them is acute.",
+      "connects": "The dot product turns component arithmetic into a direction comparison."
+    },
+    "practice": [
+      {
+        "problem": "Compute $\\langle1,4\\rangle\\cdot\\langle3,2\\rangle$.",
+        "steps": [
+          {
+            "do": "Multiply the first components",
+            "result": "$1\\cdot3=3$",
+            "why": "pair the $x$-components"
+          },
+          {
+            "do": "Multiply the second components",
+            "result": "$4\\cdot2=8$",
+            "why": "pair the $y$-components"
+          },
+          {
+            "do": "Add the products",
+            "result": "$3+8=11$",
+            "why": "dot product sums matching products"
+          },
+          {
+            "do": "Check the sign",
+            "result": "positive",
+            "why": "both vectors point generally in the same quadrant"
+          },
+          {
+            "do": "State the value",
+            "result": "$11$",
+            "why": "the arithmetic is complete"
+          }
+        ],
+        "answer": "The dot product is $11$."
+      },
+      {
+        "problem": "Determine whether $\\langle3,-2\\rangle$ and $\\langle4,6\\rangle$ are orthogonal.",
+        "steps": [
+          {
+            "do": "Multiply first components",
+            "result": "$3\\cdot4=12$",
+            "why": "start the dot product"
+          },
+          {
+            "do": "Multiply second components",
+            "result": "$(-2)\\cdot6=-12$",
+            "why": "include the negative sign"
+          },
+          {
+            "do": "Add the products",
+            "result": "$12+(-12)=0$",
+            "why": "opposite contributions cancel"
+          },
+          {
+            "do": "Apply the orthogonality test",
+            "result": "orthogonal",
+            "why": "nonzero vectors with dot product zero are perpendicular"
+          },
+          {
+            "do": "State the angle",
+            "result": "$90^\\circ$",
+            "why": "orthogonal vectors meet at a right angle"
+          }
+        ],
+        "answer": "Yes. Their dot product is $0$, so they are orthogonal."
+      },
+      {
+        "problem": "Find the angle between $\\mathbf{u}=\\langle1,0\\rangle$ and $\\mathbf{v}=\\langle\\sqrt3,1\\rangle$.",
+        "steps": [
+          {
+            "do": "Compute the dot product",
+            "result": "$\\mathbf{u}\\cdot\\mathbf{v}=\\sqrt3$",
+            "why": "$1\\cdot\\sqrt3+0\\cdot1=\\sqrt3$"
+          },
+          {
+            "do": "Compute $\\|\\mathbf{u}\\|$",
+            "result": "$1$",
+            "why": "unit vector along the $x$-axis"
+          },
+          {
+            "do": "Compute $\\|\\mathbf{v}\\|$",
+            "result": "$\\sqrt{3+1}=2$",
+            "why": "use the norm formula"
+          },
+          {
+            "do": "Solve for cosine",
+            "result": "$\\cos\\theta=\\dfrac{\\sqrt3}{1\\cdot2}=\\dfrac{\\sqrt3}{2}$",
+            "why": "use $\\mathbf{u}\\cdot\\mathbf{v}=\\|\\mathbf{u}\\|\\|\\mathbf{v}\\|\\cos\\theta$"
+          },
+          {
+            "do": "Find the angle",
+            "result": "$\\theta=\\pi/6$",
+            "why": "$\\cos(\\pi/6)=\\sqrt3/2$"
+          }
+        ],
+        "answer": "The angle is $\\pi/6$, or $30^\\circ$."
+      },
+      {
+        "problem": "Project $\\mathbf{a}=\\langle6,2\\rangle$ onto $\\mathbf{b}=\\langle3,1\\rangle$.",
+        "steps": [
+          {
+            "do": "Compute $\\mathbf{a}\\cdot\\mathbf{b}$",
+            "result": "$6\\cdot3+2\\cdot1=20$",
+            "why": "projection needs the dot product"
+          },
+          {
+            "do": "Compute $\\mathbf{b}\\cdot\\mathbf{b}$",
+            "result": "$3^2+1^2=10$",
+            "why": "divide by the squared length of $\\mathbf{b}$"
+          },
+          {
+            "do": "Compute the scalar coefficient",
+            "result": "$20/10=2$",
+            "why": "projection coefficient is $(\\mathbf{a}\\cdot\\mathbf{b})/(\\mathbf{b}\\cdot\\mathbf{b})$"
+          },
+          {
+            "do": "Multiply by $\\mathbf{b}$",
+            "result": "$2\\langle3,1\\rangle=\\langle6,2\\rangle$",
+            "why": "the projection lies along $\\mathbf{b}$"
+          },
+          {
+            "do": "Interpret",
+            "result": "the projection equals $\\mathbf{a}$",
+            "why": "$\\mathbf{a}$ is already a multiple of $\\mathbf{b}$"
+          }
+        ],
+        "answer": "The projection is $\\langle6,2\\rangle$."
+      },
+      {
+        "problem": "Two unit embeddings have dot product $0.25$. Find their cosine similarity and approximate angle using $\\arccos(0.25)\\approx1.318$ radians.",
+        "steps": [
+          {
+            "do": "Use unit lengths",
+            "result": "$\\|\\mathbf{a}\\|=\\|\\mathbf{b}\\|=1$",
+            "why": "the embeddings are unit vectors"
+          },
+          {
+            "do": "Apply the angle formula",
+            "result": "$\\mathbf{a}\\cdot\\mathbf{b}=\\cos\\theta$",
+            "why": "unit lengths make the denominator $1$"
+          },
+          {
+            "do": "Substitute the dot product",
+            "result": "$\\cos\\theta=0.25$",
+            "why": "dot product equals cosine similarity for unit vectors"
+          },
+          {
+            "do": "Take inverse cosine",
+            "result": "$\\theta=\\arccos(0.25)$",
+            "why": "recover the angle from cosine"
+          },
+          {
+            "do": "Use the approximation",
+            "result": "$\\theta\\approx1.318$ radians",
+            "why": "the problem provides the inverse cosine value"
+          }
+        ],
+        "answer": "The cosine similarity is $0.25$, and the angle is about $1.318$ radians."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Cosine similarity",
+        "background": "Embedding systems often compare direction rather than raw length, especially for text and recommendation vectors.",
+        "numbers": "For unit vectors with dot product $0.8$, cosine similarity is $0.8$ and the angle is about $36.9^\\circ$."
+      },
+      {
+        "title": "Linear model scores",
+        "background": "A linear model computes a weighted sum, which is a dot product between weights and features.",
+        "numbers": "Weights $\\langle0.5,-1,2\\rangle$ and features $\\langle4,3,1\\rangle$ give score $2-3+2=1$."
+      },
+      {
+        "title": "Attention scores",
+        "background": "Transformer attention compares query and key vectors using dot products before normalization.",
+        "numbers": "Query $\\langle1,2\\rangle$ and key $\\langle3,1\\rangle$ have score $1\\cdot3+2\\cdot1=5$."
+      },
+      {
+        "title": "Work in physics",
+        "background": "Work equals force times displacement in the same direction, which is a dot product.",
+        "numbers": "Force $\\langle10,0\\rangle$ over displacement $\\langle3,4\\rangle$ does work $30$ joules in the horizontal direction."
+      },
+      {
+        "title": "Projection onto a feature",
+        "background": "Projection measures how much of one vector lies along another, useful in dimensionality reduction intuition.",
+        "numbers": "Projection length of $\\langle3,4\\rangle$ on unit vector $\\langle1,0\\rangle$ is $3$."
+      },
+      {
+        "title": "Orthogonal residuals",
+        "background": "Least squares leaves residuals perpendicular to the fitted feature directions at the optimum.",
+        "numbers": "If residual $\\langle2,-1\\rangle$ and feature $\\langle1,2\\rangle$ have dot product $2-2=0$, they are orthogonal."
+      }
+    ],
+    "applicationsClose": "The dot product is the arithmetic of alignment: score, similarity, projection, work, and orthogonality all share it.",
+    "takeaways": [
+      "$\\mathbf{a}\\cdot\\mathbf{b}$ multiplies matching components and adds the results.",
+      "Geometrically, $\\mathbf{a}\\cdot\\mathbf{b}=\\|\\mathbf{a}\\|\\|\\mathbf{b}\\|\\cos\\theta$.",
+      "Positive, zero, and negative dot products correspond to acute, right, and obtuse angles for nonzero vectors.",
+      "For unit vectors, the dot product is cosine similarity."
+    ],
     "prereqs": [
       "math-11-05"
     ]
@@ -132,19 +1635,267 @@
   B({
     "id": "math-11-07",
     "title": "The cross product",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: the cross product.",
+    "tagline": "The cross product builds a vector perpendicular to two 3D directions and measures the area they span.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The dot product</i>"
+        "Vectors",
+        "The dot product",
+        "determinants"
       ],
       "leadsTo": [
-        "the next lesson, <i>Lines in 3D</i>"
+        "Lines in 3D",
+        "Planes in 3D",
+        "surface normals"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "orientation",
+        "area",
+        "normal vectors",
+        "3D geometry"
       ]
     },
+    "motivation": "<p>In 3D, two nonparallel directions determine a flat sheet. To describe that sheet, we often want a direction sticking straight out of it. The dot product can test perpendicularity, but it does not create the perpendicular vector for us.</p><p>The <b>cross product</b> does. Given two 3D vectors, it produces a new vector perpendicular to both, with length equal to the area of the parallelogram they span. That is why it is everywhere in geometry, graphics, and physics.</p>",
+    "definition": "<p>For $\\mathbf{a}=\\langle a_1,a_2,a_3\\rangle$ and $\\mathbf{b}=\\langle b_1,b_2,b_3\\rangle$, the cross product is $$\\mathbf{a}\\times\\mathbf{b}=\\langle a_2b_3-a_3b_2,\\ a_3b_1-a_1b_3,\\ a_1b_2-a_2b_1\\rangle.$$ Its length is $$\\|\\mathbf{a}\\times\\mathbf{b}\\|=\\|\\mathbf{a}\\|\\,\\|\\mathbf{b}\\|\\sin\\theta,$$ the area of the parallelogram formed by $\\mathbf{a}$ and $\\mathbf{b}$.</p><p>The direction follows the right-hand rule: curl from $\\mathbf{a}$ toward $\\mathbf{b}$, and your thumb points along $\\mathbf{a}\\times\\mathbf{b}$. Reversing the order reverses the direction, so $\\mathbf{b}\\times\\mathbf{a}=-(\\mathbf{a}\\times\\mathbf{b})$.</p><p><b>Assumptions that matter:</b> this vector-valued cross product is for three-dimensional vectors; parallel vectors have cross product $\\mathbf{0}$ because they span zero area; and the output direction depends on the order of the inputs.</p>",
+    "worked": {
+      "problem": "Compute $\\mathbf{a}\\times\\mathbf{b}$ for $\\mathbf{a}=\\langle1,2,3\\rangle$ and $\\mathbf{b}=\\langle4,0,-1\\rangle$.",
+      "skills": [
+        "cross product components",
+        "3D vectors",
+        "orthogonality check"
+      ],
+      "strategy": "Use the component formula carefully, then verify perpendicularity with dot products.",
+      "steps": [
+        {
+          "do": "Compute the first component",
+          "result": "$2(-1)-3(0)=-2$",
+          "why": "use $a_2b_3-a_3b_2$"
+        },
+        {
+          "do": "Compute the second component",
+          "result": "$3(4)-1(-1)=13$",
+          "why": "use $a_3b_1-a_1b_3$"
+        },
+        {
+          "do": "Compute the third component",
+          "result": "$1(0)-2(4)=-8$",
+          "why": "use $a_1b_2-a_2b_1$"
+        },
+        {
+          "do": "Write the cross product",
+          "result": "$\\mathbf{a}\\times\\mathbf{b}=\\langle-2,13,-8\\rangle$",
+          "why": "combine the three components"
+        },
+        {
+          "do": "Check with $\\mathbf{a}$",
+          "result": "$1(-2)+2(13)+3(-8)=0$",
+          "why": "the cross product should be perpendicular to $\\mathbf{a}$"
+        },
+        {
+          "do": "Check with $\\mathbf{b}$",
+          "result": "$4(-2)+0(13)+(-1)(-8)=0$",
+          "why": "the cross product should be perpendicular to $\\mathbf{b}$"
+        }
+      ],
+      "verify": "Both dot products are zero, so $\\langle-2,13,-8\\rangle$ is perpendicular to the two input vectors as required.",
+      "answer": "$\\mathbf{a}\\times\\mathbf{b}=\\langle-2,13,-8\\rangle$.",
+      "connects": "The cross product turns two directions into the normal direction of the plane they span."
+    },
+    "practice": [
+      {
+        "problem": "Compute $\\langle1,0,0\\rangle\\times\\langle0,1,0\\rangle$.",
+        "steps": [
+          {
+            "do": "Name the vectors",
+            "result": "$\\mathbf{i}=\\langle1,0,0\\rangle$, $\\mathbf{j}=\\langle0,1,0\\rangle$",
+            "why": "these are standard basis directions"
+          },
+          {
+            "do": "Compute the first component",
+            "result": "$0\\cdot0-0\\cdot1=0$",
+            "why": "use the cross product formula"
+          },
+          {
+            "do": "Compute the second component",
+            "result": "$0\\cdot0-1\\cdot0=0$",
+            "why": "use the middle component formula"
+          },
+          {
+            "do": "Compute the third component",
+            "result": "$1\\cdot1-0\\cdot0=1$",
+            "why": "the $x$-$y$ plane normal points along $z$"
+          },
+          {
+            "do": "Write the result",
+            "result": "$\\langle0,0,1\\rangle$",
+            "why": "right-hand rule gives positive $z$"
+          }
+        ],
+        "answer": "$\\langle1,0,0\\rangle\\times\\langle0,1,0\\rangle=\\langle0,0,1\\rangle$."
+      },
+      {
+        "problem": "Compute $\\langle2,1,0\\rangle\\times\\langle0,3,4\\rangle$.",
+        "steps": [
+          {
+            "do": "Compute the first component",
+            "result": "$1\\cdot4-0\\cdot3=4$",
+            "why": "use $a_2b_3-a_3b_2$"
+          },
+          {
+            "do": "Compute the second component",
+            "result": "$0\\cdot0-2\\cdot4=-8$",
+            "why": "use $a_3b_1-a_1b_3$"
+          },
+          {
+            "do": "Compute the third component",
+            "result": "$2\\cdot3-1\\cdot0=6$",
+            "why": "use $a_1b_2-a_2b_1$"
+          },
+          {
+            "do": "Write the vector",
+            "result": "$\\langle4,-8,6\\rangle$",
+            "why": "combine the components"
+          },
+          {
+            "do": "Factor if desired",
+            "result": "$2\\langle2,-4,3\\rangle$",
+            "why": "a common factor can simplify direction"
+          }
+        ],
+        "answer": "$\\langle4,-8,6\\rangle$."
+      },
+      {
+        "problem": "Find the area of the parallelogram spanned by $\\mathbf{u}=\\langle3,0,0\\rangle$ and $\\mathbf{v}=\\langle0,4,0\\rangle$.",
+        "steps": [
+          {
+            "do": "Compute the cross product",
+            "result": "$\\mathbf{u}\\times\\mathbf{v}=\\langle0,0,12\\rangle$",
+            "why": "basis directions along $x$ and $y$ span a $z$ normal"
+          },
+          {
+            "do": "Apply the norm formula",
+            "result": "$\\|\\langle0,0,12\\rangle\\|=\\sqrt{0^2+0^2+12^2}$",
+            "why": "area equals cross product length"
+          },
+          {
+            "do": "Simplify the norm",
+            "result": "$12$",
+            "why": "$\\sqrt{144}=12$"
+          },
+          {
+            "do": "Compare with rectangle area",
+            "result": "$3\\cdot4=12$",
+            "why": "the vectors are perpendicular side lengths"
+          },
+          {
+            "do": "State the area",
+            "result": "$12$ square units",
+            "why": "area units come from two lengths"
+          }
+        ],
+        "answer": "The parallelogram area is $12$ square units."
+      },
+      {
+        "problem": "Show that $\\langle1,2,3\\rangle$ and $\\langle2,4,6\\rangle$ have zero cross product.",
+        "steps": [
+          {
+            "do": "Notice the scaling",
+            "result": "$\\langle2,4,6\\rangle=2\\langle1,2,3\\rangle$",
+            "why": "the vectors are parallel"
+          },
+          {
+            "do": "Compute the first component",
+            "result": "$2\\cdot6-3\\cdot4=0$",
+            "why": "parallel components cancel"
+          },
+          {
+            "do": "Compute the second component",
+            "result": "$3\\cdot2-1\\cdot6=0$",
+            "why": "same direction gives no perpendicular area"
+          },
+          {
+            "do": "Compute the third component",
+            "result": "$1\\cdot4-2\\cdot2=0$",
+            "why": "the final component also cancels"
+          },
+          {
+            "do": "Write the result",
+            "result": "$\\mathbf{0}$",
+            "why": "parallel vectors span zero parallelogram area"
+          }
+        ],
+        "answer": "Their cross product is $\\langle0,0,0\\rangle$."
+      },
+      {
+        "problem": "A triangle has vertices $A=(0,0,0)$, $B=(2,0,1)$, and $C=(0,3,1)$. Find its area.",
+        "steps": [
+          {
+            "do": "Form vector $\\overrightarrow{AB}$",
+            "result": "$\\langle2,0,1\\rangle$",
+            "why": "subtract $A$ from $B$"
+          },
+          {
+            "do": "Form vector $\\overrightarrow{AC}$",
+            "result": "$\\langle0,3,1\\rangle$",
+            "why": "subtract $A$ from $C$"
+          },
+          {
+            "do": "Compute the cross product",
+            "result": "$\\overrightarrow{AB}\\times\\overrightarrow{AC}=\\langle-3,-2,6\\rangle$",
+            "why": "this gives a parallelogram area vector"
+          },
+          {
+            "do": "Compute its length",
+            "result": "$\\sqrt{(-3)^2+(-2)^2+6^2}=7$",
+            "why": "the parallelogram area is the norm"
+          },
+          {
+            "do": "Take half",
+            "result": "$7/2$",
+            "why": "a triangle is half the parallelogram"
+          }
+        ],
+        "answer": "The triangle area is $7/2$ square units."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Surface normals in graphics",
+        "background": "Lighting calculations need a normal vector perpendicular to a surface so brightness can depend on angle.",
+        "numbers": "Triangle edges $\\langle1,0,0\\rangle$ and $\\langle0,1,0\\rangle$ give normal $\\langle0,0,1\\rangle$."
+      },
+      {
+        "title": "Triangle area in 3D meshes",
+        "background": "Mesh processing computes triangle areas for rendering, simulation, and simplification.",
+        "numbers": "If edge cross product has length $10$, the triangle area is $5$."
+      },
+      {
+        "title": "Torque",
+        "background": "Physics uses cross products for rotational effect: force farther from a pivot creates more torque when perpendicular.",
+        "numbers": "Lever arm $\\langle2,0,0\\rangle$ and force $\\langle0,5,0\\rangle$ give torque $\\langle0,0,10\\rangle$."
+      },
+      {
+        "title": "Plane equations",
+        "background": "Two direction vectors in a plane produce a normal vector, which becomes the coefficients of a plane equation.",
+        "numbers": "Directions $\\langle1,0,1\\rangle$ and $\\langle0,1,1\\rangle$ cross to $\\langle-1,-1,1\\rangle$."
+      },
+      {
+        "title": "Orientation tests",
+        "background": "Geometry algorithms use signed cross products to decide clockwise versus counterclockwise order.",
+        "numbers": "In 2D, vectors $(1,0)$ and $(0,1)$ have scalar $z$-cross value $1$, indicating a left turn."
+      },
+      {
+        "title": "Camera coordinate frames",
+        "background": "A camera basis can be built by crossing viewing and up directions to create a perpendicular right direction.",
+        "numbers": "View $\\langle0,0,-1\\rangle$ crossed with up $\\langle0,1,0\\rangle$ gives right $\\langle1,0,0\\rangle$."
+      }
+    ],
+    "applicationsClose": "The cross product is the 3D tool for normals, areas, orientation, and rotational effects.",
+    "takeaways": [
+      "The cross product of two 3D vectors is perpendicular to both input vectors.",
+      "Its length is the area of the parallelogram spanned by the inputs.",
+      "Order matters: $\\mathbf{b}\\times\\mathbf{a}=-(\\mathbf{a}\\times\\mathbf{b})$.",
+      "Parallel vectors have zero cross product."
+    ],
     "prereqs": [
       "math-11-06"
     ]
@@ -153,19 +1904,267 @@
   B({
     "id": "math-11-08",
     "title": "Lines in 3D",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: lines in 3d.",
+    "tagline": "A 3D line is a starting point plus every scalar multiple of a direction vector.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The cross product</i>"
+        "Vectors",
+        "The dot product",
+        "The cross product"
       ],
       "leadsTo": [
-        "the next lesson, <i>Planes in 3D</i>"
+        "Planes in 3D",
+        "parametric geometry",
+        "linear algebra"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "parametric equations",
+        "direction vectors",
+        "intersections",
+        "distance"
       ]
     },
+    "motivation": "<p>In the plane, a slope can describe a nonvertical line. In 3D, one slope is not enough because a line can move in $x$, $y$, and $z$ at the same time.</p><p>The vector idea fixes this beautifully: choose one point on the line and one direction vector. Then every point on the line is reached by scaling that direction and adding it to the starting point.</p>",
+    "definition": "<p>A line in 3D through point $\\mathbf{p}_0=\\langle x_0,y_0,z_0\\rangle$ with direction vector $\\mathbf{v}=\\langle a,b,c\\rangle\\ne\\mathbf{0}$ is $$\\mathbf{r}(t)=\\mathbf{p}_0+t\\mathbf{v}.$$ In coordinates, this means $$x=x_0+at,\\qquad y=y_0+bt,\\qquad z=z_0+ct,$$ where $t$ is a real parameter.</p><p>The parameter $t$ tells how far along the direction vector you have moved: $t=0$ gives the base point, $t=1$ moves one full direction vector, and negative $t$ moves the opposite way. Two 3D lines can intersect, be parallel, or be skew, meaning nonparallel and not intersecting.</p><p><b>Assumptions that matter:</b> the direction vector must be nonzero; the same line has many possible base points and scaled direction vectors; and solving intersections requires matching all three coordinates with the same parameter values.</p>",
+    "worked": {
+      "problem": "Find a parametric equation for the line through $P=(1,-2,3)$ and $Q=(5,0,-1)$.",
+      "skills": [
+        "direction vectors",
+        "parametric equations",
+        "3D coordinates"
+      ],
+      "strategy": "Subtract the points to get a direction vector, then attach that direction to one point.",
+      "steps": [
+        {
+          "do": "Subtract $x$-coordinates",
+          "result": "$5-1=4$",
+          "why": "direction vector uses final minus initial"
+        },
+        {
+          "do": "Subtract $y$-coordinates",
+          "result": "$0-(-2)=2$",
+          "why": "find the vertical-in-plane component"
+        },
+        {
+          "do": "Subtract $z$-coordinates",
+          "result": "$-1-3=-4$",
+          "why": "find the depth component"
+        },
+        {
+          "do": "Write a direction vector",
+          "result": "$\\mathbf{v}=\\langle4,2,-4\\rangle$",
+          "why": "this points from $P$ to $Q$"
+        },
+        {
+          "do": "Use point $P$",
+          "result": "$\\mathbf{r}(t)=\\langle1,-2,3\\rangle+t\\langle4,2,-4\\rangle$",
+          "why": "point plus scalar times direction describes the whole line"
+        },
+        {
+          "do": "Write coordinate equations",
+          "result": "$x=1+4t,\\ y=-2+2t,\\ z=3-4t$",
+          "why": "expand component by component"
+        }
+      ],
+      "verify": "At $t=1$, the equation gives $(5,0,-1)$, so it reaches $Q$ from $P$ in one direction step.",
+      "answer": "$\\mathbf{r}(t)=\\langle1,-2,3\\rangle+t\\langle4,2,-4\\rangle$, or $x=1+4t$, $y=-2+2t$, $z=3-4t$.",
+      "connects": "A 3D line is not about slope alone; it is about a full direction vector."
+    },
+    "practice": [
+      {
+        "problem": "For $\\mathbf{r}(t)=\\langle2,1,-3\\rangle+t\\langle1,4,2\\rangle$, find the point at $t=3$.",
+        "steps": [
+          {
+            "do": "Scale the direction vector",
+            "result": "$3\\langle1,4,2\\rangle=\\langle3,12,6\\rangle$",
+            "why": "parameter $t=3$ means three direction steps"
+          },
+          {
+            "do": "Add first components",
+            "result": "$2+3=5$",
+            "why": "update $x$"
+          },
+          {
+            "do": "Add second components",
+            "result": "$1+12=13$",
+            "why": "update $y$"
+          },
+          {
+            "do": "Add third components",
+            "result": "$-3+6=3$",
+            "why": "update $z$"
+          },
+          {
+            "do": "Write the point",
+            "result": "$(5,13,3)$",
+            "why": "combine the coordinates"
+          }
+        ],
+        "answer": "At $t=3$, the point is $(5,13,3)$."
+      },
+      {
+        "problem": "Does the point $(4,7,1)$ lie on $\\mathbf{r}(t)=\\langle1,1,4\\rangle+t\\langle1,2,-1\\rangle$?",
+        "steps": [
+          {
+            "do": "Use the $x$ equation",
+            "result": "$1+t=4$",
+            "why": "match the target $x$ coordinate"
+          },
+          {
+            "do": "Solve for $t$",
+            "result": "$t=3$",
+            "why": "subtract 1"
+          },
+          {
+            "do": "Check the $y$ equation",
+            "result": "$1+2(3)=7$",
+            "why": "same parameter must match $y$"
+          },
+          {
+            "do": "Check the $z$ equation",
+            "result": "$4-3=1$",
+            "why": "same parameter must match $z$"
+          },
+          {
+            "do": "Decide",
+            "result": "the point lies on the line",
+            "why": "one value $t=3$ satisfies all coordinates"
+          }
+        ],
+        "answer": "Yes. The point corresponds to $t=3$."
+      },
+      {
+        "problem": "Find a line through $(0,2,5)$ parallel to $\\mathbf{d}=\\langle-2,1,3\\rangle$.",
+        "steps": [
+          {
+            "do": "Choose the base point",
+            "result": "$\\mathbf{p}_0=\\langle0,2,5\\rangle$",
+            "why": "the line must pass through this point"
+          },
+          {
+            "do": "Choose the direction",
+            "result": "$\\mathbf{v}=\\langle-2,1,3\\rangle$",
+            "why": "parallel lines share a direction vector up to scaling"
+          },
+          {
+            "do": "Write vector form",
+            "result": "$\\mathbf{r}(t)=\\langle0,2,5\\rangle+t\\langle-2,1,3\\rangle$",
+            "why": "point plus parameter times direction"
+          },
+          {
+            "do": "Write the $x$ equation",
+            "result": "$x=-2t$",
+            "why": "start at $0$ and add $-2t$"
+          },
+          {
+            "do": "Write the other equations",
+            "result": "$y=2+t,\\ z=5+3t$",
+            "why": "expand remaining components"
+          }
+        ],
+        "answer": "$\\mathbf{r}(t)=\\langle0,2,5\\rangle+t\\langle-2,1,3\\rangle$."
+      },
+      {
+        "problem": "Find where $\\mathbf{r}(t)=\\langle1,0,2\\rangle+t\\langle2,1,-1\\rangle$ meets the plane $z=0$.",
+        "steps": [
+          {
+            "do": "Write the $z$ coordinate",
+            "result": "$z=2-t$",
+            "why": "use the third component of the line"
+          },
+          {
+            "do": "Set $z=0$",
+            "result": "$2-t=0$",
+            "why": "the plane consists of points with zero $z$"
+          },
+          {
+            "do": "Solve for $t$",
+            "result": "$t=2$",
+            "why": "move along the line until depth is zero"
+          },
+          {
+            "do": "Compute $x$",
+            "result": "$x=1+2(2)=5$",
+            "why": "substitute the same parameter"
+          },
+          {
+            "do": "Compute $y$",
+            "result": "$y=0+1(2)=2$",
+            "why": "substitute into the $y$ equation"
+          }
+        ],
+        "answer": "The line meets $z=0$ at $(5,2,0)$."
+      },
+      {
+        "problem": "A camera ray starts at $C=(0,0,2)$ and points in direction $\\langle3,4,-1\\rangle$. Where is it after moving to parameter $t=5$, and how far from $C$ is that point?",
+        "steps": [
+          {
+            "do": "Scale the direction",
+            "result": "$5\\langle3,4,-1\\rangle=\\langle15,20,-5\\rangle$",
+            "why": "parameter $5$ means five direction-vector steps"
+          },
+          {
+            "do": "Add to the start",
+            "result": "$(15,20,-3)$",
+            "why": "$(0,0,2)+\\langle15,20,-5\\rangle$"
+          },
+          {
+            "do": "Find the direction length",
+            "result": "$\\sqrt{3^2+4^2+(-1)^2}=\\sqrt{26}$",
+            "why": "one step has this Euclidean length"
+          },
+          {
+            "do": "Scale the length by $5$",
+            "result": "$5\\sqrt{26}$",
+            "why": "distance traveled scales with the parameter magnitude"
+          },
+          {
+            "do": "Approximate if desired",
+            "result": "$5\\sqrt{26}\\approx25.5$",
+            "why": "$\\sqrt{26}\\approx5.10$"
+          }
+        ],
+        "answer": "The point is $(15,20,-3)$, and its distance from $C$ is $5\\sqrt{26}\\approx25.5$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Ray tracing",
+        "background": "Rendering follows rays from a camera through pixels into a 3D scene, using line equations to find intersections.",
+        "numbers": "A ray $\\mathbf{r}(t)=\\langle0,0,1\\rangle+t\\langle2,0,-1\\rangle$ hits $z=0$ when $1-t=0$, so at $(2,0,0)$."
+      },
+      {
+        "title": "Robot paths",
+        "background": "A straight 3D path can be planned as a base position plus a direction vector.",
+        "numbers": "From $(1,2,0)$ with direction $\\langle0.5,0,0.2\\rangle$, at $t=4$ the robot is at $(3,2,0.8)$."
+      },
+      {
+        "title": "Line-of-sight checks",
+        "background": "Games and simulations test whether a line from viewer to object crosses an obstacle.",
+        "numbers": "Viewer $(0,0,1)$ to object $(10,0,1)$ has direction $\\langle10,0,0\\rangle$ and midpoint at $t=0.5$ is $(5,0,1)$."
+      },
+      {
+        "title": "3D interpolation",
+        "background": "Animation moves objects between 3D keyframes using line segments.",
+        "numbers": "Halfway from $(2,4,6)$ to $(8,10,0)$ is $(5,7,3)$."
+      },
+      {
+        "title": "Sensor beams",
+        "background": "Lidar and depth cameras emit rays whose intersections estimate scene geometry.",
+        "numbers": "A beam from $(0,0,0)$ in direction $\\langle0,1,2\\rangle$ reaches $(0,3,6)$ at $t=3$."
+      },
+      {
+        "title": "Optimization search lines",
+        "background": "Line search methods examine a one-dimensional path through a high-dimensional parameter space.",
+        "numbers": "Weights $\\mathbf{w}=\\langle1,-1,2\\rangle$ and direction $\\mathbf{d}=\\langle-0.2,0.4,0\\rangle$ give $\\mathbf{w}(0.5)=\\langle0.9,-0.8,2\\rangle$."
+      }
+    ],
+    "applicationsClose": "A 3D line is a movable recipe: start here, move in this direction, choose how far.",
+    "takeaways": [
+      "A 3D line has vector form $\\mathbf{r}(t)=\\mathbf{p}_0+t\\mathbf{v}$.",
+      "The direction vector must be nonzero and can be scaled without changing the line.",
+      "A point lies on the line only if one parameter value satisfies all coordinates.",
+      "Lines in 3D can be intersecting, parallel, or skew."
+    ],
     "prereqs": [
       "math-11-07"
     ]
@@ -174,19 +2173,268 @@
   B({
     "id": "math-11-09",
     "title": "Planes in 3D",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: planes in 3d.",
+    "tagline": "A plane is a flat 3D surface best described by a point and a perpendicular normal vector.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Lines in 3D</i>"
+        "Vectors",
+        "The dot product",
+        "The cross product",
+        "Lines in 3D"
       ],
       "leadsTo": [
-        "the next lesson, <i>The circle and ellipse</i>"
+        "linear algebra",
+        "multivariable calculus",
+        "hyperplanes"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "normal vectors",
+        "linear equations",
+        "projections",
+        "3D intersections"
       ]
     },
+    "motivation": "<p>A line is the flat path through space. A plane is the flat sheet. In 3D, planes are where surfaces, constraints, decision boundaries, and tangent approximations begin.</p><p>The cleanest way to describe a plane is not by every direction inside it, but by one direction outside it: a <b>normal vector</b> perpendicular to the whole plane. The dot product then turns perpendicularity into an equation.</p>",
+    "definition": "<p>A plane through point $P_0=(x_0,y_0,z_0)$ with nonzero normal vector $\\mathbf{n}=\\langle A,B,C\\rangle$ is the set of points $(x,y,z)$ satisfying $$A(x-x_0)+B(y-y_0)+C(z-z_0)=0.$$ Expanding gives the standard form $$Ax+By+Cz=D,$$ where $D=Ax_0+By_0+Cz_0$.</p><p>This equation comes from the dot product. For any point $P=(x,y,z)$ in the plane, the displacement $\\overrightarrow{P_0P}=\\langle x-x_0,y-y_0,z-z_0\\rangle$ lies inside the plane, so it must be perpendicular to $\\mathbf{n}$. Therefore $\\mathbf{n}\\cdot\\overrightarrow{P_0P}=0$.</p><p><b>Assumptions that matter:</b> the normal vector cannot be zero; multiplying all coefficients by the same nonzero scalar gives the same plane; and two nonparallel direction vectors in a plane can produce a normal by their cross product.</p>",
+    "worked": {
+      "problem": "Find the plane through $P_0=(1,-2,3)$ with normal vector $\\mathbf{n}=\\langle2,-1,4\\rangle$.",
+      "skills": [
+        "normal vectors",
+        "dot product equations",
+        "plane standard form"
+      ],
+      "strategy": "Use the normal vector dotted with a displacement from the known point, then expand.",
+      "steps": [
+        {
+          "do": "Write the displacement",
+          "result": "$\\langle x-1,y+2,z-3\\rangle$",
+          "why": "subtract the base point from a general point"
+        },
+        {
+          "do": "Dot with the normal",
+          "result": "$2(x-1)-1(y+2)+4(z-3)=0$",
+          "why": "in-plane displacements are perpendicular to the normal"
+        },
+        {
+          "do": "Distribute",
+          "result": "$2x-2-y-2+4z-12=0$",
+          "why": "expand each term"
+        },
+        {
+          "do": "Combine constants",
+          "result": "$2x-y+4z-16=0$",
+          "why": "$-2-2-12=-16$"
+        },
+        {
+          "do": "Move the constant",
+          "result": "$2x-y+4z=16$",
+          "why": "standard form keeps variables on one side"
+        },
+        {
+          "do": "Check the point",
+          "result": "$2(1)-(-2)+4(3)=16$",
+          "why": "the given point should satisfy the plane equation"
+        }
+      ],
+      "verify": "The check gives $2+2+12=16$, so the plane contains $P_0$ and has the requested normal coefficients.",
+      "answer": "The plane is $2x-y+4z=16$.",
+      "connects": "A plane equation is a perpendicularity condition written with the dot product."
+    },
+    "practice": [
+      {
+        "problem": "Find the plane through $(0,1,2)$ with normal $\\langle3,0,-2\\rangle$.",
+        "steps": [
+          {
+            "do": "Write the displacement",
+            "result": "$\\langle x,y-1,z-2\\rangle$",
+            "why": "subtract the known point"
+          },
+          {
+            "do": "Dot with the normal",
+            "result": "$3x+0(y-1)-2(z-2)=0$",
+            "why": "plane displacements are orthogonal to the normal"
+          },
+          {
+            "do": "Remove the zero term",
+            "result": "$3x-2(z-2)=0$",
+            "why": "the $y$ coefficient is zero"
+          },
+          {
+            "do": "Distribute",
+            "result": "$3x-2z+4=0$",
+            "why": "expand the last term"
+          },
+          {
+            "do": "Write standard form",
+            "result": "$3x-2z=-4$",
+            "why": "move the constant to the other side"
+          }
+        ],
+        "answer": "The plane is $3x-2z=-4$."
+      },
+      {
+        "problem": "Check whether $(2,-1,3)$ lies on the plane $x+2y-z=-3$.",
+        "steps": [
+          {
+            "do": "Substitute $x=2$",
+            "result": "$2+2y-z$",
+            "why": "begin evaluating the left side"
+          },
+          {
+            "do": "Substitute $y=-1$",
+            "result": "$2+2(-1)-z$",
+            "why": "use the point's second coordinate"
+          },
+          {
+            "do": "Substitute $z=3$",
+            "result": "$2+2(-1)-3$",
+            "why": "use the point's third coordinate"
+          },
+          {
+            "do": "Simplify",
+            "result": "$2-2-3=-3$",
+            "why": "combine terms"
+          },
+          {
+            "do": "Compare with the right side",
+            "result": "$-3=-3$",
+            "why": "the equation is satisfied"
+          }
+        ],
+        "answer": "Yes. The point lies on the plane."
+      },
+      {
+        "problem": "Find a normal vector to the plane through $A=(0,0,0)$, $B=(1,2,0)$, and $C=(0,1,3)$.",
+        "steps": [
+          {
+            "do": "Form $\\overrightarrow{AB}$",
+            "result": "$\\langle1,2,0\\rangle$",
+            "why": "one direction inside the plane"
+          },
+          {
+            "do": "Form $\\overrightarrow{AC}$",
+            "result": "$\\langle0,1,3\\rangle$",
+            "why": "a second direction inside the plane"
+          },
+          {
+            "do": "Compute the first cross component",
+            "result": "$2\\cdot3-0\\cdot1=6$",
+            "why": "cross product gives a perpendicular vector"
+          },
+          {
+            "do": "Compute the second cross component",
+            "result": "$0\\cdot0-1\\cdot3=-3$",
+            "why": "use the middle component formula"
+          },
+          {
+            "do": "Compute the third cross component",
+            "result": "$1\\cdot1-2\\cdot0=1$",
+            "why": "complete the normal vector"
+          }
+        ],
+        "answer": "A normal vector is $\\langle6,-3,1\\rangle$."
+      },
+      {
+        "problem": "Find the equation of the plane through $(0,0,0)$, $(1,2,0)$, and $(0,1,3)$.",
+        "steps": [
+          {
+            "do": "Use two direction vectors",
+            "result": "$\\langle1,2,0\\rangle$ and $\\langle0,1,3\\rangle$",
+            "why": "subtract the origin from the other two points"
+          },
+          {
+            "do": "Take their cross product",
+            "result": "$\\langle6,-3,1\\rangle$",
+            "why": "this is a normal vector from the previous calculation"
+          },
+          {
+            "do": "Use the origin as base point",
+            "result": "$6(x-0)-3(y-0)+1(z-0)=0$",
+            "why": "normal dotted with displacement equals zero"
+          },
+          {
+            "do": "Simplify",
+            "result": "$6x-3y+z=0$",
+            "why": "the base point is the origin"
+          },
+          {
+            "do": "Check point $(1,2,0)$",
+            "result": "$6-6+0=0$",
+            "why": "one non-origin point satisfies the plane"
+          }
+        ],
+        "answer": "The plane is $6x-3y+z=0$."
+      },
+      {
+        "problem": "A linear classifier in three features uses boundary $2x_1-x_2+3x_3=6$. Find a normal vector and classify point $(1,1,2)$ by the sign of left side minus $6$.",
+        "steps": [
+          {
+            "do": "Read the normal vector",
+            "result": "$\\mathbf{n}=\\langle2,-1,3\\rangle$",
+            "why": "plane coefficients form the normal"
+          },
+          {
+            "do": "Evaluate the left side",
+            "result": "$2(1)-1+3(2)$",
+            "why": "substitute the point into the boundary expression"
+          },
+          {
+            "do": "Simplify the left side",
+            "result": "$7$",
+            "why": "$2-1+6=7$"
+          },
+          {
+            "do": "Subtract the boundary value",
+            "result": "$7-6=1$",
+            "why": "signed score compares the point to the plane"
+          },
+          {
+            "do": "Read the sign",
+            "result": "positive side",
+            "why": "the signed score is greater than zero"
+          }
+        ],
+        "answer": "A normal vector is $\\langle2,-1,3\\rangle$, and $(1,1,2)$ lies on the positive side of the boundary."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Linear decision boundaries",
+        "background": "A linear classifier in three features separates space with a plane; in more dimensions, the same idea is a hyperplane.",
+        "numbers": "Boundary $2x-y+z=4$ gives point $(1,0,1)$ score $3-4=-1$, so it lies on the negative side."
+      },
+      {
+        "title": "Tangent planes",
+        "background": "Multivariable calculus approximates a curved surface near a point by a plane, just as a tangent line approximates a curve.",
+        "numbers": "For $z=2x+3y+1$, at $(1,2)$ the plane value is $2+6+1=9$."
+      },
+      {
+        "title": "3D graphics surfaces",
+        "background": "A flat polygon face lies in a plane, and its normal controls lighting and visibility.",
+        "numbers": "Plane $z=5$ has normal $\\langle0,0,1\\rangle$; every point on it has depth $5$."
+      },
+      {
+        "title": "Constraint equations",
+        "background": "Optimization often restricts variables to a linear constraint, which is geometrically a plane.",
+        "numbers": "The constraint $x+y+z=1$ includes $(0.2,0.3,0.5)$ because the coordinates sum to $1$."
+      },
+      {
+        "title": "Distance to a plane",
+        "background": "Distances from points to planes appear in geometry processing and support-vector methods.",
+        "numbers": "For plane $x=0$, point $(3,4,5)$ is distance $3$ away because only the $x$ coordinate is perpendicular."
+      },
+      {
+        "title": "Plane fitting",
+        "background": "Point clouds from depth sensors are often approximated by planes to detect floors, walls, or tabletops.",
+        "numbers": "Points with $z$ near $1.0$, such as $0.98$, $1.01$, and $1.00$, fit the plane $z=1$ with errors $0.02$, $0.01$, and $0$."
+      }
+    ],
+    "applicationsClose": "Planes are flat constraints: the same normal-vector idea powers surfaces, classifiers, approximations, and geometry processing.",
+    "takeaways": [
+      "A plane can be written from a point and nonzero normal vector using $\\mathbf{n}\\cdot\\overrightarrow{P_0P}=0$.",
+      "Standard form $Ax+By+Cz=D$ has normal vector $\\langle A,B,C\\rangle$.",
+      "Two nonparallel directions in a plane produce a normal through the cross product.",
+      "Plane equations classify points by which side of the plane they lie on."
+    ],
     "prereqs": [
       "math-11-08"
     ]
@@ -195,19 +2443,267 @@
   B({
     "id": "math-11-10",
     "title": "The circle and ellipse",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: the circle and ellipse.",
+    "tagline": "Circles and ellipses are distance stories made visible in the coordinate plane.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Planes in 3D</i>"
+        "coordinate distance",
+        "quadratic equations",
+        "graphs of functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>The parabola and hyperbola</i>"
+        "The parabola and hyperbola",
+        "Quadratic forms",
+        "Quadric surfaces"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "distance formula",
+        "completing the square",
+        "symmetry",
+        "eigenvectors"
       ]
     },
+    "motivation": "<p>You already know how to measure distance between points. A circle simply gathers every point that stays the same distance from one center.</p><p>An <b>ellipse</b> relaxes that perfect roundness into two radii. It is still orderly and symmetric, but one direction is wider than the other. This is the first gentle step from simple distance to the geometry of quadratic equations.</p>",
+    "definition": "<p>A <b>circle</b> with center $(h,k)$ and radius $r>0$ is the set of points $(x,y)$ satisfying $(x-h)^2+(y-k)^2=r^2$. This comes directly from the distance formula: the squared distance from $(x,y)$ to $(h,k)$ is $(x-h)^2+(y-k)^2$.</p><p>An axis-aligned <b>ellipse</b> centered at $(h,k)$ has equation $\\frac{(x-h)^2}{a^2}+\\frac{(y-k)^2}{b^2}=1$, where $a,b>0$ are the horizontal and vertical semi-axis lengths. The intercepts occur by setting the other coordinate to its center value, giving $(h\\pm a,k)$ and $(h,k\\pm b)$.</p><p><b>Assumptions that matter:</b> these equations are axis-aligned unless a cross term is present; $r,a,b$ are positive lengths; and translating the center changes $(x,y)$ to $(x-h,y-k)$ without changing the shape.</p>",
+    "worked": {
+      "problem": "Put $x^2+y^2-6x+4y-12=0$ into circle form, then identify the center and radius.",
+      "skills": [
+        "completing the square",
+        "circle equations",
+        "coordinate geometry"
+      ],
+      "strategy": "The center is hidden by linear terms - group coordinates and complete two squares.",
+      "steps": [
+        {
+          "do": "Group the $x$ and $y$ terms",
+          "result": "$(x^2-6x)+(y^2+4y)=12$",
+          "why": "move the constant to the right"
+        },
+        {
+          "do": "Complete the $x$ square",
+          "result": "$x^2-6x+9=(x-3)^2$",
+          "why": "half of $-6$ is $-3$, and $(-3)^2=9$"
+        },
+        {
+          "do": "Complete the $y$ square",
+          "result": "$y^2+4y+4=(y+2)^2$",
+          "why": "half of $4$ is $2$, and $2^2=4$"
+        },
+        {
+          "do": "Add the same constants to the right",
+          "result": "$(x-3)^2+(y+2)^2=25$",
+          "why": "$12+9+4=25$"
+        },
+        {
+          "do": "Read the center",
+          "result": "$(3,-2)$",
+          "why": "circle form is $(x-h)^2+(y-k)^2=r^2$"
+        },
+        {
+          "do": "Read the radius",
+          "result": "$r=5$",
+          "why": "$r^2=25$"
+        }
+      ],
+      "verify": "The original point $(8,-2)$ is 5 units right of the center, and it satisfies the equation: $64+4-48-8-12=0$.",
+      "answer": "$(x-3)^2+(y+2)^2=25$; center $(3,-2)$ and radius $5$.",
+      "connects": "Completing the square turns a quadratic equation back into a distance statement."
+    },
+    "practice": [
+      {
+        "problem": "Find the center and radius of $(x+4)^2+(y-1)^2=36$.",
+        "steps": [
+          {
+            "do": "Match the $x$ term to $(x-h)^2$",
+            "result": "$x+4=x-(-4)$",
+            "why": "the sign inside is opposite the center coordinate"
+          },
+          {
+            "do": "Read the $x$-coordinate",
+            "result": "$h=-4$",
+            "why": "$x-(-4)$ gives center coordinate $-4$"
+          },
+          {
+            "do": "Read the $y$-coordinate",
+            "result": "$k=1$",
+            "why": "$(y-1)^2$ gives center coordinate $1$"
+          },
+          {
+            "do": "Read $r^2$",
+            "result": "$r^2=36$",
+            "why": "the right side of circle form is radius squared"
+          },
+          {
+            "do": "Take the positive square root",
+            "result": "$r=6$",
+            "why": "a radius is a positive length"
+          }
+        ],
+        "answer": "Center $(-4,1)$ and radius $6$."
+      },
+      {
+        "problem": "Write the circle with center $(2,-3)$ through $(2,5)$.",
+        "steps": [
+          {
+            "do": "Use the center form",
+            "result": "$(x-2)^2+(y+3)^2=r^2$",
+            "why": "insert $h=2$ and $k=-3$"
+          },
+          {
+            "do": "Compute horizontal difference",
+            "result": "$2-2=0$",
+            "why": "the point has the same $x$-coordinate as the center"
+          },
+          {
+            "do": "Compute vertical difference",
+            "result": "$5-(-3)=8$",
+            "why": "subtract center coordinate from point coordinate"
+          },
+          {
+            "do": "Compute squared distance",
+            "result": "$r^2=0^2+8^2=64$",
+            "why": "radius squared is distance squared"
+          },
+          {
+            "do": "Write the equation",
+            "result": "$(x-2)^2+(y+3)^2=64$",
+            "why": "substitute the radius squared"
+          }
+        ],
+        "answer": "$(x-2)^2+(y+3)^2=64$."
+      },
+      {
+        "problem": "For $\\frac{(x-1)^2}{9}+\\frac{(y+2)^2}{16}=1$, find the center and four vertices on the axes of symmetry.",
+        "steps": [
+          {
+            "do": "Read the center",
+            "result": "$(1,-2)$",
+            "why": "the shifted terms are $x-1$ and $y+2$"
+          },
+          {
+            "do": "Read the horizontal semi-axis",
+            "result": "$a=3$",
+            "why": "$9=3^2$"
+          },
+          {
+            "do": "Read the vertical semi-axis",
+            "result": "$b=4$",
+            "why": "$16=4^2$"
+          },
+          {
+            "do": "Move horizontally from the center",
+            "result": "$(-2,-2)$ and $(4,-2)$",
+            "why": "subtract and add $3$ to the $x$-coordinate"
+          },
+          {
+            "do": "Move vertically from the center",
+            "result": "$(1,-6)$ and $(1,2)$",
+            "why": "subtract and add $4$ to the $y$-coordinate"
+          }
+        ],
+        "answer": "Center $(1,-2)$; vertices $(-2,-2)$, $(4,-2)$, $(1,-6)$, and $(1,2)$."
+      },
+      {
+        "problem": "Put $4x^2+9y^2-16x+18y-11=0$ into ellipse form.",
+        "steps": [
+          {
+            "do": "Group and move the constant",
+            "result": "$4(x^2-4x)+9(y^2+2y)=11$",
+            "why": "factor the quadratic coefficients first"
+          },
+          {
+            "do": "Complete the $x$ square inside",
+            "result": "$x^2-4x+4=(x-2)^2$",
+            "why": "half of $-4$ is $-2$"
+          },
+          {
+            "do": "Complete the $y$ square inside",
+            "result": "$y^2+2y+1=(y+1)^2$",
+            "why": "half of $2$ is $1$"
+          },
+          {
+            "do": "Balance the equation",
+            "result": "$4(x-2)^2+9(y+1)^2=36$",
+            "why": "$11+4\\cdot4+9\\cdot1=36$"
+          },
+          {
+            "do": "Divide by $36$",
+            "result": "$\\frac{(x-2)^2}{9}+\\frac{(y+1)^2}{4}=1$",
+            "why": "ellipse standard form has right side $1$"
+          }
+        ],
+        "answer": "$\\frac{(x-2)^2}{9}+\\frac{(y+1)^2}{4}=1$."
+      },
+      {
+        "problem": "A 2-D feature vector is accepted when $\\frac{(x-50)^2}{100}+\\frac{(y-20)^2}{25}\\le1$. Decide whether $(58,23)$ is accepted.",
+        "steps": [
+          {
+            "do": "Substitute the point",
+            "result": "$\\frac{(58-50)^2}{100}+\\frac{(23-20)^2}{25}$",
+            "why": "test whether the point lies inside the ellipse"
+          },
+          {
+            "do": "Compute the differences",
+            "result": "$\\frac{8^2}{100}+\\frac{3^2}{25}$",
+            "why": "center the features"
+          },
+          {
+            "do": "Square the differences",
+            "result": "$\\frac{64}{100}+\\frac{9}{25}$",
+            "why": "ellipse score uses squared normalized distances"
+          },
+          {
+            "do": "Convert and add",
+            "result": "$0.64+0.36=1.00$",
+            "why": "$9/25=0.36$"
+          },
+          {
+            "do": "Compare with the threshold",
+            "result": "$1.00\\le1$",
+            "why": "boundary points are included"
+          }
+        ],
+        "answer": "The point $(58,23)$ is accepted; it lies exactly on the ellipse boundary."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Anomaly detection ellipses",
+        "background": "Classical statistics draws ellipses around typical two-feature data when variation differs by direction.",
+        "numbers": "With center $(50,20)$ and scales $10,5$, point $(55,25)$ has score $25/100+25/25=1.25$, so it is outside the unit ellipse."
+      },
+      {
+        "title": "Image masks",
+        "background": "Computer vision often crops or weights a region with a circular or elliptical mask.",
+        "numbers": "A circular mask centered at $(100,80)$ with radius $20$ includes pixel $(116,92)$ because $16^2+12^2=400=20^2$."
+      },
+      {
+        "title": "Camera calibration targets",
+        "background": "Projected circles can appear as ellipses when viewed at an angle.",
+        "numbers": "An ellipse with semi-axes $30$ and $18$ has area $\\pi ab=540\\pi\\approx1696$ square pixels."
+      },
+      {
+        "title": "Feature normalization",
+        "background": "Dividing by different variances changes a circle of equal standardized distance into an ellipse in raw units.",
+        "numbers": "If standard deviations are $4$ and $2$, the standardized score for raw offset $(8,2)$ is $(8/4)^2+(2/2)^2=5$."
+      },
+      {
+        "title": "Robot safety zones",
+        "background": "Robots use circular keep-out zones when distance from a center is the risk measure.",
+        "numbers": "A robot at $(3,4)$ from a hazard at $(0,0)$ is exactly $5$ meters away, since $3^2+4^2=25$."
+      },
+      {
+        "title": "Optimization contours",
+        "background": "A quadratic loss with different curvature in two directions has elliptical level sets.",
+        "numbers": "For $L=\\frac{x^2}{4}+y^2$, the level $L=1$ has intercepts $(\\pm2,0)$ and $(0,\\pm1)$."
+      }
+    ],
+    "applicationsClose": "Circles and ellipses turn distance, variation, and tolerance into shapes you can compute with.",
+    "takeaways": [
+      "A circle is all points at fixed distance from a center.",
+      "An ellipse scales the squared horizontal and vertical distances separately.",
+      "Completing the square reveals hidden centers and radii.",
+      "Elliptical scores are common when features have different natural scales."
+    ],
     "prereqs": [
       "math-11-09"
     ]
@@ -216,19 +2712,282 @@
   B({
     "id": "math-11-11",
     "title": "The parabola and hyperbola",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: the parabola and hyperbola.",
+    "tagline": "Parabolas and hyperbolas show how quadratic equations can bend, open, and split into branches.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The circle and ellipse</i>"
+        "The circle and ellipse",
+        "quadratic equations",
+        "completing the square"
       ],
       "leadsTo": [
-        "the next lesson, <i>Quadratic forms</i>"
+        "Quadratic forms",
+        "Quadric surfaces",
+        "Hyperplanes and decision boundaries"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "focus and directrix",
+        "asymptotes",
+        "polynomial graphs",
+        "coordinate transformations"
       ]
     },
+    "motivation": "<p>You already met conics that close on themselves: circles and ellipses. But not every quadratic curve is closed.</p><p>A <b>parabola</b> opens like a bowl, and a <b>hyperbola</b> opens in two separated branches. These shapes are not just pictures; they encode squared distance, reciprocal tradeoffs, and asymptotic behavior.</p>",
+    "definition": "<p>A vertical parabola with vertex $(h,k)$ has form $(x-h)^2=4p(y-k)$. Its focus is $(h,k+p)$ and directrix is $y=k-p$. The equation follows from equal distance to the focus and directrix; after squaring and simplifying, the linear $y$ term remains.</p><p>An axis-aligned hyperbola centered at $(h,k)$ has form $\\frac{(x-h)^2}{a^2}-\\frac{(y-k)^2}{b^2}=1$ or $\\frac{(y-k)^2}{b^2}-\\frac{(x-h)^2}{a^2}=1$. The opposite signs create two branches, with asymptotes $y-k=\\pm\\frac{b}{a}(x-h)$ in the first form.</p><p><b>Assumptions that matter:</b> the standard forms here are axis-aligned; $p$ can be positive or negative for parabola direction; $a,b$ are positive lengths; and hyperbola asymptotes guide branches but are not usually reached.</p>",
+    "worked": {
+      "problem": "For $\\frac{(x-1)^2}{9}-\\frac{(y+2)^2}{4}=1$, find the center, vertices, and asymptotes.",
+      "skills": [
+        "hyperbola standard form",
+        "vertices",
+        "asymptotes"
+      ],
+      "strategy": "The positive squared term is in $x$ - read a horizontal hyperbola and use the center shifts.",
+      "steps": [
+        {
+          "do": "Read the center",
+          "result": "$(1,-2)$",
+          "why": "the shifted variables are $x-1$ and $y+2$"
+        },
+        {
+          "do": "Read $a^2$",
+          "result": "$a^2=9$",
+          "why": "the positive $x$ term gives the transverse semi-axis"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$a=3$",
+          "why": "semi-axis lengths are positive"
+        },
+        {
+          "do": "Read $b^2$",
+          "result": "$b^2=4$",
+          "why": "the negative $y$ term gives the conjugate semi-axis"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$b=2$",
+          "why": "semi-axis lengths are positive"
+        },
+        {
+          "do": "Find the vertices",
+          "result": "$(-2,-2)$ and $(4,-2)$",
+          "why": "move left and right by $a=3$ from the center"
+        },
+        {
+          "do": "Write the asymptotes",
+          "result": "$y+2=\\pm\\frac23(x-1)$",
+          "why": "horizontal hyperbola uses slopes $\\pm b/a$"
+        }
+      ],
+      "verify": "At the vertex $(4,-2)$, the equation gives $9/9-0=1$, so the reading is consistent.",
+      "answer": "Center $(1,-2)$; vertices $(-2,-2)$ and $(4,-2)$; asymptotes $y+2=\\pm\\frac23(x-1)$.",
+      "connects": "The sign pattern in a quadratic equation tells whether a conic opens in one bowl or two branches."
+    },
+    "practice": [
+      {
+        "problem": "For $(x-2)^2=12(y+1)$, find the vertex, $p$, focus, and directrix.",
+        "steps": [
+          {
+            "do": "Match to standard form",
+            "result": "$(x-h)^2=4p(y-k)$",
+            "why": "this is a vertical parabola"
+          },
+          {
+            "do": "Read the vertex",
+            "result": "$(2,-1)$",
+            "why": "$x-2$ and $y+1=y-(-1)$ identify $(h,k)$"
+          },
+          {
+            "do": "Set $4p=12$",
+            "result": "$p=3$",
+            "why": "the coefficient equals four times focal distance"
+          },
+          {
+            "do": "Find the focus",
+            "result": "$(2,2)$",
+            "why": "add $p=3$ to the $y$-coordinate"
+          },
+          {
+            "do": "Find the directrix",
+            "result": "$y=-4$",
+            "why": "subtract $p=3$ from $k=-1$"
+          }
+        ],
+        "answer": "Vertex $(2,-1)$, $p=3$, focus $(2,2)$, directrix $y=-4$."
+      },
+      {
+        "problem": "Put $y=x^2-6x+5$ in vertex form and identify the vertex.",
+        "steps": [
+          {
+            "do": "Group the square terms",
+            "result": "$y=(x^2-6x)+5$",
+            "why": "prepare to complete the square"
+          },
+          {
+            "do": "Complete the square",
+            "result": "$x^2-6x=(x-3)^2-9$",
+            "why": "add and subtract $9$"
+          },
+          {
+            "do": "Substitute the rewrite",
+            "result": "$y=(x-3)^2-9+5$",
+            "why": "replace the quadratic part"
+          },
+          {
+            "do": "Combine constants",
+            "result": "$y=(x-3)^2-4$",
+            "why": "$-9+5=-4$"
+          },
+          {
+            "do": "Read the vertex",
+            "result": "$(3,-4)$",
+            "why": "vertex form is $y=(x-h)^2+k$"
+          }
+        ],
+        "answer": "$y=(x-3)^2-4$ with vertex $(3,-4)$."
+      },
+      {
+        "problem": "For $\\frac{y^2}{25}-\\frac{x^2}{9}=1$, find the vertices and asymptotes.",
+        "steps": [
+          {
+            "do": "Read the center",
+            "result": "$(0,0)$",
+            "why": "there are no shifts"
+          },
+          {
+            "do": "Read the positive term",
+            "result": "$y^2/25$",
+            "why": "positive $y$ term means vertical hyperbola"
+          },
+          {
+            "do": "Compute $b$",
+            "result": "$b=5$",
+            "why": "the vertical semi-axis squared is $25$"
+          },
+          {
+            "do": "Compute $a$",
+            "result": "$a=3$",
+            "why": "the horizontal denominator is $9$"
+          },
+          {
+            "do": "Find vertices",
+            "result": "$(0,-5)$ and $(0,5)$",
+            "why": "move vertically by $5$"
+          },
+          {
+            "do": "Write asymptotes",
+            "result": "$y=\\pm\\frac53 x$",
+            "why": "vertical form has slopes $\\pm b/a$"
+          }
+        ],
+        "answer": "Vertices $(0,\\pm5)$ and asymptotes $y=\\pm\\frac53x$."
+      },
+      {
+        "problem": "Find the equation of a horizontal parabola with vertex $(1,2)$ and focus $(5,2)$.",
+        "steps": [
+          {
+            "do": "Identify the direction",
+            "result": "opens right",
+            "why": "the focus is to the right of the vertex"
+          },
+          {
+            "do": "Find $p$",
+            "result": "$p=4$",
+            "why": "the focus is 4 units from the vertex"
+          },
+          {
+            "do": "Choose horizontal form",
+            "result": "$(y-k)^2=4p(x-h)$",
+            "why": "horizontal parabolas have squared $y$"
+          },
+          {
+            "do": "Substitute the vertex",
+            "result": "$(y-2)^2=4p(x-1)$",
+            "why": "$h=1$ and $k=2$"
+          },
+          {
+            "do": "Substitute $p=4$",
+            "result": "$(y-2)^2=16(x-1)$",
+            "why": "$4p=16$"
+          }
+        ],
+        "answer": "$(y-2)^2=16(x-1)$."
+      },
+      {
+        "problem": "A loss slice is $L(w)=(w-3)^2+2$. Find its vertex and the parameters where $L(w)=11$.",
+        "steps": [
+          {
+            "do": "Read the vertex form",
+            "result": "$(w-3)^2+2$",
+            "why": "the squared term is already shifted"
+          },
+          {
+            "do": "Read the vertex",
+            "result": "$(3,2)$",
+            "why": "minimum occurs when the square is zero"
+          },
+          {
+            "do": "Set the loss to $11$",
+            "result": "$(w-3)^2+2=11$",
+            "why": "solve the requested level"
+          },
+          {
+            "do": "Subtract $2$",
+            "result": "$(w-3)^2=9$",
+            "why": "isolate the square"
+          },
+          {
+            "do": "Take square roots",
+            "result": "$w-3=\\pm3$",
+            "why": "both sides of the parabola reach the same height"
+          },
+          {
+            "do": "Solve",
+            "result": "$w=0$ or $w=6$",
+            "why": "add $3$"
+          }
+        ],
+        "answer": "Vertex $(3,2)$; $L(w)=11$ at $w=0$ and $w=6$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Parabolic loss curves",
+        "background": "The simplest smooth ML loss around a minimum looks like a parabola.",
+        "numbers": "For $L(w)=(w-4)^2+1$, losses at $w=3,4,5$ are $2,1,2$, symmetric around the minimizer."
+      },
+      {
+        "title": "Support vector hinge geometry",
+        "background": "Margin penalties often flatten on one side and grow linearly, while squared hinge versions grow parabolically inside the margin.",
+        "numbers": "For squared hinge $L=\\max(0,1-m)^2$, margin $m=0.4$ gives $0.6^2=0.36$."
+      },
+      {
+        "title": "Satellite dishes",
+        "background": "Parabolic reflectors send rays parallel to the axis toward a focus, a geometric fact used in antennas.",
+        "numbers": "For $x^2=8y$, $4p=8$, so $p=2$ and the receiver sits at $(0,2)$."
+      },
+      {
+        "title": "Hyperbolic tradeoffs",
+        "background": "Hyperbolas appear when a product is roughly constant, such as latency times throughput in simple models.",
+        "numbers": "If $xy=60$, then $x=10$ gives $y=6$, and $x=20$ gives $y=3$."
+      },
+      {
+        "title": "Asymptotic model behavior",
+        "background": "Hyperbola asymptotes teach the habit of reading long-run behavior without exact equality.",
+        "numbers": "For $y=1/x$, at $x=10$ the value is $0.1$ and at $x=100$ it is $0.01$, approaching the asymptote $y=0$."
+      },
+      {
+        "title": "Feature interaction curves",
+        "background": "A quadratic decision score with opposite signs can create hyperbola-shaped boundaries.",
+        "numbers": "The boundary $x^2-y^2=1$ includes $(\\sqrt2,1)$ because $2-1=1$ and has asymptotes $y=\\pm x$."
+      }
+    ],
+    "applicationsClose": "Parabolas and hyperbolas train your eye to read direction, symmetry, and asymptotes from quadratic equations.",
+    "takeaways": [
+      "A parabola is governed by one squared direction and one linear direction.",
+      "A hyperbola has squared terms with opposite signs and two branches.",
+      "Completing the square reveals vertices, centers, and shifts.",
+      "Parabolic losses and hyperbolic tradeoffs appear often in modeling."
+    ],
     "prereqs": [
       "math-11-10"
     ]
@@ -237,19 +2996,267 @@
   B({
     "id": "math-11-12",
     "title": "Quadratic forms",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: quadratic forms.",
+    "tagline": "A quadratic form is the matrix way to describe squared geometry in many directions at once.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The parabola and hyperbola</i>"
+        "The circle and ellipse",
+        "matrix multiplication",
+        "dot products"
       ],
       "leadsTo": [
-        "the next lesson, <i>Quadric surfaces</i>"
+        "Quadric surfaces",
+        "Projections",
+        "Hyperplanes and decision boundaries"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "symmetric matrices",
+        "eigenvalues",
+        "optimization",
+        "level sets"
       ]
     },
+    "motivation": "<p>You already know expressions like $3x^2+2xy+y^2$. The cross term $2xy$ can feel like a nuisance because it mixes directions.</p><p>A <b>quadratic form</b> writes the whole expression as $\\mathbf{x}^T A\\mathbf{x}$. That compact notation reveals the geometry: the matrix decides which directions are expensive, flat, or unstable.</p>",
+    "definition": "<p>For a vector $\\mathbf{x}\\in\\mathbb{R}^n$ and a square matrix $A$, a <b>quadratic form</b> is $q(\\mathbf{x})=\\mathbf{x}^T A\\mathbf{x}$. Usually we take $A$ symmetric, because only the symmetric part $\\frac12(A+A^T)$ affects the value.</p><p>In two variables, if $A=\\begin{bmatrix}a&c\\\\c&b\\end{bmatrix}$ and $\\mathbf{x}=\\begin{bmatrix}x\\\\y\\end{bmatrix}$, then $\\mathbf{x}^T A\\mathbf{x}=ax^2+2cxy+by^2$. The factor $2c$ appears because the off-diagonal entries contribute $cxy$ twice.</p><p><b>Assumptions that matter:</b> vectors are columns; $A$ must be square; symmetric matrices give real eigenvalue directions; and positive definite means $\\mathbf{x}^T A\\mathbf{x}>0$ for every nonzero $\\mathbf{x}$.</p>",
+    "worked": {
+      "problem": "Compute $q(\\mathbf{x})=\\mathbf{x}^T A\\mathbf{x}$ for $A=\\begin{bmatrix}2&1\\\\1&3\\end{bmatrix}$ and $\\mathbf{x}=\\begin{bmatrix}4\\\\-1\\end{bmatrix}$.",
+      "skills": [
+        "matrix-vector multiplication",
+        "dot products",
+        "quadratic forms"
+      ],
+      "strategy": "Do the matrix-vector product first, then dot with the original vector.",
+      "steps": [
+        {
+          "do": "Multiply $A\\mathbf{x}$",
+          "result": "$\\begin{bmatrix}2&1\\\\1&3\\end{bmatrix}\\begin{bmatrix}4\\\\-1\\end{bmatrix}$",
+          "why": "quadratic form begins with matrix action"
+        },
+        {
+          "do": "Compute the first component",
+          "result": "$2\\cdot4+1\\cdot(-1)=7$",
+          "why": "row one dotted with the vector"
+        },
+        {
+          "do": "Compute the second component",
+          "result": "$1\\cdot4+3\\cdot(-1)=1$",
+          "why": "row two dotted with the vector"
+        },
+        {
+          "do": "Write $A\\mathbf{x}$",
+          "result": "$\\begin{bmatrix}7\\\\1\\end{bmatrix}$",
+          "why": "collect the two components"
+        },
+        {
+          "do": "Dot with $\\mathbf{x}$",
+          "result": "$\\begin{bmatrix}4&-1\\end{bmatrix}\\begin{bmatrix}7\\\\1\\end{bmatrix}$",
+          "why": "left multiplication by $\\mathbf{x}^T$ is a dot product"
+        },
+        {
+          "do": "Compute the scalar",
+          "result": "$4\\cdot7+(-1)\\cdot1=27$",
+          "why": "$28-1=27$"
+        }
+      ],
+      "verify": "Expanding gives $2x^2+2xy+3y^2$; at $(4,-1)$ this is $32-8+3=27$.",
+      "answer": "$q(\\mathbf{x})=27$.",
+      "connects": "A quadratic form measures a vector after the matrix has stretched and mixed its directions."
+    },
+    "practice": [
+      {
+        "problem": "Write $5x^2-6xy+2y^2$ as $\\mathbf{x}^T A\\mathbf{x}$ with symmetric $A$.",
+        "steps": [
+          {
+            "do": "Match the $x^2$ coefficient",
+            "result": "$a=5$",
+            "why": "the upper-left entry multiplies $x^2$"
+          },
+          {
+            "do": "Match the $y^2$ coefficient",
+            "result": "$b=2$",
+            "why": "the lower-right entry multiplies $y^2$"
+          },
+          {
+            "do": "Match the cross term",
+            "result": "$2c=-6$",
+            "why": "symmetric off-diagonal entries contribute twice"
+          },
+          {
+            "do": "Solve for $c$",
+            "result": "$c=-3$",
+            "why": "divide by $2$"
+          },
+          {
+            "do": "Write the matrix",
+            "result": "$A=\\begin{bmatrix}5&-3\\\\-3&2\\end{bmatrix}$",
+            "why": "place $c$ in both off-diagonal entries"
+          }
+        ],
+        "answer": "$5x^2-6xy+2y^2=\\mathbf{x}^T\\begin{bmatrix}5&-3\\\\-3&2\\end{bmatrix}\\mathbf{x}$."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}4&0\\\\0&9\\end{bmatrix}$ and $\\mathbf{x}=\\begin{bmatrix}2\\\\-3\\end{bmatrix}$, compute $\\mathbf{x}^T A\\mathbf{x}$.",
+        "steps": [
+          {
+            "do": "Multiply $A\\mathbf{x}$",
+            "result": "$\\begin{bmatrix}8\\\\-27\\end{bmatrix}$",
+            "why": "diagonal entries scale coordinates"
+          },
+          {
+            "do": "Write the dot product",
+            "result": "$\\begin{bmatrix}2&-3\\end{bmatrix}\\begin{bmatrix}8\\\\-27\\end{bmatrix}$",
+            "why": "finish with $\\mathbf{x}^T$"
+          },
+          {
+            "do": "Multiply first terms",
+            "result": "$2\\cdot8=16$",
+            "why": "first coordinate contribution"
+          },
+          {
+            "do": "Multiply second terms",
+            "result": "$(-3)(-27)=81$",
+            "why": "second coordinate contribution"
+          },
+          {
+            "do": "Add",
+            "result": "$97$",
+            "why": "$16+81=97$"
+          }
+        ],
+        "answer": "$97$."
+      },
+      {
+        "problem": "Classify $q(x,y)=x^2+4xy+y^2$ by testing values at $(1,0)$ and $(1,-1)$.",
+        "steps": [
+          {
+            "do": "Evaluate at $(1,0)$",
+            "result": "$1^2+4\\cdot1\\cdot0+0^2=1$",
+            "why": "one direction gives a positive value"
+          },
+          {
+            "do": "Evaluate at $(1,-1)$",
+            "result": "$1+4(1)(-1)+1$",
+            "why": "test a mixed direction"
+          },
+          {
+            "do": "Simplify the second value",
+            "result": "$-2$",
+            "why": "$1-4+1=-2$"
+          },
+          {
+            "do": "Compare signs",
+            "result": "both positive and negative values occur",
+            "why": "the form changes sign"
+          },
+          {
+            "do": "Classify",
+            "result": "indefinite",
+            "why": "indefinite forms take both signs"
+          }
+        ],
+        "answer": "The quadratic form is indefinite."
+      },
+      {
+        "problem": "For diagonal $A=\\begin{bmatrix}2&0\\\\0&8\\end{bmatrix}$, describe the level set $\\mathbf{x}^T A\\mathbf{x}=32$.",
+        "steps": [
+          {
+            "do": "Write the equation",
+            "result": "$2x^2+8y^2=32$",
+            "why": "diagonal form has no cross term"
+          },
+          {
+            "do": "Divide by $32$",
+            "result": "$\\frac{x^2}{16}+\\frac{y^2}{4}=1$",
+            "why": "standard ellipse form has right side $1$"
+          },
+          {
+            "do": "Read horizontal semi-axis",
+            "result": "$4$",
+            "why": "$16=4^2$"
+          },
+          {
+            "do": "Read vertical semi-axis",
+            "result": "$2$",
+            "why": "$4=2^2$"
+          },
+          {
+            "do": "Name the shape",
+            "result": "ellipse",
+            "why": "both squared coefficients are positive"
+          }
+        ],
+        "answer": "An ellipse centered at the origin with semi-axes $4$ and $2$."
+      },
+      {
+        "problem": "A ridge penalty is $q(w_1,w_2)=0.5w_1^2+2w_2^2$. Compare penalties for $(2,1)$ and $(1,2)$.",
+        "steps": [
+          {
+            "do": "Evaluate at $(2,1)$",
+            "result": "$0.5\\cdot2^2+2\\cdot1^2$",
+            "why": "substitute the first weight vector"
+          },
+          {
+            "do": "Simplify first penalty",
+            "result": "$4$",
+            "why": "$0.5\\cdot4+2=4$"
+          },
+          {
+            "do": "Evaluate at $(1,2)$",
+            "result": "$0.5\\cdot1^2+2\\cdot2^2$",
+            "why": "substitute the second vector"
+          },
+          {
+            "do": "Simplify second penalty",
+            "result": "$8.5$",
+            "why": "$0.5+8=8.5$"
+          },
+          {
+            "do": "Compare",
+            "result": "$(1,2)$ is penalized more",
+            "why": "the $w_2$ direction has larger curvature"
+          }
+        ],
+        "answer": "Penalties are $4$ and $8.5$; $(1,2)$ is penalized more."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Mahalanobis distance",
+        "background": "Statistics uses quadratic forms to measure distance after accounting for scale and correlation.",
+        "numbers": "With diagonal inverse covariance $\\operatorname{diag}(1/4,1)$, offset $(4,2)$ has squared distance $16/4+4=8$."
+      },
+      {
+        "title": "Ridge regularization",
+        "background": "L2 penalties are quadratic forms that discourage large weights.",
+        "numbers": "For $\\lambda=0.1$ and weights $(3,4)$, penalty is $0.1(3^2+4^2)=2.5$."
+      },
+      {
+        "title": "Newton optimization",
+        "background": "A Hessian matrix gives the quadratic model of a loss near a point.",
+        "numbers": "If $H=\\begin{bmatrix}4&0\\\\0&2\\end{bmatrix}$ and step $(1,-2)$, curvature contribution is $4+8=12$."
+      },
+      {
+        "title": "Principal component directions",
+        "background": "Eigenvectors of a covariance matrix point along axes of elliptical variation.",
+        "numbers": "Variances $9$ and $1$ mean a one-standard-deviation ellipse has semi-axes $3$ and $1$."
+      },
+      {
+        "title": "Energy in signals",
+        "background": "Engineering energy often appears as a weighted sum of squared samples.",
+        "numbers": "Weights $[2,1,3]$ and samples $[1,-2,1]$ give energy $2\\cdot1+1\\cdot4+3\\cdot1=9$."
+      },
+      {
+        "title": "Quadratic decision scores",
+        "background": "Some classifiers use squared features and interactions rather than only linear scores.",
+        "numbers": "Score $s=x^2-y^2$ assigns $(3,1)$ value $8$ and $(1,3)$ value $-8$, separating by sign."
+      }
+    ],
+    "applicationsClose": "Quadratic forms are the compact matrix language behind ellipses, penalties, curvature, and second-order models.",
+    "takeaways": [
+      "$\\mathbf{x}^T A\\mathbf{x}$ is a scalar built from a vector, a square matrix, and the same vector again.",
+      "For symmetric $2\\times2$ matrices, off-diagonal entries create the cross term twice.",
+      "Positive definite forms behave like squared lengths; indefinite forms take both signs.",
+      "Quadratic forms describe curvature, distance, energy, and regularization."
+    ],
     "prereqs": [
       "math-11-11"
     ]
@@ -258,19 +3265,272 @@
   B({
     "id": "math-11-13",
     "title": "Quadric surfaces",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: quadric surfaces.",
+    "tagline": "Quadric surfaces are the three-dimensional cousins of conics, shaped by squared coordinates.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Quadratic forms</i>"
+        "Quadratic forms",
+        "The circle and ellipse",
+        "The parabola and hyperbola"
       ],
       "leadsTo": [
-        "the next lesson, <i>Projections</i>"
+        "Projections",
+        "Rotations, scaling, and translation",
+        "Homogeneous coordinates"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "level sets",
+        "eigenvalues",
+        "3-D coordinates",
+        "optimization geometry"
       ]
     },
+    "motivation": "<p>You can recognize an ellipse in the plane. In three dimensions, the same squared-coordinate idea becomes an ellipsoid, a bowl, a saddle, or a cone.</p><p>These <b>quadric surfaces</b> help you visualize loss landscapes, constraints, and geometric models. The equation is algebra; the surface is the shape your intuition can hold.</p>",
+    "definition": "<p>A <b>quadric surface</b> in $\\mathbb{R}^3$ is the zero set or level set of a degree-two equation in $x,y,z$. Examples include ellipsoids $\\frac{x^2}{a^2}+\\frac{y^2}{b^2}+\\frac{z^2}{c^2}=1$, elliptic paraboloids $z=\\frac{x^2}{a^2}+\\frac{y^2}{b^2}$, and hyperboloids with one sign different.</p><p>The signs tell the story. All positive squared terms with a positive level give a closed ellipsoid. Two positive terms equaling a linear coordinate give a bowl. Mixed signs create saddles or separated sheets. Cross-sections by planes reduce the surface to conics you already know.</p><p><b>Assumptions that matter:</b> the simple forms here are centered and axis-aligned; translations replace variables by shifted variables; rotations can remove cross terms when the quadratic matrix is symmetric; and real surfaces require the equation to allow real coordinate values.</p>",
+    "worked": {
+      "problem": "Classify $\\frac{x^2}{4}+\\frac{y^2}{9}+\\frac{z^2}{16}=1$ and find its intercepts with the coordinate axes.",
+      "skills": [
+        "standard forms",
+        "axis intercepts",
+        "3-D geometry"
+      ],
+      "strategy": "All three squared terms are positive and equal $1$ - read an ellipsoid and set two variables to zero for intercepts.",
+      "steps": [
+        {
+          "do": "Read the sign pattern",
+          "result": "all squared terms are positive",
+          "why": "positive closed level sets suggest an ellipsoid"
+        },
+        {
+          "do": "Read the $x$ denominator",
+          "result": "$4=2^2$",
+          "why": "the $x$ semi-axis is $2$"
+        },
+        {
+          "do": "Read the $y$ denominator",
+          "result": "$9=3^2$",
+          "why": "the $y$ semi-axis is $3$"
+        },
+        {
+          "do": "Read the $z$ denominator",
+          "result": "$16=4^2$",
+          "why": "the $z$ semi-axis is $4$"
+        },
+        {
+          "do": "Set $y=z=0$",
+          "result": "$x=\\pm2$",
+          "why": "find $x$-axis intercepts"
+        },
+        {
+          "do": "Set $x=z=0$",
+          "result": "$y=\\pm3$",
+          "why": "find $y$-axis intercepts"
+        },
+        {
+          "do": "Set $x=y=0$",
+          "result": "$z=\\pm4$",
+          "why": "find $z$-axis intercepts"
+        }
+      ],
+      "verify": "The point $(0,0,4)$ gives $16/16=1$, and any coordinate beyond its semi-axis would exceed the level if the others are zero.",
+      "answer": "An ellipsoid with intercepts $(\\pm2,0,0)$, $(0,\\pm3,0)$, and $(0,0,\\pm4)$.",
+      "connects": "A quadric surface is a conic idea lifted into one more coordinate."
+    },
+    "practice": [
+      {
+        "problem": "Classify $z=x^2+4y^2$ and describe the cross-section at $z=4$.",
+        "steps": [
+          {
+            "do": "Read the equation",
+            "result": "$z$ equals a sum of squares",
+            "why": "a linear coordinate equals positive quadratic terms"
+          },
+          {
+            "do": "Classify the surface",
+            "result": "elliptic paraboloid",
+            "why": "it opens in the positive $z$ direction"
+          },
+          {
+            "do": "Set $z=4$",
+            "result": "$x^2+4y^2=4$",
+            "why": "horizontal cross-section"
+          },
+          {
+            "do": "Divide by $4$",
+            "result": "$\\frac{x^2}{4}+y^2=1$",
+            "why": "standard ellipse form"
+          },
+          {
+            "do": "Read semi-axes",
+            "result": "$2$ in $x$ and $1$ in $y$",
+            "why": "denominators are $4$ and $1$"
+          }
+        ],
+        "answer": "An elliptic paraboloid; at $z=4$ the cross-section is an ellipse with semi-axes $2$ and $1$."
+      },
+      {
+        "problem": "Classify $x^2+y^2-z^2=1$ and find the cross-section at $z=0$.",
+        "steps": [
+          {
+            "do": "Read the signs",
+            "result": "two positive terms and one negative term",
+            "why": "mixed signs create a hyperboloid"
+          },
+          {
+            "do": "Read the right side",
+            "result": "$1$",
+            "why": "positive level with two positive terms"
+          },
+          {
+            "do": "Classify",
+            "result": "hyperboloid of one sheet",
+            "why": "the positive pair forms connected circular sections"
+          },
+          {
+            "do": "Set $z=0$",
+            "result": "$x^2+y^2=1$",
+            "why": "take the central cross-section"
+          },
+          {
+            "do": "Name the cross-section",
+            "result": "circle of radius $1$",
+            "why": "standard circle equation"
+          }
+        ],
+        "answer": "A hyperboloid of one sheet; at $z=0$ it cuts a unit circle."
+      },
+      {
+        "problem": "Classify $z=x^2-y^2$ and compute $z$ at $(2,1)$ and $(1,2)$.",
+        "steps": [
+          {
+            "do": "Read the sign pattern",
+            "result": "one positive square and one negative square",
+            "why": "opposite curvature directions signal a saddle"
+          },
+          {
+            "do": "Classify the surface",
+            "result": "hyperbolic paraboloid",
+            "why": "a linear coordinate equals an indefinite quadratic"
+          },
+          {
+            "do": "Evaluate at $(2,1)$",
+            "result": "$z=4-1=3$",
+            "why": "substitute into the equation"
+          },
+          {
+            "do": "Evaluate at $(1,2)$",
+            "result": "$z=1-4=-3$",
+            "why": "the other direction bends downward"
+          },
+          {
+            "do": "Compare",
+            "result": "values have opposite signs",
+            "why": "the saddle rises one way and falls the other"
+          }
+        ],
+        "answer": "A hyperbolic paraboloid; $z=3$ at $(2,1)$ and $z=-3$ at $(1,2)$."
+      },
+      {
+        "problem": "Find the semi-axis lengths of $\\frac{(x-1)^2}{25}+\\frac{(y+2)^2}{9}+\\frac{(z-3)^2}{4}=1$.",
+        "steps": [
+          {
+            "do": "Read the center",
+            "result": "$(1,-2,3)$",
+            "why": "use the shifts in each coordinate"
+          },
+          {
+            "do": "Read the $x$ denominator",
+            "result": "$25$",
+            "why": "it equals the squared $x$ semi-axis"
+          },
+          {
+            "do": "Take the square root",
+            "result": "$5$",
+            "why": "$5^2=25$"
+          },
+          {
+            "do": "Read the $y$ semi-axis",
+            "result": "$3$",
+            "why": "$9=3^2$"
+          },
+          {
+            "do": "Read the $z$ semi-axis",
+            "result": "$2$",
+            "why": "$4=2^2$"
+          }
+        ],
+        "answer": "Center $(1,-2,3)$ with semi-axis lengths $5$, $3$, and $2$."
+      },
+      {
+        "problem": "A local loss model is $L(u,v)=10+2u^2+8v^2$. Describe the level set $L=18$.",
+        "steps": [
+          {
+            "do": "Set the level",
+            "result": "$10+2u^2+8v^2=18$",
+            "why": "use the requested loss value"
+          },
+          {
+            "do": "Subtract $10$",
+            "result": "$2u^2+8v^2=8$",
+            "why": "isolate the quadratic terms"
+          },
+          {
+            "do": "Divide by $8$",
+            "result": "$\\frac{u^2}{4}+v^2=1$",
+            "why": "put the level curve in ellipse form"
+          },
+          {
+            "do": "Read the $u$ semi-axis",
+            "result": "$2$",
+            "why": "$4=2^2$"
+          },
+          {
+            "do": "Read the $v$ semi-axis",
+            "result": "$1$",
+            "why": "denominator $1$ gives length $1$"
+          }
+        ],
+        "answer": "The $L=18$ contour is an ellipse centered at $(0,0)$ with semi-axes $2$ and $1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Loss landscapes",
+        "background": "Near a smooth minimum, a multivariable loss is often approximated by a quadratic bowl.",
+        "numbers": "For $L=5+3u^2+12v^2$, offset $(1,0.5)$ gives $5+3+3=11$."
+      },
+      {
+        "title": "Confidence ellipsoids",
+        "background": "Multivariate estimates often come with ellipsoid-shaped uncertainty regions.",
+        "numbers": "The ellipsoid $x^2/4+y^2/9+z^2=1$ allows $x$ offsets up to $2$, $y$ up to $3$, and $z$ up to $1$."
+      },
+      {
+        "title": "3-D object modeling",
+        "background": "Graphics engines use quadrics for simple shapes because equations are compact and intersections are calculable.",
+        "numbers": "A unit sphere satisfies $x^2+y^2+z^2=1$; point $(0.6,0.8,0)$ lies on it because $0.36+0.64=1$."
+      },
+      {
+        "title": "Saddle points in optimization",
+        "background": "Deep learning losses can have saddle-like local geometry, not just minima.",
+        "numbers": "For $L=u^2-v^2$, point $(0.1,0)$ raises loss by $0.01$, while $(0,0.1)$ lowers it by $0.01$."
+      },
+      {
+        "title": "Physics energy surfaces",
+        "background": "Potential energy near equilibrium is often quadratic in displacement.",
+        "numbers": "With energy $E=\\frac12(4x^2+y^2+9z^2)$, displacement $(1,2,0)$ gives $E=\\frac12(4+4)=4$."
+      },
+      {
+        "title": "Clustering with Gaussian shapes",
+        "background": "A Gaussian density has ellipsoidal equal-density surfaces determined by covariance.",
+        "numbers": "If variances are $4,1,9$, the one-standard-deviation ellipsoid has semi-axes $2,1,3$."
+      }
+    ],
+    "applicationsClose": "Quadric surfaces make second-order geometry visible: bowls, saddles, ellipsoids, and hyperbolic shapes all come from signs and scales.",
+    "takeaways": [
+      "Quadric surfaces are degree-two equations in three variables.",
+      "All-positive squared terms produce ellipsoids or bowls, depending on the level form.",
+      "Mixed signs create hyperboloids and saddles.",
+      "Cross-sections reduce 3-D quadrics back to familiar conics."
+    ],
     "prereqs": [
       "math-11-12"
     ]
@@ -279,19 +3539,267 @@
   B({
     "id": "math-11-14",
     "title": "Projections",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: projections.",
+    "tagline": "Projection finds the shadow of one vector on another direction or subspace.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Quadric surfaces</i>"
+        "dot products",
+        "vectors",
+        "least squares"
       ],
       "leadsTo": [
-        "the next lesson, <i>Reflections</i>"
+        "Reflections",
+        "Rotations, scaling, and translation",
+        "Hyperplanes and decision boundaries"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "orthogonality",
+        "subspaces",
+        "normal equations",
+        "distance"
       ]
     },
+    "motivation": "<p>You already know what a shadow does: it keeps the part of an object aligned with a light direction and drops the perpendicular part.</p><p>A <b>projection</b> is the same idea for vectors. It answers: how much of this vector lies along that direction? This becomes one of the quiet workhorses of regression, compression, and geometric distance.</p>",
+    "definition": "<p>The projection of $\\mathbf{x}$ onto a nonzero vector $\\mathbf{u}$ is $\\operatorname{proj}_{\\mathbf{u}}(\\mathbf{x})=\\frac{\\mathbf{x}^T\\mathbf{u}}{\\mathbf{u}^T\\mathbf{u}}\\mathbf{u}$. The scalar coefficient tells how many copies of $\\mathbf{u}$ best match $\\mathbf{x}$ along that line.</p><p>The residual $\\mathbf{x}-\\operatorname{proj}_{\\mathbf{u}}(\\mathbf{x})$ is perpendicular to $\\mathbf{u}$. That follows because $\\mathbf{u}^T(\\mathbf{x}-\\frac{\\mathbf{x}^T\\mathbf{u}}{\\mathbf{u}^T\\mathbf{u}}\\mathbf{u})=\\mathbf{u}^T\\mathbf{x}-\\mathbf{x}^T\\mathbf{u}=0$.</p><p><b>Assumptions that matter:</b> the direction vector must be nonzero; dot products use the usual Euclidean geometry unless stated otherwise; and projection onto a subspace uses the closest point whose residual is orthogonal to the whole subspace.</p>",
+    "worked": {
+      "problem": "Project $\\mathbf{x}=\\begin{bmatrix}3\\\\4\\end{bmatrix}$ onto $\\mathbf{u}=\\begin{bmatrix}1\\\\2\\end{bmatrix}$.",
+      "skills": [
+        "dot products",
+        "projection formula",
+        "orthogonal residuals"
+      ],
+      "strategy": "Compute the projection coefficient first, then multiply the direction vector.",
+      "steps": [
+        {
+          "do": "Compute $\\mathbf{x}^T\\mathbf{u}$",
+          "result": "$3\\cdot1+4\\cdot2=11$",
+          "why": "the numerator measures aligned amount"
+        },
+        {
+          "do": "Compute $\\mathbf{u}^T\\mathbf{u}$",
+          "result": "$1^2+2^2=5$",
+          "why": "the denominator measures direction length squared"
+        },
+        {
+          "do": "Form the coefficient",
+          "result": "$\\frac{11}{5}$",
+          "why": "divide aligned amount by direction length squared"
+        },
+        {
+          "do": "Multiply by $\\mathbf{u}$",
+          "result": "$\\frac{11}{5}\\begin{bmatrix}1\\\\2\\end{bmatrix}$",
+          "why": "the projection must lie on the line spanned by $\\mathbf{u}$"
+        },
+        {
+          "do": "Write the projected vector",
+          "result": "$\\begin{bmatrix}11/5\\\\22/5\\end{bmatrix}$",
+          "why": "scale each component"
+        },
+        {
+          "do": "Compute the residual",
+          "result": "$\\begin{bmatrix}4/5\\\\-2/5\\end{bmatrix}$",
+          "why": "$\\mathbf{x}$ minus its projection"
+        }
+      ],
+      "verify": "The residual is orthogonal to $\\mathbf{u}$ because $(4/5)\\cdot1+(-2/5)\\cdot2=0$.",
+      "answer": "$\\operatorname{proj}_{\\mathbf{u}}(\\mathbf{x})=\\begin{bmatrix}11/5\\\\22/5\\end{bmatrix}$.",
+      "connects": "Projection splits a vector into along-direction and perpendicular pieces."
+    },
+    "practice": [
+      {
+        "problem": "Project $\\mathbf{x}=\\begin{bmatrix}6\\\\2\\end{bmatrix}$ onto $\\mathbf{u}=\\begin{bmatrix}3\\\\0\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Compute the numerator",
+            "result": "$\\mathbf{x}^T\\mathbf{u}=18$",
+            "why": "$6\\cdot3+2\\cdot0=18$"
+          },
+          {
+            "do": "Compute the denominator",
+            "result": "$\\mathbf{u}^T\\mathbf{u}=9$",
+            "why": "$3^2+0^2=9$"
+          },
+          {
+            "do": "Divide",
+            "result": "$18/9=2$",
+            "why": "projection coefficient"
+          },
+          {
+            "do": "Scale $\\mathbf{u}$",
+            "result": "$2\\begin{bmatrix}3\\\\0\\end{bmatrix}=\\begin{bmatrix}6\\\\0\\end{bmatrix}$",
+            "why": "the result lies on the $x$-axis"
+          },
+          {
+            "do": "Find the residual",
+            "result": "$\\begin{bmatrix}0\\\\2\\end{bmatrix}$",
+            "why": "subtract the projection from $\\mathbf{x}$"
+          }
+        ],
+        "answer": "Projection $\\begin{bmatrix}6\\\\0\\end{bmatrix}$; residual $\\begin{bmatrix}0\\\\2\\end{bmatrix}$."
+      },
+      {
+        "problem": "Find the scalar projection of $\\mathbf{x}=(2,5)$ onto unit vector $\\mathbf{e}=(0.6,0.8)$.",
+        "steps": [
+          {
+            "do": "Check unit length",
+            "result": "$0.6^2+0.8^2=1$",
+            "why": "unit vectors simplify projection"
+          },
+          {
+            "do": "Dot the vectors",
+            "result": "$2\\cdot0.6+5\\cdot0.8$",
+            "why": "scalar projection onto a unit vector is the dot product"
+          },
+          {
+            "do": "Multiply terms",
+            "result": "$1.2+4.0$",
+            "why": "compute each component contribution"
+          },
+          {
+            "do": "Add",
+            "result": "$5.2$",
+            "why": "total signed length along the unit direction"
+          },
+          {
+            "do": "Write vector projection",
+            "result": "$5.2(0.6,0.8)=(3.12,4.16)$",
+            "why": "scalar times unit direction gives the shadow vector"
+          }
+        ],
+        "answer": "Scalar projection $5.2$; vector projection $(3.12,4.16)$."
+      },
+      {
+        "problem": "Project $\\mathbf{x}=\\begin{bmatrix}1\\\\2\\\\3\\end{bmatrix}$ onto the $xy$-plane.",
+        "steps": [
+          {
+            "do": "Identify the target subspace",
+            "result": "vectors of the form $(a,b,0)$",
+            "why": "the $xy$-plane has zero $z$ coordinate"
+          },
+          {
+            "do": "Keep the $x$ coordinate",
+            "result": "$1$",
+            "why": "it already lies in the plane"
+          },
+          {
+            "do": "Keep the $y$ coordinate",
+            "result": "$2$",
+            "why": "it already lies in the plane"
+          },
+          {
+            "do": "Drop the $z$ coordinate",
+            "result": "$0$",
+            "why": "the perpendicular direction is the $z$-axis"
+          },
+          {
+            "do": "Write the projection",
+            "result": "$\\begin{bmatrix}1\\\\2\\\\0\\end{bmatrix}$",
+            "why": "closest point in the plane"
+          }
+        ],
+        "answer": "$\\begin{bmatrix}1\\\\2\\\\0\\end{bmatrix}$."
+      },
+      {
+        "problem": "Find the distance from $\\mathbf{x}=\\begin{bmatrix}3\\\\4\\end{bmatrix}$ to the line spanned by $\\mathbf{u}=\\begin{bmatrix}1\\\\2\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Use the known projection",
+            "result": "$\\begin{bmatrix}11/5\\\\22/5\\end{bmatrix}$",
+            "why": "from the worked example"
+          },
+          {
+            "do": "Compute the residual",
+            "result": "$\\begin{bmatrix}3\\\\4\\end{bmatrix}-\\begin{bmatrix}11/5\\\\22/5\\end{bmatrix}$",
+            "why": "distance to a line is residual length"
+          },
+          {
+            "do": "Simplify residual",
+            "result": "$\\begin{bmatrix}4/5\\\\-2/5\\end{bmatrix}$",
+            "why": "subtract componentwise"
+          },
+          {
+            "do": "Compute squared length",
+            "result": "$(4/5)^2+(-2/5)^2=20/25$",
+            "why": "use the Euclidean norm"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\sqrt{20/25}=\\frac{2}{\\sqrt5}$",
+            "why": "distance is the norm"
+          }
+        ],
+        "answer": "Distance $\\frac{2}{\\sqrt5}\\approx0.894$."
+      },
+      {
+        "problem": "A one-feature least-squares model predicts $\\hat{\\mathbf{y}}=c\\mathbf{u}$ with $\\mathbf{u}=(1,2,2)$ and $\\mathbf{y}=(2,1,5)$. Find $c$.",
+        "steps": [
+          {
+            "do": "Compute $\\mathbf{y}^T\\mathbf{u}$",
+            "result": "$2\\cdot1+1\\cdot2+5\\cdot2=14$",
+            "why": "numerator for projection coefficient"
+          },
+          {
+            "do": "Compute $\\mathbf{u}^T\\mathbf{u}$",
+            "result": "$1^2+2^2+2^2=9$",
+            "why": "denominator for projection coefficient"
+          },
+          {
+            "do": "Divide",
+            "result": "$c=14/9$",
+            "why": "least-squares coefficient for one basis vector"
+          },
+          {
+            "do": "Form the prediction",
+            "result": "$\\hat{\\mathbf{y}}=(14/9,28/9,28/9)$",
+            "why": "scale the feature vector"
+          },
+          {
+            "do": "Interpret",
+            "result": "residual is orthogonal to $\\mathbf{u}$",
+            "why": "projection gives the closest vector on the line"
+          }
+        ],
+        "answer": "$c=14/9$, so $\\hat{\\mathbf{y}}=(14/9,28/9,28/9)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Least-squares regression",
+        "background": "Linear regression projects the target vector onto the column space of the feature matrix.",
+        "numbers": "For one feature $u=(1,1,2)$ and target $y=(2,4,4)$, coefficient is $(10)/(6)=5/3$."
+      },
+      {
+        "title": "Dimensionality reduction",
+        "background": "PCA keeps projections onto directions of largest variance.",
+        "numbers": "Projecting $(3,4)$ onto unit direction $(0.6,0.8)$ gives scalar $5$, so all information lies along that direction."
+      },
+      {
+        "title": "Distance to a model subspace",
+        "background": "Residual norms measure how much data is not explained by a chosen subspace.",
+        "numbers": "If residual is $(0,3,4)$, unexplained distance is $5$."
+      },
+      {
+        "title": "Computer graphics shadows",
+        "background": "Flat shadows are projections of 3-D points onto a plane.",
+        "numbers": "Projecting $(2,5,7)$ onto ground plane $z=0$ gives $(2,5,0)$."
+      },
+      {
+        "title": "Signal reconstruction",
+        "background": "Fourier coefficients are projections onto sine and cosine basis functions.",
+        "numbers": "If a signal vector has dot product $12$ with a unit basis vector, its coefficient on that basis is $12$."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "A user's interest in a topic direction can be measured by projection onto that topic vector.",
+        "numbers": "User vector $(2,1)$ projected onto unit topic $(0.8,0.6)$ has score $2.2$."
+      }
+    ],
+    "applicationsClose": "Projection is the language of shadows, best approximations, residuals, and compressed coordinates.",
+    "takeaways": [
+      "Projection keeps the component of a vector along a direction or subspace.",
+      "$\\operatorname{proj}_{\\mathbf{u}}(\\mathbf{x})=\\frac{\\mathbf{x}^T\\mathbf{u}}{\\mathbf{u}^T\\mathbf{u}}\\mathbf{u}$ for nonzero $\\mathbf{u}$.",
+      "The residual after projection is orthogonal to the target direction.",
+      "Least squares and PCA are projection ideas in practical form."
+    ],
     "prereqs": [
       "math-11-13"
     ]
@@ -300,19 +3808,262 @@
   B({
     "id": "math-11-15",
     "title": "Reflections",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: reflections.",
+    "tagline": "A reflection flips space across a mirror while preserving lengths and angles.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Projections</i>"
+        "Projections",
+        "vectors",
+        "dot products"
       ],
       "leadsTo": [
-        "the next lesson, <i>Rotations, scaling, and translation</i>"
+        "Rotations, scaling, and translation",
+        "Homogeneous coordinates",
+        "Hyperplanes and decision boundaries"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "orthogonal matrices",
+        "symmetry",
+        "normal vectors",
+        "coordinate transformations"
       ]
     },
+    "motivation": "<p>You know a mirror image when you see one: distances stay the same, but one perpendicular direction changes sign.</p><p>In linear algebra, a <b>reflection</b> makes that mirror exact. It keeps the component lying in the mirror and reverses the component perpendicular to it. Projection gives us the clean formula.</p>",
+    "definition": "<p>Reflection across a line through the origin with unit direction $\\mathbf{u}$ sends $\\mathbf{x}$ to $2(\\mathbf{u}^T\\mathbf{x})\\mathbf{u}-\\mathbf{x}$. It doubles the projected component along the mirror and subtracts the original vector, flipping the perpendicular component.</p><p>Reflection across a hyperplane through the origin with unit normal $\\mathbf{n}$ sends $\\mathbf{x}$ to $\\mathbf{x}-2(\\mathbf{n}^T\\mathbf{x})\\mathbf{n}$. The normal component changes sign; every vector in the mirror plane stays fixed.</p><p><b>Assumptions that matter:</b> the simple formulas use unit vectors; if the mirror does not pass through the origin, translate to the mirror first; and reflections preserve lengths but reverse orientation.</p>",
+    "worked": {
+      "problem": "Reflect $\\mathbf{x}=\\begin{bmatrix}3\\\\1\\end{bmatrix}$ across the line $y=x$.",
+      "skills": [
+        "unit directions",
+        "projection",
+        "reflection formula"
+      ],
+      "strategy": "Use the unit direction of the mirror line, project onto it, then flip the perpendicular part.",
+      "steps": [
+        {
+          "do": "Choose a unit direction",
+          "result": "$\\mathbf{u}=\\frac{1}{\\sqrt2}\\begin{bmatrix}1\\\\1\\end{bmatrix}$",
+          "why": "the line $y=x$ points equally in $x$ and $y$"
+        },
+        {
+          "do": "Compute $\\mathbf{u}^T\\mathbf{x}$",
+          "result": "$\\frac{1}{\\sqrt2}(3+1)=\\frac{4}{\\sqrt2}$",
+          "why": "find the scalar projection on the mirror"
+        },
+        {
+          "do": "Compute the projection",
+          "result": "$(\\mathbf{u}^T\\mathbf{x})\\mathbf{u}=\\begin{bmatrix}2\\\\2\\end{bmatrix}$",
+          "why": "$4/\\sqrt2$ times $1/\\sqrt2$ equals $2$"
+        },
+        {
+          "do": "Double the projection",
+          "result": "$2\\operatorname{proj}=\\begin{bmatrix}4\\\\4\\end{bmatrix}$",
+          "why": "reflection across a line uses $2\\operatorname{proj}-\\mathbf{x}$"
+        },
+        {
+          "do": "Subtract $\\mathbf{x}$",
+          "result": "$\\begin{bmatrix}4\\\\4\\end{bmatrix}-\\begin{bmatrix}3\\\\1\\end{bmatrix}=\\begin{bmatrix}1\\\\3\\end{bmatrix}$",
+          "why": "flip the perpendicular component"
+        }
+      ],
+      "verify": "The line $y=x$ swaps coordinates, so $(3,1)$ becoming $(1,3)$ is exactly right.",
+      "answer": "The reflection is $\\begin{bmatrix}1\\\\3\\end{bmatrix}$.",
+      "connects": "Reflection is projection plus a sign change in the perpendicular direction."
+    },
+    "practice": [
+      {
+        "problem": "Reflect $(4,-2)$ across the $x$-axis.",
+        "steps": [
+          {
+            "do": "Identify the mirror",
+            "result": "$x$-axis",
+            "why": "points on the mirror have $y=0$"
+          },
+          {
+            "do": "Keep the parallel coordinate",
+            "result": "$x=4$",
+            "why": "motion along the mirror is unchanged"
+          },
+          {
+            "do": "Reverse the perpendicular coordinate",
+            "result": "$y=2$",
+            "why": "the $y$ direction is perpendicular to the $x$-axis"
+          },
+          {
+            "do": "Write the reflected point",
+            "result": "$(4,2)$",
+            "why": "combine unchanged $x$ with flipped $y$"
+          },
+          {
+            "do": "Check distance to mirror",
+            "result": "$2$ on both sides",
+            "why": "reflection preserves perpendicular distance"
+          }
+        ],
+        "answer": "$(4,2)$."
+      },
+      {
+        "problem": "Reflect $(5,1)$ across the $y$-axis.",
+        "steps": [
+          {
+            "do": "Identify the mirror",
+            "result": "$y$-axis",
+            "why": "points on the mirror have $x=0$"
+          },
+          {
+            "do": "Reverse the perpendicular coordinate",
+            "result": "$x=-5$",
+            "why": "the $x$ direction is perpendicular to the $y$-axis"
+          },
+          {
+            "do": "Keep the parallel coordinate",
+            "result": "$y=1$",
+            "why": "the coordinate along the mirror stays fixed"
+          },
+          {
+            "do": "Write the reflected point",
+            "result": "$(-5,1)$",
+            "why": "combine flipped $x$ with unchanged $y$"
+          },
+          {
+            "do": "Check length",
+            "result": "$\\sqrt{26}$ before and after",
+            "why": "reflection through an origin axis preserves distance from the origin"
+          }
+        ],
+        "answer": "$(-5,1)$."
+      },
+      {
+        "problem": "Reflect $\\mathbf{x}=(2,3)$ across the line with unit direction $\\mathbf{u}=(1,0)$ using the formula.",
+        "steps": [
+          {
+            "do": "Compute the dot product",
+            "result": "$\\mathbf{u}^T\\mathbf{x}=2$",
+            "why": "only the $x$ component remains"
+          },
+          {
+            "do": "Compute the projection",
+            "result": "$2(1,0)=(2,0)$",
+            "why": "scale the unit direction"
+          },
+          {
+            "do": "Double the projection",
+            "result": "$(4,0)$",
+            "why": "line reflection uses twice the projection"
+          },
+          {
+            "do": "Subtract the original vector",
+            "result": "$(4,0)-(2,3)=(2,-3)$",
+            "why": "flip the perpendicular component"
+          },
+          {
+            "do": "Interpret",
+            "result": "reflection across the $x$-axis",
+            "why": "the line direction $(1,0)$ is the $x$-axis"
+          }
+        ],
+        "answer": "$(2,-3)$."
+      },
+      {
+        "problem": "Reflect $(3,4)$ across the line $y=-x$.",
+        "steps": [
+          {
+            "do": "Use a unit direction",
+            "result": "$\\mathbf{u}=\\frac{1}{\\sqrt2}(1,-1)$",
+            "why": "the line $y=-x$ points along $(1,-1)$"
+          },
+          {
+            "do": "Compute the dot product",
+            "result": "$\\mathbf{u}^T\\mathbf{x}=\\frac{3-4}{\\sqrt2}=-\\frac{1}{\\sqrt2}$",
+            "why": "project onto the mirror"
+          },
+          {
+            "do": "Compute the projection",
+            "result": "$(-1/2,1/2)$",
+            "why": "multiply the scalar by $\\mathbf{u}$"
+          },
+          {
+            "do": "Double the projection",
+            "result": "$(-1,1)$",
+            "why": "prepare $2\\operatorname{proj}-\\mathbf{x}$"
+          },
+          {
+            "do": "Subtract $\\mathbf{x}$",
+            "result": "$(-1,1)-(3,4)=(-4,-3)$",
+            "why": "complete the reflection"
+          }
+        ],
+        "answer": "$(-4,-3)$."
+      },
+      {
+        "problem": "Reflect point $(5,2)$ across the vertical line $x=1$.",
+        "steps": [
+          {
+            "do": "Translate so the mirror is at the origin",
+            "result": "$x'=5-1=4$",
+            "why": "measure horizontal distance from the line"
+          },
+          {
+            "do": "Reflect the translated coordinate",
+            "result": "$x'=-4$",
+            "why": "vertical mirror flips horizontal offset"
+          },
+          {
+            "do": "Translate back",
+            "result": "$x=1+(-4)=-3$",
+            "why": "return to original coordinates"
+          },
+          {
+            "do": "Keep the vertical coordinate",
+            "result": "$y=2$",
+            "why": "vertical line reflection does not change height"
+          },
+          {
+            "do": "Write the point",
+            "result": "$(-3,2)$",
+            "why": "combine the reflected coordinates"
+          }
+        ],
+        "answer": "$(-3,2)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Data augmentation",
+        "background": "Computer vision often reflects images to teach models that left-right position may not change class.",
+        "numbers": "In a width-$100$ image using coordinates $0$ to $99$, horizontal flip sends $x=12$ to $87$."
+      },
+      {
+        "title": "Householder reflections",
+        "background": "Numerical linear algebra uses reflections to zero out vector components stably.",
+        "numbers": "Reflecting $(3,4)$ to align with the $x$-axis preserves length $5$, producing a vector like $(5,0)$."
+      },
+      {
+        "title": "Game physics",
+        "background": "A bouncing object reflects its velocity across a wall's tangent or normal.",
+        "numbers": "Velocity $(3,-2)$ hitting a horizontal wall becomes $(3,2)$ after reversing the normal component."
+      },
+      {
+        "title": "Symmetry checks",
+        "background": "Models and simulations can be tested by reflecting inputs when the problem has mirror symmetry.",
+        "numbers": "If a score depends on $x^2+y^2$, then $(2,5)$ and $(-2,5)$ both score $29$."
+      },
+      {
+        "title": "Mirror descent intuition",
+        "background": "Optimization algorithms sometimes transform geometry before stepping; reflection is the simplest length-preserving transformation to understand first.",
+        "numbers": "A vector of norm $\\sqrt{10}$ remains norm $\\sqrt{10}$ after reflection across any line through the origin."
+      },
+      {
+        "title": "Robotics coordinate frames",
+        "background": "Robots use reflected frames when cameras or grippers view a workspace through mirrored coordinates.",
+        "numbers": "A point $(0.4,0.1)$ meters reflected across the robot centerline becomes $(-0.4,0.1)$."
+      }
+    ],
+    "applicationsClose": "Reflections preserve size while changing side, which makes them useful for symmetry, stability, and geometric transformations.",
+    "takeaways": [
+      "A reflection keeps the mirror component and reverses the perpendicular component.",
+      "Across a unit-normal hyperplane, the formula is $\\mathbf{x}-2(\\mathbf{n}^T\\mathbf{x})\\mathbf{n}$.",
+      "Reflections preserve lengths and angles.",
+      "Projection is the tool that makes reflection formulas simple."
+    ],
     "prereqs": [
       "math-11-14"
     ]
@@ -321,19 +4072,262 @@
   B({
     "id": "math-11-16",
     "title": "Rotations, scaling, and translation",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: rotations, scaling, and translation.",
+    "tagline": "Geometric transformations move coordinates without losing the structure of the object.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Reflections</i>"
+        "Reflections",
+        "matrix multiplication",
+        "trigonometric functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Homogeneous coordinates</i>"
+        "Homogeneous coordinates",
+        "Hyperplanes and decision boundaries",
+        "feature transformations"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "linear maps",
+        "affine maps",
+        "coordinate frames",
+        "matrix composition"
       ]
     },
+    "motivation": "<p>You can slide a drawing, turn it, or resize it without changing what it is. Coordinates change, but the object remains recognizable.</p><p>In math and ML, <b>rotations</b>, <b>scaling</b>, and <b>translations</b> are the basic moves for data, images, embeddings, and coordinate frames. Matrix notation lets us compose those moves carefully.</p>",
+    "definition": "<p>A counterclockwise rotation by angle $\\theta$ in the plane is $R_\\theta=\\begin{bmatrix}\\cos\\theta&-\\sin\\theta\\\\\\sin\\theta&\\cos\\theta\\end{bmatrix}$. Scaling by factors $s_x,s_y$ is $S=\\begin{bmatrix}s_x&0\\\\0&s_y\\end{bmatrix}$. Translation adds a vector $\\mathbf{t}$, giving $\\mathbf{x}\\mapsto A\\mathbf{x}+\\mathbf{t}$.</p><p>Rotations preserve lengths because the columns of $R_\\theta$ are orthonormal, so $R_\\theta^T R_\\theta=I$. Scaling changes lengths by coordinate factors. Translation is not linear because it does not send the origin to the origin, but it is affine.</p><p><b>Assumptions that matter:</b> angles are in radians unless stated otherwise; transformation order matters; matrices act on column vectors; and translations require affine notation or homogeneous coordinates to be represented by matrices.</p>",
+    "worked": {
+      "problem": "Rotate point $(2,1)$ by $90$ degrees counterclockwise, then translate by $(3,-2)$.",
+      "skills": [
+        "rotation matrices",
+        "translation",
+        "transformation order"
+      ],
+      "strategy": "Apply the rotation first, then add the translation vector.",
+      "steps": [
+        {
+          "do": "Write the $90$ degree rotation",
+          "result": "$R=\\begin{bmatrix}0&-1\\\\1&0\\end{bmatrix}$",
+          "why": "$\\cos90=0$ and $\\sin90=1$ in degree language"
+        },
+        {
+          "do": "Apply $R$ to the point",
+          "result": "$\\begin{bmatrix}0&-1\\\\1&0\\end{bmatrix}\\begin{bmatrix}2\\\\1\\end{bmatrix}$",
+          "why": "rotate before translating"
+        },
+        {
+          "do": "Compute the rotated point",
+          "result": "$\\begin{bmatrix}-1\\\\2\\end{bmatrix}$",
+          "why": "row products give $-1$ and $2$"
+        },
+        {
+          "do": "Write the translation",
+          "result": "$\\begin{bmatrix}3\\\\-2\\end{bmatrix}$",
+          "why": "translation is added after the linear map"
+        },
+        {
+          "do": "Add the translation",
+          "result": "$\\begin{bmatrix}-1\\\\2\\end{bmatrix}+\\begin{bmatrix}3\\\\-2\\end{bmatrix}=\\begin{bmatrix}2\\\\0\\end{bmatrix}$",
+          "why": "add componentwise"
+        }
+      ],
+      "verify": "The rotation alone preserves length: $(2,1)$ and $(-1,2)$ both have squared length $5$; translation then changes position.",
+      "answer": "The final point is $(2,0)$.",
+      "connects": "Affine transformations combine a linear change of shape or direction with a shift of location."
+    },
+    "practice": [
+      {
+        "problem": "Scale $(3,-2)$ by $s_x=2$ and $s_y=0.5$.",
+        "steps": [
+          {
+            "do": "Write the scaling matrix",
+            "result": "$S=\\begin{bmatrix}2&0\\\\0&0.5\\end{bmatrix}$",
+            "why": "diagonal entries scale coordinates"
+          },
+          {
+            "do": "Multiply the first coordinate",
+            "result": "$2\\cdot3=6$",
+            "why": "horizontal scaling"
+          },
+          {
+            "do": "Multiply the second coordinate",
+            "result": "$0.5\\cdot(-2)=-1$",
+            "why": "vertical scaling"
+          },
+          {
+            "do": "Write the vector",
+            "result": "$(6,-1)$",
+            "why": "collect scaled coordinates"
+          },
+          {
+            "do": "Compare shape effect",
+            "result": "wider and vertically compressed",
+            "why": "$x$ doubled and $y$ halved"
+          }
+        ],
+        "answer": "$(6,-1)$."
+      },
+      {
+        "problem": "Rotate $(4,0)$ by $180$ degrees about the origin.",
+        "steps": [
+          {
+            "do": "Write the rotation matrix",
+            "result": "$R=\\begin{bmatrix}-1&0\\\\0&-1\\end{bmatrix}$",
+            "why": "$\\cos180=-1$ and $\\sin180=0$"
+          },
+          {
+            "do": "Apply the matrix",
+            "result": "$R\\begin{bmatrix}4\\\\0\\end{bmatrix}$",
+            "why": "matrix-vector multiplication rotates the point"
+          },
+          {
+            "do": "Compute first coordinate",
+            "result": "$-4$",
+            "why": "multiply by $-1$"
+          },
+          {
+            "do": "Compute second coordinate",
+            "result": "$0$",
+            "why": "zero stays zero"
+          },
+          {
+            "do": "Write the result",
+            "result": "$(-4,0)$",
+            "why": "a half-turn reverses direction"
+          }
+        ],
+        "answer": "$(-4,0)$."
+      },
+      {
+        "problem": "Translate $(1,7)$ by vector $(-3,4)$.",
+        "steps": [
+          {
+            "do": "Write the addition",
+            "result": "$(1,7)+(-3,4)$",
+            "why": "translation adds the same vector to every point"
+          },
+          {
+            "do": "Add $x$ coordinates",
+            "result": "$1+(-3)=-2$",
+            "why": "horizontal shift"
+          },
+          {
+            "do": "Add $y$ coordinates",
+            "result": "$7+4=11$",
+            "why": "vertical shift"
+          },
+          {
+            "do": "Write the result",
+            "result": "$(-2,11)$",
+            "why": "combine coordinates"
+          },
+          {
+            "do": "Check displacement",
+            "result": "$(-3,4)$",
+            "why": "new point minus old point equals translation vector"
+          }
+        ],
+        "answer": "$(-2,11)$."
+      },
+      {
+        "problem": "Apply scaling $S=\\operatorname{diag}(2,3)$, then translation $(1,-1)$, to $(2,1)$.",
+        "steps": [
+          {
+            "do": "Scale first",
+            "result": "$S(2,1)=(4,3)$",
+            "why": "order says scaling happens before translation"
+          },
+          {
+            "do": "Write the translation",
+            "result": "$(4,3)+(1,-1)$",
+            "why": "add the shift after scaling"
+          },
+          {
+            "do": "Add first coordinate",
+            "result": "$5$",
+            "why": "$4+1=5$"
+          },
+          {
+            "do": "Add second coordinate",
+            "result": "$2$",
+            "why": "$3-1=2$"
+          },
+          {
+            "do": "Write the final point",
+            "result": "$(5,2)$",
+            "why": "composition is complete"
+          }
+        ],
+        "answer": "$(5,2)$."
+      },
+      {
+        "problem": "A feature vector $(10,20)$ is standardized by subtracting $(6,8)$ and scaling by $(0.5,0.25)$. Find the transformed vector.",
+        "steps": [
+          {
+            "do": "Subtract the center",
+            "result": "$(10,20)-(6,8)=(4,12)$",
+            "why": "translation recenters the features"
+          },
+          {
+            "do": "Scale the first coordinate",
+            "result": "$0.5\\cdot4=2$",
+            "why": "apply the first scale"
+          },
+          {
+            "do": "Scale the second coordinate",
+            "result": "$0.25\\cdot12=3$",
+            "why": "apply the second scale"
+          },
+          {
+            "do": "Write transformed vector",
+            "result": "$(2,3)$",
+            "why": "collect scaled centered values"
+          },
+          {
+            "do": "Interpret",
+            "result": "two and three scaled units above center",
+            "why": "standardization expresses relative position"
+          }
+        ],
+        "answer": "$(2,3)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Image augmentation",
+        "background": "Vision models are trained with transformed images so they learn stable objects rather than one exact pose.",
+        "numbers": "A point $(10,0)$ rotated $90$ degrees becomes $(0,10)$, then shifted by $(5,5)$ becomes $(5,15)$."
+      },
+      {
+        "title": "Feature standardization",
+        "background": "ML preprocessing translates by the mean and scales by standard deviation.",
+        "numbers": "With mean $50$ and standard deviation $10$, feature $70$ becomes $(70-50)/10=2$."
+      },
+      {
+        "title": "Robotics frames",
+        "background": "A robot converts sensor coordinates into world coordinates by rotating and translating.",
+        "numbers": "Sensor point $(1,0)$ rotated $90$ degrees and translated by $(2,3)$ becomes $(2,4)$."
+      },
+      {
+        "title": "Embedding alignment",
+        "background": "Two embedding spaces can sometimes be aligned with a rotation that preserves dot products.",
+        "numbers": "Vectors $(1,0)$ and $(0,1)$ rotated together by $90$ degrees still have dot product $0$."
+      },
+      {
+        "title": "Graphics model matrices",
+        "background": "Computer graphics composes scale, rotation, and translation to place objects in a scene.",
+        "numbers": "Scaling $(1,2)$ by $3$ gives $(3,6)$; translating by $(10,0)$ gives $(13,6)$."
+      },
+      {
+        "title": "Data centering before PCA",
+        "background": "PCA first translates data to mean zero, then rotates axes to principal directions.",
+        "numbers": "Points with mean $(4,5)$ send $(7,9)$ to centered vector $(3,4)$ before rotation."
+      }
+    ],
+    "applicationsClose": "Rotations, scaling, and translation are the basic vocabulary for moving data and coordinates while tracking what changes and what stays fixed.",
+    "takeaways": [
+      "Rotations preserve lengths and angles; scaling changes lengths by chosen factors.",
+      "Translations add a vector and are affine rather than linear.",
+      "Transformation order matters.",
+      "Preprocessing, graphics, robotics, and augmentation all use these same moves."
+    ],
     "prereqs": [
       "math-11-15"
     ]
@@ -342,19 +4336,267 @@
   B({
     "id": "math-11-17",
     "title": "Homogeneous coordinates",
-    "tier": "🟡",
-    "tagline": "One concept from Analytic geometry: homogeneous coordinates.",
+    "tagline": "Homogeneous coordinates let translations join rotations and scaling inside one matrix multiplication.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Rotations, scaling, and translation</i>"
+        "Rotations, scaling, and translation",
+        "matrix multiplication",
+        "coordinate transformations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Hyperplanes and decision boundaries</i>"
+        "Hyperplanes and decision boundaries",
+        "projective geometry",
+        "computer vision"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "affine maps",
+        "matrix composition",
+        "perspective projection",
+        "graphics pipelines"
       ]
     },
+    "motivation": "<p>Matrix multiplication handles rotations and scaling beautifully, but translation is awkward because adding a vector is not linear.</p><p><b>Homogeneous coordinates</b> fix that by adding one extra coordinate. A 2-D point $(x,y)$ becomes $(x,y,1)$, and now affine transformations can be written as one matrix product. This is a small trick with enormous practical reach.</p>",
+    "definition": "<p>In 2-D homogeneous coordinates, the point $(x,y)$ is represented by $\\begin{bmatrix}x\\\\y\\\\1\\end{bmatrix}$. An affine transformation $\\mathbf{x}\\mapsto A\\mathbf{x}+\\mathbf{t}$ becomes $\\begin{bmatrix}A&\\mathbf{t}\\\\0&1\\end{bmatrix}\\begin{bmatrix}x\\\\y\\\\1\\end{bmatrix}$, where the last row keeps the homogeneous coordinate equal to $1$.</p><p>For projective coordinates, nonzero scalar multiples represent the same point: $(X,Y,W)$ corresponds to $(X/W,Y/W)$ when $W\\ne0$. That division is how perspective projection enters geometry.</p><p><b>Assumptions that matter:</b> affine point coordinates use final coordinate $1$; direction vectors often use final coordinate $0$ so translation does not move them; and converting back from projective coordinates requires $W\\ne0$.</p>",
+    "worked": {
+      "problem": "Use homogeneous coordinates to scale $(2,3)$ by $2$ in both directions and then translate by $(5,-1)$.",
+      "skills": [
+        "homogeneous matrices",
+        "affine transformations",
+        "matrix multiplication"
+      ],
+      "strategy": "Build one matrix whose upper-left block scales and whose last column translates.",
+      "steps": [
+        {
+          "do": "Write the homogeneous point",
+          "result": "$\\begin{bmatrix}2\\\\3\\\\1\\end{bmatrix}$",
+          "why": "append $1$ for a point"
+        },
+        {
+          "do": "Write the transformation matrix",
+          "result": "$\\begin{bmatrix}2&0&5\\\\0&2&-1\\\\0&0&1\\end{bmatrix}$",
+          "why": "diagonal entries scale and last column translates"
+        },
+        {
+          "do": "Compute the first coordinate",
+          "result": "$2\\cdot2+0\\cdot3+5\\cdot1=9$",
+          "why": "scale $x$ and add translation"
+        },
+        {
+          "do": "Compute the second coordinate",
+          "result": "$0\\cdot2+2\\cdot3-1\\cdot1=5$",
+          "why": "scale $y$ and add translation"
+        },
+        {
+          "do": "Compute the last coordinate",
+          "result": "$1$",
+          "why": "the last row keeps affine points as points"
+        },
+        {
+          "do": "Convert back",
+          "result": "$(9,5)$",
+          "why": "drop the final $1$"
+        }
+      ],
+      "verify": "Doing it without homogeneous coordinates gives $2(2,3)+(5,-1)=(4,6)+(5,-1)=(9,5)$.",
+      "answer": "The transformed point is $(9,5)$.",
+      "connects": "Homogeneous coordinates turn affine motion into ordinary matrix multiplication."
+    },
+    "practice": [
+      {
+        "problem": "Represent point $(4,-2)$ and direction vector $(4,-2)$ in homogeneous coordinates.",
+        "steps": [
+          {
+            "do": "Append $1$ for the point",
+            "result": "$(4,-2,1)$",
+            "why": "points are affected by translation"
+          },
+          {
+            "do": "Append $0$ for the direction",
+            "result": "$(4,-2,0)$",
+            "why": "directions should not shift under translation"
+          },
+          {
+            "do": "Compare meanings",
+            "result": "same first two numbers, different last coordinate",
+            "why": "homogeneous coordinate stores type"
+          },
+          {
+            "do": "Apply translation idea",
+            "result": "point moves, direction does not",
+            "why": "translation column is multiplied by the last coordinate"
+          },
+          {
+            "do": "State both forms",
+            "result": "point $(4,-2,1)$; direction $(4,-2,0)$",
+            "why": "keep them distinct"
+          }
+        ],
+        "answer": "Point $(4,-2,1)$; direction $(4,-2,0)$."
+      },
+      {
+        "problem": "Apply $T=\\begin{bmatrix}1&0&3\\\\0&1&4\\\\0&0&1\\end{bmatrix}$ to point $(2,5)$.",
+        "steps": [
+          {
+            "do": "Write the homogeneous point",
+            "result": "$\\begin{bmatrix}2\\\\5\\\\1\\end{bmatrix}$",
+            "why": "append $1$"
+          },
+          {
+            "do": "Compute first coordinate",
+            "result": "$1\\cdot2+3\\cdot1=5$",
+            "why": "add horizontal translation"
+          },
+          {
+            "do": "Compute second coordinate",
+            "result": "$1\\cdot5+4\\cdot1=9$",
+            "why": "add vertical translation"
+          },
+          {
+            "do": "Compute last coordinate",
+            "result": "$1$",
+            "why": "affine point remains a point"
+          },
+          {
+            "do": "Return to 2-D",
+            "result": "$(5,9)$",
+            "why": "drop the homogeneous coordinate"
+          }
+        ],
+        "answer": "$(5,9)$."
+      },
+      {
+        "problem": "Apply the same $T$ to direction $(2,5,0)$.",
+        "steps": [
+          {
+            "do": "Write the multiplication",
+            "result": "$T\\begin{bmatrix}2\\\\5\\\\0\\end{bmatrix}$",
+            "why": "directions have final coordinate $0$"
+          },
+          {
+            "do": "Compute first coordinate",
+            "result": "$1\\cdot2+3\\cdot0=2$",
+            "why": "translation column vanishes"
+          },
+          {
+            "do": "Compute second coordinate",
+            "result": "$1\\cdot5+4\\cdot0=5$",
+            "why": "translation column vanishes"
+          },
+          {
+            "do": "Compute last coordinate",
+            "result": "$0$",
+            "why": "directions remain directions"
+          },
+          {
+            "do": "State the result",
+            "result": "$(2,5,0)$",
+            "why": "pure translation does not change a direction"
+          }
+        ],
+        "answer": "$(2,5,0)$."
+      },
+      {
+        "problem": "Convert homogeneous point $(6,9,3)$ back to ordinary coordinates.",
+        "steps": [
+          {
+            "do": "Identify $W$",
+            "result": "$W=3$",
+            "why": "the last coordinate is the scale"
+          },
+          {
+            "do": "Check $W\\ne0$",
+            "result": "$3\\ne0$",
+            "why": "conversion is allowed"
+          },
+          {
+            "do": "Divide the first coordinate",
+            "result": "$6/3=2$",
+            "why": "ordinary $x=X/W$"
+          },
+          {
+            "do": "Divide the second coordinate",
+            "result": "$9/3=3$",
+            "why": "ordinary $y=Y/W$"
+          },
+          {
+            "do": "Write the point",
+            "result": "$(2,3)$",
+            "why": "drop the scale after division"
+          }
+        ],
+        "answer": "$(2,3)$."
+      },
+      {
+        "problem": "Compose translation by $(1,2)$ after scaling by $3$ and apply to $(2,1)$ using one homogeneous matrix.",
+        "steps": [
+          {
+            "do": "Write the combined matrix",
+            "result": "$M=\\begin{bmatrix}3&0&1\\\\0&3&2\\\\0&0&1\\end{bmatrix}$",
+            "why": "scale first, then add translation"
+          },
+          {
+            "do": "Write the point",
+            "result": "$\\begin{bmatrix}2\\\\1\\\\1\\end{bmatrix}$",
+            "why": "homogeneous point"
+          },
+          {
+            "do": "Compute first coordinate",
+            "result": "$3\\cdot2+1=7$",
+            "why": "scale $x$ then translate"
+          },
+          {
+            "do": "Compute second coordinate",
+            "result": "$3\\cdot1+2=5$",
+            "why": "scale $y$ then translate"
+          },
+          {
+            "do": "Write result",
+            "result": "$(7,5)$",
+            "why": "last coordinate is $1$"
+          }
+        ],
+        "answer": "$(7,5)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Graphics pipelines",
+        "background": "Rendering systems compose model, view, and projection matrices using homogeneous coordinates.",
+        "numbers": "A $3\\times3$ 2-D matrix with translation column $(10,5,1)$ sends origin $(0,0,1)$ to $(10,5,1)$."
+      },
+      {
+        "title": "Computer vision perspective",
+        "background": "Cameras map 3-D points to images by dividing by depth, a homogeneous-coordinate operation.",
+        "numbers": "Point $(6,4,2)$ projects to $(6/2,4/2)=(3,2)$."
+      },
+      {
+        "title": "Robotics transformations",
+        "background": "Robot arms chain many joint transformations, each represented by a homogeneous matrix.",
+        "numbers": "Two translations $(1,0)$ and $(0,2)$ compose to move a point by $(1,2)$."
+      },
+      {
+        "title": "Image warping",
+        "background": "Augmentation and alignment use affine or projective matrices to move pixels.",
+        "numbers": "A pixel $(20,30)$ translated by matrix column $(5,-10)$ moves to $(25,20)$."
+      },
+      {
+        "title": "Directions versus points",
+        "background": "Physics and graphics distinguish locations from vectors such as velocity.",
+        "numbers": "A translation by $(7,7)$ changes point $(1,2,1)$ to $(8,9,1)$ but keeps direction $(1,2,0)$ unchanged."
+      },
+      {
+        "title": "Batch transform composition",
+        "background": "Composing transformations once is faster and less error-prone than applying many operations separately.",
+        "numbers": "Scaling by $2$ then translating by $3$ in 1-D sends $x=4$ to $11$, represented by matrix $\\begin{bmatrix}2&3\\\\0&1\\end{bmatrix}$."
+      }
+    ],
+    "applicationsClose": "Homogeneous coordinates package affine and projective geometry into matrix multiplication, which is why they are everywhere in vision, graphics, and robotics.",
+    "takeaways": [
+      "A 2-D point $(x,y)$ becomes $(x,y,1)$ in homogeneous coordinates.",
+      "Translations become matrix multiplications by adding one coordinate.",
+      "Directions use final coordinate $0$, so translations do not move them.",
+      "Projective coordinates convert back by dividing by the final coordinate when it is nonzero."
+    ],
     "prereqs": [
       "math-11-16"
     ]
@@ -363,19 +4605,278 @@
   B({
     "id": "math-11-18",
     "title": "Hyperplanes and decision boundaries",
-    "tier": "🟡",
-    "tagline": "Capstone — how analytic geometry shows up directly in CS & ML.",
+    "tagline": "A hyperplane is the flat boundary where a linear score is exactly undecided.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Homogeneous coordinates</i>"
+        "dot products",
+        "Projections",
+        "Homogeneous coordinates"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "linear classifiers",
+        "support vector machines",
+        "logistic regression geometry"
       ],
       "usedWith": [
-        "the other concepts in Analytic geometry and its capstone"
+        "normal vectors",
+        "distance to a plane",
+        "affine maps",
+        "optimization"
       ]
     },
+    "motivation": "<p>You already know a line can split the plane into two sides. In more dimensions, the same flat splitter is called a hyperplane.</p><p>In ML, a linear model computes a score $\\mathbf{w}^T\\mathbf{x}+b$. The <b>decision boundary</b> is where that score is zero. On one side the model predicts one class; on the other side it predicts the other class. The geometry is simple, but it powers logistic regression, perceptrons, and SVMs.</p>",
+    "definition": "<p>A <b>hyperplane</b> in $\\mathbb{R}^n$ is the set of points satisfying $\\mathbf{w}^T\\mathbf{x}+b=0$, where $\\mathbf{w}\\ne\\mathbf{0}$ is the normal vector and $b$ is the bias. The sign of $\\mathbf{w}^T\\mathbf{x}+b$ tells which side a point lies on.</p><p>The distance from a point $\\mathbf{x}$ to the hyperplane is $\\frac{|\\mathbf{w}^T\\mathbf{x}+b|}{\\|\\mathbf{w}\\|}$. This comes from projecting the point's offset onto the unit normal $\\mathbf{w}/\\|\\mathbf{w}\\|$. For an SVM with labels $y\\in\\{-1,1\\}$, the functional margin is $y(\\mathbf{w}^T\\mathbf{x}+b)$ and the geometric margin is that value divided by $\\|\\mathbf{w}\\|$.</p><p><b>Assumptions that matter:</b> $\\mathbf{w}$ must be nonzero; the sign convention can be flipped by multiplying both $\\mathbf{w}$ and $b$ by $-1$; distances use Euclidean norm; and nonlinear classifiers can still have curved boundaries after feature transformations.</p>",
+    "worked": {
+      "problem": "A linear classifier has $\\mathbf{w}=(2,-1)$ and $b=-3$. Classify $\\mathbf{x}=(4,2)$, compute its distance to the boundary, and compute its SVM geometric margin for label $y=1$.",
+      "skills": [
+        "linear scores",
+        "distance to a hyperplane",
+        "SVM margins"
+      ],
+      "strategy": "Compute the signed score, then divide by the norm of the normal vector for geometric distance.",
+      "steps": [
+        {
+          "do": "Compute the dot product",
+          "result": "$\\mathbf{w}^T\\mathbf{x}=2\\cdot4+(-1)\\cdot2=6$",
+          "why": "linear score starts with weighted features"
+        },
+        {
+          "do": "Add the bias",
+          "result": "$\\mathbf{w}^T\\mathbf{x}+b=6-3=3$",
+          "why": "bias shifts the boundary"
+        },
+        {
+          "do": "Classify by sign",
+          "result": "positive class",
+          "why": "the score is greater than zero"
+        },
+        {
+          "do": "Compute the norm of $\\mathbf{w}$",
+          "result": "$\\|\\mathbf{w}\\|=\\sqrt{2^2+(-1)^2}=\\sqrt5$",
+          "why": "distance divides by normal length"
+        },
+        {
+          "do": "Compute distance to boundary",
+          "result": "$\\frac{|3|}{\\sqrt5}=\\frac{3}{\\sqrt5}\\approx1.34$",
+          "why": "use the point-to-hyperplane distance formula"
+        },
+        {
+          "do": "Compute functional margin",
+          "result": "$y(\\mathbf{w}^T\\mathbf{x}+b)=1\\cdot3=3$",
+          "why": "label $1$ agrees with positive score"
+        },
+        {
+          "do": "Compute geometric margin",
+          "result": "$\\frac{3}{\\sqrt5}\\approx1.34$",
+          "why": "divide functional margin by $\\|\\mathbf{w}\\|$"
+        }
+      ],
+      "verify": "The boundary is $2x_1-x_2-3=0$. Point $(4,2)$ gives $8-2-3=3$, so it is safely on the positive side.",
+      "answer": "Prediction positive; distance $3/\\sqrt5\\approx1.34$; SVM geometric margin $3/\\sqrt5\\approx1.34$.",
+      "connects": "Linear classification is signed distance geometry with a learned normal vector."
+    },
+    "practice": [
+      {
+        "problem": "For boundary $x_1+x_2-5=0$, classify points $(2,1)$ and $(4,3)$ by sign.",
+        "steps": [
+          {
+            "do": "Evaluate the first score",
+            "result": "$2+1-5=-2$",
+            "why": "substitute $(2,1)$"
+          },
+          {
+            "do": "Classify the first point",
+            "result": "negative side",
+            "why": "the score is less than zero"
+          },
+          {
+            "do": "Evaluate the second score",
+            "result": "$4+3-5=2$",
+            "why": "substitute $(4,3)$"
+          },
+          {
+            "do": "Classify the second point",
+            "result": "positive side",
+            "why": "the score is greater than zero"
+          },
+          {
+            "do": "Identify boundary status",
+            "result": "neither point is on the boundary",
+            "why": "neither score equals zero"
+          }
+        ],
+        "answer": "$(2,1)$ is negative; $(4,3)$ is positive."
+      },
+      {
+        "problem": "Find the distance from $(3,0)$ to the line $2x-y-4=0$.",
+        "steps": [
+          {
+            "do": "Identify $\\mathbf{w}$ and $b$",
+            "result": "$\\mathbf{w}=(2,-1)$ and $b=-4$",
+            "why": "match $\\mathbf{w}^T\\mathbf{x}+b=0$"
+          },
+          {
+            "do": "Compute the score",
+            "result": "$2\\cdot3-0-4=2$",
+            "why": "substitute the point"
+          },
+          {
+            "do": "Take absolute value",
+            "result": "$|2|=2$",
+            "why": "distance is nonnegative"
+          },
+          {
+            "do": "Compute normal norm",
+            "result": "$\\sqrt{2^2+(-1)^2}=\\sqrt5$",
+            "why": "normal length scales the score"
+          },
+          {
+            "do": "Divide",
+            "result": "$2/\\sqrt5\\approx0.894$",
+            "why": "point-to-line distance formula"
+          }
+        ],
+        "answer": "Distance $2/\\sqrt5\\approx0.894$."
+      },
+      {
+        "problem": "A logistic model uses $p=\\sigma(0.8x_1-0.6x_2+0.2)$. Find the decision boundary and classify $(1,2)$ using threshold $0.5$.",
+        "steps": [
+          {
+            "do": "Set the logit to zero",
+            "result": "$0.8x_1-0.6x_2+0.2=0$",
+            "why": "$\\sigma(z)=0.5$ when $z=0$"
+          },
+          {
+            "do": "Evaluate the logit at $(1,2)$",
+            "result": "$0.8-1.2+0.2=-0.2$",
+            "why": "substitute the features"
+          },
+          {
+            "do": "Compare with zero",
+            "result": "$-0.2<0$",
+            "why": "negative logit gives probability below $0.5$"
+          },
+          {
+            "do": "Classify",
+            "result": "negative class",
+            "why": "threshold is $0.5$"
+          },
+          {
+            "do": "Estimate probability",
+            "result": "$\\sigma(-0.2)\\approx0.45$",
+            "why": "a small negative logit is slightly below one half"
+          }
+        ],
+        "answer": "Boundary $0.8x_1-0.6x_2+0.2=0$; $(1,2)$ is classified negative with probability about $0.45$."
+      },
+      {
+        "problem": "For SVM parameters $\\mathbf{w}=(3,4)$, $b=-10$, and labeled point $\\mathbf{x}=(2,2)$ with $y=1$, compute functional and geometric margins.",
+        "steps": [
+          {
+            "do": "Compute the dot product",
+            "result": "$3\\cdot2+4\\cdot2=14$",
+            "why": "weighted feature sum"
+          },
+          {
+            "do": "Add the bias",
+            "result": "$14-10=4$",
+            "why": "signed score"
+          },
+          {
+            "do": "Compute functional margin",
+            "result": "$1\\cdot4=4$",
+            "why": "multiply by the label"
+          },
+          {
+            "do": "Compute norm",
+            "result": "$\\sqrt{3^2+4^2}=5$",
+            "why": "normal length"
+          },
+          {
+            "do": "Compute geometric margin",
+            "result": "$4/5=0.8$",
+            "why": "divide by norm"
+          }
+        ],
+        "answer": "Functional margin $4$; geometric margin $0.8$."
+      },
+      {
+        "problem": "Use homogeneous coordinates to write score $2x_1-x_2-3$ as one dot product and evaluate it at $(4,2)$.",
+        "steps": [
+          {
+            "do": "Append $1$ to the point",
+            "result": "$\\tilde{\\mathbf{x}}=(4,2,1)$",
+            "why": "homogeneous coordinate carries the bias"
+          },
+          {
+            "do": "Append the bias to weights",
+            "result": "$\\tilde{\\mathbf{w}}=(2,-1,-3)$",
+            "why": "bias becomes a final weight"
+          },
+          {
+            "do": "Write the dot product",
+            "result": "$\\tilde{\\mathbf{w}}^T\\tilde{\\mathbf{x}}=2\\cdot4+(-1)\\cdot2+(-3)\\cdot1$",
+            "why": "one dot product includes the affine term"
+          },
+          {
+            "do": "Simplify",
+            "result": "$8-2-3=3$",
+            "why": "compute the score"
+          },
+          {
+            "do": "Classify by sign",
+            "result": "positive side",
+            "why": "score is greater than zero"
+          }
+        ],
+        "answer": "Using $\\tilde{\\mathbf{w}}=(2,-1,-3)$ and $\\tilde{\\mathbf{x}}=(4,2,1)$, the score is $3$, so the point is positive."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Linear binary classifiers",
+        "background": "Perceptrons and logistic regression use a linear score, then choose a class from its sign or probability.",
+        "numbers": "With $s=1.5x_1-0.5x_2+1$, point $(2,4)$ gives $3-2+1=2$, a positive prediction."
+      },
+      {
+        "title": "SVM maximum margin",
+        "background": "Support vector machines choose a separating hyperplane with a large geometric margin.",
+        "numbers": "If $\\|\\mathbf{w}\\|=5$ and the closest functional margin is $1$, the geometric margin is $1/5=0.2$."
+      },
+      {
+        "title": "Distance-based confidence",
+        "background": "For a fixed linear model, larger signed distance often means greater confidence before calibration.",
+        "numbers": "Scores $0.5$ and $2.0$ with $\\|\\mathbf{w}\\|=2$ have distances $0.25$ and $1.0$ from the boundary."
+      },
+      {
+        "title": "Logistic probabilities",
+        "background": "Logistic regression turns signed distance-like scores into probabilities with the sigmoid function.",
+        "numbers": "Logit $2$ gives $\\sigma(2)\\approx0.881$, while logit $-2$ gives $0.119$."
+      },
+      {
+        "title": "Multiclass linear models",
+        "background": "Softmax classifiers compare several affine scores; boundaries occur where two class scores are equal.",
+        "numbers": "If class scores are $s_1=2x+1$ and $s_2=-x+4$, the boundary solves $2x+1=-x+4$, so $x=1$."
+      },
+      {
+        "title": "Feature engineering creates nonlinear boundaries",
+        "background": "A linear hyperplane in transformed features can become curved in original inputs.",
+        "numbers": "Using features $(x,x^2)$ and boundary $x^2-4=0$ gives original decision points $x=-2$ and $x=2$."
+      },
+      {
+        "title": "Fair threshold audits",
+        "background": "Changing the bias shifts a boundary without changing its normal direction, which changes who falls on each side.",
+        "numbers": "For score $x-0.7$, threshold boundary is $x=0.7$; changing bias to $-0.6$ moves the boundary to $x=0.6$."
+      }
+    ],
+    "applicationsClose": "Hyperplanes are where algebraic scores become geometric decisions: side, distance, margin, and confidence all come from the same flat boundary.",
+    "takeaways": [
+      "A hyperplane has equation $\\mathbf{w}^T\\mathbf{x}+b=0$ with nonzero normal vector $\\mathbf{w}$.",
+      "The sign of the score chooses the side of the boundary.",
+      "Distance to the boundary is $|\\mathbf{w}^T\\mathbf{x}+b|/\\|\\mathbf{w}\\|$.",
+      "SVM margins are signed scores normalized by the length of the weight vector.",
+      "The bias can be folded into homogeneous coordinates as one more weight."
+    ],
     "prereqs": [
       "math-11-17"
     ]

@@ -9,37 +9,528 @@
   B({
     "id": "math-12-01",
     "title": "Parametrized curves",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: parametrized curves.",
+    "tagline": "A parametrized curve lets a point move through space, so geometry becomes a story with time.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "vectors",
+        "functions of one variable",
+        "coordinate geometry"
       ],
       "leadsTo": [
-        "the next lesson, <i>Arc length</i>"
+        "Arc length",
+        "Curvature",
+        "The Frenet frame"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "vector-valued functions",
+        "velocity",
+        "trigonometric functions",
+        "linear algebra"
       ]
-    }
+    },
+    "motivation": "<p>You already know how to plot a point such as $(x,y)$. A parametrized curve adds motion: at each parameter value $t$, a rule tells us where the point is.</p><p>This makes circles, spirals, robot paths, and interpolation paths feel alike. The parameter may be time, angle, or just a label, but once the curve is $\\gamma(t)$, we can differentiate it and follow its direction.</p>",
+    "definition": "<p>A <b>parametrized curve</b> in $\\mathbb{R}^n$ is a function $\\gamma:I\\to\\mathbb{R}^n$, written $\\gamma(t)=(x_1(t),\\ldots,x_n(t))$. Its derivative $\\gamma'(t)$ is the <b>velocity vector</b>.</p><p>The curve is <b>regular</b> at $t$ if $\\gamma'(t)\\ne\\mathbf{0}$. Regularity matters because a zero velocity gives no clear tangent direction. The image is the traced set of points; the parametrization also records order and speed.</p><p><b>Assumptions that matter:</b> coordinate functions are differentiable when we discuss velocity; $t$ is a parameter, not necessarily clock time; and two parametrizations can trace the same geometric path at different speeds.</p>",
+    "worked": {
+      "problem": "For $\\gamma(t)=(2t+1,t^2)$, find $\\gamma(2)$, $\\gamma'(t)$, and the tangent line at $t=2$.",
+      "skills": [
+        "vector-valued functions",
+        "derivatives",
+        "tangent lines"
+      ],
+      "strategy": "Evaluate position, differentiate coordinate by coordinate, then use point plus direction.",
+      "steps": [
+        {
+          "do": "Substitute $t=2$ in the first coordinate",
+          "result": "$2\\cdot2+1=5$",
+          "why": "evaluate the x-coordinate"
+        },
+        {
+          "do": "Substitute $t=2$ in the second coordinate",
+          "result": "$2^2=4$",
+          "why": "evaluate the y-coordinate"
+        },
+        {
+          "do": "Write the position",
+          "result": "$\\gamma(2)=(5,4)$",
+          "why": "combine coordinates"
+        },
+        {
+          "do": "Differentiate the curve",
+          "result": "$\\gamma'(t)=(2,2t)$",
+          "why": "differentiate coordinate by coordinate"
+        },
+        {
+          "do": "Evaluate velocity at $t=2$",
+          "result": "$\\gamma'(2)=(2,4)$",
+          "why": "this is the tangent direction"
+        },
+        {
+          "do": "Write the tangent line",
+          "result": "$(x,y)=(5,4)+u(2,4)$",
+          "why": "a line is point plus scalar times direction"
+        }
+      ],
+      "verify": "The velocity $(2,4)$ is nonzero, so the tangent direction is valid.",
+      "answer": "$\\gamma(2)=(5,4)$, $\\gamma'(t)=(2,2t)$, and the tangent line is $(x,y)=(5,4)+u(2,4)$.",
+      "connects": "A parametrized curve turns tangent geometry into position plus velocity."
+    },
+    "practice": [
+      {
+        "problem": "For $\\gamma(t)=(t,3t-1)$, find $\\gamma(2)$ and $\\gamma'(t)$.",
+        "steps": [
+          {
+            "do": "Evaluate the first coordinate at $2$",
+            "result": "$2$",
+            "why": "the first coordinate is t"
+          },
+          {
+            "do": "Evaluate the second coordinate at $2$",
+            "result": "$3\\cdot2-1=5$",
+            "why": "substitute into the linear coordinate"
+          },
+          {
+            "do": "Write the position",
+            "result": "$\\gamma(2)=(2,5)$",
+            "why": "combine coordinates"
+          },
+          {
+            "do": "Differentiate the first coordinate",
+            "result": "$1$",
+            "why": "the derivative of t is 1"
+          },
+          {
+            "do": "Differentiate the second coordinate",
+            "result": "$3$",
+            "why": "the derivative of $3t-1$ is 3"
+          }
+        ],
+        "answer": "$\\gamma(2)=(2,5)$ and $\\gamma'(t)=(1,3)$."
+      },
+      {
+        "problem": "For $\\gamma(t)=(\\cos t,\\sin t)$, compute $\\gamma(0)$ and $\\gamma'(0)$.",
+        "steps": [
+          {
+            "do": "Evaluate the position",
+            "result": "$\\gamma(0)=(1,0)$",
+            "why": "$\\cos0=1$ and $\\sin0=0$"
+          },
+          {
+            "do": "Differentiate $\\cos t$",
+            "result": "$-\\sin t$",
+            "why": "coordinatewise derivative"
+          },
+          {
+            "do": "Differentiate $\\sin t$",
+            "result": "$\\cos t$",
+            "why": "coordinatewise derivative"
+          },
+          {
+            "do": "Write velocity",
+            "result": "$\\gamma'(t)=(-\\sin t,\\cos t)$",
+            "why": "combine derivatives"
+          },
+          {
+            "do": "Evaluate at zero",
+            "result": "$\\gamma'(0)=(0,1)$",
+            "why": "substitute trig values"
+          }
+        ],
+        "answer": "$\\gamma(0)=(1,0)$ and $\\gamma'(0)=(0,1)$."
+      },
+      {
+        "problem": "Show that $\\gamma(t)=(t^2,t^3)$ is not regular at $t=0$.",
+        "steps": [
+          {
+            "do": "Differentiate first coordinate",
+            "result": "$2t$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate second coordinate",
+            "result": "$3t^2$",
+            "why": "power rule"
+          },
+          {
+            "do": "Write velocity",
+            "result": "$\\gamma'(t)=(2t,3t^2)$",
+            "why": "regularity depends on this vector"
+          },
+          {
+            "do": "Evaluate at $t=0$",
+            "result": "$\\gamma'(0)=(0,0)$",
+            "why": "both components vanish"
+          },
+          {
+            "do": "Apply regularity definition",
+            "result": "not regular at 0",
+            "why": "regular means nonzero velocity"
+          }
+        ],
+        "answer": "It is not regular at $t=0$ because $\\gamma'(0)=\\mathbf{0}$."
+      },
+      {
+        "problem": "Find the tangent line to $\\gamma(t)=(t^2,2t+1)$ at $t=3$.",
+        "steps": [
+          {
+            "do": "Evaluate position",
+            "result": "$\\gamma(3)=(9,7)$",
+            "why": "$3^2=9$ and $2\\cdot3+1=7$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$\\gamma'(t)=(2t,2)$",
+            "why": "coordinate derivatives"
+          },
+          {
+            "do": "Evaluate velocity",
+            "result": "$\\gamma'(3)=(6,2)$",
+            "why": "substitute 3"
+          },
+          {
+            "do": "Check direction",
+            "result": "$(6,2)\\ne(0,0)$",
+            "why": "the curve is regular there"
+          },
+          {
+            "do": "Write line",
+            "result": "$(x,y)=(9,7)+u(6,2)$",
+            "why": "point plus direction"
+          }
+        ],
+        "answer": "The tangent line is $(x,y)=(9,7)+u(6,2)$."
+      },
+      {
+        "problem": "A robot path is $\\gamma(t)=(1+4t,2+3t)$ meters. Find position and velocity at $t=2$, then predict position at $t=2.5$.",
+        "steps": [
+          {
+            "do": "Evaluate position",
+            "result": "$\\gamma(2)=(9,8)$",
+            "why": "compute both coordinates"
+          },
+          {
+            "do": "Differentiate path",
+            "result": "$\\gamma'(t)=(4,3)$",
+            "why": "constant coordinate rates"
+          },
+          {
+            "do": "Read velocity",
+            "result": "$(4,3)$ meters per second",
+            "why": "the derivative is constant"
+          },
+          {
+            "do": "Compute time change",
+            "result": "$2.5-2=0.5$",
+            "why": "prediction uses half a second"
+          },
+          {
+            "do": "Add velocity times time",
+            "result": "$(9,8)+0.5(4,3)=(11,9.5)$",
+            "why": "linear motion has constant velocity"
+          }
+        ],
+        "answer": "At $t=2$ the robot is at $(9,8)$ with velocity $(4,3)$ m/s; at $t=2.5$ it is at $(11,9.5)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Robot trajectories",
+        "background": "Robotics describes a moving body by position as a function of time, so controllers can use velocity.",
+        "numbers": "For $\\gamma(t)=(2t,1+t)$ meters, $\\gamma(4)=(8,5)$ and $\\gamma'(t)=(2,1)$."
+      },
+      {
+        "title": "Animation paths",
+        "background": "Computer animation moves cameras and characters along parametrized curves between keyframes.",
+        "numbers": "The path $\\gamma(t)=(10\\cos t,10\\sin t,2)$ has radius $10$ and starts at $(10,0,2)$."
+      },
+      {
+        "title": "Feature interpolation",
+        "background": "ML systems often inspect straight paths between embeddings to see how representations change.",
+        "numbers": "Between $a=(1,2)$ and $b=(5,4)$, $\\gamma(0.25)=0.75a+0.25b=(2,2.5)$."
+      },
+      {
+        "title": "Projectile motion",
+        "background": "Classical mechanics models position by a parametrized curve and velocity by its derivative.",
+        "numbers": "With $\\gamma(t)=(20t,30t-4.9t^2)$, at $t=2$ the point is $(40,40.4)$."
+      },
+      {
+        "title": "Bezier design curves",
+        "background": "Fonts and vector graphics use polynomial parametrized curves because control points shape the trace.",
+        "numbers": "A linear Bezier curve from $(0,0)$ to $(6,3)$ gives $\\gamma(0.5)=(3,1.5)$."
+      },
+      {
+        "title": "Optimization paths",
+        "background": "Gradient descent creates a path through parameter space, even when we only sample it at steps.",
+        "numbers": "If $w(t)=5-0.2t$, then $w(10)=3$ and $w'(t)=-0.2$."
+      }
+    ],
+    "applicationsClose": "Across robots, graphics, physics, embeddings, and optimization, a curve is geometry with a parameter attached.",
+    "takeaways": [
+      "A parametrized curve is a map $\\gamma:I\\to\\mathbb{R}^n$.",
+      "Velocity is $\\gamma'(t)$, computed coordinate by coordinate.",
+      "Regularity means $\\gamma'(t)\\ne\\mathbf{0}$.",
+      "Different parametrizations can trace the same image at different speeds."
+    ]
   });
 
   B({
     "id": "math-12-02",
     "title": "Arc length",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: arc length.",
+    "tagline": "Arc length measures how far a curve actually travels, not just how far its endpoints sit apart.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Parametrized curves</i>"
+        "Parametrized curves",
+        "vector norms",
+        "definite integrals"
       ],
       "leadsTo": [
-        "the next lesson, <i>Curvature</i>"
+        "Curvature",
+        "The Frenet frame",
+        "The first fundamental form"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "speed",
+        "integrals",
+        "reparametrization",
+        "Euclidean distance"
       ]
     },
+    "motivation": "<p>You already know straight-line distance. But a winding trail, a circle, or a robot path can travel much farther than the distance between start and finish.</p><p>Arc length adds up tiny straight pieces along the curve. In the limit, each tiny piece has length speed times $dt$, so total distance is the integral of speed.</p>",
+    "definition": "<p>If $\\gamma:[a,b]\\to\\mathbb{R}^n$ is continuously differentiable, its <b>arc length</b> is $$L=\\int_a^b\\|\\gamma'(t)\\|\\,dt.$$ For $\\gamma(t)=(x(t),y(t))$, speed is $\\sqrt{(x'(t))^2+(y'(t))^2}$.</p><p>The formula comes from approximating a short displacement by $\\gamma'(t)\\Delta t$. Its length is approximately $\\|\\gamma'(t)\\|\\Delta t$, and adding these pieces becomes an integral.</p><p><b>Assumptions that matter:</b> the velocity should exist and be integrable; length counts repeated tracing; and constant speed makes length equal speed times parameter time.</p>",
+    "worked": {
+      "problem": "Find the length of $\\gamma(t)=(3t,4t)$ for $0\\le t\\le2$.",
+      "skills": [
+        "velocity",
+        "norms",
+        "arc length integrals"
+      ],
+      "strategy": "Compute speed first; total length is the integral of speed.",
+      "steps": [
+        {
+          "do": "Differentiate the curve",
+          "result": "$\\gamma'(t)=(3,4)$",
+          "why": "velocity is coordinatewise derivative"
+        },
+        {
+          "do": "Compute speed",
+          "result": "$\\|\\gamma'(t)\\|=\\sqrt{3^2+4^2}$",
+          "why": "use the Euclidean norm"
+        },
+        {
+          "do": "Simplify speed",
+          "result": "$5$",
+          "why": "$9+16=25$"
+        },
+        {
+          "do": "Set up length",
+          "result": "$L=\\int_0^2 5\\,dt$",
+          "why": "integrate speed"
+        },
+        {
+          "do": "Evaluate",
+          "result": "$L=10$",
+          "why": "constant speed 5 over interval length 2"
+        }
+      ],
+      "verify": "The endpoint distance from $(0,0)$ to $(6,8)$ is $10$, so the straight path check agrees.",
+      "answer": "The arc length is $10$.",
+      "connects": "Arc length turns velocity into total distance traveled."
+    },
+    "practice": [
+      {
+        "problem": "Find the length of $\\gamma(t)=(t,0)$ for $0\\le t\\le7$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$\\gamma'(t)=(1,0)$",
+            "why": "velocity along the x-axis"
+          },
+          {
+            "do": "Compute speed",
+            "result": "$1$",
+            "why": "norm of $(1,0)$"
+          },
+          {
+            "do": "Set up length",
+            "result": "$L=\\int_0^7 1\\,dt$",
+            "why": "integrate speed"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$L=7$",
+            "why": "interval length is 7"
+          },
+          {
+            "do": "Compare endpoints",
+            "result": "$(0,0)$ to $(7,0)$",
+            "why": "straight distance is also 7"
+          }
+        ],
+        "answer": "The length is $7$."
+      },
+      {
+        "problem": "Find the length of $\\gamma(t)=(2t,t)$ for $0\\le t\\le3$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$\\gamma'(t)=(2,1)$",
+            "why": "coordinate derivatives"
+          },
+          {
+            "do": "Compute speed",
+            "result": "$\\sqrt{2^2+1^2}=\\sqrt5$",
+            "why": "norm of velocity"
+          },
+          {
+            "do": "Set up integral",
+            "result": "$L=\\int_0^3\\sqrt5\\,dt$",
+            "why": "speed is constant"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$3\\sqrt5$",
+            "why": "multiply by interval length"
+          },
+          {
+            "do": "Approximate",
+            "result": "$3\\sqrt5\\approx6.708$",
+            "why": "$\\sqrt5\\approx2.236$"
+          }
+        ],
+        "answer": "The length is $3\\sqrt5\\approx6.708$."
+      },
+      {
+        "problem": "Find the circumference traced by $\\gamma(t)=(2\\cos t,2\\sin t)$ for $0\\le t\\le2\\pi$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$\\gamma'(t)=(-2\\sin t,2\\cos t)$",
+            "why": "coordinate derivatives"
+          },
+          {
+            "do": "Compute speed",
+            "result": "$\\sqrt{4\\sin^2t+4\\cos^2t}$",
+            "why": "norm of velocity"
+          },
+          {
+            "do": "Use the identity",
+            "result": "$2$",
+            "why": "$\\sin^2t+\\cos^2t=1$"
+          },
+          {
+            "do": "Integrate",
+            "result": "$L=\\int_0^{2\\pi}2\\,dt$",
+            "why": "one full turn"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$4\\pi$",
+            "why": "$2(2\\pi)=4\\pi$"
+          }
+        ],
+        "answer": "The length is $4\\pi$."
+      },
+      {
+        "problem": "Find the length of $\\gamma(t)=(t,t^2)$ for $0\\le t\\le1$ as an integral, then use $\\int_0^1\\sqrt{1+4t^2}\\,dt\\approx1.479$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$\\gamma'(t)=(1,2t)$",
+            "why": "coordinate derivatives"
+          },
+          {
+            "do": "Compute speed",
+            "result": "$\\sqrt{1+4t^2}$",
+            "why": "norm of velocity"
+          },
+          {
+            "do": "Set up length",
+            "result": "$L=\\int_0^1\\sqrt{1+4t^2}\\,dt$",
+            "why": "integrate speed"
+          },
+          {
+            "do": "Use the approximation",
+            "result": "$L\\approx1.479$",
+            "why": "numerical integration"
+          },
+          {
+            "do": "Compare to chord",
+            "result": "$\\sqrt2\\approx1.414$",
+            "why": "the curved path is longer"
+          }
+        ],
+        "answer": "$L=\\int_0^1\\sqrt{1+4t^2}\\,dt\\approx1.479$."
+      },
+      {
+        "problem": "An embedding interpolation is $\\gamma(t)=(1+6t,2+8t)$ for $0\\le t\\le1$. Find its path length.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$\\gamma'(t)=(6,8)$",
+            "why": "feature velocity"
+          },
+          {
+            "do": "Compute speed",
+            "result": "$\\sqrt{6^2+8^2}$",
+            "why": "Euclidean norm"
+          },
+          {
+            "do": "Simplify speed",
+            "result": "$10$",
+            "why": "$36+64=100$"
+          },
+          {
+            "do": "Integrate",
+            "result": "$L=\\int_0^1 10\\,dt$",
+            "why": "length is speed integral"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$10$",
+            "why": "one unit of parameter time"
+          }
+        ],
+        "answer": "The interpolation path length is $10$ feature units."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Robot path distance",
+        "background": "Robots need travel distance for energy and timing, not merely endpoint displacement.",
+        "numbers": "Speed $1.5$ m/s for $8$ seconds gives length $\\int_0^8 1.5\\,dt=12$ m."
+      },
+      {
+        "title": "Road mapping",
+        "background": "Map software sums many short route pieces, a discrete version of arc length.",
+        "numbers": "Segments $0.8$, $1.1$, and $0.6$ km total $2.5$ km."
+      },
+      {
+        "title": "Animation timing",
+        "background": "A camera moving at constant perceived speed needs arc length to allocate time.",
+        "numbers": "A path of length $24$ m at $3$ m/s takes $8$ seconds."
+      },
+      {
+        "title": "Signal trajectories",
+        "background": "A multifeature signal traces a curve, and length measures total joint variation.",
+        "numbers": "For $\\gamma(t)=(3t,4t)$ on $[0,1]$, total length is $5$."
+      },
+      {
+        "title": "Embedding walks",
+        "background": "Latent-space walks are judged by distance traveled in representation space.",
+        "numbers": "From $(1,1)$ to $(4,5)$, a straight interpolation has length $\\sqrt{3^2+4^2}=5$."
+      },
+      {
+        "title": "Manufacturing toolpaths",
+        "background": "CNC machines and 3-D printers estimate material and runtime from path length.",
+        "numbers": "At $50$ mm/s, a $350$ mm toolpath takes $350/50=7$ seconds."
+      }
+    ],
+    "applicationsClose": "Arc length is the shared distance ledger for motion, maps, models, and machines.",
+    "takeaways": [
+      "Arc length is $\\int_a^b\\|\\gamma'(t)\\|\\,dt$.",
+      "Speed is the norm of the velocity vector.",
+      "Straight paths match endpoint distance; curved paths can be longer.",
+      "Constant speed makes length equal speed times parameter interval."
+    ],
     "prereqs": [
       "math-12-01"
     ]
@@ -48,19 +539,267 @@
   B({
     "id": "math-12-03",
     "title": "Curvature",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: curvature.",
+    "tagline": "Curvature measures how quickly a curve changes direction, not how quickly it moves.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Arc length</i>"
+        "Arc length",
+        "unit tangent vectors",
+        "derivatives"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Frenet frame</i>"
+        "The Frenet frame",
+        "The second fundamental form",
+        "Gaussian curvature"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "normal vectors",
+        "circles",
+        "acceleration",
+        "arc-length parametrization"
       ]
     },
+    "motivation": "<p>You can feel curvature when a car turns. Speed changes the force you feel, but the road's sharpness is about how quickly the direction of the road turns per meter traveled.</p><p>Curvature removes speed and watches the unit tangent vector rotate along arc length. A line has curvature $0$; a small circle curves more sharply than a large circle.</p>",
+    "definition": "<p>For a regular curve with arc length $s$ and unit tangent $\\mathbf{T}$, the <b>curvature</b> is $$\\kappa=\\left\\|\\dfrac{d\\mathbf{T}}{ds}\\right\\|.$$ For a plane curve $\\gamma(t)=(x(t),y(t))$, $$\\kappa(t)=\\dfrac{|x'y''-y'x''|}{((x')^2+(y')^2)^{3/2}}.$$</p><p>The definition says: first normalize direction, then measure how fast that direction changes per unit length. For a circle of radius $R$, the tangent turns one radian after distance $R$, so $\\kappa=1/R$.</p><p><b>Assumptions that matter:</b> the curve is regular; required derivatives exist; curvature here is nonnegative; and changing speed alone does not change geometric curvature.</p>",
+    "worked": {
+      "problem": "Find the curvature of $\\gamma(t)=(3\\cos t,3\\sin t)$.",
+      "skills": [
+        "derivatives",
+        "speed",
+        "curvature formula"
+      ],
+      "strategy": "Use the plane formula and expect the reciprocal radius to appear.",
+      "steps": [
+        {
+          "do": "Differentiate once",
+          "result": "$x'=-3\\sin t,\\ y'=3\\cos t$",
+          "why": "velocity components"
+        },
+        {
+          "do": "Differentiate twice",
+          "result": "$x''=-3\\cos t,\\ y''=-3\\sin t$",
+          "why": "acceleration components"
+        },
+        {
+          "do": "Compute numerator",
+          "result": "$|x'y''-y'x''|=9$",
+          "why": "$9\\sin^2t+9\\cos^2t=9$"
+        },
+        {
+          "do": "Compute speed squared",
+          "result": "$(x')^2+(y')^2=9$",
+          "why": "use the trig identity"
+        },
+        {
+          "do": "Raise to $3/2$",
+          "result": "$9^{3/2}=27$",
+          "why": "the square root is 3"
+        },
+        {
+          "do": "Divide",
+          "result": "$\\kappa=9/27=1/3$",
+          "why": "apply the formula"
+        }
+      ],
+      "verify": "A radius $3$ circle should have curvature $1/3$, so the result matches geometry.",
+      "answer": "The curvature is $\\kappa=\\dfrac13$.",
+      "connects": "Curvature reads circular bending as reciprocal radius."
+    },
+    "practice": [
+      {
+        "problem": "Find the curvature of the line $\\gamma(t)=(2t,5t)$.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$x'=2,\\ y'=5$",
+            "why": "velocity is constant"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$x''=0,\\ y''=0$",
+            "why": "a line has no acceleration"
+          },
+          {
+            "do": "Compute numerator",
+            "result": "$|2\\cdot0-5\\cdot0|=0$",
+            "why": "no direction change"
+          },
+          {
+            "do": "Compute denominator",
+            "result": "$(2^2+5^2)^{3/2}=29^{3/2}$",
+            "why": "speed is nonzero"
+          },
+          {
+            "do": "Divide",
+            "result": "$\\kappa=0$",
+            "why": "zero numerator gives zero curvature"
+          }
+        ],
+        "answer": "The curvature is $0$."
+      },
+      {
+        "problem": "Find the curvature of the unit circle $\\gamma(t)=(\\cos t,\\sin t)$.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$x'=-\\sin t,\\ y'=\\cos t$",
+            "why": "velocity"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$x''=-\\cos t,\\ y''=-\\sin t$",
+            "why": "acceleration"
+          },
+          {
+            "do": "Compute numerator",
+            "result": "$1$",
+            "why": "the trig squares add to 1"
+          },
+          {
+            "do": "Compute denominator",
+            "result": "$1$",
+            "why": "speed is 1"
+          },
+          {
+            "do": "Divide",
+            "result": "$\\kappa=1$",
+            "why": "unit circle has radius 1"
+          }
+        ],
+        "answer": "The curvature is $1$."
+      },
+      {
+        "problem": "Find the curvature of a circle of radius $2$.",
+        "steps": [
+          {
+            "do": "Read the radius",
+            "result": "$R=2$",
+            "why": "circle geometry is enough"
+          },
+          {
+            "do": "Write the rule",
+            "result": "$\\kappa=1/R$",
+            "why": "curvature of a circle"
+          },
+          {
+            "do": "Substitute",
+            "result": "$\\kappa=1/2$",
+            "why": "use R equals 2"
+          },
+          {
+            "do": "Attach units",
+            "result": "inverse length",
+            "why": "curvature is per unit distance"
+          },
+          {
+            "do": "State constancy",
+            "result": "same at every point",
+            "why": "circles bend equally everywhere"
+          }
+        ],
+        "answer": "The curvature is $1/2$."
+      },
+      {
+        "problem": "Compute the curvature of $\\gamma(t)=(t,t^2)$ at $t=1$.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$x'=1,\\ y'=2t$",
+            "why": "velocity components"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$x''=0,\\ y''=2$",
+            "why": "acceleration components"
+          },
+          {
+            "do": "Compute numerator at 1",
+            "result": "$|1\\cdot2-2\\cdot0|=2$",
+            "why": "substitute t equals 1"
+          },
+          {
+            "do": "Compute denominator at 1",
+            "result": "$(1^2+2^2)^{3/2}=5\\sqrt5$",
+            "why": "speed squared is 5"
+          },
+          {
+            "do": "Divide",
+            "result": "$\\kappa=2/(5\\sqrt5)$",
+            "why": "apply the formula"
+          }
+        ],
+        "answer": "At $t=1$, $\\kappa=\\dfrac{2}{5\\sqrt5}$."
+      },
+      {
+        "problem": "A vehicle follows circular lanes of radius $25$ m and $5$ m. Compare their curvatures.",
+        "steps": [
+          {
+            "do": "Use radius $25$",
+            "result": "$\\kappa=1/25=0.04$",
+            "why": "reciprocal radius"
+          },
+          {
+            "do": "Use radius $5$",
+            "result": "$\\kappa=1/5=0.20$",
+            "why": "reciprocal radius"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.20/0.04=5$",
+            "why": "ratio of curvatures"
+          },
+          {
+            "do": "Attach units",
+            "result": "$\\text{m}^{-1}$",
+            "why": "curvature is inverse length"
+          },
+          {
+            "do": "Interpret",
+            "result": "the 5 m lane is five times sharper",
+            "why": "larger curvature means faster direction change"
+          }
+        ],
+        "answer": "The $25$ m lane has curvature $0.04\\,\\text{m}^{-1}$; the $5$ m lane has $0.20\\,\\text{m}^{-1}$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Road design",
+        "background": "Engineers limit curvature so vehicles can turn safely and comfortably.",
+        "numbers": "Radius $200$ m gives $\\kappa=0.005\\,\\text{m}^{-1}$; radius $50$ m gives $0.02\\,\\text{m}^{-1}$."
+      },
+      {
+        "title": "Robot steering",
+        "background": "Mobile robots can command curvature directly to specify how sharply to turn.",
+        "numbers": "A turn of radius $4$ m has curvature $1/4=0.25\\,\\text{m}^{-1}."
+      },
+      {
+        "title": "Graphics smoothness",
+        "background": "Design software detects sharp curve segments by estimating curvature.",
+        "numbers": "An arc of radius $10$ px has curvature $0.1$ per pixel; radius $100$ px has $0.01$."
+      },
+      {
+        "title": "Passenger comfort",
+        "background": "Autonomous driving penalizes high curvature because lateral acceleration grows with it.",
+        "numbers": "At speed $10$ m/s on radius $50$ m, acceleration is $v^2/R=2$ m/s$^2$."
+      },
+      {
+        "title": "Optimization paths",
+        "background": "A zig-zagging parameter path has high turning rate in weight space.",
+        "numbers": "Turning $0.5$ radians over length $2$ gives average curvature about $0.25$."
+      },
+      {
+        "title": "Shape analysis",
+        "background": "Vision systems use contour curvature to detect corners and object parts.",
+        "numbers": "A contour with estimated radius $8$ pixels has curvature $1/8=0.125$ per pixel."
+      }
+    ],
+    "applicationsClose": "Curvature is the clean geometry of turning, whether the curve is a road, robot path, drawing, contour, or optimization trajectory.",
+    "takeaways": [
+      "Curvature is $\\|d\\mathbf{T}/ds\\|$.",
+      "Lines have curvature 0; circles of radius R have curvature 1/R.",
+      "The plane formula uses first and second derivatives.",
+      "Changing speed alone does not change geometric curvature."
+    ],
     "prereqs": [
       "math-12-02"
     ]
@@ -69,19 +808,262 @@
   B({
     "id": "math-12-04",
     "title": "The Frenet frame",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: the frenet frame.",
+    "tagline": "The Frenet frame carries a moving set of axes along a space curve: forward, turning, and sideways.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Curvature</i>"
+        "Curvature",
+        "unit vectors",
+        "cross products"
       ],
       "leadsTo": [
-        "the next lesson, <i>Regular surfaces</i>"
+        "Regular surfaces",
+        "normal curvature",
+        "geodesics"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "orthonormal bases",
+        "arc length",
+        "acceleration",
+        "3-D geometry"
       ]
     },
+    "motivation": "<p>You already use coordinate axes to describe space. Along a moving curve, it is often better to carry axes that travel with the point.</p><p>The Frenet frame gives a local compass: $\\mathbf{T}$ points forward, $\\mathbf{N}$ points toward the turn, and $\\mathbf{B}$ completes the sideways direction.</p>",
+    "definition": "<p>For a unit-speed space curve $\\gamma(s)$ with curvature $\\kappa(s)>0$, the <b>Frenet frame</b> is $\\mathbf{T}=\\gamma'(s)$, $\\mathbf{N}=\\mathbf{T}'(s)/\\|\\mathbf{T}'(s)\\|$, and $\\mathbf{B}=\\mathbf{T}\\times\\mathbf{N}$.</p><p>Because $\\|\\mathbf{T}\\|=1$, differentiating $\\mathbf{T}\\cdot\\mathbf{T}=1$ gives $\\mathbf{T}\\cdot\\mathbf{T}'=0$. So the tangent's change is perpendicular to the tangent, exactly where the normal direction should live.</p><p><b>Assumptions that matter:</b> the clean formulas use arc length $s$; $\\kappa>0$ is needed to define $\\mathbf{N}$; and the frame is undefined where the curve has no preferred turning direction.</p>",
+    "worked": {
+      "problem": "For $\\gamma(s)=(\\cos s,\\sin s,0)$, find $\\mathbf{T}$, $\\mathbf{N}$, and $\\mathbf{B}$.",
+      "skills": [
+        "unit-speed curves",
+        "normalization",
+        "cross products"
+      ],
+      "strategy": "The circle is unit speed, so differentiate to get forward and turning directions.",
+      "steps": [
+        {
+          "do": "Differentiate the curve",
+          "result": "$\\mathbf{T}=(-\\sin s,\\cos s,0)$",
+          "why": "unit-speed tangent is position derivative"
+        },
+        {
+          "do": "Differentiate the tangent",
+          "result": "$\\mathbf{T}'=(-\\cos s,-\\sin s,0)$",
+          "why": "turning direction"
+        },
+        {
+          "do": "Compute its norm",
+          "result": "$\\|\\mathbf{T}'\\|=1$",
+          "why": "unit circle curvature is 1"
+        },
+        {
+          "do": "Normalize",
+          "result": "$\\mathbf{N}=(-\\cos s,-\\sin s,0)$",
+          "why": "divide by norm 1"
+        },
+        {
+          "do": "Cross tangent and normal",
+          "result": "$\\mathbf{B}=(0,0,1)$",
+          "why": "complete the right-handed frame"
+        }
+      ],
+      "verify": "The three vectors are unit length and pairwise perpendicular.",
+      "answer": "$\\mathbf{T}=(-\\sin s,\\cos s,0)$, $\\mathbf{N}=(-\\cos s,-\\sin s,0)$, and $\\mathbf{B}=(0,0,1)$.",
+      "connects": "The frame separates forward motion, inward turning, and out-of-plane orientation."
+    },
+    "practice": [
+      {
+        "problem": "For $\\gamma(s)=(s,0,0)$, find $\\mathbf{T}$ and explain why $\\mathbf{N}$ is not defined.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$\\mathbf{T}=(1,0,0)$",
+            "why": "line is unit speed"
+          },
+          {
+            "do": "Differentiate tangent",
+            "result": "$\\mathbf{T}'=(0,0,0)$",
+            "why": "direction does not change"
+          },
+          {
+            "do": "Compute curvature",
+            "result": "$\\kappa=0$",
+            "why": "norm of tangent derivative"
+          },
+          {
+            "do": "Check normal formula",
+            "result": "$\\mathbf{T}'/\\|\\mathbf{T}'\\|$ is undefined",
+            "why": "division by zero"
+          },
+          {
+            "do": "Interpret",
+            "result": "a line has no preferred turning side",
+            "why": "all normal directions are equally possible"
+          }
+        ],
+        "answer": "$\\mathbf{T}=(1,0,0)$; $\\mathbf{N}$ is not defined because $\\kappa=0$."
+      },
+      {
+        "problem": "For $\\gamma(s)=(0,\\cos s,\\sin s)$, find the frame.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$\\mathbf{T}=(0,-\\sin s,\\cos s)$",
+            "why": "unit tangent"
+          },
+          {
+            "do": "Differentiate tangent",
+            "result": "$\\mathbf{T}'=(0,-\\cos s,-\\sin s)$",
+            "why": "turning direction"
+          },
+          {
+            "do": "Normalize",
+            "result": "$\\mathbf{N}=(0,-\\cos s,-\\sin s)$",
+            "why": "norm is 1"
+          },
+          {
+            "do": "Cross vectors",
+            "result": "$\\mathbf{B}=(1,0,0)$",
+            "why": "right-handed orientation"
+          },
+          {
+            "do": "Check lengths",
+            "result": "all are 1",
+            "why": "orthonormal frame"
+          }
+        ],
+        "answer": "$\\mathbf{T}=(0,-\\sin s,\\cos s)$, $\\mathbf{N}=(0,-\\cos s,-\\sin s)$, $\\mathbf{B}=(1,0,0)$."
+      },
+      {
+        "problem": "At $s=0$ on the unit circle, compute the frame numerically.",
+        "steps": [
+          {
+            "do": "Evaluate tangent",
+            "result": "$\\mathbf{T}(0)=(0,1,0)$",
+            "why": "substitute sine and cosine"
+          },
+          {
+            "do": "Evaluate normal",
+            "result": "$\\mathbf{N}(0)=(-1,0,0)$",
+            "why": "points inward"
+          },
+          {
+            "do": "Evaluate binormal",
+            "result": "$\\mathbf{B}(0)=(0,0,1)$",
+            "why": "from cross product"
+          },
+          {
+            "do": "Check dot product",
+            "result": "$\\mathbf{T}\\cdot\\mathbf{N}=0$",
+            "why": "perpendicular"
+          },
+          {
+            "do": "Check cross product",
+            "result": "$\\mathbf{T}\\times\\mathbf{N}=\\mathbf{B}$",
+            "why": "orientation is consistent"
+          }
+        ],
+        "answer": "At $s=0$, the frame is $(0,1,0)$, $(-1,0,0)$, $(0,0,1)$."
+      },
+      {
+        "problem": "For a unit-speed curve with $\\mathbf{T}'=(0,3,4)$, find $\\kappa$ and $\\mathbf{N}$.",
+        "steps": [
+          {
+            "do": "Compute norm",
+            "result": "$\\sqrt{0^2+3^2+4^2}=5$",
+            "why": "curvature is this norm"
+          },
+          {
+            "do": "State curvature",
+            "result": "$\\kappa=5$",
+            "why": "unit-speed formula"
+          },
+          {
+            "do": "Normalize",
+            "result": "$\\mathbf{N}=(0,3/5,4/5)$",
+            "why": "divide by 5"
+          },
+          {
+            "do": "Check length",
+            "result": "$1$",
+            "why": "normal must be unit"
+          },
+          {
+            "do": "Interpret",
+            "result": "the curve turns sharply",
+            "why": "curvature 5 is large"
+          }
+        ],
+        "answer": "$\\kappa=5$ and $\\mathbf{N}=(0,3/5,4/5)$."
+      },
+      {
+        "problem": "A camera has $\\mathbf{T}=(1,0,0)$ and inward $\\mathbf{N}=(0,1,0)$. Find $\\mathbf{B}$.",
+        "steps": [
+          {
+            "do": "Write definition",
+            "result": "$\\mathbf{B}=\\mathbf{T}\\times\\mathbf{N}$",
+            "why": "Frenet orientation"
+          },
+          {
+            "do": "Substitute",
+            "result": "$(1,0,0)\\times(0,1,0)$",
+            "why": "given vectors"
+          },
+          {
+            "do": "Compute",
+            "result": "$(0,0,1)$",
+            "why": "standard basis cross product"
+          },
+          {
+            "do": "Check length",
+            "result": "$1$",
+            "why": "unit binormal"
+          },
+          {
+            "do": "Interpret",
+            "result": "the binormal points upward",
+            "why": "curve lies in the horizontal plane"
+          }
+        ],
+        "answer": "$\\mathbf{B}=(0,0,1)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Camera rigs",
+        "background": "Virtual cameras need forward and side directions along a path.",
+        "numbers": "On the unit circle at $s=0$, forward is $(0,1,0)$ and inward is $(-1,0,0)$."
+      },
+      {
+        "title": "Robotics orientation",
+        "background": "Robots following 3-D paths need a local frame, not only positions.",
+        "numbers": "If $\\mathbf{T}=(1,0,0)$ and $\\mathbf{N}=(0,0,1)$, then $\\mathbf{B}=(0,-1,0)$."
+      },
+      {
+        "title": "Tube meshes",
+        "background": "Graphics draws tubes by placing circles in the normal-binormal plane.",
+        "numbers": "A tube of radius $0.2$ uses offsets $0.2\\mathbf{N}$ and $0.2\\mathbf{B}$."
+      },
+      {
+        "title": "Motion comfort",
+        "background": "The normal direction points toward centripetal acceleration.",
+        "numbers": "At speed $6$ m/s on radius $12$ m, normal acceleration is $36/12=3$ m/s$^2$."
+      },
+      {
+        "title": "Trajectory analysis",
+        "background": "Learned policy paths can be decomposed into progress and correction directions.",
+        "numbers": "If $\\kappa=0.5$ and speed is $2$, direction changes at about $1$ rad/s."
+      },
+      {
+        "title": "Medical centerlines",
+        "background": "Vessel centerlines use frames to define cross-sectional planes.",
+        "numbers": "A vessel radius may be $1.5$ mm along $\\mathbf{N}$ and $1.2$ mm along $\\mathbf{B}$."
+      }
+    ],
+    "applicationsClose": "The Frenet frame is a moving compass: forward, inward, and sideways directions follow the curve.",
+    "takeaways": [
+      "For unit speed, $\\mathbf{T}=\\gamma'(s)$.",
+      "When $\\kappa>0$, $\\mathbf{N}=\\mathbf{T}'/\\|\\mathbf{T}'\\|$.",
+      "The binormal is $\\mathbf{B}=\\mathbf{T}\\times\\mathbf{N}$.",
+      "The frame is useful whenever a curve needs local orientation."
+    ],
     "prereqs": [
       "math-12-03"
     ]
@@ -90,19 +1072,262 @@
   B({
     "id": "math-12-05",
     "title": "Regular surfaces",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: regular surfaces.",
+    "tagline": "A regular surface is a two-parameter patch that locally looks like a clean, nonfolded sheet.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Frenet frame</i>"
+        "Parametrized curves",
+        "partial derivatives",
+        "cross products"
       ],
       "leadsTo": [
-        "the next lesson, <i>Tangent planes</i>"
+        "Tangent planes",
+        "The first fundamental form",
+        "The second fundamental form"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "coordinate patches",
+        "normal vectors",
+        "Jacobian rank",
+        "manifolds"
       ]
     },
+    "motivation": "<p>You already know that one parameter traces a curve. A surface needs two parameters, one for each independent way to move across a sheet.</p><p>The word regular protects us from collapsed coordinates. A regular patch has two genuine surface directions, so tangent planes and normals make sense.</p>",
+    "definition": "<p>A surface patch is a map $\\mathbf{x}(u,v):U\\subset\\mathbb{R}^2\\to\\mathbb{R}^3$. It is <b>regular</b> if $\\mathbf{x}_u$ and $\\mathbf{x}_v$ are linearly independent, equivalently $\\mathbf{x}_u\\times\\mathbf{x}_v\\ne\\mathbf{0}$.</p><p>The reason is geometric: $\\mathbf{x}_u$ and $\\mathbf{x}_v$ are the two coordinate directions on the surface. If they are independent, they span a tangent plane; if not, the patch has locally collapsed.</p><p><b>Assumptions that matter:</b> the patch is differentiable; regularity is local; one surface may need several patches; and parameter names are coordinates, not necessarily physical axes.</p>",
+    "worked": {
+      "problem": "Show that $\\mathbf{x}(u,v)=(u,v,u+v)$ is regular.",
+      "skills": [
+        "partial derivatives",
+        "cross products",
+        "regularity"
+      ],
+      "strategy": "Compute the two coordinate directions and test whether their cross product vanishes.",
+      "steps": [
+        {
+          "do": "Compute $\\mathbf{x}_u$",
+          "result": "$(1,0,1)$",
+          "why": "differentiate with respect to u"
+        },
+        {
+          "do": "Compute $\\mathbf{x}_v$",
+          "result": "$(0,1,1)$",
+          "why": "differentiate with respect to v"
+        },
+        {
+          "do": "Form the cross product",
+          "result": "$\\mathbf{x}_u\\times\\mathbf{x}_v=(-1,-1,1)$",
+          "why": "normal direction"
+        },
+        {
+          "do": "Check nonzero",
+          "result": "$(-1,-1,1)\\ne(0,0,0)$",
+          "why": "directions are independent"
+        },
+        {
+          "do": "State regularity",
+          "result": "regular for all $(u,v)$",
+          "why": "the cross product is constant and nonzero"
+        }
+      ],
+      "verify": "The two partial directions are not multiples, so they span a plane everywhere.",
+      "answer": "The patch is regular everywhere.",
+      "connects": "Regularity is the surface analogue of nonzero velocity for a curve."
+    },
+    "practice": [
+      {
+        "problem": "Show that $\\mathbf{x}(u,v)=(u,v,0)$ is regular.",
+        "steps": [
+          {
+            "do": "Compute $\\mathbf{x}_u$",
+            "result": "$(1,0,0)$",
+            "why": "u direction"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_v$",
+            "result": "$(0,1,0)$",
+            "why": "v direction"
+          },
+          {
+            "do": "Cross them",
+            "result": "$(0,0,1)$",
+            "why": "standard basis cross product"
+          },
+          {
+            "do": "Check nonzero",
+            "result": "$(0,0,1)\\ne\\mathbf{0}$",
+            "why": "independent directions"
+          },
+          {
+            "do": "Conclude",
+            "result": "regular everywhere",
+            "why": "cross product never vanishes"
+          }
+        ],
+        "answer": "The plane patch is regular everywhere."
+      },
+      {
+        "problem": "Show that $\\mathbf{x}(u,v)=(u,v,u^2+v^2)$ is regular.",
+        "steps": [
+          {
+            "do": "Compute $\\mathbf{x}_u$",
+            "result": "$(1,0,2u)$",
+            "why": "partial in u"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_v$",
+            "result": "$(0,1,2v)$",
+            "why": "partial in v"
+          },
+          {
+            "do": "Cross them",
+            "result": "$(-2u,-2v,1)$",
+            "why": "determinant calculation"
+          },
+          {
+            "do": "Inspect third component",
+            "result": "$1$",
+            "why": "the vector cannot be zero"
+          },
+          {
+            "do": "Conclude",
+            "result": "regular for all $(u,v)$",
+            "why": "cross product never vanishes"
+          }
+        ],
+        "answer": "The paraboloid patch is regular everywhere."
+      },
+      {
+        "problem": "Check regularity of $\\mathbf{x}(u,v)=(u+v,2u+2v,0)$.",
+        "steps": [
+          {
+            "do": "Compute $\\mathbf{x}_u$",
+            "result": "$(1,2,0)$",
+            "why": "partial in u"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_v$",
+            "result": "$(1,2,0)$",
+            "why": "partial in v"
+          },
+          {
+            "do": "Compare vectors",
+            "result": "$\\mathbf{x}_u=\\mathbf{x}_v$",
+            "why": "they are dependent"
+          },
+          {
+            "do": "Cross product",
+            "result": "$\\mathbf{0}$",
+            "why": "equal vectors cross to zero"
+          },
+          {
+            "do": "Conclude",
+            "result": "not regular",
+            "why": "the patch collapses to a line"
+          }
+        ],
+        "answer": "It is not regular because the parameter directions are dependent."
+      },
+      {
+        "problem": "For the sphere patch $\\mathbf{x}(u,v)=(\\cos u\\sin v,\\sin u\\sin v,\\cos v)$, explain why $v=0$ is not regular.",
+        "steps": [
+          {
+            "do": "Evaluate at v equals zero",
+            "result": "$\\mathbf{x}(u,0)=(0,0,1)$",
+            "why": "all u values map to the north pole"
+          },
+          {
+            "do": "Notice collapse",
+            "result": "the u direction changes no point",
+            "why": "many parameters give one point"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_u$ at $v=0$",
+            "result": "$(0,0,0)$",
+            "why": "terms contain sine of zero"
+          },
+          {
+            "do": "Cross with zero",
+            "result": "$\\mathbf{0}$",
+            "why": "one direction vanished"
+          },
+          {
+            "do": "Conclude",
+            "result": "not regular at the pole",
+            "why": "spherical coordinates collapse there"
+          }
+        ],
+        "answer": "The patch is not regular at $v=0$ because $\\mathbf{x}_u=\\mathbf{0}$ there."
+      },
+      {
+        "problem": "A height field is $\\mathbf{x}(u,v)=(u,v,0.1u+0.2v)$. Verify regularity and find a normal direction.",
+        "steps": [
+          {
+            "do": "Compute $\\mathbf{x}_u$",
+            "result": "$(1,0,0.1)$",
+            "why": "partial in u"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_v$",
+            "result": "$(0,1,0.2)$",
+            "why": "partial in v"
+          },
+          {
+            "do": "Cross them",
+            "result": "$(-0.1,-0.2,1)$",
+            "why": "normal direction"
+          },
+          {
+            "do": "Check nonzero",
+            "result": "$(-0.1,-0.2,1)\\ne\\mathbf{0}$",
+            "why": "regularity holds"
+          },
+          {
+            "do": "State normal",
+            "result": "$(-0.1,-0.2,1)$",
+            "why": "any nonzero multiple works"
+          }
+        ],
+        "answer": "The patch is regular, with normal direction $(-0.1,-0.2,1)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Mesh parameterization",
+        "background": "Graphics builds surfaces from two-dimensional parameter domains, and regularity prevents degeneration.",
+        "numbers": "For $\\mathbf{x}(u,v)=(u,v,0)$, area scale is $\\|\\mathbf{x}_u\\times\\mathbf{x}_v\\|=1$."
+      },
+      {
+        "title": "Terrain height fields",
+        "background": "Maps use $z=f(u,v)$ surfaces; these are regular because the first two coordinates are $u$ and $v$.",
+        "numbers": "For $z=0.3u-0.4v$, a normal direction is $(-0.3,0.4,1)$."
+      },
+      {
+        "title": "Texture coordinates",
+        "background": "Texture mapping fails when parameter patches collapse or stretch too much.",
+        "numbers": "If area scale is $0.01$, a parameter square covers one hundredth the expected surface area."
+      },
+      {
+        "title": "Surface reconstruction",
+        "background": "Scans fit local surface patches to point clouds, and regular patches give stable normals.",
+        "numbers": "Directions $(1,0,0)$ and $(0,2,0)$ have cross product magnitude $2$."
+      },
+      {
+        "title": "Robotics contact",
+        "background": "A gripper needs a surface normal to plan contact forces.",
+        "numbers": "Patch directions $(1,0,0)$ and $(0,1,1)$ give normal $(0,-1,1)$."
+      },
+      {
+        "title": "Manifold learning",
+        "background": "Data manifolds are locally sheet-like in high-dimensional spaces, and regularity is the smooth idealization.",
+        "numbers": "Independent tangent vectors of lengths $3$ and $4$ at right angles give local area scale $12$."
+      }
+    ],
+    "applicationsClose": "Regularity guarantees that a two-parameter description behaves like a surface patch rather than a collapsed coordinate trick.",
+    "takeaways": [
+      "A surface patch is a map $\\mathbf{x}(u,v)$ into $\\mathbb{R}^3$.",
+      "Regularity means $\\mathbf{x}_u$ and $\\mathbf{x}_v$ are independent.",
+      "Equivalently, $\\mathbf{x}_u\\times\\mathbf{x}_v\\ne\\mathbf{0}$.",
+      "Regular patches have tangent planes and normal directions."
+    ],
     "prereqs": [
       "math-12-04"
     ]
@@ -111,19 +1336,267 @@
   B({
     "id": "math-12-06",
     "title": "Tangent planes",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: tangent planes.",
+    "tagline": "A tangent plane is the best flat approximation to a surface at one point.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Regular surfaces</i>"
+        "Regular surfaces",
+        "partial derivatives",
+        "planes in 3-D"
       ],
       "leadsTo": [
-        "the next lesson, <i>The differential of a map</i>"
+        "The differential of a map",
+        "The first fundamental form",
+        "The second fundamental form"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "normal vectors",
+        "linearization",
+        "gradients",
+        "local coordinates"
       ]
     },
+    "motivation": "<p>You already know a tangent line as the best straight-line view of a curve near a point. A surface needs the same idea with one more dimension.</p><p>The tangent plane is built from the two parameter directions. Close to the point, the surface behaves like the plane spanned by those directions.</p>",
+    "definition": "<p>For a regular patch $\\mathbf{x}(u,v)$, the <b>tangent plane</b> at $(u_0,v_0)$ is the plane through $\\mathbf{x}(u_0,v_0)$ spanned by $\\mathbf{x}_u(u_0,v_0)$ and $\\mathbf{x}_v(u_0,v_0)$.</p><p>Equivalently, with normal $\\mathbf{n}=\\mathbf{x}_u\\times\\mathbf{x}_v$, the plane is $\\mathbf{n}\\cdot(\\mathbf{X}-\\mathbf{x}(u_0,v_0))=0$. This works because a normal is perpendicular to every direction in the plane.</p><p><b>Assumptions that matter:</b> the patch is regular at the point; tangent planes are local approximations; and different regular coordinates for the same surface give the same tangent plane.</p>",
+    "worked": {
+      "problem": "Find the tangent plane to $\\mathbf{x}(u,v)=(u,v,u^2+v^2)$ at $(u,v)=(1,2)$.",
+      "skills": [
+        "partial derivatives",
+        "normal vectors",
+        "plane equations"
+      ],
+      "strategy": "Compute the point, compute two tangent directions, cross them for a normal, then write the plane.",
+      "steps": [
+        {
+          "do": "Evaluate the point",
+          "result": "$\\mathbf{x}(1,2)=(1,2,5)$",
+          "why": "$1^2+2^2=5$"
+        },
+        {
+          "do": "Compute $\\mathbf{x}_u(1,2)$",
+          "result": "$(1,0,2)$",
+          "why": "$\\mathbf{x}_u=(1,0,2u)$"
+        },
+        {
+          "do": "Compute $\\mathbf{x}_v(1,2)$",
+          "result": "$(0,1,4)$",
+          "why": "$\\mathbf{x}_v=(0,1,2v)$"
+        },
+        {
+          "do": "Cross directions",
+          "result": "$\\mathbf{n}=(-2,-4,1)$",
+          "why": "normal vector"
+        },
+        {
+          "do": "Write plane",
+          "result": "$-2(x-1)-4(y-2)+(z-5)=0$",
+          "why": "normal dot displacement is zero"
+        },
+        {
+          "do": "Simplify",
+          "result": "$z=2x+4y-5$",
+          "why": "solve for z"
+        }
+      ],
+      "verify": "The height function linearization gives $5+2(x-1)+4(y-2)$, the same plane.",
+      "answer": "The tangent plane is $z=2x+4y-5$.",
+      "connects": "A tangent plane is the surface's first-order local model."
+    },
+    "practice": [
+      {
+        "problem": "Find the tangent plane to $z=3x+2y$ at $(1,1,5)$.",
+        "steps": [
+          {
+            "do": "Recognize surface",
+            "result": "already a plane",
+            "why": "the height is linear"
+          },
+          {
+            "do": "Compute slopes",
+            "result": "$z_x=3,\\ z_y=2$",
+            "why": "partial derivatives"
+          },
+          {
+            "do": "Write linearization",
+            "result": "$z-5=3(x-1)+2(y-1)$",
+            "why": "point-slope plane form"
+          },
+          {
+            "do": "Simplify",
+            "result": "$z=3x+2y$",
+            "why": "the original plane returns"
+          },
+          {
+            "do": "Interpret",
+            "result": "flat surfaces equal their tangent planes",
+            "why": "no curvature is present"
+          }
+        ],
+        "answer": "The tangent plane is $z=3x+2y$."
+      },
+      {
+        "problem": "Find the tangent plane to $z=x^2+y^2$ at $(0,0,0)$.",
+        "steps": [
+          {
+            "do": "Compute $z_x$",
+            "result": "$2x$",
+            "why": "partial derivative"
+          },
+          {
+            "do": "Compute $z_y$",
+            "result": "$2y$",
+            "why": "partial derivative"
+          },
+          {
+            "do": "Evaluate slopes",
+            "result": "$0$ and $0$",
+            "why": "at the origin"
+          },
+          {
+            "do": "Write plane",
+            "result": "$z=0$",
+            "why": "linearization has no slope terms"
+          },
+          {
+            "do": "Interpret",
+            "result": "horizontal tangent plane",
+            "why": "the bowl bottom is flat to first order"
+          }
+        ],
+        "answer": "The tangent plane is $z=0$."
+      },
+      {
+        "problem": "For $\\mathbf{x}(u,v)=(u,v,u+2v)$ at $(2,1)$, find a normal vector and tangent plane.",
+        "steps": [
+          {
+            "do": "Evaluate point",
+            "result": "$(2,1,4)$",
+            "why": "substitute parameters"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_u$",
+            "result": "$(1,0,1)$",
+            "why": "partial in u"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_v$",
+            "result": "$(0,1,2)$",
+            "why": "partial in v"
+          },
+          {
+            "do": "Cross directions",
+            "result": "$(-1,-2,1)$",
+            "why": "normal vector"
+          },
+          {
+            "do": "Write plane",
+            "result": "$-(x-2)-2(y-1)+(z-4)=0$",
+            "why": "normal dot displacement"
+          }
+        ],
+        "answer": "A normal is $(-1,-2,1)$, and the plane is $z=x+2y$."
+      },
+      {
+        "problem": "Use the tangent plane to $z=x^2+y^2$ at $(1,2)$ to approximate $z$ at $(1.1,1.9)$.",
+        "steps": [
+          {
+            "do": "Use the plane",
+            "result": "$z=2x+4y-5$",
+            "why": "from the worked example"
+          },
+          {
+            "do": "Substitute x",
+            "result": "$2(1.1)=2.2$",
+            "why": "first term"
+          },
+          {
+            "do": "Substitute y",
+            "result": "$4(1.9)=7.6$",
+            "why": "second term"
+          },
+          {
+            "do": "Combine",
+            "result": "$2.2+7.6-5=4.8$",
+            "why": "evaluate plane"
+          },
+          {
+            "do": "Compare exact",
+            "result": "$1.1^2+1.9^2=4.82$",
+            "why": "close to approximation"
+          }
+        ],
+        "answer": "The tangent-plane approximation is $4.8$; the exact value is $4.82$."
+      },
+      {
+        "problem": "A loss surface has $L=10$, $L_{w_1}=4$, and $L_{w_2}=-1$ at $(2,3)$. Estimate $L(2.1,2.8)$.",
+        "steps": [
+          {
+            "do": "Write linear model",
+            "result": "$L\\approx10+4(w_1-2)-1(w_2-3)$",
+            "why": "tangent plane in parameter space"
+          },
+          {
+            "do": "Compute first change",
+            "result": "$0.1$",
+            "why": "w1 moved from 2 to 2.1"
+          },
+          {
+            "do": "Compute second change",
+            "result": "$-0.2$",
+            "why": "w2 moved from 3 to 2.8"
+          },
+          {
+            "do": "Substitute",
+            "result": "$10+4(0.1)-1(-0.2)$",
+            "why": "plug into plane"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$10.6$",
+            "why": "$10+0.4+0.2=10.6$"
+          }
+        ],
+        "answer": "The estimated loss is $10.6$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Linearization in ML",
+        "background": "Training uses local linear information about loss surfaces to predict changes.",
+        "numbers": "If gradient is $(2,-3)$ and step is $(0.1,0.2)$, predicted change is $0.2-0.6=-0.4$."
+      },
+      {
+        "title": "Surface normals in graphics",
+        "background": "Lighting calculations need tangent-plane normals to compute brightness.",
+        "numbers": "Normal $(0,0,1)$ dotted with light $(0,0,1)$ gives brightness factor $1$."
+      },
+      {
+        "title": "Terrain approximation",
+        "background": "Robots approximate small patches of ground by planes for footing.",
+        "numbers": "Plane $z=0.1x+0.2y+3$ predicts height $3.5$ at $(1,2)$."
+      },
+      {
+        "title": "Collision detection",
+        "background": "Physics engines use local tangent planes to model contact response.",
+        "numbers": "A vertical velocity $-4$ m/s reflects to $4$ m/s against horizontal normal $(0,0,1)$."
+      },
+      {
+        "title": "Differentiable rendering",
+        "background": "Pixel changes can be approximated by tangent-plane changes in geometry.",
+        "numbers": "A $0.01$ geometry change with slope $7$ changes a value by about $0.07$."
+      },
+      {
+        "title": "Trust regions",
+        "background": "Optimizers compare local tangent models with actual loss after a step.",
+        "numbers": "Predicted loss $12+(-5)(0.2)=11$ can be checked against observed loss."
+      }
+    ],
+    "applicationsClose": "Tangent planes are the local flat language shared by geometry, rendering, terrain, contact, and loss approximation.",
+    "takeaways": [
+      "A tangent plane is spanned by $\\mathbf{x}_u$ and $\\mathbf{x}_v$.",
+      "A normal vector is $\\mathbf{x}_u\\times\\mathbf{x}_v$.",
+      "For a height field, the tangent plane is ordinary linearization.",
+      "Tangent planes are local approximations, not global replacements."
+    ],
     "prereqs": [
       "math-12-05"
     ]
@@ -132,19 +1605,267 @@
   B({
     "id": "math-12-07",
     "title": "The differential of a map",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: the differential of a map.",
+    "tagline": "The differential is the best linear description of how a map moves tiny tangent vectors.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Tangent planes</i>"
+        "Tangent planes",
+        "linear maps",
+        "Jacobians"
       ],
       "leadsTo": [
-        "the next lesson, <i>The first fundamental form</i>"
+        "The first fundamental form",
+        "change of coordinates",
+        "backpropagation geometry"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "matrix multiplication",
+        "chain rule",
+        "linearization",
+        "tangent vectors"
       ]
     },
+    "motivation": "<p>You already know a derivative for one-variable functions: near a point, it predicts how a small input change changes the output. For maps with several inputs and outputs, small changes have directions.</p><p>The differential is the linear map that sends tiny tangent vectors at the input to tiny tangent vectors at the output. In coordinates, it is the Jacobian doing its honest local work.</p>",
+    "definition": "<p>For a differentiable map $F:\\mathbb{R}^m\\to\\mathbb{R}^n$, the <b>differential</b> at $p$ is the linear map $dF_p$ satisfying $F(p+h)\\approx F(p)+dF_p(h)$ for small $h$. In standard coordinates, $dF_p$ is multiplication by the Jacobian $J_F(p)$.</p><p>The chain rule says $d(G\\circ F)_p=dG_{F(p)}\\circ dF_p$. First $F$ moves the small displacement; then $G$ linearizes the moved displacement.</p><p><b>Assumptions that matter:</b> $F$ is differentiable at the point; the differential acts on tangent vectors; and matrix entries depend on coordinate choices even when the geometric linear action is the same.</p>",
+    "worked": {
+      "problem": "For $F(u,v)=(u^2+v,uv)$, compute $dF_{(2,3)}$ and apply it to $h=(0.1,-0.2)$.",
+      "skills": [
+        "Jacobians",
+        "linear maps",
+        "local approximation"
+      ],
+      "strategy": "Compute partial derivatives, evaluate the Jacobian, then multiply by the small vector.",
+      "steps": [
+        {
+          "do": "Compute first row partials",
+          "result": "$(2u,1)$",
+          "why": "derivatives of $u^2+v$"
+        },
+        {
+          "do": "Compute second row partials",
+          "result": "$(v,u)$",
+          "why": "derivatives of $uv$"
+        },
+        {
+          "do": "Evaluate Jacobian",
+          "result": "$J_F(2,3)=\\begin{pmatrix}4&1\\\\3&2\\end{pmatrix}$",
+          "why": "substitute u and v"
+        },
+        {
+          "do": "Multiply by h",
+          "result": "$\\begin{pmatrix}4&1\\\\3&2\\end{pmatrix}\\begin{pmatrix}0.1\\\\-0.2\\end{pmatrix}$",
+          "why": "apply the linear map"
+        },
+        {
+          "do": "Compute first component",
+          "result": "$0.2$",
+          "why": "$4(0.1)-0.2=0.2$"
+        },
+        {
+          "do": "Compute second component",
+          "result": "$-0.1$",
+          "why": "$3(0.1)+2(-0.2)=-0.1$"
+        }
+      ],
+      "verify": "The exact change is close to $(0.21,-0.12)$, so the linear prediction is sensible.",
+      "answer": "$dF_{(2,3)}$ has matrix $\\begin{pmatrix}4&1\\\\3&2\\end{pmatrix}$, and $dF_{(2,3)}(h)=(0.2,-0.1)$.",
+      "connects": "The differential is tangent-vector local prediction."
+    },
+    "practice": [
+      {
+        "problem": "For $F(x,y)=(x+y,x-y)$, find $dF_{(1,2)}(3,4)$.",
+        "steps": [
+          {
+            "do": "Compute Jacobian",
+            "result": "$\\begin{pmatrix}1&1\\\\1&-1\\end{pmatrix}$",
+            "why": "partials are constant"
+          },
+          {
+            "do": "Note point independence",
+            "result": "same at $(1,2)$",
+            "why": "the map is linear"
+          },
+          {
+            "do": "Multiply",
+            "result": "$\\begin{pmatrix}1&1\\\\1&-1\\end{pmatrix}\\begin{pmatrix}3\\\\4\\end{pmatrix}$",
+            "why": "apply differential"
+          },
+          {
+            "do": "First component",
+            "result": "$7$",
+            "why": "3 plus 4"
+          },
+          {
+            "do": "Second component",
+            "result": "$-1$",
+            "why": "3 minus 4"
+          }
+        ],
+        "answer": "$dF_{(1,2)}(3,4)=(7,-1)$."
+      },
+      {
+        "problem": "For $F(x,y)=(x^2,y^2)$, compute $dF_{(3,4)}(0.5,-0.25)$.",
+        "steps": [
+          {
+            "do": "Compute Jacobian",
+            "result": "$\\begin{pmatrix}2x&0\\\\0&2y\\end{pmatrix}$",
+            "why": "partials of squared coordinates"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\begin{pmatrix}6&0\\\\0&8\\end{pmatrix}$",
+            "why": "at (3,4)"
+          },
+          {
+            "do": "Multiply",
+            "result": "$(6\\cdot0.5,8\\cdot(-0.25))$",
+            "why": "diagonal scaling"
+          },
+          {
+            "do": "Simplify",
+            "result": "$(3,-2)$",
+            "why": "compute products"
+          },
+          {
+            "do": "Interpret",
+            "result": "different directions stretch differently",
+            "why": "local linear scaling"
+          }
+        ],
+        "answer": "$dF_{(3,4)}(0.5,-0.25)=(3,-2)$."
+      },
+      {
+        "problem": "For $F(x,y,z)=x+2y-z$, find $dF_{(0,0,0)}(1,3,5)$.",
+        "steps": [
+          {
+            "do": "Compute Jacobian row",
+            "result": "$(1,2,-1)$",
+            "why": "gradient of scalar map"
+          },
+          {
+            "do": "Apply to vector",
+            "result": "$1\\cdot1+2\\cdot3-1\\cdot5$",
+            "why": "row dot product"
+          },
+          {
+            "do": "Simplify",
+            "result": "$2$",
+            "why": "1 plus 6 minus 5"
+          },
+          {
+            "do": "State output type",
+            "result": "scalar tangent change",
+            "why": "target is one-dimensional"
+          },
+          {
+            "do": "Check linearity",
+            "result": "same at every point",
+            "why": "the map is linear"
+          }
+        ],
+        "answer": "$dF_{(0,0,0)}(1,3,5)=2$."
+      },
+      {
+        "problem": "Check the chain rule for $F(x)=x^2$ and $G(y)=3y+1$ at $x=2$.",
+        "steps": [
+          {
+            "do": "Compute $dF_2$",
+            "result": "$4$",
+            "why": "derivative of x squared at 2"
+          },
+          {
+            "do": "Compute $dG_{F(2)}$",
+            "result": "$3$",
+            "why": "derivative of 3y plus 1"
+          },
+          {
+            "do": "Compose differentials",
+            "result": "$3\\cdot4=12$",
+            "why": "chain rule product"
+          },
+          {
+            "do": "Compose functions",
+            "result": "$(G\\circ F)(x)=3x^2+1$",
+            "why": "substitute F into G"
+          },
+          {
+            "do": "Differentiate directly",
+            "result": "$6x|_{x=2}=12$",
+            "why": "same result"
+          }
+        ],
+        "answer": "Both methods give $d(G\\circ F)_2=12$."
+      },
+      {
+        "problem": "A preprocessing map is $F(x,y)=((x-10)/5,(y-100)/20)$. Apply its differential to change $(1,4)$.",
+        "steps": [
+          {
+            "do": "Compute Jacobian",
+            "result": "$\\begin{pmatrix}0.2&0\\\\0&0.05\\end{pmatrix}$",
+            "why": "constant scaling derivatives"
+          },
+          {
+            "do": "Multiply first component",
+            "result": "$0.2\\cdot1=0.2$",
+            "why": "x normalization"
+          },
+          {
+            "do": "Multiply second component",
+            "result": "$0.05\\cdot4=0.2$",
+            "why": "y normalization"
+          },
+          {
+            "do": "Write result",
+            "result": "$(0.2,0.2)$",
+            "why": "combine components"
+          },
+          {
+            "do": "Interpret",
+            "result": "different raw units become comparable",
+            "why": "both normalized changes match"
+          }
+        ],
+        "answer": "The differential sends $(1,4)$ to $(0.2,0.2)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Backpropagation",
+        "background": "Neural networks repeatedly apply differentials through composed maps.",
+        "numbers": "Layer derivatives $0.5$ and $3$ compose to $1.5$."
+      },
+      {
+        "title": "Feature normalization",
+        "background": "Preprocessing maps raw feature changes to normalized changes.",
+        "numbers": "For $z=(x-50)/10$, raw change $2$ becomes $0.2$."
+      },
+      {
+        "title": "Graphics transforms",
+        "background": "Transformations move points and tangent directions through Jacobians.",
+        "numbers": "Scaling $(x,y)$ by $(2,3)$ sends tangent $(1,1)$ to $(2,3)$."
+      },
+      {
+        "title": "Robot kinematics",
+        "background": "A robot arm Jacobian maps joint velocity to end-effector velocity.",
+        "numbers": "If $J=\\begin{pmatrix}2&0\\\\0&1\\end{pmatrix}$ and velocity is $(0.1,0.3)$, output is $(0.2,0.3)$."
+      },
+      {
+        "title": "Sensitivity analysis",
+        "background": "Local Jacobians estimate output changes caused by small input perturbations.",
+        "numbers": "Jacobian norm $4$ means perturbation length $0.01$ can cause change about $0.04$."
+      },
+      {
+        "title": "Coordinate changes",
+        "background": "Geometry often changes coordinates while preserving tangent-vector information.",
+        "numbers": "At radius $2$, a polar angle change $d\\theta=0.2$ contributes arc length about $0.4$."
+      }
+    ],
+    "applicationsClose": "The differential is the shared linear language behind backprop, kinematics, graphics, preprocessing, and sensitivity.",
+    "takeaways": [
+      "The differential $dF_p$ is the best linear approximation to $F$ at $p$.",
+      "In coordinates, it is the Jacobian matrix.",
+      "It acts on tangent vectors or small displacements.",
+      "The chain rule composes differentials in map order."
+    ],
     "prereqs": [
       "math-12-06"
     ]
@@ -153,19 +1874,272 @@
   B({
     "id": "math-12-08",
     "title": "The first fundamental form",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: the first fundamental form.",
+    "tagline": "The first fundamental form tells a surface how to measure lengths, angles, and areas from its coordinates.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The differential of a map</i>"
+        "Tangent planes",
+        "dot products",
+        "differentials"
       ],
       "leadsTo": [
-        "the next lesson, <i>The second fundamental form</i>"
+        "The second fundamental form",
+        "Gaussian curvature",
+        "geodesics"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "metrics",
+        "arc length",
+        "surface area",
+        "angle measurement"
       ]
     },
+    "motivation": "<p>A surface patch may use coordinates that stretch, skew, or compress the actual surface. A small coordinate move is not automatically the true physical distance.</p><p>The first fundamental form is the surface's measuring rule. It records dot products of coordinate tangent vectors, so coordinates can measure real lengths and angles.</p>",
+    "definition": "<p>For a regular patch $\\mathbf{x}(u,v)$, define $E=\\mathbf{x}_u\\cdot\\mathbf{x}_u$, $F=\\mathbf{x}_u\\cdot\\mathbf{x}_v$, and $G=\\mathbf{x}_v\\cdot\\mathbf{x}_v$. The <b>first fundamental form</b> is $$I=E\\,du^2+2F\\,du\\,dv+G\\,dv^2.$$</p><p>For a tangent vector $a\\mathbf{x}_u+b\\mathbf{x}_v$, expanding its dot product with itself gives squared length $Ea^2+2Fab+Gb^2$. That expansion is the whole idea.</p><p><b>Assumptions that matter:</b> the patch is regular; $F$ measures coordinate skew; and the form measures intrinsic lengths on the surface, not just drawings in the parameter plane.</p>",
+    "worked": {
+      "problem": "For $\\mathbf{x}(u,v)=(u,v,u+v)$, compute $E,F,G$ and the squared length of coordinate vector $(2,-1)$.",
+      "skills": [
+        "dot products",
+        "metric coefficients",
+        "tangent-vector length"
+      ],
+      "strategy": "Find coordinate tangent vectors, dot them, then use the quadratic length formula.",
+      "steps": [
+        {
+          "do": "Compute $\\mathbf{x}_u$",
+          "result": "$(1,0,1)$",
+          "why": "partial in u"
+        },
+        {
+          "do": "Compute $\\mathbf{x}_v$",
+          "result": "$(0,1,1)$",
+          "why": "partial in v"
+        },
+        {
+          "do": "Compute $E$",
+          "result": "$2$",
+          "why": "dot xu with itself"
+        },
+        {
+          "do": "Compute $F$",
+          "result": "$1$",
+          "why": "dot xu with xv"
+        },
+        {
+          "do": "Compute $G$",
+          "result": "$2$",
+          "why": "dot xv with itself"
+        },
+        {
+          "do": "Apply the form",
+          "result": "$2(2)^2+2(1)(2)(-1)+2(-1)^2$",
+          "why": "use a equals 2 and b equals -1"
+        },
+        {
+          "do": "Simplify",
+          "result": "$6$",
+          "why": "$8-4+2=6$"
+        }
+      ],
+      "verify": "The actual tangent vector is $(2,-1,1)$, whose squared norm is also $6$.",
+      "answer": "$E=2$, $F=1$, $G=2$, and the squared length is $6$.",
+      "connects": "The first fundamental form lets coordinates measure real tangent lengths."
+    },
+    "practice": [
+      {
+        "problem": "For $\\mathbf{x}(u,v)=(u,v,0)$, compute $E,F,G$.",
+        "steps": [
+          {
+            "do": "Compute $\\mathbf{x}_u$",
+            "result": "$(1,0,0)$",
+            "why": "u direction"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_v$",
+            "result": "$(0,1,0)$",
+            "why": "v direction"
+          },
+          {
+            "do": "Compute $E$",
+            "result": "$1$",
+            "why": "unit u direction"
+          },
+          {
+            "do": "Compute $F$",
+            "result": "$0$",
+            "why": "directions are perpendicular"
+          },
+          {
+            "do": "Compute $G$",
+            "result": "$1$",
+            "why": "unit v direction"
+          }
+        ],
+        "answer": "$E=1$, $F=0$, $G=1$."
+      },
+      {
+        "problem": "For $\\mathbf{x}(u,v)=(2u,3v,0)$, compute the squared length of coordinate vector $(1,1)$.",
+        "steps": [
+          {
+            "do": "Compute $\\mathbf{x}_u$",
+            "result": "$(2,0,0)$",
+            "why": "partial in u"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_v$",
+            "result": "$(0,3,0)$",
+            "why": "partial in v"
+          },
+          {
+            "do": "Find coefficients",
+            "result": "$E=4,\\ F=0,\\ G=9$",
+            "why": "dot products"
+          },
+          {
+            "do": "Apply to vector",
+            "result": "$4(1)^2+0+9(1)^2$",
+            "why": "quadratic form"
+          },
+          {
+            "do": "Simplify",
+            "result": "$13$",
+            "why": "squared length"
+          }
+        ],
+        "answer": "The squared length is $13$."
+      },
+      {
+        "problem": "For $\\mathbf{x}(u,v)=(u,v,u^2+v^2)$, find $E,F,G$ at $(0,0)$.",
+        "steps": [
+          {
+            "do": "Compute $\\mathbf{x}_u$",
+            "result": "$(1,0,2u)$",
+            "why": "partial in u"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_v$",
+            "result": "$(0,1,2v)$",
+            "why": "partial in v"
+          },
+          {
+            "do": "Evaluate at origin",
+            "result": "$(1,0,0)$ and $(0,1,0)$",
+            "why": "substitute"
+          },
+          {
+            "do": "Compute dot products",
+            "result": "$E=1,\\ F=0,\\ G=1$",
+            "why": "standard perpendicular unit directions"
+          },
+          {
+            "do": "Interpret",
+            "result": "locally flat to first order",
+            "why": "the tangent plane is horizontal"
+          }
+        ],
+        "answer": "At $(0,0)$, $E=1$, $F=0$, $G=1$."
+      },
+      {
+        "problem": "If $E=4$, $F=1$, $G=3$, find the squared length of coordinate vector $(1,2)$.",
+        "steps": [
+          {
+            "do": "Write formula",
+            "result": "$Ea^2+2Fab+Gb^2$",
+            "why": "first fundamental form"
+          },
+          {
+            "do": "Substitute",
+            "result": "$4(1)^2+2(1)(1)(2)+3(2)^2$",
+            "why": "plug in values"
+          },
+          {
+            "do": "Compute first term",
+            "result": "$4$",
+            "why": "four times one"
+          },
+          {
+            "do": "Compute remaining terms",
+            "result": "$4$ and $12$",
+            "why": "cross term and last term"
+          },
+          {
+            "do": "Add",
+            "result": "$20$",
+            "why": "total squared length"
+          }
+        ],
+        "answer": "The squared length is $20$."
+      },
+      {
+        "problem": "A learned surface has $E=9$, $F=0$, $G=4$. Compare coordinate steps $(0.1,0)$ and $(0,0.1)$.",
+        "steps": [
+          {
+            "do": "Compute u-step squared length",
+            "result": "$9(0.1)^2=0.09$",
+            "why": "only u changes"
+          },
+          {
+            "do": "Take square root",
+            "result": "$0.3$",
+            "why": "actual length"
+          },
+          {
+            "do": "Compute v-step squared length",
+            "result": "$4(0.1)^2=0.04$",
+            "why": "only v changes"
+          },
+          {
+            "do": "Take square root",
+            "result": "$0.2$",
+            "why": "actual length"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.3/0.2=1.5$",
+            "why": "u step is longer"
+          }
+        ],
+        "answer": "The u step has length $0.3$ and the v step has length $0.2$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Texture distortion",
+        "background": "Graphics uses metric coefficients to see how texture coordinates stretch.",
+        "numbers": "If $E=4$ and $G=1$, $du=0.1$ has length $0.2$, while $dv=0.1$ has length $0.1$."
+      },
+      {
+        "title": "Surface area",
+        "background": "The area scale of a patch is $sqrt{EG-F^2}$.",
+        "numbers": "With $E=2$, $F=1$, $G=2$, area scale is $\\sqrt3\\approx1.732$."
+      },
+      {
+        "title": "Geodesic computation",
+        "background": "Shortest paths on surfaces need the metric because coordinate distance can mislead.",
+        "numbers": "If u length costs $3$ per unit, moving $0.2$ in u costs $0.6$."
+      },
+      {
+        "title": "Latent-space geometry",
+        "background": "Generative models can pull output-space distances back to latent coordinates.",
+        "numbers": "Metric $E=25$ means latent step $du=0.04$ has output length about $0.2$."
+      },
+      {
+        "title": "Robotics on terrain",
+        "background": "Ground robots need true surface distance rather than map-coordinate distance.",
+        "numbers": "On slope $z=0.3x$, a horizontal $10$ m step has length $10\\sqrt{1.09}\\approx10.44$ m."
+      },
+      {
+        "title": "Medical surfaces",
+        "background": "Measurements on organs should use surface area and distance, not flat image coordinates.",
+        "numbers": "A parameter square of area $2$ mm$^2$ with area scale $1.5$ represents $3$ mm$^2$."
+      }
+    ],
+    "applicationsClose": "The first fundamental form is the surface's ruler, protractor, and area scale written in coordinate language.",
+    "takeaways": [
+      "$E=\\mathbf{x}_u\\cdot\\mathbf{x}_u$, $F=\\mathbf{x}_u\\cdot\\mathbf{x}_v$, and $G=\\mathbf{x}_v\\cdot\\mathbf{x}_v$.",
+      "A tangent vector $(a,b)$ has squared length $Ea^2+2Fab+Gb^2$.",
+      "$F$ records skew between coordinate directions.",
+      "The area scale is $\\sqrt{EG-F^2}$."
+    ],
     "prereqs": [
       "math-12-07"
     ]
@@ -174,19 +2148,272 @@
   B({
     "id": "math-12-09",
     "title": "The second fundamental form",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: the second fundamental form.",
+    "tagline": "The second fundamental form measures how a surface bends away from its tangent plane.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The first fundamental form</i>"
+        "Tangent planes",
+        "The first fundamental form",
+        "surface normals"
       ],
       "leadsTo": [
-        "the next lesson, <i>Gaussian curvature</i>"
+        "Gaussian curvature",
+        "principal curvatures",
+        "shape operators"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "normal curvature",
+        "quadratic forms",
+        "surface approximation",
+        "curvature directions"
       ]
     },
+    "motivation": "<p>The tangent plane tells the first-order story: the surface is locally flat. But two surfaces can share the same tangent plane and bend very differently just beyond the point.</p><p>The second fundamental form records that next layer. It measures the normal part of second derivatives, the part that shows how the surface peels away from its tangent plane.</p>",
+    "definition": "<p>For a regular oriented patch with unit normal $\\mathbf{n}$, define $e=\\mathbf{x}_{uu}\\cdot\\mathbf{n}$, $f=\\mathbf{x}_{uv}\\cdot\\mathbf{n}$, and $g=\\mathbf{x}_{vv}\\cdot\\mathbf{n}$. The <b>second fundamental form</b> is $$II=e\\,du^2+2f\\,du\\,dv+g\\,dv^2.$$</p><p>Second derivatives may have tangential and normal pieces. The tangential pieces can come from coordinates; the normal pieces describe actual bending of the surface in space.</p><p><b>Assumptions that matter:</b> a unit normal must be chosen; reversing it changes signs of $e,f,g$; and the surface needs second derivatives.</p>",
+    "worked": {
+      "problem": "For $\\mathbf{x}(u,v)=(u,v,u^2+v^2)$ at $(0,0)$ with upward normal, compute $e,f,g$.",
+      "skills": [
+        "second derivatives",
+        "unit normals",
+        "bending coefficients"
+      ],
+      "strategy": "At the origin the tangent plane is horizontal, so dot second derivatives with the upward normal.",
+      "steps": [
+        {
+          "do": "Use upward normal",
+          "result": "$\\mathbf{n}=(0,0,1)$",
+          "why": "the tangent plane is horizontal at the origin"
+        },
+        {
+          "do": "Compute $\\mathbf{x}_{uu}$",
+          "result": "$(0,0,2)$",
+          "why": "differentiate twice in u"
+        },
+        {
+          "do": "Compute $\\mathbf{x}_{uv}$",
+          "result": "$(0,0,0)$",
+          "why": "no mixed term"
+        },
+        {
+          "do": "Compute $\\mathbf{x}_{vv}$",
+          "result": "$(0,0,2)$",
+          "why": "differentiate twice in v"
+        },
+        {
+          "do": "Dot for e",
+          "result": "$e=2$",
+          "why": "vertical component is 2"
+        },
+        {
+          "do": "Dot for f and g",
+          "result": "$f=0,\\ g=2$",
+          "why": "dot remaining second derivatives with n"
+        }
+      ],
+      "verify": "The paraboloid bends upward equally in the two coordinate directions, so matching positive coefficients make sense.",
+      "answer": "At $(0,0)$, $II=2\\,du^2+2\\,dv^2$.",
+      "connects": "The second fundamental form captures normal bending beyond the tangent plane."
+    },
+    "practice": [
+      {
+        "problem": "For the plane $\\mathbf{x}(u,v)=(u,v,0)$, compute $e,f,g$.",
+        "steps": [
+          {
+            "do": "Compute second derivatives",
+            "result": "$\\mathbf{0},\\mathbf{0},\\mathbf{0}$",
+            "why": "the patch is linear"
+          },
+          {
+            "do": "Choose unit normal",
+            "result": "$(0,0,1)$",
+            "why": "standard plane normal"
+          },
+          {
+            "do": "Compute e",
+            "result": "$0$",
+            "why": "zero vector dot normal"
+          },
+          {
+            "do": "Compute f and g",
+            "result": "$0$ and $0$",
+            "why": "all second derivatives vanish"
+          },
+          {
+            "do": "Interpret",
+            "result": "no bending",
+            "why": "a plane stays in its tangent plane"
+          }
+        ],
+        "answer": "$e=f=g=0$."
+      },
+      {
+        "problem": "For $\\mathbf{x}(u,v)=(u,v,3u^2)$ at $(0,0)$ with upward normal, compute $e,f,g$.",
+        "steps": [
+          {
+            "do": "Use normal",
+            "result": "$(0,0,1)$",
+            "why": "tangent plane is horizontal"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_{uu}$",
+            "result": "$(0,0,6)$",
+            "why": "second derivative of 3u squared"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_{uv}$",
+            "result": "$(0,0,0)$",
+            "why": "no mixed term"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_{vv}$",
+            "result": "$(0,0,0)$",
+            "why": "no v squared term"
+          },
+          {
+            "do": "Dot with normal",
+            "result": "$e=6,\\ f=0,\\ g=0$",
+            "why": "only u direction bends"
+          }
+        ],
+        "answer": "$e=6$, $f=0$, $g=0$."
+      },
+      {
+        "problem": "For $z=uv$ at the origin with upward normal, compute $e,f,g$.",
+        "steps": [
+          {
+            "do": "Write patch",
+            "result": "$\\mathbf{x}(u,v)=(u,v,uv)$",
+            "why": "height field"
+          },
+          {
+            "do": "Use normal",
+            "result": "$(0,0,1)$",
+            "why": "first derivatives vanish at origin"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_{uu}$",
+            "result": "$(0,0,0)$",
+            "why": "no u squared term"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_{uv}$",
+            "result": "$(0,0,1)$",
+            "why": "mixed derivative of uv"
+          },
+          {
+            "do": "Compute $\\mathbf{x}_{vv}$",
+            "result": "$(0,0,0)$",
+            "why": "no v squared term"
+          },
+          {
+            "do": "Dot with normal",
+            "result": "$e=0,\\ f=1,\\ g=0$",
+            "why": "mixed bending only"
+          }
+        ],
+        "answer": "At the origin, $II=2\\,du\\,dv$."
+      },
+      {
+        "problem": "If $e=2$, $f=1$, $g=3$, compute $II$ on direction $(1,-1)$.",
+        "steps": [
+          {
+            "do": "Write form",
+            "result": "$e\\,du^2+2f\\,du\\,dv+g\\,dv^2$",
+            "why": "second fundamental form"
+          },
+          {
+            "do": "Substitute",
+            "result": "$2(1)^2+2(1)(1)(-1)+3(-1)^2$",
+            "why": "plug in values"
+          },
+          {
+            "do": "Compute terms",
+            "result": "$2-2+3$",
+            "why": "evaluate products"
+          },
+          {
+            "do": "Add",
+            "result": "$3$",
+            "why": "normal bending value"
+          },
+          {
+            "do": "Interpret sign",
+            "result": "positive in chosen normal direction",
+            "why": "orientation affects sign"
+          }
+        ],
+        "answer": "$II(1,-1)=3$."
+      },
+      {
+        "problem": "A local loss surface is $z=0.5u^2+2v^2$ at the origin. With upward normal, compute $e,f,g$.",
+        "steps": [
+          {
+            "do": "Use normal",
+            "result": "$(0,0,1)$",
+            "why": "first derivatives vanish at origin"
+          },
+          {
+            "do": "Compute $z_{uu}$",
+            "result": "$1$",
+            "why": "second derivative of 0.5u squared"
+          },
+          {
+            "do": "Compute $z_{uv}$",
+            "result": "$0$",
+            "why": "no mixed term"
+          },
+          {
+            "do": "Compute $z_{vv}$",
+            "result": "$4$",
+            "why": "second derivative of 2v squared"
+          },
+          {
+            "do": "State coefficients",
+            "result": "$e=1,\\ f=0,\\ g=4$",
+            "why": "dot with upward normal"
+          }
+        ],
+        "answer": "$e=1$, $f=0$, $g=4$, so the surface bends four times as strongly in the v direction."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Surface shading",
+        "background": "Curvature rotates normals, which changes highlights in rendering.",
+        "numbers": "A sphere of radius $2$ has bending magnitude about $1/2=0.5$ in every direction."
+      },
+      {
+        "title": "Shape analysis",
+        "background": "Vision systems classify domes, saddles, and ridges using local bending.",
+        "numbers": "For $z=u^2-v^2$ at the origin, $e=2$, $f=0$, $g=-2$."
+      },
+      {
+        "title": "Loss landscape curvature",
+        "background": "Quadratic loss surfaces reveal which parameter directions are stiff.",
+        "numbers": "For $L=0.5u^2+2v^2$, second values are $1$ and $4$."
+      },
+      {
+        "title": "Manufacturing quality",
+        "background": "Machining and material constraints limit how sharply surfaces may bend.",
+        "numbers": "Allowed curvature $0.2$ mm$^{-1}$ rejects radius $3$ mm because $1/3\\approx0.333$."
+      },
+      {
+        "title": "Robotics contact",
+        "background": "Grippers use local bending to understand contact stability.",
+        "numbers": "A cylinder radius $5$ cm bends with curvature $0.2$ cm$^{-1}$ around and $0$ along its axis."
+      },
+      {
+        "title": "Medical morphology",
+        "background": "Anatomical surface comparisons use convexity and saddle behavior.",
+        "numbers": "Principal curvatures $0.4$ and $-0.1$ mm$^{-1}$ indicate saddle-like bending."
+      }
+    ],
+    "applicationsClose": "The second fundamental form is the surface's bending ledger beyond first-order flatness.",
+    "takeaways": [
+      "$e=\\mathbf{x}_{uu}\\cdot\\mathbf{n}$, $f=\\mathbf{x}_{uv}\\cdot\\mathbf{n}$, and $g=\\mathbf{x}_{vv}\\cdot\\mathbf{n}$.",
+      "It measures normal, second-order bending.",
+      "Changing the chosen normal reverses the signs.",
+      "Curvature quantities combine first and second fundamental forms."
+    ],
     "prereqs": [
       "math-12-08"
     ]
@@ -195,19 +2422,267 @@
   B({
     "id": "math-12-10",
     "title": "Gaussian curvature",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: gaussian curvature.",
+    "tagline": "Gaussian curvature multiplies the two principal bendings, revealing whether a surface is dome-like, saddle-like, or flat-like.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The second fundamental form</i>"
+        "The first fundamental form",
+        "The second fundamental form",
+        "determinants"
       ],
       "leadsTo": [
-        "the next lesson, <i>Mean curvature</i>"
+        "intrinsic geometry",
+        "geodesics",
+        "manifold learning"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "principal curvatures",
+        "surface classification",
+        "metrics",
+        "local shape"
       ]
     },
+    "motivation": "<p>You can recognize three local surface personalities by touch: a sphere-like dome, a saddle, and a flat sheet or cylinder. Gaussian curvature gives that distinction a number.</p><p>It multiplies the two principal curvatures. Same-sign bending gives positive curvature, opposite-sign bending gives negative curvature, and one zero direction gives zero Gaussian curvature.</p>",
+    "definition": "<p>For first fundamental coefficients $E,F,G$ and second fundamental coefficients $e,f,g$, the <b>Gaussian curvature</b> is $$K=\\dfrac{eg-f^2}{EG-F^2}.$$ Equivalently, $K=k_1k_2$, the product of principal curvatures.</p><p>The numerator is the determinant of the bending form, and the denominator is the determinant of the metric form. Dividing by $EG-F^2$ corrects for coordinate stretching.</p><p><b>Assumptions that matter:</b> the patch is regular so $EG-F^2>0$; enough derivatives exist; reversing the normal does not change $K$; and $K$ is intrinsic, determined by surface distances.</p>",
+    "worked": {
+      "problem": "Suppose $E=1$, $F=0$, $G=1$, $e=2$, $f=0$, and $g=2$. Compute $K$ and classify the point.",
+      "skills": [
+        "fundamental forms",
+        "determinants",
+        "surface classification"
+      ],
+      "strategy": "Compute the bending determinant, compute the metric determinant, then divide.",
+      "steps": [
+        {
+          "do": "Compute numerator",
+          "result": "$eg-f^2=2\\cdot2-0^2$",
+          "why": "bending determinant"
+        },
+        {
+          "do": "Simplify numerator",
+          "result": "$4$",
+          "why": "multiply coefficients"
+        },
+        {
+          "do": "Compute denominator",
+          "result": "$EG-F^2=1\\cdot1-0^2$",
+          "why": "metric determinant"
+        },
+        {
+          "do": "Simplify denominator",
+          "result": "$1$",
+          "why": "orthonormal coordinates"
+        },
+        {
+          "do": "Divide",
+          "result": "$K=4$",
+          "why": "apply formula"
+        },
+        {
+          "do": "Classify sign",
+          "result": "positive curvature",
+          "why": "both bendings have same sign"
+        }
+      ],
+      "verify": "If the principal curvatures are both $2$, their product is $4$, matching the formula.",
+      "answer": "$K=4$, so the point is locally dome-like or elliptic.",
+      "connects": "Gaussian curvature compresses two-direction bending into one intrinsic sign and scale."
+    },
+    "practice": [
+      {
+        "problem": "Compute $K$ for a plane with $e=f=g=0$ and $E=G=1$, $F=0$.",
+        "steps": [
+          {
+            "do": "Compute numerator",
+            "result": "$0\\cdot0-0^2=0$",
+            "why": "no bending"
+          },
+          {
+            "do": "Compute denominator",
+            "result": "$1\\cdot1-0=1$",
+            "why": "regular metric"
+          },
+          {
+            "do": "Divide",
+            "result": "$K=0$",
+            "why": "zero over one"
+          },
+          {
+            "do": "Classify",
+            "result": "flat",
+            "why": "zero Gaussian curvature"
+          },
+          {
+            "do": "Interpret",
+            "result": "no bending in any direction",
+            "why": "all normal curvature vanishes"
+          }
+        ],
+        "answer": "$K=0$."
+      },
+      {
+        "problem": "A sphere of radius $3$ has principal curvatures $1/3$ and $1/3$. Find $K$.",
+        "steps": [
+          {
+            "do": "Write product",
+            "result": "$K=k_1k_2$",
+            "why": "principal curvature formula"
+          },
+          {
+            "do": "Substitute",
+            "result": "$(1/3)(1/3)$",
+            "why": "sphere bends equally"
+          },
+          {
+            "do": "Multiply",
+            "result": "$1/9$",
+            "why": "product of reciprocals"
+          },
+          {
+            "do": "Attach units",
+            "result": "inverse length squared",
+            "why": "curvature product has squared units"
+          },
+          {
+            "do": "Classify",
+            "result": "positive",
+            "why": "sphere is dome-like"
+          }
+        ],
+        "answer": "$K=1/9$."
+      },
+      {
+        "problem": "A cylinder of radius $4$ has principal curvatures $1/4$ and $0$. Find $K$.",
+        "steps": [
+          {
+            "do": "Write curvatures",
+            "result": "$k_1=1/4,\\ k_2=0$",
+            "why": "one direction bends and one is straight"
+          },
+          {
+            "do": "Multiply",
+            "result": "$(1/4)\\cdot0$",
+            "why": "product formula"
+          },
+          {
+            "do": "Simplify",
+            "result": "$K=0$",
+            "why": "one zero factor"
+          },
+          {
+            "do": "Classify",
+            "result": "zero Gaussian curvature",
+            "why": "developable behavior"
+          },
+          {
+            "do": "Interpret",
+            "result": "a cylinder unrolls without stretching",
+            "why": "intrinsic curvature is zero"
+          }
+        ],
+        "answer": "$K=0$."
+      },
+      {
+        "problem": "At a point $E=2$, $F=0$, $G=2$, $e=1$, $f=0$, $g=-1$. Compute $K$.",
+        "steps": [
+          {
+            "do": "Compute numerator",
+            "result": "$1(-1)-0=-1$",
+            "why": "opposite bending signs"
+          },
+          {
+            "do": "Compute denominator",
+            "result": "$2\\cdot2-0=4$",
+            "why": "metric determinant"
+          },
+          {
+            "do": "Divide",
+            "result": "$K=-1/4$",
+            "why": "curvature value"
+          },
+          {
+            "do": "Classify sign",
+            "result": "negative",
+            "why": "saddle-like"
+          },
+          {
+            "do": "Interpret",
+            "result": "one way curves up and one curves down",
+            "why": "opposite signs create a saddle"
+          }
+        ],
+        "answer": "$K=-1/4$, so the point is saddle-like."
+      },
+      {
+        "problem": "A learned 2-D manifold has estimated principal curvatures $0.8$ and $-0.3$. Compute $K$ and interpret.",
+        "steps": [
+          {
+            "do": "Use product",
+            "result": "$K=k_1k_2$",
+            "why": "principal curvatures are given"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.8(-0.3)$",
+            "why": "multiply bendings"
+          },
+          {
+            "do": "Compute",
+            "result": "$-0.24$",
+            "why": "negative product"
+          },
+          {
+            "do": "Classify",
+            "result": "saddle-like local geometry",
+            "why": "signs are opposite"
+          },
+          {
+            "do": "Interpret",
+            "result": "nearby distances spread differently across directions",
+            "why": "negative curvature suggests hyperbolic flavor"
+          }
+        ],
+        "answer": "$K=-0.24$, indicating saddle-like local geometry."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Shape classification",
+        "background": "Gaussian curvature separates domes, saddles, and flat-like regions in geometry processing.",
+        "numbers": "Curvatures $0.2$ and $0.2$ give $K=0.04$; $0.2$ and $-0.2$ give $K=-0.04$."
+      },
+      {
+        "title": "3-D scanning",
+        "background": "Scanned meshes estimate curvature to find ridges, dents, and saddle points.",
+        "numbers": "Principal curvatures $0.5$ and $0.1$ mm$^{-1}$ give $K=0.05$ mm$^{-2}$."
+      },
+      {
+        "title": "Flattening surfaces",
+        "background": "Zero Gaussian curvature surfaces can be flattened locally without stretching.",
+        "numbers": "A cylinder of radius $10$ cm has $K=(0.1)(0)=0$."
+      },
+      {
+        "title": "Robotics footholds",
+        "background": "Legged robots prefer contact patches with predictable local shape.",
+        "numbers": "Curvatures $0.2$ and $0.15$ give $K=0.03$; $0.2$ and $-0.15$ give $K=-0.03$."
+      },
+      {
+        "title": "Manifold learning diagnostics",
+        "background": "Estimated curvature summarizes local geometry of learned manifolds.",
+        "numbers": "Curvatures $0.05$ and $0.04$ produce $K=0.002$, mild positive curvature."
+      },
+      {
+        "title": "Loss landscape intuition",
+        "background": "Two-parameter losses can be bowl-like or saddle-like near critical points.",
+        "numbers": "For $L=u^2-v^2$, one direction bends up and one down, so $K$ is negative."
+      }
+    ],
+    "applicationsClose": "Gaussian curvature is a compact shape signature: dome-like, saddle-like, or flat-like.",
+    "takeaways": [
+      "Gaussian curvature is $K=(eg-f^2)/(EG-F^2)$.",
+      "It also equals $k_1k_2$.",
+      "Positive, negative, and zero signs describe dome-like, saddle-like, and flat-like behavior.",
+      "The denominator $EG-F^2$ corrects for coordinate stretching."
+    ],
     "prereqs": [
       "math-12-09"
     ]
@@ -216,19 +2691,251 @@
   B({
     "id": "math-12-11",
     "title": "Mean curvature",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: mean curvature.",
+    "tagline": "Mean curvature is the average bending a surface feels in its two principal directions.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Gaussian curvature</i>"
+        "curvature",
+        "surfaces in $\\mathbb{R}^3$",
+        "partial derivatives"
       ],
       "leadsTo": [
-        "the next lesson, <i>Manifolds and charts</i>"
+        "Manifolds and charts",
+        "Riemannian metrics",
+        "Geodesics"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "principal curvatures",
+        "normal vectors",
+        "surface variation"
       ]
     },
+    "motivation": "<p>You already know that a small circle bends more sharply than a large one. A surface is richer: through one point it can bend differently in two perpendicular directions.</p><p><b>Mean curvature</b> keeps the useful summary. It averages those two bends, so a sphere, a saddle, a soap film, or a mesh vertex can all be compared with one local number.</p>",
+    "definition": "<p>For a smooth surface in $\\mathbb{R}^3$, let $k_1$ and $k_2$ be the principal curvatures at a point, measured with respect to a chosen unit normal. The <b>mean curvature</b> is $$H=\\dfrac{k_1+k_2}{2}.$$ A sphere of radius $R$ has $k_1=k_2=1/R$, so $H=1/R$ for the outward normal.</p><p>For a graph $z=f(x,y)$ with $\\nabla f(0,0)=0$, the tangent plane is horizontal and $H=(f_{xx}+f_{yy})/2$ at the origin. That is the average of the two second-derivative bends when the axes are principal directions.</p><p><b>Assumptions that matter:</b> the surface is smooth enough to have a tangent plane and second derivatives; a unit normal has been chosen; changing the normal changes the sign of $H$; and $H=0$ means the two principal bends balance.</p>",
+    "worked": {
+      "problem": "Find the mean curvature of a sphere of radius $4$ with the outward normal.",
+      "skills": [
+        "principal curvatures",
+        "averaging",
+        "units"
+      ],
+      "strategy": "A sphere bends equally in every tangent direction, so both principal curvatures are $1/R$.",
+      "steps": [
+        {
+          "do": "Identify the radius",
+          "result": "$R=4$",
+          "why": "the radius sets the curvature scale"
+        },
+        {
+          "do": "Write the first principal curvature",
+          "result": "$k_1=1/4$",
+          "why": "normal sections are circles of radius $4$"
+        },
+        {
+          "do": "Write the second principal curvature",
+          "result": "$k_2=1/4$",
+          "why": "the sphere is symmetric in all tangent directions"
+        },
+        {
+          "do": "Average the two curvatures",
+          "result": "$H=\\dfrac{1/4+1/4}{2}$",
+          "why": "mean curvature is their arithmetic mean"
+        },
+        {
+          "do": "Simplify",
+          "result": "$H=1/4$",
+          "why": "the average of equal numbers is the same number"
+        }
+      ],
+      "verify": "The unit is inverse length, and a larger sphere would have smaller mean curvature, which matches the picture.",
+      "answer": "$H=1/4$ for the outward normal.",
+      "connects": "Mean curvature compresses two local bending directions into one average bending measurement."
+    },
+    "practice": [
+      {
+        "problem": "A plane has $k_1=0$ and $k_2=0$. Find $H$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$H=\\dfrac{k_1+k_2}{2}$",
+            "why": "start from the definition"
+          },
+          {
+            "do": "Substitute the curvatures",
+            "result": "$H=\\dfrac{0+0}{2}$",
+            "why": "a plane does not bend normally"
+          },
+          {
+            "do": "Add the numerator",
+            "result": "$H=0/2$",
+            "why": "zero plus zero is zero"
+          },
+          {
+            "do": "Divide",
+            "result": "$H=0$",
+            "why": "zero divided by two is zero"
+          }
+        ],
+        "answer": "The mean curvature is $0$."
+      },
+      {
+        "problem": "A cylinder of radius $3$ has principal curvatures $1/3$ and $0$. Find $H$.",
+        "steps": [
+          {
+            "do": "Name the curved direction",
+            "result": "$k_1=1/3$",
+            "why": "circular cross-sections have radius $3$"
+          },
+          {
+            "do": "Name the straight direction",
+            "result": "$k_2=0$",
+            "why": "the axis direction is straight"
+          },
+          {
+            "do": "Average",
+            "result": "$H=\\dfrac{1/3+0}{2}$",
+            "why": "use the definition"
+          },
+          {
+            "do": "Simplify",
+            "result": "$H=1/6$",
+            "why": "half of $1/3$ is $1/6$"
+          }
+        ],
+        "answer": "The mean curvature is $1/6$."
+      },
+      {
+        "problem": "For $z=x^2+y^2$ at the origin, use $H=(f_{xx}+f_{yy})/2$.",
+        "steps": [
+          {
+            "do": "Compute $f_{xx}$",
+            "result": "$f_{xx}=2$",
+            "why": "differentiate $x^2$ twice"
+          },
+          {
+            "do": "Compute $f_{yy}$",
+            "result": "$f_{yy}=2$",
+            "why": "differentiate $y^2$ twice"
+          },
+          {
+            "do": "Check the tangent condition",
+            "result": "$\\nabla f(0,0)=(0,0)$",
+            "why": "the simplified graph formula applies"
+          },
+          {
+            "do": "Average",
+            "result": "$H=\\dfrac{2+2}{2}$",
+            "why": "add the two second derivatives"
+          },
+          {
+            "do": "Simplify",
+            "result": "$H=2$",
+            "why": "four divided by two is two"
+          }
+        ],
+        "answer": "At the origin, $H=2$."
+      },
+      {
+        "problem": "For $z=x^2-y^2$ at the origin, find $H$.",
+        "steps": [
+          {
+            "do": "Compute $f_{xx}$",
+            "result": "$2$",
+            "why": "the $x$ direction bends upward"
+          },
+          {
+            "do": "Compute $f_{yy}$",
+            "result": "$-2$",
+            "why": "the $y$ direction bends downward"
+          },
+          {
+            "do": "Average",
+            "result": "$H=\\dfrac{2+(-2)}{2}$",
+            "why": "opposite bends balance"
+          },
+          {
+            "do": "Simplify",
+            "result": "$H=0$",
+            "why": "the numerator is zero"
+          },
+          {
+            "do": "Interpret",
+            "result": "mean-curvature balanced",
+            "why": "zero mean curvature does not mean flat"
+          }
+        ],
+        "answer": "The saddle has $H=0$ at the origin."
+      },
+      {
+        "problem": "A mean-curvature flow update is $\\Delta p=-0.2Hn$. If $H=1.5$ and $n=(0,0,1)$, find $\\Delta p$.",
+        "steps": [
+          {
+            "do": "Substitute $H$",
+            "result": "$\\Delta p=-0.2\\cdot1.5\\,n$",
+            "why": "use the given curvature"
+          },
+          {
+            "do": "Multiply the scalars",
+            "result": "$-0.2\\cdot1.5=-0.3$",
+            "why": "compute the update size"
+          },
+          {
+            "do": "Substitute the normal",
+            "result": "$\\Delta p=-0.3(0,0,1)$",
+            "why": "attach the direction"
+          },
+          {
+            "do": "Scale the vector",
+            "result": "$\\Delta p=(0,0,-0.3)$",
+            "why": "multiply each component"
+          },
+          {
+            "do": "Check direction",
+            "result": "opposite the chosen normal",
+            "why": "the scalar is negative"
+          }
+        ],
+        "answer": "The displacement is $(0,0,-0.3)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Soap films",
+        "background": "Minimal surfaces were first understood through soap films, which balance tension so their mean curvature is zero away from boundaries.",
+        "numbers": "If $k_1=0.7$ and $k_2=-0.7$, then $H=(0.7-0.7)/2=0$."
+      },
+      {
+        "title": "Bubble pressure",
+        "background": "The Young-Laplace law connects pressure jump to mean curvature, explaining why small bubbles need more pressure.",
+        "numbers": "For $\\gamma=0.03$ N/m and radius $0.02$ m, $H=50$ and $\\Delta p=2\\gamma H=3$ Pa."
+      },
+      {
+        "title": "Mesh smoothing",
+        "background": "Geometry processing removes noise by moving vertices along mean-curvature normals.",
+        "numbers": "With step $0.01$ and $H=4$, the normal displacement size is $0.04$."
+      },
+      {
+        "title": "Image surfaces",
+        "background": "A grayscale image can be treated as a height surface, where curvature-based smoothing respects local shape.",
+        "numbers": "For $z=0.5x^2+0.1y^2$, $H=(1+0.2)/2=0.6$ at a flat-gradient point."
+      },
+      {
+        "title": "Neural implicit surfaces",
+        "background": "Learned 3-D surfaces often include curvature penalties so reconstructions stay smooth.",
+        "numbers": "A penalty $0.05H^2$ with $H=3$ contributes $0.45$ to the loss."
+      },
+      {
+        "title": "Medical shape analysis",
+        "background": "Vessels and organs are compared with curvature summaries because disease can change local bending.",
+        "numbers": "A cylindrical vessel of radius $2$ mm has $H=1/(2R)=0.25$ mm$^{-1}$."
+      }
+    ],
+    "applicationsClose": "Across films, meshes, images, and learned surfaces, mean curvature is the local average bend that computation can act on.",
+    "takeaways": [
+      "Mean curvature is $H=(k_1+k_2)/2$.",
+      "Its sign depends on the chosen normal.",
+      "Spheres have $H=1/R$ and cylinders have $H=1/(2R)$.",
+      "Zero mean curvature means balanced bending, not necessarily flatness."
+    ],
     "prereqs": [
       "math-12-10"
     ]
@@ -237,19 +2944,261 @@
   B({
     "id": "math-12-12",
     "title": "Manifolds and charts",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: manifolds and charts.",
+    "tagline": "A manifold is a curved space that can be read locally with ordinary coordinates.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Mean curvature</i>"
+        "sets and functions",
+        "coordinate maps",
+        "curves and surfaces"
       ],
       "leadsTo": [
-        "the next lesson, <i>Tangent spaces</i>"
+        "Tangent spaces",
+        "Vector fields on manifolds",
+        "Riemannian metrics"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "atlases",
+        "coordinate changes",
+        "parametrizations"
       ]
     },
+    "motivation": "<p>You already trust maps of the Earth even though no single flat map represents the whole globe perfectly. Each map is local, and overlapping maps translate between coordinate systems.</p><p>A <b>manifold</b> is the same idea made precise. It may curve or wrap globally, but near each point it behaves like ordinary $\\mathbb{R}^n$.</p>",
+    "definition": "<p>An $n$-dimensional <b>manifold</b> $\\mathcal{M}$ is a space that is locally like $\\mathbb{R}^n$. A <b>chart</b> is a one-to-one coordinate map $\\varphi:U\\to V$, where $U\\subset\\mathcal{M}$ and $V\\subset\\mathbb{R}^n$. An <b>atlas</b> is a collection of compatible charts covering the manifold.</p><p>Compatibility means that on overlaps, the coordinate change $\\psi\\circ\\varphi^{-1}$ is smooth. This is what lets derivatives computed in one chart translate smoothly into another chart. The circle is one-dimensional because small arcs need one coordinate, even though one global coordinate has a seam.</p><p><b>Assumptions that matter:</b> charts are local; transition maps must be smooth; the manifold dimension is the number of local coordinates; and global coordinate systems can fail even when local charts work.</p>",
+    "worked": {
+      "problem": "Use the upper semicircle chart $\\varphi(x,y)=x$ on $x^2+y^2=1$ with $y>0$. Find the point with coordinate $u=0.6$.",
+      "skills": [
+        "charts",
+        "inverse maps",
+        "unit circle"
+      ],
+      "strategy": "The chart stores $x$; recover $y$ from the circle equation and the upper-half condition.",
+      "steps": [
+        {
+          "do": "Set the chart coordinate",
+          "result": "$x=u=0.6$",
+          "why": "the chart is projection to the $x$ coordinate"
+        },
+        {
+          "do": "Use the circle equation",
+          "result": "$x^2+y^2=1$",
+          "why": "the point lies on the unit circle"
+        },
+        {
+          "do": "Substitute $x=0.6$",
+          "result": "$0.36+y^2=1$",
+          "why": "square the coordinate"
+        },
+        {
+          "do": "Solve for $y^2$",
+          "result": "$y^2=0.64$",
+          "why": "subtract $0.36$"
+        },
+        {
+          "do": "Choose the upper value",
+          "result": "$y=0.8$",
+          "why": "the chart domain has $y>0$"
+        }
+      ],
+      "verify": "$0.6^2+0.8^2=1$, so the recovered point lies on the circle.",
+      "answer": "The point is $(0.6,0.8)$.",
+      "connects": "A chart turns a curved local patch into ordinary coordinates and back again."
+    },
+    "practice": [
+      {
+        "problem": "On the same chart, find the point with coordinate $u=-0.8$.",
+        "steps": [
+          {
+            "do": "Set $x$",
+            "result": "$x=-0.8$",
+            "why": "the chart coordinate is $x$"
+          },
+          {
+            "do": "Square $x$",
+            "result": "$x^2=0.64$",
+            "why": "prepare the circle equation"
+          },
+          {
+            "do": "Solve for $y^2$",
+            "result": "$y^2=1-0.64=0.36$",
+            "why": "use $x^2+y^2=1$"
+          },
+          {
+            "do": "Choose the upper root",
+            "result": "$y=0.6$",
+            "why": "the chart has $y>0$"
+          },
+          {
+            "do": "Write the point",
+            "result": "$(-0.8,0.6)$",
+            "why": "combine the coordinates"
+          }
+        ],
+        "answer": "The point is $(-0.8,0.6)$."
+      },
+      {
+        "problem": "The parabola chart sends $(t,t^2)$ to $t$. Find the point with coordinate $t=3$.",
+        "steps": [
+          {
+            "do": "Read the parameter",
+            "result": "$t=3$",
+            "why": "the coordinate is the parameter"
+          },
+          {
+            "do": "Compute the first component",
+            "result": "$x=3$",
+            "why": "the parabola stores $t$ as $x$"
+          },
+          {
+            "do": "Compute the second component",
+            "result": "$y=3^2=9$",
+            "why": "use the defining equation"
+          },
+          {
+            "do": "Write the point",
+            "result": "$(3,9)$",
+            "why": "combine components"
+          },
+          {
+            "do": "Check membership",
+            "result": "$9=3^2$",
+            "why": "the point lies on the parabola"
+          }
+        ],
+        "answer": "The point is $(3,9)$."
+      },
+      {
+        "problem": "Charts on positive numbers are $u=x$ and $v=\\ln x$. Find the transition $u\\mapsto v$ and evaluate it at $u=4$.",
+        "steps": [
+          {
+            "do": "Invert the first chart",
+            "result": "$x=u$",
+            "why": "the first coordinate equals the point"
+          },
+          {
+            "do": "Apply the second chart",
+            "result": "$v=\\ln x$",
+            "why": "the second chart takes a logarithm"
+          },
+          {
+            "do": "Substitute $x=u$",
+            "result": "$v=\\ln u$",
+            "why": "compose the charts"
+          },
+          {
+            "do": "Evaluate at $u=4$",
+            "result": "$v=\\ln4$",
+            "why": "use the requested coordinate"
+          },
+          {
+            "do": "Approximate",
+            "result": "$v\\approx1.386$",
+            "why": "natural logarithm of four"
+          }
+        ],
+        "answer": "The transition map is $v=\\ln u$, and $v\\approx1.386$ at $u=4$."
+      },
+      {
+        "problem": "Latitude-longitude uses two numbers on a sphere except at seams and poles. What is the local dimension?",
+        "steps": [
+          {
+            "do": "Count coordinates",
+            "result": "two",
+            "why": "latitude and longitude are two local numbers"
+          },
+          {
+            "do": "Name the local model",
+            "result": "$\\mathbb{R}^2$",
+            "why": "two coordinates give a local plane"
+          },
+          {
+            "do": "Identify the seam",
+            "result": "longitude jumps at a chosen meridian",
+            "why": "one global chart is discontinuous"
+          },
+          {
+            "do": "Identify the pole issue",
+            "result": "all longitudes meet",
+            "why": "coordinates are not one-to-one there"
+          },
+          {
+            "do": "State the dimension",
+            "result": "$2$",
+            "why": "local charts still need two coordinates"
+          }
+        ],
+        "answer": "The sphere is locally two-dimensional."
+      },
+      {
+        "problem": "On the probability simplex $p_1+p_2+p_3=1$, use chart $(u,v)=(p_1,p_2)$. Recover $p$ from $(0.2,0.5)$.",
+        "steps": [
+          {
+            "do": "Set $p_1$",
+            "result": "$p_1=0.2$",
+            "why": "the chart stores the first probability"
+          },
+          {
+            "do": "Set $p_2$",
+            "result": "$p_2=0.5$",
+            "why": "the chart stores the second probability"
+          },
+          {
+            "do": "Use the constraint",
+            "result": "$p_3=1-p_1-p_2$",
+            "why": "probabilities sum to one"
+          },
+          {
+            "do": "Substitute",
+            "result": "$p_3=1-0.2-0.5$",
+            "why": "use the chart values"
+          },
+          {
+            "do": "Simplify",
+            "result": "$p_3=0.3$",
+            "why": "subtract"
+          }
+        ],
+        "answer": "The probability vector is $(0.2,0.5,0.3)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Maps of Earth",
+        "background": "Cartography is the everyday model of chart thinking: local maps are useful even when one global map distorts.",
+        "numbers": "A $1$ km city block is tiny compared with Earth radius $6371$ km, so a flat chart is accurate locally."
+      },
+      {
+        "title": "Robot angles",
+        "background": "A joint angle lives on a circle because $0$ and $2\\pi$ describe the same pose.",
+        "numbers": "Angles $6.27$ and $0.01$ radians differ by about $0.023$ around the circle, not $6.26$."
+      },
+      {
+        "title": "Probability simplexes",
+        "background": "Categorical probabilities live on a simplex, where one coordinate is determined by the others.",
+        "numbers": "For four classes, $(0.1,0.2,0.3)$ gives $p_4=0.4$."
+      },
+      {
+        "title": "Pose estimation",
+        "background": "Rotations form a manifold, so pose algorithms use local coordinates for small updates.",
+        "numbers": "A 3-D rotation has $3$ local degrees of freedom, not $9$ free matrix entries."
+      },
+      {
+        "title": "Latent variables",
+        "background": "Generative models often learn a low-dimensional coordinate chart for high-dimensional data.",
+        "numbers": "A $64\\times64$ image has $4096$ pixels but may be controlled by a $128$-dimensional latent vector."
+      },
+      {
+        "title": "Manifold learning",
+        "background": "Methods such as Isomap and UMAP build local coordinate neighborhoods instead of forcing one flat global chart.",
+        "numbers": "Using $15$ nearest neighbors gives many small local patches for each data point."
+      }
+    ],
+    "applicationsClose": "Charts are the local coordinate language that lets curved spaces become calculable without pretending they are globally flat.",
+    "takeaways": [
+      "A manifold locally resembles $\\mathbb{R}^n$.",
+      "A chart assigns coordinates on a local patch.",
+      "Smooth transition maps make calculus coordinate-consistent.",
+      "Global coordinates can fail even when local charts work."
+    ],
     "prereqs": [
       "math-12-11"
     ]
@@ -258,19 +3207,261 @@
   B({
     "id": "math-12-13",
     "title": "Tangent spaces",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: tangent spaces.",
+    "tagline": "A tangent space is the linear home for all possible velocities through one point.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Manifolds and charts</i>"
+        "Manifolds and charts",
+        "curves",
+        "linear approximation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Vector fields on manifolds</i>"
+        "Vector fields on manifolds",
+        "Riemannian metrics",
+        "Geodesics"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "directional derivatives",
+        "constraints",
+        "local coordinates"
       ]
     },
+    "motivation": "<p>You already know the tangent line to a curve. It records the direction of motion at one instant, not the whole future path.</p><p>On a manifold there are many possible directions through a point. The <b>tangent space</b> gathers them into one vector space where derivatives and optimization steps can live.</p>",
+    "definition": "<p>For a smooth manifold $\\mathcal{M}$ and point $p$, the <b>tangent space</b> $T_p\\mathcal{M}$ is the set of velocities $\\gamma'(0)$ of smooth curves $\\gamma(t)$ in $\\mathcal{M}$ with $\\gamma(0)=p$. For a constraint $F(x)=0$, tangent vectors satisfy $DF_p(v)=0$.</p><p>For the unit sphere, $F(x,y,z)=x^2+y^2+z^2-1$. Differentiating gives $DF_p(v)=2p\\cdot v$, so $T_pS^2=\\{v:p\\cdot v=0\\}$. The tangent plane is perpendicular to the radius.</p><p><b>Assumptions that matter:</b> the curves are smooth; tangent vectors are attached to a base point; vectors from different tangent spaces cannot be added without extra structure; and constraint formulas describe first-order feasible motion.</p>",
+    "worked": {
+      "problem": "Find $T_pS^2$ at $p=(0,0,1)$ and test $v=(2,-1,0)$.",
+      "skills": [
+        "constraints",
+        "dot products",
+        "tangent planes"
+      ],
+      "strategy": "Differentiate the sphere constraint, then check perpendicularity to the radius.",
+      "steps": [
+        {
+          "do": "Write the tangent condition",
+          "result": "$p\\cdot v=0$",
+          "why": "differentiate $x^2+y^2+z^2=1$"
+        },
+        {
+          "do": "Use a general vector",
+          "result": "$(0,0,1)\\cdot(a,b,c)=c$",
+          "why": "substitute the north pole"
+        },
+        {
+          "do": "Set the derivative to zero",
+          "result": "$c=0$",
+          "why": "tangent motion stays on the sphere to first order"
+        },
+        {
+          "do": "State the tangent space",
+          "result": "$T_pS^2=\\{(a,b,0):a,b\\in\\mathbb{R}\\}$",
+          "why": "only horizontal velocities remain"
+        },
+        {
+          "do": "Test the vector",
+          "result": "$(0,0,1)\\cdot(2,-1,0)=0$",
+          "why": "it satisfies the tangent condition"
+        }
+      ],
+      "verify": "The vector has no radial component at the north pole, so it is tangent.",
+      "answer": "$T_pS^2=\\{(a,b,0)\\}$, and $v$ is tangent.",
+      "connects": "Tangent spaces linearize curved constraints at a point."
+    },
+    "practice": [
+      {
+        "problem": "Find the tangent line to the unit circle at $(1,0)$.",
+        "steps": [
+          {
+            "do": "Write the condition",
+            "result": "$p\\cdot v=0$",
+            "why": "circle tangents are perpendicular to the radius"
+          },
+          {
+            "do": "Substitute $p$",
+            "result": "$(1,0)\\cdot(a,b)=a$",
+            "why": "use a general vector"
+          },
+          {
+            "do": "Set to zero",
+            "result": "$a=0$",
+            "why": "stay on the circle to first order"
+          },
+          {
+            "do": "Describe tangent vectors",
+            "result": "$(0,b)$",
+            "why": "only vertical motion remains"
+          },
+          {
+            "do": "State the line",
+            "result": "$x=1$",
+            "why": "the line through $(1,0)$ is vertical"
+          }
+        ],
+        "answer": "The tangent line is $x=1$."
+      },
+      {
+        "problem": "For the plane $x+y+z=3$, find tangent vectors.",
+        "steps": [
+          {
+            "do": "Define the constraint",
+            "result": "$F=x+y+z-3$",
+            "why": "the plane is $F=0$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$DF(v)=v_1+v_2+v_3$",
+            "why": "each coordinate has derivative one"
+          },
+          {
+            "do": "Set to zero",
+            "result": "$v_1+v_2+v_3=0$",
+            "why": "the constraint remains fixed"
+          },
+          {
+            "do": "Give an example",
+            "result": "$(1,-1,0)$",
+            "why": "the components sum to zero"
+          },
+          {
+            "do": "Describe the space",
+            "result": "$\\{v:v_1+v_2+v_3=0\\}$",
+            "why": "all such velocities are tangent"
+          }
+        ],
+        "answer": "All tangent vectors satisfy $v_1+v_2+v_3=0$."
+      },
+      {
+        "problem": "For $z=x^2+y^2$ at $(1,2,5)$, find two tangent vectors.",
+        "steps": [
+          {
+            "do": "Parametrize",
+            "result": "$r(x,y)=(x,y,x^2+y^2)$",
+            "why": "use chart coordinates"
+          },
+          {
+            "do": "Differentiate in $x$",
+            "result": "$r_x=(1,0,2x)$",
+            "why": "hold $y$ fixed"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$r_x=(1,0,2)$",
+            "why": "use $x=1$"
+          },
+          {
+            "do": "Differentiate in $y$",
+            "result": "$r_y=(0,1,2y)$",
+            "why": "hold $x$ fixed"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$r_y=(0,1,4)$",
+            "why": "use $y=2$"
+          }
+        ],
+        "answer": "Two tangent vectors are $(1,0,2)$ and $(0,1,4)$."
+      },
+      {
+        "problem": "On the simplex $p_1+p_2+p_3=1$, test $v=(0.1,-0.3,0.2)$.",
+        "steps": [
+          {
+            "do": "Differentiate the sum",
+            "result": "$v_1+v_2+v_3=0$",
+            "why": "total probability must stay one"
+          },
+          {
+            "do": "Add components",
+            "result": "$0.1-0.3+0.2$",
+            "why": "test the vector"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0$",
+            "why": "positive and negative changes balance"
+          },
+          {
+            "do": "Check the condition",
+            "result": "satisfied",
+            "why": "the derivative of the constraint is zero"
+          },
+          {
+            "do": "Conclude",
+            "result": "tangent",
+            "why": "it is a feasible first-order probability motion"
+          }
+        ],
+        "answer": "The vector is tangent to the simplex."
+      },
+      {
+        "problem": "For $\\gamma(t)=(\\cos t,\\sin t,0)$ on $S^2$, find $\\gamma'(0)$ and verify tangency.",
+        "steps": [
+          {
+            "do": "Evaluate the point",
+            "result": "$\\gamma(0)=(1,0,0)$",
+            "why": "substitute $t=0$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$\\gamma'(t)=(-\\sin t,\\cos t,0)$",
+            "why": "differentiate componentwise"
+          },
+          {
+            "do": "Evaluate velocity",
+            "result": "$\\gamma'(0)=(0,1,0)$",
+            "why": "substitute $t=0$"
+          },
+          {
+            "do": "Dot with the point",
+            "result": "$(1,0,0)\\cdot(0,1,0)=0$",
+            "why": "sphere tangents are perpendicular to radius"
+          },
+          {
+            "do": "Conclude",
+            "result": "tangent",
+            "why": "the dot product is zero"
+          }
+        ],
+        "answer": "The velocity is $(0,1,0)$, and it is tangent."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Constrained optimization",
+        "background": "Feasible directions for constrained training live in tangent spaces.",
+        "numbers": "On a simplex, step $(0.02,-0.01,-0.01)$ sums to $0$, so it preserves total probability to first order."
+      },
+      {
+        "title": "Robot velocities",
+        "background": "A robot configuration is a point; its instantaneous joint rates are tangent vectors.",
+        "numbers": "Velocity $(0.1,-0.2)$ rad/s for $0.05$ s changes angles by $(0.005,-0.010)$."
+      },
+      {
+        "title": "Graphics normals",
+        "background": "Surface shading uses tangent vectors and normals to compute light response.",
+        "numbers": "For $z=x^2$ at $x=1$, tangent $(1,0,2)$ is perpendicular to normal $(-2,0,1)$."
+      },
+      {
+        "title": "Manifold learning",
+        "background": "Local PCA estimates tangent spaces from nearby data.",
+        "numbers": "Singular values $5,2,0.1$ suggest a two-dimensional local tangent."
+      },
+      {
+        "title": "Probability models",
+        "background": "Probability vectors must keep total mass one, so tangent directions sum to zero.",
+        "numbers": "Increasing one class by $0.03$ requires other classes to decrease by $0.03$ total."
+      },
+      {
+        "title": "Physics constraints",
+        "background": "A particle constrained to a sphere can move only tangentially.",
+        "numbers": "At $(0,0,2)$, velocity $(1,1,0)$ is allowed because the dot product is $0$."
+      }
+    ],
+    "applicationsClose": "Tangent spaces are the linear workbenches for motion, derivatives, and feasible updates on curved spaces.",
+    "takeaways": [
+      "Tangent vectors are velocities of curves through a point.",
+      "For $F=0$, tangent vectors satisfy $DF_p(v)=0$.",
+      "Tangent spaces depend on the base point.",
+      "Optimization on constraints uses tangent directions."
+    ],
     "prereqs": [
       "math-12-12"
     ]
@@ -279,19 +3470,261 @@
   B({
     "id": "math-12-14",
     "title": "Vector fields on manifolds",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: vector fields on manifolds.",
+    "tagline": "A vector field assigns a tangent arrow to every point of a manifold.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Tangent spaces</i>"
+        "Tangent spaces",
+        "functions",
+        "differential equations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Riemannian metrics</i>"
+        "Riemannian metrics",
+        "Geodesics",
+        "Connections and parallel transport"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "flows",
+        "gradients",
+        "directional derivatives"
       ]
     },
+    "motivation": "<p>A wind map is a familiar vector field: every location gets an arrow. On a manifold, the arrow must lie in the tangent space at that location.</p><p>That small rule is powerful. It turns geometry into motion, from rotations on spheres to gradient flows in learning.</p>",
+    "definition": "<p>A <b>vector field</b> $X$ on $\\mathcal{M}$ assigns each point $p$ a tangent vector $X(p)\\in T_p\\mathcal{M}$. In coordinates, $$X=\\sum_i X^i(x)\\dfrac{\\partial}{\\partial x^i},$$ where $X^i$ are component functions.</p><p>A vector field generates flow curves by $\\gamma'(t)=X(\\gamma(t))$. For an embedded sphere, tangency is checked by $p\\cdot X(p)=0$ at each point.</p><p><b>Assumptions that matter:</b> every arrow must be tangent at its own base point; smooth fields have well-behaved local flows; and coordinate components change with charts even when the geometric field is the same.</p>",
+    "worked": {
+      "problem": "On the unit sphere, let $X(x,y,z)=(-y,x,0)$. Show it is tangent at $p=(3/5,4/5,0)$ and find its speed.",
+      "skills": [
+        "vector fields",
+        "dot products",
+        "norms"
+      ],
+      "strategy": "Evaluate the field, check $p\\cdot X(p)=0$, then compute length.",
+      "steps": [
+        {
+          "do": "Evaluate the field",
+          "result": "$X(p)=(-4/5,3/5,0)$",
+          "why": "substitute the point"
+        },
+        {
+          "do": "Compute the dot product",
+          "result": "$(3/5)(-4/5)+(4/5)(3/5)+0$",
+          "why": "sphere tangency requires perpendicularity"
+        },
+        {
+          "do": "Simplify",
+          "result": "$-12/25+12/25=0$",
+          "why": "the radial component cancels"
+        },
+        {
+          "do": "Compute squared speed",
+          "result": "$\\|X(p)\\|^2=(4/5)^2+(3/5)^2=1$",
+          "why": "add squared components"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$\\|X(p)\\|=1$",
+          "why": "speed is nonnegative"
+        }
+      ],
+      "verify": "The vector is perpendicular to the radius and has unit length.",
+      "answer": "The field is tangent at $p$, and its speed is $1$.",
+      "connects": "A manifold vector field is a smooth assignment of tangent arrows."
+    },
+    "practice": [
+      {
+        "problem": "On the line, $X(x)=2x\\,\\partial/\\partial x$. Find $X(3)$.",
+        "steps": [
+          {
+            "do": "Read the coefficient",
+            "result": "$2x$",
+            "why": "there is one component"
+          },
+          {
+            "do": "Substitute $x=3$",
+            "result": "$2\\cdot3=6$",
+            "why": "evaluate the field"
+          },
+          {
+            "do": "Attach the basis",
+            "result": "$6\\,\\partial/\\partial x$",
+            "why": "write the tangent arrow"
+          },
+          {
+            "do": "Interpret the flow",
+            "result": "$\\gamma'=6$ at $x=3$",
+            "why": "flows follow the field"
+          },
+          {
+            "do": "State direction",
+            "result": "positive",
+            "why": "the point moves right"
+          }
+        ],
+        "answer": "$X(3)=6\\,\\partial/\\partial x$."
+      },
+      {
+        "problem": "On the unit circle, show $X(x,y)=(-y,x)$ is tangent at $(0,1)$.",
+        "steps": [
+          {
+            "do": "Evaluate",
+            "result": "$X(0,1)=(-1,0)$",
+            "why": "substitute the point"
+          },
+          {
+            "do": "Use the condition",
+            "result": "$p\\cdot X(p)=0$",
+            "why": "circle tangent vectors are perpendicular to radius"
+          },
+          {
+            "do": "Compute",
+            "result": "$(0,1)\\cdot(-1,0)=0$",
+            "why": "multiply and add"
+          },
+          {
+            "do": "Conclude",
+            "result": "tangent",
+            "why": "the condition holds"
+          },
+          {
+            "do": "Interpret",
+            "result": "rotation",
+            "why": "the field turns around the circle"
+          }
+        ],
+        "answer": "$(-1,0)$ is tangent at $(0,1)$."
+      },
+      {
+        "problem": "For $X(x,y)=(y,-x)$, compute $X(2,1)$ and speed.",
+        "steps": [
+          {
+            "do": "Substitute",
+            "result": "$X(2,1)=(1,-2)$",
+            "why": "replace $x,y$"
+          },
+          {
+            "do": "Square components",
+            "result": "$1^2+(-2)^2$",
+            "why": "speed uses length"
+          },
+          {
+            "do": "Add",
+            "result": "$5$",
+            "why": "squared speed"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\sqrt5$",
+            "why": "speed is nonnegative"
+          },
+          {
+            "do": "State value",
+            "result": "$(1,-2)$",
+            "why": "field value and speed are separate"
+          }
+        ],
+        "answer": "$X(2,1)=(1,-2)$ with speed $\\sqrt5$."
+      },
+      {
+        "problem": "For $f=x^2+3y$, find $\\nabla f(1,2)$ and its directional change along $(0,1)$.",
+        "steps": [
+          {
+            "do": "Compute $f_x$",
+            "result": "$2x$",
+            "why": "differentiate in $x$"
+          },
+          {
+            "do": "Compute $f_y$",
+            "result": "$3$",
+            "why": "differentiate in $y$"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\nabla f(1,2)=(2,3)$",
+            "why": "substitute the point"
+          },
+          {
+            "do": "Dot with direction",
+            "result": "$(2,3)\\cdot(0,1)=3$",
+            "why": "directional derivative"
+          },
+          {
+            "do": "Interpret",
+            "result": "rate $3$",
+            "why": "moving upward increases $f$"
+          }
+        ],
+        "answer": "The gradient is $(2,3)$ and the directional rate is $3$."
+      },
+      {
+        "problem": "On the simplex, $X(p)=(p_1(1-p_1),-p_1p_2,-p_1p_3)$. Verify tangency at $(0.2,0.3,0.5)$.",
+        "steps": [
+          {
+            "do": "Compute first component",
+            "result": "$0.2(0.8)=0.16$",
+            "why": "substitute $p_1$"
+          },
+          {
+            "do": "Compute second",
+            "result": "$-0.2\\cdot0.3=-0.06$",
+            "why": "use $p_2$"
+          },
+          {
+            "do": "Compute third",
+            "result": "$-0.2\\cdot0.5=-0.10$",
+            "why": "use $p_3$"
+          },
+          {
+            "do": "Add components",
+            "result": "$0.16-0.06-0.10=0$",
+            "why": "simplex tangents sum to zero"
+          },
+          {
+            "do": "Conclude",
+            "result": "tangent",
+            "why": "total mass is preserved to first order"
+          }
+        ],
+        "answer": "$X(p)=(0.16,-0.06,-0.10)$ is tangent."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Fluid velocity",
+        "background": "Fluids are modeled by velocity fields, one arrow per location.",
+        "numbers": "Velocity $(0.4,0.3)$ m/s has speed $0.5$ m/s."
+      },
+      {
+        "title": "Gradient descent",
+        "background": "Negative gradients form the vector field followed by training.",
+        "numbers": "For $L(w)=w^2$, $X=-2w$ gives $X(3)=-6$; step $0.1$ moves to $2.4$."
+      },
+      {
+        "title": "Circular motion",
+        "background": "The field $(-y,x)$ generates rotation on the circle.",
+        "numbers": "At $(\\sqrt3/2,1/2)$ the speed is $1$."
+      },
+      {
+        "title": "Probability dynamics",
+        "background": "Learning rules on distributions use tangent fields on the simplex.",
+        "numbers": "Direction $(0.04,-0.01,-0.03)$ sums to $0$."
+      },
+      {
+        "title": "Neural ODEs",
+        "background": "Neural ODEs learn vector fields and integrate their flows.",
+        "numbers": "If $x'=0.5x$ and $x=2$, an Euler step $0.2$ gives $2.2$."
+      },
+      {
+        "title": "Surface navigation",
+        "background": "Robots on terrain project commands onto tangent planes.",
+        "numbers": "Command $(1,0,1)$ with normal $(0,0,1)$ projects to $(1,0,0)$."
+      }
+    ],
+    "applicationsClose": "Vector fields are motion made local: each tangent arrow says how the state wants to move right now.",
+    "takeaways": [
+      "A vector field assigns $X(p)\\in T_p\\mathcal{M}$.",
+      "Flows solve $\\gamma'=X(\\gamma)$.",
+      "Tangency must be checked on constrained manifolds.",
+      "Gradients and velocities are vector fields in context."
+    ],
     "prereqs": [
       "math-12-13"
     ]
@@ -300,19 +3733,261 @@
   B({
     "id": "math-12-15",
     "title": "Riemannian metrics",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: riemannian metrics.",
+    "tagline": "A Riemannian metric tells tangent vectors how long they are and what angle they make.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Vector fields on manifolds</i>"
+        "Tangent spaces",
+        "inner products",
+        "positive definite matrices"
       ],
       "leadsTo": [
-        "the next lesson, <i>Geodesics</i>"
+        "Geodesics",
+        "The exponential map",
+        "The Fisher information metric"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "norms",
+        "gradients",
+        "local distance"
       ]
     },
+    "motivation": "<p>You already measure ordinary vectors with dot products. On a curved manifold, each point has its own tangent space, and the right measurement can change from place to place.</p><p>A <b>Riemannian metric</b> supplies that measurement, turning a bare smooth space into a geometric space with length, angle, gradients, and distance.</p>",
+    "definition": "<p>A <b>Riemannian metric</b> assigns each point $p\\in\\mathcal{M}$ an inner product $g_p$ on $T_p\\mathcal{M}$. In coordinates, $g_p(u,v)=u^TG(p)v$, where $G(p)$ is symmetric positive definite. Length is $\\|v\\|_g=\\sqrt{g_p(v,v)}$.</p><p>Positive definiteness makes every nonzero tangent vector have positive length. Smooth dependence on $p$ lets curve length be integrated as $\\int\\sqrt{g_{\\gamma(t)}(\\gamma'(t),\\gamma'(t))}\\,dt$.</p><p><b>Assumptions that matter:</b> vectors compared by $g_p$ live in the same tangent space; $G$ must be symmetric positive definite; and coordinates may change while geometric lengths remain the same.</p>",
+    "worked": {
+      "problem": "For $G=\\begin{pmatrix}4&0\\\\0&1\\end{pmatrix}$, find $\\|(1,2)\\|_g$ and $g((1,2),(3,0))$.",
+      "skills": [
+        "metric matrices",
+        "inner products",
+        "norms"
+      ],
+      "strategy": "Use $g(u,v)=u^TGv$ and take a square root for length.",
+      "steps": [
+        {
+          "do": "Multiply $Gv$ for $v=(1,2)$",
+          "result": "$(4,2)$",
+          "why": "apply the metric matrix"
+        },
+        {
+          "do": "Compute $g(v,v)$",
+          "result": "$(1,2)\\cdot(4,2)=8$",
+          "why": "metric length squared"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$\\|v\\|_g=\\sqrt8=2\\sqrt2$",
+          "why": "length is nonnegative"
+        },
+        {
+          "do": "Multiply $Gw$ for $w=(3,0)$",
+          "result": "$(12,0)$",
+          "why": "prepare the cross inner product"
+        },
+        {
+          "do": "Compute $g(v,w)$",
+          "result": "$(1,2)\\cdot(12,0)=12$",
+          "why": "use the metric inner product"
+        }
+      ],
+      "verify": "The first coordinate is weighted more heavily, so the metric length exceeds the Euclidean length $\\sqrt5$.",
+      "answer": "$\\|v\\|_g=2\\sqrt2$ and $g(v,w)=12$.",
+      "connects": "A metric is a measurement rule on tangent spaces."
+    },
+    "practice": [
+      {
+        "problem": "For $G=\\operatorname{diag}(2,3)$, find $\\|(1,1)\\|_g$.",
+        "steps": [
+          {
+            "do": "Multiply",
+            "result": "$G(1,1)=(2,3)$",
+            "why": "apply the metric"
+          },
+          {
+            "do": "Dot",
+            "result": "$(1,1)\\cdot(2,3)=5$",
+            "why": "length squared"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\sqrt5$",
+            "why": "length is nonnegative"
+          },
+          {
+            "do": "Compare",
+            "result": "$\\sqrt5>\\sqrt2$",
+            "why": "weights increase length"
+          },
+          {
+            "do": "State",
+            "result": "$\\|(1,1)\\|_g=\\sqrt5$",
+            "why": "final metric length"
+          }
+        ],
+        "answer": "$\\sqrt5$."
+      },
+      {
+        "problem": "In polar metric $ds^2=dr^2+r^2d\\theta^2$, find the length of $(0,0.5)$ at $r=2$.",
+        "steps": [
+          {
+            "do": "Write squared length",
+            "result": "$0^2+2^2(0.5)^2$",
+            "why": "use the polar metric"
+          },
+          {
+            "do": "Square",
+            "result": "$4\\cdot0.25$",
+            "why": "compute the angular part"
+          },
+          {
+            "do": "Multiply",
+            "result": "$1$",
+            "why": "squared length"
+          },
+          {
+            "do": "Take square root",
+            "result": "$1$",
+            "why": "length"
+          },
+          {
+            "do": "Interpret",
+            "result": "unit arc speed",
+            "why": "radius doubles angular motion"
+          }
+        ],
+        "answer": "The length is $1$."
+      },
+      {
+        "problem": "On the unit sphere metric $ds^2=d\\phi^2+\\sin^2\\phi d\\theta^2$, find the length of $(0,0.2)$ at $\\phi=\\pi/2$.",
+        "steps": [
+          {
+            "do": "Evaluate sine",
+            "result": "$\\sin(\\pi/2)=1$",
+            "why": "equator"
+          },
+          {
+            "do": "Write squared length",
+            "result": "$0^2+1^2(0.2)^2$",
+            "why": "use the metric"
+          },
+          {
+            "do": "Square",
+            "result": "$0.04$",
+            "why": "compute"
+          },
+          {
+            "do": "Take square root",
+            "result": "$0.2$",
+            "why": "length"
+          },
+          {
+            "do": "Interpret",
+            "result": "angle equals arc length",
+            "why": "unit equator"
+          }
+        ],
+        "answer": "The length is $0.2$."
+      },
+      {
+        "problem": "For $G=\\operatorname{diag}(1,9)$, find the metric cosine between $u=(1,0)$ and $v=(1,1)$.",
+        "steps": [
+          {
+            "do": "Compute $g(u,v)$",
+            "result": "$1$",
+            "why": "$Gv=(1,9)$"
+          },
+          {
+            "do": "Compute $\\|u\\|_g$",
+            "result": "$1$",
+            "why": "first basis vector has weight one"
+          },
+          {
+            "do": "Compute $\\|v\\|_g^2$",
+            "result": "$10$",
+            "why": "$1+9=10$"
+          },
+          {
+            "do": "Take root",
+            "result": "$\\|v\\|_g=\\sqrt{10}$",
+            "why": "length"
+          },
+          {
+            "do": "Divide",
+            "result": "$\\cos\\alpha=1/\\sqrt{10}$",
+            "why": "inner product over lengths"
+          }
+        ],
+        "answer": "$1/\\sqrt{10}$."
+      },
+      {
+        "problem": "Metric $G=\\operatorname{diag}(100,1)$. Compare lengths of $(0.1,0)$ and $(0,0.1)$.",
+        "steps": [
+          {
+            "do": "First squared length",
+            "result": "$100(0.1)^2=1$",
+            "why": "first coordinate is expensive"
+          },
+          {
+            "do": "First length",
+            "result": "$1$",
+            "why": "square root"
+          },
+          {
+            "do": "Second squared length",
+            "result": "$(0.1)^2=0.01$",
+            "why": "second coordinate weight is one"
+          },
+          {
+            "do": "Second length",
+            "result": "$0.1$",
+            "why": "square root"
+          },
+          {
+            "do": "Compare",
+            "result": "first is $10$ times longer",
+            "why": "$1/0.1=10$"
+          }
+        ],
+        "answer": "Lengths are $1$ and $0.1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature scaling",
+        "background": "Metrics formalize that some feature directions count more than others.",
+        "numbers": "With weights $1/4$ and $1$, step $(2,1)$ has squared length $1+1=2$."
+      },
+      {
+        "title": "Robot costs",
+        "background": "Heavy joints can be penalized more strongly by a metric.",
+        "numbers": "$G=\\operatorname{diag}(5,1)$ makes velocity $(1,1)$ have squared cost $6$."
+      },
+      {
+        "title": "Graphics parametrization",
+        "background": "Surface coordinates need metrics to recover real lengths.",
+        "numbers": "At polar radius $10$, angle $0.01$ has length $0.1$."
+      },
+      {
+        "title": "Natural gradients",
+        "background": "Information geometry measures parameter steps by distributional change.",
+        "numbers": "If $G=25$, raw step $0.02$ has metric length $0.1$."
+      },
+      {
+        "title": "Image diffusion",
+        "background": "Anisotropic metrics smooth along edges more than across them.",
+        "numbers": "Weights $100$ across and $1$ along make equal steps $10$ times longer across."
+      },
+      {
+        "title": "Embedding distance",
+        "background": "Mahalanobis metrics give task-specific similarity in learned spaces.",
+        "numbers": "With $G=\\operatorname{diag}(4,1)$, difference $(1,2)$ has squared distance $8$."
+      }
+    ],
+    "applicationsClose": "A metric is local measurement made precise; once you can measure, you can define distance, gradients, and geodesics.",
+    "takeaways": [
+      "A Riemannian metric is an inner product on each tangent space.",
+      "Coordinate matrices must be symmetric positive definite.",
+      "Lengths and angles depend on the metric.",
+      "Metrics prepare the ground for geodesics and natural gradients."
+    ],
     "prereqs": [
       "math-12-14"
     ]
@@ -321,19 +3996,261 @@
   B({
     "id": "math-12-16",
     "title": "Geodesics",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: geodesics.",
+    "tagline": "Geodesics are the straightest paths a curved space allows.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Riemannian metrics</i>"
+        "Riemannian metrics",
+        "curve length",
+        "tangent vectors"
       ],
       "leadsTo": [
-        "the next lesson, <i>The exponential map</i>"
+        "The exponential map",
+        "Connections and parallel transport",
+        "The Fisher information metric"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "shortest paths",
+        "energy",
+        "Christoffel symbols"
       ]
     },
+    "motivation": "<p>You know the shortest path in the plane is a straight line. On a sphere or statistical manifold, the path must stay inside the space.</p><p>A <b>geodesic</b> is the geometry-aware straight line: it does not turn according to the manifold connection, and locally it minimizes length.</p>",
+    "definition": "<p>A curve $\\gamma(t)$ is a <b>geodesic</b> when $\\nabla_{\\gamma'}\\gamma'=0$. In coordinates this is $\\ddot{x}^k+\\Gamma^k_{ij}\\dot{x}^i\\dot{x}^j=0$, where $\\Gamma^k_{ij}$ are Christoffel symbols from the metric.</p><p>In Euclidean space the Christoffel symbols vanish, so geodesics satisfy $\\ddot{x}=0$ and are lines. On a sphere, geodesics are great circles.</p><p><b>Assumptions that matter:</b> geodesics depend on the metric; constant-speed parametrization is usually intended; local shortest does not always mean globally unique; and several geodesics can connect the same two points.</p>",
+    "worked": {
+      "problem": "On a sphere of radius $2$, find the shorter geodesic distance for central angle $\\pi/3$.",
+      "skills": [
+        "sphere geometry",
+        "arc length",
+        "distance"
+      ],
+      "strategy": "Sphere geodesics are great-circle arcs, and arc length is $R\\theta$.",
+      "steps": [
+        {
+          "do": "Identify radius",
+          "result": "$R=2$",
+          "why": "given sphere size"
+        },
+        {
+          "do": "Identify angle",
+          "result": "$\\theta=\\pi/3$",
+          "why": "given central angle"
+        },
+        {
+          "do": "Use arc length",
+          "result": "$s=R\\theta$",
+          "why": "great-circle formula"
+        },
+        {
+          "do": "Substitute",
+          "result": "$s=2\\pi/3$",
+          "why": "multiply radius and angle"
+        },
+        {
+          "do": "Approximate",
+          "result": "$s\\approx2.094$",
+          "why": "decimal value"
+        }
+      ],
+      "verify": "The shorter arc is less than half a great circle, so the distance is plausible.",
+      "answer": "$2\\pi/3\\approx2.094$.",
+      "connects": "Geodesics generalize straight-line distance to curved spaces."
+    },
+    "practice": [
+      {
+        "problem": "In the plane, solve the geodesic with point $(1,2)$ and velocity $(3,-1)$.",
+        "steps": [
+          {
+            "do": "Use $\\ddot{x}=0$",
+            "result": "$\\dot{x}=3$",
+            "why": "initial velocity"
+          },
+          {
+            "do": "Integrate",
+            "result": "$x=1+3t$",
+            "why": "initial position"
+          },
+          {
+            "do": "Use $\\ddot{y}=0$",
+            "result": "$\\dot{y}=-1$",
+            "why": "second velocity"
+          },
+          {
+            "do": "Integrate",
+            "result": "$y=2-t$",
+            "why": "initial position"
+          },
+          {
+            "do": "Combine",
+            "result": "$\\gamma(t)=(1+3t,2-t)$",
+            "why": "write the line"
+          }
+        ],
+        "answer": "$\\gamma(t)=(1+3t,2-t)$."
+      },
+      {
+        "problem": "On the unit sphere, central angle $\\pi/2$. Find distance.",
+        "steps": [
+          {
+            "do": "Set radius",
+            "result": "$R=1$",
+            "why": "unit sphere"
+          },
+          {
+            "do": "Set angle",
+            "result": "$\\theta=\\pi/2$",
+            "why": "given"
+          },
+          {
+            "do": "Use formula",
+            "result": "$s=R\\theta$",
+            "why": "great-circle length"
+          },
+          {
+            "do": "Substitute",
+            "result": "$s=\\pi/2$",
+            "why": "unit radius"
+          },
+          {
+            "do": "State",
+            "result": "$\\pi/2$",
+            "why": "exact distance"
+          }
+        ],
+        "answer": "$\\pi/2$."
+      },
+      {
+        "problem": "A radius-$1$ cylinder unrolls. Height difference $3$, angle difference $\\pi$. Find unwrapped distance.",
+        "steps": [
+          {
+            "do": "Convert angle",
+            "result": "$1\\cdot\\pi=\\pi$",
+            "why": "arc displacement"
+          },
+          {
+            "do": "Form plane displacement",
+            "result": "$(\\pi,3)$",
+            "why": "unroll the cylinder"
+          },
+          {
+            "do": "Use distance",
+            "result": "$\\sqrt{\\pi^2+9}$",
+            "why": "straight line on the unwrapped plane"
+          },
+          {
+            "do": "Approximate inside",
+            "result": "$9.870+9=18.870$",
+            "why": "use $\\pi^2\\approx9.870$"
+          },
+          {
+            "do": "Take root",
+            "result": "$4.344$",
+            "why": "decimal distance"
+          }
+        ],
+        "answer": "$\\sqrt{\\pi^2+9}\\approx4.344$."
+      },
+      {
+        "problem": "In hyperbolic metric $ds^2=(dx^2+dy^2)/y^2$, find vertical length from $y=1$ to $4$.",
+        "steps": [
+          {
+            "do": "Set $dx=0$",
+            "result": "$ds=dy/y$",
+            "why": "vertical path"
+          },
+          {
+            "do": "Set integral",
+            "result": "$\\int_1^4 dy/y$",
+            "why": "length integral"
+          },
+          {
+            "do": "Antidifferentiate",
+            "result": "$\\ln y\\big|_1^4$",
+            "why": "integral of $1/y$"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\ln4-\\ln1$",
+            "why": "endpoints"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\ln4\\approx1.386$",
+            "why": "$\\ln1=0$"
+          }
+        ],
+        "answer": "$\\ln4\\approx1.386$."
+      },
+      {
+        "problem": "On the unit circle, angles $0.2$ and $0.8$. Find geodesic distance.",
+        "steps": [
+          {
+            "do": "Subtract angles",
+            "result": "$0.8-0.2=0.6$",
+            "why": "same coordinate chart"
+          },
+          {
+            "do": "Check shorter arc",
+            "result": "$0.6<\\pi$",
+            "why": "no wraparound is shorter"
+          },
+          {
+            "do": "Use unit arc length",
+            "result": "$s=1\\cdot0.6$",
+            "why": "radius one"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.6$",
+            "why": "radians equal unit-circle length"
+          },
+          {
+            "do": "Interpret",
+            "result": "manifold distance",
+            "why": "distance is along the circle"
+          }
+        ],
+        "answer": "The distance is $0.6$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Air routes",
+        "background": "Flights follow great circles on Earth because those are spherical geodesics.",
+        "numbers": "Earth radius $6371$ km and angle $0.5$ gives $3185.5$ km."
+      },
+      {
+        "title": "Robot angles",
+        "background": "Joint interpolation should use circular geodesics instead of raw angle subtraction.",
+        "numbers": "$350^\\circ$ to $10^\\circ$ is $20^\\circ$, not $340^\\circ$."
+      },
+      {
+        "title": "Shape interpolation",
+        "background": "Geodesic morphs stay inside valid shape spaces.",
+        "numbers": "A midpoint along distance $0.3$ is $0.15$ from each endpoint."
+      },
+      {
+        "title": "Hyperbolic embeddings",
+        "background": "Tree-like data use hyperbolic geodesic distances.",
+        "numbers": "Vertical half-plane levels $1$ and $8$ are distance $\\ln8\\approx2.079$."
+      },
+      {
+        "title": "Optimization paths",
+        "background": "Riemannian methods move along geometry-aware paths.",
+        "numbers": "A geodesic step of norm $0.1$ travels local distance $0.1$."
+      },
+      {
+        "title": "Diffusion kernels",
+        "background": "Kernels on manifolds often use geodesic distance.",
+        "numbers": "$e^{-0.5^2}=0.779$, while $e^{-2^2}=0.018$."
+      }
+    ],
+    "applicationsClose": "Geodesics are straight lines in the language of the space itself.",
+    "takeaways": [
+      "Geodesics satisfy $\\nabla_{\\gamma'}\\gamma'=0$.",
+      "Euclidean geodesics are lines.",
+      "Sphere geodesics are great circles.",
+      "Geodesics are locally shortest but may not be globally unique."
+    ],
     "prereqs": [
       "math-12-15"
     ]
@@ -342,19 +4259,261 @@
   B({
     "id": "math-12-17",
     "title": "The exponential map",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: the exponential map.",
+    "tagline": "The exponential map follows a tangent vector along a geodesic to land back on the manifold.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Geodesics</i>"
+        "Geodesics",
+        "Tangent spaces",
+        "Riemannian metrics"
       ],
       "leadsTo": [
-        "the next lesson, <i>Connections and parallel transport</i>"
+        "Connections and parallel transport",
+        "The Fisher information metric",
+        "Geometric deep learning"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "normal coordinates",
+        "retractions",
+        "local parametrization"
       ]
     },
+    "motivation": "<p>In flat space, you can add a vector to a point. On a manifold, that sum may leave the space.</p><p>The <b>exponential map</b> gives the curved-space replacement: start at $p$, use $v$ as initial velocity, follow the geodesic for time $1$, and arrive at $\\exp_p(v)$.</p>",
+    "definition": "<p>For $v\\in T_p\\mathcal{M}$, define $\\exp_p(v)=\\gamma_v(1)$, where $\\gamma_v(0)=p$ and $\\gamma_v'(0)=v$ is the geodesic with that initial velocity. In Euclidean space, $\\exp_p(v)=p+v$.</p><p>On the unit sphere, for $v\\ne0$, $$\\exp_p(v)=\\cos(\\|v\\|)p+\\sin(\\|v\\|)\\dfrac{v}{\\|v\\|}.$$ The norm of $v$ is the geodesic travel distance.</p><p><b>Assumptions that matter:</b> $v$ must be tangent at $p$; the map is best behaved locally before cut points; and numerical methods often use retractions as cheaper approximations.</p>",
+    "worked": {
+      "problem": "On the unit sphere at $p=(0,0,1)$, compute $\\exp_p(v)$ for $v=(\\pi/6,0,0)$.",
+      "skills": [
+        "sphere exponential",
+        "norms",
+        "trigonometry"
+      ],
+      "strategy": "Use the sphere formula: vector length is the travel angle.",
+      "steps": [
+        {
+          "do": "Compute the norm",
+          "result": "$\\|v\\|=\\pi/6$",
+          "why": "only one component is nonzero"
+        },
+        {
+          "do": "Normalize direction",
+          "result": "$v/\\|v\\|=(1,0,0)$",
+          "why": "divide by $\\pi/6$"
+        },
+        {
+          "do": "Apply the formula",
+          "result": "$\\cos(\\pi/6)p+\\sin(\\pi/6)(1,0,0)$",
+          "why": "substitute length and direction"
+        },
+        {
+          "do": "Use trig values",
+          "result": "$\\cos(\\pi/6)=\\sqrt3/2$, $\\sin(\\pi/6)=1/2$",
+          "why": "standard values"
+        },
+        {
+          "do": "Combine",
+          "result": "$(1/2,0,\\sqrt3/2)$",
+          "why": "add the vector parts"
+        }
+      ],
+      "verify": "The endpoint has squared norm $1/4+3/4=1$, so it lies on the sphere.",
+      "answer": "$\\exp_p(v)=(1/2,0,\\sqrt3/2)$.",
+      "connects": "The exponential map turns a tangent instruction into a manifold point."
+    },
+    "practice": [
+      {
+        "problem": "In Euclidean space, compute $\\exp_{(1,2)}(3,-4)$.",
+        "steps": [
+          {
+            "do": "Recall Euclidean rule",
+            "result": "$\\exp_p(v)=p+v$",
+            "why": "geodesics are lines"
+          },
+          {
+            "do": "Add first coordinate",
+            "result": "$1+3=4$",
+            "why": "componentwise addition"
+          },
+          {
+            "do": "Add second coordinate",
+            "result": "$2-4=-2$",
+            "why": "componentwise addition"
+          },
+          {
+            "do": "Write endpoint",
+            "result": "$(4,-2)$",
+            "why": "combine components"
+          },
+          {
+            "do": "Check",
+            "result": "straight-line endpoint",
+            "why": "flat case"
+          }
+        ],
+        "answer": "$(4,-2)$."
+      },
+      {
+        "problem": "On the unit circle at $(1,0)$ with $v=(0,0.3)$, approximate $\\exp_p(v)$.",
+        "steps": [
+          {
+            "do": "Compute norm",
+            "result": "$0.3$",
+            "why": "tangent speed"
+          },
+          {
+            "do": "Unit direction",
+            "result": "$(0,1)$",
+            "why": "normalize"
+          },
+          {
+            "do": "Use formula",
+            "result": "$(\\cos0.3,\\sin0.3)$",
+            "why": "circle geodesic"
+          },
+          {
+            "do": "Approximate",
+            "result": "$(0.955,0.296)$",
+            "why": "calculator values"
+          },
+          {
+            "do": "State",
+            "result": "point on the circle",
+            "why": "approximately unit length"
+          }
+        ],
+        "answer": "Approximately $(0.955,0.296)$."
+      },
+      {
+        "problem": "At the north pole, compute $\\exp_p(0,\\pi/4,0)$ on the unit sphere.",
+        "steps": [
+          {
+            "do": "Find norm",
+            "result": "$\\pi/4$",
+            "why": "travel angle"
+          },
+          {
+            "do": "Normalize",
+            "result": "$(0,1,0)$",
+            "why": "direction"
+          },
+          {
+            "do": "Apply formula",
+            "result": "$\\cos(\\pi/4)p+\\sin(\\pi/4)(0,1,0)$",
+            "why": "sphere exponential"
+          },
+          {
+            "do": "Use values",
+            "result": "$\\sqrt2/2$ and $\\sqrt2/2$",
+            "why": "standard trig"
+          },
+          {
+            "do": "Combine",
+            "result": "$(0,\\sqrt2/2,\\sqrt2/2)$",
+            "why": "endpoint"
+          }
+        ],
+        "answer": "$(0,\\sqrt2/2,\\sqrt2/2)$."
+      },
+      {
+        "problem": "Retraction $R_p(v)=(p+v)/\\|p+v\\|$ on the sphere. Use $p=(0,0,1)$, $v=(0.1,0,0)$.",
+        "steps": [
+          {
+            "do": "Add",
+            "result": "$(0.1,0,1)$",
+            "why": "ambient trial point"
+          },
+          {
+            "do": "Norm",
+            "result": "$\\sqrt{1.01}\\approx1.005$",
+            "why": "sum squares"
+          },
+          {
+            "do": "Divide first",
+            "result": "$0.1/1.005\\approx0.0995$",
+            "why": "normalize"
+          },
+          {
+            "do": "Divide third",
+            "result": "$1/1.005\\approx0.9950$",
+            "why": "normalize"
+          },
+          {
+            "do": "Write result",
+            "result": "$(0.0995,0,0.9950)$",
+            "why": "retracted point"
+          }
+        ],
+        "answer": "Approximately $(0.0995,0,0.9950)$."
+      },
+      {
+        "problem": "If $\\|v\\|=0.05$, what is the local distance from $p$ to $\\exp_p(v)$?",
+        "steps": [
+          {
+            "do": "Use geodesic speed",
+            "result": "$\\|\\gamma'\\|=\\|v\\|$",
+            "why": "initial speed stays constant"
+          },
+          {
+            "do": "Set time",
+            "result": "$1$",
+            "why": "exponential evaluates at time one"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.05\\cdot1=0.05$",
+            "why": "distance equals speed times time locally"
+          },
+          {
+            "do": "Add condition",
+            "result": "before cut points",
+            "why": "local minimizing is assumed"
+          },
+          {
+            "do": "State distance",
+            "result": "$0.05$",
+            "why": "local geodesic length"
+          }
+        ],
+        "answer": "The local distance is $0.05$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Normal coordinates",
+        "background": "Exponential maps create coordinates centered at a point where radial lines are geodesics.",
+        "numbers": "A tangent vector of norm $0.2$ lands about distance $0.2$ away."
+      },
+      {
+        "title": "Riemannian optimization",
+        "background": "Manifold optimizers use exponential maps or retractions to stay feasible.",
+        "numbers": "A sphere step $(0.1,0,0)$ from north retracts to about $(0.0995,0,0.9950)$."
+      },
+      {
+        "title": "Rotation updates",
+        "background": "Rigid-body rotations are updated by exponentiating angular velocities.",
+        "numbers": "Norm $0.01$ radians is about $0.57^\\circ$."
+      },
+      {
+        "title": "Shape shooting",
+        "background": "Geodesic shooting predicts an initial velocity that reaches a target shape.",
+        "numbers": "A target distance $3$ needs a unit-time velocity of norm about $3$."
+      },
+      {
+        "title": "Hyperbolic learning",
+        "background": "Hyperbolic embeddings use exponential maps to keep points in curved space.",
+        "numbers": "A tangent step of norm $0.1$ changes local distance by about $0.1$."
+      },
+      {
+        "title": "Data augmentation",
+        "background": "Small tangent perturbations can create valid nearby manifold data.",
+        "numbers": "A sphere perturbation of norm $0.05$ is about $2.86^\\circ$."
+      }
+    ],
+    "applicationsClose": "The exponential map is the curved equivalent of point plus vector, local but deeply useful.",
+    "takeaways": [
+      "$\\exp_p(v)=\\gamma_v(1)$.",
+      "In flat space it is $p+v$.",
+      "On spheres it follows great circles.",
+      "Retractions are practical approximations."
+    ],
     "prereqs": [
       "math-12-16"
     ]
@@ -363,19 +4522,261 @@
   B({
     "id": "math-12-18",
     "title": "Connections and parallel transport",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: connections and parallel transport.",
+    "tagline": "A connection tells curved spaces how to differentiate and move tangent vectors.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The exponential map</i>"
+        "Vector fields on manifolds",
+        "Riemannian metrics",
+        "Geodesics"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Fisher information metric</i>"
+        "The Fisher information metric",
+        "Geometric deep learning",
+        "curvature tensors"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "covariant derivatives",
+        "Christoffel symbols",
+        "parallel fields"
       ]
     },
+    "motivation": "<p>In the plane, you can slide an arrow around without changing it. On a sphere, tangent planes tilt, so comparing arrows at different points needs a rule.</p><p>A <b>connection</b> supplies that rule. It lets us differentiate vector fields, define geodesics, and transport momentum or directions along curves.</p>",
+    "definition": "<p>A <b>connection</b> $\\nabla$ takes vector fields $X,Y$ and forms $\\nabla_XY$, the derivative of $Y$ in direction $X$ corrected to remain tangent. For a Riemannian metric, the Levi-Civita connection preserves the metric and has no torsion.</p><p>In coordinates, $\\nabla_{\\partial_i}\\partial_j=\\Gamma^k_{ij}\\partial_k$. A vector field $V$ along $\\gamma$ is <b>parallel</b> if $\\nabla_{\\gamma'}V=0$. A geodesic is the case $V=\\gamma'$.</p><p><b>Assumptions that matter:</b> the connection must be specified; Levi-Civita depends on the metric; Christoffel symbols are coordinate-dependent; and parallel transport can depend on path.</p>",
+    "worked": {
+      "problem": "In polar coordinates, $\\nabla_{\\partial_\\theta}\\partial_\\theta=-r\\partial_r$. For $r=2$, $\\theta=t$, compute $\\nabla_{\\gamma'}\\gamma'$.",
+      "skills": [
+        "connections",
+        "polar coordinates",
+        "geodesic acceleration"
+      ],
+      "strategy": "The velocity is $\\partial_\\theta$, so substitute into the given connection formula.",
+      "steps": [
+        {
+          "do": "Write velocity",
+          "result": "$\\gamma'=\\partial_\\theta$",
+          "why": "only angle changes"
+        },
+        {
+          "do": "Set up acceleration",
+          "result": "$\\nabla_{\\gamma'}\\gamma'=\\nabla_{\\partial_\\theta}\\partial_\\theta$",
+          "why": "differentiate velocity along itself"
+        },
+        {
+          "do": "Use the formula",
+          "result": "$-r\\partial_r$",
+          "why": "given connection"
+        },
+        {
+          "do": "Substitute $r=2$",
+          "result": "$-2\\partial_r$",
+          "why": "circle radius"
+        },
+        {
+          "do": "Interpret",
+          "result": "inward acceleration",
+          "why": "constant-radius circles turn inward"
+        }
+      ],
+      "verify": "The acceleration is nonzero, so this circle is not a Euclidean geodesic.",
+      "answer": "$\\nabla_{\\gamma'}\\gamma'=-2\\partial_r$.",
+      "connects": "Connections measure turning in a way that respects the manifold."
+    },
+    "practice": [
+      {
+        "problem": "In Cartesian Euclidean coordinates, compute $\\nabla_{\\gamma'}\\gamma'$ for $\\gamma(t)=(1+2t,3-t)$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$\\gamma'=(2,-1)$",
+            "why": "velocity"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$\\gamma''=(0,0)$",
+            "why": "constant velocity"
+          },
+          {
+            "do": "Use zero Christoffels",
+            "result": "$\\nabla_{\\gamma'}\\gamma'=\\gamma''$",
+            "why": "Cartesian flat coordinates"
+          },
+          {
+            "do": "Substitute",
+            "result": "$(0,0)$",
+            "why": "ordinary acceleration"
+          },
+          {
+            "do": "Conclude",
+            "result": "geodesic",
+            "why": "zero covariant acceleration"
+          }
+        ],
+        "answer": "The covariant acceleration is $(0,0)$."
+      },
+      {
+        "problem": "Use $\\nabla_{\\partial_r}\\partial_r=0$ to show a polar radial line is geodesic.",
+        "steps": [
+          {
+            "do": "Write velocity",
+            "result": "$\\partial_r$",
+            "why": "only radius changes"
+          },
+          {
+            "do": "Set acceleration",
+            "result": "$\\nabla_{\\partial_r}\\partial_r$",
+            "why": "differentiate velocity"
+          },
+          {
+            "do": "Use formula",
+            "result": "$0$",
+            "why": "given"
+          },
+          {
+            "do": "Apply geodesic test",
+            "result": "zero",
+            "why": "no covariant turning"
+          },
+          {
+            "do": "Conclude",
+            "result": "geodesic",
+            "why": "satisfies the equation"
+          }
+        ],
+        "answer": "The radial line is geodesic."
+      },
+      {
+        "problem": "Transport $(0,0,1)$ along the unit-sphere equator from $(1,0,0)$ to $(0,1,0)$. What remains?",
+        "steps": [
+          {
+            "do": "Check start tangency",
+            "result": "$(1,0,0)\\cdot(0,0,1)=0$",
+            "why": "sphere tangent condition"
+          },
+          {
+            "do": "Use equator point",
+            "result": "$(\\cos t,\\sin t,0)$",
+            "why": "parametrize path"
+          },
+          {
+            "do": "Check all tangency",
+            "result": "$(\\cos t,\\sin t,0)\\cdot(0,0,1)=0$",
+            "why": "north vector stays tangent"
+          },
+          {
+            "do": "Observe ambient derivative",
+            "result": "$0$",
+            "why": "the vector is constant"
+          },
+          {
+            "do": "State result",
+            "result": "$(0,0,1)$",
+            "why": "it remains parallel"
+          }
+        ],
+        "answer": "The transported vector is $(0,0,1)$."
+      },
+      {
+        "problem": "If $\\nabla_{\\partial_x}\\partial_y=0$, compute $\\nabla_XY$ for $X=3\\partial_x$, $Y=2\\partial_y$ with constant coefficients.",
+        "steps": [
+          {
+            "do": "Pull out $3$",
+            "result": "$3\\nabla_{\\partial_x}Y$",
+            "why": "linear in direction"
+          },
+          {
+            "do": "Pull out $2$",
+            "result": "$6\\nabla_{\\partial_x}\\partial_y$",
+            "why": "constant coefficient"
+          },
+          {
+            "do": "Use given value",
+            "result": "$6\\cdot0$",
+            "why": "connection term is zero"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0$",
+            "why": "zero times six"
+          },
+          {
+            "do": "State",
+            "result": "$\\nabla_XY=0$",
+            "why": "parallel in that direction"
+          }
+        ],
+        "answer": "$0$."
+      },
+      {
+        "problem": "One-dimensional Christoffel correction $\\Gamma^1_{11}=0.5$, with $\\dot{x}=2$, $\\ddot{x}=0$. Compute geodesic equation left side.",
+        "steps": [
+          {
+            "do": "Write formula",
+            "result": "$\\ddot{x}+\\Gamma^1_{11}\\dot{x}^2$",
+            "why": "one coordinate"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0+0.5\\cdot2^2$",
+            "why": "given values"
+          },
+          {
+            "do": "Square",
+            "result": "$4$",
+            "why": "speed squared"
+          },
+          {
+            "do": "Multiply",
+            "result": "$2$",
+            "why": "Christoffel contribution"
+          },
+          {
+            "do": "Interpret",
+            "result": "not geodesic",
+            "why": "left side is nonzero"
+          }
+        ],
+        "answer": "The value is $2$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Navigation on Earth",
+        "background": "Parallel transport on a curved globe can rotate directions after a loop.",
+        "numbers": "A unit-sphere triangle of area $\\pi/2$ rotates a vector by $\\pi/2$."
+      },
+      {
+        "title": "General relativity",
+        "background": "Gravity is encoded by a connection on spacetime.",
+        "numbers": "Correction $0.01$ m/s$^2$ over $10$ s changes speed by $0.1$ m/s."
+      },
+      {
+        "title": "Manifold momentum",
+        "background": "Optimization with momentum must transport old velocity to the new tangent space.",
+        "numbers": "Momentum norm $0.8$ and gradient norm $0.2$ can be combined after transport."
+      },
+      {
+        "title": "Graphics frames",
+        "background": "Parallel-transport frames avoid twisting along curves.",
+        "numbers": "A tube with $100$ samples can transport one normal step by step."
+      },
+      {
+        "title": "Information geometry",
+        "background": "Statistical manifolds use connections to compare score directions.",
+        "numbers": "A transported score change of metric length $0.03$ is a small correction."
+      },
+      {
+        "title": "Robotics orientation",
+        "background": "Rotation velocities are transported between changing body frames.",
+        "numbers": "$0.2$ rad/s for $0.05$ s gives a $0.01$ rad update."
+      }
+    ],
+    "applicationsClose": "Connections are the rules that let arrows move honestly across curved spaces.",
+    "takeaways": [
+      "A connection defines $\\nabla_XY$.",
+      "Parallel transport means $\\nabla_{\\gamma'}V=0$.",
+      "Geodesics satisfy $\\nabla_{\\gamma'}\\gamma'=0$.",
+      "Transport may depend on path in curved spaces."
+    ],
     "prereqs": [
       "math-12-17"
     ]
@@ -384,19 +4785,261 @@
   B({
     "id": "math-12-19",
     "title": "The Fisher information metric",
-    "tier": "🟡",
-    "tagline": "One concept from Differential geometry: the fisher information metric.",
+    "tagline": "The Fisher metric measures parameter motion by how much it changes a probability distribution.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Connections and parallel transport</i>"
+        "Riemannian metrics",
+        "probability distributions",
+        "log-likelihood"
       ],
       "leadsTo": [
-        "the next lesson, <i>Geometric deep learning</i>"
+        "Geometric deep learning",
+        "natural gradient",
+        "information geometry"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "score functions",
+        "KL divergence",
+        "statistical manifolds"
       ]
     },
+    "motivation": "<p>A raw parameter change of $0.1$ does not mean the same thing in every model. Near a probability boundary, it can radically change the distribution.</p><p>The <b>Fisher information metric</b> measures changes by distributional sensitivity, not coordinate size.</p>",
+    "definition": "<p>For $p(x\\mid\\theta)$, the score is $s_\\theta(x)=\\nabla_\\theta\\log p(x\\mid\\theta)$. The Fisher information matrix is $$I(\\theta)=\\mathbb{E}[s_\\theta(x)s_\\theta(x)^T],$$ and it defines $g_\\theta(u,v)=u^TI(\\theta)v$.</p><p>Locally, $D_{KL}(p_\\theta\\|p_{\\theta+d\\theta})\\approx\\frac12 d\\theta^TI(\\theta)d\\theta$. That is why Fisher length measures distinguishability of nearby distributions.</p><p><b>Assumptions that matter:</b> the model is smooth; expectations exist; parameters are identifiable; and boundary probabilities can make the metric large.</p>",
+    "worked": {
+      "problem": "For Bernoulli $p=0.2$, compute $I(p)=1/[p(1-p)]$ and squared Fisher length of $dp=0.04$.",
+      "skills": [
+        "Bernoulli",
+        "Fisher metric",
+        "local length"
+      ],
+      "strategy": "Compute Fisher information, then multiply by $dp^2$.",
+      "steps": [
+        {
+          "do": "Compute $1-p$",
+          "result": "$0.8$",
+          "why": "failure probability"
+        },
+        {
+          "do": "Multiply",
+          "result": "$p(1-p)=0.2\\cdot0.8=0.16$",
+          "why": "denominator"
+        },
+        {
+          "do": "Invert",
+          "result": "$I=1/0.16=6.25$",
+          "why": "Bernoulli formula"
+        },
+        {
+          "do": "Square the step",
+          "result": "$(0.04)^2=0.0016$",
+          "why": "length squared uses squared change"
+        },
+        {
+          "do": "Multiply",
+          "result": "$6.25\\cdot0.0016=0.01$",
+          "why": "squared Fisher length"
+        }
+      ],
+      "verify": "The Fisher length is $0.1$, a modest local distribution change.",
+      "answer": "$I(0.2)=6.25$ and squared length is $0.01$.",
+      "connects": "The Fisher metric turns statistical sensitivity into geometry."
+    },
+    "practice": [
+      {
+        "problem": "For Bernoulli $p=0.5$, compute $I$ and squared length of $dp=0.1$.",
+        "steps": [
+          {
+            "do": "Multiply",
+            "result": "$0.5\\cdot0.5=0.25$",
+            "why": "denominator"
+          },
+          {
+            "do": "Invert",
+            "result": "$I=4$",
+            "why": "Fisher information"
+          },
+          {
+            "do": "Square step",
+            "result": "$0.01$",
+            "why": "$0.1^2$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.04$",
+            "why": "$4\\cdot0.01$"
+          },
+          {
+            "do": "Take length",
+            "result": "$0.2$",
+            "why": "square root"
+          }
+        ],
+        "answer": "$I=4$, squared length $0.04$."
+      },
+      {
+        "problem": "Compare squared length of $dp=0.02$ at Bernoulli $p=0.9$ and $p=0.5$.",
+        "steps": [
+          {
+            "do": "Compute $I(0.9)$",
+            "result": "$1/(0.9\\cdot0.1)=11.111\\ldots$",
+            "why": "near boundary"
+          },
+          {
+            "do": "Square step",
+            "result": "$0.0004$",
+            "why": "$0.02^2$"
+          },
+          {
+            "do": "Multiply at $0.9$",
+            "result": "$0.00444$",
+            "why": "Fisher length squared"
+          },
+          {
+            "do": "Compute at $0.5$",
+            "result": "$4\\cdot0.0004=0.0016$",
+            "why": "center metric"
+          },
+          {
+            "do": "Compare",
+            "result": "$0.00444>0.0016$",
+            "why": "boundary step is larger"
+          }
+        ],
+        "answer": "About $0.00444$ at $p=0.9$ versus $0.0016$ at $p=0.5$."
+      },
+      {
+        "problem": "Normal mean with known variance $4$: use $I(\\mu)=1/4$ to find Fisher length of $d\\mu=1$.",
+        "steps": [
+          {
+            "do": "Identify Fisher",
+            "result": "$I=1/4$",
+            "why": "known-variance normal mean"
+          },
+          {
+            "do": "Square change",
+            "result": "$1^2=1$",
+            "why": "given step"
+          },
+          {
+            "do": "Compute squared length",
+            "result": "$1/4$",
+            "why": "multiply"
+          },
+          {
+            "do": "Take square root",
+            "result": "$1/2$",
+            "why": "length"
+          },
+          {
+            "do": "State",
+            "result": "$0.5$",
+            "why": "decimal form"
+          }
+        ],
+        "answer": "The Fisher length is $0.5$."
+      },
+      {
+        "problem": "Poisson rate $\\lambda=5$, $I=1/\\lambda$. Find squared length of $d\\lambda=0.5$.",
+        "steps": [
+          {
+            "do": "Compute Fisher",
+            "result": "$I=1/5=0.2$",
+            "why": "Poisson formula"
+          },
+          {
+            "do": "Square change",
+            "result": "$0.25$",
+            "why": "$0.5^2$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.2\\cdot0.25=0.05$",
+            "why": "squared length"
+          },
+          {
+            "do": "Optional length",
+            "result": "$\\sqrt{0.05}\\approx0.224$",
+            "why": "square root"
+          },
+          {
+            "do": "State requested value",
+            "result": "$0.05$",
+            "why": "squared length"
+          }
+        ],
+        "answer": "The squared Fisher length is $0.05$."
+      },
+      {
+        "problem": "Bernoulli $p=0.25$ has ordinary gradient $2$. Compute natural-gradient direction.",
+        "steps": [
+          {
+            "do": "Compute inverse Fisher",
+            "result": "$p(1-p)=0.25\\cdot0.75=0.1875$",
+            "why": "Bernoulli inverse metric"
+          },
+          {
+            "do": "Multiply by gradient",
+            "result": "$0.1875\\cdot2=0.375$",
+            "why": "precondition the gradient"
+          },
+          {
+            "do": "Check Fisher",
+            "result": "$I=5.333\\ldots$",
+            "why": "inverse of $0.1875$"
+          },
+          {
+            "do": "Name direction",
+            "result": "$0.375$",
+            "why": "natural gradient"
+          },
+          {
+            "do": "Interpret",
+            "result": "descent subtracts a scaled version",
+            "why": "optimization convention"
+          }
+        ],
+        "answer": "The natural-gradient direction is $0.375$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Natural gradient descent",
+        "background": "Natural gradients precondition ordinary gradients by information geometry.",
+        "numbers": "For $p=0.2$, $I^{-1}=0.16$ and gradient $1.5$ becomes $0.24$."
+      },
+      {
+        "title": "Boundary confidence",
+        "background": "Near $0$ or $1$, Bernoulli parameters are geometrically sensitive.",
+        "numbers": "At $p=0.99$, $I\\approx101.01$; step $0.01$ has squared length $0.0101$."
+      },
+      {
+        "title": "Estimator uncertainty",
+        "background": "Inverse Fisher information approximates variance of maximum likelihood estimators.",
+        "numbers": "If $100$ samples give information $400$, variance is about $1/400=0.0025$."
+      },
+      {
+        "title": "KL trust regions",
+        "background": "Fisher length approximates local KL, useful for limiting policy changes.",
+        "numbers": "If $d\\theta^TId\\theta=0.02$, local KL is about $0.01$."
+      },
+      {
+        "title": "Policy optimization",
+        "background": "Reinforcement learning methods often constrain Fisher-like step size.",
+        "numbers": "A Fisher squared length $0.04$ gives local KL about $0.02$."
+      },
+      {
+        "title": "Gaussian noise",
+        "background": "More observation noise means less information about a mean.",
+        "numbers": "Variance $9$ gives one-sample $I=1/9$; $81$ samples give total information $9$."
+      }
+    ],
+    "applicationsClose": "The Fisher metric is probability-aware geometry: it measures how much the distribution changes.",
+    "takeaways": [
+      "Fisher information is the expected score outer product.",
+      "It defines a metric on identifiable statistical models.",
+      "Local KL is approximately half squared Fisher length.",
+      "Natural gradients use the inverse Fisher metric."
+    ],
     "prereqs": [
       "math-12-18"
     ]
@@ -405,19 +5048,267 @@
   B({
     "id": "math-12-20",
     "title": "Geometric deep learning",
-    "tier": "🟡",
-    "tagline": "Capstone — how differential geometry shows up directly in CS & ML.",
+    "tagline": "Geometric deep learning builds models that respect the shape, symmetry, and constraints of their data.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Fisher information metric</i>"
+        "Geodesics",
+        "The exponential map",
+        "Connections and parallel transport",
+        "The Fisher information metric"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "manifold optimization",
+        "equivariant networks",
+        "graph neural networks"
       ],
       "usedWith": [
-        "the other concepts in Differential geometry and its capstone"
+        "symmetry groups",
+        "Riemannian metrics",
+        "message passing"
       ]
     },
+    "motivation": "<p>Many neural networks treat everything as flat vectors. But rotations, graphs, probability distributions, spherical embeddings, and covariance matrices are not naturally flat.</p><p><b>Geometric deep learning</b> asks the model to respect the structure already present: distances, symmetries, manifolds, and graph neighborhoods.</p>",
+    "definition": "<p><b>Geometric deep learning</b> designs learning systems around geometric structure such as manifolds, graphs, groups, and metrics. A model is <b>equivariant</b> when transforming the input predictably transforms the output, and <b>invariant</b> when the output should not change.</p><p>This topic contributes concrete tools: metrics measure meaningful steps, exponential maps and retractions keep updates on manifolds, parallel transport moves tangent information, and Fisher geometry gives natural gradients $I(\\theta)^{-1}\\nabla L$.</p><p><b>Assumptions that matter:</b> the chosen geometry must match the data; graph edges must encode useful relations; equivariance must match the true symmetry; and manifold updates need tangent steps followed by valid maps back to the manifold.</p>",
+    "worked": {
+      "problem": "Bernoulli $p=0.2$ has ordinary loss gradient $1.5$. Take a natural-gradient descent step with learning rate $0.1$.",
+      "skills": [
+        "Fisher metric",
+        "natural gradient",
+        "ML optimization"
+      ],
+      "strategy": "Use $I^{-1}=p(1-p)$, precondition the gradient, then subtract the scaled step.",
+      "steps": [
+        {
+          "do": "Compute $1-p$",
+          "result": "$0.8$",
+          "why": "failure probability"
+        },
+        {
+          "do": "Compute inverse Fisher",
+          "result": "$p(1-p)=0.2\\cdot0.8=0.16$",
+          "why": "Bernoulli inverse metric"
+        },
+        {
+          "do": "Compute natural gradient",
+          "result": "$0.16\\cdot1.5=0.24$",
+          "why": "precondition the ordinary gradient"
+        },
+        {
+          "do": "Scale by learning rate",
+          "result": "$0.1\\cdot0.24=0.024$",
+          "why": "step size"
+        },
+        {
+          "do": "Update",
+          "result": "$p_{new}=0.2-0.024=0.176$",
+          "why": "descent subtracts the step"
+        }
+      ],
+      "verify": "A raw Euclidean step would move by $0.15$ to $0.05$; the natural step is gentler near the boundary.",
+      "answer": "$p_{new}=0.176$.",
+      "connects": "Geometric learning uses the right metric so optimization respects the model space."
+    },
+    "practice": [
+      {
+        "problem": "Sphere embedding $p=(0,0,1)$ has tangent gradient $g=(0.3,0.4,0)$. Retract a descent step of size $0.2$.",
+        "steps": [
+          {
+            "do": "Compute step",
+            "result": "$v=-0.2g=(-0.06,-0.08,0)$",
+            "why": "move opposite gradient"
+          },
+          {
+            "do": "Add",
+            "result": "$p+v=(-0.06,-0.08,1)$",
+            "why": "ambient trial"
+          },
+          {
+            "do": "Squared norm",
+            "result": "$0.0036+0.0064+1=1.01$",
+            "why": "sum squares"
+          },
+          {
+            "do": "Norm",
+            "result": "$\\sqrt{1.01}\\approx1.005$",
+            "why": "normalize"
+          },
+          {
+            "do": "Divide",
+            "result": "$(-0.0597,-0.0796,0.9950)$",
+            "why": "retraction"
+          }
+        ],
+        "answer": "Approximately $(-0.0597,-0.0796,0.9950)$."
+      },
+      {
+        "problem": "A GNN node has neighbors $(1,3)$ and $(5,1)$. With mean message and $h_1^{new}=0.5h_1+0.5m$, $h_1=(2,2)$.",
+        "steps": [
+          {
+            "do": "Add neighbors",
+            "result": "$(6,4)$",
+            "why": "aggregate"
+          },
+          {
+            "do": "Average",
+            "result": "$m=(3,2)$",
+            "why": "two neighbors"
+          },
+          {
+            "do": "Scale self",
+            "result": "$0.5h_1=(1,1)$",
+            "why": "self weight"
+          },
+          {
+            "do": "Scale message",
+            "result": "$0.5m=(1.5,1)$",
+            "why": "neighbor weight"
+          },
+          {
+            "do": "Add",
+            "result": "$(2.5,2)$",
+            "why": "updated feature"
+          }
+        ],
+        "answer": "$h_1^{new}=(2.5,2)$."
+      },
+      {
+        "problem": "Hyperbolic score $s=-d$: distances $0.7$ and $2.1$. Use $e^{-0.7}=0.497$, $e^{-2.1}=0.122$ for two-way softmax.",
+        "steps": [
+          {
+            "do": "Set weights",
+            "result": "$0.497$ and $0.122$",
+            "why": "exponentiate scores"
+          },
+          {
+            "do": "Add",
+            "result": "$0.619$",
+            "why": "softmax denominator"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.497/0.619$",
+            "why": "probability of closer edge"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.803$",
+            "why": "compute ratio"
+          },
+          {
+            "do": "Interpret",
+            "result": "$80.3\\%$",
+            "why": "closer point is favored"
+          }
+        ],
+        "answer": "The closer-edge probability is about $0.803$."
+      },
+      {
+        "problem": "A $90^\\circ$ equivariant vector model outputs $(2,1)$. What output should follow a $90^\\circ$ input rotation?",
+        "steps": [
+          {
+            "do": "Write rotation rule",
+            "result": "$(x,y)\\mapsto(-y,x)$",
+            "why": "counterclockwise $90^\\circ$"
+          },
+          {
+            "do": "Substitute",
+            "result": "$(2,1)\\mapsto(-1,2)$",
+            "why": "apply rotation"
+          },
+          {
+            "do": "Check old norm",
+            "result": "$\\sqrt5$",
+            "why": "length before rotation"
+          },
+          {
+            "do": "Check new norm",
+            "result": "$\\sqrt5$",
+            "why": "rotation preserves length"
+          },
+          {
+            "do": "State equivariance",
+            "result": "$(-1,2)$",
+            "why": "output transforms with input"
+          }
+        ],
+        "answer": "$(-1,2)$."
+      },
+      {
+        "problem": "Fisher matrix $I=\\operatorname{diag}(4,1)$ and gradient $g=(8,3)$. Update $\\theta=(1,1)$ with natural-gradient descent, learning rate $0.05$.",
+        "steps": [
+          {
+            "do": "Invert Fisher",
+            "result": "$I^{-1}=\\operatorname{diag}(1/4,1)$",
+            "why": "diagonal inverse"
+          },
+          {
+            "do": "Precondition",
+            "result": "$I^{-1}g=(2,3)$",
+            "why": "natural gradient"
+          },
+          {
+            "do": "Scale",
+            "result": "$0.05(2,3)=(0.1,0.15)$",
+            "why": "learning rate"
+          },
+          {
+            "do": "Subtract",
+            "result": "$(1,1)-(0.1,0.15)$",
+            "why": "descent"
+          },
+          {
+            "do": "Simplify",
+            "result": "$(0.9,0.85)$",
+            "why": "new parameter"
+          }
+        ],
+        "answer": "Natural direction $(2,3)$; updated parameter $(0.9,0.85)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Natural gradient training",
+        "background": "Natural gradients use Fisher geometry to reduce dependence on parameter coordinates.",
+        "numbers": "At $p=0.2$, gradient $1.5$ becomes $0.24$, so $\\eta=0.1$ moves by $0.024$."
+      },
+      {
+        "title": "Manifold-valued embeddings",
+        "background": "Sphere or rotation embeddings need updates that stay on the manifold.",
+        "numbers": "The retracted point $(-0.0597,-0.0796,0.9950)$ has norm about $1$."
+      },
+      {
+        "title": "Graph neural networks",
+        "background": "GNNs use graph neighborhoods as the geometry of the data.",
+        "numbers": "Neighbor scalars $4,7,10$ average to message $7$."
+      },
+      {
+        "title": "Equivariant vision",
+        "background": "Convolutions respect translation; group-equivariant models extend this to rotations.",
+        "numbers": "A $90^\\circ$ rotation sends $(2,1)$ to $(-1,2)$."
+      },
+      {
+        "title": "Hyperbolic hierarchy embeddings",
+        "background": "Hyperbolic space fits tree-like growth better than flat space.",
+        "numbers": "Distances $0.7$ and $2.1$ give softmax probability $0.803$ for the closer relation."
+      },
+      {
+        "title": "Molecular learning",
+        "background": "Rotating a molecule should rotate predicted forces but leave energy unchanged.",
+        "numbers": "Force $(1,0,0)$ rotates to $(0,1,0)$, while energy $-3.2$ eV stays $-3.2$ eV."
+      },
+      {
+        "title": "SPD covariance layers",
+        "background": "Covariance matrices live on a positive-definite manifold, not all matrices.",
+        "numbers": "Log variances $(\\ln4,\\ln9)=(1.386,2.197)$ plus $(-0.1,0.2)$ map to about $(3.62,10.99)$."
+      }
+    ],
+    "applicationsClose": "Geometric deep learning is the practical payoff: respect the space, use the right metric, and build the symmetry into the model.",
+    "takeaways": [
+      "Geometry tells models what distances, constraints, and symmetries matter.",
+      "Manifold updates use tangent steps plus exponential maps or retractions.",
+      "Natural gradients use Fisher geometry.",
+      "GNNs, equivariant models, hyperbolic embeddings, and manifold networks are concrete geometric learning tools."
+    ],
     "prereqs": [
       "math-12-19"
     ]

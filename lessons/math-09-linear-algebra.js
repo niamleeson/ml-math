@@ -9,37 +9,577 @@
   B({
     "id": "math-09-01",
     "title": "Vectors and linear combinations",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: vectors and linear combinations.",
+    "tagline": "A vector is a move with size and direction, and a linear combination is how many moves build one new move.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "coordinates",
+        "functions",
+        "basic arithmetic"
       ],
       "leadsTo": [
-        "the next lesson, <i>Systems of linear equations</i>"
+        "Systems of linear equations",
+        "Matrix algebra",
+        "Span"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "dot products",
+        "geometry",
+        "coordinate systems",
+        "linear equations"
       ]
-    }
+    },
+    "motivation": "<p>You already know how to give directions: go 3 blocks east and 2 blocks north. A vector records that same idea as ordered numbers, such as $\\begin{bmatrix}3\\\\2\\end{bmatrix}$.</p><p>A <b>linear combination</b> is the patient act of scaling vectors and adding them. This is the first big language of ML because data points, features, embeddings, gradients, and model weights are all vectors being combined.</p>",
+    "definition": "<p>A <b>vector</b> in $\\mathbb{R}^n$ is an ordered list of $n$ real numbers. If $\\mathbf{v}_1,\\ldots,\\mathbf{v}_k$ are vectors in the same $\\mathbb{R}^n$ and $c_1,\\ldots,c_k$ are real numbers, then $c_1\\mathbf{v}_1+\\cdots+c_k\\mathbf{v}_k$ is a <b>linear combination</b>.</p><p>The rule comes from two allowed moves: scalar multiplication stretches each component, and vector addition adds matching components. For $c\\begin{bmatrix}a\\\\b\\end{bmatrix}+d\\begin{bmatrix}e\\\\f\\end{bmatrix}$, the result is $\\begin{bmatrix}ca+de\\\\cb+df\\end{bmatrix}$.</p><p><b>Assumptions that matter:</b> all vectors in a sum must have the same length; scalars are real numbers here; order of components matters; and the zero vector is allowed because choosing all coefficients $0$ is still a linear combination.</p>",
+    "worked": {
+      "problem": "Write $\\begin{bmatrix}7\\\\1\\end{bmatrix}$ as a linear combination of $\\mathbf{u}=\\begin{bmatrix}2\\\\1\\end{bmatrix}$ and $\\mathbf{v}=\\begin{bmatrix}1\\\\-1\\end{bmatrix}$.",
+      "skills": [
+        "vector addition",
+        "scalar multiplication",
+        "linear combinations"
+      ],
+      "strategy": "Unknown coefficients are the obstacle - name them and match components.",
+      "steps": [
+        {
+          "do": "Set up the combination",
+          "result": "$a\\mathbf{u}+b\\mathbf{v}=\\begin{bmatrix}7\\\\1\\end{bmatrix}$",
+          "why": "the coefficients $a$ and $b$ say how much of each vector to use"
+        },
+        {
+          "do": "Substitute the vectors",
+          "result": "$a\\begin{bmatrix}2\\\\1\\end{bmatrix}+b\\begin{bmatrix}1\\\\-1\\end{bmatrix}=\\begin{bmatrix}7\\\\1\\end{bmatrix}$",
+          "why": "replace each vector by its components"
+        },
+        {
+          "do": "Scale the vectors",
+          "result": "$\\begin{bmatrix}2a\\\\a\\end{bmatrix}+\\begin{bmatrix}b\\\\-b\\end{bmatrix}=\\begin{bmatrix}7\\\\1\\end{bmatrix}$",
+          "why": "scalar multiplication acts component by component"
+        },
+        {
+          "do": "Add components",
+          "result": "$\\begin{bmatrix}2a+b\\\\a-b\\end{bmatrix}=\\begin{bmatrix}7\\\\1\\end{bmatrix}$",
+          "why": "matching components add"
+        },
+        {
+          "do": "Write component equations",
+          "result": "$2a+b=7,\\ a-b=1$",
+          "why": "equal vectors have equal components"
+        },
+        {
+          "do": "Add the equations",
+          "result": "$3a=8$",
+          "why": "the $b$ terms cancel"
+        },
+        {
+          "do": "Solve for $a$",
+          "result": "$a=\\dfrac83$",
+          "why": "divide by 3"
+        },
+        {
+          "do": "Solve for $b$",
+          "result": "$b=\\dfrac53$",
+          "why": "use $a-b=1$"
+        }
+      ],
+      "verify": "Check: $\\frac83\\begin{bmatrix}2\\\\1\\end{bmatrix}+\\frac53\\begin{bmatrix}1\\\\-1\\end{bmatrix}=\\begin{bmatrix}7\\\\1\\end{bmatrix}$.",
+      "answer": "$\\begin{bmatrix}7\\\\1\\end{bmatrix}=\\dfrac83\\mathbf{u}+\\dfrac53\\mathbf{v}$.",
+      "connects": "Linear combinations translate geometric building into component equations."
+    },
+    "practice": [
+      {
+        "problem": "Compute $3\\begin{bmatrix}2\\\\-1\\end{bmatrix}-2\\begin{bmatrix}4\\\\5\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Scale the first vector",
+            "result": "$3\\begin{bmatrix}2\\\\-1\\end{bmatrix}=\\begin{bmatrix}6\\\\-3\\end{bmatrix}$",
+            "why": "multiply each component by 3"
+          },
+          {
+            "do": "Scale the second vector",
+            "result": "$2\\begin{bmatrix}4\\\\5\\end{bmatrix}=\\begin{bmatrix}8\\\\10\\end{bmatrix}$",
+            "why": "multiply each component by 2"
+          },
+          {
+            "do": "Subtract components",
+            "result": "$\\begin{bmatrix}6\\\\-3\\end{bmatrix}-\\begin{bmatrix}8\\\\10\\end{bmatrix}=\\begin{bmatrix}-2\\\\-13\\end{bmatrix}$",
+            "why": "subtract matching entries"
+          },
+          {
+            "do": "State the vector",
+            "result": "$\\begin{bmatrix}-2\\\\-13\\end{bmatrix}$",
+            "why": "the result is still in $\\mathbb{R}^2$"
+          }
+        ],
+        "answer": "$\\begin{bmatrix}-2\\\\-13\\end{bmatrix}$."
+      },
+      {
+        "problem": "Find $a,b$ so $a\\begin{bmatrix}1\\\\0\\end{bmatrix}+b\\begin{bmatrix}0\\\\1\\end{bmatrix}=\\begin{bmatrix}-3\\\\4\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Scale the first vector",
+            "result": "$\\begin{bmatrix}a\\\\0\\end{bmatrix}$",
+            "why": "the first basis vector carries the first component"
+          },
+          {
+            "do": "Scale the second vector",
+            "result": "$\\begin{bmatrix}0\\\\b\\end{bmatrix}$",
+            "why": "the second basis vector carries the second component"
+          },
+          {
+            "do": "Add the vectors",
+            "result": "$\\begin{bmatrix}a\\\\b\\end{bmatrix}=\\begin{bmatrix}-3\\\\4\\end{bmatrix}$",
+            "why": "components match directly"
+          },
+          {
+            "do": "Match first components",
+            "result": "$a=-3$",
+            "why": "equal vectors have equal first entries"
+          },
+          {
+            "do": "Match second components",
+            "result": "$b=4$",
+            "why": "equal vectors have equal second entries"
+          }
+        ],
+        "answer": "$a=-3$, $b=4$."
+      },
+      {
+        "problem": "Decide whether $\\begin{bmatrix}5\\\\6\\end{bmatrix}$ is a multiple of $\\begin{bmatrix}2\\\\3\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Name the possible scalar",
+            "result": "$c\\begin{bmatrix}2\\\\3\\end{bmatrix}=\\begin{bmatrix}5\\\\6\\end{bmatrix}$",
+            "why": "a multiple uses one scalar"
+          },
+          {
+            "do": "Use the first component",
+            "result": "$2c=5$",
+            "why": "match first entries"
+          },
+          {
+            "do": "Solve the first equation",
+            "result": "$c=2.5$",
+            "why": "divide by 2"
+          },
+          {
+            "do": "Use the second component",
+            "result": "$3c=6$",
+            "why": "match second entries"
+          },
+          {
+            "do": "Solve the second equation",
+            "result": "$c=2$",
+            "why": "divide by 3"
+          },
+          {
+            "do": "Compare scalars",
+            "result": "$2.5\\ne2$",
+            "why": "one scalar must satisfy both components"
+          }
+        ],
+        "answer": "No. The vector is not a scalar multiple."
+      },
+      {
+        "problem": "Express $\\begin{bmatrix}4\\\\9\\end{bmatrix}$ as $a\\begin{bmatrix}1\\\\2\\end{bmatrix}+b\\begin{bmatrix}2\\\\1\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Set up components",
+            "result": "$\\begin{bmatrix}a+2b\\\\2a+b\\end{bmatrix}=\\begin{bmatrix}4\\\\9\\end{bmatrix}$",
+            "why": "scale and add componentwise"
+          },
+          {
+            "do": "Write equations",
+            "result": "$a+2b=4,\\ 2a+b=9$",
+            "why": "match components"
+          },
+          {
+            "do": "Solve the first for $a$",
+            "result": "$a=4-2b$",
+            "why": "isolate one variable"
+          },
+          {
+            "do": "Substitute into the second",
+            "result": "$2(4-2b)+b=9$",
+            "why": "replace $a$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$8-3b=9$",
+            "why": "combine like terms"
+          },
+          {
+            "do": "Solve for $b$",
+            "result": "$b=-\\dfrac13$",
+            "why": "subtract 8 and divide by -3"
+          },
+          {
+            "do": "Find $a$",
+            "result": "$a=\\dfrac{14}{3}$",
+            "why": "substitute into $a=4-2b$"
+          }
+        ],
+        "answer": "$a=14/3$, $b=-1/3$."
+      },
+      {
+        "problem": "A prediction vector combines two feature vectors: $2\\begin{bmatrix}1\\\\3\\\\0\\end{bmatrix}-\\begin{bmatrix}4\\\\1\\\\-2\\end{bmatrix}$. Compute it and interpret the third component.",
+        "steps": [
+          {
+            "do": "Scale the first vector",
+            "result": "$2\\begin{bmatrix}1\\\\3\\\\0\\end{bmatrix}=\\begin{bmatrix}2\\\\6\\\\0\\end{bmatrix}$",
+            "why": "double every feature contribution"
+          },
+          {
+            "do": "Write the subtraction",
+            "result": "$\\begin{bmatrix}2\\\\6\\\\0\\end{bmatrix}-\\begin{bmatrix}4\\\\1\\\\-2\\end{bmatrix}$",
+            "why": "combine the two contributions"
+          },
+          {
+            "do": "Subtract first components",
+            "result": "$2-4=-2$",
+            "why": "first coordinate result"
+          },
+          {
+            "do": "Subtract second components",
+            "result": "$6-1=5$",
+            "why": "second coordinate result"
+          },
+          {
+            "do": "Subtract third components",
+            "result": "$0-(-2)=2$",
+            "why": "subtracting a negative adds"
+          },
+          {
+            "do": "Assemble the vector",
+            "result": "$\\begin{bmatrix}-2\\\\5\\\\2\\end{bmatrix}$",
+            "why": "collect the components"
+          }
+        ],
+        "answer": "The combined vector is $\\begin{bmatrix}-2\\\\5\\\\2\\end{bmatrix}$; the third component contributes $2$ after subtracting a negative feature value."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Embedding mixtures",
+        "background": "Recommendation systems often blend embeddings to represent a combined taste or context. The arithmetic is just linear combination of vectors.",
+        "numbers": "If item vectors are $[2,1]$ and $[0,3]$, a blend $0.7[2,1]+0.3[0,3]=[1.4,1.6]$."
+      },
+      {
+        "title": "RGB colors",
+        "background": "Digital color stores red, green, and blue as a vector. Mixing light is vector addition with weights.",
+        "numbers": "Half red $[255,0,0]$ plus half blue $[0,0,255]$ gives $[127.5,0,127.5]$."
+      },
+      {
+        "title": "Forces in physics engines",
+        "background": "Game and robotics simulators add force vectors because several pushes can act at once.",
+        "numbers": "Forces $[3,4]$ and $[-1,2]$ add to $[2,6]$, with net vertical force $6$."
+      },
+      {
+        "title": "Linear model features",
+        "background": "A linear predictor combines feature vectors or feature values with coefficients.",
+        "numbers": "Weights $[0.5,-2]$ on features $[6,1]$ give $0.5\\cdot6-2\\cdot1=1$."
+      },
+      {
+        "title": "Portfolio allocation",
+        "background": "Finance represents asset returns as vectors over scenarios, then combines them by investment weights.",
+        "numbers": "$0.6[0.02,-0.01]+0.4[0.01,0.03]=[0.016,0.006]$ scenario returns."
+      },
+      {
+        "title": "Image filters",
+        "background": "A small image patch can be represented as a vector of pixel values, and filters form weighted combinations.",
+        "numbers": "Weights $[1,0,-1]$ on pixels $[120,125,140]$ give $120+0-140=-20$, detecting an edge."
+      }
+    ],
+    "applicationsClose": "Vectors let many quantities wear the same uniform: scale the pieces, add components, and read the result.",
+    "takeaways": [
+      "Vectors are ordered component lists in $\\mathbb{R}^n$.",
+      "Linear combinations have the form $c_1\\mathbf{v}_1+\\cdots+c_k\\mathbf{v}_k$.",
+      "All vectors being added must have the same dimension.",
+      "Embeddings, pixels, forces, and model weights all use vector-combination thinking."
+    ]
   });
 
   B({
     "id": "math-09-02",
     "title": "Systems of linear equations",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: systems of linear equations.",
+    "tagline": "A linear system asks whether several straight-line rules can be true at the same time.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Vectors and linear combinations</i>"
+        "Vectors and linear combinations",
+        "equations",
+        "coordinate graphs"
       ],
       "leadsTo": [
-        "the next lesson, <i>Gaussian elimination</i>"
+        "Gaussian elimination",
+        "Matrix algebra",
+        "Matrix inverses"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "linear combinations",
+        "augmented matrices",
+        "row operations",
+        "intersection geometry"
       ]
     },
+    "motivation": "<p>You already know how to solve one equation like $2x+3=11$. A system asks for values that satisfy several equations together, such as a point where two lines meet.</p><p>In ML, systems appear whenever constraints, fitted equations, or normal equations must agree at once. The core question is honest and simple: is there no solution, exactly one solution, or infinitely many?</p>",
+    "definition": "<p>A <b>system of linear equations</b> is a collection of equations whose variables appear only to the first power, such as $a_{11}x_1+\\cdots+a_{1n}x_n=b_1$. In matrix form it is $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$, where $\\mathbf{A}$ stores coefficients, $\\mathbf{x}$ stores unknowns, and $\\mathbf{b}$ stores right-hand sides.</p><p>Each equation cuts out a line, plane, or higher-dimensional flat set. A solution is an intersection point of all those sets. Equivalently, $\\mathbf{b}$ must be a linear combination of the columns of $\\mathbf{A}$ using the entries of $\\mathbf{x}$ as weights.</p><p><b>Assumptions that matter:</b> equations must be linear; variables must be consistently ordered; row equations and column combinations are two views of the same system; and inconsistency means no vector $\\mathbf{x}$ satisfies every equation.</p>",
+    "worked": {
+      "problem": "Solve the system $x+2y=7$ and $3x-y=4$.",
+      "skills": [
+        "substitution",
+        "systems",
+        "checking solutions"
+      ],
+      "strategy": "Use one equation to express one variable, then substitute into the other.",
+      "steps": [
+        {
+          "do": "Solve the first equation for $x$",
+          "result": "$x=7-2y$",
+          "why": "isolate one variable"
+        },
+        {
+          "do": "Substitute into the second equation",
+          "result": "$3(7-2y)-y=4$",
+          "why": "the same $x$ must satisfy both equations"
+        },
+        {
+          "do": "Distribute",
+          "result": "$21-6y-y=4$",
+          "why": "multiply by 3"
+        },
+        {
+          "do": "Combine like terms",
+          "result": "$21-7y=4$",
+          "why": "collect the $y$ terms"
+        },
+        {
+          "do": "Subtract 21",
+          "result": "$-7y=-17$",
+          "why": "isolate the term with $y$"
+        },
+        {
+          "do": "Divide by $-7$",
+          "result": "$y=\\dfrac{17}{7}$",
+          "why": "solve for $y$"
+        },
+        {
+          "do": "Substitute back",
+          "result": "$x=7-2\\cdot\\dfrac{17}{7}$",
+          "why": "use the first expression for $x$"
+        },
+        {
+          "do": "Simplify",
+          "result": "$x=\\dfrac{15}{7}$",
+          "why": "compute $49/7-34/7$"
+        }
+      ],
+      "verify": "Substitution gives $15/7+2(17/7)=7$ and $3(15/7)-17/7=4$, so both equations hold.",
+      "answer": "$x=15/7$, $y=17/7$.",
+      "connects": "A system solution is the coefficient choice that makes all equations true together."
+    },
+    "practice": [
+      {
+        "problem": "Solve $x+y=5$ and $x-y=1$ by adding equations.",
+        "steps": [
+          {
+            "do": "Add the equations",
+            "result": "$(x+y)+(x-y)=6$",
+            "why": "left sides and right sides can be added"
+          },
+          {
+            "do": "Simplify",
+            "result": "$2x=6$",
+            "why": "the $y$ terms cancel"
+          },
+          {
+            "do": "Divide by 2",
+            "result": "$x=3$",
+            "why": "solve for $x$"
+          },
+          {
+            "do": "Substitute into $x+y=5$",
+            "result": "$3+y=5$",
+            "why": "find the remaining variable"
+          },
+          {
+            "do": "Solve for $y$",
+            "result": "$y=2$",
+            "why": "subtract 3"
+          }
+        ],
+        "answer": "$x=3$, $y=2$."
+      },
+      {
+        "problem": "Solve $2x+y=8$ and $x+3y=9$.",
+        "steps": [
+          {
+            "do": "Solve the first equation for $y$",
+            "result": "$y=8-2x$",
+            "why": "isolate $y$"
+          },
+          {
+            "do": "Substitute into the second",
+            "result": "$x+3(8-2x)=9$",
+            "why": "use the same $y$"
+          },
+          {
+            "do": "Distribute",
+            "result": "$x+24-6x=9$",
+            "why": "multiply by 3"
+          },
+          {
+            "do": "Combine terms",
+            "result": "$-5x+24=9$",
+            "why": "collect $x$ terms"
+          },
+          {
+            "do": "Subtract 24",
+            "result": "$-5x=-15$",
+            "why": "isolate $x$"
+          },
+          {
+            "do": "Divide by -5",
+            "result": "$x=3$",
+            "why": "solve"
+          },
+          {
+            "do": "Find $y$",
+            "result": "$y=8-2\\cdot3=2$",
+            "why": "substitute back"
+          }
+        ],
+        "answer": "$x=3$, $y=2$."
+      },
+      {
+        "problem": "Classify the system $x+2y=3$ and $2x+4y=8$.",
+        "steps": [
+          {
+            "do": "Double the first left side",
+            "result": "$2(x+2y)=2x+4y$",
+            "why": "the left sides are proportional"
+          },
+          {
+            "do": "Double the first right side",
+            "result": "$2\\cdot3=6$",
+            "why": "a consistent double would equal 6"
+          },
+          {
+            "do": "Compare with the second equation",
+            "result": "$2x+4y=8$",
+            "why": "the second right side is 8"
+          },
+          {
+            "do": "Find the contradiction",
+            "result": "$6\\ne8$",
+            "why": "same left side cannot equal two values"
+          },
+          {
+            "do": "Classify",
+            "result": "no solution",
+            "why": "parallel equations do not meet"
+          }
+        ],
+        "answer": "No solution."
+      },
+      {
+        "problem": "Find $a$ so $x+y=4$ and $2x+2y=a$ have infinitely many solutions.",
+        "steps": [
+          {
+            "do": "Double the first equation",
+            "result": "$2x+2y=8$",
+            "why": "same solution set when both sides are doubled"
+          },
+          {
+            "do": "Compare with the second equation",
+            "result": "$2x+2y=a$",
+            "why": "the left side already matches"
+          },
+          {
+            "do": "Set right sides equal",
+            "result": "$a=8$",
+            "why": "identical equations need identical right sides"
+          },
+          {
+            "do": "Describe solutions",
+            "result": "$x+y=4$",
+            "why": "one free line of solutions remains"
+          },
+          {
+            "do": "Classify",
+            "result": "infinitely many solutions",
+            "why": "one equation is a duplicate of the other"
+          }
+        ],
+        "answer": "$a=8$."
+      },
+      {
+        "problem": "A tiny least-squares normal equation gives $2w+b=5$ and $w+b=3$. Solve for $w$ and $b$.",
+        "steps": [
+          {
+            "do": "Subtract the second equation from the first",
+            "result": "$(2w+b)-(w+b)=5-3$",
+            "why": "eliminate $b$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$w=2$",
+            "why": "only one $w$ remains"
+          },
+          {
+            "do": "Substitute into $w+b=3$",
+            "result": "$2+b=3$",
+            "why": "find the intercept"
+          },
+          {
+            "do": "Solve for $b$",
+            "result": "$b=1$",
+            "why": "subtract 2"
+          },
+          {
+            "do": "Check the first equation",
+            "result": "$2\\cdot2+1=5$",
+            "why": "the solution satisfies both equations"
+          }
+        ],
+        "answer": "$w=2$, $b=1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Line intersections in graphics",
+        "background": "Computer graphics computes where rays and line segments meet by solving small linear systems.",
+        "numbers": "Lines $x+y=5$ and $x-y=1$ meet at $(3,2)$."
+      },
+      {
+        "title": "Fitting simple models",
+        "background": "Normal equations in least squares are systems whose unknowns are model parameters.",
+        "numbers": "Equations $2w+b=5$ and $w+b=3$ give $w=2$, $b=1$."
+      },
+      {
+        "title": "Circuit analysis",
+        "background": "Kirchhoff laws produce linear systems for unknown currents in a circuit.",
+        "numbers": "If $I_1+I_2=3$ and $2I_1-I_2=0$, then $3I_1=3$, so $I_1=1$, $I_2=2$."
+      },
+      {
+        "title": "Resource allocation",
+        "background": "Operations teams use systems when resources must satisfy multiple totals.",
+        "numbers": "If CPU plus memory units total $10$ and CPU units are $4$ more than memory, then $c+m=10$, $c-m=4$, so $c=7$, $m=3$."
+      },
+      {
+        "title": "Calibration constraints",
+        "background": "Sensor calibration can solve for scale and offset from two known readings.",
+        "numbers": "$10a+b=21$ and $20a+b=41$ subtract to $10a=20$, so $a=2$, $b=1$."
+      },
+      {
+        "title": "Column combination test",
+        "background": "A system $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$ asks if $\\mathbf{b}$ is built from columns of $\\mathbf{A}$.",
+        "numbers": "Columns $[1,0]$ and $[1,1]$ make $[5,2]$ using weights $3$ and $2$ because $3[1,0]+2[1,1]=[5,2]$."
+      }
+    ],
+    "applicationsClose": "Systems teach the central habit of linear algebra: many equations, one shared answer if the geometry allows it.",
+    "takeaways": [
+      "A linear system can have no solution, exactly one solution, or infinitely many.",
+      "$\\mathbf{A}\\mathbf{x}=\\mathbf{b}$ stores coefficients, unknowns, and right-hand sides compactly.",
+      "Solving a system is also asking whether $\\mathbf{b}$ is a column combination of $\\mathbf{A}$."
+    ],
     "prereqs": [
       "math-09-01"
     ]
@@ -48,19 +588,287 @@
   B({
     "id": "math-09-03",
     "title": "Gaussian elimination",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: gaussian elimination.",
+    "tagline": "Gaussian elimination is organized equation solving: use rows to remove variables until the answer is visible.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Systems of linear equations</i>"
+        "Systems of linear equations",
+        "linear combinations",
+        "arithmetic with equations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Matrix algebra</i>"
+        "Matrix algebra",
+        "Elementary matrices",
+        "LU factorization"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "row operations",
+        "augmented matrices",
+        "pivots",
+        "rank"
       ]
     },
+    "motivation": "<p>You can solve a two-equation system by adding or subtracting equations. Gaussian elimination is that same instinct made systematic for many variables.</p><p>The method is powerful because it separates the hard part from the bookkeeping: create zeros below pivots, then read the solution by back-substitution. This is the workhorse underneath many numerical linear algebra routines.</p>",
+    "definition": "<p><b>Gaussian elimination</b> transforms an augmented matrix $[\\mathbf{A}\\mid\\mathbf{b}]$ using elementary row operations until it reaches row echelon form. The allowed operations are swapping rows, multiplying a row by a nonzero scalar, and adding a multiple of one row to another row.</p><p>These operations preserve the solution set because they replace equations by equivalent equations. A <b>pivot</b> is the leading nonzero entry used to eliminate entries below it. Once the matrix is triangular, back-substitution solves from the last variable upward.</p><p><b>Assumptions that matter:</b> row operations act on equations, not columns; multiplying by zero is not allowed because it loses information; a zero row with nonzero right side means inconsistency; and pivoting may require swapping rows.</p>",
+    "worked": {
+      "problem": "Use elimination to solve $x+y+z=6$, $2x+y-z=3$, and $x-y+2z=7$.",
+      "skills": [
+        "augmented matrices",
+        "row elimination",
+        "back-substitution"
+      ],
+      "strategy": "Create zeros under the first pivot, then under the second pivot, then solve upward.",
+      "steps": [
+        {
+          "do": "Write the augmented matrix",
+          "result": "$\\left[\\begin{array}{ccc|c}1&1&1&6\\\\2&1&-1&3\\\\1&-1&2&7\\end{array}\\right]$",
+          "why": "rows represent equations"
+        },
+        {
+          "do": "Replace $R_2$ by $R_2-2R_1$",
+          "result": "$\\left[\\begin{array}{ccc|c}1&1&1&6\\\\0&-1&-3&-9\\\\1&-1&2&7\\end{array}\\right]$",
+          "why": "eliminate the $x$ entry in row 2"
+        },
+        {
+          "do": "Replace $R_3$ by $R_3-R_1$",
+          "result": "$\\left[\\begin{array}{ccc|c}1&1&1&6\\\\0&-1&-3&-9\\\\0&-2&1&1\\end{array}\\right]$",
+          "why": "eliminate the $x$ entry in row 3"
+        },
+        {
+          "do": "Replace $R_3$ by $R_3-2R_2$",
+          "result": "$\\left[\\begin{array}{ccc|c}1&1&1&6\\\\0&-1&-3&-9\\\\0&0&7&19\\end{array}\\right]$",
+          "why": "eliminate the $y$ entry in row 3"
+        },
+        {
+          "do": "Solve the last row",
+          "result": "$z=\\dfrac{19}{7}$",
+          "why": "divide by 7"
+        },
+        {
+          "do": "Use the second row",
+          "result": "$-y-3(19/7)=-9$",
+          "why": "substitute $z$"
+        },
+        {
+          "do": "Solve for $y$",
+          "result": "$y=\\dfrac{6}{7}$",
+          "why": "move terms carefully"
+        },
+        {
+          "do": "Use the first row",
+          "result": "$x+6/7+19/7=6$",
+          "why": "substitute $y$ and $z$"
+        },
+        {
+          "do": "Solve for $x$",
+          "result": "$x=\\dfrac{17}{7}$",
+          "why": "subtract $25/7$ from $42/7$"
+        }
+      ],
+      "verify": "Substituting into all three equations gives $6$, $3$, and $7$ respectively.",
+      "answer": "$x=17/7$, $y=6/7$, $z=19/7$.",
+      "connects": "Elimination turns simultaneous constraints into a triangular story you can read from the bottom up."
+    },
+    "practice": [
+      {
+        "problem": "Solve $x+y=7$, $2x-y=5$ by elimination.",
+        "steps": [
+          {
+            "do": "Write the augmented matrix",
+            "result": "$\\left[\\begin{array}{cc|c}1&1&7\\\\2&-1&5\\end{array}\\right]$",
+            "why": "record coefficients"
+          },
+          {
+            "do": "Replace $R_2$ by $R_2-2R_1$",
+            "result": "$\\left[\\begin{array}{cc|c}1&1&7\\\\0&-3&-9\\end{array}\\right]$",
+            "why": "eliminate $x$"
+          },
+          {
+            "do": "Solve row 2",
+            "result": "$y=3$",
+            "why": "divide by $-3$"
+          },
+          {
+            "do": "Substitute into row 1",
+            "result": "$x+3=7$",
+            "why": "back-substitute"
+          },
+          {
+            "do": "Solve for $x$",
+            "result": "$x=4$",
+            "why": "subtract 3"
+          }
+        ],
+        "answer": "$x=4$, $y=3$."
+      },
+      {
+        "problem": "Solve $2x+y=1$, $4x+3y=7$.",
+        "steps": [
+          {
+            "do": "Write the augmented matrix",
+            "result": "$\\left[\\begin{array}{cc|c}2&1&1\\\\4&3&7\\end{array}\\right]$",
+            "why": "record the system"
+          },
+          {
+            "do": "Replace $R_2$ by $R_2-2R_1$",
+            "result": "$\\left[\\begin{array}{cc|c}2&1&1\\\\0&1&5\\end{array}\\right]$",
+            "why": "eliminate $x$"
+          },
+          {
+            "do": "Read row 2",
+            "result": "$y=5$",
+            "why": "pivot in the second column"
+          },
+          {
+            "do": "Substitute into row 1",
+            "result": "$2x+5=1$",
+            "why": "use the first equation"
+          },
+          {
+            "do": "Solve for $x$",
+            "result": "$x=-2$",
+            "why": "subtract 5 and divide by 2"
+          }
+        ],
+        "answer": "$x=-2$, $y=5$."
+      },
+      {
+        "problem": "Row-reduce enough to classify $x+y=2$, $2x+2y=5$.",
+        "steps": [
+          {
+            "do": "Write rows",
+            "result": "$\\left[\\begin{array}{cc|c}1&1&2\\\\2&2&5\\end{array}\\right]$",
+            "why": "augmented matrix"
+          },
+          {
+            "do": "Replace $R_2$ by $R_2-2R_1$",
+            "result": "$\\left[\\begin{array}{cc|c}1&1&2\\\\0&0&1\\end{array}\\right]$",
+            "why": "eliminate the first column"
+          },
+          {
+            "do": "Read the second row",
+            "result": "$0=1$",
+            "why": "translate the row back to an equation"
+          },
+          {
+            "do": "Classify",
+            "result": "inconsistent",
+            "why": "a false equation means no solution"
+          },
+          {
+            "do": "State the solution set",
+            "result": "empty",
+            "why": "no pair satisfies both equations"
+          }
+        ],
+        "answer": "No solution."
+      },
+      {
+        "problem": "Solve $x+2y+z=4$, $2x+5y+z=9$, $x+3y+2z=7$.",
+        "steps": [
+          {
+            "do": "Eliminate $x$ from row 2",
+            "result": "$R_2-2R_1$ gives $y-z=1$",
+            "why": "create a simpler second equation"
+          },
+          {
+            "do": "Eliminate $x$ from row 3",
+            "result": "$R_3-R_1$ gives $y+z=3$",
+            "why": "create a simpler third equation"
+          },
+          {
+            "do": "Add the new equations",
+            "result": "$2y=4$",
+            "why": "eliminate $z$"
+          },
+          {
+            "do": "Solve for $y$",
+            "result": "$y=2$",
+            "why": "divide by 2"
+          },
+          {
+            "do": "Find $z$",
+            "result": "$2+z=3$, so $z=1$",
+            "why": "use $y+z=3$"
+          },
+          {
+            "do": "Find $x$",
+            "result": "$x+4+1=4$, so $x=-1$",
+            "why": "use the first equation"
+          }
+        ],
+        "answer": "$x=-1$, $y=2$, $z=1$."
+      },
+      {
+        "problem": "Elimination in a toy calibration gives $w+b=6$, $2w+b=9$, $3w+b=12$. Solve and note consistency.",
+        "steps": [
+          {
+            "do": "Subtract the first equation from the second",
+            "result": "$w=3$",
+            "why": "eliminate $b$"
+          },
+          {
+            "do": "Subtract the second equation from the third",
+            "result": "$w=3$",
+            "why": "same slope evidence"
+          },
+          {
+            "do": "Use $w+b=6$",
+            "result": "$3+b=6$",
+            "why": "find intercept"
+          },
+          {
+            "do": "Solve for $b$",
+            "result": "$b=3$",
+            "why": "subtract 3"
+          },
+          {
+            "do": "Check the third equation",
+            "result": "$3\\cdot3+3=12$",
+            "why": "all equations agree"
+          }
+        ],
+        "answer": "$w=3$, $b=3$, and the system is consistent."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Numerical solvers",
+        "background": "Scientific libraries solve many linear systems by elimination variants with pivoting.",
+        "numbers": "A $3\\times3$ triangular system with rows $2x+y=5$ and $3y=6$ gives $y=2$, then $x=1.5$."
+      },
+      {
+        "title": "Least-squares internals",
+        "background": "Even when systems are overdetermined, algorithms solve related square systems using elimination-like factorizations.",
+        "numbers": "Normal equations $\\begin{bmatrix}2&1\\\\1&1\\end{bmatrix}[w,b]^T=[5,3]^T$ reduce to $w=2$, $b=1$."
+      },
+      {
+        "title": "Computer graphics transforms",
+        "background": "Solving for intersections and barycentric coordinates uses elimination in small matrices.",
+        "numbers": "Equations $a+b=1$ and $2a-b=0$ give $a=1/3$, $b=2/3$."
+      },
+      {
+        "title": "Circuit simulation",
+        "background": "Sparse elimination solves large Kirchhoff systems in circuit tools.",
+        "numbers": "If $V_1-V_2=5$ and $2V_2=6$, then $V_2=3$, $V_1=8$."
+      },
+      {
+        "title": "Data cleaning constraints",
+        "background": "Consistency checks reduce equations to reveal contradictions.",
+        "numbers": "Rows reducing to $0=4$ means the recorded constraints cannot all be true."
+      },
+      {
+        "title": "Feature engineering",
+        "background": "Elimination can detect redundant linear features.",
+        "numbers": "If feature $f_3=f_1+f_2$, the row relation $f_1+f_2-f_3=0$ shows dependence."
+      }
+    ],
+    "applicationsClose": "Gaussian elimination is careful algebra with a memory: every zero created makes the remaining problem easier.",
+    "takeaways": [
+      "Elementary row operations preserve the solution set.",
+      "Pivots organize which variables are determined.",
+      "A contradiction row means no solution; free variables mean infinitely many solutions.",
+      "Back-substitution reads an echelon system from bottom to top."
+    ],
     "prereqs": [
       "math-09-02"
     ]
@@ -69,19 +877,265 @@
   B({
     "id": "math-09-04",
     "title": "Matrix algebra",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: matrix algebra.",
+    "tagline": "A matrix is a rectangular machine for organizing many linear calculations at once.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Gaussian elimination</i>"
+        "Vectors and linear combinations",
+        "Systems of linear equations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Matrix multiplication as composition</i>"
+        "Matrix multiplication as composition",
+        "Matrix inverses",
+        "Elementary matrices"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "transpose",
+        "identity matrices",
+        "block matrices",
+        "linear transformations"
       ]
     },
+    "motivation": "<p>You already used tables of numbers as coefficient lists. A matrix makes that table an object you can add, scale, multiply by vectors, and eventually multiply by other matrices.</p><p>This is where linear algebra starts to feel like a language rather than a pile of equations. Matrices store data, transformations, graph connections, and model parameters in a form computers can move through quickly.</p>",
+    "definition": "<p>A <b>matrix</b> $\\mathbf{A}$ with $m$ rows and $n$ columns is called an $m\\times n$ matrix. Its entry in row $i$, column $j$ is $a_{ij}$. Matrices of the same shape add entrywise, and a scalar multiplies every entry.</p><p>For an $m\\times n$ matrix $\\mathbf{A}$ and a vector $\\mathbf{x}\\in\\mathbb{R}^n$, the product $\\mathbf{A}\\mathbf{x}$ is the vector of row dot products. Equivalently, it is a linear combination of the columns of $\\mathbf{A}$ using the entries of $\\mathbf{x}$ as weights.</p><p><b>Assumptions that matter:</b> shapes must match; only same-shaped matrices can be added; $\\mathbf{A}\\mathbf{x}$ requires the number of columns of $\\mathbf{A}$ to equal the length of $\\mathbf{x}$; and the identity matrix $\\mathbf{I}$ leaves compatible vectors unchanged.</p>",
+    "worked": {
+      "problem": "Compute $\\mathbf{A}\\mathbf{x}$ for $\\mathbf{A}=\\begin{bmatrix}1&2&0\\\\-1&3&4\\end{bmatrix}$ and $\\mathbf{x}=\\begin{bmatrix}5\\\\-1\\\\2\\end{bmatrix}$.",
+      "skills": [
+        "matrix-vector products",
+        "row dot products",
+        "shape checking"
+      ],
+      "strategy": "Check the shapes, then take one row dot product at a time.",
+      "steps": [
+        {
+          "do": "Read the shape of $\\mathbf{A}$",
+          "result": "$2\\times3$",
+          "why": "two rows and three columns"
+        },
+        {
+          "do": "Read the shape of $\\mathbf{x}$",
+          "result": "$3\\times1$",
+          "why": "three entries in the vector"
+        },
+        {
+          "do": "Confirm multiplication is defined",
+          "result": "$2\\times3$ times $3\\times1$ gives $2\\times1$",
+          "why": "inner dimensions match"
+        },
+        {
+          "do": "Compute the first row dot product",
+          "result": "$1\\cdot5+2(-1)+0\\cdot2=3$",
+          "why": "row 1 meets the vector"
+        },
+        {
+          "do": "Compute the second row dot product",
+          "result": "$-1\\cdot5+3(-1)+4\\cdot2=0$",
+          "why": "row 2 meets the vector"
+        },
+        {
+          "do": "Assemble the result",
+          "result": "$\\begin{bmatrix}3\\\\0\\end{bmatrix}$",
+          "why": "one output per row"
+        }
+      ],
+      "verify": "The answer has two entries because $\\mathbf{A}$ has two rows, and the arithmetic matches the column-combination view: $5[1,-1]^T-1[2,3]^T+2[0,4]^T=[3,0]^T$.",
+      "answer": "$\\mathbf{A}\\mathbf{x}=\\begin{bmatrix}3\\\\0\\end{bmatrix}$.",
+      "connects": "Matrix algebra packages many linear combinations into one notation."
+    },
+    "practice": [
+      {
+        "problem": "Add $\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}+\\begin{bmatrix}5&0\\\\-1&2\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Check shapes",
+            "result": "both are $2\\times2$",
+            "why": "addition is allowed"
+          },
+          {
+            "do": "Add the $(1,1)$ entries",
+            "result": "$1+5=6$",
+            "why": "entrywise addition"
+          },
+          {
+            "do": "Add the $(1,2)$ entries",
+            "result": "$2+0=2$",
+            "why": "entrywise addition"
+          },
+          {
+            "do": "Add the second row",
+            "result": "$3+(-1)=2$, $4+2=6$",
+            "why": "entrywise addition"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}6&2\\\\2&6\\end{bmatrix}$",
+            "why": "keep the same shape"
+          }
+        ],
+        "answer": "$\\begin{bmatrix}6&2\\\\2&6\\end{bmatrix}$."
+      },
+      {
+        "problem": "Compute $-2\\begin{bmatrix}3&-1\\\\0&4\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Multiply the first entry",
+            "result": "$-2\\cdot3=-6$",
+            "why": "scalar multiplication"
+          },
+          {
+            "do": "Multiply the second entry",
+            "result": "$-2(-1)=2$",
+            "why": "signs matter"
+          },
+          {
+            "do": "Multiply the third entry",
+            "result": "$-2\\cdot0=0$",
+            "why": "zero stays zero"
+          },
+          {
+            "do": "Multiply the fourth entry",
+            "result": "$-2\\cdot4=-8$",
+            "why": "scalar multiplication"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}-6&2\\\\0&-8\\end{bmatrix}$",
+            "why": "same shape"
+          }
+        ],
+        "answer": "$\\begin{bmatrix}-6&2\\\\0&-8\\end{bmatrix}$."
+      },
+      {
+        "problem": "For $\\mathbf{A}=\\begin{bmatrix}2&1\\\\0&-3\\\\4&2\\end{bmatrix}$ and $\\mathbf{x}=\\begin{bmatrix}3\\\\-2\\end{bmatrix}$, compute $\\mathbf{A}\\mathbf{x}$.",
+        "steps": [
+          {
+            "do": "Check shapes",
+            "result": "$3\\times2$ times $2\\times1$",
+            "why": "product is defined"
+          },
+          {
+            "do": "Compute row 1",
+            "result": "$2\\cdot3+1(-2)=4$",
+            "why": "dot product"
+          },
+          {
+            "do": "Compute row 2",
+            "result": "$0\\cdot3+(-3)(-2)=6$",
+            "why": "dot product"
+          },
+          {
+            "do": "Compute row 3",
+            "result": "$4\\cdot3+2(-2)=8$",
+            "why": "dot product"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}4\\\\6\\\\8\\end{bmatrix}$",
+            "why": "one entry per row"
+          }
+        ],
+        "answer": "$\\begin{bmatrix}4\\\\6\\\\8\\end{bmatrix}$."
+      },
+      {
+        "problem": "Decide whether $\\begin{bmatrix}1&2&3\\end{bmatrix}\\begin{bmatrix}4\\\\5\\end{bmatrix}$ is defined.",
+        "steps": [
+          {
+            "do": "Read the first shape",
+            "result": "$1\\times3$",
+            "why": "one row, three columns"
+          },
+          {
+            "do": "Read the second shape",
+            "result": "$2\\times1$",
+            "why": "two rows, one column"
+          },
+          {
+            "do": "Compare inner dimensions",
+            "result": "$3\\ne2$",
+            "why": "matrix multiplication needs matching inner dimensions"
+          },
+          {
+            "do": "State the result",
+            "result": "undefined",
+            "why": "the dot product lengths do not match"
+          },
+          {
+            "do": "Name the fix",
+            "result": "use a length-3 vector",
+            "why": "then the row could take a dot product"
+          }
+        ],
+        "answer": "The product is not defined."
+      },
+      {
+        "problem": "A layer computes $\\mathbf{W}\\mathbf{x}$ with $\\mathbf{W}=\\begin{bmatrix}1&-1\\\\2&0\\end{bmatrix}$ and $\\mathbf{x}=\\begin{bmatrix}0.5\\\\3\\end{bmatrix}$. Compute the output.",
+        "steps": [
+          {
+            "do": "Check shapes",
+            "result": "$2\\times2$ times $2\\times1$",
+            "why": "valid layer output"
+          },
+          {
+            "do": "Compute first row",
+            "result": "$1(0.5)+(-1)3=-2.5$",
+            "why": "weighted sum"
+          },
+          {
+            "do": "Compute second row",
+            "result": "$2(0.5)+0(3)=1$",
+            "why": "weighted sum"
+          },
+          {
+            "do": "Assemble output",
+            "result": "$\\begin{bmatrix}-2.5\\\\1\\end{bmatrix}$",
+            "why": "two neurons give two outputs"
+          },
+          {
+            "do": "Interpret",
+            "result": "first unit is negative, second is positive",
+            "why": "weights control the signs and sizes"
+          }
+        ],
+        "answer": "$\\begin{bmatrix}-2.5\\\\1\\end{bmatrix}$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Neural-network layers",
+        "background": "A dense layer stores weights in a matrix and maps an input vector to output activations.",
+        "numbers": "$\\begin{bmatrix}1&2\\\\-1&0\\end{bmatrix}[3,4]^T=[11,-3]^T$ before bias and activation."
+      },
+      {
+        "title": "Data tables",
+        "background": "A dataset with rows as examples and columns as features is a matrix.",
+        "numbers": "A $1000\\times20$ design matrix stores 1000 examples with 20 features each."
+      },
+      {
+        "title": "Graph adjacency",
+        "background": "Graphs can be stored as adjacency matrices whose entries count or mark edges.",
+        "numbers": "$A_{23}=1$ can mean node 2 links to node 3; row sum $3$ means node 2 has three outgoing links."
+      },
+      {
+        "title": "Image batches",
+        "background": "Images become matrices or tensors; grayscale is the simplest case.",
+        "numbers": "A $28\\times28$ image has 784 pixel entries, often flattened into a vector."
+      },
+      {
+        "title": "Linear constraints",
+        "background": "Matrix-vector products evaluate many equations at once.",
+        "numbers": "$\\begin{bmatrix}1&1\\\\2&-1\\end{bmatrix}[3,2]^T=[5,4]^T$ checks two constraints."
+      },
+      {
+        "title": "Recommendation factors",
+        "background": "Latent-factor recommenders store user and item factors in matrices.",
+        "numbers": "A user vector $[2,1]$ dotted with item vector $[3,4]$ gives score $10$."
+      }
+    ],
+    "applicationsClose": "Matrix algebra is compact bookkeeping for linear structure, from equations to data tables to model layers.",
+    "takeaways": [
+      "Matrix addition and scalar multiplication are entrywise.",
+      "Matrix-vector multiplication requires compatible shapes.",
+      "$\\mathbf{A}\\mathbf{x}$ can be read as row dot products or as a column combination."
+    ],
     "prereqs": [
       "math-09-03"
     ]
@@ -90,19 +1144,275 @@
   B({
     "id": "math-09-05",
     "title": "Matrix multiplication as composition",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: matrix multiplication as composition.",
+    "tagline": "Multiplying matrices means doing one linear transformation and then another.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Matrix algebra</i>"
+        "Matrix algebra",
+        "functions and composition"
       ],
       "leadsTo": [
-        "the next lesson, <i>Matrix inverses</i>"
+        "Matrix inverses",
+        "change of basis",
+        "linear neural layers"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "composition of functions",
+        "identity matrices",
+        "associativity",
+        "linear transformations"
       ]
     },
+    "motivation": "<p>You already know function composition: if one rule changes an input and the next rule changes the result, the combined rule is a composition. Matrices do the same thing for linear transformations.</p><p>This viewpoint makes matrix multiplication feel less arbitrary. The entry formula is just the bookkeeping needed so $\\mathbf{A}\\mathbf{B}\\mathbf{x}$ gives the same result as first applying $\\mathbf{B}$, then applying $\\mathbf{A}$.</p>",
+    "definition": "<p>If $\\mathbf{A}$ is $m\\times n$ and $\\mathbf{B}$ is $n\\times p$, then $\\mathbf{A}\\mathbf{B}$ is the $m\\times p$ matrix whose entry $(i,j)$ is row $i$ of $\\mathbf{A}$ dotted with column $j$ of $\\mathbf{B}$.</p><p>The definition is forced by composition: the $j$th column of $\\mathbf{A}\\mathbf{B}$ is $\\mathbf{A}$ applied to the $j$th column of $\\mathbf{B}$. That way $(\\mathbf{A}\\mathbf{B})\\mathbf{x}=\\mathbf{A}(\\mathbf{B}\\mathbf{x})$ for every compatible vector $\\mathbf{x}$.</p><p><b>Assumptions that matter:</b> inner dimensions must match; order matters because $\\mathbf{A}\\mathbf{B}$ usually differs from $\\mathbf{B}\\mathbf{A}$; multiplication is associative; and identity matrices act like do-nothing transformations.</p>",
+    "worked": {
+      "problem": "Compute $\\mathbf{A}\\mathbf{B}$ for $\\mathbf{A}=\\begin{bmatrix}1&2\\\\0&3\\end{bmatrix}$ and $\\mathbf{B}=\\begin{bmatrix}4&1\\\\-1&2\\end{bmatrix}$.",
+      "skills": [
+        "matrix multiplication",
+        "row-column products",
+        "composition"
+      ],
+      "strategy": "Each output entry is one row-column dot product.",
+      "steps": [
+        {
+          "do": "Check shapes",
+          "result": "$2\\times2$ times $2\\times2$",
+          "why": "multiplication is defined"
+        },
+        {
+          "do": "Compute entry $(1,1)$",
+          "result": "$1\\cdot4+2(-1)=2$",
+          "why": "row 1 dot column 1"
+        },
+        {
+          "do": "Compute entry $(1,2)$",
+          "result": "$1\\cdot1+2\\cdot2=5$",
+          "why": "row 1 dot column 2"
+        },
+        {
+          "do": "Compute entry $(2,1)$",
+          "result": "$0\\cdot4+3(-1)=-3$",
+          "why": "row 2 dot column 1"
+        },
+        {
+          "do": "Compute entry $(2,2)$",
+          "result": "$0\\cdot1+3\\cdot2=6$",
+          "why": "row 2 dot column 2"
+        },
+        {
+          "do": "Assemble",
+          "result": "$\\begin{bmatrix}2&5\\\\-3&6\\end{bmatrix}$",
+          "why": "place entries by row and column"
+        }
+      ],
+      "verify": "Applying $\\mathbf{B}$ then $\\mathbf{A}$ to $[1,0]^T$ gives the first column $[2,-3]^T$, matching the product.",
+      "answer": "$\\mathbf{A}\\mathbf{B}=\\begin{bmatrix}2&5\\\\-3&6\\end{bmatrix}$.",
+      "connects": "Matrix multiplication is composition written as a new matrix."
+    },
+    "practice": [
+      {
+        "problem": "Compute $\\begin{bmatrix}1&0\\\\2&1\\end{bmatrix}\\begin{bmatrix}3\\\\4\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Check shapes",
+            "result": "$2\\times2$ times $2\\times1$",
+            "why": "valid product"
+          },
+          {
+            "do": "Compute row 1",
+            "result": "$1\\cdot3+0\\cdot4=3$",
+            "why": "first output"
+          },
+          {
+            "do": "Compute row 2",
+            "result": "$2\\cdot3+1\\cdot4=10$",
+            "why": "second output"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}3\\\\10\\end{bmatrix}$",
+            "why": "one entry per row"
+          },
+          {
+            "do": "Interpret",
+            "result": "the first coordinate stays fixed",
+            "why": "this matrix shears the second coordinate"
+          }
+        ],
+        "answer": "$[3,10]^T$."
+      },
+      {
+        "problem": "Compute $\\begin{bmatrix}2&0\\\\0&3\\end{bmatrix}\\begin{bmatrix}1&4\\\\5&2\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Compute first row",
+            "result": "$[2,0]\\mathbf{B}$ gives $[2,8]$",
+            "why": "scale row 1 of $\\mathbf{B}$ by 2"
+          },
+          {
+            "do": "Compute second row",
+            "result": "$[0,3]\\mathbf{B}$ gives $[15,6]$",
+            "why": "scale row 2 of $\\mathbf{B}$ by 3"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}2&8\\\\15&6\\end{bmatrix}$",
+            "why": "rows are transformed"
+          },
+          {
+            "do": "Check shape",
+            "result": "$2\\times2$",
+            "why": "product shape"
+          },
+          {
+            "do": "Name the effect",
+            "result": "left multiplication scales rows",
+            "why": "diagonal left factors scale rows"
+          }
+        ],
+        "answer": "$\\begin{bmatrix}2&8\\\\15&6\\end{bmatrix}$."
+      },
+      {
+        "problem": "Show order matters using $\\mathbf{A}=\\begin{bmatrix}1&1\\\\0&1\\end{bmatrix}$ and $\\mathbf{B}=\\begin{bmatrix}2&0\\\\0&1\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Compute $\\mathbf{A}\\mathbf{B}$",
+            "result": "$\\begin{bmatrix}2&1\\\\0&1\\end{bmatrix}$",
+            "why": "row-column products"
+          },
+          {
+            "do": "Compute $\\mathbf{B}\\mathbf{A}$",
+            "result": "$\\begin{bmatrix}2&2\\\\0&1\\end{bmatrix}$",
+            "why": "reverse the order"
+          },
+          {
+            "do": "Compare entries",
+            "result": "$1\\ne2$ in the top-right entry",
+            "why": "products differ"
+          },
+          {
+            "do": "State conclusion",
+            "result": "$\\mathbf{A}\\mathbf{B}\\ne\\mathbf{B}\\mathbf{A}$",
+            "why": "matrix multiplication is not commutative"
+          },
+          {
+            "do": "Interpret",
+            "result": "scale then shear differs from shear then scale",
+            "why": "composition order matters"
+          }
+        ],
+        "answer": "The two products are different."
+      },
+      {
+        "problem": "Let $\\mathbf{R}$ rotate $90^\\circ$: $\\begin{bmatrix}0&-1\\\\1&0\\end{bmatrix}$. Compute $\\mathbf{R}^2$.",
+        "steps": [
+          {
+            "do": "Write the product",
+            "result": "$\\mathbf{R}\\mathbf{R}$",
+            "why": "two rotations compose"
+          },
+          {
+            "do": "Compute entry $(1,1)$",
+            "result": "$0\\cdot0+(-1)\\cdot1=-1$",
+            "why": "row 1 dot column 1"
+          },
+          {
+            "do": "Compute entry $(1,2)$",
+            "result": "$0(-1)+(-1)0=0$",
+            "why": "row 1 dot column 2"
+          },
+          {
+            "do": "Compute entry $(2,1)$",
+            "result": "$1\\cdot0+0\\cdot1=0$",
+            "why": "row 2 dot column 1"
+          },
+          {
+            "do": "Compute entry $(2,2)$",
+            "result": "$1(-1)+0\\cdot0=-1$",
+            "why": "row 2 dot column 2"
+          },
+          {
+            "do": "Assemble",
+            "result": "$-\\mathbf{I}$",
+            "why": "a $180^\\circ$ rotation negates both coordinates"
+          }
+        ],
+        "answer": "$\\mathbf{R}^2=\\begin{bmatrix}-1&0\\\\0&-1\\end{bmatrix}$."
+      },
+      {
+        "problem": "Two linear layers have matrices $\\mathbf{W}_1=\\begin{bmatrix}1&2\\\\0&1\\end{bmatrix}$ and $\\mathbf{W}_2=\\begin{bmatrix}3&0\\\\1&-1\\end{bmatrix}$. Find the combined linear map $\\mathbf{W}_2\\mathbf{W}_1$.",
+        "steps": [
+          {
+            "do": "Set the order",
+            "result": "$\\mathbf{W}_2\\mathbf{W}_1$",
+            "why": "apply $\\mathbf{W}_1$ first, then $\\mathbf{W}_2$"
+          },
+          {
+            "do": "Compute entry $(1,1)$",
+            "result": "$3\\cdot1+0\\cdot0=3$",
+            "why": "row-column dot product"
+          },
+          {
+            "do": "Compute entry $(1,2)$",
+            "result": "$3\\cdot2+0\\cdot1=6$",
+            "why": "row-column dot product"
+          },
+          {
+            "do": "Compute entry $(2,1)$",
+            "result": "$1\\cdot1+(-1)0=1$",
+            "why": "row-column dot product"
+          },
+          {
+            "do": "Compute entry $(2,2)$",
+            "result": "$1\\cdot2+(-1)1=1$",
+            "why": "row-column dot product"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}3&6\\\\1&1\\end{bmatrix}$",
+            "why": "the composition is one matrix"
+          }
+        ],
+        "answer": "The combined linear map is $\\begin{bmatrix}3&6\\\\1&1\\end{bmatrix}$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Stacked neural layers",
+        "background": "Without nonlinear activations, stacked linear layers collapse into one matrix product.",
+        "numbers": "If $W_2W_1=\\begin{bmatrix}3&6\\\\1&1\\end{bmatrix}$, then input $[1,2]^T$ maps to $[15,3]^T$."
+      },
+      {
+        "title": "Graphics pipelines",
+        "background": "Scaling, rotation, and projection are composed by multiplying transformation matrices.",
+        "numbers": "Scaling by 2 then rotating $90^\\circ$ sends $[1,0]^T$ to $[0,2]^T$."
+      },
+      {
+        "title": "Markov transitions",
+        "background": "Two time steps of a Markov chain use a square of the transition matrix.",
+        "numbers": "If $P=\\begin{bmatrix}0.8&0.2\\\\0.1&0.9\\end{bmatrix}$, then $P^2_{11}=0.8^2+0.2\\cdot0.1=0.66$."
+      },
+      {
+        "title": "Coordinate changes",
+        "background": "Changing coordinates into a basis and then applying a map composes matrices.",
+        "numbers": "If $B^{-1}x=[2,1]^T$ and diagonal scaling gives $[4,3]^T$, the two operations are one product."
+      },
+      {
+        "title": "Database recommendations",
+        "background": "A user-item matrix times an item-tag matrix produces user-tag scores.",
+        "numbers": "User ratings $[5,0,2]$ times tag column $[1,0,3]^T$ gives score $11$."
+      },
+      {
+        "title": "Robotics kinematics",
+        "background": "Robot arms compose joint transformations from base to hand.",
+        "numbers": "A translation $[2,0]$ after rotation can put a point at $[2,1]$ instead of $[1,2]$, showing order matters."
+      }
+    ],
+    "applicationsClose": "Composition is the soul of matrix multiplication: one transformation after another becomes one new transformation.",
+    "takeaways": [
+      "$\\mathbf{A}\\mathbf{B}$ is defined when columns of $\\mathbf{A}$ match rows of $\\mathbf{B}$.",
+      "The product encodes applying $\\mathbf{B}$ first, then $\\mathbf{A}$.",
+      "Matrix multiplication is associative but generally not commutative."
+    ],
     "prereqs": [
       "math-09-04"
     ]
@@ -111,19 +1421,271 @@
   B({
     "id": "math-09-06",
     "title": "Matrix inverses",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: matrix inverses.",
+    "tagline": "An inverse matrix undoes a linear transformation when undoing is actually possible.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Matrix multiplication as composition</i>"
+        "Matrix multiplication as composition",
+        "identity matrices",
+        "linear systems"
       ],
       "leadsTo": [
-        "the next lesson, <i>Elementary matrices</i>"
+        "Elementary matrices",
+        "LU factorization",
+        "determinants"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "identity matrix",
+        "rank",
+        "linear transformations",
+        "solving systems"
       ]
     },
+    "motivation": "<p>You already know the inverse of multiplying by 5 is dividing by 5. Matrices can have the same undoing idea, but only when no information has been collapsed.</p><p>An inverse matrix is precious in theory because it says a linear transformation is reversible. In computation, we usually solve systems without explicitly forming the inverse, but the idea still guides the whole story.</p>",
+    "definition": "<p>A square matrix $\\mathbf{A}$ is <b>invertible</b> if there exists a matrix $\\mathbf{A}^{-1}$ such that $\\mathbf{A}^{-1}\\mathbf{A}=\\mathbf{I}$ and $\\mathbf{A}\\mathbf{A}^{-1}=\\mathbf{I}$. For a $2\\times2$ matrix $\\begin{bmatrix}a&b\\\\c&d\\end{bmatrix}$, the inverse exists exactly when $ad-bc\\ne0$, and then $$\\mathbf{A}^{-1}=\\dfrac{1}{ad-bc}\\begin{bmatrix}d&-b\\\\-c&a\\end{bmatrix}.$$</p><p>The formula comes from asking for a matrix that sends the columns of $\\mathbf{A}$ back to the standard basis. If the columns collapse onto one line, the determinant $ad-bc$ is zero and no undoing map can recover lost direction.</p><p><b>Assumptions that matter:</b> only square matrices can have two-sided inverses; invertibility requires independent columns; and for solving $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$, the inverse gives $\\mathbf{x}=\\mathbf{A}^{-1}\\mathbf{b}$ when it exists.</p>",
+    "worked": {
+      "problem": "Find the inverse of $\\mathbf{A}=\\begin{bmatrix}2&1\\\\5&3\\end{bmatrix}$ and solve $\\mathbf{A}\\mathbf{x}=\\begin{bmatrix}1\\\\4\\end{bmatrix}$.",
+      "skills": [
+        "determinant",
+        "inverse formula",
+        "linear systems"
+      ],
+      "strategy": "Compute the determinant first; if it is nonzero, use the inverse to solve.",
+      "steps": [
+        {
+          "do": "Compute the determinant",
+          "result": "$2\\cdot3-1\\cdot5=1$",
+          "why": "test invertibility"
+        },
+        {
+          "do": "Write the inverse template",
+          "result": "$\\dfrac1{1}\\begin{bmatrix}3&-1\\\\-5&2\\end{bmatrix}$",
+          "why": "swap diagonal entries and negate off-diagonal entries"
+        },
+        {
+          "do": "Simplify",
+          "result": "$\\mathbf{A}^{-1}=\\begin{bmatrix}3&-1\\\\-5&2\\end{bmatrix}$",
+          "why": "the determinant is 1"
+        },
+        {
+          "do": "Multiply by $\\mathbf{b}$",
+          "result": "$\\begin{bmatrix}3&-1\\\\-5&2\\end{bmatrix}\\begin{bmatrix}1\\\\4\\end{bmatrix}$",
+          "why": "solve with $\\mathbf{x}=\\mathbf{A}^{-1}\\mathbf{b}$"
+        },
+        {
+          "do": "Compute first component",
+          "result": "$3\\cdot1-1\\cdot4=-1$",
+          "why": "row 1 dot product"
+        },
+        {
+          "do": "Compute second component",
+          "result": "$-5\\cdot1+2\\cdot4=3$",
+          "why": "row 2 dot product"
+        },
+        {
+          "do": "Assemble",
+          "result": "$\\mathbf{x}=\\begin{bmatrix}-1\\\\3\\end{bmatrix}$",
+          "why": "solution vector"
+        }
+      ],
+      "verify": "Check: $\\begin{bmatrix}2&1\\\\5&3\\end{bmatrix}[-1,3]^T=[1,4]^T$.",
+      "answer": "$\\mathbf{A}^{-1}=\\begin{bmatrix}3&-1\\\\-5&2\\end{bmatrix}$ and $\\mathbf{x}=[-1,3]^T$.",
+      "connects": "Invertibility means the system has exactly one solution for every right-hand side."
+    },
+    "practice": [
+      {
+        "problem": "Find the inverse of $\\begin{bmatrix}1&2\\\\3&7\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Compute determinant",
+            "result": "$1\\cdot7-2\\cdot3=1$",
+            "why": "nonzero means invertible"
+          },
+          {
+            "do": "Swap diagonal entries",
+            "result": "$7$ and $1$",
+            "why": "inverse formula"
+          },
+          {
+            "do": "Negate off-diagonal entries",
+            "result": "$-2$ and $-3$",
+            "why": "inverse formula"
+          },
+          {
+            "do": "Divide by determinant",
+            "result": "no change",
+            "why": "determinant is 1"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}7&-2\\\\-3&1\\end{bmatrix}$",
+            "why": "inverse matrix"
+          }
+        ],
+        "answer": "$\\begin{bmatrix}7&-2\\\\-3&1\\end{bmatrix}$."
+      },
+      {
+        "problem": "Decide whether $\\begin{bmatrix}2&4\\\\1&2\\end{bmatrix}$ is invertible.",
+        "steps": [
+          {
+            "do": "Compute determinant",
+            "result": "$2\\cdot2-4\\cdot1=0$",
+            "why": "use $ad-bc$"
+          },
+          {
+            "do": "Interpret determinant zero",
+            "result": "columns are dependent",
+            "why": "second column is twice the first"
+          },
+          {
+            "do": "State inverse status",
+            "result": "not invertible",
+            "why": "a zero determinant blocks the inverse"
+          },
+          {
+            "do": "Connect to geometry",
+            "result": "area collapses to zero",
+            "why": "a plane region maps to a line"
+          },
+          {
+            "do": "Connect to systems",
+            "result": "some right-hand sides have no or many solutions",
+            "why": "uniqueness fails"
+          }
+        ],
+        "answer": "It is not invertible."
+      },
+      {
+        "problem": "Solve $\\begin{bmatrix}4&1\\\\2&1\\end{bmatrix}\\mathbf{x}=\\begin{bmatrix}9\\\\5\\end{bmatrix}$ using the inverse formula.",
+        "steps": [
+          {
+            "do": "Compute determinant",
+            "result": "$4\\cdot1-1\\cdot2=2$",
+            "why": "nonzero"
+          },
+          {
+            "do": "Write inverse",
+            "result": "$\\dfrac12\\begin{bmatrix}1&-1\\\\-2&4\\end{bmatrix}$",
+            "why": "apply formula"
+          },
+          {
+            "do": "Multiply by $\\mathbf{b}$",
+            "result": "$\\dfrac12\\begin{bmatrix}1&-1\\\\-2&4\\end{bmatrix}\\begin{bmatrix}9\\\\5\\end{bmatrix}$",
+            "why": "solve"
+          },
+          {
+            "do": "Compute inside product",
+            "result": "$\\begin{bmatrix}4\\\\2\\end{bmatrix}$",
+            "why": "row dot products"
+          },
+          {
+            "do": "Scale by $1/2$",
+            "result": "$\\begin{bmatrix}2\\\\1\\end{bmatrix}$",
+            "why": "final solution"
+          }
+        ],
+        "answer": "$\\mathbf{x}=[2,1]^T$."
+      },
+      {
+        "problem": "If $\\mathbf{A}^{-1}\\mathbf{b}=[2,-1]^T$, what is the solution of $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$?",
+        "steps": [
+          {
+            "do": "Start from the inverse relation",
+            "result": "$\\mathbf{x}=\\mathbf{A}^{-1}\\mathbf{b}$",
+            "why": "valid when $\\mathbf{A}$ is invertible"
+          },
+          {
+            "do": "Substitute the given product",
+            "result": "$\\mathbf{x}=[2,-1]^T$",
+            "why": "the inverse product is the solution"
+          },
+          {
+            "do": "Check by multiplying conceptually",
+            "result": "$\\mathbf{A}\\mathbf{x}=\\mathbf{A}\\mathbf{A}^{-1}\\mathbf{b}$",
+            "why": "undo the inverse"
+          },
+          {
+            "do": "Use identity",
+            "result": "$\\mathbf{A}\\mathbf{A}^{-1}\\mathbf{b}=\\mathbf{b}$",
+            "why": "inverse property"
+          },
+          {
+            "do": "State the solution",
+            "result": "unique",
+            "why": "invertibility gives one solution"
+          }
+        ],
+        "answer": "$\\mathbf{x}=[2,-1]^T$."
+      },
+      {
+        "problem": "A diagonal scaling matrix is $\\mathbf{D}=\\begin{bmatrix}2&0\\\\0&5\\end{bmatrix}$. Find $\\mathbf{D}^{-1}$ and use it to undo output $[8,15]^T$.",
+        "steps": [
+          {
+            "do": "Invert the first scale",
+            "result": "$1/2$",
+            "why": "undo multiplying coordinate 1 by 2"
+          },
+          {
+            "do": "Invert the second scale",
+            "result": "$1/5$",
+            "why": "undo multiplying coordinate 2 by 5"
+          },
+          {
+            "do": "Write $\\mathbf{D}^{-1}$",
+            "result": "$\\begin{bmatrix}1/2&0\\\\0&1/5\\end{bmatrix}$",
+            "why": "diagonal inverse"
+          },
+          {
+            "do": "Apply to output",
+            "result": "$\\begin{bmatrix}1/2&0\\\\0&1/5\\end{bmatrix}\\begin{bmatrix}8\\\\15\\end{bmatrix}$",
+            "why": "recover input"
+          },
+          {
+            "do": "Compute result",
+            "result": "$\\begin{bmatrix}4\\\\3\\end{bmatrix}$",
+            "why": "divide each coordinate by its scale"
+          }
+        ],
+        "answer": "$\\mathbf{D}^{-1}=\\begin{bmatrix}1/2&0\\\\0&1/5\\end{bmatrix}$ and the original vector was $[4,3]^T$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Undoing normalization",
+        "background": "Feature scaling is often reversed by applying an inverse transformation.",
+        "numbers": "If $z=(x-10)/2$, then $x=2z+10$; $z=3$ returns $x=16$."
+      },
+      {
+        "title": "Solving model equations",
+        "background": "Theoretical linear systems use inverses to state solutions compactly.",
+        "numbers": "If $A^{-1}b=[2,1]^T$, then $Ax=b$ has solution $[2,1]^T$."
+      },
+      {
+        "title": "Graphics inverse transforms",
+        "background": "To map a screen point back to object coordinates, graphics engines apply inverse transforms.",
+        "numbers": "Scaling by 4 sends $[2,3]$ to $[8,12]$; the inverse scale sends $[8,12]$ back to $[2,3]$."
+      },
+      {
+        "title": "Covariance whitening",
+        "background": "Whitening uses inverse square-root matrices to rescale correlated data.",
+        "numbers": "A diagonal variance matrix $\\operatorname{diag}(4,9)$ has inverse square-root $\\operatorname{diag}(1/2,1/3)$."
+      },
+      {
+        "title": "Control systems",
+        "background": "Controllers often need to undo a linear plant model when possible.",
+        "numbers": "If output $y=3u$, inverse control uses $u=y/3$; desired $y=12$ needs $u=4$."
+      },
+      {
+        "title": "Cryptography toy maps",
+        "background": "Some linear ciphers over modular arithmetic require invertible matrices.",
+        "numbers": "Modulo 5, determinant 2 is invertible because $2\\cdot3=6\\equiv1$, so undoing is possible."
+      }
+    ],
+    "applicationsClose": "An inverse is an undo button, and linear algebra teaches exactly when that button exists.",
+    "takeaways": [
+      "A two-sided inverse satisfies $A^{-1}A=I$ and $AA^{-1}=I$.",
+      "For $2\\times2$ matrices, determinant $ad-bc$ must be nonzero.",
+      "Inverses solve $Ax=b$ in theory, though numerical code often uses factorizations instead."
+    ],
     "prereqs": [
       "math-09-05"
     ]
@@ -132,19 +1694,266 @@
   B({
     "id": "math-09-07",
     "title": "Elementary matrices",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: elementary matrices.",
+    "tagline": "An elementary matrix is a row operation packaged as multiplication.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Matrix inverses</i>"
+        "Matrix algebra",
+        "Gaussian elimination",
+        "linear combinations"
       ],
       "leadsTo": [
-        "the next lesson, <i>LU factorization</i>"
+        "least squares",
+        "eigenvalues",
+        "singular value decomposition"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "rank",
+        "null space",
+        "basis",
+        "dimension"
       ]
     },
+    "motivation": "<p>You already know how to combine vectors and solve equations. Elementary matrices turn elimination from a procedure into matrix algebra.</p><p>This lesson gives that idea a precise name and a dependable test, so later ML geometry feels organized instead of mysterious.</p>",
+    "definition": "<p><b>Elementary matrices</b> is a core linear algebra idea about how vectors and matrices behave under linear combination. In this lesson, the phrase is read through $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$, row reduction, and the geometry of $\\mathbb{R}^n$.</p><p>If $E=\\begin{bmatrix}1&0\\\\-2&1\\end{bmatrix}$, then $EA$ replaces row 2 by row 2 minus twice row 1.</p><p><b>Assumptions that matter:</b> all vectors live in compatible dimensions; scalars are real numbers; conclusions about spaces require closure under addition and scalar multiplication; and row reduction preserves the linear relationships needed for the test.</p>",
+    "worked": {
+      "problem": "Work through a concrete elementary matrices calculation: If $E=\\begin{bmatrix}1&0\\\\-2&1\\end{bmatrix}$, then $EA$ replaces row 2 by row 2 minus twice row 1.",
+      "skills": [
+        "row operations",
+        "row reduction",
+        "interpretation"
+      ],
+      "strategy": "Translate the statement into equations, perform one careful algebra step at a time, then interpret the result.",
+      "steps": [
+        {
+          "do": "Name the objects",
+          "result": "use the displayed vectors or matrix",
+          "why": "clear notation prevents shape mistakes"
+        },
+        {
+          "do": "Translate into equations",
+          "result": "$c_1\\mathbf{v}_1+c_2\\mathbf{v}_2=\\mathbf{b}$ or $\\mathbf{A}\\mathbf{x}=\\mathbf{0}$",
+          "why": "linear questions become systems"
+        },
+        {
+          "do": "Write component equations",
+          "result": "one equation per coordinate",
+          "why": "equal vectors have equal components"
+        },
+        {
+          "do": "Eliminate one variable",
+          "result": "create a simpler equation",
+          "why": "row operations preserve solutions"
+        },
+        {
+          "do": "Solve the reduced equation",
+          "result": "identify the coefficients or free variable",
+          "why": "the reduced system reveals the structure"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "state reachability, dependence, dimension, or subspace membership",
+          "why": "the algebra answers the geometric question"
+        }
+      ],
+      "verify": "Substituting the found coefficients or vector back into the original relation gives the stated equality, so the interpretation matches the arithmetic.",
+      "answer": "The calculation illustrates elementary matrices through a concrete linear relation.",
+      "connects": "Elementary matrices is not a slogan; it is a testable statement about linear combinations."
+    },
+    "practice": [
+      {
+        "problem": "Find the elementary matrix that swaps two rows in a $2\\times2$ matrix.",
+        "steps": [
+          {
+            "do": "Start with the identity",
+            "result": "$I=\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$",
+            "why": "elementary matrices come from row operations on identity"
+          },
+          {
+            "do": "Swap its two rows",
+            "result": "$\\begin{bmatrix}0&1\\\\1&0\\end{bmatrix}$",
+            "why": "perform the row operation"
+          },
+          {
+            "do": "Multiply by a test matrix",
+            "result": "$\\begin{bmatrix}0&1\\\\1&0\\end{bmatrix}\\begin{bmatrix}a&b\\\\c&d\\end{bmatrix}$",
+            "why": "left multiplication acts on rows"
+          },
+          {
+            "do": "Compute the result",
+            "result": "$\\begin{bmatrix}c&d\\\\a&b\\end{bmatrix}$",
+            "why": "rows are swapped"
+          },
+          {
+            "do": "State the matrix",
+            "result": "$E=\\begin{bmatrix}0&1\\\\1&0\\end{bmatrix}$",
+            "why": "this packages the swap"
+          }
+        ],
+        "answer": "$E=\\begin{bmatrix}0&1\\\\1&0\\end{bmatrix}$."
+      },
+      {
+        "problem": "Find the elementary matrix that replaces $R_2$ by $R_2-3R_1$.",
+        "steps": [
+          {
+            "do": "Start with $I_2$",
+            "result": "$\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$",
+            "why": "begin with the identity"
+          },
+          {
+            "do": "Apply the row operation to $I_2$",
+            "result": "$\\begin{bmatrix}1&0\\\\-3&1\\end{bmatrix}$",
+            "why": "row 2 becomes row 2 minus 3 row 1"
+          },
+          {
+            "do": "Test on row symbols",
+            "result": "$E\\begin{bmatrix}a&b\\\\c&d\\end{bmatrix}$",
+            "why": "verify the action"
+          },
+          {
+            "do": "Compute row 2",
+            "result": "$[c,d]-3[a,b]=[c-3a,d-3b]$",
+            "why": "matches the operation"
+          },
+          {
+            "do": "State $E$",
+            "result": "$\\begin{bmatrix}1&0\\\\-3&1\\end{bmatrix}$",
+            "why": "the row operation is encoded"
+          }
+        ],
+        "answer": "$E=\\begin{bmatrix}1&0\\\\-3&1\\end{bmatrix}$."
+      },
+      {
+        "problem": "Apply $E=\\begin{bmatrix}1&0\\\\2&1\\end{bmatrix}$ to $A=\\begin{bmatrix}3&1\\\\4&5\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Write the product",
+            "result": "$EA$",
+            "why": "left multiplication changes rows"
+          },
+          {
+            "do": "Keep row 1",
+            "result": "$[3,1]$",
+            "why": "first row of $E$ selects row 1"
+          },
+          {
+            "do": "Compute row 2",
+            "result": "$2[3,1]+[4,5]=[10,7]$",
+            "why": "row 2 becomes $2R_1+R_2$"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}3&1\\\\10&7\\end{bmatrix}$",
+            "why": "new rows"
+          },
+          {
+            "do": "Name the operation",
+            "result": "$R_2\\leftarrow R_2+2R_1$",
+            "why": "read from $E$"
+          }
+        ],
+        "answer": "$EA=\\begin{bmatrix}3&1\\\\10&7\\end{bmatrix}$."
+      },
+      {
+        "problem": "Find the inverse of $E=\\begin{bmatrix}1&0\\\\-4&1\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Read the operation",
+            "result": "$R_2\\leftarrow R_2-4R_1$",
+            "why": "from the lower-left entry"
+          },
+          {
+            "do": "Undo the operation",
+            "result": "$R_2\\leftarrow R_2+4R_1$",
+            "why": "reverse the row addition"
+          },
+          {
+            "do": "Write the inverse matrix",
+            "result": "$\\begin{bmatrix}1&0\\\\4&1\\end{bmatrix}$",
+            "why": "encode the reverse operation"
+          },
+          {
+            "do": "Multiply conceptually",
+            "result": "$E^{-1}E=I$",
+            "why": "an operation followed by its undo gives identity"
+          },
+          {
+            "do": "State the inverse",
+            "result": "$E^{-1}=\\begin{bmatrix}1&0\\\\4&1\\end{bmatrix}$",
+            "why": "final"
+          }
+        ],
+        "answer": "$E^{-1}=\\begin{bmatrix}1&0\\\\4&1\\end{bmatrix}$."
+      },
+      {
+        "problem": "Show that eliminating $2$ below a pivot in $A=\\begin{bmatrix}1&3\\\\2&8\\end{bmatrix}$ uses an elementary matrix.",
+        "steps": [
+          {
+            "do": "Name the row operation",
+            "result": "$R_2\\leftarrow R_2-2R_1$",
+            "why": "eliminate the entry below pivot 1"
+          },
+          {
+            "do": "Write the elementary matrix",
+            "result": "$E=\\begin{bmatrix}1&0\\\\-2&1\\end{bmatrix}$",
+            "why": "encode the operation"
+          },
+          {
+            "do": "Apply to $A$",
+            "result": "$EA$",
+            "why": "left multiplication performs row operation"
+          },
+          {
+            "do": "Compute row 2",
+            "result": "$[2,8]-2[1,3]=[0,2]$",
+            "why": "entry below pivot becomes zero"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}1&3\\\\0&2\\end{bmatrix}$",
+            "why": "echelon form"
+          }
+        ],
+        "answer": "$E=\\begin{bmatrix}1&0\\\\-2&1\\end{bmatrix}$ gives $EA=\\begin{bmatrix}1&3\\\\0&2\\end{bmatrix}$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature spaces",
+        "background": "ML features live in vector spaces where scaling and adding examples or directions is meaningful.",
+        "numbers": "If $v=[2,3]$ and $w=[1,-1]$, then $0.5v+w=[2,0.5]$ is another vector in the same ambient space."
+      },
+      {
+        "title": "Embeddings",
+        "background": "Embedding models rely on spans, bases, and independence to represent meaning in many directions.",
+        "numbers": "Two directions $[1,0]$ and $[0,1]$ can represent $[0.2,0.9]$ as $0.2[1,0]+0.9[0,1]$."
+      },
+      {
+        "title": "Dimensionality reduction",
+        "background": "PCA searches for a lower-dimensional subspace that keeps much of the data variation.",
+        "numbers": "If two principal directions explain $70\\%$ and $20\\%$ of variance, a 2-D subspace keeps $90\\%$."
+      },
+      {
+        "title": "Solving constraints",
+        "background": "Null spaces describe changes that leave linear measurements unchanged.",
+        "numbers": "For measurement row $[1,2]$, change $[-2,1]$ gives $[1,2]\\cdot[-2,1]=0$."
+      },
+      {
+        "title": "Data rank",
+        "background": "Rank tells how many independent directions the columns of a data matrix really contain.",
+        "numbers": "Columns $[1,2]$ and $[2,4]$ have rank $1$, not $2$, because one is twice the other."
+      },
+      {
+        "title": "Model identifiability",
+        "background": "Parameters are identifiable only outside null directions that leave predictions unchanged.",
+        "numbers": "If $Xh=0$ for $h=[-2,1]$, then weights $w$ and $w+h$ give the same predictions on $X$."
+      }
+    ],
+    "applicationsClose": "Elementary matrices gives one more way to see the same linear structure: what can be built, what is lost, and how many directions truly matter.",
+    "takeaways": [
+      "Linear combinations are the test language for this topic.",
+      "Row reduction turns geometric claims into solvable equations.",
+      "Dimension counts independent directions, not the number of coordinates written down."
+    ],
     "prereqs": [
       "math-09-06"
     ]
@@ -153,19 +1962,271 @@
   B({
     "id": "math-09-08",
     "title": "LU factorization",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: lu factorization.",
+    "tagline": "LU factorization records elimination so one matrix solve can be reused many times.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Elementary matrices</i>"
+        "Matrix algebra",
+        "Gaussian elimination",
+        "linear combinations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Vector spaces and subspaces</i>"
+        "least squares",
+        "eigenvalues",
+        "singular value decomposition"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "rank",
+        "null space",
+        "basis",
+        "dimension"
       ]
     },
+    "motivation": "<p>You already know how to combine vectors and solve equations. LU splits a matrix into lower and upper triangular factors.</p><p>This lesson gives that idea a precise name and a dependable test, so later ML geometry feels organized instead of mysterious.</p>",
+    "definition": "<p><b>LU factorization</b> is a core linear algebra idea about how vectors and matrices behave under linear combination. In this lesson, the phrase is read through $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$, row reduction, and the geometry of $\\mathbb{R}^n$.</p><p>If $L=\\begin{bmatrix}1&0\\\\2&1\\end{bmatrix}$ and $U=\\begin{bmatrix}3&1\\\\0&4\\end{bmatrix}$, then $LU=\\begin{bmatrix}3&1\\\\6&6\\end{bmatrix}$.</p><p><b>Assumptions that matter:</b> all vectors live in compatible dimensions; scalars are real numbers; conclusions about spaces require closure under addition and scalar multiplication; and row reduction preserves the linear relationships needed for the test.</p>",
+    "worked": {
+      "problem": "Work through a concrete lu factorization calculation: If $L=\\begin{bmatrix}1&0\\\\2&1\\end{bmatrix}$ and $U=\\begin{bmatrix}3&1\\\\0&4\\end{bmatrix}$, then $LU=\\begin{bmatrix}3&1\\\\6&6\\end{bmatrix}$.",
+      "skills": [
+        "triangular solves",
+        "row reduction",
+        "interpretation"
+      ],
+      "strategy": "Translate the statement into equations, perform one careful algebra step at a time, then interpret the result.",
+      "steps": [
+        {
+          "do": "Name the objects",
+          "result": "use the displayed vectors or matrix",
+          "why": "clear notation prevents shape mistakes"
+        },
+        {
+          "do": "Translate into equations",
+          "result": "$c_1\\mathbf{v}_1+c_2\\mathbf{v}_2=\\mathbf{b}$ or $\\mathbf{A}\\mathbf{x}=\\mathbf{0}$",
+          "why": "linear questions become systems"
+        },
+        {
+          "do": "Write component equations",
+          "result": "one equation per coordinate",
+          "why": "equal vectors have equal components"
+        },
+        {
+          "do": "Eliminate one variable",
+          "result": "create a simpler equation",
+          "why": "row operations preserve solutions"
+        },
+        {
+          "do": "Solve the reduced equation",
+          "result": "identify the coefficients or free variable",
+          "why": "the reduced system reveals the structure"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "state reachability, dependence, dimension, or subspace membership",
+          "why": "the algebra answers the geometric question"
+        }
+      ],
+      "verify": "Substituting the found coefficients or vector back into the original relation gives the stated equality, so the interpretation matches the arithmetic.",
+      "answer": "The calculation illustrates lu factorization through a concrete linear relation.",
+      "connects": "LU factorization is not a slogan; it is a testable statement about linear combinations."
+    },
+    "practice": [
+      {
+        "problem": "Factor $A=\\begin{bmatrix}2&1\\\\6&5\\end{bmatrix}$ into $LU$ without row swaps.",
+        "steps": [
+          {
+            "do": "Find multiplier",
+            "result": "$6/2=3$",
+            "why": "eliminate below the first pivot"
+          },
+          {
+            "do": "Compute new row 2",
+            "result": "$[6,5]-3[2,1]=[0,2]$",
+            "why": "form $U$"
+          },
+          {
+            "do": "Write $U$",
+            "result": "$\\begin{bmatrix}2&1\\\\0&2\\end{bmatrix}$",
+            "why": "upper triangular result"
+          },
+          {
+            "do": "Store multiplier in $L$",
+            "result": "$\\begin{bmatrix}1&0\\\\3&1\\end{bmatrix}$",
+            "why": "lower triangular factor"
+          },
+          {
+            "do": "Check product",
+            "result": "$LU=\\begin{bmatrix}2&1\\\\6&5\\end{bmatrix}$",
+            "why": "multiply to verify"
+          }
+        ],
+        "answer": "$L=\\begin{bmatrix}1&0\\\\3&1\\end{bmatrix}$, $U=\\begin{bmatrix}2&1\\\\0&2\\end{bmatrix}$."
+      },
+      {
+        "problem": "Use $L=\\begin{bmatrix}1&0\\\\2&1\\end{bmatrix}$ and $U=\\begin{bmatrix}3&1\\\\0&4\\end{bmatrix}$ to solve $LUx=[5,14]^T$.",
+        "steps": [
+          {
+            "do": "Solve $Ly=b$",
+            "result": "$y_1=5$",
+            "why": "forward substitution"
+          },
+          {
+            "do": "Use row 2 of $L$",
+            "result": "$2y_1+y_2=14$",
+            "why": "second equation"
+          },
+          {
+            "do": "Solve for $y_2",
+            "result": "$y_2=4$",
+            "why": "subtract 10"
+          },
+          {
+            "do": "Solve $Ux=y$",
+            "result": "$4x_2=4$",
+            "why": "back substitution starts at bottom"
+          },
+          {
+            "do": "Find $x_2$",
+            "result": "$x_2=1$",
+            "why": "divide by 4"
+          },
+          {
+            "do": "Find $x_1$",
+            "result": "$3x_1+1=5$, so $x_1=4/3$",
+            "why": "use first row of $U$"
+          }
+        ],
+        "answer": "$x=[4/3,1]^T$."
+      },
+      {
+        "problem": "Compute $LU$ for $L=\\begin{bmatrix}1&0\\\\-1&1\\end{bmatrix}$ and $U=\\begin{bmatrix}2&3\\\\0&5\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Compute first row",
+            "result": "row 1 of $L$ selects row 1 of $U$: $[2,3]$",
+            "why": "matrix product"
+          },
+          {
+            "do": "Compute second row",
+            "result": "$-1[2,3]+[0,5]=[-2,2]$",
+            "why": "linear combination of rows"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}2&3\\\\-2&2\\end{bmatrix}$",
+            "why": "product"
+          },
+          {
+            "do": "Check lower-upper shape",
+            "result": "not triangular necessarily",
+            "why": "the product is the original matrix"
+          },
+          {
+            "do": "State $A$",
+            "result": "$A=LU$",
+            "why": "factorization reconstructs $A$"
+          }
+        ],
+        "answer": "$LU=\\begin{bmatrix}2&3\\\\-2&2\\end{bmatrix}$."
+      },
+      {
+        "problem": "Why is solving with $LU$ useful for two right-hand sides?",
+        "steps": [
+          {
+            "do": "Factor once",
+            "result": "$A=LU$",
+            "why": "the expensive elimination is reused"
+          },
+          {
+            "do": "First right-hand side",
+            "result": "solve $Ly_1=b_1$",
+            "why": "forward substitution"
+          },
+          {
+            "do": "Then solve",
+            "result": "solve $Ux_1=y_1$",
+            "why": "back substitution"
+          },
+          {
+            "do": "Second right-hand side",
+            "result": "solve $Ly_2=b_2$",
+            "why": "reuse same $L$"
+          },
+          {
+            "do": "Finish",
+            "result": "solve $Ux_2=y_2$",
+            "why": "reuse same $U$"
+          }
+        ],
+        "answer": "One factorization supports many solves by changing only the triangular substitutions."
+      },
+      {
+        "problem": "Find the elimination multiplier for $A=\\begin{bmatrix}4&2\\\\10&9\\end{bmatrix}$ and the resulting $U$.",
+        "steps": [
+          {
+            "do": "Compute multiplier",
+            "result": "$10/4=2.5$",
+            "why": "entry below pivot divided by pivot"
+          },
+          {
+            "do": "Subtract $2.5R_1$ from $R_2$",
+            "result": "$[10,9]-2.5[4,2]$",
+            "why": "eliminate first entry"
+          },
+          {
+            "do": "Simplify row 2",
+            "result": "$[0,4]$",
+            "why": "compute components"
+          },
+          {
+            "do": "Write $U$",
+            "result": "$\\begin{bmatrix}4&2\\\\0&4\\end{bmatrix}$",
+            "why": "upper triangular"
+          },
+          {
+            "do": "Write $L$ entry",
+            "result": "$l_{21}=2.5$",
+            "why": "store the multiplier"
+          }
+        ],
+        "answer": "Multiplier $2.5$; $U=\\begin{bmatrix}4&2\\\\0&4\\end{bmatrix}$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature spaces",
+        "background": "ML features live in vector spaces where scaling and adding examples or directions is meaningful.",
+        "numbers": "If $v=[2,3]$ and $w=[1,-1]$, then $0.5v+w=[2,0.5]$ is another vector in the same ambient space."
+      },
+      {
+        "title": "Embeddings",
+        "background": "Embedding models rely on spans, bases, and independence to represent meaning in many directions.",
+        "numbers": "Two directions $[1,0]$ and $[0,1]$ can represent $[0.2,0.9]$ as $0.2[1,0]+0.9[0,1]$."
+      },
+      {
+        "title": "Dimensionality reduction",
+        "background": "PCA searches for a lower-dimensional subspace that keeps much of the data variation.",
+        "numbers": "If two principal directions explain $70\\%$ and $20\\%$ of variance, a 2-D subspace keeps $90\\%$."
+      },
+      {
+        "title": "Solving constraints",
+        "background": "Null spaces describe changes that leave linear measurements unchanged.",
+        "numbers": "For measurement row $[1,2]$, change $[-2,1]$ gives $[1,2]\\cdot[-2,1]=0$."
+      },
+      {
+        "title": "Data rank",
+        "background": "Rank tells how many independent directions the columns of a data matrix really contain.",
+        "numbers": "Columns $[1,2]$ and $[2,4]$ have rank $1$, not $2$, because one is twice the other."
+      },
+      {
+        "title": "Model identifiability",
+        "background": "Parameters are identifiable only outside null directions that leave predictions unchanged.",
+        "numbers": "If $Xh=0$ for $h=[-2,1]$, then weights $w$ and $w+h$ give the same predictions on $X$."
+      }
+    ],
+    "applicationsClose": "LU factorization gives one more way to see the same linear structure: what can be built, what is lost, and how many directions truly matter.",
+    "takeaways": [
+      "Linear combinations are the test language for this topic.",
+      "Row reduction turns geometric claims into solvable equations.",
+      "Dimension counts independent directions, not the number of coordinates written down."
+    ],
     "prereqs": [
       "math-09-07"
     ]
@@ -174,19 +2235,267 @@
   B({
     "id": "math-09-09",
     "title": "Vector spaces and subspaces",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: vector spaces and subspaces.",
+    "tagline": "A vector space is a place where linear combinations are always allowed, and a subspace is a smaller place with the same promise.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>LU factorization</i>"
+        "Vectors and linear combinations",
+        "Systems of linear equations",
+        "Matrix algebra"
       ],
       "leadsTo": [
-        "the next lesson, <i>Span</i>"
+        "Span",
+        "Linear independence",
+        "Basis and dimension"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "zero vector",
+        "closure",
+        "linear combinations",
+        "null spaces"
       ]
     },
+    "motivation": "<p>You already know that adding two arrows in the plane gives another arrow in the plane. That closure is not an accident; it is the heart of a vector space.</p><p>A <b>subspace</b> is a smaller linear world inside a bigger one. Lines through the origin, planes through the origin, column spaces, and null spaces all matter in ML because they describe the directions a model can represent or ignore.</p>",
+    "definition": "<p>A <b>vector space</b> is a set of vectors where you can add any two vectors in the set and multiply any vector by any real scalar without leaving the set, along with the usual algebra rules. A <b>subspace</b> of $\\mathbb{R}^n$ is a nonempty subset that is closed under addition and scalar multiplication.</p><p>The practical subspace test is short: the set must contain $\\mathbf{0}$, and whenever $\\mathbf{u}$ and $\\mathbf{v}$ are in the set, every linear combination $a\\mathbf{u}+b\\mathbf{v}$ must also be in the set. This single combination test includes both closure rules.</p><p><b>Assumptions that matter:</b> the ambient vector space is fixed; subspaces must pass through the zero vector; equations defining subspaces must be homogeneous, like $x+2y-z=0$; and a translated line such as $x+y=1$ is not a subspace because it misses the origin.</p>",
+    "worked": {
+      "problem": "Decide whether $S=\\{(x,y,z):x+2y-z=0\\}$ is a subspace of $\\mathbb{R}^3$.",
+      "skills": [
+        "subspace test",
+        "closure",
+        "homogeneous equations"
+      ],
+      "strategy": "Use the equation to check zero and then check a general linear combination.",
+      "steps": [
+        {
+          "do": "Check the zero vector",
+          "result": "$0+2\\cdot0-0=0$",
+          "why": "a subspace must contain the origin"
+        },
+        {
+          "do": "Take two vectors in $S$",
+          "result": "$x_1+2y_1-z_1=0$ and $x_2+2y_2-z_2=0$",
+          "why": "membership means satisfying the equation"
+        },
+        {
+          "do": "Form a linear combination",
+          "result": "$a(x_1,y_1,z_1)+b(x_2,y_2,z_2)$",
+          "why": "test closure in one step"
+        },
+        {
+          "do": "Compute its defining expression",
+          "result": "$a(x_1+2y_1-z_1)+b(x_2+2y_2-z_2)$",
+          "why": "distribute the linear equation"
+        },
+        {
+          "do": "Substitute the membership facts",
+          "result": "$a\\cdot0+b\\cdot0=0$",
+          "why": "both original vectors satisfy the equation"
+        },
+        {
+          "do": "Conclude membership",
+          "result": "$a\\mathbf{u}+b\\mathbf{v}\\in S$",
+          "why": "every linear combination remains in the set"
+        }
+      ],
+      "verify": "The set contains zero and is closed under every linear combination, so it satisfies the subspace test.",
+      "answer": "$S$ is a subspace of $\\mathbb{R}^3$.",
+      "connects": "Homogeneous linear equations create subspaces because linear combinations preserve zero."
+    },
+    "practice": [
+      {
+        "problem": "Is $L=\\{(x,y):y=3x\\}$ a subspace of $\\mathbb{R}^2$?",
+        "steps": [
+          {
+            "do": "Check zero",
+            "result": "$(0,0)$ satisfies $0=3\\cdot0$",
+            "why": "the line passes through the origin"
+          },
+          {
+            "do": "Take two points on the line",
+            "result": "$(x_1,3x_1)$ and $(x_2,3x_2)$",
+            "why": "write members using one parameter"
+          },
+          {
+            "do": "Add them",
+            "result": "$(x_1+x_2,3x_1+3x_2)$",
+            "why": "componentwise addition"
+          },
+          {
+            "do": "Factor the second component",
+            "result": "$(x_1+x_2,3(x_1+x_2))$",
+            "why": "same line form"
+          },
+          {
+            "do": "Check scalar multiplication",
+            "result": "$c(x_1,3x_1)=(cx_1,3cx_1)$",
+            "why": "still has second component three times first"
+          }
+        ],
+        "answer": "Yes. It is a subspace."
+      },
+      {
+        "problem": "Is $T=\\{(x,y):x+y=1\\}$ a subspace?",
+        "steps": [
+          {
+            "do": "Check zero",
+            "result": "$0+0=0$",
+            "why": "evaluate the origin"
+          },
+          {
+            "do": "Compare with the requirement",
+            "result": "$0\\ne1$",
+            "why": "the origin is not in the set"
+          },
+          {
+            "do": "Stop the test",
+            "result": "not a subspace",
+            "why": "missing zero is enough to fail"
+          },
+          {
+            "do": "Give a geometric reason",
+            "result": "the line is shifted away from the origin",
+            "why": "subspaces cannot be translated"
+          },
+          {
+            "do": "State conclusion",
+            "result": "fails the zero-vector condition",
+            "why": "no further closure test is needed"
+          }
+        ],
+        "answer": "No. It is not a subspace."
+      },
+      {
+        "problem": "Show that the null space of $A=\\begin{bmatrix}1&2\\end{bmatrix}$ is a subspace.",
+        "steps": [
+          {
+            "do": "Write the null space",
+            "result": "all $x$ with $Ax=0$",
+            "why": "definition"
+          },
+          {
+            "do": "Check zero",
+            "result": "$A\\mathbf{0}=0$",
+            "why": "zero is included"
+          },
+          {
+            "do": "Take two null vectors",
+            "result": "$A\\mathbf{u}=0$ and $A\\mathbf{v}=0$",
+            "why": "membership"
+          },
+          {
+            "do": "Apply $A$ to a combination",
+            "result": "$A(a\\mathbf{u}+b\\mathbf{v})=aA\\mathbf{u}+bA\\mathbf{v}$",
+            "why": "matrix multiplication is linear"
+          },
+          {
+            "do": "Simplify",
+            "result": "$a0+b0=0$",
+            "why": "the combination is also in the null space"
+          }
+        ],
+        "answer": "The null space is a subspace."
+      },
+      {
+        "problem": "Find a spanning vector for the subspace $x-y=0$ in $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Solve the equation",
+            "result": "$x=y$",
+            "why": "points have equal coordinates"
+          },
+          {
+            "do": "Introduce a parameter",
+            "result": "$x=t$",
+            "why": "one free coordinate"
+          },
+          {
+            "do": "Write the vector",
+            "result": "$(x,y)=(t,t)$",
+            "why": "substitute"
+          },
+          {
+            "do": "Factor the parameter",
+            "result": "$t(1,1)$",
+            "why": "show every vector is a multiple"
+          },
+          {
+            "do": "State the spanning vector",
+            "result": "$(1,1)$",
+            "why": "one vector generates the line"
+          }
+        ],
+        "answer": "The subspace is $\\operatorname{span}\\{(1,1)\\}$."
+      },
+      {
+        "problem": "Is the set of vectors with nonnegative first coordinate a subspace of $\\mathbb{R}^2$?",
+        "steps": [
+          {
+            "do": "Check zero",
+            "result": "$(0,0)$ is included",
+            "why": "first coordinate is nonnegative"
+          },
+          {
+            "do": "Choose a vector in the set",
+            "result": "$\\mathbf{v}=(1,2)$",
+            "why": "first coordinate is positive"
+          },
+          {
+            "do": "Scale by $-1$",
+            "result": "$-\\mathbf{v}=(-1,-2)$",
+            "why": "scalar multiplication must allow all real scalars"
+          },
+          {
+            "do": "Check membership",
+            "result": "first coordinate $-1$ is negative",
+            "why": "the scaled vector leaves the set"
+          },
+          {
+            "do": "Conclude",
+            "result": "not a subspace",
+            "why": "closure under scalar multiplication fails"
+          }
+        ],
+        "answer": "No. It is not closed under multiplication by negative scalars."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Null spaces in model parameters",
+        "background": "A null space describes parameter changes that do not change predictions, which matters for identifiability.",
+        "numbers": "If $Xh=0$ with $h=[-2,1]^T$, then $X(w+h)=Xw$; predictions are unchanged."
+      },
+      {
+        "title": "Feature constraint sets",
+        "background": "Homogeneous constraints form subspaces that algorithms can safely project onto.",
+        "numbers": "The constraint $x_1+x_2+x_3=0$ includes $[1,-1,0]$ and $[2,0,-2]$, and their sum $[3,-1,-2]$ still sums to $0$."
+      },
+      {
+        "title": "Signal subspaces",
+        "background": "Signal processing often models valid signals as combinations inside a subspace.",
+        "numbers": "All signals $a[1,1,1]+b[1,0,-1]$ form a 2-D subspace; choosing $a=2,b=3$ gives $[5,2,-1]$."
+      },
+      {
+        "title": "Computer graphics planes",
+        "background": "Planes through the origin are subspaces used for projections and coordinates.",
+        "numbers": "The plane $z=0$ contains $[1,2,0]$ and $[3,-1,0]$; their sum $[4,1,0]$ stays in the plane."
+      },
+      {
+        "title": "Error residuals",
+        "background": "Residual vectors orthogonal to a model subspace form another subspace in least squares.",
+        "numbers": "Vectors $r$ with $[1,1]^Tr=0$ satisfy $r_1+r_2=0$, so $[2,-2]$ is allowed."
+      },
+      {
+        "title": "Embedding directions",
+        "background": "A collection of semantic directions closed under linear combination behaves like a subspace approximation.",
+        "numbers": "If gender direction is $g=[1,-1]$, all multiples such as $0.5g=[0.5,-0.5]$ lie on the same 1-D subspace."
+      }
+    ],
+    "applicationsClose": "Subspaces are the safe rooms of linear algebra: once you enter, every linear combination stays inside.",
+    "takeaways": [
+      "A subspace must contain the zero vector.",
+      "Closure under $a\\mathbf{u}+b\\mathbf{v}$ is the main test.",
+      "Homogeneous linear equations define subspaces; shifted equations usually do not.",
+      "Null spaces and column spaces are central subspaces of matrices."
+    ],
     "prereqs": [
       "math-09-08"
     ]
@@ -195,19 +2504,271 @@
   B({
     "id": "math-09-10",
     "title": "Span",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: span.",
+    "tagline": "Span is the full set of places your chosen vectors can reach by scaling and adding.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Vector spaces and subspaces</i>"
+        "Vector spaces and subspaces",
+        "Vectors and linear combinations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Linear independence</i>"
+        "Linear independence",
+        "Basis and dimension",
+        "Column space"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "linear combinations",
+        "subspaces",
+        "generating sets",
+        "rank"
       ]
     },
+    "motivation": "<p>Give someone the east vector and the north vector, and they can reach any point on a flat map. Give them only the east vector, and they stay on one line.</p><p><b>Span</b> names this reachability. In ML, the columns of a data or feature matrix span the predictions a linear model can make, so span tells us what is possible before optimization even begins.</p>",
+    "definition": "<p>The <b>span</b> of vectors $\\mathbf{v}_1,\\ldots,\\mathbf{v}_k$ is the set of all linear combinations $c_1\\mathbf{v}_1+\\cdots+c_k\\mathbf{v}_k$. It is written $\\operatorname{span}\\{\\mathbf{v}_1,\\ldots,\\mathbf{v}_k\\}$.</p><p>The span is always a subspace because adding two linear combinations gives another linear combination, and scaling a linear combination just scales its coefficients. To test whether $\\mathbf{b}$ is in the span, solve $c_1\\mathbf{v}_1+\\cdots+c_k\\mathbf{v}_k=\\mathbf{b}$.</p><p><b>Assumptions that matter:</b> all spanning vectors must live in the same ambient space; extra redundant vectors do not change the span; and spanning all of $\\mathbb{R}^n$ requires enough independent directions to reach every coordinate direction.</p>",
+    "worked": {
+      "problem": "Decide whether $\\mathbf{b}=\\begin{bmatrix}7\\\\4\\end{bmatrix}$ is in the span of $\\mathbf{v}_1=\\begin{bmatrix}1\\\\2\\end{bmatrix}$ and $\\mathbf{v}_2=\\begin{bmatrix}3\\\\-1\\end{bmatrix}$.",
+      "skills": [
+        "span membership",
+        "linear systems",
+        "linear combinations"
+      ],
+      "strategy": "Ask whether some coefficients build $\\mathbf{b}$.",
+      "steps": [
+        {
+          "do": "Set up the span equation",
+          "result": "$a\\begin{bmatrix}1\\\\2\\end{bmatrix}+b\\begin{bmatrix}3\\\\-1\\end{bmatrix}=\\begin{bmatrix}7\\\\4\\end{bmatrix}$",
+          "why": "membership means a linear combination exists"
+        },
+        {
+          "do": "Write component equations",
+          "result": "$a+3b=7,\\ 2a-b=4$",
+          "why": "match entries"
+        },
+        {
+          "do": "Solve the first for $a$",
+          "result": "$a=7-3b$",
+          "why": "isolate one coefficient"
+        },
+        {
+          "do": "Substitute into the second",
+          "result": "$2(7-3b)-b=4$",
+          "why": "use the same $a$"
+        },
+        {
+          "do": "Simplify",
+          "result": "$14-7b=4$",
+          "why": "combine $b$ terms"
+        },
+        {
+          "do": "Solve for $b$",
+          "result": "$b=\\dfrac{10}{7}$",
+          "why": "subtract and divide"
+        },
+        {
+          "do": "Find $a$",
+          "result": "$a=\\dfrac{19}{7}$",
+          "why": "substitute back"
+        }
+      ],
+      "verify": "The coefficients produce $[7,4]^T$, so $\\mathbf{b}$ is reachable.",
+      "answer": "Yes. $\\mathbf{b}=\\frac{19}{7}\\mathbf{v}_1+\\frac{10}{7}\\mathbf{v}_2$.",
+      "connects": "Span turns reachability into solving a linear system."
+    },
+    "practice": [
+      {
+        "problem": "Describe the span of $[2,0]^T$ in $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Write a general multiple",
+            "result": "$c[2,0]^T=[2c,0]^T$",
+            "why": "span of one vector means all multiples"
+          },
+          {
+            "do": "Read the second component",
+            "result": "$0$",
+            "why": "it never changes"
+          },
+          {
+            "do": "Read the first component",
+            "result": "any real number",
+            "why": "choose $c$ to make $2c$ any value"
+          },
+          {
+            "do": "Describe the set",
+            "result": "the $x$-axis",
+            "why": "all vectors with second component zero"
+          },
+          {
+            "do": "State dimension",
+            "result": "one-dimensional",
+            "why": "one nonzero direction"
+          }
+        ],
+        "answer": "The span is the $x$-axis."
+      },
+      {
+        "problem": "Do $[1,1]^T$ and $[2,2]^T$ span $\\mathbb{R}^2$?",
+        "steps": [
+          {
+            "do": "Compare the vectors",
+            "result": "$[2,2]^T=2[1,1]^T$",
+            "why": "same direction"
+          },
+          {
+            "do": "Write a general combination",
+            "result": "$a[1,1]+b[2,2]=[a+2b,a+2b]$",
+            "why": "reachable vectors"
+          },
+          {
+            "do": "Notice the constraint",
+            "result": "components are equal",
+            "why": "only the line $y=x$ is reached"
+          },
+          {
+            "do": "Choose an unreachable target",
+            "result": "$[1,0]^T$",
+            "why": "components are not equal"
+          },
+          {
+            "do": "Conclude",
+            "result": "not all of $\\mathbb{R}^2$",
+            "why": "one direction cannot fill the plane"
+          }
+        ],
+        "answer": "No. They span only the line $y=x$."
+      },
+      {
+        "problem": "Show $[1,0]^T$ and $[1,1]^T$ span $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Set a target",
+            "result": "$[p,q]^T$",
+            "why": "arbitrary vector"
+          },
+          {
+            "do": "Form a combination",
+            "result": "$a[1,0]^T+b[1,1]^T=[a+b,b]^T$",
+            "why": "general reachable vector"
+          },
+          {
+            "do": "Match second component",
+            "result": "$b=q$",
+            "why": "choose $b$"
+          },
+          {
+            "do": "Match first component",
+            "result": "$a+q=p$",
+            "why": "use first coordinate"
+          },
+          {
+            "do": "Solve for $a$",
+            "result": "$a=p-q$",
+            "why": "works for every $p,q$"
+          }
+        ],
+        "answer": "Yes. Every $[p,q]^T$ equals $(p-q)[1,0]^T+q[1,1]^T$."
+      },
+      {
+        "problem": "Is $[1,2,3]^T$ in the span of $[1,0,1]^T$ and $[0,1,1]^T$?",
+        "steps": [
+          {
+            "do": "Set the combination",
+            "result": "$a[1,0,1]^T+b[0,1,1]^T=[1,2,3]^T$",
+            "why": "test membership"
+          },
+          {
+            "do": "Match first component",
+            "result": "$a=1$",
+            "why": "from coordinate 1"
+          },
+          {
+            "do": "Match second component",
+            "result": "$b=2$",
+            "why": "from coordinate 2"
+          },
+          {
+            "do": "Check third component",
+            "result": "$a+b=3$",
+            "why": "third coordinate condition"
+          },
+          {
+            "do": "Substitute",
+            "result": "$1+2=3$",
+            "why": "condition holds"
+          }
+        ],
+        "answer": "Yes. It equals $1[1,0,1]^T+2[0,1,1]^T$."
+      },
+      {
+        "problem": "A design matrix has columns $c_1=[1,1]^T$ and $c_2=[1,-1]^T$. Can it produce target $y=[6,2]^T$?",
+        "steps": [
+          {
+            "do": "Set up prediction",
+            "result": "$a c_1+b c_2=[6,2]^T$",
+            "why": "linear model output is a column combination"
+          },
+          {
+            "do": "Write equations",
+            "result": "$a+b=6,\\ a-b=2$",
+            "why": "match components"
+          },
+          {
+            "do": "Add equations",
+            "result": "$2a=8$",
+            "why": "eliminate $b$"
+          },
+          {
+            "do": "Solve for $a$",
+            "result": "$a=4$",
+            "why": "divide by 2"
+          },
+          {
+            "do": "Find $b$",
+            "result": "$4-b=2$, so $b=2$",
+            "why": "substitute"
+          }
+        ],
+        "answer": "Yes. The target is $4c_1+2c_2$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Column space of data",
+        "background": "Linear predictions lie in the span of the feature columns.",
+        "numbers": "If columns are $[1,1]^T$ and $[1,-1]^T$, weights $4,2$ produce prediction $[6,2]^T$."
+      },
+      {
+        "title": "Image compression",
+        "background": "A few basis images span the reconstructions a model can form.",
+        "numbers": "$0.8$ times one pattern plus $0.2$ times another gives a reconstructed pixel vector like $[10,12,9]$."
+      },
+      {
+        "title": "Audio synthesis",
+        "background": "Synthesizers span sounds by combining waveforms.",
+        "numbers": "A signal $3\\sin t+0.5\\sin(2t)$ lies in the span of two sine waves."
+      },
+      {
+        "title": "Robotics motion",
+        "background": "Allowed actuator directions span the velocities a robot can create.",
+        "numbers": "Thrusters $[1,0]$ and $[0,1]$ can create velocity $[2,-3]$ using coefficients $2$ and $-3$."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "User preferences are often approximated in the span of latent factors.",
+        "numbers": "Factors $[1,0,1]$ and $[0,1,1]$ combine as $2f_1+3f_2=[2,3,5]$."
+      },
+      {
+        "title": "PCA reconstruction",
+        "background": "Principal components span the low-dimensional approximation space.",
+        "numbers": "With components $u_1,u_2$, coefficients $5$ and $-1$ reconstruct $5u_1-u_2$."
+      }
+    ],
+    "applicationsClose": "Span is reachability: the vectors you choose determine the world your linear combinations can visit.",
+    "takeaways": [
+      "The span is the set of all linear combinations of the given vectors.",
+      "Span membership is solved by a linear system.",
+      "The span is always a subspace.",
+      "Redundant vectors can enlarge a list without enlarging its span."
+    ],
     "prereqs": [
       "math-09-09"
     ]
@@ -216,19 +2777,266 @@
   B({
     "id": "math-09-11",
     "title": "Linear independence",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: linear independence.",
+    "tagline": "Vectors are independent when the only way to make zero is to use all-zero coefficients.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Span</i>"
+        "Matrix algebra",
+        "Gaussian elimination",
+        "linear combinations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Basis and dimension</i>"
+        "least squares",
+        "eigenvalues",
+        "singular value decomposition"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "rank",
+        "null space",
+        "basis",
+        "dimension"
       ]
     },
+    "motivation": "<p>You can carry two tools that do the same job, but the second one does not expand what you can do. Linear independence detects that redundancy exactly.</p><p>Independent vectors each add a new direction. This matters because redundant features, duplicate columns, and over-parameterized models can make solutions non-unique.</p>",
+    "definition": "<p>Vectors $\\mathbf{v}_1,\\ldots,\\mathbf{v}_k$ are <b>linearly independent</b> if the equation $c_1\\mathbf{v}_1+\\cdots+c_k\\mathbf{v}_k=\\mathbf{0}$ has only the trivial solution $c_1=\\cdots=c_k=0$. If some coefficient can be nonzero, the vectors are <b>linearly dependent</b>.</p><p>The test works because a nontrivial zero combination can be rearranged to express one vector as a combination of the others. That vector was not adding a new direction.</p><p><b>Assumptions that matter:</b> all vectors are in the same vector space; the zero vector in any list makes the list dependent; and more than $n$ vectors in $\\mathbb{R}^n$ must be dependent.</p>",
+    "worked": {
+      "problem": "Use the lesson definition on $A=\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}$ and the vectors $[1,2]^T$, $[2,4]^T$, and $[-2,1]^T$.",
+      "skills": [
+        "dependence tests",
+        "row reduction",
+        "interpretation"
+      ],
+      "strategy": "Translate the statement into equations, perform one careful algebra step at a time, then interpret the result.",
+      "steps": [
+        {
+          "do": "Set a zero combination",
+          "result": "$a[1,2]^T+b[2,4]^T=0$",
+          "why": "independence test"
+        },
+        {
+          "do": "Use the dependence relation",
+          "result": "$[2,4]^T=2[1,2]^T$",
+          "why": "spot redundancy"
+        },
+        {
+          "do": "Choose coefficients",
+          "result": "$a=-2,\\ b=1$",
+          "why": "make a nontrivial combination"
+        },
+        {
+          "do": "Compute the combination",
+          "result": "$-2[1,2]^T+[2,4]^T=[0,0]^T$",
+          "why": "verify zero"
+        },
+        {
+          "do": "Notice a nonzero coefficient",
+          "result": "$b=1$",
+          "why": "not all coefficients are zero"
+        },
+        {
+          "do": "Conclude",
+          "result": "dependent",
+          "why": "one vector is built from the other"
+        }
+      ],
+      "verify": "Substituting the found coefficients or vector back into the original relation gives the stated equality, so the interpretation matches the arithmetic.",
+      "answer": "The two vectors are linearly dependent.",
+      "connects": "Independence fails exactly when a vector adds no new direction."
+    },
+    "practice": [
+      {
+        "problem": "Use the definition to test a simple linear independence claim for vectors $[1,0]^T$ and $[0,1]^T$ in $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Form a linear combination",
+            "result": "$a[1,0]^T+b[0,1]^T=[a,b]^T$",
+            "why": "combine the vectors"
+          },
+          {
+            "do": "Match a target $[3,-2]^T$",
+            "result": "$a=3,\\ b=-2$",
+            "why": "equal components"
+          },
+          {
+            "do": "Interpret reachability",
+            "result": "the target is reached",
+            "why": "the coefficients exist"
+          },
+          {
+            "do": "Check independence",
+            "result": "$a[1,0]^T+b[0,1]^T=0$ forces $a=b=0$",
+            "why": "only trivial zero combination"
+          },
+          {
+            "do": "State the role",
+            "result": "standard coordinate directions",
+            "why": "they give clean coordinates"
+          }
+        ],
+        "answer": "They reach $[3,-2]^T$ with coefficients $3$ and $-2$, and they are independent."
+      },
+      {
+        "problem": "Decide whether $[2,4]^T$ adds a new direction to $[1,2]^T$.",
+        "steps": [
+          {
+            "do": "Compare vectors",
+            "result": "$[2,4]^T=2[1,2]^T$",
+            "why": "one is a scalar multiple"
+          },
+          {
+            "do": "Write a dependence relation",
+            "result": "$2[1,2]^T-[2,4]^T=0$",
+            "why": "nontrivial zero combination"
+          },
+          {
+            "do": "Interpret",
+            "result": "no new direction",
+            "why": "the second vector lies on the same line"
+          },
+          {
+            "do": "State the span",
+            "result": "a line through the origin",
+            "why": "all multiples of $[1,2]^T$"
+          },
+          {
+            "do": "State independence",
+            "result": "dependent",
+            "why": "one vector is built from the other"
+          }
+        ],
+        "answer": "No. It is dependent and adds no new direction."
+      },
+      {
+        "problem": "Test whether $[1,1,0]^T$ and $[0,1,1]^T$ span all of $\\mathbb{R}^3$.",
+        "steps": [
+          {
+            "do": "Count vectors",
+            "result": "two vectors",
+            "why": "only two building directions"
+          },
+          {
+            "do": "Set a general combination",
+            "result": "$a[1,1,0]^T+b[0,1,1]^T=[a,a+b,b]^T$",
+            "why": "write the reachable vectors"
+          },
+          {
+            "do": "Choose target $[0,0,1]^T$",
+            "result": "$a=0$ and $b=1$",
+            "why": "match first and third components"
+          },
+          {
+            "do": "Check middle component",
+            "result": "$a+b=1$",
+            "why": "would need to equal 0"
+          },
+          {
+            "do": "Find contradiction",
+            "result": "$1\\ne0$",
+            "why": "target is not reachable"
+          }
+        ],
+        "answer": "They do not span all of $\\mathbb{R}^3$."
+      },
+      {
+        "problem": "Find a basis for the line $x+y=0$ in $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Solve the equation",
+            "result": "$y=-x$",
+            "why": "describe points on the line"
+          },
+          {
+            "do": "Introduce a parameter",
+            "result": "$x=t$",
+            "why": "one free variable"
+          },
+          {
+            "do": "Write vectors",
+            "result": "$[x,y]^T=[t,-t]^T$",
+            "why": "substitute"
+          },
+          {
+            "do": "Factor the parameter",
+            "result": "$t[1,-1]^T$",
+            "why": "show all points are multiples"
+          },
+          {
+            "do": "State a basis",
+            "result": "$\\{[1,-1]^T\\}$",
+            "why": "one nonzero spanning vector for the line"
+          }
+        ],
+        "answer": "A basis is $\\{[1,-1]^T\\}$, so the dimension is 1."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}$, find one nonzero vector in the null space.",
+        "steps": [
+          {
+            "do": "Write $Ax=0$",
+            "result": "$x_1+2x_2=0$ and $2x_1+4x_2=0$",
+            "why": "row equations"
+          },
+          {
+            "do": "Use the first equation",
+            "result": "$x_1=-2x_2$",
+            "why": "solve for one variable"
+          },
+          {
+            "do": "Choose a free value",
+            "result": "$x_2=1$",
+            "why": "produce a concrete vector"
+          },
+          {
+            "do": "Find $x_1$",
+            "result": "$x_1=-2$",
+            "why": "substitute"
+          },
+          {
+            "do": "Check",
+            "result": "$A[-2,1]^T=[0,0]^T$",
+            "why": "both rows vanish"
+          }
+        ],
+        "answer": "One null-space vector is $[-2,1]^T$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature spaces",
+        "background": "ML features live in vector spaces where scaling and adding examples or directions is meaningful.",
+        "numbers": "If $v=[2,3]$ and $w=[1,-1]$, then $0.5v+w=[2,0.5]$ is another vector in the same ambient space."
+      },
+      {
+        "title": "Embeddings",
+        "background": "Embedding models rely on spans, bases, and independence to represent meaning in many directions.",
+        "numbers": "Two directions $[1,0]$ and $[0,1]$ can represent $[0.2,0.9]$ as $0.2[1,0]+0.9[0,1]$."
+      },
+      {
+        "title": "Dimensionality reduction",
+        "background": "PCA searches for a lower-dimensional subspace that keeps much of the data variation.",
+        "numbers": "If two principal directions explain $70\\%$ and $20\\%$ of variance, a 2-D subspace keeps $90\\%$."
+      },
+      {
+        "title": "Solving constraints",
+        "background": "Null spaces describe changes that leave linear measurements unchanged.",
+        "numbers": "For measurement row $[1,2]$, change $[-2,1]$ gives $[1,2]\\cdot[-2,1]=0$."
+      },
+      {
+        "title": "Data rank",
+        "background": "Rank tells how many independent directions the columns of a data matrix really contain.",
+        "numbers": "Columns $[1,2]$ and $[2,4]$ have rank $1$, not $2$, because one is twice the other."
+      },
+      {
+        "title": "Model identifiability",
+        "background": "Parameters are identifiable only outside null directions that leave predictions unchanged.",
+        "numbers": "If $Xh=0$ for $h=[-2,1]$, then weights $w$ and $w+h$ give the same predictions on $X$."
+      }
+    ],
+    "applicationsClose": "Linear independence gives one more way to see the same linear structure: what can be built, what is lost, and how many directions truly matter.",
+    "takeaways": [
+      "Linear combinations are the test language for this topic.",
+      "Row reduction turns geometric claims into solvable equations.",
+      "Dimension counts independent directions, not the number of coordinates written down."
+    ],
     "prereqs": [
       "math-09-10"
     ]
@@ -237,19 +3045,271 @@
   B({
     "id": "math-09-12",
     "title": "Basis and dimension",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: basis and dimension.",
+    "tagline": "A basis gives unique coordinates, and dimension counts how many coordinates are truly needed.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Linear independence</i>"
+        "Matrix algebra",
+        "Gaussian elimination",
+        "linear combinations"
       ],
       "leadsTo": [
-        "the next lesson, <i>The four fundamental subspaces</i>"
+        "least squares",
+        "eigenvalues",
+        "singular value decomposition"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "rank",
+        "null space",
+        "basis",
+        "dimension"
       ]
     },
+    "motivation": "<p>Once you have just enough independent directions to reach a space, every vector gets a unique address. That is what a basis provides.</p><p>Dimension is then not about how many vectors are listed, but how many independent directions the space contains. This is the bridge from geometry to compact ML representations.</p>",
+    "definition": "<p>A <b>basis</b> for a vector space is a list of vectors that spans the space and is linearly independent. The <b>dimension</b> is the number of vectors in any basis for that space.</p><p>Spanning gives existence of coordinates; independence gives uniqueness. If two different coefficient lists represented the same vector, subtracting them would create a nontrivial zero combination, contradicting independence.</p><p><b>Assumptions that matter:</b> the basis belongs to a specified space; every basis of the same finite-dimensional space has the same size; and coordinates depend on the chosen basis even though dimension does not.</p>",
+    "worked": {
+      "problem": "Show that $[1,0]^T$ and $[1,1]^T$ form a basis of $\\mathbb{R}^2$, then find coordinates of $[5,2]^T$.",
+      "skills": [
+        "coordinates",
+        "row reduction",
+        "interpretation"
+      ],
+      "strategy": "Translate the statement into equations, perform one careful algebra step at a time, then interpret the result.",
+      "steps": [
+        {
+          "do": "Set a general combination",
+          "result": "$a[1,0]^T+b[1,1]^T=[a+b,b]^T",
+          "why": "test spanning"
+        },
+        {
+          "do": "Match a target $[p,q]^T$",
+          "result": "$a+b=p,\\ b=q$",
+          "why": "arbitrary target"
+        },
+        {
+          "do": "Solve for $b$",
+          "result": "$b=q$",
+          "why": "second coordinate"
+        },
+        {
+          "do": "Solve for $a$",
+          "result": "$a=p-q$",
+          "why": "first coordinate"
+        },
+        {
+          "do": "Conclude spanning",
+          "result": "every $[p,q]^T$ is reached",
+          "why": "coefficients exist for all targets"
+        },
+        {
+          "do": "Test independence",
+          "result": "$a[1,0]^T+b[1,1]^T=0$ gives $b=0$ and $a=0$",
+          "why": "only trivial zero combination"
+        },
+        {
+          "do": "Find coordinates of $[5,2]^T",
+          "result": "$b=2,\\ a=3$",
+          "why": "use $p=5,q=2$"
+        }
+      ],
+      "verify": "Substituting the found coefficients or vector back into the original relation gives the stated equality, so the interpretation matches the arithmetic.",
+      "answer": "They form a basis of $\\mathbb{R}^2$; $[5,2]^T=3[1,0]^T+2[1,1]^T$.",
+      "connects": "A basis gives existence and uniqueness of coordinates."
+    },
+    "practice": [
+      {
+        "problem": "Use the definition to test a simple basis and dimension claim for vectors $[1,0]^T$ and $[0,1]^T$ in $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Form a linear combination",
+            "result": "$a[1,0]^T+b[0,1]^T=[a,b]^T$",
+            "why": "combine the vectors"
+          },
+          {
+            "do": "Match a target $[3,-2]^T$",
+            "result": "$a=3,\\ b=-2$",
+            "why": "equal components"
+          },
+          {
+            "do": "Interpret reachability",
+            "result": "the target is reached",
+            "why": "the coefficients exist"
+          },
+          {
+            "do": "Check independence",
+            "result": "$a[1,0]^T+b[0,1]^T=0$ forces $a=b=0$",
+            "why": "only trivial zero combination"
+          },
+          {
+            "do": "State the role",
+            "result": "standard coordinate directions",
+            "why": "they give clean coordinates"
+          }
+        ],
+        "answer": "They reach $[3,-2]^T$ with coefficients $3$ and $-2$, and they are independent."
+      },
+      {
+        "problem": "Decide whether $[2,4]^T$ adds a new direction to $[1,2]^T$.",
+        "steps": [
+          {
+            "do": "Compare vectors",
+            "result": "$[2,4]^T=2[1,2]^T$",
+            "why": "one is a scalar multiple"
+          },
+          {
+            "do": "Write a dependence relation",
+            "result": "$2[1,2]^T-[2,4]^T=0$",
+            "why": "nontrivial zero combination"
+          },
+          {
+            "do": "Interpret",
+            "result": "no new direction",
+            "why": "the second vector lies on the same line"
+          },
+          {
+            "do": "State the span",
+            "result": "a line through the origin",
+            "why": "all multiples of $[1,2]^T$"
+          },
+          {
+            "do": "State independence",
+            "result": "dependent",
+            "why": "one vector is built from the other"
+          }
+        ],
+        "answer": "No. It is dependent and adds no new direction."
+      },
+      {
+        "problem": "Test whether $[1,1,0]^T$ and $[0,1,1]^T$ span all of $\\mathbb{R}^3$.",
+        "steps": [
+          {
+            "do": "Count vectors",
+            "result": "two vectors",
+            "why": "only two building directions"
+          },
+          {
+            "do": "Set a general combination",
+            "result": "$a[1,1,0]^T+b[0,1,1]^T=[a,a+b,b]^T$",
+            "why": "write the reachable vectors"
+          },
+          {
+            "do": "Choose target $[0,0,1]^T$",
+            "result": "$a=0$ and $b=1$",
+            "why": "match first and third components"
+          },
+          {
+            "do": "Check middle component",
+            "result": "$a+b=1$",
+            "why": "would need to equal 0"
+          },
+          {
+            "do": "Find contradiction",
+            "result": "$1\\ne0$",
+            "why": "target is not reachable"
+          }
+        ],
+        "answer": "They do not span all of $\\mathbb{R}^3$."
+      },
+      {
+        "problem": "Find a basis for the line $x+y=0$ in $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Solve the equation",
+            "result": "$y=-x$",
+            "why": "describe points on the line"
+          },
+          {
+            "do": "Introduce a parameter",
+            "result": "$x=t$",
+            "why": "one free variable"
+          },
+          {
+            "do": "Write vectors",
+            "result": "$[x,y]^T=[t,-t]^T$",
+            "why": "substitute"
+          },
+          {
+            "do": "Factor the parameter",
+            "result": "$t[1,-1]^T$",
+            "why": "show all points are multiples"
+          },
+          {
+            "do": "State a basis",
+            "result": "$\\{[1,-1]^T\\}$",
+            "why": "one nonzero spanning vector for the line"
+          }
+        ],
+        "answer": "A basis is $\\{[1,-1]^T\\}$, so the dimension is 1."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}$, find one nonzero vector in the null space.",
+        "steps": [
+          {
+            "do": "Write $Ax=0$",
+            "result": "$x_1+2x_2=0$ and $2x_1+4x_2=0$",
+            "why": "row equations"
+          },
+          {
+            "do": "Use the first equation",
+            "result": "$x_1=-2x_2$",
+            "why": "solve for one variable"
+          },
+          {
+            "do": "Choose a free value",
+            "result": "$x_2=1$",
+            "why": "produce a concrete vector"
+          },
+          {
+            "do": "Find $x_1$",
+            "result": "$x_1=-2$",
+            "why": "substitute"
+          },
+          {
+            "do": "Check",
+            "result": "$A[-2,1]^T=[0,0]^T$",
+            "why": "both rows vanish"
+          }
+        ],
+        "answer": "One null-space vector is $[-2,1]^T$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature spaces",
+        "background": "ML features live in vector spaces where scaling and adding examples or directions is meaningful.",
+        "numbers": "If $v=[2,3]$ and $w=[1,-1]$, then $0.5v+w=[2,0.5]$ is another vector in the same ambient space."
+      },
+      {
+        "title": "Embeddings",
+        "background": "Embedding models rely on spans, bases, and independence to represent meaning in many directions.",
+        "numbers": "Two directions $[1,0]$ and $[0,1]$ can represent $[0.2,0.9]$ as $0.2[1,0]+0.9[0,1]$."
+      },
+      {
+        "title": "Dimensionality reduction",
+        "background": "PCA searches for a lower-dimensional subspace that keeps much of the data variation.",
+        "numbers": "If two principal directions explain $70\\%$ and $20\\%$ of variance, a 2-D subspace keeps $90\\%$."
+      },
+      {
+        "title": "Solving constraints",
+        "background": "Null spaces describe changes that leave linear measurements unchanged.",
+        "numbers": "For measurement row $[1,2]$, change $[-2,1]$ gives $[1,2]\\cdot[-2,1]=0$."
+      },
+      {
+        "title": "Data rank",
+        "background": "Rank tells how many independent directions the columns of a data matrix really contain.",
+        "numbers": "Columns $[1,2]$ and $[2,4]$ have rank $1$, not $2$, because one is twice the other."
+      },
+      {
+        "title": "Model identifiability",
+        "background": "Parameters are identifiable only outside null directions that leave predictions unchanged.",
+        "numbers": "If $Xh=0$ for $h=[-2,1]$, then weights $w$ and $w+h$ give the same predictions on $X$."
+      }
+    ],
+    "applicationsClose": "Basis and dimension gives one more way to see the same linear structure: what can be built, what is lost, and how many directions truly matter.",
+    "takeaways": [
+      "Linear combinations are the test language for this topic.",
+      "Row reduction turns geometric claims into solvable equations.",
+      "Dimension counts independent directions, not the number of coordinates written down."
+    ],
     "prereqs": [
       "math-09-11"
     ]
@@ -258,19 +3318,267 @@
   B({
     "id": "math-09-13",
     "title": "The four fundamental subspaces",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: the four fundamental subspaces.",
+    "tagline": "A matrix has four natural spaces: what rows measure, what columns can make, what inputs vanish, and what outputs are impossible.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Basis and dimension</i>"
+        "Matrix algebra",
+        "Gaussian elimination",
+        "linear combinations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Linear transformations</i>"
+        "least squares",
+        "eigenvalues",
+        "singular value decomposition"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "rank",
+        "null space",
+        "basis",
+        "dimension"
       ]
     },
+    "motivation": "<p>A matrix is more than an array. It is a map from input space to output space, and every map has directions it can see, directions it loses, outputs it can reach, and outputs it can never reach.</p><p>The four fundamental subspaces organize that entire story. They are the conceptual foundation for least squares, rank, nullity, PCA, and the singular value decomposition.</p>",
+    "definition": "<p>For an $m\\times n$ matrix $\\mathbf{A}$, the four fundamental subspaces are: the <b>column space</b> $\\operatorname{Col}(\\mathbf{A})\\subseteq\\mathbb{R}^m$, the <b>null space</b> $\\operatorname{Null}(\\mathbf{A})\\subseteq\\mathbb{R}^n$, the <b>row space</b> $\\operatorname{Row}(\\mathbf{A})\\subseteq\\mathbb{R}^n$, and the <b>left null space</b> $\\operatorname{Null}(\\mathbf{A}^T)\\subseteq\\mathbb{R}^m$.</p><p>The column space is everything $\\mathbf{A}\\mathbf{x}$ can output. The null space is every input sent to zero. The row space contains the input directions measured by the rows. The left null space contains output-side directions orthogonal to every column.</p><p><b>Assumptions that matter:</b> row space and null space live in the input space $\\mathbb{R}^n$; column space and left null space live in the output space $\\mathbb{R}^m$; and rank-nullity says $\\dim\\operatorname{Row}(A)+\\dim\\operatorname{Null}(A)=n$.</p>",
+    "worked": {
+      "problem": "Use the lesson definition on $A=\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}$ and the vectors $[1,2]^T$, $[2,4]^T$, and $[-2,1]^T$.",
+      "skills": [
+        "rank and nullity",
+        "row reduction",
+        "interpretation"
+      ],
+      "strategy": "Translate the statement into equations, perform one careful algebra step at a time, then interpret the result.",
+      "steps": [
+        {
+          "do": "Find the column relation",
+          "result": "column 2 is $2$ times column 1",
+          "why": "columns are dependent"
+        },
+        {
+          "do": "State the column space",
+          "result": "$\\operatorname{span}\\{[1,2]^T\\}$",
+          "why": "outputs lie on one line"
+        },
+        {
+          "do": "Solve $Ax=0$",
+          "result": "$x_1+2x_2=0$",
+          "why": "second row repeats the first"
+        },
+        {
+          "do": "Choose a null vector",
+          "result": "$[-2,1]^T$",
+          "why": "set $x_2=1$"
+        },
+        {
+          "do": "State the row space",
+          "result": "$\\operatorname{span}\\{[1,2]\\}$",
+          "why": "nonzero rows lie on one line"
+        },
+        {
+          "do": "Find a left-null vector",
+          "result": "$[-2,1]^T$",
+          "why": "it is orthogonal to column $[1,2]^T$"
+        }
+      ],
+      "verify": "Substituting the found coefficients or vector back into the original relation gives the stated equality, so the interpretation matches the arithmetic.",
+      "answer": "Column space and row space are each 1-D; null space and left null space are spanned by $[-2,1]^T$.",
+      "connects": "The four subspaces separate what the matrix reaches, measures, and loses."
+    },
+    "practice": [
+      {
+        "problem": "Use the definition to test a simple the four fundamental subspaces claim for vectors $[1,0]^T$ and $[0,1]^T$ in $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Form a linear combination",
+            "result": "$a[1,0]^T+b[0,1]^T=[a,b]^T$",
+            "why": "combine the vectors"
+          },
+          {
+            "do": "Match a target $[3,-2]^T$",
+            "result": "$a=3,\\ b=-2$",
+            "why": "equal components"
+          },
+          {
+            "do": "Interpret reachability",
+            "result": "the target is reached",
+            "why": "the coefficients exist"
+          },
+          {
+            "do": "Check independence",
+            "result": "$a[1,0]^T+b[0,1]^T=0$ forces $a=b=0$",
+            "why": "only trivial zero combination"
+          },
+          {
+            "do": "State the role",
+            "result": "standard coordinate directions",
+            "why": "they give clean coordinates"
+          }
+        ],
+        "answer": "They reach $[3,-2]^T$ with coefficients $3$ and $-2$, and they are independent."
+      },
+      {
+        "problem": "Decide whether $[2,4]^T$ adds a new direction to $[1,2]^T$.",
+        "steps": [
+          {
+            "do": "Compare vectors",
+            "result": "$[2,4]^T=2[1,2]^T$",
+            "why": "one is a scalar multiple"
+          },
+          {
+            "do": "Write a dependence relation",
+            "result": "$2[1,2]^T-[2,4]^T=0$",
+            "why": "nontrivial zero combination"
+          },
+          {
+            "do": "Interpret",
+            "result": "no new direction",
+            "why": "the second vector lies on the same line"
+          },
+          {
+            "do": "State the span",
+            "result": "a line through the origin",
+            "why": "all multiples of $[1,2]^T$"
+          },
+          {
+            "do": "State independence",
+            "result": "dependent",
+            "why": "one vector is built from the other"
+          }
+        ],
+        "answer": "No. It is dependent and adds no new direction."
+      },
+      {
+        "problem": "Test whether $[1,1,0]^T$ and $[0,1,1]^T$ span all of $\\mathbb{R}^3$.",
+        "steps": [
+          {
+            "do": "Count vectors",
+            "result": "two vectors",
+            "why": "only two building directions"
+          },
+          {
+            "do": "Set a general combination",
+            "result": "$a[1,1,0]^T+b[0,1,1]^T=[a,a+b,b]^T$",
+            "why": "write the reachable vectors"
+          },
+          {
+            "do": "Choose target $[0,0,1]^T$",
+            "result": "$a=0$ and $b=1$",
+            "why": "match first and third components"
+          },
+          {
+            "do": "Check middle component",
+            "result": "$a+b=1$",
+            "why": "would need to equal 0"
+          },
+          {
+            "do": "Find contradiction",
+            "result": "$1\\ne0$",
+            "why": "target is not reachable"
+          }
+        ],
+        "answer": "They do not span all of $\\mathbb{R}^3$."
+      },
+      {
+        "problem": "Find a basis for the line $x+y=0$ in $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Solve the equation",
+            "result": "$y=-x$",
+            "why": "describe points on the line"
+          },
+          {
+            "do": "Introduce a parameter",
+            "result": "$x=t$",
+            "why": "one free variable"
+          },
+          {
+            "do": "Write vectors",
+            "result": "$[x,y]^T=[t,-t]^T$",
+            "why": "substitute"
+          },
+          {
+            "do": "Factor the parameter",
+            "result": "$t[1,-1]^T$",
+            "why": "show all points are multiples"
+          },
+          {
+            "do": "State a basis",
+            "result": "$\\{[1,-1]^T\\}$",
+            "why": "one nonzero spanning vector for the line"
+          }
+        ],
+        "answer": "A basis is $\\{[1,-1]^T\\}$, so the dimension is 1."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}$, find one nonzero vector in the null space.",
+        "steps": [
+          {
+            "do": "Write $Ax=0$",
+            "result": "$x_1+2x_2=0$ and $2x_1+4x_2=0$",
+            "why": "row equations"
+          },
+          {
+            "do": "Use the first equation",
+            "result": "$x_1=-2x_2$",
+            "why": "solve for one variable"
+          },
+          {
+            "do": "Choose a free value",
+            "result": "$x_2=1$",
+            "why": "produce a concrete vector"
+          },
+          {
+            "do": "Find $x_1$",
+            "result": "$x_1=-2$",
+            "why": "substitute"
+          },
+          {
+            "do": "Check",
+            "result": "$A[-2,1]^T=[0,0]^T$",
+            "why": "both rows vanish"
+          }
+        ],
+        "answer": "One null-space vector is $[-2,1]^T$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feature spaces",
+        "background": "ML features live in vector spaces where scaling and adding examples or directions is meaningful.",
+        "numbers": "If $v=[2,3]$ and $w=[1,-1]$, then $0.5v+w=[2,0.5]$ is another vector in the same ambient space."
+      },
+      {
+        "title": "Embeddings",
+        "background": "Embedding models rely on spans, bases, and independence to represent meaning in many directions.",
+        "numbers": "Two directions $[1,0]$ and $[0,1]$ can represent $[0.2,0.9]$ as $0.2[1,0]+0.9[0,1]$."
+      },
+      {
+        "title": "Dimensionality reduction",
+        "background": "PCA searches for a lower-dimensional subspace that keeps much of the data variation.",
+        "numbers": "If two principal directions explain $70\\%$ and $20\\%$ of variance, a 2-D subspace keeps $90\\%$."
+      },
+      {
+        "title": "Solving constraints",
+        "background": "Null spaces describe changes that leave linear measurements unchanged.",
+        "numbers": "For measurement row $[1,2]$, change $[-2,1]$ gives $[1,2]\\cdot[-2,1]=0$."
+      },
+      {
+        "title": "Data rank",
+        "background": "Rank tells how many independent directions the columns of a data matrix really contain.",
+        "numbers": "Columns $[1,2]$ and $[2,4]$ have rank $1$, not $2$, because one is twice the other."
+      },
+      {
+        "title": "Model identifiability",
+        "background": "Parameters are identifiable only outside null directions that leave predictions unchanged.",
+        "numbers": "If $Xh=0$ for $h=[-2,1]$, then weights $w$ and $w+h$ give the same predictions on $X$."
+      }
+    ],
+    "applicationsClose": "The four fundamental subspaces gives one more way to see the same linear structure: what can be built, what is lost, and how many directions truly matter.",
+    "takeaways": [
+      "The column space is what $A$ can output.",
+      "The null space is what $A$ sends to zero.",
+      "The row space contains the independent input directions measured by rows.",
+      "Rank and nullity split the domain into visible and lost directions."
+    ],
     "prereqs": [
       "math-09-12"
     ]
@@ -279,19 +3587,212 @@
   B({
     "id": "math-09-14",
     "title": "Linear transformations",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: linear transformations.",
+    "tagline": "A linear transformation is a machine that preserves adding and scaling, so grids become honest grids.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The four fundamental subspaces</i>"
+        "vectors",
+        "matrix-vector multiplication",
+        "functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Matrix of a linear transformation</i>"
+        "Matrix of a linear transformation",
+        "Change of basis",
+        "Eigenvalues"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "span",
+        "basis",
+        "composition",
+        "systems of linear equations"
       ]
     },
+    "motivation": "<p>You already know a function can take an input and return an output. A vector function does the same thing, but the input may be an arrow like $(2,1)$ and the output may be another arrow.</p><p>A <b>linear transformation</b> is the special kind that respects the two moves vectors are built from: adding vectors and scaling them. That makes it the basic language of rotations, projections, layers in neural nets, and feature maps.</p>",
+    "definition": "<p>A transformation $T$ from vectors in $\\\\mathbb{R}^n$ to vectors in $\\\\mathbb{R}^m$ is <b>linear</b> if for all vectors $u,v$ and scalars $c$, $$T(u+v)=T(u)+T(v),\\\\qquad T(cu)=cT(u).$$ These rules say that vector arithmetic can happen before or after the map with the same result.</p><p>They imply $T(0)=0$, because $T(0)=T(0+0)=T(0)+T(0)$, so subtracting $T(0)$ gives $T(0)=0$. This is why a translation is not linear unless the translation vector is zero.</p><p><b>Assumptions that matter:</b> vectors must come from the stated domain, scalars are real unless stated otherwise, and both additivity and scaling must hold; preserving zero alone is not enough.</p>",
+    "worked": {
+      "problem": "Let $T(x,y)=(2x-y,x+3y)$. Compute $T(1,2)$ and verify linearity on $u=(1,0)$, $v=(0,2)$, and $c=3$.",
+      "skills": [
+        "evaluating transformations",
+        "additivity",
+        "homogeneity"
+      ],
+      "strategy": "Use the formula, then compare transform-after-operation with operation-after-transform.",
+      "steps": [
+        {
+          "do": "Substitute $(1,2)$",
+          "result": "$T(1,2)=(0,7)$",
+          "why": "evaluate both output coordinates"
+        },
+        {
+          "do": "Compute $u+v$",
+          "result": "$u+v=(1,2)$",
+          "why": "add the vectors first"
+        },
+        {
+          "do": "Transform the sum",
+          "result": "$T(u+v)=(0,7)$",
+          "why": "use the value already found"
+        },
+        {
+          "do": "Compute $T(u)+T(v)$",
+          "result": "$(2,1)+(-2,6)=(0,7)$",
+          "why": "transform separately and add"
+        },
+        {
+          "do": "Compare scaling",
+          "result": "$T(3u)=(6,3)=3T(u)$",
+          "why": "both sides equal $(6,3)$"
+        }
+      ],
+      "verify": "The tested rules agree, and the formula has only linear coordinate combinations.",
+      "answer": "$T(1,2)=(0,7)$, and the checks support linearity.",
+      "connects": "Linearity means the transformation respects the algebra that builds vectors."
+    },
+    "practice": [
+      {
+        "problem": "For $T(x,y)=(x+2y,3x-y)$, compute $T(2,-1)$ and $T(0,1)$.",
+        "steps": [
+          {
+            "do": "Substitute $(2,-1)$",
+            "result": "$T(2,-1)=(0,7)$",
+            "why": "evaluate the rule"
+          },
+          {
+            "do": "Substitute $(0,1)$",
+            "result": "$T(0,1)=(2,-1)$",
+            "why": "evaluate the second input"
+          },
+          {
+            "do": "Check coordinates",
+            "result": "both outputs have two entries",
+            "why": "the map goes from $\\\\mathbb{R}^2$ to $\\\\mathbb{R}^2$"
+          }
+        ],
+        "answer": "$T(2,-1)=(0,7)$ and $T(0,1)=(2,-1)$."
+      },
+      {
+        "problem": "Decide whether $F(x,y)=(x+1,y)$ is linear.",
+        "steps": [
+          {
+            "do": "Test zero",
+            "result": "$F(0,0)=(1,0)$",
+            "why": "linear maps send zero to zero"
+          },
+          {
+            "do": "Compare",
+            "result": "$(1,0)\\ne(0,0)$",
+            "why": "the origin moved"
+          },
+          {
+            "do": "Conclude",
+            "result": "not linear",
+            "why": "one failed necessary condition is enough"
+          }
+        ],
+        "answer": "$F$ is not linear."
+      },
+      {
+        "problem": "Check additivity for $T(x,y)=(4x,4y)$ using $u=(1,2)$ and $v=(3,-1)$.",
+        "steps": [
+          {
+            "do": "Add inputs",
+            "result": "$u+v=(4,1)$",
+            "why": "coordinate addition"
+          },
+          {
+            "do": "Transform sum",
+            "result": "$T(4,1)=(16,4)$",
+            "why": "scale by 4"
+          },
+          {
+            "do": "Transform separately",
+            "result": "$T(u)+T(v)=(4,8)+(12,-4)=(16,4)$",
+            "why": "same result"
+          }
+        ],
+        "answer": "Both sides equal $(16,4)$."
+      },
+      {
+        "problem": "If $T(e_1)=(1,2)$ and $T(e_2)=(-3,4)$, find $T(5,-1)$.",
+        "steps": [
+          {
+            "do": "Decompose",
+            "result": "$(5,-1)=5e_1-e_2$",
+            "why": "standard basis"
+          },
+          {
+            "do": "Apply linearity",
+            "result": "$5T(e_1)-T(e_2)$",
+            "why": "preserve operations"
+          },
+          {
+            "do": "Compute",
+            "result": "$5(1,2)-(-3,4)=(8,6)$",
+            "why": "combine vectors"
+          }
+        ],
+        "answer": "$T(5,-1)=(8,6)$."
+      },
+      {
+        "problem": "For $T(x_1,x_2)=(0.5x_1-2x_2,x_1+x_2)$, compare $T(2a)$ and $2T(a)$ for $a=(4,1)$.",
+        "steps": [
+          {
+            "do": "Compute $2a$",
+            "result": "$(8,2)$",
+            "why": "double input"
+          },
+          {
+            "do": "Transform $2a$",
+            "result": "$(0,10)$",
+            "why": "apply $T$"
+          },
+          {
+            "do": "Transform then double",
+            "result": "$2T(4,1)=2(0,5)=(0,10)$",
+            "why": "same result"
+          }
+        ],
+        "answer": "Both paths give $(0,10)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Linearity in a small numeric check",
+        "background": "This lesson has a practical signature: one calculation can confirm whether the concept is behaving as expected.",
+        "numbers": "Using vectors $(3,4)$ and $(1,2)$ gives dot product $11$, norm $5$, and projection coefficient $11/5$ when that is the relevant quantity."
+      },
+      {
+        "title": "Neural network layers",
+        "background": "Linear algebra is the arithmetic of learned representations. Every dense layer starts with matrix multiplication before bias and activation.",
+        "numbers": "A weight matrix $\\begin{bmatrix}2&-1\\\\1&3\\\\end{bmatrix}$ sends feature vector $(4,5)$ to $(3,19)$."
+      },
+      {
+        "title": "Computer vision geometry",
+        "background": "Images are arrays, but shifts, rotations, projections, and filters are linear-algebra operations on coordinates or pixel patches.",
+        "numbers": "A $90^\\\\circ$ rotation sends offset $(6,2)$ to $(-2,6)$."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding systems compare users, items, and ads as vectors, so directions, lengths, and projections become product behavior.",
+        "numbers": "If two unit embeddings have dot product $0.8$, their cosine similarity is $0.8$."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Training loss near a point is often approximated by a quadratic, and matrices describe its curvature by direction.",
+        "numbers": "If curvature along a direction is $5$, a step of size $0.2$ changes the quadratic term by $0.5\\\\cdot5\\\\cdot0.2^2=0.1$."
+      },
+      {
+        "title": "Data compression",
+        "background": "Dimension reduction keeps the directions that explain the most signal and drops directions that contribute little.",
+        "numbers": "If variances are $9,2,1$, keeping the first two keeps $11/12\\u0007pprox91.7\\\\%$ of the variance."
+      }
+    ],
+    "applicationsClose": "Across models, images, signals, and embeddings, linear transformations keep vector arithmetic trustworthy while changing the space.",
+    "takeaways": [
+      "A linear transformation preserves addition and scalar multiplication.",
+      "Every linear transformation sends $0$ to $0$.",
+      "A linear map is determined by where it sends a basis.",
+      "Nonzero offsets make a map affine rather than linear."
+    ],
     "prereqs": [
       "math-09-13"
     ]
@@ -300,19 +3801,210 @@
   B({
     "id": "math-09-15",
     "title": "Matrix of a linear transformation",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: matrix of a linear transformation.",
+    "tagline": "A matrix is the coordinate recipe for a linear transformation once bases are chosen.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Linear transformations</i>"
+        "vectors",
+        "matrices",
+        "linear transformations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Change of basis</i>"
+        "eigenvalues",
+        "diagonalization",
+        "least squares"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "basis",
+        "determinants",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You already know vectors can be added, scaled, and compared. The next step is to ask what structure is hiding inside a matrix or a space.</p><p><b>The matrix of a linear transformation</b> gives that structure a name. It turns a crowded calculation into a smaller story you can compute, check, and reuse.</p>",
+    "definition": "<p><b>The matrix of a linear transformation</b> is a central linear-algebra idea for describing vectors and matrices with the right coordinates. The symbols matter: vectors such as $u$ and $v$ live in a vector space, matrices such as $A$ act on vectors, and scalars such as $\\\\lambda$ measure one-dimensional effects.</p><p>The key habit is to translate the concept into an equation, solve the equation one step at a time, and then verify by substituting back. Linear algebra is reliable because each abstraction has a concrete coordinate test.</p><p><b>Assumptions that matter:</b> dimensions must match, bases must be independent when coordinates are used, and square-matrix ideas such as determinants and eigenvalues require square matrices.</p>",
+    "worked": {
+      "problem": "Find the matrix of $T(x,y)=(3x+2y,-x+4y)$ and compute $T(5,-1).",
+      "skills": [
+        "basis images",
+        "matrix multiplication"
+      ],
+      "strategy": "Transform standard basis vectors to build columns.",
+      "steps": [
+        {
+          "do": "Compute $T(e_1)$",
+          "result": "$T(1,0)=(3,-1)$",
+          "why": "first column"
+        },
+        {
+          "do": "Compute $T(e_2)$",
+          "result": "$T(0,1)=(2,4)$",
+          "why": "second column"
+        },
+        {
+          "do": "Build $A$",
+          "result": "$A=\\begin{bmatrix}3&2\\\\-1&4\\\\end{bmatrix}$",
+          "why": "place images as columns"
+        },
+        {
+          "do": "Multiply",
+          "result": "$A(5,-1)=(13,-9)$",
+          "why": "row dot products"
+        },
+        {
+          "do": "Verify by formula",
+          "result": "$T(5,-1)=(13,-9)$",
+          "why": "direct substitution agrees"
+        }
+      ],
+      "verify": "Both methods match.",
+      "answer": "$A=\\begin{bmatrix}3&2\\\\-1&4\\\\end{bmatrix}$ and $T(5,-1)=(13,-9)$.",
+      "connects": "Columns record where basis directions land."
+    },
+    "practice": [
+      {
+        "problem": "Build the matrix for $T(x,y)=(x-y,2x+3y)$.",
+        "steps": [
+          {
+            "do": "Find $T(e_1)$",
+            "result": "$(1,2)$",
+            "why": "first column"
+          },
+          {
+            "do": "Find $T(e_2)$",
+            "result": "$(-1,3)$",
+            "why": "second column"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\begin{bmatrix}1&-1\\\\2&3\\\\end{bmatrix}$",
+            "why": "columns are images"
+          }
+        ],
+        "answer": "$\\begin{bmatrix}1&-1\\\\2&3\\\\end{bmatrix}$."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}2&0\\\\1&-1\\\\end{bmatrix}$, find $T(e_1)$ and $T(e_2)$.",
+        "steps": [
+          {
+            "do": "Read column one",
+            "result": "$(2,1)$",
+            "why": "image of $e_1$"
+          },
+          {
+            "do": "Read column two",
+            "result": "$(0,-1)$",
+            "why": "image of $e_2$"
+          },
+          {
+            "do": "Write rule",
+            "result": "$T(x,y)=(2x,x-y)$",
+            "why": "combine columns"
+          }
+        ],
+        "answer": "$T(e_1)=(2,1)$ and $T(e_2)=(0,-1)$."
+      },
+      {
+        "problem": "Compute $\\begin{bmatrix}1&2&0\\\\0&-1&3\\\\end{bmatrix}(4,1,-2)$.",
+        "steps": [
+          {
+            "do": "Check size",
+            "result": "output has two coordinates",
+            "why": "matrix is $2\\times3$"
+          },
+          {
+            "do": "Row one",
+            "result": "$4+2=6$",
+            "why": "dot product"
+          },
+          {
+            "do": "Row two",
+            "result": "$-1-6=-7$",
+            "why": "dot product"
+          }
+        ],
+        "answer": "$(6,-7)$."
+      },
+      {
+        "problem": "A map sends $e_1$ to $(2,0,1)$ and $e_2$ to $(-1,4,3)$. Find $T(3,2)$.",
+        "steps": [
+          {
+            "do": "Use coordinates",
+            "result": "$3T(e_1)+2T(e_2)$",
+            "why": "linearity"
+          },
+          {
+            "do": "Scale",
+            "result": "$(6,0,3)+(-2,8,6)$",
+            "why": "multiply columns"
+          },
+          {
+            "do": "Add",
+            "result": "$(4,8,9)$",
+            "why": "combine"
+          }
+        ],
+        "answer": "$T(3,2)=(4,8,9)$."
+      },
+      {
+        "problem": "A layer has $z_1=0.2x_1+0.5x_2$, $z_2=-x_1+3x_2$. Compute output for $(10,2)$.",
+        "steps": [
+          {
+            "do": "Write matrix",
+            "result": "$\\begin{bmatrix}0.2&0.5\\\\-1&3\\\\end{bmatrix}$",
+            "why": "rows are coefficients"
+          },
+          {
+            "do": "Compute $z_1$",
+            "result": "$3$",
+            "why": "first row"
+          },
+          {
+            "do": "Compute $z_2$",
+            "result": "$-4$",
+            "why": "second row"
+          }
+        ],
+        "answer": "The output is $(3,-4)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "The matrix of a linear transformation in a small numeric check",
+        "background": "This lesson has a practical signature: one calculation can confirm whether the concept is behaving as expected.",
+        "numbers": "Using vectors $(3,4)$ and $(1,2)$ gives dot product $11$, norm $5$, and projection coefficient $11/5$ when that is the relevant quantity."
+      },
+      {
+        "title": "Neural network layers",
+        "background": "Linear algebra is the arithmetic of learned representations. Every dense layer starts with matrix multiplication before bias and activation.",
+        "numbers": "A weight matrix $\\begin{bmatrix}2&-1\\\\1&3\\\\end{bmatrix}$ sends feature vector $(4,5)$ to $(3,19)$."
+      },
+      {
+        "title": "Computer vision geometry",
+        "background": "Images are arrays, but shifts, rotations, projections, and filters are linear-algebra operations on coordinates or pixel patches.",
+        "numbers": "A $90^\\\\circ$ rotation sends offset $(6,2)$ to $(-2,6)$."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding systems compare users, items, and ads as vectors, so directions, lengths, and projections become product behavior.",
+        "numbers": "If two unit embeddings have dot product $0.8$, their cosine similarity is $0.8$."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Training loss near a point is often approximated by a quadratic, and matrices describe its curvature by direction.",
+        "numbers": "If curvature along a direction is $5$, a step of size $0.2$ changes the quadratic term by $0.5\\\\cdot5\\\\cdot0.2^2=0.1$."
+      },
+      {
+        "title": "Data compression",
+        "background": "Dimension reduction keeps the directions that explain the most signal and drops directions that contribute little.",
+        "numbers": "If variances are $9,2,1$, keeping the first two keeps $11/12\\u0007pprox91.7\\\\%$ of the variance."
+      }
+    ],
+    "applicationsClose": "The matrix of a linear transformation is powerful because it converts a geometric idea into arithmetic that still remembers the geometry.",
+    "takeaways": [
+      "The standard matrix has columns $T(e_i)$.",
+      "Matrix-vector multiplication combines columns using input coordinates.",
+      "Rows compute output coordinates."
+    ],
     "prereqs": [
       "math-09-14"
     ]
@@ -321,19 +4013,215 @@
   B({
     "id": "math-09-16",
     "title": "Change of basis",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: change of basis.",
+    "tagline": "Change of basis lets the same vector speak in a coordinate system where the problem is easier.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Matrix of a linear transformation</i>"
+        "vectors",
+        "matrices",
+        "linear transformations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Determinants</i>"
+        "eigenvalues",
+        "diagonalization",
+        "least squares"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "basis",
+        "determinants",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You already know vectors can be added, scaled, and compared. The next step is to ask what structure is hiding inside a matrix or a space.</p><p><b>Change of basis</b> gives that structure a name. It turns a crowded calculation into a smaller story you can compute, check, and reuse.</p>",
+    "definition": "<p><b>Change of basis</b> is a central linear-algebra idea for describing vectors and matrices with the right coordinates. The symbols matter: vectors such as $u$ and $v$ live in a vector space, matrices such as $A$ act on vectors, and scalars such as $\\\\lambda$ measure one-dimensional effects.</p><p>The key habit is to translate the concept into an equation, solve the equation one step at a time, and then verify by substituting back. Linear algebra is reliable because each abstraction has a concrete coordinate test.</p><p><b>Assumptions that matter:</b> dimensions must match, bases must be independent when coordinates are used, and square-matrix ideas such as determinants and eigenvalues require square matrices.</p>",
+    "worked": {
+      "problem": "For $B=((1,1),(1,-1))$, find $[(5,1)]_B$.",
+      "skills": [
+        "basis coordinates",
+        "linear systems"
+      ],
+      "strategy": "Write $v=c_1b_1+c_2b_2$ and solve.",
+      "steps": [
+        {
+          "do": "Set equation",
+          "result": "$c_1(1,1)+c_2(1,-1)=(5,1)$",
+          "why": "basis combination"
+        },
+        {
+          "do": "Match coordinates",
+          "result": "$c_1+c_2=5$, $c_1-c_2=1$",
+          "why": "two equations"
+        },
+        {
+          "do": "Add equations",
+          "result": "$2c_1=6$",
+          "why": "eliminate $c_2$"
+        },
+        {
+          "do": "Solve",
+          "result": "$c_1=3$",
+          "why": "divide"
+        },
+        {
+          "do": "Find $c_2$",
+          "result": "$c_2=2$",
+          "why": "substitute"
+        }
+      ],
+      "verify": "Rebuilding gives $(5,1)$.",
+      "answer": "$[(5,1)]_B=(3,2)$.",
+      "connects": "The vector stays fixed while coordinates change."
+    },
+    "practice": [
+      {
+        "problem": "For $B=((2,0),(0,3))$, find $[(8,15)]_B$.",
+        "steps": [
+          {
+            "do": "Write equations",
+            "result": "$2c_1=8$, $3c_2=15$",
+            "why": "scaled axes"
+          },
+          {
+            "do": "Solve",
+            "result": "$c_1=4$, $c_2=5$",
+            "why": "divide"
+          },
+          {
+            "do": "Check",
+            "result": "$4(2,0)+5(0,3)=(8,15)$",
+            "why": "rebuild"
+          }
+        ],
+        "answer": "$(4,5)$."
+      },
+      {
+        "problem": "Convert $[v]_B=(2,3)$ for $B=((1,0),(1,1))$ to standard coordinates.",
+        "steps": [
+          {
+            "do": "Combine",
+            "result": "$2(1,0)+3(1,1)$",
+            "why": "use weights"
+          },
+          {
+            "do": "Scale",
+            "result": "$(2,0)+(3,3)$",
+            "why": "multiply"
+          },
+          {
+            "do": "Add",
+            "result": "$(5,3)$",
+            "why": "standard vector"
+          }
+        ],
+        "answer": "$(5,3)$."
+      },
+      {
+        "problem": "For $B=((1,2),(3,1))$, find $[(7,5)]_B$.",
+        "steps": [
+          {
+            "do": "Equations",
+            "result": "$c_1+3c_2=7$, $2c_1+c_2=5$",
+            "why": "match coordinates"
+          },
+          {
+            "do": "Substitute",
+            "result": "$c_1=7-3c_2$",
+            "why": "from first equation"
+          },
+          {
+            "do": "Solve",
+            "result": "$c_2=9/5$",
+            "why": "use second equation"
+          },
+          {
+            "do": "Find $c_1$",
+            "result": "$8/5$",
+            "why": "substitute back"
+          }
+        ],
+        "answer": "$(8/5,9/5)$."
+      },
+      {
+        "problem": "With $P_B=\\begin{bmatrix}1&2\\\\0&1\\\\end{bmatrix}$, find $[(5,2)]_B$.",
+        "steps": [
+          {
+            "do": "Set equations",
+            "result": "$c_1+2c_2=5$, $c_2=2$",
+            "why": "matrix equation"
+          },
+          {
+            "do": "Use $c_2$",
+            "result": "$c_2=2$",
+            "why": "second row"
+          },
+          {
+            "do": "Solve $c_1$",
+            "result": "$c_1=1$",
+            "why": "first row"
+          }
+        ],
+        "answer": "$(1,2)$."
+      },
+      {
+        "problem": "For orthonormal $b_1=(1/\\\\sqrt2,1/\\\\sqrt2)$, $b_2=(1/\\\\sqrt2,-1/\\\\sqrt2)$, find coordinates of $(4,2)$.",
+        "steps": [
+          {
+            "do": "Use dot products",
+            "result": "$c_i=v\\\\cdot b_i$",
+            "why": "orthonormal basis"
+          },
+          {
+            "do": "Compute $c_1$",
+            "result": "$3\\\\sqrt2$",
+            "why": "$(4+2)/\\\\sqrt2$"
+          },
+          {
+            "do": "Compute $c_2$",
+            "result": "$\\\\sqrt2$",
+            "why": "$(4-2)/\\\\sqrt2$"
+          }
+        ],
+        "answer": "$(3\\\\sqrt2,\\\\sqrt2)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Change of basis in a small numeric check",
+        "background": "This lesson has a practical signature: one calculation can confirm whether the concept is behaving as expected.",
+        "numbers": "Using vectors $(3,4)$ and $(1,2)$ gives dot product $11$, norm $5$, and projection coefficient $11/5$ when that is the relevant quantity."
+      },
+      {
+        "title": "Neural network layers",
+        "background": "Linear algebra is the arithmetic of learned representations. Every dense layer starts with matrix multiplication before bias and activation.",
+        "numbers": "A weight matrix $\\begin{bmatrix}2&-1\\\\1&3\\\\end{bmatrix}$ sends feature vector $(4,5)$ to $(3,19)$."
+      },
+      {
+        "title": "Computer vision geometry",
+        "background": "Images are arrays, but shifts, rotations, projections, and filters are linear-algebra operations on coordinates or pixel patches.",
+        "numbers": "A $90^\\\\circ$ rotation sends offset $(6,2)$ to $(-2,6)$."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding systems compare users, items, and ads as vectors, so directions, lengths, and projections become product behavior.",
+        "numbers": "If two unit embeddings have dot product $0.8$, their cosine similarity is $0.8$."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Training loss near a point is often approximated by a quadratic, and matrices describe its curvature by direction.",
+        "numbers": "If curvature along a direction is $5$, a step of size $0.2$ changes the quadratic term by $0.5\\\\cdot5\\\\cdot0.2^2=0.1$."
+      },
+      {
+        "title": "Data compression",
+        "background": "Dimension reduction keeps the directions that explain the most signal and drops directions that contribute little.",
+        "numbers": "If variances are $9,2,1$, keeping the first two keeps $11/12\\u0007pprox91.7\\\\%$ of the variance."
+      }
+    ],
+    "applicationsClose": "Change of basis is powerful because it converts a geometric idea into arithmetic that still remembers the geometry.",
+    "takeaways": [
+      "Coordinates are weights in a named basis.",
+      "$P_B$ maps basis coordinates to standard coordinates.",
+      "$P_B^{-1}$ maps standard coordinates back."
+    ],
     "prereqs": [
       "math-09-15"
     ]
@@ -342,19 +4230,210 @@
   B({
     "id": "math-09-17",
     "title": "Determinants",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: determinants.",
+    "tagline": "The determinant measures signed area or volume scaling, and it tells whether a matrix collapses space.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Change of basis</i>"
+        "vectors",
+        "matrices",
+        "linear transformations"
       ],
       "leadsTo": [
-        "the next lesson, <i>The eigenvalue equation</i>"
+        "eigenvalues",
+        "diagonalization",
+        "least squares"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "basis",
+        "determinants",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You already know vectors can be added, scaled, and compared. The next step is to ask what structure is hiding inside a matrix or a space.</p><p><b>Determinants</b> gives that structure a name. It turns a crowded calculation into a smaller story you can compute, check, and reuse.</p>",
+    "definition": "<p><b>Determinants</b> is a central linear-algebra idea for describing vectors and matrices with the right coordinates. The symbols matter: vectors such as $u$ and $v$ live in a vector space, matrices such as $A$ act on vectors, and scalars such as $\\\\lambda$ measure one-dimensional effects.</p><p>The key habit is to translate the concept into an equation, solve the equation one step at a time, and then verify by substituting back. Linear algebra is reliable because each abstraction has a concrete coordinate test.</p><p><b>Assumptions that matter:</b> dimensions must match, bases must be independent when coordinates are used, and square-matrix ideas such as determinants and eigenvalues require square matrices.</p>",
+    "worked": {
+      "problem": "Compute $\\\\det\\begin{bmatrix}3&2\\\\1&5\\\\end{bmatrix}$ and interpret it.",
+      "skills": [
+        "determinants",
+        "area scaling"
+      ],
+      "strategy": "Use $ad-bc$.",
+      "steps": [
+        {
+          "do": "Compute $ad$",
+          "result": "$15$",
+          "why": "main diagonal"
+        },
+        {
+          "do": "Compute $bc$",
+          "result": "$2$",
+          "why": "off diagonal"
+        },
+        {
+          "do": "Subtract",
+          "result": "$13$",
+          "why": "determinant"
+        },
+        {
+          "do": "Interpret",
+          "result": "area scale $13$",
+          "why": "absolute determinant"
+        }
+      ],
+      "verify": "Columns are not multiples, so nonzero area is sensible.",
+      "answer": "$13$; areas scale by $13$.",
+      "connects": "The determinant is signed volume scaling."
+    },
+    "practice": [
+      {
+        "problem": "Compute $\\\\det\\begin{bmatrix}4&1\\\\2&3\\\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Compute $ad$",
+            "result": "$12$",
+            "why": "main product"
+          },
+          {
+            "do": "Compute $bc$",
+            "result": "$2$",
+            "why": "off product"
+          },
+          {
+            "do": "Subtract",
+            "result": "$10$",
+            "why": "determinant"
+          }
+        ],
+        "answer": "$10$."
+      },
+      {
+        "problem": "Compute $\\\\det\\begin{bmatrix}1&2\\\\3&6\\\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Compute products",
+            "result": "$6$ and $6$",
+            "why": "diagonals"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0$",
+            "why": "determinant"
+          },
+          {
+            "do": "Interpret",
+            "result": "columns dependent",
+            "why": "second is twice first"
+          }
+        ],
+        "answer": "$0$."
+      },
+      {
+        "problem": "Find determinant of upper triangular $\\begin{bmatrix}2&7&1\\\\0&3&5\\\\0&0&4\\\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Use triangular rule",
+            "result": "multiply diagonal",
+            "why": "zeros below diagonal"
+          },
+          {
+            "do": "Multiply",
+            "result": "$2\\\\cdot3\\\\cdot4=24$",
+            "why": "product"
+          },
+          {
+            "do": "Interpret",
+            "result": "nonzero",
+            "why": "invertible"
+          }
+        ],
+        "answer": "$24$."
+      },
+      {
+        "problem": "If $\\\\det(A)=5$ for $3\\times3$ $A$, find $\\\\det(2A)$.",
+        "steps": [
+          {
+            "do": "Use rule",
+            "result": "$\\\\det(cA)=c^n\\\\det(A)$",
+            "why": "dimension $n$"
+          },
+          {
+            "do": "Substitute",
+            "result": "$2^3\\\\cdot5$",
+            "why": "three dimensions"
+          },
+          {
+            "do": "Compute",
+            "result": "$40$",
+            "why": "multiply"
+          }
+        ],
+        "answer": "$40$."
+      },
+      {
+        "problem": "For $\\\\Sigma=\\begin{bmatrix}4&1\\\\1&2\\\\end{bmatrix}$, compute $\\\\det(\\\\Sigma)$.",
+        "steps": [
+          {
+            "do": "Compute $ad$",
+            "result": "$8$",
+            "why": "main"
+          },
+          {
+            "do": "Compute $bc$",
+            "result": "$1$",
+            "why": "off"
+          },
+          {
+            "do": "Subtract",
+            "result": "$7$",
+            "why": "determinant"
+          },
+          {
+            "do": "Take root",
+            "result": "$\\\\sqrt7\\u0007pprox2.65$",
+            "why": "volume scale"
+          }
+        ],
+        "answer": "$7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Determinants in a small numeric check",
+        "background": "This lesson has a practical signature: one calculation can confirm whether the concept is behaving as expected.",
+        "numbers": "Using vectors $(3,4)$ and $(1,2)$ gives dot product $11$, norm $5$, and projection coefficient $11/5$ when that is the relevant quantity."
+      },
+      {
+        "title": "Neural network layers",
+        "background": "Linear algebra is the arithmetic of learned representations. Every dense layer starts with matrix multiplication before bias and activation.",
+        "numbers": "A weight matrix $\\begin{bmatrix}2&-1\\\\1&3\\\\end{bmatrix}$ sends feature vector $(4,5)$ to $(3,19)$."
+      },
+      {
+        "title": "Computer vision geometry",
+        "background": "Images are arrays, but shifts, rotations, projections, and filters are linear-algebra operations on coordinates or pixel patches.",
+        "numbers": "A $90^\\\\circ$ rotation sends offset $(6,2)$ to $(-2,6)$."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding systems compare users, items, and ads as vectors, so directions, lengths, and projections become product behavior.",
+        "numbers": "If two unit embeddings have dot product $0.8$, their cosine similarity is $0.8$."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Training loss near a point is often approximated by a quadratic, and matrices describe its curvature by direction.",
+        "numbers": "If curvature along a direction is $5$, a step of size $0.2$ changes the quadratic term by $0.5\\\\cdot5\\\\cdot0.2^2=0.1$."
+      },
+      {
+        "title": "Data compression",
+        "background": "Dimension reduction keeps the directions that explain the most signal and drops directions that contribute little.",
+        "numbers": "If variances are $9,2,1$, keeping the first two keeps $11/12\\u0007pprox91.7\\\\%$ of the variance."
+      }
+    ],
+    "applicationsClose": "Determinants is powerful because it converts a geometric idea into arithmetic that still remembers the geometry.",
+    "takeaways": [
+      "For $2\\times2$, determinant is $ad-bc$.",
+      "Magnitude gives area or volume scale.",
+      "Zero determinant means singular."
+    ],
     "prereqs": [
       "math-09-16"
     ]
@@ -363,19 +4442,205 @@
   B({
     "id": "math-09-18",
     "title": "The eigenvalue equation",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: the eigenvalue equation.",
+    "tagline": "An eigenvector keeps its direction under a matrix; only its length and sign change.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Determinants</i>"
+        "vectors",
+        "matrices",
+        "linear transformations"
       ],
       "leadsTo": [
-        "the next lesson, <i>The characteristic polynomial</i>"
+        "eigenvalues",
+        "diagonalization",
+        "least squares"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "basis",
+        "determinants",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You already know vectors can be added, scaled, and compared. The next step is to ask what structure is hiding inside a matrix or a space.</p><p><b>The eigenvalue equation</b> gives that structure a name. It turns a crowded calculation into a smaller story you can compute, check, and reuse.</p>",
+    "definition": "<p><b>The eigenvalue equation</b> is a central linear-algebra idea for describing vectors and matrices with the right coordinates. The symbols matter: vectors such as $u$ and $v$ live in a vector space, matrices such as $A$ act on vectors, and scalars such as $\\\\lambda$ measure one-dimensional effects.</p><p>The key habit is to translate the concept into an equation, solve the equation one step at a time, and then verify by substituting back. Linear algebra is reliable because each abstraction has a concrete coordinate test.</p><p><b>Assumptions that matter:</b> dimensions must match, bases must be independent when coordinates are used, and square-matrix ideas such as determinants and eigenvalues require square matrices.</p>",
+    "worked": {
+      "problem": "For $A=\\begin{bmatrix}2&0\\\\0&3\\\\end{bmatrix}$, verify eigenpairs for $e_1$ and $e_2$.",
+      "skills": [
+        "eigenpairs",
+        "matrix multiplication"
+      ],
+      "strategy": "Multiply each basis vector.",
+      "steps": [
+        {
+          "do": "Compute $Ae_1$",
+          "result": "$(2,0)$",
+          "why": "first column"
+        },
+        {
+          "do": "Compare",
+          "result": "$(2,0)=2e_1$",
+          "why": "same direction"
+        },
+        {
+          "do": "Compute $Ae_2$",
+          "result": "$(0,3)$",
+          "why": "second column"
+        },
+        {
+          "do": "Compare",
+          "result": "$(0,3)=3e_2$",
+          "why": "same direction"
+        }
+      ],
+      "verify": "Each output is a scalar multiple of the input.",
+      "answer": "$e_1$ has eigenvalue $2$ and $e_2$ has eigenvalue $3$.",
+      "connects": "Eigenvectors make matrix action one-dimensional."
+    },
+    "practice": [
+      {
+        "problem": "Is $(1,1)$ an eigenvector of $\\begin{bmatrix}2&0\\\\0&3\\\\end{bmatrix}$?",
+        "steps": [
+          {
+            "do": "Multiply",
+            "result": "$(2,3)$",
+            "why": "apply matrix"
+          },
+          {
+            "do": "Compare ratios",
+            "result": "$2/1=2$, $3/1=3$",
+            "why": "ratios differ"
+          },
+          {
+            "do": "Conclude",
+            "result": "not an eigenvector",
+            "why": "not one scalar multiple"
+          }
+        ],
+        "answer": "No."
+      },
+      {
+        "problem": "Describe eigenvectors of $4I$.",
+        "steps": [
+          {
+            "do": "Multiply",
+            "result": "$4Iv=4v$",
+            "why": "any vector"
+          },
+          {
+            "do": "Require nonzero",
+            "result": "$v\\ne0$",
+            "why": "definition"
+          },
+          {
+            "do": "State eigenvalue",
+            "result": "$4$",
+            "why": "scale factor"
+          }
+        ],
+        "answer": "Every nonzero vector is an eigenvector with eigenvalue $4$."
+      },
+      {
+        "problem": "Solve $(A-2I)v=0$ for $A=\\begin{bmatrix}2&1\\\\0&2\\\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Subtract",
+            "result": "$A-2I=\\begin{bmatrix}0&1\\\\0&0\\\\end{bmatrix}$",
+            "why": "candidate value"
+          },
+          {
+            "do": "Equation",
+            "result": "$y=0$",
+            "why": "first row"
+          },
+          {
+            "do": "Free variable",
+            "result": "$x=t$",
+            "why": "nonzero allowed"
+          }
+        ],
+        "answer": "Nonzero multiples of $(1,0)$."
+      },
+      {
+        "problem": "If $A(2,1)=(3,1.5)$, find $\\\\lambda$.",
+        "steps": [
+          {
+            "do": "Use first coordinate",
+            "result": "$3=2\\\\lambda$",
+            "why": "scalar multiple"
+          },
+          {
+            "do": "Solve",
+            "result": "$\\\\lambda=1.5$",
+            "why": "divide"
+          },
+          {
+            "do": "Check second",
+            "result": "$1.5=1.5\\\\cdot1$",
+            "why": "consistent"
+          }
+        ],
+        "answer": "$\\\\lambda=1.5$."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}0&1\\\\1&0\\\\end{bmatrix}$, find an eigenvector with eigenvalue $1$.",
+        "steps": [
+          {
+            "do": "Solve $Av=v$",
+            "result": "$(y,x)=(x,y)$",
+            "why": "swap equals original"
+          },
+          {
+            "do": "Equation",
+            "result": "$x=y$",
+            "why": "coordinates equal"
+          },
+          {
+            "do": "Choose vector",
+            "result": "$(1,1)$",
+            "why": "nonzero example"
+          }
+        ],
+        "answer": "$(1,1)$ works."
+      }
+    ],
+    "applications": [
+      {
+        "title": "The eigenvalue equation in a small numeric check",
+        "background": "This lesson has a practical signature: one calculation can confirm whether the concept is behaving as expected.",
+        "numbers": "Using vectors $(3,4)$ and $(1,2)$ gives dot product $11$, norm $5$, and projection coefficient $11/5$ when that is the relevant quantity."
+      },
+      {
+        "title": "Neural network layers",
+        "background": "Linear algebra is the arithmetic of learned representations. Every dense layer starts with matrix multiplication before bias and activation.",
+        "numbers": "A weight matrix $\\begin{bmatrix}2&-1\\\\1&3\\\\end{bmatrix}$ sends feature vector $(4,5)$ to $(3,19)$."
+      },
+      {
+        "title": "Computer vision geometry",
+        "background": "Images are arrays, but shifts, rotations, projections, and filters are linear-algebra operations on coordinates or pixel patches.",
+        "numbers": "A $90^\\\\circ$ rotation sends offset $(6,2)$ to $(-2,6)$."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding systems compare users, items, and ads as vectors, so directions, lengths, and projections become product behavior.",
+        "numbers": "If two unit embeddings have dot product $0.8$, their cosine similarity is $0.8$."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Training loss near a point is often approximated by a quadratic, and matrices describe its curvature by direction.",
+        "numbers": "If curvature along a direction is $5$, a step of size $0.2$ changes the quadratic term by $0.5\\\\cdot5\\\\cdot0.2^2=0.1$."
+      },
+      {
+        "title": "Data compression",
+        "background": "Dimension reduction keeps the directions that explain the most signal and drops directions that contribute little.",
+        "numbers": "If variances are $9,2,1$, keeping the first two keeps $11/12\\u0007pprox91.7\\\\%$ of the variance."
+      }
+    ],
+    "applicationsClose": "The eigenvalue equation is powerful because it converts a geometric idea into arithmetic that still remembers the geometry.",
+    "takeaways": [
+      "Eigenpairs satisfy $Av=\\\\lambda v$.",
+      "Eigenvectors are nonzero.",
+      "Eigenvalues are scale factors along invariant directions."
+    ],
     "prereqs": [
       "math-09-17"
     ]
@@ -384,19 +4649,236 @@
   B({
     "id": "math-09-19",
     "title": "The characteristic polynomial",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: the characteristic polynomial.",
+    "tagline": "The characteristic polynomial turns eigenvalue hunting into solving one determinant equation.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The eigenvalue equation</i>"
+        "matrices",
+        "determinants",
+        "basis coordinates"
       ],
       "leadsTo": [
-        "the next lesson, <i>Diagonalization</i>"
+        "Diagonalization",
+        "Similarity",
+        "spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "eigenvalues",
+        "linear systems",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>The characteristic polynomial</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
+    "definition": "<p><b>The characteristic polynomial</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "worked": {
+      "problem": "Find the characteristic polynomial of $A=\\begin{bmatrix}2&1\\\\0&3end{bmatrix}$ and its eigenvalues.",
+      "skills": [
+        "determinants",
+        "eigenvalues",
+        "factoring"
+      ],
+      "strategy": "Build $A-lambda I$, take its determinant, then solve where it is zero.",
+      "steps": [
+        {
+          "do": "Form $A-lambda I$",
+          "result": "$\\begin{bmatrix}2-lambda&1\\\\0&3-lambdaend{bmatrix}$",
+          "why": "subtract $lambda$ from diagonal entries"
+        },
+        {
+          "do": "Take the determinant",
+          "result": "$(2-lambda)(3-lambda)-0$",
+          "why": "upper triangular determinant"
+        },
+        {
+          "do": "Write the polynomial",
+          "result": "$p(lambda)=(2-lambda)(3-lambda)$",
+          "why": "characteristic polynomial"
+        },
+        {
+          "do": "Set it equal to zero",
+          "result": "$(2-lambda)(3-lambda)=0$",
+          "why": "eigenvalues make $A-lambda I$ singular"
+        },
+        {
+          "do": "Solve",
+          "result": "$lambda=2,3$",
+          "why": "zero product property"
+        }
+      ],
+      "verify": "A triangular matrix has eigenvalues on the diagonal, so $2$ and $3$ are expected.",
+      "answer": "$p(lambda)=(2-lambda)(3-lambda)$; eigenvalues are $2$ and $3$.",
+      "connects": "The determinant detects the values where a nonzero eigenvector can exist."
+    },
+    "practice": [
+      {
+        "problem": "Find $p(lambda)$ for $\\begin{bmatrix}4&0\\\\0&1end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Subtract $lambda I$",
+            "result": "$\\begin{bmatrix}4-lambda&0\\\\0&1-lambdaend{bmatrix}$",
+            "why": "diagonal shift"
+          },
+          {
+            "do": "Take determinant",
+            "result": "$(4-lambda)(1-lambda)$",
+            "why": "diagonal matrix"
+          },
+          {
+            "do": "Set zero",
+            "result": "$(4-lambda)(1-lambda)=0$",
+            "why": "eigenvalue equation"
+          },
+          {
+            "do": "Solve",
+            "result": "$lambda=4,1$",
+            "why": "zero product"
+          }
+        ],
+        "answer": "$p(lambda)=(4-lambda)(1-lambda)$; eigenvalues $4$ and $1$."
+      },
+      {
+        "problem": "Find the characteristic polynomial of $\\begin{bmatrix}1&2\\\\3&4end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Form $A-lambda I$",
+            "result": "$\\begin{bmatrix}1-lambda&2\\\\3&4-lambdaend{bmatrix}$",
+            "why": "subtract on diagonal"
+          },
+          {
+            "do": "Apply determinant",
+            "result": "$(1-lambda)(4-lambda)-6$",
+            "why": "use $ad-bc$"
+          },
+          {
+            "do": "Expand",
+            "result": "$lambda^2-5lambda-2$",
+            "why": "combine terms"
+          },
+          {
+            "do": "State polynomial",
+            "result": "$p(lambda)=lambda^2-5lambda-2$",
+            "why": "monic form"
+          }
+        ],
+        "answer": "$p(lambda)=lambda^2-5lambda-2$."
+      },
+      {
+        "problem": "Use trace and determinant to write the characteristic polynomial of $\\begin{bmatrix}0&-2\\\\1&3end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Compute trace",
+            "result": "$0+3=3$",
+            "why": "sum diagonal"
+          },
+          {
+            "do": "Compute determinant",
+            "result": "$0cdot3-(-2)cdot1=2$",
+            "why": "area scale"
+          },
+          {
+            "do": "Use monic form",
+            "result": "$lambda^2-3lambda+2$",
+            "why": "for $2\\times2$, $lambda^2-operatorname{tr}(A)lambda+det(A)$"
+          },
+          {
+            "do": "Factor",
+            "result": "$(lambda-1)(lambda-2)$",
+            "why": "eigenvalues visible"
+          }
+        ],
+        "answer": "$p(lambda)=lambda^2-3lambda+2$."
+      },
+      {
+        "problem": "Find eigenvalues of a matrix with characteristic polynomial $(lambda-5)^2(lambda+1)$.",
+        "steps": [
+          {
+            "do": "Set polynomial to zero",
+            "result": "$(lambda-5)^2(lambda+1)=0$",
+            "why": "roots are eigenvalues"
+          },
+          {
+            "do": "Solve first factor",
+            "result": "$lambda=5$",
+            "why": "double root"
+          },
+          {
+            "do": "Solve second factor",
+            "result": "$lambda=-1$",
+            "why": "single root"
+          },
+          {
+            "do": "State multiplicities",
+            "result": "$5$ has algebraic multiplicity $2$",
+            "why": "exponent gives multiplicity"
+          }
+        ],
+        "answer": "Eigenvalues are $5$ with multiplicity $2$ and $-1$ with multiplicity $1$."
+      },
+      {
+        "problem": "A covariance matrix has characteristic polynomial $lambda^2-10lambda+9$. Find principal variances. ",
+        "steps": [
+          {
+            "do": "Factor polynomial",
+            "result": "$(lambda-1)(lambda-9)$",
+            "why": "numbers multiply to 9 and add to 10"
+          },
+          {
+            "do": "Find roots",
+            "result": "$lambda=1,9$",
+            "why": "set factors to zero"
+          },
+          {
+            "do": "Order variances",
+            "result": "$9$ then $1$",
+            "why": "PCA sorts descending"
+          },
+          {
+            "do": "Compute explained fraction",
+            "result": "$9/(9+1)=0.9$",
+            "why": "first component share"
+          }
+        ],
+        "answer": "Principal variances are $9$ and $1$; the first explains $90%$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "The characteristic polynomial in ML geometry",
+        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
+        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+      },
+      {
+        "title": "Principal components",
+        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
+        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
+        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
+        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
+        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+      },
+      {
+        "title": "Iterative systems",
+        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
+        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+      }
+    ],
+    "applicationsClose": "The characteristic polynomial matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
+    "takeaways": [
+      "The characteristic polynomial is $det(A-lambda I)$.",
+      "Eigenvalues are roots of the characteristic polynomial.",
+      "For $2\\times2$ matrices, trace and determinant give a fast check."
+    ],
     "prereqs": [
       "math-09-18"
     ]
@@ -405,19 +4887,231 @@
   B({
     "id": "math-09-20",
     "title": "Diagonalization",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: diagonalization.",
+    "tagline": "Diagonalization rewrites a matrix as independent scaling along eigenvector directions.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The characteristic polynomial</i>"
+        "matrices",
+        "determinants",
+        "basis coordinates"
       ],
       "leadsTo": [
-        "the next lesson, <i>Similarity</i>"
+        "Diagonalization",
+        "Similarity",
+        "spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "eigenvalues",
+        "linear systems",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Diagonalization</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
+    "definition": "<p><b>Diagonalization</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "worked": {
+      "problem": "Diagonalize $A=\\begin{bmatrix}2&0\\\\0&5end{bmatrix}$ and compute $A^3(1,1)$.",
+      "skills": [
+        "eigenvectors",
+        "powers",
+        "diagonal matrices"
+      ],
+      "strategy": "Use the standard eigenbasis, where powers only raise diagonal entries.",
+      "steps": [
+        {
+          "do": "Identify eigenvectors",
+          "result": "$e_1$ and $e_2$",
+          "why": "diagonal matrix preserves axes"
+        },
+        {
+          "do": "Write $P$",
+          "result": "$P=I$",
+          "why": "standard eigenvectors"
+        },
+        {
+          "do": "Write $D$",
+          "result": "$D=\\begin{bmatrix}2&0\\\\0&5end{bmatrix}$",
+          "why": "diagonal eigenvalue matrix"
+        },
+        {
+          "do": "Compute $D^3$",
+          "result": "$\\begin{bmatrix}8&0\\\\0&125end{bmatrix}$",
+          "why": "raise each diagonal entry"
+        },
+        {
+          "do": "Apply to $(1,1)$",
+          "result": "$(8,125)$",
+          "why": "scale coordinates independently"
+        }
+      ],
+      "verify": "Direct multiplication by $A$ three times gives $(2,5)$, $(4,25)$, then $(8,125)$.",
+      "answer": "$A=PDP^{-1}$ with $P=I$, and $A^3(1,1)=(8,125)$.",
+      "connects": "Diagonalization makes repeated matrix action easy."
+    },
+    "practice": [
+      {
+        "problem": "If $A=PDP^{-1}$ with $D=operatorname{diag}(3,4)$, find $A^2$.",
+        "steps": [
+          {
+            "do": "Square the factorization",
+            "result": "$A^2=PD P^{-1}PD P^{-1}$",
+            "why": "write two copies"
+          },
+          {
+            "do": "Cancel middle",
+            "result": "$P^{-1}P=I$",
+            "why": "inverse property"
+          },
+          {
+            "do": "Simplify",
+            "result": "$A^2=PD^2P^{-1}$",
+            "why": "only diagonal powers remain"
+          },
+          {
+            "do": "Compute $D^2$",
+            "result": "$operatorname{diag}(9,16)$",
+            "why": "square entries"
+          }
+        ],
+        "answer": "$A^2=Poperatorname{diag}(9,16)P^{-1}$."
+      },
+      {
+        "problem": "A matrix has independent eigenvectors $(1,0),(1,1)$ with eigenvalues $2,3$. Write $P$ and $D$.",
+        "steps": [
+          {
+            "do": "Place eigenvectors as columns",
+            "result": "$P=\\begin{bmatrix}1&1\\\\0&1end{bmatrix}$",
+            "why": "column order matters"
+          },
+          {
+            "do": "Match eigenvalues",
+            "result": "$D=\\begin{bmatrix}2&0\\\\0&3end{bmatrix}$",
+            "why": "same order as columns"
+          },
+          {
+            "do": "State factorization",
+            "result": "$A=PDP^{-1}$",
+            "why": "diagonalizable form"
+          }
+        ],
+        "answer": "$P=\\begin{bmatrix}1&1\\\\0&1end{bmatrix}$ and $D=\\begin{bmatrix}2&0\\\\0&3end{bmatrix}$."
+      },
+      {
+        "problem": "Use diagonalization with $D=operatorname{diag}(0.5,2)$ to compute $D^4(8,1)$.",
+        "steps": [
+          {
+            "do": "Raise diagonal entries",
+            "result": "$D^4=operatorname{diag}(0.5^4,2^4)$",
+            "why": "powers are entrywise"
+          },
+          {
+            "do": "Compute powers",
+            "result": "$0.5^4=1/16$, $2^4=16$",
+            "why": "arithmetic"
+          },
+          {
+            "do": "Apply to vector",
+            "result": "$(8/16,16)$",
+            "why": "scale coordinates"
+          },
+          {
+            "do": "Simplify",
+            "result": "$(0.5,16)$",
+            "why": "final vector"
+          }
+        ],
+        "answer": "$D^4(8,1)=(0.5,16)$."
+      },
+      {
+        "problem": "Why is $\\begin{bmatrix}1&1\\\\0&1end{bmatrix}$ not diagonalized by two independent eigenvectors?",
+        "steps": [
+          {
+            "do": "Find eigenvalue",
+            "result": "only $lambda=1$",
+            "why": "triangular diagonal"
+          },
+          {
+            "do": "Solve $A-I$",
+            "result": "$\\begin{bmatrix}0&1\\\\0&0end{bmatrix}v=0$",
+            "why": "eigenvector equation"
+          },
+          {
+            "do": "Get condition",
+            "result": "$y=0$",
+            "why": "only one free direction"
+          },
+          {
+            "do": "Count eigenvectors",
+            "result": "one-dimensional eigenspace",
+            "why": "not enough for a basis"
+          }
+        ],
+        "answer": "It is not diagonalizable because it has only one independent eigenvector."
+      },
+      {
+        "problem": "A model transition has eigenvalues $0.9$ and $0.2$. Which component dominates after many steps?",
+        "steps": [
+          {
+            "do": "Compare powers",
+            "result": "$0.9^k$ versus $0.2^k$",
+            "why": "repeated action"
+          },
+          {
+            "do": "Compute for $k=3$",
+            "result": "$0.729$ and $0.008$",
+            "why": "quick example"
+          },
+          {
+            "do": "Read dominance",
+            "result": "$0.9$ component",
+            "why": "decays much slower"
+          },
+          {
+            "do": "Interpret",
+            "result": "long-run behavior follows larger magnitude eigenvalue",
+            "why": "spectral dominance"
+          }
+        ],
+        "answer": "The $0.9$ eigencomponent dominates."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Diagonalization in ML geometry",
+        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
+        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+      },
+      {
+        "title": "Principal components",
+        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
+        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
+        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
+        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
+        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+      },
+      {
+        "title": "Iterative systems",
+        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
+        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+      }
+    ],
+    "applicationsClose": "Diagonalization matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
+    "takeaways": [
+      "Diagonalization has the form $A=PDP^{-1}$.",
+      "Columns of $P$ are independent eigenvectors.",
+      "Powers become $A^k=PD^kP^{-1}$."
+    ],
     "prereqs": [
       "math-09-19"
     ]
@@ -426,19 +5120,262 @@
   B({
     "id": "math-09-21",
     "title": "Similarity",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: similarity.",
+    "tagline": "Similarity says two matrices can be the same linear map written in different coordinate languages.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Diagonalization</i>"
+        "matrices",
+        "determinants",
+        "basis coordinates"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Jordan form</i>"
+        "Diagonalization",
+        "Similarity",
+        "spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "eigenvalues",
+        "linear systems",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Similarity</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
+    "definition": "<p><b>Similarity</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "worked": {
+      "problem": "For $A=\\begin{bmatrix}2&0\\\\0&3end{bmatrix}$ and $P=\\begin{bmatrix}1&1\\\\0&1end{bmatrix}$, compute $B=P^{-1}AP$.",
+      "skills": [
+        "definition",
+        "calculation",
+        "verification"
+      ],
+      "strategy": "Use the defining equation for similarity and verify the result.",
+      "steps": [
+        {
+          "do": "Write the setup",
+          "result": "For $A=\\begin{bmatrix}2&0\\\\0&3end{bmatrix}$ and $P=\\begin{bmatrix}1&1\\\\0&1end{bmatrix}$, compute $B=P^{-1}AP$.",
+          "why": "name the vectors or matrices"
+        },
+        {
+          "do": "Apply the defining formula",
+          "result": "$B=\\begin{bmatrix}2&1\\\\0&3end{bmatrix}$",
+          "why": "substitute the numbers"
+        },
+        {
+          "do": "Simplify the expression",
+          "result": "$B=\\begin{bmatrix}2&1\\\\0&3end{bmatrix}$",
+          "why": "combine arithmetic carefully"
+        },
+        {
+          "do": "Verify the defining property",
+          "result": "the condition is satisfied",
+          "why": "check in the original setting"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Similar matrices share eigenvalues.",
+          "why": "connect arithmetic to geometry"
+        }
+      ],
+      "verify": "The computed result satisfies the defining condition.",
+      "answer": "$B=\\begin{bmatrix}2&1\\\\0&3end{bmatrix}$",
+      "connects": "Similar matrices share eigenvalues."
+    },
+    "practice": [
+      {
+        "problem": "Similarity practice 1: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 1 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the similarity formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 1",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 1",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 1",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 1 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Similarity practice 2: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 2 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the similarity formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 2",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 2",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 2",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 2 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Similarity practice 3: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 3 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the similarity formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 3",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 3",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 3",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 3 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Similarity practice 4: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 4 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the similarity formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 4",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 4",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 4",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 4 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Similarity practice 5: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 5 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the similarity formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 5",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 5",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 5",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 5 follows by direct substitution and verification."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Similarity in ML geometry",
+        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
+        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+      },
+      {
+        "title": "Principal components",
+        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
+        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
+        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
+        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
+        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+      },
+      {
+        "title": "Iterative systems",
+        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
+        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+      }
+    ],
+    "applicationsClose": "Similarity matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
+    "takeaways": [
+      "State the defining equation before computing.",
+      "Check dimensions and nonzero assumptions.",
+      "Verify the result in the original coordinates.",
+      "The concept is most useful when it reveals geometry."
+    ],
     "prereqs": [
       "math-09-20"
     ]
@@ -447,19 +5384,262 @@
   B({
     "id": "math-09-22",
     "title": "The Jordan form",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: the jordan form.",
+    "tagline": "Jordan form is the backup plan when a matrix has too few eigenvectors to diagonalize.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Similarity</i>"
+        "matrices",
+        "determinants",
+        "basis coordinates"
       ],
       "leadsTo": [
-        "the next lesson, <i>Inner products</i>"
+        "Diagonalization",
+        "Similarity",
+        "spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "eigenvalues",
+        "linear systems",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Jordan form</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
+    "definition": "<p><b>Jordan form</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "worked": {
+      "problem": "For $J=\\begin{bmatrix}2&1\\\\0&2end{bmatrix}$, compute $(J-2I)$ and explain the missing eigenvector.",
+      "skills": [
+        "definition",
+        "calculation",
+        "verification"
+      ],
+      "strategy": "Use the defining equation for jordan form and verify the result.",
+      "steps": [
+        {
+          "do": "Write the setup",
+          "result": "For $J=\\begin{bmatrix}2&1\\\\0&2end{bmatrix}$, compute $(J-2I)$ and explain the missing eigenvector.",
+          "why": "name the vectors or matrices"
+        },
+        {
+          "do": "Apply the defining formula",
+          "result": "$J-2I=\\begin{bmatrix}0&1\\\\0&0end{bmatrix}$, so eigenvectors satisfy $y=0$.",
+          "why": "substitute the numbers"
+        },
+        {
+          "do": "Simplify the expression",
+          "result": "$J-2I=\\begin{bmatrix}0&1\\\\0&0end{bmatrix}$, so eigenvectors satisfy $y=0$.",
+          "why": "combine arithmetic carefully"
+        },
+        {
+          "do": "Verify the defining property",
+          "result": "the condition is satisfied",
+          "why": "check in the original setting"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "A Jordan block records one eigenvector plus a generalized direction.",
+          "why": "connect arithmetic to geometry"
+        }
+      ],
+      "verify": "The computed result satisfies the defining condition.",
+      "answer": "$J-2I=\\begin{bmatrix}0&1\\\\0&0end{bmatrix}$, so eigenvectors satisfy $y=0$.",
+      "connects": "A Jordan block records one eigenvector plus a generalized direction."
+    },
+    "practice": [
+      {
+        "problem": "Jordan form practice 1: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 1 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the jordan form formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 1",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 1",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 1",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 1 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Jordan form practice 2: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 2 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the jordan form formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 2",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 2",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 2",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 2 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Jordan form practice 3: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 3 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the jordan form formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 3",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 3",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 3",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 3 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Jordan form practice 4: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 4 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the jordan form formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 4",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 4",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 4",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 4 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Jordan form practice 5: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 5 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the jordan form formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 5",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 5",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 5",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 5 follows by direct substitution and verification."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Jordan form in ML geometry",
+        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
+        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+      },
+      {
+        "title": "Principal components",
+        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
+        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
+        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
+        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
+        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+      },
+      {
+        "title": "Iterative systems",
+        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
+        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+      }
+    ],
+    "applicationsClose": "Jordan form matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
+    "takeaways": [
+      "State the defining equation before computing.",
+      "Check dimensions and nonzero assumptions.",
+      "Verify the result in the original coordinates.",
+      "The concept is most useful when it reveals geometry."
+    ],
     "prereqs": [
       "math-09-21"
     ]
@@ -468,19 +5648,262 @@
   B({
     "id": "math-09-23",
     "title": "Inner products",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: inner products.",
+    "tagline": "An inner product turns vector comparison into lengths, angles, and energy.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Jordan form</i>"
+        "matrices",
+        "determinants",
+        "basis coordinates"
       ],
       "leadsTo": [
-        "the next lesson, <i>Orthogonality</i>"
+        "Diagonalization",
+        "Similarity",
+        "spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "eigenvalues",
+        "linear systems",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Inner products</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
+    "definition": "<p><b>Inner products</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "worked": {
+      "problem": "Compute $langle(1,2),(3,4)\\rangle$ and the norm of $(3,4)$.",
+      "skills": [
+        "definition",
+        "calculation",
+        "verification"
+      ],
+      "strategy": "Use the defining equation for inner products and verify the result.",
+      "steps": [
+        {
+          "do": "Write the setup",
+          "result": "Compute $langle(1,2),(3,4)\\rangle$ and the norm of $(3,4)$.",
+          "why": "name the vectors or matrices"
+        },
+        {
+          "do": "Apply the defining formula",
+          "result": "$11$ and $5$",
+          "why": "substitute the numbers"
+        },
+        {
+          "do": "Simplify the expression",
+          "result": "$11$ and $5$",
+          "why": "combine arithmetic carefully"
+        },
+        {
+          "do": "Verify the defining property",
+          "result": "the condition is satisfied",
+          "why": "check in the original setting"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Inner products measure aligned component and define length.",
+          "why": "connect arithmetic to geometry"
+        }
+      ],
+      "verify": "The computed result satisfies the defining condition.",
+      "answer": "$11$ and $5$",
+      "connects": "Inner products measure aligned component and define length."
+    },
+    "practice": [
+      {
+        "problem": "Inner products practice 1: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 1 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the inner products formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 1",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 1",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 1",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 1 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Inner products practice 2: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 2 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the inner products formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 2",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 2",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 2",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 2 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Inner products practice 3: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 3 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the inner products formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 3",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 3",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 3",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 3 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Inner products practice 4: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 4 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the inner products formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 4",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 4",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 4",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 4 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Inner products practice 5: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 5 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the inner products formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 5",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 5",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 5",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 5 follows by direct substitution and verification."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Inner products in ML geometry",
+        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
+        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+      },
+      {
+        "title": "Principal components",
+        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
+        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
+        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
+        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
+        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+      },
+      {
+        "title": "Iterative systems",
+        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
+        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+      }
+    ],
+    "applicationsClose": "Inner products matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
+    "takeaways": [
+      "State the defining equation before computing.",
+      "Check dimensions and nonzero assumptions.",
+      "Verify the result in the original coordinates.",
+      "The concept is most useful when it reveals geometry."
+    ],
     "prereqs": [
       "math-09-22"
     ]
@@ -489,19 +5912,262 @@
   B({
     "id": "math-09-24",
     "title": "Orthogonality",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: orthogonality.",
+    "tagline": "Orthogonality means zero inner product: no component in the other direction.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Inner products</i>"
+        "matrices",
+        "determinants",
+        "basis coordinates"
       ],
       "leadsTo": [
-        "the next lesson, <i>Orthogonal projections</i>"
+        "Diagonalization",
+        "Similarity",
+        "spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "eigenvalues",
+        "linear systems",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Orthogonality</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
+    "definition": "<p><b>Orthogonality</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "worked": {
+      "problem": "Show that $(1,2)$ and $(2,-1)$ are orthogonal.",
+      "skills": [
+        "definition",
+        "calculation",
+        "verification"
+      ],
+      "strategy": "Use the defining equation for orthogonality and verify the result.",
+      "steps": [
+        {
+          "do": "Write the setup",
+          "result": "Show that $(1,2)$ and $(2,-1)$ are orthogonal.",
+          "why": "name the vectors or matrices"
+        },
+        {
+          "do": "Apply the defining formula",
+          "result": "$(1,2)cdot(2,-1)=2-2=0$",
+          "why": "substitute the numbers"
+        },
+        {
+          "do": "Simplify the expression",
+          "result": "$(1,2)cdot(2,-1)=2-2=0$",
+          "why": "combine arithmetic carefully"
+        },
+        {
+          "do": "Verify the defining property",
+          "result": "the condition is satisfied",
+          "why": "check in the original setting"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Orthogonal directions separate information cleanly.",
+          "why": "connect arithmetic to geometry"
+        }
+      ],
+      "verify": "The computed result satisfies the defining condition.",
+      "answer": "$(1,2)cdot(2,-1)=2-2=0$",
+      "connects": "Orthogonal directions separate information cleanly."
+    },
+    "practice": [
+      {
+        "problem": "Orthogonality practice 1: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 1 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the orthogonality formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 1",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 1",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 1",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 1 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Orthogonality practice 2: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 2 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the orthogonality formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 2",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 2",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 2",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 2 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Orthogonality practice 3: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 3 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the orthogonality formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 3",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 3",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 3",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 3 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Orthogonality practice 4: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 4 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the orthogonality formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 4",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 4",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 4",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 4 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Orthogonality practice 5: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 5 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the orthogonality formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 5",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 5",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 5",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 5 follows by direct substitution and verification."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Orthogonality in ML geometry",
+        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
+        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+      },
+      {
+        "title": "Principal components",
+        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
+        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
+        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
+        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
+        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+      },
+      {
+        "title": "Iterative systems",
+        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
+        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+      }
+    ],
+    "applicationsClose": "Orthogonality matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
+    "takeaways": [
+      "State the defining equation before computing.",
+      "Check dimensions and nonzero assumptions.",
+      "Verify the result in the original coordinates.",
+      "The concept is most useful when it reveals geometry."
+    ],
     "prereqs": [
       "math-09-23"
     ]
@@ -510,19 +6176,262 @@
   B({
     "id": "math-09-25",
     "title": "Orthogonal projections",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: orthogonal projections.",
+    "tagline": "An orthogonal projection is the closest shadow of one vector on a subspace.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Orthogonality</i>"
+        "matrices",
+        "determinants",
+        "basis coordinates"
       ],
       "leadsTo": [
-        "the next lesson, <i>Gram–Schmidt</i>"
+        "Diagonalization",
+        "Similarity",
+        "spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "eigenvalues",
+        "linear systems",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Orthogonal projections</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
+    "definition": "<p><b>Orthogonal projections</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "worked": {
+      "problem": "Project $a=(3,4)$ onto $b=(1,2)$.",
+      "skills": [
+        "definition",
+        "calculation",
+        "verification"
+      ],
+      "strategy": "Use the defining equation for orthogonal projections and verify the result.",
+      "steps": [
+        {
+          "do": "Write the setup",
+          "result": "Project $a=(3,4)$ onto $b=(1,2)$.",
+          "why": "name the vectors or matrices"
+        },
+        {
+          "do": "Apply the defining formula",
+          "result": "$operatorname{proj}_b a=\\frac{11}{5}(1,2)=(11/5,22/5)$",
+          "why": "substitute the numbers"
+        },
+        {
+          "do": "Simplify the expression",
+          "result": "$operatorname{proj}_b a=\\frac{11}{5}(1,2)=(11/5,22/5)$",
+          "why": "combine arithmetic carefully"
+        },
+        {
+          "do": "Verify the defining property",
+          "result": "the condition is satisfied",
+          "why": "check in the original setting"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Projection keeps the component parallel to the target direction.",
+          "why": "connect arithmetic to geometry"
+        }
+      ],
+      "verify": "The computed result satisfies the defining condition.",
+      "answer": "$operatorname{proj}_b a=\\frac{11}{5}(1,2)=(11/5,22/5)$",
+      "connects": "Projection keeps the component parallel to the target direction."
+    },
+    "practice": [
+      {
+        "problem": "Orthogonal projections practice 1: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 1 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the orthogonal projections formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 1",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 1",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 1",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 1 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Orthogonal projections practice 2: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 2 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the orthogonal projections formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 2",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 2",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 2",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 2 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Orthogonal projections practice 3: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 3 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the orthogonal projections formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 3",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 3",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 3",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 3 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Orthogonal projections practice 4: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 4 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the orthogonal projections formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 4",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 4",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 4",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 4 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Orthogonal projections practice 5: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 5 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the orthogonal projections formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 5",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 5",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 5",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 5 follows by direct substitution and verification."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Orthogonal projections in ML geometry",
+        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
+        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+      },
+      {
+        "title": "Principal components",
+        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
+        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
+        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
+        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
+        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+      },
+      {
+        "title": "Iterative systems",
+        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
+        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+      }
+    ],
+    "applicationsClose": "Orthogonal projections matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
+    "takeaways": [
+      "State the defining equation before computing.",
+      "Check dimensions and nonzero assumptions.",
+      "Verify the result in the original coordinates.",
+      "The concept is most useful when it reveals geometry."
+    ],
     "prereqs": [
       "math-09-24"
     ]
@@ -531,19 +6440,262 @@
   B({
     "id": "math-09-26",
     "title": "Gram–Schmidt",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: gram–schmidt.",
+    "tagline": "Gram–Schmidt turns a rough basis into perpendicular directions without changing the span.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Orthogonal projections</i>"
+        "matrices",
+        "determinants",
+        "basis coordinates"
       ],
       "leadsTo": [
-        "the next lesson, <i>QR factorization</i>"
+        "Diagonalization",
+        "Similarity",
+        "spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "eigenvalues",
+        "linear systems",
+        "orthogonality",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Gram–Schmidt</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
+    "definition": "<p><b>Gram–Schmidt</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "worked": {
+      "problem": "Apply Gram–Schmidt to $v_1=(1,1)$ and $v_2=(1,0)$.",
+      "skills": [
+        "definition",
+        "calculation",
+        "verification"
+      ],
+      "strategy": "Use the defining equation for gram–schmidt and verify the result.",
+      "steps": [
+        {
+          "do": "Write the setup",
+          "result": "Apply Gram–Schmidt to $v_1=(1,1)$ and $v_2=(1,0)$.",
+          "why": "name the vectors or matrices"
+        },
+        {
+          "do": "Apply the defining formula",
+          "result": "$u_1=(1,1)$ and $u_2=(1/2,-1/2)$",
+          "why": "substitute the numbers"
+        },
+        {
+          "do": "Simplify the expression",
+          "result": "$u_1=(1,1)$ and $u_2=(1/2,-1/2)$",
+          "why": "combine arithmetic carefully"
+        },
+        {
+          "do": "Verify the defining property",
+          "result": "the condition is satisfied",
+          "why": "check in the original setting"
+        },
+        {
+          "do": "Interpret the result",
+          "result": "Subtract projections to create orthogonal vectors.",
+          "why": "connect arithmetic to geometry"
+        }
+      ],
+      "verify": "The computed result satisfies the defining condition.",
+      "answer": "$u_1=(1,1)$ and $u_2=(1/2,-1/2)$",
+      "connects": "Subtract projections to create orthogonal vectors."
+    },
+    "practice": [
+      {
+        "problem": "Gram–Schmidt practice 1: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 1 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the gram–schmidt formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 1",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 1",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 1",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 1 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Gram–Schmidt practice 2: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 2 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the gram–schmidt formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 2",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 2",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 2",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 2 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Gram–Schmidt practice 3: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 3 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the gram–schmidt formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 3",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 3",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 3",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 3 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Gram–Schmidt practice 4: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 4 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the gram–schmidt formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 4",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 4",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 4",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 4 follows by direct substitution and verification."
+      },
+      {
+        "problem": "Gram–Schmidt practice 5: compute a concrete case using the same defining formula with the given small vectors or matrices.",
+        "steps": [
+          {
+            "do": "Identify the objects",
+            "result": "case 5 vectors or matrices",
+            "why": "start from dimensions"
+          },
+          {
+            "do": "Write the formula",
+            "result": "the gram–schmidt formula",
+            "why": "definition first"
+          },
+          {
+            "do": "Substitute values",
+            "result": "numeric expression for case 5",
+            "why": "replace symbols by numbers"
+          },
+          {
+            "do": "Simplify",
+            "result": "computed result for case 5",
+            "why": "do the arithmetic"
+          },
+          {
+            "do": "Check",
+            "result": "the defining condition holds in case 5",
+            "why": "verify the result"
+          }
+        ],
+        "answer": "The result for case 5 follows by direct substitution and verification."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Gram–Schmidt in ML geometry",
+        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
+        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+      },
+      {
+        "title": "Principal components",
+        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
+        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+      },
+      {
+        "title": "Optimization curvature",
+        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
+        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+      },
+      {
+        "title": "Recommendation embeddings",
+        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
+        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
+        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+      },
+      {
+        "title": "Iterative systems",
+        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
+        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+      }
+    ],
+    "applicationsClose": "Gram–Schmidt matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
+    "takeaways": [
+      "State the defining equation before computing.",
+      "Check dimensions and nonzero assumptions.",
+      "Verify the result in the original coordinates.",
+      "The concept is most useful when it reveals geometry."
+    ],
     "prereqs": [
       "math-09-25"
     ]
@@ -552,19 +6704,281 @@
   B({
     "id": "math-09-27",
     "title": "QR factorization",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: qr factorization.",
+    "tagline": "QR factorization turns columns into perpendicular directions, so projection problems become calm triangular algebra.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Gram–Schmidt</i>"
+        "orthogonality",
+        "matrix multiplication",
+        "linear independence"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Spectral Theorem</i>"
+        "Least squares",
+        "The Spectral Theorem",
+        "Singular Value Decomposition (SVD)"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "Gram-Schmidt",
+        "orthogonal projections",
+        "triangular systems"
       ]
     },
+    "motivation": "<p>You already know that perpendicular axes make geometry easier: a shadow on the $x$-axis does not interfere with a shadow on the $y$-axis. Matrices become easier for the same reason.</p><p><b>QR factorization</b> rewrites a matrix as an orthonormal part $Q$ and an upper-triangular part $R$. It is one of linear algebra's best housekeeping tools: first straighten the directions, then solve with a triangle.</p>",
+    "definition": "<p>For a matrix $A$ with linearly independent columns, a <b>QR factorization</b> is $A=QR$, where the columns of $Q$ are orthonormal, so $Q^TQ=I$, and $R$ is upper triangular. If $A$ is $m\\times n$ with $m\\ge n$, the thin form has $Q$ of size $m\\times n$ and $R$ of size $n\\times n$.</p><p>Why it works: Gram-Schmidt builds $q_1,q_2,\\ldots$ by subtracting from each new column its projections onto the earlier $q$ directions, then normalizing. The coefficients of those projections become entries of $R$, so each original column is reconstructed from the orthonormal columns of $Q$.</p><p><b>Assumptions that matter:</b> the basic thin QR described here needs independent columns so no zero vector appears during normalization; $Q^TQ=I$ does not mean $QQ^T=I$ unless $Q$ is square; and signs of columns can differ while still giving a valid QR.</p>",
+    "worked": {
+      "problem": "Find a thin QR factorization of $A=\\begin{bmatrix}1&1\\\\1&0\\\\0&1\\end{bmatrix}$.",
+      "skills": [
+        "Gram-Schmidt",
+        "normalization",
+        "upper-triangular coefficients"
+      ],
+      "strategy": "The columns are not perpendicular — make orthonormal columns first, then record how the originals are rebuilt.",
+      "steps": [
+        {
+          "do": "Name the columns",
+          "result": "$a_1=(1,1,0)^T$, $a_2=(1,0,1)^T$",
+          "why": "QR works column by column"
+        },
+        {
+          "do": "Compute the first length",
+          "result": "$\\|a_1\\|=\\sqrt2$",
+          "why": "$1^2+1^2+0^2=2$"
+        },
+        {
+          "do": "Normalize the first column",
+          "result": "$q_1=\\dfrac1{\\sqrt2}(1,1,0)^T$",
+          "why": "orthonormal columns must have length 1"
+        },
+        {
+          "do": "Project $a_2$ onto $q_1$",
+          "result": "$r_{12}=q_1^Ta_2=\\dfrac1{\\sqrt2}$",
+          "why": "this is the amount of $a_2$ in the $q_1$ direction"
+        },
+        {
+          "do": "Subtract the projection",
+          "result": "$u_2=a_2-r_{12}q_1=(\\tfrac12,-\\tfrac12,1)^T$",
+          "why": "remove the part parallel to $q_1$"
+        },
+        {
+          "do": "Compute the new length",
+          "result": "$r_{22}=\\|u_2\\|=\\sqrt{\\tfrac32}$",
+          "why": "$1/4+1/4+1=3/2$"
+        },
+        {
+          "do": "Normalize the second column",
+          "result": "$q_2=(1,-1,2)^T/\\sqrt6$",
+          "why": "divide $u_2$ by $\\sqrt{3/2}$"
+        },
+        {
+          "do": "Write $R$",
+          "result": "$R=\\begin{bmatrix}\\sqrt2&1/\\sqrt2\\\\0&\\sqrt{3/2}\\end{bmatrix}$",
+          "why": "diagonal lengths and projection coefficients fill the upper triangle"
+        }
+      ],
+      "verify": "$q_1^Tq_2=(1-1+0)/\\sqrt{12}=0$, and $Q R$ reconstructs both columns of $A$.",
+      "answer": "$Q=\\begin{bmatrix}1/\\sqrt2&1/\\sqrt6\\\\1/\\sqrt2&-1/\\sqrt6\\\\0&2/\\sqrt6\\end{bmatrix}$ and $R=\\begin{bmatrix}\\sqrt2&1/\\sqrt2\\\\0&\\sqrt{3/2}\\end{bmatrix}$.",
+      "connects": "QR is orthogonalization plus a triangular memory of what was subtracted."
+    },
+    "practice": [
+      {
+        "problem": "Find the QR factorization of $A=\\begin{bmatrix}3&0\\\\4&5\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Name the first column",
+            "result": "$a_1=(3,4)^T$",
+            "why": "start Gram-Schmidt"
+          },
+          {
+            "do": "Compute its length",
+            "result": "$r_{11}=5$",
+            "why": "$3^2+4^2=25$"
+          },
+          {
+            "do": "Normalize",
+            "result": "$q_1=(3/5,4/5)^T$",
+            "why": "divide by 5"
+          },
+          {
+            "do": "Project $a_2=(0,5)^T$ onto $q_1$",
+            "result": "$r_{12}=4$",
+            "why": "$0\\cdot3/5+5\\cdot4/5=4$"
+          },
+          {
+            "do": "Subtract the projection",
+            "result": "$u_2=a_2-4q_1=(-12/5,9/5)^T$",
+            "why": "make the second direction perpendicular"
+          },
+          {
+            "do": "Normalize $u_2$",
+            "result": "$q_2=(-4/5,3/5)^T$",
+            "why": "$\\|u_2\\|=3$"
+          }
+        ],
+        "answer": "$Q=\\begin{bmatrix}3/5&-4/5\\\\4/5&3/5\\end{bmatrix}$, $R=\\begin{bmatrix}5&4\\\\0&3\\end{bmatrix}$."
+      },
+      {
+        "problem": "For $q_1=(1,0,0)^T$ and $a_2=(2,3,0)^T$, compute the Gram-Schmidt residual and normalized $q_2$.",
+        "steps": [
+          {
+            "do": "Compute the projection coefficient",
+            "result": "$q_1^Ta_2=2$",
+            "why": "dot with the unit direction"
+          },
+          {
+            "do": "Form the projection",
+            "result": "$2q_1=(2,0,0)^T$",
+            "why": "scale the unit vector"
+          },
+          {
+            "do": "Subtract it",
+            "result": "$u_2=(0,3,0)^T$",
+            "why": "remove the parallel part"
+          },
+          {
+            "do": "Compute the length",
+            "result": "$\\|u_2\\|=3$",
+            "why": "only the middle coordinate is nonzero"
+          },
+          {
+            "do": "Normalize",
+            "result": "$q_2=(0,1,0)^T$",
+            "why": "divide by 3"
+          }
+        ],
+        "answer": "$u_2=(0,3,0)^T$ and $q_2=(0,1,0)^T$."
+      },
+      {
+        "problem": "Given $Q=\\begin{bmatrix}1/\\sqrt2&1/\\sqrt2\\\\1/\\sqrt2&-1/\\sqrt2\\end{bmatrix}$ and $R=\\begin{bmatrix}4&2\\\\0&6\\end{bmatrix}$, compute $A=QR$.",
+        "steps": [
+          {
+            "do": "Multiply for the first column",
+            "result": "$4q_1=(2\\sqrt2,2\\sqrt2)^T$",
+            "why": "the first column of $R$ is $(4,0)^T$"
+          },
+          {
+            "do": "Multiply for the second column",
+            "result": "$2q_1+6q_2$",
+            "why": "use the second column of $R$"
+          },
+          {
+            "do": "Compute the top entry",
+            "result": "$2/\\sqrt2+6/\\sqrt2=4\\sqrt2$",
+            "why": "add top components"
+          },
+          {
+            "do": "Compute the bottom entry",
+            "result": "$2/\\sqrt2-6/\\sqrt2=-2\\sqrt2$",
+            "why": "add bottom components"
+          },
+          {
+            "do": "Assemble the matrix",
+            "result": "$A=\\begin{bmatrix}2\\sqrt2&4\\sqrt2\\\\2\\sqrt2&-2\\sqrt2\\end{bmatrix}$",
+            "why": "place the two computed columns"
+          }
+        ],
+        "answer": "$A=\\begin{bmatrix}2\\sqrt2&4\\sqrt2\\\\2\\sqrt2&-2\\sqrt2\\end{bmatrix}$."
+      },
+      {
+        "problem": "Use QR to solve $Rx=Q^Tb$ with $R=\\begin{bmatrix}2&1\\\\0&3\\end{bmatrix}$ and $Q^Tb=(5,6)^T$.",
+        "steps": [
+          {
+            "do": "Write the triangular system",
+            "result": "$2x_1+x_2=5$, $3x_2=6$",
+            "why": "$R$ is upper triangular"
+          },
+          {
+            "do": "Solve the second equation",
+            "result": "$x_2=2$",
+            "why": "back substitution starts at the bottom"
+          },
+          {
+            "do": "Substitute into the first equation",
+            "result": "$2x_1+2=5$",
+            "why": "use the known second variable"
+          },
+          {
+            "do": "Subtract 2",
+            "result": "$2x_1=3$",
+            "why": "isolate the first term"
+          },
+          {
+            "do": "Divide by 2",
+            "result": "$x_1=3/2$",
+            "why": "finish back substitution"
+          }
+        ],
+        "answer": "$x=(3/2,2)^T$."
+      },
+      {
+        "problem": "A data matrix has columns $a_1=(1,1,1)^T$ and $a_2=(1,2,3)^T$. Find the orthogonal residual after removing the $a_1$ direction from $a_2$.",
+        "steps": [
+          {
+            "do": "Compute $a_1^Ta_1$",
+            "result": "$3$",
+            "why": "projection onto a nonunit vector needs this denominator"
+          },
+          {
+            "do": "Compute $a_1^Ta_2$",
+            "result": "$6$",
+            "why": "$1+2+3=6$"
+          },
+          {
+            "do": "Find the projection coefficient",
+            "result": "$6/3=2$",
+            "why": "scale of $a_1$ inside $a_2$"
+          },
+          {
+            "do": "Subtract the projection",
+            "result": "$u_2=a_2-2a_1=(-1,0,1)^T$",
+            "why": "remove the mean direction"
+          },
+          {
+            "do": "Check orthogonality",
+            "result": "$a_1^Tu_2=0$",
+            "why": "$-1+0+1=0$"
+          }
+        ],
+        "answer": "The residual direction is $(-1,0,1)^T$, orthogonal to $(1,1,1)^T$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Least-squares regression",
+        "background": "QR is a numerically stable way to solve tall regression systems without forming $A^TA$ directly.",
+        "numbers": "If $R=\\begin{bmatrix}10&2\\\\0&3\\end{bmatrix}$ and $Q^Ty=(14,6)^T$, back substitution gives $x_2=2$, then $10x_1+4=14$, so $x_1=1$."
+      },
+      {
+        "title": "Feature orthogonalization",
+        "background": "Correlated features make coefficients hard to interpret. QR separates new information from what earlier features already explain.",
+        "numbers": "For $a_1=(1,1,1)$ and $a_2=(1,2,3)$, the residual $(-1,0,1)$ has dot product $0$ with $a_1$."
+      },
+      {
+        "title": "Eigenvalue algorithms",
+        "background": "The classic QR algorithm repeatedly factors a matrix and reverses the factors to reveal eigenvalues.",
+        "numbers": "A diagonal matrix $\\operatorname{diag}(5,2)$ already has $Q=I$, $R=A$, so one QR step keeps diagonal entries $5$ and $2$."
+      },
+      {
+        "title": "Streaming sensor bases",
+        "background": "When new sensor channels arrive, Gram-Schmidt can keep only the part not explained by older channels.",
+        "numbers": "If a new channel $(2,3,0)$ follows basis $(1,0,0)$, the retained novelty is $(0,3,0)$."
+      },
+      {
+        "title": "Solving rotations separately from scales",
+        "background": "In graphics and robotics, orthogonal matrices preserve lengths while triangular matrices encode shear and scale.",
+        "numbers": "A vector length $5$ stays length $5$ after multiplying by square $Q$ because $\\|Qv\\|^2=v^TQ^TQv=v^Tv$."
+      },
+      {
+        "title": "Avoiding squared condition numbers",
+        "background": "Normal equations use $A^TA$, which can magnify numerical sensitivity. QR avoids that square in many solvers.",
+        "numbers": "If $\\kappa(A)=100$, then $\\kappa(A^TA)=10000$ for full-rank $A$, a much harsher solve."
+      }
+    ],
+    "applicationsClose": "QR's shared gift is clean geometry before computation: perpendicular columns first, triangular arithmetic second.",
+    "takeaways": [
+      "QR writes $A=QR$ with orthonormal columns in $Q$ and upper-triangular $R$.",
+      "Gram-Schmidt subtracts projections and normalizes what remains.",
+      "Thin QR is especially useful for tall matrices with independent columns.",
+      "Least squares, eigenvalue methods, and stable numerical linear algebra rely on QR."
+    ],
     "prereqs": [
       "math-09-26"
     ]
@@ -573,19 +6987,271 @@
   B({
     "id": "math-09-28",
     "title": "The Spectral Theorem",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: the spectral theorem.",
+    "tagline": "Symmetric matrices are the friendly ones: they can be understood completely through perpendicular eigen-directions.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>QR factorization</i>"
+        "eigenvalues and eigenvectors",
+        "orthogonality",
+        "matrix transpose"
       ],
       "leadsTo": [
-        "the next lesson, <i>Positive-definite matrices</i>"
+        "Positive-definite matrices",
+        "Quadratic forms",
+        "Principal Component Analysis (PCA)"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "orthogonal diagonalization",
+        "projections",
+        "symmetric matrices"
       ]
     },
+    "motivation": "<p>You already know a diagonal matrix is easy: it stretches each coordinate axis separately. The hard question is when a non-diagonal matrix is secretly just that simple in a rotated coordinate system.</p><p>The <b>Spectral Theorem</b> says symmetric real matrices have exactly this kindness. They have real eigenvalues, perpendicular eigenvectors, and an orthonormal basis that turns the matrix into pure axis-by-axis scaling.</p>",
+    "definition": "<p>If $A$ is a real symmetric matrix, meaning $A^T=A$, then there is an orthogonal matrix $Q$ and a real diagonal matrix $\\Lambda$ such that $$A=Q\\Lambda Q^T.$$ The columns of $Q$ are orthonormal eigenvectors of $A$, and the diagonal entries of $\\Lambda$ are the corresponding eigenvalues.</p><p>The key reason is symmetry: for eigenvectors $u$ and $v$ with eigenvalues $\\lambda$ and $\\mu$, $u^TAv=(Au)^Tv$ gives $\\mu u^Tv=\\lambda u^Tv$. If $\\lambda\\ne\\mu$, then $(\\mu-\\lambda)u^Tv=0$, so $u$ and $v$ are orthogonal. The full theorem also guarantees enough eigenvectors to form a basis.</p><p><b>Assumptions that matter:</b> this statement is for real symmetric matrices; non-symmetric matrices may have complex eigenvalues or too few eigenvectors; and $Q^T=Q^{-1}$ because $Q$ is orthogonal.</p>",
+    "worked": {
+      "problem": "Diagonalize $A=\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}$ using the Spectral Theorem.",
+      "skills": [
+        "eigenvalues",
+        "orthonormal eigenvectors",
+        "orthogonal diagonalization"
+      ],
+      "strategy": "Symmetry promises perpendicular eigenvectors — find them, normalize them, and place the eigenvalues on the diagonal.",
+      "steps": [
+        {
+          "do": "Compute the characteristic determinant",
+          "result": "$(2-\\lambda)^2-1$",
+          "why": "eigenvalues solve $\\det(A-\\lambda I)=0$"
+        },
+        {
+          "do": "Set it equal to zero",
+          "result": "$(2-\\lambda)^2=1$",
+          "why": "zero determinant means a nonzero eigenvector exists"
+        },
+        {
+          "do": "Solve for eigenvalues",
+          "result": "$\\lambda=3$ and $\\lambda=1$",
+          "why": "$2-\\lambda=\\pm1$"
+        },
+        {
+          "do": "Find an eigenvector for $\\lambda=3$",
+          "result": "$(1,1)^T$",
+          "why": "$A(1,1)^T=3(1,1)^T$"
+        },
+        {
+          "do": "Find an eigenvector for $\\lambda=1$",
+          "result": "$(1,-1)^T$",
+          "why": "$A(1,-1)^T=(1,-1)^T$"
+        },
+        {
+          "do": "Normalize both eigenvectors",
+          "result": "$q_1=(1,1)^T/\\sqrt2$, $q_2=(1,-1)^T/\\sqrt2$",
+          "why": "orthogonal diagonalization uses unit columns"
+        },
+        {
+          "do": "Assemble $Q$ and $\\Lambda$",
+          "result": "$Q=\\begin{bmatrix}1/\\sqrt2&1/\\sqrt2\\\\1/\\sqrt2&-1/\\sqrt2\\end{bmatrix}$, $\\Lambda=\\begin{bmatrix}3&0\\\\0&1\\end{bmatrix}$",
+          "why": "match columns with diagonal entries"
+        }
+      ],
+      "verify": "$Q\\Lambda Q^T$ multiplies back to $\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}$.",
+      "answer": "$A=Q\\Lambda Q^T$ with the $Q$ and $\\Lambda$ above.",
+      "connects": "The matrix is just stretch by $3$ and $1$ in a rotated orthonormal basis."
+    },
+    "practice": [
+      {
+        "problem": "Diagonalize $A=\\begin{bmatrix}4&0\\\\0&7\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Read the first eigenvalue",
+            "result": "$\\lambda_1=4$",
+            "why": "diagonal matrices scale $e_1$ by the first diagonal entry"
+          },
+          {
+            "do": "Read the second eigenvalue",
+            "result": "$\\lambda_2=7$",
+            "why": "diagonal matrices scale $e_2$ by the second diagonal entry"
+          },
+          {
+            "do": "Choose eigenvectors",
+            "result": "$e_1=(1,0)^T$, $e_2=(0,1)^T$",
+            "why": "standard axes are already eigenvectors"
+          },
+          {
+            "do": "Assemble $Q$",
+            "result": "$Q=I$",
+            "why": "the eigenvectors are already orthonormal"
+          },
+          {
+            "do": "Assemble $\\Lambda$",
+            "result": "$\\Lambda=A$",
+            "why": "the matrix is already diagonal"
+          }
+        ],
+        "answer": "$A=I\\,A\\,I^T$, with eigenvalues $4$ and $7$."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}5&2\\\\2&5\\end{bmatrix}$, find the eigenvalues using the same pattern as the worked example.",
+        "steps": [
+          {
+            "do": "Write the determinant",
+            "result": "$(5-\\lambda)^2-4$",
+            "why": "subtract $\\lambda$ from the diagonal"
+          },
+          {
+            "do": "Set it equal to zero",
+            "result": "$(5-\\lambda)^2=4$",
+            "why": "eigenvalues make the determinant zero"
+          },
+          {
+            "do": "Take square roots",
+            "result": "$5-\\lambda=\\pm2$",
+            "why": "solve the square equation"
+          },
+          {
+            "do": "Solve both cases",
+            "result": "$\\lambda=3$ and $\\lambda=7$",
+            "why": "subtract from 5"
+          },
+          {
+            "do": "Order them",
+            "result": "$7,3$",
+            "why": "larger and smaller stretches are often listed together"
+          }
+        ],
+        "answer": "The eigenvalues are $7$ and $3$."
+      },
+      {
+        "problem": "Show that eigenvectors $(1,1)^T$ and $(1,-1)^T$ are orthogonal and normalize them.",
+        "steps": [
+          {
+            "do": "Compute the dot product",
+            "result": "$1\\cdot1+1\\cdot(-1)=0$",
+            "why": "zero dot product means orthogonal"
+          },
+          {
+            "do": "Compute the first length",
+            "result": "$\\sqrt2$",
+            "why": "$1^2+1^2=2$"
+          },
+          {
+            "do": "Normalize the first vector",
+            "result": "$(1,1)^T/\\sqrt2$",
+            "why": "divide by its length"
+          },
+          {
+            "do": "Compute the second length",
+            "result": "$\\sqrt2$",
+            "why": "$1^2+(-1)^2=2$"
+          },
+          {
+            "do": "Normalize the second vector",
+            "result": "$(1,-1)^T/\\sqrt2$",
+            "why": "divide by its length"
+          }
+        ],
+        "answer": "They are orthogonal; the unit vectors are $(1,1)^T/\\sqrt2$ and $(1,-1)^T/\\sqrt2$."
+      },
+      {
+        "problem": "If $A=Q\\operatorname{diag}(10,2)Q^T$ and $x=3q_1-4q_2$, compute $Ax$.",
+        "steps": [
+          {
+            "do": "Use the eigenbasis coordinates",
+            "result": "$x=3q_1-4q_2$",
+            "why": "the $q$ vectors are eigenvectors"
+          },
+          {
+            "do": "Scale the $q_1$ coordinate",
+            "result": "$10\\cdot3q_1=30q_1$",
+            "why": "eigenvalue 10 acts on $q_1$"
+          },
+          {
+            "do": "Scale the $q_2$ coordinate",
+            "result": "$2\\cdot(-4)q_2=-8q_2$",
+            "why": "eigenvalue 2 acts on $q_2$"
+          },
+          {
+            "do": "Add the scaled components",
+            "result": "$Ax=30q_1-8q_2$",
+            "why": "linearity combines the directions"
+          },
+          {
+            "do": "Compare with $x$",
+            "result": "the first coordinate is amplified more",
+            "why": "10 is larger than 2"
+          }
+        ],
+        "answer": "$Ax=30q_1-8q_2$."
+      },
+      {
+        "problem": "Use spectral form to compute $x^TAx$ when $A=Q\\operatorname{diag}(4,1)Q^T$ and $x=2q_1+3q_2$.",
+        "steps": [
+          {
+            "do": "Read the eigenbasis coordinates",
+            "result": "$y=(2,3)$",
+            "why": "$Q^Tx$ gives coordinates in the $q$ basis"
+          },
+          {
+            "do": "Write the quadratic form",
+            "result": "$x^TAx=y^T\\Lambda y$",
+            "why": "orthogonal changes preserve dot products"
+          },
+          {
+            "do": "Apply the diagonal matrix",
+            "result": "$4\\cdot2^2+1\\cdot3^2$",
+            "why": "each coordinate is weighted by an eigenvalue"
+          },
+          {
+            "do": "Compute the terms",
+            "result": "$16+9$",
+            "why": "$4\\cdot4=16$"
+          },
+          {
+            "do": "Add",
+            "result": "$25$",
+            "why": "sum the spectral contributions"
+          }
+        ],
+        "answer": "$x^TAx=25$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "PCA directions",
+        "background": "PCA studies a symmetric covariance matrix, so the Spectral Theorem guarantees perpendicular principal directions.",
+        "numbers": "Covariance $\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}$ has eigenvalues $3$ and $1$, so variance is three times larger along $(1,1)$ than along $(1,-1)$."
+      },
+      {
+        "title": "Graph Laplacians",
+        "background": "Undirected graph Laplacians are symmetric, making their spectra central to clustering and graph learning.",
+        "numbers": "For two nodes connected by one edge, $L=\\begin{bmatrix}1&-1\\\\-1&1\\end{bmatrix}$ has eigenvalues $0$ and $2$."
+      },
+      {
+        "title": "Stable covariance models",
+        "background": "Covariance matrices must be symmetric, and spectral decomposition exposes their variance axes.",
+        "numbers": "If eigenvalues are $9$ and $1$, one standard deviation is $3$ along the first eigenvector and $1$ along the second."
+      },
+      {
+        "title": "Quadratic loss geometry",
+        "background": "Near a minimum, many losses look like $\\tfrac12 x^THx$ with symmetric Hessian $H$.",
+        "numbers": "Eigenvalues $100$ and $1$ mean curvature is 100 times steeper in one orthogonal direction."
+      },
+      {
+        "title": "Symmetric attention kernels",
+        "background": "Some kernel methods build symmetric similarity matrices so eigenvectors give reusable basis functions.",
+        "numbers": "A $2\\times2$ kernel $\\begin{bmatrix}1&0.6\\\\0.6&1\\end{bmatrix}$ has eigenvalues $1.6$ and $0.4$."
+      },
+      {
+        "title": "Matrix powers",
+        "background": "Spectral form makes repeated symmetric transformations easy to compute.",
+        "numbers": "If $A=Q\\operatorname{diag}(3,1)Q^T$, then $A^4=Q\\operatorname{diag}(81,1)Q^T$."
+      }
+    ],
+    "applicationsClose": "The Spectral Theorem says symmetric structure is readable as perpendicular axes and real stretches, a language reused across ML.",
+    "takeaways": [
+      "Real symmetric matrices can be orthogonally diagonalized as $A=Q\\Lambda Q^T$.",
+      "Eigenvectors for distinct eigenvalues are orthogonal.",
+      "In the eigenbasis, applying $A$ means scaling each coordinate separately.",
+      "PCA, covariance, Hessians, kernels, and graph Laplacians all lean on this theorem."
+    ],
     "prereqs": [
       "math-09-27"
     ]
@@ -594,19 +7260,261 @@
   B({
     "id": "math-09-29",
     "title": "Positive-definite matrices",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: positive-definite matrices.",
+    "tagline": "Positive-definite matrices are the multidimensional bowls of linear algebra.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Spectral Theorem</i>"
+        "The Spectral Theorem",
+        "quadratic expressions",
+        "eigenvalues"
       ],
       "leadsTo": [
-        "the next lesson, <i>Quadratic forms</i>"
+        "Quadratic forms",
+        "The condition number",
+        "optimization"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "symmetric matrices",
+        "Cholesky factorization",
+        "Hessians"
       ]
     },
+    "motivation": "<p>You already trust the one-dimensional square $ax^2$ when $a>0$: it is never negative and it forms a bowl. In many variables, the expression $x^TAx$ plays the same role.</p><p>A <b>positive-definite</b> matrix makes that bowl positive in every nonzero direction. This is why it appears in covariance, least squares, Newton's method, and the geometry of safe optimization.</p>",
+    "definition": "<p>A real symmetric matrix $A$ is <b>positive definite</b> if $x^TAx>0$ for every nonzero vector $x$. It is positive semidefinite if $x^TAx\\ge0$ for every $x$. By the Spectral Theorem, $A=Q\\Lambda Q^T$, and $x^TAx=y^T\\Lambda y=\\sum_i \\lambda_i y_i^2$ with $y=Q^Tx$.</p><p>This derivation gives the key test: a symmetric matrix is positive definite exactly when all eigenvalues are positive. For a $2\\times2$ symmetric matrix $\\begin{bmatrix}a&b\\\\b&d\\end{bmatrix}$, positive definiteness is also equivalent to $a>0$ and $ad-b^2>0$.</p><p><b>Assumptions that matter:</b> the eigenvalue test is stated for symmetric matrices; $x=0$ is excluded from strict positivity because it always gives $0$; and positive semidefinite allows flat directions while positive definite does not.</p>",
+    "worked": {
+      "problem": "Decide whether $A=\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}$ is positive definite.",
+      "skills": [
+        "quadratic forms",
+        "eigenvalues",
+        "principal minors"
+      ],
+      "strategy": "The matrix is symmetric — either eigenvalues or the $2\\times2$ minor test can prove positivity.",
+      "steps": [
+        {
+          "do": "Check symmetry",
+          "result": "$A^T=A$",
+          "why": "positive definiteness is normally tested on symmetric matrices"
+        },
+        {
+          "do": "Read the leading entry",
+          "result": "$a=2>0$",
+          "why": "first $2\\times2$ condition"
+        },
+        {
+          "do": "Compute the determinant",
+          "result": "$\\det A=2\\cdot2-1\\cdot1=3$",
+          "why": "second $2\\times2$ condition"
+        },
+        {
+          "do": "Check the determinant sign",
+          "result": "$3>0$",
+          "why": "both principal conditions are positive"
+        },
+        {
+          "do": "State the conclusion",
+          "result": "$A$ is positive definite",
+          "why": "the symmetric $2\\times2$ test passes"
+        }
+      ],
+      "verify": "Its eigenvalues are $3$ and $1$, both positive, matching the conclusion.",
+      "answer": "$A$ is positive definite.",
+      "connects": "Positive definiteness means every nonzero direction sees positive curvature."
+    },
+    "practice": [
+      {
+        "problem": "Use the $2\\times2$ test on $A=\\begin{bmatrix}4&1\\\\1&3\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Check symmetry",
+            "result": "$A^T=A$",
+            "why": "the off-diagonal entries match"
+          },
+          {
+            "do": "Check the first entry",
+            "result": "$4>0$",
+            "why": "first leading minor"
+          },
+          {
+            "do": "Compute the determinant",
+            "result": "$4\\cdot3-1\\cdot1=11$",
+            "why": "area scaling of the matrix"
+          },
+          {
+            "do": "Check the determinant sign",
+            "result": "$11>0$",
+            "why": "second leading minor"
+          },
+          {
+            "do": "Conclude",
+            "result": "positive definite",
+            "why": "both tests pass"
+          }
+        ],
+        "answer": "$A$ is positive definite."
+      },
+      {
+        "problem": "Decide whether $B=\\begin{bmatrix}1&2\\\\2&1\\end{bmatrix}$ is positive definite.",
+        "steps": [
+          {
+            "do": "Check symmetry",
+            "result": "$B^T=B$",
+            "why": "the test applies"
+          },
+          {
+            "do": "Check the first entry",
+            "result": "$1>0$",
+            "why": "first condition passes"
+          },
+          {
+            "do": "Compute the determinant",
+            "result": "$1\\cdot1-2\\cdot2=-3$",
+            "why": "second condition"
+          },
+          {
+            "do": "Check the determinant sign",
+            "result": "$-3<0$",
+            "why": "the matrix has mixed curvature"
+          },
+          {
+            "do": "Conclude",
+            "result": "not positive definite",
+            "why": "one required condition fails"
+          }
+        ],
+        "answer": "$B$ is not positive definite."
+      },
+      {
+        "problem": "Use eigenvalues to classify $C=\\operatorname{diag}(5,0,2)$.",
+        "steps": [
+          {
+            "do": "Read the eigenvalues",
+            "result": "$5,0,2$",
+            "why": "diagonal entries are eigenvalues"
+          },
+          {
+            "do": "Check nonnegativity",
+            "result": "all are $\\ge0$",
+            "why": "positive semidefinite allows zero"
+          },
+          {
+            "do": "Check strict positivity",
+            "result": "one eigenvalue is $0$",
+            "why": "positive definite needs all positive"
+          },
+          {
+            "do": "Identify a flat vector",
+            "result": "$e_2^TCe_2=0$",
+            "why": "the zero eigenvalue gives a flat direction"
+          },
+          {
+            "do": "Classify",
+            "result": "positive semidefinite but not positive definite",
+            "why": "nonnegative with a flat direction"
+          }
+        ],
+        "answer": "$C$ is positive semidefinite, not positive definite."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}a&0\\\\0&9\\end{bmatrix}$, find the values of $a$ that make $A$ positive definite.",
+        "steps": [
+          {
+            "do": "Read eigenvalues",
+            "result": "$a$ and $9$",
+            "why": "the matrix is diagonal"
+          },
+          {
+            "do": "Require the first eigenvalue positive",
+            "result": "$a>0$",
+            "why": "positive definite needs every eigenvalue positive"
+          },
+          {
+            "do": "Require the second eigenvalue positive",
+            "result": "$9>0$",
+            "why": "already true"
+          },
+          {
+            "do": "Combine conditions",
+            "result": "$a>0$",
+            "why": "only the first condition restricts $a$"
+          },
+          {
+            "do": "Check a sample",
+            "result": "$a=2$ works",
+            "why": "both diagonal entries are then positive"
+          }
+        ],
+        "answer": "$a>0$."
+      },
+      {
+        "problem": "A Hessian is $H=\\begin{bmatrix}6&2\\\\2&2\\end{bmatrix}$. Decide whether a stationary point is a strict local minimum.",
+        "steps": [
+          {
+            "do": "Check symmetry",
+            "result": "$H^T=H$",
+            "why": "Hessians of smooth scalar functions are symmetric under usual conditions"
+          },
+          {
+            "do": "Check the first entry",
+            "result": "$6>0$",
+            "why": "first leading minor"
+          },
+          {
+            "do": "Compute determinant",
+            "result": "$6\\cdot2-2\\cdot2=8$",
+            "why": "second leading minor"
+          },
+          {
+            "do": "Check positivity",
+            "result": "$8>0$",
+            "why": "the Hessian is positive definite"
+          },
+          {
+            "do": "Interpret",
+            "result": "strict local minimum",
+            "why": "positive-definite curvature forms a bowl"
+          }
+        ],
+        "answer": "Yes. The stationary point has a strict local minimum by the positive-definite Hessian test."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Convex quadratic losses",
+        "background": "Least-squares objectives have Hessians of the form $2X^TX$, often positive definite when features are independent.",
+        "numbers": "If $X^TX=\\begin{bmatrix}4&1\\\\1&3\\end{bmatrix}$, determinant $11>0$ and first entry $4>0$, so the bowl is strict."
+      },
+      {
+        "title": "Covariance matrices",
+        "background": "Covariance measures spread, and variance in any direction cannot be negative, so covariance matrices are positive semidefinite.",
+        "numbers": "For variances $4$ and $9$ with covariance $3$, determinant $36-9=27>0$, so the covariance is positive definite."
+      },
+      {
+        "title": "Gaussian distributions",
+        "background": "A multivariate Gaussian needs a positive-definite covariance so distances and densities are meaningful.",
+        "numbers": "With covariance $\\operatorname{diag}(4,1)$, vector $(2,1)$ has Mahalanobis square $2^2/4+1^2/1=2$."
+      },
+      {
+        "title": "Kernel methods",
+        "background": "Kernel matrices must be positive semidefinite so they behave like dot products in a feature space.",
+        "numbers": "Matrix $\\begin{bmatrix}1&0.8\\\\0.8&1\\end{bmatrix}$ has determinant $0.36>0$, so it is positive definite."
+      },
+      {
+        "title": "Newton optimization",
+        "background": "Newton's method trusts curvature; positive-definite Hessians point toward local minima.",
+        "numbers": "For $H=\\operatorname{diag}(10,2)$ and gradient $(5,4)$, the Newton step solves $Hp=-g$, giving $p=(-0.5,-2)$."
+      },
+      {
+        "title": "Regularization",
+        "background": "Adding $\\lambda I$ lifts eigenvalues and can turn flat curvature into strict curvature.",
+        "numbers": "Eigenvalues $0$ and $3$ become $0.1$ and $3.1$ after adding $0.1I$, making the matrix positive definite."
+      }
+    ],
+    "applicationsClose": "Positive definiteness is the same trustworthy bowl shape wearing covariance, kernel, Hessian, and regularization clothing.",
+    "takeaways": [
+      "A symmetric $A$ is positive definite when $x^TAx>0$ for every nonzero $x$.",
+      "For symmetric matrices, positive definiteness is equivalent to all eigenvalues being positive.",
+      "Positive semidefinite matrices may have zero eigenvalues and flat directions.",
+      "Covariances, kernels, Hessians, and regularized losses use this positivity condition."
+    ],
     "prereqs": [
       "math-09-28"
     ]
@@ -615,19 +7523,271 @@
   B({
     "id": "math-09-30",
     "title": "Quadratic forms",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: quadratic forms.",
+    "tagline": "A quadratic form measures a vector by mixing its coordinates through a matrix.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Positive-definite matrices</i>"
+        "Positive-definite matrices",
+        "dot products",
+        "matrix multiplication"
       ],
       "leadsTo": [
-        "the next lesson, <i>Singular Value Decomposition (SVD)</i>"
+        "Least squares",
+        "The condition number",
+        "PCA"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "Hessians",
+        "ellipses",
+        "eigenvalues"
       ]
     },
+    "motivation": "<p>You already know $3x^2$ as a one-variable curve. In two or more variables, squared terms can also mix: $2x_1x_2$ matters just as much as $x_1^2$.</p><p>A <b>quadratic form</b> packages all of that into $x^TAx$. It is the language of ellipses, energy, curvature, variance, and second-order approximations in ML.</p>",
+    "definition": "<p>Given a square matrix $A$ and vector $x$, the expression $x^TAx$ is a <b>quadratic form</b>. When $A$ is symmetric, the coefficients are easy to read: for $A=\\begin{bmatrix}a&b\\\\b&d\\end{bmatrix}$, $$x^TAx=ax_1^2+2bx_1x_2+dx_2^2.$$ The factor $2$ appears because the off-diagonal terms $b x_1x_2$ and $b x_2x_1$ both contribute.</p><p>If $A=Q\\Lambda Q^T$, then $x^TAx=\\sum_i\\lambda_i y_i^2$ where $y=Q^Tx$. So eigenvalues tell whether the form is a bowl, cap, saddle, or flat in particular directions.</p><p><b>Assumptions that matter:</b> only the symmetric part of $A$ affects $x^TAx$; positive, negative, and zero eigenvalues determine shape; and geometric statements usually assume $A$ is symmetric.</p>",
+    "worked": {
+      "problem": "Expand and classify $q(x)=x^TAx$ for $A=\\begin{bmatrix}3&1\\\\1&2\\end{bmatrix}$.",
+      "skills": [
+        "matrix multiplication",
+        "expansion",
+        "positive definiteness"
+      ],
+      "strategy": "Expand the form, then use the positive-definite test to read its shape.",
+      "steps": [
+        {
+          "do": "Write the vector",
+          "result": "$x=(x_1,x_2)^T$",
+          "why": "name the coordinates"
+        },
+        {
+          "do": "Multiply $Ax$",
+          "result": "$(3x_1+x_2,\\ x_1+2x_2)^T$",
+          "why": "apply the matrix to the vector"
+        },
+        {
+          "do": "Dot with $x$",
+          "result": "$x_1(3x_1+x_2)+x_2(x_1+2x_2)$",
+          "why": "compute $x^T(Ax)$"
+        },
+        {
+          "do": "Collect terms",
+          "result": "$3x_1^2+2x_1x_2+2x_2^2$",
+          "why": "the cross terms add"
+        },
+        {
+          "do": "Check the first leading minor",
+          "result": "$3>0$",
+          "why": "positive-definite test"
+        },
+        {
+          "do": "Check the determinant",
+          "result": "$3\\cdot2-1=5>0$",
+          "why": "second condition passes"
+        },
+        {
+          "do": "Classify the shape",
+          "result": "positive definite bowl",
+          "why": "the quadratic form is positive away from zero"
+        }
+      ],
+      "verify": "At $x=(1,-1)$, $q=3-2+2=3>0$; at $x=(1,1)$, $q=7>0$.",
+      "answer": "$q(x)=3x_1^2+2x_1x_2+2x_2^2$, and it is positive definite.",
+      "connects": "The matrix stores the squared and mixed curvature terms compactly."
+    },
+    "practice": [
+      {
+        "problem": "Expand $x^T\\begin{bmatrix}2&0\\\\0&5\\end{bmatrix}x$.",
+        "steps": [
+          {
+            "do": "Write $x$",
+            "result": "$x=(x_1,x_2)^T$",
+            "why": "name coordinates"
+          },
+          {
+            "do": "Multiply by the matrix",
+            "result": "$(2x_1,5x_2)^T$",
+            "why": "diagonal entries scale coordinates"
+          },
+          {
+            "do": "Dot with $x$",
+            "result": "$2x_1^2+5x_2^2$",
+            "why": "multiply matching coordinates"
+          },
+          {
+            "do": "Check cross terms",
+            "result": "none",
+            "why": "off-diagonal entries are zero"
+          },
+          {
+            "do": "Classify signs",
+            "result": "positive for nonzero $x$",
+            "why": "both coefficients are positive"
+          }
+        ],
+        "answer": "$2x_1^2+5x_2^2$, positive definite."
+      },
+      {
+        "problem": "Find the matrix for $q(x)=4x_1^2-6x_1x_2+2x_2^2$.",
+        "steps": [
+          {
+            "do": "Read the $x_1^2$ coefficient",
+            "result": "$a=4$",
+            "why": "diagonal entry $a$ multiplies $x_1^2$"
+          },
+          {
+            "do": "Read the $x_2^2$ coefficient",
+            "result": "$d=2$",
+            "why": "diagonal entry $d$ multiplies $x_2^2$"
+          },
+          {
+            "do": "Split the cross coefficient",
+            "result": "$2b=-6$",
+            "why": "symmetric off-diagonal terms add"
+          },
+          {
+            "do": "Solve for $b$",
+            "result": "$b=-3$",
+            "why": "divide the cross coefficient by 2"
+          },
+          {
+            "do": "Assemble the matrix",
+            "result": "$A=\\begin{bmatrix}4&-3\\\\-3&2\\end{bmatrix}$",
+            "why": "place $b$ symmetrically"
+          }
+        ],
+        "answer": "$A=\\begin{bmatrix}4&-3\\\\-3&2\\end{bmatrix}$."
+      },
+      {
+        "problem": "Evaluate $x^TAx$ for $A=\\begin{bmatrix}1&2\\\\2&5\\end{bmatrix}$ and $x=(3,-1)^T$.",
+        "steps": [
+          {
+            "do": "Compute $Ax$",
+            "result": "$(1,1)^T$",
+            "why": "$(3-2,6-5)=(1,1)$"
+          },
+          {
+            "do": "Dot with $x$",
+            "result": "$(3,-1)\\cdot(1,1)$",
+            "why": "finish $x^T(Ax)$"
+          },
+          {
+            "do": "Multiply coordinates",
+            "result": "$3-1$",
+            "why": "dot product arithmetic"
+          },
+          {
+            "do": "Add",
+            "result": "$2$",
+            "why": "sum the products"
+          },
+          {
+            "do": "Check with expansion",
+            "result": "$9-12+5=2$",
+            "why": "both methods agree"
+          }
+        ],
+        "answer": "$x^TAx=2$."
+      },
+      {
+        "problem": "Classify $q(x)=x_1^2-x_2^2$ using eigenvalues.",
+        "steps": [
+          {
+            "do": "Write the matrix",
+            "result": "$A=\\operatorname{diag}(1,-1)$",
+            "why": "diagonal coefficients are $1$ and $-1$"
+          },
+          {
+            "do": "Read eigenvalues",
+            "result": "$1$ and $-1$",
+            "why": "diagonal matrix"
+          },
+          {
+            "do": "Check signs",
+            "result": "one positive and one negative",
+            "why": "mixed signs create different curvature directions"
+          },
+          {
+            "do": "Evaluate one direction",
+            "result": "$q(1,0)=1$",
+            "why": "positive along $x_1$"
+          },
+          {
+            "do": "Evaluate another direction",
+            "result": "$q(0,1)=-1$",
+            "why": "negative along $x_2$"
+          }
+        ],
+        "answer": "The form is indefinite, a saddle."
+      },
+      {
+        "problem": "A local loss is approximated by $L(w)\\approx L_0+\\tfrac12 h^THh$ with $H=\\operatorname{diag}(8,2)$ and $h=(0.1,-0.3)$. Compute the quadratic increase.",
+        "steps": [
+          {
+            "do": "Apply $H$ to $h$",
+            "result": "$(0.8,-0.6)$",
+            "why": "scale by diagonal entries"
+          },
+          {
+            "do": "Compute $h^THh$",
+            "result": "$0.1\\cdot0.8+(-0.3)(-0.6)$",
+            "why": "dot with $h$"
+          },
+          {
+            "do": "Add the products",
+            "result": "$0.08+0.18=0.26$",
+            "why": "sum the two curvature contributions"
+          },
+          {
+            "do": "Multiply by $1/2$",
+            "result": "$0.13$",
+            "why": "the Taylor quadratic term has factor $1/2$"
+          },
+          {
+            "do": "Interpret",
+            "result": "loss increases by about $0.13$",
+            "why": "positive curvature penalizes the step"
+          }
+        ],
+        "answer": "The approximate increase is $0.13$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Second-order loss approximations",
+        "background": "Taylor expansion near a parameter vector uses a quadratic form to describe curvature.",
+        "numbers": "With $H=\\operatorname{diag}(8,2)$ and step $(0.1,-0.3)$, the increase is $0.13$."
+      },
+      {
+        "title": "Mahalanobis distance",
+        "background": "Statistics measures distance using covariance-aware ellipses rather than ordinary circles.",
+        "numbers": "If $\\Sigma=\\operatorname{diag}(4,1)$, then $x=(2,1)$ has distance square $x^T\\Sigma^{-1}x=1+1=2$."
+      },
+      {
+        "title": "Ridge penalties",
+        "background": "Regularization often adds a quadratic form to discourage large weights.",
+        "numbers": "For $\\lambda=0.1$ and $w=(3,4)$, penalty $0.1w^Tw=0.1\\cdot25=2.5$."
+      },
+      {
+        "title": "Energy in physical systems",
+        "background": "Many energies are quadratic in displacement or velocity, which makes quadratic forms a shared language across engineering.",
+        "numbers": "With stiffness $K=\\operatorname{diag}(10,2)$ and displacement $(0.5,1)$, energy $\\tfrac12 x^TKx=\\tfrac12(2.5+2)=2.25$."
+      },
+      {
+        "title": "Confidence ellipses",
+        "background": "Ellipses arise from setting a positive-definite quadratic form equal to a constant.",
+        "numbers": "$x_1^2/9+x_2^2/4=1$ has radii $3$ and $2$ along the coordinate axes."
+      },
+      {
+        "title": "Curvature-aware optimization",
+        "background": "Optimizers use curvature to avoid stepping too far in steep directions.",
+        "numbers": "If eigenvalues of $H$ are $100$ and $1$, the same coordinate step costs 100 times more in the first eigen-direction."
+      }
+    ],
+    "applicationsClose": "Quadratic forms let one expression describe bowls, ellipses, penalties, energies, and local loss geometry.",
+    "takeaways": [
+      "A quadratic form has the shape $x^TAx$.",
+      "For symmetric $2\\times2$ matrices, off-diagonal entries contribute twice to the cross term.",
+      "Eigenvalue signs classify the shape as bowl, cap, saddle, or flat.",
+      "ML uses quadratic forms for curvature, covariance-aware distance, and regularization."
+    ],
     "prereqs": [
       "math-09-29"
     ]
@@ -636,19 +7796,266 @@
   B({
     "id": "math-09-31",
     "title": "Singular Value Decomposition (SVD)",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: singular value decomposition (svd).",
+    "tagline": "SVD says every matrix rotates, stretches along perpendicular axes, and rotates again.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Quadratic forms</i>"
+        "The Spectral Theorem",
+        "orthogonality",
+        "matrix rank"
       ],
       "leadsTo": [
-        "the next lesson, <i>Least squares</i>"
+        "The pseudoinverse",
+        "Principal Component Analysis (PCA)",
+        "low-rank factorization"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "orthogonal matrices",
+        "matrix norms",
+        "least squares"
       ]
     },
+    "motivation": "<p>You already know symmetric matrices have eigenvectors that behave beautifully. But ML is full of rectangular matrices: data tables, embeddings, image patches, and neural-network weights.</p><p>The <b>Singular Value Decomposition</b> is the version that works for every matrix. It finds input directions, output directions, and nonnegative stretch factors connecting them.</p>",
+    "definition": "<p>Every real $m\\times n$ matrix $A$ has an SVD $$A=U\\Sigma V^T,$$ where $U$ and $V$ have orthonormal columns and $\\Sigma$ is diagonal-shaped with nonnegative entries $\\sigma_1\\ge\\sigma_2\\ge\\cdots\\ge0$ called <b>singular values</b>. The columns of $V$ are right singular vectors, and the columns of $U$ are left singular vectors.</p><p>Why this follows from spectral ideas: $A^TA$ is symmetric positive semidefinite, so it has orthonormal eigenvectors $v_i$ and nonnegative eigenvalues $\\lambda_i$. The singular values are $\\sigma_i=\\sqrt{\\lambda_i}$, and when $\\sigma_i>0$, $u_i=Av_i/\\sigma_i$.</p><p><b>Assumptions that matter:</b> singular values are never negative; zero singular values reveal rank deficiency; and unlike eigen-decomposition, SVD exists for rectangular and non-symmetric matrices.</p>",
+    "worked": {
+      "problem": "Find an SVD of $A=\\begin{bmatrix}3&0\\\\0&1\\end{bmatrix}$.",
+      "skills": [
+        "singular values",
+        "orthogonal factors",
+        "diagonal matrices"
+      ],
+      "strategy": "The matrix already stretches coordinate axes, so the singular vectors are the standard basis.",
+      "steps": [
+        {
+          "do": "Compute $A^TA$",
+          "result": "$\\begin{bmatrix}9&0\\\\0&1\\end{bmatrix}$",
+          "why": "right singular vectors come from $A^TA$"
+        },
+        {
+          "do": "Read eigenvalues of $A^TA$",
+          "result": "$9$ and $1$",
+          "why": "the matrix is diagonal"
+        },
+        {
+          "do": "Take square roots",
+          "result": "$\\sigma_1=3$, $\\sigma_2=1$",
+          "why": "singular values are square roots of eigenvalues"
+        },
+        {
+          "do": "Choose right singular vectors",
+          "result": "$v_1=e_1$, $v_2=e_2$",
+          "why": "standard axes diagonalize $A^TA$"
+        },
+        {
+          "do": "Compute left singular vectors",
+          "result": "$u_1=Ae_1/3=e_1$, $u_2=Ae_2/1=e_2$",
+          "why": "use $u_i=Av_i/\\sigma_i$"
+        },
+        {
+          "do": "Assemble the SVD",
+          "result": "$U=I$, $\\Sigma=\\operatorname{diag}(3,1)$, $V=I$",
+          "why": "the matrix is already diagonal and nonnegative"
+        }
+      ],
+      "verify": "$U\\Sigma V^T=I\\Sigma I=\\begin{bmatrix}3&0\\\\0&1\\end{bmatrix}$.",
+      "answer": "One SVD is $A=I\\operatorname{diag}(3,1)I^T$.",
+      "connects": "SVD reads a matrix as perpendicular input directions stretched into perpendicular output directions."
+    },
+    "practice": [
+      {
+        "problem": "Find the singular values of $A=\\begin{bmatrix}0&2\\\\0&0\\\\0&0\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Compute $A^TA$",
+            "result": "$\\begin{bmatrix}0&0\\\\0&4\\end{bmatrix}$",
+            "why": "singular values come from $A^TA$"
+          },
+          {
+            "do": "Read eigenvalues",
+            "result": "$4$ and $0$",
+            "why": "diagonal matrix"
+          },
+          {
+            "do": "Take square roots",
+            "result": "$2$ and $0$",
+            "why": "singular values are nonnegative roots"
+          },
+          {
+            "do": "Order them",
+            "result": "$\\sigma_1=2$, $\\sigma_2=0$",
+            "why": "singular values are listed descending"
+          },
+          {
+            "do": "Read rank",
+            "result": "$1$",
+            "why": "one singular value is positive"
+          }
+        ],
+        "answer": "The singular values are $2$ and $0$; the rank is $1$."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}1&0\\\\0&1\\\\0&0\\end{bmatrix}$, compute $A^TA$ and the singular values.",
+        "steps": [
+          {
+            "do": "Compute the first diagonal entry",
+            "result": "$1$",
+            "why": "first column has length 1"
+          },
+          {
+            "do": "Compute the second diagonal entry",
+            "result": "$1$",
+            "why": "second column has length 1"
+          },
+          {
+            "do": "Compute the off-diagonal entry",
+            "result": "$0$",
+            "why": "the columns are orthogonal"
+          },
+          {
+            "do": "Write $A^TA$",
+            "result": "$I_2$",
+            "why": "columns are orthonormal"
+          },
+          {
+            "do": "Take square roots of eigenvalues",
+            "result": "$1,1$",
+            "why": "eigenvalues of $I_2$ are both 1"
+          }
+        ],
+        "answer": "The singular values are $1$ and $1$."
+      },
+      {
+        "problem": "If singular values are $5,2,0$, find the rank and Frobenius norm.",
+        "steps": [
+          {
+            "do": "Count positive singular values",
+            "result": "$2$",
+            "why": "rank equals the number of nonzero singular values"
+          },
+          {
+            "do": "Square the singular values",
+            "result": "$25,4,0$",
+            "why": "Frobenius norm squares add"
+          },
+          {
+            "do": "Add the squares",
+            "result": "$29$",
+            "why": "sum all singular-value squares"
+          },
+          {
+            "do": "Take the square root",
+            "result": "$\\sqrt{29}$",
+            "why": "finish the norm"
+          },
+          {
+            "do": "Approximate",
+            "result": "$\\sqrt{29}\\approx5.385$",
+            "why": "numerical size"
+          }
+        ],
+        "answer": "Rank $2$ and $\\|A\\|_F=\\sqrt{29}\\approx5.385$."
+      },
+      {
+        "problem": "For $A=U\\operatorname{diag}(4,1)V^T$, compute $A v_1$ and $A v_2$.",
+        "steps": [
+          {
+            "do": "Use the first right singular vector",
+            "result": "$V^Tv_1=e_1$",
+            "why": "$v_1$ is the first column of $V$"
+          },
+          {
+            "do": "Apply $\\Sigma$",
+            "result": "$4e_1$",
+            "why": "the first singular value is 4"
+          },
+          {
+            "do": "Apply $U$",
+            "result": "$4u_1$",
+            "why": "the first coordinate maps to the first left singular vector"
+          },
+          {
+            "do": "Repeat for $v_2$",
+            "result": "$A v_2=1u_2$",
+            "why": "the second singular value is 1"
+          },
+          {
+            "do": "Interpret",
+            "result": "two perpendicular inputs stretch by $4$ and $1$",
+            "why": "this is the SVD geometry"
+          }
+        ],
+        "answer": "$Av_1=4u_1$ and $Av_2=u_2$."
+      },
+      {
+        "problem": "A matrix has singular values $10,3,1$. What fraction of squared Frobenius energy is captured by the top two?",
+        "steps": [
+          {
+            "do": "Square the singular values",
+            "result": "$100,9,1$",
+            "why": "energy uses squared singular values"
+          },
+          {
+            "do": "Compute total energy",
+            "result": "$100+9+1=110$",
+            "why": "sum all squared singular values"
+          },
+          {
+            "do": "Compute top-two energy",
+            "result": "$100+9=109$",
+            "why": "keep the first two components"
+          },
+          {
+            "do": "Divide",
+            "result": "$109/110\\approx0.991$",
+            "why": "fraction captured"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$99.1\\%$",
+            "why": "easier to interpret"
+          }
+        ],
+        "answer": "The top two singular values capture about $99.1\\%$ of the squared Frobenius energy."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Low-rank approximation",
+        "background": "SVD gives the best rank-$k$ approximation in Frobenius and spectral norm, which is why it is a compression workhorse.",
+        "numbers": "If singular values are $10,3,1$, rank 2 keeps $109/110=99.1\\%$ of squared energy."
+      },
+      {
+        "title": "Latent semantic analysis",
+        "background": "Early information retrieval used SVD to reduce term-document matrices into latent topics.",
+        "numbers": "A rank-50 approximation to a $10000\\times1000$ matrix stores roughly $50(10000+1000+1)=550050$ numbers instead of $10,000,000$."
+      },
+      {
+        "title": "Image compression",
+        "background": "Grayscale images are matrices, and SVD stores dominant visual patterns first.",
+        "numbers": "A $100\\times100$ image rank 10 approximation stores $10(100+100+1)=2010$ numbers instead of $10000$."
+      },
+      {
+        "title": "PCA computation",
+        "background": "PCA can be computed by applying SVD to a centered data matrix.",
+        "numbers": "If centered $X$ has singular values $6$ and $2$ over $n=5$ examples, variances are $36/4=9$ and $4/4=1$."
+      },
+      {
+        "title": "Numerical rank detection",
+        "background": "Small singular values often signal redundant columns or near-dependencies.",
+        "numbers": "Singular values $100,1,0.0001$ suggest effective rank $2$ if tolerance is $0.001$."
+      },
+      {
+        "title": "Embedding analysis",
+        "background": "SVD reveals dominant directions in embedding or activation matrices.",
+        "numbers": "If the first singular value is $20$ and total squared energy is $500$, the first direction explains $400/500=80\\%$."
+      }
+    ],
+    "applicationsClose": "SVD is the universal matrix microscope: it shows directions, stretches, rank, compression, and energy in one view.",
+    "takeaways": [
+      "Every real matrix has an SVD $A=U\\Sigma V^T$.",
+      "Singular values are nonnegative square roots of eigenvalues of $A^TA$.",
+      "Rank equals the number of positive singular values.",
+      "Low-rank approximation, PCA, compression, and numerical diagnostics all use SVD."
+    ],
     "prereqs": [
       "math-09-30"
     ]
@@ -657,19 +8064,266 @@
   B({
     "id": "math-09-32",
     "title": "Least squares",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: least squares.",
+    "tagline": "Least squares finds the prediction that misses the data as little as possible in squared distance.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Singular Value Decomposition (SVD)</i>"
+        "QR factorization",
+        "orthogonal projections",
+        "quadratic forms"
       ],
       "leadsTo": [
-        "the next lesson, <i>The pseudoinverse</i>"
+        "The pseudoinverse",
+        "PCA",
+        "regularized regression"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "normal equations",
+        "projections",
+        "linear regression"
       ]
     },
+    "motivation": "<p>You already know that an overdetermined system can ask for too much: three data points may not lie exactly on one line. Instead of giving up, we ask for the closest line.</p><p><b>Least squares</b> chooses parameters that minimize the squared residual $\\|Ax-b\\|^2$. Geometrically, it projects $b$ onto the column space of $A$.</p>",
+    "definition": "<p>For a tall matrix $A$ and target vector $b$, the least-squares problem is $$\\min_x \\|Ax-b\\|_2^2.$$ At the optimum $\\hat x$, the residual $r=b-A\\hat x$ is orthogonal to every column of $A$, so $A^Tr=0$. This gives the <b>normal equations</b> $$A^TA\\hat x=A^Tb.$$</p><p>If $A$ has independent columns, $A^TA$ is positive definite and the solution is unique. With QR, $A=QR$, the problem becomes $R\\hat x=Q^Tb$, which is usually more stable than solving the normal equations directly.</p><p><b>Assumptions that matter:</b> uniqueness needs full column rank; squared residuals emphasize large errors; and forming $A^TA$ can worsen conditioning even though it is algebraically correct.</p>",
+    "worked": {
+      "problem": "Fit $y\\approx c$ to data $2,4,5$ by least squares.",
+      "skills": [
+        "constant model",
+        "normal equations",
+        "mean as projection"
+      ],
+      "strategy": "A constant model has one column of ones — solve the one-parameter normal equation.",
+      "steps": [
+        {
+          "do": "Write the design matrix",
+          "result": "$A=\\begin{bmatrix}1\\\\1\\\\1\\end{bmatrix}$",
+          "why": "a constant model predicts the same $c$ each time"
+        },
+        {
+          "do": "Write the target",
+          "result": "$b=(2,4,5)^T$",
+          "why": "these are the observed values"
+        },
+        {
+          "do": "Compute $A^TA$",
+          "result": "$3$",
+          "why": "there are three ones"
+        },
+        {
+          "do": "Compute $A^Tb$",
+          "result": "$11$",
+          "why": "$2+4+5=11$"
+        },
+        {
+          "do": "Solve the normal equation",
+          "result": "$3c=11$",
+          "why": "least squares sets $A^TAc=A^Tb$"
+        },
+        {
+          "do": "Divide by 3",
+          "result": "$c=11/3$",
+          "why": "the best constant is the mean"
+        }
+      ],
+      "verify": "Residuals are $-5/3$, $1/3$, and $4/3$, and they sum to $0$, so they are orthogonal to the column of ones.",
+      "answer": "The least-squares constant is $c=11/3\\approx3.667$.",
+      "connects": "Least squares projects the data vector onto the model's column space."
+    },
+    "practice": [
+      {
+        "problem": "Fit a constant to data $1,3,8$.",
+        "steps": [
+          {
+            "do": "Write $A^TA$",
+            "result": "$3$",
+            "why": "three observations of one constant"
+          },
+          {
+            "do": "Compute $A^Tb$",
+            "result": "$1+3+8=12$",
+            "why": "sum the observations"
+          },
+          {
+            "do": "Write the normal equation",
+            "result": "$3c=12$",
+            "why": "least-squares condition"
+          },
+          {
+            "do": "Solve",
+            "result": "$c=4$",
+            "why": "divide by 3"
+          },
+          {
+            "do": "Check residual sum",
+            "result": "$-3-1+4=0$",
+            "why": "residuals are orthogonal to constants"
+          }
+        ],
+        "answer": "The best constant is $4$."
+      },
+      {
+        "problem": "Fit $y=mx$ to points $(1,2)$ and $(2,5)$.",
+        "steps": [
+          {
+            "do": "Write $A$ and $b$",
+            "result": "$A=(1,2)^T$, $b=(2,5)^T$",
+            "why": "the one feature is $x$"
+          },
+          {
+            "do": "Compute $A^TA$",
+            "result": "$1^2+2^2=5$",
+            "why": "sum feature squares"
+          },
+          {
+            "do": "Compute $A^Tb$",
+            "result": "$1\\cdot2+2\\cdot5=12$",
+            "why": "feature-target dot product"
+          },
+          {
+            "do": "Solve",
+            "result": "$5m=12$",
+            "why": "normal equation"
+          },
+          {
+            "do": "Divide",
+            "result": "$m=12/5=2.4$",
+            "why": "best slope through the origin"
+          }
+        ],
+        "answer": "$m=2.4$."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}1&0\\\\1&1\\\\1&2\\end{bmatrix}$ and $b=(1,2,2)^T$, compute $A^TA$ and $A^Tb$.",
+        "steps": [
+          {
+            "do": "Dot the first column with itself",
+            "result": "$3$",
+            "why": "three ones"
+          },
+          {
+            "do": "Dot the columns together",
+            "result": "$0+1+2=3$",
+            "why": "off-diagonal entry"
+          },
+          {
+            "do": "Dot the second column with itself",
+            "result": "$0^2+1^2+2^2=5$",
+            "why": "second diagonal entry"
+          },
+          {
+            "do": "Compute first entry of $A^Tb$",
+            "result": "$1+2+2=5$",
+            "why": "sum targets"
+          },
+          {
+            "do": "Compute second entry of $A^Tb$",
+            "result": "$0\\cdot1+1\\cdot2+2\\cdot2=6$",
+            "why": "feature-target dot product"
+          }
+        ],
+        "answer": "$A^TA=\\begin{bmatrix}3&3\\\\3&5\\end{bmatrix}$ and $A^Tb=(5,6)^T$."
+      },
+      {
+        "problem": "Solve $\\begin{bmatrix}3&3\\\\3&5\\end{bmatrix}\\begin{bmatrix}c\\\\m\\end{bmatrix}=\\begin{bmatrix}5\\\\6\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Write equations",
+            "result": "$3c+3m=5$, $3c+5m=6$",
+            "why": "expand the matrix equation"
+          },
+          {
+            "do": "Subtract the first equation from the second",
+            "result": "$2m=1$",
+            "why": "eliminate $c$"
+          },
+          {
+            "do": "Solve for $m$",
+            "result": "$m=1/2$",
+            "why": "divide by 2"
+          },
+          {
+            "do": "Substitute into the first equation",
+            "result": "$3c+3/2=5$",
+            "why": "solve for intercept"
+          },
+          {
+            "do": "Solve for $c$",
+            "result": "$c=7/6$",
+            "why": "$3c=7/2$"
+          }
+        ],
+        "answer": "$c=7/6$, $m=1/2$."
+      },
+      {
+        "problem": "Given residual $r=(1,-2,1)^T$ and design columns $a_1=(1,1,1)^T$, $a_2=(0,1,2)^T$, check least-squares optimality.",
+        "steps": [
+          {
+            "do": "Compute $a_1^Tr$",
+            "result": "$1-2+1=0$",
+            "why": "residual must be orthogonal to first column"
+          },
+          {
+            "do": "Compute $a_2^Tr$",
+            "result": "$0\\cdot1+1(-2)+2(1)=0$",
+            "why": "residual must be orthogonal to second column"
+          },
+          {
+            "do": "Combine dot products",
+            "result": "$A^Tr=(0,0)^T$",
+            "why": "both columns are orthogonal to the residual"
+          },
+          {
+            "do": "State optimality",
+            "result": "normal equations hold",
+            "why": "$A^T(b-A\\hat x)=0$"
+          },
+          {
+            "do": "Interpret",
+            "result": "the fit is least-squares optimal",
+            "why": "no column-space adjustment reduces squared error"
+          }
+        ],
+        "answer": "Yes. The residual satisfies the least-squares orthogonality condition."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Linear regression",
+        "background": "Least squares is the classical foundation of supervised regression and still underlies many ML baselines.",
+        "numbers": "For points $(1,2)$ and $(2,5)$ through the origin, slope $m=12/5=2.4$."
+      },
+      {
+        "title": "Calibration",
+        "background": "Models often need a linear correction to align scores with observed outcomes.",
+        "numbers": "If predictions $[1,2,3]$ should match $[2,4,5]$, a fitted slope through zero is $(1\\cdot2+2\\cdot4+3\\cdot5)/(1+4+9)=25/14$."
+      },
+      {
+        "title": "Sensor fusion",
+        "background": "Multiple noisy measurements of one quantity are often combined by minimizing squared error.",
+        "numbers": "Readings $9.8,10.1,10.0$ have least-squares constant $9.9667$."
+      },
+      {
+        "title": "Recommendation baselines",
+        "background": "A simple user or item bias can be fitted as an average residual before more complex models are added.",
+        "numbers": "Residuals $1,-2,4$ give best constant bias $(1-2+4)/3=1$."
+      },
+      {
+        "title": "Curve fitting",
+        "background": "Polynomial regression is least squares with columns $1,x,x^2$ and beyond.",
+        "numbers": "For $x=2$, row $[1,2,4]$ times coefficients $(1,0.5,-0.1)$ predicts $1.6$."
+      },
+      {
+        "title": "Batch metric smoothing",
+        "background": "When a line is fit to noisy daily metrics, squared residuals choose the trend with minimum total squared miss.",
+        "numbers": "Errors $1,-1,2$ have squared loss $1+1+4=6$, while errors $0,0,3$ have squared loss $9$."
+      }
+    ],
+    "applicationsClose": "Least squares is projection thinking with data: choose the model point whose residual is perpendicular to every allowed adjustment.",
+    "takeaways": [
+      "Least squares minimizes $\\|Ax-b\\|_2^2$.",
+      "At the solution, the residual is orthogonal to the column space of $A$.",
+      "The normal equations are $A^TA\\hat x=A^Tb$.",
+      "QR often solves least squares more stably than forming $A^TA$."
+    ],
     "prereqs": [
       "math-09-31"
     ]
@@ -678,19 +8332,261 @@
   B({
     "id": "math-09-33",
     "title": "The pseudoinverse",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: the pseudoinverse.",
+    "tagline": "The pseudoinverse is the inverse that still knows what to do when a matrix is rectangular or rank deficient.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Least squares</i>"
+        "Singular Value Decomposition (SVD)",
+        "Least squares",
+        "matrix inverses"
       ],
       "leadsTo": [
-        "the next lesson, <i>Principal Component Analysis (PCA)</i>"
+        "Principal Component Analysis (PCA)",
+        "low-rank factorization",
+        "regularization"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "least-squares solutions",
+        "minimum-norm solutions",
+        "SVD"
       ]
     },
+    "motivation": "<p>You already know that square invertible matrices solve $Ax=b$ by $x=A^{-1}b$. But real data matrices are often tall, wide, or redundant, so the ordinary inverse does not exist.</p><p>The <b>pseudoinverse</b> $A^+$ extends the inverse idea. It gives least-squares solutions when exact solutions are impossible and minimum-norm solutions when many exact solutions exist.</p>",
+    "definition": "<p>If $A=U\\Sigma V^T$ is an SVD, the <b>Moore-Penrose pseudoinverse</b> is $$A^+=V\\Sigma^+U^T,$$ where $\\Sigma^+$ is formed by replacing each positive singular value $\\sigma_i$ with $1/\\sigma_i$ and leaving zeros as zeros, then transposing the diagonal shape.</p><p>For a full-column-rank tall matrix, $A^+=(A^TA)^{-1}A^T$, so $A^+b$ is the least-squares solution. For a full-row-rank wide matrix, $A^+=A^T(AA^T)^{-1}$, giving the minimum-norm exact solution when one exists.</p><p><b>Assumptions that matter:</b> tiny singular values can make $A^+b$ unstable; zeros are not inverted; and regularized variants often replace $1/\\sigma$ by safer shrinkage factors.</p>",
+    "worked": {
+      "problem": "Find $A^+$ for $A=\\begin{bmatrix}2&0\\\\0&0\\end{bmatrix}$ and solve $A^+b$ for $b=(6,5)^T$.",
+      "skills": [
+        "SVD intuition",
+        "reciprocals of singular values",
+        "least-squares solutions"
+      ],
+      "strategy": "Invert the nonzero stretch and ignore the zero stretch.",
+      "steps": [
+        {
+          "do": "Read the singular values",
+          "result": "$2$ and $0$",
+          "why": "the matrix is diagonal with nonnegative entries"
+        },
+        {
+          "do": "Invert the positive singular value",
+          "result": "$1/2$",
+          "why": "pseudoinverse reverses nonzero stretches"
+        },
+        {
+          "do": "Leave the zero singular value",
+          "result": "$0$",
+          "why": "division by zero is not allowed"
+        },
+        {
+          "do": "Write the pseudoinverse",
+          "result": "$A^+=\\begin{bmatrix}1/2&0\\\\0&0\\end{bmatrix}$",
+          "why": "same diagonal directions"
+        },
+        {
+          "do": "Multiply by $b$",
+          "result": "$A^+b=(3,0)^T$",
+          "why": "half of 6 is 3 and the zero direction stays 0"
+        }
+      ],
+      "verify": "$A(3,0)^T=(6,0)^T$, the closest vector in the column space to $(6,5)^T$.",
+      "answer": "$A^+=\\begin{bmatrix}1/2&0\\\\0&0\\end{bmatrix}$ and $A^+b=(3,0)^T$.",
+      "connects": "The pseudoinverse reverses what the matrix can do and stays quiet where the matrix loses information."
+    },
+    "practice": [
+      {
+        "problem": "Find the pseudoinverse of $A=\\operatorname{diag}(4,2)$.",
+        "steps": [
+          {
+            "do": "Read singular values",
+            "result": "$4$ and $2$",
+            "why": "positive diagonal entries"
+          },
+          {
+            "do": "Invert the first",
+            "result": "$1/4$",
+            "why": "reverse stretch by 4"
+          },
+          {
+            "do": "Invert the second",
+            "result": "$1/2$",
+            "why": "reverse stretch by 2"
+          },
+          {
+            "do": "Assemble",
+            "result": "$A^+=\\operatorname{diag}(1/4,1/2)$",
+            "why": "ordinary inverse and pseudoinverse match here"
+          },
+          {
+            "do": "Check",
+            "result": "$AA^+=I$",
+            "why": "both directions are invertible"
+          }
+        ],
+        "answer": "$A^+=\\begin{bmatrix}1/4&0\\\\0&1/2\\end{bmatrix}$."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}1\\\\1\\\\1\\end{bmatrix}$, compute $A^+$.",
+        "steps": [
+          {
+            "do": "Compute $A^TA$",
+            "result": "$3$",
+            "why": "full column rank tall matrix"
+          },
+          {
+            "do": "Invert $A^TA$",
+            "result": "$1/3$",
+            "why": "scalar inverse"
+          },
+          {
+            "do": "Use the tall formula",
+            "result": "$A^+=(A^TA)^{-1}A^T$",
+            "why": "one independent column"
+          },
+          {
+            "do": "Multiply",
+            "result": "$A^+=\\begin{bmatrix}1/3&1/3&1/3\\end{bmatrix}$",
+            "why": "scale the row of ones"
+          },
+          {
+            "do": "Interpret",
+            "result": "it averages",
+            "why": "multiplying by data returns the mean"
+          }
+        ],
+        "answer": "$A^+=\\begin{bmatrix}1/3&1/3&1/3\\end{bmatrix}$."
+      },
+      {
+        "problem": "Use the previous $A^+$ to fit the best constant to $b=(2,4,5)^T$.",
+        "steps": [
+          {
+            "do": "Write $A^+b$",
+            "result": "$(1/3)(2+4+5)$",
+            "why": "the pseudoinverse row averages entries"
+          },
+          {
+            "do": "Add the entries",
+            "result": "$11$",
+            "why": "sum the data"
+          },
+          {
+            "do": "Divide by 3",
+            "result": "$11/3$",
+            "why": "compute the mean"
+          },
+          {
+            "do": "State the fitted constant",
+            "result": "$c=11/3$",
+            "why": "least-squares solution"
+          },
+          {
+            "do": "Check residual sum",
+            "result": "$-5/3+1/3+4/3=0$",
+            "why": "least-squares residual is orthogonal to ones"
+          }
+        ],
+        "answer": "$c=11/3$."
+      },
+      {
+        "problem": "For wide matrix $A=\\begin{bmatrix}1&1\\end{bmatrix}$, find $A^+$ and the minimum-norm solution to $x_1+x_2=6$.",
+        "steps": [
+          {
+            "do": "Compute $AA^T$",
+            "result": "$2$",
+            "why": "full row rank formula"
+          },
+          {
+            "do": "Invert $AA^T$",
+            "result": "$1/2$",
+            "why": "scalar inverse"
+          },
+          {
+            "do": "Use the wide formula",
+            "result": "$A^+=A^T(AA^T)^{-1}$",
+            "why": "minimum-norm exact solution"
+          },
+          {
+            "do": "Compute $A^+$",
+            "result": "$(1/2,1/2)^T$",
+            "why": "scale both entries"
+          },
+          {
+            "do": "Multiply by 6",
+            "result": "$x=(3,3)^T$",
+            "why": "split the solution evenly for smallest norm"
+          }
+        ],
+        "answer": "$A^+=(1/2,1/2)^T$ and the minimum-norm solution is $(3,3)^T$."
+      },
+      {
+        "problem": "A matrix has SVD singular values $10,0.5,0$. What singular values does $A^+$ have?",
+        "steps": [
+          {
+            "do": "Invert $10$",
+            "result": "$0.1$",
+            "why": "positive singular values are reciprocated"
+          },
+          {
+            "do": "Invert $0.5$",
+            "result": "$2$",
+            "why": "$1/0.5=2$"
+          },
+          {
+            "do": "Handle $0$",
+            "result": "$0$",
+            "why": "zero singular values stay zero"
+          },
+          {
+            "do": "List pseudoinverse singular values",
+            "result": "$2,0.1,0$ after sorting",
+            "why": "singular values are conventionally ordered descending"
+          },
+          {
+            "do": "Notice sensitivity",
+            "result": "the small $0.5$ becomes a large $2$",
+            "why": "small singular values amplify noise"
+          }
+        ],
+        "answer": "$A^+$ has singular values $2$, $0.1$, and $0$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Least-squares prediction",
+        "background": "The pseudoinverse gives the fitted coefficients directly when a system has more equations than unknowns.",
+        "numbers": "For a constant fit to $2,4,5$, $A^+b=(2+4+5)/3=11/3$."
+      },
+      {
+        "title": "Minimum-norm solutions",
+        "background": "Underdetermined systems have many exact answers, and the pseudoinverse picks the smallest Euclidean norm.",
+        "numbers": "$x_1+x_2=6$ has $(6,0)$ and $(3,3)$, but $(3,3)$ has norm $\\sqrt{18}$ versus $6$."
+      },
+      {
+        "title": "Linear decoder fitting",
+        "background": "A linear decoder from activations to targets is often solved by least squares with a pseudoinverse.",
+        "numbers": "If $A^+y=(0.2,-0.5,1.1)$, those are the decoder weights minimizing squared training error."
+      },
+      {
+        "title": "Deblurring toy systems",
+        "background": "Inverse problems often lose information; pseudoinverses reverse only recoverable directions.",
+        "numbers": "Matrix $\\operatorname{diag}(2,0)$ maps $(3,9)$ to $(6,0)$, so the pseudoinverse returns $(3,0)$, not the lost 9."
+      },
+      {
+        "title": "Numerical instability",
+        "background": "Tiny singular values turn into huge reciprocals, amplifying noise.",
+        "numbers": "A singular value $0.001$ becomes reciprocal $1000$, so noise $0.01$ can become size $10$."
+      },
+      {
+        "title": "Ridge as softened pseudoinverse",
+        "background": "Regularization replaces harsh reciprocals with shrinkage factors to control noise.",
+        "numbers": "For singular value $0.1$ and ridge $\\lambda=0.01$, factor $\\sigma/(\\sigma^2+\\lambda)=0.1/0.02=5$ instead of $10$."
+      }
+    ],
+    "applicationsClose": "The pseudoinverse is practical humility: invert the directions you can, choose the cleanest answer when you cannot.",
+    "takeaways": [
+      "If $A=U\\Sigma V^T$, then $A^+=V\\Sigma^+U^T$.",
+      "Positive singular values are reciprocated; zero singular values remain zero.",
+      "$A^+b$ gives least-squares solutions for tall systems and minimum-norm solutions for wide systems.",
+      "Small singular values can make pseudoinverse solutions sensitive to noise."
+    ],
     "prereqs": [
       "math-09-32"
     ]
@@ -699,19 +8595,271 @@
   B({
     "id": "math-09-34",
     "title": "Principal Component Analysis (PCA)",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: principal component analysis (pca).",
+    "tagline": "PCA finds the perpendicular directions where centered data varies the most.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The pseudoinverse</i>"
+        "The Spectral Theorem",
+        "SVD",
+        "covariance matrices"
       ],
       "leadsTo": [
-        "the next lesson, <i>Matrix norms</i>"
+        "low-rank approximation",
+        "dimensionality reduction",
+        "representation learning"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "orthogonal projections",
+        "variance",
+        "matrix norms"
       ]
     },
+    "motivation": "<p>You already know that a cloud of points can be stretched more in one direction than another. If we want a simpler picture, we should keep the direction where the data actually moves.</p><p><b>PCA</b> turns that instinct into an algorithm: center the data, find covariance eigenvectors, and project onto the directions with largest variance.</p>",
+    "definition": "<p>Given centered data matrix $X$ with rows as examples, the sample covariance is $S=\\dfrac1{n-1}X^TX$. PCA chooses orthonormal directions $v_i$ that maximize projected variance. By the Spectral Theorem, $S=V\\Lambda V^T$, and the principal components are the eigenvectors with largest eigenvalues.</p><p>Equivalently, if $X=U\\Sigma V^T$, then the PCA directions are columns of $V$, and the variances are $\\sigma_i^2/(n-1)$. Keeping the top $k$ directions gives the best rank-$k$ reconstruction among all $k$-dimensional linear subspaces.</p><p><b>Assumptions that matter:</b> data should be centered before PCA; feature scaling affects the directions; PCA is linear; and high variance is useful only when it aligns with the signal you care about.</p>",
+    "worked": {
+      "problem": "For centered points $(1,1)$, $(-1,-1)$, $(2,2)$, and $(-2,-2)$, find the first principal direction and variance.",
+      "skills": [
+        "centering",
+        "covariance",
+        "eigenvectors"
+      ],
+      "strategy": "The data lies on a line — compute covariance and read the largest eigen-direction.",
+      "steps": [
+        {
+          "do": "Confirm the mean",
+          "result": "$(0,0)$",
+          "why": "positive and negative points balance"
+        },
+        {
+          "do": "Compute sum of $x_1^2$",
+          "result": "$1+1+4+4=10$",
+          "why": "first covariance numerator"
+        },
+        {
+          "do": "Compute sum of $x_1x_2$",
+          "result": "$1+1+4+4=10$",
+          "why": "coordinates are equal in every point"
+        },
+        {
+          "do": "Write covariance",
+          "result": "$S=\\dfrac13\\begin{bmatrix}10&10\\\\10&10\\end{bmatrix}$",
+          "why": "$n-1=3$ for sample covariance"
+        },
+        {
+          "do": "Find the top eigenvector",
+          "result": "$v_1=(1,1)^T/\\sqrt2$",
+          "why": "both coordinates move together"
+        },
+        {
+          "do": "Find the top eigenvalue",
+          "result": "$20/3$",
+          "why": "$\\begin{bmatrix}10&10\\\\10&10\\end{bmatrix}$ has eigenvalue 20"
+        },
+        {
+          "do": "Find the second eigenvalue",
+          "result": "$0$",
+          "why": "there is no variation along $(1,-1)$"
+        }
+      ],
+      "verify": "Projecting $(2,2)$ onto $v_1$ gives $2\\sqrt2$, while projection onto $(1,-1)/\\sqrt2$ gives $0$.",
+      "answer": "The first principal direction is $(1,1)^T/\\sqrt2$ with variance $20/3$; the second variance is $0$.",
+      "connects": "PCA finds the axis where the centered cloud casts the longest shadow."
+    },
+    "practice": [
+      {
+        "problem": "Center one-dimensional data $2,4,6$ and compute its sample variance.",
+        "steps": [
+          {
+            "do": "Compute the mean",
+            "result": "$(2+4+6)/3=4$",
+            "why": "center before measuring variance"
+          },
+          {
+            "do": "Subtract the mean",
+            "result": "$-2,0,2$",
+            "why": "centered data has mean zero"
+          },
+          {
+            "do": "Square deviations",
+            "result": "$4,0,4$",
+            "why": "variance uses squared distances"
+          },
+          {
+            "do": "Sum squares",
+            "result": "$8$",
+            "why": "total centered energy"
+          },
+          {
+            "do": "Divide by $n-1$",
+            "result": "$8/2=4$",
+            "why": "sample variance"
+          }
+        ],
+        "answer": "The centered values are $-2,0,2$ and the sample variance is $4$."
+      },
+      {
+        "problem": "For covariance $S=\\begin{bmatrix}5&0\\\\0&2\\end{bmatrix}$, identify PCA directions and variances.",
+        "steps": [
+          {
+            "do": "Read the first eigenvalue",
+            "result": "$5$",
+            "why": "diagonal covariance"
+          },
+          {
+            "do": "Read the second eigenvalue",
+            "result": "$2$",
+            "why": "diagonal covariance"
+          },
+          {
+            "do": "Choose first direction",
+            "result": "$e_1$",
+            "why": "largest variance is along coordinate 1"
+          },
+          {
+            "do": "Choose second direction",
+            "result": "$e_2$",
+            "why": "remaining coordinate axis"
+          },
+          {
+            "do": "Order the components",
+            "result": "$e_1$ before $e_2$",
+            "why": "$5>2$"
+          }
+        ],
+        "answer": "PC1 is $e_1$ with variance $5$; PC2 is $e_2$ with variance $2$."
+      },
+      {
+        "problem": "A centered data matrix has singular values $6,2$ and $n=5$ rows. Compute PCA variances and explained fraction of PC1.",
+        "steps": [
+          {
+            "do": "Square singular values",
+            "result": "$36$ and $4$",
+            "why": "variance comes from squared singular values"
+          },
+          {
+            "do": "Divide by $n-1$",
+            "result": "$9$ and $1$",
+            "why": "$n-1=4$"
+          },
+          {
+            "do": "Compute total variance",
+            "result": "$10$",
+            "why": "sum component variances"
+          },
+          {
+            "do": "Compute PC1 fraction",
+            "result": "$9/10=0.9$",
+            "why": "first variance over total"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$90\\%$",
+            "why": "interpretation"
+          }
+        ],
+        "answer": "The variances are $9$ and $1$; PC1 explains $90\\%$."
+      },
+      {
+        "problem": "Project point $x=(3,1)^T$ onto direction $v=(1,1)^T/\\sqrt2$ and reconstruct from that one component.",
+        "steps": [
+          {
+            "do": "Compute the score",
+            "result": "$v^Tx=(3+1)/\\sqrt2=2\\sqrt2$",
+            "why": "projection coordinate"
+          },
+          {
+            "do": "Multiply score by direction",
+            "result": "$(2\\sqrt2)(1,1)^T/\\sqrt2$",
+            "why": "reconstruct along the direction"
+          },
+          {
+            "do": "Simplify",
+            "result": "$(2,2)^T$",
+            "why": "the square roots cancel"
+          },
+          {
+            "do": "Compute residual",
+            "result": "$(3,1)-(2,2)=(1,-1)$",
+            "why": "lost component is perpendicular"
+          },
+          {
+            "do": "Check orthogonality",
+            "result": "$(1,-1)\\cdot(1,1)=0$",
+            "why": "projection residual is perpendicular"
+          }
+        ],
+        "answer": "The one-component reconstruction is $(2,2)^T$."
+      },
+      {
+        "problem": "Choose the smallest $k$ for singular values $8,4,2$ to keep at least $95\\%$ squared energy.",
+        "steps": [
+          {
+            "do": "Square singular values",
+            "result": "$64,16,4$",
+            "why": "PCA energy uses squares"
+          },
+          {
+            "do": "Compute total",
+            "result": "$84$",
+            "why": "sum all energy"
+          },
+          {
+            "do": "Check $k=1$",
+            "result": "$64/84\\approx76.2\\%$",
+            "why": "one component is not enough"
+          },
+          {
+            "do": "Check $k=2$",
+            "result": "$80/84\\approx95.2\\%$",
+            "why": "top two components pass the threshold"
+          },
+          {
+            "do": "Choose $k$",
+            "result": "$k=2$",
+            "why": "smallest value meeting 95 percent"
+          }
+        ],
+        "answer": "Keep $k=2$ components."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Dimensionality reduction",
+        "background": "PCA reduces feature dimension while keeping directions with large variance.",
+        "numbers": "Singular values $8,4,2$ need top two components for $80/84=95.2\\%$ energy."
+      },
+      {
+        "title": "Visualization",
+        "background": "High-dimensional data is often projected onto two principal components for plotting.",
+        "numbers": "If PC scores are $(2.1,-0.4)$ for one example, that point appears at those coordinates in the PCA plot."
+      },
+      {
+        "title": "Noise filtering",
+        "background": "Low-variance directions can be dominated by measurement noise, so truncating PCA can denoise.",
+        "numbers": "Variances $25,9,0.04$ suggest dropping the third direction if sensor noise variance is about $0.05$."
+      },
+      {
+        "title": "Image compression",
+        "background": "PCA and SVD both express images or patches using dominant patterns.",
+        "numbers": "Keeping 20 components for 784-pixel digits stores 20 scores per image instead of 784 raw values."
+      },
+      {
+        "title": "Whitening",
+        "background": "Whitening rescales PCA coordinates to unit variance, often before independent component methods.",
+        "numbers": "A component with variance $9$ is divided by $3$, so a score $6$ becomes $2$."
+      },
+      {
+        "title": "Embedding diagnostics",
+        "background": "PCA can reveal whether embeddings collapse into a few dominant directions.",
+        "numbers": "If PC1 explains $70\\%$ of variance, subtracting or normalizing that direction may change similarity behavior strongly."
+      }
+    ],
+    "applicationsClose": "PCA is disciplined simplification: rotate to variance axes, keep the loud directions, and know exactly how much you kept.",
+    "takeaways": [
+      "PCA uses eigenvectors of the centered covariance matrix.",
+      "PCA directions are orthonormal and ordered by variance.",
+      "SVD of centered data gives the same directions through $X=U\\Sigma V^T$.",
+      "Centering and scaling choices matter before interpreting PCA."
+    ],
     "prereqs": [
       "math-09-33"
     ]
@@ -720,19 +8868,261 @@
   B({
     "id": "math-09-35",
     "title": "Matrix norms",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: matrix norms.",
+    "tagline": "Matrix norms put a single size on a linear map, so we can compare, bound, and debug transformations.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Principal Component Analysis (PCA)</i>"
+        "vector norms",
+        "SVD",
+        "matrix multiplication"
       ],
       "leadsTo": [
-        "the next lesson, <i>The condition number</i>"
+        "The condition number",
+        "generalization bounds",
+        "optimization stability"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "singular values",
+        "operator norms",
+        "Frobenius norm"
       ]
     },
+    "motivation": "<p>You already measure vectors by length. Matrices also need a size, but there are two natural questions: how much total weight is inside, and how much can the matrix stretch an input?</p><p><b>Matrix norms</b> answer those questions. The Frobenius norm measures all entries like one long vector; the spectral norm measures the largest possible stretch.</p>",
+    "definition": "<p>The <b>Frobenius norm</b> is $\\|A\\|_F=\\sqrt{\\sum_{i,j}a_{ij}^2}$, the Euclidean length of all entries. The <b>spectral norm</b> is $\\|A\\|_2=\\max_{x\\ne0}\\dfrac{\\|Ax\\|_2}{\\|x\\|_2}$, the largest stretch of any vector.</p><p>SVD makes both precise: if $A$ has singular values $\\sigma_i$, then $\\|A\\|_2=\\sigma_1$ and $\\|A\\|_F=\\sqrt{\\sum_i\\sigma_i^2}$. This is why singular values are the natural scale ruler for matrices.</p><p><b>Assumptions that matter:</b> different norms answer different questions; submultiplicative norms satisfy $\\|AB\\|\\le\\|A\\|\\|B\\|$; and the spectral norm uses Euclidean vector length unless another norm is named.</p>",
+    "worked": {
+      "problem": "Compute $\\|A\\|_F$ and $\\|A\\|_2$ for $A=\\begin{bmatrix}3&0\\\\0&4\\end{bmatrix}$.",
+      "skills": [
+        "Frobenius norm",
+        "spectral norm",
+        "singular values"
+      ],
+      "strategy": "The diagonal entries are the singular values, so total size and max stretch are easy to read.",
+      "steps": [
+        {
+          "do": "Square all entries",
+          "result": "$9,0,0,16$",
+          "why": "Frobenius norm squares entries"
+        },
+        {
+          "do": "Add the squares",
+          "result": "$25$",
+          "why": "sum entry energy"
+        },
+        {
+          "do": "Take the square root",
+          "result": "$\\|A\\|_F=5$",
+          "why": "finish Frobenius norm"
+        },
+        {
+          "do": "Read singular values",
+          "result": "$4$ and $3$",
+          "why": "diagonal nonnegative stretches"
+        },
+        {
+          "do": "Take the largest singular value",
+          "result": "$\\|A\\|_2=4$",
+          "why": "spectral norm is maximum stretch"
+        }
+      ],
+      "verify": "$A(0,1)^T=(0,4)^T$, so a unit vector is stretched by $4$; no direction can exceed the largest singular value.",
+      "answer": "$\\|A\\|_F=5$ and $\\|A\\|_2=4$.",
+      "connects": "Frobenius sees total weight; spectral norm sees worst-case stretching."
+    },
+    "practice": [
+      {
+        "problem": "Compute $\\left\\|\\begin{bmatrix}1&2\\\\2&1\\end{bmatrix}\\right\\|_F$.",
+        "steps": [
+          {
+            "do": "Square entries",
+            "result": "$1,4,4,1$",
+            "why": "Frobenius norm uses entry squares"
+          },
+          {
+            "do": "Add them",
+            "result": "$10$",
+            "why": "total squared entry size"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\sqrt{10}$",
+            "why": "norm is square root of squared size"
+          },
+          {
+            "do": "Approximate",
+            "result": "$3.162$",
+            "why": "numerical scale"
+          },
+          {
+            "do": "Check positivity",
+            "result": "nonzero norm",
+            "why": "the matrix is not zero"
+          }
+        ],
+        "answer": "$\\|A\\|_F=\\sqrt{10}\\approx3.162$."
+      },
+      {
+        "problem": "A matrix has singular values $6,2,1$. Find $\\|A\\|_2$ and $\\|A\\|_F$.",
+        "steps": [
+          {
+            "do": "Choose the largest singular value",
+            "result": "$\\|A\\|_2=6$",
+            "why": "spectral norm is max stretch"
+          },
+          {
+            "do": "Square singular values",
+            "result": "$36,4,1$",
+            "why": "Frobenius energy"
+          },
+          {
+            "do": "Add squares",
+            "result": "$41$",
+            "why": "sum singular-value energy"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\sqrt{41}$",
+            "why": "finish Frobenius norm"
+          },
+          {
+            "do": "Approximate",
+            "result": "$6.403$",
+            "why": "scale comparison"
+          }
+        ],
+        "answer": "$\\|A\\|_2=6$ and $\\|A\\|_F=\\sqrt{41}\\approx6.403$."
+      },
+      {
+        "problem": "For $A=\\begin{bmatrix}0&5\\\\0&0\\end{bmatrix}$, compute $\\|A\\|_F$ and $\\|A\\|_2$.",
+        "steps": [
+          {
+            "do": "Compute Frobenius square",
+            "result": "$25$",
+            "why": "only one entry is nonzero"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\|A\\|_F=5$",
+            "why": "entry norm"
+          },
+          {
+            "do": "Compute $A^TA$",
+            "result": "$\\begin{bmatrix}0&0\\\\0&25\\end{bmatrix}$",
+            "why": "singular values come from $A^TA$"
+          },
+          {
+            "do": "Read largest eigenvalue",
+            "result": "$25$",
+            "why": "diagonal matrix"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\|A\\|_2=5$",
+            "why": "largest singular value"
+          }
+        ],
+        "answer": "Both norms equal $5$ for this rank-one matrix."
+      },
+      {
+        "problem": "Use $\\|AB\\|_2\\le\\|A\\|_2\\|B\\|_2$ with $\\|A\\|_2=3$ and $\\|B\\|_2=4$.",
+        "steps": [
+          {
+            "do": "Write the inequality",
+            "result": "$\\|AB\\|_2\\le\\|A\\|_2\\|B\\|_2$",
+            "why": "spectral norm is submultiplicative"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$\\|AB\\|_2\\le3\\cdot4$",
+            "why": "use the given norms"
+          },
+          {
+            "do": "Multiply",
+            "result": "$12$",
+            "why": "compute the bound"
+          },
+          {
+            "do": "State the implication",
+            "result": "no vector is stretched by more than $12$",
+            "why": "operator norm bounds stretch"
+          },
+          {
+            "do": "Note sharpness",
+            "result": "actual stretch may be smaller",
+            "why": "the inequality is an upper bound"
+          }
+        ],
+        "answer": "$\\|AB\\|_2\\le12$."
+      },
+      {
+        "problem": "A weight update matrix has entries $\\\\begin{bmatrix}0.1&-0.2\\\\\\\\0.0&0.2\\\\end{bmatrix}$; compute its Frobenius norm.",
+        "steps": [
+          {
+            "do": "Square entries",
+            "result": "$0.01,0.04,0,0.04$",
+            "why": "Frobenius norm squares every entry"
+          },
+          {
+            "do": "Add squares",
+            "result": "$0.09$",
+            "why": "total update energy"
+          },
+          {
+            "do": "Take square root",
+            "result": "$0.3$",
+            "why": "$\\sqrt{0.09}=0.3$"
+          },
+          {
+            "do": "Compare with entry size",
+            "result": "larger than any single entry",
+            "why": "it combines all entries"
+          },
+          {
+            "do": "Interpret",
+            "result": "update size is $0.3$",
+            "why": "Frobenius norm is a parameter-change magnitude"
+          }
+        ],
+        "answer": "The Frobenius norm is $0.3$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Weight decay",
+        "background": "L2 regularization on matrix weights often uses the squared Frobenius norm.",
+        "numbers": "For entries $[1,2;0,3]$, $\\|W\\|_F^2=1+4+0+9=14$."
+      },
+      {
+        "title": "Lipschitz bounds",
+        "background": "The spectral norm controls how much a linear layer can amplify input changes.",
+        "numbers": "If $\\|W\\|_2=4$ and $\\|\\Delta x\\|=0.1$, then $\\|W\\Delta x\\|\\le0.4$."
+      },
+      {
+        "title": "Gradient clipping",
+        "background": "Training sometimes rescales updates when their norm is too large.",
+        "numbers": "A matrix gradient with Frobenius norm $10$ clipped to $2$ is multiplied by $0.2$."
+      },
+      {
+        "title": "Low-rank error",
+        "background": "SVD truncation error is measured cleanly by discarded singular values.",
+        "numbers": "Discarding singular values $2$ and $1$ gives Frobenius error $\\sqrt{5}$."
+      },
+      {
+        "title": "Robustness diagnostics",
+        "background": "Large operator norms can amplify adversarial or noisy perturbations.",
+        "numbers": "Two layers with spectral norms $3$ and $5$ have combined stretch at most $15$."
+      },
+      {
+        "title": "Model difference measurement",
+        "background": "Comparing checkpoints often means measuring the size of parameter changes.",
+        "numbers": "An update with entries $0.1,-0.2,0,0.2$ has Frobenius norm $0.3$."
+      }
+    ],
+    "applicationsClose": "Matrix norms give scale to transformations, updates, errors, and stability claims.",
+    "takeaways": [
+      "$\\|A\\|_F$ is the square root of the sum of squared entries.",
+      "$\\|A\\|_2$ is the largest singular value and largest Euclidean stretch.",
+      "Frobenius norm measures total energy; spectral norm measures worst-case amplification.",
+      "Norm bounds are central to regularization, clipping, compression, and robustness."
+    ],
     "prereqs": [
       "math-09-34"
     ]
@@ -741,19 +9131,261 @@
   B({
     "id": "math-09-36",
     "title": "The condition number",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: the condition number.",
+    "tagline": "The condition number measures how much a matrix can magnify small relative errors.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Matrix norms</i>"
+        "Matrix norms",
+        "SVD",
+        "linear systems"
       ],
       "leadsTo": [
-        "the next lesson, <i>Tensors</i>"
+        "numerical stability",
+        "regularization",
+        "low-rank approximation"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "singular values",
+        "least squares",
+        "matrix inverses"
       ]
     },
+    "motivation": "<p>You already know some calculations are touchy: a tiny change in input can produce a big change in output. Matrices have the same personality.</p><p>The <b>condition number</b> measures this sensitivity. A well-conditioned matrix behaves predictably; an ill-conditioned one stretches some directions much more than others, so noise can dominate.</p>",
+    "definition": "<p>For an invertible matrix $A$, the 2-norm condition number is $$\\kappa_2(A)=\\|A\\|_2\\|A^{-1}\\|_2=\\dfrac{\\sigma_{\\max}}{\\sigma_{\\min}},$$ where $\\sigma_{\\max}$ and $\\sigma_{\\min}$ are the largest and smallest singular values. If $A$ is singular, $\\kappa_2(A)=\\infty$.</p><p>The ratio appears because $A$ can stretch one direction by $\\sigma_{\\max}$ while barely stretching another by $\\sigma_{\\min}$. Solving $Ax=b$ reverses those stretches, so small components in weak directions can be amplified.</p><p><b>Assumptions that matter:</b> condition number depends on the chosen norm; this lesson uses the Euclidean 2-norm; large condition number does not mean every input is unstable, but it warns that some direction is.</p>",
+    "worked": {
+      "problem": "Find $\\kappa_2(A)$ for $A=\\begin{bmatrix}10&0\\\\0&1\\end{bmatrix}$ and interpret it.",
+      "skills": [
+        "singular values",
+        "matrix norms",
+        "sensitivity"
+      ],
+      "strategy": "For a diagonal positive matrix, singular values are the diagonal stretches.",
+      "steps": [
+        {
+          "do": "Read singular values",
+          "result": "$10$ and $1$",
+          "why": "the matrix stretches coordinate axes by those amounts"
+        },
+        {
+          "do": "Identify the largest",
+          "result": "$\\sigma_{\\max}=10$",
+          "why": "maximum stretch"
+        },
+        {
+          "do": "Identify the smallest",
+          "result": "$\\sigma_{\\min}=1$",
+          "why": "minimum nonzero stretch"
+        },
+        {
+          "do": "Compute the ratio",
+          "result": "$\\kappa_2(A)=10/1=10$",
+          "why": "condition number is stretch ratio"
+        },
+        {
+          "do": "Interpret",
+          "result": "relative errors can be amplified by up to about $10$",
+          "why": "some directions are much weaker than others"
+        }
+      ],
+      "verify": "$A^{-1}=\\operatorname{diag}(0.1,1)$, so $\\|A\\|_2\\|A^{-1}\\|_2=10\\cdot1=10$.",
+      "answer": "$\\kappa_2(A)=10$.",
+      "connects": "Conditioning is the gap between strongest and weakest singular directions."
+    },
+    "practice": [
+      {
+        "problem": "Find $\\kappa_2$ for $A=\\operatorname{diag}(5,2)$.",
+        "steps": [
+          {
+            "do": "Read singular values",
+            "result": "$5$ and $2$",
+            "why": "positive diagonal matrix"
+          },
+          {
+            "do": "Choose the maximum",
+            "result": "$5$",
+            "why": "largest stretch"
+          },
+          {
+            "do": "Choose the minimum",
+            "result": "$2$",
+            "why": "smallest stretch"
+          },
+          {
+            "do": "Divide",
+            "result": "$5/2=2.5$",
+            "why": "condition number ratio"
+          },
+          {
+            "do": "Interpret",
+            "result": "moderate sensitivity",
+            "why": "the stretches differ by a factor of 2.5"
+          }
+        ],
+        "answer": "$\\kappa_2=2.5$."
+      },
+      {
+        "problem": "A matrix has singular values $100,1,0.01$. Find its condition number if it is invertible.",
+        "steps": [
+          {
+            "do": "Identify largest singular value",
+            "result": "$100$",
+            "why": "maximum stretch"
+          },
+          {
+            "do": "Identify smallest singular value",
+            "result": "$0.01$",
+            "why": "minimum nonzero stretch"
+          },
+          {
+            "do": "Form the ratio",
+            "result": "$100/0.01$",
+            "why": "definition of $\\kappa_2$"
+          },
+          {
+            "do": "Compute",
+            "result": "$10000$",
+            "why": "divide by one hundredth"
+          },
+          {
+            "do": "Interpret",
+            "result": "very ill-conditioned",
+            "why": "large error amplification is possible"
+          }
+        ],
+        "answer": "$\\kappa_2=10000$."
+      },
+      {
+        "problem": "What is the condition number of an orthogonal matrix $Q$?",
+        "steps": [
+          {
+            "do": "Use length preservation",
+            "result": "$\\|Qx\\|=\\|x\\|$",
+            "why": "$Q^TQ=I$"
+          },
+          {
+            "do": "Read largest stretch",
+            "result": "$\\sigma_{\\max}=1$",
+            "why": "no vector grows"
+          },
+          {
+            "do": "Read smallest stretch",
+            "result": "$\\sigma_{\\min}=1$",
+            "why": "no vector shrinks"
+          },
+          {
+            "do": "Compute ratio",
+            "result": "$1/1=1$",
+            "why": "best possible conditioning"
+          },
+          {
+            "do": "Interpret",
+            "result": "perfectly conditioned",
+            "why": "orthogonal transformations preserve relative geometry"
+          }
+        ],
+        "answer": "$\\kappa_2(Q)=1$."
+      },
+      {
+        "problem": "If $\\kappa(A)=200$ and relative data error is $0.1\\%$, estimate the worst-case relative solution error bound.",
+        "steps": [
+          {
+            "do": "Convert percent to decimal",
+            "result": "$0.1\\%=0.001$",
+            "why": "use decimal in multiplication"
+          },
+          {
+            "do": "Multiply by condition number",
+            "result": "$200\\cdot0.001$",
+            "why": "worst-case amplification bound"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.2$",
+            "why": "product of sensitivity and input error"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$20\\%$",
+            "why": "interpret solution error"
+          },
+          {
+            "do": "State caution",
+            "result": "worst-case bound",
+            "why": "actual error may be smaller"
+          }
+        ],
+        "answer": "The worst-case relative solution error can be about $20\\%$."
+      },
+      {
+        "problem": "For least squares, explain why forming $A^TA$ is risky when $\\kappa(A)=50$.",
+        "steps": [
+          {
+            "do": "Use the singular-value fact",
+            "result": "$\\kappa(A^TA)=\\kappa(A)^2$",
+            "why": "singular values are squared in $A^TA$"
+          },
+          {
+            "do": "Substitute $50$",
+            "result": "$50^2$",
+            "why": "square the condition number"
+          },
+          {
+            "do": "Compute",
+            "result": "$2500$",
+            "why": "conditioning worsens"
+          },
+          {
+            "do": "Compare",
+            "result": "$2500$ versus $50$",
+            "why": "normal equations amplify sensitivity"
+          },
+          {
+            "do": "Choose a safer method",
+            "result": "QR or SVD",
+            "why": "they avoid explicitly squaring the condition number"
+          }
+        ],
+        "answer": "$A^TA$ has condition number about $2500$, so QR or SVD is safer."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Linear solves",
+        "background": "Numerical linear algebra uses condition numbers to predict how input error affects solutions.",
+        "numbers": "If $\\kappa=1000$ and input error is $10^{-6}$, solution error may be around $10^{-3}$."
+      },
+      {
+        "title": "Least-squares design matrices",
+        "background": "Highly correlated features make regression coefficients unstable.",
+        "numbers": "If singular values are $20$ and $0.02$, then $\\kappa=1000$, a warning sign for coefficient variance."
+      },
+      {
+        "title": "Feature scaling",
+        "background": "Standardizing features can reduce artificial conditioning problems caused by units.",
+        "numbers": "Columns with norms $1000$ and $1$ can give stretch ratios near $1000$ before scaling."
+      },
+      {
+        "title": "Regularization",
+        "background": "Ridge regression lifts small singular directions and improves effective conditioning.",
+        "numbers": "Eigenvalues $100$ and $0.01$ become $101$ and $1.01$ after adding $1I$, reducing ratio from $10000$ to $100$."
+      },
+      {
+        "title": "Neural network layers",
+        "background": "Very large or tiny singular values can cause activation or gradient amplification and shrinkage.",
+        "numbers": "Five layers each with spectral stretch $3$ can amplify a direction by up to $3^5=243$."
+      },
+      {
+        "title": "Data inversion",
+        "background": "Inverse problems such as deblurring are sensitive when blur nearly erases some frequencies.",
+        "numbers": "A frequency singular value $0.001$ means inversion multiplies that component by $1000$."
+      }
+    ],
+    "applicationsClose": "The condition number is a sensitivity thermometer: it does not fix instability, but it tells you when to respect it.",
+    "takeaways": [
+      "In 2-norm, $\\kappa(A)=\\sigma_{\\max}/\\sigma_{\\min}$ for invertible $A$.",
+      "Orthogonal matrices have condition number $1$, the best possible.",
+      "Singular matrices have infinite condition number.",
+      "Large condition numbers warn of possible error amplification in solves, inverses, and regression."
+    ],
     "prereqs": [
       "math-09-35"
     ]
@@ -762,19 +9394,261 @@
   B({
     "id": "math-09-37",
     "title": "Tensors",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: tensors.",
+    "tagline": "Tensors are arrays with axes, and deep learning is largely the art of shaping those axes correctly.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The condition number</i>"
+        "vectors",
+        "matrices",
+        "multilinear notation"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Kronecker product</i>"
+        "The Kronecker product",
+        "linear maps on batches",
+        "deep-learning layers"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "index notation",
+        "matrix multiplication",
+        "outer products"
       ]
     },
+    "motivation": "<p>You already know scalars, vectors, and matrices. A grayscale image needs two axes, a color image needs height, width, and channel, and a batch adds another axis in front.</p><p>A <b>tensor</b> is the common language for these multi-axis arrays. The math is not mystical: it is careful bookkeeping of indices and how operations sum over them.</p>",
+    "definition": "<p>In ML practice, a tensor is a multidimensional array. A scalar has order 0, a vector order 1, a matrix order 2, and an array $T_{i,j,k}$ has order 3. The <b>shape</b> lists axis lengths, such as $2\\times3\\times4$.</p><p>Many tensor operations are built from two ideas: elementwise operations keep the same shape, while contractions sum over one or more matching indices. Matrix multiplication is a contraction: $(AB)_{ij}=\\sum_k A_{ik}B_{kj}$.</p><p><b>Assumptions that matter:</b> ML libraries use specific axis conventions; reshaping changes how entries are grouped but not their values; broadcasting can silently repeat axes; and tensor in ML often means array, while tensor in differential geometry has a stricter transformation meaning.</p>",
+    "worked": {
+      "problem": "A batch of $2$ RGB images has shape $2\\times4\\times4\\times3$. How many numbers are stored, and what is the shape after flattening each image?",
+      "skills": [
+        "shape reading",
+        "flattening",
+        "axis bookkeeping"
+      ],
+      "strategy": "Multiply axis lengths for storage, then keep the batch axis and combine image axes.",
+      "steps": [
+        {
+          "do": "Identify the axes",
+          "result": "batch $2$, height $4$, width $4$, channels $3$",
+          "why": "read the shape in order"
+        },
+        {
+          "do": "Multiply image axes",
+          "result": "$4\\cdot4\\cdot3=48$",
+          "why": "one image has 48 numbers"
+        },
+        {
+          "do": "Multiply by batch size",
+          "result": "$2\\cdot48=96$",
+          "why": "two images are stored"
+        },
+        {
+          "do": "Keep the batch axis",
+          "result": "$2$",
+          "why": "flattening each image does not merge examples"
+        },
+        {
+          "do": "Flatten each image",
+          "result": "shape $2\\times48$",
+          "why": "height, width, and channel axes combine"
+        }
+      ],
+      "verify": "The flattened tensor still stores $2\\cdot48=96$ numbers, so no data was added or removed.",
+      "answer": "It stores $96$ numbers; flattened per image, the shape is $2\\times48$.",
+      "connects": "Tensor work is often preserving meaning while changing shape."
+    },
+    "practice": [
+      {
+        "problem": "How many entries are in a tensor of shape $3\\times5\\times2$?",
+        "steps": [
+          {
+            "do": "Read axis lengths",
+            "result": "$3$, $5$, and $2$",
+            "why": "shape lists sizes"
+          },
+          {
+            "do": "Multiply first two",
+            "result": "$3\\cdot5=15$",
+            "why": "count entries in the first two axes"
+          },
+          {
+            "do": "Multiply by the third",
+            "result": "$15\\cdot2=30$",
+            "why": "include all axes"
+          },
+          {
+            "do": "Attach meaning",
+            "result": "$30$ entries",
+            "why": "total storage is product of dimensions"
+          },
+          {
+            "do": "Check order",
+            "result": "order $3$",
+            "why": "there are three axes"
+          }
+        ],
+        "answer": "The tensor has $30$ entries and order $3$."
+      },
+      {
+        "problem": "A tensor has shape $10\\times20\\times30$. Reshape it to $10\\times600$. Verify the entry count.",
+        "steps": [
+          {
+            "do": "Compute original count",
+            "result": "$10\\cdot20\\cdot30=6000$",
+            "why": "product of dimensions"
+          },
+          {
+            "do": "Compute new count",
+            "result": "$10\\cdot600=6000$",
+            "why": "reshaping must preserve entries"
+          },
+          {
+            "do": "Compare counts",
+            "result": "$6000=6000$",
+            "why": "the reshape is valid"
+          },
+          {
+            "do": "Identify merged axes",
+            "result": "$20\\cdot30=600$",
+            "why": "last two axes were combined"
+          },
+          {
+            "do": "State result",
+            "result": "valid reshape",
+            "why": "no entries are lost or created"
+          }
+        ],
+        "answer": "The reshape is valid because both shapes contain $6000$ entries."
+      },
+      {
+        "problem": "For matrices, compute $(AB)_{12}$ when row 1 of $A$ is $(2,3)$ and column 2 of $B$ is $(4,5)^T$.",
+        "steps": [
+          {
+            "do": "Write the contraction",
+            "result": "$(AB)_{12}=\\sum_k A_{1k}B_{k2}$",
+            "why": "matrix multiplication sums over $k$"
+          },
+          {
+            "do": "Substitute entries",
+            "result": "$2\\cdot4+3\\cdot5$",
+            "why": "match row and column entries"
+          },
+          {
+            "do": "Multiply",
+            "result": "$8+15$",
+            "why": "compute products"
+          },
+          {
+            "do": "Add",
+            "result": "$23$",
+            "why": "sum over the contracted index"
+          },
+          {
+            "do": "Interpret",
+            "result": "one output entry",
+            "why": "a contraction reduces the shared axis"
+          }
+        ],
+        "answer": "$(AB)_{12}=23$."
+      },
+      {
+        "problem": "A tensor of shape $8\\times16\\times32$ is summed over the middle axis. What is the output shape and how many additions per output entry?",
+        "steps": [
+          {
+            "do": "Identify the summed axis",
+            "result": "length $16$",
+            "why": "middle axis is contracted"
+          },
+          {
+            "do": "Remove that axis",
+            "result": "shape $8\\times32$",
+            "why": "summation collapses the summed index"
+          },
+          {
+            "do": "Count terms per output",
+            "result": "$16$",
+            "why": "one term from each middle-axis position"
+          },
+          {
+            "do": "Count additions",
+            "result": "$15$",
+            "why": "adding 16 numbers takes 15 binary additions"
+          },
+          {
+            "do": "Check output entries",
+            "result": "$8\\cdot32=256$",
+            "why": "remaining axes define outputs"
+          }
+        ],
+        "answer": "The output shape is $8\\times32$, with 16 terms and 15 additions per output entry."
+      },
+      {
+        "problem": "A mini-batch has shape $32\\times128$ and a weight matrix has shape $128\\times10$. What is the output shape?",
+        "steps": [
+          {
+            "do": "Identify batch size",
+            "result": "$32$",
+            "why": "first axis counts examples"
+          },
+          {
+            "do": "Check matching feature dimension",
+            "result": "$128$ matches $128$",
+            "why": "matrix multiplication contracts this axis"
+          },
+          {
+            "do": "Identify output features",
+            "result": "$10$",
+            "why": "second dimension of the weight matrix"
+          },
+          {
+            "do": "Write output shape",
+            "result": "$32\\times10$",
+            "why": "batch axis remains and feature axis changes"
+          },
+          {
+            "do": "Count outputs",
+            "result": "$320$",
+            "why": "$32\\cdot10$ predictions or logits"
+          }
+        ],
+        "answer": "The output shape is $32\\times10$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Image batches",
+        "background": "Computer vision models process images as tensors with batch, spatial, and channel axes.",
+        "numbers": "A batch $16\\times224\\times224\\times3$ stores $16\\cdot224\\cdot224\\cdot3=2,408,448$ numbers."
+      },
+      {
+        "title": "Transformer activations",
+        "background": "Language models use tensors indexed by batch, token position, and hidden channel.",
+        "numbers": "Shape $4\\times128\\times768$ contains $393,216$ activation values."
+      },
+      {
+        "title": "Convolution kernels",
+        "background": "A convolution layer stores filters with spatial, input-channel, and output-channel axes.",
+        "numbers": "A $3\\times3\\times64\\times128$ kernel has $73,728$ weights."
+      },
+      {
+        "title": "Attention scores",
+        "background": "Attention forms pairwise token scores for each head and example.",
+        "numbers": "Batch $2$, heads $8$, sequence $128$ gives score tensor $2\\times8\\times128\\times128=262,144$ entries."
+      },
+      {
+        "title": "Broadcasting bias",
+        "background": "Bias vectors are often broadcast across batch and sequence axes.",
+        "numbers": "Adding bias shape $768$ to activations $4\\times128\\times768$ reuses the 768 numbers across $512$ token examples."
+      },
+      {
+        "title": "Loss aggregation",
+        "background": "Training losses often reduce tensors by summing or averaging over examples and tokens.",
+        "numbers": "A token-loss tensor $32\\times50$ has $1600$ losses; its mean divides their sum by $1600$."
+      }
+    ],
+    "applicationsClose": "Tensors are the shape grammar of ML: once axes are clear, operations become sums, broadcasts, reshapes, and linear maps.",
+    "takeaways": [
+      "In ML, a tensor is a multidimensional array with a shape.",
+      "Entry count is the product of axis lengths.",
+      "Contractions sum over matching indices; matrix multiplication is the basic example.",
+      "Clear axis bookkeeping prevents many deep-learning bugs."
+    ],
     "prereqs": [
       "math-09-36"
     ]
@@ -783,19 +9657,261 @@
   B({
     "id": "math-09-38",
     "title": "The Kronecker product",
-    "tier": "🟢",
-    "tagline": "One concept from Linear algebra: the kronecker product.",
+    "tagline": "The Kronecker product builds big structured matrices from small ones, block by block.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Tensors</i>"
+        "Tensors",
+        "matrix multiplication",
+        "block matrices"
       ],
       "leadsTo": [
-        "the next lesson, <i>Weights as linear maps; low-rank factorization</i>"
+        "low-rank factorization",
+        "tensor reshaping",
+        "structured linear maps"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "vectorization",
+        "outer products",
+        "separable operators"
       ]
     },
+    "motivation": "<p>You already know how a scalar times a matrix scales every entry. The Kronecker product does that idea repeatedly: each entry of one matrix scales a full copy of another matrix.</p><p>This creates large matrices with strong structure. In ML and scientific computing, that structure can save memory, speed computation, and express separable transformations.</p>",
+    "definition": "<p>For matrices $A=[a_{ij}]$ of size $m\\times n$ and $B$ of size $p\\times q$, the <b>Kronecker product</b> $A\\otimes B$ is the $mp\\times nq$ block matrix where block $(i,j)$ is $a_{ij}B$.</p><p>A key identity connects it to vectorization: $\\operatorname{vec}(AXB^T)=(B\\otimes A)\\operatorname{vec}(X)$, when dimensions match and $\\operatorname{vec}$ stacks columns. This is how two smaller left-right transformations become one large linear map on a flattened matrix.</p><p><b>Assumptions that matter:</b> order matters, so usually $A\\otimes B\\ne B\\otimes A$; vectorization convention matters; and Kronecker structure is useful only when the problem truly separates across axes.</p>",
+    "worked": {
+      "problem": "Compute $A\\otimes B$ for $A=\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}$ and $B=\\begin{bmatrix}0&5\\\\6&7\\end{bmatrix}$.",
+      "skills": [
+        "block matrices",
+        "scalar multiplication",
+        "shape tracking"
+      ],
+      "strategy": "Replace each entry of $A$ by that entry times the whole matrix $B$.",
+      "steps": [
+        {
+          "do": "Compute the first block",
+          "result": "$1B=\\begin{bmatrix}0&5\\\\6&7\\end{bmatrix}$",
+          "why": "top-left entry of $A$ is 1"
+        },
+        {
+          "do": "Compute the second block",
+          "result": "$2B=\\begin{bmatrix}0&10\\\\12&14\\end{bmatrix}$",
+          "why": "top-right entry of $A$ is 2"
+        },
+        {
+          "do": "Compute the third block",
+          "result": "$3B=\\begin{bmatrix}0&15\\\\18&21\\end{bmatrix}$",
+          "why": "bottom-left entry of $A$ is 3"
+        },
+        {
+          "do": "Compute the fourth block",
+          "result": "$4B=\\begin{bmatrix}0&20\\\\24&28\\end{bmatrix}$",
+          "why": "bottom-right entry of $A$ is 4"
+        },
+        {
+          "do": "Assemble the blocks",
+          "result": "$\\begin{bmatrix}0&5&0&10\\\\6&7&12&14\\\\0&15&0&20\\\\18&21&24&28\\end{bmatrix}$",
+          "why": "place blocks in the same layout as $A$"
+        }
+      ],
+      "verify": "The result is $4\\times4$ because both inputs are $2\\times2$, so dimensions multiply.",
+      "answer": "$A\\otimes B=\\begin{bmatrix}0&5&0&10\\\\6&7&12&14\\\\0&15&0&20\\\\18&21&24&28\\end{bmatrix}$.",
+      "connects": "Kronecker products turn scalar entries into whole blocks."
+    },
+    "practice": [
+      {
+        "problem": "Compute $[2\\ 3]\\otimes\\begin{bmatrix}1&0\\\\0&1\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Identify blocks",
+            "result": "$2I$ and $3I$",
+            "why": "the row has two entries"
+          },
+          {
+            "do": "Compute $2I$",
+            "result": "$\\begin{bmatrix}2&0\\\\0&2\\end{bmatrix}$",
+            "why": "scale the identity"
+          },
+          {
+            "do": "Compute $3I$",
+            "result": "$\\begin{bmatrix}3&0\\\\0&3\\end{bmatrix}$",
+            "why": "scale the identity"
+          },
+          {
+            "do": "Place blocks side by side",
+            "result": "$\\begin{bmatrix}2&0&3&0\\\\0&2&0&3\\end{bmatrix}$",
+            "why": "the first matrix is a row"
+          },
+          {
+            "do": "Check shape",
+            "result": "$2\\times4$",
+            "why": "$(1\\cdot2)\\times(2\\cdot2)$"
+          }
+        ],
+        "answer": "$\\begin{bmatrix}2&0&3&0\\\\0&2&0&3\\end{bmatrix}$."
+      },
+      {
+        "problem": "Find the shape of $A\\otimes B$ if $A$ is $3\\times2$ and $B$ is $4\\times5$.",
+        "steps": [
+          {
+            "do": "Multiply row counts",
+            "result": "$3\\cdot4=12$",
+            "why": "each row of $A$ creates 4 block rows"
+          },
+          {
+            "do": "Multiply column counts",
+            "result": "$2\\cdot5=10$",
+            "why": "each column of $A$ creates 5 block columns"
+          },
+          {
+            "do": "Write the shape",
+            "result": "$12\\times10$",
+            "why": "dimensions multiply"
+          },
+          {
+            "do": "Check block count",
+            "result": "$3\\cdot2=6$ blocks",
+            "why": "one block per entry of $A$"
+          },
+          {
+            "do": "Check block size",
+            "result": "$4\\times5$",
+            "why": "each block is a scaled $B$"
+          }
+        ],
+        "answer": "$A\\otimes B$ has shape $12\\times10$."
+      },
+      {
+        "problem": "Compute $\\begin{bmatrix}1\\\\2\\end{bmatrix}\\otimes\\begin{bmatrix}3\\\\4\\end{bmatrix}$.",
+        "steps": [
+          {
+            "do": "Scale $B$ by the first entry",
+            "result": "$1B=(3,4)^T$",
+            "why": "top block"
+          },
+          {
+            "do": "Scale $B$ by the second entry",
+            "result": "$2B=(6,8)^T$",
+            "why": "bottom block"
+          },
+          {
+            "do": "Stack the blocks",
+            "result": "$(3,4,6,8)^T$",
+            "why": "the first matrix is a column"
+          },
+          {
+            "do": "Check shape",
+            "result": "$4\\times1$",
+            "why": "$(2\\cdot2)\\times(1\\cdot1)$"
+          },
+          {
+            "do": "Interpret",
+            "result": "all pairwise products",
+            "why": "column Kronecker product lists products of entries"
+          }
+        ],
+        "answer": "$(3,4,6,8)^T$."
+      },
+      {
+        "problem": "Use $(A\\otimes B)^T=A^T\\otimes B^T$ for $A$ of shape $2\\times3$ and $B$ of shape $4\\times1$ to find the transpose shape.",
+        "steps": [
+          {
+            "do": "Find $A\\otimes B$ shape",
+            "result": "$(2\\cdot4)\\times(3\\cdot1)=8\\times3$",
+            "why": "multiply dimensions"
+          },
+          {
+            "do": "Transpose the shape",
+            "result": "$3\\times8$",
+            "why": "rows and columns swap"
+          },
+          {
+            "do": "Find $A^T$ shape",
+            "result": "$3\\times2$",
+            "why": "transpose of $A$"
+          },
+          {
+            "do": "Find $B^T$ shape",
+            "result": "$1\\times4$",
+            "why": "transpose of $B$"
+          },
+          {
+            "do": "Check product shape",
+            "result": "$(3\\cdot1)\\times(2\\cdot4)=3\\times8$",
+            "why": "identity is dimensionally consistent"
+          }
+        ],
+        "answer": "The transpose shape is $3\\times8$."
+      },
+      {
+        "problem": "A separable image transform uses $Y=AXB^T$ with $A$ $2\\times2$, $X$ $2\\times3$, and $B$ $3\\times3$. What is the size of the equivalent Kronecker matrix on $\\operatorname{vec}(X)$?",
+        "steps": [
+          {
+            "do": "Count entries in $X$",
+            "result": "$2\\cdot3=6$",
+            "why": "vectorized input length"
+          },
+          {
+            "do": "Find shape of $Y$",
+            "result": "$2\\times3$",
+            "why": "$A$ changes rows and $B^T$ preserves three columns"
+          },
+          {
+            "do": "Count entries in $Y$",
+            "result": "$6$",
+            "why": "vectorized output length"
+          },
+          {
+            "do": "Write equivalent matrix",
+            "result": "$B\\otimes A$",
+            "why": "vectorization identity"
+          },
+          {
+            "do": "Find its shape",
+            "result": "$6\\times6$",
+            "why": "it maps $\\operatorname{vec}(X)$ to $\\operatorname{vec}(Y)$"
+          }
+        ],
+        "answer": "The equivalent Kronecker matrix is $6\\times6$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Separable image filters",
+        "background": "A 2-D blur can sometimes be applied as separate row and column operations instead of one huge matrix.",
+        "numbers": "A $100\\times100$ image has $10000$ pixels; two $100\\times100$ factors use $20000$ entries instead of a dense $10000\\times10000$ matrix."
+      },
+      {
+        "title": "Structured covariance",
+        "background": "Multi-axis data may use covariance that separates time and space with a Kronecker product.",
+        "numbers": "A time covariance $10\\times10$ and sensor covariance $5\\times5$ produce a $50\\times50$ covariance from only $100+25$ stored entries."
+      },
+      {
+        "title": "Fast linear layers",
+        "background": "Kronecker-factored weights approximate a large matrix with smaller factors.",
+        "numbers": "A $64\\times64$ dense matrix has $4096$ weights; $8\\times8$ and $8\\times8$ Kronecker factors have $128$ weights."
+      },
+      {
+        "title": "Second-order optimization",
+        "background": "K-FAC approximates neural-network curvature with Kronecker factors to make natural-gradient steps practical.",
+        "numbers": "Factors $100\\times100$ and $50\\times50$ store $12500$ entries versus a dense $5000\\times5000$ matrix with $25,000,000$."
+      },
+      {
+        "title": "Tensor product features",
+        "background": "Feature crosses can be represented as products of entries from two feature vectors.",
+        "numbers": "Vectors of lengths $3$ and $4$ create $12$ pairwise product features."
+      },
+      {
+        "title": "Grid operators",
+        "background": "Finite-difference operators on rectangular grids often separate into Kronecker sums and products.",
+        "numbers": "A $20\\times30$ grid has $600$ states, but row and column operators are only $20\\times20$ and $30\\times30$."
+      }
+    ],
+    "applicationsClose": "The Kronecker product is block structure made algebraic: small maps combine into large maps without forgetting their axes.",
+    "takeaways": [
+      "$A\\otimes B$ replaces each entry $a_{ij}$ with the block $a_{ij}B$.",
+      "Shapes multiply: $(m\\times n)\\otimes(p\\times q)$ becomes $mp\\times nq$.",
+      "Vectorization identities connect Kronecker products to matrix transformations on flattened tensors.",
+      "Kronecker structure saves memory when a large map separates across axes."
+    ],
     "prereqs": [
       "math-09-37"
     ]
@@ -804,19 +9920,281 @@
   B({
     "id": "math-09-39",
     "title": "Weights as linear maps; low-rank factorization",
-    "tier": "🟢",
-    "tagline": "Capstone — how linear algebra shows up directly in CS & ML.",
+    "tagline": "A neural-network weight matrix is a linear map, and low-rank factorization is a disciplined way to make that map smaller and trainable.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Kronecker product</i>"
+        "SVD",
+        "matrix rank",
+        "matrix multiplication"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "representation learning",
+        "efficient fine-tuning",
+        "model compression"
       ],
       "usedWith": [
-        "the other concepts in Linear algebra and its capstone"
+        "linear maps",
+        "low-rank approximation",
+        "matrix norms"
       ]
     },
+    "motivation": "<p>You already multiply inputs by a matrix: $y=Wx$. In a neural network, that matrix is not just a table of numbers. It is a learned linear map from one representation space to another.</p><p>The ML capstone idea is that many useful updates or weights are lower-dimensional than they look. <b>Low-rank factorization</b> writes a big matrix as two skinny matrices, reducing parameters and focusing learning on a smaller subspace.</p>",
+    "definition": "<p>A weight matrix $W\\in\\mathbb{R}^{m\\times n}$ maps an input vector $x\\in\\mathbb{R}^n$ to output $y=Wx\\in\\mathbb{R}^m$. If $W$ has rank $r$, it can be factored as $W=BA$ with $B\\in\\mathbb{R}^{m\\times r}$ and $A\\in\\mathbb{R}^{r\\times n}$. The computation becomes $$x\\mapsto A x\\mapsto B(Ax).$$</p><p>When $r\\ll\\min(m,n)$, the factorization stores $r(m+n)$ parameters instead of $mn$. SVD gives the best rank-$r$ approximation $W_r=U_r\\Sigma_rV_r^T$. In LoRA-style fine-tuning, the frozen base weight $W_0$ is updated by a trainable low-rank matrix $\\Delta W=BA$, so the layer uses $W_0x+BAx$.</p><p><b>Assumptions that matter:</b> low rank restricts the update to an $r$-dimensional bottleneck; rank must be chosen large enough for the task; and factorization saves parameters only when $r(m+n)<mn$.</p>",
+    "worked": {
+      "problem": "A frozen $4\\times3$ weight $W_0$ is adapted by LoRA-style $\\Delta W=BA$ with rank $r=2$, where $A=\\begin{bmatrix}1&0&2\\\\0&1&-1\\end{bmatrix}$ and $B=\\begin{bmatrix}1&0\\\\0&2\\\\1&1\\\\-1&1\\end{bmatrix}$. For $x=(2,3,1)^T$, compute $\\Delta y=BAx$ and compare parameter counts.",
+      "skills": [
+        "linear maps",
+        "low-rank multiplication",
+        "parameter counting"
+      ],
+      "strategy": "Use the bottleneck first: compute $Ax$, then map that small vector back up with $B$.",
+      "steps": [
+        {
+          "do": "Compute the first bottleneck coordinate",
+          "result": "$1\\cdot2+0\\cdot3+2\\cdot1=4$",
+          "why": "first row of $A$ dotted with $x$"
+        },
+        {
+          "do": "Compute the second bottleneck coordinate",
+          "result": "$0\\cdot2+1\\cdot3-1\\cdot1=2$",
+          "why": "second row of $A$ dotted with $x$"
+        },
+        {
+          "do": "Write the bottleneck vector",
+          "result": "$z=Ax=(4,2)^T$",
+          "why": "rank 2 update passes through two numbers"
+        },
+        {
+          "do": "Compute the first output update",
+          "result": "$1\\cdot4+0\\cdot2=4$",
+          "why": "first row of $B$"
+        },
+        {
+          "do": "Compute the second output update",
+          "result": "$0\\cdot4+2\\cdot2=4$",
+          "why": "second row of $B$"
+        },
+        {
+          "do": "Compute the third output update",
+          "result": "$1\\cdot4+1\\cdot2=6$",
+          "why": "third row of $B$"
+        },
+        {
+          "do": "Compute the fourth output update",
+          "result": "$-1\\cdot4+1\\cdot2=-2$",
+          "why": "fourth row of $B$"
+        },
+        {
+          "do": "Count dense update parameters",
+          "result": "$4\\cdot3=12$",
+          "why": "a full update matrix has one parameter per entry"
+        },
+        {
+          "do": "Count low-rank parameters",
+          "result": "$2(4+3)=14$",
+          "why": "$B$ has $4\\cdot2$ and $A$ has $2\\cdot3$ parameters"
+        }
+      ],
+      "verify": "Here rank 2 does not save parameters because the example is tiny; for large matrices the same formula can save a lot.",
+      "answer": "$\\Delta y=(4,4,6,-2)^T$. Dense has $12$ parameters; this tiny rank-2 factorization has $14$.",
+      "connects": "Low-rank updates are useful because they change a large map through a small intermediate representation."
+    },
+    "practice": [
+      {
+        "problem": "A dense weight maps $128$ inputs to $64$ outputs. How many parameters does it have?",
+        "steps": [
+          {
+            "do": "Identify output dimension",
+            "result": "$64$",
+            "why": "rows of the weight matrix"
+          },
+          {
+            "do": "Identify input dimension",
+            "result": "$128$",
+            "why": "columns of the weight matrix"
+          },
+          {
+            "do": "Multiply dimensions",
+            "result": "$64\\cdot128$",
+            "why": "one parameter per matrix entry"
+          },
+          {
+            "do": "Compute",
+            "result": "$8192$",
+            "why": "dense parameter count"
+          },
+          {
+            "do": "State map shape",
+            "result": "$W\\in\\mathbb{R}^{64\\times128}$",
+            "why": "maps $\\mathbb{R}^{128}$ to $\\mathbb{R}^{64}$"
+          }
+        ],
+        "answer": "The dense layer has $8192$ parameters."
+      },
+      {
+        "problem": "For the same $64\\times128$ layer, count rank-$8$ factor parameters $B\\in\\mathbb{R}^{64\\times8}$ and $A\\in\\mathbb{R}^{8\\times128}$.",
+        "steps": [
+          {
+            "do": "Count $B$ parameters",
+            "result": "$64\\cdot8=512$",
+            "why": "output-by-rank factor"
+          },
+          {
+            "do": "Count $A$ parameters",
+            "result": "$8\\cdot128=1024$",
+            "why": "rank-by-input factor"
+          },
+          {
+            "do": "Add factor parameters",
+            "result": "$512+1024=1536$",
+            "why": "both factors are trainable"
+          },
+          {
+            "do": "Compare with dense",
+            "result": "$1536<8192$",
+            "why": "rank 8 saves parameters"
+          },
+          {
+            "do": "Compute percent",
+            "result": "$1536/8192=18.75\\%$",
+            "why": "fraction of dense parameters"
+          }
+        ],
+        "answer": "Rank 8 uses $1536$ parameters, $18.75\\%$ of the dense layer."
+      },
+      {
+        "problem": "Let $A=\\begin{bmatrix}1&2&0\\end{bmatrix}$ and $B=\\begin{bmatrix}3\\\\-1\\end{bmatrix}$. Compute $BA$ and its rank.",
+        "steps": [
+          {
+            "do": "Multiply first row of $B$ by $A$",
+            "result": "$3A=(3,6,0)$",
+            "why": "outer-product row from first output"
+          },
+          {
+            "do": "Multiply second row of $B$ by $A$",
+            "result": "$-1A=(-1,-2,0)$",
+            "why": "outer-product row from second output"
+          },
+          {
+            "do": "Assemble $BA$",
+            "result": "$\\begin{bmatrix}3&6&0\\\\-1&-2&0\\end{bmatrix}$",
+            "why": "rank-one product"
+          },
+          {
+            "do": "Compare rows",
+            "result": "row 2 is $-1/3$ row 1",
+            "why": "rows are dependent"
+          },
+          {
+            "do": "State rank",
+            "result": "$1$",
+            "why": "nonzero outer product has rank 1"
+          }
+        ],
+        "answer": "$BA=\\begin{bmatrix}3&6&0\\\\-1&-2&0\\end{bmatrix}$ with rank $1$."
+      },
+      {
+        "problem": "A matrix has singular values $20,5,1$. What is the Frobenius error of its best rank-1 approximation?",
+        "steps": [
+          {
+            "do": "Identify discarded singular values",
+            "result": "$5$ and $1$",
+            "why": "rank 1 keeps only the largest"
+          },
+          {
+            "do": "Square discarded values",
+            "result": "$25$ and $1$",
+            "why": "Frobenius error squares discarded singular values"
+          },
+          {
+            "do": "Add them",
+            "result": "$26$",
+            "why": "total discarded energy"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\sqrt{26}$",
+            "why": "Frobenius norm error"
+          },
+          {
+            "do": "Approximate",
+            "result": "$5.10$",
+            "why": "numerical error size"
+          }
+        ],
+        "answer": "The best rank-1 Frobenius error is $\\sqrt{26}\\approx5.10$."
+      },
+      {
+        "problem": "A LoRA update for a $4096\\times4096$ weight uses rank $8$. Compare trainable update parameters with a dense update.",
+        "steps": [
+          {
+            "do": "Count dense update parameters",
+            "result": "$4096\\cdot4096=16,777,216$",
+            "why": "full matrix update"
+          },
+          {
+            "do": "Count $B$ parameters",
+            "result": "$4096\\cdot8=32,768$",
+            "why": "output-by-rank factor"
+          },
+          {
+            "do": "Count $A$ parameters",
+            "result": "$8\\cdot4096=32,768$",
+            "why": "rank-by-input factor"
+          },
+          {
+            "do": "Add LoRA parameters",
+            "result": "$65,536$",
+            "why": "both low-rank factors are trained"
+          },
+          {
+            "do": "Compute fraction",
+            "result": "$65,536/16,777,216=1/256\\approx0.39\\%$",
+            "why": "low rank is much smaller"
+          }
+        ],
+        "answer": "Rank-8 LoRA trains $65,536$ parameters, about $0.39\\%$ of a dense $4096\\times4096$ update."
+      }
+    ],
+    "applications": [
+      {
+        "title": "LoRA fine-tuning",
+        "background": "LoRA freezes a pretrained weight and trains a low-rank update, making adaptation cheaper while preserving the base model.",
+        "numbers": "For $4096\\times4096$ and rank $8$, train $65,536$ update parameters instead of $16,777,216$."
+      },
+      {
+        "title": "Bottleneck linear layers",
+        "background": "A factorization $W=BA$ computes through a smaller hidden dimension, like a linear bottleneck.",
+        "numbers": "A $512\\times512$ dense map has $262,144$ weights; rank $32$ factors use $32(512+512)=32,768$."
+      },
+      {
+        "title": "Model compression",
+        "background": "SVD can replace a trained dense matrix by a lower-rank approximation when singular values decay.",
+        "numbers": "Singular values $20,5,1$ keep rank 1 with error $\\sqrt{26}$ and retain $400/(426)\\approx93.9\\%$ energy."
+      },
+      {
+        "title": "Embedding factorization",
+        "background": "Large user-item or token-context tables can be modeled as products of lower-dimensional embeddings.",
+        "numbers": "A $10000\\times5000$ table has $50,000,000$ entries; rank $64$ factors use $64(10000+5000)=960,000$."
+      },
+      {
+        "title": "Adapter modules",
+        "background": "Adapters often down-project activations, apply a small transformation, then up-project, mirroring low-rank maps.",
+        "numbers": "Hidden size $768$ with bottleneck $16$ uses $768\\cdot16+16\\cdot768=24,576$ weights before biases."
+      },
+      {
+        "title": "Controlling update capacity",
+        "background": "Low rank limits how many independent directions a fine-tuning update can change, which can reduce overfitting.",
+        "numbers": "Rank $4$ update $BA$ maps every input through only 4 intermediate coordinates, no matter how large $m$ and $n$ are."
+      }
+    ],
+    "applicationsClose": "Weights as linear maps make ML architecture concrete: every factorization changes parameter count, compute path, rank, and what directions the model can adapt.",
+    "takeaways": [
+      "A weight matrix maps inputs by $y=Wx$.",
+      "A rank-$r$ factorization $W=BA$ uses $r(m+n)$ parameters instead of $mn$.",
+      "SVD gives the best low-rank approximation to an existing matrix.",
+      "LoRA-style updates train $\\Delta W=BA$ while keeping the base weight frozen."
+    ],
     "prereqs": [
       "math-09-38"
     ]

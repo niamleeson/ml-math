@@ -9,37 +9,521 @@
   B({
     "id": "math-13-01",
     "title": "What topology studies",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: what topology studies.",
+    "tagline": "Topology studies which features survive continuous stretching, bending, and reshaping.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "sets",
+        "functions",
+        "distance and neighborhoods"
       ],
       "leadsTo": [
-        "the next lesson, <i>Topological spaces</i>"
+        "Topological spaces",
+        "continuity",
+        "compactness"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "set operations",
+        "equivalence relations",
+        "metric spaces"
       ]
-    }
+    },
+    "motivation": "<p>You already know that a circle and an oval feel like the same kind of shape, while a circle and two separate circles do not. The exact lengths and angles changed, but something deeper stayed put.</p><p><b>Topology</b> is the mathematics of that deeper sameness. It asks what remains true when we are allowed to stretch or bend without cutting, gluing, or tearing. For machine learning, this becomes a language for shape in data: connected pieces, holes, neighborhoods, and stable structure.</p>",
+    "definition": "<p>Topology studies properties preserved by continuous deformation and continuous maps. A property is <b>topological</b> if it is unchanged by a homeomorphism, meaning a bijective map whose forward and inverse directions are continuous. Examples include number of connected components, compactness, and whether removing a point disconnects a space.</p><p>The core move is to replace exact distance with the idea of <b>nearness</b>. In metric spaces, nearness comes from distances like $d(x,y)$. In general topology, nearness is encoded by open sets. This lets the same reasoning apply to curves, point clouds, function spaces, and parameter spaces.</p><p><b>Assumptions that matter:</b> topology does not ignore all geometry; it ignores only measurements that can change under continuous deformation. Cutting a loop, identifying two points, or changing the number of separated pieces changes the topology. The chosen notion of open set determines what counts as near.</p>",
+    "worked": {
+      "problem": "Decide which features are topological for a circle: radius $2$, circumference $4\\pi$, one connected component, and one hole.",
+      "skills": [
+        "topological invariance",
+        "continuous deformation",
+        "shape comparison"
+      ],
+      "strategy": "Separate measurements that can stretch from structure that cannot be removed without cutting or gluing.",
+      "steps": [
+        {
+          "do": "Imagine stretching the circle to radius $3$",
+          "result": "radius changes from $2$ to $3$",
+          "why": "stretching is allowed in topology"
+        },
+        {
+          "do": "Compute the new circumference",
+          "result": "$2\\pi\\cdot3=6\\pi$",
+          "why": "length changes when the circle stretches"
+        },
+        {
+          "do": "Track connected components",
+          "result": "still $1$ component",
+          "why": "stretching does not split the circle"
+        },
+        {
+          "do": "Track holes",
+          "result": "still $1$ central hole",
+          "why": "removing the hole would require filling or cutting"
+        },
+        {
+          "do": "Classify the features",
+          "result": "radius and circumference are not topological; component count and hole count are",
+          "why": "only the latter survive all homeomorphic reshaping"
+        }
+      ],
+      "verify": "An ellipse has different lengths from the circle but remains one loop with one hole, matching the topological features.",
+      "answer": "Topological features here are one connected component and one hole; radius $2$ and circumference $4\\pi$ are geometric, not topological.",
+      "connects": "Topology asks which shape facts remain after geometry is allowed to flex."
+    },
+    "practice": [
+      {
+        "problem": "A rubber band circle is stretched into an oval. Which of these change topologically: diameter, number of components, number of holes?",
+        "steps": [
+          {
+            "do": "Compare diameters",
+            "result": "diameter can change",
+            "why": "stretching can lengthen one direction"
+          },
+          {
+            "do": "Count components before stretching",
+            "result": "$1$",
+            "why": "the original rubber band is one piece"
+          },
+          {
+            "do": "Count components after stretching",
+            "result": "$1$",
+            "why": "stretching does not tear the band"
+          },
+          {
+            "do": "Count holes before and after",
+            "result": "$1$ and $1$",
+            "why": "the loop still surrounds one opening"
+          },
+          {
+            "do": "Classify",
+            "result": "diameter changes; components and holes do not",
+            "why": "topology preserves connection and holes under deformation"
+          }
+        ],
+        "answer": "Diameter is not topological; number of components and holes are topological in this comparison."
+      },
+      {
+        "problem": "Compare a line segment $[0,1]$ with a circle. Use the effect of removing one point to show they are not topologically the same.",
+        "steps": [
+          {
+            "do": "Remove an interior point from $[0,1]$",
+            "result": "two separated intervals",
+            "why": "for example removing $1/2$ leaves left and right pieces"
+          },
+          {
+            "do": "Count resulting components for the segment",
+            "result": "$2$",
+            "why": "the remaining pieces no longer touch"
+          },
+          {
+            "do": "Remove one point from a circle",
+            "result": "one open arc",
+            "why": "the rest can be followed continuously around the missing point"
+          },
+          {
+            "do": "Count resulting components for the circle",
+            "result": "$1$",
+            "why": "the remaining arc is still connected"
+          },
+          {
+            "do": "Compare the removal behavior",
+            "result": "$2\\ne1$",
+            "why": "homeomorphisms preserve this kind of connectedness behavior"
+          }
+        ],
+        "answer": "$[0,1]$ and a circle are not homeomorphic."
+      },
+      {
+        "problem": "A data cloud has two separated clusters with $40$ points and $60$ points. If each cluster is smoothly warped but not merged, how many connected components should the topology report?",
+        "steps": [
+          {
+            "do": "Identify separated pieces",
+            "result": "two clusters",
+            "why": "there is a gap between the groups"
+          },
+          {
+            "do": "Warp the first cluster",
+            "result": "still one piece",
+            "why": "smooth deformation does not split it"
+          },
+          {
+            "do": "Warp the second cluster",
+            "result": "still one piece",
+            "why": "the same reasoning applies"
+          },
+          {
+            "do": "Check whether merging occurred",
+            "result": "no merger",
+            "why": "the problem says they are not merged"
+          },
+          {
+            "do": "Count components",
+            "result": "$2$",
+            "why": "component count ignores the exact point counts and shapes"
+          }
+        ],
+        "answer": "The topological component count remains $2$."
+      },
+      {
+        "problem": "A square frame is made of four edges and has an empty middle. Compare it topologically with a circle.",
+        "steps": [
+          {
+            "do": "Count components of the square frame",
+            "result": "$1$",
+            "why": "all four edges meet into one loop"
+          },
+          {
+            "do": "Count holes of the square frame",
+            "result": "$1$",
+            "why": "the middle is enclosed and empty"
+          },
+          {
+            "do": "Count components of the circle",
+            "result": "$1$",
+            "why": "a circle is one loop"
+          },
+          {
+            "do": "Count holes of the circle",
+            "result": "$1$",
+            "why": "it also encloses one middle region"
+          },
+          {
+            "do": "Compare the counts",
+            "result": "same basic topological pattern",
+            "why": "corners can be rounded continuously"
+          }
+        ],
+        "answer": "A square frame and a circle have the same basic topology: one connected component with one hole."
+      },
+      {
+        "problem": "In a $2$D embedding, class A forms a ring around class B. Why can a linear rescaling preserve the ring fact even if all distances double?",
+        "steps": [
+          {
+            "do": "Apply a scale factor $2$",
+            "result": "each distance becomes twice as large",
+            "why": "linear rescaling changes measurement"
+          },
+          {
+            "do": "Track class A",
+            "result": "still one surrounding ring",
+            "why": "scaling does not cut the ring"
+          },
+          {
+            "do": "Track class B",
+            "result": "still inside the ring",
+            "why": "relative containment is unchanged by the scaling"
+          },
+          {
+            "do": "Compare distance facts",
+            "result": "distances changed",
+            "why": "metric information is geometric"
+          },
+          {
+            "do": "Compare ring structure",
+            "result": "ring structure is preserved",
+            "why": "the deformation is continuous and reversible"
+          }
+        ],
+        "answer": "Distances double, but the surrounding-loop structure is preserved as a topological feature."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Clustering by connected pieces",
+        "background": "Topological thinking treats clusters as connected regions rather than only as Gaussian blobs. This helps when data is curved or stretched.",
+        "numbers": "If a point cloud separates into groups of $40$ and $60$ points with a clear gap, the component count is $2$ even if one group is long and curved."
+      },
+      {
+        "title": "Persistent homology",
+        "background": "Topological data analysis studies features that persist as a scale parameter grows. It was built to distinguish noise from shape.",
+        "numbers": "If a loop appears at radius $0.3$ and disappears at $1.1$, its persistence is $1.1-0.3=0.8$."
+      },
+      {
+        "title": "Image holes",
+        "background": "Computer vision sometimes needs shape facts that survive resizing and mild deformation. Counting holes is a simple topological feature.",
+        "numbers": "A digit $8$ has $2$ holes, while a digit $0$ has $1$; resizing from $28\\times28$ to $56\\times56$ should not change those counts."
+      },
+      {
+        "title": "Robotics configuration spaces",
+        "background": "A robot's possible positions form a space, and obstacles remove regions from it. Topology asks whether a path exists around those holes.",
+        "numbers": "In a square room with one circular obstacle, a path space may have one obstacle hole; a planned route of length $12$ m and another of length $15$ m can still wind around the same hole."
+      },
+      {
+        "title": "Neural representation geometry",
+        "background": "Embeddings often stretch and rotate under training while preserving neighborhood shape. Topology gives language for the preserved structure.",
+        "numbers": "If $1000$ points form one ring in layer $6$, multiplying all coordinates by $3$ changes norms but keeps one ring component."
+      },
+      {
+        "title": "Mesh processing",
+        "background": "Graphics meshes need checks that smoothing did not accidentally tear a surface. Topological counts catch those errors.",
+        "numbers": "A torus mesh should have one connected surface and one tunnel; if smoothing creates two connected components, the component count changed from $1$ to $2$."
+      }
+    ],
+    "applicationsClose": "Topology is the habit of asking which shape facts survive flexible change, whether the object is rubber, data, a mesh, or a model representation.",
+    "takeaways": [
+      "Topology studies properties preserved by continuous, reversible deformation.",
+      "Exact lengths and angles are geometric; connectedness and holes are topological.",
+      "Open sets are the general language of nearness.",
+      "Data analysis uses topology to find stable shape rather than fragile measurement."
+    ]
   });
 
   B({
     "id": "math-13-02",
     "title": "Topological spaces",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: topological spaces.",
+    "tagline": "A topological space is a set together with a chosen rule for which subsets count as open.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>What topology studies</i>"
+        "What topology studies",
+        "sets",
+        "unions and intersections"
       ],
       "leadsTo": [
-        "the next lesson, <i>Open and closed sets</i>"
+        "Open and closed sets",
+        "Bases",
+        "Continuity"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "power sets",
+        "metric spaces",
+        "logic of set containment"
       ]
     },
+    "motivation": "<p>You already know open intervals such as $(0,1)$ on the real line. But topology asks for a more flexible idea: what if the objects are strings, graphs, probability distributions, or model parameters?</p><p>A <b>topological space</b> packages the answer. It starts with a set of points and names which subsets are open. Once that choice is made, words like near, continuous, closed, connected, and compact have a place to live.</p>",
+    "definition": "<p>A <b>topology</b> on a set $X$ is a collection $\\tau$ of subsets of $X$ satisfying three rules: $\\emptyset\\in\\tau$ and $X\\in\\tau$; any union of sets in $\\tau$ is in $\\tau$; and any finite intersection of sets in $\\tau$ is in $\\tau$. The pair $(X,\\tau)$ is a <b>topological space</b>.</p><p>These rules preserve the behavior we expect from open intervals. Empty and whole spaces are harmless extremes. Arbitrary unions let many local open regions combine. Finite intersections let two or five requirements be imposed at once without demanding impossible infinite precision.</p><p><b>Assumptions that matter:</b> the same set $X$ can carry different topologies; open means member of $\\tau$, not necessarily open in the usual Euclidean sense; and arbitrary intersections of open sets need not be open.</p>",
+    "worked": {
+      "problem": "Let $X=\\{a,b\\}$ and $\\tau=\\{\\emptyset,\\{a\\},X\\}$. Verify that $\\tau$ is a topology.",
+      "skills": [
+        "checking axioms",
+        "set unions",
+        "finite intersections"
+      ],
+      "strategy": "Check the three topology rules directly on this small collection.",
+      "steps": [
+        {
+          "do": "Check the empty set",
+          "result": "$\\emptyset\\in\\tau$",
+          "why": "it is listed"
+        },
+        {
+          "do": "Check the whole set",
+          "result": "$X\\in\\tau$",
+          "why": "it is listed"
+        },
+        {
+          "do": "List possible nontrivial unions",
+          "result": "$\\{a\\}\\cup X=X$ and $\\{a\\}\\cup\\emptyset=\\{a\\}$",
+          "why": "unions stay in the listed collection"
+        },
+        {
+          "do": "List possible nontrivial intersections",
+          "result": "$\\{a\\}\\cap X=\\{a\\}$ and $\\{a\\}\\cap\\emptyset=\\emptyset$",
+          "why": "finite intersections stay listed"
+        },
+        {
+          "do": "Conclude",
+          "result": "$\\tau$ is a topology",
+          "why": "all three axioms hold"
+        }
+      ],
+      "verify": "No subset outside $\\emptyset$, $\\{a\\}$, and $X$ is forced by the axioms, so the collection is complete as listed.",
+      "answer": "Yes. $\\tau=\\{\\emptyset,\\{a\\},X\\}$ is a topology on $X=\\{a,b\\}$.",
+      "connects": "A topology is not a formula for distance; it is a legal collection of open sets."
+    },
+    "practice": [
+      {
+        "problem": "Let $X=\\{1,2\\}$ and $\\tau=\\{\\emptyset,X\\}$. Show this is a topology.",
+        "steps": [
+          {
+            "do": "Check $\\emptyset$",
+            "result": "$\\emptyset\\in\\tau$",
+            "why": "required and listed"
+          },
+          {
+            "do": "Check $X$",
+            "result": "$X\\in\\tau$",
+            "why": "required and listed"
+          },
+          {
+            "do": "Union the listed sets",
+            "result": "$\\emptyset\\cup X=X$",
+            "why": "the only nontrivial union stays in $\\tau$"
+          },
+          {
+            "do": "Intersect the listed sets",
+            "result": "$\\emptyset\\cap X=\\emptyset$",
+            "why": "the only nontrivial finite intersection stays in $\\tau$"
+          },
+          {
+            "do": "State the topology name",
+            "result": "indiscrete topology",
+            "why": "only the empty set and whole set are open"
+          }
+        ],
+        "answer": "It is a topology, called the indiscrete topology."
+      },
+      {
+        "problem": "Let $X=\\{1,2\\}$ and $\\tau=\\{\\emptyset,\\{1\\},\\{2\\},X\\}$. Show this is a topology.",
+        "steps": [
+          {
+            "do": "Recognize the collection",
+            "result": "$\\tau$ contains every subset of $X$",
+            "why": "there are four subsets total"
+          },
+          {
+            "do": "Check extremes",
+            "result": "$\\emptyset$ and $X$ are included",
+            "why": "topology rule one"
+          },
+          {
+            "do": "Take any union",
+            "result": "a subset of $X$",
+            "why": "unions of subsets of $X$ remain subsets of $X$"
+          },
+          {
+            "do": "Take any finite intersection",
+            "result": "a subset of $X$",
+            "why": "intersections of subsets of $X$ remain subsets of $X$"
+          },
+          {
+            "do": "Use membership",
+            "result": "the result is in $\\tau$",
+            "why": "$\\tau$ contains all subsets"
+          }
+        ],
+        "answer": "It is a topology, called the discrete topology."
+      },
+      {
+        "problem": "Let $X=\\{a,b,c\\}$ and $\\tau=\\{\\emptyset,\\{a\\},\\{b\\},X\\}$. Explain why this is not a topology.",
+        "steps": [
+          {
+            "do": "Check the required extremes",
+            "result": "$\\emptyset$ and $X$ are included",
+            "why": "the first axiom is fine"
+          },
+          {
+            "do": "Take the union of $\\{a\\}$ and $\\{b\\}$",
+            "result": "$\\{a,b\\}$",
+            "why": "unions of open sets must be open"
+          },
+          {
+            "do": "Check membership",
+            "result": "$\\{a,b\\}\\notin\\tau$",
+            "why": "it is not listed"
+          },
+          {
+            "do": "Identify the failed axiom",
+            "result": "arbitrary union closure fails",
+            "why": "two listed open sets produced an unlisted set"
+          },
+          {
+            "do": "Conclude",
+            "result": "not a topology",
+            "why": "one failed axiom is enough"
+          }
+        ],
+        "answer": "It is not a topology because $\\{a\\}\\cup\\{b\\}=\\{a,b\\}$ is not included."
+      },
+      {
+        "problem": "On $X=\\{a,b,c\\}$, let $\\tau=\\{\\emptyset,\\{a\\},\\{a,b\\},X\\}$. Verify the finite-intersection rule.",
+        "steps": [
+          {
+            "do": "Intersect $\\{a\\}$ and $\\{a,b\\}$",
+            "result": "$\\{a\\}$",
+            "why": "common elements only"
+          },
+          {
+            "do": "Intersect $\\{a\\}$ and $X$",
+            "result": "$\\{a\\}$",
+            "why": "$X$ does not remove anything"
+          },
+          {
+            "do": "Intersect $\\{a,b\\}$ and $X$",
+            "result": "$\\{a,b\\}$",
+            "why": "again $X$ is neutral"
+          },
+          {
+            "do": "Include intersections with $\\emptyset$",
+            "result": "$\\emptyset$",
+            "why": "intersection with empty is empty"
+          },
+          {
+            "do": "Check membership",
+            "result": "all results lie in $\\tau$",
+            "why": "finite-intersection closure holds"
+          }
+        ],
+        "answer": "The finite-intersection rule holds for this $\\tau$."
+      },
+      {
+        "problem": "A finite dataset $X$ has $5$ points. In the discrete topology, how many open sets are there?",
+        "steps": [
+          {
+            "do": "Recall the discrete topology",
+            "result": "every subset is open",
+            "why": "discrete means all subsets are in $\\tau$"
+          },
+          {
+            "do": "Count subsets of a $5$-point set",
+            "result": "$2^5$",
+            "why": "each point is either included or not"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$32$",
+            "why": "$2\\cdot2\\cdot2\\cdot2\\cdot2=32$"
+          },
+          {
+            "do": "Connect to open sets",
+            "result": "$32$ open sets",
+            "why": "open sets equal subsets in the discrete topology"
+          },
+          {
+            "do": "Compare with the indiscrete topology",
+            "result": "$2$ open sets",
+            "why": "only $\\emptyset$ and $X$ would be open there"
+          }
+        ],
+        "answer": "There are $32$ open sets in the discrete topology on $5$ points."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Digital finite spaces",
+        "background": "Finite topological spaces model simple systems where only certain observations are distinguishable.",
+        "numbers": "For $X=\\{a,b,c\\}$, the discrete topology has $2^3=8$ open sets, while the indiscrete topology has $2$."
+      },
+      {
+        "title": "Metric spaces become topological spaces",
+        "background": "Every distance rule creates open balls, and open balls create a topology. This is how calculus fits inside topology.",
+        "numbers": "On $\\mathbb{R}$, the ball of radius $0.1$ around $2$ is $(1.9,2.1)$, one basic open neighborhood."
+      },
+      {
+        "title": "Feature spaces with different notions of nearness",
+        "background": "ML features can use Euclidean, cosine, or graph-based neighborhoods. Each choice can induce a different topology-like structure.",
+        "numbers": "For vectors with cosine similarity at least $0.9$, a point may have $12$ neighbors; with threshold $0.8$, it may have $47$."
+      },
+      {
+        "title": "Program semantics",
+        "background": "Computer science uses topologies to discuss approximation and observable behavior, especially in domain theory.",
+        "numbers": "A three-state approximation chain $\\bot<a<b$ can use opens like $\\{b\\}$ and $\\{a,b\\}$ to encode what finite observations can confirm."
+      },
+      {
+        "title": "Probability distributions",
+        "background": "Spaces of distributions need a topology to say when one distribution converges to another.",
+        "numbers": "A sequence with means $1,1.5,1.75,1.875$ moves within $0.125$ of mean $2$ by the fourth value."
+      },
+      {
+        "title": "Neural network parameter spaces",
+        "background": "A parameter vector space inherits the usual topology from Euclidean distance, which makes continuous loss functions meaningful.",
+        "numbers": "If weights differ by norm $0.01$ and a loss is locally Lipschitz with constant $5$, the loss changes by at most about $0.05$."
+      }
+    ],
+    "applicationsClose": "A topological space is the quiet setup that lets all later shape words mean something precise.",
+    "takeaways": [
+      "A topology $\\tau$ is a collection of open subsets of a set $X$.",
+      "$\\emptyset$ and $X$ must be open; arbitrary unions and finite intersections of opens stay open.",
+      "The same set can have many different topologies.",
+      "Metric spaces are important examples, but topology is more general than distance."
+    ],
     "prereqs": [
       "math-13-01"
     ]
@@ -48,19 +532,261 @@
   B({
     "id": "math-13-03",
     "title": "Open and closed sets",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: open and closed sets.",
+    "tagline": "Open sets describe room to move; closed sets contain their boundary points.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Topological spaces</i>"
+        "Topological spaces",
+        "set complements",
+        "interval notation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Bases</i>"
+        "Bases",
+        "Subspace topology",
+        "Compactness"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "limits",
+        "metric balls",
+        "boundary points"
       ]
     },
+    "motivation": "<p>You already feel the difference between being inside a room and standing on its wall. If you are safely inside, you can wiggle a little and stay inside. On the wall, every tiny wiggle may leave.</p><p><b>Open</b> and <b>closed</b> make that feeling precise. Open sets are neighborhoods with breathing room. Closed sets include all points they are supposed to limit toward. Many careful arguments in analysis, optimization, and ML begin by knowing which kind of set they are using.</p>",
+    "definition": "<p>In a topological space $(X,\\tau)$, a set $U\\subseteq X$ is <b>open</b> if $U\\in\\tau$. A set $F\\subseteq X$ is <b>closed</b> if its complement $X\\setminus F$ is open. In $\\mathbb{R}$ with the usual topology, $(0,1)$ is open, $[0,1]$ is closed, and $(0,1]$ is neither open nor closed.</p><p>Closed does not mean locked or finite. It means boundary-respecting: if a sequence of points in $F$ converges to a point of $X$, that limit point should still lie in $F$ for familiar metric spaces. The complement definition is the general topological one.</p><p><b>Assumptions that matter:</b> open and closed are relative to the chosen topology and ambient space $X$; a set can be both open and closed; and a set can be neither open nor closed.</p>",
+    "worked": {
+      "problem": "In $\\mathbb{R}$ with the usual topology, classify $(0,1)$, $[0,1]$, and $(0,1]$ as open, closed, both, or neither.",
+      "skills": [
+        "intervals",
+        "complements",
+        "boundary points"
+      ],
+      "strategy": "Use breathing room for openness and complements for closedness.",
+      "steps": [
+        {
+          "do": "Check $(0,1)$ for openness",
+          "result": "open",
+          "why": "each point has a small interval around it inside $(0,1)$"
+        },
+        {
+          "do": "Check the complement of $(0,1)$",
+          "result": "$(-\\infty,0]\\cup[1,\\infty)$",
+          "why": "the endpoints remain in the complement"
+        },
+        {
+          "do": "Classify $(0,1)$ as closed or not",
+          "result": "not closed",
+          "why": "its complement is not open in the usual topology"
+        },
+        {
+          "do": "Check $[0,1]$ via complement",
+          "result": "$(-\\infty,0)\\cup(1,\\infty)$ is open",
+          "why": "a union of open intervals is open"
+        },
+        {
+          "do": "Check $(0,1]$",
+          "result": "neither open nor closed",
+          "why": "$1$ blocks openness and missing $0$ blocks closedness"
+        }
+      ],
+      "verify": "The endpoints are the clue: including both gives closed, excluding both gives open, including only one gives neither in the usual real line.",
+      "answer": "$(0,1)$ is open not closed; $[0,1]$ is closed not open; $(0,1]$ is neither.",
+      "connects": "Open and closed describe how a set handles nearby points and boundary points."
+    },
+    "practice": [
+      {
+        "problem": "Classify $\\emptyset$ and $X$ in any topological space $(X,\\tau)$.",
+        "steps": [
+          {
+            "do": "Use the topology axiom",
+            "result": "$\\emptyset$ is open",
+            "why": "every topology contains it"
+          },
+          {
+            "do": "Use the topology axiom again",
+            "result": "$X$ is open",
+            "why": "every topology contains the whole space"
+          },
+          {
+            "do": "Take complement of $\\emptyset$",
+            "result": "$X$",
+            "why": "closedness depends on open complements"
+          },
+          {
+            "do": "Take complement of $X$",
+            "result": "$\\emptyset$",
+            "why": "the whole space leaves nothing outside"
+          },
+          {
+            "do": "Classify both sets",
+            "result": "both open and closed",
+            "why": "each has an open complement"
+          }
+        ],
+        "answer": "$\\emptyset$ and $X$ are both open and closed in every topological space."
+      },
+      {
+        "problem": "In $\\mathbb{R}$, decide whether $(-\\infty,3)$ is open and whether it is closed.",
+        "steps": [
+          {
+            "do": "Check openness",
+            "result": "open",
+            "why": "every point less than $3$ has room before reaching $3$"
+          },
+          {
+            "do": "Compute the complement",
+            "result": "$[3,\\infty)$",
+            "why": "all real numbers not less than $3$"
+          },
+          {
+            "do": "Check complement openness",
+            "result": "not open",
+            "why": "the endpoint $3$ has no left-side room inside the complement"
+          },
+          {
+            "do": "Use closed definition",
+            "result": "not closed",
+            "why": "a closed set needs open complement"
+          },
+          {
+            "do": "State classification",
+            "result": "open but not closed",
+            "why": "only the openness test passed"
+          }
+        ],
+        "answer": "$(-\\infty,3)$ is open but not closed."
+      },
+      {
+        "problem": "In $\\mathbb{R}$, decide whether $\\{2\\}$ is closed.",
+        "steps": [
+          {
+            "do": "Compute the complement",
+            "result": "$(-\\infty,2)\\cup(2,\\infty)$",
+            "why": "remove the single point $2$"
+          },
+          {
+            "do": "Check the first piece",
+            "result": "$(-\\infty,2)$ is open",
+            "why": "open ray in the usual topology"
+          },
+          {
+            "do": "Check the second piece",
+            "result": "$(2,\\infty)$ is open",
+            "why": "open ray in the usual topology"
+          },
+          {
+            "do": "Union the pieces",
+            "result": "open",
+            "why": "unions of open sets are open"
+          },
+          {
+            "do": "Apply the definition",
+            "result": "$\\{2\\}$ is closed",
+            "why": "its complement is open"
+          }
+        ],
+        "answer": "$\\{2\\}$ is closed in $\\mathbb{R}$."
+      },
+      {
+        "problem": "In the discrete topology on $X=\\{a,b,c\\}$, classify $A=\\{a,c\\}$.",
+        "steps": [
+          {
+            "do": "Recall discrete topology",
+            "result": "every subset is open",
+            "why": "that is the definition of discrete"
+          },
+          {
+            "do": "Apply to $A$",
+            "result": "$A$ is open",
+            "why": "$A\\subseteq X$"
+          },
+          {
+            "do": "Compute the complement",
+            "result": "$X\\setminus A=\\{b\\}$",
+            "why": "only $b$ is outside"
+          },
+          {
+            "do": "Check complement openness",
+            "result": "$\\{b\\}$ is open",
+            "why": "every subset is open"
+          },
+          {
+            "do": "Classify $A$",
+            "result": "open and closed",
+            "why": "it is open and has open complement"
+          }
+        ],
+        "answer": "$A$ is both open and closed in the discrete topology."
+      },
+      {
+        "problem": "For the constraint set $C=[0,1]$ in $\\mathbb{R}$, explain why a convergent sequence $0.9,0.99,0.999,\\ldots$ has its limit inside $C$.",
+        "steps": [
+          {
+            "do": "Identify the sequence",
+            "result": "$x_n=1-10^{-n}$",
+            "why": "the listed numbers approach $1$"
+          },
+          {
+            "do": "Compute the limit",
+            "result": "$\\lim x_n=1$",
+            "why": "$10^{-n}\\to0$"
+          },
+          {
+            "do": "Check membership of the limit",
+            "result": "$1\\in[0,1]$",
+            "why": "the endpoint is included"
+          },
+          {
+            "do": "Name the closed-set behavior",
+            "result": "the limit stays in $C$",
+            "why": "closed intervals contain their boundary limits"
+          },
+          {
+            "do": "Contrast with $(0,1)$",
+            "result": "$1\\notin(0,1)$",
+            "why": "the open interval would lose this limit"
+          }
+        ],
+        "answer": "The limit is $1$, and $1$ lies in the closed set $[0,1]$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feasible regions in optimization",
+        "background": "Constraints often form closed sets so limit points of improving solutions remain feasible.",
+        "numbers": "If weights must satisfy $0\\le w\\le1$, the sequence $0.9,0.99,0.999$ approaches $1$, still feasible."
+      },
+      {
+        "title": "Open neighborhoods for gradients",
+        "background": "Differentiability is local, so analysts use open neighborhoods where small perturbations are allowed.",
+        "numbers": "Around $w=2$ with radius $0.1$, the open interval $(1.9,2.1)$ permits steps like $2.03$ and $1.95$."
+      },
+      {
+        "title": "Threshold decision regions",
+        "background": "Classifier regions can be open, closed, or neither depending on whether the threshold is included.",
+        "numbers": "Scores with accept rule $s\\ge0.7$ form $[0.7,1]$, while reject scores $s<0.7$ form $[0,0.7)$ inside $[0,1]$."
+      },
+      {
+        "title": "Image masks",
+        "background": "A binary mask may include or exclude boundary pixels. Topology helps describe whether the boundary belongs to the object.",
+        "numbers": "A disk mask with radius condition $r\\le10$ includes about $\\pi\\cdot10^2\\approx314$ square pixels in a continuous approximation."
+      },
+      {
+        "title": "Safe parameter sets",
+        "background": "Safety constraints are often closed so a limit of safe models stays safe.",
+        "numbers": "If latency must be at most $100$ ms, measured latencies $99.9,99.99,99.999$ approach $100$, still allowed by $L\\le100$."
+      },
+      {
+        "title": "Nearest-neighbor balls",
+        "background": "Open and closed balls differ by whether the boundary radius is included, which can affect ties.",
+        "numbers": "With radius $5$, a point at distance $4.9$ is in both balls; a point at distance $5.0$ is only in the closed ball."
+      }
+    ],
+    "applicationsClose": "Open and closed sets are boundary discipline: they tell us where motion has room and where limits are retained.",
+    "takeaways": [
+      "Open means member of the topology; closed means the complement is open.",
+      "A set may be open, closed, both, or neither.",
+      "In metric spaces, open sets give room to wiggle and closed sets keep their limit points.",
+      "Open and closed are always relative to the chosen space and topology."
+    ],
     "prereqs": [
       "math-13-02"
     ]
@@ -69,19 +795,261 @@
   B({
     "id": "math-13-04",
     "title": "Bases",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: bases.",
+    "tagline": "A basis builds every open set from small, reusable open pieces.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Open and closed sets</i>"
+        "Open and closed sets",
+        "unions",
+        "intervals"
       ],
       "leadsTo": [
-        "the next lesson, <i>Subspace topology</i>"
+        "Subspace topology",
+        "Continuity",
+        "local arguments"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "metric balls",
+        "product sets",
+        "neighborhoods"
       ]
     },
+    "motivation": "<p>Listing every open set is usually impossible. On the real line, there are far too many open sets to write down one by one. But you already know a smaller vocabulary: open intervals.</p><p>A <b>basis</b> is that vocabulary. It gives small open building blocks, and every open set is made by taking unions of them. This makes topology practical: prove something locally on basic pieces, then extend by unions.</p>",
+    "definition": "<p>A collection $\\mathcal{B}$ of subsets of $X$ is a <b>basis</b> for a topology if every point of $X$ lies in some $B\\in\\mathcal{B}$, and whenever $x\\in B_1\\cap B_2$ with $B_1,B_2\\in\\mathcal{B}$, there is a basis element $B_3\\in\\mathcal{B}$ such that $x\\in B_3\\subseteq B_1\\cap B_2$. The topology generated by $\\mathcal{B}$ consists of all unions of basis elements.</p><p>For $\\mathbb{R}$, the open intervals $(a,b)$ form a basis for the usual topology. If a set $U$ is open and $x\\in U$, there is a small interval around $x$ contained in $U$; unioning all such intervals recovers $U$.</p><p><b>Assumptions that matter:</b> basis elements need not be disjoint; the generated open sets are arbitrary unions of basis elements; and the intersection condition is local at each point of overlap, not a demand that the whole intersection be a single basis element.</p>",
+    "worked": {
+      "problem": "Show that open intervals form a basis for the usual topology on $\\mathbb{R}$ by finding a smaller interval around $x=1$ inside $(0,3)\\cap(0.5,2)$.",
+      "skills": [
+        "basis condition",
+        "interval intersections",
+        "containment"
+      ],
+      "strategy": "Intersect the two intervals, then choose a smaller open interval containing the point.",
+      "steps": [
+        {
+          "do": "Compute the intersection",
+          "result": "$(0,3)\\cap(0.5,2)=(0.5,2)$",
+          "why": "the stricter lower and upper bounds win"
+        },
+        {
+          "do": "Check the point",
+          "result": "$1\\in(0.5,2)$",
+          "why": "$0.5<1<2$"
+        },
+        {
+          "do": "Choose a smaller interval",
+          "result": "$(0.75,1.25)$",
+          "why": "it surrounds $1$"
+        },
+        {
+          "do": "Check containment",
+          "result": "$(0.75,1.25)\\subseteq(0.5,2)$",
+          "why": "both endpoints lie inside the larger interval"
+        },
+        {
+          "do": "State the basis condition",
+          "result": "a basis element around $1$ lies inside the overlap",
+          "why": "this is the required local refinement"
+        }
+      ],
+      "verify": "The same midpoint-margin idea works for any point in the overlap of two open intervals.",
+      "answer": "For $x=1$, $(0.75,1.25)$ is a basis element contained in $(0,3)\\cap(0.5,2)$.",
+      "connects": "Bases reduce topology to local building blocks."
+    },
+    "practice": [
+      {
+        "problem": "Write the open set $(0,2)\\cup(3,5)$ as a union of basis elements from the usual basis on $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Identify the basis",
+            "result": "open intervals",
+            "why": "the usual basis on $\\mathbb{R}$"
+          },
+          {
+            "do": "Observe the first piece",
+            "result": "$(0,2)$ is a basis element",
+            "why": "it is an open interval"
+          },
+          {
+            "do": "Observe the second piece",
+            "result": "$(3,5)$ is a basis element",
+            "why": "it is also an open interval"
+          },
+          {
+            "do": "Union the pieces",
+            "result": "$(0,2)\\cup(3,5)$",
+            "why": "open sets are unions of basis elements"
+          },
+          {
+            "do": "Count the basis elements used",
+            "result": "$2$",
+            "why": "two intervals are enough"
+          }
+        ],
+        "answer": "$(0,2)\\cup(3,5)$ is the union of the two basis elements $(0,2)$ and $(3,5)$."
+      },
+      {
+        "problem": "In $\\mathbb{R}^2$, rectangles $(a,b)\\times(c,d)$ form a basis. Find a basis rectangle around $(1,2)$ inside $(0,3)\\times(1,5)$.",
+        "steps": [
+          {
+            "do": "Check the point",
+            "result": "$(1,2)\\in(0,3)\\times(1,5)$",
+            "why": "$0<1<3$ and $1<2<5$"
+          },
+          {
+            "do": "Choose horizontal bounds",
+            "result": "$(0.5,1.5)$",
+            "why": "they contain $1$ and fit inside $(0,3)$"
+          },
+          {
+            "do": "Choose vertical bounds",
+            "result": "$(1.5,2.5)$",
+            "why": "they contain $2$ and fit inside $(1,5)$"
+          },
+          {
+            "do": "Form the rectangle",
+            "result": "$(0.5,1.5)\\times(1.5,2.5)$",
+            "why": "basis elements are products of open intervals"
+          },
+          {
+            "do": "Check containment",
+            "result": "contained in $(0,3)\\times(1,5)$",
+            "why": "each coordinate interval is contained"
+          }
+        ],
+        "answer": "One valid basis rectangle is $(0.5,1.5)\\times(1.5,2.5)$."
+      },
+      {
+        "problem": "On $X=\\{a,b,c\\}$, let $\\mathcal{B}=\\{\\{a\\},\\{b,c\\}\\}$. What topology does it generate?",
+        "steps": [
+          {
+            "do": "List unions using no basis elements",
+            "result": "$\\emptyset$",
+            "why": "empty union gives the empty set"
+          },
+          {
+            "do": "Use the first basis element",
+            "result": "$\\{a\\}$",
+            "why": "single-element union"
+          },
+          {
+            "do": "Use the second basis element",
+            "result": "$\\{b,c\\}$",
+            "why": "single-element union"
+          },
+          {
+            "do": "Use both basis elements",
+            "result": "$\\{a,b,c\\}=X$",
+            "why": "their union covers all points"
+          },
+          {
+            "do": "Collect the topology",
+            "result": "$\\{\\emptyset,\\{a\\},\\{b,c\\},X\\}$",
+            "why": "all generated opens are unions of basis elements"
+          }
+        ],
+        "answer": "The generated topology is $\\{\\emptyset,\\{a\\},\\{b,c\\},X\\}$."
+      },
+      {
+        "problem": "Explain why $\\mathcal{B}=\\{(a,b):a<b\\}$ covers every point of $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Take an arbitrary point",
+            "result": "$x\\in\\mathbb{R}$",
+            "why": "coverage must work for every point"
+          },
+          {
+            "do": "Choose an interval",
+            "result": "$(x-1,x+1)$",
+            "why": "it is an open interval"
+          },
+          {
+            "do": "Check membership",
+            "result": "$x\\in(x-1,x+1)$",
+            "why": "$x-1<x<x+1$"
+          },
+          {
+            "do": "Check basis membership",
+            "result": "$(x-1,x+1)\\in\\mathcal{B}$",
+            "why": "the left endpoint is smaller than the right endpoint"
+          },
+          {
+            "do": "Conclude coverage",
+            "result": "every point lies in a basis element",
+            "why": "the arbitrary $x$ was covered"
+          }
+        ],
+        "answer": "The open intervals cover $\\mathbb{R}$ because every $x$ lies in $(x-1,x+1)$."
+      },
+      {
+        "problem": "In nearest-neighbor learning, suppose open balls of radius $0.5$ around training points are used as local basis pieces. If point $p$ has coordinates $(2,3)$, give a square neighborhood contained in the ball of radius $0.5$ using half-width $0.25$.",
+        "steps": [
+          {
+            "do": "Write the square",
+            "result": "$(1.75,2.25)\\times(2.75,3.25)$",
+            "why": "half-width $0.25$ around each coordinate"
+          },
+          {
+            "do": "Compute maximum coordinate change",
+            "result": "$0.25$ in each coordinate",
+            "why": "that is how the square was chosen"
+          },
+          {
+            "do": "Bound Euclidean distance",
+            "result": "$\\sqrt{0.25^2+0.25^2}\\approx0.354$",
+            "why": "corner distance is the largest"
+          },
+          {
+            "do": "Compare with radius",
+            "result": "$0.354<0.5$",
+            "why": "the square fits inside the ball"
+          },
+          {
+            "do": "State containment",
+            "result": "the square is a local basis-like neighborhood",
+            "why": "every point in it remains within radius $0.5$"
+          }
+        ],
+        "answer": "The square $(1.75,2.25)\\times(2.75,3.25)$ is contained in the radius-$0.5$ ball."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Euclidean neighborhoods",
+        "background": "Calculus uses balls and intervals as local pieces. Bases formalize why local interval arguments build global open sets.",
+        "numbers": "The interval $(1.9,2.1)$ is a radius-$0.1$ basis neighborhood around $2$."
+      },
+      {
+        "title": "Image patches",
+        "background": "Computer vision often reasons locally with patches. A topology-like basis viewpoint says global image regions are unions of local patches.",
+        "numbers": "A $224\\times224$ image divided into $16\\times16$ patches has $14\\cdot14=196$ local pieces."
+      },
+      {
+        "title": "Product feature spaces",
+        "background": "When features combine, rectangular basis sets describe independent tolerances in each coordinate.",
+        "numbers": "Age within $\\pm2$ years and income within $\\pm5000$ dollars gives a rectangle of width $4$ by $10000$."
+      },
+      {
+        "title": "Local explanations",
+        "background": "Model explanations such as LIME sample local neighborhoods around an input. Basis thinking clarifies the chosen local region.",
+        "numbers": "If perturbations allow each of $10$ binary features to flip independently, there are $2^{10}=1024$ local binary variants."
+      },
+      {
+        "title": "Database range queries",
+        "background": "Range indexes answer queries that look like basic open or half-open intervals; unions of ranges build more complex filters.",
+        "numbers": "The query price between $10$ and $20$ and rating between $4$ and $5$ is a rectangle in two features."
+      },
+      {
+        "title": "Manifold charts",
+        "background": "Differential geometry uses coordinate neighborhoods as local building blocks for curved spaces.",
+        "numbers": "A globe can be covered by two stereographic charts; each chart behaves locally like $\\mathbb{R}^2$."
+      }
+    ],
+    "applicationsClose": "Bases are efficient vocabulary: small local pieces that generate the open worlds we actually reason in.",
+    "takeaways": [
+      "A basis covers the space and refines overlaps locally.",
+      "The generated topology consists of all unions of basis elements.",
+      "Open intervals form a basis for the usual topology on $\\mathbb{R}$.",
+      "Basis thinking is local-to-global thinking."
+    ],
     "prereqs": [
       "math-13-03"
     ]
@@ -90,19 +1058,261 @@
   B({
     "id": "math-13-05",
     "title": "Subspace topology",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: subspace topology.",
+    "tagline": "A subspace inherits openness by intersecting the larger world's open sets with the smaller set.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Bases</i>"
+        "Bases",
+        "Open and closed sets",
+        "set intersections"
       ],
       "leadsTo": [
-        "the next lesson, <i>Continuity</i>"
+        "Continuity",
+        "Connectedness",
+        "Compactness"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "relative openness",
+        "metric restrictions",
+        "embedded spaces"
       ]
     },
+    "motivation": "<p>You already know that a point at the end of a line segment feels like a boundary in the full real line. But if the line segment is the whole universe, that endpoint has a different local feel: there is no outside direction to the left inside the subspace.</p><p>The <b>subspace topology</b> lets a smaller set inherit topology from a larger one. It is the natural way to talk about a circle sitting in the plane, a constraint set inside parameter space, or a dataset sitting inside feature space.</p>",
+    "definition": "<p>If $(X,\\tau)$ is a topological space and $Y\\subseteq X$, the <b>subspace topology</b> on $Y$ is $$\\tau_Y=\\{Y\\cap U:U\\in\\tau\\}.$$ A set $V\\subseteq Y$ is open in the subspace if it equals $Y\\cap U$ for some open set $U$ in $X$.</p><p>This definition keeps the larger notion of nearness but restricts attention to points that live in $Y$. For example, $[0,1)$ is open in the subspace $[0,2]$ because $[0,1)=[0,2]\\cap(-1,1)$, even though $[0,1)$ is not open in $\\mathbb{R}$.</p><p><b>Assumptions that matter:</b> open in $Y$ does not necessarily mean open in $X$; complements for closedness are taken inside $Y$; and all inherited neighborhoods are intersections with the ambient open sets.</p>",
+    "worked": {
+      "problem": "Let $Y=[0,2]\\subseteq\\mathbb{R}$. Show that $[0,1)$ is open in the subspace $Y$.",
+      "skills": [
+        "relative openness",
+        "intersections",
+        "intervals"
+      ],
+      "strategy": "Find an open set in $\\mathbb{R}$ whose intersection with $Y$ gives the target set.",
+      "steps": [
+        {
+          "do": "Choose an ambient open set",
+          "result": "$U=(-1,1)$",
+          "why": "it is open in $\\mathbb{R}$"
+        },
+        {
+          "do": "Intersect with $Y$",
+          "result": "$[0,2]\\cap(-1,1)$",
+          "why": "subspace opens have this form"
+        },
+        {
+          "do": "Compute the intersection",
+          "result": "$[0,1)$",
+          "why": "points must be at least $0$ from $Y$ and less than $1$ from $U$"
+        },
+        {
+          "do": "Match the target",
+          "result": "$Y\\cap U=[0,1)$",
+          "why": "the intersection equals the set we wanted"
+        },
+        {
+          "do": "Conclude relative openness",
+          "result": "$[0,1)$ is open in $Y$",
+          "why": "it is the intersection of $Y$ with an ambient open set"
+        }
+      ],
+      "verify": "This does not claim $[0,1)$ is open in $\\mathbb{R}$; it is open only relative to $Y=[0,2]$.",
+      "answer": "$[0,1)$ is open in the subspace $[0,2]$ because $[0,1)=[0,2]\\cap(-1,1)$.",
+      "connects": "Subspace topology changes the ambient universe while preserving inherited nearness."
+    },
+    "practice": [
+      {
+        "problem": "Let $Y=[0,2]$. Show that $(0,2]$ is open in $Y$.",
+        "steps": [
+          {
+            "do": "Choose an ambient open set",
+            "result": "$U=(0,3)$",
+            "why": "it is open in $\\mathbb{R}$"
+          },
+          {
+            "do": "Intersect with $Y$",
+            "result": "$[0,2]\\cap(0,3)$",
+            "why": "subspace definition"
+          },
+          {
+            "do": "Compute the intersection",
+            "result": "$(0,2]$",
+            "why": "points are greater than $0$ and at most $2$"
+          },
+          {
+            "do": "Match the target",
+            "result": "$Y\\cap U=(0,2]$",
+            "why": "the desired set has the required form"
+          },
+          {
+            "do": "Conclude",
+            "result": "open in $Y$",
+            "why": "relative openness is proved"
+          }
+        ],
+        "answer": "$(0,2]$ is open in the subspace $Y=[0,2]$."
+      },
+      {
+        "problem": "Let $Y=\\{0\\}\\cup(1,2)$ as a subspace of $\\mathbb{R}$. Is $\\{0\\}$ open in $Y$?",
+        "steps": [
+          {
+            "do": "Choose an ambient open set around $0$",
+            "result": "$U=(-0.5,0.5)$",
+            "why": "it isolates $0$ from the interval $(1,2)$"
+          },
+          {
+            "do": "Intersect with $Y$",
+            "result": "$Y\\cap U$",
+            "why": "subspace opens are intersections"
+          },
+          {
+            "do": "Compute the intersection",
+            "result": "$\\{0\\}$",
+            "why": "no point of $(1,2)$ lies between $-0.5$ and $0.5$"
+          },
+          {
+            "do": "Check the form",
+            "result": "$\\{0\\}=Y\\cap U$",
+            "why": "it comes from an ambient open set"
+          },
+          {
+            "do": "Conclude",
+            "result": "$\\{0\\}$ is open in $Y$",
+            "why": "isolated points can be open in a subspace"
+          }
+        ],
+        "answer": "Yes. $\\{0\\}$ is open in $Y$."
+      },
+      {
+        "problem": "In $Y=[0,1]$, classify $(0,1]$ as open, closed, both, or neither relative to $Y$.",
+        "steps": [
+          {
+            "do": "Show relative openness",
+            "result": "$(0,1]=[0,1]\\cap(0,2)$",
+            "why": "$(0,2)$ is open in $\\mathbb{R}$"
+          },
+          {
+            "do": "Compute the complement in $Y$",
+            "result": "$Y\\setminus(0,1]=\\{0\\}$",
+            "why": "only $0$ is missing"
+          },
+          {
+            "do": "Show complement is open in $Y$",
+            "result": "$\\{0\\}=[0,1]\\cap(-1,0.5)$",
+            "why": "it is a subspace-open set"
+          },
+          {
+            "do": "Use closed definition",
+            "result": "$(0,1]$ is closed in $Y$",
+            "why": "its relative complement is open"
+          },
+          {
+            "do": "Classify",
+            "result": "both open and closed in $Y$",
+            "why": "both tests passed"
+          }
+        ],
+        "answer": "$(0,1]$ is both open and closed in the subspace $Y=[0,1]$."
+      },
+      {
+        "problem": "Let $Y$ be the unit circle in $\\mathbb{R}^2$. Describe an open arc as a subspace-open set.",
+        "steps": [
+          {
+            "do": "Let the target be a short arc",
+            "result": "points on the circle with angles between $0$ and $\\pi/2$",
+            "why": "this is a quarter arc without endpoints"
+          },
+          {
+            "do": "Choose an ambient open region",
+            "result": "the first quadrant $\\{(x,y):x>0,y>0\\}$",
+            "why": "it is open in $\\mathbb{R}^2$"
+          },
+          {
+            "do": "Intersect with the circle",
+            "result": "$Y\\cap\\{(x,y):x>0,y>0\\}$",
+            "why": "subspace rule"
+          },
+          {
+            "do": "Read the result",
+            "result": "the open first-quadrant arc",
+            "why": "only circle points in that open quadrant remain"
+          },
+          {
+            "do": "Conclude relative openness",
+            "result": "the arc is open in $Y$",
+            "why": "it is an ambient-open intersection"
+          }
+        ],
+        "answer": "The first-quadrant open arc is open in the circle subspace."
+      },
+      {
+        "problem": "A feasible parameter set is $Y=[0,10]$. Show the learning-rate region $[0,0.1)$ is open in $Y$ if $Y$ is viewed as a subspace of $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Choose an ambient open interval",
+            "result": "$U=(-1,0.1)$",
+            "why": "it is open in $\\mathbb{R}$"
+          },
+          {
+            "do": "Intersect with $Y$",
+            "result": "$[0,10]\\cap(-1,0.1)$",
+            "why": "relative topology"
+          },
+          {
+            "do": "Compute the intersection",
+            "result": "$[0,0.1)$",
+            "why": "the lower endpoint comes from $Y$"
+          },
+          {
+            "do": "Match the region",
+            "result": "the learning-rate region is $Y\\cap U$",
+            "why": "it has the subspace-open form"
+          },
+          {
+            "do": "State the interpretation",
+            "result": "open relative to feasible rates",
+            "why": "negative rates are outside the universe"
+          }
+        ],
+        "answer": "$[0,0.1)$ is open relative to $Y=[0,10]$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Constraint sets in ML",
+        "background": "Parameters often live in a subset such as probabilities or nonnegative weights. Openness is then relative to the feasible set.",
+        "numbers": "Inside $[0,1]$, the region $[0,0.2)$ is open because it equals $[0,1]\\cap(-0.1,0.2)$."
+      },
+      {
+        "title": "Manifold learning",
+        "background": "Data may lie on a curved subspace inside a high-dimensional ambient space. Neighborhoods are inherited from the ambient metric.",
+        "numbers": "A circle embedded in $\\mathbb{R}^2$ can use a radius-$0.1$ disk; intersecting with the circle gives a small arc."
+      },
+      {
+        "title": "Probability simplex",
+        "background": "Class probabilities for $k$ classes live in a simplex, not all of $\\mathbb{R}^k$. Its topology is inherited from Euclidean space.",
+        "numbers": "For $3$ classes, probabilities satisfy $p_1+p_2+p_3=1$ and $p_i\\ge0$, a $2$D triangle in $\\mathbb{R}^3$."
+      },
+      {
+        "title": "Embedded graphs",
+        "background": "Road networks or knowledge graphs can be seen as subspaces of larger geometric or combinatorial spaces.",
+        "numbers": "A path with $20$ road nodes inherits neighborhoods along edges rather than all nearby points in the plane."
+      },
+      {
+        "title": "Boundary-aware optimization",
+        "background": "An endpoint can be open relative to the feasible set even if it is not open in the ambient line.",
+        "numbers": "For learning rate $\\eta\\in[0,1]$, a small relative neighborhood of $0$ can look like $[0,0.01)$."
+      },
+      {
+        "title": "Data slices",
+        "background": "Analysts often study a cohort as a subspace of all users. Relative open sets describe neighborhoods inside that cohort.",
+        "numbers": "If a cohort has ages $30$ to $40$, the relative age band $[30,32)$ equals $[30,40]\\cap(29,32)$."
+      }
+    ],
+    "applicationsClose": "Subspace topology teaches a gentle but important lesson: openness depends on the universe you are standing in.",
+    "takeaways": [
+      "Subspace-open sets have the form $Y\\cap U$ where $U$ is open in the ambient space.",
+      "A set can be open in a subspace without being open in the ambient space.",
+      "Relative complements are taken inside the subspace.",
+      "Constraints, manifolds, simplexes, and embedded data all use inherited topology."
+    ],
     "prereqs": [
       "math-13-04"
     ]
@@ -111,19 +1321,266 @@
   B({
     "id": "math-13-06",
     "title": "Continuity",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: continuity.",
+    "tagline": "A continuous map sends nearby inputs to outputs that remain nearby in the topological sense.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Subspace topology</i>"
+        "Open and closed sets",
+        "Subspace topology",
+        "functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Homeomorphisms</i>"
+        "Homeomorphisms",
+        "Connectedness",
+        "Compactness"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "preimages",
+        "limits",
+        "metric spaces"
       ]
     },
+    "motivation": "<p>You already know continuity on the real line as no jumps or tears. Topology keeps that intuition but removes dependence on formulas, derivatives, or exact distances.</p><p>The topological definition is beautifully practical: a function is continuous if the preimage of every open set is open. Instead of chasing every nearby point one by one, we test whether open output requirements pull back to open input requirements.</p>",
+    "definition": "<p>Let $(X,\\tau_X)$ and $(Y,\\tau_Y)$ be topological spaces. A function $f:X\\to Y$ is <b>continuous</b> if for every open set $U\\in\\tau_Y$, the preimage $f^{-1}(U)=\\{x\\in X:f(x)\\in U\\}$ is open in $X$. Equivalently, preimages of closed sets are closed.</p><p>For real functions, this matches the familiar epsilon-delta idea. If an output interval around $f(a)$ is requested, continuity says the inputs that land inside that interval form a neighborhood around $a$. The open-set version works in spaces where no numeric distance is available.</p><p><b>Assumptions that matter:</b> continuity depends on the topologies on both domain and codomain; preimage is used, not image; and a function can be continuous under one choice of topology but not another.</p>",
+    "worked": {
+      "problem": "Show that $f:\\mathbb{R}\\to\\mathbb{R}$, $f(x)=2x+1$, is continuous by checking the preimage of an open interval $(a,b)$.",
+      "skills": [
+        "preimages",
+        "linear inequalities",
+        "open intervals"
+      ],
+      "strategy": "Pull the output interval back through the formula and see whether the input set is open.",
+      "steps": [
+        {
+          "do": "Write the preimage condition",
+          "result": "$f(x)\\in(a,b)$",
+          "why": "preimage means outputs land in the target set"
+        },
+        {
+          "do": "Substitute the formula",
+          "result": "$2x+1\\in(a,b)$",
+          "why": "$f(x)=2x+1$"
+        },
+        {
+          "do": "Turn membership into inequalities",
+          "result": "$a<2x+1<b$",
+          "why": "interval membership is a double inequality"
+        },
+        {
+          "do": "Subtract $1$",
+          "result": "$a-1<2x<b-1$",
+          "why": "isolate the term with $x$"
+        },
+        {
+          "do": "Divide by $2$",
+          "result": "$(a-1)/2<x<(b-1)/2$",
+          "why": "positive division preserves inequalities"
+        },
+        {
+          "do": "Read the preimage",
+          "result": "$f^{-1}((a,b))=((a-1)/2,(b-1)/2)$",
+          "why": "the solution set is an open interval"
+        }
+      ],
+      "verify": "Open intervals generate the usual topology, and every basic open interval pulls back to an open interval.",
+      "answer": "$f$ is continuous because preimages of basic open intervals are open intervals.",
+      "connects": "Continuity is openness preserved backward through the function."
+    },
+    "practice": [
+      {
+        "problem": "For $f(x)=x^2$, find $f^{-1}((1,4))$ in $\\mathbb{R}$ and decide whether it is open.",
+        "steps": [
+          {
+            "do": "Write the preimage condition",
+            "result": "$1<x^2<4$",
+            "why": "outputs must lie in $(1,4)$"
+          },
+          {
+            "do": "Solve $x^2>1$",
+            "result": "$x<-1$ or $x>1$",
+            "why": "outside the unit interval"
+          },
+          {
+            "do": "Solve $x^2<4$",
+            "result": "$-2<x<2$",
+            "why": "inside radius $2$"
+          },
+          {
+            "do": "Combine the conditions",
+            "result": "$(-2,-1)\\cup(1,2)$",
+            "why": "both inequalities must hold"
+          },
+          {
+            "do": "Check openness",
+            "result": "open",
+            "why": "a union of open intervals is open"
+          }
+        ],
+        "answer": "$f^{-1}((1,4))=(-2,-1)\\cup(1,2)$, which is open."
+      },
+      {
+        "problem": "Let $g:\\mathbb{R}\\to\\mathbb{R}$ be the step function $g(x)=0$ for $x<0$ and $g(x)=1$ for $x\\ge0$. Use $U=(0.5,1.5)$ to show $g$ is not continuous.",
+        "steps": [
+          {
+            "do": "Check that $U$ is open",
+            "result": "$(0.5,1.5)$ is open",
+            "why": "ordinary open interval"
+          },
+          {
+            "do": "Find where $g(x)\\in U$",
+            "result": "$x\\ge0$",
+            "why": "only output $1$ lies in $(0.5,1.5)$"
+          },
+          {
+            "do": "Write the preimage",
+            "result": "$g^{-1}(U)=[0,\\infty)$",
+            "why": "all nonnegative inputs map to $1$"
+          },
+          {
+            "do": "Check openness of the preimage",
+            "result": "not open in $\\mathbb{R}$",
+            "why": "$0$ has no left-side room inside the set"
+          },
+          {
+            "do": "Conclude",
+            "result": "$g$ is not continuous",
+            "why": "one open set with non-open preimage is enough"
+          }
+        ],
+        "answer": "$g$ is not continuous."
+      },
+      {
+        "problem": "Show that a constant function $c:X\\to Y$ is continuous for any topological space $X$.",
+        "steps": [
+          {
+            "do": "Take an open set $U\\subseteq Y$",
+            "result": "two cases",
+            "why": "the constant value is either in $U$ or not"
+          },
+          {
+            "do": "If the constant value lies in $U$",
+            "result": "$c^{-1}(U)=X$",
+            "why": "every input maps into $U$"
+          },
+          {
+            "do": "If the constant value does not lie in $U$",
+            "result": "$c^{-1}(U)=\\emptyset$",
+            "why": "no input maps into $U$"
+          },
+          {
+            "do": "Check openness",
+            "result": "$X$ and $\\emptyset$ are open",
+            "why": "topology axioms"
+          },
+          {
+            "do": "Conclude continuity",
+            "result": "constant functions are continuous",
+            "why": "every open preimage is open"
+          }
+        ],
+        "answer": "Every constant function is continuous."
+      },
+      {
+        "problem": "Let $X$ have the discrete topology. Explain why every function $f:X\\to Y$ is continuous.",
+        "steps": [
+          {
+            "do": "Take an open set $U\\subseteq Y$",
+            "result": "$U$ is arbitrary",
+            "why": "continuity must hold for every open target set"
+          },
+          {
+            "do": "Form the preimage",
+            "result": "$f^{-1}(U)\\subseteq X$",
+            "why": "preimages are subsets of the domain"
+          },
+          {
+            "do": "Use discreteness",
+            "result": "$f^{-1}(U)$ is open",
+            "why": "every subset of $X$ is open"
+          },
+          {
+            "do": "Repeat for all $U$",
+            "result": "all open preimages are open",
+            "why": "the argument did not depend on $U$"
+          },
+          {
+            "do": "Conclude",
+            "result": "$f$ is continuous",
+            "why": "the open-preimage condition holds"
+          }
+        ],
+        "answer": "Every function from a discrete space is continuous."
+      },
+      {
+        "problem": "A model map $f(w)=3w-2$ sends weights to scores. Find the preimage of acceptable scores $(1,7)$ and interpret it.",
+        "steps": [
+          {
+            "do": "Write the score condition",
+            "result": "$1<3w-2<7$",
+            "why": "acceptable scores lie in $(1,7)$"
+          },
+          {
+            "do": "Add $2$",
+            "result": "$3<3w<9$",
+            "why": "isolate the weight term"
+          },
+          {
+            "do": "Divide by $3$",
+            "result": "$1<w<3$",
+            "why": "positive division preserves inequalities"
+          },
+          {
+            "do": "Write the preimage",
+            "result": "$f^{-1}((1,7))=(1,3)$",
+            "why": "these weights produce acceptable scores"
+          },
+          {
+            "do": "Check openness",
+            "result": "open interval",
+            "why": "small weight changes remain acceptable inside the interval"
+          }
+        ],
+        "answer": "Acceptable scores correspond to weights $w\\in(1,3)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Neural networks with continuous activations",
+        "background": "Affine maps, sigmoid, tanh, and ReLU are continuous, and compositions of continuous maps remain continuous.",
+        "numbers": "For ReLU, inputs $-0.01,0,0.01$ give outputs $0,0,0.01$, with no jump at $0$."
+      },
+      {
+        "title": "Preimage decision regions",
+        "background": "Classifiers define score regions in output space; preimages show which inputs land there.",
+        "numbers": "For score $s(x)=2x+1$, the output range $(5,9)$ pulls back to inputs $(2,4)$."
+      },
+      {
+        "title": "Robustness to perturbations",
+        "background": "Continuity is the first mathematical reason small input changes should create small output changes, though it does not guarantee a large margin.",
+        "numbers": "If $f(x)=4x$, changing $x$ by $0.01$ changes output by $0.04$."
+      },
+      {
+        "title": "Loss surfaces",
+        "background": "Continuous losses allow optimization paths to be interpreted without jumps in objective value.",
+        "numbers": "For $L(w)=(w-2)^2$, moving from $w=2$ to $2.1$ changes loss from $0$ to $0.01$."
+      },
+      {
+        "title": "Data pipelines",
+        "background": "Some preprocessing maps are continuous, such as scaling; others, such as rounding, are not.",
+        "numbers": "Scaling $z=(x-100)/20$ maps the open band $(90,110)$ to $(-0.5,0.5)$."
+      },
+      {
+        "title": "Thresholding breaks continuity",
+        "background": "Hard decisions often introduce jumps, which can make gradient training difficult.",
+        "numbers": "A threshold at $0.7$ sends $0.699$ to $0$ and $0.701$ to $1$, a jump of $1$ from a change of $0.002$."
+      }
+    ],
+    "applicationsClose": "Continuity says open output demands pull back to open input freedoms, a compact idea that powers analysis and learning.",
+    "takeaways": [
+      "A map is continuous when preimages of open sets are open.",
+      "Use preimages, not images, in the definition.",
+      "Continuity depends on the topologies chosen on domain and codomain.",
+      "Compositions of continuous maps are continuous, which is why many model pipelines behave predictably."
+    ],
     "prereqs": [
       "math-13-05"
     ]
@@ -132,19 +1589,266 @@
   B({
     "id": "math-13-07",
     "title": "Homeomorphisms",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: homeomorphisms.",
+    "tagline": "A homeomorphism is a continuous, reversible reshaping that preserves topology exactly.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Continuity</i>"
+        "Continuity",
+        "bijections",
+        "inverse functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Connectedness</i>"
+        "Connectedness",
+        "Compactness",
+        "topological invariants"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "equivalence relations",
+        "subspace topology",
+        "continuous maps"
       ]
     },
+    "motivation": "<p>You already know that two formulas can describe the same line after a change of coordinates. Topology has a deeper version: two spaces can be the same shape even when their geometry looks different.</p><p>A <b>homeomorphism</b> is the official certificate of sameness. It is continuous, one-to-one, onto, and has a continuous inverse. That last condition matters: it prevents a map from crushing or gluing information together.</p>",
+    "definition": "<p>A function $f:X\\to Y$ is a <b>homeomorphism</b> if it is bijective, continuous, and its inverse $f^{-1}:Y\\to X$ is continuous. When such an $f$ exists, $X$ and $Y$ are <b>homeomorphic</b>, written informally as the same topological space.</p><p>Homeomorphisms preserve topological properties. If $X$ is connected, compact, or has one hole, then $Y$ has the corresponding property. But they do not preserve distances, angles, areas, or straightness.</p><p><b>Assumptions that matter:</b> bijective and continuous is not always enough unless the inverse is also continuous; the topologies on both spaces are part of the statement; and proving two spaces are not homeomorphic usually requires finding a topological invariant that differs.</p>",
+    "worked": {
+      "problem": "Show that $f:(0,1)\\to(2,5)$ given by $f(x)=3x+2$ is a homeomorphism.",
+      "skills": [
+        "bijections",
+        "inverse functions",
+        "continuity"
+      ],
+      "strategy": "Prove the map is bijective, compute the inverse, and check both directions are continuous.",
+      "steps": [
+        {
+          "do": "Check the range of $f$",
+          "result": "$0<x<1$ gives $2<3x+2<5$",
+          "why": "the formula lands in $(2,5)$"
+        },
+        {
+          "do": "Solve $y=3x+2$ for $x$",
+          "result": "$x=(y-2)/3$",
+          "why": "this gives the inverse formula"
+        },
+        {
+          "do": "Write the inverse",
+          "result": "$f^{-1}(y)=(y-2)/3$",
+          "why": "each output has exactly one input"
+        },
+        {
+          "do": "Check inverse lands in $(0,1)$",
+          "result": "$2<y<5$ gives $0<(y-2)/3<1$",
+          "why": "the inverse is well-defined"
+        },
+        {
+          "do": "Check continuity of $f$",
+          "result": "continuous",
+          "why": "linear functions are continuous"
+        },
+        {
+          "do": "Check continuity of $f^{-1}$",
+          "result": "continuous",
+          "why": "the inverse is also linear"
+        }
+      ],
+      "verify": "The map stretches by factor $3$ and shifts by $2$; it changes length but not interval topology.",
+      "answer": "$f$ is a homeomorphism from $(0,1)$ to $(2,5)$.",
+      "connects": "Homeomorphism is topology's equality sign for spaces."
+    },
+    "practice": [
+      {
+        "problem": "Show that $f:\\mathbb{R}\\to\\mathbb{R}$, $f(x)=x+7$, is a homeomorphism.",
+        "steps": [
+          {
+            "do": "Check injectivity",
+            "result": "$x_1+7=x_2+7$ implies $x_1=x_2$",
+            "why": "subtract $7$"
+          },
+          {
+            "do": "Check surjectivity",
+            "result": "for any $y$, choose $x=y-7$",
+            "why": "$f(y-7)=y$"
+          },
+          {
+            "do": "Write the inverse",
+            "result": "$f^{-1}(y)=y-7$",
+            "why": "solve $y=x+7$"
+          },
+          {
+            "do": "Check continuity of $f$",
+            "result": "continuous",
+            "why": "linear function"
+          },
+          {
+            "do": "Check continuity of the inverse",
+            "result": "continuous",
+            "why": "also linear"
+          }
+        ],
+        "answer": "$f(x)=x+7$ is a homeomorphism of $\\mathbb{R}$ with itself."
+      },
+      {
+        "problem": "Show that $(0,1)$ and $\\mathbb{R}$ are homeomorphic using $f(x)=\\tan(\\pi(x-1/2))$.",
+        "steps": [
+          {
+            "do": "Check endpoint behavior",
+            "result": "$x\\to0^+$ gives $f(x)\\to-\\infty$",
+            "why": "the angle approaches $-\\pi/2$"
+          },
+          {
+            "do": "Check the other endpoint",
+            "result": "$x\\to1^-$ gives $f(x)\\to\\infty$",
+            "why": "the angle approaches $\\pi/2$"
+          },
+          {
+            "do": "Use monotonicity",
+            "result": "one-to-one and onto $\\mathbb{R}$",
+            "why": "tangent increases across this interval"
+          },
+          {
+            "do": "Write inverse form",
+            "result": "$f^{-1}(y)=1/2+(1/\\pi)\\arctan y$",
+            "why": "solve using arctangent"
+          },
+          {
+            "do": "Check continuity",
+            "result": "both formulas are continuous",
+            "why": "tangent on the interval and arctangent are continuous"
+          }
+        ],
+        "answer": "The given $f$ is a homeomorphism from $(0,1)$ to $\\mathbb{R}$."
+      },
+      {
+        "problem": "Explain why $[0,1]$ and $(0,1)$ are not homeomorphic using compactness as an invariant.",
+        "steps": [
+          {
+            "do": "State compactness of $[0,1]$",
+            "result": "compact",
+            "why": "closed and bounded in $\\mathbb{R}$"
+          },
+          {
+            "do": "State compactness of $(0,1)$",
+            "result": "not compact",
+            "why": "it is not closed and misses endpoint limits"
+          },
+          {
+            "do": "Recall invariant behavior",
+            "result": "homeomorphisms preserve compactness",
+            "why": "continuous images of compact spaces are compact"
+          },
+          {
+            "do": "Compare",
+            "result": "compact versus not compact",
+            "why": "the invariant differs"
+          },
+          {
+            "do": "Conclude",
+            "result": "not homeomorphic",
+            "why": "homeomorphic spaces cannot differ on compactness"
+          }
+        ],
+        "answer": "$[0,1]$ and $(0,1)$ are not homeomorphic."
+      },
+      {
+        "problem": "Show that a circle and an ellipse are homeomorphic by using a coordinate scaling idea.",
+        "steps": [
+          {
+            "do": "Let the circle be $x^2+y^2=1$",
+            "result": "unit circle",
+            "why": "standard model"
+          },
+          {
+            "do": "Define a map",
+            "result": "$f(x,y)=(2x,3y)$",
+            "why": "scale horizontal and vertical coordinates"
+          },
+          {
+            "do": "Compute the image equation",
+            "result": "$(X/2)^2+(Y/3)^2=1$",
+            "why": "$X=2x$ and $Y=3y$"
+          },
+          {
+            "do": "Write the inverse",
+            "result": "$f^{-1}(X,Y)=(X/2,Y/3)$",
+            "why": "undo the scaling"
+          },
+          {
+            "do": "Check continuity",
+            "result": "both maps are continuous",
+            "why": "coordinate scaling is linear"
+          }
+        ],
+        "answer": "The unit circle and the ellipse $(X/2)^2+(Y/3)^2=1$ are homeomorphic."
+      },
+      {
+        "problem": "A learned embedding maps a one-dimensional interval by $f(t)=(2t,5t+1)$ for $0<t<1$. Show the embedded curve is homeomorphic to $(0,1)$.",
+        "steps": [
+          {
+            "do": "Check continuity of $f$",
+            "result": "continuous",
+            "why": "each coordinate is linear in $t$"
+          },
+          {
+            "do": "Check injectivity",
+            "result": "$2t_1=2t_2$ implies $t_1=t_2$",
+            "why": "the first coordinate recovers $t$"
+          },
+          {
+            "do": "Define the inverse on the image",
+            "result": "$t=X/2$",
+            "why": "the first coordinate is $X=2t$"
+          },
+          {
+            "do": "Check inverse continuity",
+            "result": "continuous on the image",
+            "why": "coordinate projection and scaling are continuous"
+          },
+          {
+            "do": "Conclude",
+            "result": "homeomorphic to $(0,1)$",
+            "why": "the map is continuous, bijective onto its image, with continuous inverse"
+          }
+        ],
+        "answer": "The embedded curve is homeomorphic to $(0,1)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Data embeddings",
+        "background": "A good embedding may bend a manifold while preserving its topology. Homeomorphism is the ideal version of no tearing or gluing.",
+        "numbers": "Mapping $t\\in(0,1)$ to $(2t,5t+1)$ changes length scale but keeps one interval of points."
+      },
+      {
+        "title": "Shape matching",
+        "background": "Computer graphics distinguishes deformations that preserve topology from edits that cut holes or merge parts.",
+        "numbers": "Scaling a circle to an ellipse by factors $2$ and $3$ changes area from $\\pi$ to $6\\pi$ but preserves one loop."
+      },
+      {
+        "title": "Normalizing flows",
+        "background": "Some generative models use invertible continuous maps, close in spirit to homeomorphisms when inverse continuity holds.",
+        "numbers": "In one dimension, $y=2x+1$ changes density by scale factor $1/2$ under the inverse $x=(y-1)/2$."
+      },
+      {
+        "title": "Coordinate changes",
+        "background": "Physics and geometry often change coordinates without changing the underlying space. Homeomorphisms formalize safe coordinate replacement.",
+        "numbers": "The interval $(2,5)$ maps to $(0,1)$ by $(y-2)/3$, so $y=3.5$ maps to $0.5$."
+      },
+      {
+        "title": "Robotics configuration spaces",
+        "background": "Two parameterizations of the same motion space should be homeomorphic when they encode the same configurations.",
+        "numbers": "An angle interval $(-\\pi,\\pi)$ and $(-1,1)$ are homeomorphic by $x=\\theta/\\pi$."
+      },
+      {
+        "title": "Topology-preserving augmentation",
+        "background": "Image augmentation can stretch or warp objects while preserving labels when it does not alter topology.",
+        "numbers": "A $20\\times20$ circle stretched to width $30$ and height $15$ changes pixel geometry but should remain one connected object with one hole if it was a ring."
+      }
+    ],
+    "applicationsClose": "Homeomorphisms are the precise promise that a new representation changed coordinates, not topology.",
+    "takeaways": [
+      "A homeomorphism is bijective, continuous, and has continuous inverse.",
+      "Homeomorphic spaces share topological properties such as connectedness and compactness.",
+      "Distances, lengths, angles, and areas need not be preserved.",
+      "To prove non-homeomorphism, find a topological invariant that differs."
+    ],
     "prereqs": [
       "math-13-06"
     ]
@@ -153,19 +1857,266 @@
   B({
     "id": "math-13-08",
     "title": "Connectedness",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: connectedness.",
+    "tagline": "Connectedness says a space is one piece, not separable into two disjoint open worlds.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Homeomorphisms</i>"
+        "Homeomorphisms",
+        "Open and closed sets",
+        "Subspace topology"
       ],
       "leadsTo": [
-        "the next lesson, <i>Compactness</i>"
+        "Compactness",
+        "path connectedness",
+        "topological data analysis"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "components",
+        "intervals",
+        "continuous images"
       ]
     },
+    "motivation": "<p>You can see when a shape is in one piece. But topology asks for a definition that works even when the shape is abstract and no picture is available.</p><p><b>Connectedness</b> captures one-piece-ness. A connected space cannot be split into two nonempty pieces that are both open relative to the space. This simple idea powers clustering, intervals, path planning, and the Intermediate Value Theorem's deeper topology.</p>",
+    "definition": "<p>A topological space $X$ is <b>connected</b> if it cannot be written as $X=A\\cup B$ where $A$ and $B$ are nonempty, disjoint, and open in $X$. Such a split is called a separation. A <b>connected component</b> is a maximal connected subset.</p><p>Intervals in $\\mathbb{R}$ are connected. The union $(0,1)\\cup(2,3)$ is not connected because it is the union of two separated open pieces in the subspace topology. Continuous images of connected spaces are connected, which is why continuous curves do not jump into disconnected pieces.</p><p><b>Assumptions that matter:</b> openness is relative to the space being studied; connected does not always mean path connected in every topology; and component counts are preserved by homeomorphisms.</p>",
+    "worked": {
+      "problem": "Show that $X=(0,1)\\cup(2,3)$ is disconnected as a subspace of $\\mathbb{R}$.",
+      "skills": [
+        "subspace openness",
+        "separations",
+        "intervals"
+      ],
+      "strategy": "Exhibit two nonempty disjoint open subsets whose union is the whole subspace.",
+      "steps": [
+        {
+          "do": "Define the first piece",
+          "result": "$A=(0,1)$",
+          "why": "one interval component of $X$"
+        },
+        {
+          "do": "Define the second piece",
+          "result": "$B=(2,3)$",
+          "why": "the other interval component of $X$"
+        },
+        {
+          "do": "Check nonempty",
+          "result": "$0.5\\in A$ and $2.5\\in B$",
+          "why": "both pieces contain points"
+        },
+        {
+          "do": "Check disjointness",
+          "result": "$A\\cap B=\\emptyset$",
+          "why": "no number is both between $0,1$ and $2,3$"
+        },
+        {
+          "do": "Check union",
+          "result": "$A\\cup B=X$",
+          "why": "these are exactly the two pieces of $X$"
+        },
+        {
+          "do": "Check relative openness",
+          "result": "$A$ and $B$ are open in $X$",
+          "why": "each is an intersection of $X$ with an open set of $\\mathbb{R}$"
+        }
+      ],
+      "verify": "The gap from $1$ to $2$ prevents any continuous movement inside $X$ from one piece to the other.",
+      "answer": "$X$ is disconnected, with separation $(0,1)$ and $(2,3)$.",
+      "connects": "Disconnected means the space can be separated into two open, nonempty, noncommunicating pieces."
+    },
+    "practice": [
+      {
+        "problem": "Explain why $[0,1]$ is connected in the usual topology on $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Recognize the set",
+            "result": "$[0,1]$ is an interval",
+            "why": "it contains every point between any two of its points"
+          },
+          {
+            "do": "Recall the theorem",
+            "result": "intervals in $\\mathbb{R}$ are connected",
+            "why": "a separation would create a missing cut point"
+          },
+          {
+            "do": "Test the intuition",
+            "result": "between $0.2$ and $0.8$ lies $0.5$",
+            "why": "no gap appears inside the interval"
+          },
+          {
+            "do": "Compare with a separated union",
+            "result": "no gap like $(1,2)$ is removed",
+            "why": "removed gaps cause disconnection"
+          },
+          {
+            "do": "Conclude",
+            "result": "connected",
+            "why": "the interval is one piece"
+          }
+        ],
+        "answer": "$[0,1]$ is connected."
+      },
+      {
+        "problem": "Find the connected components of $X=\\{0\\}\\cup[2,4]$ in $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Identify isolated point",
+            "result": "$\\{0\\}$",
+            "why": "there is a gap between $0$ and $2$"
+          },
+          {
+            "do": "Identify interval piece",
+            "result": "$[2,4]$",
+            "why": "closed intervals are connected"
+          },
+          {
+            "do": "Check separation",
+            "result": "$X=\\{0\\}\\cup[2,4]$",
+            "why": "these pieces cover $X$"
+          },
+          {
+            "do": "Check disjointness",
+            "result": "$\\{0\\}\\cap[2,4]=\\emptyset$",
+            "why": "$0$ is not in $[2,4]$"
+          },
+          {
+            "do": "State maximal connected pieces",
+            "result": "$\\{0\\}$ and $[2,4]$",
+            "why": "neither can be enlarged across the gap"
+          }
+        ],
+        "answer": "The connected components are $\\{0\\}$ and $[2,4]$."
+      },
+      {
+        "problem": "Use connectedness to show there is no homeomorphism from $(0,1)$ to $(0,1)\\cup(2,3)$.",
+        "steps": [
+          {
+            "do": "Classify $(0,1)$",
+            "result": "connected",
+            "why": "it is an interval"
+          },
+          {
+            "do": "Classify $(0,1)\\cup(2,3)$",
+            "result": "disconnected",
+            "why": "it splits into two open interval pieces"
+          },
+          {
+            "do": "Recall invariant",
+            "result": "homeomorphisms preserve connectedness",
+            "why": "continuous reversible maps preserve separations"
+          },
+          {
+            "do": "Compare invariant values",
+            "result": "connected versus disconnected",
+            "why": "the spaces differ"
+          },
+          {
+            "do": "Conclude",
+            "result": "no homeomorphism exists",
+            "why": "a topological invariant disagrees"
+          }
+        ],
+        "answer": "They are not homeomorphic because one is connected and the other is disconnected."
+      },
+      {
+        "problem": "If $f:[0,1]\\to\\mathbb{R}$ is continuous with $f(0)=-2$ and $f(1)=3$, explain why $f([0,1])$ is connected and contains $0$.",
+        "steps": [
+          {
+            "do": "Classify the domain",
+            "result": "$[0,1]$ is connected",
+            "why": "intervals are connected"
+          },
+          {
+            "do": "Use continuous image theorem",
+            "result": "$f([0,1])$ is connected",
+            "why": "continuous images preserve connectedness"
+          },
+          {
+            "do": "Use real-line connected sets",
+            "result": "$f([0,1])$ is an interval",
+            "why": "connected subsets of $\\mathbb{R}$ are intervals"
+          },
+          {
+            "do": "Compare endpoint values",
+            "result": "$-2<0<3$",
+            "why": "zero lies between the image values"
+          },
+          {
+            "do": "Conclude",
+            "result": "$0\\in f([0,1])$",
+            "why": "an interval containing $-2$ and $3$ contains all between"
+          }
+        ],
+        "answer": "$f([0,1])$ is connected and contains $0$."
+      },
+      {
+        "problem": "A point cloud graph has edges connecting points within distance $1$. If components have sizes $12$, $5$, and $8$, how many connected components does the graph have and what fraction is in the largest one?",
+        "steps": [
+          {
+            "do": "Count the listed components",
+            "result": "$3$",
+            "why": "three component sizes are given"
+          },
+          {
+            "do": "Find total points",
+            "result": "$12+5+8=25$",
+            "why": "sum component sizes"
+          },
+          {
+            "do": "Find largest component",
+            "result": "$12$",
+            "why": "$12$ is greater than $8$ and $5$"
+          },
+          {
+            "do": "Compute fraction",
+            "result": "$12/25=0.48$",
+            "why": "largest divided by total"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$48\\%$",
+            "why": "$0.48\\cdot100=48$"
+          }
+        ],
+        "answer": "There are $3$ connected components, and the largest contains $48\\%$ of the points."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Clustering as components",
+        "background": "Graph-based clustering connects nearby points and reads clusters as connected components.",
+        "numbers": "If an epsilon graph has component sizes $12$, $5$, and $8$, it has $3$ clusters and $25$ total points."
+      },
+      {
+        "title": "Image segmentation",
+        "background": "Connected-component labeling finds contiguous foreground regions in binary images.",
+        "numbers": "A mask with blobs of $40$, $70$, and $15$ pixels has $3$ components; the largest has $70$ pixels."
+      },
+      {
+        "title": "Path planning",
+        "background": "Robotics checks whether start and goal lie in the same connected free-space component.",
+        "numbers": "If free-space components have areas $12$ m$^2$ and $5$ m$^2$, start in the first and goal in the second means no path without crossing an obstacle."
+      },
+      {
+        "title": "Neural activation regions",
+        "background": "Decision regions can split into multiple connected pieces, which affects interpretability and robustness.",
+        "numbers": "A class region with $4$ disconnected islands in a $2$D slice can be hit by four separated input neighborhoods."
+      },
+      {
+        "title": "A/B experiment funnels",
+        "background": "User journey graphs can be analyzed by reachability components to find disconnected product flows.",
+        "numbers": "If $10000$ users split into reachable groups of $8000$ and $2000$, then $20\\%$ are in the smaller disconnected flow."
+      },
+      {
+        "title": "Persistent connectedness",
+        "background": "Topological data analysis tracks how components merge as neighborhood radius grows.",
+        "numbers": "If components drop from $10$ at radius $0.1$ to $3$ at radius $0.5$ to $1$ at radius $1.0$, seven merges happened before $0.5$."
+      }
+    ],
+    "applicationsClose": "Connectedness is one-piece structure, whether that piece is an interval, an image blob, a graph cluster, or a free-motion region.",
+    "takeaways": [
+      "A connected space cannot be split into two nonempty disjoint open subsets.",
+      "Intervals in $\\mathbb{R}$ are connected; separated unions are not.",
+      "Continuous images of connected spaces are connected.",
+      "Connected components are maximal connected pieces and are useful cluster-like summaries."
+    ],
     "prereqs": [
       "math-13-07"
     ]
@@ -174,19 +2125,271 @@
   B({
     "id": "math-13-09",
     "title": "Compactness",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: compactness.",
+    "tagline": "Compactness is the topological version of finite control over an infinite set.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Connectedness</i>"
+        "Connectedness",
+        "Open and closed sets",
+        "Subspace topology"
       ],
       "leadsTo": [
-        "the next lesson, <i>Metric-space topology</i>"
+        "uniform continuity",
+        "existence of optima",
+        "topological data analysis"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "open covers",
+        "closed and bounded sets",
+        "continuous functions"
       ]
     },
+    "motivation": "<p>You already trust closed intervals like $[0,1]$ more than open intervals like $(0,1)$. A continuous function on $[0,1]$ reaches a maximum and minimum; on $(0,1)$ it might keep chasing an endpoint it never reaches.</p><p><b>Compactness</b> is the reason. It says that whenever open sets cover the space, finitely many already cover it. That sounds abstract, but it is the engine behind existence theorems, finite approximations, and stable optimization on bounded feasible regions.</p>",
+    "definition": "<p>A topological space $X$ is <b>compact</b> if every open cover of $X$ has a finite subcover. An open cover is a collection of open sets whose union contains $X$. In $\\mathbb{R}^n$ with the usual topology, the Heine-Borel theorem says compact sets are exactly the closed and bounded sets.</p><p>Compactness turns infinite checking into finite checking. If infinitely many local neighborhoods cover a compact space, some finite selection already does the job. Continuous functions preserve compactness: if $X$ is compact and $f:X\\to Y$ is continuous, then $f(X)$ is compact.</p><p><b>Assumptions that matter:</b> closed and bounded characterizes compactness in Euclidean spaces, not in every topology; the cover sets must be open in the relevant space; and compactness is stronger than boundedness alone.</p>",
+    "worked": {
+      "problem": "Use Heine-Borel to decide whether $[0,1]$, $(0,1)$, and $[0,\\infty)$ are compact in $\\mathbb{R}$.",
+      "skills": [
+        "closed and bounded",
+        "Euclidean compactness",
+        "intervals"
+      ],
+      "strategy": "In $\\mathbb{R}$, check closedness and boundedness for each interval.",
+      "steps": [
+        {
+          "do": "Check $[0,1]$ for closedness",
+          "result": "closed",
+          "why": "it contains both endpoints"
+        },
+        {
+          "do": "Check $[0,1]$ for boundedness",
+          "result": "bounded",
+          "why": "all points lie between $0$ and $1$"
+        },
+        {
+          "do": "Classify $[0,1]$",
+          "result": "compact",
+          "why": "closed and bounded in $\\mathbb{R}$"
+        },
+        {
+          "do": "Check $(0,1)$",
+          "result": "bounded but not closed",
+          "why": "it misses endpoint limits $0$ and $1$"
+        },
+        {
+          "do": "Classify $(0,1)$",
+          "result": "not compact",
+          "why": "both closed and bounded are required in $\\mathbb{R}$"
+        },
+        {
+          "do": "Check $[0,\\infty)$",
+          "result": "closed but not bounded",
+          "why": "values grow without an upper bound"
+        },
+        {
+          "do": "Classify $[0,\\infty)$",
+          "result": "not compact",
+          "why": "boundedness fails"
+        }
+      ],
+      "verify": "The open interval can chase endpoints, and the ray can chase infinity; neither has the finite-control behavior of $[0,1]$.",
+      "answer": "$[0,1]$ is compact; $(0,1)$ and $[0,\\infty)$ are not compact in $\\mathbb{R}$.",
+      "connects": "Compactness makes closed bounded Euclidean sets behave like finite spaces for many purposes."
+    },
+    "practice": [
+      {
+        "problem": "Decide whether $[-2,5]$ is compact in $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Check closedness",
+            "result": "closed",
+            "why": "the interval includes endpoints $-2$ and $5$"
+          },
+          {
+            "do": "Check lower bound",
+            "result": "$x\\ge-2$",
+            "why": "no point goes below $-2$"
+          },
+          {
+            "do": "Check upper bound",
+            "result": "$x\\le5$",
+            "why": "no point goes above $5$"
+          },
+          {
+            "do": "State boundedness",
+            "result": "bounded",
+            "why": "both lower and upper bounds exist"
+          },
+          {
+            "do": "Apply Heine-Borel",
+            "result": "compact",
+            "why": "closed and bounded in $\\mathbb{R}$"
+          }
+        ],
+        "answer": "$[-2,5]$ is compact."
+      },
+      {
+        "problem": "Decide whether $(0,1]$ is compact in $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Check boundedness",
+            "result": "bounded",
+            "why": "all points lie between $0$ and $1$"
+          },
+          {
+            "do": "Check endpoint $1$",
+            "result": "included",
+            "why": "right bracket includes it"
+          },
+          {
+            "do": "Check endpoint $0$",
+            "result": "not included",
+            "why": "left parenthesis excludes it"
+          },
+          {
+            "do": "State closedness",
+            "result": "not closed",
+            "why": "the sequence $1/n$ lies in the set and converges to $0$"
+          },
+          {
+            "do": "Apply Heine-Borel",
+            "result": "not compact",
+            "why": "closedness fails"
+          }
+        ],
+        "answer": "$(0,1]$ is not compact in $\\mathbb{R}$."
+      },
+      {
+        "problem": "Decide whether the closed disk $D=\\{(x,y):x^2+y^2\\le4\\}$ is compact in $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Read the radius",
+            "result": "$2$",
+            "why": "$x^2+y^2\\le4$ means distance from the origin is at most $2$"
+          },
+          {
+            "do": "Check boundedness",
+            "result": "bounded",
+            "why": "all points lie within radius $2$"
+          },
+          {
+            "do": "Check closedness",
+            "result": "closed",
+            "why": "the inequality $\\le4$ includes the boundary circle"
+          },
+          {
+            "do": "Apply Heine-Borel in $\\mathbb{R}^2$",
+            "result": "compact",
+            "why": "closed and bounded subsets of Euclidean space are compact"
+          },
+          {
+            "do": "Note the boundary",
+            "result": "$x^2+y^2=4$ is included",
+            "why": "this is essential for closedness"
+          }
+        ],
+        "answer": "The closed disk is compact."
+      },
+      {
+        "problem": "A continuous loss $L$ on compact set $K=[0,1]$ has values $L(0)=3$, $L(0.5)=1$, and $L(1)=2$. What does compactness guarantee beyond these samples?",
+        "steps": [
+          {
+            "do": "Classify $K$",
+            "result": "compact",
+            "why": "$[0,1]$ is closed and bounded"
+          },
+          {
+            "do": "Use continuity",
+            "result": "$L(K)$ is compact in $\\mathbb{R}$",
+            "why": "continuous images of compact spaces are compact"
+          },
+          {
+            "do": "Translate compact image",
+            "result": "$L(K)$ is closed and bounded",
+            "why": "Heine-Borel in $\\mathbb{R}$"
+          },
+          {
+            "do": "State extreme value theorem",
+            "result": "a minimum and maximum are attained",
+            "why": "continuous functions on compact domains reach extrema"
+          },
+          {
+            "do": "Use samples carefully",
+            "result": "minimum is at most $1$ and maximum is at least $3$",
+            "why": "sampled values are included but may not be extreme"
+          }
+        ],
+        "answer": "Compactness guarantees that $L$ attains a global minimum and maximum on $[0,1]$."
+      },
+      {
+        "problem": "For a finite dataset of $100$ points with the discrete topology, explain why it is compact by using an open cover.",
+        "steps": [
+          {
+            "do": "Take any open cover",
+            "result": "each of the $100$ points is covered",
+            "why": "cover means every point lies in some open set"
+          },
+          {
+            "do": "Choose one cover set for point $1$",
+            "result": "one selected set",
+            "why": "point $1$ must be covered"
+          },
+          {
+            "do": "Repeat for all points",
+            "result": "at most $100$ selected sets",
+            "why": "choose one set per point"
+          },
+          {
+            "do": "Check coverage",
+            "result": "selected sets cover all points",
+            "why": "each point's selected set contains it"
+          },
+          {
+            "do": "Conclude compactness",
+            "result": "finite subcover exists",
+            "why": "the chosen subcover has at most $100$ sets"
+          }
+        ],
+        "answer": "Every finite dataset is compact; here any cover has a subcover of at most $100$ sets."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Existence of optimal parameters",
+        "background": "If a feasible parameter set is compact and the loss is continuous, a global minimizer exists. This is a foundational comfort in optimization.",
+        "numbers": "For $w\\in[-10,10]$ and $L(w)=(w-3)^2$, the minimum $0$ is attained at $w=3$."
+      },
+      {
+        "title": "Grid approximation",
+        "background": "Compact domains can often be approximated by finite grids because there is no escaping to infinity or missing endpoint.",
+        "numbers": "A $[0,1]^2$ square sampled every $0.01$ has $101\\cdot101=10201$ grid points."
+      },
+      {
+        "title": "Bounded activations",
+        "background": "Compact input ranges lead to bounded continuous outputs, helping with numerical guarantees.",
+        "numbers": "If $x\\in[-2,2]$ and $f(x)=e^x$, outputs lie in $[e^{-2},e^2]\\approx[0.135,7.389]$."
+      },
+      {
+        "title": "Finite subcovers in sensing",
+        "background": "Sensor coverage problems often ask whether finitely many sensing regions cover a compact area.",
+        "numbers": "A $10$ m by $10$ m square area is compact; a grid of $25$ sensors with $2.5$ m spacing is a finite coverage candidate."
+      },
+      {
+        "title": "Model robustness certificates",
+        "background": "Verification over a compact perturbation set can reduce to finite or bounded checks under continuity assumptions.",
+        "numbers": "An $\\ell_\\infty$ perturbation box $[-0.03,0.03]^{784}$ is closed and bounded in $\\mathbb{R}^{784}$, hence compact."
+      },
+      {
+        "title": "Persistent homology filtrations",
+        "background": "Topological data analysis often restricts to finite point clouds or compact domains so features can be computed and controlled.",
+        "numbers": "A finite cloud of $500$ points is compact; a filtration with $20$ radius values gives at most $20$ recorded stages per feature."
+      }
+    ],
+    "applicationsClose": "Compactness is finite reliability in an infinite-looking world: covers become finite, continuous images stay controlled, and optima are attained.",
+    "takeaways": [
+      "Compact means every open cover has a finite subcover.",
+      "In $\\mathbb{R}^n$, compact is equivalent to closed and bounded.",
+      "Continuous images of compact spaces are compact.",
+      "Continuous real-valued functions on compact sets attain maxima and minima."
+    ],
     "prereqs": [
       "math-13-08"
     ]
@@ -195,19 +2398,271 @@
   B({
     "id": "math-13-10",
     "title": "Metric-space topology",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: metric-space topology.",
+    "tagline": "Topology begins gently: decide what it means for points to be near, and open sets follow.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Compactness</i>"
+        "sets",
+        "functions",
+        "Euclidean distance"
       ],
       "leadsTo": [
-        "the next lesson, <i>Quotient spaces</i>"
+        "continuity in topological spaces",
+        "quotient spaces",
+        "manifolds"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "norms",
+        "sequences",
+        "neighborhoods"
       ]
     },
+    "motivation": "<p>You already know distance on the number line: $2.01$ is close to $2$, while $7$ is not. A <b>metric space</b> keeps that familiar idea but lets the points be vectors, functions, strings, or data records.</p><p>Topology then asks a softer question than exact distance: which points count as nearby? Once we know the open balls, we know open sets, limits, continuity, and the shape information that survives small deformations.</p>",
+    "definition": "<p>A <b>metric</b> on a set $X$ is a function $d:X\\times X\\to[0,\\infty)$ such that $d(x,y)=0$ exactly when $x=y$, $d(x,y)=d(y,x)$, and $d(x,z)\\le d(x,y)+d(y,z)$. The open ball centered at $x$ with radius $r>0$ is $B_r(x)=\\{y\\in X:d(x,y)<r\\}$. A set $U\\subseteq X$ is <b>open</b> if every $x\\in U$ has some ball $B_r(x)\\subseteq U$.</p><p>The key fact is that metrics create topology: unions of open sets are open because each point keeps the ball it had in one member of the union, and finite intersections are open because a point in both sets can use the smaller of the two available radii.</p><p><b>Assumptions that matter:</b> distances must satisfy all metric axioms; the radius in an open ball is positive; openness is relative to the ambient metric space; and different metrics can sometimes produce the same open sets.</p>",
+    "worked": {
+      "problem": "In $\\mathbb{R}$ with $d(x,y)=|x-y|$, prove that $(1,4)$ is open and that $[1,4]$ is not open.",
+      "skills": [
+        "open balls",
+        "intervals",
+        "counterexamples"
+      ],
+      "strategy": "Interior points have room on both sides; endpoints of a closed interval do not.",
+      "steps": [
+        {
+          "do": "Choose a point $x\\in(1,4)$",
+          "result": "$1<x<4$",
+          "why": "the point lies strictly between the endpoints"
+        },
+        {
+          "do": "Measure its distance to the nearer endpoint",
+          "result": "$m=\\min(x-1,4-x)>0$",
+          "why": "both distances are positive"
+        },
+        {
+          "do": "Choose a radius",
+          "result": "$r=m/2$",
+          "why": "half the nearest-endpoint distance stays safely inside"
+        },
+        {
+          "do": "Test any $y$ with $|y-x|<r$",
+          "result": "$1<y<4$",
+          "why": "moving less than $r$ cannot reach either endpoint"
+        },
+        {
+          "do": "Conclude for $(1,4)$",
+          "result": "$(1,4)$ is open",
+          "why": "every point has an inside ball"
+        },
+        {
+          "do": "Test $[1,4]$ at $x=1$",
+          "result": "B_r(1)=(1-r,1+r)$",
+          "why": "every positive radius includes numbers below $1$"
+        },
+        {
+          "do": "Compare with $[1,4]$",
+          "result": "$B_r(1)\\nsubseteq[1,4]$",
+          "why": "points like $1-r/2$ fall outside"
+        }
+      ],
+      "verify": "The argument used an arbitrary interior point for $(1,4)$ and a single failed endpoint for $[1,4]$.",
+      "answer": "$(1,4)$ is open in $\\mathbb{R}$, but $[1,4]$ is not open.",
+      "connects": "Metric topology turns distance-to-the-boundary into the formal idea of openness."
+    },
+    "practice": [
+      {
+        "problem": "In $\\mathbb{R}$, find an open ball centered at $3$ that lies inside $(2,5)$.",
+        "steps": [
+          {
+            "do": "Compute distance to the left endpoint",
+            "result": "$3-2=1$",
+            "why": "the ball cannot reach $2$"
+          },
+          {
+            "do": "Compute distance to the right endpoint",
+            "result": "$5-3=2$",
+            "why": "the right side has more room"
+          },
+          {
+            "do": "Take the smaller distance",
+            "result": "$1$",
+            "why": "the nearest boundary controls the radius"
+          },
+          {
+            "do": "Choose a safe radius",
+            "result": "$r=0.5$",
+            "why": "any positive radius below $1$ works"
+          },
+          {
+            "do": "Write the ball",
+            "result": "$B_{0.5}(3)=(2.5,3.5)$",
+            "why": "all points stay inside $(2,5)$"
+          }
+        ],
+        "answer": "One valid answer is $B_{0.5}(3)$; in fact any radius $0<r\\le1$ with strict containment using $r<1$ works."
+      },
+      {
+        "problem": "In $\\mathbb{R}^2$ with Euclidean distance, is the disk $U=\\{(x,y):x^2+y^2<9\\}$ open?",
+        "steps": [
+          {
+            "do": "Choose a point $p=(x,y)\\in U$",
+            "result": "$x^2+y^2<9$",
+            "why": "the point is strictly inside the radius-$3$ disk"
+          },
+          {
+            "do": "Compute its distance from the origin",
+            "result": "$\\|p\\|=\\sqrt{x^2+y^2}<3$",
+            "why": "the boundary has radius $3$"
+          },
+          {
+            "do": "Measure room to the boundary",
+            "result": "$3-\\|p\\|>0$",
+            "why": "inside points have positive margin"
+          },
+          {
+            "do": "Choose a radius",
+            "result": "$r=(3-\\|p\\|)/2$",
+            "why": "half the margin is safe"
+          },
+          {
+            "do": "Use the triangle inequality",
+            "result": "$\\|q\\|\\le\\|p\\|+\\|q-p\\|<\\|p\\|+r<3$",
+            "why": "nearby points remain inside"
+          }
+        ],
+        "answer": "Yes. The open disk is open."
+      },
+      {
+        "problem": "With the discrete metric $d(x,y)=0$ if $x=y$ and $1$ otherwise, show every subset $A\\subseteq X$ is open.",
+        "steps": [
+          {
+            "do": "Choose a point $a\\in A$",
+            "result": "$a$ is one element of the subset",
+            "why": "openness is checked point by point"
+          },
+          {
+            "do": "Choose radius",
+            "result": "$r=1/2$",
+            "why": "this radius is smaller than the distance to every different point"
+          },
+          {
+            "do": "Compute the ball",
+            "result": "$B_{1/2}(a)=\\{a\\}$",
+            "why": "only $a$ has distance less than $1/2$ from itself"
+          },
+          {
+            "do": "Compare with $A$",
+            "result": "$\\{a\\}\\subseteq A$",
+            "why": "the chosen point belongs to $A$"
+          },
+          {
+            "do": "Conclude",
+            "result": "$A$ is open",
+            "why": "every point of $A$ has a contained ball"
+          }
+        ],
+        "answer": "Every subset is open in a discrete metric space."
+      },
+      {
+        "problem": "In $\\mathbb{R}$, prove that $\\mathbb{Q}$ is not open with the usual metric.",
+        "steps": [
+          {
+            "do": "Choose a rational point",
+            "result": "$q\\in\\mathbb{Q}$",
+            "why": "openness would need a ball around every rational"
+          },
+          {
+            "do": "Take any radius",
+            "result": "$r>0$",
+            "why": "we must show no radius works"
+          },
+          {
+            "do": "Pick an irrational nearby",
+            "result": "$q+\\frac{r}{2\\sqrt2}$",
+            "why": "a nonzero rational multiple of $1/\\sqrt2$ is irrational"
+          },
+          {
+            "do": "Measure the distance",
+            "result": "$\\left|q+\\frac{r}{2\\sqrt2}-q\\right|=\\frac{r}{2\\sqrt2}<r$",
+            "why": "the point lies in the ball"
+          },
+          {
+            "do": "Compare with $\\mathbb{Q}$",
+            "result": "$q+\\frac{r}{2\\sqrt2}\\notin\\mathbb{Q}$",
+            "why": "the ball is not contained in the rationals"
+          }
+        ],
+        "answer": "$\\mathbb{Q}$ is not open in the usual topology on $\\mathbb{R}$."
+      },
+      {
+        "problem": "For data vectors $a=(1,2)$ and $b=(4,6)$, compute the Euclidean distance and decide whether $b\\in B_6(a)$.",
+        "steps": [
+          {
+            "do": "Subtract coordinates",
+            "result": "$b-a=(3,4)$",
+            "why": "distance uses the displacement vector"
+          },
+          {
+            "do": "Square the differences",
+            "result": "$3^2+4^2=9+16$",
+            "why": "Euclidean distance sums squared coordinate changes"
+          },
+          {
+            "do": "Take the square root",
+            "result": "$d(a,b)=\\sqrt{25}=5$",
+            "why": "the distance is the length of the displacement"
+          },
+          {
+            "do": "Compare with the radius",
+            "result": "$5<6$",
+            "why": "membership in an open ball uses strict inequality"
+          },
+          {
+            "do": "State membership",
+            "result": "$b\\in B_6(a)$",
+            "why": "the vector is within radius $6$"
+          }
+        ],
+        "answer": "The distance is $5$, so $b$ lies in the open ball $B_6(a)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Nearest-neighbor search",
+        "background": "Similarity search starts by choosing a metric, because nearest only means nearest after distance is defined.",
+        "numbers": "For vectors $(1,2)$ and $(4,6)$, Euclidean distance is $5$; for $(1,2)$ and $(2,2)$ it is $1$, so the second vector is nearer."
+      },
+      {
+        "title": "Feature standardization",
+        "background": "Distances can be dominated by large-scale features, so preprocessing often changes the metric geometry before learning.",
+        "numbers": "If age differs by $10$ and income differs by $10000$, raw squared distance includes $10000^2$; after scaling income by $10000$, that contribution becomes $1^2$."
+      },
+      {
+        "title": "Clustering",
+        "background": "Algorithms such as k-means assume that small metric balls capture local similarity.",
+        "numbers": "Centers $0$ and $10$ on the line split at $5$ because a point $x=4$ has distances $4$ and $6$, so it joins center $0$."
+      },
+      {
+        "title": "Robust metrics",
+        "background": "Manhattan distance is common when coordinate-wise absolute changes matter more than diagonal geometry.",
+        "numbers": "Between $(1,2)$ and $(4,6)$, $L^1$ distance is $|3|+|4|=7$, while Euclidean distance is $5$."
+      },
+      {
+        "title": "Topology of data clouds",
+        "background": "Topological data analysis grows balls around data points and watches when components merge.",
+        "numbers": "Points at $0$, $0.2$, and $1.0$ with radius $0.15$ connect the first two balls but leave the third separate."
+      },
+      {
+        "title": "Continuity of models",
+        "background": "A model is continuous when nearby inputs lead to nearby outputs, and the metric defines nearby.",
+        "numbers": "If $|f(x)-f(y)|\\le2|x-y|$, then inputs within $0.01$ force outputs within $0.02$."
+      }
+    ],
+    "applicationsClose": "Metric topology is the quiet foundation beneath neighborhoods, continuity, clustering, and the shape of data.",
+    "takeaways": [
+      "A metric supplies distances; open balls turn those distances into topology.",
+      "A set is open when every one of its points has a small ball still inside the set.",
+      "Openness depends on the ambient metric space.",
+      "In ML, changing the metric changes what the model treats as local."
+    ],
     "prereqs": [
       "math-13-09"
     ]
@@ -216,19 +2671,261 @@
   B({
     "id": "math-13-11",
     "title": "Quotient spaces",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: quotient spaces.",
+    "tagline": "A quotient space is what you get when you decide which points should count as the same.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Metric-space topology</i>"
+        "metric-space topology",
+        "equivalence relations",
+        "functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Homotopy</i>"
+        "homotopy",
+        "covering spaces",
+        "projective spaces"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "partitions",
+        "continuous maps",
+        "identifications"
       ]
     },
+    "motivation": "<p>You already know a simple identification: on a clock, hour $12$ and hour $0$ name the same position. Quotient spaces make that idea precise for geometric objects.</p><p>Instead of studying a space point by point, we first declare some points equivalent, then study the space of equivalence classes. This is how an interval becomes a circle, a square becomes a torus, and periodic features become honest topology.</p>",
+    "definition": "<p>Let $X$ be a topological space and let $\\sim$ be an equivalence relation on $X$. The <b>quotient set</b> $X/{\\sim}$ consists of equivalence classes $[x]$. The quotient map $q:X\\to X/{\\sim}$ sends each point to its class. A subset $V\\subseteq X/{\\sim}$ is open exactly when $q^{-1}(V)$ is open in $X$.</p><p>This definition is chosen so the quotient map is automatically continuous: if $V$ is open in the quotient, then by definition its preimage is open in $X$. It is also the largest topology with that property, meaning we identify points without adding unnecessary extra restrictions.</p><p><b>Assumptions that matter:</b> the relation must be reflexive, symmetric, and transitive; openness is tested by pulling back along $q$; and quotient spaces can behave badly if identifications are wild, so simple geometric examples are the safest first guide.</p>",
+    "worked": {
+      "problem": "Show that identifying the endpoints of $[0,1]$ produces a circle-like quotient, and compute the class of $0$, $1$, and $0.25$.",
+      "skills": [
+        "equivalence classes",
+        "quotient maps",
+        "endpoint identification"
+      ],
+      "strategy": "The only nontrivial identification is $0\\sim1$; all interior points keep their own class.",
+      "steps": [
+        {
+          "do": "State the relation",
+          "result": "$0\\sim1$ and every point is equivalent to itself",
+          "why": "the endpoints are glued"
+        },
+        {
+          "do": "Find the class of $0$",
+          "result": "$[0]=\\{0,1\\}$",
+          "why": "endpoint gluing puts them together"
+        },
+        {
+          "do": "Find the class of $1$",
+          "result": "$[1]=\\{0,1\\}$",
+          "why": "equivalent points have the same class"
+        },
+        {
+          "do": "Find the class of $0.25$",
+          "result": "$[0.25]=\\{0.25\\}$",
+          "why": "no other point is identified with it"
+        },
+        {
+          "do": "Interpret geometrically",
+          "result": "the quotient bends the interval into a loop",
+          "why": "the two loose ends become one point"
+        }
+      ],
+      "verify": "Every point of the interval has exactly one class, and only the two endpoints share a class.",
+      "answer": "$[0]=[1]=\\{0,1\\}$, while $[0.25]=\\{0.25\\}$; geometrically the quotient is a circle.",
+      "connects": "Quotients let topology model gluing as a precise operation on points and open sets."
+    },
+    "practice": [
+      {
+        "problem": "For integers, define $a\\sim b$ if $a-b$ is divisible by $3$. List the equivalence classes.",
+        "steps": [
+          {
+            "do": "Compute the class of $0$",
+            "result": "$[0]=\\{\\ldots,-6,-3,0,3,6,\\ldots\\}$",
+            "why": "these integers leave remainder $0$"
+          },
+          {
+            "do": "Compute the class of $1$",
+            "result": "$[1]=\\{\\ldots,-5,-2,1,4,7,\\ldots\\}$",
+            "why": "these leave remainder $1$"
+          },
+          {
+            "do": "Compute the class of $2$",
+            "result": "$[2]=\\{\\ldots,-4,-1,2,5,8,\\ldots\\}$",
+            "why": "these leave remainder $2$"
+          },
+          {
+            "do": "Check coverage",
+            "result": "every integer is in one of the three classes",
+            "why": "division by $3$ has three remainders"
+          },
+          {
+            "do": "Check separation",
+            "result": "the classes do not overlap",
+            "why": "an integer cannot have two different remainders"
+          }
+        ],
+        "answer": "The quotient $\\mathbb{Z}/3\\mathbb{Z}$ has three classes: $[0]$, $[1]$, and $[2]$."
+      },
+      {
+        "problem": "On $[0,2]$, identify $0\\sim2$. Find the classes of $0$, $2$, $1.5$, and describe the quotient.",
+        "steps": [
+          {
+            "do": "Apply the endpoint identification",
+            "result": "$[0]=\\{0,2\\}$",
+            "why": "the endpoints are glued"
+          },
+          {
+            "do": "Use equality of classes",
+            "result": "$[2]=\\{0,2\\}$",
+            "why": "equivalent points share a class"
+          },
+          {
+            "do": "Check the interior point",
+            "result": "$[1.5]=\\{1.5\\}$",
+            "why": "it is not identified with another point"
+          },
+          {
+            "do": "Count the geometric effect",
+            "result": "one interval with endpoints glued",
+            "why": "this creates one loop"
+          },
+          {
+            "do": "Name the shape",
+            "result": "circle",
+            "why": "a segment closed end-to-end is a circle"
+          }
+        ],
+        "answer": "The quotient is circle-like, with $[0]=[2]$ and interior points singleton classes."
+      },
+      {
+        "problem": "Let $q: [0,1]\\to [0,1]/{0\\sim1}$. If $V$ is the quotient image of $(0.2,0.8)$, is $V$ open?",
+        "steps": [
+          {
+            "do": "Pull back the set",
+            "result": "$q^{-1}(V)=(0.2,0.8)$",
+            "why": "no endpoints are involved in this image"
+          },
+          {
+            "do": "Check openness in $[0,1]$",
+            "result": "$(0.2,0.8)$ is open relative to $[0,1]$",
+            "why": "it equals $[0,1]\\cap(0.2,0.8)$"
+          },
+          {
+            "do": "Use the quotient definition",
+            "result": "$V$ is open",
+            "why": "a quotient set is open when its preimage is open"
+          },
+          {
+            "do": "Check endpoint issue",
+            "result": "none",
+            "why": "the glued class $[0]=[1]$ is not in $V$"
+          },
+          {
+            "do": "Conclude",
+            "result": "$V$ is an open arc",
+            "why": "it avoids the glued point"
+          }
+        ],
+        "answer": "Yes. $V$ is open in the quotient."
+      },
+      {
+        "problem": "In a square, identify the left edge to the right edge in the same direction. What surface is formed before any top-bottom gluing?",
+        "steps": [
+          {
+            "do": "Name the square coordinates",
+            "result": "$[0,1]\\times[0,1]$",
+            "why": "this gives horizontal and vertical directions"
+          },
+          {
+            "do": "State the identification",
+            "result": "$(0,y)\\sim(1,y)$",
+            "why": "left and right edges match at equal height"
+          },
+          {
+            "do": "Track a horizontal segment",
+            "result": "its ends meet",
+            "why": "moving left or right wraps around"
+          },
+          {
+            "do": "Track the vertical direction",
+            "result": "top and bottom remain unglued",
+            "why": "there are still two boundary circles"
+          },
+          {
+            "do": "Name the surface",
+            "result": "cylinder",
+            "why": "one wrapped direction and one open direction make a cylinder"
+          }
+        ],
+        "answer": "The quotient is a cylinder."
+      },
+      {
+        "problem": "A periodic feature records angle $\\theta$ with $0\\le\\theta\\le2\\pi$ and identifies $0\\sim2\\pi$. Are $0.1$ and $2\\pi-0.1$ close on the quotient circle? Use arc distance.",
+        "steps": [
+          {
+            "do": "Compute direct angular difference",
+            "result": "$2\\pi-0.2$",
+            "why": "going the long way around is almost a full turn"
+          },
+          {
+            "do": "Compute wrapped difference",
+            "result": "$2\\pi-(2\\pi-0.2)=0.2$",
+            "why": "the short way crosses the glued point"
+          },
+          {
+            "do": "Choose arc distance",
+            "result": "$0.2$",
+            "why": "circle distance uses the shorter arc"
+          },
+          {
+            "do": "Compare with ordinary interval distance",
+            "result": "$2\\pi-0.2\\approx6.083$",
+            "why": "the unglued interval misses periodic closeness"
+          },
+          {
+            "do": "Interpret",
+            "result": "the points are close",
+            "why": "they lie near the same glued endpoint"
+          }
+        ],
+        "answer": "Yes. Their quotient-circle distance is $0.2$ radians."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Periodic features",
+        "background": "Time of day and angles wrap around, so quotient thinking prevents midnight from looking far from 11:59 pm.",
+        "numbers": "Times $23.9$ and $0.1$ hours differ by $23.8$ on a line but only $0.2$ hours on the quotient circle."
+      },
+      {
+        "title": "Image boundaries in simulations",
+        "background": "Some simulations use periodic boundary conditions, effectively gluing opposite sides of a rectangle.",
+        "numbers": "On a width-$100$ grid, positions $x=99$ and $x=1$ are distance $2$ with wraparound, not $98$."
+      },
+      {
+        "title": "Torus parameter spaces",
+        "background": "A torus appears when two independent periodic coordinates are both quotiented to circles.",
+        "numbers": "Angles $(0.1,6.2)$ and $(2\\pi-0.1,0.0)$ differ by about $(0.2,0.083)$ after wrapping."
+      },
+      {
+        "title": "Clustering cyclic data",
+        "background": "Clustering hour-of-day as a line can split natural midnight clusters; quotient geometry fixes that.",
+        "numbers": "Samples at $23.8$, $0.0$, and $0.2$ have circular mean near $0$, not near $8$."
+      },
+      {
+        "title": "Robotics configuration spaces",
+        "background": "A robot joint angle has $0$ and $2\\pi$ as the same physical pose, so its configuration space is a quotient.",
+        "numbers": "A joint at $359^\\circ$ is only $2^\\circ$ from $1^\\circ$, not $358^\\circ$."
+      },
+      {
+        "title": "Data augmentation by symmetry",
+        "background": "When examples are considered equivalent under flips or rotations, learning sometimes works on a quotient of input space.",
+        "numbers": "If four rotations of one image are treated as equivalent, an orbit can contain $4$ images but one quotient class."
+      }
+    ],
+    "applicationsClose": "Quotients are the mathematics of respectful forgetting: we forget distinctions that should not matter and keep the shape that remains.",
+    "takeaways": [
+      "A quotient space replaces points by equivalence classes.",
+      "Open sets in the quotient are defined by open preimages under the quotient map.",
+      "Gluing endpoints of an interval gives a circle; gluing square edges gives cylinders and tori.",
+      "Many ML features with periodicity or symmetry are best understood through quotient geometry."
+    ],
     "prereqs": [
       "math-13-10"
     ]
@@ -237,19 +2934,266 @@
   B({
     "id": "math-13-12",
     "title": "Homotopy",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: homotopy.",
+    "tagline": "Homotopy says two maps are the same if one can be continuously deformed into the other.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Quotient spaces</i>"
+        "quotient spaces",
+        "continuous maps",
+        "intervals"
       ],
       "leadsTo": [
-        "the next lesson, <i>The fundamental group</i>"
+        "the fundamental group",
+        "homology",
+        "deformation retracts"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "paths",
+        "loops",
+        "connectedness"
       ]
     },
+    "motivation": "<p>You already have a physical picture: a rubber band loop can slide around a table without cutting or jumping. Homotopy turns that motion into math.</p><p>The central question is not whether two maps are equal point by point, but whether one can be changed into the other through a continuous movie. This is the kind of equality topology loves: flexible, shape-aware, and very useful for detecting holes.</p>",
+    "definition": "<p>Two continuous maps $f,g:X\\to Y$ are <b>homotopic</b>, written $f\\simeq g$, if there is a continuous map $H:X\\times[0,1]\\to Y$ with $H(x,0)=f(x)$ and $H(x,1)=g(x)$. The parameter $t\\in[0,1]$ is time, so $H(\\cdot,t)$ is the map at time $t$.</p><p>For paths with fixed endpoints, we additionally require the endpoints to stay fixed during the deformation. Homotopy is an equivalence relation: constant movie gives reflexivity, running the movie backward gives symmetry, and playing two movies in sequence gives transitivity.</p><p><b>Assumptions that matter:</b> the whole movie $H$ must be continuous; fixed-endpoint homotopy keeps endpoints fixed for all $t$; and obstacles in the target space can prevent a deformation even when two curves look close.</p>",
+    "worked": {
+      "problem": "Show that the two paths $f(s)=(s,0)$ and $g(s)=(s,s)$ from $(0,0)$ to $(1,0)$ and $(1,1)$ in $\\mathbb{R}^2$ are homotopic as maps $[0,1]\\to\\mathbb{R}^2$.",
+      "skills": [
+        "constructing homotopies",
+        "linear interpolation",
+        "continuity"
+      ],
+      "strategy": "In a convex space, interpolate between the two maps point by point.",
+      "steps": [
+        {
+          "do": "Write a candidate homotopy",
+          "result": "$H(s,t)=(1-t)f(s)+tg(s)$",
+          "why": "linear interpolation starts at $f$ and ends at $g$"
+        },
+        {
+          "do": "Substitute the formulas",
+          "result": "$H(s,t)=(1-t)(s,0)+t(s,s)$",
+          "why": "use the given paths"
+        },
+        {
+          "do": "Simplify coordinates",
+          "result": "$H(s,t)=(s,ts)$",
+          "why": "combine coordinate-wise"
+        },
+        {
+          "do": "Check time $0$",
+          "result": "$H(s,0)=(s,0)=f(s)$",
+          "why": "the movie starts at $f$"
+        },
+        {
+          "do": "Check time $1$",
+          "result": "$H(s,1)=(s,s)=g(s)$",
+          "why": "the movie ends at $g$"
+        },
+        {
+          "do": "Check continuity",
+          "result": "$H$ is continuous",
+          "why": "its coordinate functions are polynomials in $s$ and $t$"
+        }
+      ],
+      "verify": "At each time $t$, the path is the line from $(0,0)$ to $(1,t)$, so the deformation moves smoothly.",
+      "answer": "A homotopy is $H(s,t)=(s,ts)$, so $f\\simeq g$ as maps into $\\mathbb{R}^2$.",
+      "connects": "Homotopy records continuous deformation, not rigid equality."
+    },
+    "practice": [
+      {
+        "problem": "Show that any two points $a,b\\in\\mathbb{R}^n$ are joined by a path.",
+        "steps": [
+          {
+            "do": "Define a candidate path",
+            "result": "$p(t)=(1-t)a+tb$",
+            "why": "linear interpolation moves from $a$ to $b$"
+          },
+          {
+            "do": "Evaluate at $t=0$",
+            "result": "$p(0)=a$",
+            "why": "the path starts at $a$"
+          },
+          {
+            "do": "Evaluate at $t=1$",
+            "result": "$p(1)=b$",
+            "why": "the path ends at $b$"
+          },
+          {
+            "do": "Check continuity",
+            "result": "$p$ is continuous",
+            "why": "coordinate functions are linear"
+          },
+          {
+            "do": "Conclude",
+            "result": "$\\mathbb{R}^n$ is path connected",
+            "why": "every pair of points has such a path"
+          }
+        ],
+        "answer": "The path $p(t)=(1-t)a+tb$ connects $a$ to $b$."
+      },
+      {
+        "problem": "Show that the maps $f(x)=x$ and $g(x)=0$ from $[0,1]$ to $\\mathbb{R}$ are homotopic.",
+        "steps": [
+          {
+            "do": "Choose interpolation",
+            "result": "$H(x,t)=(1-t)x+t\\cdot0$",
+            "why": "move each output toward zero"
+          },
+          {
+            "do": "Simplify",
+            "result": "$H(x,t)=(1-t)x$",
+            "why": "the second term vanishes"
+          },
+          {
+            "do": "Check $t=0$",
+            "result": "$H(x,0)=x$",
+            "why": "this is $f$"
+          },
+          {
+            "do": "Check $t=1$",
+            "result": "$H(x,1)=0$",
+            "why": "this is $g$"
+          },
+          {
+            "do": "Check continuity",
+            "result": "$H$ is continuous",
+            "why": "multiplication and subtraction are continuous"
+          }
+        ],
+        "answer": "They are homotopic by $H(x,t)=(1-t)x$."
+      },
+      {
+        "problem": "For paths in $\\mathbb{R}^2$, homotope $f(s)=(s,0)$ to $g(s)=(s,1)$ without fixing endpoints.",
+        "steps": [
+          {
+            "do": "Use interpolation",
+            "result": "$H(s,t)=(1-t)(s,0)+t(s,1)$",
+            "why": "slide the segment upward"
+          },
+          {
+            "do": "Simplify",
+            "result": "$H(s,t)=(s,t)$",
+            "why": "coordinate-wise combination"
+          },
+          {
+            "do": "Check start",
+            "result": "$H(s,0)=(s,0)$",
+            "why": "this is $f$"
+          },
+          {
+            "do": "Check end",
+            "result": "$H(s,1)=(s,1)$",
+            "why": "this is $g$"
+          },
+          {
+            "do": "Observe endpoints",
+            "result": "$H(0,t)=(0,t)$ and $H(1,t)=(1,t)$",
+            "why": "endpoints move because this is not fixed-endpoint homotopy"
+          }
+        ],
+        "answer": "A homotopy is $H(s,t)=(s,t)$."
+      },
+      {
+        "problem": "Explain why the unit circle loop $\\ell(s)=(\\cos 2\\pi s,\\sin 2\\pi s)$ is homotopic to a constant loop in $\\mathbb{R}^2$.",
+        "steps": [
+          {
+            "do": "Choose the constant point",
+            "result": "$c(s)=(0,0)$",
+            "why": "the plane includes the disk inside the circle"
+          },
+          {
+            "do": "Shrink radially",
+            "result": "$H(s,t)=(1-t)\\ell(s)$",
+            "why": "multiply the loop radius by $1-t$"
+          },
+          {
+            "do": "Check start",
+            "result": "$H(s,0)=\\ell(s)$",
+            "why": "radius is $1$"
+          },
+          {
+            "do": "Check end",
+            "result": "$H(s,1)=(0,0)$",
+            "why": "radius is $0$"
+          },
+          {
+            "do": "Check the target",
+            "result": "$H(s,t)\\in\\mathbb{R}^2$",
+            "why": "the plane has no missing center blocking the shrink"
+          }
+        ],
+        "answer": "In $\\mathbb{R}^2$, the loop contracts to a point by $H(s,t)=(1-t)\\ell(s)$."
+      },
+      {
+        "problem": "A path in embedding space moves from vector $u=(1,0)$ to $v=(0,1)$. Give a straight-line homotopy from the constant map at $u$ to the constant map at $v$.",
+        "steps": [
+          {
+            "do": "Define the first constant map",
+            "result": "$f(x)=u$",
+            "why": "every input maps to $(1,0)$"
+          },
+          {
+            "do": "Define the second constant map",
+            "result": "$g(x)=v$",
+            "why": "every input maps to $(0,1)$"
+          },
+          {
+            "do": "Interpolate",
+            "result": "$H(x,t)=(1-t)u+tv$",
+            "why": "embedding space is treated as Euclidean"
+          },
+          {
+            "do": "Compute coordinates",
+            "result": "$H(x,t)=(1-t,t)$",
+            "why": "combine the vectors"
+          },
+          {
+            "do": "Check endpoints in time",
+            "result": "$H(x,0)=(1,0)$ and $H(x,1)=(0,1)$",
+            "why": "the movie starts and ends correctly"
+          }
+        ],
+        "answer": "Use $H(x,t)=(1-t,t)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Deformation in robot planning",
+        "background": "Robotics cares whether one path can slide into another without crossing an obstacle.",
+        "numbers": "In an empty square, paths from $(0,0)$ to $(1,1)$ can interpolate linearly; at $t=0.5$, midpoint between paths is the average of coordinates."
+      },
+      {
+        "title": "Contractible feature spaces",
+        "background": "If a data domain is convex, every loop can shrink, so homotopy sees no hole.",
+        "numbers": "A loop of radius $1$ in the full plane shrinks to radius $0.3$ at time $t=0.7$ using radius $1-t$."
+      },
+      {
+        "title": "Obstacles create classes",
+        "background": "Removing an obstacle can make loops non-homotopic because they cannot pass through the missing region.",
+        "numbers": "A circle of radius $1$ around the origin in $\\mathbb{R}^2\\setminus\\{0\\}$ cannot use the radial shrink after radius reaches $0$."
+      },
+      {
+        "title": "Morphing shapes",
+        "background": "Computer graphics blends one shape into another through a continuous movie, the practical cousin of homotopy.",
+        "numbers": "Vertex $(2,0)$ moved to $(2,3)$ by interpolation is at $(2,1.2)$ when $t=0.4$."
+      },
+      {
+        "title": "Optimization paths",
+        "background": "Training traces a path through parameter space; homotopy language separates path shape from exact timing.",
+        "numbers": "A two-step path $(0,0)\\to(1,0)\\to(1,1)$ can be deformed to the straight path $(t,t)$ in a convex square."
+      },
+      {
+        "title": "Topological data analysis",
+        "background": "Persistent loops are meaningful because they resist being filled in by a homotopy within the observed space.",
+        "numbers": "Eight points around a circle of radius $1$ suggest a loop; adding a center point lets triangles fill it and makes contraction possible."
+      }
+    ],
+    "applicationsClose": "Homotopy is topology's patient movie camera: it watches whether a shape can change continuously without tearing through forbidden places.",
+    "takeaways": [
+      "A homotopy is a continuous deformation $H:X\\times[0,1]\\to Y$ from one map to another.",
+      "Linear interpolation gives homotopies in convex spaces.",
+      "Fixed-endpoint homotopy is stricter because endpoints must stay still.",
+      "Holes and obstacles are detected by homotopies that cannot exist."
+    ],
     "prereqs": [
       "math-13-11"
     ]
@@ -258,19 +3202,261 @@
   B({
     "id": "math-13-13",
     "title": "The fundamental group",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: the fundamental group.",
+    "tagline": "The fundamental group turns loops based at a point into algebra that can count holes.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Homotopy</i>"
+        "homotopy",
+        "loops",
+        "groups"
       ],
       "leadsTo": [
-        "the next lesson, <i>Covering spaces</i>"
+        "covering spaces",
+        "homology groups",
+        "topological invariants"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "path composition",
+        "identity elements",
+        "inverses"
       ]
     },
+    "motivation": "<p>You already know that a loop can go around a hole once, twice, or not at all. The <b>fundamental group</b> makes that intuition algebraic.</p><p>We fix a base point, look at loops that start and end there, and treat two loops as the same when one can be deformed into the other while keeping the base point fixed. Composition is just doing one loop after another.</p>",
+    "definition": "<p>For a topological space $X$ with base point $x_0$, the <b>fundamental group</b> $\\pi_1(X,x_0)$ is the set of fixed-endpoint homotopy classes of loops $\\ell:[0,1]\\to X$ with $\\ell(0)=\\ell(1)=x_0$. The product $[\\ell][m]$ is the class of the loop that travels $\\ell$ first and then $m$.</p><p>The constant loop is the identity because doing nothing before or after a loop changes only the timing. The inverse of a loop is the same loop run backward. Associativity holds up to reparameterization, which homotopy ignores.</p><p><b>Assumptions that matter:</b> loops share the same base point; homotopies keep that base point fixed; path-connected spaces have isomorphic fundamental groups at different base points, but the isomorphism depends on a connecting path; and $\\pi_1$ can be nonabelian in complicated spaces.</p>",
+    "worked": {
+      "problem": "Compute the product of winding numbers for two loops in $S^1$: one winds $2$ times and the next winds $-1$ time.",
+      "skills": [
+        "winding numbers",
+        "loop composition",
+        "group operation"
+      ],
+      "strategy": "For the circle, $\\pi_1(S^1)\\cong\\mathbb{Z}$ and composition adds winding numbers.",
+      "steps": [
+        {
+          "do": "Name the invariant",
+          "result": "$\\pi_1(S^1)\\cong\\mathbb{Z}$",
+          "why": "circle loops are classified by winding number"
+        },
+        {
+          "do": "Record the first loop",
+          "result": "$2$",
+          "why": "it goes around counterclockwise twice"
+        },
+        {
+          "do": "Record the second loop",
+          "result": "$-1$",
+          "why": "negative means once clockwise"
+        },
+        {
+          "do": "Compose the loops",
+          "result": "$2+(-1)=1$",
+          "why": "circle loop composition adds winding numbers"
+        },
+        {
+          "do": "Interpret",
+          "result": "one counterclockwise winding remains",
+          "why": "the clockwise loop cancels one of the two positive turns"
+        }
+      ],
+      "verify": "A loop followed by its reverse has winding $1+(-1)=0$, matching the identity class.",
+      "answer": "The product has winding number $1$.",
+      "connects": "The fundamental group converts loop composition into a group calculation."
+    },
+    "practice": [
+      {
+        "problem": "What is the identity element in $\\pi_1(X,x_0)$?",
+        "steps": [
+          {
+            "do": "Identify the special loop",
+            "result": "$c(t)=x_0$",
+            "why": "the loop stays at the base point"
+          },
+          {
+            "do": "Compose before a loop $\\ell$",
+            "result": "$c*\\ell$",
+            "why": "first wait, then travel"
+          },
+          {
+            "do": "Compare with $\\ell$",
+            "result": "$[c*\\ell]=[\\ell]$",
+            "why": "reparameterizing time removes the waiting"
+          },
+          {
+            "do": "Compose after $\\ell$",
+            "result": "$[\\ell*c]=[\\ell]$",
+            "why": "waiting at the end also changes only timing"
+          },
+          {
+            "do": "State the identity",
+            "result": "$[c]$",
+            "why": "it leaves every class unchanged"
+          }
+        ],
+        "answer": "The identity is the homotopy class of the constant loop at $x_0$."
+      },
+      {
+        "problem": "If a loop on $S^1$ has winding number $3$, what is the winding number of its inverse?",
+        "steps": [
+          {
+            "do": "Record the loop",
+            "result": "$3$",
+            "why": "three counterclockwise turns"
+          },
+          {
+            "do": "Define the inverse",
+            "result": "run the loop backward",
+            "why": "group inverse reverses traversal"
+          },
+          {
+            "do": "Change the sign",
+            "result": "$-3$",
+            "why": "backward traversal reverses orientation"
+          },
+          {
+            "do": "Add to check",
+            "result": "$3+(-3)=0$",
+            "why": "a loop followed by its inverse is identity"
+          },
+          {
+            "do": "Interpret identity",
+            "result": "$0$ windings",
+            "why": "zero means contractible on the circle only as a based group identity class"
+          }
+        ],
+        "answer": "The inverse has winding number $-3$."
+      },
+      {
+        "problem": "In $\\mathbb{R}^2$, what is $\\pi_1(\\mathbb{R}^2,(0,0))$?",
+        "steps": [
+          {
+            "do": "Use contractibility",
+            "result": "$\\mathbb{R}^2$ contracts to $(0,0)$",
+            "why": "radial shrinking is allowed"
+          },
+          {
+            "do": "Take any loop $\\ell$",
+            "result": "$\\ell(t)\\in\\mathbb{R}^2$",
+            "why": "loops have no obstacle"
+          },
+          {
+            "do": "Shrink it",
+            "result": "$H(s,u)=(1-u)\\ell(s)$",
+            "why": "move all points toward the origin"
+          },
+          {
+            "do": "End at the constant loop",
+            "result": "$H(s,1)=(0,0)$",
+            "why": "the loop becomes trivial"
+          },
+          {
+            "do": "State the group",
+            "result": "trivial group",
+            "why": "all loops are homotopic to the identity"
+          }
+        ],
+        "answer": "$\\pi_1(\\mathbb{R}^2,(0,0))$ is the trivial group."
+      },
+      {
+        "problem": "A loop in $\\mathbb{R}^2\\setminus\\{0\\}$ winds once counterclockwise, then twice clockwise. What class in $\\pi_1$ does it represent?",
+        "steps": [
+          {
+            "do": "Use the known group",
+            "result": "$\\pi_1(\\mathbb{R}^2\\setminus\\{0\\})\\cong\\mathbb{Z}$",
+            "why": "punctured plane has circle-like loops"
+          },
+          {
+            "do": "Record the first part",
+            "result": "$+1$",
+            "why": "counterclockwise once"
+          },
+          {
+            "do": "Record the second part",
+            "result": "$-2$",
+            "why": "clockwise twice"
+          },
+          {
+            "do": "Add windings",
+            "result": "$1-2=-1$",
+            "why": "composition adds integers"
+          },
+          {
+            "do": "Interpret",
+            "result": "one clockwise winding",
+            "why": "net winding is negative one"
+          }
+        ],
+        "answer": "The loop represents class $-1$."
+      },
+      {
+        "problem": "A circular sensor path samples angles $0,\\pi/2,\\pi,3\\pi/2,2\\pi$. What winding number does it suggest?",
+        "steps": [
+          {
+            "do": "Start angle",
+            "result": "$0$",
+            "why": "base point at one full-turn coordinate"
+          },
+          {
+            "do": "End angle",
+            "result": "$2\\pi$",
+            "why": "the angle increases by one full turn"
+          },
+          {
+            "do": "Compute total change",
+            "result": "$2\\pi-0=2\\pi$",
+            "why": "winding compares angle change to a full turn"
+          },
+          {
+            "do": "Divide by $2\\pi$",
+            "result": "$1$",
+            "why": "one full turn"
+          },
+          {
+            "do": "Interpret",
+            "result": "winding number $1$",
+            "why": "the sampled loop goes once counterclockwise"
+          }
+        ],
+        "answer": "The suggested winding number is $1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Detecting holes",
+        "background": "The fundamental group distinguishes a disk from a punctured disk because loops around the missing point cannot shrink.",
+        "numbers": "A loop with angle change $2\\pi$ has winding $1$; in a disk with the center present it can shrink, but in a punctured disk it cannot."
+      },
+      {
+        "title": "Robot motion around obstacles",
+        "background": "Path classes tell planners whether routes go around obstacles in different ways.",
+        "numbers": "A route with winding $0$ around a pole can shrink away; winding $1$ wraps once and must cross the pole to become winding $0$."
+      },
+      {
+        "title": "Phase unwrapping",
+        "background": "Signal processing tracks how many times an angle wraps around the circle.",
+        "numbers": "Angles $0,1.5,3.1,4.7,6.3$ have total change about $6.3$, so winding is about $6.3/(2\\pi)\\approx1.00$."
+      },
+      {
+        "title": "Configuration spaces",
+        "background": "A rotating joint has circle topology, and loop classes count full rotations of the joint.",
+        "numbers": "Moving from $0$ through $4\\pi$ and back to the same physical pose represents winding $2$."
+      },
+      {
+        "title": "Topological signatures",
+        "background": "In data analysis, loop-like structure motivates invariants beyond connected components.",
+        "numbers": "Points on a ring with no center suggest one independent loop, consistent with a nontrivial $\\pi_1$ pattern."
+      },
+      {
+        "title": "Complex-valued models",
+        "background": "Some models use phases on the unit circle; tracking phase loops can reveal discontinuities or vortices.",
+        "numbers": "If phase around a square changes by $\\pi/2$ on each side, total change is $2\\pi$, giving index $1$."
+      }
+    ],
+    "applicationsClose": "The fundamental group is loop memory: it remembers how paths wrap when ordinary coordinates forget.",
+    "takeaways": [
+      "$\\pi_1(X,x_0)$ is built from based loops modulo fixed-endpoint homotopy.",
+      "Loop composition gives the group operation; the constant loop is the identity.",
+      "For the circle, the fundamental group is $\\mathbb{Z}$ via winding number.",
+      "Nonzero winding detects a hole that a loop cannot cross."
+    ],
     "prereqs": [
       "math-13-12"
     ]
@@ -279,19 +3465,261 @@
   B({
     "id": "math-13-14",
     "title": "Covering spaces",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: covering spaces.",
+    "tagline": "A covering space unwraps a space locally, so every small neighborhood looks like separate stacked copies.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The fundamental group</i>"
+        "the fundamental group",
+        "quotient spaces",
+        "continuous maps"
       ],
       "leadsTo": [
-        "the next lesson, <i>Simplicial complexes</i>"
+        "deck transformations",
+        "universal covers",
+        "fiber bundles"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "local homeomorphisms",
+        "path lifting",
+        "winding numbers"
       ]
     },
+    "motivation": "<p>You have seen maps that wrap: the real line can wind around a circle by sending $t$ to angle $2\\pi t$. Nearby points behave simply, but globally the line covers the circle over and over.</p><p>A <b>covering space</b> makes this precise. It is a map that looks like many separate copies over every small open patch. That local simplicity is why covering spaces explain winding numbers and lift circular motion to straight-line motion.</p>",
+    "definition": "<p>A continuous surjection $p:E\\to B$ is a <b>covering map</b> if every point $b\\in B$ has an open neighborhood $U$ such that $p^{-1}(U)$ is a disjoint union of open sets in $E$, and each piece maps homeomorphically onto $U$ by $p$. The space $E$ is a covering space of $B$.</p><p>The standard example is $p:\\mathbb{R}\\to S^1$ given by $p(t)=(\\cos 2\\pi t,\\sin 2\\pi t)$. A short arc on the circle lifts to infinitely many short intervals on the line, one near each integer translate.</p><p><b>Assumptions that matter:</b> covering maps are local, not necessarily one-to-one globally; neighborhoods must be evenly covered; path lifting needs a chosen starting point in the fiber; and connected covering spaces encode subgroups of the fundamental group under good hypotheses.</p>",
+    "worked": {
+      "problem": "For $p(t)=(\\cos2\\pi t,\\sin2\\pi t)$, lift the circle loop $\\ell(s)=(\\cos2\\pi s,\\sin2\\pi s)$ starting at $\\tilde\\ell(0)=0$.",
+      "skills": [
+        "covering maps",
+        "path lifting",
+        "winding"
+      ],
+      "strategy": "Match the angle of the loop with a real-valued lifted coordinate.",
+      "steps": [
+        {
+          "do": "Write the covering map",
+          "result": "$p(t)=(\\cos2\\pi t,\\sin2\\pi t)$",
+          "why": "one unit on the line is one full circle turn"
+        },
+        {
+          "do": "Compare with the loop",
+          "result": "$\\ell(s)=(\\cos2\\pi s,\\sin2\\pi s)$",
+          "why": "the loop uses the same angle formula"
+        },
+        {
+          "do": "Choose the lift",
+          "result": "$\\tilde\\ell(s)=s$",
+          "why": "this starts at $0$ and has the right angle"
+        },
+        {
+          "do": "Check the projection",
+          "result": "$p(\\tilde\\ell(s))=p(s)=\\ell(s)$",
+          "why": "the lifted path maps down to the loop"
+        },
+        {
+          "do": "Compute the endpoint",
+          "result": "$\\tilde\\ell(1)=1$",
+          "why": "one circle winding lifts from $0$ to $1$"
+        }
+      ],
+      "verify": "The endpoint changed by $1$, exactly the loop's winding number.",
+      "answer": "The lift is $\\tilde\\ell(s)=s$, starting at $0$ and ending at $1$.",
+      "connects": "Covering spaces turn circular winding into ordinary displacement upstairs."
+    },
+    "practice": [
+      {
+        "problem": "For the same covering map, lift the constant loop at $(1,0)$ starting at $2$.",
+        "steps": [
+          {
+            "do": "Identify the base point",
+            "result": "$p(2)=(1,0)$",
+            "why": "integers map to angle $0$"
+          },
+          {
+            "do": "Choose a constant lift",
+            "result": "$\\tilde c(s)=2$",
+            "why": "the lift must start at $2$"
+          },
+          {
+            "do": "Project it",
+            "result": "$p(\\tilde c(s))=p(2)=(1,0)$",
+            "why": "constant upstairs maps to constant downstairs"
+          },
+          {
+            "do": "Check the start",
+            "result": "$\\tilde c(0)=2$",
+            "why": "the chosen fiber point is respected"
+          },
+          {
+            "do": "Check the endpoint",
+            "result": "$\\tilde c(1)=2$",
+            "why": "zero winding gives no displacement"
+          }
+        ],
+        "answer": "The lift is $\\tilde c(s)=2$."
+      },
+      {
+        "problem": "Lift a circle loop of winding $3$ starting at $0$.",
+        "steps": [
+          {
+            "do": "Write the downstairs loop",
+            "result": "$\\ell(s)=(\\cos6\\pi s,\\sin6\\pi s)$",
+            "why": "winding $3$ uses angle $2\\pi\\cdot3s$"
+          },
+          {
+            "do": "Choose the lift",
+            "result": "$\\tilde\\ell(s)=3s$",
+            "why": "the real coordinate records turns"
+          },
+          {
+            "do": "Check projection",
+            "result": "$p(3s)=(\\cos6\\pi s,\\sin6\\pi s)$",
+            "why": "projection matches the loop"
+          },
+          {
+            "do": "Check start",
+            "result": "$\\tilde\\ell(0)=0$",
+            "why": "the starting lift is correct"
+          },
+          {
+            "do": "Find endpoint",
+            "result": "$\\tilde\\ell(1)=3$",
+            "why": "three turns move three sheets"
+          }
+        ],
+        "answer": "The lifted path is $\\tilde\\ell(s)=3s$ and ends at $3$."
+      },
+      {
+        "problem": "Under $p(t)=e^{2\\pi i t}$, what points in $\\mathbb{R}$ lie over $(1,0)$?",
+        "steps": [
+          {
+            "do": "Set the circle point",
+            "result": "$p(t)=(1,0)$",
+            "why": "this means angle is a full integer turn"
+          },
+          {
+            "do": "Translate to cosine and sine",
+            "result": "$\\cos2\\pi t=1$ and $\\sin2\\pi t=0$",
+            "why": "coordinates of $(1,0)$"
+          },
+          {
+            "do": "Solve the angle condition",
+            "result": "$2\\pi t=2\\pi k$",
+            "why": "full turns land at $(1,0)$"
+          },
+          {
+            "do": "Divide by $2\\pi$",
+            "result": "$t=k$",
+            "why": "the lift coordinate is an integer"
+          },
+          {
+            "do": "State the fiber",
+            "result": "$p^{-1}(1,0)=\\mathbb{Z}$",
+            "why": "all integer sheets lie above the base point"
+          }
+        ],
+        "answer": "The fiber over $(1,0)$ is $\\mathbb{Z}$."
+      },
+      {
+        "problem": "For the double cover $p:S^1\\to S^1$ given by $p(z)=z^2$, how many points lie over $1$?",
+        "steps": [
+          {
+            "do": "Solve $z^2=1$",
+            "result": "$z=1$ or $z=-1$",
+            "why": "square roots of $1$ on the unit circle"
+          },
+          {
+            "do": "Count the fiber",
+            "result": "$2$ points",
+            "why": "a double cover has two sheets"
+          },
+          {
+            "do": "Check both points",
+            "result": "$1^2=1$ and $(-1)^2=1$",
+            "why": "both project to the base point"
+          },
+          {
+            "do": "Interpret locally",
+            "result": "small arcs lift to two small arcs",
+            "why": "one near $1$ and one near $-1$"
+          },
+          {
+            "do": "State answer",
+            "result": "$p^{-1}(1)=\\{1,-1\\}$",
+            "why": "the fiber has exactly two points"
+          }
+        ],
+        "answer": "There are two points over $1$: $1$ and $-1$."
+      },
+      {
+        "problem": "A phase trajectory unwraps from $0.2$ to $2.7$ in the real cover of the circle. What winding change does this represent?",
+        "steps": [
+          {
+            "do": "Compute real displacement",
+            "result": "$2.7-0.2=2.5$",
+            "why": "the cover coordinate counts turns"
+          },
+          {
+            "do": "Separate integer and fractional parts",
+            "result": "$2.5=2+0.5$",
+            "why": "two full turns plus half a turn"
+          },
+          {
+            "do": "Read full winding",
+            "result": "$2$",
+            "why": "integer displacement gives completed windings"
+          },
+          {
+            "do": "Compute final angular offset",
+            "result": "$0.5\\cdot2\\pi=\\pi$",
+            "why": "half a turn changes phase by $\\pi$"
+          },
+          {
+            "do": "Interpret",
+            "result": "two full wraps plus a half-turn",
+            "why": "the endpoint is opposite the starting phase"
+          }
+        ],
+        "answer": "The path completes $2$ full windings and ends a half-turn later."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Phase unwrapping",
+        "background": "Signals measured modulo $2\\pi$ become easier to analyze after lifting them to a real-valued cover.",
+        "numbers": "Observed phases $6.1,0.1,0.3$ can lift to $6.1,6.383,6.583$, avoiding a fake jump of about $-6.0$."
+      },
+      {
+        "title": "Robot joints",
+        "background": "A revolute joint has circular state, but controllers often unwrap it to track total rotations.",
+        "numbers": "Angles $350^\\circ$ to $10^\\circ$ are a $20^\\circ$ move, not $-340^\\circ$, after choosing the lifted path."
+      },
+      {
+        "title": "Winding number computation",
+        "background": "Covering spaces explain why a lifted endpoint records winding.",
+        "numbers": "A loop lift from $0$ to $-2$ has winding $-2$, meaning two clockwise turns."
+      },
+      {
+        "title": "Texture coordinates",
+        "background": "Computer graphics maps a covering plane onto repeated textures on a torus or surface.",
+        "numbers": "Texture coordinate $u=2.3$ and $u=0.3$ show the same horizontal phase but differ by two repeats."
+      },
+      {
+        "title": "Periodic optimization",
+        "background": "Optimizing angles is easier when local steps are lifted to a line and then wrapped back.",
+        "numbers": "A gradient step from $6.20$ by $+0.15$ gives lifted $6.35$, which wraps to $0.067$ radians on the circle."
+      },
+      {
+        "title": "Data on circles",
+        "background": "Circular measurements such as heading or time can be locally unwrapped before smoothing.",
+        "numbers": "Headings $358^\\circ,1^\\circ,4^\\circ$ unwrap to $358^\\circ,361^\\circ,364^\\circ$, a smooth sequence with $3^\\circ$ increments."
+      }
+    ],
+    "applicationsClose": "Covering spaces let us do local straight-line reasoning upstairs while remembering circular or multi-sheeted structure downstairs.",
+    "takeaways": [
+      "A covering map looks locally like disjoint copies of the base.",
+      "The map $\\mathbb{R}\\to S^1$ unwraps the circle into a line.",
+      "A lifted loop's endpoint records winding information.",
+      "Phase unwrapping and periodic optimization are practical covering-space ideas."
+    ],
     "prereqs": [
       "math-13-13"
     ]
@@ -300,19 +3728,271 @@
   B({
     "id": "math-13-15",
     "title": "Simplicial complexes",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: simplicial complexes.",
+    "tagline": "Simplicial complexes build shapes from vertices, edges, triangles, and their higher-dimensional cousins.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Covering spaces</i>"
+        "sets",
+        "metric-space topology",
+        "graphs"
       ],
       "leadsTo": [
-        "the next lesson, <i>Homology groups</i>"
+        "homology groups",
+        "persistent homology",
+        "mesh geometry"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "combinatorics",
+        "incidence matrices",
+        "polyhedra"
       ]
     },
+    "motivation": "<p>You already know how a triangle is made from three edges and three vertices. A <b>simplicial complex</b> keeps building from that idea: points, line segments, filled triangles, filled tetrahedra, and so on.</p><p>This combinatorial language is perfect for data. We can start with a cloud of points, connect nearby points, fill triangles when triples are mutually close, and obtain a shape whose holes can be counted algebraically.</p>",
+    "definition": "<p>An <b>$k$-simplex</b> is the convex hull of $k+1$ affinely independent vertices: a $0$-simplex is a vertex, a $1$-simplex is an edge, a $2$-simplex is a filled triangle, and a $3$-simplex is a filled tetrahedron. A <b>simplicial complex</b> $K$ is a collection of simplices such that every face of a simplex in $K$ is also in $K$, and the intersection of any two simplices is a common face or empty.</p><p>The face rule is essential: if a filled triangle $[a,b,c]$ is present, then its three edges and three vertices must be present too. That rule lets boundary maps and homology be defined cleanly.</p><p><b>Assumptions that matter:</b> a simplex includes its interior; complexes are closed under taking faces; vertex order matters for oriented calculations but not for the underlying shape; and data-built complexes depend strongly on the distance threshold.</p>",
+    "worked": {
+      "problem": "A complex has vertices $a,b,c$ and the filled triangle $[a,b,c]$. List all simplices and compute the Euler characteristic $\\chi=V-E+F$.",
+      "skills": [
+        "faces",
+        "counting simplices",
+        "Euler characteristic"
+      ],
+      "strategy": "A filled triangle forces all lower-dimensional faces to be included.",
+      "steps": [
+        {
+          "do": "List vertices",
+          "result": "$a,b,c$",
+          "why": "these are the three $0$-simplices"
+        },
+        {
+          "do": "Count vertices",
+          "result": "$V=3$",
+          "why": "there are three vertices"
+        },
+        {
+          "do": "List edges",
+          "result": "$[a,b],[b,c],[a,c]$",
+          "why": "all triangle faces of dimension $1$ are included"
+        },
+        {
+          "do": "Count edges",
+          "result": "$E=3$",
+          "why": "there are three sides"
+        },
+        {
+          "do": "List filled faces",
+          "result": "$[a,b,c]$",
+          "why": "the triangle itself is one $2$-simplex"
+        },
+        {
+          "do": "Compute Euler characteristic",
+          "result": "$\\chi=3-3+1=1$",
+          "why": "use $V-E+F$"
+        }
+      ],
+      "verify": "A filled triangle is topologically a disk, and a disk has Euler characteristic $1$.",
+      "answer": "The simplices are $3$ vertices, $3$ edges, and $1$ filled triangle; $\\chi=1$.",
+      "connects": "Simplicial complexes turn geometry into countable building blocks."
+    },
+    "practice": [
+      {
+        "problem": "A graph complex has vertices $1,2,3$ and edges $[1,2]$, $[2,3]$. List its simplices and compute $\\chi$.",
+        "steps": [
+          {
+            "do": "List vertices",
+            "result": "$1,2,3$",
+            "why": "given vertices are $0$-simplices"
+          },
+          {
+            "do": "Count vertices",
+            "result": "$V=3$",
+            "why": "three vertices"
+          },
+          {
+            "do": "List edges",
+            "result": "$[1,2]$ and $[2,3]$",
+            "why": "given edges are $1$-simplices"
+          },
+          {
+            "do": "Count edges",
+            "result": "$E=2$",
+            "why": "two edges"
+          },
+          {
+            "do": "Count filled triangles",
+            "result": "$F=0$",
+            "why": "no $2$-simplex is listed"
+          },
+          {
+            "do": "Compute",
+            "result": "$\\chi=3-2+0=1$",
+            "why": "apply $V-E+F$"
+          }
+        ],
+        "answer": "The complex has $\\chi=1$."
+      },
+      {
+        "problem": "Four vertices form a square boundary with no diagonal and no filled face. Compute $V$, $E$, $F$, and $\\chi$.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$V=4$",
+            "why": "four corners"
+          },
+          {
+            "do": "Count boundary edges",
+            "result": "$E=4$",
+            "why": "one edge per side"
+          },
+          {
+            "do": "Count filled faces",
+            "result": "$F=0$",
+            "why": "the square interior is not filled by triangles"
+          },
+          {
+            "do": "Compute Euler characteristic",
+            "result": "$\\chi=4-4+0=0$",
+            "why": "use alternating counts"
+          },
+          {
+            "do": "Interpret",
+            "result": "one loop",
+            "why": "a circle-like boundary has Euler characteristic $0$"
+          }
+        ],
+        "answer": "$V=4$, $E=4$, $F=0$, and $\\chi=0$."
+      },
+      {
+        "problem": "If a complex contains edge $[u,v]$, what faces must it contain?",
+        "steps": [
+          {
+            "do": "Identify the simplex",
+            "result": "$[u,v]$ is a $1$-simplex",
+            "why": "it has two vertices"
+          },
+          {
+            "do": "List its proper faces",
+            "result": "$[u]$ and $[v]$",
+            "why": "faces come from subsets of vertices"
+          },
+          {
+            "do": "Apply the face rule",
+            "result": "$[u]$ and $[v]$ must be in the complex",
+            "why": "complexes are closed under faces"
+          },
+          {
+            "do": "Include the edge",
+            "result": "$[u,v]$ remains in the complex",
+            "why": "the simplex itself is also present"
+          },
+          {
+            "do": "State the required set",
+            "result": "$[u]$, $[v]$, and $[u,v]$",
+            "why": "these are the necessary simplices"
+          }
+        ],
+        "answer": "It must contain the two endpoint vertices $[u]$ and $[v]$."
+      },
+      {
+        "problem": "A tetrahedron includes vertices, edges, triangular faces, and one filled $3$-simplex. Count $V$, $E$, $F$, $T$ and compute $V-E+F-T$.",
+        "steps": [
+          {
+            "do": "Count vertices",
+            "result": "$V=4$",
+            "why": "a tetrahedron has four corners"
+          },
+          {
+            "do": "Count edges",
+            "result": "$E=\\binom42=6$",
+            "why": "choose two vertices for an edge"
+          },
+          {
+            "do": "Count triangular faces",
+            "result": "$F=\\binom43=4$",
+            "why": "choose three vertices for a face"
+          },
+          {
+            "do": "Count tetrahedra",
+            "result": "$T=1$",
+            "why": "there is one filled $3$-simplex"
+          },
+          {
+            "do": "Compute alternating sum",
+            "result": "$4-6+4-1=1$",
+            "why": "filled ball-like objects have Euler characteristic $1$"
+          }
+        ],
+        "answer": "$V=4$, $E=6$, $F=4$, $T=1$, so the alternating sum is $1$."
+      },
+      {
+        "problem": "Four data points have distances $d(1,2)=0.4$, $d(2,3)=0.5$, $d(1,3)=0.7$, and all distances to point $4$ exceed $1.2$. In a Vietoris-Rips complex at threshold $0.6$, which edges appear?",
+        "steps": [
+          {
+            "do": "Apply the threshold to $d(1,2)$",
+            "result": "$0.4\\le0.6$",
+            "why": "edge $[1,2]$ appears"
+          },
+          {
+            "do": "Apply the threshold to $d(2,3)$",
+            "result": "$0.5\\le0.6$",
+            "why": "edge $[2,3]$ appears"
+          },
+          {
+            "do": "Apply the threshold to $d(1,3)$",
+            "result": "$0.7>0.6$",
+            "why": "edge $[1,3]$ does not appear"
+          },
+          {
+            "do": "Check point $4$",
+            "result": "all distances exceed $1.2>0.6$",
+            "why": "no edge touches point $4$"
+          },
+          {
+            "do": "List edges",
+            "result": "$[1,2]$ and $[2,3]$",
+            "why": "only pairs within threshold are connected"
+          }
+        ],
+        "answer": "The edges are $[1,2]$ and $[2,3]$; point $4$ is isolated."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Mesh models",
+        "background": "Computer graphics stores surfaces as triangle meshes, which are simplicial complexes in practical form.",
+        "numbers": "A mesh with $1000$ vertices, $2994$ edges, and $1996$ triangular faces has $\\chi=1000-2994+1996=2$, sphere-like."
+      },
+      {
+        "title": "Vietoris-Rips complexes",
+        "background": "TDA often builds a complex from data by connecting points whose pairwise distances are below a scale.",
+        "numbers": "Three points with all pairwise distances at most $0.5$ form a filled triangle at threshold $0.5$."
+      },
+      {
+        "title": "Network clique complexes",
+        "background": "A graph can become a complex by filling every clique, letting triangles in a network count as filled relations.",
+        "numbers": "A $4$-clique contributes $4$ vertices, $6$ edges, $4$ triangles, and $1$ tetrahedron."
+      },
+      {
+        "title": "Finite-element methods",
+        "background": "Engineering simulations divide domains into simple pieces so equations can be solved locally.",
+        "numbers": "A square split by one diagonal has $4$ vertices, $5$ edges, and $2$ triangles, so $\\chi=1$."
+      },
+      {
+        "title": "Image segmentation",
+        "background": "Pixel grids can be converted to cubical or simplicial complexes to analyze connected regions and holes.",
+        "numbers": "A $2\\times2$ block of active pixels has one connected component and no central hole after filling the four squares."
+      },
+      {
+        "title": "Sensor coverage",
+        "background": "Coverage problems model sensors as disks and approximate their nerve by simplicial complexes.",
+        "numbers": "If three sensors pairwise overlap and share a common overlap, their nerve includes one filled triangle."
+      }
+    ],
+    "applicationsClose": "Simplicial complexes are the bridge from finite data and meshes to the algebraic tools that measure shape.",
+    "takeaways": [
+      "A $k$-simplex has $k+1$ vertices.",
+      "A simplicial complex must include every face of each simplex.",
+      "Euler characteristic is an alternating count of simplices.",
+      "Data complexes depend on a scale parameter, which persistent homology will vary."
+    ],
     "prereqs": [
       "math-13-14"
     ]
@@ -321,19 +4001,271 @@
   B({
     "id": "math-13-16",
     "title": "Homology groups",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: homology groups.",
+    "tagline": "Homology counts holes by comparing cycles with boundaries.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Simplicial complexes</i>"
+        "simplicial complexes",
+        "linear algebra",
+        "groups"
       ],
       "leadsTo": [
-        "the next lesson, <i>Persistent homology</i>"
+        "persistent homology",
+        "Betti numbers",
+        "topological features"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "boundary maps",
+        "cycles",
+        "quotient groups"
       ]
     },
+    "motivation": "<p>You can often see a hole before you can prove it: a square outline has a loop, while a filled square does not. <b>Homology</b> gives a careful algebraic test for that difference.</p><p>The idea is beautifully economical. First find cycles, chains with no boundary. Then ignore cycles that are themselves boundaries of higher-dimensional pieces. What remains is the hole information.</p>",
+    "definition": "<p>For a simplicial complex, the chain group $C_n$ is the free abelian group generated by oriented $n$-simplices. The boundary map $\\partial_n:C_n\\to C_{n-1}$ sends each simplex to its oriented boundary. The <b>cycle group</b> is $Z_n=\\ker\\partial_n$, the chains with zero boundary. The <b>boundary group</b> is $B_n=\\operatorname{im}\\partial_{n+1}$, the cycles that bound higher-dimensional chains. The homology group is $$H_n=Z_n/B_n.$$</p><p>The crucial identity is $\\partial_n\\partial_{n+1}=0$: the boundary of a boundary cancels. For a triangle, the boundary edges have endpoints that appear once positive and once negative, so the total boundary of that boundary is zero.</p><p><b>Assumptions that matter:</b> orientations determine signs but not Betti numbers; coefficients may be integers or a field such as $\\mathbb{Z}_2$; $H_0$ counts connected components; $H_1$ counts one-dimensional holes when using field coefficients through its rank.</p>",
+    "worked": {
+      "problem": "Compute $H_1$ over $\\mathbb{Z}_2$ for a triangle boundary with three vertices and three edges but no filled triangle.",
+      "skills": [
+        "cycles",
+        "boundaries",
+        "Betti numbers"
+      ],
+      "strategy": "Find the edge cycle, then check whether any filled $2$-simplex makes it a boundary.",
+      "steps": [
+        {
+          "do": "Count edges",
+          "result": "$C_1$ has dimension $3$",
+          "why": "there are three independent edge generators over $\\mathbb{Z}_2$"
+        },
+        {
+          "do": "Form the full boundary loop",
+          "result": "$e_{12}+e_{23}+e_{31}$",
+          "why": "each vertex touches two selected edges"
+        },
+        {
+          "do": "Take its boundary",
+          "result": "$0$",
+          "why": "over $\\mathbb{Z}_2$, each vertex appears twice and cancels"
+        },
+        {
+          "do": "Identify $Z_1$",
+          "result": "$Z_1$ has dimension $1$",
+          "why": "the connected triangle graph has one independent cycle"
+        },
+        {
+          "do": "Check $2$-simplices",
+          "result": "none",
+          "why": "there is no filled triangle"
+        },
+        {
+          "do": "Identify $B_1$",
+          "result": "$B_1=0$",
+          "why": "no $2$-chain can have the loop as boundary"
+        },
+        {
+          "do": "Compute homology",
+          "result": "$H_1=Z_1/B_1\\cong\\mathbb{Z}_2$",
+          "why": "one nonbounding cycle remains"
+        }
+      ],
+      "verify": "A triangle outline is circle-like, so one $1$-dimensional hole is expected.",
+      "answer": "$H_1\\cong\\mathbb{Z}_2$, with Betti number $\\beta_1=1$.",
+      "connects": "Homology detects the loop because it is a cycle but not a boundary."
+    },
+    "practice": [
+      {
+        "problem": "Compute $\\beta_0$ for a complex with edges $[1,2]$, $[2,3]$ and isolated vertex $4$.",
+        "steps": [
+          {
+            "do": "Find the first component",
+            "result": "$1,2,3$",
+            "why": "edges connect these vertices"
+          },
+          {
+            "do": "Find the second component",
+            "result": "$4$",
+            "why": "no edge touches vertex $4$"
+          },
+          {
+            "do": "Count components",
+            "result": "$2$",
+            "why": "$H_0$ records connected components"
+          },
+          {
+            "do": "Translate to Betti number",
+            "result": "$\\beta_0=2$",
+            "why": "over a field, rank of $H_0$ equals component count"
+          },
+          {
+            "do": "State homology shape",
+            "result": "$H_0$ has rank $2$",
+            "why": "two independent component classes remain"
+          }
+        ],
+        "answer": "$\\beta_0=2$."
+      },
+      {
+        "problem": "A filled triangle has three vertices, three edges, and one $2$-simplex. What is $\\beta_1$?",
+        "steps": [
+          {
+            "do": "Identify the boundary loop",
+            "result": "three-edge cycle",
+            "why": "the triangle edges form a cycle"
+          },
+          {
+            "do": "Check the filled face",
+            "result": "$[1,2,3]$ is present",
+            "why": "a $2$-simplex fills the loop"
+          },
+          {
+            "do": "Take its boundary",
+            "result": "$\\partial[1,2,3]$ is the three-edge loop",
+            "why": "the cycle is a boundary"
+          },
+          {
+            "do": "Compare cycles modulo boundaries",
+            "result": "the loop becomes zero in $H_1$",
+            "why": "boundaries are quotiented out"
+          },
+          {
+            "do": "State Betti number",
+            "result": "$\\beta_1=0$",
+            "why": "no one-dimensional hole remains"
+          }
+        ],
+        "answer": "$\\beta_1=0$ for a filled triangle."
+      },
+      {
+        "problem": "A square boundary has $4$ vertices and $4$ edges, with no filled face. For a connected graph, use $\\beta_1=E-V+1$.",
+        "steps": [
+          {
+            "do": "Record vertices",
+            "result": "$V=4$",
+            "why": "four corners"
+          },
+          {
+            "do": "Record edges",
+            "result": "$E=4$",
+            "why": "four boundary sides"
+          },
+          {
+            "do": "Use connected graph formula",
+            "result": "$\\beta_1=E-V+1$",
+            "why": "one component is assumed"
+          },
+          {
+            "do": "Substitute",
+            "result": "$\\beta_1=4-4+1$",
+            "why": "plug in counts"
+          },
+          {
+            "do": "Compute",
+            "result": "$\\beta_1=1$",
+            "why": "one independent loop"
+          }
+        ],
+        "answer": "The square boundary has $\\beta_1=1$."
+      },
+      {
+        "problem": "Two disjoint triangle boundaries have no filled faces. Compute $\\beta_0$ and $\\beta_1$.",
+        "steps": [
+          {
+            "do": "Count components",
+            "result": "$2$",
+            "why": "the two triangles are disjoint"
+          },
+          {
+            "do": "Set $\\beta_0$",
+            "result": "$\\beta_0=2$",
+            "why": "$H_0$ counts components"
+          },
+          {
+            "do": "Count loops per triangle",
+            "result": "$1$ each",
+            "why": "each boundary has one nonfilled cycle"
+          },
+          {
+            "do": "Add loop counts",
+            "result": "$1+1=2$",
+            "why": "homology over disjoint unions adds ranks"
+          },
+          {
+            "do": "Set $\\beta_1$",
+            "result": "$\\beta_1=2$",
+            "why": "two independent one-dimensional holes"
+          }
+        ],
+        "answer": "$\\beta_0=2$ and $\\beta_1=2$."
+      },
+      {
+        "problem": "A graph built from data has $V=10$, $E=12$, and $C=2$ connected components. Assuming no filled triangles, compute $\\beta_1$.",
+        "steps": [
+          {
+            "do": "Recall graph formula",
+            "result": "$\\beta_1=E-V+C$",
+            "why": "cycle rank for a graph"
+          },
+          {
+            "do": "Substitute counts",
+            "result": "$\\beta_1=12-10+2$",
+            "why": "use edges, vertices, and components"
+          },
+          {
+            "do": "Compute",
+            "result": "$\\beta_1=4$",
+            "why": "four independent graph cycles"
+          },
+          {
+            "do": "Check nonnegativity",
+            "result": "$4\\ge0$",
+            "why": "cycle ranks cannot be negative"
+          },
+          {
+            "do": "Interpret",
+            "result": "four loop features",
+            "why": "without filled triangles, graph cycles survive in $H_1$"
+          }
+        ],
+        "answer": "$\\beta_1=4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Connected components",
+        "background": "The earliest homology feature is just component counting, used in clustering and segmentation.",
+        "numbers": "If a threshold graph has components of sizes $5$, $3$, and $2$, then $\\beta_0=3$."
+      },
+      {
+        "title": "Loop detection",
+        "background": "Homology detects ring-like structure in point clouds without choosing a single center.",
+        "numbers": "A square boundary with $V=4$ and $E=4$ gives $\\beta_1=1$, signaling one loop."
+      },
+      {
+        "title": "Mesh validation",
+        "background": "Graphics and CAD systems check whether a mesh has unexpected holes.",
+        "numbers": "A closed sphere-like mesh with $V=100$, $E=294$, $F=196$ has $\\chi=2$, consistent with no handles."
+      },
+      {
+        "title": "Sensor coverage",
+        "background": "Coverage holes can be detected from intersection complexes of sensor ranges.",
+        "numbers": "If four sensors form a square with adjacent overlaps but no diagonal overlaps, the nerve has $\\beta_1=1$, indicating a coverage gap."
+      },
+      {
+        "title": "Image analysis",
+        "background": "Binary images can be studied by components and holes, robust descriptors for shapes.",
+        "numbers": "A digit 8 often has one component and two holes, so roughly $\\beta_0=1$, $\\beta_1=2$."
+      },
+      {
+        "title": "Feature engineering",
+        "background": "Betti numbers summarize shape as numerical features for downstream models.",
+        "numbers": "A dataset snapshot with $\\beta_0=4$ and $\\beta_1=1$ can be encoded as vector $(4,1)$ before classification."
+      }
+    ],
+    "applicationsClose": "Homology turns visible shape questions into algebraic bookkeeping: cycles that do not bound are holes that matter.",
+    "takeaways": [
+      "Cycles have zero boundary; boundaries come from one dimension higher.",
+      "Homology is $H_n=Z_n/B_n$.",
+      "$H_0$ counts connected components and $H_1$ counts independent loops over field coefficients.",
+      "Filling a loop with a simplex makes that loop vanish in homology."
+    ],
     "prereqs": [
       "math-13-15"
     ]
@@ -342,19 +4274,276 @@
   B({
     "id": "math-13-17",
     "title": "Persistent homology",
-    "tier": "🟡",
-    "tagline": "One concept from Topology: persistent homology.",
+    "tagline": "Persistent homology watches topological features appear and disappear as the scale changes.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Homology groups</i>"
+        "homology groups",
+        "simplicial complexes",
+        "metric-space topology"
       ],
       "leadsTo": [
-        "the next lesson, <i>The manifold hypothesis & TDA</i>"
+        "persistence diagrams",
+        "TDA pipelines",
+        "manifold hypothesis"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "filtrations",
+        "Betti numbers",
+        "barcodes"
       ]
     },
+    "motivation": "<p>One scale rarely tells the whole truth. If balls around data points are tiny, every point is alone; if they are huge, everything merges into one blob. The interesting shape lives in how features persist across scales.</p><p><b>Persistent homology</b> turns that movie into birth and death times for components, loops, and higher-dimensional holes. Long lifetimes often signal structure; short lifetimes often signal noise.</p>",
+    "definition": "<p>A <b>filtration</b> is a nested sequence of complexes $K_{r_1}\\subseteq K_{r_2}\\subseteq\\cdots$ indexed by scale $r$. Persistent homology tracks how homology classes are born at one scale and die at a later scale. A feature with birth $b$ and death $d$ has persistence $d-b$ and appears as interval $[b,d)$ in a barcode or point $(b,d)$ in a persistence diagram.</p><p>The nesting matters: once a simplex appears, it stays. This lets homology classes be mapped forward from one scale to the next, so we can say that the same feature persists rather than merely recounting from scratch.</p><p><b>Assumptions that matter:</b> the filtration must be nested; thresholds and coefficient fields affect the result; infinite death means a feature never dies within the observed filtration; and persistence is descriptive, not automatic proof that a feature is meaningful.</p>",
+    "worked": {
+      "problem": "Three points on a line are at positions $0$, $1$, and $3$. In a Vietoris-Rips filtration using edge threshold $r$, find when connected components merge.",
+      "skills": [
+        "filtrations",
+        "components",
+        "barcodes"
+      ],
+      "strategy": "Components are born at $r=0$ and merge when edges appear at pairwise distances.",
+      "steps": [
+        {
+          "do": "List pairwise distances",
+          "result": "$d(0,1)=1$, $d(1,3)=2$, $d(0,3)=3$",
+          "why": "edges appear when $r$ reaches these values"
+        },
+        {
+          "do": "Start at $r=0$",
+          "result": "$3$ components",
+          "why": "each point begins alone"
+        },
+        {
+          "do": "Add the first edge",
+          "result": "$r=1$ connects $0$ and $1$",
+          "why": "the smallest distance is $1$"
+        },
+        {
+          "do": "Update components",
+          "result": "$2$ components remain",
+          "why": "two points merge into one component"
+        },
+        {
+          "do": "Add the next useful edge",
+          "result": "$r=2$ connects $1$ and $3$",
+          "why": "this merges the remaining point"
+        },
+        {
+          "do": "Update components",
+          "result": "$1$ component remains",
+          "why": "all points are connected"
+        },
+        {
+          "do": "Record finite bars",
+          "result": "deaths at $1$ and $2$",
+          "why": "two components die by merging into older components"
+        }
+      ],
+      "verify": "The edge at distance $3$ appears later but does not change components because all points are already connected.",
+      "answer": "There are three $H_0$ births at $0$; two finite component bars die at $r=1$ and $r=2$, and one component persists.",
+      "connects": "Persistent homology records not just how many components exist, but how long they survive."
+    },
+    "practice": [
+      {
+        "problem": "Four line points $0$, $0.4$, $1.5$, $1.8$ use Rips edge threshold $r$. When do $H_0$ merges occur?",
+        "steps": [
+          {
+            "do": "Compute adjacent distances",
+            "result": "$0.4$, $1.1$, and $0.3$",
+            "why": "line points merge by nearest gaps first"
+          },
+          {
+            "do": "Sort the useful gaps",
+            "result": "$0.3,0.4,1.1$",
+            "why": "smallest edges appear first"
+          },
+          {
+            "do": "Start components",
+            "result": "$4$",
+            "why": "each point is born at $0$"
+          },
+          {
+            "do": "Merge at $r=0.3$",
+            "result": "$3$ components",
+            "why": "points $1.5$ and $1.8$ connect"
+          },
+          {
+            "do": "Merge at $r=0.4$",
+            "result": "$2$ components",
+            "why": "points $0$ and $0.4$ connect"
+          },
+          {
+            "do": "Merge at $r=1.1$",
+            "result": "$1$ component",
+            "why": "the two clusters connect"
+          }
+        ],
+        "answer": "Finite $H_0$ deaths occur at $0.3$, $0.4$, and $1.1$."
+      },
+      {
+        "problem": "A persistence interval has birth $0.6$ and death $1.4$. Compute its persistence and midpoint.",
+        "steps": [
+          {
+            "do": "Subtract birth from death",
+            "result": "$1.4-0.6$",
+            "why": "persistence is lifetime"
+          },
+          {
+            "do": "Compute lifetime",
+            "result": "$0.8$",
+            "why": "the feature lasts across $0.8$ units of scale"
+          },
+          {
+            "do": "Add birth and death",
+            "result": "$0.6+1.4=2.0$",
+            "why": "midpoint averages the endpoints"
+          },
+          {
+            "do": "Divide by $2$",
+            "result": "$1.0$",
+            "why": "midpoint of the interval"
+          },
+          {
+            "do": "Interpret",
+            "result": "bar $[0.6,1.4)$ centered at $1.0$",
+            "why": "the feature is most visually centered near scale $1.0$"
+          }
+        ],
+        "answer": "Persistence is $0.8$ and midpoint is $1.0$."
+      },
+      {
+        "problem": "A diagram has $H_1$ points $(0.2,0.25)$, $(0.4,1.3)$, and $(0.9,1.0)$. Which loop is most persistent?",
+        "steps": [
+          {
+            "do": "Compute first lifetime",
+            "result": "$0.25-0.2=0.05$",
+            "why": "death minus birth"
+          },
+          {
+            "do": "Compute second lifetime",
+            "result": "$1.3-0.4=0.9$",
+            "why": "death minus birth"
+          },
+          {
+            "do": "Compute third lifetime",
+            "result": "$1.0-0.9=0.1$",
+            "why": "death minus birth"
+          },
+          {
+            "do": "Compare lifetimes",
+            "result": "$0.9$ is largest",
+            "why": "largest persistence is farthest from the diagonal"
+          },
+          {
+            "do": "Identify the feature",
+            "result": "point $(0.4,1.3)$",
+            "why": "it survives the longest"
+          }
+        ],
+        "answer": "The loop born at $0.4$ and dying at $1.3$ is most persistent."
+      },
+      {
+        "problem": "For a triangle of three points with all pairwise distances $1$, describe $H_1$ in a Rips filtration where the filled triangle appears as soon as all three edges appear.",
+        "steps": [
+          {
+            "do": "Start at small $r<1$",
+            "result": "three isolated vertices",
+            "why": "no edges exist"
+          },
+          {
+            "do": "Reach $r=1$",
+            "result": "three edges appear",
+            "why": "all pairwise distances equal $1$"
+          },
+          {
+            "do": "Add the $2$-simplex",
+            "result": "filled triangle appears at $r=1$",
+            "why": "Rips fills cliques"
+          },
+          {
+            "do": "Check loop lifetime",
+            "result": "birth and death both at $1$",
+            "why": "the loop is filled immediately"
+          },
+          {
+            "do": "Interpret persistence",
+            "result": "$0$",
+            "why": "no positive-length $H_1$ bar remains"
+          }
+        ],
+        "answer": "The apparent triangle loop has zero persistence in the Rips complex because it is filled immediately."
+      },
+      {
+        "problem": "A noisy circle has one $H_1$ interval $[0.35,1.20)$ and noise intervals $[0.20,0.27)$ and $[0.50,0.56)$. Which should a model keep with a persistence cutoff $0.2$?",
+        "steps": [
+          {
+            "do": "Compute main lifetime",
+            "result": "$1.20-0.35=0.85$",
+            "why": "long bar"
+          },
+          {
+            "do": "Compute first noise lifetime",
+            "result": "$0.27-0.20=0.07$",
+            "why": "short bar"
+          },
+          {
+            "do": "Compute second noise lifetime",
+            "result": "$0.56-0.50=0.06$",
+            "why": "short bar"
+          },
+          {
+            "do": "Compare with cutoff",
+            "result": "$0.85>0.2$, while $0.07<0.2$ and $0.06<0.2$",
+            "why": "keep only bars above the cutoff"
+          },
+          {
+            "do": "State kept feature",
+            "result": "$[0.35,1.20)$",
+            "why": "it is the only persistent loop"
+          }
+        ],
+        "answer": "Keep the interval $[0.35,1.20)$ and discard the two short noise intervals."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Noise filtering",
+        "background": "Persistence separates fleeting topological artifacts from longer-lived structure.",
+        "numbers": "Bars of lengths $0.03$, $0.05$, and $0.7$ suggest keeping the $0.7$ feature if the cutoff is $0.1$."
+      },
+      {
+        "title": "Clustering across scale",
+        "background": "$H_0$ persistence is a multiscale view of hierarchical clustering.",
+        "numbers": "Line gaps $0.2$, $0.4$, and $2.0$ produce component deaths at those values, showing a large cluster separation at $2.0$."
+      },
+      {
+        "title": "Shape classification",
+        "background": "Persistence diagrams can become features for classifying shapes or point clouds.",
+        "numbers": "A circle sample might have one $H_1$ bar of length $0.9$, while a disk sample has no $H_1$ bar longer than $0.1$."
+      },
+      {
+        "title": "Sensor networks",
+        "background": "Persistent holes can identify coverage gaps that remain over a range of communication radii.",
+        "numbers": "A hole bar $[15,40)$ meters lasts $25$ meters of radius, stronger evidence than a bar $[15,17)$."
+      },
+      {
+        "title": "Molecular data",
+        "background": "TDA has been used to summarize geometry in proteins and materials where loops and cavities matter.",
+        "numbers": "A cavity born at radius $1.2$ angstroms and dying at $2.8$ has persistence $1.6$ angstroms."
+      },
+      {
+        "title": "Model diagnostics",
+        "background": "Embeddings can be probed for loops, branches, or disconnected clusters across scales.",
+        "numbers": "If class embeddings have $H_0$ deaths mostly below $0.3$ except one at $1.5$, the class may contain two separated subgroups."
+      }
+    ],
+    "applicationsClose": "Persistent homology adds time to homology: features matter not only because they exist, but because they endure.",
+    "takeaways": [
+      "A filtration is a nested sequence of complexes indexed by scale.",
+      "A persistence interval $[b,d)$ has lifetime $d-b$.",
+      "Long bars often represent stable structure; short bars often represent noise.",
+      "$H_0$ persistence mirrors hierarchical clustering, while $H_1$ persistence tracks loops."
+    ],
     "prereqs": [
       "math-13-16"
     ]
@@ -363,19 +4552,276 @@
   B({
     "id": "math-13-18",
     "title": "The manifold hypothesis & TDA",
-    "tier": "🟡",
-    "tagline": "Capstone — how topology shows up directly in CS & ML.",
+    "tagline": "The manifold hypothesis says high-dimensional data may live near a low-dimensional shape, and TDA helps test that shape.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Persistent homology</i>"
+        "persistent homology",
+        "homology groups",
+        "metric-space topology"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "representation learning",
+        "geometric deep learning",
+        "topological regularization"
       ],
       "usedWith": [
-        "the other concepts in Topology and its capstone"
+        "dimension reduction",
+        "nearest-neighbor graphs",
+        "persistence diagrams"
       ]
     },
+    "motivation": "<p>Modern data often arrives with thousands of coordinates: pixels, embeddings, gene counts, or user features. The hopeful observation is that real examples may not fill the whole ambient space. They may lie near a lower-dimensional curve, surface, or branching shape.</p><p>The <b>manifold hypothesis</b> gives that hope a geometric name. Topological data analysis adds a practical question: as we thicken the data, do we see components, loops, or voids that persist long enough to be more than noise?</p>",
+    "definition": "<p>The <b>manifold hypothesis</b> says that many high-dimensional datasets concentrate near a low-dimensional manifold or stratified space embedded in a much larger ambient space. A persistence diagram summarizes the topology of a filtered complex built from the data: each point $(b,d)$ records a feature born at scale $b$ and dying at scale $d$.</p><p>For ML, the workflow is concrete: choose a metric on representations, build a filtration such as Vietoris-Rips, compute persistent homology, and turn long-lived features into diagnostics or features. A loop in a diagram can mean circular variation, such as rotation angle, seasonality, or phase.</p><p><b>Assumptions that matter:</b> the metric on data or embeddings must be meaningful; sampling density affects what topology is visible; noise creates short bars; high-dimensional Rips complexes can be expensive; and TDA suggests structure but must be checked against domain knowledge and predictive performance.</p>",
+    "worked": {
+      "problem": "A two-dimensional embedding of images has one $H_1$ persistence point $(0.18,0.92)$ and noise points $(0.10,0.14)$ and $(0.35,0.41)$. Compute lifetimes and decide what the diagram suggests about the data manifold using cutoff $0.20$.",
+      "skills": [
+        "persistence diagrams",
+        "lifetimes",
+        "ML interpretation"
+      ],
+      "strategy": "Long lifetimes are far from the diagonal; compare each death minus birth with the cutoff.",
+      "steps": [
+        {
+          "do": "Compute the main lifetime",
+          "result": "$0.92-0.18=0.74$",
+          "why": "persistence is death minus birth"
+        },
+        {
+          "do": "Compute the first noise lifetime",
+          "result": "$0.14-0.10=0.04$",
+          "why": "short feature near the diagonal"
+        },
+        {
+          "do": "Compute the second noise lifetime",
+          "result": "$0.41-0.35=0.06$",
+          "why": "another short feature"
+        },
+        {
+          "do": "Apply the cutoff",
+          "result": "$0.74>0.20$, while $0.04<0.20$ and $0.06<0.20$",
+          "why": "only the main feature survives the rule"
+        },
+        {
+          "do": "Interpret topology",
+          "result": "one persistent loop",
+          "why": "a loop suggests circular variation in the embedding"
+        },
+        {
+          "do": "Connect to ML",
+          "result": "possible one-dimensional circular factor",
+          "why": "examples may vary by angle, phase, or cyclic pose"
+        }
+      ],
+      "verify": "The main point is far from the diagonal compared with the two short-lived points, so the conclusion is driven by one robust feature.",
+      "answer": "Keep the $H_1$ feature $(0.18,0.92)$ with lifetime $0.74$; the embedding suggests one meaningful loop-like factor in the data.",
+      "connects": "The manifold hypothesis becomes testable when representation geometry produces persistent topological signatures."
+    },
+    "practice": [
+      {
+        "problem": "A dataset has $500$ pixel dimensions but PCA shows the first two coordinates explain $82\\%$ of variance. What does this suggest, and what does it not prove?",
+        "steps": [
+          {
+            "do": "Read ambient dimension",
+            "result": "$500$",
+            "why": "the raw data lives in a high-dimensional space"
+          },
+          {
+            "do": "Read explained variance",
+            "result": "$82\\%$ in two coordinates",
+            "why": "most linear variation lies in a plane"
+          },
+          {
+            "do": "State the suggestion",
+            "result": "low-dimensional structure",
+            "why": "the data may concentrate near a two-dimensional set"
+          },
+          {
+            "do": "State the limitation",
+            "result": "not proof of a manifold",
+            "why": "variance does not check topology or smoothness"
+          },
+          {
+            "do": "Name a next check",
+            "result": "compute neighborhood or persistence structure",
+            "why": "TDA can test connectedness and loops across scales"
+          }
+        ],
+        "answer": "It suggests low-dimensional structure, but it does not prove the data lies on a manifold."
+      },
+      {
+        "problem": "An embedding has $H_0$ death times $0.05,0.06,0.07,1.20$. Interpret the large death time.",
+        "steps": [
+          {
+            "do": "List small deaths",
+            "result": "$0.05,0.06,0.07$",
+            "why": "nearby points or tiny clusters merge early"
+          },
+          {
+            "do": "Identify the large death",
+            "result": "$1.20$",
+            "why": "one merge occurs much later"
+          },
+          {
+            "do": "Compare scales",
+            "result": "$1.20/0.07\\approx17.14$",
+            "why": "the large gap is over seventeen times the largest small death"
+          },
+          {
+            "do": "Interpret components",
+            "result": "two macro-clusters",
+            "why": "a late merge suggests separated groups"
+          },
+          {
+            "do": "Connect to ML",
+            "result": "possible class, domain, or subgroup split",
+            "why": "the representation may separate data into two regions"
+          }
+        ],
+        "answer": "The death at $1.20$ suggests two large clusters remain separate until a much larger scale."
+      },
+      {
+        "problem": "A circular latent factor is sampled at angles $0^\\circ,90^\\circ,180^\\circ,270^\\circ$. Using unit-circle coordinates, compute the four points.",
+        "steps": [
+          {
+            "do": "Use angle $0^\\circ$",
+            "result": "$(\\cos0,\\sin0)=(1,0)$",
+            "why": "rightmost point"
+          },
+          {
+            "do": "Use angle $90^\\circ$",
+            "result": "$(0,1)$",
+            "why": "top point"
+          },
+          {
+            "do": "Use angle $180^\\circ$",
+            "result": "$(-1,0)$",
+            "why": "leftmost point"
+          },
+          {
+            "do": "Use angle $270^\\circ$",
+            "result": "$(0,-1)$",
+            "why": "bottom point"
+          },
+          {
+            "do": "Interpret shape",
+            "result": "four samples around a loop",
+            "why": "the latent factor is cyclic"
+          }
+        ],
+        "answer": "The points are $(1,0)$, $(0,1)$, $(-1,0)$, and $(0,-1)$."
+      },
+      {
+        "problem": "A persistence diagram for embeddings has $H_1$ lifetimes $0.03,0.08,0.62,0.11$. With a cutoff of $0.10$, how many loop features remain?",
+        "steps": [
+          {
+            "do": "Compare $0.03$ with cutoff",
+            "result": "$0.03<0.10$",
+            "why": "discard"
+          },
+          {
+            "do": "Compare $0.08$ with cutoff",
+            "result": "$0.08<0.10$",
+            "why": "discard"
+          },
+          {
+            "do": "Compare $0.62$ with cutoff",
+            "result": "$0.62>0.10$",
+            "why": "keep"
+          },
+          {
+            "do": "Compare $0.11$ with cutoff",
+            "result": "$0.11>0.10$",
+            "why": "keep"
+          },
+          {
+            "do": "Count kept loops",
+            "result": "$2$",
+            "why": "two lifetimes exceed the threshold"
+          }
+        ],
+        "answer": "Two loop features remain."
+      },
+      {
+        "problem": "A model maps a noisy circle to embeddings. Before training, the main $H_1$ bar is $[0.2,1.1)$. After training, it is $[0.25,0.45)$. Compute the persistence drop and interpret.",
+        "steps": [
+          {
+            "do": "Compute before persistence",
+            "result": "$1.1-0.2=0.9$",
+            "why": "original lifetime"
+          },
+          {
+            "do": "Compute after persistence",
+            "result": "$0.45-0.25=0.20$",
+            "why": "trained lifetime"
+          },
+          {
+            "do": "Compute drop",
+            "result": "$0.90-0.20=0.70$",
+            "why": "loss of loop persistence"
+          },
+          {
+            "do": "Compare relative size",
+            "result": "$0.20/0.90\\approx0.222$",
+            "why": "about $22.2\\%$ of the original persistence remains"
+          },
+          {
+            "do": "Interpret",
+            "result": "the representation flattened or filled the loop",
+            "why": "the cyclic factor may be less visible after training"
+          }
+        ],
+        "answer": "Persistence dropped by $0.70$; the learned embedding may have suppressed the loop structure."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Manifold learning",
+        "background": "Algorithms such as Isomap and UMAP are motivated by the idea that local neighborhoods reveal a low-dimensional data shape.",
+        "numbers": "If each point keeps $15$ nearest neighbors out of $10000$ samples, the graph uses local geometry rather than all $49,995,000$ possible pairs."
+      },
+      {
+        "title": "Embedding diagnostics",
+        "background": "TDA can check whether a neural embedding preserves meaningful topology from the data.",
+        "numbers": "A rotation dataset with one expected loop should show an $H_1$ bar such as $[0.18,0.92)$, lifetime $0.74$, not only bars below $0.05$."
+      },
+      {
+        "title": "Class separation",
+        "background": "Persistent $H_0$ reveals whether classes form separated components or mixed clouds.",
+        "numbers": "If within-class merges die by $0.2$ but class-to-class merge dies at $1.4$, the separation scale is $7$ times larger."
+      },
+      {
+        "title": "Cyclic factors in vision",
+        "background": "Objects rotating through angle form circular structure in representation space when pose is preserved.",
+        "numbers": "Images at $0^\\circ,90^\\circ,180^\\circ,270^\\circ$ map naturally to four points around a unit circle with adjacent distance $\\sqrt2\\approx1.414$."
+      },
+      {
+        "title": "Topological regularization",
+        "background": "Some training methods penalize losing or creating topological features in latent spaces.",
+        "numbers": "If the target has one loop bar of length $0.8$ and the model output has length $0.2$, a simple penalty could include $(0.8-0.2)^2=0.36$."
+      },
+      {
+        "title": "Anomaly detection",
+        "background": "Points far from a learned manifold or causing new short-lived components can be treated as anomalies.",
+        "numbers": "If normal neighbor distances average $0.10$ and one point's nearest neighbor is $0.65$, it may create an $H_0$ bar lasting about $0.65$."
+      },
+      {
+        "title": "Single-cell biology",
+        "background": "Cell states often progress along branches or cycles, and TDA can summarize those trajectories.",
+        "numbers": "A cell-cycle loop with persistence $1.3$ versus noise loops $0.1$ and $0.2$ supports a real cyclic biological process."
+      },
+      {
+        "title": "Representation comparison",
+        "background": "Two models can be compared by their persistence diagrams, not just accuracy.",
+        "numbers": "Model A has main loop lifetime $0.75$ and accuracy $0.91$; model B has lifetime $0.10$ and accuracy $0.91$, suggesting different geometry with equal predictive score."
+      }
+    ],
+    "applicationsClose": "The capstone lesson is this: topology can become an ML diagnostic when distances, scales, and domain meaning are handled with care.",
+    "takeaways": [
+      "The manifold hypothesis says high-dimensional data often concentrates near lower-dimensional structure.",
+      "Persistence diagrams summarize multiscale topology with birth and death coordinates.",
+      "Long bars in embeddings can reveal loops, clusters, or cyclic latent factors.",
+      "TDA complements ML metrics; it does not replace validation, labels, or domain judgment."
+    ],
     "prereqs": [
       "math-13-17"
     ]
