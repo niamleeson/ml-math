@@ -28,8 +28,8 @@
         "functions"
       ]
     },
-    "motivation": "<p>You already sort possibilities all the time: a coin lands heads or tails, an email is spam or not spam, a prediction is correct or incorrect. Probability asks us to name that universe before assigning numbers.</p><p>A <b>sample space</b> is the universe of possible outcomes. An <b>event</b> is a collection of outcomes inside it. Once those are clear, probability becomes careful bookkeeping instead of guesswork.</p>",
-    "definition": "<p>A <b>sample space</b> $S$ is the set of all possible outcomes of an experiment. An outcome is one result, often written $\\omega\\in S$. An <b>event</b> is a subset $A\\subseteq S$; it happens exactly when the observed outcome lies in $A$.</p><p>For a finite experiment with equally likely outcomes, $P(A)=|A|/|S|$. This comes from giving each outcome weight $1/|S|$ and adding those weights over the outcomes in $A$.</p><p><b>Assumptions that matter:</b> $S$ includes every possible outcome exactly once at the chosen detail level; events may contain zero, one, or many outcomes; and the simple counting formula requires equally likely finite outcomes.</p>",
+    "motivation": "<p>In ordinary counting problems, it is tempting to begin with a number such as one half or one sixth. Probability is safer when it begins one step earlier, by naming the experiment and listing or describing the outcomes that could occur. The sample space is that full collection, and an event is a selected part of it.</p><p>This distinction matters because the same real situation can be modeled at different levels of detail. A coin flipped twice may have four ordered outcomes, while a simpler model may only record the number of heads. Once the outcome space is chosen, events become subsets, and probability rules can operate on those subsets consistently.</p>",
+    "definition": "<p><b>Sample spaces and events</b> states the lesson's probability object or rule.</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Roll one fair die. Let $A$ be even and $B$ be at least $5$. Write $S$, $A$, $B$, $P(A)$, and $P(B)$.",
       "skills": [
@@ -233,34 +233,34 @@
     ],
     "applications": [
       {
-        "title": "Coin flips as a first model",
-        "background": "Coin tossing is standard because the sample space is tiny and symmetric.",
-        "numbers": "For two flips, at least one head is $\\{HH,HT,TH\\}$, so $P=3/4$."
+        "title": "Coin twice",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$\\Omega=\\{HH,HT,TH,TT\\}$ and event at least one head has $3$ outcomes."
       },
       {
-        "title": "Quality control",
-        "background": "Factories sample items to reason about defects without inspecting everything.",
-        "numbers": "With $95$ good chips and $5$ defective chips, the defect event has probability $5/100=0.05$."
+        "title": "Die roll",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "even event $\\{2,4,6\\}$ has $3$ of $6$ outcomes."
       },
       {
-        "title": "Classification labels",
-        "background": "In ML, the label space is the sample space of possible targets.",
-        "numbers": "For $\\{cat,dog,car,bike\\}$, the vehicle event $\\{car,bike\\}$ has uniform probability $2/4=0.5$."
+        "title": "Classifier",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "correctness space $\\{TP,FP,TN,FN\\}$ has $4$ outcomes."
       },
       {
-        "title": "A/B testing",
-        "background": "Experiment teams define outcomes such as purchase before analyzing results.",
-        "numbers": "If $120$ of $1000$ users purchase, the empirical purchase probability is $120/1000=0.12$."
+        "title": "Card suit",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "hearts event has $13$ outcomes in a $52$-card deck."
       },
       {
-        "title": "Ranking impressions",
-        "background": "Search and feed systems define events such as click, save, or skip per impression.",
-        "numbers": "If $45$ of $900$ impressions get a click, the click event rate is $45/900=0.05$."
+        "title": "Two bits",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "exactly one 1 is $\\{01,10\\}$, so $2$ outcomes."
       },
       {
-        "title": "Robot safety states",
-        "background": "A robot planner can treat grid cells as outcomes and safe cells as an event.",
-        "numbers": "If $9$ of $60$ cells are blocked, the blocked event covers $9/60=0.15$ of the grid."
+        "title": "Ad click",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$\\Omega=\\{0,1\\}$ and click event has $1$ outcome."
       }
     ],
     "applicationsClose": "From dice to datasets, the first act is the same: name possible outcomes, then name the subset that matters.",
@@ -269,6 +269,25 @@
       "An event is a subset of $S$.",
       "For finite equally likely outcomes, $P(A)=|A|/|S|$.",
       "Careful event definitions prevent probability errors later."
+    ],
+    "connectionsProse": "<p>This opening lesson gives probability its basic vocabulary. Before calculating any chance, the model has to say which outcomes are possible and which outcomes count for the event of interest. That language connects directly to set operations, probability axioms, and random variables. A clear sample space also keeps later formulas from being applied to the wrong universe of outcomes.</p>",
+    "symbols": [
+      {
+        "sym": "$\\Omega$",
+        "desc": "is the sample space"
+      },
+      {
+        "sym": "$\\omega$",
+        "desc": "is one outcome"
+      },
+      {
+        "sym": "$A\\subseteq\\Omega$",
+        "desc": "is an event"
+      },
+      {
+        "sym": "$|A|$",
+        "desc": "counts outcomes in a finite event"
+      }
     ]
   });
 
@@ -294,8 +313,8 @@
         "indicator functions"
       ]
     },
-    "motivation": "<p>After events are sets, everyday words become precise. A user clicks or buys, a card is red and a queen, a test is positive but the patient is healthy. Probability needs exact language for these combined statements.</p><p><b>Set operations</b> give that language: or, and, and not become operations we can count and reason about.</p>",
-    "definition": "<p>For events $A,B\\subseteq S$, the <b>union</b> $A\\cup B$ means $A$ or $B$ or both happen. The <b>intersection</b> $A\\cap B$ means both happen. The <b>complement</b> $A^c$ means $A$ does not happen, relative to $S$.</p><p>The counting identity $|A\\cup B|=|A|+|B|-|A\\cap B|$ subtracts the overlap because outcomes in both sets were counted twice.</p><p><b>Assumptions that matter:</b> all events use the same sample space; complements are relative to that space; and disjoint events have empty intersection.</p>",
+    "motivation": "<p>Many probability statements combine simpler events. A die roll might be even, high, both even and high, or even but not high. Set notation gives a compact way to say each of those cases without inventing new rules for every example.</p><p>The load-bearing idea is membership. To understand a combined event, check which outcomes belong to it. This keeps logical statements precise before any probabilities are assigned, and it prevents double counting when events overlap.</p>",
+    "definition": "<p><b>Set operations on events</b> states the lesson's probability object or rule.</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "From numbers $1$ through $12$, let $A$ be multiples of $2$ and $B$ multiples of $3$. Find $A\\cup B$, $A\\cap B$, and $A^c$.",
       "skills": [
@@ -494,34 +513,34 @@
     ],
     "applications": [
       {
-        "title": "Database filters",
-        "background": "Query languages combine conditions with AND, OR, and NOT.",
-        "numbers": "If $300$ rows satisfy age, $120$ satisfy region, and $80$ satisfy both, OR returns $300+120-80=340$ rows."
+        "title": "Die roll",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$A=\\{2,4,6\\}$, $B=\\{4,5,6\\}$, so $A\\cup B=\\{2,4,5,6\\}$ has $4$ outcomes."
       },
       {
-        "title": "Confusion matrices",
-        "background": "Classifier evaluation is set arithmetic on true and predicted label events.",
-        "numbers": "If $80$ are predicted positive and $50$ are true positives, false positives are $30$."
+        "title": "Intersection",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "same $A,B$ give $A\\cap B=\\{4,6\\}$ with $2$ outcomes."
       },
       {
-        "title": "Recommendation funnels",
-        "background": "Product funnels track unions and intersections of view, click, save, and buy.",
-        "numbers": "With $200$ clicks, $50$ buys, and $30$ both, click or buy count is $220$."
+        "title": "Complement",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "not even is $\\{1,3,5\\}$ with $3$ outcomes."
       },
       {
-        "title": "Privacy cohorts",
-        "background": "Access rules often combine allowed groups and exclusions.",
-        "numbers": "If team A has $40$, team B has $35$, and overlap is $10$, the union has $65$ users."
+        "title": "Difference",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "even but not high is $\\{2\\}$ with $1$ outcome."
       },
       {
-        "title": "Feature flags",
-        "background": "Experiment flags combine targeting rules using set operations.",
-        "numbers": "If $60\\%$ match country, $20\\%$ match employee, and $5\\%$ match both, OR covers $75\\%$."
+        "title": "Classifier errors",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "false positives or false negatives are $2$ error types."
       },
       {
-        "title": "Deduplication",
-        "background": "Data cleaning combines sources without counting repeated records twice.",
-        "numbers": "Source 1 has $900$ ids, source 2 has $700$, overlap $250$, so unique ids are $1350$."
+        "title": "Two dice",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "sum 7 has $6$ ordered outcomes."
       }
     ],
     "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
@@ -530,6 +549,25 @@
       "$A\\cap B$ means both events happen.",
       "$A^c$ means not $A$ inside the chosen sample space.",
       "Inclusion-exclusion subtracts overlap counted twice."
+    ],
+    "connectionsProse": "<p>This lesson continues the sample-space language from the previous lesson. Once events are subsets of a sample space, the usual set operations become probability operations. Union, intersection, complement, and difference describe common phrases such as “at least one,” “both,” “not,” and “without.” These operations are used constantly in conditional probability, Bayes theorem, and distribution calculations.</p>",
+    "symbols": [
+      {
+        "sym": "$A\\cup B$",
+        "desc": "means $A$ or $B$"
+      },
+      {
+        "sym": "$A\\cap B$",
+        "desc": "means both"
+      },
+      {
+        "sym": "$A^c$",
+        "desc": "means not $A$"
+      },
+      {
+        "sym": "$A\\setminus B$",
+        "desc": "means in $A$ but not in $B$"
+      }
     ],
     "prereqs": [
       "math-17-01"
@@ -556,8 +594,8 @@
         "logic"
       ]
     },
-    "motivation": "<p>It is tempting to treat probabilities as vibes, but useful probability needs rules. The axioms are simple: no negative chances, total chance one, and add disjoint pieces by addition.</p><p>From those rules come the formulas used throughout statistics and ML.</p>",
-    "definition": "<p>A probability measure $P$ assigns each event $A\\subseteq S$ a number. The axioms are: $P(A)\\ge0$; $P(S)=1$; and if $A$ and $B$ are disjoint, then $P(A\\cup B)=P(A)+P(B)$.</p><p>From $S=A\\cup A^c$ with disjoint pieces, $1=P(S)=P(A)+P(A^c)$, so $P(A^c)=1-P(A)$.</p><p><b>Assumptions that matter:</b> events are in one sample space; probabilities are normalized to total $1$; and additivity without subtraction applies only to disjoint events.</p>",
+    "motivation": "<p>A probability model should behave like a careful accounting system. It should never assign negative mass, it should put total mass one on all possible outcomes, and it should add masses without overlap when events cannot happen together. These requirements are enough to rule out many inconsistent assignments.</p><p>The main intuition is conservation of probability mass. If an event and its complement split the whole sample space, their probabilities must add to one. If one event sits inside another, the larger event must have at least as much probability because it contains all the smaller event’s mass and possibly more.</p>",
+    "definition": "<p><b>Axioms of probability</b> states the lesson's probability object or rule. $$P(A^c)=1-P(A)$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "If $P(A)=0.35$, $P(B)=0.20$, and $A,B$ are disjoint, find $P(A^c)$ and $P(A\\cup B)$.",
       "skills": [
@@ -741,34 +779,34 @@
     ],
     "applications": [
       {
-        "title": "Probability calibration",
-        "background": "Calibration checks whether predicted probabilities obey real frequencies.",
-        "numbers": "If a model gives ten bins of mass $0.1$ each, the total mass is $10\\cdot0.1=1$."
+        "title": "Reliability",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "if failure probability is $0.02$, success is $0.98$."
       },
       {
-        "title": "Dataset class priors",
-        "background": "Class probabilities must sum to one before they can be used as priors.",
-        "numbers": "Counts $500,300,200$ out of $1000$ give priors $0.5,0.3,0.2$, summing to $1$."
+        "title": "Email filter",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "if spam probability is $0.15$, non-spam is $0.85$."
       },
       {
-        "title": "Mutually exclusive labels",
-        "background": "Single-label classification assumes one true class per example.",
-        "numbers": "If class A is $0.7$ and class B is $0.2$, then $P(A\\cup B)=0.9$ because they are disjoint."
+        "title": "Disjoint dice events",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(1\\text{ or }6)=1/6+1/6=1/3$."
       },
       {
-        "title": "Anomaly rates",
-        "background": "Complement probabilities are often easier than direct counts.",
-        "numbers": "If normal traffic is $0.995$, anomaly probability is $1-0.995=0.005$."
+        "title": "Impossible overlap",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "heads and tails on one flip has probability $0$."
       },
       {
-        "title": "Sampling audits",
-        "background": "A probability table with total above one reveals a data or modeling bug.",
-        "numbers": "Entries $0.4,0.35,0.30$ sum to $1.05$, so they cannot be a valid distribution."
+        "title": "Nested events",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "rolling 6 is within rolling even, so $1/6\\le1/2$."
       },
       {
-        "title": "Risk aggregation",
-        "background": "Disjoint failure modes can be added safely.",
-        "numbers": "If memory failure is $0.01$ and disk failure is $0.02$ with no overlap in the model, total failure probability is $0.03$."
+        "title": "Mass check",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "probabilities $0.2,0.5,0.3$ sum to $1$."
       }
     ],
     "applicationsClose": "The axioms are small, but they are the guardrails behind every probability table and ML uncertainty estimate.",
@@ -777,6 +815,48 @@
       "Name the events and assumptions before calculating.",
       "Check that probability answers stay between $0$ and $1$.",
       "The same rule works for toy examples and data systems."
+    ],
+    "connectionsProse": "<p>After sample spaces and events are named, probability needs rules that make all assignments consistent. The axioms are deliberately small: probabilities are nonnegative, the whole sample space has mass one, and disjoint pieces add. From those rules, useful facts such as complements, impossible events, and monotonicity follow. These facts support every later calculation in the section.</p>",
+    "symbols": [
+      {
+        "sym": "$P(A)$",
+        "desc": "is probability of event $A$"
+      },
+      {
+        "sym": "$\\varnothing$",
+        "desc": "is impossible event"
+      },
+      {
+        "sym": "disjoint means intersection is empty",
+        "desc": "notation from the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Split $\\Omega=A\\cup A^c$ with disjoint pieces because every outcome is either in $A$ or not.",
+        "result": "Split $\\Omega=A\\cup A^c$ with disjoint pieces because every outcome is either in $A$ or not.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Apply additivity",
+        "result": "$P(\\Omega)=P(A)+P(A^c)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Use normalization $P(\\Omega)=1$",
+        "result": "$P(A^c)=1-P(A)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Put $A=\\Omega$",
+        "result": "$P(\\varnothing)=1-P(\\Omega)=0$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "If $A\\subseteq B$, write $B=A\\cup(B\\setminus A)$ disjointly,",
+        "result": "$P(B)=P(A)+P(B\\setminus A)\\ge P(A)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-02"
@@ -804,8 +884,8 @@
         "sets"
       ]
     },
-    "motivation": "<p>Listing outcomes is fine for one die, but it collapses for passwords, cards, and mini-batches. Combinatorics gives us a way to count without writing everything down.</p><p>The heart is still $P=\\text{favorable}/\\text{total}$, but the counts now come from permutations and combinations.</p>",
-    "definition": "<p>When outcomes are equally likely, $P(A)=|A|/|S|$. The product rule says $m$ choices followed by $n$ choices give $mn$ ordered outcomes. Combinations count unordered selections: $\\binom{n}{k}=\\dfrac{n!}{k!(n-k)!}$.</p><p>The formula divides $n!$ ordered arrangements by $k!$ reorderings inside the chosen group and $(n-k)!$ reorderings outside it.</p><p><b>Assumptions that matter:</b> decide whether order matters, whether replacement is allowed, and whether all counted outcomes are equally likely.</p>",
+    "motivation": "<p>Listing outcomes is possible for two dice or a few coin flips, but it quickly becomes impractical for cards, lotteries, and large samples. When outcomes are equally likely, counting replaces listing. The probability of an event is the fraction of equally likely outcomes that fall inside it.</p><p>The important modeling step is deciding what counts as one outcome. Ordered selections and unordered selections are different sample spaces. Combinations appear when order is irrelevant, because each unordered group has many ordered descriptions that must be divided out.</p>",
+    "definition": "<p><b>Combinatorial probability</b> states the lesson's probability object or rule. $$P(A)=\\frac{|A|}{|\\Omega|},\\qquad \\binom nk=\\frac{n!}{k!(n-k)!}$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "From $10$ images, choose $3$ for review uniformly. What is the probability that a particular image is included?",
       "skills": [
@@ -994,34 +1074,34 @@
     ],
     "applications": [
       {
-        "title": "Password spaces",
-        "background": "Security estimates count possible strings before reasoning about attack probability.",
-        "numbers": "An $8$-character lowercase password has $26^8=208827064576$ possibilities."
+        "title": "Poker pair event",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "choose 2 aces from 4 gives $\\binom42=6$ pairs."
       },
       {
-        "title": "Train-validation splits",
-        "background": "ML workflows choose subsets for validation or test sets.",
-        "numbers": "Choosing $20$ validation points from $100$ gives $\\binom{100}{20}$ possible splits."
+        "title": "Batch sample",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "choose 3 from 10 gives $\\binom{10}{3}=120$."
       },
       {
-        "title": "Random forests",
-        "background": "Feature subsampling in trees is combinatorial.",
-        "numbers": "Choosing $3$ features from $10$ at a split gives $\\binom{10}{3}=120$ possible feature subsets."
+        "title": "Lottery",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "one 6-number ticket from 49 has chance $1/\\binom{49}{6}=1/13{,}983{,}816$."
       },
       {
-        "title": "Card-game baselines",
-        "background": "Combinatorics made probability concrete historically through gambling problems.",
-        "numbers": "A five-card flush in a fixed suit has $\\binom{13}{5}=1287$ hands."
+        "title": "Defective selection",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "choose 2 defectives from 5 and 1 good from 15 gives $\\binom52\\binom{15}1=150$ samples."
       },
       {
-        "title": "Hyperparameter grids",
-        "background": "Grid search counts configurations by multiplying choices.",
-        "numbers": "With $4$ learning rates, $3$ depths, and $5$ seeds, there are $4\\cdot3\\cdot5=60$ runs."
+        "title": "Two dice sum 7",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$6/36=1/6$."
       },
       {
-        "title": "Negative sampling",
-        "background": "Sampling examples without replacement uses combinations.",
-        "numbers": "Choosing $5$ negatives from $1000$ possible negatives gives $\\binom{1000}{5}$ possible sets."
+        "title": "Coin strings",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "exactly 3 heads in 5 flips has $\\binom53=10$ strings."
       }
     ],
     "applicationsClose": "Combinatorial probability keeps the sample-space idea alive when listing outcomes would be impossible.",
@@ -1030,6 +1110,43 @@
       "Name the events and assumptions before calculating.",
       "Check that probability answers stay between $0$ and $1$.",
       "The same rule works for toy examples and data systems."
+    ],
+    "connectionsProse": "<p>This lesson applies the probability axioms to finite equally likely models. When every outcome has the same probability, the problem becomes counting favorable outcomes and total outcomes. That connects sample spaces with combinatorics, especially combinations. Later discrete distributions use the same counting logic inside their probability mass functions.</p>",
+    "symbols": [
+      {
+        "sym": "$|A|$",
+        "desc": "is the favorable count"
+      },
+      {
+        "sym": "$|\\Omega|$",
+        "desc": "is the total count"
+      },
+      {
+        "sym": "$\\binom nk$",
+        "desc": "counts $k$-subsets"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For equally likely outcomes, each outcome in finite $\\Omega$ has mass $1/|\\Omega|$.",
+        "result": "For equally likely outcomes, each outcome in finite $\\Omega$ has mass $1/|\\Omega|$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "An event $A$ contains $|A|$ such outcomes.",
+        "result": "An event $A$ contains $|A|$ such outcomes.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Add the equal masses",
+        "result": "$P(A)=\\sum_{\\omega\\in A}1/|\\Omega|=|A|/|\\Omega|$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For combinations, choose $k$ unordered items",
+        "result": "dividing ordered selections $n(n-1)\\cdots(n-k+1)$ by $k!$, giving $\\binom nk=\\frac{n!}{k!(n-k)!}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-03"
@@ -1056,8 +1173,8 @@
         "ratios"
       ]
     },
-    "motivation": "<p>New information changes the question. If you know a card is a queen, the chance it is red is not counted over all $52$ cards anymore; it is counted over the four queens.</p><p>That is the entire warmth of conditional probability: keep only the cases consistent with what you learned.</p>",
-    "definition": "<p>For events $A$ and $B$ with $P(B)>0$, the <b>conditional probability</b> of $A$ given $B$ is $P(A\\mid B)=\\dfrac{P(A\\cap B)}{P(B)}$.</p><p>The formula comes from restricting attention to $B$: within the $B$ world, the favorable part is $A\\cap B$, and the total part is $B$.</p><p><b>Assumptions that matter:</b> $P(B)$ must be positive; the vertical bar means given, not division by an event; and conditioning can change probabilities dramatically.</p>",
+    "motivation": "<p>New information changes which outcomes are still possible. If B is known, outcomes outside B no longer participate in the calculation. The event A can only occur through the overlap A cap B, so that overlap is compared with the probability mass of B.</p><p>The renormalization is the essential step. The old whole sample space had mass one, but the restricted world B has mass P(B). Dividing by P(B) makes the remaining world have total mass one again, so ordinary probability reasoning can continue inside the condition.</p>",
+    "definition": "<p><b>Conditional probability</b> states the lesson's probability object or rule. $$P(A\\mid B)=\\frac{P(A\\cap B)}{P(B)}$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "In a deck, given the card is a queen, find the probability it is red.",
       "skills": [
@@ -1246,34 +1363,34 @@
     ],
     "applications": [
       {
-        "title": "Precision",
-        "background": "Precision is conditional probability in classifier evaluation.",
-        "numbers": "$60$ true positives among $80$ predicted positives gives $P(T\\mid \\hat T)=60/80=0.75$."
+        "title": "Cards",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(\\text{ace}\\mid\\text{spade})=1/13$."
       },
       {
-        "title": "Recall",
-        "background": "Recall conditions on the true positive class.",
-        "numbers": "$50$ true positives and $20$ false negatives give recall $50/(50+20)=0.714$."
+        "title": "Die",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "given even, probability greater than 3 is $2/3$."
       },
       {
-        "title": "Click-through by device",
-        "background": "Product metrics are often conditional on segment.",
-        "numbers": "$12$ clicks among $300$ mobile impressions gives $P(click\\mid mobile)=0.04$."
+        "title": "Medical test base group",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "if positives are $0.0293$ and true-positive overlap is $0.0095$, disease given positive is $0.3242$."
       },
       {
-        "title": "Medical tests",
-        "background": "Diagnostic interpretation depends on conditioning on the test result or disease status.",
-        "numbers": "$95$ positives among $100$ sick patients gives sensitivity $0.95$."
+        "title": "Website",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$40$ buyers among $200$ visitors gives $0.20$."
       },
       {
-        "title": "Recommendation relevance",
-        "background": "Offline recommendation metrics condition on shown or retrieved items.",
-        "numbers": "If $18$ of $40$ retrieved items are relevant, relevance given retrieval is $18/40=0.45$."
+        "title": "Confusion matrix",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "precision $TP/(TP+FP)=80/(80+20)=0.80$."
       },
       {
-        "title": "Data quality",
-        "background": "Error rates are often reported within a source.",
-        "numbers": "$7$ bad rows among $500$ rows from source A gives $P(error\\mid A)=0.014$."
+        "title": "Weather",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "rain among cloudy days $18/60=0.30$."
       }
     ],
     "applicationsClose": "Conditioning is the habit of changing the denominator to match the information you have.",
@@ -1282,6 +1399,39 @@
       "Name the events and assumptions before calculating.",
       "Check that probability answers stay between $0$ and $1$.",
       "The same rule works for toy examples and data systems."
+    ],
+    "connectionsProse": "<p>Conditional probability is the first formal update rule in the section. It builds on events, intersections, and probability mass. Once information says that event B occurred, probabilities are measured only inside B. This idea becomes the basis for independence, Bayes theorem, conditional distributions, and conditional expectation.</p>",
+    "symbols": [
+      {
+        "sym": "$P(A\\mid B)$",
+        "desc": "means probability of $A$ given $B$"
+      },
+      {
+        "sym": "require $P(B)>0$",
+        "desc": "notation from the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Restrict attention to $B$, whose probability mass is $P(B)$.",
+        "result": "Restrict attention to $B$, whose probability mass is $P(B)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Inside that restricted world, $A$ occurs exactly on $A\\cap B$.",
+        "result": "Inside that restricted world, $A$ occurs exactly on $A\\cap B$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Renormalize the overlap by the available mass",
+        "result": "$P(A\\mid B)=P(A\\cap B)/P(B)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Multiply both sides by $P(B)$",
+        "result": "$P(A\\cap B)=P(A\\mid B)P(B)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-04"
@@ -1308,8 +1458,8 @@
         "factorization"
       ]
     },
-    "motivation": "<p>Some information matters; some does not. Knowing a fair coin landed heads tells you nothing about an independently rolled die. Knowing a medical test is positive, however, may matter a lot.</p><p>Independence is the precise statement that learning one event leaves the probability of the other unchanged.</p>",
-    "definition": "<p>Events $A$ and $B$ are <b>independent</b> when $P(A\\cap B)=P(A)P(B)$. If $P(B)>0$, this is equivalent to $P(A\\mid B)=P(A)$.</p><p>The equivalence follows by dividing $P(A\\cap B)=P(A)P(B)$ by $P(B)$, giving $P(A\\mid B)=P(A)$.</p><p><b>Assumptions that matter:</b> independence is not the same as disjointness; it must be justified by design or checked from probabilities; and pairwise independence need not imply mutual independence for many events.</p>",
+    "motivation": "<p>Some pieces of information matter and others do not. Knowing that a die roll is even changes the chance that it is six, but knowing the result of a separate coin flip does not. Independence gives a precise test for that second situation.</p><p>The product formula says that the overlap of independent events has exactly the mass expected from multiplying their separate masses. This is not a rule to assume automatically. It is a modeling claim that must match the experiment or data-generating process.</p>",
+    "definition": "<p><b>Independence</b> states the lesson's probability object or rule. $$A\\perp B\\quad\\Longleftrightarrow\\quad P(A\\cap B)=P(A)P(B)$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A fair coin and fair die are used. Let $A$ be heads and $B$ be rolling $6$. Check independence.",
       "skills": [
@@ -1503,34 +1653,34 @@
     ],
     "applications": [
       {
-        "title": "Naive Bayes",
-        "background": "Naive Bayes assumes features are conditionally independent given a class.",
-        "numbers": "If word probabilities are $0.2$ and $0.1$ in a class, the joint factor is $0.2\\cdot0.1=0.02$."
+        "title": "Two coins",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(HH)=1/2\\cdot1/2=1/4$."
       },
       {
-        "title": "Dropout",
-        "background": "Neural nets often sample independent dropout masks.",
-        "numbers": "Keep probability $0.9$ for two units gives both kept probability $0.81$."
+        "title": "Die and coin",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(6\\text{ and }H)=1/6\\cdot1/2=1/12$."
       },
       {
-        "title": "A/B assignment",
-        "background": "Random assignment makes treatment independent of user traits in expectation.",
-        "numbers": "If treatment probability is $0.5$ and mobile share is $0.6$, expected treated mobile share is $0.3$."
+        "title": "System failures",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "two independent $0.01$ failures both occur with probability $0.0001$."
       },
       {
-        "title": "System reliability",
-        "background": "Independent component failures multiply for joint failure.",
-        "numbers": "Failures $0.01$ and $0.02$ give both-fail probability $0.0002$."
+        "title": "Dropout masks",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "two units kept with $0.8^2=0.64$."
       },
       {
-        "title": "Shuffling data",
-        "background": "Random shuffling aims to make batch membership independent of ordering artifacts.",
-        "numbers": "If $10\\%$ of data is positive, an independent draw has positive probability $0.1$ for each slot."
+        "title": "Not independent",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(\\text{even}\\cap\\text{6})=1/6\\ne(1/2)(1/6)$."
       },
       {
-        "title": "Simulation",
-        "background": "Monte Carlo methods often rely on independent repeated samples.",
-        "numbers": "For event probability $0.3$, two independent hits have probability $0.09$."
+        "title": "A/B exposure and weekday",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "if $0.4$ exposed and $5/7$ weekdays, joint is $2/7\\approx0.2857$ under independence."
       }
     ],
     "applicationsClose": "Independence is powerful because it turns joint probabilities into products, but only when the assumption is justified.",
@@ -1539,6 +1689,39 @@
       "Name the events and assumptions before calculating.",
       "Check that probability answers stay between $0$ and $1$.",
       "The same rule works for toy examples and data systems."
+    ],
+    "connectionsProse": "<p>Independence uses conditional probability to express absence of probabilistic influence. If learning B does not change the probability of A, the events are independent. The same idea also has a product form, which is often easier to compute. This product rule later extends to independent random variables, sums, and limit theorems.</p>",
+    "symbols": [
+      {
+        "sym": "$A\\perp B$",
+        "desc": "denotes independence"
+      },
+      {
+        "sym": "$P(A)P(B)$",
+        "desc": "is the product mass expected with no influence"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start from the condition $P(A\\mid B)=P(A)$ for $P(B)>0$.",
+        "result": "Start from the condition $P(A\\mid B)=P(A)$ for $P(B)>0$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Substitute conditional probability",
+        "result": "$P(A\\cap B)/P(B)=P(A)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Multiply by $P(B)$",
+        "result": "$P(A\\cap B)=P(A)P(B)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Conversely, if the product rule holds and $P(B)>0$, divide",
+        "result": "$P(B)$ to recover $P(A\\mid B)=P(A)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-05"
@@ -1565,8 +1748,8 @@
         "sums"
       ]
     },
-    "motivation": "<p>Large probability questions are often easier after splitting the world into cases. Maybe traffic comes from mobile or desktop; a patient is sick or healthy; a data point comes from class 0 or class 1.</p><p>The law of total probability says: solve the event inside each case, then add the weighted pieces.</p>",
-    "definition": "<p>If $B_1,\\ldots,B_k$ are disjoint events whose union is $S$ and each has positive probability, then $P(A)=\\sum_{i=1}^k P(A\\mid B_i)P(B_i)$.</p><p>This comes from writing $A$ as the disjoint union $(A\\cap B_1)\\cup\\cdots\\cup(A\\cap B_k)$ and using $P(A\\cap B_i)=P(A\\mid B_i)P(B_i)$.</p><p><b>Assumptions that matter:</b> the cases $B_i$ must be mutually disjoint, cover the whole sample space, and have probabilities that sum to $1$.</p>",
+    "motivation": "<p>Many events can happen through several routes. A positive test can come from diseased and non-diseased groups, a click can come from mobile and desktop users, and a delay can come from different shipping methods. Total probability says to compute within each route and then average using the route frequencies.</p><p>The key requirement is that the cases form a partition. They must not overlap, and together they must cover the world being modeled. With that structure in place, each piece of A is counted once, and the weighted sum gives the full probability of A.</p>",
+    "definition": "<p><b>The law of total probability</b> states the lesson's probability object or rule. $$P(A)=\\sum_i P(A\\mid B_i)P(B_i)$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A site has $70\\%$ mobile users and $30\\%$ desktop users. Click rates are $4\\%$ mobile and $6\\%$ desktop. Find overall click probability.",
       "skills": [
@@ -1755,34 +1938,34 @@
     ],
     "applications": [
       {
-        "title": "Traffic mix",
-        "background": "Overall rates combine segment rates by traffic share.",
-        "numbers": "Mobile $70\\%$ at $4\\%$ click and desktop $30\\%$ at $6\\%$ click gives $0.046$ overall."
+        "title": "Diagnostic positives",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$0.01\\cdot0.95+0.99\\cdot0.02=0.0293$."
       },
       {
-        "title": "Class priors",
-        "background": "Expected error can be averaged over classes.",
-        "numbers": "Class shares $0.8,0.2$ with errors $0.05,0.15$ give $0.8\\cdot0.05+0.2\\cdot0.15=0.07$."
+        "title": "Ad click",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mobile $0.7$ at $0.04$ and desktop $0.3$ at $0.02$ gives $0.034$."
       },
       {
-        "title": "Mixture models",
-        "background": "Mixtures generate data by first choosing a component.",
-        "numbers": "Weights $0.6,0.4$ with event probabilities $0.2,0.7$ give total $0.40$."
+        "title": "Shipping delay",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "air $0.6$ at $0.05$, ground $0.4$ at $0.12$ gives $0.078$."
       },
       {
-        "title": "Medical screening",
-        "background": "Population rates combine subgroup risks.",
-        "numbers": "Group shares $0.9,0.1$ with risks $0.01,0.08$ give $0.017$ risk."
+        "title": "Model error by segment",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$0.5\\cdot0.08+0.5\\cdot0.12=0.10$."
       },
       {
-        "title": "Recommendation channels",
-        "background": "Overall engagement averages over surfaces.",
-        "numbers": "Feed share $0.75$ at $0.03$ save and search share $0.25$ at $0.05$ save gives $0.035$."
+        "title": "Factory defect",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "lines $0.3,0.7$ with rates $0.01,0.03$ give $0.024$."
       },
       {
-        "title": "Data pipelines",
-        "background": "Overall failure rates combine stage-specific routing.",
-        "numbers": "Route A $80\\%$ at $1\\%$ fail and route B $20\\%$ at $4\\%$ fail gives $0.016$."
+        "title": "Rain by season",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$0.25(0.4+0.2+0.1+0.3)=0.25$."
       }
     ],
     "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
@@ -1791,6 +1974,44 @@
       "Name the events and assumptions before calculating.",
       "Check that probability answers stay between $0$ and $1$.",
       "The same rule works for toy examples and data systems."
+    ],
+    "connectionsProse": "<p>The law of total probability organizes calculations by cases. It uses disjoint events that cover the sample space, together with conditional probability inside each case. This is the denominator machinery behind Bayes theorem. It is also a common way to combine segment-level rates into an overall rate.</p>",
+    "symbols": [
+      {
+        "sym": "$B_i$",
+        "desc": "are cases or strata"
+      },
+      {
+        "sym": "$P(B_i)$",
+        "desc": "are case weights"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $B_1,\\dots,B_k$ be disjoint and cover $\\Omega$.",
+        "result": "Let $B_1,\\dots,B_k$ be disjoint and cover $\\Omega$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Split $A$ into disjoint pieces",
+        "result": "$A=(A\\cap B_1)\\cup\\cdots\\cup(A\\cap B_k)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Add disjoint probabilities",
+        "result": "$P(A)=\\sum_iP(A\\cap B_i)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Use conditional probability on each piece",
+        "result": "$P(A\\cap B_i)=P(A\\mid B_i)P(B_i)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Substitute",
+        "result": "$P(A)=\\sum_iP(A\\mid B_i)P(B_i)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-06"
@@ -1817,8 +2038,8 @@
         "likelihoods"
       ]
     },
-    "motivation": "<p>Often we know how likely evidence is under each cause, but we want the reverse. A test is positive; how likely is the condition? A word appears; how likely is the topic?</p><p>Bayes theorem is the disciplined reversal that combines prior probability with how strongly the evidence points.</p>",
-    "definition": "<p>For $P(B)>0$, <b>Bayes theorem</b> says $P(A\\mid B)=\\dfrac{P(B\\mid A)P(A)}{P(B)}$. With cases $A$ and $A^c$, the denominator is $P(B)=P(B\\mid A)P(A)+P(B\\mid A^c)P(A^c)$.</p><p>The formula follows because $P(A\\cap B)$ can be written as both $P(A\\mid B)P(B)$ and $P(B\\mid A)P(A)$.</p><p><b>Assumptions that matter:</b> priors and likelihoods must refer to the same population; $P(B)$ must be positive; and rare base rates can dominate even accurate evidence.</p>",
+    "motivation": "<p>A test result or signal is often easier to model from each possible cause than the other way around. For example, it may be known how often a test is positive among sick people and among healthy people. The question after observing a positive result is different: how much of the positive group actually comes from the sick population.</p><p>Bayes theorem answers by comparing the mass of the target overlap with the total mass of the evidence. The numerator is the joint mass of the cause and signal. The denominator includes every way the signal can happen, which is why base rates matter so strongly in rare-event problems.</p>",
+    "definition": "<p><b>Bayes theorem</b> states the lesson's probability object or rule. $$P(A\\mid B)=\\frac{P(B\\mid A)P(A)}{P(B)}$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A disease affects $1\\%$ of people. A test is $95\\%$ sensitive and has $5\\%$ false positive rate. Given a positive test, find disease probability.",
       "skills": [
@@ -2012,34 +2233,34 @@
     ],
     "applications": [
       {
-        "title": "Spam filtering",
-        "background": "Bayes connects word likelihoods to posterior spam probability.",
-        "numbers": "Prior spam $0.2$, word likelihoods $0.6$ spam and $0.1$ ham give posterior $0.12/(0.12+0.08)=0.6$."
+        "title": "Medical test",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$0.0095/0.0293=0.3242$ disease given positive."
       },
       {
-        "title": "Medical diagnosis",
-        "background": "Base rates matter when interpreting positive tests.",
-        "numbers": "Prior $0.01$, sensitivity $0.95$, false positive $0.05$ gives posterior $0.0095/0.059=0.161$."
+        "title": "Spam filter",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$0.2\\cdot0.9/(0.2\\cdot0.9+0.8\\cdot0.1)=0.6923$."
       },
       {
-        "title": "Fraud detection",
-        "background": "Rare fraud can still have modest posterior after an alert.",
-        "numbers": "Prior $0.002$, alert rates $0.8$ fraud and $0.01$ nonfraud give $0.0016/(0.0016+0.00998)=0.138$."
+        "title": "Fraud alert",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "prior $0.01$, hit $0.8$, false alert $0.05$ gives $0.1391$."
       },
       {
-        "title": "A/B debugging",
-        "background": "Bayes updates which variant likely caused an error.",
-        "numbers": "Variant share $0.5$ each, error rates $0.04$ and $0.01$ give posterior variant A given error $0.02/(0.025)=0.8$."
+        "title": "Rare bug",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "prior $0.02$, detector $0.9$, false $0.1$ gives $0.1552$."
       },
       {
-        "title": "Sensor fusion",
-        "background": "Robotics updates belief after noisy observations.",
-        "numbers": "Prior obstacle $0.3$, hit rates $0.9$ obstacle and $0.2$ no obstacle give $0.27/(0.27+0.14)=0.659$."
+        "title": "Weather radar",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "prior rain $0.3$, radar hit $0.8$, false $0.2$ gives $0.6316$."
       },
       {
-        "title": "Topic classification",
-        "background": "Text models infer topics from word evidence.",
-        "numbers": "Prior sports $0.4$, word likelihoods $0.5$ sports and $0.1$ other give $0.20/(0.20+0.06)=0.769$."
+        "title": "A/B winner",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "prior $0.5$, signal likelihoods $0.7,0.3$ gives posterior $0.7$."
       }
     ],
     "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
@@ -2048,6 +2269,47 @@
       "Name the events and assumptions before calculating.",
       "Check that probability answers stay between $0$ and $1$.",
       "The same rule works for toy examples and data systems."
+    ],
+    "connectionsProse": "<p>Bayes theorem combines conditional probability with total probability. It is used when the available information is naturally stated in the forward direction, such as signal given state, but the needed answer is the reverse direction, such as state given signal. The theorem separates prior belief, likelihood, and evidence. This structure reappears in diagnostics, spam filtering, classification, and Bayesian modeling.</p>",
+    "symbols": [
+      {
+        "sym": "$P(A)$",
+        "desc": "prior"
+      },
+      {
+        "sym": "$P(B\\mid A)$",
+        "desc": "likelihood"
+      },
+      {
+        "sym": "$P(A\\mid B)$",
+        "desc": "posterior"
+      },
+      {
+        "sym": "$P(B)$",
+        "desc": "evidence"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the same overlap two ways",
+        "result": "$P(A\\cap B)=P(A\\mid B)P(B)$ and $P(A\\cap B)=P(B\\mid A)P(A)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Set the right-hand sides equal.",
+        "result": "Set the right-hand sides equal.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Divide by $P(B)$",
+        "result": "$P(A\\mid B)=\\frac{P(B\\mid A)P(A)}{P(B)}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "If $B$ can happen through cases $A$ and $A^c$, expand $P(B)$",
+        "result": "total probability.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-07"
@@ -2074,8 +2336,8 @@
         "sums"
       ]
     },
-    "motivation": "<p>Events answer yes or no; random variables assign numbers. A die roll can become the number shown, two coin flips can become the number of heads, and an ad impression can become revenue.</p><p>For discrete variables, the whole distribution can be listed as probabilities attached to possible values.</p>",
-    "definition": "<p>A <b>discrete random variable</b> $X$ is a function from the sample space to a countable set of numbers. Its probability mass function is $p_X(x)=P(X=x)$, and the masses satisfy $p_X(x)\\ge0$ and $\\sum_x p_X(x)=1$.</p><p>The distribution groups outcomes that produce the same number, then adds their probabilities.</p><p><b>Assumptions that matter:</b> the possible values are finite or countable; probabilities over all possible values sum to $1$; and $X=x$ is an event.</p>",
+    "motivation": "<p>Events answer yes-or-no questions about outcomes, but many models need a numeric summary. In two coin flips, the outcome might be HT, while the random variable records the number of heads as 1. The probability model then shifts from raw outcomes to the values the variable can take.</p><p>For a discrete random variable, probability sits on individual values. The mass function records how much probability each value receives, and the masses must sum to one. This makes it possible to compute averages, spreads, and distribution-specific probabilities from a compact table or formula.</p>",
+    "definition": "<p><b>Discrete random variables</b> states the lesson's probability object or rule. $$p_X(x)=P(X=x),\\qquad \\sum_x p_X(x)=1$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Flip two fair coins and let $X$ be the number of heads. Find the distribution of $X$.",
       "skills": [
@@ -2274,34 +2536,34 @@
     ],
     "applications": [
       {
-        "title": "Click counts",
-        "background": "A click indicator is a discrete random variable taking $0$ or $1$.",
-        "numbers": "If click probability is $0.04$, then $P(X=1)=0.04$ and $P(X=0)=0.96$."
+        "title": "Coin heads in 2 flips",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(X=0,1,2)=(1/4,1/2,1/4)$."
       },
       {
-        "title": "Binomial batches",
-        "background": "The number of positives in a mini-batch is discrete.",
-        "numbers": "For two independent examples with positive probability $0.5$, probabilities for $0,1,2$ positives are $0.25,0.5,0.25$."
+        "title": "Support count",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "a die-valued $X$ has $6$ possible values."
       },
       {
-        "title": "Token counts",
-        "background": "Language models often count occurrences of words or tokens.",
-        "numbers": "If a token appears $3$ times in $100$ positions, the empirical mass at that token is $0.03$."
+        "title": "Click count",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "in 3 impressions can be $0,1,2,3$."
       },
       {
-        "title": "Queue lengths",
-        "background": "Systems monitor integer queue sizes.",
-        "numbers": "If queue length probabilities are $P(0)=0.6$, $P(1)=0.3$, $P(2)=0.1$, they sum to $1$."
+        "title": "Classifier error",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$X\\in\\{0,1\\}$ has two values."
       },
       {
-        "title": "Defect counts",
-        "background": "Manufacturing counts defective items in a sample.",
-        "numbers": "In two items with defect probability $0.1$, probability of zero defects is $0.9^2=0.81$."
+        "title": "Queue length",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "might be $0,1,2,\\dots$."
       },
       {
-        "title": "Rating stars",
-        "background": "User ratings are discrete values.",
-        "numbers": "If ratings $1$ through $5$ have masses $0.05,0.10,0.20,0.30,0.35$, total mass is $1.00$."
+        "title": "Mass check",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$0.2+0.5+0.3=1$."
       }
     ],
     "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
@@ -2310,6 +2572,21 @@
       "Name the events and assumptions before calculating.",
       "Check that probability answers stay between $0$ and $1$.",
       "The same rule works for toy examples and data systems."
+    ],
+    "connectionsProse": "<p>This lesson moves from events to random variables. A random variable turns outcomes into numbers, so probability can describe quantities such as counts, labels, and scores. Discrete random variables use probability masses on countable values. They prepare the ground for expectation, variance, Bernoulli, binomial, Poisson, and geometric models.</p>",
+    "symbols": [
+      {
+        "sym": "$X$",
+        "desc": "is the random variable"
+      },
+      {
+        "sym": "$x$",
+        "desc": "is a possible value"
+      },
+      {
+        "sym": "$p_X(x)=P(X=x)$",
+        "desc": "is the mass function"
+      }
     ],
     "prereqs": [
       "math-17-08"
@@ -2336,8 +2613,8 @@
         "intervals"
       ]
     },
-    "motivation": "<p>Some quantities are not naturally counted one by one: time to load a page, height, temperature, model score. For these, probability lives over intervals.</p><p>The gentle surprise is that a single exact value usually has probability zero, while intervals can have positive probability.</p>",
-    "definition": "<p>A <b>continuous random variable</b> $X$ takes values on an interval or continuum. Probabilities are assigned to intervals such as $P(a\\le X\\le b)$, usually through a density $f$ by $P(a\\le X\\le b)=\\int_a^b f(x)\\,dx$.</p><p>Point probabilities are zero for ordinary continuous variables because an interval with width shrinking to $0$ has area shrinking to $0$.</p><p><b>Assumptions that matter:</b> densities must be nonnegative and integrate to $1$; interval endpoints do not change probabilities for continuous variables; and density height is not itself probability.</p>",
+    "motivation": "<p>A measurement such as time or height can vary on a continuum. In such models, the chance of landing on one exact value is usually zero, not because the value is impossible, but because probability is spread across infinitely many nearby values. Meaningful probabilities come from ranges.</p><p>The central idea is area rather than point mass. To ask about a continuous variable, one usually asks whether it falls below a threshold, above a threshold, or inside an interval. Densities and CDFs are tools for computing those interval probabilities.</p>",
+    "definition": "<p><b>Continuous random variables</b> states the lesson's probability object or rule. $$P(a\\le X\\le b)\\text{ is interval probability, while usually }P(X=x)=0$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Let $X$ be uniform on $[0,10]$. Find $P(2\\le X\\le5)$ and $P(X=4)$.",
       "skills": [
@@ -2531,34 +2808,34 @@
     ],
     "applications": [
       {
-        "title": "Latency",
-        "background": "Response time varies continuously enough that interval probabilities are natural.",
-        "numbers": "Uniform $0$ to $500$ ms gives $P(100\\le X\\le200)=100/500=0.2$."
+        "title": "Uniform wait 0 to 10",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "wait between 2 and 5 has probability $3/10=0.3$."
       },
       {
-        "title": "Model scores",
-        "background": "Scores such as logits or calibrated probabilities move on continua.",
-        "numbers": "A score uniform on $[0,1]$ exceeds $0.8$ with probability $0.2$."
+        "title": "Exact wait",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(X=4)=0$ for a continuous wait."
+      },
+      {
+        "title": "Height interval",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "170--180 cm is an interval event."
+      },
+      {
+        "title": "Latency below 100 ms",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "is $P(X<100)$."
       },
       {
         "title": "Sensor noise",
-        "background": "Physical sensors produce real-valued measurements.",
-        "numbers": "If error is uniform on $[-1,1]$, probability error lies between $-0.2$ and $0.2$ is $0.4/2=0.2$."
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "uses intervals such as $[-0.1,0.1]$."
       },
       {
-        "title": "Arrival times",
-        "background": "Queueing models treat arrivals as continuous times.",
-        "numbers": "Uniform arrival in a $10$ minute window has probability $3/10=0.3$ of arriving in the first $3$ minutes."
-      },
-      {
-        "title": "Embeddings",
-        "background": "Vector components are real-valued random quantities across data.",
-        "numbers": "If a component is modeled uniform on $[-2,2]$, probability it is positive is $2/4=0.5$."
-      },
-      {
-        "title": "A/B metric changes",
-        "background": "Measured lift can be modeled as a continuous estimate.",
-        "numbers": "If lift is uniform from $-1\\%$ to $3\\%$, probability of positive lift is $3/4=0.75$."
+        "title": "Revenue lift",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "can be positive with probability $P(X>0)$."
       }
     ],
     "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
@@ -2567,6 +2844,21 @@
       "Name the events and assumptions before calculating.",
       "Check that probability answers stay between $0$ and $1$.",
       "The same rule works for toy examples and data systems."
+    ],
+    "connectionsProse": "<p>Continuous random variables extend probability from counts to measurements. Instead of putting mass on individual values, they assign probability to intervals. This shift is essential for wait times, heights, latencies, noise, and real-valued model outputs. The next lesson makes the interval-area idea precise through density functions.</p>",
+    "symbols": [
+      {
+        "sym": "$X$",
+        "desc": "is continuous"
+      },
+      {
+        "sym": "$P(a\\le X\\le b)$",
+        "desc": "is interval probability"
+      },
+      {
+        "sym": "$f_X$",
+        "desc": "is density when it exists"
+      }
     ],
     "prereqs": [
       "math-17-09"
@@ -2594,8 +2886,8 @@
         "nonnegative functions"
       ]
     },
-    "motivation": "<p>For continuous variables, probability is not stored at individual points. It is spread like a thin layer of paint over the number line.</p><p>A <b>probability density function</b> tells how thick that paint is. To get probability, you measure area.</p>",
-    "definition": "<p>A <b>probability density function</b> $f$ satisfies $f(x)\\ge0$ and $\\int_{-\\infty}^{\\infty} f(x)\\,dx=1$. For intervals, $P(a\\le X\\le b)=\\int_a^b f(x)\\,dx$.</p><p>The total area must be $1$ because the random variable must land somewhere. Nonnegative area over an interval becomes the probability of landing there.</p><p><b>Assumptions that matter:</b> $f(x)$ may exceed $1$ if concentrated on a short interval; probabilities are areas, not heights; and endpoints do not matter for continuous variables.</p>",
+    "motivation": "<p>For continuous variables, a point has no probability mass, so the height of a curve cannot be read as a probability by itself. Instead, the height describes probability per unit of horizontal distance. A narrow bin gets probability approximately equal to height times width.</p><p>Integration is the limiting version of adding many small bins. As the bins become thinner, the approximate sum of rectangle areas becomes the exact area under the density. The total area must be one because the variable has to land somewhere on its support.</p>",
+    "definition": "<p><b>Probability density functions</b> states the lesson's probability object or rule. $$P(a\\le X\\le b)=\\int_a^b f_X(x)\\,dx$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Let $f(x)=2x$ for $0\\le x\\le1$ and $0$ otherwise. Find $P(0.5\\le X\\le1)$.",
       "skills": [
@@ -2790,33 +3082,33 @@
     "applications": [
       {
         "title": "Uniform density",
-        "background": "Uniform distributions have constant density over an interval.",
-        "numbers": "On $[0,4]$, density $1/4$ gives $P(1\\le X\\le3)=2/4=0.5$."
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "on $[2,6]$ is $1/4$, so $P(3\\le X\\le5)=2/4=0.5$."
       },
       {
         "title": "Triangular density",
-        "background": "Simple increasing densities model values more likely near one end.",
-        "numbers": "For $f(x)=2x$ on $[0,1]$, $P(X>0.5)=1-0.25=0.75$."
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$f(x)=2x$ on $[0,1]$ integrates to $1$."
       },
       {
-        "title": "Normal curves",
-        "background": "Gaussian densities are central in noise models and approximate averages.",
-        "numbers": "About $0.68$ of a normal distribution lies within one standard deviation of the mean."
+        "title": "Small bin",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "density $0.2$ over width $0.5$ gives approximate mass $0.1$."
       },
       {
-        "title": "Kernel density estimates",
-        "background": "KDEs estimate an unknown density from data by smoothing observed points.",
-        "numbers": "If estimated area from $0$ to $1$ is $0.42$, then the model assigns probability $0.42$ to that interval."
+        "title": "Normal within one sd",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has area $0.6827$."
       },
       {
-        "title": "Anomaly scores",
-        "background": "Density models can flag low-density observations.",
-        "numbers": "If density near typical scores is $1.5$ but near an outlier is $0.02$, the outlier lies in a much thinner region."
+        "title": "Exponential rate 0.5",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has density at $2$ equal $0.5e^{-1}=0.1839$."
       },
       {
-        "title": "Simulation checks",
-        "background": "A proposed density must integrate to one.",
-        "numbers": "A constant density $c$ on $[2,7]$ needs $5c=1$, so $c=0.2$."
+        "title": "Area check",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "rectangle height $0.25$ width $4$ has area $1$."
       }
     ],
     "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
@@ -2824,6 +3116,43 @@
       "Probability density functions translates probability into a numerical function.",
       "Areas, sums, and accumulated probabilities must be checked against total probability $1$.",
       "These tools are central for losses, uncertainty, and ML evaluation."
+    ],
+    "connectionsProse": "<p>Density functions make continuous probability calculable. They connect the interval language of continuous variables with integration from calculus. A density can be high or low locally, but probability is obtained only after multiplying by width and adding area. This lesson supports CDFs, Gaussian models, transformations, and continuous joint distributions.</p>",
+    "symbols": [
+      {
+        "sym": "$f_X(x)$",
+        "desc": "is density"
+      },
+      {
+        "sym": "$dx$",
+        "desc": "is a small width"
+      },
+      {
+        "sym": "the integral is area",
+        "desc": "notation from the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Require total probability $1$,",
+        "result": "$\\int_{-\\infty}^{\\infty}f_X(x)\\,dx=1$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Probability in a small interval $[x,x+\\Delta x]$ is approximately $f_X(x)\\Delta x$.",
+        "result": "Probability in a small interval $[x,x+\\Delta x]$ is approximately $f_X(x)\\Delta x$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Add small interval probabilities across $[a,b]$.",
+        "result": "Add small interval probabilities across $[a,b]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Take the limit as interval widths shrink",
+        "result": "$P(a\\le X\\le b)=\\int_a^b f_X(x)\\,dx$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-10"
@@ -2851,8 +3180,8 @@
         "monotonicity"
       ]
     },
-    "motivation": "<p>Sometimes the most useful probability question is not exactly at a value, but up to a value: how likely is the response time at most $200$ ms?</p><p>The <b>cumulative distribution function</b> answers that question for every cutoff.</p>",
-    "definition": "<p>The CDF of $X$ is $F(x)=P(X\\le x)$. For a continuous variable with density $f$, $F(x)=\\int_{-\\infty}^x f(t)\\,dt$. For a discrete variable, $F(x)=\\sum_{v\\le x}P(X=v)$.</p><p>It accumulates probability from left to right, so it never decreases and moves from $0$ toward $1$.</p><p><b>Assumptions that matter:</b> $F$ is right-continuous; jumps represent point masses in discrete distributions; and for continuous variables, interval probability is $F(b)-F(a)$.</p>",
+    "motivation": "<p>Instead of asking for the probability at a value or inside a small bin, the CDF asks for all probability accumulated up to a threshold. As the threshold moves to the right, the accumulated mass can only increase. This creates a stable way to describe the distribution as a whole.</p><p>The subtraction rule is the practical payoff. Probability between two thresholds is the mass accumulated by the upper threshold minus the mass already accumulated by the lower threshold. When a density exists, the CDF is the accumulated area under that density.</p>",
+    "definition": "<p><b>Cumulative distribution functions</b> states the lesson's probability object or rule. $$F(x)=P(X\\le x),\\qquad P(a<X\\le b)=F(b)-F(a)$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "For $X$ uniform on $[0,10]$, find $F(7)$ and $P(3<X\\le7)$.",
       "skills": [
@@ -3046,34 +3375,34 @@
     ],
     "applications": [
       {
-        "title": "Percentiles",
-        "background": "CDFs turn measurements into percentile ranks.",
-        "numbers": "If $F(200\\text{ ms})=0.9$, then $90\\%$ of requests finish by $200$ ms."
+        "title": "Interval from CDF",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$F(8)=0.7$, $F(3)=0.2$ gives $0.5$."
       },
       {
-        "title": "Threshold rates",
-        "background": "Classifier score thresholds use tail probabilities from a CDF.",
-        "numbers": "If negative scores have $F(0.7)=0.95$, then $5\\%$ exceed $0.7$."
+        "title": "Median",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$F(m)=0.5$."
       },
       {
-        "title": "Interval probabilities",
-        "background": "CDF subtraction avoids re-integrating densities.",
-        "numbers": "If $F(8)=0.8$ and $F(3)=0.25$, then $P(3<X\\le8)=0.55$."
+        "title": "95th percentile",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$F(q)=0.95$."
       },
       {
-        "title": "Quantiles",
-        "background": "Monitoring systems report p95 and p99 from inverse CDFs.",
-        "numbers": "If the p95 latency is $400$ ms, then $F(400)=0.95$."
+        "title": "Uniform [0,10]",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$F(4)=0.4$."
       },
       {
-        "title": "Discrete jumps",
-        "background": "For discrete variables, CDF jumps show point masses.",
-        "numbers": "If $P(X=2)=0.3$, then the CDF jumps upward by $0.3$ at $2$."
+        "title": "Tail",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(X>7)=1-F(7)$."
       },
       {
-        "title": "Inverse transform sampling",
-        "background": "Simulators can sample from a distribution by applying an inverse CDF to uniform noise.",
-        "numbers": "If $F(x)=x^2$ on $[0,1]$ and $u=0.64$, then $x=\\sqrt{0.64}=0.8$."
+        "title": "Discrete CDF",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "masses $0.2,0.5,0.3$ give $F(1)=0.7$."
       }
     ],
     "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
@@ -3081,6 +3410,48 @@
       "Cumulative distribution functions translates probability into a numerical function.",
       "Areas, sums, and accumulated probabilities must be checked against total probability $1$.",
       "These tools are central for losses, uncertainty, and ML evaluation."
+    ],
+    "connectionsProse": "<p>The cumulative distribution function gives a single function that summarizes a distribution. It applies to discrete, continuous, and mixed cases, so it is more general than a density. By subtracting CDF values, interval probabilities become easy to express. Percentiles, medians, tail probabilities, and quantiles all use this function.</p>",
+    "symbols": [
+      {
+        "sym": "$F$",
+        "desc": "is CDF"
+      },
+      {
+        "sym": "$f$",
+        "desc": "is density"
+      },
+      {
+        "sym": "$a,b$",
+        "desc": "are interval endpoints"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define $F(x)=P(X\\le x)$.",
+        "result": "Define $F(x)=P(X\\le x)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For $a<b$, split $\\{X\\le b\\}$ into disjoint events $\\{X\\le a\\}$ and $\\{a<X\\le b\\}$.",
+        "result": "For $a<b$, split $\\{X\\le b\\}$ into disjoint events $\\{X\\le a\\}$ and $\\{a<X\\le b\\}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Add probabilities",
+        "result": "$F(b)=F(a)+P(a<X\\le b)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Rearrange",
+        "result": "$P(a<X\\le b)=F(b)-F(a)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "If a density exists, accumulated area",
+        "result": "$F(x)=\\int_{-\\infty}^x f(t)\\,dt$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-11"
@@ -3108,8 +3479,8 @@
         "weighted averages"
       ]
     },
-    "motivation": "<p>Probability distributions can be large, but often we need one careful summary: the average value we would see over many repetitions.</p><p><b>Expectation</b> is that probability-weighted center. It is not always a value that can occur, but it is the balance point of the distribution.</p>",
-    "definition": "<p>For a discrete random variable, $\\mathbb{E}[X]=\\sum_x xP(X=x)$. For a continuous random variable with density $f$, $\\mathbb{E}[X]=\\int_{-\\infty}^{\\infty} x f(x)\\,dx$ when the sum or integral converges.</p><p>The formula weights each value by how often it occurs. Linearity follows by distributing sums or integrals: $\\mathbb{E}[aX+bY]=a\\mathbb{E}[X]+b\\mathbb{E}[Y]$ when expectations exist.</p><p><b>Assumptions that matter:</b> probabilities must sum or integrate to $1$; the weighted sum or integral must converge; and expectation is a long-run average, not a guaranteed outcome.</p>",
+    "motivation": "<p>An ordinary average gives equal weight to each observed value in a dataset. A probability-weighted average gives more influence to values that occur more often. If an experiment were repeated many times, the empirical average would be pulled toward this weighted center.</p><p>For discrete variables, the expectation is a weighted sum. For continuous variables, the same idea becomes an integral because probability is spread through density. In both cases, expectation is not necessarily the most likely value; it is the balance point of the distribution.</p>",
+    "definition": "<p><b>Expectation</b> states the lesson's probability object or rule. $$\\mathbb E[X]=\\sum_i x_i p_i,\\qquad \\mathbb E[X]=\\int x f(x)\\,dx$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Let $X$ have values $0,1,2$ with probabilities $0.2,0.5,0.3$. Find $\\mathbb{E}[X]$.",
       "skills": [
@@ -3302,34 +3673,34 @@
     ],
     "applications": [
       {
-        "title": "Expected loss",
-        "background": "Training minimizes average loss over data and randomness.",
-        "numbers": "Losses $0.2,0.5,1.0$ with probabilities $0.5,0.3,0.2$ give expectation $0.1+0.15+0.2=0.45$."
+        "title": "Three-point distribution",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "values $0,1,2$ with masses $0.2,0.5,0.3$ give mean $1.1$."
       },
       {
-        "title": "Expected revenue",
-        "background": "Business models often optimize expected value, not one outcome.",
-        "numbers": "Revenue $0$ with probability $0.9$ and $10$ with probability $0.1$ has expectation $1$."
+        "title": "Dice",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$(1+2+3+4+5+6)/6=3.5$."
       },
       {
-        "title": "Calibration baselines",
-        "background": "A Bernoulli variable has expectation equal to its success probability.",
-        "numbers": "If click probability is $0.04$, expected clicks per impression is $0.04$."
+        "title": "Ad revenue",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$0.04\\cdot2=0.08$ dollars expected per impression."
       },
       {
-        "title": "A/B testing",
-        "background": "Expected metric lift averages over possible outcomes.",
-        "numbers": "Lift $-1$ with probability $0.3$ and $2$ with probability $0.7$ has expectation $1.1$."
+        "title": "Insurance",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$0.01\\cdot1000=10$ expected payout."
       },
       {
-        "title": "Queue load",
-        "background": "Expected arrivals guide capacity planning.",
-        "numbers": "Counts $0,1,2$ with probabilities $0.2,0.5,0.3$ have mean $0+0.5+0.6=1.1$."
+        "title": "Bernoulli",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$E[X]=p$, so $p=0.3$ gives $0.3$."
       },
       {
-        "title": "Ensembles",
-        "background": "Model averaging is expectation over predictors or samples.",
-        "numbers": "Predictions $0.2,0.6,0.7$ averaged uniformly give expected prediction $0.5$."
+        "title": "Uniform [2,6]",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mean $(2+6)/2=4$."
       }
     ],
     "applicationsClose": "Across these examples, the same probability idea keeps its shape while the objects change from toy outcomes to real model behavior.",
@@ -3337,6 +3708,43 @@
       "Expectation translates probability into a numerical function.",
       "Areas, sums, and accumulated probabilities must be checked against total probability $1$.",
       "These tools are central for losses, uncertainty, and ML evaluation."
+    ],
+    "connectionsProse": "<p>Expectation is the central average used throughout probability. It turns a distribution into its long-run center by weighting values according to their probabilities. This idea links random variables to variance, moments, conditional expectation, inequalities, and limit theorems. Many later formulas are built by applying expectation to transformed variables.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mathbb E[X]$",
+        "desc": "is expectation"
+      },
+      {
+        "sym": "$p_i=P(X=x_i)$",
+        "desc": "notation from the plan"
+      },
+      {
+        "sym": "$f(x)$",
+        "desc": "is density"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "In $n$ repetitions, value $x_i$ appears about $np_i$ times.",
+        "result": "In $n$ repetitions, value $x_i$ appears about $np_i$ times.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The sample average is approximately $\\frac{1}{n}\\sum_i (np_i)x_i$.",
+        "result": "The sample average is approximately $\\frac{1}{n}\\sum_i (np_i)x_i$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Cancel $n$",
+        "result": "$\\sum_i x_ip_i$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For a continuous variable, replace the sum of small bins",
+        "result": "$\\int x f(x)\\,dx$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-12"
@@ -3365,8 +3773,8 @@
         "Chebyshev bounds"
       ]
     },
-    "motivation": "<p>You already know an average can hide the story. Two models can both have mean error $0$, while one makes tiny mistakes and the other swings wildly between misses.</p><p><b>Variance</b> gives spread a number. It asks: after we subtract the mean, how large is the squared leftover on average? Squaring keeps positive and negative deviations from canceling, and it makes large surprises count more.</p>",
-    "definition": "<p>For a random variable $X$ with mean $mu=E[X]$, the <b>variance</b> is $Var(X)=E[(X-mu)^2]$. The standard deviation is $sigma=sqrt(Var(X))$, returning the spread to the original units.</p><p>The useful shortcut is $Var(X)=E[X^2]-mu^2$. It comes from expanding $(X-mu)^2=X^2-2mu X+mu^2$, then taking expectation: $E[X^2]-2mu E[X]+mu^2=E[X^2]-mu^2$ because $E[X]=mu$.</p><p><b>Assumptions that matter:</b> the mean and second moment must exist; variance is never negative; adding a constant does not change variance; and multiplying by $a$ changes variance by $a^2$.</p>",
+    "motivation": "<p>A mean alone does not say how variable the outcomes are. Two distributions can have the same center while one is tightly concentrated and the other is widely spread. Variance measures this spread by looking at distances from the mean.</p><p>Squaring deviations has two roles. It prevents positive and negative deviations from canceling, and it gives larger deviations more weight. The algebraic identity for variance is useful because raw second moments are often easier to compute than centered squared deviations directly.</p>",
+    "definition": "<p><b>Variance</b> states the lesson's probability object or rule. $$\\operatorname{Var}(X)=\\mathbb E[(X-\\mu)^2]=\\mathbb E[X^2]-\\mu^2$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A random variable takes values $1,3,5$ with probabilities $0.2,0.5,0.3$. Find its variance.",
       "skills": [
@@ -3570,34 +3978,34 @@
     ],
     "applications": [
       {
-        "title": "Model error spread",
-        "background": "Regression teams track not only average error but also how unstable the errors are across examples.",
-        "numbers": "Errors $[-1,0,1]$ with equal probability have mean $0$ and variance $(1+0+1)/3=0.667$."
+        "title": "Three-point distribution",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "above has $E[X^2]=1.7$, mean $1.1$, variance $0.49$."
       },
       {
-        "title": "Feature scaling",
-        "background": "Standardization divides by standard deviation so features have comparable spread before optimization.",
-        "numbers": "If click count has mean $20$ and variance $25$, then $x=30$ becomes $z=(30-20)/5=2$."
+        "title": "Bernoulli $p=0.3$",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has variance $0.21$."
       },
       {
-        "title": "A/B experiment noise",
-        "background": "Experiment analysis separates signal from random variation; high variance makes an effect harder to detect.",
-        "numbers": "If conversion indicators have $p=0.04$, Bernoulli variance is $0.04(0.96)=0.0384$."
+        "title": "Die",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has variance $35/12=2.9167$."
       },
       {
-        "title": "Portfolio risk",
-        "background": "Finance popularized variance as a risk measure because returns above and below the mean both matter.",
-        "numbers": "Returns $-0.02,0.01,0.04$ have mean $0.01$ and squared deviations $0.0009,0,0.0009$, average $0.0006$."
+        "title": "Uniform [2,6]",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "variance is $16/12=1.3333$."
       },
       {
-        "title": "Sensor reliability",
-        "background": "Engineers compare sensors by repeated measurements around a stable value.",
-        "numbers": "Measurements $9,10,11$ have mean $10$ and variance $(1+0+1)/3=0.667$."
+        "title": "Batch average",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "of variance $9$ with $n=36$ has variance $0.25$."
       },
       {
-        "title": "Mini-batch gradients",
-        "background": "Stochastic gradient methods work with noisy gradient estimates; variance describes that noise.",
-        "numbers": "Gradient samples $2,4,6$ have mean $4$ and variance $(4+0+4)/3=2.667$."
+        "title": "Standard deviation",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "for variance $2.25$ is $1.5$."
       }
     ],
     "applicationsClose": "Variance is the same spread-measuring idea in losses, features, experiments, finance, sensors, and optimization.",
@@ -3606,6 +4014,48 @@
       "The shortcut $Var(X)=E[X^2]-mu^2$ is often the fastest computation.",
       "Shifts do not change variance; scaling by $a$ multiplies variance by $a^2$.",
       "Standard deviation is the square root of variance and uses the original units."
+    ],
+    "connectionsProse": "<p>Variance builds on expectation by measuring spread around the mean. It is the average squared deviation, so it uses expectation after centering the variable. The identity involving E[X squared] makes variance easier to compute in many distributions. Variance later controls Chebyshev bounds, sample averages, Gaussian scale, and the Central Limit Theorem.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mu=\\mathbb E[X]$",
+        "desc": "notation from the plan"
+      },
+      {
+        "sym": "$\\sigma^2=\\operatorname{Var}(X)$",
+        "desc": "notation from the plan"
+      },
+      {
+        "sym": "$\\sigma$",
+        "desc": "is standard deviation"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $\\operatorname{Var}(X)=\\mathbb E[(X-\\mu)^2]$.",
+        "result": "Start with $\\operatorname{Var}(X)=\\mathbb E[(X-\\mu)^2]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Expand the square",
+        "result": "$(X-\\mu)^2=X^2-2\\mu X+\\mu^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Take expectation term",
+        "result": "term.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Use $\\mathbb E[X]=\\mu$ and $\\mathbb E[\\mu^2]=\\mu^2$.",
+        "result": "Use $\\mathbb E[X]=\\mu$ and $\\mathbb E[\\mu^2]=\\mu^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Get $\\operatorname{Var}(X)=\\mathbb E[X^2]-2\\mu^2+\\mu^2=\\mathbb E[X^2]-\\mu^2$.",
+        "result": "Get $\\operatorname{Var}(X)=\\mathbb E[X^2]-2\\mu^2+\\mu^2=\\mathbb E[X^2]-\\mu^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-13"
@@ -3634,8 +4084,8 @@
         "Taylor polynomials"
       ]
     },
-    "motivation": "<p>You already know the first two summaries: the mean tells where a distribution balances, and variance tells how far it spreads. But distributions can lean left, lean right, or have unusually heavy tails.</p><p><b>Moments</b> extend the same idea. They average powers of the random variable, or powers of its distance from the mean, so each new power notices a different part of the shape.</p>",
-    "definition": "<p>The $k$th raw moment of $X$ is $E[X^k]$. The $k$th central moment is $E[(X-mu)^k]$, where $mu=E[X]$. The first raw moment is the mean. The second central moment is variance. The third central moment helps describe skew, and the fourth helps describe tail weight.</p><p>The link to variance is direct: $E[(X-mu)^2]$ expands to $E[X^2]-mu^2$. Higher central moments similarly recenter the distribution before taking powers, so they describe shape around the mean rather than around zero.</p><p><b>Assumptions that matter:</b> a moment exists only if the relevant expectation is finite; raw moments depend on the origin of the scale; central moments are translation-aware; and odd central moments keep sign information while even central moments measure magnitude.</p>",
+    "motivation": "<p>A distribution has more structure than just its center and spread. Powers of the random variable emphasize different parts of the distribution. Low powers describe basic location and scale, while higher powers become sensitive to asymmetry and extreme values.</p><p>Raw moments measure powers from zero, while central moments measure powers after subtracting the mean. That centering is what makes central moments describe shape rather than location. The second central moment is variance, and higher central moments help describe skewness and tail weight.</p>",
+    "definition": "<p><b>Moments</b> states the lesson's probability object or rule. $$m_k=\\mathbb E[X^k],\\qquad \\mu_k=\\mathbb E[(X-\\mathbb E[X])^k]$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "For $X$ taking $0,1,2$ with probabilities $0.25,0.50,0.25$, compute the first raw moment, second raw moment, and second central moment.",
       "skills": [
@@ -3834,34 +4284,34 @@
     ],
     "applications": [
       {
-        "title": "Mean as first moment",
-        "background": "The mean is the oldest moment and still the first summary people ask for.",
-        "numbers": "Values $2,4,9$ with equal weights have first moment $(2+4+9)/3=5$."
+        "title": "Three-point distribution",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has $m_1=1.1$ and $m_2=1.7$."
       },
       {
-        "title": "Variance as second central moment",
-        "background": "Statistics uses the second central moment because it measures spread around the mean.",
-        "numbers": "For $1,3,5$, mean is $3$ and variance is $(4+0+4)/3=2.667$."
+        "title": "Bernoulli $p=0.3$",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has every raw moment $m_k=0.3$ for $k\\ge1$."
       },
       {
-        "title": "Skewness in latency",
-        "background": "Service latency often has a long right tail; third central moments detect that lean.",
-        "numbers": "Latencies $10,10,40$ have mean $20$ and centered cubes $-1000,-1000,8000$, average $2000$."
+        "title": "Standard normal",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has $m_2=1$ and $m_4=3$."
       },
       {
-        "title": "Kurtosis and tail risk",
-        "background": "Fourth moments increase the penalty for rare large deviations, useful when tails matter.",
-        "numbers": "Centered deviations $-1,0,3$ have fourth powers $1,0,81$, so the large value dominates."
+        "title": "Uniform [0,1]",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has $m_2=1/3$."
       },
       {
-        "title": "Method of moments",
-        "background": "Before modern computation, statisticians estimated parameters by matching sample moments to theoretical moments.",
-        "numbers": "If sample mean is $5$ and a model has mean parameter $theta$, set $theta=5$."
+        "title": "Exponential rate 0.5",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has mean $2$ and second raw moment $8$."
       },
       {
-        "title": "Feature distribution monitoring",
-        "background": "ML systems monitor moments to detect data drift across training and serving.",
-        "numbers": "A feature mean moving from $0.0$ to $0.6$ and variance from $1.0$ to $1.8$ signals both shift and spread change."
+        "title": "Skew direction",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "values $0,0,3$ have positive third central moment."
       }
     ],
     "applicationsClose": "Moments are shape summaries: one language for averages, spreads, asymmetry, tails, estimation, and monitoring.",
@@ -3870,6 +4320,43 @@
       "Central moments average powers around the mean, $E[(X-mu)^k]$.",
       "Variance is the second central moment.",
       "Higher moments describe shape, but they require finite expectations."
+    ],
+    "connectionsProse": "<p>Moments generalize expectation and variance into a family of summaries. The first raw moment gives the mean, the second raw moment helps compute variance, and central moments describe shape around the mean. This language prepares for moment generating functions and distribution comparisons. It also gives a compact way to discuss skew and tail behavior.</p>",
+    "symbols": [
+      {
+        "sym": "$m_k$",
+        "desc": "raw moment"
+      },
+      {
+        "sym": "$\\mu_k$",
+        "desc": "central moment"
+      },
+      {
+        "sym": "$k$",
+        "desc": "is the power"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define raw moment $m_k=\\mathbb E[X^k]$.",
+        "result": "Define raw moment $m_k=\\mathbb E[X^k]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For $k=1$, $m_1=\\mathbb E[X]$ is the mean.",
+        "result": "For $k=1$, $m_1=\\mathbb E[X]$ is the mean.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For $k=2$, combine with the variance identity",
+        "result": "$\\operatorname{Var}(X)=m_2-m_1^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Define central moment $\\mu_k=\\mathbb E[(X-\\mathbb E[X])^k]$ to measure shape around the mean.",
+        "result": "Define central moment $\\mu_k=\\mathbb E[(X-\\mathbb E[X])^k]$ to measure shape around the mean.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-14"
@@ -3898,8 +4385,8 @@
         "cumulants"
       ]
     },
-    "motivation": "<p>You have seen moments one at a time: mean, variance, skew, and beyond. But computing each separately can feel like opening many drawers.</p><p>A <b>moment generating function</b>, or MGF, puts those drawers in one cabinet. It averages $e^{tX}$, and the Taylor series of the exponential stores powers of $X$ as coefficients.</p>",
-    "definition": "<p>The MGF of a random variable $X$ is $M_X(t)=E[e^{tX}]$ for values of $t$ near $0$ where the expectation is finite. Its derivatives at zero generate raw moments: $M_X'(0)=E[X]$, $M_X''(0)=E[X^2]$, and in general the $k$th derivative at zero is $E[X^k]$.</p><p>Why this works: $e^{tX}=1+tX+t^2X^2/2+...$. Taking expectation gives $M_X(t)=1+tE[X]+t^2E[X^2]/2+...$, so derivatives at $0$ pull down the moment coefficients.</p><p><b>Assumptions that matter:</b> the MGF must exist in an open interval around $0$ for the standard uniqueness and derivative facts; independence gives $M_{X+Y}(t)=M_X(t)M_Y(t)$; and not every distribution has an MGF beyond $t=0$.</p>",
+    "motivation": "<p>Computing moments one at a time can become repetitive. The exponential series contains every power of X, so taking its expectation stores all raw moments as coefficients in one function. Differentiation at zero selects the desired coefficient.</p><p>The other major advantage appears with independent sums. Exponentials turn sums into products, and independence lets expectations of products factor. This makes the MGF of a sum especially simple when the summands are independent.</p>",
+    "definition": "<p><b>Moment generating functions</b> states the lesson's probability object or rule. $$M_X(t)=\\mathbb E[e^{tX}],\\qquad M_X^{(k)}(0)=\\mathbb E[X^k]$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A Bernoulli random variable has $P(X=1)=p$ and $P(X=0)=1-p$. Find its MGF and use it to get the mean.",
       "skills": [
@@ -4098,34 +4585,34 @@
     ],
     "applications": [
       {
-        "title": "Sums of independent noise",
-        "background": "MGFs simplify sums because independent pieces multiply in MGF space.",
-        "numbers": "If two independent constants have MGFs $e^t$ and $e^{4t}$, the sum MGF is $e^{5t}$."
+        "title": "Bernoulli",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$M(t)=1-p+pe^t$, so $M'(0)=p$."
       },
       {
-        "title": "Recovering moments",
-        "background": "Analysts use MGFs as compact containers for moments when derivatives are easier than direct sums.",
-        "numbers": "For $M(t)=e^{2t}$, $M'(0)=2$ and $M''(0)=4$."
+        "title": "Poisson",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$M(t)=\\exp(\\lambda(e^t-1))$, so mean $\\lambda$."
       },
       {
-        "title": "Identifying distributions",
-        "background": "When MGFs exist near zero, matching MGFs identifies the distribution.",
-        "numbers": "The MGF $1-p+p e^t$ with $p=0.8$ identifies a Bernoulli with success probability $0.8$."
+        "title": "Normal",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$M(t)=\\exp(\\mu t+\\sigma^2t^2/2)$."
       },
       {
-        "title": "Gaussian algebra",
-        "background": "Normal distributions are pleasant partly because their MGFs make sums easy.",
-        "numbers": "Independent means $2$ and $3$ add to $5$; variances $1$ and $4$ add to $5$."
+        "title": "Sum of two Poisson(2)",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has MGF of Poisson(4)."
       },
       {
-        "title": "Concentration bounds",
-        "background": "Probability tail bounds often start by applying Markov's inequality to $e^{tX}$.",
-        "numbers": "If $E[e^{0.5X}]=2$ then $P(X>=4) <= 2/e^2 approx 0.271$."
+        "title": "Exponential rate 0.5",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has $M(t)=0.5/(0.5-t)$ for $t<0.5$."
       },
       {
-        "title": "Queueing and reliability models",
-        "background": "Classical applied probability uses transforms like MGFs to combine waiting times and lifetimes.",
-        "numbers": "Two independent stages with mean times $3$ and $5$ have total mean $8$, visible from first MGF derivatives."
+        "title": "Moment check",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$M''(0)-M'(0)^2$ gives variance."
       }
     ],
     "applicationsClose": "MGFs are a transform viewpoint: moments, sums, identities, and tail bounds become easier after exponentiating.",
@@ -4134,6 +4621,48 @@
       "Derivatives at $0$ generate raw moments.",
       "Independent sums have product MGFs.",
       "MGFs are powerful, but existence near zero matters."
+    ],
+    "connectionsProse": "<p>Moment generating functions package many moment calculations into one function. They use expectation applied to an exponential transform, then recover moments by differentiating at zero. This connects power-series algebra with probability summaries. MGFs are also useful for sums of independent variables and for recognizing named distributions.</p>",
+    "symbols": [
+      {
+        "sym": "$M_X(t)$",
+        "desc": "is the MGF"
+      },
+      {
+        "sym": "$t$",
+        "desc": "is an auxiliary variable"
+      },
+      {
+        "sym": "$M_X^{(k)}(0)$",
+        "desc": "is the $k$th derivative at zero"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define $M_X(t)=\\mathbb E[e^{tX}]$.",
+        "result": "Define $M_X(t)=\\mathbb E[e^{tX}]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Expand $e^{tX}=1+tX+t^2X^2/2!+\\cdots$.",
+        "result": "Expand $e^{tX}=1+tX+t^2X^2/2!+\\cdots$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Take expectation term by term",
+        "result": "$M_X(t)=1+t\\mathbb E[X]+t^2\\mathbb E[X^2]/2!+\\cdots$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Differentiate $k$ times and set $t=0$; all terms vanish except $\\mathbb E[X^k]$.",
+        "result": "Differentiate $k$ times and set $t=0$; all terms vanish except $\\mathbb E[X^k]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For independent sums, $M_{X+Y}(t)=E[e^{tX}e^{tY}]=M_X(t)M_Y(t)$.",
+        "result": "For independent sums, $M_{X+Y}(t)=E[e^{tX}e^{tY}]=M_X(t)M_Y(t)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-15"
@@ -4162,8 +4691,8 @@
         "sample proportions"
       ]
     },
-    "motivation": "<p>Many questions begin as a single yes or no: did the user click, did the test pass, did the email open, did the coin land heads?</p><p>The <b>Bernoulli distribution</b> is the clean model for one such trial. It gives the outcome $1$ to success, $0$ to failure, and keeps all uncertainty in one parameter $p$.</p>",
-    "definition": "<p>A random variable $X$ has a Bernoulli distribution with parameter $p$ if $P(X=1)=p$ and $P(X=0)=1-p$, where $0<=p<=1$. Its mean is $E[X]=p$ and its variance is $Var(X)=p(1-p)$.</p><p>The mean follows because $E[X]=1p+0(1-p)=p$. The second moment equals $p$ too, since $X^2=X$ for values $0$ and $1$. Therefore $Var(X)=E[X^2]-E[X]^2=p-p^2=p(1-p)$.</p><p><b>Assumptions that matter:</b> the trial has exactly two coded outcomes; $p$ is the probability of the outcome coded as $1$; repeated Bernoulli trials need independence only if we later combine them as a binomial model.</p>",
+    "motivation": "<p>Many random situations reduce to one binary outcome. A user clicks or does not click, a component fails or does not fail, and a label is correct or incorrect. Coding success as 1 and failure as 0 turns the event into a numeric random variable.</p><p>The coding makes the mean especially interpretable. Since the variable is 1 exactly on success, its expected value is the success probability. The variance is largest near p=0.5 and smaller near 0 or 1, reflecting that nearly certain outcomes have less variability.</p>",
+    "definition": "<p><b>The Bernoulli distribution</b> states the lesson's probability object or rule. $$P(X=1)=p,\\quad P(X=0)=1-p,\\quad E[X]=p,\\quad \\operatorname{Var}(X)=p(1-p)$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A click indicator has click probability $p=0.08$. Find $P(X=0)$, $E[X]$, and $Var(X)$.",
       "skills": [
@@ -4362,34 +4891,34 @@
     ],
     "applications": [
       {
-        "title": "Click indicators",
-        "background": "Ads and recommendation systems often start with click or no-click events.",
-        "numbers": "If $p=0.03$, then $E[X]=0.03$ and $Var(X)=0.03(0.97)=0.0291$."
+        "title": "CTR click",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with $p=0.04$ has mean $0.04$."
       },
       {
-        "title": "Logistic regression labels",
-        "background": "Binary classification treats each label as a Bernoulli outcome with model-predicted parameter.",
-        "numbers": "Prediction $p=0.8$ assigns likelihood $0.8$ to label 1 and $0.2$ to label 0."
+        "title": "Conversion",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with $p=0.1$ has variance $0.09$."
       },
       {
-        "title": "A/B conversion",
-        "background": "Conversion is naturally coded as 1 for converted and 0 otherwise.",
-        "numbers": "A $12 percent$ conversion probability gives variance $0.12(0.88)=0.1056$."
+        "title": "Fair coin",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has mean $0.5$."
       },
       {
-        "title": "Data quality checks",
-        "background": "Missingness for a field can be modeled as a Bernoulli indicator.",
-        "numbers": "If $7$ of $100$ rows are missing, estimate $p=0.07$ and variance $0.0651$."
+        "title": "Dropout keep",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with $p=0.8$ has variance $0.16$."
       },
       {
-        "title": "Unit test pass indicators",
-        "background": "A flaky test can be viewed as pass or fail on each run.",
-        "numbers": "If pass probability is $0.95$, fail probability is $0.05$."
+        "title": "Label error",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with $p=0.03$ has expected error $0.03$."
       },
       {
-        "title": "Dropout masks",
-        "background": "Neural-network dropout randomly keeps or removes units during training.",
-        "numbers": "With keep probability $0.8$, a mask entry has mean $0.8$ and variance $0.16$."
+        "title": "Two independent successes",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "at $p=0.3$ both occur with $0.09$."
       }
     ],
     "applicationsClose": "Bernoulli is the small binary brick under clicks, labels, conversions, masks, and many larger count models.",
@@ -4398,6 +4927,44 @@
       "Its mean is $p$ and its variance is $p(1-p)$.",
       "Indicator variables are Bernoulli variables when the event probability is fixed.",
       "Repeated independent Bernoulli trials lead naturally to the binomial distribution."
+    ],
+    "connectionsProse": "<p>The Bernoulli distribution is the simplest nontrivial random-variable model. It records one trial with two outcomes, usually coded as 1 for success and 0 for failure. Because many counts are sums of yes-or-no trials, Bernoulli variables are building blocks for the binomial distribution and sample proportions. They also appear in classification, clicks, labels, and dropout masks.</p>",
+    "symbols": [
+      {
+        "sym": "$p$",
+        "desc": "is success probability"
+      },
+      {
+        "sym": "$X\\in\\{0,1\\}$",
+        "desc": "notation from the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $X=1$ for success and $X=0$ for failure.",
+        "result": "Let $X=1$ for success and $X=0$ for failure.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Assign $P(X=1)=p$ and $P(X=0)=1-p$",
+        "result": "masses sum to $1$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Compute mean",
+        "result": "$E[X]=1\\cdot p+0\\cdot(1-p)=p$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Since $X^2=X$, $E[X^2]=p$.",
+        "result": "Since $X^2=X$, $E[X^2]=p$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Use variance identity",
+        "result": "$p-p^2=p(1-p)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-16"
@@ -4426,8 +4993,8 @@
         "variance"
       ]
     },
-    "motivation": "<p>One Bernoulli trial answers one yes-or-no question. But data rarely arrives as one trial. We ask how many users clicked among 100 impressions, how many tests passed among 20 runs, or how many heads appeared in 10 flips.</p><p>The <b>binomial distribution</b> counts successes across a fixed number of independent Bernoulli trials with the same success probability.</p>",
-    "definition": "<p>A random variable $X$ has a binomial distribution with parameters $n$ and $p$ if it counts successes in $n$ independent Bernoulli trials, each with success probability $p$. For $k=0,1,...,n$, $P(X=k)=C(n,k)p^k(1-p)^{n-k}$.</p><p>The formula has three parts: $p^k$ for the $k$ successes, $(1-p)^{n-k}$ for the failures, and $C(n,k)$ for the number of orders those successes can occupy. Its mean is $np$ and its variance is $np(1-p)$ because it is a sum of $n$ independent Bernoulli variables.</p><p><b>Assumptions that matter:</b> the number of trials $n$ is fixed, trials are independent, every trial has the same $p$, and the variable counts successes rather than measuring waiting time.</p>",
+    "motivation": "<p>A single Bernoulli trial says whether one success occurred. In many applications, the natural question is how many successes appear across n repeated trials. Each exact sequence with k successes has the same probability when trials are independent with the same success chance.</p><p>The binomial coefficient counts where the successes could be placed. Multiplying the probability of one such sequence by the number of such sequences gives the mass at k. The mean and variance then come from viewing the count as a sum of independent Bernoulli variables.</p>",
+    "definition": "<p><b>The binomial distribution</b> states the lesson's probability object or rule. $$P(X=k)=\\binom nk p^k(1-p)^{n-k}$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A test has pass probability $0.8$ on each independent run. For $n=3$ runs, find $P(X=2)$ and $E[X]$.",
       "skills": [
@@ -4631,34 +5198,34 @@
     ],
     "applications": [
       {
-        "title": "Click counts",
-        "background": "Ad systems count successes over fixed impressions when each impression is treated as a trial.",
-        "numbers": "$100$ impressions with $p=0.03$ have expected clicks $3$ and variance $2.91$."
+        "title": "10 impressions, CTR 0.3",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(X=3)=0.2668$."
       },
       {
-        "title": "A/B conversions",
-        "background": "Experiments compare conversion counts across treatment groups of fixed size.",
-        "numbers": "$n=200$, $p=0.1$ gives expected conversions $20$."
+        "title": "Mean clicks",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$10\\cdot0.3=3$."
       },
       {
-        "title": "Reliability testing",
-        "background": "Manufacturing and software quality often count how many units pass a fixed test suite.",
-        "numbers": "$10$ independent checks with pass probability $0.95$ all pass with probability $0.95^{10} approx 0.599$."
+        "title": "Variance",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$10\\cdot0.3\\cdot0.7=2.1$."
       },
       {
-        "title": "Mini-batch class counts",
-        "background": "Training batches randomly sample examples; class counts can be approximately binomial.",
-        "numbers": "In batch size $32$ with class probability $0.25$, expected class count is $8$."
+        "title": "At least one success in 5 at $p=0.2$",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$1-0.8^5=0.6723$."
       },
       {
-        "title": "Polling",
-        "background": "Survey counts of yes responses are modeled binomially under simple random sampling.",
-        "numbers": "$n=1000$, $p=0.52$ gives mean $520$ and standard deviation $sqrt(249.6) approx 15.8$."
+        "title": "Fair coins",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "exactly 5 heads in 10 has $\\binom{10}5/2^{10}=0.2461$."
       },
       {
-        "title": "Dropout kept units",
-        "background": "Each unit may be kept independently during dropout training.",
-        "numbers": "With $50$ units and keep probability $0.8$, expected kept units are $40$ and variance $8$."
+        "title": "Batch defects",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$n=100,p=0.01$ gives expected defects $1$."
       }
     ],
     "applicationsClose": "Whenever fixed independent yes-or-no trials become a count, the binomial distribution is the natural first model.",
@@ -4667,6 +5234,48 @@
       "$P(X=k)=C(n,k)p^k(1-p)^{n-k}$.",
       "Its mean is $np$ and variance is $np(1-p)$.",
       "The assumptions of fixed $n$, common $p$, and independence are essential."
+    ],
+    "connectionsProse": "<p>The binomial distribution extends Bernoulli trials from one trial to a fixed number of independent trials. It counts how many successes occur, not which exact sequence occurred. The formula combines sequence probabilities with combinatorial counts. This distribution supports click counts, defect counts, coin experiments, and many normal-approximation examples later in the section.</p>",
+    "symbols": [
+      {
+        "sym": "$n$",
+        "desc": "trials"
+      },
+      {
+        "sym": "$k$",
+        "desc": "successes"
+      },
+      {
+        "sym": "$p$",
+        "desc": "success probability"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "A particular sequence with $k$ successes and $n-k$ failures has probability $p^k(1-p)^{n-k}$.",
+        "result": "A particular sequence with $k$ successes and $n-k$ failures has probability $p^k(1-p)^{n-k}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The $k$ success positions can be chosen in $\\binom nk$ ways.",
+        "result": "The $k$ success positions can be chosen in $\\binom nk$ ways.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Add equal-probability sequences",
+        "result": "$P(X=k)=\\binom nk p^k(1-p)^{n-k}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Sum Bernoulli means",
+        "result": "$E[X]=np$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Sum independent Bernoulli variances",
+        "result": "$\\operatorname{Var}(X)=np(1-p)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-17"
@@ -4695,8 +5304,8 @@
         "factorials"
       ]
     },
-    "motivation": "<p>Some counts do not come from a clear fixed number of trials. How many requests arrive in a second? How many typos appear on a page? How many failures happen in a day?</p><p>The <b>Poisson distribution</b> models counts in a fixed window using one number, the average rate $lambda$. It is especially useful when many tiny opportunities each have small chance of producing an event.</p>",
-    "definition": "<p>A random variable $X$ has a Poisson distribution with rate $lambda>0$ if $P(X=k)=e^{-lambda}lambda^k/k!$ for $k=0,1,2,...$. Its mean and variance are both $lambda$.</p><p>The formula can be seen as a rare-event limit of binomial counts: let $n$ be large, $p$ small, and $np=lambda$ fixed. The many combinations and small probabilities settle into $e^{-lambda}lambda^k/k!$.</p><p><b>Assumptions that matter:</b> events are counted in a fixed window, the average rate is stable, events occur independently enough for the model, and two events do not pile up at exactly the same tiny instant in the ideal model.</p>",
+    "motivation": "<p>Some counts do not have a natural fixed number of trials. Calls arrive during a minute, defects appear along a production run, and requests hit a server over time. The Poisson model describes the count when events occur independently and the average rate is stable.</p><p>The limiting construction divides the interval into many small pieces. Each piece has a tiny chance of one event, and the expected total count stays at lambda. As the pieces become smaller, the binomial count approaches the Poisson mass formula.</p>",
+    "definition": "<p><b>The Poisson distribution</b> states the lesson's probability object or rule. $$P(X=k)=e^{-\\lambda}\\lambda^k/k!$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A server averages $lambda=2$ errors per hour. Under a Poisson model, find the probability of exactly $3$ errors in an hour.",
       "skills": [
@@ -4900,34 +5509,34 @@
     ],
     "applications": [
       {
-        "title": "Web request counts",
-        "background": "Traffic engineering often models arrivals per short interval as Poisson when rates are stable.",
-        "numbers": "At $12$ requests per second, the expected count in $0.25$ seconds is $lambda=3$."
+        "title": "Calls per minute",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with $\\lambda=4$: $P(2)=0.1465$."
       },
       {
-        "title": "Rare error monitoring",
-        "background": "Operations teams count incidents or exceptions over time windows.",
-        "numbers": "With $lambda=0.5$ errors per hour, no errors in an hour has probability $e^{-0.5}=0.607$."
+        "title": "Expected calls",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "is $4$."
       },
       {
-        "title": "Text typos",
-        "background": "Classical Poisson examples include printing errors across pages.",
-        "numbers": "Average $0.2$ typos per page gives $P(at least one)=1-e^{-0.2}=0.181$."
+        "title": "Variance",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "is $4$."
       },
       {
-        "title": "Click counts at low probability",
-        "background": "For many impressions with tiny click probability, binomial counts can be approximated by Poisson.",
-        "numbers": "$n=1000$, $p=0.002$ gives $lambda=2$, so $P(0) approx e^{-2}=0.135$."
+        "title": "Zero events",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "at $\\lambda=3$ has probability $e^{-3}=0.0498$."
       },
       {
-        "title": "Biology event counts",
-        "background": "Mutation and particle counts are often modeled by rates over regions or time.",
-        "numbers": "If expected mutations in a segment are $1.5$, variance is also $1.5$."
+        "title": "Two independent streams",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with rates 2 and 5 combine to rate 7."
       },
       {
-        "title": "Queue arrivals",
-        "background": "Poisson arrivals are a foundation of queueing theory.",
-        "numbers": "At $5$ arrivals per minute, a two-minute window has $lambda=10$."
+        "title": "Rare defects",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with $\\lambda=1$ gives $P(0)=0.3679$."
       }
     ],
     "applicationsClose": "Poisson is the rate-to-count bridge for rare clicks, errors, arrivals, typos, and other windowed events.",
@@ -4936,6 +5545,49 @@
       "Poisson mean and variance are both $lambda$.",
       "Rates scale with the size of the time or space window.",
       "It often approximates binomial counts when $n$ is large and $p$ is small."
+    ],
+    "connectionsProse": "<p>The Poisson distribution models counts in a fixed interval when events occur at a constant average rate. It can be derived as the limit of many tiny Bernoulli opportunities. This makes it useful for rare events, arrivals, defects, and calls. It also connects to the exponential distribution, which models the waiting time between such events.</p>",
+    "symbols": [
+      {
+        "sym": "$\\lambda$",
+        "desc": "is expected count"
+      },
+      {
+        "sym": "$k$",
+        "desc": "is observed count"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a binomial count over $n$ tiny subintervals with success probability $p=\\lambda/n$.",
+        "result": "Start with a binomial count over $n$ tiny subintervals with success probability $p=\\lambda/n$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The mass is $\\binom nk(\\lambda/n)^k(1-\\lambda/n)^{n-k}$.",
+        "result": "The mass is $\\binom nk(\\lambda/n)^k(1-\\lambda/n)^{n-k}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "As $n\\to\\infty$, $\\binom nk(\\lambda/n)^k\\to\\lambda^k/k!$.",
+        "result": "As $n\\to\\infty$, $\\binom nk(\\lambda/n)^k\\to\\lambda^k/k!$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The no-event factor $(1-\\lambda/n)^n\\to e^{-\\lambda}$.",
+        "result": "The no-event factor $(1-\\lambda/n)^n\\to e^{-\\lambda}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The remaining finite correction tends to $1$.",
+        "result": "The remaining finite correction tends to $1$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Therefore $P(X=k)=e^{-\\lambda}\\lambda^k/k!$; mean and variance are both $\\lambda$",
+        "result": "the MGF.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-18"
@@ -4964,8 +5616,8 @@
         "sample paths"
       ]
     },
-    "motivation": "<p>Sometimes the count is not successes in a fixed batch, but the waiting time until success arrives. How many tries until a test passes? How many impressions until the first click?</p><p>The <b>geometric distribution</b> is the discrete waiting-time model for repeated independent Bernoulli trials with the same success probability.</p>",
-    "definition": "<p>Using the common trial-count convention, $X$ has a geometric distribution with parameter $p$ if $X$ is the trial number of the first success. Then $P(X=k)=(1-p)^{k-1}p$ for $k=1,2,3,...$. Its mean is $1/p$ and variance is $(1-p)/p^2$.</p><p>The probability formula says: fail $k-1$ times, then succeed once. The memoryless property says $P(X>s+t | X>s)=P(X>t)$, because after $s$ failures the remaining independent trials look fresh.</p><p><b>Assumptions that matter:</b> trials are independent, $p$ stays constant, this convention counts the success trial itself, and a different convention may count failures before first success instead.</p>",
+    "motivation": "<p>Waiting for a first success has a special structure. To succeed for the first time on trial k, every earlier trial must fail and the kth trial must succeed. There is only one pattern of success and failure for that event.</p><p>Independence turns that pattern into a product of probabilities. The longer the wait, the more failure factors are multiplied before the final success factor. The mean wait 1/p reflects the basic scale: smaller success probabilities create longer expected waits.</p>",
+    "definition": "<p><b>The geometric distribution</b> states the lesson's probability object or rule. $$P(X=k)=(1-p)^{k-1}p$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A model deployment check passes each run with probability $0.25$. Find the probability the first pass occurs on run $4$ and the expected run number.",
       "skills": [
@@ -5169,34 +5821,34 @@
     ],
     "applications": [
       {
-        "title": "Retries until success",
-        "background": "Distributed systems often retry operations until one succeeds.",
-        "numbers": "With success probability $0.8$, expected attempts are $1/0.8=1.25$."
+        "title": "First click",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "at CTR $0.2$ on trial 4: $0.8^3\\cdot0.2=0.1024$."
       },
       {
-        "title": "First click waiting time",
-        "background": "Ad systems may ask how many impressions precede the first click.",
-        "numbers": "At $p=0.02$, expected first-click impression is $50$."
+        "title": "Expected trials",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "for $p=0.2$ is $5$."
       },
       {
-        "title": "Quality-control testing",
-        "background": "A factory may test items until a defective one is found, or until a good one appears.",
-        "numbers": "If defect probability is $0.01$, expected wait for first defect is $100$ items."
+        "title": "Variance",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "for $p=0.2$ is $20$."
       },
       {
-        "title": "Randomized algorithms",
-        "background": "Some algorithms repeat a randomized attempt until it succeeds.",
-        "numbers": "If each attempt succeeds with $0.25$, probability of success within $3$ tries is $1-0.75^3=0.578$."
+        "title": "First head",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "on trial 3 has $0.5^3=0.125$."
       },
       {
-        "title": "Memoryless modeling",
-        "background": "The geometric distribution is the discrete model where past failures do not change the future chance.",
-        "numbers": "With $p=0.4$, after five failures the chance the next trial succeeds is still $0.4$."
+        "title": "No success in 5",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "at $p=0.1$ has $0.9^5=0.5905$."
       },
       {
-        "title": "Data collection",
-        "background": "Researchers sometimes sample until finding the first positive example.",
-        "numbers": "If positives are $5 percent$, expected samples to first positive are $20$."
+        "title": "Median wait rough check",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "for $p=0.5$: $P(X\\le1)=0.5$."
       }
     ],
     "applicationsClose": "Geometric waiting times appear anywhere independent repeated attempts continue until the first success.",
@@ -5205,6 +5857,44 @@
       "$P(X=k)=(1-p)^{k-1}p$.",
       "Mean is $1/p$ and variance is $(1-p)/p^2$.",
       "Its memoryless property is the discrete cousin of the exponential distribution."
+    ],
+    "connectionsProse": "<p>The geometric distribution changes the focus from how many successes occur to how long it takes to see the first one. It is built from independent Bernoulli trials with the same success probability. The model is useful for retries, first clicks, first heads, and waiting for a rare event. It also introduces a simple discrete waiting-time pattern.</p>",
+    "symbols": [
+      {
+        "sym": "$p$",
+        "desc": "success probability"
+      },
+      {
+        "sym": "$k$",
+        "desc": "trial number of first success"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "To have first success on trial $k$, the first $k-1$ trials must fail.",
+        "result": "To have first success on trial $k$, the first $k-1$ trials must fail.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The failure probability for those trials is $(1-p)^{k-1}$.",
+        "result": "The failure probability for those trials is $(1-p)^{k-1}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The $k$th trial succeeds with probability $p$.",
+        "result": "The $k$th trial succeeds with probability $p$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Independence",
+        "result": "$P(X=k)=(1-p)^{k-1}p$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Summing the power series",
+        "result": "$E[X]=1/p$ and $\\operatorname{Var}(X)=(1-p)/p^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-19"
@@ -5233,8 +5923,8 @@
         "quantiles"
       ]
     },
-    "motivation": "<p>Sometimes fairness is the model: a die has equally likely faces, a random number generator chooses evenly from $0$ to $1$, or a shuffle gives each position the same chance.</p><p>The <b>uniform distribution</b> is the probability model for equal likelihood over an allowed set. It is simple, but it powers simulation, random initialization, and many probability transformations.</p>",
-    "definition": "<p>For a continuous uniform random variable on $[a,b]$, the density is $f(x)=1/(b-a)$ for $a<=x<=b$ and $0$ otherwise. Probabilities are lengths divided by total length: $P(c<=X<=d)=(d-c)/(b-a)$ when $[c,d]$ lies inside $[a,b]$.</p><p>The mean is $(a+b)/2$ by symmetry, and the variance is $(b-a)^2/12$. For a discrete uniform distribution over $n$ equally likely values, each value has probability $1/n$.</p><p><b>Assumptions that matter:</b> continuous uniform probability at any exact point is $0$; probability comes from interval length; the density must integrate to $1$; and equal density over an interval is different from equal probability over infinitely many individual points.</p>",
+    "motivation": "<p>When no location inside an interval is favored, a constant density is the natural continuous model. Since probability is area, equal lengths get equal areas under a flat density. The density height is determined entirely by the requirement that total area equals one.</p><p>The mean sits at the midpoint by symmetry. The variance depends only on the length of the interval, because shifting the interval changes location but not spread. These features make the uniform distribution a useful baseline for understanding more shaped distributions.</p>",
+    "definition": "<p><b>The uniform distribution</b> states the lesson's probability object or rule. $$f(x)=\\frac1{b-a}\\text{ on }[a,b]$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Let $X$ be uniform on $[2,8]$. Find the density, mean, variance, and $P(3<=X<=5)$.",
       "skills": [
@@ -5438,34 +6128,34 @@
     ],
     "applications": [
       {
-        "title": "Random number generators",
-        "background": "Most simulation begins with numbers designed to look uniform on $[0,1]$.",
-        "numbers": "The chance a generated value lies in $[0.1,0.4]$ is $0.3$."
+        "title": "Wait from 2 to 6",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has mean $4$."
       },
       {
-        "title": "Monte Carlo sampling",
-        "background": "Monte Carlo methods estimate averages by drawing random samples, often starting from uniform draws.",
-        "numbers": "If $10000$ uniform draws estimate an area $0.27$, about $2700$ land in the target region."
+        "title": "Variance",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "on $[2,6]$ is $1.3333$."
       },
       {
-        "title": "Weight initialization",
-        "background": "Neural networks often start weights from a small symmetric uniform range.",
-        "numbers": "Uniform $[-0.05,0.05]$ has mean $0$ and variance $0.1^2/12=0.000833$."
+        "title": "Between 3 and 5",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "on $[2,6]$ has probability $0.5$."
       },
       {
-        "title": "Hashing",
-        "background": "A good hash spreads keys approximately uniformly across buckets.",
-        "numbers": "With $1000$ keys and $10$ buckets, expected keys per bucket are $100$."
+        "title": "Random initialization",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "on $[-1,1]$ has density $0.5$."
       },
       {
-        "title": "Randomized experiments",
-        "background": "Assignment to treatment often uses uniform random numbers for fairness.",
-        "numbers": "Assign treatment if $U<0.5$; then probability of treatment is $0.5$."
+        "title": "Die as discrete uniform",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has mean $3.5$."
       },
       {
-        "title": "Quantization noise",
-        "background": "Small rounding errors are sometimes modeled as uniform within one half-step.",
-        "numbers": "Uniform error on $[-0.5,0.5]$ has variance $1/12=0.0833$."
+        "title": "Quantile",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "on $[0,10]$: 90th percentile is $9$."
       }
     ],
     "applicationsClose": "Uniform distributions express fairness by length or count, then support simulation, initialization, hashing, experiments, and noise models.",
@@ -5474,6 +6164,48 @@
       "Uniform $[a,b]$ has mean $(a+b)/2$ and variance $(b-a)^2/12$.",
       "Exact points have probability $0$ in a continuous uniform distribution.",
       "Discrete uniform assigns equal mass to each listed outcome."
+    ],
+    "connectionsProse": "<p>The uniform distribution is the simplest model of equal likelihood over a range. In the continuous case, equal-length intervals receive equal probability. This provides a clean example of density, CDF, mean, variance, and quantiles. It also appears as a reference model for random initialization and simulation.</p>",
+    "symbols": [
+      {
+        "sym": "$a,b$",
+        "desc": "endpoints"
+      },
+      {
+        "sym": "$c$",
+        "desc": "density"
+      },
+      {
+        "sym": "$r,s$",
+        "desc": "interval endpoints"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "On $[a,b]$, a constant density must be $c$.",
+        "result": "On $[a,b]$, a constant density must be $c$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Total area is $c(b-a)=1$,",
+        "result": "$c=1/(b-a)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Interval probability is length times density",
+        "result": "$P(r\\le X\\le s)=(s-r)/(b-a)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Symmetry",
+        "result": "mean $(a+b)/2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Integrating $(x-\\mu)^2/(b-a)$",
+        "result": "variance $(b-a)^2/12$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-20"
@@ -5502,8 +6234,8 @@
         "waiting times"
       ]
     },
-    "motivation": "<p>The geometric distribution waits through discrete attempts. But many waits happen in continuous time: time until the next request, failure, click, or radioactive decay.</p><p>The <b>exponential distribution</b> is the continuous waiting-time companion to Poisson counts. If events arrive at a steady rate, the time to the next event is exponential.</p>",
-    "definition": "<p>A random variable $T$ has an exponential distribution with rate $lambda>0$ if its density is $f(t)=lambda e^{-lambda t}$ for $t>=0$. Its cumulative probability is $P(T<=t)=1-e^{-lambda t}$, its survival probability is $P(T>t)=e^{-lambda t}$, its mean is $1/lambda$, and its variance is $1/lambda^2$.</p><p>The survival formula matches Poisson zero counts: waiting more than $t$ means no event occurred in time $t$, and a Poisson process with rate $lambda$ has $P(0 events)=e^{-lambda t}$.</p><p><b>Assumptions that matter:</b> the event rate is constant, waiting time is nonnegative, the memoryless property relies on the ideal exponential model, and $lambda$ is a rate per unit time.</p>",
+    "motivation": "<p>A waiting time exceeds t exactly when no event has arrived by time t. In a constant-rate Poisson process, the probability of zero arrivals over that interval is easy to compute. That survival probability determines the exponential distribution.</p><p>Differentiating the CDF turns accumulated probability into a density. The rate lambda controls the time scale: larger rates make shorter waits more likely. The memoryless property reflects the constant-rate assumption, where waiting additional time does not depend on how long one has already waited.</p>",
+    "definition": "<p><b>The exponential distribution</b> states the lesson's probability object or rule. $$F(t)=1-e^{-\\lambda t},\\qquad f(t)=\\lambda e^{-\\lambda t}$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Requests arrive at rate $lambda=0.5$ per second. Find the mean wait and the probability the next request arrives within $3$ seconds.",
       "skills": [
@@ -5707,34 +6439,34 @@
     ],
     "applications": [
       {
-        "title": "Time to next request",
-        "background": "Queueing models often use exponential waits between Poisson arrivals.",
-        "numbers": "At $5$ requests per second, mean wait is $0.2$ seconds."
+        "title": "Rate 0.5",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has mean wait $2$."
       },
       {
-        "title": "Reliability lifetimes",
-        "background": "A constant failure rate gives exponential time to failure.",
-        "numbers": "Failure rate $0.01$ per hour gives mean lifetime $100$ hours."
+        "title": "Variance",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "at rate $0.5$ is $4$."
       },
       {
-        "title": "Survival analysis",
-        "background": "Medical and product survival models often begin with exponential baselines.",
-        "numbers": "If $lambda=0.2$ per month, survival beyond $6$ months is $e^{-1.2}=0.301$."
+        "title": "Wait over 6",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has probability $e^{-3}=0.0498$."
       },
       {
-        "title": "Timeout settings",
-        "background": "Systems choose timeouts based on wait-time probabilities.",
-        "numbers": "With mean wait $2$ seconds, $lambda=0.5$ and $P(T>5)=e^{-2.5}=0.082$."
+        "title": "CDF at 2",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "for rate $0.5$ is $1-e^{-1}=0.6321$."
       },
       {
-        "title": "Simulation",
-        "background": "Poisson process simulations generate interarrival times from exponential distributions.",
-        "numbers": "A uniform draw $u=0.8$ can produce wait $-ln(0.8)/lambda$; with $lambda=2$, wait is about $0.112$."
+        "title": "Memoryless wait",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(T>7\\mid T>5)=P(T>2)=e^{-1}=0.3679$."
       },
       {
-        "title": "Memoryless service",
-        "background": "The exponential model says an old wait has no extra aging information.",
-        "numbers": "With $lambda=1$, $P(T>5 | T>3)=P(T>2)=e^{-2}=0.135$."
+        "title": "Median wait",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "at rate $0.5$ is $\\ln2/0.5=1.3863$."
       }
     ],
     "applicationsClose": "Exponential waiting times are the continuous-time partner of Poisson counts, from queues to reliability to simulation.",
@@ -5743,6 +6475,52 @@
       "Mean is $1/lambda$ and variance is $1/lambda^2$.",
       "Survival is $P(T>t)=e^{-lambda t}$.",
       "It is memoryless under the constant-rate model."
+    ],
+    "connectionsProse": "<p>The exponential distribution is the waiting-time partner of the Poisson distribution. If Poisson counts describe how many events arrive by a time, the exponential distribution describes the time until the next arrival. Its CDF and density come directly from the probability of no event occurring yet. The model is central in queues, reliability, and continuous-time processes.</p>",
+    "symbols": [
+      {
+        "sym": "$T$",
+        "desc": "waiting time"
+      },
+      {
+        "sym": "$\\lambda$",
+        "desc": "rate"
+      },
+      {
+        "sym": "$f$",
+        "desc": "density"
+      },
+      {
+        "sym": "$F$",
+        "desc": "CDF"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "If events arrive at rate $\\lambda$, no event",
+        "result": "time $t$ has Poisson probability $e^{-\\lambda t}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Thus $P(T>t)=e^{-\\lambda t}$.",
+        "result": "Thus $P(T>t)=e^{-\\lambda t}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The CDF is $F(t)=1-e^{-\\lambda t}$ for $t\\ge0$.",
+        "result": "The CDF is $F(t)=1-e^{-\\lambda t}$ for $t\\ge0$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Differentiate the CDF",
+        "result": "density $f(t)=\\lambda e^{-\\lambda t}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Integrating $t f(t)$",
+        "result": "mean $1/\\lambda$; integrating $t^2f(t)$ gives variance $1/\\lambda^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-21"
@@ -5771,8 +6549,8 @@
         "confidence intervals"
       ]
     },
-    "motivation": "<p>You have seen averages, spreads, and common distributions. The Gaussian, or normal distribution, appears when many small independent influences add together: measurement noise, averaged errors, heights, embeddings after normalization, and more.</p><p>Its bell shape is not magic. It is the stable footprint of additive variation, controlled by a mean for location and a variance for spread.</p>",
-    "definition": "<p>A Gaussian random variable $X$ with mean $mu$ and variance $sigma^2$ is written $X ~ N(mu,sigma^2)$. Its density is centered at $mu$, symmetric, and has spread controlled by $sigma$. The standard normal is $Z ~ N(0,1)$.</p><p>Standardization turns any Gaussian into a standard normal: $Z=(X-mu)/sigma$. This works because subtracting $mu$ shifts the center to $0$, and dividing by $sigma$ rescales the spread to $1$.</p><p><b>Assumptions that matter:</b> Gaussian variables are continuous; exact point probabilities are $0$; the mean and variance fully determine a one-dimensional Gaussian; and normal approximations are strongest when many small independent effects accumulate.</p>",
+    "motivation": "<p>The standard normal gives a reference density centered at zero with variance one. Many real-valued models use a shifted and scaled version of that reference shape. Subtracting the mean recenters the variable, and dividing by the standard deviation expresses distance in standard-deviation units.</p><p>The density transformation accounts for the horizontal stretch caused by sigma. Wider distributions have lower peak density because the total area must remain one. This is why the same bell shape can represent many centers and scales while preserving total probability.</p>",
+    "definition": "<p><b>The Gaussian distribution</b> states the lesson's probability object or rule. $$f_X(x)=\\frac1{\\sigma\\sqrt{2\\pi}}\\exp[-(x-\\mu)^2/(2\\sigma^2)]$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Suppose test scores are $X ~ N(70,10^2)$. Find the z-score for $85$ and estimate $P(X<=85)$ using $P(Z<=1.5) approx 0.9332$.",
       "skills": [
@@ -5971,34 +6749,34 @@
     ],
     "applications": [
       {
-        "title": "Measurement noise",
-        "background": "Many instruments have small additive errors from many sources, leading to near-Gaussian noise.",
-        "numbers": "If noise is $N(0,2^2)$, an error of $4$ has z-score $2$."
+        "title": "Exam score",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$70\\pm10$: $P(60<X<80)=0.6827$."
       },
       {
-        "title": "Linear regression errors",
-        "background": "Classical regression often assumes Gaussian residuals to derive likelihoods and intervals.",
-        "numbers": "Residual $-3$ with $sigma=1.5$ has z-score $-2$."
+        "title": "Tail",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(Z>2)=0.0228$."
       },
       {
-        "title": "Averaging and the central limit effect",
-        "background": "Averages of many independent observations often become approximately normal.",
-        "numbers": "If individual variance is $25$, the average of $100$ has variance $25/100=0.25$."
+        "title": "Standardize",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$x=85$, $\\mu=70$, $\\sigma=10$ gives $z=1.5$."
       },
       {
-        "title": "Anomaly detection",
-        "background": "Z-scores flag values unusually far from typical behavior.",
-        "numbers": "Mean latency $100$ ms, standard deviation $10$ ms, observation $140$ ms gives z-score $4$."
+        "title": "95% band",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "is about $\\mu\\pm1.96\\sigma$."
       },
       {
-        "title": "Bayesian priors",
-        "background": "Gaussian priors are common because they are smooth and algebraically convenient.",
-        "numbers": "A weight prior $N(0,1)$ treats weight $2$ as two standard deviations from zero."
+        "title": "Density at mean",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with $\\sigma=10$ is $1/(10\\sqrt{2\\pi})=0.0399$."
       },
       {
-        "title": "Embedding normalization checks",
-        "background": "Large batches of normalized features are often monitored using approximate Gaussian summaries.",
-        "numbers": "Feature mean $0.1$, standard deviation $0.5$, value $1.1$ gives z-score $2$."
+        "title": "Sum of normals",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "means $2+3=5$, variances $4+9=13$."
       }
     ],
     "applicationsClose": "Gaussian thinking is standardization thinking: center, scale, and reason in standard-deviation units.",
@@ -6007,6 +6785,48 @@
       "Standardization uses $Z=(X-mu)/sigma$.",
       "Point probabilities are zero; intervals carry probability.",
       "Gaussian models often arise from many small additive effects."
+    ],
+    "connectionsProse": "<p>The Gaussian distribution is the main bell-shaped continuous model in probability. It is determined by a mean for location and a standard deviation for scale. Standardization converts any Gaussian with positive scale into the standard normal. This distribution is later justified by the Central Limit Theorem and extended by the multivariate Gaussian.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mu$",
+        "desc": "mean"
+      },
+      {
+        "sym": "$\\sigma$",
+        "desc": "standard deviation"
+      },
+      {
+        "sym": "$z$",
+        "desc": "standardized value"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Begin with the standard normal density $\\phi(z)=\\frac1{\\sqrt{2\\pi}}e^{-z^2/2}$.",
+        "result": "Begin with the standard normal density $\\phi(z)=\\frac1{\\sqrt{2\\pi}}e^{-z^2/2}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Standardize $X$",
+        "result": "$Z=(X-\\mu)/\\sigma$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Solve for $x=\\mu+\\sigma z$,",
+        "result": "$dz=dx/\\sigma$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Substitute into density area",
+        "result": "$f_X(x)dx=\\phi((x-\\mu)/\\sigma)\\,dx/\\sigma$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Therefore $f_X(x)=\\frac1{\\sigma\\sqrt{2\\pi}}\\exp[-(x-\\mu)^2/(2\\sigma^2)]$.",
+        "result": "Therefore $f_X(x)=\\frac1{\\sigma\\sqrt{2\\pi}}\\exp[-(x-\\mu)^2/(2\\sigma^2)]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-22"
@@ -6035,8 +6855,8 @@
         "rates"
       ]
     },
-    "motivation": "<p>Some random quantities must stay between $0$ and $1$, like a click probability. Others must be positive, like a waiting time, variance, or rate. Ordinary bell curves can spill outside those boundaries.</p><p>The <b>Beta</b> and <b>Gamma</b> distributions respect those shapes. Beta lives on $[0,1]$ and is natural for probabilities. Gamma lives on positive numbers and is natural for accumulated waiting or positive scale.</p>",
-    "definition": "<p>A Beta distribution with parameters $alpha>0$ and $beta>0$ lives on $0<=X<=1$ and has mean $alpha/(alpha+beta)$. Its parameters can be read like success and failure strength. A Gamma distribution with shape $k>0$ and rate $lambda>0$ lives on $x>=0$ and has mean $k/lambda$ and variance $k/lambda^2$.</p><p>Exponential is the Gamma special case with shape $k=1$. When $k$ is a positive integer, Gamma can represent the waiting time until the $k$th event in a Poisson process with rate $lambda$.</p><p><b>Assumptions that matter:</b> parameterization varies across books, especially Gamma rate versus scale; Beta parameters must be positive; Gamma values are nonnegative; and these distributions are chosen because their support matches the quantity being modeled.</p>",
+    "motivation": "<p>Some quantities have natural boundaries. A probability cannot be below 0 or above 1, and a waiting time or rate cannot be negative. The Beta and Gamma families build those constraints into the density while still allowing many different shapes.</p><p>Normalization is the main technical issue. The density shape is written first up to proportionality, and then a special-function constant makes the total area equal one. Once normalized, the parameters give simple mean and variance formulas that make the families practical to use.</p>",
+    "definition": "<p><b>The Beta and Gamma distributions</b> states the lesson's probability object or rule. $$f_{\\mathrm{Beta}}(x)=\\frac{x^{\\alpha-1}(1-x)^{\\beta-1}}{B(\\alpha,\\beta)},\\qquad f_{\\mathrm{Gamma}}(x)=\\frac{x^{k-1}e^{-x/\\theta}}{\\Gamma(k)\\theta^k}$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A Beta prior has $alpha=8$, $beta=2$. A Gamma model has shape $k=3$ and rate $lambda=2$. Find both means and the Gamma variance.",
       "skills": [
@@ -6235,34 +7055,34 @@
     ],
     "applications": [
       {
-        "title": "Bayesian click-rate priors",
-        "background": "Beta distributions are common priors for unknown Bernoulli probabilities.",
-        "numbers": "$Beta(3,7)$ has mean $3/10=0.3$."
+        "title": "Beta(2,5)",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mean is $2/7=0.2857$."
       },
       {
-        "title": "A/B smoothing",
-        "background": "Small experiments can have noisy observed rates; Beta priors smooth them.",
-        "numbers": "Prior $Beta(1,1)$ plus $2$ successes and $8$ failures gives $Beta(3,9)$, mean $0.25$."
+        "title": "Beta(2,5)",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "variance is $10/(49\\cdot8)=0.0255$."
       },
       {
-        "title": "Waiting for several events",
-        "background": "Gamma models time until the $k$th Poisson event.",
-        "numbers": "For $k=5$, rate $2$ per hour, expected wait is $5/2=2.5$ hours."
+        "title": "Uniform prior",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "is Beta(1,1)."
       },
       {
-        "title": "Positive scale parameters",
-        "background": "Bayesian models often need priors on positive quantities like rates or variances.",
-        "numbers": "Gamma shape $2$, rate $0.5$ has mean $4$ and variance $8$."
+        "title": "After 3 successes and 7 failures",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with Beta(1,1), posterior is Beta(4,8)."
       },
       {
-        "title": "Reliability testing",
-        "background": "Accumulated lifetime before several failures can be modeled with Gamma waiting times.",
-        "numbers": "Rate $0.1$ failures per day, wait for $3$ failures has mean $30$ days."
+        "title": "Gamma(3,2)",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mean is $6$."
       },
       {
-        "title": "Thompson sampling",
-        "background": "Bandit algorithms sample possible click rates from Beta posteriors to balance exploration and exploitation.",
-        "numbers": "Arm A $Beta(8,2)$ mean $0.8$; arm B $Beta(3,3)$ mean $0.5$."
+        "title": "Gamma(3,2)",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "variance is $12$."
       }
     ],
     "applicationsClose": "Beta keeps probabilities inside $[0,1]$; Gamma keeps positive times and rates positive, making both natural modeling tools.",
@@ -6271,6 +7091,48 @@
       "Beta mean is $alpha/(alpha+beta)$.",
       "Gamma distributions live on nonnegative values and model positive amounts or waiting times.",
       "Gamma shape-rate mean is $k/lambda$ and variance is $k/lambda^2$."
+    ],
+    "connectionsProse": "<p>The Beta and Gamma distributions are flexible continuous families for constrained positive quantities. Beta variables live on the probability interval from 0 to 1, while Gamma variables live on the positive line. Their parameters control shape, center, and spread. They are common in Bayesian modeling, waiting-time models, rates, and uncertainty over probabilities.</p>",
+    "symbols": [
+      {
+        "sym": "$\\alpha,\\beta$",
+        "desc": "are Beta shape parameters"
+      },
+      {
+        "sym": "$k,\\theta$",
+        "desc": "are Gamma shape and scale"
+      },
+      {
+        "sym": "$\\Gamma$",
+        "desc": "is the gamma function"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For Beta, use density proportional to $x^{\\alpha-1}(1-x)^{\\beta-1}$ on $[0,1]$.",
+        "result": "For Beta, use density proportional to $x^{\\alpha-1}(1-x)^{\\beta-1}$ on $[0,1]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Normalize",
+        "result": "$B(\\alpha,\\beta)=\\frac{\\Gamma(\\alpha)\\Gamma(\\beta)}{\\Gamma(\\alpha+\\beta)}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Integrating $x f(x)$",
+        "result": "mean $\\alpha/(\\alpha+\\beta)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For Gamma, normalize $x^{k-1}e^{-x/\\theta}$ on $x>0$",
+        "result": "$\\Gamma(k)\\theta^k$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Its mean is $k\\theta$ and variance is $k\\theta^2$.",
+        "result": "Its mean is $k\\theta$ and variance is $k\\theta^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-23"
@@ -6299,8 +7161,8 @@
         "multivariate models"
       ]
     },
-    "motivation": "<p>ML rarely studies one variable alone. A user may have age and click behavior; an image has many pixels; a model output and a true label appear together.</p><p>A <b>joint distribution</b> is the full probability story for multiple variables at once. It tells which combinations are likely, and it is the source from which marginals, conditionals, covariance, and independence are read.</p>",
-    "definition": "<p>For discrete variables $X$ and $Y$, the joint distribution assigns probabilities $P(X=x,Y=y)$ to pairs of values. All joint probabilities are nonnegative and sum to $1$. For continuous variables, a joint density integrates over regions to give probabilities.</p><p>Independence is a special factorization: $X$ and $Y$ are independent if $P(X=x,Y=y)=P(X=x)P(Y=y)$ for all pairs. If the joint does not factor this way, the variables carry information about each other.</p><p><b>Assumptions that matter:</b> every pair probability belongs to the same sample space; rows and columns must cover all possible values being modeled; independence is not assumed unless checked; and joint probabilities must sum or integrate to $1$.</p>",
+    "motivation": "<p>Two variables can each have simple individual behavior while still being related to each other. A joint distribution records the probability of pairs or regions, so it can answer questions about variables happening together. Without the joint distribution, dependence information is missing.</p><p>For discrete variables, the joint distribution is a table of masses that sum to one. For continuous variables, it is a density over a region, and probabilities come from integrating over that region. In both cases, the joint object is the full probability model for the variables together.</p>",
+    "definition": "<p><b>Joint distributions</b> states the lesson's probability object or rule. $$P((X,Y)\\in R)=\\iint_R f_{X,Y}(x,y)\\,dx\\,dy$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A joint table has $P(X=0,Y=0)=0.30$, $P(0,1)=0.20$, $P(1,0)=0.10$, and $P(1,1)=0.40$. Find $P(X=1,Y=1)$, $P(X=1)$, $P(Y=1)$, and check whether $X$ and $Y$ are independent.",
       "skills": [
@@ -6499,34 +7361,34 @@
     ],
     "applications": [
       {
-        "title": "Confusion matrices",
-        "background": "Classification evaluation is a joint distribution over predicted and true labels.",
-        "numbers": "Cells $0.35,0.15,0.10,0.40$ give accuracy $0.35+0.40=0.75$."
+        "title": "Joint table",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$[[0.1,0.4],[0.2,0.3]]$ sums to $1$."
       },
       {
-        "title": "Feature-label relationships",
-        "background": "A joint distribution shows how a feature and label co-occur.",
-        "numbers": "If $P(feature=1,label=1)=0.30$ but $P(feature=1)P(label=1)=0.20$, they are dependent."
+        "title": "Event $X=1,Y=2$",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "in that table has mass $0.3$."
       },
       {
-        "title": "Recommendation events",
-        "background": "Systems track joint behavior such as viewed and clicked.",
-        "numbers": "$P(view=1,click=1)=0.04$ means four percent of impressions were both viewed and clicked."
+        "title": "$X+Y>1$",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "for $X\\in\\{0,1\\},Y\\in\\{0,2\\}$ has mass $0.4+0.3=0.7$."
       },
       {
-        "title": "Fairness auditing",
-        "background": "Audits examine joint distributions of decisions and groups.",
-        "numbers": "If $P(approve=1,group=A)=0.18$ and $P(group=A)=0.30$, later conditionals can compare approval rates."
+        "title": "Bivariate density over unit square",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$f=1$ has total mass $1$."
       },
       {
-        "title": "Multivariate sensors",
-        "background": "Joint distributions capture relationships among sensor readings.",
-        "numbers": "If high temperature and high vibration occur together with probability $0.08$, that cell may matter more than either marginal."
+        "title": "Rectangle half-square",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "area $0.5$ has probability $0.5$."
       },
       {
-        "title": "Language models",
-        "background": "Co-occurrence tables are joint distributions over neighboring tokens before smoothing and modeling.",
-        "numbers": "If $P(word1=deep, word2=learning)=0.002$, the pair has two-tenths of a percent mass."
+        "title": "Two labels",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with 3 classes each have $9$ joint cells."
       }
     ],
     "applicationsClose": "Joint distributions are the full map of co-occurrence, from model evaluation to fairness, sensors, and language.",
@@ -6535,6 +7397,43 @@
       "Discrete joint probabilities must be nonnegative and sum to $1$.",
       "Marginals and conditionals are derived from the joint.",
       "Independence requires joint probabilities to factor into marginal products."
+    ],
+    "connectionsProse": "<p>Joint distributions move from one random variable to several variables considered together. They preserve co-occurrence information that separate marginal distributions would lose. This is the starting point for marginals, conditional distributions, independence of random variables, covariance, and correlation. It also supports multivariate models such as the multivariate Gaussian.</p>",
+    "symbols": [
+      {
+        "sym": "$p_{X,Y}$",
+        "desc": "joint pmf"
+      },
+      {
+        "sym": "$f_{X,Y}$",
+        "desc": "joint density"
+      },
+      {
+        "sym": "$R$",
+        "desc": "a region in the plane"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For discrete variables, assign mass $p_{X,Y}(x,y)=P(X=x,Y=y)$.",
+        "result": "For discrete variables, assign mass $p_{X,Y}(x,y)=P(X=x,Y=y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "All joint masses must be nonnegative and sum to $1$.",
+        "result": "All joint masses must be nonnegative and sum to $1$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The probability of a rectangle is the sum over pairs inside it.",
+        "result": "The probability of a rectangle is the sum over pairs inside it.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For continuous variables, replace sums by double integrals",
+        "result": "$P((X,Y)\\in R)=\\iint_R f_{X,Y}(x,y)\\,dx\\,dy$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-24"
@@ -6563,8 +7462,8 @@
         "integrals"
       ]
     },
-    "motivation": "<p>A joint distribution tells the whole story, but sometimes you need one character's solo line. If you know probabilities for age and click together, you may still ask: what is the overall click probability?</p><p><b>Marginal distributions</b> answer by summing or integrating over the variables you are not focusing on. The word comes from old tables where row and column totals were written in the margins.</p>",
-    "definition": "<p>For discrete variables, the marginal distribution of $X$ is found by summing the joint distribution over all values of $Y$: $P(X=x)=sum_y P(X=x,Y=y)$. For continuous variables with joint density $f(x,y)$, the marginal density is found by integrating out $y$.</p><p>This is the law of total probability in table form. The event $X=x$ can happen together with exactly one of the possible $Y$ values, so the disjoint joint pieces add up to the total probability for $X=x$.</p><p><b>Assumptions that matter:</b> the values summed over must cover all possibilities for the removed variable; continuous variables require integration rather than point sums; and marginalization loses dependence information even though it preserves the single-variable distribution.</p>",
+    "motivation": "<p>A joint table or density contains more information than is sometimes needed. If the current question only concerns X, all possibilities for Y should be included rather than fixed. Marginalization adds up the joint probabilities across the variable being removed.</p><p>The name marginal comes from table margins, where row and column sums sit at the edges of a joint table. The same idea works in continuous models by integration. The resulting distribution is a valid distribution because it collects all joint mass associated with each value of the variable kept.</p>",
+    "definition": "<p><b>Marginal distributions</b> states the lesson's probability object or rule. $$p_X(x)=\\sum_y p_{X,Y}(x,y),\\qquad f_X(x)=\\int f_{X,Y}(x,y)\\,dy$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A joint table has $P(X=0,Y=0)=0.15$, $P(0,1)=0.35$, $P(1,0)=0.25$, $P(1,1)=0.25$. Find the marginal distributions of $X$ and $Y$.",
       "skills": [
@@ -6763,34 +7662,34 @@
     ],
     "applications": [
       {
-        "title": "Overall click rate from segments",
-        "background": "Product metrics often combine segment-specific behavior into one marginal rate.",
-        "numbers": "Rates $0.05$ and $0.20$ with weights $0.8$ and $0.2$ give $0.08$."
+        "title": "Joint table",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "row sums give $P(X=0)=0.5$, $P(X=1)=0.5$."
       },
       {
-        "title": "Latent variable models",
-        "background": "Mixture models hide a component label and marginalize it out to describe observed data.",
-        "numbers": "Component means $0$ and $10$ with weights $0.7$ and $0.3$ give marginal mean $3$."
+        "title": "Column sums",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "give $P(Y=0)=0.3$, $P(Y=2)=0.7$."
       },
       {
-        "title": "Confusion matrix label rates",
-        "background": "Summing a confusion matrix column gives true label frequency.",
-        "numbers": "True positive $0.30$ plus false negative $0.10$ gives $P(label=1)=0.40$."
+        "title": "Continuous square",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "marginal of uniform unit square is $1$ on $[0,1]$."
       },
       {
-        "title": "Missing data summaries",
-        "background": "A joint table of feature value and missingness can be marginalized to get the missing rate.",
-        "numbers": "Missing cells $0.04$ and $0.06$ across groups sum to missing probability $0.10$."
+        "title": "Customer segment",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "marginal sums campaign responses across devices."
       },
       {
-        "title": "Probabilistic graphical models",
-        "background": "Inference in graphical models repeatedly sums out variables not being queried.",
-        "numbers": "If two hidden states contribute $0.12$ and $0.18$ to an observation, its marginal probability is $0.30$."
+        "title": "Image pixels",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "marginal color distribution sums over positions."
       },
       {
-        "title": "Monte Carlo integration",
-        "background": "Sampling can approximate marginalization when exact sums or integrals are hard.",
-        "numbers": "Average conditional probabilities $0.1,0.2,0.4,0.3$ gives marginal estimate $0.25$."
+        "title": "Joint labels",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "3 by 4 table marginal has 3 row probabilities."
       }
     ],
     "applicationsClose": "Marginalization is the art of summing away what you are not asking about while preserving the probability of what remains.",
@@ -6799,6 +7698,43 @@
       "Row and column totals are discrete marginals.",
       "Marginalization is the law of total probability in action.",
       "Marginals do not preserve all dependence information from the joint."
+    ],
+    "connectionsProse": "<p>Marginal distributions extract one variable from a joint distribution. They answer how X behaves by itself after the other variables are ignored. The operation is summing in the discrete case and integrating in the continuous case. Marginals are needed for conditional distributions, independence tests, and covariance calculations.</p>",
+    "symbols": [
+      {
+        "sym": "$p_X$",
+        "desc": "are marginals"
+      },
+      {
+        "sym": "$f_X$",
+        "desc": "are marginals"
+      },
+      {
+        "sym": "$y$",
+        "desc": "is the variable removed"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "The event $X=x$ is the disjoint union over all possible $Y=y$",
+        "result": "$(X=x,Y=y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Add those disjoint masses",
+        "result": "$p_X(x)=\\sum_y p_{X,Y}(x,y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For continuous variables, add by integration",
+        "result": "$f_X(x)=\\int f_{X,Y}(x,y)\\,dy$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The resulting marginal sums or integrates to $1$ because the joint does.",
+        "result": "The resulting marginal sums or integrates to $1$ because the joint does.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-25"
@@ -6827,8 +7763,8 @@
         "posterior distributions"
       ]
     },
-    "motivation": "<p>Information changes probability. A click is more likely after a view; a disease is more likely after a positive test; a label is more likely after seeing certain features.</p><p>A <b>conditional distribution</b> is the distribution that remains after we restrict attention to cases where some event or variable value is known. It is probability with context included.</p>",
-    "definition": "<p>For events or discrete variables, $P(X=x | Y=y)=P(X=x,Y=y)/P(Y=y)$ when $P(Y=y)>0$. The denominator renormalizes the slice where $Y=y$ so probabilities within that slice sum to $1$.</p><p>Bayes' rule follows by writing the same joint probability two ways: $P(X,Y)=P(X|Y)P(Y)=P(Y|X)P(X)$. Solving gives $P(X|Y)=P(Y|X)P(X)/P(Y)$.</p><p><b>Assumptions that matter:</b> the conditioning event must have positive probability in the discrete case; conditionals depend on what information is known; independence means conditioning does not change the distribution; and continuous conditioning uses densities rather than point probabilities.</p>",
+    "motivation": "<p>Knowing Y=y changes the relevant part of the joint distribution. Only the slice of the joint model at that value of Y remains, and it must be renormalized so probabilities over X sum to one. That normalized slice is the conditional distribution.</p><p>The formula mirrors ordinary conditional probability. The numerator is the joint mass or density for the specific pair, and the denominator is the total marginal mass or density of the condition. This denominator is what makes the conditional distribution a proper distribution over X.</p>",
+    "definition": "<p><b>Conditional distributions</b> states the lesson's probability object or rule. $$p_{X\\mid Y}(x\\mid y)=\\frac{p_{X,Y}(x,y)}{p_Y(y)}$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A joint table has $P(X=1,Y=1)=0.24$, $P(X=0,Y=1)=0.16$, $P(X=1,Y=0)=0.36$, $P(X=0,Y=0)=0.24$. Find $P(X=1 | Y=1)$.",
       "skills": [
@@ -7027,34 +7963,34 @@
     ],
     "applications": [
       {
-        "title": "Bayesian diagnosis",
-        "background": "Medical testing is a classic conditional-probability setting because base rates matter.",
-        "numbers": "Prior $0.01$, sensitivity $0.99$, false positive $0.05$ gives evidence $0.0594$ and posterior $0.0099/0.0594=0.167$."
+        "title": "Joint table",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "gives $P(X=1\\mid Y=2)=0.3/0.7=0.4286$."
       },
       {
-        "title": "Spam filtering",
-        "background": "Filters update belief in spam after seeing words or model flags.",
-        "numbers": "If $P(spam)=0.1$, $P(flag|spam)=0.9$, $P(flag)=0.27$, then $P(spam|flag)=0.333$."
+        "title": "Given $Y=0$",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": ", $P(X=0\\mid Y=0)=0.1/0.3=0.3333$."
       },
       {
-        "title": "Recommendation after a view",
-        "background": "Click probability changes after conditioning on whether an item was viewed.",
-        "numbers": "$P(click,view)=0.04$ and $P(view)=0.5$ give $P(click|view)=0.08$."
+        "title": "Bayes classifier",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "uses $P(\\text{class}\\mid\\text{features})$."
       },
       {
-        "title": "Model calibration by segment",
-        "background": "Conditional distributions compare outcomes inside groups or score buckets.",
-        "numbers": "In a bucket with $200$ examples and $30$ positives, observed conditional positive rate is $0.15$."
+        "title": "Recommendation",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "uses item distribution conditional on user segment."
       },
       {
-        "title": "Markov chains",
-        "background": "A Markov chain is built from conditional probabilities of the next state given the current state.",
-        "numbers": "If $P(next=B | current=A)=0.3$, then among $1000$ visits to $A$ expect about $300$ moves to $B$."
+        "title": "Conditional Gaussian",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "narrows uncertainty after an observation."
       },
       {
-        "title": "Naive Bayes",
-        "background": "Naive Bayes classifiers combine conditional feature likelihoods with class priors.",
-        "numbers": "Class prior $0.4$ times likelihoods $0.5$ and $0.2$ gives unnormalized score $0.04$."
+        "title": "Confusion matrix recall",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(\\hat Y=1\\mid Y=1)=TP/(TP+FN)$."
       }
     ],
     "applicationsClose": "Conditioning is the math of learning from context: slice the joint story, renormalize, and reason with the information you now have.",
@@ -7063,6 +7999,48 @@
       "A conditional distribution is a normalized slice of a joint distribution.",
       "Bayes' rule reverses conditioning using likelihood, prior, and evidence.",
       "Independence means conditioning does not change the probability distribution."
+    ],
+    "connectionsProse": "<p>Conditional distributions combine joint and marginal distributions. They give the full distribution of one variable after another variable has been observed. This extends conditional probability from single events to all values of a random variable. It is used in Bayesian classifiers, regression, Gaussian conditioning, and conditional expectation.</p>",
+    "symbols": [
+      {
+        "sym": "$p_{X\\mid Y}$",
+        "desc": "conditional pmf"
+      },
+      {
+        "sym": "$f_{X\\mid Y}$",
+        "desc": "conditional density"
+      },
+      {
+        "sym": "$p_Y(y)$",
+        "desc": "normalizing marginal"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with conditional probability for events",
+        "result": "$P(X=x\\mid Y=y)=P(X=x,Y=y)/P(Y=y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Replace the numerator with joint mass $p_{X,Y}(x,y)$.",
+        "result": "Replace the numerator with joint mass $p_{X,Y}(x,y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Replace denominator with marginal $p_Y(y)$.",
+        "result": "Replace denominator with marginal $p_Y(y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Get $p_{X\\mid Y}(x\\mid y)=p_{X,Y}(x,y)/p_Y(y)$.",
+        "result": "Get $p_{X\\mid Y}(x\\mid y)=p_{X,Y}(x,y)/p_Y(y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For densities, use the same ratio $f_{X\\mid Y}=f_{X,Y}/f_Y$ where $f_Y(y)>0$.",
+        "result": "For densities, use the same ratio $f_{X\\mid Y}=f_{X,Y}/f_Y$ where $f_Y(y)>0$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-26"
@@ -7091,8 +8069,8 @@
         "joint distributions"
       ]
     },
-    "motivation": "<p>You already know the feeling of separate randomness: a coin toss should not change a die roll. Random-variable independence asks for that separation not just for one event, but for every event the variables can describe.</p><p>This is why independence is so powerful in ML math. It lets a joint model split into smaller pieces, lets samples average cleanly, and lets repeated trials become understandable.</p>",
-    "definition": "<p>Random variables $X$ and $Y$ are <b>independent</b> when $P(X\\in A,Y\\in B)=P(X\\in A)P(Y\\in B)$ for every pair of sets $A,B$. In the discrete case this is $p_{X,Y}(x,y)=p_X(x)p_Y(y)$ for every $x,y$; in the continuous case it is $f_{X,Y}(x,y)=f_X(x)f_Y(y)$ on the support.</p><p>The product rule comes from conditional probability: $P(A\\cap B)=P(A\\mid B)P(B)$. If learning $B$ does not change the chance of $A$, then $P(A\\mid B)=P(A)$ and the product appears.</p><p><b>Assumptions that matter:</b> independence must hold for all events determined by the variables; a single matching cell is not enough; independent does not mean identical; and zero covariance is weaker than independence.</p>",
+    "motivation": "<p>Random variables can be unrelated in a stronger sense than merely having zero covariance. If X and Y are independent, observing Y gives no distributional information about X. Every conditional distribution of X is the same as its marginal distribution.</p><p>The product form is the practical test. In a joint table, each cell must equal the row marginal times the column marginal. In a density, the joint surface must factor into one function of x times one function of y. When this fails, the variables carry dependence information.</p>",
+    "definition": "<p><b>Independence of random variables</b> states the lesson's probability object or rule. $$p_{X,Y}(x,y)=p_X(x)p_Y(y)$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A joint table has probabilities $0.12,0.18,0.28,0.42$ for $(X,Y)=(0,0),(0,1),(1,0),(1,1)$. Decide whether $X$ and $Y$ are independent.",
       "skills": [
@@ -7291,34 +8269,34 @@
     ],
     "applications": [
       {
-        "title": "Naive Bayes",
-        "background": "Naive Bayes factors feature likelihoods by assuming conditional independence given the class.",
-        "numbers": "If $P(C)=0.4$, $P(x_1\\mid C)=0.8$, and $P(x_2\\mid C)=0.5$, the score is $0.4\\cdot0.8\\cdot0.5=0.16$."
+        "title": "Two fair dice",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$P(2,5)=1/36=(1/6)(1/6)$."
       },
       {
-        "title": "Independent validation examples",
-        "background": "Validation averages are easiest to analyze when examples are independent draws.",
-        "numbers": "With error rate $0.2$ over $100$ independent examples, expected errors are $100\\cdot0.2=20$."
+        "title": "Joint table check",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "if marginals are $0.5,0.5$ and $0.3,0.7$, independent cell $(1,2)$ would be $0.35$, not $0.3$."
       },
       {
-        "title": "Dropout masks",
-        "background": "Dropout commonly uses independent Bernoulli masks for units during training.",
-        "numbers": "With keep probability $0.8$ for $5$ units, all are kept with probability $0.8^5=0.32768$."
+        "title": "Feature independence",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "in Naive Bayes multiplies likelihoods."
       },
       {
-        "title": "Randomized experiments",
-        "background": "Treatment assignment should be independent of user traits to make groups comparable.",
-        "numbers": "If $30\\%$ get treatment and $12\\%$ are premium, independence predicts $0.30\\cdot0.12=0.036$ are both."
+        "title": "Independent normals",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "have diagonal covariance matrix."
       },
       {
-        "title": "Sensor fusion",
-        "background": "Independent sensor failures multiply, but shared causes can break the assumption.",
-        "numbers": "Two independent false-alarm rates of $0.02$ give joint false alarm $0.02^2=0.0004$."
+        "title": "Independent Bernoulli $0.2,0.3$",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "both succeed with $0.06$."
       },
       {
-        "title": "Monte Carlo draws",
-        "background": "Monte Carlo estimates usually rely on independent random samples.",
-        "numbers": "For Bernoulli $p=0.3$, the chance the first three draws are all $1$ is $0.3^3=0.027$."
+        "title": "A product density",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$2x\\cdot3y^2$ on unit square factors into marginals."
       }
     ],
     "applicationsClose": "Independence is the promise that separate probability stories can be multiplied into a joint story.",
@@ -7327,6 +8305,39 @@
       "Discrete independence means every joint mass factors into marginals.",
       "Continuous independence means the joint density factors on its support.",
       "Independence powers sampling, experiments, dropout, Naive Bayes, and Monte Carlo."
+    ],
+    "connectionsProse": "<p>Independence of random variables extends independence of events to full distributions. Instead of one event leaving another event unchanged, every value of one variable leaves the distribution of the other unchanged. The joint distribution then factors into the product of marginals. This factorization simplifies sums, MGFs, convolution, and limit theorems.</p>",
+    "symbols": [
+      {
+        "sym": "$X\\perp Y$",
+        "desc": "means independent"
+      },
+      {
+        "sym": "$p_X,p_Y$",
+        "desc": "are marginals"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Independence means $P(X=x\\mid Y=y)=P(X=x)$ for all relevant $x,y$.",
+        "result": "Independence means $P(X=x\\mid Y=y)=P(X=x)$ for all relevant $x,y$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Substitute the conditional formula $p_{X,Y}(x,y)/p_Y(y)=p_X(x)$.",
+        "result": "Substitute the conditional formula $p_{X,Y}(x,y)/p_Y(y)=p_X(x)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Multiply by $p_Y(y)$",
+        "result": "$p_{X,Y}(x,y)=p_X(x)p_Y(y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The density version uses the same factorization with $f$.",
+        "result": "The density version uses the same factorization with $f$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-27"
@@ -7355,8 +8366,8 @@
         "bilinearity"
       ]
     },
-    "motivation": "<p>Variance centers one variable, squares, and averages. Covariance centers two variables, multiplies, and averages.</p><p>A positive product means both variables are on the same side of their means. A negative product means they are on opposite sides. Averaging those products gives a signed summary of linear co-movement.</p>",
-    "definition": "<p>The <b>covariance</b> of $X$ and $Y$ is $\\operatorname{Cov}(X,Y)=E[(X-\\mu_X)(Y-\\mu_Y)]$, where $\\mu_X=E[X]$ and $\\mu_Y=E[Y]$. The computational form is $\\operatorname{Cov}(X,Y)=E[XY]-E[X]E[Y]$.</p><p>Expanding the centered product gives $E[XY-\\mu_XY-\\mu_YX+\\mu_X\\mu_Y]=E[XY]-\\mu_X\\mu_Y$ after like terms combine.</p><p><b>Assumptions that matter:</b> the needed expectations must exist; covariance has product units; independence implies zero covariance when moments exist; and zero covariance does not by itself prove independence.</p>",
+    "motivation": "<p>To compare movement, each variable is first measured relative to its own mean. When both centered values are usually positive together or negative together, their product tends to be positive. When one is often above its mean while the other is below, the product tends to be negative.</p><p>Averaging those centered products gives covariance. Its sign is easy to interpret, but its units depend on the units of both variables. That is why the next lesson rescales covariance into correlation for comparisons across different measurement scales.</p>",
+    "definition": "<p><b>Covariance</b> states the lesson's probability object or rule. $$\\operatorname{Cov}(X,Y)=E[(X-\\mu_X)(Y-\\mu_Y)]=E[XY]-\\mu_X\\mu_Y$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Outcomes $(X,Y)=(1,2),(2,4),(3,5)$ are equally likely. Compute $\\operatorname{Cov}(X,Y)$.",
       "skills": [
@@ -7555,34 +8566,34 @@
     ],
     "applications": [
       {
-        "title": "Feature association",
-        "background": "Covariance is a numerical scatterplot summary.",
-        "numbers": "Centered ad spend $[-10,0,10]$ and clicks $[-40,0,50]$ give covariance $(400+0+500)/3=300$."
+        "title": "Joint table",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "example has $E[X]=0.5$, $E[Y]=1.4$, $E[XY]=0.6$, covariance $-0.1$."
       },
       {
-        "title": "Portfolio risk",
-        "background": "Covariance controls whether risks add or offset.",
-        "numbers": "If variances are $4$ and $9$ and covariance is $-2$, variance of the sum is $4+9+2(-2)=9$."
+        "title": "Independent variables",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "have covariance $0$."
       },
       {
-        "title": "Gradient noise",
-        "background": "Covariance between gradient coordinates shows whether updates wobble together.",
-        "numbers": "Centered pairs $(1,2),(-1,-2),(2,4)$ have average product $(2+2+8)/3=4$."
+        "title": "Portfolio",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "variance uses $2\\operatorname{Cov}(X,Y)$."
       },
       {
-        "title": "PCA",
-        "background": "PCA starts from covariance to find high-variation directions.",
-        "numbers": "Matrix $\\begin{pmatrix}4&3\\\\3&4\\end{pmatrix}$ has variance $7$ along normalized direction $(1,1)/\\sqrt2$."
+        "title": "Feature redundancy",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "positive covariance flags similar movement."
       },
       {
-        "title": "Metric tradeoffs",
-        "background": "Negative covariance can reveal product tradeoffs.",
-        "numbers": "Centered revenue $[2,-1,-1]$ and latency $[-4,2,2]$ average product $(-8-2-2)/3=-4$."
+        "title": "Centered vectors",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "average product of centered columns is sample covariance."
       },
       {
-        "title": "Units",
-        "background": "Covariance changes when units change.",
-        "numbers": "A covariance of $12$ meter-kg becomes $1200$ centimeter-kg after multiplying height by $100$."
+        "title": "Scale effect",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$\\operatorname{Cov}(2X,Y)=2\\operatorname{Cov}(X,Y)$."
       }
     ],
     "applicationsClose": "Covariance is useful because it is signed and algebraic, but its scale still depends on units.",
@@ -7591,6 +8602,44 @@
       "The shortcut is $E[XY]-E[X]E[Y]$.",
       "Positive means same-direction linear movement; negative means opposite-direction movement.",
       "Independence implies zero covariance, but zero covariance need not imply independence."
+    ],
+    "connectionsProse": "<p>Covariance is the first numeric summary of how two variables move together. It uses centered variables, so it measures joint deviations from their means. Positive, negative, and zero covariance describe different kinds of linear co-movement. This lesson prepares for correlation, covariance matrices, and the multivariate Gaussian.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mu_X,\\mu_Y$",
+        "desc": "are means"
+      },
+      {
+        "sym": "$E[XY]$",
+        "desc": "is expected product"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define covariance as $\\operatorname{Cov}(X,Y)=E[(X-\\mu_X)(Y-\\mu_Y)]$.",
+        "result": "Define covariance as $\\operatorname{Cov}(X,Y)=E[(X-\\mu_X)(Y-\\mu_Y)]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Expand the product",
+        "result": "$XY-X\\mu_Y-Y\\mu_X+\\mu_X\\mu_Y$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Take expectation term",
+        "result": "term.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Use $E[X]=\\mu_X$ and $E[Y]=\\mu_Y$.",
+        "result": "Use $E[X]=\\mu_X$ and $E[Y]=\\mu_Y$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Get $\\operatorname{Cov}(X,Y)=E[XY]-\\mu_X\\mu_Y$.",
+        "result": "Get $\\operatorname{Cov}(X,Y)=E[XY]-\\mu_X\\mu_Y$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-28"
@@ -7619,8 +8668,8 @@
         "scatterplots"
       ]
     },
-    "motivation": "<p>Covariance has units. Correlation removes those units by dividing by the two standard deviations.</p><p>The result is a number between $-1$ and $1$: sign tells direction, magnitude tells linear strength, and the scale is comparable across problems.</p>",
-    "definition": "<p>The <b>Pearson correlation</b> is $\\rho_{X,Y}=\\dfrac{\\operatorname{Cov}(X,Y)}{\\sigma_X\\sigma_Y}$ when $\\sigma_X,\\sigma_Y>0$.</p><p>Cauchy-Schwarz gives $|\\operatorname{Cov}(X,Y)|\\le\\sigma_X\\sigma_Y$, so $-1\\le\\rho\\le1$.</p><p><b>Assumptions that matter:</b> variances must be finite and nonzero; correlation is linear association; positive rescaling preserves it; negative rescaling flips its sign.</p>",
+    "motivation": "<p>Covariance changes when variables are rescaled, so its magnitude is hard to compare across contexts. Dividing by the two standard deviations removes the units. The result measures association after both variables have been put on standard-deviation scale.</p><p>The bound between negative one and one comes from Cauchy-Schwarz applied to the standardized variables. Values near one or negative one indicate strong linear alignment, while zero means no linear association. Zero correlation alone does not rule out nonlinear dependence.</p>",
+    "definition": "<p><b>Correlation</b> states the lesson's probability object or rule. $$\\rho=\\frac{\\operatorname{Cov}(X,Y)}{\\sigma_X\\sigma_Y}$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Given covariance $6$, variances $9$ and $16$, compute correlation.",
       "skills": [
@@ -7818,34 +8867,34 @@
     ],
     "applications": [
       {
+        "title": "Covariance $6$, sds $2$ and $3$",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "gives $\\rho=1$."
+      },
+      {
+        "title": "Covariance $-1$, sds $2$ and $4$",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "gives $\\rho=-0.125$."
+      },
+      {
         "title": "Feature screening",
-        "background": "Correlation is a fast first scan for linear signal.",
-        "numbers": "Covariance $1.5$ with sds $3$ and $2$ gives correlation $1.5/6=0.25$."
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "uses $|\\rho|>0.9$ for near-duplicates."
       },
       {
-        "title": "Multicollinearity",
-        "background": "Highly correlated features can make regression coefficients unstable.",
-        "numbers": "Standardized features with average product $0.98$ have correlation $0.98$."
+        "title": "Zero correlation",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "means no linear association, not full independence."
       },
       {
-        "title": "Embedding diagnostics",
-        "background": "Correlated embedding dimensions can indicate redundancy.",
-        "numbers": "Covariance $0.03$ with sds $0.2$ and $0.5$ gives $0.03/0.1=0.3$."
+        "title": "Portfolio pairs",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with $\\rho=-0.5$ diversify more than $\\rho=0.8$."
       },
       {
-        "title": "Metric relationships",
-        "background": "Correlation summarizes whether metrics move together across items.",
-        "numbers": "Covariance $0.015$ with sds $0.1$ and $0.3$ gives correlation $0.5$."
-      },
-      {
-        "title": "Leakage checks",
-        "background": "Near-perfect correlation with a label may reveal leakage.",
-        "numbers": "Correlation $0.99$ means $99\\%$ of a standardized unit moves together linearly."
-      },
-      {
-        "title": "Causality caution",
-        "background": "Correlation is not causation; shared causes can create it.",
-        "numbers": "A correlation of $0.8$ between two seasonal metrics may be driven by temperature."
+        "title": "Units vanish",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "when centimeters are converted to meters."
       }
     ],
     "applicationsClose": "Correlation keeps the useful sign of covariance while putting every linear relationship on the same unitless scale.",
@@ -7854,6 +8903,39 @@
       "It lies between $-1$ and $1$.",
       "It measures linear association, not all dependence.",
       "It is unitless and comparable across scales."
+    ],
+    "connectionsProse": "<p>Correlation turns covariance into a unitless measure of linear association. It standardizes both variables before measuring their average product. The result always lies between negative one and one, making comparisons easier across different units. Correlation is used in feature screening, portfolio analysis, and covariance-matrix interpretation.</p>",
+    "symbols": [
+      {
+        "sym": "$\\rho$",
+        "desc": "correlation"
+      },
+      {
+        "sym": "$\\sigma_X,\\sigma_Y$",
+        "desc": "standard deviations"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Standardize variables",
+        "result": "$Z_X=(X-\\mu_X)/\\sigma_X$ and $Z_Y=(Y-\\mu_Y)/\\sigma_Y$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Take covariance of standardized variables.",
+        "result": "Take covariance of standardized variables.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Constants factor out, giving $E[Z_XZ_Y]=\\operatorname{Cov}(X,Y)/(\\sigma_X\\sigma_Y)$.",
+        "result": "Constants factor out, giving $E[Z_XZ_Y]=\\operatorname{Cov}(X,Y)/(\\sigma_X\\sigma_Y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Cauchy-Schwarz",
+        "result": "$|E[Z_XZ_Y]|\\le\\sqrt{E[Z_X^2]E[Z_Y^2]}=1$, so correlation is between $-1$ and $1$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-29"
@@ -7882,8 +8964,8 @@
         "expectation"
       ]
     },
-    "motivation": "<p>If $X$ is random and $Y=g(X)$, the function moves probability from input values to output values.</p><p>The important detail is stretching. When a transformation stretches the axis, density thins; when it compresses, density rises.</p>",
-    "definition": "<p>Always valid is the CDF method: $F_Y(y)=P(Y\\le y)=P(g(X)\\le y)$. If $g$ is one-to-one and differentiable, then $f_Y(y)=f_X(g^{-1}(y))\\left|\\dfrac{d}{dy}g^{-1}(y)\\right|$.</p><p>The derivative factor comes from matching small probabilities: $f_Y(y)dy\\approx f_X(x)dx$.</p><p><b>Assumptions that matter:</b> transform the support; use absolute derivative; split into monotone pieces when the map is many-to-one.</p>",
+    "motivation": "<p>If Y is defined as a function of X, probabilities for Y must come from the corresponding probabilities for X. A shift moves the distribution, a scale stretches it, and nonlinear transformations can bend or fold the support. The distribution changes even though the underlying probability mass is conserved.</p><p>For a one-to-one differentiable transformation, matching small intervals have the same probability. If the transformation stretches the horizontal axis, the density height must shrink, and if it compresses the axis, the density height must grow. The Jacobian factor records that stretch.</p>",
+    "definition": "<p><b>Transformations of random variables</b> states the lesson's probability object or rule. $$f_Y(y)=f_X(g^{-1}(y))\\left|\\frac{d}{dy}g^{-1}(y)\\right|$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Let $X\\sim\\operatorname{Unif}(0,1)$ and $Y=2X+3$. Find $f_Y$.",
       "skills": [
@@ -8081,34 +9163,34 @@
     ],
     "applications": [
       {
-        "title": "Feature scaling",
-        "background": "Standardization is a transformation of a random feature.",
-        "numbers": "$x=55$ with mean $40$ and sd $10$ maps to $z=1.5$."
+        "title": "Scale",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$Y=2X$ for uniform $[0,1]$ gives uniform $[0,2]$ with density $0.5$."
       },
       {
-        "title": "Log transforms",
-        "background": "Logs compress positive skewed quantities such as latency.",
-        "numbers": "$200$ ms maps to $\\ln200\\approx5.30$."
+        "title": "Shift",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$Y=X+3$ shifts mean by $3$."
       },
       {
-        "title": "Inverse-CDF simulation",
-        "background": "Uniform random numbers can be transformed into target distributions.",
-        "numbers": "For exponential rate $2$, $U=0.8$ gives $-\\ln(0.2)/2\\approx0.805$."
+        "title": "Square",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$Y=X^2$ needs two preimages except at $0$."
       },
       {
-        "title": "Sigmoid probabilities",
-        "background": "A logit transformation maps scores to probabilities.",
-        "numbers": "Score $1.2$ maps to $1/(1+e^{-1.2})\\approx0.768$."
+        "title": "Log transform",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "if $Y=e^X$, density includes $1/y$."
       },
       {
-        "title": "Image gamma correction",
-        "background": "Pixel intensities are transformed to change contrast.",
-        "numbers": "$Y=\\sqrt X$ sends $0.25$ to $0.5$."
+        "title": "Standardization",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$Z=(X-\\mu)/\\sigma$ gives unitless values."
       },
       {
-        "title": "Uncertainty propagation",
-        "background": "Linear transformations scale standard deviations.",
-        "numbers": "If $Y=3X+2$ and $\\operatorname{sd}(X)=0.4$, then $\\operatorname{sd}(Y)=1.2$."
+        "title": "Variance scaling",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$\\operatorname{Var}(2X+1)=4\\operatorname{Var}(X)$."
       }
     ],
     "applicationsClose": "A random-variable transformation is probability conservation in new coordinates.",
@@ -8117,6 +9199,43 @@
       "One-to-one density transforms need the absolute derivative of the inverse.",
       "Always transform the support.",
       "Many-to-one maps require adding all preimage contributions."
+    ],
+    "connectionsProse": "<p>Transformations create new random variables from old ones. They are used when shifting, scaling, standardizing, logging, squaring, or otherwise re-expressing a quantity. For densities, probability must be preserved while the horizontal scale changes. This is the basis of change-of-variables calculations in continuous probability.</p>",
+    "symbols": [
+      {
+        "sym": "$g$",
+        "desc": "transformation"
+      },
+      {
+        "sym": "$g^{-1}$",
+        "desc": "inverse"
+      },
+      {
+        "sym": "Jacobian is the stretch factor",
+        "desc": "notation from the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $Y=g(X)$ with one-to-one differentiable $g$.",
+        "result": "Let $Y=g(X)$ with one-to-one differentiable $g$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Equal probabilities in matching small intervals",
+        "result": "$f_Y(y)dy=f_X(x)dx$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Since $x=g^{-1}(y)$, divide by $dy$",
+        "result": "$f_Y(y)=f_X(g^{-1}(y))\\left|\\frac{d}{dy}g^{-1}(y)\\right|$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The absolute derivative is the Jacobian scale factor.",
+        "result": "The absolute derivative is the Jacobian scale factor.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-30"
@@ -8145,8 +9264,8 @@
         "expectation linearity"
       ]
     },
-    "motivation": "<p>A sum like $7$ from two dice can happen in several ways. Probability must count all compatible pairs.</p><p>Convolution is that counting rule for distributions, in sums for discrete variables and integrals for continuous variables.</p>",
-    "definition": "<p>For independent discrete variables, $P(X+Y=s)=\\sum_x P(X=x)P(Y=s-x)$. For independent densities, $f_{X+Y}(s)=\\int f_X(x)f_Y(s-x)\\,dx$.</p><p>The rule partitions the event by possible $X=x$, then independence turns joint pieces into products.</p><p><b>Assumptions that matter:</b> the product form needs independence; supports set the valid summation or integration range; means add always, but variances add only when covariance is zero.</p>",
+    "motivation": "<p>When Z equals X plus Y, the event Z=z is not usually a single event in the joint space. It includes every combination where X takes one value and Y supplies the remaining amount. For dice, a sum of seven comes from several ordered pairs.</p><p>Convolution adds the probability of each matching pair. Independence simplifies the joint probability into a product of marginal probabilities. In continuous models, the same idea becomes an integral over all ways to split the total z into x and z minus x.</p>",
+    "definition": "<p><b>Sums of random variables and convolution</b> states the lesson's probability object or rule. $$p_Z(z)=\\sum_x p_X(x)p_Y(z-x),\\qquad f_Z(z)=\\int f_X(x)f_Y(z-x)\\,dx$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Two fair dice are rolled. Find $P(X+Y=7)$ by convolution.",
       "skills": [
@@ -8344,34 +9463,34 @@
     ],
     "applications": [
       {
-        "title": "Dice probabilities",
-        "background": "Game sums are classic discrete convolutions.",
-        "numbers": "Two dice make $7$ in $6$ ways and $2$ in $1$ way, so probabilities are $6/36$ and $1/36$."
+        "title": "Two dice sum 7",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$6/36=1/6$."
       },
       {
-        "title": "Measurement noise",
-        "background": "Independent noise sources add by convolution.",
-        "numbers": "Variances $1.5$ and $0.5$ add to total variance $2.0$."
+        "title": "Two fair coins heads count",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has masses $1/4,1/2,1/4$."
       },
       {
-        "title": "Mini-batches",
-        "background": "A batch gradient is a scaled sum of example gradients.",
-        "numbers": "Variance $9$ averaged over $16$ examples becomes $9/16=0.5625$."
+        "title": "Poisson rates 2 and 5",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "sum to Poisson rate $7$."
       },
       {
-        "title": "Latency totals",
-        "background": "End-to-end latency is often a sum of component times.",
-        "numbers": "Network mean $20$ ms plus model mean $35$ ms gives total mean $55$ ms."
+        "title": "Independent normals",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "add variances: $4+9=13$."
       },
       {
-        "title": "Ensembles",
-        "background": "Averaging independent errors reduces variance.",
-        "numbers": "Four independent errors with variance $0.04$ average to variance $0.01$."
+        "title": "Delivery time",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "as packing plus shipping uses convolution."
       },
       {
-        "title": "Signal filters",
-        "background": "Signal convolution uses the same add-over-alignments pattern.",
-        "numbers": "A moving average of $[6,9,12]$ is $(6+9+12)/3=9$."
+        "title": "Ensemble error",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "sums independent noise variances."
       }
     ],
     "applicationsClose": "Convolution is the add-all-compatible-ways pattern behind sums, noise, batches, and filters.",
@@ -8380,6 +9499,44 @@
       "Discrete sums use summation; continuous sums use integration.",
       "Means add always; variances add when covariance is zero.",
       "Averages reduce variance by scaling sums."
+    ],
+    "connectionsProse": "<p>Sums of random variables combine probability distributions. A target sum can be produced by many pairs of component values, so all matching pairs must be accounted for. Convolution is the operation that performs this accounting. It appears in dice sums, noise addition, delivery times, Poisson rates, and normal sums.</p>",
+    "symbols": [
+      {
+        "sym": "$Z=X+Y$",
+        "desc": "notation from the plan"
+      },
+      {
+        "sym": "convolution is the sum/integral over matching pairs",
+        "desc": "notation from the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For discrete $Z=X+Y$, event $Z=z$ is the disjoint union over $x$ of $X=x$ and $Y=z-x$.",
+        "result": "For discrete $Z=X+Y$, event $Z=z$ is the disjoint union over $x$ of $X=x$ and $Y=z-x$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Add the joint probabilities.",
+        "result": "Add the joint probabilities.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "If $X,Y$ are independent, joint mass factors.",
+        "result": "If $X,Y$ are independent, joint mass factors.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Therefore $p_Z(z)=\\sum_xp_X(x)p_Y(z-x)$.",
+        "result": "Therefore $p_Z(z)=\\sum_xp_X(x)p_Y(z-x)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "For densities, replace the sum",
+        "result": "$f_Z(z)=\\int f_X(x)f_Y(z-x)\\,dx$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-31"
@@ -8408,8 +9565,8 @@
         "total expectation"
       ]
     },
-    "motivation": "<p>Averages change when information arrives. Expected clicks differ for new and returning users; expected return differs by state.</p><p>Conditional expectation turns that updated average into a function of the observed information.</p>",
-    "definition": "<p>For discrete variables, $E[Y\\mid X=x]=\\sum_y yP(Y=y\\mid X=x)$. The object $E[Y\\mid X]$ is a random variable: after $X$ is observed, it returns the corresponding conditional mean.</p><p>The law of total expectation is $E[Y]=E[E[Y\\mid X]]$, because averaging conditional averages with their probabilities recovers the overall average.</p><p><b>Assumptions that matter:</b> the conditional mean must exist; elementary conditioning needs positive-probability events; and under squared loss the best prediction from $X$ is $E[Y\\mid X]$.</p>",
+    "motivation": "<p>After observing information such as a segment, feature bin, or class, the distribution of X may change. Conditional expectation gives the center of that updated distribution. It is the best single average to use within that condition.</p><p>The law of total expectation says that averaging conditional averages over the cases returns the overall average. This is a consistency rule: first average within each group, then weight by group frequency. It is the expectation counterpart of the law of total probability.</p>",
+    "definition": "<p><b>Conditional expectation</b> states the lesson's probability object or rule. $$E[X\\mid Y=y]=\\sum_x x p_{X\\mid Y}(x\\mid y)$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Premium users have mean clicks $12$, free users have mean clicks $4$, and $P(premium)=0.25$. Find overall expected clicks.",
       "skills": [
@@ -8607,34 +9764,34 @@
     ],
     "applications": [
       {
-        "title": "Regression",
-        "background": "The ideal squared-loss predictor is conditional expectation.",
-        "numbers": "If $Y=0$ with probability $0.3$ and $10$ with probability $0.7$, prediction is $7$."
+        "title": "Segment revenue",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mobile mean $5$ with weight $0.6$, desktop mean $8$ with weight $0.4$ gives overall $6.2$."
       },
       {
-        "title": "Recommendations",
-        "background": "Context-specific averages estimate engagement.",
-        "numbers": "Mobile mean $3$ and desktop mean $5$ with $60\\%$ mobile gives total $3.8$."
+        "title": "Risk score",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "averages labels within a feature bin."
       },
       {
-        "title": "Imputation",
-        "background": "Missing values are often filled with conditional group means.",
-        "numbers": "Returning-user mean spend $50$ suggests imputing $50$ for a missing returning-user spend."
+        "title": "Joint table",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "gives $E[X\\mid Y=2]=0.3/0.7=0.4286$."
       },
       {
-        "title": "Reinforcement learning",
-        "background": "A value function is expected return conditional on state.",
-        "numbers": "Reward $10$ with probability $0.4$ and $0$ otherwise gives value $4$."
+        "title": "Dice given even",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has mean $(2+4+6)/3=4$."
       },
       {
-        "title": "Calibration",
-        "background": "Calibration checks conditional label frequency given predicted score.",
-        "numbers": "If $160$ of $200$ examples scored $0.8$ are positive, conditional mean is $0.8$."
+        "title": "Forecast calibration",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "checks average outcome at predicted $0.7$."
       },
       {
-        "title": "Segment monitoring",
-        "background": "Overall metrics are weighted averages of segment metrics.",
-        "numbers": "Means $2$ and $8$ with weights $0.75$ and $0.25$ give total $3.5$."
+        "title": "Queue time",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "conditioned on priority class creates class-specific averages."
       }
     ],
     "applicationsClose": "Conditional expectation is averaging with information included, then using that average as a prediction.",
@@ -8643,6 +9800,35 @@
       "$E[Y\\mid X]$ is itself a random variable.",
       "The law of total expectation says $E[Y]=E[E[Y\\mid X]]$.",
       "Conditional expectation is the ideal squared-loss predictor."
+    ],
+    "connectionsProse": "<p>Conditional expectation summarizes a conditional distribution by its average. It combines the conditional-distribution idea with expectation. When the condition is random, the conditional expectation is itself a random variable that changes with the observed information. This leads directly to the law of total expectation and to prediction as conditional averaging.</p>",
+    "symbols": [
+      {
+        "sym": "$E[X\\mid Y]$",
+        "desc": "is the conditional mean as a function of $Y$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For a fixed condition $Y=y$, use the conditional distribution of $X$.",
+        "result": "For a fixed condition $Y=y$, use the conditional distribution of $X$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Average with those conditional probabilities",
+        "result": "$E[X\\mid Y=y]=\\sum_xx p_{X\\mid Y}(x\\mid y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "To derive total expectation, average these conditional means over $Y$",
+        "result": "$E[E[X\\mid Y]]=\\sum_y E[X\\mid Y=y]P(Y=y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Substitute the conditional sum and simplify to $\\sum_xxP(X=x)=E[X]$.",
+        "result": "Substitute the conditional sum and simplify to $\\sum_xxP(X=x)=E[X]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-32"
@@ -8671,8 +9857,8 @@
         "bounding arguments"
       ]
     },
-    "motivation": "<p>Sometimes the mean is all you know. Markov's inequality still gives a tail bound for nonnegative quantities.</p><p>It is blunt, but it is the seed for many sharper concentration inequalities.</p>",
-    "definition": "<p>If $X\\ge0$ and $a>0$, then $P(X\\ge a)\\le E[X]/a$.</p><p>Let $I=\\mathbf{1}_{\\{X\\ge a\\}}$. Since $X\\ge aI$, taking expectations gives $E[X]\\ge aP(X\\ge a)$.</p><p><b>Assumptions that matter:</b> $X$ must be nonnegative; $a$ must be positive; and the bound can be loose because it uses only the mean.</p>",
+    "motivation": "<p>For a nonnegative variable to be very large with high probability, its mean must also be large. Markov’s inequality formalizes that basic constraint. If the mean is small, the probability of exceeding a much larger threshold cannot be too high.</p><p>The proof isolates the contribution to the expectation from the tail event. On the event X is at least a, each outcome contributes at least a to the average. That forces the mean to be at least a times the tail probability, which gives the bound after division.</p>",
+    "definition": "<p><b>Markov's inequality</b> states the lesson's probability object or rule. $$P(X\\ge a)\\le \\frac{E[X]}{a}$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A nonnegative runtime has mean $40$ ms. Bound $P(T\\ge200\\text{ ms})$.",
       "skills": [
@@ -8870,34 +10056,34 @@
     ],
     "applications": [
       {
-        "title": "Latency bounds",
-        "background": "Average latency alone bounds the fraction of very slow requests.",
-        "numbers": "Mean $80$ ms gives $P(T\\ge400)\\le0.2$."
+        "title": "Runtime",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mean 100 ms: $P(X\\ge500)\\le0.2$."
       },
       {
-        "title": "Loss monitoring",
-        "background": "Nonnegative loss fits Markov directly.",
-        "numbers": "Mean loss $0.02$ gives $P(L\\ge0.2)\\le0.1$."
+        "title": "Loss",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mean 0.4: $P(L\\ge2)\\le0.2$."
       },
       {
-        "title": "Memory usage",
-        "background": "Memory is nonnegative, so mean memory bounds high usage.",
-        "numbers": "Mean $1.5$ GB gives $P(M\\ge6)\\le0.25$."
+        "title": "Queue length",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mean 3: $P(Q\\ge10)\\le0.3$."
       },
       {
-        "title": "Bad-event counts",
-        "background": "Counts are nonnegative random variables.",
-        "numbers": "Expected alerts $0.1$ gives probability of at least one at most $0.1$."
+        "title": "Spend",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mean $50$: $P(S\\ge200)\\le0.25$."
       },
       {
-        "title": "Randomized algorithms",
-        "background": "Runtime and collision counts often use Markov first.",
-        "numbers": "Expected collisions $0.05$ gives $P(\\text{at least one})\\le0.05$."
+        "title": "Gradient norm squared",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mean 0.01: $P(\\|g\\|^2\\ge0.1)\\le0.1$."
       },
       {
-        "title": "Path to Chebyshev",
-        "background": "Markov on squared deviation gives Chebyshev.",
-        "numbers": "If variance is $9$, then $P(|X-\\mu|\\ge6)\\le9/36=0.25$."
+        "title": "Nonnegative error",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "mean 0.02: $P(E\\ge0.1)\\le0.2$."
       }
     ],
     "applicationsClose": "Markov is humble but universal: nonnegative size plus mean already limits extreme frequency.",
@@ -8906,6 +10092,43 @@
       "The proof compares $X$ with $a\\mathbf{1}_{\\{X\\ge a\\}}$.",
       "It uses very little information and can be loose.",
       "It is the starting point for several stronger inequalities."
+    ],
+    "connectionsProse": "<p>Markov’s inequality is a broad tail bound for nonnegative random variables. It uses only the mean and does not require a distributional shape. Because it assumes so little, the bound can be loose, but it is widely applicable. It also serves as the main ingredient for Chebyshev’s inequality.</p>",
+    "symbols": [
+      {
+        "sym": "$a$",
+        "desc": "threshold"
+      },
+      {
+        "sym": "$E[X]$",
+        "desc": "mean"
+      },
+      {
+        "sym": "require $X\\ge0$",
+        "desc": "notation from the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume $X\\ge0$.",
+        "result": "Assume $X\\ge0$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "On event $X\\ge a$, the value of $X$ is at least $a$.",
+        "result": "On event $X\\ge a$, the value of $X$ is at least $a$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Therefore $E[X]$ is at least the contribution from that event",
+        "result": "$E[X]\\ge aP(X\\ge a)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Divide by $a>0$",
+        "result": "$P(X\\ge a)\\le E[X]/a$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-33"
@@ -8934,8 +10157,8 @@
         "concentration"
       ]
     },
-    "motivation": "<p>To bound distance from a mean, square the distance so it becomes nonnegative.</p><p>Chebyshev applies Markov to squared deviation and works for any distribution with finite variance.</p>",
-    "definition": "<p>If $E[X]=\\mu$ and $\\operatorname{Var}(X)=\\sigma^2$, then $P(|X-\\mu|\\ge k)\\le\\sigma^2/k^2$.</p><p>This is Markov applied to $(X-\\mu)^2$: $P((X-\\mu)^2\\ge k^2)\\le E[(X-\\mu)^2]/k^2$.</p><p><b>Assumptions that matter:</b> mean and variance must exist; the bound is two-sided and distribution-free; it is often conservative.</p>",
+    "motivation": "<p>Variance measures the average squared distance from the mean. If many outcomes were far from the mean, that average squared distance would have to be large. Chebyshev’s inequality turns this observation into a bound on the probability of a large deviation.</p><p>The proof applies Markov’s inequality to the nonnegative squared deviation. The event of being at least a away from the mean is exactly the event that the squared deviation is at least a squared. This converts a variance statement into a probability tail bound.</p>",
+    "definition": "<p><b>Chebyshev's inequality</b> states the lesson's probability object or rule. $$P(|X-\\mu|\\ge a)\\le \\frac{\\sigma^2}{a^2}$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Scores have mean $70$ and standard deviation $8$. Bound the chance of being at least $20$ points from the mean.",
       "skills": [
@@ -9133,34 +10356,34 @@
     ],
     "applications": [
       {
-        "title": "Quality control",
-        "background": "Chebyshev works without a normal assumption.",
-        "numbers": "Mean $2$ mm, sd $0.1$ mm gives $P(|X-2|\\ge0.5)\\le0.04$."
+        "title": "Mean 100, sd 15, distance 30",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "bound $225/900=0.25$."
       },
       {
-        "title": "Sample means",
-        "background": "Chebyshev proves a finite-variance LLN.",
-        "numbers": "Variance $9$, $n=100$ gives $P(|\\bar X-\\mu|\\ge1)\\le0.09$."
+        "title": "Within 2 sd",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "has probability at least $0.75$."
       },
       {
-        "title": "Monitoring drift",
-        "background": "Far-from-mean metrics can be flagged conservatively.",
-        "numbers": "Mean $50$, sd $5$: outside $[35,65]$ is at most $1/9$."
+        "title": "Within 3 sd",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "at least $0.8889$."
       },
       {
-        "title": "Runtime variation",
-        "background": "Skewed runtimes can still use variance bounds.",
-        "numbers": "Mean $10$, variance $4$ gives $P(|T-10|\\ge6)\\le4/36$."
+        "title": "Estimator sd 0.05",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "error over $0.2$ bounded by $0.0625$."
       },
       {
-        "title": "Sensor averaging",
-        "background": "Averaging reduces variance and tail bounds.",
-        "numbers": "Noise variance $25$ over $100$ readings gives average variance $0.25$."
+        "title": "Queue mean 10, sd 4",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "outside 8 units bounded by $0.25$."
       },
       {
-        "title": "Normal comparison",
-        "background": "Chebyshev is conservative but assumption-light.",
-        "numbers": "At $3$ sds, Chebyshev says at most $11.1\\%$ outside; normal tails are about $0.27\\%$."
+        "title": "Model metric sd 0.01",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "deviation over $0.05$ bounded by $0.04$."
       }
     ],
     "applicationsClose": "Chebyshev is the variance guarantee: broad, conservative, and strong enough to prove averaging works.",
@@ -9169,6 +10392,48 @@
       "It follows from Markov applied to squared deviation.",
       "It works for any finite-variance distribution.",
       "For sample means, the bound improves like $1/n$."
+    ],
+    "connectionsProse": "<p>Chebyshev’s inequality strengthens the basic tail-bound idea by using variance. It applies to deviations from the mean and does not assume normality or any particular distribution shape. The result explains how smaller variance forces more concentration around the mean. It is also the key proof tool for the Law of Large Numbers in this section.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mu$",
+        "desc": "mean"
+      },
+      {
+        "sym": "$\\sigma^2$",
+        "desc": "variance"
+      },
+      {
+        "sym": "$a$",
+        "desc": "distance from mean"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $Y=(X-\\mu)^2$, which is nonnegative.",
+        "result": "Let $Y=(X-\\mu)^2$, which is nonnegative.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Event $|X-\\mu|\\ge a$ is the same as $Y\\ge a^2$.",
+        "result": "Event $|X-\\mu|\\ge a$ is the same as $Y\\ge a^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Apply Markov",
+        "result": "$P(Y\\ge a^2)\\le E[Y]/a^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Use $E[Y]=\\operatorname{Var}(X)=\\sigma^2$.",
+        "result": "Use $E[Y]=\\operatorname{Var}(X)=\\sigma^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Get $P(|X-\\mu|\\ge a)\\le\\sigma^2/a^2$.",
+        "result": "Get $P(|X-\\mu|\\ge a)\\le\\sigma^2/a^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-34"
@@ -9197,8 +10462,8 @@
         "logarithms"
       ]
     },
-    "motivation": "<p>A bowl-shaped function punishes spread. The average of squared values is usually larger than the square of the average.</p><p>Jensen's inequality is this curvature fact written for expectations.</p>",
-    "definition": "<p>If $\\varphi$ is convex, then $\\varphi(E[X])\\le E[\\varphi(X)]$. If $\\varphi$ is concave, the inequality reverses.</p><p>For discrete $X$, convexity says $\\varphi(\\sum_i p_ix_i)\\le\\sum_i p_i\\varphi(x_i)$, which is exactly Jensen.</p><p><b>Assumptions that matter:</b> $\\varphi$ must be convex on the range of $X$; expectations must exist; equality holds for affine functions or constant inputs under strict convexity.</p>",
+    "motivation": "<p>Linear functions commute with averaging, but curved functions generally do not. For a convex function, the graph lies below the chord between two points. That geometry implies that applying the function to an average is no larger than averaging the function values.</p><p>The probability version treats the weights in a convex combination as probabilities. A random variable is an average over its possible values, and the inequality compares two orders of operation. Concave functions reverse the direction, which is why logarithms and square roots behave differently from squares.</p>",
+    "definition": "<p><b>Jensen's inequality</b> states the lesson's probability object or rule. $$f(E[X])\\le E[f(X)]$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Let $X$ be $0$ or $2$ equally likely and $\\varphi(x)=x^2$. Verify Jensen.",
       "skills": [
@@ -9396,34 +10661,34 @@
     ],
     "applications": [
       {
-        "title": "Convex losses",
-        "background": "Convex losses penalize variability in errors.",
-        "numbers": "Errors $-1$ and $1$ have mean $0$, but mean squared loss $1$."
+        "title": "Square loss",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$E[X^2]\\ge(E[X])^2$."
       },
       {
-        "title": "Variational bounds",
-        "background": "Jensen with log creates tractable likelihood lower bounds.",
-        "numbers": "For $1$ and $4$, $E[\\log X]=0.693$ and $\\log E[X]=0.916$."
+        "title": "Log utility",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "is concave, so $E[\\log X]\\le\\log E[X]$."
       },
       {
-        "title": "Risk aversion",
-        "background": "Concave utility values certainty.",
-        "numbers": "$u(w)=\\sqrt w$ gives expected utility $5$ for $0$ or $100$, while $u(50)=7.07$."
+        "title": "Sqrt concavity",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "average of $\\sqrt1$ and $\\sqrt9$ is $2$, while $\\sqrt5=2.2361$."
       },
       {
-        "title": "Regularization",
-        "background": "Convex penalties grow with spread.",
-        "numbers": "Weights $0$ and $4$ average squared penalty $8$, but average weight $2$ has penalty $4$."
+        "title": "Risk penalty",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "variance appears because squared average error is below average squared error."
       },
       {
-        "title": "AM-GM",
-        "background": "Jensen for concave log implies arithmetic mean beats geometric mean.",
-        "numbers": "For $2$ and $8$, geometric mean $4$ is below arithmetic mean $5$."
+        "title": "ELBO style",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "concavity of log moves expectation inside as an upper direction."
       },
       {
-        "title": "Planning under uncertainty",
-        "background": "Convex costs make uncertain demand expensive.",
-        "numbers": "Demand $5$ or $15$ has expected squared cost $125$, above cost at mean $100$."
+        "title": "Absolute value",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$E|X|\\ge|E[X]|$."
       }
     ],
     "applicationsClose": "Jensen is curvature meeting uncertainty: convexity makes spread costly, concavity makes smoothing valuable.",
@@ -9432,6 +10697,43 @@
       "For concave functions such as $\\log$, the inequality reverses.",
       "Jensen explains why $E[X^2]\\ge(E[X])^2$.",
       "It is central to convex optimization and variational bounds."
+    ],
+    "connectionsProse": "<p>Jensen’s inequality connects probability with convexity. It compares applying a function after averaging with averaging after applying the function. This is important whenever nonlinear losses, utilities, penalties, or transformations appear. It also explains common inequalities involving squares, absolute values, logarithms, and square roots.</p>",
+    "symbols": [
+      {
+        "sym": "$f$",
+        "desc": "convex"
+      },
+      {
+        "sym": "$\\lambda$",
+        "desc": "weight"
+      },
+      {
+        "sym": "$E$",
+        "desc": "expectation"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For two points, convexity says $f(\\lambda x+(1-\\lambda)y)\\le\\lambda f(x)+(1-\\lambda)f(y)$.",
+        "result": "For two points, convexity says $f(\\lambda x+(1-\\lambda)y)\\le\\lambda f(x)+(1-\\lambda)f(y)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Interpret $\\lambda$ and $1-\\lambda$ as probabilities of a two-valued random variable.",
+        "result": "Interpret $\\lambda$ and $1-\\lambda$ as probabilities of a two-valued random variable.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Then the left side is $f(E[X])$ and the right side is $E[f(X)]$.",
+        "result": "Then the left side is $f(E[X])$ and the right side is $E[f(X)]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Approximate a general distribution by finite weighted points and take limits",
+        "result": "$f(E[X])\\le E[f(X)]$ for convex $f$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-35"
@@ -9461,8 +10763,8 @@
         "estimators"
       ]
     },
-    "motivation": "<p>One toss is noisy; many tosses reveal the coin. That everyday trust in averages is a theorem.</p><p>The Law of Large Numbers says independent sample averages converge toward the population expectation.</p>",
-    "definition": "<p>If $X_1,\\dots,X_n$ are iid with mean $\\mu$ and finite variance $\\sigma^2$, then $\\bar X_n=\\dfrac1n\\sum_iX_i$ satisfies $P(|\\bar X_n-\\mu|\\ge\\varepsilon)\\to0$ for every $\\varepsilon>0$.</p><p>Chebyshev proves this finite-variance version because $E[\\bar X_n]=\\mu$ and $\\operatorname{Var}(\\bar X_n)=\\sigma^2/n$.</p><p><b>Assumptions that matter:</b> this version uses independence, identical distribution, and finite variance; convergence is about large samples, not guaranteed accuracy in every small sample.</p>",
+    "motivation": "<p>Each observation contains noise, but averaging independent observations reduces that noise. The mean of the average remains the true mean, while the variance of the average shrinks by a factor of n. This is the mathematical reason repeated measurements become more stable.</p><p>Chebyshev’s inequality converts the shrinking variance into a probability statement. For any fixed tolerance, the probability that the sample average misses the mean by at least that tolerance goes to zero. The theorem says convergence happens in probability, not that every finite sample equals the mean.</p>",
+    "definition": "<p><b>The Law of Large Numbers</b> states the lesson's probability object or rule. $$P(|\\bar X_n-\\mu|\\ge\\epsilon)\\le\\frac{\\sigma^2}{n\\epsilon^2}\\to0$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Iid observations have mean $50$ and variance $25$. Bound $P(|\\bar X_{100}-50|\\ge2)$.",
       "skills": [
@@ -9660,34 +10962,34 @@
     ],
     "applications": [
       {
-        "title": "Monte Carlo integration",
-        "background": "Random integrals are estimated by sample averages.",
-        "numbers": "An average $0.312$ over $10000$ draws estimates $E[g(U)]$ as $0.312$."
+        "title": "Coin flips",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with $p=0.5$, $n=10000$, sd of sample proportion is $0.005$."
       },
       {
-        "title": "Validation metrics",
-        "background": "Accuracy and loss are sample averages.",
-        "numbers": "Accuracy $0.9$ with $n=1000$ has variance $0.09/1000=0.00009$."
+        "title": "Ratings",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "variance 4, $n=400$, average variance $0.01$."
       },
       {
-        "title": "A/B tests",
-        "background": "Group averages estimate population effects.",
-        "numbers": "Conversion mean $0.06$ over $5000$ users gives expected conversions $300$."
+        "title": "Monte Carlo",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "variance 9, $n=900$, standard error $0.1$."
       },
       {
-        "title": "Stochastic gradients",
-        "background": "Mini-batch gradients average example gradients.",
-        "numbers": "Coordinate variance $16$ with batch $64$ becomes $0.25$."
+        "title": "A/B metric",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "more users shrink noise like $1/\\sqrt n$."
       },
       {
-        "title": "Sensor averaging",
-        "background": "Repeated readings reduce independent noise.",
-        "numbers": "Noise sd $3$ over $9$ readings gives average noise sd $1$."
+        "title": "Manufacturing",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "average fill weight stabilizes across batches."
       },
       {
-        "title": "Simulation testing",
-        "background": "Observed failure rates stabilize over many trials.",
-        "numbers": "Failure probability $0.002$ over $100000$ trials gives expected failures $200$."
+        "title": "Dice average",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "converges to $3.5$."
       }
     ],
     "applicationsClose": "The Law of Large Numbers is why repeated independent measurements become trustworthy averages.",
@@ -9696,6 +10998,48 @@
       "The sample mean has variance $\\sigma^2/n$.",
       "Chebyshev gives a clean proof of the weak law.",
       "The LLN justifies Monte Carlo, validation metrics, and A/B averages."
+    ],
+    "connectionsProse": "<p>The Law of Large Numbers turns expectation into an observable long-run average. It uses independence, variance, and Chebyshev’s inequality to show that sample averages stabilize near the true mean. This result justifies estimating population means with repeated samples. It also sets up the Central Limit Theorem, which describes the remaining fluctuation around the mean.</p>",
+    "symbols": [
+      {
+        "sym": "$\\bar X_n$",
+        "desc": "sample average"
+      },
+      {
+        "sym": "$\\epsilon$",
+        "desc": "tolerance"
+      },
+      {
+        "sym": "$n$",
+        "desc": "sample size"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $\\bar X_n=(X_1+\\cdots+X_n)/n$ with independent variables of mean $\\mu$ and variance $\\sigma^2$.",
+        "result": "Let $\\bar X_n=(X_1+\\cdots+X_n)/n$ with independent variables of mean $\\mu$ and variance $\\sigma^2$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Linearity",
+        "result": "$E[\\bar X_n]=\\mu$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Independence",
+        "result": "$\\operatorname{Var}(\\bar X_n)=\\frac{1}{n^2}n\\sigma^2=\\sigma^2/n$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Apply Chebyshev",
+        "result": "$P(|\\bar X_n-\\mu|\\ge\\epsilon)\\le\\sigma^2/(n\\epsilon^2)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "As $n\\to\\infty$, the bound goes to $0$, proving convergence in probability.",
+        "result": "As $n\\to\\infty$, the bound goes to $0$, proving convergence in probability.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-36"
@@ -9724,8 +11068,8 @@
         "asymptotics"
       ]
     },
-    "motivation": "<p>The Law of Large Numbers says averages get close. The Central Limit Theorem describes the remaining error.</p><p>After centering and scaling, many different source distributions lead to the same bell-shaped normal limit.</p>",
-    "definition": "<p>If $X_1,\\dots,X_n$ are iid with mean $\\mu$ and variance $\\sigma^2>0$, then $\\dfrac{\\sqrt n(\\bar X_n-\\mu)}{\\sigma}$ converges in distribution to $\\mathcal{N}(0,1)$. Thus $\\bar X_n\\approx\\mathcal{N}(\\mu,\\sigma^2/n)$ for large $n$.</p><p>The $\\sqrt n$ appears because the standard deviation of $\\bar X_n$ is $\\sigma/\\sqrt n$.</p><p><b>Assumptions that matter:</b> the classical form uses iid samples and finite nonzero variance; approximation quality depends on tails and sample size.</p>",
+    "motivation": "<p>Suppose individual observations have mean $\\mu$ and standard deviation $\\sigma$. The sample average $\\bar X_n$ still has mean $\\mu$, but its standard deviation is smaller: $\\sigma/\\sqrt n$. That explains the scale. If the sample size is multiplied by $4$, the typical error in the average is cut in half.</p><p>The deeper point is the shape. A single observation may be skewed, discrete, or bounded, but a sum of many independent observations is built by repeatedly averaging independent noise. After centering by $\\mu$ and scaling by $\\sigma/\\sqrt n$, the linear part of the distribution has been removed and the variance has been normalized to $1$. The terms beyond variance become less important as $n$ grows. What remains is the standard normal shape.</p><p>The practical reading is direct. For $n$ large enough and no single observation dominating the sum, probabilities about $\\bar X_n$ can be estimated with a normal $z$-score. If $\\mu=100$, $\\sigma=15$, and $n=36$, then $\\mathrm{sd}(\\bar X_n)=15/6=2.5$, so $\\bar X_n=105$ is two standard errors above the mean and $P(\\bar X_n>105)\\approx P(Z>2)=0.0228$.</p>",
+    "definition": "<p><b>The Central Limit Theorem</b> states the lesson's probability object or rule. $$\\frac{\\bar X_n-\\mu}{\\sigma/\\sqrt n}\\Rightarrow \\mathcal N(0,1)$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "A population has mean $100$, sd $15$, and $n=36$. Approximate $P(\\bar X>105)$.",
       "skills": [
@@ -9923,34 +11267,34 @@
     ],
     "applications": [
       {
-        "title": "Confidence intervals",
-        "background": "Mean intervals use approximate normality of sample means.",
-        "numbers": "$\\bar x=12$, $s=5$, $n=100$ gives rough $95\\%$ interval $12\\pm0.98$."
+        "title": "Average score monitoring.",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "With $\\mu=100$, $\\sigma=15$, $n=36$, $P(\\bar X>105)=P(Z>2)=0.0228$."
       },
       {
-        "title": "A/B proportions",
-        "background": "Conversion-rate estimates are often normal for large samples.",
-        "numbers": "For $p=0.10$, $n=1000$, standard error is $\\sqrt{0.09/1000}\\approx0.0095$."
+        "title": "A/B lift estimate.",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "If per-user lift has $\\sigma=20$ and $n=400$, the standard error is $20/20=1$, so a measured lift of $2.5$ is $z=2.5$ and has one-sided tail $0.0062$."
       },
       {
-        "title": "Gradient noise",
-        "background": "Averaged gradient coordinates can look normal by aggregation.",
-        "numbers": "Variance $25$ with batch $100$ gives average sd $0.5$."
+        "title": "Polling proportion.",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "For $p=0.52$, $n=1600$, $\\mathrm{se}=\\sqrt{0.52\\cdot0.48/1600}=0.0125$, so $0.50$ is about $1.60$ standard errors below $0.52$."
       },
       {
-        "title": "Polling",
-        "background": "Margins of error come from CLT standard errors.",
-        "numbers": "Worst-case $p=0.5$, $n=1600$ gives standard error $0.0125$."
+        "title": "Batch loss average.",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "If example losses have $\\sigma=3$ and batch size $64$, the average loss has standard error $3/8=0.375$."
       },
       {
-        "title": "Average latency",
-        "background": "Average latency is more normal than individual skewed latency.",
-        "numbers": "Request sd $80$ ms over $64$ requests gives average sd $10$ ms."
+        "title": "Manufacturing fill weights.",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "With $\\mu=500$ g, $\\sigma=12$ g, $n=36$, the sample-mean standard error is $2$ g, so $\\bar X<496$ is about $P(Z<-2)=0.0228$."
       },
       {
-        "title": "Bell curves in nature",
-        "background": "Many small independent causes add toward normality.",
-        "numbers": "$50$ sources each variance $0.02$ give total variance $1$."
+        "title": "Monte Carlo mean.",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "If simulated payoff variance is $25$, then $10{,}000$ draws give standard error $5/100=0.05$."
       }
     ],
     "applicationsClose": "The Central Limit Theorem explains why normal calculations appear whenever many small independent effects are averaged.",
@@ -9959,6 +11303,98 @@
       "For large $n$, $\\bar X_n\\approx\\mathcal{N}(\\mu,\\sigma^2/n)$.",
       "The standard error is $\\sigma/\\sqrt n$.",
       "The CLT supports normal approximations for means, sums, and proportions."
+    ],
+    "connectionsProse": "<p>This lesson gathers several tools from the section into one result. Expectation gives the long-run center of a random quantity, variance measures its spread, and independence lets the variation in separate samples combine in a controlled way. The Law of Large Numbers says that sample averages settle near the mean. The Central Limit Theorem adds the shape of the remaining error: after the average is centered and scaled by its standard error, its distribution becomes approximately normal.</p><p>This is why normal curves appear in measurement error, polling, A/B tests, stochastic optimization, and confidence intervals even when the original data are not normal. The theorem is not saying that every dataset is normal. It says that sums and averages of many independent small contributions have a normal limiting shape after the correct centering and scaling.</p>",
+    "symbols": [
+      {
+        "sym": "$X_i$",
+        "desc": "are the original observations"
+      },
+      {
+        "sym": "$\\mu$",
+        "desc": "is their mean"
+      },
+      {
+        "sym": "$\\sigma$",
+        "desc": "is their standard deviation"
+      },
+      {
+        "sym": "$\\bar X_n$",
+        "desc": "is the sample average"
+      },
+      {
+        "sym": "$\\Rightarrow$",
+        "desc": "means convergence in distribution"
+      },
+      {
+        "sym": "$\\varphi_X(t)$",
+        "desc": "is the characteristic function"
+      },
+      {
+        "sym": "$t$",
+        "desc": "is a frequency argument"
+      },
+      {
+        "sym": "$o(s^2)$",
+        "desc": "means a remainder that is small compared with $s^2$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define standardized variables $Y_i=(X_i-\\mu)/\\sigma$,",
+        "result": "each $Y_i$ has mean $0$ and variance $1$; this removes location and scale before taking a limit.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Rewrite the normalized average as $Z_n=\\frac{\\bar X_n-\\mu}{\\sigma/\\sqrt n}=\\frac{1}{\\sqrt n}\\sum_{i=1}^n Y_i$; this puts the whole problem into the form of a standardized sum.",
+        "result": "Rewrite the normalized average as $Z_n=\\frac{\\bar X_n-\\mu}{\\sigma/\\sqrt n}=\\frac{1}{\\sqrt n}\\sum_{i=1}^n Y_i$; this puts the whole problem into the form of a standardized sum.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Use the characteristic function $\\varphi_X(t)=\\mathbb E[e^{itX}]$; for independent variables, the characteristic function of a sum is the product of the factors.",
+        "result": "Use the characteristic function $\\varphi_X(t)=\\mathbb E[e^{itX}]$; for independent variables, the characteristic function of a sum is the product of the factors.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Apply that product rule to $Z_n$",
+        "result": "$\\varphi_{Z_n}(t)=\\prod_{i=1}^n\\varphi_Y(t/\\sqrt n)=[\\varphi_Y(t/\\sqrt n)]^n$; the factor $t/\\sqrt n$ appears because each $Y_i$ is scaled by $1/\\sqrt n$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Expand one factor near $0$",
+        "result": "$\\varphi_Y(s)=1+s\\varphi_Y'(0)+\\frac{s^2}{2}\\varphi_Y''(0)+o(s^2)$; Taylor expansion captures the small argument $s=t/\\sqrt n$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Substitute the standardized moments",
+        "result": "$\\varphi_Y(0)=1$, $\\varphi_Y'(0)=i\\mathbb E[Y]=0$, and $\\varphi_Y''(0)=-\\mathbb E[Y^2]=-1$; mean $0$ removes the linear term and variance $1$ fixes the quadratic term.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Therefore $\\varphi_Y(s)=1-\\frac{s^2}{2}+o(s^2)$; all higher details are smaller than $s^2$ near zero.",
+        "result": "Therefore $\\varphi_Y(s)=1-\\frac{s^2}{2}+o(s^2)$; all higher details are smaller than $s^2$ near zero.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Put $s=t/\\sqrt n$",
+        "result": "$\\varphi_Y(t/\\sqrt n)=1-\\frac{t^2}{2n}+o(1/n)$; the error shrinks on the same scale as $1/n$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Raise to the $n$th power",
+        "result": "$\\varphi_{Z_n}(t)=\\left(1-\\frac{t^2}{2n}+o(1/n)\\right)^n$; this is the accumulated effect of $n$ small factors.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Use $(1+a/n)^n\\to e^a$ with $a=-t^2/2$",
+        "result": "$\\varphi_{Z_n}(t)\\to e^{-t^2/2}$; this is the limiting characteristic function.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Recognize $e^{-t^2/2}$ as the characteristic function of $\\mathcal N(0,1)$; since characteristic functions determine distributions, $Z_n\\Rightarrow\\mathcal N(0,1)$.",
+        "result": "Recognize $e^{-t^2/2}$ as the characteristic function of $\\mathcal N(0,1)$; since characteristic functions determine distributions, $Z_n\\Rightarrow\\mathcal N(0,1)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-37"
@@ -9987,8 +11423,8 @@
         "exponential bounds"
       ]
     },
-    "motivation": "<p>Chebyshev uses variance and gives a broad guarantee. If each observation is bounded, we can do better.</p><p>Hoeffding gives an explicit exponential tail bound for independent bounded averages.</p>",
-    "definition": "<p>If independent $X_i\\in[0,1]$ and $\\bar X=\\dfrac1n\\sum_iX_i$, then $P(|\\bar X-E\\bar X|\\ge t)\\le2e^{-2nt^2}$.</p><p>Boundedness prevents a single observation from dominating, and independence makes repeated deviations exponentially unlikely.</p><p><b>Assumptions that matter:</b> observations must be independent and bounded; the displayed form is two-sided for $[0,1]$ variables; it is distribution-free within those limits.</p>",
+    "motivation": "<p>When each observation is trapped inside a fixed interval, large deviations of the average require many observations to lean in the same direction. Independence makes that coordinated movement increasingly unlikely as n grows. Hoeffding’s inequality quantifies this decay.</p><p>The proof strategy uses exponential moments rather than only variance. Center the variables, bound each centered MGF using the range, multiply the bounds by independence, and apply Chernoff’s method. Optimizing the exponential bound gives a probability that shrinks like an exponential in n epsilon squared.</p>",
+    "definition": "<p><b>Hoeffding's inequality</b> states the lesson's probability object or rule. $$P(\\bar X-E\\bar X\\ge\\epsilon)\\le\\exp(-2n\\epsilon^2/(b-a)^2)$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "For $n=1000$ independent $0$-$1$ validation indicators, bound $P(|\\hat p-p|\\ge0.05)$.",
       "skills": [
@@ -10186,34 +11622,34 @@
     ],
     "applications": [
       {
-        "title": "Generalization bounds",
-        "background": "Bounded losses use Hoeffding to compare sample and population averages.",
-        "numbers": "$n=10000$, $t=0.02$ gives $2e^{-8}\\approx0.00067$."
+        "title": "Coin average",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$n=100$, $\\epsilon=0.1$ gives two-sided bound $0.2707$."
       },
       {
-        "title": "A/B dashboards",
-        "background": "Conversion indicators are bounded Bernoulli variables.",
-        "numbers": "$n=5000$, $t=0.01$ gives $2e^{-1}\\approx0.736$."
+        "title": "Ratings in [1,5]",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "range 4 changes denominator to 16."
       },
       {
-        "title": "Bandits",
-        "background": "Confidence bounds guide exploration.",
-        "numbers": "After $1000$ pulls, radius $\\sqrt{\\ln40/2000}\\approx0.043$."
+        "title": "Bounded loss [0,1]",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "with $n=1000$, $\\epsilon=0.05$ gives bound $0.0135$."
       },
       {
-        "title": "Randomized tests",
-        "background": "Pass-fail tests fit bounded concentration.",
-        "numbers": "$n=2000$, $t=0.03$ gives $2e^{-3.6}\\approx0.0546$."
+        "title": "A/B click rate",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "uses bounded Bernoulli outcomes."
       },
       {
-        "title": "CTR estimation",
-        "background": "Clicks are $0$-$1$ outcomes.",
-        "numbers": "$n=20000$, $t=0.005$ gives $2e^{-1}\\approx0.736$."
+        "title": "Monte Carlo bounded payoff",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "certifies sample error."
       },
       {
-        "title": "Bounded ratings",
-        "background": "Ratings can be rescaled to apply Hoeffding.",
-        "numbers": "For ratings in $[1,5]$, $n=400$, $t=0.5$, one-sided bound is $e^{-12.5}\\approx0.0000037$."
+        "title": "Validation accuracy",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$n=10{,}000$, $\\epsilon=0.01$ bound is $2e^{-2}=0.2707$."
       }
     ],
     "applicationsClose": "Hoeffding turns bounded independent data into explicit confidence, not just eventual convergence.",
@@ -10222,6 +11658,53 @@
       "Boundedness and independence give exponential concentration.",
       "The exponent grows with $n$ and $t^2$.",
       "Hoeffding supports learning bounds, bandits, and bounded metric estimates."
+    ],
+    "connectionsProse": "<p>Hoeffding’s inequality is a concentration bound for averages of independent bounded variables. It uses more information than Chebyshev’s inequality, because boundedness limits how much any one observation can move the average. In return, it gives an exponential tail bound. This is useful for bounded losses, validation accuracy, click rates, and Monte Carlo estimates.</p>",
+    "symbols": [
+      {
+        "sym": "$[a,b]$",
+        "desc": "bounded range"
+      },
+      {
+        "sym": "$\\epsilon$",
+        "desc": "deviation"
+      },
+      {
+        "sym": "$n$",
+        "desc": "sample size"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let independent $X_i\\in[a_i,b_i]$ and $\\bar X$ be their average.",
+        "result": "Let independent $X_i\\in[a_i,b_i]$ and $\\bar X$ be their average.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Center each variable",
+        "result": "its mean so the average deviation is a sum of bounded centered terms.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Hoeffding's lemma bounds the MGF of each centered term",
+        "result": "an exponential quadratic in its range.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Multiply MGFs using independence.",
+        "result": "Multiply MGFs using independence.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Apply Chernoff's method $P(S\\ge t)\\le e^{-\\lambda t}E[e^{\\lambda S}]$.",
+        "result": "Apply Chernoff's method $P(S\\ge t)\\le e^{-\\lambda t}E[e^{\\lambda S}]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Optimize over $\\lambda$",
+        "result": "$P(\\bar X-E\\bar X\\ge\\epsilon)\\le\\exp(-2n\\epsilon^2/(b-a)^2)$ for common range $[a,b]$; double it for two-sided deviation.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-38"
@@ -10251,8 +11734,8 @@
         "eigenvalues"
       ]
     },
-    "motivation": "<p>The one-dimensional normal has a mean and variance. ML features are usually vectors, so we also need covariance between coordinates.</p><p>The multivariate Gaussian gives a complete vector normal model: a center point, an uncertainty ellipsoid, and clean behavior under linear transformations.</p>",
-    "definition": "<p>A vector $X\\in\\mathbb{R}^d$ has distribution $\\mathcal{N}(\\mu,\\Sigma)$ with density $f(x)=\\dfrac{1}{(2\\pi)^{d/2}|\\Sigma|^{1/2}}\\exp\\left(-\\dfrac12(x-\\mu)^T\\Sigma^{-1}(x-\\mu)\\right)$ when $\\Sigma$ is positive definite.</p><p>The quadratic form measures distance in covariance units. Linear maps preserve Gaussianity: if $X\\sim\\mathcal{N}(\\mu,\\Sigma)$, then $AX+b\\sim\\mathcal{N}(A\\mu+b,A\\Sigma A^T)$.</p><p><b>Assumptions that matter:</b> the density formula needs positive definite covariance; semidefinite covariance gives a degenerate Gaussian; and for Gaussian vectors, zero covariance implies independence.</p>",
+    "motivation": "<p>A vector-valued measurement often has components that vary together. Modeling each coordinate separately loses information about correlation and joint spread. The multivariate Gaussian keeps that information through the covariance matrix.</p><p>The construction starts from independent standard normal coordinates and applies a linear transformation. The transformation shifts the center to the mean vector and reshapes the spherical standard normal into an ellipsoid determined by Sigma. The density must include both the quadratic Mahalanobis distance and the determinant factor that accounts for volume scaling.</p>",
+    "definition": "<p><b>The multivariate Gaussian</b> states the lesson's probability object or rule. $$f(x)=\\frac{1}{(2\\pi)^{d/2}|\\Sigma|^{1/2}}\\exp[-\\frac12(x-\\mu)^T\\Sigma^{-1}(x-\\mu)]$$</p><p><b>Assumptions that matter:</b> apply the support, partition, conditioning, independence, boundedness, finite-moment, or positive-scale conditions stated in the plan before using the displayed rule.</p>",
     "worked": {
       "problem": "Let $X\\sim\\mathcal{N}(\\mu,\\Sigma)$ with $\\mu=(2,1)^T$ and $\\Sigma=\\begin{pmatrix}4&1\\\\1&9\\end{pmatrix}$. For $S=[1,2]X+3$, find the distribution of $S$.",
       "skills": [
@@ -10450,39 +11933,34 @@
     ],
     "applications": [
       {
-        "title": "Linear classifiers",
-        "background": "A linear score of Gaussian embeddings is Gaussian.",
-        "numbers": "If $S\\sim\\mathcal{N}(0.5,1)$, then $P(S>1.5)\\approx0.1587$."
+        "title": "2-D covariance",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$\\begin{bmatrix}4&1\\1&9\\end{bmatrix}$ has determinant $35$."
       },
       {
-        "title": "Mahalanobis anomaly detection",
-        "background": "Gaussian distance accounts for covariance scale.",
-        "numbers": "With variances $4$ and $9$, point $(4,3)$ has score $4^2/4+3^2/9=5$."
+        "title": "At the mean",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": ", density is $1/(2\\pi\\sqrt{35})=0.0269$."
       },
       {
-        "title": "Kalman filters",
-        "background": "Gaussian state beliefs update by mean and covariance propagation.",
-        "numbers": "Variance $2$ plus process-noise variance $0.5$ predicts variance $2.5$."
+        "title": "For $x=(2,3),\\mu=0$",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": ", quadratic form is $12/7=1.7143$."
       },
       {
-        "title": "PCA ellipses",
-        "background": "Covariance eigenvectors are Gaussian ellipse axes.",
-        "numbers": "Covariance $\\begin{pmatrix}5&0\\\\0&1\\end{pmatrix}$ has axis sds $\\sqrt5$ and $1$."
+        "title": "Independent coordinates",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "make $\\Sigma$ diagonal."
       },
       {
-        "title": "Gaussian classifiers",
-        "background": "Class-conditional Gaussians compare likelihoods.",
-        "numbers": "Log-likelihoods $-3.2$ and $-4.5$ with equal priors favor the first by margin $1.3$."
+        "title": "Correlation",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "from covariance 1 and sds 2,3 is $1/6=0.1667$."
       },
       {
-        "title": "Uncertainty propagation",
-        "background": "Linearized models push covariance through matrices.",
-        "numbers": "$A=[2,0]$ and input covariance diag$(0.25,1)$ give output variance $1$."
-      },
-      {
-        "title": "Correlated feature sampling",
-        "background": "Off-diagonal covariance creates realistic feature co-movement.",
-        "numbers": "Variances $1$ and $4$ with correlation $0.75$ imply covariance $0.75\\cdot1\\cdot2=1.5$."
+        "title": "Mahalanobis radius",
+        "background": "Use this setting to read the lesson's probability idea.",
+        "numbers": "$r^2=5.99$ gives the common 95% ellipse in 2-D."
       }
     ],
     "applicationsClose": "The multivariate Gaussian ties together covariance, correlation, transformations, sums, and CLT intuition in one ML-ready distribution.",
@@ -10492,6 +11970,52 @@
       "Linear maps preserve Gaussianity through $A\\mu+b$ and $A\\Sigma A^T$.",
       "For Gaussian vectors, zero covariance implies independence.",
       "It is a capstone model for embeddings, classifiers, PCA, Kalman filters, and anomaly detection."
+    ],
+    "connectionsProse": "<p>The multivariate Gaussian extends the normal distribution from one real-valued variable to a random vector. The mean becomes a vector, and variance becomes a covariance matrix. This matrix controls scale, correlation, and the directions of spread. The lesson connects Gaussian density, transformations, covariance, correlation, and Mahalanobis distance.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mu$",
+        "desc": "mean vector"
+      },
+      {
+        "sym": "$\\Sigma$",
+        "desc": "covariance matrix"
+      },
+      {
+        "sym": "$|\\Sigma|$",
+        "desc": "determinant"
+      },
+      {
+        "sym": "quadratic form is squared Mahalanobis distance",
+        "desc": "notation from the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $Z\\sim\\mathcal N(0,I_d)$ having density $(2\\pi)^{-d/2}\\exp(-z^Tz/2)$.",
+        "result": "Start with $Z\\sim\\mathcal N(0,I_d)$ having density $(2\\pi)^{-d/2}\\exp(-z^Tz/2)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Build $X=\\mu+LZ$ where $LL^T=\\Sigma$.",
+        "result": "Build $X=\\mu+LZ$ where $LL^T=\\Sigma$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Solve $z=L^{-1}(x-\\mu)$,",
+        "result": "$z^Tz=(x-\\mu)^T\\Sigma^{-1}(x-\\mu)$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "The change of variables contributes $|\\det L|^{-1}=|\\Sigma|^{-1/2}$.",
+        "result": "The change of variables contributes $|\\det L|^{-1}=|\\Sigma|^{-1/2}$.",
+        "why": "this is the next justified step in the plan's derivation"
+      },
+      {
+        "do": "Therefore $f(x)=\\frac{1}{(2\\pi)^{d/2}|\\Sigma|^{1/2}}\\exp[-\\frac12(x-\\mu)^T\\Sigma^{-1}(x-\\mu)]$.",
+        "result": "Therefore $f(x)=\\frac{1}{(2\\pi)^{d/2}|\\Sigma|^{1/2}}\\exp[-\\frac12(x-\\mu)^T\\Sigma^{-1}(x-\\mu)]$.",
+        "why": "this is the next justified step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-17-39"

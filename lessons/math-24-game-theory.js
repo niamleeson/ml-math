@@ -28,8 +28,8 @@
         "fixed points"
       ]
     },
-    "motivation": "<p>You already know how to optimize one person's choice: compare the outcomes and pick the best one. Game theory begins when your outcome also depends on what someone else chooses.</p><p>A <b>game</b> names the players, their available actions, and the payoff each player receives after everyone acts. That language is useful for auctions, markets, routing, GANs, and multi-agent learning because it keeps incentives visible instead of hiding them in prose.</p>",
-    "definition": "<p>A finite strategic game has a set of players $N=\\{1,\\ldots,n\\}$, an action set $A_i$ for each player $i$, and a payoff function $u_i:A_1\\times\\cdots\\times A_n\\to\\mathbb{R}$. If the joint action is $a=(a_1,\\ldots,a_n)$, then player $i$ receives $u_i(a)$.</p><p>The key point is that $u_i$ is a function of the whole action profile, not just player $i$'s own action. For two players with actions $a_1$ and $a_2$, changing $a_2$ can change $u_1(a_1,a_2)$ even when $a_1$ stays fixed. That dependence is what makes a game different from ordinary one-person optimization.</p><p><b>Assumptions that matter:</b> payoffs are numerical preferences where larger means better for that player; the listed players and actions are the whole model; and the timing here is simultaneous unless a later lesson says otherwise.</p>",
+    "motivation": "<p>A game is a model of interdependent choice. It names the decision-makers, the actions each can take, and the payoff each receives after everyone acts. The important difference from ordinary optimization is that one player's result depends on what the other players do. A route can be fast if few drivers choose it and slow if many choose it; an ad bid can be profitable or wasteful depending on rival bids.</p><p>The payoff table or payoff rule is the bookkeeping device that keeps these dependencies clear. First choose one action for each player. Those choices form an action profile. Then read the payoff attached to that whole profile, keeping the order of the players fixed. This habit lets every later comparison be made from a player's own point of view without losing track of how the outcome was produced.</p>",
+    "definition": "<p>A <b>game</b> is a mathematical model that names the players, each player's action set, and the payoff each player receives for every action profile.</p><p><b>Assumptions that matter:</b> choose one action for each player, form the action profile, read the ordered payoff pair, and compare payoffs from the viewpoint of each player.</p>",
     "worked": {
       "problem": "Two ad bidders choose High or Low bids. Payoffs are $(u_A,u_B)$: High/High $(2,2)$, High/Low $(5,1)$, Low/High $(1,5)$, Low/Low $(3,3)$. Identify the players, actions, and payoff to A when A chooses High and B chooses Low.",
       "skills": [
@@ -233,34 +233,34 @@
     ],
     "applications": [
       {
-        "title": "Ad auctions",
-        "background": "Advertisers bid against one another, so the value of a bid depends on competing bids. Game models make that dependence explicit.",
-        "numbers": "If A bids High and B bids Low with payoff $(5,1)$, A's payoff is $5$; if both bid High and payoff is $(2,2)$, A loses $3$ payoff points by facing a high rival."
+        "title": "Ad placement auction",
+        "background": "Two advertisers choose high/low bids.",
+        "numbers": "Profile $(H,L)$ gives payoffs $(3,1)$, so advertiser 1 earns $2$ more."
       },
       {
-        "title": "Traffic routing",
-        "background": "Drivers choosing routes create congestion for each other. This is one of the classic examples of strategic externalities.",
-        "numbers": "If two drivers split routes, each travel time is $20$ minutes; if both choose X, each takes $35$ minutes, so each loses $15$ minutes relative to splitting."
+        "title": "Recommendation ranking",
+        "background": "Platform and creator choose promote/not.",
+        "numbers": "$(P,C)$ payoff $(5,4)$ has total welfare $9$."
       },
       {
-        "title": "GAN training",
-        "background": "A generative adversarial network has a generator and discriminator with linked objectives. The generator's success depends on the discriminator's behavior.",
-        "numbers": "If the discriminator accuracy falls from $0.90$ to $0.55$, a generator reward such as $1-\\text{accuracy}$ rises from $0.10$ to $0.45$."
+        "title": "Self-driving merge",
+        "background": "Car A yields and car B goes.",
+        "numbers": "Payoff $(2,4)$, so B gains $2$ over A."
       },
       {
-        "title": "Multi-agent reinforcement learning",
-        "background": "Multiple agents learning in one environment make rewards nonstationary from each other's perspective. A game state clarifies whose action changed the reward.",
-        "numbers": "With two robots choosing Left or Right, there are $2\\cdot2=4$ joint actions at one state."
+        "title": "Adversarial ML",
+        "background": "Defender hardens and attacker probes.",
+        "numbers": "Payoff $(1,-1)$ in zero-sum form sums to $0$."
       },
       {
-        "title": "Security games",
-        "background": "Defenders allocate limited inspection effort while attackers choose targets. Payoffs represent losses, catches, and costs.",
-        "numbers": "If guarding server A costs $2$ and prevents loss $10$ with probability $0.7$, expected prevented loss is $7$, net value $7-2=5$."
+        "title": "Data-sharing",
+        "background": "Two firms share data.",
+        "numbers": "Payoff $(6,6)$, total value $12$."
       },
       {
-        "title": "Recommendation ecosystems",
-        "background": "Platforms, creators, and users can have aligned or conflicting incentives. Game language separates each actor's payoff.",
-        "numbers": "If a creator gains $6$ from exposure and a user loses $2$ from low relevance, the same recommendation can have payoff pair $(6,-2)$."
+        "title": "Routing",
+        "background": "Two drivers choose separate roads.",
+        "numbers": "Payoff $(-20,-20)$ minutes; one shared congested road $(-35,-35)$ is $15$ worse per driver."
       }
     ],
     "applicationsClose": "Across auctions, roads, adversarial models, and teams of agents, the same first move is to name who chooses, what they can choose, and how each outcome is valued.",
@@ -269,6 +269,25 @@
       "A payoff depends on the whole action profile, not only one player's action.",
       "Larger payoff means better for that player within the model.",
       "Expected payoffs average over uncertain actions by other players."
+    ],
+    "connectionsProse": "<p>This opening lesson gives the basic language used throughout game theory. The reader already knows how to describe a choice made by one decision-maker; a game adds the fact that several decision-makers act in the same situation. Once players, actions, and payoffs are named, later lessons can talk precisely about dominance, best responses, equilibrium, and cooperation. The goal here is not to prove a theorem, but to learn how to turn an interdependent situation into a mathematical object.</p>",
+    "symbols": [
+      {
+        "sym": "$N$",
+        "desc": "players"
+      },
+      {
+        "sym": "$A_i$",
+        "desc": "player $i$'s action set"
+      },
+      {
+        "sym": "$a=(a_1,\\dots,a_n)$",
+        "desc": "an action profile"
+      },
+      {
+        "sym": "$u_i(a)$",
+        "desc": "player $i$'s payoff"
+      }
     ]
   });
 
@@ -293,8 +312,8 @@
         "expected value"
       ]
     },
-    "motivation": "<p>Once you can name players and payoffs, the next gift is organization. For two players with a few actions, a table lets you see the whole strategic world at once.</p><p>A <b>normal-form game</b> is that table. Rows are one player's actions, columns are the other's, and each cell stores the payoff pair. This simple format is where many equilibrium ideas become visible by comparing numbers in rows and columns.</p>",
-    "definition": "<p>For a two-player finite game, a normal-form payoff matrix lists player 1's actions as rows and player 2's actions as columns. The cell in row $r$ and column $c$ contains $(u_1(r,c),u_2(r,c))$.</p><p>Reading the table is functional: fixing a column means player 2's action is held constant, so comparing first coordinates down that column compares player 1's options. Fixing a row means player 1's action is held constant, so comparing second coordinates across that row compares player 2's options.</p><p><b>Assumptions that matter:</b> the table represents simultaneous choices; each player knows the listed actions and payoffs in the model; and payoff pairs are ordered consistently, usually row player first and column player second.</p>",
+    "motivation": "<p>A normal-form game puts simultaneous choices into a table. Rows are one player's actions, columns are the other player's actions, and each cell stores the payoff pair. The table makes the whole strategic situation visible at once, so the reader can compare what happens when one player changes action while the other player's action is held fixed.</p><p>This representation is especially helpful because many strategic questions are local comparisons inside the table. Dominance checks compare entries across a row or column. Best-response checks look for the largest payoff against a fixed opponent action. A normal-form table is therefore not just a display; it is the workspace where equilibrium reasoning begins.</p>",
+    "definition": "<p>A <b>normal-form game</b> represents simultaneous choices by listing each player's actions, taking the Cartesian product of action sets, and filling one payoff vector per cell.</p><p><b>Assumptions that matter:</b> players choose actions simultaneously, the row and column labels are fixed, and each cell stores payoffs in a fixed player order.</p>",
     "worked": {
       "problem": "Given rows Top, Bottom and columns Left, Right with payoffs Top/Left $(3,2)$, Top/Right $(0,4)$, Bottom/Left $(5,1)$, Bottom/Right $(2,3)$, find player 1's best row when player 2 chooses Left and player 2's best column when player 1 chooses Top.",
       "skills": [
@@ -508,34 +527,34 @@
     ],
     "applications": [
       {
-        "title": "A/B platform decisions",
-        "background": "A platform and advertiser may each choose aggressive or conservative settings. Normal form shows every combination.",
-        "numbers": "Two actions each give $2\\cdot2=4$ cells; if Aggressive/Conservative gives $(7,3)$, platform payoff is $7$ and advertiser payoff is $3$."
+        "title": "Prisoner's dilemma table",
+        "background": "The cooperation and defection outcomes can be read cell by cell.",
+        "numbers": "$(C,C)=(3,3)$ and $(D,D)=(1,1)$, so mutual cooperation adds $4$ total payoff over mutual defection."
       },
       {
-        "title": "Model competition",
-        "background": "Two teams may choose fast or accurate models. The payoff table can encode latency and quality tradeoffs.",
-        "numbers": "If both choose accurate, payoff $(5,5)$; if one chooses fast against accurate, payoff $(6,3)$ for the fast team and other team."
+        "title": "Ad auction",
+        "background": "A low/high bid table lists every simultaneous bid outcome.",
+        "numbers": "The table has $2\\times2=4$ cells to evaluate."
       },
       {
-        "title": "Pricing games",
-        "background": "Retailers choosing high or low prices form a classic simultaneous game. Tables make undercutting incentives easy to inspect.",
-        "numbers": "If High/High yields $(10,10)$ and Low/High yields $(14,4)$, the row retailer gains $4$ by undercutting."
+        "title": "Model release",
+        "background": "Ship/delay crossed with approve/block gives a normal-form policy table.",
+        "numbers": "There are $4$ policy outcomes."
       },
       {
-        "title": "Cyber defense",
-        "background": "A defender chooses Monitor or Ignore while an attacker chooses Attack or Wait. The normal-form table lists losses and costs.",
-        "numbers": "If Monitor/Attack gives defender payoff $-2$ and Ignore/Attack gives $-10$, monitoring improves defender payoff by $8$."
+        "title": "Routing",
+        "background": "Two drivers with two routes each create congestion cells.",
+        "numbers": "$(A,B)$ gives travel times $(20,22)$, total $42$."
       },
       {
-        "title": "MARL joint action values",
-        "background": "In multi-agent RL, a central critic can store values for joint actions much like a payoff matrix.",
-        "numbers": "With 4 actions for agent A and 3 for agent B, the critic evaluates $4\\cdot3=12$ joint actions per state."
+        "title": "Security patching",
+        "background": "Patch/no-patch by two teams gives risk cells.",
+        "numbers": "Both patch reduces expected loss from $10$ to $2$, a gain of $8$."
       },
       {
-        "title": "GAN objective snapshots",
-        "background": "A generator choice and discriminator threshold can be discretized to inspect training incentives at a moment in time.",
-        "numbers": "If G1/D1 yields losses $(0.8,0.3)$ and G2/D1 yields $(0.6,0.5)$, a payoff defined as negative loss gives generator payoffs $-0.8$ and $-0.6$."
+        "title": "Two-agent RL matrix game",
+        "background": "Two actions per agent create a reward matrix.",
+        "numbers": "Average team reward in cells $8,5,5,2$ is $5$."
       }
     ],
     "applicationsClose": "A normal-form table is modest, but it teaches the essential discipline of holding one choice fixed while comparing another.",
@@ -544,6 +563,29 @@
       "Each cell stores an ordered payoff pair.",
       "Compare first coordinates down a fixed column for player 1.",
       "Compare second coordinates across a fixed row for player 2."
+    ],
+    "connectionsProse": "<p>This lesson turns the parts of a game into a compact table. After players, actions, and payoffs are named, the next useful step is to arrange simultaneous choices so every possible outcome can be inspected. Normal form is the format used for many early examples in game theory: prisoner's dilemma, coordination games, matching pennies, and small auction models. It prepares the reader to scan rows and columns for dominance, best responses, and Nash equilibria.</p>",
+    "symbols": [
+      {
+        "sym": "$R$",
+        "desc": "row player"
+      },
+      {
+        "sym": "$C$",
+        "desc": "column player"
+      },
+      {
+        "sym": "$r\\in A_R$",
+        "desc": "row action"
+      },
+      {
+        "sym": "$c\\in A_C$",
+        "desc": "column action"
+      },
+      {
+        "sym": "$(u_R(r,c),u_C(r,c))$",
+        "desc": "payoff cell"
+      }
     ],
     "prereqs": [
       "math-24-01"
@@ -571,8 +613,8 @@
         "matrices"
       ]
     },
-    "motivation": "<p>You have probably seen decisions that feel robust: no matter what someone else does, one option still looks better. Game theory gives that feeling a precise name.</p><p>A <b>dominant strategy</b> is powerful because it removes strategic guessing. Instead of predicting the other player, you compare your payoffs against each possible action they might take and see whether the same action wins every time.</p>",
-    "definition": "<p>For player $i$, strategy $s_i$ <b>strictly dominates</b> another strategy $t_i$ if $u_i(s_i,s_{-i})>u_i(t_i,s_{-i})$ for every possible strategy profile $s_{-i}$ of the other players. A strategy is strictly dominant if it strictly dominates every other strategy available to that player.</p><p>The condition is column-by-column for a row player and row-by-row for a column player. The word every matters: one exception is enough to destroy strict dominance. Weak dominance replaces $>$ with $\\ge$ everywhere and requires $>$ somewhere.</p><p><b>Assumptions that matter:</b> payoff numbers correctly represent preferences; all relevant opponent actions are listed; strict dominance needs a strict improvement in every opponent case; and weak dominance is useful but more delicate because ties can matter.</p>",
+    "motivation": "<p>A dominant strategy is best no matter what the other player does. It lets a player choose without first predicting the opponent. In a payoff table, that means one row or column gives a higher payoff in every relevant comparison for the player who owns it.</p><p>The strength of the idea is also its limitation. A strictly dominant strategy is simple to justify, but many games do not have one. When it exists, the player can choose it using only the payoff table. When it does not, the player must move to weaker tools such as best responses, Nash equilibrium, or mixed strategies.</p>",
+    "definition": "<p>For player $i$, action $a_i^*$ <b>strictly dominates</b> $a_i$ when it gives a higher payoff against every possible choice of the other players: $$u_i(a_i^*,a_{-i})>u_i(a_i,a_{-i})\\quad\\text{for every }a_{-i}.$$</p><p><b>Assumptions that matter:</b> compare payoffs for the same player, hold the opponents' actions fixed in each comparison, and require the inequality in every opponent case.</p>",
     "worked": {
       "problem": "Rows Up and Down face columns Left and Right. Player 1 payoffs are: Up/Left $4$, Down/Left $2$, Up/Right $3$, Down/Right $1$. Does Up strictly dominate Down for player 1?",
       "skills": [
@@ -777,33 +819,33 @@
     "applications": [
       {
         "title": "Prisoner's dilemma",
-        "background": "The classic dilemma shows how individually dominant choices can produce a collectively worse outcome.",
-        "numbers": "Defect gives $5$ instead of $3$ when the other cooperates and $1$ instead of $0$ when the other defects, so it dominates by margins $2$ and $1$."
+        "background": "Defect beats cooperate under either opponent action.",
+        "numbers": "Defect pays $5$ vs $3$ if the other cooperates and $1$ vs $0$ if the other defects, so defect dominates by margins $2$ and $1$."
       },
       {
-        "title": "Auction bidding rules",
-        "background": "Some auction formats make truthful bidding dominant. This is why second-price auctions are central in mechanism design.",
-        "numbers": "If true value is $10$, bidding $10$ can win with surplus $10-7=3$ when the second price is $7$; overbidding to $12$ risks paying $11$ for value $10$, payoff $-1$."
+        "title": "Spam filtering",
+        "background": "Strict filtering is never worse than lenient filtering in the toy table.",
+        "numbers": "Strict filter payoff $4$ vs lenient $2$ under attack and $3$ vs $3$ under no attack gives weak dominance with gains $2$ and $0$."
       },
       {
-        "title": "Spam filtering actions",
-        "background": "A system may choose Block or Allow under uncertain attacker behavior. Dominance can identify a safe rule if one action is better in all cases.",
-        "numbers": "If Block gives payoffs $8,6$ across two attack types while Allow gives $3,5$, Block strictly dominates because $8>3$ and $6>5$."
+        "title": "Reserve-price auction",
+        "background": "A reserve can be weakly better across demand states.",
+        "numbers": "Setting reserve $10$ beats reserve $0$ by $2$ revenue in high demand and ties in low demand, so it weakly dominates in the toy table."
       },
       {
-        "title": "Feature selection under costs",
-        "background": "A model designer may compare using a costly feature versus skipping it across data regimes. Dominance is rare but valuable.",
-        "numbers": "If using feature F gives validation utilities $0.82-0.03=0.79$ and $0.76-0.03=0.73$, while skipping gives $0.75$ and $0.70$, F dominates in both regimes."
+        "title": "Adversarial training",
+        "background": "A robust model is never worse in the two tested states.",
+        "numbers": "Robust model payoff $7$ vs standard $5$ under attack and $6$ vs $6$ clean gives weak dominance."
       },
       {
-        "title": "Routing protocols",
-        "background": "A packet-routing policy may dominate another if it has lower latency under every congestion scenario.",
-        "numbers": "Policy A latencies $20$ and $35$ ms beat policy B latencies $25$ and $40$ ms by $5$ ms in both cases."
+        "title": "Routing with toll refund",
+        "background": "Route A beats route B in both traffic states.",
+        "numbers": "Route A travel utility $-20$ vs route B $-25$ under light traffic and $-30$ vs $-40$ under heavy traffic, so A dominates by $5$ and $10$."
       },
       {
-        "title": "Multi-agent policies",
-        "background": "In small MARL games, a policy can dominate another across every opponent policy. That lets pruning happen before learning deeper equilibria.",
-        "numbers": "If policy P returns rewards $4,7,6$ against three opponents and Q returns $2,5,6$, P weakly dominates Q because $4\\ge2$, $7\\ge5$, $6\\ge6$, with strict gains twice."
+        "title": "Cache policy",
+        "background": "Caching the popular item wins in both demand cases.",
+        "numbers": "Cache popular item payoff $9$ vs rare item $4$ when demand is popular and $2$ vs $1$ when demand is rare, so popular-item caching dominates."
       }
     ],
     "applicationsClose": "Dominance is the rare strategic shortcut: when it holds, the player's best choice does not depend on prediction.",
@@ -812,6 +854,52 @@
       "Weak dominance means never lower payoff and higher payoff somewhere.",
       "For row players, compare down each fixed column.",
       "Dominant strategies simplify games before equilibrium analysis begins."
+    ],
+    "connectionsProse": "<p>Dominant strategies build directly on the payoff comparisons made in a normal-form table. Instead of trying to predict exactly what another player will do, the player checks whether one action wins against every possible opponent action. This is the cleanest kind of strategic recommendation because it does not depend on beliefs about the opponent. Dominance also prepares the ground for dominated-strategy deletion and for understanding why some equilibria are easy to find.</p>",
+    "symbols": [
+      {
+        "sym": "$a_i^*$",
+        "desc": "candidate dominant action"
+      },
+      {
+        "sym": "$a_i$",
+        "desc": "alternative action"
+      },
+      {
+        "sym": "$a_{-i}$",
+        "desc": "all other players' actions"
+      },
+      {
+        "sym": "$u_i$",
+        "desc": "payoff to player $i$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Fix one possible opponent action $a_{-i}$",
+        "result": "payoffs are comparable in one column",
+        "why": "the opponent's choice must be held fixed"
+      },
+      {
+        "do": "Compare $u_i(a_i^*,a_{-i})$ with $u_i(a_i,a_{-i})$",
+        "result": "$u_i(a_i^*,a_{-i})>u_i(a_i,a_{-i})$",
+        "why": "the candidate must beat the alternative in that case"
+      },
+      {
+        "do": "Repeat for every opponent action",
+        "result": "one inequality for every $a_{-i}$",
+        "why": "dominance must not depend on the opponent's choice"
+      },
+      {
+        "do": "Check whether every inequality points to $a_i^*$",
+        "result": "$a_i^*$ is always better",
+        "why": "the candidate wins in all relevant comparisons"
+      },
+      {
+        "do": "Look for any failing column",
+        "result": "if one column fails, the strategy is not strictly dominant",
+        "why": "strict dominance requires every comparison to succeed"
+      }
     ],
     "prereqs": [
       "math-24-02"
@@ -839,8 +927,8 @@
         "optimization"
       ]
     },
-    "motivation": "<p>Dominant strategies are the bright spotlight. Dominated strategies are the useful shadow: choices that should not survive careful comparison.</p><p>When one strategy is worse than another no matter what opponents do, rational play has a reason to discard it. This pruning is one of the first ways game theory reduces complexity without solving the whole game at once.</p>",
-    "definition": "<p>Strategy $t_i$ is <b>strictly dominated</b> by strategy $s_i$ if $u_i(s_i,s_{-i})>u_i(t_i,s_{-i})$ for every opponent profile $s_{-i}$. It is <b>weakly dominated</b> if $u_i(s_i,s_{-i})\\ge u_i(t_i,s_{-i})$ for every opponent profile and the inequality is strict for at least one profile.</p><p>The definition is the same comparison as dominance, viewed from the losing strategy. A strictly dominated strategy can never be a best response to any pure opponent action because another available strategy gives more in every case.</p><p><b>Assumptions that matter:</b> dominance is judged within the listed strategy set; strict dominated strategies are safest to eliminate; weak elimination can change conclusions if done carelessly; and payoffs are ordinal in the sense that only preference order matters for dominance.</p>",
+    "motivation": "<p>A dominated strategy is never worth playing because another strategy does at least as well in every case and better in some case. The player does not need a detailed forecast of the opponent to reject it. If a replacement action is no worse against every opponent action, the tested action has no strategic advantage left.</p><p>This idea is useful because games can have many actions, and not every listed action deserves equal attention. Deleting dominated actions keeps all rational possibilities while removing clutter. The weak version uses weak inequalities in every case and one strict improvement somewhere, so the replacement is at least as safe and sometimes better.</p>",
+    "definition": "<p>Strategy $a_i$ is <b>weakly dominated</b> by $b_i$ if $b_i$ is no worse against every opponent action and better against at least one: $$u_i(b_i,a_{-i})\\ge u_i(a_i,a_{-i})\\quad\\text{for every }a_{-i},$$ with $>$ for at least one $a_{-i}$.</p><p><b>Assumptions that matter:</b> compare two strategies for the same player, hold the opponents' actions fixed, require no losing comparison, and require at least one strict gain.</p>",
     "worked": {
       "problem": "Player 1 has rows A, B, C. Against columns L and R, payoffs are A $(6,5)$, B $(4,2)$, C $(3,7)$ for player 1. Is B strictly dominated by A?",
       "skills": [
@@ -1044,34 +1132,34 @@
     ],
     "applications": [
       {
-        "title": "Strategy pruning",
-        "background": "Dominated strategies let analysts shrink a game before solving it. This is especially helpful when action sets are large.",
-        "numbers": "If a row's payoffs are $(1,2,1)$ and another row's are $(3,4,2)$, the first row is strictly dominated in all $3$ columns."
+        "title": "Ad bidding",
+        "background": "A low bid is beaten in both rival states.",
+        "numbers": "Bid $1$ has payoffs $(1,1)$ while bid $2$ has $(2,3)$ across two rival states, so bid $1$ is dominated by margins $1$ and $2$."
       },
       {
-        "title": "Automated negotiation",
-        "background": "Agents can remove offers that are worse for themselves under every response. That saves search time.",
-        "numbers": "Offer A utilities $(5,6)$ beat offer B utilities $(3,4)$ across two buyer types, so B can be pruned."
+        "title": "Classifier threshold",
+        "background": "A stricter threshold is no better and sometimes worse.",
+        "numbers": "Threshold $0.9$ gives utility $(4,2)$ and threshold $0.7$ gives $(5,2)$, so $0.9$ is weakly dominated."
       },
       {
-        "title": "Hyperparameter policy choices",
-        "background": "A training controller may drop a policy that never outperforms another across validation regimes.",
-        "numbers": "If scheduler S has accuracies $(0.82,0.80,0.78)$ and T has $(0.79,0.80,0.75)$, T is weakly dominated by S."
+        "title": "Routing",
+        "background": "Road C is slower than road A in both states.",
+        "numbers": "Road C takes $(30,45)$ minutes while road A takes $(25,40)$, so C is dominated by being $5$ minutes slower in both states."
       },
       {
-        "title": "Security allocation",
-        "background": "A defender can discard patrol plans that are worse under every attacker target.",
-        "numbers": "Plan P expected losses $(-2,-4,-3)$ are better than Q losses $(-5,-6,-4)$ because larger utility means less loss in all targets."
+        "title": "Security scans",
+        "background": "Weekly scans catch at least as much risk as monthly scans.",
+        "numbers": "Weekly scans catch $(7,5)$ risks and monthly scans catch $(4,5)$, so monthly is weakly dominated."
       },
       {
-        "title": "Robotics coordination",
-        "background": "A robot team can remove motion primitives that use more energy and arrive later in every scenario.",
-        "numbers": "Primitive A takes $(5,7)$ seconds while B takes $(6,9)$ seconds; if payoff is negative time, B is strictly dominated."
+        "title": "Auction mechanism",
+        "background": "A lower reserve gives more revenue in both demand cases.",
+        "numbers": "Reserve $20$ revenue $(8,1)$ vs reserve $10$ revenue $(9,3)$, so reserve $20$ is dominated."
       },
       {
-        "title": "GAN discriminator thresholds",
-        "background": "During analysis, a threshold choice can be dominated if another threshold improves detection without hurting generator feedback in all sampled cases.",
-        "numbers": "Threshold T1 utilities $(0.6,0.7,0.65)$ beat T2 $(0.5,0.7,0.60)$, so T2 is weakly dominated."
+        "title": "RL action pruning",
+        "background": "Action R weakly beats action L across opponent actions.",
+        "numbers": "Action L yields rewards $(0,1,1)$ and action R yields $(1,1,2)$ across opponent actions, so L is weakly dominated with two strict gains."
       }
     ],
     "applicationsClose": "Dominated strategies are the choices the table itself gives you permission to doubt.",
@@ -1080,6 +1168,57 @@
       "A weakly dominated strategy is never better and sometimes worse.",
       "Strict dominated strategies are never best responses while the dominator remains.",
       "Eliminating weakly dominated strategies requires more care than eliminating strictly dominated ones."
+    ],
+    "connectionsProse": "<p>Dominated strategies are the other side of dominant-strategy reasoning. Instead of asking which action is always best, the player asks whether some action is never needed. This lesson uses the same payoff-table comparisons as dominance, but its practical purpose is simplification. Removing choices that rational players would avoid makes later equilibrium analysis smaller and clearer.</p>",
+    "symbols": [
+      {
+        "sym": "$a_i$",
+        "desc": "tested action"
+      },
+      {
+        "sym": "$b_i$",
+        "desc": "dominating action"
+      },
+      {
+        "sym": "$\\ge$",
+        "desc": "weak inequality, meaning no worse"
+      },
+      {
+        "sym": "$>$",
+        "desc": "strict inequality, meaning better somewhere"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Choose the strategy to test",
+        "result": "$a_i$",
+        "why": "dominance is a claim about a particular action"
+      },
+      {
+        "do": "Choose a candidate replacement",
+        "result": "$b_i$",
+        "why": "the tested action must be compared with a specific alternative"
+      },
+      {
+        "do": "Compare the two payoffs in each opponent column",
+        "result": "$u_i(b_i,a_{-i})$ versus $u_i(a_i,a_{-i})$",
+        "why": "each comparison holds the opponent's action fixed"
+      },
+      {
+        "do": "Require no column where $a_i$ beats $b_i$",
+        "result": "$u_i(b_i,a_{-i})\\ge u_i(a_i,a_{-i})$ in every column",
+        "why": "otherwise $a_i$ would still be useful"
+      },
+      {
+        "do": "Require at least one strict improvement",
+        "result": "$u_i(b_i,a_{-i})>u_i(a_i,a_{-i})$ somewhere",
+        "why": "the two strategies should not be merely identical"
+      },
+      {
+        "do": "Mark $a_i$ dominated and remove it",
+        "result": "$a_i$ is excluded from rational-choice analysis",
+        "why": "$b_i$ is at least as safe and sometimes better"
+      }
     ],
     "prereqs": [
       "math-24-03"
@@ -1107,8 +1246,8 @@
         "optimization"
       ]
     },
-    "motivation": "<p>Sometimes one dominated strategy is only the first loose thread. Once you remove it, another strategy may become dominated in the smaller game.</p><p><b>Iterated elimination</b> follows that thread carefully. It is not magic; it is repeated comparison under a shrinking list of possibilities. The reward is a smaller game and sometimes a single predicted outcome.</p>",
-    "definition": "<p><b>Iterated elimination of strictly dominated strategies</b> repeatedly removes any strategy that is strictly dominated in the current reduced game. After each removal, dominance comparisons are recomputed using only the remaining opponent strategies.</p><p>The recomputation matters because a strategy might not be dominated against all original columns, but can become dominated after a column is removed. For strict dominance in finite games, the final reduced set does not depend on the order of elimination in the same troublesome way weak dominance can.</p><p><b>Assumptions that matter:</b> players are treated as rational enough not to use strictly dominated strategies; this reasoning is common knowledge for multiple rounds of deletion; and weakly dominated strategies require caution because deletion order can affect what remains.</p>",
+    "motivation": "<p>Iterated elimination removes dominated strategies, then checks again because the smaller game can reveal new dominated choices. It is a disciplined way to simplify strategic reasoning. Each deletion says that a rational player would not need that action against the currently relevant opponent choices.</p><p>The word &quot;iterated&quot; matters because dominance is evaluated relative to the action sets still under consideration. A strategy that is not dominated in the original game may become dominated after an opponent's unreasonable action is removed. If the process leaves a single action profile, the game has a sharp prediction from dominance alone.</p>",
+    "definition": "<p><b>Iterated elimination</b> repeatedly removes dominated strategies and recomputes dominance in the reduced game until no dominated strategies remain.</p><p><b>Assumptions that matter:</b> start from the full action sets, only delete strategies that satisfy the relevant dominance test, and recompute comparisons after each deletion.</p>",
     "worked": {
       "problem": "Player 1 rows A,B and player 2 columns L,R. Payoffs are A/L $(4,2)$, A/R $(4,1)$, B/L $(1,3)$, B/R $(3,0)$. Use strict iterated elimination.",
       "skills": [
@@ -1317,34 +1456,34 @@
     ],
     "applications": [
       {
-        "title": "Solving small games",
-        "background": "Before computing equilibria, economists often delete strictly dominated strategies to shrink the table.",
-        "numbers": "A $4\\times4$ game has $16$ cells; deleting one row and one column leaves $3\\times3=9$ cells."
+        "title": "Three-bid auction",
+        "background": "Dominated bids can be removed in rounds.",
+        "numbers": "Remove bid $0$ dominated by bid $1$ with revenue gains $(1,1,1)$; then bid $3$ becomes dominated by bid $2$ in the reduced game."
       },
       {
-        "title": "Search pruning",
-        "background": "Computer science uses the same spirit when removing actions that cannot be optimal under any remaining case.",
-        "numbers": "If an action is beaten in all $5$ scenarios, deleting it reduces comparisons from $6\\cdot5=30$ to $5\\cdot5=25$."
+        "title": "Security choices",
+        "background": "Patch choices simplify after an unreasonable action is deleted.",
+        "numbers": "Remove no-patch because patch beats it by $4$ under attack and ties clean; remaining hardening choice becomes clear."
       },
       {
-        "title": "Negotiation agents",
-        "background": "Automated negotiators can iteratively remove offers that rational opponents should not accept after earlier pruning.",
-        "numbers": "If 10 offers become 7 after one pass and 5 after another, the search space drops by $50%$."
+        "title": "Routing",
+        "background": "A consistently slower road can be removed.",
+        "numbers": "Road C is $5$ minutes slower than A in every remaining traffic state, so deleting C leaves a $2$-road game."
       },
       {
-        "title": "Security planning",
-        "background": "A defender may remove patrol plans dominated under all surviving attacker strategies, then remove attacks that are no longer attractive.",
-        "numbers": "A $5\\times4$ table has $20$ cells; deleting 2 defender rows and 1 attacker column leaves $3\\times3=9$ cells."
+        "title": "Ad allocation",
+        "background": "A worse creative can be removed before budget decisions.",
+        "numbers": "Creative X has CTR $(1,2)$ and creative Y $(2,3)$ across segments, so X is deleted before budget mixing."
       },
       {
-        "title": "MARL action masking",
-        "background": "In multi-agent RL, safe action masks sometimes remove provably inferior actions before policy updates.",
-        "numbers": "If each of 3 agents has 5 actions, there are $5^3=125$ joint actions; pruning one action per agent leaves $4^3=64$."
+        "title": "Opponent modeling",
+        "background": "An RL agent prunes a losing action before solving the reduced game.",
+        "numbers": "An RL agent prunes action L after rewards $(0,1)$ lose to R's $(2,1)$, reducing a $3\\times3$ game to $2\\times3$."
       },
       {
-        "title": "GAN design choices",
-        "background": "Researchers may compare architectures or objectives under sampled discriminator settings and remove choices that are uniformly worse.",
-        "numbers": "If generator G2 scores $(0.40,0.35,0.42)$ and G1 scores $(0.48,0.39,0.50)$, G2 can be pruned in that sampled table."
+        "title": "Procurement",
+        "background": "A more expensive supplier is dominated in each demand state.",
+        "numbers": "Supplier C cost $(12,15)$ is dominated by supplier A cost $(10,13)$, saving $2$ in both demand states."
       }
     ],
     "applicationsClose": "Iterated elimination is patient reasoning: delete only what the current table proves, then look again.",
@@ -1353,6 +1492,49 @@
       "After each deletion, recompute dominance using only surviving strategies.",
       "Strict elimination is safer and more order-robust than weak elimination.",
       "The method can shrink a game dramatically, but it may not solve every game completely."
+    ],
+    "connectionsProse": "<p>Iterated elimination extends the dominated-strategy test from one comparison to a repeated procedure. After one dominated row or column is removed, the remaining game may reveal new comparisons that were not available before. This lesson links local payoff inequalities to a larger method for simplifying games. It also builds intuition for why reasoning about rationality can proceed in rounds.</p>",
+    "symbols": [
+      {
+        "sym": "$A_i^k$",
+        "desc": "player $i$'s remaining action set after round $k$"
+      },
+      {
+        "sym": "deleted strategies",
+        "desc": "strategies that are not best responses to any remaining belief in the strict-dominance case"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with the full action sets",
+        "result": "$A_i^0$",
+        "why": "no rational option should be excluded prematurely"
+      },
+      {
+        "do": "Find a dominated strategy for one player",
+        "result": "a row or column passes the inequality test from $24$-$04$",
+        "why": "deletion needs a payoff comparison justification"
+      },
+      {
+        "do": "Remove that strategy and its row or column",
+        "result": "a reduced game",
+        "why": "the dominated action is not needed for rational-choice analysis"
+      },
+      {
+        "do": "Recompute dominance in the reduced game",
+        "result": "new comparisons among remaining actions",
+        "why": "comparisons only need to hold against remaining actions"
+      },
+      {
+        "do": "Continue until no dominated strategies remain",
+        "result": "a dominance-reduced game",
+        "why": "the procedure repeats the same rationality screen"
+      },
+      {
+        "do": "Check whether one action profile remains",
+        "result": "the iterated-dominance prediction",
+        "why": "a single surviving profile gives a sharp prediction from dominance alone"
+      }
     ],
     "prereqs": [
       "math-24-04"
@@ -1380,8 +1562,8 @@
         "matrix games"
       ]
     },
-    "motivation": "<p>Dominance asks whether one choice wins against everything. Nash equilibrium asks a softer, more local question: once everyone has chosen, would anyone want to change alone?</p><p>A <b>pure-strategy Nash equilibrium</b> is stable in that precise unilateral sense. It does not mean everyone is happy, fair, or globally optimal. It means each player's action is a best response to the others' current actions.</p>",
-    "definition": "<p>An action profile $a^\\ast=(a_1^\\ast,\\ldots,a_n^\\ast)$ is a <b>Nash equilibrium</b> if for every player $i$ and every alternative action $a_i$, $$u_i(a_i^\\ast,a_{-i}^\\ast)\\ge u_i(a_i,a_{-i}^\\ast).$$ Here $a_{-i}^\\ast$ means the other players' equilibrium actions held fixed.</p><p>The inequality is exactly a no-profitable-deviation test. Hold everyone else still; if player $i$ cannot improve by switching, player $i$ is content. When this holds for every player, the profile is mutually best responding.</p><p><b>Assumptions that matter:</b> deviations are unilateral; payoffs represent preferences; pure equilibrium uses deterministic actions, not probability mixtures; and an equilibrium can be inefficient or nonunique.</p>",
+    "motivation": "<p>A pure-strategy Nash equilibrium is a cell where every player is already choosing a best response. No one can improve by changing only their own action. The word &quot;pure&quot; means that each player chooses a single action rather than a probability distribution over actions.</p><p>The key comparison is unilateral. To test a cell, hold the other player's action fixed and ask whether the current player can improve by switching. Then do the same for the other player. A cell is stable only when all players pass this test at the same time.</p>",
+    "definition": "<p>A <b>pure-strategy Nash equilibrium</b> is an action profile where each player's chosen action is a best response to the others' chosen actions: $$r\\in\\operatorname{BR}_R(c)\\quad\\text{and}\\quad c\\in\\operatorname{BR}_C(r).$$</p><p><b>Assumptions that matter:</b> each player chooses one action, deviations are unilateral, and a cell fails if any player can switch and get a larger payoff.</p>",
     "worked": {
       "problem": "Find the pure Nash equilibria in the table: U/L $(3,3)$, U/R $(0,4)$, D/L $(4,0)$, D/R $(1,1)$.",
       "skills": [
@@ -1585,34 +1767,34 @@
     ],
     "applications": [
       {
-        "title": "Traffic equilibria",
-        "background": "Wardrop traffic equilibrium is a continuous cousin of Nash equilibrium: no driver can reduce travel time by switching routes alone.",
-        "numbers": "If route A takes $30$ minutes and route B takes $25$, a driver on A has a $5$ minute profitable deviation, so the allocation is not stable."
+        "title": "Coordination game",
+        "background": "Matching actions are stable in the diagonal cells.",
+        "numbers": "$(A,A)$ pays $(2,2)$ and $(B,B)$ pays $(1,1)$; both diagonal cells are Nash because each action matches the other."
       },
       {
-        "title": "Pricing competition",
-        "background": "Firms choosing prices may settle where neither wants to change price given the other's price.",
-        "numbers": "If Low/Low gives profits $(4,4)$ and switching to High against Low gives $2$, neither firm improves by switching from Low."
+        "title": "Prisoner's dilemma",
+        "background": "Mutual defection is stable under unilateral checks.",
+        "numbers": "$(D,D)$ is Nash since switching to cooperate changes row payoff $1\\to0$ and column payoff $1\\to0$."
       },
       {
-        "title": "Protocol selection",
-        "background": "Networks can have stable protocol choices when each node's protocol is best given neighbors' choices.",
-        "numbers": "If both using protocol X gives utility $10$ each and switching alone gives $6$, $(X,X)$ is stable."
+        "title": "Ad channel choice",
+        "background": "Both advertisers choosing search is stable in the toy table.",
+        "numbers": "Both choose search gives $(4,4)$ and either switching alone gives $2$, so search/search is Nash."
       },
       {
-        "title": "Multi-agent RL evaluation",
-        "background": "A learned joint policy is often checked for unilateral exploitability. Low exploitability means close to Nash stability.",
-        "numbers": "If agent 1's current reward is $7.0$ and best unilateral alternative is $7.2$, exploitability for that agent is $0.2$."
+        "title": "Routing equilibrium",
+        "background": "No driver improves by moving alone.",
+        "numbers": "Route A/A takes $30$ minutes each; a unilateral switch to B takes $35$, so A/A is stable by $5$ minutes."
       },
       {
-        "title": "GAN training intuition",
-        "background": "GANs are often described through equilibrium: the discriminator cannot improve and the generator cannot improve under the idealized objective.",
-        "numbers": "At an ideal discriminator accuracy $0.5$, a simple discriminator payoff above random is $0.5-0.5=0$."
+        "title": "Security patching",
+        "background": "Both patching is stable against one-team deviations.",
+        "numbers": "Both patch payoff $(3,3)$; unilateral no-patch payoff $1$, so no player gains."
       },
       {
-        "title": "Coordination standards",
-        "background": "Technologies such as keyboard layouts or file formats can be equilibria because switching alone is costly.",
-        "numbers": "If both use standard S, payoff is $9$ each; switching alone to T gives payoff $1$, so no single user wants to move first."
+        "title": "Two-agent RL evaluation",
+        "background": "A tested policy pair can be stable under available alternatives.",
+        "numbers": "Policy pair $(\\pi_1,\\pi_2)$ with rewards $(10,9)$ and unilateral alternatives $(8,7)$ and $(6,5)$ is a pure Nash under the tested policy set."
       }
     ],
     "applicationsClose": "Nash equilibrium is the quiet stability test underneath many strategic systems: would any one participant change if everyone else stayed put?",
@@ -1621,6 +1803,53 @@
       "Only unilateral deviations are tested.",
       "Equilibrium need not maximize total payoff.",
       "A game can have zero, one, or multiple pure Nash equilibria."
+    ],
+    "connectionsProse": "<p>Pure-strategy Nash equilibrium uses the best-response comparisons that have been appearing in payoff tables. Instead of looking for one action that is best against everything, it looks for a cell where each player's chosen action is best against the other player's chosen action. This makes equilibrium a mutual stability condition. It is the main bridge from dominance reasoning to the broader equilibrium ideas used in the rest of the section.</p>",
+    "symbols": [
+      {
+        "sym": "$\\operatorname{BR}_R(c)$",
+        "desc": "row's best response to $c$"
+      },
+      {
+        "sym": "$\\operatorname{BR}_C(r)$",
+        "desc": "column's best response to $r$"
+      },
+      {
+        "sym": "pure strategy",
+        "desc": "one action, not a probability distribution"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Fix column player's action $c$",
+        "result": "one column of row payoffs",
+        "why": "row's possible unilateral switches keep column fixed"
+      },
+      {
+        "do": "Mark the row action $r$ with the largest $u_R(r,c)$",
+        "result": "$r\\in\\operatorname{BR}_R(c)$",
+        "why": "row is best-responding in that column"
+      },
+      {
+        "do": "Fix row player's action $r$",
+        "result": "one row of column payoffs",
+        "why": "column's possible unilateral switches keep row fixed"
+      },
+      {
+        "do": "Mark the column action $c$ with the largest $u_C(r,c)$",
+        "result": "$c\\in\\operatorname{BR}_C(r)$",
+        "why": "column is best-responding in that row"
+      },
+      {
+        "do": "Look for both marks in the same cell",
+        "result": "$(r,c)$ is Nash exactly when both marks appear",
+        "why": "both players are choosing best responses at once"
+      },
+      {
+        "do": "Check possible switches",
+        "result": "if a player can switch and get a larger payoff, the cell is not Nash",
+        "why": "Nash stability rules out profitable unilateral deviations"
+      }
     ],
     "prereqs": [
       "math-24-05"
@@ -1648,8 +1877,8 @@
         "expected payoff"
       ]
     },
-    "motivation": "<p>When a pure choice is predictable, an opponent may exploit it. Randomization can be strategic, not indecisive.</p><p>A <b>mixed strategy</b> assigns probabilities to pure actions. Once probabilities enter, payoffs become expected payoffs: weighted averages over the possible action profiles. That one move is the bridge from tables to equilibrium existence.</p>",
-    "definition": "<p>For a finite action set $A_i=\\{a_1,\\ldots,a_k\\}$, a mixed strategy for player $i$ is a probability vector $p=(p_1,\\ldots,p_k)$ with $p_j\\ge0$ and $\\sum_{j=1}^k p_j=1$. The number $p_j$ is the probability of playing action $a_j$.</p><p>If player 1 mixes with probabilities $p_r$ over rows and player 2 mixes with probabilities $q_c$ over columns, player 1's expected payoff is $$\\sum_r\\sum_c p_r q_c u_1(r,c).$$ This is just the expected-value rule applied to all row-column outcomes.</p><p><b>Assumptions that matter:</b> probabilities are chosen before the random draw; players evaluate lotteries by expected payoff; probabilities must be nonnegative and sum to $1$; and pure strategies are special mixed strategies with probability $1$ on one action.</p>",
+    "motivation": "<p>A mixed strategy assigns probabilities to actions. Expected payoff is the weighted average of the payoffs from those actions. If a player chooses top with probability $p$ and bottom with probability $1-p$, then each possible payoff is counted in proportion to how often that action is used.</p><p>Randomization can represent deliberate unpredictability, exploration, or population frequencies. The mathematics is the same in each case: multiply each cell payoff by the probability that the corresponding action profile occurs, then add the contributions. Once payoffs are written as expectations, equilibrium conditions can be solved with equations rather than only by scanning table cells.</p>",
+    "definition": "<p>A <b>mixed strategy</b> assigns probabilities to pure actions, and expected payoff is the probability-weighted sum of cell payoffs: $$\\mathbb E[u_R]=\\sum_r\\sum_c p_R(r)p_C(c)u_R(r,c).$$</p><p><b>Assumptions that matter:</b> probabilities over a player's actions sum to $1$, action profiles occur with product probabilities when players randomize independently, and payoffs are averaged by those probabilities.</p>",
     "worked": {
       "problem": "Player 1 chooses U with probability $0.7$ and D with $0.3$. Player 2 chooses L with probability $0.4$ and R with $0.6$. Player 1 payoffs are U/L $5$, U/R $1$, D/L $2$, D/R $4$. Compute player 1's expected payoff.",
       "skills": [
@@ -1853,34 +2082,34 @@
     ],
     "applications": [
       {
-        "title": "Randomized security patrols",
-        "background": "Predictable patrols can be exploited. Mixed strategies make coverage uncertain.",
-        "numbers": "If a guard visits gate A with probability $0.7$ and B with $0.3$, the expected covered value for assets $10$ and $6$ is $0.7\\cdot10+0.3\\cdot6=8.8$."
+        "title": "Matching pennies",
+        "background": "Equilibrium randomization balances wins and losses.",
+        "numbers": "Row heads probability $0.5$ against column heads $0.5$ gives expected payoff $0.25-0.25-0.25+0.25=0$."
       },
       {
-        "title": "Exploration in reinforcement learning",
-        "background": "Epsilon-greedy policies mix a greedy action with random exploration so learning does not get stuck too early.",
-        "numbers": "With $\\epsilon=0.1$ and 5 actions, the greedy action has probability $0.9+0.1/5=0.92$."
+        "title": "Ad creative rotation",
+        "background": "Expected payoff averages creative outcomes by serving probability.",
+        "numbers": "Creative A payoff $6$ with probability $0.7$ and creative B payoff $2$ with probability $0.3$ gives expected payoff $4.8$."
       },
       {
-        "title": "GAN minibatch variation",
-        "background": "Training uses random minibatches, which effectively mixes over examples and perturbations seen by generator and discriminator.",
-        "numbers": "If two sample types appear with probabilities $0.6$ and $0.4$ and losses $1.2$ and $0.7$, expected loss is $0.6\\cdot1.2+0.4\\cdot0.7=1.0$."
+        "title": "Security scanning",
+        "background": "A randomized scan policy has an average detection payoff.",
+        "numbers": "Scan deep with probability $0.2$ payoff $10$ and light with $0.8$ payoff $4$ gives expected payoff $5.2$."
       },
       {
-        "title": "Load balancing",
-        "background": "Servers can receive randomized traffic allocations to avoid deterministic overload.",
-        "numbers": "Sending $40%$ of 1000 requests to server A gives expected load $0.4\\cdot1000=400$ requests."
+        "title": "Exploration in RL",
+        "background": "Randomized actions give an expected reward.",
+        "numbers": "Action rewards $8$ and $2$ with probabilities $0.25$ and $0.75$ give expected reward $3.5$."
       },
       {
-        "title": "A/B testing",
-        "background": "Experiments randomize users across variants. The strategy is a probability distribution over treatments.",
-        "numbers": "With allocation $(0.5,0.3,0.2)$ over A,B,C for 10,000 users, expected counts are $5000,3000,2000$."
+        "title": "Auction bid randomization",
+        "background": "A bidder can average high- and low-bid outcomes.",
+        "numbers": "Bid high payoff $3$ with probability $0.4$ and low payoff $1$ with $0.6$ gives $1.8$."
       },
       {
-        "title": "Ad pacing",
-        "background": "An ad system may randomize whether to bid on eligible impressions to meet a budget smoothly.",
-        "numbers": "If 20,000 impressions are eligible and bid probability is $0.15$, expected bids are $3000$."
+        "title": "Recommendation diversification",
+        "background": "Serving probabilities convert item values into an average payoff.",
+        "numbers": "Show niche item with probability $0.3$ payoff $5$ and popular item with $0.7$ payoff $3$ gives $3.6$."
       }
     ],
     "applicationsClose": "Mixed strategies are probability distributions with a purpose: they let strategic choice be measured through expected payoff.",
@@ -1889,6 +2118,48 @@
       "Pure strategies are mixtures with one action assigned probability $1$.",
       "Expected payoff weights each outcome by its probability.",
       "Randomization can prevent predictable exploitation."
+    ],
+    "connectionsProse": "<p>Mixed strategies extend the strategy language from choosing one action to choosing probabilities over actions. This is a natural next step after pure Nash equilibrium because some games do not have a stable pure cell. The reader already knows expected value as a weighted average, and that is the main calculation needed here. Mixed strategies prepare for mixed Nash equilibrium, minimax games, and randomized policies in machine learning systems.</p>",
+    "symbols": [
+      {
+        "sym": "$p_R(r)$",
+        "desc": "probability row uses action $r$"
+      },
+      {
+        "sym": "$p_C(c)$",
+        "desc": "probability column uses action $c$"
+      },
+      {
+        "sym": "$\\mathbb E[u_R]$",
+        "desc": "row's expected payoff"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let row play top with probability $p$ and bottom with probability $1-p$",
+        "result": "$p+(1-p)=1$",
+        "why": "probabilities across two actions must sum to $1$"
+      },
+      {
+        "do": "Against a fixed column action, multiply each row payoff by the probability of the row action that produces it",
+        "result": "weighted row payoffs",
+        "why": "each payoff counts in proportion to how often its action is used"
+      },
+      {
+        "do": "Add the weighted payoffs",
+        "result": "expected payoff",
+        "why": "expectation is a weighted average"
+      },
+      {
+        "do": "Against a mixed column player, multiply each cell payoff by the probability of that action profile",
+        "result": "$p_R(r)p_C(c)u_R(r,c)$",
+        "why": "the cell occurs when both players choose those actions"
+      },
+      {
+        "do": "Sum all cell contributions",
+        "result": "$\\mathbb E[u_R]=\\sum_r\\sum_c p_R(r)p_C(c)u_R(r,c)$",
+        "why": "the total expectation adds every possible cell contribution"
+      }
     ],
     "prereqs": [
       "math-24-06"
@@ -1916,8 +2187,8 @@
         "best responses"
       ]
     },
-    "motivation": "<p>Some games have no stable pure outcome. Matching pennies is the friendly warning: whatever fixed side you choose, the other player wants to react.</p><p>Mixed-strategy Nash equilibrium finds stability in uncertainty. Each player randomizes in a way that makes the other player indifferent among the pure actions they actually use. Indifference is not a feeling here; it is an equation of expected payoffs.</p>",
-    "definition": "<p>A mixed-strategy profile $\\sigma^\\ast$ is a Nash equilibrium if no player can improve expected payoff by switching to another mixed or pure strategy. In a finite game, it is enough to check pure deviations because expected payoff is linear in a player's own probabilities.</p><p>The practical rule is the <b>indifference principle</b>: if a player assigns positive probability to several pure actions, those actions must all give the same expected payoff against the opponents' equilibrium mix. Any unused pure action must give no more than that value.</p><p><b>Assumptions that matter:</b> players maximize expected payoff; all probabilities in a support are positive and sum to $1$; indifference equations apply only to actions used with positive probability; and unused actions still need a no-better check.</p>",
+    "motivation": "<p>In a pure-strategy equilibrium, each player chooses one action and stays there because switching would not help. Some games have no such stable action pair. In matching pennies, if both players choose heads, the matching player wins and the mismatching player wants to switch. If they mismatch, the matching player wants to switch. Every pure outcome gives someone a reason to move.</p><p>Randomization can make the game stable. The key is not that randomness hides the player's action after it is chosen; the key is that the probabilities make the opponent indifferent. If the column player chooses heads with probability $q$, the row player's expected payoff from heads is $2q-1$, and the expected payoff from tails is $1-2q$. The row player is willing to mix only when these are equal. Solving that equality gives $q=1/2$. By symmetry, the row player also uses heads with probability $p=1/2$.</p><p>The indifference principle is the central habit. To find a mixed equilibrium, make each player indifferent among the actions that receive positive probability, then solve the resulting equations. Actions outside the support must not do better, or the proposed mix is not an equilibrium.</p>",
+    "definition": "<p>A <b>mixed-strategy Nash equilibrium</b> is a Nash equilibrium where strategies may be probability distributions over actions: $$\\text{for every player }i,\\quad s_i\\in\\operatorname{BR}(s_{-i}).$$</p><p><b>Assumptions that matter:</b> players may randomize, each action in the support must be payoff-tied as a best response, and actions outside the support must not do better.</p>",
     "worked": {
       "problem": "Matching pennies: player 1 gets $1$ if actions match and $-1$ otherwise; player 2 gets the opposite. Let player 2 play H with probability $q$. Find $q$ that makes player 1 indifferent between H and T.",
       "skills": [
@@ -2121,34 +2392,34 @@
     ],
     "applications": [
       {
+        "title": "Matching pennies baseline",
+        "background": "The equilibrium mix balances both players' actions.",
+        "numbers": "The equilibrium mix is $p=q=1/2$, and row's value is $0$; a test simulation with a long-run heads rate near $0.5$ should produce average payoff near $0$."
+      },
+      {
         "title": "Penalty kicks",
-        "background": "Sports strategy often uses mixed equilibrium because predictable choices are exploitable.",
-        "numbers": "If a goalie dives left $80%$ of the time, a kicker with opposite-side success $0.9$ and same-side success $0.6$ scores $0.9(0.8)+0.6(0.2)=0.84$ by shooting right."
+        "background": "The goalie can make the kicker indifferent between directions.",
+        "numbers": "If shooting left scores with probability $0.8$ when the goalie dives right and $0.2$ when the goalie dives left, the kicker can be made indifferent only by the goalie's dive probabilities; equalized expected scoring at $0.5$ is the target in the symmetric case."
       },
       {
-        "title": "Security inspection",
-        "background": "Randomized inspection schedules can make attackers indifferent across targets, reducing exploitability.",
-        "numbers": "If target A is inspected with probability $0.7$, an attack value $10$ with catch loss $10$ has expected payoff $0.3\\cdot10+0.7\\cdot0=3$."
+        "title": "Adversarial example choice",
+        "background": "A mixed defense prevents one attack type from being predictably best.",
+        "numbers": "If an attacker alternates two perturbation types and the defender is indifferent at $q=1/2$, a deterministic defense can be exploited while the mixed defense gives each attack expected success $0.5$."
       },
       {
-        "title": "Rock-paper-scissors agents",
-        "background": "A uniform mixed equilibrium prevents any pure action from being exploited in the standard zero-sum game.",
-        "numbers": "Against $(1/3,1/3,1/3)$, Rock has expected payoff $(1/3)0+(1/3)(-1)+(1/3)(1)=0$."
+        "title": "A/B auction bidding",
+        "background": "A bidder can randomize when low and high bids are tied.",
+        "numbers": "In a two-bid toy game, a bidder who is indifferent between low and high bids at rival high-bid probability $q=1/2$ should randomize instead of choosing a predictable bid."
       },
       {
-        "title": "GAN equilibrium ideal",
-        "background": "The ideal GAN point has neither generator nor discriminator able to improve under the theoretical objective. Mixed distributions replace single actions.",
-        "numbers": "If real and generated distributions match, a discriminator guessing real with probability $0.5$ has accuracy $0.5$ and no better threshold from data alone."
+        "title": "Multi-agent RL self-play",
+        "background": "A mixed policy can remove a one-action exploit.",
+        "numbers": "A policy that plays rock and paper each with probability $0.5$ in a two-action subgame gives the opponent equal value $0$ from its two counter-actions, preventing a one-action exploit."
       },
       {
-        "title": "Adversarial training",
-        "background": "Robust ML often mixes attacks during training so the model cannot overfit one attack type.",
-        "numbers": "If attacks A and B have losses $0.4$ and $0.8$, a $50/50$ mix has expected loss $0.6$."
-      },
-      {
-        "title": "Online experimentation",
-        "background": "Traffic allocation can be viewed as a mixed strategy when variants strategically adapt to metrics or budgets.",
-        "numbers": "A split $(0.5,0.5)$ with conversion rates $0.04$ and $0.06$ gives expected conversion $0.05$ before learning updates."
+        "title": "GAN discriminator pressure",
+        "background": "The generator tries to make discriminator labels equally attractive.",
+        "numbers": "A generator that makes the discriminator's two labels equally attractive corresponds to the same indifference idea; at the ideal GAN equilibrium $D^*(x)=1/2$, the discriminator has no better label rule at that point."
       }
     ],
     "applicationsClose": "Mixed equilibrium is stable uncertainty: randomization chosen so no player has a better unilateral way to use the probabilities.",
@@ -2157,6 +2428,88 @@
       "Actions used with positive probability must tie in expected payoff.",
       "Unused actions must not give higher expected payoff.",
       "Indifference equations often solve two-action mixed equilibria."
+    ],
+    "connectionsProse": "<p>This lesson builds on mixed strategies and Nash equilibrium. A mixed strategy lets a player randomize among actions, while Nash equilibrium says that no player wants to change after seeing the others' strategies. A mixed-strategy Nash equilibrium combines those ideas: each player chooses probabilities, and those probabilities make the other player willing to randomize as well. This is the first place where equilibrium is found by solving for probabilities instead of checking a finite list of action pairs. That matters in games with no stable pure action, such as matching pennies, penalty kicks, bidding, and adversarial learning. The same calculation later appears in minimax games, GAN intuition, and multi-agent systems in which predictable behavior can be exploited.</p>",
+    "symbols": [
+      {
+        "sym": "$s_i$",
+        "desc": "player $i$'s strategy, possibly mixed"
+      },
+      {
+        "sym": "$s_{-i}$",
+        "desc": "the profile of other players' strategies"
+      },
+      {
+        "sym": "$\\operatorname{BR}$",
+        "desc": "the best-response set"
+      },
+      {
+        "sym": "$p$",
+        "desc": "probability row plays heads"
+      },
+      {
+        "sym": "$q$",
+        "desc": "probability column plays heads"
+      },
+      {
+        "sym": "$1$",
+        "desc": "row wins one unit"
+      },
+      {
+        "sym": "$-1$",
+        "desc": "row loses one unit"
+      },
+      {
+        "sym": "support",
+        "desc": "the set of actions played with positive probability"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $q$ be the probability that column plays heads",
+        "result": "$q$",
+        "why": "this is the one number row needs to compute expected payoffs"
+      },
+      {
+        "do": "Compute row's payoff from heads",
+        "result": "$q(1)+(1-q)(-1)=2q-1$",
+        "why": "heads wins against heads and loses against tails"
+      },
+      {
+        "do": "Compute row's payoff from tails",
+        "result": "$q(-1)+(1-q)(1)=1-2q$",
+        "why": "tails loses against heads and wins against tails"
+      },
+      {
+        "do": "Set the two row payoffs equal",
+        "result": "$2q-1=1-2q$",
+        "why": "row mixes only when both pure actions are tied"
+      },
+      {
+        "do": "Add $2q$ to both sides",
+        "result": "$4q-1=1$",
+        "why": "this moves toward isolating $q$"
+      },
+      {
+        "do": "Add $1$ to both sides",
+        "result": "$4q=2$",
+        "why": "the coefficient on $q$ is alone"
+      },
+      {
+        "do": "Divide by $4$",
+        "result": "$q=1/2$",
+        "why": "this solves column's equilibrium heads probability"
+      },
+      {
+        "do": "Let $p$ be the probability row plays heads",
+        "result": "$p=1/2$",
+        "why": "the same indifference calculation applies for column"
+      },
+      {
+        "do": "Compute the game value to row",
+        "result": "$0.5(1)+0.5(-1)=0$",
+        "why": "either pure action against the equilibrium mix has expected payoff $0$"
+      }
     ],
     "prereqs": [
       "math-24-07"
@@ -2184,8 +2537,8 @@
         "optimization"
       ]
     },
-    "motivation": "<p>Matching pennies has no pure equilibrium, which could feel discouraging. But once mixed strategies are allowed, equilibrium comes back.</p><p>The deep theorem is hopeful: every finite game has at least one mixed-strategy Nash equilibrium. The proof lives in fixed-point ideas, but the lesson for ML is practical too. When agents have finite actions and expected payoffs, a stable mixed profile exists even if pure stability fails.</p>",
-    "definition": "<p><b>Nash's existence theorem</b> says every finite game has at least one mixed-strategy Nash equilibrium. Each player's mixed-strategy set is a simplex: probabilities are nonnegative and sum to $1$. This set is closed, bounded, and convex.</p><p>Expected payoff is continuous and linear in each player's own mixed strategy when the others are fixed. A best-response correspondence maps each mixed profile to the set of payoff-maximizing mixed strategies. Under the finite-game assumptions, a fixed-point theorem guarantees a profile where each player's chosen mix is a best response to the others.</p><p><b>Assumptions that matter:</b> action sets are finite; mixed strategies allow all probability distributions over those actions; players maximize expected payoff; and the theorem guarantees existence, not uniqueness, easy computation, or good social welfare.</p>",
+    "motivation": "<p>Finite games may lack pure equilibria, but allowing mixed strategies guarantees at least one Nash equilibrium. The guarantee says a stable probability profile exists, not that it is easy to find or unique. Matching pennies is the simplest warning: no pure cell is stable, yet the mixed profile with each player randomizing evenly is stable.</p><p>The reason the theorem becomes possible is that probability spaces are smoother than finite action lists. A player can move continuously from one mixture to another, and expected payoffs change continuously with those probabilities. The fixed-point result says that, under the right conditions, the best-response mapping must contain a profile that points back to itself. That self-consistent profile is a Nash equilibrium.</p>",
+    "definition": "<p><b>Nash's existence theorem</b> says that every finite game has at least one Nash equilibrium when mixed strategies are allowed.</p><p><b>Assumptions that matter:</b> action sets are finite, mixed-strategy spaces are simplexes, expected payoffs are continuous, best-response correspondences have the right convexity properties, and a fixed point is a Nash equilibrium.</p>",
     "worked": {
       "problem": "Explain why matching pennies has a mixed equilibrium even though it has no pure equilibrium, and identify it.",
       "skills": [
@@ -2394,34 +2747,34 @@
     ],
     "applications": [
       {
-        "title": "Why mixed equilibria matter",
-        "background": "Some strategic systems have no stable deterministic profile. Existence tells us probability can restore a solution concept.",
-        "numbers": "Matching pennies has $4$ pure cells and all $4$ have a profitable deviation, yet the $1/2,1/2$ mix is stable."
+        "title": "Matching pennies",
+        "background": "A mixed equilibrium exists even though no pure cell is stable.",
+        "numbers": "No pure cell is stable, but the theorem guarantees the mixed equilibrium $(0.5,0.5)$."
       },
       {
-        "title": "Algorithm design",
-        "background": "Equilibrium-computation algorithms rely on the fact that a target solution exists before searching for it.",
-        "numbers": "A $2\\times2$ game has two one-dimensional mixed spaces; solving two indifference equations can find a candidate."
+        "title": "Rock-paper-scissors",
+        "background": "The symmetric mixed strategy is stable.",
+        "numbers": "The equilibrium $(1/3,1/3,1/3)$ has value $0$."
       },
       {
-        "title": "Multi-agent RL benchmarks",
-        "background": "Finite Markov games often analyze equilibria at each state or in policies over finite actions.",
-        "numbers": "With 5 actions per agent and 2 agents, a state has $25$ joint pure actions, but each agent's mixed strategy is a 4-dimensional simplex."
+        "title": "Adversarial testing",
+        "background": "A finite attack-defense table has a mixed equilibrium.",
+        "numbers": "Two attack types and two defenses define a finite game, so at least one mixed defense equilibrium exists."
       },
       {
-        "title": "GAN theory",
-        "background": "Idealized GANs use distributional strategies. Existence intuition supports looking for saddle or equilibrium-like points even when pure generators are insufficient.",
-        "numbers": "A generator mixing two modes with probabilities $(0.5,0.5)$ can match a data distribution with two equally likely modes, while either pure mode alone misses half the data."
+        "title": "Auction bidding grid",
+        "background": "A finite bid grid has at least one equilibrium distribution.",
+        "numbers": "A $5$-bid finite game has a mixed equilibrium over at most $5$ bids per bidder."
       },
       {
-        "title": "Market design",
-        "background": "Mechanism designers need equilibrium existence to predict participation and bidding behavior in finite simplified models.",
-        "numbers": "If each of 3 bidders has 4 bid levels, there are $4^3=64$ pure profiles, and Nash's theorem guarantees at least one mixed equilibrium."
+        "title": "MARL benchmark",
+        "background": "A finite matrix game has at least one mixed Nash policy pair.",
+        "numbers": "A $3\\times3$ matrix game has at least one mixed Nash policy pair."
       },
       {
-        "title": "Robust evaluation",
-        "background": "When systems compete, existence does not mean the equilibrium is easy to find or desirable. It means the model has a stable reference point.",
-        "numbers": "A game may have equilibrium welfare $2+2=4$ while another non-equilibrium cell has welfare $5+5=10$."
+        "title": "Mechanism design toy model",
+        "background": "Finite report choices guarantee equilibrium existence, not truthfulness.",
+        "numbers": "If each agent has $4$ reports, existence guarantees at least one equilibrium report distribution, though not truthfulness."
       }
     ],
     "applicationsClose": "Existence is a promise of mathematical footing: finite strategic models always have at least one mixed equilibrium to analyze.",
@@ -2430,6 +2783,17 @@
       "Mixed-strategy spaces are probability simplexes: closed, bounded, and convex.",
       "Expected payoffs are continuous and linear in a player's own mix.",
       "Existence does not imply uniqueness, efficiency, or easy computation."
+    ],
+    "connectionsProse": "<p>This lesson follows mixed strategies and mixed-strategy Nash equilibrium. After seeing that some games need randomization to become stable, the natural structural fact is that finite games always have at least one equilibrium once mixed strategies are allowed. The lesson does not prove the fixed-point theorem behind the result, but it explains the path from finite action sets to a stable probability profile. This guarantee supports the rest of the section, especially minimax games and multi-agent learning.</p>",
+    "symbols": [
+      {
+        "sym": "$\\Delta(A_i)$",
+        "desc": "the simplex of probability distributions over player $i$'s finite actions"
+      },
+      {
+        "sym": "fixed point",
+        "desc": "a strategy profile that maps back to itself under best response"
+      }
     ],
     "prereqs": [
       "math-24-08"
@@ -2458,8 +2822,8 @@
         "convexity"
       ]
     },
-    "motivation": "<p>Some games are partly cooperative or mutually beneficial. Zero-sum games are sharper: every point one player gains is a point the other player loses.</p><p>This makes the central question beautifully clear. The row player tries to maximize payoff; the column player tries to minimize that same payoff. The resulting <b>minimax</b> view is one of the main mathematical bridges from game theory to GANs and adversarial ML.</p>",
-    "definition": "<p>A two-player game is <b>zero-sum</b> if $u_1(a)+u_2(a)=0$ for every action profile $a$. We can store only player 1's payoff matrix $A$, because player 2's payoff is $-A$.</p><p>For mixed strategies $p$ for the row player and $q$ for the column player, the row player's expected payoff is $p^T A q$. The row player wants $\\max_p \\min_q p^T A q$, while the column player wants $\\min_q \\max_p p^T A q$. The minimax theorem says these values are equal in finite zero-sum games.</p><p><b>Assumptions that matter:</b> payoffs sum to zero exactly; players optimize expected payoff; mixed strategies range over probability simplexes; and minimax equality is special to zero-sum structure, not arbitrary games.</p>",
+    "motivation": "<p>In a zero-sum game, one player's gain is the other player's loss. This makes the game a direct contest over a single payoff matrix. If the row player receives $A_{rc}$ in a cell, the column player receives $-A_{rc}$, so the two payoffs always sum to zero.</p><p>The single-matrix view is powerful because both players are optimizing the same quantity in opposite directions. Row wants the expected value $p^TAq$ to be large, while column wants it to be small. That shared objective with opposite signs is what makes maximin, minimax, and saddle-point language fit so naturally.</p>",
+    "definition": "<p>A <b>zero-sum game</b> is a game where the players' payoffs sum to zero in every outcome, so column's payoff is the negative of row's payoff: $$u_C(r,c)=-A_{rc},\\qquad p^TAq=\\sum_r\\sum_c p_rq_cA_{rc}.$$</p><p><b>Assumptions that matter:</b> the matrix $A$ records row's payoff, column optimizes the same value with the opposite sign, and mixed payoffs use action-profile probabilities.</p>",
     "worked": {
       "problem": "For the zero-sum payoff matrix $A=\\begin{pmatrix}2&-1\\0&1\\end{pmatrix}$ for the row player, find the row player's maximin pure strategy and the column player's minimax pure strategy.",
       "skills": [
@@ -2663,34 +3027,34 @@
     ],
     "applications": [
       {
-        "title": "Minimax decision making",
-        "background": "Zero-sum games formalize conservative planning against an adversary. The maximin choice protects the worst case.",
-        "numbers": "If row guarantees are $-2$, $1$, and $0$, the maximin guarantee is $1$ from the second row."
+        "title": "Matching pennies",
+        "background": "The equilibrium has no long-run advantage for either player.",
+        "numbers": "Equilibrium value $0$ means neither player has a long-run edge."
       },
       {
-        "title": "GAN objectives",
-        "background": "Original GAN training is often introduced as a minimax game between generator and discriminator. One network's improvement can hurt the other's objective.",
-        "numbers": "If discriminator payoff is accuracy minus $0.5$, accuracy $0.90$ gives payoff $0.40$, while accuracy $0.50$ gives payoff $0$."
+        "title": "Adversarial classification",
+        "background": "Defender accuracy and attacker utility can be modeled with opposite signs.",
+        "numbers": "Defender utility $0.75$ robust accuracy corresponds to attacker utility $-0.75$ in a zero-sum abstraction."
       },
       {
-        "title": "Adversarial examples",
-        "background": "Robust training can be written as minimizing loss under a worst-case perturbation, a zero-sum flavor between model and attacker.",
-        "numbers": "If perturbations produce losses $0.2,0.7,0.4$, the attacker chooses $0.7$ and the model trains against that maximum."
+        "title": "Security allocation",
+        "background": "Defender savings are attacker losses in the contest model.",
+        "numbers": "Defender saves $8$ units of loss, attacker payoff is $-8$ in the contest model."
       },
       {
-        "title": "Poker and hidden information",
-        "background": "Simplified poker models are classic zero-sum games because chips won by one player are lost by another.",
-        "numbers": "Winning $15$ chips gives payoff $+15$ to one player and $-15$ to the other, summing to $0$."
+        "title": "Auction budget duel",
+        "background": "One bidder's relative surplus advantage is the other's loss.",
+        "numbers": "Bidder A's surplus advantage $3$ is bidder B's relative loss $-3$."
       },
       {
-        "title": "Network defense",
-        "background": "Attack-defense resource allocation is often approximated as zero-sum when defender utility is negative attacker utility.",
-        "numbers": "If a breach gives attacker $100$ and defender $-100$, blocking with probability $0.8$ reduces attacker expected payoff to $0.2\\cdot100=20$."
+        "title": "GAN idealization",
+        "background": "Discriminator gain can be paired with generator loss.",
+        "numbers": "Discriminator gain against the generator can be modeled as row value $v$ and generator value $-v$."
       },
       {
-        "title": "Evaluation by worst case",
-        "background": "Benchmarks sometimes report worst-group performance, echoing minimax thinking: improve the weakest case rather than the average only.",
-        "numbers": "If group accuracies are $0.91,0.84,0.78$, the worst-group score is $0.78$; raising it to $0.82$ improves the minimax metric by $0.04$."
+        "title": "Robust optimization",
+        "background": "Worst-case loss can be viewed as an attacker objective.",
+        "numbers": "Minimizing worst-case loss $0.45$ is equivalent to an attacker maximizing loss to $0.45$."
       }
     ],
     "applicationsClose": "Zero-sum games distill strategic conflict into one number both sides care about in opposite directions, which is why minimax keeps reappearing in adversarial ML.",
@@ -2699,6 +3063,57 @@
       "The row player maximizes $p^T A q$ while the column player minimizes it.",
       "Pure maximin uses row minima; pure minimax uses column maxima.",
       "Finite zero-sum mixed games satisfy minimax equality."
+    ],
+    "connectionsProse": "<p>Zero-sum games specialize the payoff language to direct conflict. The reader has already seen payoff pairs and mixed expected payoffs; here those payoffs are linked by a simple rule: one player's payoff is the negative of the other's. This makes the game easier to analyze with a single matrix. It also sets up the minimax theorem, robust optimization, adversarial training, and the GAN capstone.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "payoff matrix for row"
+      },
+      {
+        "sym": "$p$",
+        "desc": "row's mixed strategy"
+      },
+      {
+        "sym": "$q$",
+        "desc": "column's mixed strategy"
+      },
+      {
+        "sym": "$p^TAq$",
+        "desc": "expected value to row"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $A_{rc}$ be row's payoff in cell $(r,c)$",
+        "result": "$A_{rc}$",
+        "why": "one matrix records row's payoff"
+      },
+      {
+        "do": "Use the zero-sum rule for column",
+        "result": "$-A_{rc}$",
+        "why": "one player's gain is the other's loss"
+      },
+      {
+        "do": "Let row use mixed strategy $p$ and column use $q$",
+        "result": "cell $(r,c)$ has probability $p_rq_c$",
+        "why": "independent mixed choices multiply"
+      },
+      {
+        "do": "Compute row's expected payoff",
+        "result": "$p^TAq=\\sum_r\\sum_c p_rq_cA_{rc}$",
+        "why": "sum each payoff times the probability of its cell"
+      },
+      {
+        "do": "Compute column's expected payoff",
+        "result": "$-p^TAq$",
+        "why": "column's payoff is the negative of row's value"
+      },
+      {
+        "do": "Add the two payoffs",
+        "result": "$p^TAq-p^TAq=0$",
+        "why": "this is the zero-sum condition"
+      }
     ],
     "prereqs": [
       "math-24-09"
@@ -2728,8 +3143,8 @@
         "saddle points"
       ]
     },
-    "motivation": "<p>You already know how to choose safely: if one route can take 20 or 60 minutes and another reliably takes 35, the worst-case lens may prefer the reliable route. Zero-sum games make that instinct precise.</p><p>The <b>minimax theorem</b> is the comforting surprise: when two players mix among finitely many actions and one player's gain is the other's loss, the row player can secure a value and the column player can hold them to that same value. Defense and attack meet at one number.</p>",
-    "definition": "<p>In a finite two-player zero-sum game with payoff matrix $A$, the row player chooses a mixed strategy $p$ and the column player chooses a mixed strategy $q$. The row player's expected payoff is $p^T A q$. The minimax theorem states $$\\max_p\\min_q p^T A q=\\min_q\\max_p p^T A q.$$ The shared number is the <b>value</b> of the game.</p><p>Why the equality is special: for any fixed $p$ and $q$, the worst column response to $p$ is no larger than the best row response to $q$, so $\\max_p\\min_q p^T A q\\le\\min_q\\max_p p^T A q$ is easy. The theorem says finite mixed strategies and linear expected payoffs close the gap.</p><p><b>Assumptions that matter:</b> the action sets are finite; players may randomize with probabilities that sum to $1$; payoffs are zero-sum; and both players evaluate strategies by expected payoff.</p>",
+    "motivation": "<p>The minimax theorem says that, in finite zero-sum games with mixed strategies, row's best guaranteed payoff equals column's best upper bound on row's payoff. Maximin and minimax meet at the value of the game. Row chooses a mixture to make the worst column response as good as possible; column chooses a mixture to make row's best response as small as possible.</p><p>In a two-action example, the calculation often works by equalizing the opponent's relevant payoffs. If row's mixture makes column's two pure responses give row the same expected payoff, column cannot lower the value by switching between them. If column's mixture makes row's two pure actions equally attractive, row cannot raise the value by switching. Where these equalizations agree, the game has its value.</p>",
+    "definition": "<p>The <b>minimax theorem</b> says that in a finite zero-sum game, row's best guaranteed payoff equals column's best cap on row's payoff: $$\\max_p\\min_q p^TAq=\\min_q\\max_p p^TAq=v.$$</p><p><b>Assumptions that matter:</b> the game is finite, players may use mixed strategies, $A$ is row's payoff matrix, and $v$ is the common value of the game.</p>",
     "worked": {
       "problem": "Find the value and optimal row mix for $A=\\begin{pmatrix}2&0\\\\0&1\\end{pmatrix}$.",
       "skills": [
@@ -2948,34 +3363,34 @@
     ],
     "applications": [
       {
-        "title": "Robust model selection",
-        "background": "Security-minded ML often chooses models against possible attacks. The minimax view asks for the best guaranteed performance, not the best average story.",
-        "numbers": "If model A gets $90\\%$ clean and $50\\%$ attacked while B gets $75\\%$ clean and $70\\%$ attacked, a $50$-$50$ mix gives clean $82.5\\%$ and attacked $60\\%$; the guaranteed rate is $60\\%$."
+        "title": "Toy security game",
+        "background": "The example matrix has a computable safety value.",
+        "numbers": "With matrix above, row guarantees value $0.5$ by playing top $25\\%$."
       },
       {
         "title": "Adversarial training",
-        "background": "Adversarial training pits a predictor against perturbations that try to raise loss. The learner minimizes the worst loss the attacker can create.",
-        "numbers": "If loss is $0.20$ on normal data and $0.55$ after an attack, the robust objective sees $0.55$; lowering attacked loss to $0.35$ improves the minimax target by $0.20$."
+        "background": "The model optimizes against the strongest attack.",
+        "numbers": "Model minimizes the maximum attack loss; reducing worst-case loss from $0.75$ to $0.45$ improves value by $0.30$."
       },
       {
-        "title": "Network routing",
-        "background": "Packet routing can be modeled as a game against congestion. A minimax route plan limits the damage from the worst traffic pattern.",
-        "numbers": "Route 1 has delays $20,80$ ms under two loads; route 2 has $35,45$ ms. Worst cases are $80$ and $45$, so minimax chooses route 2."
+        "title": "GAN training",
+        "background": "The generator is judged after the discriminator's best response.",
+        "numbers": "A saddle objective asks the generator to lower the discriminator's best response; the value is measured after the inner maximization."
       },
       {
-        "title": "Portfolio hedging",
-        "background": "Finance used minimax-like reasoning for guarding against bad market states. The payoff matrix is not always truly zero-sum, but the worst-case arithmetic is the same.",
-        "numbers": "Asset A returns $8\\%$ or $-6\\%$; asset B returns $2\\%$ or $1\\%$. The safer worst case is B with $1\\%$ rather than A with $-6\\%$."
+        "title": "Penalty kicks",
+        "background": "Equalization prevents either goalie dive from being exploited.",
+        "numbers": "Equalizing the goalie's two dives at value $0.5$ prevents a worse guaranteed scoring rate."
       },
       {
-        "title": "A/B testing under segment shift",
-        "background": "A product choice can look good on average but weak in a segment. Minimax checks the segment that hurts most.",
-        "numbers": "Design A lifts clicks by $4\\%$ for desktop and $-2\\%$ for mobile; design B lifts $1\\%$ and $1\\%$. Worst segment favors B."
+        "title": "Robust bidding",
+        "background": "A randomized bid can outperform a risky pure bid in worst case.",
+        "numbers": "A bidder choosing a randomized bid with guaranteed surplus $0.5$ should not switch to a pure bid with worst case $-1$."
       },
       {
-        "title": "Game-playing AI",
-        "background": "Zero-sum board games inspired minimax search. A chess engine evaluates a move by assuming the opponent then chooses the reply that hurts most.",
-        "numbers": "If a move's possible replies lead to evaluations $+3,+1,-2$, its minimax score is $-2$. Another move with $0,0.5,0.2$ has worst score $0$, so it is safer."
+        "title": "MARL exploitability",
+        "background": "Exploitability compares a policy's worst-case payoff with the minimax value.",
+        "numbers": "If a policy's worst-case payoff is $0.2$ but the minimax value is $0.5$, exploitability is $0.3$."
       }
     ],
     "applicationsClose": "Minimax is the discipline of asking what you can still guarantee when the other side is intelligent and prepared.",
@@ -2984,6 +3399,83 @@
       "Equalizing the opponent's pure responses is a powerful way to find a $2\\times2$ optimal mix.",
       "The theorem depends on randomization, linear expected payoff, finite actions, and zero-sum preferences.",
       "Robust ML, adversarial training, routing, and game AI all reuse the same worst-case lens."
+    ],
+    "connectionsProse": "<p>The minimax theorem is the central equilibrium result for finite zero-sum games. It uses mixed strategies, expected payoff, and the zero-sum matrix $A$ from the previous lessons. The theorem says that row's best safety guarantee and column's best cap on row's payoff meet at the same value. This result is the mathematical basis for many adversarial and robust-learning formulations.</p>",
+    "symbols": [
+      {
+        "sym": "$\\max_p\\min_q p^TAq$",
+        "desc": "row's best guarantee"
+      },
+      {
+        "sym": "$\\min_q\\max_p p^TAq$",
+        "desc": "column's best cap"
+      },
+      {
+        "sym": "$v$",
+        "desc": "game value"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let row play top with probability $p$ for $A=\\begin{bmatrix}2&-1\\0&1\\end{bmatrix}$",
+        "result": "$p$",
+        "why": "row's mixture determines the payoff against each column"
+      },
+      {
+        "do": "Compute payoff if column chooses left",
+        "result": "$2p+0(1-p)=2p$",
+        "why": "left column pays $2$ to top and $0$ to bottom"
+      },
+      {
+        "do": "Compute payoff if column chooses right",
+        "result": "$-p+1(1-p)=1-2p$",
+        "why": "right column pays $-1$ to top and $1$ to bottom"
+      },
+      {
+        "do": "Equalize row's two worst-case candidates",
+        "result": "$2p=1-2p$",
+        "why": "row maximizes the worse of these two numbers"
+      },
+      {
+        "do": "Add $2p$",
+        "result": "$4p=1$",
+        "why": "this collects $p$ terms on one side"
+      },
+      {
+        "do": "Divide by $4$",
+        "result": "$p=1/4$",
+        "why": "this solves row's safety mixture"
+      },
+      {
+        "do": "Compute the guaranteed value",
+        "result": "$2p=1/2$",
+        "why": "both column responses now give the same payoff"
+      },
+      {
+        "do": "Let column choose left with probability $q$",
+        "result": "$q$",
+        "why": "column's mix determines row's payoff from each row action"
+      },
+      {
+        "do": "Compute row top payoff",
+        "result": "$2q-1(1-q)=3q-1$",
+        "why": "top gets $2$ against left and $-1$ against right"
+      },
+      {
+        "do": "Compute row bottom payoff",
+        "result": "$0q+1(1-q)=1-q$",
+        "why": "bottom gets $0$ against left and $1$ against right"
+      },
+      {
+        "do": "Set top and bottom equal",
+        "result": "$3q-1=1-q$",
+        "why": "column makes row indifferent"
+      },
+      {
+        "do": "Solve for $q$ and the value",
+        "result": "$4q=2$, so $q=1/2$ and the value is $1/2$",
+        "why": "the column mix caps row's payoff at the same value"
+      }
     ],
     "prereqs": [
       "math-24-10"
@@ -3013,8 +3505,8 @@
         "Nash equilibrium"
       ]
     },
-    "motivation": "<p>You already know that some decisions happen in order. One person moves, another observes or does not observe, and then someone responds. A payoff matrix can hide that timing.</p><p>An <b>extensive-form game</b> draws the timing as a tree. The picture records who moves, what they know, which actions are available, and what payoffs arrive at the leaves. It is the natural grammar for bargaining, auctions, protocols, and multi-step AI interaction.</p>",
-    "definition": "<p>An extensive-form game consists of decision nodes, a player assigned to each nonterminal node, actions leaving each node, possible chance probabilities, information sets describing which nodes a player cannot distinguish, and terminal payoffs. A <b>strategy</b> is a complete contingent plan: it specifies what a player would do at every information set they might reach.</p><p>The expected payoff is derived by multiplying probabilities along each path and summing terminal payoffs. When all previous actions are observed, each information set has one node and the game has <b>perfect information</b>. When several nodes share an information set, the player must choose the same action at all of them because they cannot tell which node they are at.</p><p><b>Assumptions that matter:</b> the game tree has no cycles unless represented by repeated stages; each terminal leaf has payoffs for all players; chance probabilities are known; and a strategy describes off-path choices too, not only the path that actually occurs.</p>",
+    "motivation": "<p>Extensive form represents timing. A game tree records who moves, what actions are available, what each player observes, and which payoff arrives at each terminal node. Each path through the tree is a possible history of play, ending at a leaf with payoffs for the players.</p><p>The tree matters because the order of moves can change the meaning of a strategy. A player may choose differently after seeing an earlier action, or may have to act without knowing exactly where in the tree they are. Decision nodes, branches, information sets, and terminal histories are the pieces that make this timing and information structure explicit.</p>",
+    "definition": "<p>An <b>extensive-form game</b> represents strategic timing with a tree of decision nodes, action branches, information sets, and terminal histories with payoffs.</p><p><b>Assumptions that matter:</b> place the initial node, add action branches, assign a player to each decision node, group indistinguishable nodes into information sets, and write payoffs at leaves.</p>",
     "worked": {
       "problem": "A seller first chooses High price or Low price. A buyer observes the price and chooses Buy or Walk. Payoffs are High-Buy $(5,1)$, High-Walk $(0,0)$, Low-Buy $(3,3)$, Low-Walk $(0,0)$. List the buyer's pure strategies and compute seller payoff if seller chooses High and buyer strategy is Buy after Low, Walk after High.",
       "skills": [
@@ -3203,34 +3695,34 @@
     ],
     "applications": [
       {
-        "title": "Negotiation trees",
-        "background": "Bargaining is sequential: offers, counteroffers, and acceptances happen over time. Extensive form keeps timing visible.",
-        "numbers": "If offer High is accepted with probability $0.3$ for profit $10$ and rejected for $0$, expected profit is $3$; Low accepted with probability $0.8$ for profit $6$ gives $4.8$."
+        "title": "Negotiation",
+        "background": "An offer can be accepted or rejected at different leaves.",
+        "numbers": "Offer accept yields $(4,3)$; reject leads to $(1,1)$, so the accept leaf adds $5$ total payoff."
       },
       {
-        "title": "Security protocols",
-        "background": "Attack-defense interactions often branch by whether an alert is triggered. A tree records both defender actions and attacker responses.",
-        "numbers": "Patch costs $2$ and prevents a $10$ loss with probability $0.7$, giving expected avoided loss $7-2=5$."
+        "title": "Ad auction sequence",
+        "background": "A platform can set a reserve before a bidder responds.",
+        "numbers": "Two reserve choices and two responses create $4$ terminal leaves."
       },
       {
-        "title": "Customer support bots",
-        "background": "A bot may ask a question, route to a human, or answer directly. The tree clarifies consequences of early choices.",
-        "numbers": "Ask-first costs $1$ minute and solves $85\\%$; direct answer costs $0.2$ minute and solves $60\\%$. Expected unsolved rates are $15\\%$ and $40\\%$."
+        "title": "RL episode",
+        "background": "A finite action tree records possible histories.",
+        "numbers": "State-action tree depth $3$ with two actions per step has $2^3=8$ action histories."
       },
       {
-        "title": "Auctions",
-        "background": "Bidding procedures are sequential when participants observe earlier bids. Extensive-form games model the information revealed by each bid.",
-        "numbers": "If a bid of $100$ leads to win probability $0.4$ and surplus $30$, expected surplus is $12$ before bid costs."
+        "title": "Security inspection",
+        "background": "Inspection occurs before the attacker chooses an action.",
+        "numbers": "Inspect first then attacker chooses attack/no-attack; inspection cost $2$ reduces defender payoff from $10$ to $8$ when no attack happens."
       },
       {
-        "title": "Multi-agent RL episodes",
-        "background": "An episode is a tree of states, actions, rewards, and transitions. Policies are strategies that say what to do at each reachable state.",
-        "numbers": "If action A reaches reward $5$ with probability $0.6$ and reward $1$ with probability $0.4$, expected reward is $3.4$."
+        "title": "Recommendation session",
+        "background": "Sequential recommendations and click outcomes form a tree.",
+        "numbers": "Show item A then user clicks/skips; two rounds with binary outcomes create $4$ click histories."
       },
       {
-        "title": "Clinical decision pathways",
-        "background": "Medicine often uses staged decisions after test results. The tree makes conditional choices explicit.",
-        "numbers": "A test costs $50$; if positive probability is $0.2$ and treatment benefit is $500$, expected benefit before false positives is $0.2\\cdot500-50=50$."
+        "title": "Model deployment",
+        "background": "Review changes the payoff of launch versus hold.",
+        "numbers": "Review then launch/hold; launch payoff $5$ after approval versus $-4$ after rejection shows timing matters by $9$."
       }
     ],
     "applicationsClose": "Whenever timing and information matter, the game tree is the clean board on which strategic reasoning can begin.",
@@ -3239,6 +3731,29 @@
       "A strategy is a complete contingent plan, including off-path decisions.",
       "Expected payoff sums terminal payoffs weighted by path probabilities.",
       "Information sets prevent players from conditioning on distinctions they cannot observe."
+    ],
+    "connectionsProse": "<p>Extensive-form games add time and information to the game models introduced earlier. Normal form is useful for simultaneous choices, but many strategic situations unfold in stages. A tree can record who moves first, what each player observes, and where the final payoffs are assigned. This representation prepares the reader for backward induction and subgame perfection.</p>",
+    "symbols": [
+      {
+        "sym": "Node",
+        "desc": "a decision point in the game tree"
+      },
+      {
+        "sym": "branch",
+        "desc": "an available action from a node"
+      },
+      {
+        "sym": "$h$",
+        "desc": "terminal history"
+      },
+      {
+        "sym": "information set",
+        "desc": "nodes a player cannot distinguish"
+      },
+      {
+        "sym": "$u_i(h)$",
+        "desc": "payoff to player $i$ at a terminal history"
+      }
     ],
     "prereqs": [
       "math-24-11"
@@ -3267,8 +3782,8 @@
         "sequential rationality"
       ]
     },
-    "motivation": "<p>You already solve small plans backward. If a trip must end by 6:00, you decide when to leave by working back from arrival time. Sequential games reward the same habit.</p><p><b>Backward induction</b> says: at the last decision nodes, choose the best action for the player who moves there; then replace those nodes by their chosen payoffs and step backward. It is local common sense, repeated until the root.</p>",
-    "definition": "<p>In a finite extensive-form game with perfect information, backward induction selects actions by solving terminal decision nodes first and then moving upward through the tree. At each node, the active player chooses the action whose continuation payoff is best for that player.</p><p>The method works because a player's current choice only matters through the continuation payoff it leads to. Once all later rational choices are known, the current node becomes an ordinary maximization problem. This is the game-theory cousin of dynamic programming.</p><p><b>Assumptions that matter:</b> the tree is finite; players observe previous actions; payoffs are known; players choose actions to maximize their own payoffs; and ties may create multiple backward-induction outcomes unless a tie-breaking rule is specified.</p>",
+    "motivation": "<p>Backward induction solves a finite perfect-information game from the end backward. At each last decision, the moving player chooses the best available continuation. Once that choice is made, the whole decision node can be replaced by the payoff that will result from rational play there.</p><p>Working backward is reliable because earlier players should anticipate what later players will actually choose. A threat or promise that would not be optimal when reached should not be treated as a real continuation. By reducing the tree one layer at a time, backward induction turns a sequential game into a sequence of simpler choices.</p>",
+    "definition": "<p><b>Backward induction</b> solves a finite perfect-information game tree by choosing optimal actions at terminal decision nodes, replacing those nodes by continuation values, and repeating back to the root.</p><p><b>Assumptions that matter:</b> the game tree is finite, players observe previous actions at each decision node, and each mover chooses the branch with the highest payoff for that mover.</p>",
     "worked": {
       "problem": "Player 1 chooses L or R. L ends with $(2,2)$. R lets Player 2 choose U giving $(0,3)$ or D giving $(4,1)$. Solve by backward induction.",
       "skills": [
@@ -3462,34 +3977,34 @@
     ],
     "applications": [
       {
+        "title": "Ultimatum toy game",
+        "background": "The responder's final choice determines the proposer's offer.",
+        "numbers": "Responder accepts offer $2$ over reject $0$; proposer then keeps $8$ and offers $2$."
+      },
+      {
         "title": "Entry deterrence",
-        "background": "Classic industrial-organization examples use backward induction to show when threats are credible. A threat that hurts the threatener later will not guide rational early choices.",
-        "numbers": "If Fight gives incumbent $-1$ and Accommodate gives $2$, the entrant predicts Accommodate and enters when entry payoff is $3>0$."
+        "background": "The incumbent's response after entry determines whether entry happens.",
+        "numbers": "Incumbent accommodates payoff $3$ over fights payoff $-1$ after entry, so entrant enters if entry payoff is $2$."
       },
       {
-        "title": "Dynamic programming",
-        "background": "Backward induction is the finite-tree version of dynamic programming. Later solved values become earlier continuation values.",
-        "numbers": "If terminal rewards are $5$ and $2$, a max node stores $5$; a previous node comparing $3$ to that stored $5$ chooses the $5$ branch."
+        "title": "Sequential ad pricing",
+        "background": "The buyer's purchase decision determines the seller's best price.",
+        "numbers": "Buyer buys at price $4$ value $6$, surplus $2$; seller chooses price $4$ over price $7$ if $7$ causes no sale."
       },
       {
-        "title": "Chess endgames",
-        "background": "Game engines solve small endgame trees from checkmate positions backward. Every earlier position inherits win, loss, or draw values from successors.",
-        "numbers": "If move A leads to forced mate in $3$ and move B to draw value $0$, a winning engine picks A with value $+1$."
+        "title": "Security patch timing",
+        "background": "The defender values patching through the attacker's later response.",
+        "numbers": "Attacker does not attack patched system payoff $-1$ vs attack $-5$, so defender's patch value is computed from no-attack continuation."
       },
       {
-        "title": "Project planning",
-        "background": "Sequential decisions with deadlines can be optimized backward from the final requirement. This is strategic reasoning without an opponent.",
-        "numbers": "If delivery needs $5$ days testing and $8$ days build before July 20, latest build start is July 7."
+        "title": "Planning in RL",
+        "background": "A depth-limited tree is solved from child values upward.",
+        "numbers": "Depth-2 action values $5$ and $3$ at the child make the parent value $5$."
       },
       {
-        "title": "Dialogue systems",
-        "background": "A dialogue policy can compare the value of asking now against answering now by looking at expected future success.",
-        "numbers": "Ask cost $1$ turn and raises success from $0.65$ to $0.90$; if success is worth $10$, net gain is $2.5-1=1.5$."
-      },
-      {
-        "title": "Robotics planning",
-        "background": "A robot chooses current actions by estimating the best future path from each resulting state. Backward induction is exact on small finite maps.",
-        "numbers": "If left leads to future reward $6$ after cost $1$, value is $5$; right leads to reward $4$ after cost $0.5$, value is $3.5$."
+        "title": "Negotiation deadline",
+        "background": "A final-period fallback determines earlier bargaining value.",
+        "numbers": "Final accept payoff $1$ beats reject $0$, so earlier offers can be evaluated against continuation value $1$."
       }
     ],
     "applicationsClose": "Backward induction is a quiet discipline: solve the future honestly, then choose the present with clear eyes.",
@@ -3498,6 +4013,57 @@
       "At each node, the active player chooses the continuation best for themselves.",
       "The method exposes non-credible threats because later incentives must be respected.",
       "It is closely related to dynamic programming and planning in AI."
+    ],
+    "connectionsProse": "<p>Backward induction is the solution method that fits finite perfect-information game trees. After extensive form has named nodes, branches, and terminal payoffs, the next step is to solve from the leaves back to the root. The method uses ordinary payoff maximization at each decision node. It is the foundation for sequential rationality and subgame perfection.</p>",
+    "symbols": [
+      {
+        "sym": "Terminal payoff",
+        "desc": "the payoff written at a leaf"
+      },
+      {
+        "sym": "continuation value",
+        "desc": "the value that replaces a solved future decision node"
+      },
+      {
+        "sym": "root",
+        "desc": "the initial node of the game tree"
+      },
+      {
+        "sym": "perfect information",
+        "desc": "the player knows the previous actions at each node"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start at terminal decision nodes",
+        "result": "known payoffs",
+        "why": "their continuation payoffs are already visible"
+      },
+      {
+        "do": "For each such node, choose the branch with the highest payoff for the moving player",
+        "result": "the locally optimal branch",
+        "why": "the player maximizes payoff when the node is reached"
+      },
+      {
+        "do": "Replace that node by the payoff of the chosen branch",
+        "result": "a continuation value",
+        "why": "earlier players only need the value rational play will produce there"
+      },
+      {
+        "do": "Move one step earlier in the tree",
+        "result": "a smaller decision problem",
+        "why": "later choices have already been summarized"
+      },
+      {
+        "do": "Repeat the same maximization using the replaced continuation values",
+        "result": "one more layer solved",
+        "why": "the method works backward one layer at a time"
+      },
+      {
+        "do": "Continue to the root",
+        "result": "the backward-induction outcome",
+        "why": "the remaining branch choices describe rational play through the tree"
+      }
     ],
     "prereqs": [
       "math-24-12"
@@ -3526,8 +4092,8 @@
         "equilibrium refinement"
       ]
     },
-    "motivation": "<p>You already saw that some promises in a game tree are not believable. If a player says they will choose an action later that hurts themselves, the early player should be skeptical.</p><p><b>Subgame perfection</b> formalizes that skepticism. It keeps only equilibria whose prescribed behavior remains rational in every proper subgame, including places the actual path may never reach.</p>",
-    "definition": "<p>A <b>subgame</b> begins at a decision node that is alone in its information set and includes all its successors without cutting any information set. A strategy profile is a <b>subgame-perfect equilibrium</b> if its restriction to every subgame is a Nash equilibrium of that subgame.</p><p>Backward induction produces a subgame-perfect equilibrium in finite perfect-information games. The reason is local: each solved node makes the strategy optimal in the subgame rooted there, and moving backward preserves optimality in all later subgames.</p><p><b>Assumptions that matter:</b> subgames must be well-defined; the refinement is strongest in perfect-information trees; strategies still specify off-path behavior; and subgame perfection rules out non-credible threats but does not remove every possible equilibrium in games with simultaneous moves or imperfect information.</p>",
+    "motivation": "<p>Subgame perfection strengthens Nash equilibrium by requiring credible optimal behavior after every history that starts a proper subgame. It removes threats that a player would not actually carry out. In a sequential game, the plan must be stable not only from the root, but also from each subgame that could be reached.</p><p>The test is local but demanding. Restrict the proposed strategies to one subgame and ask whether they form a Nash equilibrium inside that subgame. Then repeat for every subgame. A profile that fails anywhere is not sequentially credible, even if no player wants to deviate at the very beginning.</p>",
+    "definition": "<p>A <b>subgame-perfect equilibrium</b> is a strategy profile whose restriction is a Nash equilibrium in every subgame: $$s|_G\\text{ is Nash in every subgame }G.$$</p><p><b>Assumptions that matter:</b> a subgame begins at a decision node, contains all later nodes, does not cut an information set, and must pass its own equilibrium test.</p>",
     "worked": {
       "problem": "Entrant chooses In or Out. Out gives $(0,2)$. In lets incumbent choose Fight $(-1,-1)$ or Accommodate $(2,1)$. Identify the subgame-perfect outcome and explain why Fight is not credible.",
       "skills": [
@@ -3716,34 +4282,34 @@
     ],
     "applications": [
       {
-        "title": "Credible threats in markets",
-        "background": "Subgame perfection became central because some Nash equilibria depended on threats no rational firm would carry out. The refinement separates posturing from credible action.",
-        "numbers": "If punishing entry costs an incumbent $5$ and accommodating earns $2$, punishment is $7$ worse and not credible."
+        "title": "Entry deterrence",
+        "background": "A fight threat must be optimal after entry to be credible.",
+        "numbers": "Threat to fight gives incumbent $-1$ while accommodate gives $3$, so fight is not credible and the profile fails subgame perfection."
       },
       {
-        "title": "Smart contracts",
-        "background": "A contract can make future actions credible by changing payoffs. Deposits and penalties alter the continuation game.",
-        "numbers": "With a $100$ deposit forfeited on refusal, honoring a $30$ refund can beat refusing: honor payoff $-30$, refuse payoff $-100$."
+        "title": "Bargaining",
+        "background": "Final-period rejection threats are tested where they occur.",
+        "numbers": "Rejecting a final offer of $2$ for payoff $0$ is not sequentially rational, so the threat is removed."
       },
       {
-        "title": "Reputation systems",
-        "background": "Future ratings can make helpful behavior credible. The continuation payoff from reputation changes the subgame incentives.",
-        "numbers": "A seller loses $200$ future profit from cheating for a $50$ gain, so honest behavior has net advantage $150$."
+        "title": "Platform moderation",
+        "background": "A punishment policy must be optimal in the reached moderation subgame.",
+        "numbers": "Threatening permanent ban with payoff $-5$ when warning gives $1$ is not credible in that subgame."
       },
       {
-        "title": "Multi-agent planning",
-        "background": "Agents that announce future cooperation must still prefer it when the future state arrives. Subgame checks prevent brittle plans.",
-        "numbers": "If cooperating later gives reward $8$ and defecting gives $5$ after a shared setup, cooperation is sequentially rational."
+        "title": "RL hierarchical policy",
+        "background": "Low-level subtasks must be optimized when reached.",
+        "numbers": "A high-level plan is credible only if the low-level policy maximizes each reached subtask value, such as $7$ over $4$."
       },
       {
-        "title": "Protocol design",
-        "background": "Distributed protocols often use penalties so honest continuation is optimal after unexpected histories.",
-        "numbers": "A validator gains $3$ by cheating but risks slashing $20$ with probability $0.5$, expected penalty $10$, so cheating net is $-7$."
+        "title": "Auction after reserve",
+        "background": "The seller's later accept/reject choice must be credible.",
+        "numbers": "If the seller would accept bid $10$ over outside option $8$, a threat to reject $10$ is not subgame perfect."
       },
       {
-        "title": "Customer-service guarantees",
-        "background": "A guarantee is credible when honoring it costs less than the lost lifetime value from refusal.",
-        "numbers": "Refund cost $25$ versus expected retained future margin $60$ makes refunding worth $35$ net."
+        "title": "Security response",
+        "background": "A response plan must remain optimal after detection.",
+        "numbers": "After detection, isolating server payoff $6$ beats doing nothing $-3$, so any plan requiring no isolation fails."
       }
     ],
     "applicationsClose": "Subgame perfection teaches a humane but firm lesson: promises matter when the incentives still support them later.",
@@ -3752,6 +4318,57 @@
       "The refinement rules out non-credible threats in sequential games.",
       "Backward induction yields subgame-perfect equilibria in finite perfect-information games.",
       "Information sets limit where proper subgames can begin."
+    ],
+    "connectionsProse": "<p>Subgame perfection refines Nash equilibrium for dynamic games. A Nash equilibrium can describe stable behavior at the start while relying on threats that would not be optimal later. Extensive-form games and backward induction provide the tools to test those later histories directly. This lesson turns credibility into a formal equilibrium requirement.</p>",
+    "symbols": [
+      {
+        "sym": "Subgame",
+        "desc": "a decision node with all later nodes that does not cut an information set"
+      },
+      {
+        "sym": "$s$",
+        "desc": "strategy profile"
+      },
+      {
+        "sym": "$s|_G$",
+        "desc": "restriction of $s$ to subgame $G$"
+      },
+      {
+        "sym": "credible threat",
+        "desc": "a threat that is optimal if the relevant subgame is reached"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Identify every subgame",
+        "result": "decision nodes that contain all later nodes and do not cut an information set",
+        "why": "only those histories define valid subgames"
+      },
+      {
+        "do": "For a proposed strategy profile, restrict the strategies to one subgame",
+        "result": "$s|_G$",
+        "why": "credibility is checked inside the reached subgame"
+      },
+      {
+        "do": "Check whether the restricted profile is Nash in the subgame",
+        "result": "$s|_G$ passes or fails",
+        "why": "players should not want to deviate once the subgame starts"
+      },
+      {
+        "do": "Repeat for every subgame",
+        "result": "a list of subgame checks",
+        "why": "sequential credibility must hold after every relevant history"
+      },
+      {
+        "do": "Accept the profile if all subgames pass",
+        "result": "the profile is subgame perfect",
+        "why": "every continuation is a Nash equilibrium where it is played"
+      },
+      {
+        "do": "Reject the profile if one subgame fails",
+        "result": "the full profile is not subgame perfect",
+        "why": "it relies on noncredible play somewhere"
+      }
     ],
     "prereqs": [
       "math-24-13"
@@ -3781,8 +4398,8 @@
         "equilibrium refinement"
       ]
     },
-    "motivation": "<p>You already know one-shot temptation: if a teammate will never see you again, shirking may look attractive. But repeated interaction changes the arithmetic. Tomorrow can discipline today.</p><p>A <b>repeated game</b> plays a stage game more than once. Strategies can condition on history, so kindness, punishment, forgiveness, and reputation become mathematical objects.</p>",
-    "definition": "<p>A repeated game consists of a stage game played over periods $t=0,1,2,\\dots$ or for a finite horizon. With discount factor $\\delta\\in[0,1)$, a payoff stream $u_0,u_1,u_2,\\dots$ has present value $$\\sum_{t=0}^{\\infty}\\delta^t u_t.$$ A common cooperative strategy is <b>grim trigger</b>: cooperate until someone defects, then punish forever.</p><p>The geometric sum drives the key comparison. Constant payoff $c$ forever has value $c/(1-\\delta)$. Cooperation can be sustained when the one-time gain from defection is smaller than the discounted future loss from punishment.</p><p><b>Assumptions that matter:</b> players observe enough history to condition on it; payoffs and discounting are known; finite-horizon games with known final period often unravel; and infinite-horizon cooperation depends strongly on $\\delta$ being high enough.</p>",
+    "motivation": "<p>Repetition changes incentives because today's action affects tomorrow's punishment or reward. Cooperation can be stable when the future is valuable enough. If a player defects now, the immediate temptation payoff may be high, but future punishment can erase that gain.</p><p>The discount factor $\\delta$ measures how much the next period matters compared with the current one. Grim trigger is a simple strategy: cooperate unless someone defects, and after a defection punish forever. The stability calculation compares the present value of cooperating forever with the present value of defecting once and then receiving the punishment payoff.</p>",
+    "definition": "<p>In a repeated game, a strategy can condition current actions on previous play; under grim trigger, cooperation is stable when the present value of cooperating forever is at least the value of defecting once and then being punished: $$\\frac{R}{1-\\delta}\\ge T+\\frac{\\delta P}{1-\\delta}.$$</p><p><b>Assumptions that matter:</b> payoffs repeat over time, future payoffs are discounted by $\\delta$, and grim trigger switches to the punishment payoff forever after a defection.</p>",
     "worked": {
       "problem": "In a repeated prisoner's dilemma, mutual cooperation gives each $3$, defecting against a cooperator gives $5$, mutual defection gives $1$. Under grim trigger, find when cooperation is better than defecting once if the discount factor is $\\delta$.",
       "skills": [
@@ -3986,34 +4603,34 @@
     ],
     "applications": [
       {
-        "title": "Reputation markets",
-        "background": "Online marketplaces rely on future business to discipline today's seller. A bad review lowers tomorrow's payoff.",
-        "numbers": "Cheating gain $20$ today versus lost future profit $8$ per month discounted at $0.9$ has loss $0.9\\cdot8/(1-0.9)=72$, so honesty wins."
+        "title": "Prisoner's dilemma",
+        "background": "The standard grim-trigger calculation gives a cooperation threshold.",
+        "numbers": "With $T=5,R=3,P=1$, cooperation is sustainable when $\\delta\\ge0.5$."
       },
       {
-        "title": "Collusion analysis",
-        "background": "Economists study repeated pricing because firms may keep prices high when future punishment is valuable. Antitrust analysis checks this incentive arithmetic.",
-        "numbers": "Extra undercutting profit $5$ million today is deterred if future loss is $1$ million per quarter with $\\delta=0.9$: loss value $9$ million."
+        "title": "Seller reputation",
+        "background": "A seller compares cheating now with future margin loss.",
+        "numbers": "Cheating gains $2$ now but loses future margin $4$ per period; threshold is $2/4=0.5$."
       },
       {
-        "title": "Multi-agent RL self-play",
-        "background": "Agents trained together repeatedly may learn reciprocal strategies rather than one-shot best responses.",
-        "numbers": "If cooperation reward is $3$ per episode and betrayal gives $5$ once then $1$ after, $\\delta=0.8$ gives cooperation value $15$ versus betrayal $9$."
+        "title": "Ad exchange quality",
+        "background": "Spam can be deterred when future cooperative value matters enough.",
+        "numbers": "Short-term spam gain $6$ versus cooperative margin $4$ and punishment $0$ gives threshold $(6-4)/(6-0)=1/3$."
       },
       {
-        "title": "Distributed systems",
-        "background": "Nodes may follow protocols because misbehavior leads to exclusion from future rewards.",
-        "numbers": "A validator gains $4$ by cheating now but loses $0.5$ per future round; with $\\delta=0.95$, future loss is $0.95\\cdot0.5/0.05=9.5$."
+        "title": "Multi-agent self-play",
+        "background": "Patient agents can sustain cooperation.",
+        "numbers": "If defection reward is $5$ and cooperative reward is $3$, agents with $\\delta=0.9$ pass the $0.5$ cooperation threshold."
       },
       {
-        "title": "Team collaboration",
-        "background": "Repeated project work makes reliability valuable. Future teammates remember today's choices.",
-        "numbers": "Saving $2$ hours by shirking can cost four future collaborations worth $1$ hour each discounted by $0.8$, value $0.8+0.64+0.512+0.410=2.362$."
+        "title": "API rate limits",
+        "background": "A future ban can deter overuse.",
+        "numbers": "Overuse gain $10$ now and future ban loss $25$ is deterred when $\\delta\\ge10/25=0.4$."
       },
       {
-        "title": "API rate-limit cooperation",
-        "background": "Services can cooperate by respecting limits because retaliation or throttling affects future access.",
-        "numbers": "Bursting gives $1000$ extra calls now but triggers loss of $300$ calls per day; with daily $\\delta=0.8$, future loss is $0.8\\cdot300/0.2=1200$."
+        "title": "Repeated auctions",
+        "background": "Future punishment can deter bid shading.",
+        "numbers": "Bid shading gain $1$ with future punishment loss $3$ requires $\\delta\\ge1/3$ to deter shading."
       }
     ],
     "applicationsClose": "Repeated games show that patience is not just a virtue; in strategic systems it is a payoff term.",
@@ -4022,6 +4639,62 @@
       "Constant payoff $c$ forever has value $c/(1-\\delta)$.",
       "Cooperation can survive when future punishment outweighs current temptation.",
       "Known finite horizons can unravel by backward induction."
+    ],
+    "connectionsProse": "<p>Repeated games add a future to the strategic situations studied earlier. A one-shot prisoner's dilemma makes defection attractive in the current round, but repetition lets later rewards and punishments affect today's choice. This lesson connects Nash reasoning to incentives over time. It also gives a first exact threshold calculation using a discount factor.</p>",
+    "symbols": [
+      {
+        "sym": "$\\delta$",
+        "desc": "discount factor"
+      },
+      {
+        "sym": "$T$",
+        "desc": "temptation payoff"
+      },
+      {
+        "sym": "$R$",
+        "desc": "mutual cooperation payoff"
+      },
+      {
+        "sym": "$P$",
+        "desc": "punishment payoff"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Compute the value of cooperating forever",
+        "result": "$R+\\delta R+\\delta^2R+\\cdots=R/(1-\\delta)$",
+        "why": "cooperation pays $R$ each period with discounting"
+      },
+      {
+        "do": "Compute the value of defecting once then being punished",
+        "result": "$T+\\delta P+\\delta^2P+\\cdots=T+\\delta P/(1-\\delta)$",
+        "why": "defection gives $T$ now and $P$ in all future punished periods"
+      },
+      {
+        "do": "Require cooperation to be stable",
+        "result": "$R/(1-\\delta)\\ge T+\\delta P/(1-\\delta)$",
+        "why": "cooperating must be at least as valuable as deviating"
+      },
+      {
+        "do": "Multiply by $1-\\delta$",
+        "result": "$R\\ge T(1-\\delta)+\\delta P$",
+        "why": "this clears the geometric-series denominator"
+      },
+      {
+        "do": "Expand the right side",
+        "result": "$R\\ge T-\\delta T+\\delta P$",
+        "why": "this separates the current temptation and future punishment terms"
+      },
+      {
+        "do": "Rearrange",
+        "result": "$\\delta(T-P)\\ge T-R$",
+        "why": "collect the discount-factor terms on one side"
+      },
+      {
+        "do": "Divide by $T-P$ for $T=5$, $R=3$, and $P=1$",
+        "result": "$\\delta\\ge (T-R)/(T-P)=2/4=0.5$",
+        "why": "this gives the exact grim-trigger threshold"
+      }
     ],
     "prereqs": [
       "math-24-14"
@@ -4051,8 +4724,8 @@
         "incomplete information"
       ]
     },
-    "motivation": "<p>You often make decisions without knowing exactly who you face. A buyer may have high or low value; a sender may be reliable or noisy; an opponent may be cautious or bold. Strategy then depends on beliefs.</p><p>A <b>Bayesian game</b> keeps the uncertainty inside the model. Nature draws each player's type, players know their own type, and strategies map types to actions. Equilibrium asks each type to be optimal given beliefs and other players' type-contingent strategies.</p>",
-    "definition": "<p>A Bayesian game specifies players, action sets, type sets, a common prior probability over types, and payoffs that may depend on actions and types. A pure strategy for player $i$ is a function $s_i(t_i)$ from that player's type $t_i$ to an action. A <b>Bayes-Nash equilibrium</b> is a strategy profile where every type maximizes expected payoff given its beliefs and the other strategies.</p><p>The expectation is the key derivation: a type does not maximize payoff against one known world; it averages payoffs over possible other types using conditional probabilities. If type $H$ assigns probability $0.7$ to one state and $0.3$ to another, expected payoff is $0.7u_1+0.3u_2$.</p><p><b>Assumptions that matter:</b> the prior is common knowledge; each player observes their own type; beliefs are updated consistently when information is observed; and risk-neutral expected utility is used unless stated otherwise.</p>",
+    "motivation": "<p>A Bayesian game adds private information. Players choose actions using beliefs about types, not just beliefs about actions. A type is a piece of private information that affects payoffs or available choices, such as a bidder's value or a firm's cost.</p><p>The main calculation is expected payoff over unknown types. A strategy must say what each type would do, because a high type and a low type may rationally choose different actions. Bayesian Nash equilibrium then requires every type's assigned action to be optimal given beliefs and the other players' type-contingent strategies.</p>",
+    "definition": "<p>A <b>Bayesian game</b> is a game with private types and beliefs, where strategies map types to actions and expected payoff averages over unknown types: $$\\mathbb E[u_i(a,t)]=\\sum_tP(t)u_i(a,t).$$</p><p><b>Assumptions that matter:</b> types affect payoffs or choices, priors describe uncertainty before actions, and Bayesian Nash equilibrium requires each type's assigned action to maximize expected payoff given beliefs.</p>",
     "worked": {
       "problem": "A bidder's value is High $10$ with probability $0.4$ or Low $4$ with probability $0.6$. Bidding costs $5$ and wins for sure; not bidding gives $0$. What should each type do?",
       "skills": [
@@ -4256,34 +4929,34 @@
     ],
     "applications": [
       {
-        "title": "Auctions with private values",
-        "background": "Bayesian games are a foundation of auction theory because bidders know their own values but not others'.",
-        "numbers": "If your value is $100$ and a sealed bid of $70$ wins with probability $0.4$, expected surplus is $0.4(100-70)=12$."
+        "title": "Investment under private quality",
+        "background": "The investor averages high- and low-quality payoffs.",
+        "numbers": "High type probability $0.3$, payoff $10$ if high and $-5$ if low gives expected payoff $-0.5$, so do not invest."
       },
       {
-        "title": "Spam detection",
-        "background": "A sender may be legitimate or spammy, and the filter chooses actions from probabilistic evidence. Types represent hidden sender classes.",
-        "numbers": "Prior spam $20\\%$, flag rate $90\\%$ for spam and $10\\%$ for ham gives posterior spam after flag $0.18/(0.18+0.08)=0.692$."
+        "title": "Auction bidding",
+        "background": "A bidder averages possible private values.",
+        "numbers": "Bidder value $100$ with probability $0.4$ and $40$ with probability $0.6$ gives expected value $64$."
       },
       {
-        "title": "Hiring signals",
-        "background": "Education and portfolios can signal private productivity. Bayesian reasoning compares what different types would choose.",
-        "numbers": "If certification costs productive workers $2$ and unproductive workers $6$, while wage gain is $4$, only productive workers find it profitable."
+        "title": "Ad fraud detection",
+        "background": "Fraud risk changes expected payoff.",
+        "numbers": "Fraud probability $0.2$, loss $-20$, clean gain $5$ gives expected payoff $0.8(5)+0.2(-20)=0$."
       },
       {
         "title": "Personalized pricing",
-        "background": "A seller may not know a buyer's value. Expected revenue weighs possible types against purchase decisions.",
-        "numbers": "Price $30$: high value $50$ buys with probability $0.4$, low value $20$ does not, so revenue is $12$. Price $18$ sells to all, revenue $18$."
+        "background": "A high willingness type contributes expected margin before churn.",
+        "numbers": "High willingness type probability $0.25$ and margin $12$ gives expected high-price margin $3$ before churn costs."
       },
       {
-        "title": "Human-in-the-loop ML",
-        "background": "Systems often know a confidence type but not the true label. Bayesian policies decide when to ask for help.",
-        "numbers": "Review cost $0.05$ and accuracy gain from $0.70$ to $0.95$ is worth $0.25$, so review has net gain $0.20$ on uncertain cases."
+        "title": "MARL hidden roles",
+        "background": "An agent averages over cooperative and adversarial teammate types.",
+        "numbers": "Teammate is cooperative with probability $0.7$ payoff $8$ and adversarial with probability $0.3$ payoff $-4$, expected payoff $4.4$."
       },
       {
-        "title": "Cybersecurity",
-        "background": "Defenders face attackers of unknown sophistication. A Bayesian model averages over attacker types when choosing controls.",
-        "numbers": "Advanced attacker probability $0.2$ with loss $100$ and basic probability $0.8$ with loss $20$ gives expected unprotected loss $36$."
+        "title": "Mechanism design",
+        "background": "A type compares truthful reporting with lying.",
+        "numbers": "Truthful report by a low-cost type pays $6$ and lying pays $4$, so incentive margin is $2$ for that type."
       }
     ],
     "applicationsClose": "Bayesian games are strategic probability: act for the type you are, while respecting uncertainty about everyone else.",
@@ -4292,6 +4965,56 @@
       "Bayes-Nash equilibrium requires every type to maximize expected payoff given beliefs.",
       "Common priors and consistent belief updates are central assumptions.",
       "Auctions, signaling, security, and human-in-the-loop ML all use incomplete-information reasoning."
+    ],
+    "connectionsProse": "<p>Bayesian games extend strategic reasoning to private information. Earlier lessons assumed that the payoff table or game tree was commonly known, but many situations involve hidden types such as cost, value, quality, or intent. The player must choose an action using beliefs about those types. This lesson prepares for auctions, screening, signaling, and mechanism-design examples.</p>",
+    "symbols": [
+      {
+        "sym": "$t_i$",
+        "desc": "type"
+      },
+      {
+        "sym": "$P(t)$",
+        "desc": "prior"
+      },
+      {
+        "sym": "belief",
+        "desc": "probability assessment over unknown types"
+      },
+      {
+        "sym": "$s_i(t_i)$",
+        "desc": "type-contingent strategy"
+      },
+      {
+        "sym": "Bayesian Nash equilibrium",
+        "desc": "a profile where each type's action is optimal given beliefs and others' type-contingent strategies"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let player $i$ have type $t_i$",
+        "result": "$t_i$",
+        "why": "the type represents private information such as high cost or low cost"
+      },
+      {
+        "do": "Assign a prior probability before actions are chosen",
+        "result": "$P(t_i)$",
+        "why": "players need beliefs about unknown types"
+      },
+      {
+        "do": "Define a strategy by type",
+        "result": "$s_i(t_i)$",
+        "why": "different types may rationally choose different actions"
+      },
+      {
+        "do": "Average payoffs over unknown types",
+        "result": "$\\mathbb E[u_i(a,t)]=\\sum_tP(t)u_i(a,t)$",
+        "why": "expected payoff weights each type's payoff by its probability"
+      },
+      {
+        "do": "Apply the equilibrium requirement",
+        "result": "each type's chosen action maximizes expected payoff given beliefs and other type-contingent strategies",
+        "why": "Bayesian Nash equilibrium is optimality type by type"
+      }
     ],
     "prereqs": [
       "math-24-15"
@@ -4321,8 +5044,8 @@
         "dual constraints"
       ]
     },
-    "motivation": "<p>Not every strategic problem is about fighting. Sometimes the question is: if several people or systems cooperate, how much can they create together, and how should that value be divided?</p><p>A <b>cooperative game</b> names the value of every coalition. The <b>core</b> is the set of payoff divisions where no group can walk away and do better on its own. It is stability written as inequalities.</p>",
-    "definition": "<p>For a player set $N$, a transferable-utility cooperative game assigns each coalition $S\\subseteq N$ a value $v(S)$ with $v(\\varnothing)=0$. An allocation $x=(x_i)_{i\\in N}$ is in the <b>core</b> if it is efficient, $$\\sum_{i\\in N}x_i=v(N),$$ and coalitionally rational, $$\\sum_{i\\in S}x_i\\ge v(S)\\quad\\text{for every }S\\subseteq N.$$</p><p>The inequalities come directly from blocking. If a coalition $S$ receives less than $v(S)$, its members can form $S$ alone and divide $v(S)$ so that they are collectively better off. The core contains exactly the allocations with no such blocking coalition.</p><p><b>Assumptions that matter:</b> utility is transferable like money or divisible reward; coalition values are known; players can enforce agreements within a coalition; and the core may be empty if coalition demands are mutually inconsistent.</p>",
+    "motivation": "<p>Cooperative games study what coalitions can achieve and how a total value can be divided. The core contains allocations that no coalition can improve on by leaving. An allocation must first distribute the grand coalition's total value, so nothing is lost or overpaid at the full-group level.</p><p>Stability then requires every smaller coalition to receive at least what it could make on its own. If a group of players is assigned less than its standalone value, those players have a blocking deviation: they can leave and do better together. The core is the set of allocations that survive all such coalition checks.</p>",
+    "definition": "<p>The <b>core</b> of a cooperative game is the set of allocations that fully distribute the grand coalition's value and give every coalition at least its standalone value: $$\\sum_{i\\in N}x_i=v(N),\\qquad \\sum_{i\\in S}x_i\\ge v(S)\\text{ for every }S.$$</p><p><b>Assumptions that matter:</b> coalition values $v(S)$ are known, the grand coalition's value is fully allocated, and every coalition can block an allocation that gives it less than $v(S)$.</p>",
     "worked": {
       "problem": "Three players have $v(\\{1\\})=v(\\{2\\})=v(\\{3\\})=0$, pair values $v(12)=6$, $v(13)=4$, $v(23)=4$, and grand value $v(123)=8$. Is allocation $x=(4,2,2)$ in the core?",
       "skills": [
@@ -4516,34 +5239,34 @@
     ],
     "applications": [
       {
-        "title": "Data cooperatives",
-        "background": "Multiple data owners may jointly train a better model. The core asks whether the reward split keeps every subgroup willing to participate.",
-        "numbers": "If all three earn value $15$ but owners A and B can earn $10$ without C, then A+B must receive at least $10$ together."
+        "title": "Data consortium",
+        "background": "An allocation must first distribute the grand coalition's value.",
+        "numbers": "$v(ABC)=100$, allocation $(40,35,25)$ is efficient because totals $100$."
       },
       {
-        "title": "Cloud cost sharing",
-        "background": "Teams sharing infrastructure need stable cost allocations. A coalition should not pay more than its standalone cost in cost-game form.",
-        "numbers": "If teams A and B can run separately for $8$ but are charged $9$ together, they can object by leaving the pool."
+        "title": "Coalition check",
+        "background": "A pair stays if it receives at least its pair value.",
+        "numbers": "If $v(AB)=70$, then $x_A+x_B=75$ blocks no deviation by AB."
       },
       {
-        "title": "Supply-chain alliances",
-        "background": "Suppliers may create savings by coordinating. The core checks whether any subset can capture better savings alone.",
-        "numbers": "Total savings $100$ with pair AB able to save $70$ means A+B must receive at least $70$ of allocated savings."
+        "title": "Feature-sharing",
+        "background": "A coalition with slack has no reason to leave.",
+        "numbers": "If $v(AC)=60$, allocation gives $65$, surplus $5$ above the coalition's outside option."
       },
       {
-        "title": "Federated learning incentives",
-        "background": "Hospitals or devices may contribute data to a shared model. Stable rewards help prevent useful coalitions from leaving.",
-        "numbers": "If hospitals 1 and 2 can reach AUC gain $0.04$ without hospital 3, their combined reward should value at least $0.04$ of contribution units."
+        "title": "Compute cluster sharing",
+        "background": "A team pair stays when assigned value exceeds its standalone production.",
+        "numbers": "If team B+C can produce value $55$ and receives $60$, it stays by margin $5$."
       },
       {
-        "title": "Ride-sharing matching",
-        "background": "Passengers sharing a ride split cost. Core-like constraints say no subgroup should be able to take a cheaper separate ride.",
-        "numbers": "If three-person ride costs $30$ and riders A+B can ride for $18$, their assigned charges should sum to no more than $18$ in the cost version."
+        "title": "Ride-sharing cost core",
+        "background": "Cost shares must not exceed a coalition's outside-option cost.",
+        "numbers": "If three-person cost is $30$ and pair AB can ride for $18$, cost shares for AB must be at most $18$; shares $9+8=17$ pass by $1$."
       },
       {
-        "title": "Open-source maintenance",
-        "background": "Several firms funding a maintainer can view features as coalition value. Stable funding shares account for what subsets need most.",
-        "numbers": "If all firms value maintenance at $300k$ and firms A+C value it at $220k$, then an allocation of benefit with A+C below $220k$ is unstable."
+        "title": "Open-source funding",
+        "background": "A funding coalition with positive slack does not block.",
+        "numbers": "If firms A+C value maintenance at $220k$ and receive $230k$ of benefit, the coalition has $10k$ slack."
       }
     ],
     "applicationsClose": "The core turns fairness into a sturdy question: who could credibly leave together, and are they already receiving enough to stay?",
@@ -4552,6 +5275,61 @@
       "Core allocations are efficient and satisfy every coalition's value constraint.",
       "A coalition blocks an allocation if it receives less than it can make alone.",
       "The core can be empty when coalition demands are too strong to fit inside total value."
+    ],
+    "connectionsProse": "<p>Cooperative games shift attention from individual action profiles to coalitions. Instead of asking which actions form an equilibrium, the model asks what groups can achieve together and how the resulting value can be divided. This connects game theory to bargaining, cost sharing, data consortia, and allocation problems. The core is the stability concept that keeps coalitions from wanting to leave.</p>",
+    "symbols": [
+      {
+        "sym": "$N$",
+        "desc": "grand coalition"
+      },
+      {
+        "sym": "$S\\subseteq N$",
+        "desc": "coalition"
+      },
+      {
+        "sym": "$v(S)$",
+        "desc": "coalition value"
+      },
+      {
+        "sym": "$x_i$",
+        "desc": "player $i$'s allocation"
+      },
+      {
+        "sym": "core",
+        "desc": "allocations satisfying efficiency and all coalition-rationality inequalities"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $v(S)$ be the value coalition $S$ can make alone",
+        "result": "$v(S)$",
+        "why": "coalition values define outside options"
+      },
+      {
+        "do": "Let an allocation assign payoff to each player",
+        "result": "$x_i$",
+        "why": "the total value must be divided among players"
+      },
+      {
+        "do": "Require efficiency",
+        "result": "$\\sum_{i\\in N}x_i=v(N)$",
+        "why": "the grand coalition's value is fully distributed"
+      },
+      {
+        "do": "Require coalition rationality",
+        "result": "$\\sum_{i\\in S}x_i\\ge v(S)$ for every coalition $S$",
+        "why": "each coalition must receive at least what it can make alone"
+      },
+      {
+        "do": "Check for a violated coalition inequality",
+        "result": "a blocking deviation if $\\sum_{i\\in S}x_i<v(S)$",
+        "why": "that coalition can leave and make more than its assigned total"
+      },
+      {
+        "do": "Collect allocations satisfying all inequalities",
+        "result": "the core",
+        "why": "these allocations survive every coalition check"
+      }
     ],
     "prereqs": [
       "math-24-16"
@@ -4580,8 +5358,8 @@
         "Markov processes"
       ]
     },
-    "motivation": "<p>You already know that successful habits tend to spread. If a strategy earns better outcomes in a population, more agents may copy it, reproduce it, or update toward it.</p><p><b>Evolutionary game theory</b> replaces fully rational one-shot choice with population change. The central question becomes: which strategies survive under payoff-driven dynamics?</p>",
-    "definition": "<p>For a population state $x$, where $x_i$ is the fraction using strategy $i$, payoff matrix $A$ gives strategy payoff $(Ax)_i$ and average population payoff $x^T A x$. The <b>replicator equation</b> is $$\\dot x_i=x_i\\big((Ax)_i-x^T A x\\big).$$ A strategy grows when its payoff is above average and shrinks when below average.</p><p>This formula comes from proportional growth: the change in share equals current share times relative advantage. If a strategy is absent, $x_i=0$, it cannot grow without mutation because the multiplier is zero.</p><p><b>Assumptions that matter:</b> payoffs translate into growth or imitation rates; the population is large enough for deterministic shares; strategy shares are nonnegative and sum to $1$; and mutation or exploration must be added separately if absent strategies can reappear.</p>",
+    "motivation": "<p>Evolutionary game theory tracks how strategy shares change when better-performing strategies spread. It replaces one-shot rational choice with population dynamics. If a strategy's payoff is above the population average, its share grows; if its payoff is below average, its share shrinks.</p><p>The replicator equation turns that idea into a rate of change. The growth term has two parts: the current share of the strategy and its payoff advantage over average. Evolutionary stability adds a related invasion test: a resident strategy is stable if small groups of mutants do worse and therefore cannot grow.</p>",
+    "definition": "<p><b>Evolutionary game theory</b> studies how strategy shares change with payoff advantage; the replicator equation is $$\\dot x_i=x_i((Ax)_i-x^TAx).$$</p><p><b>Assumptions that matter:</b> $x_i$ is a population share, payoffs come from the current population state, above-average strategies grow, and ESS checks whether small mutant populations can invade.</p>",
     "worked": {
       "problem": "In a population with Hawk share $x$ and Dove share $1-x$, payoffs are $u_H=2-4x$ and $u_D=1-x$. Find the interior equilibrium where both strategies have equal payoff.",
       "skills": [
@@ -4771,33 +5549,33 @@
     "applications": [
       {
         "title": "Biological competition",
-        "background": "The field began with biology, where reproductive success changes trait frequencies over generations.",
-        "numbers": "If trait A has fitness $1.2$ and average fitness is $1.0$ at share $0.3$, replicator growth is $0.3(0.2)=0.06$."
+        "background": "A fitter trait grows in proportion to its share and advantage.",
+        "numbers": "Trait share $0.3$, fitness $1.2$, average $1.0$ gives growth $0.3(0.2)=0.06$."
       },
       {
         "title": "Cultural imitation",
-        "background": "People may copy strategies that appear successful. Evolutionary games model the spread of norms without assuming perfect calculation.",
-        "numbers": "If a norm earns payoff $7$ versus population average $5$ at share $0.4$, growth pressure is $0.8$ per time unit in the scaled model."
+        "background": "A norm with above-average payoff spreads.",
+        "numbers": "Norm share $0.4$, payoff $7$, average $5$ gives growth pressure $0.8$."
       },
       {
-        "title": "Multi-agent RL policy populations",
-        "background": "Population-based training keeps multiple policies and allocates more trials to better performers. The arithmetic resembles replicator growth.",
-        "numbers": "Policy A reward $120$ versus average $100$ at share $0.25$ gives growth term $0.25\\cdot20=5$ before scaling."
+        "title": "Population-based RL",
+        "background": "A policy with above-average reward gets positive update pressure.",
+        "numbers": "Policy share $0.25$, reward $120$, average $100$ gives update term $5$ before scaling."
       },
       {
         "title": "Traffic route choice",
-        "background": "Drivers shift toward faster routes after experience. Payoffs can be negative travel times.",
-        "numbers": "Route A time $20$ min and average time $25$ gives payoff advantage $5$ if payoff is negative time, so its share tends to grow."
-      },
-      {
-        "title": "Security behavior",
-        "background": "Defensive practices spread when they visibly reduce losses. Population dynamics describe adoption over time.",
-        "numbers": "If MFA users lose $1\\%$ and nonusers lose $4\\%$, payoff advantage can be $3$ percentage points in favor of MFA."
+        "background": "A better route attracts more drivers in the dynamic model.",
+        "numbers": "Route payoff advantage $5$ at share $0.2$ gives growth term $1.0$."
       },
       {
         "title": "Algorithm selection",
-        "background": "AutoML systems can keep a population of algorithms and expand those with better validation scores.",
-        "numbers": "Algorithm X score $0.84$ versus average $0.80$ at share $0.2$ gives update term $0.2(0.04)=0.008$."
+        "background": "A better-scoring algorithm gains share slowly when its advantage is small.",
+        "numbers": "Score $0.84$ versus average $0.80$ at share $0.2$ gives update $0.008$."
+      },
+      {
+        "title": "ESS check",
+        "background": "A resident strategy passes immediately if it beats mutants against residents.",
+        "numbers": "If $u(s,s)=4$ and $u(t,s)=3$, resident $s$ passes the first ESS test by margin $1$."
       }
     ],
     "applicationsClose": "Evolutionary games remind us that strategy can be selected by feedback, not only chosen by foresight.",
@@ -4806,6 +5584,123 @@
       "Interior equilibria require all used strategies to have equal payoff.",
       "Absent strategies stay absent unless mutation or exploration is added.",
       "Population learning in biology, culture, traffic, and MARL often follows evolutionary logic."
+    ],
+    "connectionsProse": "<p>Evolutionary game theory changes the interpretation of strategies from deliberate choices by one player to shares in a population. The payoff comparisons are still game-theoretic, but the outcome is a dynamic process rather than a single equilibrium cell. Strategies that earn above-average payoff tend to spread. This connects game theory to biology, cultural learning, traffic adaptation, and population-based reinforcement learning.</p>",
+    "symbols": [
+      {
+        "sym": "$x_i$",
+        "desc": "strategy share"
+      },
+      {
+        "sym": "$A$",
+        "desc": "payoff matrix"
+      },
+      {
+        "sym": "$(Ax)_i$",
+        "desc": "strategy payoff"
+      },
+      {
+        "sym": "$x^TAx$",
+        "desc": "average payoff"
+      },
+      {
+        "sym": "$\\dot x_i$",
+        "desc": "time derivative of share"
+      },
+      {
+        "sym": "$s$",
+        "desc": "resident strategy"
+      },
+      {
+        "sym": "$t$",
+        "desc": "mutant strategy"
+      },
+      {
+        "sym": "$\\epsilon$",
+        "desc": "mutant share"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $x_i$ be the population share using strategy $i$",
+        "result": "$x_i$",
+        "why": "strategy use is measured as a share of the population"
+      },
+      {
+        "do": "Compute the payoff to strategy $i$ in population state $x$",
+        "result": "$(Ax)_i$",
+        "why": "the matrix payoff is averaged against the current population"
+      },
+      {
+        "do": "Compute the average population payoff",
+        "result": "$x^TAx$",
+        "why": "this is the payoff benchmark for growth"
+      },
+      {
+        "do": "Compute the relative advantage of strategy $i$",
+        "result": "$(Ax)_i-x^TAx$",
+        "why": "above-average payoff should increase share"
+      },
+      {
+        "do": "Multiply by current share",
+        "result": "$\\dot x_i=x_i((Ax)_i-x^TAx)$",
+        "why": "proportional growth depends on both share and advantage"
+      },
+      {
+        "do": "For an ESS $s$, compare a small mutant share $\\epsilon$ of strategy $t$ against mostly residents",
+        "result": "resident-versus-mutant invasion test",
+        "why": "stability means mutants cannot grow when rare"
+      },
+      {
+        "do": "Compute resident payoff",
+        "result": "$(1-\\epsilon)u(s,s)+\\epsilon u(s,t)$",
+        "why": "residents mostly meet residents and sometimes meet mutants"
+      },
+      {
+        "do": "Compute mutant payoff",
+        "result": "$(1-\\epsilon)u(t,s)+\\epsilon u(t,t)$",
+        "why": "mutants mostly meet residents and sometimes meet mutants"
+      },
+      {
+        "do": "Require resident payoff to exceed mutant payoff for small positive $\\epsilon$",
+        "result": "resident payoff $>$ mutant payoff",
+        "why": "mutants then shrink rather than invade"
+      },
+      {
+        "do": "Take $\\epsilon\\to0$",
+        "result": "$u(s,s)>u(t,s)$",
+        "why": "the leading-order resident-versus-mutant comparison must favor the resident"
+      },
+      {
+        "do": "If the first terms tie, compare the $\\epsilon$ terms",
+        "result": "$u(s,t)>u(t,t)$",
+        "why": "the second ESS test breaks the tie"
+      },
+      {
+        "do": "For Hawk-Dove, write the two payoffs",
+        "result": "$u_H=2-4x$ and $u_D=1-x$",
+        "why": "an interior rest point equalizes the active strategies"
+      },
+      {
+        "do": "Set the payoffs equal",
+        "result": "$2-4x=1-x$",
+        "why": "both strategies persist only when their payoffs match"
+      },
+      {
+        "do": "Add $4x$",
+        "result": "$2=1+3x$",
+        "why": "this gathers $x$ terms on the right"
+      },
+      {
+        "do": "Subtract $1$",
+        "result": "$1=3x$",
+        "why": "this isolates the multiple of $x$"
+      },
+      {
+        "do": "Divide by $3$",
+        "result": "$x=1/3$",
+        "why": "this gives the Hawk-Dove interior mix"
+      }
     ],
     "prereqs": [
       "math-24-17"
@@ -4834,8 +5729,8 @@
         "information design"
       ]
     },
-    "motivation": "<p>You already know that advice can help people coordinate. If a trusted traffic app privately suggests routes to drivers, each driver may follow because the suggestion contains information about what others are likely doing.</p><p>A <b>correlated equilibrium</b> is exactly that: a probability distribution over action profiles plus private recommendations, such that each player prefers following their own recommendation given what that recommendation tells them.</p>",
-    "definition": "<p>Let $\\pi(a)$ be a distribution over action profiles $a=(a_i,a_{-i})$. A mediator draws $a$ from $\\pi$ and privately recommends $a_i$ to player $i$. The distribution is a <b>correlated equilibrium</b> if for every player $i$, every recommended action $r$, and every alternative action $d$, following has at least as much conditional expected payoff as deviating: $$\\mathbb{E}[u_i(r,a_{-i})\\mid a_i=r]\\ge\\mathbb{E}[u_i(d,a_{-i})\\mid a_i=r].$$</p><p>The condition is just no-profitable-deviation after hearing the signal. Nash equilibrium is the special case where recommendations are independent across players; correlation can coordinate safer or more efficient outcomes.</p><p><b>Assumptions that matter:</b> the mediator's distribution is common knowledge; recommendations are private unless stated otherwise; players can condition only on their own recommendation; and the obedience inequalities must hold for every recommended action with positive probability.</p>",
+    "motivation": "<p>Correlated equilibrium allows a mediator to recommend actions. It is stable when every player wants to follow the recommendation after learning only their own signal. The player does not observe the full recommended action profile; the player only knows the recommendation they received.</p><p>The obedience condition is the main idea. Conditional on receiving a recommendation, compare the expected payoff from obeying with the expected payoff from switching to another action. If obeying is at least as good for every player, every recommendation, and every deviation, the mediator's distribution is a correlated equilibrium.</p>",
+    "definition": "<p>A <b>correlated equilibrium</b> is a mediator distribution over action profiles such that every player prefers obeying the received recommendation to any unilateral deviation: $$\\mathbb E[u_i(r,a_{-i})\\mid a_i=r]\\ge \\mathbb E[u_i(d,a_{-i})\\mid a_i=r].$$</p><p><b>Assumptions that matter:</b> the player sees only their own recommendation, expectations condition on that recommendation, and the obedience inequality must hold for every player, recommendation, and deviation.</p>",
     "worked": {
       "problem": "In Battle of the Sexes, payoffs are $(2,1)$ at $(A,A)$, $(1,2)$ at $(B,B)$, and $(0,0)$ off diagonal. A mediator recommends $(A,A)$ with probability $0.5$ and $(B,B)$ with probability $0.5$. Show this is a correlated equilibrium.",
       "skills": [
@@ -5035,33 +5930,33 @@
     "applications": [
       {
         "title": "Traffic routing",
-        "background": "A central app can reduce congestion by correlating route recommendations. Private signals prevent everyone from taking the same shortcut.",
-        "numbers": "If split routes give each driver $20$ minutes and same route gives $35$, following a split recommendation saves $15$ minutes."
+        "background": "A mediator can recommend a split that avoids congestion.",
+        "numbers": "If following a split recommendation gives $20$ minutes and deviating to the same route gives $35$, obedience saves $15$ minutes."
       },
       {
-        "title": "Wireless channel allocation",
-        "background": "Devices can coordinate channel choices through recommendations to avoid interference. Correlation improves throughput.",
-        "numbers": "Two devices on different channels get $10$ Mbps each; same channel gives $3$ Mbps. A mediator that splits them raises total throughput from $6$ to $20$ Mbps."
+        "title": "Wireless channels",
+        "background": "Recommended different channels avoid interference.",
+        "numbers": "Different channels give $10$ Mbps each and same channel $3$ Mbps, so obeying gains $7$ Mbps."
       },
       {
-        "title": "Multi-agent task assignment",
-        "background": "Robots can receive correlated private roles so they do not duplicate work. Obedience means each robot prefers its assigned role.",
-        "numbers": "If one robot maps and one carries, team reward is $12$; if both map, reward is $5$. Role correlation gains $7$."
+        "title": "Robot task assignment",
+        "background": "A mediator can prevent duplicated robot work.",
+        "numbers": "Map/carry reward $12$ versus duplicate-map reward $5$ gives obedience gain $7$."
       },
       {
         "title": "Load balancing",
-        "background": "A scheduler can randomize assignments in a correlated way across servers. Each worker follows because its own assignment implies others are balanced.",
-        "numbers": "With two jobs, separate servers finish in $4$ seconds; same server takes $9$ seconds. Correlation cuts completion time by $5$ seconds."
+        "background": "Following recommendations sends jobs to separate servers.",
+        "numbers": "Separate servers finish in $4$ seconds and same server in $9$, so following saves $5$ seconds."
       },
       {
         "title": "Recommendation platforms",
-        "background": "Platforms may coordinate exposure so creators do not all compete for one slot. Correlated recommendations distribute attention.",
-        "numbers": "If two campaigns shown to distinct segments each get $1000$ impressions, but overlap gives each $600$, correlation adds $800$ total impressions."
+        "background": "Coordinated recommendations can avoid audience overlap.",
+        "numbers": "Distinct audience segments give $1000$ impressions each while overlap gives $600$ each, so correlation adds $800$ total impressions."
       },
       {
         "title": "Mechanism design",
-        "background": "Correlated equilibrium is a bridge to mechanisms that recommend actions rather than force them. The obedience constraints are incentive constraints.",
-        "numbers": "If following a recommendation pays expected $1.2$ and deviating pays $1.0$, a payment of $0.21$ is more than enough to preserve obedience if costs shift by $0.2$."
+        "background": "Positive obedience slack means the recommended action is stable.",
+        "numbers": "If obeying pays $1.2$ and deviating pays $1.0$, the obedience slack is $0.2$."
       }
     ],
     "applicationsClose": "Correlation is useful when the signal itself helps players trust that others are being guided in compatible ways.",
@@ -5070,6 +5965,61 @@
       "Obedience is checked by conditional expected payoff for every recommendation.",
       "Nash equilibrium is a special independent case; correlation can improve coordination.",
       "Traffic, scheduling, wireless systems, and MARL coordination all use this signal-based idea."
+    ],
+    "connectionsProse": "<p>Correlated equilibrium extends Nash equilibrium by allowing players to condition their actions on private recommendations from a mediator. The players still make their own decisions, but their actions can be coordinated through signals. This concept sits between noncooperative equilibrium and mechanism design. It is useful whenever a shared recommendation can reduce collisions, congestion, or duplicated work.</p>",
+    "symbols": [
+      {
+        "sym": "$\\pi(a)$",
+        "desc": "mediator distribution"
+      },
+      {
+        "sym": "$r$",
+        "desc": "recommended action"
+      },
+      {
+        "sym": "$d$",
+        "desc": "deviation"
+      },
+      {
+        "sym": "$a_{-i}$",
+        "desc": "others' recommended actions"
+      },
+      {
+        "sym": "obedience inequality",
+        "desc": "the condition that following a recommendation is at least as good as deviating"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $\\pi(a)$ be the probability that the mediator recommends action profile $a$",
+        "result": "$\\pi(a)$",
+        "why": "the mediator randomizes over full action profiles"
+      },
+      {
+        "do": "Condition on player $i$ receiving recommendation $r$",
+        "result": "$a_i=r$",
+        "why": "that is the information the player has"
+      },
+      {
+        "do": "Compute the expected payoff from obeying",
+        "result": "$\\mathbb E[u_i(r,a_{-i})\\mid a_i=r]$",
+        "why": "the player follows the recommendation and averages over others' recommendations"
+      },
+      {
+        "do": "Compute the expected payoff from deviating to $d$",
+        "result": "$\\mathbb E[u_i(d,a_{-i})\\mid a_i=r]$",
+        "why": "the player switches action while keeping the same information"
+      },
+      {
+        "do": "Require obedience to be at least as good as deviation",
+        "result": "$\\mathbb E[u_i(r,a_{-i})\\mid a_i=r]\\ge \\mathbb E[u_i(d,a_{-i})\\mid a_i=r]$",
+        "why": "no player should want to ignore the recommendation"
+      },
+      {
+        "do": "Check Battle of the Sexes with recommendations $(A,A)$ and $(B,B)$ each probability $0.5$",
+        "result": "recommendation $A$ gives obeying payoff $2$ versus deviation $0$; recommendation $B$ gives obeying payoff $1$ versus deviation $0$",
+        "why": "both obedience inequalities hold"
+      }
     ],
     "prereqs": [
       "math-24-18"
@@ -5099,8 +6049,8 @@
         "Nash equilibrium"
       ]
     },
-    "motivation": "<p>You already know how ordinary supervised learning feels: choose parameters to lower one loss on fixed data. Game-based ML is livelier. Another model, agent, or policy changes while you learn.</p><p>In a <b>GAN</b>, a generator tries to fool a discriminator while the discriminator tries to tell real from fake. In <b>multi-agent RL</b>, policies learn in an environment that includes other learning policies. Game theory gives the language for objectives, equilibria, and instability.</p>",
-    "definition": "<p>A classic GAN objective is $$\\min_G\\max_D\\;\\mathbb{E}_{x\\sim p_{data}}[\\log D(x)]+\\mathbb{E}_{z\\sim p_z}[\\log(1-D(G(z)))].$$ Here $G$ maps noise $z$ to fake samples, $D(x)$ estimates probability that $x$ is real, and the discriminator maximizes classification log-likelihood while the generator tries to reduce the fake-detection term.</p><p>For fixed $G$, the best discriminator at a point is $D^*(x)=p_{data}(x)/(p_{data}(x)+p_G(x))$. This comes from maximizing $a\\log D+b\\log(1-D)$ in $D$, whose derivative is $a/D-b/(1-D)$; setting it to zero gives $D=a/(a+b)$. At equilibrium, $p_G=p_{data}$ and $D^*(x)=1/2$.</p><p><b>Assumptions that matter:</b> the ideal statement assumes enough model capacity, enough optimization, and well-defined distributions; practical training uses stochastic gradients and may cycle; multi-agent RL adds state, time, exploration, and nonstationarity because other policies are changing.</p>",
+    "motivation": "<p>Game-theoretic ML has objectives that move because another learner is moving too. GANs, adversarial training, self-play, and multi-agent RL all require equilibrium and best-response language. A model is not optimizing against a fixed environment; it is often optimizing against another process that adapts in response.</p><p>In a GAN, the discriminator tries to separate real samples from generated samples, while the generator tries to make generated samples harder to separate. If the generator distribution matches the data distribution, the discriminator's best local output is $1/2$. That value means the discriminator has no label advantage at that point, which is the same indifference idea that appeared in mixed equilibrium and minimax games.</p>",
+    "definition": "<p>A <b>GAN</b> can be viewed as a minimax game in which the generator minimizes the value that the discriminator maximizes: $$\\min_G\\max_D\\;\\mathbb E_{x\\sim p_{data}}\\log D(x)+\\mathbb E_{x\\sim p_G}\\log(1-D(x)).$$</p><p><b>Assumptions that matter:</b> fix $G$ while optimizing $D$, treat $p_G$ as fixed in the inner maximization, and solve the discriminator's local best response pointwise in $x$.</p>",
     "worked": {
       "problem": "A tiny discriminator sees 4 real samples with outputs $D=0.8,0.7,0.6,0.9$ and 4 generated samples with outputs $D=0.3,0.4,0.2,0.5$. Compute the discriminator GAN objective average using natural logs $\\ln0.8=-0.223$, $\\ln0.7=-0.357$, $\\ln0.6=-0.511$, $\\ln0.9=-0.105$, $\\ln0.7=-0.357$, $\\ln0.6=-0.511$, $\\ln0.8=-0.223$, $\\ln0.5=-0.693$.",
       "skills": [
@@ -5294,39 +6244,34 @@
     ],
     "applications": [
       {
-        "title": "Image GAN training",
-        "background": "GANs became famous for image generation because a discriminator can provide a learned training signal when pixel-wise targets are not enough.",
-        "numbers": "If a batch has average $-\\log D(G(z))=0.9$ and improves to $0.6$, the generator has reduced loss by $0.3$ per fake sample."
+        "title": "GAN discriminator objective",
+        "background": "The discriminator's log objective averages real and fake outputs.",
+        "numbers": "Real outputs $0.8,0.7,0.6,0.9$ and fake outputs $0.3,0.4,0.2,0.5$ give average log objective $-0.3725$."
       },
       {
-        "title": "Mode collapse detection",
-        "background": "A generator may fool the discriminator while covering too few data modes. Game metrics must be paired with diversity checks.",
-        "numbers": "If real data has 10 classes but 1000 generated images cover only 4 classes, empirical class coverage is $40\\%$ even if discriminator loss looks good."
+        "title": "Ideal discriminator",
+        "background": "Matching distributions remove local label advantage.",
+        "numbers": "If $p_{data}(x)=p_G(x)$, then $D^*(x)=1/2$, so the discriminator has no local label advantage."
       },
       {
         "title": "Adversarial robustness",
-        "background": "Robust training is another minimax problem: the model minimizes loss while an attacker maximizes it within a perturbation set.",
-        "numbers": "Clean loss $0.20$ and adversarial loss $0.75$ make the robust objective $0.75$; after training, reducing adversarial loss to $0.45$ improves worst-case loss by $0.30$."
+        "background": "A lower worst-case loss improves the minimax objective.",
+        "numbers": "Worst-case loss drops from $0.75$ to $0.45$, improving the minimax objective by $0.30$."
       },
       {
-        "title": "Self-play in games",
-        "background": "AlphaZero-style systems improve by playing against versions of themselves. The opponent distribution changes as the agent improves.",
-        "numbers": "If a new policy wins 56 of 100 games against the current best, its estimated win rate is $0.56$; a 55 percent gate would promote it."
+        "title": "Self-play promotion",
+        "background": "A policy can be promoted after clearing a win-rate gate.",
+        "numbers": "A new policy winning $56$ of $100$ games has estimated win rate $0.56$, passing a $0.55$ gate by $0.01$."
       },
       {
-        "title": "Opponent nonstationarity in MARL",
-        "background": "In multi-agent RL, your reward function can appear to change because other policies update. This breaks the fixed-data comfort of supervised learning.",
-        "numbers": "If your policy's reward against opponent v1 is $8$ but against v2 is $3$, the same action lost $5$ value because the opponent changed."
+        "title": "Opponent nonstationarity",
+        "background": "A changing opponent shifts the reward landscape.",
+        "numbers": "Reward falling from $8$ against opponent v1 to $3$ against v2 is a $5$-point strategic shift."
       },
       {
-        "title": "Population-based training",
-        "background": "Instead of one opponent, agents train against a population to avoid overfitting to a single strategy.",
-        "numbers": "Win rates against five opponents $0.7,0.6,0.5,0.4,0.3$ average to $0.5$, revealing that strength is uneven despite one high score."
-      },
-      {
-        "title": "Reward shaping and social dilemmas",
-        "background": "MARL often studies cooperation problems where individual reward conflicts with group reward. Game theory names the tension.",
-        "numbers": "If two agents cooperate they each get $3$; unilateral defection gives defector $5$ and cooperator $0$; mutual defection gives $1$ each, exactly the repeated-game pressure seen in self-play."
+        "title": "Population evaluation",
+        "background": "A policy can be evaluated against a distribution of opponents.",
+        "numbers": "Win rates $0.7,0.6,0.5,0.4,0.3$ average to $0.5$, showing no net edge over the opponent population."
       }
     ],
     "applicationsClose": "The ML lesson is practical and humbling: when learners interact, objectives are not fixed landscapes but strategic relationships.",
@@ -5336,6 +6281,85 @@
       "At the ideal GAN equilibrium, generated and data distributions match and $D$ outputs $1/2$.",
       "Multi-agent RL adds nonstationarity because each agent learns while others learn.",
       "Self-play, adversarial robustness, and population training all use game-theoretic thinking."
+    ],
+    "connectionsProse": "<p>This capstone brings the section's game-theory language into machine learning. Mixed strategies, best responses, zero-sum objectives, and minimax reasoning all appear when models are trained against other models or adaptive opponents. GANs provide the clearest mathematical example because one network improves by making another network's discrimination task harder. The same vocabulary also helps describe adversarial robustness, self-play, and multi-agent reinforcement learning.</p>",
+    "symbols": [
+      {
+        "sym": "$G$",
+        "desc": "generator"
+      },
+      {
+        "sym": "$D$",
+        "desc": "discriminator"
+      },
+      {
+        "sym": "$p_{data}$",
+        "desc": "data distribution"
+      },
+      {
+        "sym": "$p_G$",
+        "desc": "generator distribution"
+      },
+      {
+        "sym": "$z$",
+        "desc": "noise"
+      },
+      {
+        "sym": "minimax",
+        "desc": "one side minimizes the value the other maximizes"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Fix $G$",
+        "result": "$p_G$ is fixed while optimizing $D$",
+        "why": "the inner maximization treats the generator distribution as given"
+      },
+      {
+        "do": "At one point $x$, write the contribution",
+        "result": "$a\\log D+b\\log(1-D)$ with $a=p_{data}(x)$ and $b=p_G(x)$",
+        "why": "the discriminator choice at that point has real and generated weights"
+      },
+      {
+        "do": "Differentiate with respect to $D$",
+        "result": "$a/D-b/(1-D)$",
+        "why": "this gives the slope of the local discriminator objective"
+      },
+      {
+        "do": "Set the derivative to zero",
+        "result": "$a/D-b/(1-D)=0$",
+        "why": "an interior maximum has slope $0$"
+      },
+      {
+        "do": "Move terms",
+        "result": "$a/D=b/(1-D)$",
+        "why": "this balances the real and generated contributions"
+      },
+      {
+        "do": "Cross-multiply",
+        "result": "$a(1-D)=bD$",
+        "why": "this clears denominators"
+      },
+      {
+        "do": "Expand",
+        "result": "$a-aD=bD$",
+        "why": "this separates the constant and $D$ terms"
+      },
+      {
+        "do": "Add $aD$",
+        "result": "$a=(a+b)D$",
+        "why": "this gathers the $D$ terms on one side"
+      },
+      {
+        "do": "Divide by $a+b$",
+        "result": "$D^*(x)=a/(a+b)=p_{data}(x)/(p_{data}(x)+p_G(x))$",
+        "why": "this solves the discriminator's best response"
+      },
+      {
+        "do": "Set $p_G=p_{data}$",
+        "result": "$D^*(x)=1/2$",
+        "why": "equal real and generated densities make the discriminator indifferent"
+      }
     ],
     "prereqs": [
       "math-24-19"

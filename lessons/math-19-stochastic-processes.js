@@ -29,8 +29,8 @@
         "covariance"
       ]
     },
-    "motivation": "<p>You already know how one random variable describes one uncertain measurement, like a click count or a coin toss. Real systems usually unfold through many measurements.</p><p>A <b>stochastic process</b> keeps the uncertainty and adds an index such as time, step, or location. Instead of one random outcome, we study a whole random path.</p>",
-    "definition": "<p>A <b>stochastic process</b> is a family of random variables $\\{X_t:t\\in T\\}$ on a common probability space. The set $T$ is the index set, and each $X_t$ takes values in a state space $S$.</p><p>Finite-dimensional distributions describe the process: probabilities such as $P(X_0=i,X_1=j,X_2=k)$ tell us how several observations fit together. Dependence across time is part of the model, not a defect.</p><p><b>Assumptions that matter:</b> all variables share one probability model; the index set says when we observe; the state space says what values are possible; and the joint behavior across indices must be specified or estimated.</p>",
+    "motivation": "<p>A single random variable can describe one uncertain quantity, such as whether a user clicks or how many requests arrive in one minute. Many systems need more structure than that because the values arrive as a sequence. A stochastic process packages the whole collection into one model, so the model can describe both individual values and how values are related across indices.</p><p>The index set might be discrete time, continuous time, positions in an image, or nodes in a network. Once the index set and state space are named, a sample path becomes one realized sequence or function. This makes it possible to discuss dependence, trends, jumps, and long-run behavior without pretending the observations are isolated.</p>",
+    "definition": "<p>A stochastic process is an indexed family of random variables $$\\{X_t:t\\in T\\}$$ with an index set, a state space, and finite-dimensional distributions describing joint behavior across selected indices.</p><p><b>Assumptions that matter:</b> This lesson is explain-only: without extra assumptions about dependence, time, or state space, there is no identity to prove.</p>",
     "worked": {
       "problem": "A two-day weather process has states Sunny $S$ and Rainy $R$. Suppose $P(X_0=S)=0.7$, $P(X_1=S\\mid X_0=S)=0.8$, and $P(X_1=S\\mid X_0=R)=0.4$. Find $P(X_1=S)$.",
       "skills": [
@@ -229,34 +229,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Stochastic-process thinking helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "For counts $120,150,141$, the net change from first to last is $21$."
+        "title": "Binary click process",
+        "background": "For independent Bernoulli clicks with $p=0.2$.",
+        "numbers": "$P(X_1=1,X_2=0,X_3=1)=0.2\\cdot0.8\\cdot0.2=0.032$"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Stochastic-process thinking appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "If token path probability is $0.2\\cdot0.4=0.08$, two positions are modeled jointly."
+        "title": "Path count",
+        "background": "A 10-step binary process enumerates all binary sample paths.",
+        "numbers": "$2^{10}=1024$ possible paths"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use stochastic-process thinking ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "A queue with $5$ jobs plus $3$ arrivals minus $4$ completions moves to $4$."
+        "title": "Traffic counts",
+        "background": "Expected totals add over three periods with means $100,120,80$.",
+        "numbers": "$300$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A two-token path with probabilities $0.25$ and $0.10$ has probability $0.025$."
+        "title": "Rolling metric",
+        "background": "One sample path $(3,4,2)$ has a three-step average.",
+        "numbers": "$3$"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "Simulating $1000$ paths and seeing $73$ failures estimates failure probability $0.073$."
+        "title": "Spatial process",
+        "background": "A $4\\times4$ image patch is a random field.",
+        "numbers": "$16$ indexed variables"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A price path $100,102,98.94$ has returns $2\\%$ and $-3\\%$."
+        "title": "Time dependence",
+        "background": "An AR(1) process with variance $1$ and lag correlation $0.7$.",
+        "numbers": "covariance $0.7$ between adjacent times"
       }
     ],
     "applicationsClose": "Across these examples, the same idea wears different clothes: random variables indexed by time let us reason about uncertain paths.",
@@ -265,6 +265,25 @@
       "The index set describes when or where observations occur.",
       "The state space describes possible values.",
       "Joint distributions across times describe dependence and paths."
+    ],
+    "connectionsProse": "<p>This lesson starts the section by naming the object that later lessons study in detail. Earlier probability lessons often focused on one random variable or one distribution at a time. A stochastic process keeps that same probability language but attaches it to many indexed random variables at once.</p><p>This viewpoint prepares the ground for Markov chains, Poisson processes, Brownian motion, time-series models, and diffusion models. In all of those settings, the main object is not one random outcome but a random path evolving across time, steps, or space.</p>",
+    "symbols": [
+      {
+        "sym": "$X_t$",
+        "desc": "the random value at index $t$"
+      },
+      {
+        "sym": "$T$",
+        "desc": "the index set"
+      },
+      {
+        "sym": "$S$",
+        "desc": "the state space"
+      },
+      {
+        "sym": "sample path",
+        "desc": "one realized sequence or function of values"
+      }
     ]
   });
 
@@ -290,8 +309,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>You already know that new information changes conditional probabilities. A Markov chain is the time-evolution version of that idea.</p><p>The helpful simplification is that the current state contains all the predictive information we keep. Once the present is known, older history no longer changes the next-step probabilities.</p>",
-    "definition": "<p>A <b>discrete-time Markov chain</b> is a process $X_0,X_1,\\ldots$ with state space $S$ such that $P(X_{n+1}=j\\mid X_n=i,X_{n-1},\\ldots,X_0)=P(X_{n+1}=j\\mid X_n=i)$. Write $P_{ij}=P(X_{n+1}=j\\mid X_n=i)$.</p><p>This is conditional independence, not forgetfulness in a casual sense. The future may depend strongly on the present; the claim is only that the older past adds no extra information after the present state is known.</p><p><b>Assumptions that matter:</b> time advances in integer steps; each transition row sums to $1$; time-homogeneous chains reuse the same $P_{ij}$ at every step; and the Markov property depends on choosing a state rich enough to summarize the past.</p>",
+    "motivation": "<p>A general stochastic process can remember a long and complicated history. In many step-by-step systems, the current state is designed to summarize that history well enough for prediction. If a user is currently active, or a machine is currently up, the next-step model can often start from that current state rather than from every earlier state.</p><p>The Markov property is the mathematical version of that summary. It does not say the past is irrelevant in an ordinary sense; it says the past affects the future only through the present state. Once this is true, every one-step prediction can be stored as a transition probability, and repeated movement becomes matrix algebra.</p>",
+    "definition": "<p>A discrete-time Markov chain is a stochastic process whose next-state distribution depends on the past only through the current state: $$P(X_{n+1}=j\\mid X_n=i,X_{n-1},\\ldots,X_0)=P(X_{n+1}=j\\mid X_n=i)=P_{ij}.$$</p><p><b>Assumptions that matter:</b> Time is discrete, the current state summarizes the relevant history, and in the time-homogeneous case the same $P_{ij}$ applies at every step.</p>",
     "worked": {
       "problem": "A customer is Active $A$ or Inactive $I$. From $A$, stay active with probability $0.9$; from $I$, become active with probability $0.3$. If $P(X_0=A)=0.6$, find $P(X_1=A)$.",
       "skills": [
@@ -490,34 +509,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Discrete-time Markov chains helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "User retention",
+        "background": "With $P_{\\text{active,inactive}}=0.3$.",
+        "numbers": "an active user has $0.7$ chance to remain active next step"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Discrete-time Markov chains appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "Two-step churn",
+        "background": "Row 1 of $P^2$ above gives the two-step inactive probability.",
+        "numbers": "$P(X_2=\\text{inactive}\\mid X_0=\\text{active})=0.45$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use discrete-time markov chains ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Recommendation state",
+        "background": "From current distribution $(0.4,0.6)$.",
+        "numbers": "$(0.4,0.6)P=(0.40,0.60)$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Reliability",
+        "background": "If failure is absorbing with row $(0,1)$ and up-state failure probability $0.02$.",
+        "numbers": "two-step survival is $0.98^2=0.9604$"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "Experiment funnels",
+        "background": "If view-to-click is $0.3$ and click-to-buy is $0.2$.",
+        "numbers": "two-step buy probability is $0.06$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "Sequence simulation",
+        "background": "A path $1\\to2\\to2$ under $P$.",
+        "numbers": "probability $0.3\\cdot0.8=0.24$"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -526,6 +545,52 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson builds directly on stochastic processes by adding a simple rule about dependence. Instead of allowing the whole past to affect the next value, a discrete-time Markov chain says the present state contains the information needed for the next step. That makes the process easier to compute without making it deterministic.</p><p>The Markov-chain idea leads naturally to transition matrices, multi-step probabilities, state classification, stationarity, and MCMC. It is also the template behind many models in reliability, user behavior, sequence simulation, and reinforcement learning.</p>",
+    "symbols": [
+      {
+        "sym": "$X_n$",
+        "desc": "the state at step $n$"
+      },
+      {
+        "sym": "$S$",
+        "desc": "the state space"
+      },
+      {
+        "sym": "$P_{ij}$",
+        "desc": "the probability of moving from $i$ to $j$ in one step"
+      },
+      {
+        "sym": "$P$",
+        "desc": "the matrix of all $P_{ij}$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with conditional probability from all history.",
+        "result": "$P(X_{n+1}=j\\mid X_n=i,X_{n-1},\\ldots,X_0)$",
+        "why": "This is the most general one-step prediction."
+      },
+      {
+        "do": "Impose the Markov property.",
+        "result": "$P(X_{n+1}=j\\mid X_n=i)$",
+        "why": "The present state is the sufficient summary."
+      },
+      {
+        "do": "Name each one-step probability.",
+        "result": "$P_{ij}=P(X_{n+1}=j\\mid X_n=i)$",
+        "why": "Every pair of states gets a transition probability."
+      },
+      {
+        "do": "Read row 1 of the example matrix.",
+        "result": "$P=\\begin{bmatrix}0.7&0.3\\0.2&0.8\\end{bmatrix}$ gives $(0.7,0.3)$",
+        "why": "Starting in state 1 uses row 1 as the next-state distribution."
+      },
+      {
+        "do": "Multiply for a second step.",
+        "result": "$(1,0)P^2=(0.55,0.45)$",
+        "why": "The current distribution becomes the new mixture over rows."
+      }
     ],
     "prereqs": [
       "math-19-01"
@@ -554,8 +619,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>You already use tables to organize conditional probabilities. A transition matrix is that table with a job: move a whole distribution one step forward.</p><p>Rows describe where the chain is now; columns describe where it goes next. Matrix multiplication is just total probability in compact form.</p>",
-    "definition": "<p>For states $1,\\ldots,m$, the <b>transition matrix</b> $P$ has entries $P_{ij}=P(X_{n+1}=j\\mid X_n=i)$. Entries are nonnegative and every row sums to $1$.</p><p>If $\\mu_n$ is a row vector of state probabilities, then $\\mu_{n+1}=\\mu_nP$. Its $j$th component is $\\sum_i\\mu_n(i)P_{ij}$, the total probability of landing in $j$ from all possible current states.</p><p><b>Assumptions that matter:</b> this lesson uses row vectors; state order must stay fixed; rows, not columns, sum to $1$; and powers $P^k$ describe $k$-step transitions only when the transition rule is time-homogeneous.</p>",
+    "motivation": "<p>A chain has many possible current states, and each current state has a row of possible next states. The transition matrix stores those rows in one place. A row-stochastic matrix is therefore not just a table of numbers; each row is a complete probability distribution for one current state.</p><p>Multiplying a current distribution by the matrix applies total probability. The mass currently in each state is spread across next states according to that state's row, and all incoming contributions are added. This is why matrix multiplication is the natural update rule for Markov chains.</p>",
+    "definition": "<p>A transition matrix $P$ stores one-step Markov transition probabilities and updates row-vector distributions by $$\\mu_{n+1}=\\mu_nP,\\qquad (\\mu_{n+1})_j=\\sum_i\\mu_{n,i}P_{ij}.$$</p><p><b>Assumptions that matter:</b> $P$ is row-stochastic, so its entries are nonnegative and every row sums to $1$.</p>",
     "worked": {
       "problem": "Let $P=\\begin{bmatrix}0.7&0.3\\0.2&0.8\\end{bmatrix}$ and $\\mu_0=[0.6,0.4]$. Find $\\mu_1$.",
       "skills": [
@@ -754,34 +819,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Transition matrices helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "Population update",
+        "background": "Using the example distribution and matrix.",
+        "numbers": "$(0.25,0.75)P=(0.225,0.775)$"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Transition matrices appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "Two-step matrix",
+        "background": "Squaring the example transition matrix.",
+        "numbers": "$P^2=\\begin{bmatrix}0.40&0.60\\0.15&0.85\\end{bmatrix}$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use transition matrices ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Row validation",
+        "background": "The first row must sum to one.",
+        "numbers": "$0.6+0.4=1$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Expected active users",
+        "background": "If 1000 users start with distribution $(0.25,0.75)$.",
+        "numbers": "next counts are $(225,775)$"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "A/B state migration",
+        "background": "From state 1 after two steps.",
+        "numbers": "probability of state 2 is $0.60$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "Data-quality check",
+        "background": "A row sum of $0.97$.",
+        "numbers": "missing probability $0.03$"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -790,6 +855,52 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson turns the Markov-chain rule into a compact computational object. Once every one-step probability is placed into a table, the whole distribution can be advanced without listing paths one by one. The table is the transition matrix.</p><p>Transition matrices are the working language for finite Markov chains. They support Chapman–Kolmogorov equations, stationary distributions, limiting distributions, state classification, and many applications where populations move between categories.</p>",
+    "symbols": [
+      {
+        "sym": "$P$",
+        "desc": "a row-stochastic transition matrix"
+      },
+      {
+        "sym": "$P_{ij}$",
+        "desc": "a one-step probability"
+      },
+      {
+        "sym": "$\\mu_n$",
+        "desc": "the distribution at step $n$"
+      },
+      {
+        "sym": "$\\mu_nP$",
+        "desc": "the next distribution"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $\\mu_n$ record current probabilities.",
+        "result": "$(\\mu_n)_i=P(X_n=i)$",
+        "why": "The row vector stores the distribution at step $n$."
+      },
+      {
+        "do": "Split next-state probability by current state.",
+        "result": "$P(X_{n+1}=j)=\\sum_i P(X_n=i)P(X_{n+1}=j\\mid X_n=i)$",
+        "why": "This is total probability."
+      },
+      {
+        "do": "Replace terms by matrix notation.",
+        "result": "$(\\mu_{n+1})_j=\\sum_i\\mu_{n,i}P_{ij}$",
+        "why": "Each entry adds incoming mass to state $j$."
+      },
+      {
+        "do": "Write all components at once.",
+        "result": "$\\mu_{n+1}=\\mu_nP$",
+        "why": "Matrix multiplication is total probability in vector form."
+      },
+      {
+        "do": "Compute the example update.",
+        "result": "$(0.25,0.75)\\begin{bmatrix}0.6&0.4\\0.1&0.9\\end{bmatrix}=(0.225,0.775)$",
+        "why": "Each next-state probability is the sum of row-weighted contributions."
+      }
     ],
     "prereqs": [
       "math-19-02"
@@ -818,8 +929,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>You already split probabilities by cases. For a process moving through time, the natural cases are the possible intermediate states.</p><p>Chapman-Kolmogorov is the formal version of that path stitching. To go from now to later, the chain must pass through somewhere in between.</p>",
-    "definition": "<p>For a time-homogeneous Markov chain, the <b>Chapman-Kolmogorov equations</b> say $P^{(m+n)}_{ij}=\\sum_k P^{(m)}_{ik}P^{(n)}_{kj}$, where $P^{(r)}_{ab}=P(X_r=b\\mid X_0=a)$.</p><p>The derivation is total probability: condition on $X_m=k$, multiply the probability of reaching $k$ in $m$ steps by the probability of going from $k$ to $j$ in the next $n$ steps, then sum over $k$.</p><p><b>Assumptions that matter:</b> the sum includes all intermediate states; time-homogeneity lets the second factor depend only on elapsed time; and in finite chains the equation is matrix multiplication $P^{m+n}=P^mP^n$.</p>",
+    "motivation": "<p>To find the chance of going from state $i$ to state $j$ in several steps, it is useful to pause at an intermediate time. At that time, the process must be in some state $k$. The total probability is found by adding the probabilities of all ways to pass through those possible $k$ values.</p><p>The Markov property makes this decomposition clean. Once the process is at $k$, the future segment depends on $k$ rather than on the earlier path. Chapman–Kolmogorov is exactly this split-and-sum rule written in matrix form.</p>",
+    "definition": "<p>The Chapman–Kolmogorov equations split an $(m+n)$-step transition through an intermediate state: $$P^{(m+n)}_{ij}=\\sum_k P^{(m)}_{ik}P^{(n)}_{kj}.$$</p><p><b>Assumptions that matter:</b> The chain is Markov and time-homogeneous, and the intermediate states form disjoint cases covering all paths.</p>",
     "worked": {
       "problem": "For $P=\\begin{bmatrix}0.7&0.3\\0.2&0.8\\end{bmatrix}$, compute $P^{(2)}_{12}$.",
       "skills": [
@@ -1018,34 +1129,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Chapman-Kolmogorov equations helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "Two-step transition",
+        "background": "For $P=\\begin{bmatrix}0.7&0.3\\0.2&0.8\\end{bmatrix}$.",
+        "numbers": "$P^2_{12}=0.7\\cdot0.3+0.3\\cdot0.8=0.45$"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Chapman-Kolmogorov equations appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "Three-step prediction",
+        "background": "Using the same matrix.",
+        "numbers": "$P^3_{12}=0.525$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use chapman-kolmogorov equations ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Attribution through states",
+        "background": "The two contributions to $P^2_{12}$ separate by intermediate state.",
+        "numbers": "through state 1 is $0.21$, through state 2 is $0.24$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Path planning",
+        "background": "Two-hop reachability is positive when at least one product $P_{ik}P_{kj}$ is positive.",
+        "numbers": "here both products are positive"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "Batch forecasting",
+        "background": "Starting from state 1.",
+        "numbers": "$(1,0)P^3=(0.475,0.525)$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "Matrix-power caching",
+        "background": "Computing $P^{10}$ by repeated powers for the stationary example matrix.",
+        "numbers": "$P^{10}_{12}=0.399609$"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -1054,6 +1165,53 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson builds on transition matrices and asks how one-step movement becomes multi-step movement. Earlier Markov-chain lessons showed that one multiplication advances a distribution by one step. Chapman–Kolmogorov explains why repeated multiplication gives the correct probabilities for longer horizons.</p><p>The same equation appears whenever a process moves through possible intermediate states. It supports forecasting, matrix powers, path attribution, dynamic programming, and later limiting-distribution calculations.</p>",
+    "symbols": [
+      {
+        "sym": "$P^{(r)}_{ij}$",
+        "desc": "the $r$-step transition probability"
+      },
+      {
+        "sym": "$m,n$",
+        "desc": "step counts"
+      },
+      {
+        "sym": "$k$",
+        "desc": "an intermediate state"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with the long-horizon transition.",
+        "result": "$P(X_{m+n}=j\\mid X_0=i)$",
+        "why": "This is the chance of ending at $j$ after $m+n$ steps."
+      },
+      {
+        "do": "Insert the intermediate state.",
+        "result": "sum over all $k$",
+        "why": "Total probability says the disjoint cases cover all paths."
+      },
+      {
+        "do": "Write the joint terms.",
+        "result": "$\\sum_k P(X_m=k,X_{m+n}=j\\mid X_0=i)$",
+        "why": "Each term describes passing through one possible $k$."
+      },
+      {
+        "do": "Factor each joint probability.",
+        "result": "$P(X_m=k\\mid X_0=i)P(X_{m+n}=j\\mid X_m=k,X_0=i)$",
+        "why": "This is the multiplication rule for conditional probability."
+      },
+      {
+        "do": "Apply the Markov/time-homogeneous property.",
+        "result": "the second factor becomes $P^{(n)}_{kj}$",
+        "why": "After reaching $k$, the future segment depends only on $k$."
+      },
+      {
+        "do": "Collect the terms.",
+        "result": "$P^{(m+n)}_{ij}=\\sum_k P^{(m)}_{ik}P^{(n)}_{kj}$",
+        "why": "The split-and-sum rule is exactly matrix multiplication."
+      }
     ],
     "prereqs": [
       "math-19-03"
@@ -1082,8 +1240,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>Once a chain has several states, not all states play the same role. Some communicate, some trap probability, and some are only temporary stops.</p><p>Classification gives names to those roles so a transition diagram becomes a map of long-run possibilities.</p>",
-    "definition": "<p>State $j$ is <b>accessible</b> from $i$, written $i\\to j$, if $P^n_{ij}>0$ for some $n\\ge0$. States <b>communicate</b> if each is accessible from the other. A state is <b>absorbing</b> if $P_{ii}=1$.</p><p>A state is <b>recurrent</b> if, starting there, eventual return has probability $1$; it is <b>transient</b> if there is positive probability of never returning. In a finite closed communicating class, all states are recurrent.</p><p><b>Assumptions that matter:</b> accessibility can require multiple steps; recurrence concerns eventual return, not just a self-loop; closed classes do not leak probability; and infinite chains need extra care.</p>",
+    "motivation": "<p>A transition matrix gives local one-step movement, but a state may be important because of what happens over many steps. Some states lead back to each other and form a communicating group. Some states can be left and never returned to. Some states or classes trap the process once entered.</p><p>Classification turns these qualitative facts into precise conditions. Accessibility uses positive entries of matrix powers, closed classes use the absence of exits, and transience can be measured by expected return visits. This gives a bridge from the diagram of a chain to statements about long-run probability.</p>",
+    "definition": "<p>State classification uses reachability, communication, closed classes, recurrence, transience, and period to describe the long-run roles of Markov-chain states. A basic reachability condition is $$i\\to j\\quad\\text{when}\\quad P^n_{ij}>0\\text{ for some }n\\ge0.$$</p><p><b>Assumptions that matter:</b> Matrix powers encode possible paths; recurrence and transience describe return behavior over time.</p>",
     "worked": {
       "problem": "A chain has $1\\to2$ with probability $1$, $2\\to1$ with probability $0.4$, $2\\to3$ with probability $0.6$, and $3\\to3$ with probability $1$. Classify state $3$ and decide whether state $1$ is transient.",
       "skills": [
@@ -1282,34 +1440,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "State classification helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "Absorbing checkout",
+        "background": "A state with a certain self-loop is absorbing.",
+        "numbers": "$P_{33}=1$ makes state 3 absorbing"
       },
       {
-        "title": "Recommendation systems",
-        "background": "State classification appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "Two-step access",
+        "background": "If $P_{12}=0.5$ and $P_{23}=0.6$.",
+        "numbers": "$P^2_{13}\\ge0.30$, so $1\\to3$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use state classification ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Communicating pair",
+        "background": "Transitions in both directions connect states 1 and 2.",
+        "numbers": "$P_{12}=0.4$ and $P_{21}=0.5$ put states 1 and 2 in the same class"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Periodic monitoring",
+        "background": "Deterministic alternation returns only at even times.",
+        "numbers": "period $\\gcd(2,4,6,\\ldots)=2$"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "Transient page",
+        "background": "With self-loop $0.6$ before exit.",
+        "numbers": "expected visits are $2.5$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "Absorption probability",
+        "background": "Solving $h_1=0.3+0.5h_2$, $h_2=0.4+0.2h_1$.",
+        "numbers": "$h_1=0.5556$"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -1318,6 +1476,52 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson uses transition probabilities to describe the roles that states play in a Markov chain. Once matrix powers tell us which states can be reached, the chain also has a graph structure. Classification gives names to the important graph patterns.</p><p>These names matter for long-run behavior. Closed classes, communicating classes, transient states, recurrent states, and periodic states determine whether a chain settles, traps probability, or keeps cycling.</p>",
+    "symbols": [
+      {
+        "sym": "$i\\to j$",
+        "desc": "state $j$ is accessible from state $i$"
+      },
+      {
+        "sym": "$P^n_{ij}$",
+        "desc": "an $n$-step transition probability"
+      },
+      {
+        "sym": "recurrent",
+        "desc": "return with probability $1$"
+      },
+      {
+        "sym": "transient",
+        "desc": "return probability is less than $1$ or expected visits are finite"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define accessibility by matrix powers.",
+        "result": "$i\\to j$ when $P^n_{ij}>0$ for some $n\\ge0$",
+        "why": "A positive entry means at least one $n$-step path exists."
+      },
+      {
+        "do": "Define communication.",
+        "result": "$i$ and $j$ communicate when both $i\\to j$ and $j\\to i$",
+        "why": "Mutual access forms communication classes."
+      },
+      {
+        "do": "Define a closed class.",
+        "result": "no positive transition leaves the class",
+        "why": "Once entered, probability cannot escape."
+      },
+      {
+        "do": "Measure transience by expected visits.",
+        "result": "$1+q+q^2+\\cdots=1/(1-q)$",
+        "why": "A self-loop probability $q<1$ before exit gives a finite geometric series."
+      },
+      {
+        "do": "Substitute $q=0.6$.",
+        "result": "$1/(1-0.6)=2.5$",
+        "why": "Finite expected visits indicate transience in that open chain."
+      }
     ],
     "prereqs": [
       "math-19-04"
@@ -1346,8 +1550,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>You already know equilibrium as a situation where change cancels out. For a Markov chain, equilibrium means the distribution is unchanged by the transition matrix.</p><p>Individual paths still move. Stationarity says the population-level flow into each state balances the flow out.</p>",
-    "definition": "<p>A distribution $\\pi$ is <b>stationary</b> for transition matrix $P$ if $\\pi P=\\pi$, with $\\pi_i\\ge0$ and $\\sum_i\\pi_i=1$. In components, $\\pi_j=\\sum_i\\pi_iP_{ij}$.</p><p>This is a balance equation: tomorrow's mass at state $j$ equals all mass arriving from states $i$ today. Solving combines linear equations with normalization.</p><p><b>Assumptions that matter:</b> $\\pi$ must be a probability distribution; row-vector convention gives $\\pi P=\\pi$; stationarity is not the same as convergence; and uniqueness requires additional chain conditions.</p>",
+    "motivation": "<p>A Markov chain can keep moving even when its overall distribution is steady. In the two-state chain with transition matrix $P=\\begin{bmatrix}0.8&0.2\\0.3&0.7\\end{bmatrix}$, some probability moves from state 1 to state 2 on each step, and some probability moves back. A stationary distribution is the set of weights where those flows balance.</p><p>For this chain the stationary distribution is $\\pi=(0.6,0.4)$. That does not mean a sample path stops. It means that if 60% of the mass starts in state 1 and 40% starts in state 2, the next step has the same 60/40 split. This is why stationarity is useful: it turns a moving random system into a stable long-run summary.</p>",
+    "definition": "<p>A stationary distribution is a probability row vector that is unchanged by one transition: $$\\pi P=\\pi,\\qquad \\pi_i\\ge 0,\\qquad \\sum_i \\pi_i=1.$$</p><p><b>Assumptions that matter:</b> The rows of $P$ sum to $1$ and the chain is finite; uniqueness needs the usual irreducible/aperiodic conditions, but $\\pi P=\\pi$ itself is the definition.</p>",
     "worked": {
       "problem": "Find the stationary distribution for $P=\\begin{bmatrix}0.8&0.2\\0.3&0.7\\end{bmatrix}$.",
       "skills": [
@@ -1546,34 +1750,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Stationary distributions helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "PageRank",
+        "background": "A page's rank is stationary mass; for the chain above.",
+        "numbers": "$0.6\\cdot0.8+0.4\\cdot0.3=0.6$"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Stationary distributions appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "MCMC correctness",
+        "background": "Detailed balance certifies stationarity.",
+        "numbers": "$0.6\\cdot0.2=0.4\\cdot0.3=0.12$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use stationary distributions ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Ergodic averages",
+        "background": "In 1000 long-run visits.",
+        "numbers": "expected counts are about $600$ and $400$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Queue occupancy",
+        "background": "An M/M/1 birth-death chain with $\\rho=0.4$.",
+        "numbers": "$\\pi_0=0.6$ and $\\pi_1=0.24$"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "Mixing",
+        "background": "From state 1 after five steps.",
+        "numbers": "$(1,0)P^5=(0.6125,0.3875)$, only $0.0125$ total-variation distance from $(0.6,0.4)$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "RL state visitation",
+        "background": "Under a fixed policy with this induced chain.",
+        "numbers": "a 10,000-step on-policy average weights states by about $6000$ and $4000$ visits"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -1582,6 +1786,62 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson builds on transition matrices and on the Markov-chain rule that the next distribution is found by multiplying the current distribution by $P$. Earlier lessons asked how probability moves after one step or several steps. Here the question is what it means for the whole distribution to be in equilibrium.</p><p>Stationary distributions are the link from finite Markov-chain algebra to long-run behavior. Limiting distributions, detailed balance, MCMC correctness, PageRank, queue occupancy, and RL visitation measures all use the same equation: after one transition, the distribution is unchanged.</p>",
+    "symbols": [
+      {
+        "sym": "$P$",
+        "desc": "the transition matrix"
+      },
+      {
+        "sym": "$P_{ij}$",
+        "desc": "the probability of moving from state $i$ to state $j$"
+      },
+      {
+        "sym": "$\\pi$",
+        "desc": "the stationary row vector"
+      },
+      {
+        "sym": "$\\pi_i$",
+        "desc": "long-run mass at state $i$ when the chain is in equilibrium"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the unknown stationary distribution.",
+        "result": "$\\pi=(a,b)$",
+        "why": "The chain has two states, and $a,b$ are the probabilities assigned to states 1 and 2."
+      },
+      {
+        "do": "Multiply by $P$.",
+        "result": "$(a,b)P=(0.8a+0.3b,\\ 0.2a+0.7b)$",
+        "why": "Each new component adds all incoming probability mass."
+      },
+      {
+        "do": "Set the result equal to the original distribution.",
+        "result": "$(a,b)P=(a,b)$",
+        "why": "Stationarity means one step leaves the distribution unchanged."
+      },
+      {
+        "do": "Use the first component.",
+        "result": "$0.8a+0.3b=a$, so $0.3b=0.2a$",
+        "why": "This is the balance of flow into and out of state 1."
+      },
+      {
+        "do": "Add normalization.",
+        "result": "$a+b=1$",
+        "why": "$\\pi$ is a probability distribution."
+      },
+      {
+        "do": "Substitute $b=\\tfrac{2}{3}a$ into normalization.",
+        "result": "$a+\\tfrac{2}{3}a=1$, so $\\tfrac{5}{3}a=1$ and $a=0.6$",
+        "why": "The balance equation and total mass determine $a$."
+      },
+      {
+        "do": "Solve for $b$ and check.",
+        "result": "$b=0.4$, so $\\pi=(0.6,0.4)$",
+        "why": "$0.6\\cdot0.8+0.4\\cdot0.3=0.6$ and $0.6\\cdot0.2+0.4\\cdot0.7=0.4$."
+      }
     ],
     "prereqs": [
       "math-19-05"
@@ -1610,8 +1870,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>Stationarity asks what would remain unchanged. Limiting behavior asks what actually happens after many transitions from a starting state.</p><p>When a chain mixes well, different starting points fade and rows of $P^n$ approach the same distribution.</p>",
-    "definition": "<p>A <b>limiting distribution</b> $\\ell$ satisfies $P(X_n=j\\mid X_0=i)\\to\\ell_j$ as $n\\to\\infty$ for every starting state $i$. Equivalently, the rows of $P^n$ converge to $\\ell$.</p><p>For a finite irreducible and aperiodic Markov chain, the limiting distribution exists and equals the unique stationary distribution. Periodicity can prevent convergence even when stationary balance exists.</p><p><b>Assumptions that matter:</b> irreducibility keeps one communicating class; aperiodicity avoids deterministic cycling; finite chains have cleaner guarantees; and convergence rate is a separate question.</p>",
+    "motivation": "<p>A chain may begin concentrated in one state, so its early distributions remember that initial condition. As the chain runs, repeated multiplication by $P$ can spread and rebalance the mass. When the chain is well behaved, the rows of $P^n$ become nearly identical, meaning the long-run distribution no longer depends much on the starting state.</p><p>The limit, when it exists, must be stationary because taking one more transition should not change a distribution that has already settled. This is why limiting distributions are stronger than stationary distributions. They describe both the destination and the convergence from ordinary initial conditions.</p>",
+    "definition": "<p>A limiting distribution is the common row limit of transition powers, when it exists, and it must satisfy stationarity: $$P(X_n=j\\mid X_0=i)\\to \\ell_j,\\qquad \\ell P=\\ell.$$</p><p><b>Assumptions that matter:</b> Convergence needs irreducibility and aperiodicity; periodic chains can fail to settle even when stationary distributions exist.</p>",
     "worked": {
       "problem": "For $P=\\begin{bmatrix}0.8&0.2\\0.3&0.7\\end{bmatrix}$, state the limiting distribution, assuming the chain is irreducible and aperiodic.",
       "skills": [
@@ -1810,34 +2070,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Limiting distributions helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "Cold-start forgetting",
+        "background": "From state 1 after five steps.",
+        "numbers": "$P^5=(0.6125,0.3875)$, near $(0.6,0.4)$"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Limiting distributions appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "Distance to equilibrium",
+        "background": "After 5 steps.",
+        "numbers": "total-variation distance is $0.0125$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use limiting distributions ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Ten-step prediction",
+        "background": "For the shared chain.",
+        "numbers": "$P^{10}_{12}=0.399609$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Recommendation exposure",
+        "background": "A chain with limit $(0.6,0.4)$.",
+        "numbers": "allocates 40% long-run exposure to state 2"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "A/B carryover",
+        "background": "Starting from state 2 after five steps.",
+        "numbers": "row 2 of $P^5=(0.58125,0.41875)$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "Period warning",
+        "background": "The two-state alternating chain.",
+        "numbers": "has stationary $(0.5,0.5)$ but no limiting row from state 1 because rows alternate"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -1846,6 +2106,52 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson follows stationary distributions by separating equilibrium from convergence to equilibrium. A stationary distribution stays fixed if the chain starts there. A limiting distribution describes what ordinary starting states approach after many transitions.</p><p>This distinction is central in Markov-chain modeling. It connects matrix powers to mixing, burn-in, long-run exposure, and warnings about periodic chains that have stationary distributions but do not settle from a fixed start.</p>",
+    "symbols": [
+      {
+        "sym": "$\\ell$",
+        "desc": "the limiting distribution"
+      },
+      {
+        "sym": "$P^n$",
+        "desc": "the $n$-step transition matrix"
+      },
+      {
+        "sym": "irreducible",
+        "desc": "all states communicate"
+      },
+      {
+        "sym": "aperiodic",
+        "desc": "returns do not occur only on a fixed cycle"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the distribution after $n$ steps.",
+        "result": "$\\mu_0P^n$",
+        "why": "Each multiplication advances one step."
+      },
+      {
+        "do": "Assume rows converge to a common vector.",
+        "result": "$P(X_n=j\\mid X_0=i)\\to\\ell_j$",
+        "why": "The long-run distribution then no longer depends on starting state $i$."
+      },
+      {
+        "do": "Multiply one more step and pass to the limit.",
+        "result": "$\\ell P=\\lim_{n\\to\\infty}(\\text{row }i\\text{ of }P^n)P=\\lim_{n\\to\\infty}\\text{row }i\\text{ of }P^{n+1}=\\ell$",
+        "why": "A settled distribution must be stationary."
+      },
+      {
+        "do": "Compute a ten-step row for the shared two-state chain.",
+        "result": "$P^{10}$ has first row $(0.600390625,0.399609375)$",
+        "why": "This is close to the stationary distribution $(0.6,0.4)$."
+      },
+      {
+        "do": "State the convergence condition.",
+        "result": "irreducible and aperiodic chains settle; periodic chains may not",
+        "why": "A stationary vector alone does not guarantee a limiting row from every start."
+      }
     ],
     "prereqs": [
       "math-19-06"
@@ -1874,8 +2180,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>Some chains have a special equilibrium symmetry: at stationarity, flow from $i$ to $j$ is exactly balanced by flow from $j$ to $i$.</p><p>This detailed balance condition is stronger than stationarity and often easier to check. It is central in Markov chain Monte Carlo.</p>",
-    "definition": "<p>A chain with stationary distribution $\\pi$ is <b>reversible</b> if it satisfies <b>detailed balance</b>: $\\pi_iP_{ij}=\\pi_jP_{ji}$ for all states $i,j$.</p><p>The quantity $\\pi_iP_{ij}$ is equilibrium probability flow from $i$ to $j$. If every pairwise flow balances its reverse, then total inflow equals total outflow at every state, so $\\pi$ is stationary.</p><p><b>Assumptions that matter:</b> detailed balance is sufficient but not necessary for stationarity; zero-probability states need care; and reversibility is a property of both $P$ and $\\pi$ together.</p>",
+    "motivation": "<p>At stationarity, probability may still move between states. The distribution remains unchanged because outgoing and incoming flows balance in aggregate. Detailed balance asks for an even cleaner symmetry: for every pair of states, the equilibrium flow from $i$ to $j$ equals the flow from $j$ to $i$.</p><p>This pairwise condition is stronger than ordinary stationarity, but it is often easier to verify. Instead of summing all incoming paths first, one checks local equalities. When those local equalities hold everywhere, the global stationary equation follows.</p>",
+    "definition": "<p>Detailed balance says equilibrium flow is equal in both directions for every pair: $$\\pi_iP_{ij}=\\pi_jP_{ji}.$$ When this holds, the chain is reversible and $\\pi$ is stationary.</p><p><b>Assumptions that matter:</b> $\\pi$ is a probability distribution, $P$ is row-stochastic, and the pairwise balance equalities hold for all relevant pairs.</p>",
     "worked": {
       "problem": "Check detailed balance for $P=\\begin{bmatrix}0.8&0.2\\0.3&0.7\\end{bmatrix}$ with $\\pi=[0.6,0.4]$.",
       "skills": [
@@ -2074,34 +2380,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Reversibility and detailed balance helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "Two-state check",
+        "background": "For the shared stationary chain.",
+        "numbers": "$0.6\\cdot0.2=0.4\\cdot0.3=0.12$, so the stationary chain is reversible"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Reversibility and detailed balance appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "MCMC design",
+        "background": "A symmetric proposal with target ratio $0.4$.",
+        "numbers": "accepts with probability $0.4$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use reversibility and detailed balance ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Birth-death queue",
+        "background": "With $\\rho=0.4$.",
+        "numbers": "$\\pi_2\\lambda=0.096\\cdot2=0.192$ and $\\pi_3\\mu=0.0384\\cdot5=0.192$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Undirected random walk",
+        "background": "On a 4-node regular graph.",
+        "numbers": "uniform $\\pi_i=0.25$ balances each edge flow"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "Nonreversible warning",
+        "background": "A directed 3-cycle.",
+        "numbers": "one-way flow $1/3$ and reverse flow $0$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "Metropolis correction",
+        "background": "If proposal flow is twice too large in one direction.",
+        "numbers": "an acceptance factor $0.5$ restores balance"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -2110,6 +2416,48 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson continues the stationarity cluster by adding a stronger, more local way to prove equilibrium. Stationarity says total incoming mass equals the mass at each state after one step. Detailed balance checks equality pair by pair along transitions.</p><p>Reversibility is especially useful in MCMC, birth-death processes, and random walks on undirected graphs. It gives a practical certificate that a proposed chain has the desired stationary distribution.</p>",
+    "symbols": [
+      {
+        "sym": "$\\pi_iP_{ij}$",
+        "desc": "equilibrium flow from $i$ to $j$"
+      },
+      {
+        "sym": "reversible",
+        "desc": "the stationary process has the same law forward and backward in time"
+      },
+      {
+        "sym": "detailed balance",
+        "desc": "the pairwise equality of forward and reverse equilibrium flow"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the equilibrium flow from $i$ to $j$.",
+        "result": "$\\pi_iP_{ij}$",
+        "why": "The chain is in $i$ with probability $\\pi_i$ and then moves to $j$."
+      },
+      {
+        "do": "Impose detailed balance.",
+        "result": "$\\pi_iP_{ij}=\\pi_jP_{ji}$",
+        "why": "Each edge has equal forward and reverse flow."
+      },
+      {
+        "do": "Sum both sides over $i$.",
+        "result": "$\\sum_i\\pi_iP_{ij}=\\sum_i\\pi_jP_{ji}$",
+        "why": "This collects all incoming flow to $j$."
+      },
+      {
+        "do": "Use the row sum for state $j$.",
+        "result": "$\\sum_i\\pi_jP_{ji}=\\pi_j\\sum_iP_{ji}=\\pi_j$",
+        "why": "$\\pi_j$ does not depend on $i$, and row $j$ sums to $1$ when summing incoming reverse counterparts over all $i$."
+      },
+      {
+        "do": "Conclude stationarity.",
+        "result": "$\\sum_i\\pi_iP_{ij}=\\pi_j$, so $\\pi P=\\pi$",
+        "why": "Detailed balance implies the stationary equation component by component."
+      }
     ],
     "prereqs": [
       "math-19-07"
@@ -2138,8 +2486,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>Discrete chains move on ticks. Many systems do not wait for ticks: failures, arrivals, repairs, and messages can happen at any time.</p><p>A continuous-time Markov chain keeps the Markov idea but replaces per-step probabilities with rates per unit time.</p>",
-    "definition": "<p>A <b>continuous-time Markov chain</b> has states $X(t)$ for $t\\ge0$ and a generator matrix $Q$. For $i\\ne j$, $q_{ij}\\ge0$ is the jump rate from $i$ to $j$, and $q_{ii}=-\\sum_{j\\ne i}q_{ij}$.</p><p>For small $h$, $P(X(t+h)=j\\mid X(t)=i)\\u0007pprox q_{ij}h$. The holding time in state $i$ is exponential with rate $\\lambda_i=-q_{ii}$, and the next state is $j$ with probability $q_{ij}/\\lambda_i$.</p><p><b>Assumptions that matter:</b> rates have time units; rows of $Q$ sum to $0$; exponential holding times are memoryless; and transition probabilities over time come from $P(t)=e^{tQ}$.</p>",
+    "motivation": "<p>In a discrete-time chain, every step has the same clock tick. Many real systems do not move that way. A server finishes jobs at random times, a component fails after a random lifetime, and a molecule jumps when an event occurs. A continuous-time Markov chain keeps the state-based dependence but lets the clock run continuously.</p><p>The generator records instantaneous rates rather than ordinary one-step probabilities. Over a very short interval, a rate multiplied by the interval length behaves like a small transition probability. The diagonal entries are chosen so each row sums to zero, which preserves total probability as the transition matrix evolves over time.</p>",
+    "definition": "<p>A continuous-time Markov chain uses a generator matrix $Q$ of jump rates, with off-diagonal rates $q_{ij}\\ge0$ and diagonals chosen so rows sum to zero. Its transition matrix satisfies $$P'(t)=P(t)Q.$$</p><p><b>Assumptions that matter:</b> For small $h$, one jump from $i$ to $j$ has probability $q_{ij}h+o(h)$, and $q_{ii}=-\\sum_{j\\ne i}q_{ij}$.</p>",
     "worked": {
       "problem": "A server fails from Up to Down at rate $0.02$ per hour and recovers from Down to Up at rate $0.5$ per hour. Find the mean up-time and the one-hour failure probability.",
       "skills": [
@@ -2338,34 +2686,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Continuous-time Markov chains helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "Failure/repair",
+        "background": "With rates up→down $2$ and down→up $1$.",
+        "numbers": "$P_{\\text{up,down}}(1)=\\tfrac23(1-e^{-3})=0.6335$"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Continuous-time Markov chains appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "Holding time",
+        "background": "A state with rate $2$.",
+        "numbers": "mean holding time $0.5$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use continuous-time markov chains ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Small interval",
+        "background": "Over $h=0.02$.",
+        "numbers": "jump probability is about $2h=0.04$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Stationary availability",
+        "background": "The two-state rates above.",
+        "numbers": "stationary $(1/3,2/3)$"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "Service systems",
+        "background": "Total exit rate $7$.",
+        "numbers": "mean holding time $1/7=0.1429$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "Matrix exponential",
+        "background": "$P(0)=I$.",
+        "numbers": "$P(t)=e^{tQ}$ preserves row sums because $Q$ rows sum to $0$"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -2374,6 +2722,52 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson extends Markov chains from fixed time steps to random event times. The state still summarizes the future in the Markov sense, but transitions now occur in continuous time. The main object changes from a transition matrix per step to a generator matrix of rates.</p><p>Continuous-time Markov chains lead directly to Poisson processes, birth-death processes, queues, reliability models, and matrix exponentials. They are the natural language for systems where waiting times matter.</p>",
+    "symbols": [
+      {
+        "sym": "$Q$",
+        "desc": "the generator"
+      },
+      {
+        "sym": "$q_{ij}$",
+        "desc": "a jump rate"
+      },
+      {
+        "sym": "$P(t)$",
+        "desc": "the time-$t$ transition matrix"
+      },
+      {
+        "sym": "holding time",
+        "desc": "time spent in state $i$, with rate $-q_{ii}$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Set off-diagonal jump rates.",
+        "result": "$q_{ij}\\ge0$ for $i\\ne j$",
+        "why": "These are instantaneous rates of jumping from $i$ to $j$."
+      },
+      {
+        "do": "Approximate short-interval jump probability.",
+        "result": "$q_{ij}h+o(h)$",
+        "why": "Rates become probabilities after multiplying by small time."
+      },
+      {
+        "do": "Choose the diagonal.",
+        "result": "$q_{ii}=-\\sum_{j\\ne i}q_{ij}$",
+        "why": "Each row of $Q$ must sum to zero."
+      },
+      {
+        "do": "Write the small-time matrix update.",
+        "result": "$P(t+h)\\approx P(t)(I+hQ)$",
+        "why": "A short extra interval applies an identity-plus-rate transition."
+      },
+      {
+        "do": "Subtract, divide, and take the limit.",
+        "result": "$P'(t)=P(t)Q$",
+        "why": "Letting $h\\to0$ gives the forward differential equation."
+      }
     ],
     "prereqs": [
       "math-19-08"
@@ -2402,8 +2796,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>You have seen counts per time window: calls per hour, requests per second, errors per day. A Poisson process is the clean baseline for arrivals scattered randomly through time.</p><p>The count view and waiting-time view fit together: Poisson counts over intervals and exponential waiting times between arrivals.</p>",
-    "definition": "<p>A <b>Poisson process</b> $N(t)$ with rate $\\lambda>0$ has $N(0)=0$, independent increments, stationary increments, and $P(N(t)=k)=e^{-\\lambda t}(\\lambda t)^k/k!$.</p><p>The mean and variance of $N(t)$ are both $\\lambda t$. Also, $P(T_1>t)=P(N(t)=0)=e^{-\\lambda t}$, so the first waiting time is exponential.</p><p><b>Assumptions that matter:</b> the rate is constant; disjoint intervals are independent; simultaneous arrivals have negligible probability; and clustered real systems may need richer models.</p>",
+    "motivation": "<p>When events are scattered in time at a steady average rate, the exact arrival times are uncertain but the count over an interval has structure. Short intervals usually contain no event, sometimes contain one event, and very rarely contain two or more. Adding many such small intervals gives the count over the whole time span.</p><p>The Poisson distribution appears as the limit of many tiny Bernoulli opportunities. The parameter $\\lambda t$ is the expected number of arrivals in time $t$, and it is also the variance. This equality of mean and variance is a signature of the basic Poisson model.</p>",
+    "definition": "<p>A Poisson process with rate $\\lambda$ has independent increments and count distribution $$P(N(t)=k)=e^{-\\lambda t}\\frac{(\\lambda t)^k}{k!}.$$</p><p><b>Assumptions that matter:</b> In a small interval, one arrival has probability about $\\lambda\\Delta t$, two or more arrivals are negligible, and disjoint increments are independent.</p>",
     "worked": {
       "problem": "Calls arrive at rate $\\lambda=3$ per hour. Find $P(N(2)=4)$.",
       "skills": [
@@ -2602,34 +2996,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Poisson processes helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "Traffic arrivals",
+        "background": "With $\\lambda=3$/hour and $t=2$.",
+        "numbers": "$P(N=4)=e^{-6}6^4/4!=0.13385$"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Poisson processes appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "At least one error",
+        "background": "With mean $0.5$.",
+        "numbers": "$P(N\\ge1)=1-e^{-0.5}=0.39347$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use poisson processes ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Capacity planning",
+        "background": "Over two hours at rate 3 per hour.",
+        "numbers": "mean and variance over two hours are both $6$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Interarrival time",
+        "background": "Rate $3$/hour.",
+        "numbers": "mean wait $1/3$ hour, or 20 minutes"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "Superposition",
+        "background": "Independent Poisson streams with rates $2$ and $3$.",
+        "numbers": "combine to rate $5$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "Thinning",
+        "background": "Keeping 30% of a rate-10 stream.",
+        "numbers": "rate $3$"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -2638,6 +3032,52 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson specializes continuous-time stochastic processes to the basic model of random arrivals. A Poisson process counts how many events have occurred by time $t$. It keeps the rate constant and treats disjoint time intervals as independent.</p><p>Poisson processes are building blocks for queues, reliability, traffic modeling, thinning, superposition, and continuous-time Markov chains. They also give the simplest count process whose waiting times are exponential.</p>",
+    "symbols": [
+      {
+        "sym": "$N(t)$",
+        "desc": "the number of arrivals by time $t$"
+      },
+      {
+        "sym": "$\\lambda$",
+        "desc": "the rate per unit time"
+      },
+      {
+        "sym": "$k$",
+        "desc": "the count"
+      },
+      {
+        "sym": "increments",
+        "desc": "counts over disjoint intervals"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Split a time interval of length $t$ into many pieces.",
+        "result": "pieces of size $\\Delta t$",
+        "why": "Small pieces make arrivals nearly Bernoulli."
+      },
+      {
+        "do": "Use the short-interval approximation.",
+        "result": "one arrival has probability about $\\lambda\\Delta t$",
+        "why": "Two or more arrivals are negligible in a tiny interval."
+      },
+      {
+        "do": "Approximate the total count.",
+        "result": "$\\mathrm{Binomial}(n,\\lambda t/n)$",
+        "why": "There are many nearly Bernoulli trials."
+      },
+      {
+        "do": "Let $n\\to\\infty$.",
+        "result": "$P(N(t)=k)=e^{-\\lambda t}(\\lambda t)^k/k!$",
+        "why": "The binomial limit gives the Poisson distribution."
+      },
+      {
+        "do": "Record the moments and waiting times.",
+        "result": "$E[N(t)]=\\operatorname{Var}(N(t))=\\lambda t$ and mean wait $1/\\lambda$",
+        "why": "The same limiting argument gives mean, variance, and exponential interarrival times."
+      }
     ],
     "prereqs": [
       "math-19-09"
@@ -2666,8 +3106,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>Many systems are counts: jobs in a queue, molecules in a reaction, users in a state. Often the count changes by one at a time.</p><p>A birth-death process captures this with upward birth rates and downward death rates. Neighbor-only movement makes the model simple and useful.</p>",
-    "definition": "<p>A <b>birth-death process</b> is a continuous-time Markov chain on $0,1,2,\\ldots$ with transitions $n\\to n+1$ at rate $\\lambda_n$ and $n\\to n-1$ at rate $\\mu_n$ for $n\\ge1$.</p><p>At state $n$, the holding time is exponential with rate $\\lambda_n+\\mu_n$, and the next jump is upward with probability $\\lambda_n/(\\lambda_n+\\mu_n)$. State $0$ has no downward jump.</p><p><b>Assumptions that matter:</b> jumps change the count by one; rates may depend on $n$; boundaries matter; and stable long-run behavior usually requires enough downward pressure.</p>",
+    "motivation": "<p>Many systems are naturally described by a count: jobs in a queue, active requests, molecules of a type, or members of a population. In a small time interval, the count may go up by one, down by one, or stay where it is. A birth-death process encodes exactly those neighboring moves.</p><p>Because transitions occur only between adjacent states, stationarity can be understood through adjacent flow balance. The mass flowing from $n$ to $n+1$ should match the mass flowing back from $n+1$ to $n$. Repeating that relationship builds the stationary probabilities from $\\pi_0$.</p>",
+    "definition": "<p>A birth-death process is a CTMC on count states with births $n\\to n+1$ at rate $\\lambda_n$ and deaths $n\\to n-1$ at rate $\\mu_n$. Adjacent stationarity satisfies $$\\pi_n\\lambda_n=\\pi_{n+1}\\mu_{n+1},\\qquad \\pi_{n+1}=\\pi_n\\frac{\\lambda_n}{\\mu_{n+1}}.$$</p><p><b>Assumptions that matter:</b> Transitions occur only to neighboring count states; for constant $\\lambda<\\mu$, normalization gives a geometric stationary distribution.</p>",
     "worked": {
       "problem": "In an $M/M/1$ queue, arrivals have rate $2$ per minute and service has rate $5$ per minute. At state $3$, find the mean holding time and probability the next jump is an arrival.",
       "skills": [
@@ -2866,34 +3306,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Birth-death processes helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "Server occupancy",
+        "background": "With $\\lambda=2$, $\\mu=5$.",
+        "numbers": "$\\rho=0.4$ and $\\pi_0=0.6$"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Birth-death processes appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "Three jobs",
+        "background": "Using the same M/M/1 stationary distribution.",
+        "numbers": "$\\pi_3=0.6\\cdot0.4^3=0.0384$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use birth-death processes ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Mean queue length",
+        "background": "For traffic intensity $\\rho=0.4$.",
+        "numbers": "$\\rho/(1-\\rho)=0.6667$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Tail probability",
+        "background": "For the same geometric stationary distribution.",
+        "numbers": "$P(N\\ge4)=\\rho^4=0.0256$"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "Holding time",
+        "background": "At $n\\ge1$, total rate $7$.",
+        "numbers": "mean $0.1429$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "Flow check",
+        "background": "Adjacent flow balance between states 2 and 3.",
+        "numbers": "$\\pi_2\\lambda=0.192$ equals $\\pi_3\\mu=0.192$"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -2902,6 +3342,56 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson builds on continuous-time Markov chains by focusing on count states. The process can only move from $n$ to $n+1$ or from $n$ to $n-1$, so it models one-at-a-time arrivals and departures. That simple local movement gives a rich class of queue and population models.</p><p>Birth-death processes connect CTMC rates, detailed balance, stationary distributions, and queueing formulas. They are also a clear example of how local flow equations determine a full long-run distribution.</p>",
+    "symbols": [
+      {
+        "sym": "$n$",
+        "desc": "the count"
+      },
+      {
+        "sym": "$\\lambda_n$",
+        "desc": "the birth or arrival rate"
+      },
+      {
+        "sym": "$\\mu_n$",
+        "desc": "the death or service rate"
+      },
+      {
+        "sym": "$\\pi_n$",
+        "desc": "stationary probability of count $n$"
+      },
+      {
+        "sym": "$\\rho=\\lambda/\\mu$",
+        "desc": "traffic intensity in M/M/1"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Allow neighboring moves only.",
+        "result": "$n\\to n+1$ at rate $\\lambda_n$ and $n\\to n-1$ at rate $\\mu_n$",
+        "why": "The process changes the count one at a time."
+      },
+      {
+        "do": "Compute the total exit rate.",
+        "result": "$\\lambda_n+\\mu_n$",
+        "why": "The mean holding time is $1/(\\lambda_n+\\mu_n)$."
+      },
+      {
+        "do": "Balance adjacent stationary flows.",
+        "result": "$\\pi_n\\lambda_n=\\pi_{n+1}\\mu_{n+1}$",
+        "why": "Mass moving up across an edge should match mass moving back down."
+      },
+      {
+        "do": "Rearrange the balance equation.",
+        "result": "$\\pi_{n+1}=\\pi_n\\lambda_n/\\mu_{n+1}$",
+        "why": "Repeated substitution builds all masses from $\\pi_0$."
+      },
+      {
+        "do": "Specialize to constant $\\lambda<\\mu$.",
+        "result": "$\\pi_n=(1-\\rho)\\rho^n$ with $\\rho=\\lambda/\\mu$",
+        "why": "Normalization of the geometric series sets $\\pi_0=1-\\rho$."
+      }
     ],
     "prereqs": [
       "math-19-10"
@@ -2930,8 +3420,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>You already understand a game where heads steps right and tails steps left. A random walk asks what the accumulated position looks like after many such steps.</p><p>This humble model sits behind diffusion, graph exploration, optimization noise, and Brownian-motion limits.</p>",
-    "definition": "<p>A <b>random walk</b> is a process $S_n=S_0+Y_1+\\cdots+Y_n$, where $Y_k$ are random increments. In the simple symmetric walk, $Y_k=1$ with probability $1/2$ and $Y_k=-1$ with probability $1/2$.</p><p>Linearity gives $E[S_n]=S_0+nE[Y_1]$. If independent increments have variance $\\sigma^2$, then $\\operatorname{Var}(S_n)=n\\sigma^2$, so standard deviation grows like $\\sqrt n$.</p><p><b>Assumptions that matter:</b> increments are often independent and identically distributed; drift is $E[Y_k]$; boundaries can change behavior; and a finite-state random walk is a Markov chain when position is the state.</p>",
+    "motivation": "<p>A random walk starts somewhere and then adds a random step at each time. The individual steps may be simple, but their sum creates a path with growing uncertainty. If the steps are fair, the expected position stays fixed while the spread grows with the number of steps.</p><p>The key calculations use linearity of expectation and independence of increments. Means add, variances add, and endpoint probabilities can be counted by the number of right and left steps. This makes the random walk both intuitive and computationally useful.</p>",
+    "definition": "<p>A random walk accumulates random increments: $$S_n=S_0+Y_1+\\cdots+Y_n.$$ For independent increments, expectations and variances add across steps.</p><p><b>Assumptions that matter:</b> The variance formula uses independent increments; the simple symmetric walk uses steps with mean $0$ and variance $1$.</p>",
     "worked": {
       "problem": "A biased walk starts at $S_0=0$ and steps $+1$ with probability $0.6$ or $-1$ with probability $0.4$. Find $E[S_{10}]$.",
       "skills": [
@@ -3130,34 +3620,34 @@
     ],
     "applications": [
       {
-        "title": "Model monitoring",
-        "background": "Random walks helps teams treat metrics as evolving random quantities rather than isolated numbers.",
-        "numbers": "With probability $0.8$ of staying and $0.2$ of moving, $1000$ items yield about $800$ stays."
+        "title": "Diffusion scaling",
+        "background": "After 10 fair steps.",
+        "numbers": "variance is $10$"
       },
       {
-        "title": "Recommendation systems",
-        "background": "Random walks appears when user state, item exposure, or exploration changes over sessions.",
-        "numbers": "A two-state recommender with mass $[0.7,0.3]$ sends $0.7\\cdot0.1=0.07$ mass into exploration from state 1."
+        "title": "Endpoint probability",
+        "background": "For a fair walk ending at 2 after 10 steps.",
+        "numbers": "$P(S_{10}=2)=0.205078$"
       },
       {
-        "title": "Queueing and serving systems",
-        "background": "Production services use random walks ideas to reason about arrivals, failures, and waiting.",
-        "numbers": "Arrival rate $6$/hour gives expected $6\\cdot0.5=3$ arrivals in half an hour."
+        "title": "Biased drift",
+        "background": "With $p=0.6$.",
+        "numbers": "$E[S_{10}]=10(0.6-0.4)=2$"
       },
       {
-        "title": "Language and sequence models",
-        "background": "Sequence modeling often begins with probabilistic rules over positions before adding richer neural context.",
-        "numbers": "A token transition of $0.25$ followed by $0.4$ gives path probability $0.10$."
+        "title": "Gambler's ruin",
+        "background": "With $p=0.6$, start $1$, upper boundary $5$.",
+        "numbers": "hit-upper probability is $0.3839$"
       },
       {
-        "title": "Simulation",
-        "background": "Engineers simulate stochastic models to estimate quantities that are hard to solve exactly.",
-        "numbers": "In $5000$ simulated paths, $425$ successes estimate probability $0.085$."
+        "title": "SGD noise",
+        "background": "Independent zero-mean update noise.",
+        "numbers": "variance growing like $n\\sigma^2$"
       },
       {
-        "title": "Risk and reliability",
-        "background": "Finance, operations, and reliability all need probabilities over future paths, not just one-step averages.",
-        "numbers": "A failure probability of $0.001$ per minute gives about $1.44$ expected failures per day."
+        "title": "Random-walk graph sampling",
+        "background": "On a 4-node regular graph.",
+        "numbers": "each neighbor is chosen with probability $1/4=0.25$"
       }
     ],
     "applicationsClose": "The common thread is patient bookkeeping: define the state, write the local rule, and let probability carry the system through time.",
@@ -3166,6 +3656,52 @@
       "Local rules often determine multi-step and long-run behavior.",
       "Always check state definitions and assumptions before trusting the calculation.",
       "These tools support ML systems, queues, reliability models, and simulation."
+    ],
+    "connectionsProse": "<p>This lesson studies a process built by accumulating random increments. It connects discrete-time stochastic processes to sums, expectations, variances, and path probabilities. The position after many steps is the result of all earlier increments.</p><p>Random walks are a foundation for Brownian motion, martingales, gambler's ruin, diffusion approximations, and graph sampling. They give a concrete way to see how independent noise accumulates over time.</p>",
+    "symbols": [
+      {
+        "sym": "$S_n$",
+        "desc": "position after $n$ steps"
+      },
+      {
+        "sym": "$Y_k$",
+        "desc": "the $k$th increment"
+      },
+      {
+        "sym": "$p$",
+        "desc": "right-step probability"
+      },
+      {
+        "sym": "variance",
+        "desc": "spread of position"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define the position after $n$ steps.",
+        "result": "$S_n=S_0+Y_1+\\cdots+Y_n$",
+        "why": "Each $Y_k$ is one step added to the starting position."
+      },
+      {
+        "do": "Take expectation term by term.",
+        "result": "$E[S_n]=S_0+\\sum_kE[Y_k]$",
+        "why": "Linearity lets each increment contribute its mean."
+      },
+      {
+        "do": "Add variances under independence.",
+        "result": "$\\operatorname{Var}(S_n)=\\sum_k\\operatorname{Var}(Y_k)$",
+        "why": "Independent increments have no covariance terms."
+      },
+      {
+        "do": "Specialize to a simple symmetric walk.",
+        "result": "$E[S_n]=S_0$ and $\\operatorname{Var}(S_n)=n$",
+        "why": "Each increment has mean $0$ and variance $1$."
+      },
+      {
+        "do": "Count endpoint paths.",
+        "result": "$\\binom{10}{6}/2^{10}=0.205078$",
+        "why": "Ending at $2$ after 10 steps from 0 requires 6 right steps and 4 left steps."
+      }
     ],
     "prereqs": [
       "math-19-11"
@@ -3194,8 +3730,8 @@
         "variance scaling"
       ]
     },
-    "motivation": "<p>You already know a random walk: move left or right by one step after each coin flip. If the steps get smaller and the clock ticks faster, the jagged path begins to look like a restless continuous curve.</p><p><b>Brownian motion</b> is that idealized curve. It is random at every time, but not lawless: increments over disjoint time intervals are independent, normally distributed, and have variance equal to elapsed time.</p>",
-    "definition": "<p>A standard Brownian motion $W_t$ is a stochastic process with $W_0=0$, continuous sample paths, independent increments, and $W_t-W_s\\sim N(0,t-s)$ for $0\\le s<t$. Here $t$ is time, $W_t$ is the random position at time $t$, and $N(0,t-s)$ is a normal distribution with mean $0$ and variance $t-s$.</p><p>The variance rule comes from scaling a fair random walk. After $n$ independent steps of size $1/\\sqrt n$ in one unit of time, the variance is $n\\cdot(1/n)=1$. Over $t$ units, the variance becomes $t$, which is why $W_t\\sim N(0,t)$.</p><p><b>Assumptions that matter:</b> standard Brownian motion starts at zero, has no drift, has unit variance rate, and has independent Gaussian increments; paths are continuous but almost surely nowhere differentiable.</p>",
+    "motivation": "<p>If a random walk takes more and more steps in a fixed time interval, the step sizes must shrink to keep the total variance stable. The $1/\\sqrt n$ scaling does exactly that. Many tiny centered steps then combine into a Gaussian by the central limit theorem.</p><p>Brownian motion keeps the limiting features that matter most: independent increments, mean zero, and variance proportional to elapsed time. Its paths are continuous, but they remain highly irregular. This makes it a useful model for accumulated microscopic randomness.</p>",
+    "definition": "<p>Brownian motion $W_t$ is a continuous-time process with mean-zero Gaussian increments and variance equal to elapsed time: $$W_t\\sim N(0,t),\\qquad W_t-W_s\\sim N(0,t-s).$$</p><p><b>Assumptions that matter:</b> The random-walk limit uses independent centered steps scaled by $1/\\sqrt n$, and disjoint increments become independent.</p>",
     "worked": {
       "problem": "For standard Brownian motion, find the distribution of $W_3-W_1$ and compute $P(W_3-W_1\\le 2)$ using $\\Phi(\\sqrt2)\\approx0.921$.",
       "skills": [
@@ -3395,33 +3931,33 @@
     "applications": [
       {
         "title": "Particle diffusion",
-        "background": "Brownian motion was developed to explain pollen grains jittering in fluid, a clue that invisible molecules were colliding with them.",
-        "numbers": "With diffusion coefficient $D=0.2$, one-dimensional displacement has variance $2Dt=0.4t$; after $5$ seconds, variance is $2$ and standard deviation is $\\sqrt2\\approx1.414$."
+        "background": "For Brownian position at time 2.",
+        "numbers": "$W_2$ has standard deviation $\\sqrt2=1.4142$"
       },
       {
-        "title": "Financial log returns",
-        "background": "The Black-Scholes model idealizes short log-return shocks as Brownian increments because many tiny market shocks accumulate.",
-        "numbers": "If daily volatility is $1.5\\%$, a $4$-day Brownian volatility scale is $0.015\\sqrt4=0.03$, or $3\\%$."
+        "title": "Barrier probability",
+        "background": "At time 1.",
+        "numbers": "$P(W_1>1)=0.1587$"
+      },
+      {
+        "title": "Increment variance",
+        "background": "For the increment from 1 to 1.25.",
+        "numbers": "$W_{1.25}-W_1$ has variance $0.25$"
       },
       {
         "title": "Sensor drift",
-        "background": "Inertial sensors accumulate many small errors, so their reported position can wander like a Brownian path.",
-        "numbers": "If variance grows at $0.04$ meters squared per minute, after $9$ minutes the variance is $0.36$ and standard deviation is $0.6$ meters."
+        "background": "A unit-variance-rate model.",
+        "numbers": "95% range about $\\pm1.96$ after one time unit"
       },
       {
-        "title": "Stochastic gradient noise",
-        "background": "Mini-batch gradients introduce random fluctuations around the full gradient. In small-step limits, this noise is often approximated by Brownian forcing.",
-        "numbers": "If gradient noise variance rate is $0.25$, a time step $0.04$ has noise standard deviation $\\sqrt{0.25\\cdot0.04}=0.1$."
+        "title": "SGD approximation",
+        "background": "Noise accumulated over $t=0.5$ at rate 1.",
+        "numbers": "standard deviation $\\sqrt{0.5}=0.7071$"
       },
       {
-        "title": "Image generation diffusion",
-        "background": "Modern diffusion models borrow the idea of gradually adding Gaussian noise over time before learning to reverse it.",
-        "numbers": "A simple step $x_{t+1}=x_t+0.2Z$ with $Z=1.5$ adds noise $0.3$ to that coordinate."
-      },
-      {
-        "title": "Queueing approximations",
-        "background": "When arrivals and services are numerous, scaled queue fluctuations can resemble Brownian motion around their average trend.",
-        "numbers": "If a centered queue has variance rate $16$ jobs squared per hour, the standard deviation after $0.25$ hours is $\\sqrt{16\\cdot0.25}=2$ jobs."
+        "title": "Diffusion model noise",
+        "background": "Forward Gaussian noise with variance $0.19$.",
+        "numbers": "standard deviation $0.4359$"
       }
     ],
     "applicationsClose": "The same clock-controlled Gaussian wandering appears in molecules, markets, sensors, optimization noise, and generative models.",
@@ -3430,6 +3966,48 @@
       "Independent increments make the future noise separate from the past.",
       "A time interval of length $\\Delta t$ contributes variance $\\Delta t$ and standard deviation $\\sqrt{\\Delta t}$.",
       "Continuous Brownian paths are too rough to have ordinary derivatives."
+    ],
+    "connectionsProse": "<p>This lesson continues from random walks by taking a continuous-time limit. A random walk has discrete steps, while Brownian motion has continuous paths and Gaussian increments. The same ideas of accumulated independent noise remain in place.</p><p>Brownian motion is the basic noise process for stochastic calculus, diffusion models, martingales, finance, and continuous-time approximations. It provides the driving process for Itô's lemma and many stochastic differential equations.</p>",
+    "symbols": [
+      {
+        "sym": "$W_t$",
+        "desc": "Brownian position at time $t$"
+      },
+      {
+        "sym": "$N(0,t)$",
+        "desc": "normal with mean $0$ and variance $t$"
+      },
+      {
+        "sym": "increments",
+        "desc": "differences $W_t-W_s$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Take $n$ independent steps in one unit of time.",
+        "result": "step size $1/\\sqrt n$",
+        "why": "This scaling keeps variance from exploding or vanishing."
+      },
+      {
+        "do": "Compute variance over one unit.",
+        "result": "$n\\cdot(1/n)=1$",
+        "why": "Each step has variance $1/n$."
+      },
+      {
+        "do": "Extend the scaling to time $t$.",
+        "result": "variance $t$",
+        "why": "Variance accumulates in proportion to elapsed time."
+      },
+      {
+        "do": "Apply the central limit theorem.",
+        "result": "$W_t\\sim N(0,t)$",
+        "why": "Many small centered steps combine into a normal distribution."
+      },
+      {
+        "do": "Use independent blocks of steps.",
+        "result": "$W_t-W_s\\sim N(0,t-s)$",
+        "why": "Separate blocks become independent increments."
+      }
     ],
     "prereqs": [
       "math-19-12"
@@ -3458,8 +4036,8 @@
         "function spaces"
       ]
     },
-    "motivation": "<p>You already know a normal random variable is a distribution over one number. A multivariate normal is a distribution over a finite vector of numbers. A Gaussian process takes one more brave step: it is a distribution over a whole function.</p><p>The gentle idea is this: if you ask for the function at any finite set of inputs, those values form a jointly normal vector. A mean function gives the central guess, and a kernel says which inputs should move together.</p>",
-    "definition": "<p>A <b>Gaussian process</b>, written $f\\sim GP(m,k)$, is a collection of random variables $f(x)$ indexed by inputs $x$ such that every finite vector $(f(x_1),\\ldots,f(x_n))$ is multivariate normal. The mean function is $m(x)=E[f(x)]$, and the covariance function is $k(x,x')=\\operatorname{Cov}(f(x),f(x'))$.</p><p>The kernel builds the covariance matrix $K$ with entries $K_{ij}=k(x_i,x_j)$. For the squared-exponential kernel $k(x,x')=\\sigma_f^2\\exp(-(x-x')^2/(2\\ell^2))$, nearby inputs have covariance close to $\\sigma_f^2$, while far inputs have smaller covariance. That is smoothness expressed as covariance.</p><p><b>Assumptions that matter:</b> the kernel must produce positive semidefinite covariance matrices, the finite-dimensional distributions must be consistent, and Gaussian-process regression usually assumes Gaussian observation noise unless stated otherwise.</p>",
+    "motivation": "<p>In regression, the unknown object is often a function. A Gaussian process places a probability distribution on that function by saying that every finite set of function values has a joint normal distribution. This lets the model make predictions with uncertainty at new inputs.</p><p>The kernel supplies the covariance between any two inputs. Nearby or similar inputs can be assigned high covariance, while distant inputs can be assigned lower covariance. After observations are made, ordinary multivariate normal conditioning updates the mean and variance of the function at new points.</p>",
+    "definition": "<p>A Gaussian process is a distribution over functions such that every finite set of values is jointly normal: $$f\\sim GP(m,k),\\qquad (f(x_1),\\ldots,f(x_n))\\sim N(m,K).$$</p><p><b>Assumptions that matter:</b> The kernel matrix has entries $K_{ij}=k(x_i,x_j)$, and noisy observations add variance through $K_y=K+\\sigma^2I$.</p>",
     "worked": {
       "problem": "For a zero-mean GP with kernel $k(x,x')=4\\exp(-(x-x')^2/2)$, compute the covariance matrix for inputs $0$ and $1$ using $e^{-1/2}\\approx0.607$.",
       "skills": [
@@ -3659,33 +4237,33 @@
     "applications": [
       {
         "title": "Bayesian regression",
-        "background": "Gaussian-process regression gives predictions with uncertainty, which is valuable when data are scarce and decisions are expensive.",
-        "numbers": "If the posterior mean is $7.5$ and variance is $0.25$, a rough 95 percent interval is $7.5\\pm2\\cdot0.5=[6.5,8.5]$."
+        "background": "One observation above predicts at $x=1$.",
+        "numbers": "mean $0.9704$"
+      },
+      {
+        "title": "Uncertainty",
+        "background": "For the same posterior prediction.",
+        "numbers": "posterior variance there is $0.7057$"
+      },
+      {
+        "title": "Kernel similarity",
+        "background": "Squared-exponential covariance at distance 1.",
+        "numbers": "$e^{-1/2}=0.6065$"
       },
       {
         "title": "Bayesian optimization",
-        "background": "Expensive experiments use GPs as surrogate models because the kernel shares information across nearby settings.",
-        "numbers": "If one hyperparameter setting has predicted mean $0.82$ and standard deviation $0.03$, an upper-confidence score with weight 2 is $0.82+2(0.03)=0.88$."
+        "background": "Upper confidence with $1.96$ standard deviations.",
+        "numbers": "$0.9704+1.96\\sqrt{0.7057}=2.6170$"
       },
       {
         "title": "Spatial interpolation",
-        "background": "Geostatistics used Gaussian processes under the name kriging before ML adopted them. Nearby locations tend to have correlated measurements.",
-        "numbers": "With covariance $10e^{-d^2/18}$, two sensors $3$ km apart have covariance $10e^{-1/2}\\approx6.07$."
+        "background": "Two identical inputs with noise $0.25$.",
+        "numbers": "observed variance $1.25$"
       },
       {
-        "title": "Time-series smoothing",
-        "background": "A GP kernel over time can separate smooth signal from noisy observations without choosing a fixed polynomial degree.",
-        "numbers": "If observation noise variance is $0.09$, a posterior standard deviation dropping from $0.5$ to $0.2$ means variance drops from $0.25$ to $0.04$."
-      },
-      {
-        "title": "Uncertainty-aware robotics",
-        "background": "Robots mapping terrain need both a predicted surface and confidence about unexplored regions.",
-        "numbers": "A predicted obstacle height $1.2$ m with standard deviation $0.15$ gives a cautious upper estimate $1.2+2(0.15)=1.5$ m."
-      },
-      {
-        "title": "Kernel design",
-        "background": "Kernel choices encode mathematical beliefs such as smoothness, periodicity, or linear trends.",
-        "numbers": "A periodic kernel with period $24$ hours makes times $3$ and $27$ hours perfectly aligned in phase, since their difference is exactly one period."
+        "title": "Design check",
+        "background": "A 3-point GP prior.",
+        "numbers": "uses a $3\\times3$ covariance matrix with 9 entries"
       }
     ],
     "applicationsClose": "Gaussian processes turn assumptions about similarity into full predictive distributions over functions.",
@@ -3694,6 +4272,56 @@
       "The mean function gives central tendency and the kernel gives covariance.",
       "Kernel matrices must be positive semidefinite.",
       "Conditioning a joint Gaussian gives posterior means and variances for regression."
+    ],
+    "connectionsProse": "<p>This lesson moves from random paths over time to random functions over input spaces. Brownian motion is one example of a stochastic process with Gaussian structure, and Gaussian processes generalize that idea. They define uncertainty over function values rather than over a finite parameter vector alone.</p><p>Gaussian processes connect stochastic processes, multivariate normal conditioning, kernels, Bayesian regression, spatial interpolation, and Bayesian optimization. The kernel is the central object because it determines how values at different inputs co-vary.</p>",
+    "symbols": [
+      {
+        "sym": "$f\\sim GP(m,k)$",
+        "desc": "a random function"
+      },
+      {
+        "sym": "$m(x)$",
+        "desc": "the mean"
+      },
+      {
+        "sym": "$k(x,x')$",
+        "desc": "covariance"
+      },
+      {
+        "sym": "$K$",
+        "desc": "the kernel matrix"
+      },
+      {
+        "sym": "$\\sigma^2$",
+        "desc": "observation-noise variance"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Choose finite inputs.",
+        "result": "$(f(x_1),\\ldots,f(x_n))$ is multivariate normal",
+        "why": "A GP defines all finite collections of function values by joint normals."
+      },
+      {
+        "do": "Build the mean vector and covariance matrix.",
+        "result": "$K_{ij}=k(x_i,x_j)$",
+        "why": "The kernel supplies covariance between inputs."
+      },
+      {
+        "do": "Add observation noise.",
+        "result": "$K_y=K+\\sigma^2I$",
+        "why": "Noisy observations have extra variance on the diagonal."
+      },
+      {
+        "do": "Condition the joint normal.",
+        "result": "posterior mean $k_*^TK_y^{-1}y$ and variance $k_{**}-k_*^TK_y^{-1}k_*$",
+        "why": "This is the normal conditioning formula."
+      },
+      {
+        "do": "Substitute the one-observation example.",
+        "result": "posterior mean $0.9704$ and variance $0.7057$",
+        "why": "$y=2$, $k(0,1)=e^{-1/2}=0.6065$, and noise variance $0.25$."
+      }
     ],
     "prereqs": [
       "math-19-13"
@@ -3722,8 +4350,8 @@
         "fair games"
       ]
     },
-    "motivation": "<p>You already understand a fair bet: if you know everything that has happened so far, the next expected gain is zero. You might win or lose, but the game has no built-in tilt.</p><p>A <b>martingale</b> makes that idea precise for a whole stochastic process. It is one of the cleanest ways to say that the present value is the best prediction of the future value, using the information currently available.</p>",
-    "definition": "<p>Given a filtration $\\mathcal F_t$ representing information available by time $t$, a process $M_t$ is a martingale if it is adapted, has finite expectation, and for $s<t$, $$E[M_t\\mid\\mathcal F_s]=M_s.$$ Here $E[\\cdot\\mid\\mathcal F_s]$ means conditional expectation given the past and present information at time $s$.</p><p>The fair-game identity follows from zero-mean future increments. If $M_t=M_s+(M_t-M_s)$ and $E[M_t-M_s\\mid\\mathcal F_s]=0$, then $E[M_t\\mid\\mathcal F_s]=M_s+0=M_s$. Brownian motion itself is a martingale because its future increment is independent of the past and has mean zero.</p><p><b>Assumptions that matter:</b> the process must be measurable with respect to current information, expectations must exist, and the equality is conditional on the chosen filtration, not on hidden information outside the model.</p>",
+    "motivation": "<p>A process can move randomly while still being fair in expectation. The fairness is not about every outcome being unchanged; it is about the conditional mean of the future given what is currently known. If the current value is the best prediction of the future value, the process is a martingale.</p><p>The filtration $\\mathcal F_t$ records the information available by time $t$. Requiring the process to be adapted prevents using future information when defining the present value. With that structure in place, zero-mean future increments vanish under conditional expectation, leaving the current value.</p>",
+    "definition": "<p>A martingale is an adapted integrable process whose best current prediction of a future value is the current value: $$E[M_t\\mid\\mathcal F_s]=M_s\\qquad(s<t).$$</p><p><b>Assumptions that matter:</b> The process is adapted to the filtration and integrable so the conditional expectations exist.</p>",
     "worked": {
       "problem": "Let $M_n=\\sum_{i=1}^n X_i$, where $X_i$ are independent fair coin gains with $P(X_i=1)=P(X_i=-1)=1/2$. Show $M_n$ is a martingale.",
       "skills": [
@@ -3922,34 +4550,34 @@
     ],
     "applications": [
       {
-        "title": "Fair gambling models",
-        "background": "Martingales were shaped by probability theory's study of fair games, where no strategy should create expected profit from nothing.",
-        "numbers": "Starting with $20$ dollars in a fair bounded game, expected wealth at stop remains $20$, even if terminal wealth is $0$ or $50$."
+        "title": "Fair random walk",
+        "background": "If $S_2=3$.",
+        "numbers": "$E[S_5\\mid\\mathcal F_2]=3$"
+      },
+      {
+        "title": "Gambler's ruin",
+        "background": "Fair walk starting at 2 between 0 and 5.",
+        "numbers": "hits 5 with probability $2/5=0.4$"
       },
       {
         "title": "Asset pricing",
-        "background": "Risk-neutral pricing uses martingales: discounted asset prices have no expected drift under the pricing measure.",
-        "numbers": "If a discounted payoff is $110$ with probability $0.4$ and $90$ with probability $0.6$, its price is $0.4(110)+0.6(90)=98$."
+        "background": "A discounted price with current value 100.",
+        "numbers": "conditional expected future discounted value 100"
+      },
+      {
+        "title": "A/B monitoring",
+        "background": "A mean-zero score process.",
+        "numbers": "expected next increment $0$"
       },
       {
         "title": "Brownian motion",
-        "background": "Standard Brownian motion is a martingale because future increments are independent and centered.",
-        "numbers": "If $W_2=1.1$, then $E[W_5\\mid\\mathcal F_2]=1.1$."
+        "background": "Conditioning at time 1.",
+        "numbers": "$E[W_2\\mid\\mathcal F_1]=W_1$; if $W_1=0.7$, prediction is $0.7$"
       },
       {
         "title": "Online learning",
-        "background": "Martingale concentration inequalities control the sum of unpredictable errors in sequential prediction.",
-        "numbers": "If errors have zero conditional mean and are bounded by 1 for $100$ rounds, typical fluctuation scale is about $\\sqrt{100}=10$."
-      },
-      {
-        "title": "A/B testing over time",
-        "background": "Sequential experiments must account for repeated looks at data. Martingale methods help keep false positives controlled.",
-        "numbers": "A centered cumulative lift estimate with standard error $0.02$ has a rough two-standard-error band $\\pm0.04$."
-      },
-      {
-        "title": "Reinforcement learning returns",
-        "background": "Temporal-difference errors can be arranged as martingale difference noise around a value estimate.",
-        "numbers": "If three zero-mean TD noises are $0.2,-0.1,-0.1$, their sum is $0$, matching the no-drift idea in that sample."
+        "background": "Cumulative centered losses with current sum $-4$.",
+        "numbers": "future conditional expectation $-4$"
       }
     ],
     "applicationsClose": "Martingales are the mathematics of honest conditional prediction, from games to prices to online learning noise.",
@@ -3958,6 +4586,52 @@
       "Zero-mean future increments are the common route to the martingale property.",
       "The filtration matters because it defines what information is known.",
       "Martingales can fluctuate widely even though their conditional expected change is zero."
+    ],
+    "connectionsProse": "<p>This lesson uses stochastic-process language to describe fair evolution over time. Random walks and Brownian motion both provide important examples, but the martingale idea is more general. It is stated in terms of current information and conditional expectation.</p><p>Martingales support optional stopping, concentration inequalities, stochastic calculus, finance, online learning, and fair-game reasoning. They help separate drift from unpredictable fluctuation.</p>",
+    "symbols": [
+      {
+        "sym": "$M_t$",
+        "desc": "the martingale value"
+      },
+      {
+        "sym": "$\\mathcal F_t$",
+        "desc": "current information"
+      },
+      {
+        "sym": "adapted",
+        "desc": "observable with current information"
+      },
+      {
+        "sym": "integrable",
+        "desc": "expectations exist"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $\\mathcal F_t$ be the available information.",
+        "result": "$\\mathcal F_t$",
+        "why": "The filtration records what is known by time $t$."
+      },
+      {
+        "do": "Require the process to be adapted.",
+        "result": "$M_t$ is known from $\\mathcal F_t$",
+        "why": "This prevents using future information."
+      },
+      {
+        "do": "State the martingale condition.",
+        "result": "$E[M_t\\mid\\mathcal F_s]=M_s$ for $s<t$",
+        "why": "The current value is the best current prediction of the future value."
+      },
+      {
+        "do": "Use zero-mean increments for a sum process.",
+        "result": "$M_n=M_0+\\sum_{k=1}^nY_k$, with $E[Y_k\\mid\\mathcal F_{k-1}]=0$",
+        "why": "Conditional expectation removes all future zero-mean increments."
+      },
+      {
+        "do": "Conclude the martingale property.",
+        "result": "$E[M_n\\mid\\mathcal F_s]=M_s$",
+        "why": "Only the value already known at time $s$ remains."
+      }
     ],
     "prereqs": [
       "math-19-14"
@@ -3986,8 +4660,8 @@
         "chain rules"
       ]
     },
-    "motivation": "<p>You already know the ordinary chain rule: if $x(t)$ changes smoothly, then $f(x(t))$ changes according to $f'(x)x'(t)$. Brownian motion is not smooth, so that familiar rule needs one careful repair.</p><p><b>Itô's lemma</b> says the repair is a second-derivative term. Tiny Brownian increments have mean zero, but their squares add up like time, so curvature creates a real drift contribution.</p>",
-    "definition": "<p>If $dX_t=\\mu(t,X_t)dt+\\sigma(t,X_t)dW_t$ and $f(t,x)$ is sufficiently smooth, then $$df(t,X_t)=\\left(f_t+\\mu f_x+\\tfrac12\\sigma^2 f_{xx}\\right)dt+\\sigma f_x\\,dW_t.$$ Here $f_t$, $f_x$, and $f_{xx}$ are partial derivatives evaluated at $(t,X_t)$.</p><p>The extra term comes from a Taylor expansion: $df\\approx f_tdt+f_xdX+\\tfrac12f_{xx}(dX)^2$. In Itô calculus, $(dW_t)^2$ behaves like $dt$, while $dt\\,dW_t$ and $(dt)^2$ are negligible. Thus $(dX_t)^2\\approx\\sigma^2dt$.</p><p><b>Assumptions that matter:</b> the process follows an Itô stochastic differential equation, the function has the needed derivatives, and the calculation uses Itô convention, not an ordinary pathwise derivative.</p>",
+    "motivation": "<p>In ordinary calculus, terms like $(dt)^2$ are too small to matter in a first-order differential. Brownian motion changes the bookkeeping because $(dW_t)^2$ behaves like $dt$ in the Itô rules. A second derivative term therefore contributes to the drift.</p><p>The result is a corrected chain rule. The usual time derivative and first spatial derivative still appear, but the curvature of $f$ also matters through $\\tfrac12\\sigma^2f_{xx}$. This correction is what makes stochastic transformations consistent with Brownian variance.</p>",
+    "definition": "<p>Itô's lemma is the Brownian-chain-rule correction for $dX_t=\\mu dt+\\sigma dW_t$: $$df=(f_t+\\mu f_x+\\tfrac12\\sigma^2f_{xx})dt+\\sigma f_xdW_t.$$</p><p><b>Assumptions that matter:</b> The derivation uses the Itô multiplication rules $(dt)^2=0$, $dt\\,dW_t=0$, and $(dW_t)^2=dt$.</p>",
     "worked": {
       "problem": "For $X_t=W_t$ and $f(x)=x^2$, use Itô's lemma to find $d(W_t^2)$.",
       "skills": [
@@ -4186,34 +4860,34 @@
     ],
     "applications": [
       {
+        "title": "Square transform",
+        "background": "For $f(x)=x^2$, $x=3$, $\\mu=0.1$, $\\sigma=0.5$.",
+        "numbers": "drift is $2\\mu x+\\sigma^2=0.85$"
+      },
+      {
+        "title": "Diffusion term",
+        "background": "The same example.",
+        "numbers": "noise coefficient $2\\sigma x=3$"
+      },
+      {
+        "title": "Log GBM",
+        "background": "With $dS/S=0.08dt+0.2dW$.",
+        "numbers": "log drift is $0.08-0.2^2/2=0.06$"
+      },
+      {
         "title": "Option pricing",
-        "background": "Itô's lemma is the engine behind Black-Scholes because option value is a function of time and a noisy stock price.",
-        "numbers": "If volatility is $0.2$, the log drift correction is $0.5(0.2)^2=0.02$ per year."
-      },
-      {
-        "title": "Stochastic control",
-        "background": "Control systems with random disturbances track how costs change when state follows an SDE.",
-        "numbers": "For cost $x^2$ and noise $\\sigma=0.3$, the Itô correction is $0.5(0.09)(2)=0.09$ in the drift."
-      },
-      {
-        "title": "Physics diffusions",
-        "background": "Random molecular motion is modeled by differential equations with Brownian forcing, and Itô's lemma tracks transformed quantities such as energy.",
-        "numbers": "For $f(x)=x^2/2$ and $\\sigma=2$, the correction is $0.5\\cdot4\\cdot1=2$."
-      },
-      {
-        "title": "Diffusion generative models",
-        "background": "Score-based generative models use forward and reverse SDEs; Itô calculus explains how densities evolve under noisy dynamics.",
-        "numbers": "If a coordinate has diffusion coefficient $0.5$, a small step $dt=0.01$ has noise standard deviation $0.5\\sqrt{0.01}=0.05$."
-      },
-      {
-        "title": "Risk modeling",
-        "background": "Portfolio transformations are nonlinear, so noise variance can change expected values through curvature.",
-        "numbers": "For $f(x)=x^2$ and volatility $\\sigma=0.1$, the correction to drift is $0.5(0.01)(2)=0.01$."
+        "background": "In the transformed option value equation.",
+        "numbers": "the $\\tfrac12\\sigma^2S^2V_{SS}$ term is the gamma contribution"
       },
       {
         "title": "Neural SDEs",
-        "background": "Some continuous-depth neural networks add stochastic dynamics; Itô's lemma is the calculus used to train and analyze them.",
-        "numbers": "With drift $-0.4x$ and noise $0.2$, the square-state drift at $x=1$ is $-0.8+0.04=-0.76$."
+        "background": "Transforming a hidden state.",
+        "numbers": "requires the Itô correction, not just $f_xdX$"
+      },
+      {
+        "title": "Diffusion models",
+        "background": "Variance coefficient $\\sigma=0.5$.",
+        "numbers": "contributes $0.25/2=0.125$ times $f_{xx}$ to drift"
       }
     ],
     "applicationsClose": "Itô's lemma is the translation guide whenever a noisy state is pushed through a smooth function.",
@@ -4222,6 +4896,60 @@
       "The extra term comes from $(dW_t)^2$ behaving like $dt$.",
       "Linear functions have no Itô correction because their second derivative is zero.",
       "Log transforms of geometric Brownian motion subtract half the variance rate."
+    ],
+    "connectionsProse": "<p>This lesson follows Brownian motion and martingales by introducing the chain rule used for Brownian-driven processes. Ordinary calculus is not enough because Brownian increments have variance of order $dt$. Itô's lemma keeps the second-order term that survives in this setting.</p><p>Itô's lemma is a core tool for stochastic differential equations, option pricing, stochastic control, neural SDEs, and diffusion models. It explains how functions of stochastic processes evolve.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mu$",
+        "desc": "drift"
+      },
+      {
+        "sym": "$\\sigma$",
+        "desc": "volatility"
+      },
+      {
+        "sym": "$W_t$",
+        "desc": "Brownian motion"
+      },
+      {
+        "sym": "$f_t,f_x,f_{xx}$",
+        "desc": "partial derivatives"
+      },
+      {
+        "sym": "$dt$",
+        "desc": "deterministic time"
+      },
+      {
+        "sym": "$dW_t$",
+        "desc": "Brownian noise"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the stochastic differential.",
+        "result": "$dX_t=\\mu dt+\\sigma dW_t$",
+        "why": "The process has drift and Brownian noise."
+      },
+      {
+        "do": "Expand $f(t+dt,X_t+dX_t)$ to second order.",
+        "result": "$df=f_tdt+f_xdX_t+\\tfrac12f_{xx}(dX_t)^2$ plus smaller terms",
+        "why": "Second-order terms can survive with Brownian increments."
+      },
+      {
+        "do": "Substitute $dX_t$.",
+        "result": "$dX_t=\\mu dt+\\sigma dW_t$",
+        "why": "This expresses the function change in terms of time and Brownian noise."
+      },
+      {
+        "do": "Use Itô multiplication rules.",
+        "result": "$(dt)^2=0$, $dt\\,dW_t=0$, and $(dW_t)^2=dt$",
+        "why": "The Brownian variance term is kept."
+      },
+      {
+        "do": "Collect drift and noise terms.",
+        "result": "$df=(f_t+\\mu f_x+\\tfrac12\\sigma^2f_{xx})dt+\\sigma f_xdW_t$",
+        "why": "This is the corrected stochastic chain rule."
+      }
     ],
     "prereqs": [
       "math-19-15"
@@ -4250,8 +4978,8 @@
         "random sampling"
       ]
     },
-    "motivation": "<p>You already average numbers to summarize them. Monte Carlo uses that same habit when the numbers are random draws from a distribution or simulated model.</p><p>The promise is practical: if an integral or expectation is hard to compute directly, draw samples, evaluate the quantity, and average. More samples reduce noise at the familiar $1/\\sqrt n$ rate.</p>",
-    "definition": "<p>To estimate $\\mu=E[g(X)]$, Monte Carlo draws independent samples $X_1,\\ldots,X_n$ from the distribution of $X$ and uses $$\\hat\\mu_n=\\frac1n\\sum_{i=1}^n g(X_i).$$ The estimator is unbiased when the samples are drawn correctly, because $E[\\hat\\mu_n]=\\mu$.</p><p>The variance is $\\operatorname{Var}(\\hat\\mu_n)=\\operatorname{Var}(g(X))/n$ for independent samples. That is why quadrupling the number of samples only halves the standard error. The method is simple, powerful, and sometimes expensive.</p><p><b>Assumptions that matter:</b> samples should match the target distribution, independence or weak dependence controls error formulas, and finite variance is needed for the usual standard-error estimate.</p>",
+    "motivation": "<p>Many expectations are hard to compute exactly but easy to approximate by sampling. If $g(X)$ can be evaluated on simulated draws, the sample average is a direct estimate of $E[g(X)]$. The law of large numbers explains why the average stabilizes as the number of samples grows.</p><p>The uncertainty of the estimate is controlled by variance and sample size. Independence makes variances add, so the variance of the average is $\\sigma^2/n$. This gives the standard $1/\\sqrt n$ rate and explains why reducing error substantially often requires many more samples.</p>",
+    "definition": "<p>Monte Carlo estimates an expectation by averaging simulated values: $$\\hat\\mu_n=\\frac1n\\sum_i g(X_i),\\qquad E[\\hat\\mu_n]=\\mu,\\ \\operatorname{Var}(\\hat\\mu_n)=\\sigma^2/n.$$</p><p><b>Assumptions that matter:</b> The variance formula uses independent samples with common variance $\\sigma^2$ for $g(X)$.</p>",
     "worked": {
       "problem": "Estimate $E[X^2]$ from samples $X=1,2,3,4$ and compute the sample standard error of the mean of $X^2$.",
       "skills": [
@@ -4455,34 +5183,34 @@
     ],
     "applications": [
       {
-        "title": "Estimating integrals",
-        "background": "Monte Carlo integration became essential because high-dimensional grids grow impossibly fast.",
-        "numbers": "For $x$ samples $0.1,0.4,0.9$, estimating $\\int_0^1x^2dx$ gives $(0.01+0.16+0.81)/3=0.327$, near $1/3$."
+        "title": "Sample mean",
+        "background": "Samples $2,4,6,8$.",
+        "numbers": "estimate $5$"
       },
       {
-        "title": "Model evaluation",
-        "background": "Test metrics are averages over examples, so their uncertainty follows Monte Carlo logic.",
-        "numbers": "Accuracy $850/1000=0.85$ has standard error $\\sqrt{0.85\\cdot0.15/1000}\\approx0.0113$."
+        "title": "Standard error",
+        "background": "With $\\sigma=10$ and $n=100$.",
+        "numbers": "SE is $1$"
       },
       {
-        "title": "Rendering",
-        "background": "Computer graphics uses random rays to estimate light transport when exact integration is too complex.",
-        "numbers": "A pixel with ray colors $0.2,0.6,0.4,0.8$ is estimated as brightness $0.5$."
+        "title": "95% interval",
+        "background": "Estimate $5$ with SE $1$.",
+        "numbers": "about $(3.04,6.96)$"
       },
       {
-        "title": "Bayesian prediction",
-        "background": "Posterior predictive quantities are often averages over parameter samples.",
-        "numbers": "Predictions $3.1,2.9,3.4,3.0$ average to $3.1$."
+        "title": "Estimating $\\pi$",
+        "background": "7854 hits in 10,000 quarter-square samples.",
+        "numbers": "$4\\cdot0.7854=3.1416$"
       },
       {
         "title": "Risk simulation",
-        "background": "Finance and operations simulate many possible futures to estimate tail losses.",
-        "numbers": "If 5 of 1000 simulated losses exceed $1$ million, the estimated exceedance probability is $0.005$."
+        "background": "1% tail in 100,000 runs.",
+        "numbers": "about 1000 tail samples"
       },
       {
         "title": "Stochastic optimization",
-        "background": "Mini-batch training estimates a full gradient using a random subset of data.",
-        "numbers": "Batch gradients $1.2,0.8,1.0,1.4$ average to $1.1$, an estimate of the full gradient component."
+        "background": "Mini-batch size 256 compared with 64.",
+        "numbers": "half the gradient-noise SE because $\\sqrt{256/64}=2$"
       }
     ],
     "applicationsClose": "Monte Carlo is the art of replacing impossible exact averages with honest simulated averages and measured uncertainty.",
@@ -4491,6 +5219,56 @@
       "Independent sample mean variance shrinks like $1/n$.",
       "Standard error shrinks like $1/\\sqrt n$.",
       "The method is broadly useful when direct integration is difficult."
+    ],
+    "connectionsProse": "<p>This lesson uses randomness as a computational tool. Earlier lessons modeled random systems themselves; Monte Carlo uses simulated random samples to estimate quantities such as expectations and probabilities. The key object is an average over independent draws.</p><p>Monte Carlo methods connect probability, simulation, stochastic optimization, Bayesian computation, risk analysis, and numerical integration. They also prepare for MCMC, where the samples come from a dependent Markov chain.</p>",
+    "symbols": [
+      {
+        "sym": "$X_i$",
+        "desc": "samples"
+      },
+      {
+        "sym": "$g$",
+        "desc": "the measured function"
+      },
+      {
+        "sym": "$\\mu=E[g(X)]$",
+        "desc": "the target expectation"
+      },
+      {
+        "sym": "$\\hat\\mu_n$",
+        "desc": "the estimate"
+      },
+      {
+        "sym": "$\\sigma$",
+        "desc": "the standard deviation of $g(X)$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Draw independent samples and evaluate the function.",
+        "result": "$X_1,\\ldots,X_n$ and $g(X_i)$",
+        "why": "Monte Carlo turns an expectation into a sample average."
+      },
+      {
+        "do": "Define the sample average.",
+        "result": "$\\hat\\mu_n=\\frac1n\\sum_i g(X_i)$",
+        "why": "This is the estimator."
+      },
+      {
+        "do": "Take expectation.",
+        "result": "$E[\\hat\\mu_n]=\\frac1n\\sum_iE[g(X_i)]=\\mu$",
+        "why": "The estimator is unbiased."
+      },
+      {
+        "do": "Use independence for variance.",
+        "result": "$\\operatorname{Var}(\\hat\\mu_n)=\\frac1{n^2}\\sum_i\\operatorname{Var}(g(X_i))=\\sigma^2/n$",
+        "why": "Independent sample variances add."
+      },
+      {
+        "do": "Take the square root.",
+        "result": "standard error $\\sigma/\\sqrt n$",
+        "why": "Four times as many samples only halves error."
+      }
     ],
     "prereqs": [
       "math-19-16"
@@ -4519,8 +5297,8 @@
         "stationarity"
       ]
     },
-    "motivation": "<p>You already know ordinary Monte Carlo needs direct samples. But many important distributions are easy to evaluate up to a constant and hard to sample from directly.</p><p><b>Markov Chain Monte Carlo</b> solves this by designing a random walk whose long-run fraction of visits matches the target distribution. Early samples may be biased, but after mixing, averages along the chain approximate expectations.</p>",
-    "definition": "<p>MCMC constructs a Markov chain $X_0,X_1,\\ldots$ with stationary distribution $\\pi$. The estimate of $E_\\pi[g(X)]$ is the chain average $\\frac1n\\sum_{i=1}^n g(X_i)$ after burn-in. In Metropolis-Hastings, a proposal $y$ from $q(y\\mid x)$ is accepted with probability $$\\alpha=\\min\\left(1,\\frac{\\pi(y)q(x\\mid y)}{\\pi(x)q(y\\mid x)}\\right).$$</p><p>For symmetric proposals, $q(y\\mid x)=q(x\\mid y)$, so the proposal terms cancel and moves to higher target density are accepted automatically. Moves to lower density are accepted sometimes, which keeps exploration alive.</p><p><b>Assumptions that matter:</b> the chain must be able to reach the relevant state space, have the desired stationary distribution, and be run long enough that initialization effects are small.</p>",
+    "motivation": "<p>Direct sampling from a target distribution is often unavailable, especially when the target is known only up to a normalizing constant. MCMC avoids direct sampling by proposing local moves and accepting them in a way that leaves the target distribution stationary. After the chain has moved away from its initial condition, its visited states can be used like approximate target samples.</p><p>Metropolis-Hastings corrects for proposal imbalance through the acceptance probability. Moves toward higher target density are often accepted, while moves toward lower density are accepted with a controlled probability. The detailed-balance calculation shows that this local rule produces the desired equilibrium.</p>",
+    "definition": "<p>Markov Chain Monte Carlo builds a Markov chain with target stationary distribution $\\pi$ and estimates expectations using chain averages. Metropolis-Hastings accepts a proposal with $$\\alpha(x,y)=\\min\\{1,\\pi(y)q(x\\mid y)/(\\pi(x)q(y\\mid x))\\}.$$</p><p><b>Assumptions that matter:</b> The proposal and acceptance rule should make the chain leave $\\pi$ stationary; burn-in discards early nonstationary draws.</p>",
     "worked": {
       "problem": "With symmetric proposal and unnormalized target values $\\pi(x)=0.2$, $\\pi(y)=0.5$, compute the Metropolis acceptance probability for moving from $x$ to $y$.",
       "skills": [
@@ -4718,34 +5496,34 @@
     ],
     "applications": [
       {
-        "title": "Bayesian inference",
-        "background": "MCMC made complex Bayesian models practical by sampling from posteriors without closed-form normalization.",
-        "numbers": "Posterior parameter samples $1.0,1.2,0.9,1.1$ average to $1.05$."
+        "title": "Symmetric proposal",
+        "background": "Target ratio $\\pi(y)/\\pi(x)=0.4$.",
+        "numbers": "acceptance $0.4$"
+      },
+      {
+        "title": "Always accept uphill",
+        "background": "Target ratio $1.8$.",
+        "numbers": "acceptance $1$"
+      },
+      {
+        "title": "Bayesian posterior",
+        "background": "A 5000-step chain with 1000 burn-in.",
+        "numbers": "leaves 4000 averaging draws"
+      },
+      {
+        "title": "Autocorrelation cost",
+        "background": "With lag correlation $0.8$.",
+        "numbers": "1000 draws have ESS about $111.1$"
       },
       {
         "title": "Gibbs sampling",
-        "background": "Gibbs sampling updates one variable at a time from conditional distributions, useful when full joint sampling is hard.",
-        "numbers": "If $P(Z=1\\mid X)=0.7$, a uniform draw $0.4$ sets $Z=1$."
-      },
-      {
-        "title": "Hamiltonian Monte Carlo",
-        "background": "Modern probabilistic programming often uses gradient-informed proposals to move efficiently through high-dimensional posteriors.",
-        "numbers": "A step size $0.1$ for $20$ leapfrog steps simulates a path length $2.0$."
-      },
-      {
-        "title": "Topic models",
-        "background": "Latent-variable text models used MCMC to infer hidden topic assignments before variational methods became common.",
-        "numbers": "If a word's topic counts are $3$ and $7$, normalized probabilities are $0.3$ and $0.7$."
-      },
-      {
-        "title": "Uncertainty in ML",
-        "background": "Sampling multiple plausible parameters gives uncertainty bands around predictions.",
-        "numbers": "Predictions $4.8,5.1,5.0,5.3$ average to $5.05$."
+        "background": "A two-block Gibbs update.",
+        "numbers": "acceptance $1$ because it samples exact conditionals"
       },
       {
         "title": "Diagnostics",
-        "background": "Effective sample size accounts for autocorrelation, because correlated draws contain less information.",
-        "numbers": "If $1000$ chain draws behave like $250$ independent draws, standard error is twice what $1000$ independent draws would suggest."
+        "background": "Four chains with means $1.0,1.1,0.9,1.0$.",
+        "numbers": "between-chain range $0.2$ to investigate"
       }
     ],
     "applicationsClose": "MCMC is Monte Carlo with memory, carefully designed so the memory settles into the distribution we wanted all along.",
@@ -4754,6 +5532,52 @@
       "Metropolis-Hastings accepts proposals using a ratio that preserves stationarity.",
       "Burn-in and mixing matter because early states remember initialization.",
       "Chain averages estimate expectations, but autocorrelation reduces effective information."
+    ],
+    "connectionsProse": "<p>This lesson combines Monte Carlo estimation with Markov-chain stationarity. Ordinary Monte Carlo uses independent samples from the target distribution. MCMC builds a Markov chain whose stationary distribution is the target, then averages values along the chain.</p><p>The lesson depends on detailed balance, stationary distributions, and Monte Carlo standard-error thinking. It is a central method in Bayesian inference, probabilistic modeling, and sampling from distributions that are hard to normalize directly.</p>",
+    "symbols": [
+      {
+        "sym": "$\\pi$",
+        "desc": "the target density up to normalization"
+      },
+      {
+        "sym": "$q$",
+        "desc": "the proposal"
+      },
+      {
+        "sym": "$\\alpha$",
+        "desc": "acceptance probability"
+      },
+      {
+        "sym": "burn-in",
+        "desc": "early nonstationary draws that are discarded"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Choose a proposal distribution.",
+        "result": "$q(y\\mid x)$",
+        "why": "It generates candidate moves from current state $x$."
+      },
+      {
+        "do": "Define the Metropolis-Hastings acceptance probability.",
+        "result": "$\\alpha(x,y)=\\min\\{1,\\pi(y)q(x\\mid y)/(\\pi(x)q(y\\mid x))\\}$",
+        "why": "This corrects proposal imbalance."
+      },
+      {
+        "do": "Write accepted forward flow.",
+        "result": "$\\pi(x)q(y\\mid x)\\alpha(x,y)=\\min\\{\\pi(x)q(y\\mid x),\\pi(y)q(x\\mid y)\\}$",
+        "why": "The acceptance rule caps the larger flow to match the smaller."
+      },
+      {
+        "do": "Swap $x$ and $y$.",
+        "result": "the same minimum expression appears",
+        "why": "Forward and reverse accepted flows match."
+      },
+      {
+        "do": "Apply detailed balance.",
+        "result": "$\\pi$ is stationary",
+        "why": "Detailed balance implies stationarity, so chain averages estimate $E_\\pi[g(X)]$ after burn-in."
+      }
     ],
     "prereqs": [
       "math-19-17"
@@ -4782,8 +5606,8 @@
         "policies"
       ]
     },
-    "motivation": "<p>You already know a single decision can have a reward. Reinforcement learning studies a chain of decisions, where each action changes what choices and rewards come next.</p><p>A <b>Markov Decision Process</b> is the clean mathematical table for that story: states, actions, transition probabilities, rewards, and a discount factor that values near rewards more than distant ones.</p>",
-    "definition": "<p>An MDP consists of states $s$, actions $a$, transition probabilities $P(s'\\mid s,a)$, rewards $R(s,a,s')$, and discount $\\gamma\\in[0,1)$. A policy $\\pi(a\\mid s)$ chooses actions. The value function satisfies the Bellman equation $$V^\\pi(s)=E_\\pi[R_{t+1}+\\gamma V^\\pi(S_{t+1})\\mid S_t=s].$$</p><p>The Markov property says the conditional distribution of the next state depends on the present state and action, not the full history. The Bellman equation works because total future return can be split into immediate reward plus discounted value of the next state.</p><p><b>Assumptions that matter:</b> the state must contain enough information for the Markov property, rewards and transitions are defined by the environment, and $\\gamma<1$ keeps infinite-horizon discounted returns finite under bounded rewards.</p>",
+    "motivation": "<p>In many sequential problems, the next state is not only random but also affected by a decision. A policy specifies how actions are chosen from states. The value of a state is then the expected discounted reward obtained by following that policy.</p><p>The Bellman equation comes from splitting the return into the immediate reward and the discounted future return. The Markov property makes the future value depend on the next state rather than on the full previous path. This recursive structure is the basis for policy evaluation and control.</p>",
+    "definition": "<p>A Markov decision process has states, actions, transition probabilities, rewards, and a discount. For a fixed policy, values satisfy the Bellman equation $$V^\\pi(s)=\\sum_a\\pi(a\\mid s)\\sum_{s'}P(s'\\mid s,a)[R(s,a,s')+\\gamma V^\\pi(s')].$$</p><p><b>Assumptions that matter:</b> The Markov property makes the next-state value depend on $s'$ rather than the full previous path; a fixed policy induces a Markov chain.</p>",
     "worked": {
       "problem": "A state has two possible next states after an action: reward $5$ then value $10$ with probability $0.7$, and reward $1$ then value $4$ with probability $0.3$. With $\\gamma=0.9$, compute the action value.",
       "skills": [
@@ -4982,34 +5806,34 @@
     ],
     "applications": [
       {
-        "title": "Game playing",
-        "background": "MDPs model games when the board state contains all relevant information for future play.",
-        "numbers": "If winning gives $1$ after three moves with $\\gamma=0.9$, present value is $0.9^3=0.729$."
+        "title": "One-state value",
+        "background": "Reward $2$ with $\\gamma=0.9$.",
+        "numbers": "$V=2/(1-0.9)=20$"
       },
       {
-        "title": "Robotics",
-        "background": "A robot chooses actions under uncertain transitions, such as wheels slipping or sensors being noisy.",
-        "numbers": "Move-forward success $0.8$ for reward $5$ and slip reward $-1$ gives expected reward $0.8(5)+0.2(-1)=3.8$."
+        "title": "Action value",
+        "background": "Reward $1$, then 70% chance of value 10.",
+        "numbers": "$Q=1+0.9(0.7\\cdot10)=7.3$"
       },
       {
-        "title": "Inventory control",
-        "background": "Sequential stock decisions balance holding costs against stockout penalties.",
-        "numbers": "Ordering costs $2$ but prevents an expected stockout cost $7$ with probability $0.5$, giving expected benefit $3.5-2=1.5$."
+        "title": "Policy mixture",
+        "background": "Choosing action A with probability $0.6$ and B with $0.4$.",
+        "numbers": "averages their Q-values"
       },
       {
-        "title": "Recommendation systems",
-        "background": "A recommender's action can affect future user state, not just immediate clicks.",
-        "numbers": "A click reward $1$ now plus future value $4$ at $\\gamma=0.8$ gives backed-up value $4.2$."
+        "title": "Occupancy",
+        "background": "A fixed policy inducing stationary $(0.6,0.4)$.",
+        "numbers": "visits state 2 about 4000 times in 10,000 steps"
       },
       {
-        "title": "Dynamic programming",
-        "background": "Value iteration repeatedly applies Bellman backups until values stabilize.",
-        "numbers": "If old value is $6$ and backup is $6.3$, the update change is $0.3$."
+        "title": "Discount horizon",
+        "background": "With $\\gamma=0.9$.",
+        "numbers": "effective horizon about $1/(1-\\gamma)=10$ steps"
       },
       {
-        "title": "Exploration strategies",
-        "background": "Policies such as epsilon-greedy deliberately try non-greedy actions to learn transitions and rewards.",
-        "numbers": "With $4$ actions and $\\epsilon=0.2$, each random action gets probability $0.2/4=0.05$ plus any greedy mass."
+        "title": "Exploration",
+        "background": "$\\epsilon=0.1$ over 5 actions.",
+        "numbers": "selects each non-greedy action with probability $0.025$"
       }
     ],
     "applicationsClose": "MDPs make sequential choice computable by compressing the future into state values and one-step backups.",
@@ -5018,6 +5842,64 @@
       "The Markov property requires the current state to contain the relevant past.",
       "Bellman equations split return into immediate reward plus discounted next value.",
       "RL algorithms estimate or optimize these values from data and interaction."
+    ],
+    "connectionsProse": "<p>This lesson extends Markov chains by adding actions and rewards. A Markov chain describes how states move under fixed transition probabilities. A Markov decision process lets an agent choose actions that influence both transitions and rewards.</p><p>MDPs connect stochastic processes to reinforcement learning, dynamic programming, policy evaluation, and state visitation. Once a policy is fixed, the MDP again induces a Markov chain, so earlier ideas about stationarity and long-run occupancy still apply.</p>",
+    "symbols": [
+      {
+        "sym": "$s$",
+        "desc": "state"
+      },
+      {
+        "sym": "$a$",
+        "desc": "action"
+      },
+      {
+        "sym": "$P$",
+        "desc": "transition probability"
+      },
+      {
+        "sym": "$R$",
+        "desc": "reward"
+      },
+      {
+        "sym": "$\\gamma$",
+        "desc": "discount"
+      },
+      {
+        "sym": "$\\pi$",
+        "desc": "policy"
+      },
+      {
+        "sym": "$V^\\pi$",
+        "desc": "value"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Choose an action from a state according to a policy.",
+        "result": "$\\pi(a\\mid s)$",
+        "why": "The policy describes action probabilities."
+      },
+      {
+        "do": "Receive reward and transition.",
+        "result": "$R(s,a,s')$ and $P(s'\\mid s,a)$",
+        "why": "Actions influence both rewards and next states."
+      },
+      {
+        "do": "Define policy value.",
+        "result": "$V^\\pi(s)$",
+        "why": "It is expected discounted return from state $s$."
+      },
+      {
+        "do": "Split the return.",
+        "result": "$G=R+\\gamma G'$",
+        "why": "Return equals immediate reward plus discounted future return."
+      },
+      {
+        "do": "Take expectation over actions and next states.",
+        "result": "$V^\\pi(s)=\\sum_a\\pi(a\\mid s)\\sum_{s'}P(s'\\mid s,a)[R(s,a,s')+\\gamma V^\\pi(s')]$",
+        "why": "The Markov property makes the future value depend on the next state."
+      }
     ],
     "prereqs": [
       "math-19-18"
@@ -5046,8 +5928,8 @@
         "linear prediction"
       ]
     },
-    "motivation": "<p>You already make informal forecasts from recent history: if traffic has been rising every morning, tomorrow may be high too. Autoregressive models turn that instinct into a linear equation.</p><p>An <b>AR</b> model says the present value depends on its own past values and a fresh unpredictable shock. It is one of the simplest bridges from stochastic processes to time-series forecasting.</p>",
-    "definition": "<p>An AR(1) model has form $X_t=c+\\phi X_{t-1}+\\varepsilon_t$, where $c$ is an intercept, $\\phi$ is the autoregressive coefficient, and $\\varepsilon_t$ is white-noise shock with mean zero. More generally, AR($p$) uses $p$ lags.</p><p>For AR(1), stationarity requires $|\\phi|<1$. Then the mean $\\mu$ satisfies $\\mu=c+\\phi\\mu$, so $\\mu=c/(1-\\phi)$. Shocks fade geometrically because a shock one period ago is multiplied by $\\phi$, two periods ago by $\\phi^2$, and so on.</p><p><b>Assumptions that matter:</b> shocks are usually taken as uncorrelated with constant variance, coefficients are fixed over time, and stationarity formulas require the roots to be stable, especially $|\\phi|<1$ for AR(1).</p>",
+    "motivation": "<p>Many time series have persistence: a high value today tends to be followed by a high value tomorrow, though not exactly. An AR model represents that persistence by feeding lagged values back into the current value. The new shock accounts for the part not explained by the past.</p><p>In AR(1), the coefficient $\\phi$ controls how strongly the past carries forward. When $|\\phi|<1$, the effect of a shock decays geometrically and the process can have a stable long-run mean. This makes the model both interpretable and useful for forecasting.</p>",
+    "definition": "<p>An AR(1) model predicts the current value from the previous value plus a shock: $$X_t=c+\\phi X_{t-1}+\\varepsilon_t,\\qquad \\mu=\\frac{c}{1-\\phi}\\text{ when }|\\phi|<1.$$</p><p><b>Assumptions that matter:</b> The shock has mean zero, and stationarity for AR(1) requires $|\\phi|<1$.</p>",
     "worked": {
       "problem": "For $X_t=2+0.6X_{t-1}+\\varepsilon_t$, find the stationary mean and one-step forecast when $X_t=10$.",
       "skills": [
@@ -5246,34 +6128,34 @@
     ],
     "applications": [
       {
-        "title": "Demand forecasting",
-        "background": "Retail forecasts often use yesterday's demand to predict today's demand because habits and seasonality create persistence.",
-        "numbers": "With $X_t=20+0.5X_{t-1}$ and yesterday $40$, forecast is $40$."
+        "title": "Long-run mean",
+        "background": "With $c=3$, $\\phi=0.7$.",
+        "numbers": "mean is $10$"
       },
       {
-        "title": "Temperature anomalies",
-        "background": "Weather deviations can persist but usually mean-revert, matching stable AR behavior.",
-        "numbers": "If anomaly is $3$ and $\\phi=0.6$, next expected anomaly is $1.8$."
+        "title": "One-step forecast",
+        "background": "From $X_t=8$.",
+        "numbers": "forecast is $3+0.7\\cdot8=8.6$"
       },
       {
-        "title": "Finance returns",
-        "background": "Raw returns often have weak autocorrelation, but some transformed series can show AR structure.",
-        "numbers": "An AR coefficient $0.1$ makes a $2\\%$ return contribute $0.2\\%$ to next expected return."
+        "title": "Stationary variance",
+        "background": "With shock variance $4$.",
+        "numbers": "variance is $4/(1-0.7^2)=7.8431$"
       },
       {
-        "title": "Monitoring metrics",
-        "background": "Service latency or error-rate deviations may persist from one interval to the next.",
-        "numbers": "If standardized latency is $4$ and $\\phi=0.75$, next forecast is $3$."
+        "title": "Autocorrelation",
+        "background": "At lag 3.",
+        "numbers": "lag 3 autocorrelation is $0.7^3=0.343$"
       },
       {
-        "title": "Feature engineering",
-        "background": "Lagged values are common predictors in ML time-series models and AR is the linear baseline.",
-        "numbers": "Features $X_t=10$ and $X_{t-1}=8$ in an AR(2) with weights $0.5,0.2$ give forecast $6.6$."
+        "title": "Half-life",
+        "background": "For coefficient $0.7$.",
+        "numbers": "shock half-life is $\\log(0.5)/\\log(0.7)=1.943$ steps"
       },
       {
-        "title": "Mean reversion",
-        "background": "Stable AR models quantify how quickly a series returns toward its average.",
-        "numbers": "With $\\phi=0.5$, a deviation of $8$ shrinks in expectation to $4$, then $2$, then $1$."
+        "title": "Impulse response",
+        "background": "After 4 steps.",
+        "numbers": "a unit shock contributes $0.7^4=0.2401$"
       }
     ],
     "applicationsClose": "AR models are small equations with a large idea: the past predicts the present, but stable memory fades.",
@@ -5282,6 +6164,56 @@
       "For AR(1), stationarity requires $|\\phi|<1$.",
       "The stationary mean is $c/(1-\\phi)$ when stable.",
       "Forecasts use zero mean for future shocks and propagate lagged values forward."
+    ],
+    "connectionsProse": "<p>This lesson moves into time-series models where the current value depends on past observed values. An autoregressive model is a stochastic process with explicit linear memory. It uses earlier values as predictors and adds a new shock.</p><p>AR models connect stochastic processes, regression, stationarity, autocorrelation, forecasting, and impulse response. They are a basic component of ARMA and ARIMA models.</p>",
+    "symbols": [
+      {
+        "sym": "$X_t$",
+        "desc": "the series value"
+      },
+      {
+        "sym": "$c$",
+        "desc": "intercept"
+      },
+      {
+        "sym": "$\\phi$",
+        "desc": "autoregressive coefficient"
+      },
+      {
+        "sym": "$\\varepsilon_t$",
+        "desc": "white-noise shock"
+      },
+      {
+        "sym": "$p$",
+        "desc": "the number of lags in AR($p$)"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the AR(1) model.",
+        "result": "$X_t=c+\\phi X_{t-1}+\\varepsilon_t$",
+        "why": "The current value depends linearly on the previous value and a new shock."
+      },
+      {
+        "do": "Take expectations under stationarity.",
+        "result": "$\\mu=c+\\phi\\mu$",
+        "why": "$E[\\varepsilon_t]=0$ and the mean is constant over time."
+      },
+      {
+        "do": "Solve for the mean.",
+        "result": "$(1-\\phi)\\mu=c$, so $\\mu=c/(1-\\phi)$",
+        "why": "This is finite when $|\\phi|<1$."
+      },
+      {
+        "do": "Subtract the mean.",
+        "result": "$X_t-\\mu=\\phi(X_{t-1}-\\mu)+\\varepsilon_t$",
+        "why": "This isolates deviations from the long-run level."
+      },
+      {
+        "do": "Iterate the recursion.",
+        "result": "a shock's effect after $h$ steps is $\\phi^h$",
+        "why": "The effect decays geometrically only when $|\\phi|<1$."
+      }
     ],
     "prereqs": [
       "math-19-19"
@@ -5310,8 +6242,8 @@
         "forecast errors"
       ]
     },
-    "motivation": "<p>You already know a surprise can echo for a while. If a website outage happens now, metrics may remain affected for the next few measurements even after the original shock is gone.</p><p>A <b>moving-average</b> model describes a series as a weighted sum of recent random shocks. Unlike AR memory, MA memory cuts off after a fixed number of lags.</p>",
-    "definition": "<p>An MA(1) model has form $X_t=\\mu+\\varepsilon_t+\\theta\\varepsilon_{t-1}$, where $\\varepsilon_t$ is white noise with mean zero and variance $\\sigma^2$. An MA($q$) model uses shocks back to $q$ lags.</p><p>The mean is $E[X_t]=\\mu$ because each shock has mean zero. For MA(1), the variance is $(1+\\theta^2)\\sigma^2$ and lag-1 covariance is $\\theta\\sigma^2$. Lags beyond 1 have covariance zero because no shared shock remains.</p><p><b>Assumptions that matter:</b> shocks are white noise, the coefficients are fixed, and invertibility conditions are often imposed so the model has a unique shock representation.</p>",
+    "motivation": "<p>In an MA model, the current value is built from current and past innovations. A shock can echo into a few future observations because it appears with lagged coefficients. After those lags pass, the same shock drops out of the formula.</p><p>This finite memory gives a simple covariance pattern. In MA(1), neighboring observations share one shock, so they are correlated. Observations two or more lags apart share no shock, so their autocovariance is zero under the white-noise assumptions.</p>",
+    "definition": "<p>An MA(1) model builds the current value from current and previous white-noise shocks: $$X_t=\\mu+\\varepsilon_t+\\theta\\varepsilon_{t-1},\\qquad \\operatorname{Var}(X_t)=(1+\\theta^2)\\sigma^2.$$</p><p><b>Assumptions that matter:</b> The shocks are white noise with mean zero and variance $\\sigma^2$, so distinct shocks are uncorrelated.</p>",
     "worked": {
       "problem": "For $X_t=10+\\varepsilon_t+0.5\\varepsilon_{t-1}$ with shock variance $4$, find mean, variance, and lag-1 covariance.",
       "skills": [
@@ -5510,34 +6442,34 @@
     ],
     "applications": [
       {
-        "title": "Forecast errors",
-        "background": "MA models were built to describe serial correlation in forecast errors after trends are removed.",
-        "numbers": "If today's shock is $2$ and $\\theta=0.5$, it adds $1$ to tomorrow's expected value."
+        "title": "Variance",
+        "background": "With $\\theta=0.5$, $\\sigma^2=4$.",
+        "numbers": "variance is $5$"
       },
       {
-        "title": "Signal processing",
-        "background": "Finite impulse response filters are MA models under another name, weighting recent noise or signal samples.",
-        "numbers": "Filter weights $0.5,0.3,0.2$ on inputs $10,8,5$ give output $8.4$."
+        "title": "Lag-1 covariance",
+        "background": "Using the same values.",
+        "numbers": "$0.5\\cdot4=2$"
       },
       {
-        "title": "Quality control",
-        "background": "A production disturbance can affect several consecutive measurements before disappearing.",
-        "numbers": "Shock $6$ with coefficient $0.25$ leaves contribution $1.5$ one period later."
+        "title": "Lag-1 autocorrelation",
+        "background": "Covariance divided by variance.",
+        "numbers": "$2/5=0.4$"
       },
       {
-        "title": "Econometrics",
-        "background": "MA terms often model short-lived policy or measurement shocks in economic data.",
-        "numbers": "If shock variance is $16$ and $\\theta=0.5$, MA(1) variance is $20$."
+        "title": "Shock echo",
+        "background": "A shock $\\varepsilon_t=3$.",
+        "numbers": "adds $3$ now and $1.5$ next step"
       },
       {
-        "title": "Residual diagnostics",
-        "background": "Autocorrelation cutting off after lag $q$ suggests an MA($q$) pattern.",
-        "numbers": "If sample autocorrelations are $0.4$ at lag 1 and near $0$ at lags 2 and 3, MA(1) is plausible."
+        "title": "Finite memory",
+        "background": "The same shock in MA(1).",
+        "numbers": "adds $0$ after two steps"
       },
       {
-        "title": "ML time-series baselines",
-        "background": "Simple MA models are interpretable baselines before fitting larger sequence models.",
-        "numbers": "A two-shock model $\\varepsilon_t+0.7\\varepsilon_{t-1}$ with shocks $1$ and $-2$ gives $-0.4$."
+        "title": "Forecast adjustment",
+        "background": "If the last estimated shock is $3$.",
+        "numbers": "the next forecast is $\\mu+0.5\\cdot3=\\mu+1.5$"
       }
     ],
     "applicationsClose": "MA models teach a clean lesson: some randomness has a short echo, and then it is gone.",
@@ -5546,6 +6478,52 @@
       "MA(1) mean is $\\mu$ and variance is $(1+\\theta^2)\\sigma^2$.",
       "Autocovariance cuts off after the MA order.",
       "Forecasting requires knowing or estimating recent shocks."
+    ],
+    "connectionsProse": "<p>This lesson complements autoregressive models by modeling dependence through recent shocks rather than recent observed values. An MA model still describes a time series, but its memory is finite. Once a shock is older than the chosen lag order, it no longer appears directly.</p><p>MA models connect white noise, autocovariance, forecasting, finite-memory processes, and ARMA models. They help distinguish persistence caused by carried-forward values from persistence caused by shared recent disturbances.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mu$",
+        "desc": "mean"
+      },
+      {
+        "sym": "$\\varepsilon_t$",
+        "desc": "white-noise shock"
+      },
+      {
+        "sym": "$\\theta$",
+        "desc": "the MA coefficient"
+      },
+      {
+        "sym": "$q$",
+        "desc": "the number of shock lags"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the MA(1) model.",
+        "result": "$X_t=\\mu+\\varepsilon_t+\\theta\\varepsilon_{t-1}$",
+        "why": "The current value uses current and one lagged shock."
+      },
+      {
+        "do": "Take expectation.",
+        "result": "$E[X_t]=\\mu$",
+        "why": "Both shocks have mean zero."
+      },
+      {
+        "do": "Compute variance.",
+        "result": "$\\operatorname{Var}(X_t)=\\sigma^2+\\theta^2\\sigma^2=(1+\\theta^2)\\sigma^2$",
+        "why": "Independent shocks contribute variances separately."
+      },
+      {
+        "do": "Compute lag-1 covariance.",
+        "result": "$\\theta\\sigma^2$",
+        "why": "$X_t$ and $X_{t-1}$ share only $\\varepsilon_{t-1}$, with coefficients $\\theta$ and $1$."
+      },
+      {
+        "do": "Check longer lags.",
+        "result": "autocovariance is zero beyond lag 1",
+        "why": "No shock is shared at lag 2 or more."
+      }
     ],
     "prereqs": [
       "math-19-20"
@@ -5574,8 +6552,8 @@
         "stationarity"
       ]
     },
-    "motivation": "<p>You have seen two kinds of memory: AR models remember past values, and MA models remember past shocks. Many real series need both.</p><p><b>ARMA</b> models combine those memories for stationary series. <b>ARIMA</b> adds differencing first, so a wandering nonstationary series can be modeled through its changes.</p>",
-    "definition": "<p>An ARMA(1,1) model can be written $X_t=c+\\phi X_{t-1}+\\varepsilon_t+\\theta\\varepsilon_{t-1}$. ARIMA($p,d,q$) means the $d$-times differenced series is modeled as ARMA($p,q$). The first difference is $\\Delta X_t=X_t-X_{t-1}$.</p><p>Differencing removes certain trends because a random walk $X_t=X_{t-1}+\\varepsilon_t$ becomes $\\Delta X_t=\\varepsilon_t$, which is stationary white noise. ARMA then models remaining stable dependence.</p><p><b>Assumptions that matter:</b> ARMA formulas assume stationarity after any differencing, shocks are usually white noise, and overdifferencing can create unnecessary negative dependence.</p>",
+    "motivation": "<p>AR terms explain persistence through previous observations, while MA terms explain short-run effects of previous shocks. Many series need both kinds of memory. ARMA combines them so a shock can affect the present directly, echo once through the MA term, and then continue through the AR recursion.</p><p>ARIMA adds differencing when the original level of the series is not stable enough to model directly. Differencing replaces levels by changes, such as $X_t-X_{t-1}$. After enough differencing, an ARMA model can be applied to the transformed series.</p>",
+    "definition": "<p>An ARMA(1,1) combines autoregressive and moving-average terms, while ARIMA applies ARMA after differencing: $$X_t=c+\\phi X_{t-1}+\\varepsilon_t+\\theta\\varepsilon_{t-1},\\qquad \\Delta X_t=X_t-X_{t-1}.$$</p><p><b>Assumptions that matter:</b> Stationary ARMA(1,1) requires the AR part to be stable; ARIMA($p,d,q$) models $\\Delta^dX_t$.</p>",
     "worked": {
       "problem": "For $X_t=1+0.5X_{t-1}+\\varepsilon_t+0.4\\varepsilon_{t-1}$, compute the one-step forecast given $X_t=6$ and $\\varepsilon_t=2$.",
       "skills": [
@@ -5774,34 +6752,34 @@
     ],
     "applications": [
       {
-        "title": "Sales forecasting",
-        "background": "ARIMA became a standard business forecasting tool because trends can be differenced and residual dependence modeled.",
-        "numbers": "Sales $100,108,115$ give differences $8,7$, suggesting growth has slowed by $1$."
+        "title": "Mean",
+        "background": "With $c=2$, $\\phi=0.5$.",
+        "numbers": "mean is $4$"
       },
       {
-        "title": "Economic indicators",
-        "background": "Macroeconomic levels often drift, while growth rates are more stable.",
-        "numbers": "GDP index from $200$ to $206$ has growth difference $6$ before modeling dependence."
+        "title": "Forecast",
+        "background": "With $X_t=5$, last shock $1$.",
+        "numbers": "forecast is $2+0.5\\cdot5+0.4\\cdot1=4.9$"
       },
       {
-        "title": "Web traffic",
-        "background": "Traffic can have both persistence and shock echoes after campaigns or outages.",
-        "numbers": "An ARMA forecast $0.6(100)+0.3(10)=63$ combines level and shock."
+        "title": "First difference",
+        "background": "Series $100,103,102$.",
+        "numbers": "differences $3,-1$"
       },
       {
-        "title": "Anomaly detection",
-        "background": "Forecast residuals from ARIMA can flag surprising observations.",
-        "numbers": "If forecast is $50$ with residual standard deviation $4$, observation $61$ is $2.75$ standard deviations high."
+        "title": "Shock coefficient",
+        "background": "With $\\phi=0.5$, $\\theta=0.4$.",
+        "numbers": "lag-1 impulse is $0.9$"
       },
       {
-        "title": "Preprocessing for ML",
-        "background": "Differencing can make a nonstationary input easier for a model to learn.",
-        "numbers": "Prices $10,11,13,12$ become returns $1,2,-1$."
+        "title": "Total impulse",
+        "background": "For the same ARMA coefficients.",
+        "numbers": "sum is $(1+\\theta)/(1-\\phi)=2.8$"
       },
       {
-        "title": "Seasonal extensions",
-        "background": "Seasonal ARIMA adds seasonal differences and lags for repeated calendar patterns.",
-        "numbers": "Monthly sales differenced at lag 12 compare March this year to March last year, such as $140-125=15$."
+        "title": "Variance formula",
+        "background": "With shock variance 1 in ARMA(1,1).",
+        "numbers": "variance is $(1+0.4^2+2\\cdot0.5\\cdot0.4)/(1-0.5^2)=2.08$"
       }
     ],
     "applicationsClose": "ARMA and ARIMA are practical bookkeeping systems for persistence, short shock memory, and nonstationary trends.",
@@ -5810,6 +6788,61 @@
       "ARIMA applies differencing before ARMA modeling.",
       "A random walk becomes white noise after first differencing.",
       "Forecasts use known lagged values and estimated recent shocks while future shocks average to zero."
+    ],
+    "connectionsProse": "<p>This lesson combines the AR and MA ideas into one time-series family. ARMA models carry information through past values and recent shocks. ARIMA adds differencing so the same tools can be used after removing certain kinds of nonstationary behavior.</p><p>These models connect forecasting, stationarity, impulse response, differencing, and practical time-series workflows. They show how stochastic-process structure can be built from a few interpretable linear pieces.</p>",
+    "symbols": [
+      {
+        "sym": "$\\phi$",
+        "desc": "AR coefficient"
+      },
+      {
+        "sym": "$\\theta$",
+        "desc": "MA coefficient"
+      },
+      {
+        "sym": "$\\Delta$",
+        "desc": "differencing"
+      },
+      {
+        "sym": "$d$",
+        "desc": "the number of differences"
+      },
+      {
+        "sym": "$\\varepsilon_t$",
+        "desc": "white noise"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write ARMA(1,1).",
+        "result": "$X_t=c+\\phi X_{t-1}+\\varepsilon_t+\\theta\\varepsilon_{t-1}$",
+        "why": "The model combines past values and recent shocks."
+      },
+      {
+        "do": "Take expectations for stationarity.",
+        "result": "$\\mu=c+\\phi\\mu$, so $\\mu=c/(1-\\phi)$",
+        "why": "The shock has mean zero and the mean is constant."
+      },
+      {
+        "do": "Track a unit shock immediately.",
+        "result": "coefficient $1$",
+        "why": "The current innovation enters directly."
+      },
+      {
+        "do": "Track it one step later.",
+        "result": "coefficient $\\phi+\\theta$",
+        "why": "It enters through both AR propagation and the MA term."
+      },
+      {
+        "do": "Propagate after that.",
+        "result": "$\\phi^{h-1}(\\phi+\\theta)$ for $h\\ge1$",
+        "why": "The AR part carries the shock forward geometrically."
+      },
+      {
+        "do": "Define ARIMA differencing.",
+        "result": "ARIMA($p,d,q$) applies ARMA to $\\Delta^dX_t$",
+        "why": "Differencing can remove certain nonstationary behavior."
+      }
     ],
     "prereqs": [
       "math-19-21"
@@ -5838,8 +6871,8 @@
         "emission probabilities"
       ]
     },
-    "motivation": "<p>You often observe symptoms rather than causes: a user's clicks rather than intent, a word rather than the speaker's topic, a sensor reading rather than the true state. Hidden Markov Models give that situation a simple sequence structure.</p><p>An <b>HMM</b> says hidden states move as a Markov chain, and each state emits an observation according to an emission distribution. Inference means using observations to reason about hidden paths.</p>",
-    "definition": "<p>An HMM has hidden states $Z_t$, observations $X_t$, transition probabilities $P(Z_t\\mid Z_{t-1})$, initial probabilities $P(Z_1)$, and emissions $P(X_t\\mid Z_t)$. The hidden process is Markov, and observations are conditionally independent given their states.</p><p>The forward algorithm works by recursively combining previous filtered probabilities with transitions, then multiplying by the likelihood of the new observation. This is dynamic programming: keep just enough summary of the past to update efficiently.</p><p><b>Assumptions that matter:</b> the Markov property applies to hidden states, emissions depend only on the current hidden state, and probabilities must be normalized at each inference step for numerical stability.</p>",
+    "motivation": "<p>In many sequence problems, the observed data are clues about an underlying state rather than the state itself. A speech signal gives evidence about phonemes, sensor readings give evidence about faults, and user behavior can give evidence about latent intent. The hidden chain models how the latent state evolves.</p><p>The forward message summarizes all paths that end in each hidden state after seeing the observations so far. It uses total probability to sum over previous states and the emission probability to attach the current observation. Viterbi uses a similar recursion but keeps the best path score instead of the total probability.</p>",
+    "definition": "<p>A hidden Markov model has a hidden Markov chain and observation emissions. The forward message obeys $$\\alpha_t(j)=B_j(X_t)\\sum_i\\alpha_{t-1}(i)A_{ij}.$$</p><p><b>Assumptions that matter:</b> The hidden state is Markov, and each observation is conditionally independent of the rest given the current hidden state.</p>",
     "worked": {
       "problem": "An HMM starts with $P(Rain)=0.6$, $P(Sun)=0.4$. Umbrella emission probabilities are $P(U\\mid Rain)=0.9$, $P(U\\mid Sun)=0.2$. After observing umbrella on day 1, compute $P(Rain\\mid U)$.",
       "skills": [
@@ -6038,34 +7071,34 @@
     ],
     "applications": [
       {
+        "title": "Forward first step",
+        "background": "With initial $(0.6,0.4)$ and yes-emissions $(0.9,0.4)$.",
+        "numbers": "$\\alpha_1=(0.54,0.16)$ and likelihood $0.70$"
+      },
+      {
+        "title": "Two-observation likelihood",
+        "background": "For yes then no with no-emissions $(0.1,0.6)$.",
+        "numbers": "$\\alpha_2=(0.041,0.174)$ and likelihood $0.215$"
+      },
+      {
+        "title": "State posterior",
+        "background": "Given yes,no.",
+        "numbers": "$P(Z_2=2\\mid\\text{yes,no})=0.174/0.215=0.8093$"
+      },
+      {
+        "title": "Viterbi path",
+        "background": "Comparing paths $1\\to2$ and $2\\to2$.",
+        "numbers": "path $1\\to2$ has score $0.6\\cdot0.9\\cdot0.3\\cdot0.6=0.0972$, larger than $2\\to2$ score $0.0768$"
+      },
+      {
         "title": "Speech recognition",
-        "background": "HMMs were central in speech systems because phoneme states are hidden and audio features are observed.",
-        "numbers": "If a phoneme emits a feature with probability $0.6$ and transition into it is $0.2$, that path factor contributes $0.12$."
-      },
-      {
-        "title": "Part-of-speech tagging",
-        "background": "Words are observed while grammatical tags are hidden, and nearby tags have strong transition patterns.",
-        "numbers": "If $P(noun\\mid adjective)=0.7$ and $P(\\text{dog}\\mid noun)=0.05$, product contribution is $0.035$."
-      },
-      {
-        "title": "Bioinformatics",
-        "background": "HMMs model DNA regions such as genes and noncoding segments through hidden biological states.",
-        "numbers": "A GC-rich state emitting G with probability $0.35$ gives likelihood $0.35$ for that base."
-      },
-      {
-        "title": "User intent",
-        "background": "A user's latent intent can evolve while clicks and views are noisy emissions.",
-        "numbers": "Prior intent $0.4$ times click likelihood $0.8$ gives unnormalized weight $0.32$."
+        "background": "A 20-state phoneme HMM.",
+        "numbers": "uses a 20-entry forward vector each frame"
       },
       {
         "title": "Fault detection",
-        "background": "Machines may be healthy or failing, while sensors emit noisy readings.",
-        "numbers": "If failure prior is $0.02$ and alarm likelihood is $0.9$, failure alarm weight is $0.018$."
-      },
-      {
-        "title": "State-space models",
-        "background": "HMMs are discrete state-space models and a stepping stone to Kalman filters and particle filters.",
-        "numbers": "With two states and three time steps, there are $2^3=8$ hidden paths before dynamic programming reduces the work."
+        "background": "If posterior fault probability is $0.8093$.",
+        "numbers": "it crosses a 0.8 alert threshold by $0.0093$"
       }
     ],
     "applicationsClose": "HMMs are a disciplined way to infer hidden stories from visible sequences.",
@@ -6074,6 +7107,65 @@
       "Filtering multiplies by emissions and normalizes after transitions.",
       "Viterbi finds the most likely hidden path by dynamic programming.",
       "Scaling is important because sequence probabilities can become extremely small."
+    ],
+    "connectionsProse": "<p>This lesson returns to Markov chains with an important added layer: the states are not directly observed. Instead, each hidden state emits visible data. The model separates the hidden process from the noisy observations generated by it.</p><p>Hidden Markov models connect Markov chains, conditional independence, dynamic programming, sequence labeling, speech recognition, and fault detection. The forward algorithm and Viterbi recursion are standard examples of probabilistic inference over sequences.</p>",
+    "symbols": [
+      {
+        "sym": "$Z_t$",
+        "desc": "hidden state"
+      },
+      {
+        "sym": "$X_t$",
+        "desc": "observed value"
+      },
+      {
+        "sym": "$A$",
+        "desc": "transition matrix"
+      },
+      {
+        "sym": "$B_j$",
+        "desc": "emission probability"
+      },
+      {
+        "sym": "$\\alpha_t$",
+        "desc": "a forward probability"
+      },
+      {
+        "sym": "Viterbi",
+        "desc": "max path scores"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Name hidden and observed variables.",
+        "result": "$Z_t$ and $X_t$",
+        "why": "$Z_t$ is hidden state and $X_t$ is observation."
+      },
+      {
+        "do": "Write hidden transitions.",
+        "result": "$A_{ij}=P(Z_t=j\\mid Z_{t-1}=i)$",
+        "why": "The hidden process is a Markov chain."
+      },
+      {
+        "do": "Write emissions.",
+        "result": "$B_j(x)=P(X_t=x\\mid Z_t=j)$",
+        "why": "Each hidden state generates visible data."
+      },
+      {
+        "do": "Define the forward message.",
+        "result": "$\\alpha_t(j)=P(X_1,\\ldots,X_t,Z_t=j)$",
+        "why": "It summarizes all paths ending in hidden state $j$."
+      },
+      {
+        "do": "Split by previous hidden state.",
+        "result": "$\\alpha_t(j)=B_j(X_t)\\sum_i\\alpha_{t-1}(i)A_{ij}$",
+        "why": "This is total probability plus the Markov and conditional-independence assumptions."
+      },
+      {
+        "do": "Switch from total probability to best path.",
+        "result": "replace the sum by a max",
+        "why": "That gives the Viterbi recursion."
+      }
     ],
     "prereqs": [
       "math-19-22"
@@ -6102,8 +7194,8 @@
         "reverse processes"
       ]
     },
-    "motivation": "<p>You already know how noise can hide a signal: blur an image enough and the original content disappears. Diffusion generative models use that idea in reverse.</p><p>The forward process slowly adds Gaussian noise until data look almost like pure noise. A neural network then learns many small denoising steps, so sampling can start from noise and walk back toward realistic data.</p>",
-    "definition": "<p>A simple discrete diffusion forward step is $$x_t=\\sqrt{\\alpha_t}x_{t-1}+\\sqrt{1-\\alpha_t}\\,\\varepsilon_t,$$ where $0<\\alpha_t<1$ and $\\varepsilon_t\\sim N(0,I)$. After many steps, $x_t$ becomes close to Gaussian noise. Training often asks a neural network to predict the noise $\\varepsilon_t$ or the score $\\nabla_x\\log p_t(x)$.</p><p>The Markov structure is clear: each noisy state depends only on the previous noisy state and fresh Gaussian noise. The reverse process is learned because the exact data distribution is unknown, but Gaussian conditioning gives the form of small reverse denoising updates.</p><p><b>Assumptions that matter:</b> the forward noising schedule is chosen by the modeler, training data represent the desired distribution, the network approximates denoising or score functions, and sampling quality depends on both learned predictions and numerical step choices.</p>",
+    "motivation": "<p>The forward diffusion process is deliberately simple: each step keeps part of the previous signal and adds fresh Gaussian noise. After many steps, the data become easier to describe because most structure has been washed out. The cumulative coefficient $\\bar\\alpha_t$ tracks how much original signal remains.</p><p>Generation reverses this controlled corruption. A model is trained to predict the noise or score needed to move from a noisier sample toward a cleaner one. The Markov structure matters because each reverse step only needs the current noisy sample and the time step, rather than the whole previous history.</p>",
+    "definition": "<p>A diffusion generative model uses a Markov forward noising process and a learned reverse denoising process. One forward step and its cumulative form are $$x_t=\\sqrt{\\alpha_t}x_{t-1}+\\sqrt{1-\\alpha_t}\\,\\varepsilon_t,\\qquad x_t=\\sqrt{\\bar\\alpha_t}x_0+\\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon.$$</p><p><b>Assumptions that matter:</b> Each forward step depends only on $x_{t-1}$ and fresh Gaussian noise, with $\\varepsilon_t\\sim N(0,I)$ and $\\bar\\alpha_t=\\prod_s\\alpha_s$.</p>",
     "worked": {
       "problem": "A scalar diffusion step uses $x_t=\\sqrt{0.81}x_{t-1}+\\sqrt{0.19}\\varepsilon_t$. If $x_{t-1}=2$ and $\\varepsilon_t=-1$, compute $x_t$ using $\\sqrt{0.81}=0.9$ and $\\sqrt{0.19}\\approx0.436$.",
       "skills": [
@@ -6302,39 +7394,34 @@
     ],
     "applications": [
       {
-        "title": "Image generation",
-        "background": "Diffusion models became famous for producing images by iteratively denoising Gaussian noise into pixels.",
-        "numbers": "A pixel channel normalized to $0.6$ with predicted noise $0.4$ and step $0.05$ updates to $0.6-0.02=0.58$."
+        "title": "One noising step",
+        "background": "With $\\alpha=0.9$, $x=2$, $\\varepsilon=-1$.",
+        "numbers": "$x_t=1.5811$"
       },
       {
-        "title": "Text-to-image guidance",
-        "background": "Classifier-free guidance combines conditional and unconditional predictions to follow prompts more strongly.",
-        "numbers": "If unconditional noise is $0.2$, conditional noise is $0.5$, and guidance scale is $3$, guided prediction is $0.2+3(0.5-0.2)=1.1$."
+        "title": "Cumulative signal",
+        "background": "If $\\bar\\alpha=0.81$ and $x_0=2$.",
+        "numbers": "retained mean is $1.8$"
       },
       {
-        "title": "Audio generation",
-        "background": "Waveform and spectrogram diffusion models denoise random signals into realistic sound.",
-        "numbers": "A sample value $-0.3$ with predicted noise $-0.8$ and step $0.1$ updates to $-0.3-0.1(-0.8)=-0.22$."
+        "title": "Noise variance",
+        "background": "The same step.",
+        "numbers": "variance $1-0.81=0.19$"
       },
       {
-        "title": "Molecular design",
-        "background": "Diffusion can generate candidate molecular coordinates by denoising noisy atom positions under learned chemical structure.",
-        "numbers": "A coordinate $1.5$ Angstrom with correction $0.12$ moves to $1.38$ Angstrom in one reverse step."
+        "title": "Noise standard deviation",
+        "background": "For variance $0.19$.",
+        "numbers": "$\\sqrt{0.19}=0.4359$"
       },
       {
-        "title": "Inpainting",
-        "background": "Diffusion inpainting keeps known pixels fixed while denoising unknown regions, blending generation with constraints.",
-        "numbers": "If 70 percent of pixels are known in a $100\\times100$ image, $7000$ pixels are clamped and $3000$ are generated."
+        "title": "SNR",
+        "background": "With cumulative retention $0.81$.",
+        "numbers": "$\\bar\\alpha/(1-\\bar\\alpha)=0.81/0.19=4.2632$"
       },
       {
-        "title": "Sampling speed",
-        "background": "Practical systems trade sample quality against the number of reverse steps.",
-        "numbers": "A 50-step sampler doing 20 ms per neural call takes about $50\\cdot20=1000$ ms, or 1 second, per sample."
-      },
-      {
-        "title": "Latent diffusion",
-        "background": "Many image systems diffuse in a compressed latent space to reduce computation.",
-        "numbers": "Compressing a $512\\times512$ image by factor 8 per side gives a $64\\times64$ latent grid, reducing spatial positions from $262144$ to $4096$."
+        "title": "Classifier-free guidance",
+        "background": "With $\\epsilon_u=0.5$, $\\epsilon_c=0.2$, scale $3$.",
+        "numbers": "guided noise is $0.5+3(0.2-0.5)=-0.4$"
       }
     ],
     "applicationsClose": "Diffusion models are stochastic-process lessons made visible: add noise by a known Markov process, then learn the reverse path back to data.",
@@ -6343,6 +7430,56 @@
       "The noising process is Markov: each state depends on the previous state and fresh noise.",
       "Training often predicts added noise or the score of the noisy data distribution.",
       "Sampling reverses noise through many learned denoising steps, with schedule and step count affecting quality."
+    ],
+    "connectionsProse": "<p>This lesson closes the section by connecting stochastic processes to modern generative modeling. The forward process is a Markov chain that gradually corrupts data with Gaussian noise. The learned reverse process tries to denoise step by step.</p><p>Diffusion generative models connect Markov processes, Gaussian conditioning, Brownian-style noise intuition, score modeling, and stochastic simulation. They reuse the section's core idea that a complex random object can be understood through a sequence of conditional transitions.</p>",
+    "symbols": [
+      {
+        "sym": "$x_t$",
+        "desc": "the noisy sample at step $t$"
+      },
+      {
+        "sym": "$\\alpha_t$",
+        "desc": "signal-retention per step"
+      },
+      {
+        "sym": "$\\bar\\alpha_t$",
+        "desc": "cumulative retention"
+      },
+      {
+        "sym": "$\\varepsilon_t$",
+        "desc": "standard Gaussian noise"
+      },
+      {
+        "sym": "reverse model",
+        "desc": "approximates denoising transitions"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define one forward noising step.",
+        "result": "$x_t=\\sqrt{\\alpha_t}x_{t-1}+\\sqrt{1-\\alpha_t}\\,\\varepsilon_t$, with $\\varepsilon_t\\sim N(0,I)$",
+        "why": "The step keeps part of the previous signal and adds fresh Gaussian noise."
+      },
+      {
+        "do": "Interpret the coefficients.",
+        "result": "$\\sqrt{\\alpha_t}$ keeps signal and $\\sqrt{1-\\alpha_t}$ adds noise",
+        "why": "They split retained signal from injected randomness."
+      },
+      {
+        "do": "Use the dependence structure.",
+        "result": "the forward process is Markov",
+        "why": "Each step depends only on $x_{t-1}$ and new noise."
+      },
+      {
+        "do": "Repeat substitution.",
+        "result": "$x_t=\\sqrt{\\bar\\alpha_t}x_0+\\sqrt{1-\\bar\\alpha_t}\\,\\varepsilon$ for $\\bar\\alpha_t=\\prod_s\\alpha_s$",
+        "why": "Independent Gaussian noises combine into one Gaussian noise term."
+      },
+      {
+        "do": "State the training target.",
+        "result": "predict the noise or score",
+        "why": "That is the information needed to reverse this Gaussian corruption."
+      }
     ],
     "prereqs": [
       "math-19-23"

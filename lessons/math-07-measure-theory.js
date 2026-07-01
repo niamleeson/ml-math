@@ -29,8 +29,8 @@
         "real analysis"
       ]
     },
-    "motivation": "<p>You already know how to measure simple things: an interval $[0,3]$ has length $3$, and a fair coin event has probability $1/2$. That instinct is exactly right.</p><p><b>Measure theory</b> asks for one language that can handle lengths, areas, probabilities, limits of events, and functions with infinitely many small pieces. It is the foundation under modern probability and the reason statements like expected loss, almost everywhere, and convergence in distribution can be made precise.</p>",
-    "definition": "<p>A <b>measure-theoretic model</b> has three ingredients: a set $X$ of outcomes, a collection $\\mathcal F$ of subsets of $X$ that we agree are measurable, and a function $\\mu:\\mathcal F\\to[0,\\infty]$ that assigns size. The central rule is countable additivity: if $A_1,A_2,\\ldots$ are disjoint measurable sets, then $$\\mu\\left(\\bigcup_{n=1}^{\\infty}A_n\\right)=\\sum_{n=1}^{\\infty}\\mu(A_n).$$</p><p>This rule extends ordinary addition. Two disjoint intervals of lengths $2$ and $3$ have union length $5$; countable additivity says the same bookkeeping still works for infinitely many non-overlapping pieces.</p><p><b>Assumptions that matter:</b> not every subset must be measurable; $\\mathcal F$ tells us which questions are legal; $\\mu$ may take the value $\\infty$; and disjointness is required before sizes can be added directly.</p>",
+    "motivation": "<p>Length and probability are often first learned through examples: intervals have lengths, finite outcomes have probabilities, and averages add weighted values. Those examples work well until limits, infinitely many events, continuous outcomes, or functions with complicated value sets enter the picture. A common language is needed so the same rules continue to apply without rebuilding the theory each time.</p><p>Measure theory supplies that language. The set $X$ contains the points or outcomes, $\\mathcal F$ says which subsets are measurable, and $\\mu$ assigns size to those subsets. Probability is the special case where the total size is $1$, and expected loss is an integral with respect to that probability measure. This lesson is explain-only because its job is orientation: it names the structure that the rest of the section will make precise.</p>",
+    "definition": "<p>Measure theory studies a space of points or outcomes, a collection of measurable subsets, and a size assignment:</p><p>$$(X,\\mathcal F,\\mu)$$</p><p><b>Assumptions that matter:</b> $\\mathcal F$ is the event language of measurable subsets, $\\mu$ assigns size to those subsets, and probability is the special case with total mass $1$.</p>",
     "worked": {
       "problem": "A sample space has disjoint events $A$, $B$, and $C$ with $\\mu(A)=0.2$, $\\mu(B)=0.3$, and $\\mu(C)=0.1$. Find $\\mu(A\\cup B\\cup C)$ and $\\mu((A\\cup B)^{c})$ if $\\mu(X)=1$.",
       "skills": [
@@ -204,34 +204,34 @@
     ],
     "applications": [
       {
-        "title": "Expected loss",
-        "background": "Machine learning averages loss over examples. Measure theory says the average is an integral over a probability space, not just a finite sum.",
-        "numbers": "If losses $1$, $3$, and $6$ have probabilities $0.2$, $0.5$, and $0.3$, expected loss is $0.2\\cdot1+0.5\\cdot3+0.3\\cdot6=3.5$."
+        "title": "Expected loss language",
+        "background": "Loss $L\\in\\{1,4,10\\}$ with probabilities $(0.2,0.5,0.3)$ gives an integral expression for average loss.",
+        "numbers": "$\\int L\\,dP=5.2$."
       },
       {
         "title": "Continuous probability",
-        "background": "A density assigns probability by area, so single points can have probability zero while intervals have positive probability.",
-        "numbers": "For the uniform distribution on $[0,1]$, $P([0.2,0.5])=0.5-0.2=0.3$, but $P(\\{0.2\\})=0$."
+        "background": "A uniform point on $[0,2]$ assigns probability by normalized length.",
+        "numbers": "$P([0.5,1.5])=(1.5-0.5)/2=0.5$."
       },
       {
         "title": "Dataset slices",
-        "background": "Analytics often partitions traffic into measurable cohorts before comparing outcomes.",
-        "numbers": "If cohorts have shares $0.15$, $0.35$, and $0.50$, their union has measure $1.00$ when they are disjoint and exhaustive."
+        "background": "An empirical measure on $1000$ rows gives mass to row events by counting proportions.",
+        "numbers": "A $73$-row event mass is $0.073$."
+      },
+      {
+        "title": "Null exceptions",
+        "background": "Changing a model on a probability-zero set does not affect an expected loss integral.",
+        "numbers": "The change in expected loss is $0$."
       },
       {
         "title": "Risk constraints",
-        "background": "Fairness and safety rules often bound the measure of bad events under a data distribution.",
-        "numbers": "If failure region $F$ has $P(F)=0.004$, then in $100000$ independent cases the expected failures are $100000\\cdot0.004=400$."
-      },
-      {
-        "title": "Image area",
-        "background": "Computer vision masks are measurable regions on a pixel grid or in the continuous image plane.",
-        "numbers": "A $200$ by $100$ image has $20000$ pixels; a mask with $3500$ pixels covers $3500/20000=0.175$ of the image."
+        "background": "If bad outcomes have mass $0.04$, the indicator of that bad event has the same risk mass.",
+        "numbers": "An indicator-risk integral is $0.04$."
       },
       {
         "title": "Limit arguments",
-        "background": "Generalization theory studies events over infinitely many samples or parameters, where countable unions appear naturally.",
-        "numbers": "If bad events have probabilities $0.01/2^n$, their total probability is at most $0.01\\sum_{n=1}^{\\infty}2^{-n}=0.01$."
+        "background": "If event masses $0.3,0.03,0.003$ shrink geometrically, countable addition gives the total tail mass.",
+        "numbers": "The tail total is $0.333\\ldots$ by countable addition."
       }
     ],
     "applicationsClose": "Measure theory keeps one promise across length, probability, data, and limits: only measure legal sets, and add disjoint pieces honestly.",
@@ -239,6 +239,25 @@
       "Measure theory studies size through measurable sets and a measure function.",
       "Countable additivity is the engine that lets infinitely many disjoint pieces be handled safely.",
       "Probability, integration, expected loss, and almost-everywhere statements all use this language."
+    ],
+    "connectionsProse": "<p>This opening lesson connects familiar ideas about length, area, probability, and averages to the common structure that supports them. Earlier mathematics already treats intervals as having length and events as having probability; measure theory explains what these assignments have in common. The lesson sets up the triple $(X,\\mathcal F,\\mu)$, which will appear throughout the section. It also prepares the probability interpretation used later for expected loss and random variables.</p>",
+    "symbols": [
+      {
+        "sym": "$X$",
+        "desc": "the underlying set of outcomes or points"
+      },
+      {
+        "sym": "$\\mathcal F$",
+        "desc": "the collection of measurable subsets"
+      },
+      {
+        "sym": "$\\mu$",
+        "desc": "assigns size"
+      },
+      {
+        "sym": "$P$",
+        "desc": "the special case of a probability measure with total mass $1$"
+      }
     ]
   });
 
@@ -265,8 +284,8 @@
         "Boolean algebra"
       ]
     },
-    "motivation": "<p>You already know that a probability question begins with an event: did it rain, did the model predict class $1$, did the loss exceed $2$? But before assigning probabilities, we need to know which events are allowed.</p><p>A <b>$\\sigma$-algebra</b> is that allowed-event list. It is built to be stable under the questions we naturally ask: not $A$, $A$ or $B$, and countably many alternatives at once.</p>",
-    "definition": "<p>Given a set $X$, a collection $\\mathcal F$ of subsets of $X$ is a <b>$\\sigma$-algebra</b> if: $X\\in\\mathcal F$; whenever $A\\in\\mathcal F$, the complement $A^c=X\\setminus A$ is in $\\mathcal F$; and whenever $A_1,A_2,\\ldots\\in\\mathcal F$, the countable union $\\bigcup_{n=1}^{\\infty}A_n$ is in $\\mathcal F$.</p><p>Countable intersections then come for free because $$\\bigcap_{n=1}^{\\infty}A_n=\\left(\\bigcup_{n=1}^{\\infty}A_n^c\\right)^c.$$ Complements and countable unions therefore also give countable intersections.</p><p><b>Assumptions that matter:</b> every set in $\\mathcal F$ must be a subset of the same underlying set $X$; closure under finite unions follows from countable union by repeating or padding with empty sets; and a $\\sigma$-algebra says what is measurable, not how large it is.</p>",
+    "motivation": "<p>Events are not useful if the collection of legal events falls apart under ordinary logical operations. If an event can be observed, then the event that it does not happen should also be observable. If events can be observed one after another, then the event that at least one of them happens should still be legal. Countable unions are included because many limiting events are built from infinitely many stages.</p><p>The complement and countable-union axioms are enough to recover countable intersections through De Morgan's law. This matters because intersections express persistent conditions such as all checks failing or every constraint holding. A sigma-algebra is therefore not just a list of allowed sets; it is a stable event language for probability and integration.</p>",
+    "definition": "<p>A sigma-algebra $\\mathcal F$ on $X$ is a collection of subsets that contains the whole space, is closed under complements, and is closed under countable unions.</p><p><b>Assumptions that matter:</b> The operations are taken inside the same whole space $X$, and countable closure is included so limiting events remain measurable.</p>",
     "worked": {
       "problem": "Let $X=\\{1,2,3,4\\}$ and $\\mathcal F=\\{\\varnothing,X,\\{1,2\\},\\{3,4\\}\\}$. Show that $\\mathcal F$ is a $\\sigma$-algebra.",
       "skills": [
@@ -451,33 +470,33 @@
     "applications": [
       {
         "title": "Coarse logging",
-        "background": "A product log may record only categories, not exact values. The measurable events are unions of recorded categories.",
-        "numbers": "If categories have counts $20$, $50$, and $30$ out of $100$, the event category 1 or 2 has measurable mass $(20+50)/100=0.70$."
+        "background": "For $X=\\{1,2,3,4\\}$, a grouped sigma-algebra has a small number of legal events.",
+        "numbers": "$\\{\\varnothing,X,\\{1,2\\},\\{3,4\\}\\}$ has $4$ legal events."
       },
       {
         "title": "Feature binning",
-        "background": "Tree models and dashboards often bin continuous features. The bins generate a smaller $\\sigma$-algebra than all intervals.",
-        "numbers": "Bins $[0,10)$, $[10,20)$, $[20,30]$ allow the event $x\\ge10$ with mass $45+15=60$ if bin counts are $40,45,15$."
+        "background": "Bins $B_1,B_2,B_3$ generate events by unions of bins.",
+        "numbers": "They generate at most $2^3=8$ unions of bins."
       },
       {
         "title": "Privacy views",
-        "background": "Privacy systems deliberately expose only coarse events. A $\\sigma$-algebra captures what can be asked without revealing finer data.",
-        "numbers": "If only age groups under 18 and at least 18 are visible, a dataset with $120$ minors among $1000$ users gives visible event mass $0.12$."
+        "background": "If only age groups are measurable, a single user's row is not isolated as its own event.",
+        "numbers": "A single user's row has mass hidden inside its group."
       },
       {
-        "title": "Classification labels",
-        "background": "A label space with $k$ classes usually uses the full power set, because any collection of classes can be an event.",
-        "numbers": "For $3$ classes, the power set has $2^3=8$ measurable label events."
+        "title": "A/B tests",
+        "background": "If treatment event $T$ is measurable, the control event is available automatically.",
+        "numbers": "$T^c$ is automatically measurable."
       },
       {
-        "title": "A/B testing",
-        "background": "Experiments need events closed under combining variants and taking complements.",
-        "numbers": "If variant A has $480$ users and variant B has $520$, the complement of A has measure $520/1000=0.52$."
+        "title": "Monitoring",
+        "background": "Events $A_n=$ \"latency exceeds threshold on day $n$\" can be combined across days.",
+        "numbers": "$\\bigcup_n A_n$ is a measurable ever-exceeded event."
       },
       {
-        "title": "Monitoring alerts",
-        "background": "Alert systems combine conditions with or, and not. Closure rules keep compound alerts measurable.",
-        "numbers": "If CPU alert has probability $0.04$, memory alert $0.03$, and overlap $0.01$, their union alert is $0.04+0.03-0.01=0.06$."
+        "title": "Alert persistence",
+        "background": "Intersections express conditions that keep holding across checks.",
+        "numbers": "$\\bigcap_n A_n$ is measurable, so \"all checks failed\" is a legal event."
       }
     ],
     "applicationsClose": "A $\\sigma$-algebra is the quiet contract behind every probability statement: it names the events that survive reliable logical operations.",
@@ -485,6 +504,56 @@
       "A $\\sigma$-algebra contains $X$, is closed under complements, and is closed under countable unions.",
       "It is automatically closed under countable intersections by De Morgan's law.",
       "It controls measurability; a measure later assigns sizes to the measurable sets."
+    ],
+    "connectionsProse": "<p>This lesson follows naturally from the need to say which sets are legitimate events. Once a set is observable, its complement should also be observable, and countable combinations of observable events should remain observable. Sigma-algebras give exactly that stable collection. This stability is what lets probability, integration, and limiting events use the same event language.</p>",
+    "symbols": [
+      {
+        "sym": "$X$",
+        "desc": "the whole space"
+      },
+      {
+        "sym": "$\\mathcal F$",
+        "desc": "the sigma-algebra"
+      },
+      {
+        "sym": "$A^c=X\\setminus A$",
+        "desc": "the complement"
+      },
+      {
+        "sym": "$\\bigcup$",
+        "desc": "combines events"
+      },
+      {
+        "sym": "$\\bigcap$",
+        "desc": "keeps points common to all events"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with events $A_1,A_2,\\ldots\\in\\mathcal F$.",
+        "result": "$A_1,A_2,\\ldots\\in\\mathcal F$",
+        "why": "These are the sets whose intersection we want to use."
+      },
+      {
+        "do": "Take complements $A_n^c\\in\\mathcal F$ for every $n$.",
+        "result": "$A_n^c\\in\\mathcal F$",
+        "why": "This uses closure under complement."
+      },
+      {
+        "do": "Form the countable union $\\bigcup_{n=1}^\\infty A_n^c\\in\\mathcal F$.",
+        "result": "$\\bigcup_{n=1}^\\infty A_n^c\\in\\mathcal F$",
+        "why": "This uses closure under countable union."
+      },
+      {
+        "do": "Take its complement $\\left(\\bigcup_n A_n^c\\right)^c\\in\\mathcal F$.",
+        "result": "$(\\bigcup_n A_n^c)^c\\in\\mathcal F$",
+        "why": "This uses closure under complement again."
+      },
+      {
+        "do": "Apply De Morgan's law to get $\\bigcap_n A_n$.",
+        "result": "$\\bigcap_n A_n\\in\\mathcal F$",
+        "why": "This shows countable intersections are measurable too."
+      }
     ],
     "prereqs": [
       "math-07-01"
@@ -513,8 +582,8 @@
         "product spaces"
       ]
     },
-    "motivation": "<p>You can think of raw data as a universe of possible outcomes. But analysis does not use the universe alone; it also needs a rule for which questions about the universe are legitimate.</p><p>A <b>measurable space</b> packages those two things together. It says: here are the possible outcomes, and here are the subsets we can measure, observe, or assign probabilities to.</p>",
-    "definition": "<p>A <b>measurable space</b> is a pair $(X,\\mathcal F)$ where $X$ is a set and $\\mathcal F$ is a $\\sigma$-algebra of subsets of $X$. The members of $\\mathcal F$ are called measurable sets.</p><p>The pair matters. The same underlying set $X$ can carry different $\\sigma$-algebras. For $X=\\{1,2,3,4\\}$, the full power set can observe every subset, while $\\{\\varnothing,X,\\{1,2\\},\\{3,4\\}\\}$ can only distinguish the two blocks.</p><p><b>Assumptions that matter:</b> a measurable space does not yet assign sizes; it only defines legal sets; all measurable sets are subsets of $X$; and changing $\\mathcal F$ changes which functions and events are measurable.</p>",
+    "motivation": "<p>Before assigning probabilities or lengths, we must decide what can be observed. On a finite set, full observation may allow every subset; in a coarsened logging system, only groups of points may be visible. Both cases can have the same raw set $X$, but they support different measurable events.</p><p>A measurable space records this decision as the pair $(X,\\mathcal F)$. It has no numerical sizes yet, so there is no probability or integral at this stage. The point is to make the event structure explicit, because later a measure can only assign sizes to sets that are in $\\mathcal F$.</p>",
+    "definition": "<p>A measurable space is a set together with a sigma-algebra of subsets that are allowed to be measured:</p><p>$$(X,\\mathcal F)$$</p><p><b>Assumptions that matter:</b> $\\mathcal F$ must be a sigma-algebra on $X$; no numerical measure has been assigned yet.</p>",
     "worked": {
       "problem": "Let $X=\\{1,2,3,4\\}$ and $\\mathcal F=\\{\\varnothing,X,\\{1,2\\},\\{3,4\\}\\}$. Decide whether $A=\\{1\\}$ and $B=\\{1,2\\}$ are measurable in $(X,\\mathcal F)$.",
       "skills": [
@@ -698,34 +767,34 @@
     ],
     "applications": [
       {
-        "title": "Raw samples versus observable events",
-        "background": "Data platforms often store raw rows but expose only approved slices. The measurable space separates the universe from visible events.",
-        "numbers": "If $1000$ rows are exposed through $4$ disjoint segments, the generated $\\sigma$-algebra has $2^4=16$ visible events."
-      },
-      {
-        "title": "Borel measurable data",
-        "background": "Real-valued features usually use the Borel measurable space, generated by open intervals, because thresholds and intervals must be observable.",
-        "numbers": "The event $2\\le x<5$ has length $3$, so a uniform feature on $[0,10]$ gives probability $3/10=0.3$."
-      },
-      {
-        "title": "Label spaces",
-        "background": "Classification labels form finite measurable spaces, usually with every subset measurable.",
-        "numbers": "For $5$ labels, the full label $\\sigma$-algebra has $2^5=32$ events."
+        "title": "Full observation",
+        "background": "If $X=\\{1,2,3\\}$ and $\\mathcal F=\\mathcal P(X)$, every subset is observable.",
+        "numbers": "All $2^3=8$ subsets are measurable."
       },
       {
         "title": "Coarsened telemetry",
-        "background": "Monitoring systems often aggregate values before storage. The measurable space remembers only the aggregate bins.",
-        "numbers": "With bins normal, slow, failed and counts $900$, $80$, $20$, the event not normal has mass $(80+20)/1000=0.10$."
+        "background": "If $\\mathcal F=\\{\\varnothing,X,\\{1,2\\},\\{3\\}\\}$, observation is restricted to grouped events.",
+        "numbers": "Only $4$ subsets are measurable."
       },
       {
-        "title": "Random variables",
-        "background": "A random variable is a measurable function from an outcome space into a value space, so both spaces matter.",
-        "numbers": "If a coin space maps $H\\mapsto1$ and $T\\mapsto0$, the event output at least $0.5$ pulls back to $\\{H\\}$ with probability $0.5$."
+        "title": "Label spaces",
+        "background": "A three-class label with full sigma-algebra allows every class event.",
+        "numbers": "It has $8$ possible label events."
+      },
+      {
+        "title": "Borel data",
+        "background": "Real-valued scores use $(\\mathbb R,\\mathcal B(\\mathbb R))$.",
+        "numbers": "Intervals like $(-\\infty,0.7]$ are measurable."
       },
       {
         "title": "Product observations",
-        "background": "Combining two features creates a product universe and measurable rectangles before more complex events are built.",
-        "numbers": "If feature A has $3$ bins and feature B has $2$ bins, their grid has $3\\cdot2=6$ rectangle cells."
+        "background": "Two binary features with full observation create four raw pairs.",
+        "numbers": "They have $2^4=16$ measurable subsets of four pairs."
+      },
+      {
+        "title": "Random-variable target",
+        "background": "A score map is admissible only when value events pull back to legal events.",
+        "numbers": "Preimages of Borel score sets are in $\\mathcal F$."
       }
     ],
     "applicationsClose": "A measurable space is the stage before measurement: it tells us what can be seen, named, and later assigned size.",
@@ -733,6 +802,29 @@
       "A measurable space is a pair $(X,\\mathcal F)$ with $\\mathcal F$ a $\\sigma$-algebra on $X$.",
       "Measurability of a set means membership in the chosen $\\sigma$-algebra.",
       "Different $\\sigma$-algebras on the same $X$ produce different levels of observable detail."
+    ],
+    "connectionsProse": "<p>This lesson separates observability from size. A measurable space records the raw set and the collection of subsets that are allowed to be discussed as events, before any probability or length is assigned. That distinction is useful because the same underlying set can support different levels of information. Later lessons add measures and functions on top of this measurable structure.</p>",
+    "symbols": [
+      {
+        "sym": "$(X,\\mathcal F)$",
+        "desc": "the measurable space"
+      },
+      {
+        "sym": "$X$",
+        "desc": "the raw set"
+      },
+      {
+        "sym": "$\\mathcal F$",
+        "desc": "a sigma-algebra"
+      },
+      {
+        "sym": "members of $\\mathcal F$",
+        "desc": "measurable sets"
+      },
+      {
+        "sym": "$\\mathcal P(X)$",
+        "desc": "the full power set"
+      }
     ],
     "prereqs": [
       "math-07-02"
@@ -762,8 +854,8 @@
         "signed measures"
       ]
     },
-    "motivation": "<p>Once a measurable space tells us which sets are legal, the next question is beautifully natural: how big are they?</p><p>A <b>measure</b> answers that question. Length is a measure on intervals, probability is a measure on events, counting is a measure on finite sets, and all of them share one rule: split into disjoint pieces, then add.</p>",
-    "definition": "<p>On a measurable space $(X,\\mathcal F)$, a <b>measure</b> is a function $\\mu:\\mathcal F\\to[0,\\infty]$ such that $\\mu(\\varnothing)=0$ and, for any disjoint sequence $A_1,A_2,\\ldots$ in $\\mathcal F$, $$\\mu\\left(\\bigcup_{n=1}^{\\infty}A_n\\right)=\\sum_{n=1}^{\\infty}\\mu(A_n).$$</p><p>Monotonicity follows from this rule. If $A\\subseteq B$, then $B=A\\cup(B\\setminus A)$ disjointly, so $\\mu(B)=\\mu(A)+\\mu(B\\setminus A)\\ge\\mu(A)$.</p><p><b>Assumptions that matter:</b> $\\mu$ is only defined on measurable sets; values cannot be negative; countable additivity needs disjointness; and a probability measure is the special case with $\\mu(X)=1$.</p>",
+    "motivation": "<p>Once legal sets have been chosen, the next step is to assign them sizes. Counting measure counts elements, Lebesgue measure gives length or area, and probability measures assign masses that sum to one. These examples are different in interpretation, but they share nonnegativity and additivity over disjoint measurable pieces.</p><p>Countable additivity is the load-bearing rule. It says that if a set is assembled from non-overlapping measurable pieces, its size is the sum of their sizes. From that rule, monotonicity follows by splitting a larger set into a smaller set plus the leftover part. This is why measures behave consistently when sets are nested or decomposed.</p>",
+    "definition": "<p>A measure $\\mu$ assigns a nonnegative extended-real size to measurable sets and is countably additive on disjoint measurable pieces:</p><p>$$\\mu\\left(\\bigcup_{n=1}^\\infty A_n\\right)=\\sum_{n=1}^\\infty\\mu(A_n)$$</p><p><b>Assumptions that matter:</b> The sets $A_n$ are measurable and pairwise disjoint, and values may lie in $[0,\\infty]$.</p>",
     "worked": {
       "problem": "Counting measure on $X=\\{a,b,c,d,e\\}$ assigns $\\mu(A)$ equal to the number of elements in $A$. For $A=\\{a,c\\}$ and $B=\\{b,d,e\\}$, find $\\mu(A)$, $\\mu(B)$, and $\\mu(A\\cup B)$.",
       "skills": [
@@ -937,34 +1029,34 @@
     ],
     "applications": [
       {
-        "title": "Empirical distributions",
-        "background": "Training data often uses the empirical measure, which puts equal mass on each example.",
-        "numbers": "For $500$ examples, each row has mass $1/500=0.002$; a subset of $35$ rows has mass $35/500=0.07$."
+        "title": "Counting measure",
+        "background": "Counting measure assigns size by counting elements.",
+        "numbers": "$\\mu(\\{a,b,c\\})=3$."
       },
       {
-        "title": "Counting tokens",
-        "background": "Natural-language processing often measures finite sets by counts before normalizing to probabilities.",
-        "numbers": "If a document has token counts $cat:3$ and $dog:2$, counting measure of $\\{cat,dog\\}$ occurrences is $5$."
+        "title": "Empirical distribution",
+        "background": "$200$ selected rows out of $1000$ define an empirical event.",
+        "numbers": "They have empirical mass $0.2$."
       },
       {
-        "title": "Probability models",
-        "background": "A probability distribution is a measure with total mass one, giving sizes to events.",
-        "numbers": "A Bernoulli variable with $P(1)=0.7$ has $P(0)=1-0.7=0.3$."
+        "title": "Probability model",
+        "background": "Disjoint events with masses $0.1,0.25,0.4$ add by measure additivity.",
+        "numbers": "Their union mass is $0.75$."
       },
       {
         "title": "Weighted sampling",
-        "background": "Importance sampling changes the measure by assigning unequal weights to examples.",
-        "numbers": "Weights $2$, $1$, and $1$ normalize to probabilities $0.5$, $0.25$, and $0.25$."
+        "background": "Weights $2,5,3$ on three rows give a weighted measure.",
+        "numbers": "The total measure is $10$."
       },
       {
         "title": "Geometric area",
-        "background": "Computer vision and graphics use area measures for regions and masks.",
-        "numbers": "A rectangle from $x=1$ to $5$ and $y=2$ to $8$ has area measure $(5-1)(8-2)=24$."
+        "background": "Two disjoint rectangles of areas $6$ and $4$ add without overlap.",
+        "numbers": "Their union area is $10$."
       },
       {
         "title": "Dirac measure",
-        "background": "A point mass, or Dirac measure, is useful for deterministic outcomes and degenerate distributions.",
-        "numbers": "If $\\delta_3$ puts all mass at $3$, then $\\delta_3(\\{3\\})=1$ and $\\delta_3([0,2])=0$."
+        "background": "$\\delta_x(A)=1$ if $x\\in A$ and $0$ otherwise.",
+        "numbers": "A set containing $x$ has size $1$."
       }
     ],
     "applicationsClose": "Measures make size arithmetic portable: count, length, area, probability, and weighted data all obey the same disjoint-addition law.",
@@ -972,6 +1064,57 @@
       "A measure maps measurable sets to nonnegative sizes, possibly $\\infty$.",
       "Countable additivity is the defining arithmetic rule for disjoint measurable sets.",
       "Probability, counting, length, and point mass are all measures with different interpretations."
+    ],
+    "connectionsProse": "<p>This lesson adds numerical size to the measurable sets from the previous lessons. A measure can be length, area, counting size, probability, or a weighted data mass, depending on the context. The important common rule is countable additivity on disjoint pieces. From that rule come the everyday facts that larger sets have at least as much size and that non-overlapping pieces add.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mu$",
+        "desc": "the measure"
+      },
+      {
+        "sym": "$\\varnothing$",
+        "desc": "the empty set"
+      },
+      {
+        "sym": "$A_n$",
+        "desc": "disjoint measurable sets"
+      },
+      {
+        "sym": "$[0,\\infty]$",
+        "desc": "allows infinite size"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $A\\subseteq B$ with both sets measurable.",
+        "result": "$A\\subseteq B$",
+        "why": "This sets up monotonicity."
+      },
+      {
+        "do": "Split $B$ as $A\\cup(B\\setminus A)$ disjointly.",
+        "result": "$B=A\\cup(B\\setminus A)$",
+        "why": "This separates the part already in $A$ from the rest."
+      },
+      {
+        "do": "Apply finite additivity from countable additivity.",
+        "result": "$\\mu(B)=\\mu(A)+\\mu(B\\setminus A)$",
+        "why": "Disjoint pieces add."
+      },
+      {
+        "do": "Use nonnegativity $\\mu(B\\setminus A)\\ge0$.",
+        "result": "$\\mu(B\\setminus A)\\ge0$",
+        "why": "Measures cannot subtract size."
+      },
+      {
+        "do": "Conclude $\\mu(A)\\le\\mu(B)$.",
+        "result": "$\\mu(A)\\le\\mu(B)$",
+        "why": "Larger measurable sets have at least as much measure."
+      },
+      {
+        "do": "If $\\mu(A)<\\infty$, rearrange.",
+        "result": "$\\mu(B\\setminus A)=\\mu(B)-\\mu(A)$",
+        "why": "This is the subtraction rule when the smaller size is finite."
+      }
     ],
     "prereqs": [
       "math-07-03"
@@ -1001,8 +1144,8 @@
         "metric spaces"
       ]
     },
-    "motivation": "<p>Sometimes a set is too irregular to measure directly. A wise first move is to cover it by simple pieces whose sizes we understand, then ask how small the total covering size can be.</p><p><b>Outer measure</b> does exactly that. It measures from the outside, like wrapping a strange object in smaller and smaller boxes until the best possible wrapper reveals its size.</p>",
-    "definition": "<p>On $\\mathbb R$, the Lebesgue outer measure of a set $E$ is $$m^*(E)=\\inf\\left\\{\\sum_{n=1}^{\\infty} |I_n|: E\\subseteq\\bigcup_{n=1}^{\\infty} I_n,\\ I_n \\text{ open intervals}\\right\\},$$ where $|I_n|$ is interval length. The infimum means the greatest lower bound over all countable interval covers.</p><p>Outer measure always has $m^*(\\varnothing)=0$, monotonicity, and countable subadditivity: $m^*(\\bigcup E_n)\\le\\sum m^*(E_n)$. Subadditivity comes by covering each $E_n$ nearly optimally and then combining all those covers.</p><p><b>Assumptions that matter:</b> outer measure is defined for every subset, but it is not countably additive on every possible subset; measurability is the later condition that identifies sets where additivity behaves correctly.</p>",
+    "motivation": "<p>Some subsets of the real line are too irregular to handle by simply declaring their length directly. Outer measure starts from something concrete: cover the set by intervals and add the interval lengths. The best possible total cover length gives an outside estimate for the set's size.</p><p>This construction does not yet say that every set is measurable. Instead, it gives a size-like upper bound for every set and then identifies which sets interact correctly with cutting and recombining. Countable subadditivity is the essential first property: a union can be covered by covering each part, so the outside size of the union cannot exceed the sum of the outside sizes.</p>",
+    "definition": "<p>Lebesgue outer measure assigns every subset $E\\subseteq\\mathbb R$ the infimum of total interval lengths over countable interval covers:</p><p>$$m^*(E)=\\inf\\left\\{\\sum_n |I_n|:E\\subseteq\\bigcup_n I_n\\right\\}$$</p><p><b>Assumptions that matter:</b> The cover is countable, the $I_n$ are intervals, and outer measure is defined before restricting to measurable sets.</p>",
     "worked": {
       "problem": "Show that $m^*(\\{2\\})=0$ on the real line.",
       "skills": [
@@ -1181,34 +1324,34 @@
     ],
     "applications": [
       {
-        "title": "Bounding rare score regions",
-        "background": "Outer measure lets you bound complicated threshold regions by covering them with intervals.",
-        "numbers": "Covers of lengths $0.02$, $0.015$, and $0.005$ give outer measure at most $0.04$."
-      },
-      {
-        "title": "Approximate geometry",
-        "background": "Before exact area is known, graphics algorithms cover shapes with boxes to bound size.",
-        "numbers": "Boxes of areas $4$, $3$, and $1.5$ give outer area at most $8.5$."
-      },
-      {
-        "title": "Confidence sets",
-        "background": "Statistics often covers an unknown parameter set by intervals, then reports the total width.",
-        "numbers": "Intervals $[0.1,0.2]$ and $[0.45,0.50]$ have total length $0.10+0.05=0.15$."
+        "title": "Union bounds",
+        "background": "Events with outer-size bounds $0.02,0.03,0.01$ have a union controlled by subadditivity.",
+        "numbers": "The union size is at most $0.06$."
       },
       {
         "title": "Anomaly windows",
-        "background": "Monitoring can cover suspicious time points by windows and bound total affected time.",
-        "numbers": "Windows of $5$, $8$, and $2$ minutes cover at most $15$ minutes of anomaly time."
+        "background": "Intervals of lengths $0.1,0.05,0.02$ cover a suspicious score set.",
+        "numbers": "Its outer measure is at most $0.17$."
       },
       {
-        "title": "Compression of sparse events",
-        "background": "Finite or countable point sets have zero length even if they contain many values.",
-        "numbers": "One thousand points can each be covered by length $10^{-6}$ intervals, giving total cover length $0.001$."
+        "title": "Sparse events",
+        "background": "Countably many points can be covered with intervals totaling any $\\varepsilon>0$.",
+        "numbers": "They have outer measure $0$."
       },
       {
-        "title": "Union bounds",
-        "background": "Probability union bounds mirror outer-measure subadditivity.",
-        "numbers": "If three failure modes have probabilities $0.01$, $0.02$, and $0.005$, any failure has probability at most $0.035$."
+        "title": "Confidence sets",
+        "background": "Two covered regions of lengths $1.2$ and $0.8$ combine by adding cover lengths.",
+        "numbers": "They give a combined outer bound $2.0$."
+      },
+      {
+        "title": "Approximate geometry",
+        "background": "A fractal-like set covered by $4^n$ intervals of length $3^{-2n}$ has a shrinking cover bound.",
+        "numbers": "The bound is $(4/9)^n\\to0$."
+      },
+      {
+        "title": "Score thresholds",
+        "background": "If all bad scores lie in intervals totaling $0.04$, the outside estimate controls their size.",
+        "numbers": "Their Lebesgue outer measure is no more than $0.04$."
       }
     ],
     "applicationsClose": "Outer measure is cautious in the best way: it gives every set an outside size, then prepares us to identify the sets where exact additivity is safe.",
@@ -1216,6 +1359,61 @@
       "Outer measure is built from infima of countable covers.",
       "It is monotone and countably subadditive for all sets.",
       "Measurable sets are the ones where outer measure later behaves like a true measure."
+    ],
+    "connectionsProse": "<p>This lesson explains how Lebesgue measure begins before measurability is imposed. Outer measure assigns a candidate size to every subset of the real line by covering it with intervals. This gives a universal upper estimate even for sets that may not behave well under cutting and recombining. The subadditivity derivation is the basic reason these outside estimates control unions.</p>",
+    "symbols": [
+      {
+        "sym": "$m^*$",
+        "desc": "outer measure"
+      },
+      {
+        "sym": "$E$",
+        "desc": "any subset of $\\mathbb R$"
+      },
+      {
+        "sym": "$I_n$",
+        "desc": "open intervals"
+      },
+      {
+        "sym": "$|I_n|$",
+        "desc": "interval length"
+      },
+      {
+        "sym": "$\\inf$",
+        "desc": "the greatest lower bound over all covers"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For each set $E_j$ and each tolerance $\\varepsilon 2^{-j}$, choose interval covers $E_j\\subseteq\\bigcup_k I_{jk}$ with $\\sum_k |I_{jk}|\\le m^*(E_j)+\\varepsilon2^{-j}$.",
+        "result": "$E_j\\subseteq\\bigcup_k I_{jk}$ and $\\sum_k |I_{jk}|\\le m^*(E_j)+\\varepsilon2^{-j}$",
+        "why": "This uses the infimum definition with a small allowance."
+      },
+      {
+        "do": "Combine all chosen intervals.",
+        "result": "$\\bigcup_{j,k} I_{jk}$ covers $\\bigcup_j E_j$",
+        "why": "Their union covers $\\bigcup_j E_j$ because each $E_j$ is covered."
+      },
+      {
+        "do": "Compute the total length of the combined cover.",
+        "result": "$\\sum_j\\sum_k |I_{jk}|$",
+        "why": "This is the cost of that particular countable cover."
+      },
+      {
+        "do": "Bound it by substituting the near-optimal bounds.",
+        "result": "$\\sum_j m^*(E_j)+\\varepsilon\\sum_j2^{-j}$",
+        "why": "This substitutes the near-optimal bounds."
+      },
+      {
+        "do": "Use $\\sum_j2^{-j}=1$.",
+        "result": "cover cost at most $\\sum_jm^*(E_j)+\\varepsilon$",
+        "why": "The tolerance allowances add to $\\varepsilon$."
+      },
+      {
+        "do": "Take the infimum over all covers and let $\\varepsilon\\downarrow0$.",
+        "result": "$m^*(\\bigcup_jE_j)\\le\\sum_jm^*(E_j)$",
+        "why": "This gives countable subadditivity."
+      }
     ],
     "prereqs": [
       "math-07-04"
@@ -1244,8 +1442,8 @@
         "probability densities"
       ]
     },
-    "motivation": "<p>You already trust that the interval $[2,5]$ has length $3$. The challenge is to measure sets made from many intervals, limits of intervals, and scattered exceptional points without breaking the arithmetic of length.</p><p><b>Lebesgue measure</b> is the answer on the real line. It keeps interval length, gives countable sets length zero, and supports the integrals used throughout probability and ML.</p>",
-    "definition": "<p>Lebesgue measure $m$ is the measure on Lebesgue measurable subsets of $\\mathbb R$ satisfying $m((a,b))=b-a$ for intervals and countable additivity on disjoint measurable sets. It is obtained by restricting outer measure $m^*$ to the sets that pass the Carathéodory measurability test.</p><p>For intervals, the familiar rule remains: $m([a,b])=b-a$, and adding or removing endpoints does not change length because singletons have measure zero.</p><p><b>Assumptions that matter:</b> sets must be Lebesgue measurable before $m$ is used as a measure; countable sets have measure zero; intervals have their usual length; and translation does not change measure.</p>",
+    "motivation": "<p>Ordinary length should give $b-a$ for an interval from $a$ to $b$, and it should not care whether endpoints are included. Lebesgue measure preserves that intuition while extending length to a much richer collection of sets. This extension is what makes continuous probability and integration over real variables rigorous.</p><p>The reason endpoints do not matter is that a single point can be covered by intervals with arbitrarily small total length. Its measure is therefore zero. Once singletons have measure zero, adding or removing finitely many endpoints changes no interval length. This same idea later supports almost-everywhere equality and null edits to functions.</p>",
+    "definition": "<p>Lebesgue measure $m$ is the countably additive measure on Lebesgue measurable subsets of $\\mathbb R$ that agrees with interval length:</p><p>$$m([a,b])=b-a$$</p><p><b>Assumptions that matter:</b> The set must be Lebesgue measurable, and endpoints or finitely many points have measure zero.</p>",
     "worked": {
       "problem": "Find the Lebesgue measure of $[0,2]\\cup[3,4]$.",
       "skills": [
@@ -1410,33 +1608,33 @@
     "applications": [
       {
         "title": "Uniform probability",
-        "background": "Lebesgue measure becomes probability after normalization on a finite interval.",
-        "numbers": "On $[0,4]$, the interval $[1,3]$ has probability length $2/4=0.5$."
+        "background": "On $[0,2]$, uniform probability is normalized Lebesgue length.",
+        "numbers": "$P([0.5,1.5])=m([0.5,1.5])/2=0.5$."
       },
       {
         "title": "Continuous features",
-        "background": "Feature distributions with densities integrate over Lebesgue measure.",
-        "numbers": "A constant density $0.2$ on $[0,5]$ gives probability of $[1,2.5]$ equal to $0.2\\cdot1.5=0.3$."
+        "background": "Under any bounded density, a singleton score has zero Lebesgue length.",
+        "numbers": "$P(X=0.7)=0$."
       },
       {
-        "title": "Null exceptions",
-        "background": "Analysis often ignores failures on measure-zero sets because they occupy no length.",
-        "numbers": "Changing a model output at $10$ exact thresholds changes it on a set of measure $0$."
-      },
-      {
-        "title": "Image masks in normalized coordinates",
-        "background": "A rectangular region in a continuous image has area given by two-dimensional Lebesgue measure.",
-        "numbers": "A box of width $0.3$ and height $0.2$ has area $0.06$."
+        "title": "Image masks",
+        "background": "A normalized rectangle $[0,0.2]\\times[0,0.5]$ has area from side lengths.",
+        "numbers": "Its area is $0.1$."
       },
       {
         "title": "Histograms",
-        "background": "Histogram probabilities estimate Lebesgue-length intervals under a density.",
-        "numbers": "A bin $[4,6]$ with estimated density $0.12$ has approximate probability $0.12\\cdot2=0.24$."
+        "background": "Five bins of width $0.2$ cover $[0,1]$.",
+        "numbers": "Their total length is $1$."
       },
       {
         "title": "Translation invariance",
-        "background": "Shifting data along the real line does not change lengths of intervals.",
-        "numbers": "$[2,5]$ and $[12,15]$ both have Lebesgue measure $3$."
+        "background": "Shifting $[1,4]$ to $[6,9]$ preserves Lebesgue length.",
+        "numbers": "The length stays $3$."
+      },
+      {
+        "title": "Null edits",
+        "background": "Changing a predictor at one real-valued score changes only a measure-zero set.",
+        "numbers": "The change in a Lebesgue integral is $0$."
       }
     ],
     "applicationsClose": "Lebesgue measure is ordinary length made robust enough for limits, countable sets, densities, and modern integration.",
@@ -1444,6 +1642,56 @@
       "Lebesgue measure agrees with interval length.",
       "Countable sets, including finite sets and rationals, have measure zero.",
       "It is countably additive on Lebesgue measurable sets and is the base measure for many densities."
+    ],
+    "connectionsProse": "<p>This lesson turns the outer-measure construction into the familiar length used on measurable subsets of the real line. Lebesgue measure agrees with interval length, treats endpoints as having no length, and supports countable additivity. It is the measure behind continuous probability densities and ordinary integration over real-valued data. The key point here is that changing finitely many points does not change length.</p>",
+    "symbols": [
+      {
+        "sym": "$m$",
+        "desc": "Lebesgue measure"
+      },
+      {
+        "sym": "$m^*$",
+        "desc": "outer measure"
+      },
+      {
+        "sym": "$[a,b]$ and $(a,b)$",
+        "desc": "intervals"
+      },
+      {
+        "sym": "$b-a$",
+        "desc": "their length"
+      },
+      {
+        "sym": "almost everywhere",
+        "desc": "except on a set of measure zero"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Cover the singleton $\\{a\\}$ by the open interval $(a-\\varepsilon/2,a+\\varepsilon/2)$.",
+        "result": "length $\\varepsilon$",
+        "why": "This interval has length $\\varepsilon$."
+      },
+      {
+        "do": "Since the cover cost can be made as small as any $\\varepsilon>0$, use nonnegativity.",
+        "result": "$m^*(\\{a\\})=0$",
+        "why": "Outer measure is nonnegative, so the only possible value is $0$."
+      },
+      {
+        "do": "Use that Lebesgue measure agrees with outer measure on measurable singletons.",
+        "result": "$m(\\{a\\})=0$",
+        "why": "Singletons are Lebesgue measurable."
+      },
+      {
+        "do": "Write $[a,b]=(a,b)\\cup\\{a\\}\\cup\\{b\\}$ disjointly.",
+        "result": "$[a,b]=(a,b)\\cup\\{a\\}\\cup\\{b\\}$",
+        "why": "This separates the open interval from endpoints."
+      },
+      {
+        "do": "Add the measures.",
+        "result": "$m([a,b])=m((a,b))+0+0=b-a$",
+        "why": "Endpoints add no length."
+      }
     ],
     "prereqs": [
       "math-07-05"
@@ -1472,8 +1720,8 @@
         "composition"
       ]
     },
-    "motivation": "<p>A function can map outcomes to numbers, labels, losses, or predictions. To integrate it or treat it as a random variable, we need its output events to correspond to legal input events.</p><p>That is exactly what <b>measurable</b> means for functions: whenever you ask an allowed question about the output, the set of inputs answering yes is measurable.</p>",
-    "definition": "<p>A function $f:(X,\\mathcal F)\\to(Y,\\mathcal G)$ is <b>measurable</b> if for every $B\\in\\mathcal G$, the preimage $f^{-1}(B)=\\{x\\in X:f(x)\\in B\\}$ belongs to $\\mathcal F$. For real-valued functions, it is enough to check sets of the form $(-\\infty,a]$: $\\{x:f(x)\\le a\\}\\in\\mathcal F$ for every real $a$.</p><p>Indicator functions show the idea: $1_A$ is measurable exactly when $A$ is measurable, because $\\{x:1_A(x)=1\\}=A$.</p><p><b>Assumptions that matter:</b> measurability depends on both domain and codomain $\\sigma$-algebras; preimages, not images, define measurability; and continuous real functions are Borel measurable on standard real spaces.</p>",
+    "motivation": "<p>A function on a measure space becomes useful for probability or integration only when value-based statements are measurable. For a score $s$, the statement $s\\le0.7$ must correspond to an event in the original space. For a loss $L$, the regions where the loss falls in a given range must be measurable before an expected loss can be defined.</p><p>Measurability is exactly this preimage condition. It looks backward from value sets to the original space and requires those preimages to be legal events. Indicators show the simplest case: the indicator of a set is measurable precisely when the set itself is measurable. Composition then shows that measurable pipelines remain measurable.</p>",
+    "definition": "<p>A function $f:(X,\\mathcal F)\\to(Y,\\mathcal G)$ is measurable when every measurable value-set pulls back to a measurable event:</p><p>$$B\\in\\mathcal G\\quad\\Rightarrow\\quad f^{-1}(B)\\in\\mathcal F$$</p><p><b>Assumptions that matter:</b> The domain and codomain are measurable spaces, and for real-valued functions the value sigma-algebra is usually $\\mathcal B(\\mathbb R)$.</p>",
     "worked": {
       "problem": "Let $(X,\\mathcal F)$ be a measurable space and $A\\in\\mathcal F$. Show that the indicator $1_A$ is measurable as a function into $\\mathbb R$.",
       "skills": [
@@ -1653,33 +1901,33 @@
     "applications": [
       {
         "title": "Random variables",
-        "background": "In probability, a random variable is exactly a measurable function from outcomes to numbers.",
-        "numbers": "If $X$ maps outcomes to $0$ or $1$ and $P(X=1)=0.3$, then $P(X\\le0)=0.7$."
+        "background": "If $X$ is measurable, value thresholds pull back to events.",
+        "numbers": "$\\{X\\le0.7\\}$ is an event whose probability can be computed."
       },
       {
         "title": "Loss functions",
-        "background": "Expected loss requires the loss to be measurable so the event loss above a threshold is meaningful.",
-        "numbers": "If $P(L>2)=0.05$ over $10000$ examples, about $500$ examples exceed loss $2$."
+        "background": "If $L$ is measurable, the loss is compatible with integration.",
+        "numbers": "Expected loss $\\int L\\,dP$ is defined."
       },
       {
         "title": "Classifiers",
-        "background": "A classifier's decision regions must be measurable to assign probabilities to predictions.",
-        "numbers": "If $35$ of $200$ validation points fall in predicted class A, empirical measure is $35/200=0.175$."
+        "background": "A threshold classifier is an indicator of a measurable score event.",
+        "numbers": "$1_{\\{s\\ge0.8\\}}$ is measurable when the score $s$ is measurable."
       },
       {
         "title": "Feature thresholds",
-        "background": "Decision trees use threshold events, which are measurable for real-valued features.",
-        "numbers": "A split $x\\le4.5$ sending $120$ of $300$ rows left has empirical mass $0.4$."
+        "background": "If a score threshold has probability $0.18$, that probability belongs to the preimage event.",
+        "numbers": "$P(s\\le0.3)=0.18$."
       },
       {
         "title": "Calibration curves",
-        "background": "Calibration bins are preimages of score intervals under a measurable score function.",
-        "numbers": "Scores in $[0.7,0.8)$ for $80$ of $1000$ examples form a measurable bin of mass $0.08$."
+        "background": "Calibration bins are score preimages of value intervals.",
+        "numbers": "Bins like $s^{-1}([0.6,0.7])$ are measurable score events."
       },
       {
-        "title": "Composed pipelines",
-        "background": "Measurable functions compose, matching how preprocessing followed by prediction should remain observable.",
-        "numbers": "If standardization maps $x=70$ to $z=(70-50)/10=2$, and a threshold uses $z>1$, this equals $x>60$."
+        "title": "Pipelines",
+        "background": "If a feature map and a model score are measurable, applying them in sequence preserves measurability.",
+        "numbers": "Their composition is measurable."
       }
     ],
     "applicationsClose": "Measurable functions are the safe bridges between spaces: every observable output event has a measurable set of causes.",
@@ -1687,6 +1935,57 @@
       "Measurability is defined by preimages of measurable output sets.",
       "For real functions, threshold events $\\{f\\le a\\}$ are enough to check.",
       "Random variables, losses, scores, and indicators are measurable functions when their events are well-defined."
+    ],
+    "connectionsProse": "<p>This lesson connects measurable sets with functions. In probability, a random variable is useful only when statements about its values correspond to events whose probabilities can be assigned. Measurable functions guarantee this by requiring preimages of observable value-sets to be measurable. That condition is also what makes losses, indicators, and model scores compatible with integration.</p>",
+    "symbols": [
+      {
+        "sym": "$f:(X,\\mathcal F)\\to(Y,\\mathcal G)$",
+        "desc": "a function between measurable spaces"
+      },
+      {
+        "sym": "$f^{-1}(B)$",
+        "desc": "the preimage of $B$"
+      },
+      {
+        "sym": "$\\mathcal B(\\mathbb R)$",
+        "desc": "the Borel sigma-algebra"
+      },
+      {
+        "sym": "$1_A$",
+        "desc": "an indicator"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $1_A:X\\to\\{0,1\\}$ be the indicator of $A$.",
+        "result": "$1_A:X\\to\\{0,1\\}$",
+        "why": "This function records whether $x$ is in $A$."
+      },
+      {
+        "do": "Compute the preimage of $\\{1\\}$.",
+        "result": "$1_A^{-1}(\\{1\\})=A$",
+        "why": "A value-set is measurable precisely when the event is measurable."
+      },
+      {
+        "do": "Compute the preimage of $\\{0\\}$.",
+        "result": "$1_A^{-1}(\\{0\\})=A^c$",
+        "why": "Sigma-algebras include complements."
+      },
+      {
+        "do": "Conclude the indicator criterion.",
+        "result": "$1_A$ is measurable exactly when $A\\in\\mathcal F$",
+        "why": "Indicator measurability matches event measurability."
+      },
+      {
+        "do": "If $f:X\\to Y$ and $g:Y\\to Z$ are measurable, compute a composed preimage.",
+        "result": "$(g\\circ f)^{-1}(C)=f^{-1}(g^{-1}(C))$",
+        "why": "This is the preimage rule for composition."
+      },
+      {
+        "do": "Use measurability of $g$ and then $f$.",
+        "result": "$g\\circ f$ is measurable",
+        "why": "Since $g^{-1}(C)$ is measurable in $Y$ and $f$ pulls measurable sets back to $X$, $g\\circ f$ is measurable."
+      }
     ],
     "prereqs": [
       "math-07-06"
@@ -1715,8 +2014,8 @@
         "$L^p$ spaces"
       ]
     },
-    "motivation": "<p>You already know a finite weighted average: value times weight, then add. The Lebesgue integral is the infinite, measurable version of that same idea.</p><p>Instead of asking only how wide each input slice is, it asks how much measure sits where the function has each value. That makes it especially natural for probability and expected loss.</p>",
-    "definition": "<p>For a nonnegative simple function $s=\\sum_{k=1}^n a_k 1_{A_k}$ with $a_k\\ge0$ and measurable $A_k$, define $$\\int_X s\\,d\\mu=\\sum_{k=1}^n a_k\\mu(A_k).$$ For a nonnegative measurable function $f$, define $$\\int_X f\\,d\\mu=\\sup\\left\\{\\int_X s\\,d\\mu:0\\le s\\le f,\\ s \\text{ simple}\\right\\}.$$ General integrable functions are handled by positive and negative parts.</p><p>This definition agrees with area for familiar functions and with expectation when $\\mu$ is probability.</p><p><b>Assumptions that matter:</b> the function must be measurable; nonnegative integrals may be $\\infty$; signed integrals require the positive and negative parts not both infinite; and $d\\mu$ names the measure used for weighting.</p>",
+    "motivation": "<p>The Riemann integral often imagines slicing the input axis into intervals. The Lebesgue integral instead begins with the values a function takes and the measurable regions where it takes them. For a simple function, each value-region contributes height times measure, exactly like a rectangle but with measurable sets in place of ordinary intervals.</p><p>General nonnegative functions are handled by approximating from below with simple functions. Taking the supremum over all such lower approximations captures the full area without depending on a particular partition. Signed functions are then split into positive and negative parts, with the usual warning that $\\infty-\\infty$ is not defined. This construction is why expectations, densities, indicators, and limits share one integral.</p>",
+    "definition": "<p>For a nonnegative simple function $s=\\sum_{k=1}^n a_k1_{A_k}$ on disjoint measurable sets, the Lebesgue integral is</p><p>$$\\int s\\,d\\mu=\\sum_{k=1}^n a_k\\mu(A_k)$$</p><p><b>Assumptions that matter:</b> The value-regions $A_k$ are measurable and disjoint; nonnegative functions use suprema of simple lower approximations, and signed functions use positive and negative parts when the result is not $\\infty-\\infty$.</p>",
     "worked": {
       "problem": "Let $X=\\{a,b,c\\}$ with probabilities $0.2$, $0.5$, $0.3$. If $f(a)=1$, $f(b)=4$, and $f(c)=10$, compute $\\int f\\,d\\mu$.",
       "skills": [
@@ -1891,33 +2190,33 @@
     "applications": [
       {
         "title": "Expected loss",
-        "background": "ML training minimizes expectations, which are Lebesgue integrals under the data distribution.",
-        "numbers": "Losses $0.2$, $1.0$, $3.0$ with probabilities $0.5$, $0.4$, $0.1$ give expected loss $0.1+0.4+0.3=0.8$."
+        "background": "$L\\in\\{1,4,10\\}$ with probabilities $(0.2,0.5,0.3)$ gives a simple-function integral.",
+        "numbers": "$\\int L\\,dP=5.2$."
       },
       {
         "title": "Empirical risk",
-        "background": "A finite dataset uses the empirical measure, so the integral becomes an average.",
-        "numbers": "For losses $2$, $4$, $5$, $9$, empirical risk is $(2+4+5+9)/4=5$."
+        "background": "Four losses $(1,0.5,2,1.5)$ under equal mass form an empirical integral.",
+        "numbers": "They give $1.25$."
       },
       {
         "title": "Density integration",
-        "background": "Continuous probabilities integrate density over sets.",
-        "numbers": "Density $f(x)=2x$ on $[0,1]$ gives $P([0,0.5])=\\int_0^{0.5}2x\\,dx=0.25$."
+        "background": "The density $f(x)=3x^2$ on $[0,1]$ has total probability mass.",
+        "numbers": "It integrates to $1$."
       },
       {
-        "title": "Weighted metrics",
-        "background": "Business metrics often weight examples by importance or traffic share.",
-        "numbers": "Segment errors $0.1$ and $0.3$ with traffic weights $0.8$ and $0.2$ give weighted error $0.08+0.06=0.14$."
+        "title": "Weighted metric",
+        "background": "A score equal to $2$ on mass $0.3$ and $5$ on mass $0.7$ adds height times mass.",
+        "numbers": "Its integral is $4.1$."
       },
       {
         "title": "Image intensity",
-        "background": "Average brightness is an integral of intensity over image area.",
-        "numbers": "If half an image has brightness $100$ and half $200$, average brightness is $100\\cdot0.5+200\\cdot0.5=150$."
+        "background": "Intensity $0.2$ on area $0.25$ and $0.8$ on area $0.75$ gives a weighted area total.",
+        "numbers": "The total is $0.65$."
       },
       {
-        "title": "Regularization",
-        "background": "Norm penalties are integrals or sums of parameter magnitudes under counting measure.",
-        "numbers": "For weights $[1,-2,3]$, the squared $L^2$ sum is $1^2+(-2)^2+3^2=14$."
+        "title": "Regularization moment",
+        "background": "Under probabilities $(0.2,0.5,0.3)$, $\\int |X|\\,dP$ for values $(1,-2,3)$ averages absolute values.",
+        "numbers": "It is $2.1$."
       }
     ],
     "applicationsClose": "The Lebesgue integral is one idea in many uniforms: weighted sums, areas, probabilities, and expected losses all add value times measure.",
@@ -1925,6 +2224,65 @@
       "Simple functions integrate by summing value times measure.",
       "Nonnegative measurable functions integrate as suprema of simple lower approximations.",
       "Expected value is the Lebesgue integral with respect to a probability measure."
+    ],
+    "connectionsProse": "<p>This lesson builds the integral that the rest of the probability track uses. The previous lessons supplied measurable sets, measures, and measurable functions; the Lebesgue integral combines them by adding function values over measured regions. It starts from simple functions because their value regions are clear and disjoint. From there, nonnegative and signed functions are handled by approximation and decomposition.</p>",
+    "symbols": [
+      {
+        "sym": "$s$",
+        "desc": "a simple function"
+      },
+      {
+        "sym": "$a_k$",
+        "desc": "its values"
+      },
+      {
+        "sym": "$A_k$",
+        "desc": "measurable value-regions"
+      },
+      {
+        "sym": "$1_{A_k}$",
+        "desc": "an indicator"
+      },
+      {
+        "sym": "$\\mu(A_k)$",
+        "desc": "the size of a value-region"
+      },
+      {
+        "sym": "$f^+$ and $f^-$",
+        "desc": "positive and negative parts"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a nonnegative simple function $s=\\sum_{k=1}^n a_k1_{A_k}$ on disjoint measurable sets $A_k$.",
+        "result": "$s=\\sum_{k=1}^n a_k1_{A_k}$",
+        "why": "This means $s$ has value $a_k$ on $A_k$."
+      },
+      {
+        "do": "The contribution from $A_k$ is height times size.",
+        "result": "$a_k\\mu(A_k)$",
+        "why": "This is the rectangle rule generalized to measurable sets."
+      },
+      {
+        "do": "Add the disjoint contributions.",
+        "result": "$\\int s\\,d\\mu=\\sum_{k=1}^n a_k\\mu(A_k)$",
+        "why": "Disjoint value-regions do not overlap."
+      },
+      {
+        "do": "For a nonnegative measurable $f$, choose simple functions $0\\le s\\le f$.",
+        "result": "$0\\le s\\le f$",
+        "why": "They approximate $f$ from below."
+      },
+      {
+        "do": "Take the supremum of their integrals.",
+        "result": "$\\int f\\,d\\mu=\\sup_{0\\le s\\le f}\\int s\\,d\\mu$",
+        "why": "This captures all lower approximations."
+      },
+      {
+        "do": "For signed $f$, write $f=f^+-f^-$.",
+        "result": "$\\int f\\,d\\mu=\\int f^+\\,d\\mu-\\int f^-\\,d\\mu$",
+        "why": "This is defined when it is not the undefined form $\\infty-\\infty$."
+      }
     ],
     "prereqs": [
       "math-07-07"
@@ -1953,8 +2311,8 @@
         "expectations"
       ]
     },
-    "motivation": "<p>Limits and integrals are both ways of gathering infinitely much information. The delicate question is when you may swap them.</p><p>The <b>monotone convergence theorem</b> gives a wonderfully clean answer for nonnegative functions that only increase. If your approximations rise toward the truth, the areas rise toward the true area.</p>",
-    "definition": "<p>If $0\\le f_1\\le f_2\\le\\cdots$ are measurable functions on $(X,\\mathcal F,\\mu)$ and $f_n(x)\\to f(x)$ pointwise, then $$\\int_X f\\,d\\mu=\\lim_{n\\to\\infty}\\int_X f_n\\,d\\mu.$$ The limit may be $\\infty$.</p><p>The monotonicity matters because no area is ever lost by later approximations. Since $f_n\\le f$, each integral is at most $\\int f\\,d\\mu$; the theorem says these lower areas climb all the way up.</p><p><b>Assumptions that matter:</b> every $f_n$ must be measurable; the sequence must be nondecreasing pointwise; functions must be nonnegative; and no separate boundedness assumption is required.</p>",
+    "motivation": "<p>Many measurable functions are reached through increasing approximations. A truncated loss grows as the truncation level rises, an expanding union of events grows as more events are included, and lower step functions improve as a partition is refined. In each case, previously counted mass is never removed.</p><p>Monotone convergence says that this one-sided growth is enough to make integrals converge to the integral of the pointwise limit. The proof idea is that every simple block lying below the limit is eventually almost captured by the increasing sequence. Because the integral of the limit is defined through simple lower approximations, capturing all such blocks forces equality.</p>",
+    "definition": "<p>The monotone convergence theorem says that for nonnegative measurable functions increasing pointwise to $f$, the integrals increase to the integral of the limit:</p><p>$$0\\le f_1\\le f_2\\le\\cdots,\\ f_n\\uparrow f\\quad\\Rightarrow\\quad \\lim_n\\int f_n\\,d\\mu=\\int f\\,d\\mu$$</p><p><b>Assumptions that matter:</b> The functions are nonnegative and measurable, and convergence is pointwise increasing.</p>",
     "worked": {
       "problem": "On $[0,1]$, let $f_n(x)=1$ on $[0,1-1/n]$ and $0$ elsewhere. Compute $\\lim_n\\int f_n\\,dx$ and compare with the limit function.",
       "skills": [
@@ -2133,34 +2491,34 @@
     ],
     "applications": [
       {
-        "title": "Approximating expected loss",
-        "background": "Clip a nonnegative loss at higher and higher caps, then MCT recovers the true expected loss.",
-        "numbers": "If capped expectations are $1.2$, $1.7$, $1.9$, and approach $2.0$, MCT identifies expected loss as $2.0$."
+        "title": "Truncated expected loss",
+        "background": "$L_n=\\min(L,n)$ increases to $L$, so stabilized integrals reveal the expected loss.",
+        "numbers": "If integrals are $1.8,2.4,2.7$, the expected loss limit is $2.7$ when the sequence stabilizes."
       },
       {
-        "title": "Histograms to densities",
-        "background": "Increasing simple lower approximations can converge to a density or response curve.",
-        "numbers": "Lower areas $0.40$, $0.47$, $0.495$ rising to $0.5$ converge to the true area $0.5$."
+        "title": "Histogram refinement",
+        "background": "Lower step approximations can only rise as they improve.",
+        "numbers": "$0.5,0.75,0.875$ climb toward area $1$."
       },
       {
         "title": "Counting infinite events",
-        "background": "Indicators of expanding sets increase to the indicator of their union.",
-        "numbers": "Sets $[0,n]$ have measures $n$, so the union $[0,\\infty)$ has infinite measure."
+        "background": "Indicators of expanding finite unions increase to the full countable union.",
+        "numbers": "$1_{\\cup_{i=1}^nA_i}\\uparrow1_{\\cup_iA_i}$, so probabilities converge upward."
       },
       {
         "title": "Series as integrals",
-        "background": "MCT justifies turning sums of nonnegative functions into integrals of infinite sums.",
-        "numbers": "If integrals are $1/2^n$, the integral of the sum is $\\sum_{n=1}^{\\infty}2^{-n}=1$."
+        "background": "Partial sums of nonnegative terms form an increasing sequence.",
+        "numbers": "$0.5+0.25+0.125$ increase to $1$."
       },
       {
         "title": "Reliability over time",
-        "background": "Failure probability by time $t$ increases as the time window expands.",
-        "numbers": "If $P(T\\le1)=0.1$, $P(T\\le2)=0.18$, and $P(T\\le5)=0.35$, the events increase with time."
+        "background": "Events \"failure by day $n$\" grow as the time horizon grows.",
+        "numbers": "Masses $0.1,0.18,0.25$ increase toward eventual failure probability."
       },
       {
         "title": "Data filters",
-        "background": "Relaxing filters creates increasing included sets and increasing measured totals.",
-        "numbers": "A threshold includes $200$, then $350$, then $410$ of $500$ rows, with empirical masses $0.40$, $0.70$, $0.82$."
+        "background": "Expanding eligible sets add more measured data and never remove previous mass.",
+        "numbers": "Masses $0.4,0.6,0.7$ give integrals that increase with the set."
       }
     ],
     "applicationsClose": "MCT is the safe exchange rule for growing approximations: if the functions only rise, their integrals rise to the integral of the limit.",
@@ -2168,6 +2526,57 @@
       "MCT requires nonnegative measurable functions with $f_n\\le f_{n+1}$ pointwise.",
       "Under those hypotheses, $\\int f_n\\,d\\mu$ increases to $\\int f\\,d\\mu$.",
       "No boundedness condition is needed; the answer may be infinite."
+    ],
+    "connectionsProse": "<p>This lesson gives the first major rule for passing from approximations to a limiting integral. Many useful functions are built as increasing limits of simpler ones, such as growing truncations, expanding events, or refined lower approximations. Monotone convergence says that when the approximations only increase, the integrals increase to the integral of the limit. That makes approximation a reliable way to define and compute integrals.</p>",
+    "symbols": [
+      {
+        "sym": "$f_n\\uparrow f$",
+        "desc": "increasing pointwise convergence"
+      },
+      {
+        "sym": "$\\lim_n\\int f_n$",
+        "desc": "may be infinite"
+      },
+      {
+        "sym": "$s$",
+        "desc": "a simple lower approximation"
+      },
+      {
+        "sym": "$c$",
+        "desc": "a scaling factor below $1$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume $0\\le f_1\\le f_2\\le\\cdots$ and $f_n\\uparrow f$ pointwise.",
+        "result": "$0\\le f_1\\le f_2\\le\\cdots$ and $f_n\\uparrow f$",
+        "why": "This means every point's value climbs to its limit."
+      },
+      {
+        "do": "Since $f_n\\le f$, apply monotonicity of the integral.",
+        "result": "$\\int f_n\\,d\\mu\\le\\int f\\,d\\mu$",
+        "why": "The limit of the integrals cannot exceed the target integral."
+      },
+      {
+        "do": "Let $s$ be any simple function with $0\\le s\\le f$.",
+        "result": "$0\\le s\\le f$",
+        "why": "This tests whether the increasing approximations reach every lower simple block."
+      },
+      {
+        "do": "For $0<c<1$, consider the sets where $f_n\\ge cs$.",
+        "result": "the sets where $f_n\\ge cs$ increase to the support of $s$",
+        "why": "Pointwise convergence makes each positive block eventually covered."
+      },
+      {
+        "do": "Use countable additivity to compare integrals.",
+        "result": "$\\int f_n\\,d\\mu$ is eventually at least nearly $c\\int s\\,d\\mu$",
+        "why": "The increasing functions capture nearly all of the simple lower area."
+      },
+      {
+        "do": "Let $c\\uparrow1$ and take the supremum over simple $s\\le f$.",
+        "result": "$\\lim_n\\int f_n\\,d\\mu\\ge\\int f\\,d\\mu$",
+        "why": "This completes equality."
+      }
     ],
     "prereqs": [
       "math-07-08"
@@ -2196,8 +2605,8 @@
         "optimization limits"
       ]
     },
-    "motivation": "<p>Not every sequence increases neatly. Functions can wiggle, spike, or alternate. We still need a reliable inequality that survives imperfect convergence.</p><p><b>Fatou's lemma</b> is that safety net for nonnegative functions. It says the integral of what remains in the limit inferior cannot exceed the limit inferior of the integrals.</p>",
-    "definition": "<p>For nonnegative measurable functions $f_n$, Fatou's lemma states $$\\int_X \\liminf_{n\\to\\infty} f_n\\,d\\mu\\le\\liminf_{n\\to\\infty}\\int_X f_n\\,d\\mu.$$ Here $\\liminf f_n(x)$ means the eventual lower value at each point: take tails, find their infimums, then let the tail start move forward.</p><p>The lemma follows from MCT by defining $g_k(x)=\\inf_{n\\ge k}f_n(x)$. Then $g_k\\le g_{k+1}$ and $g_k\\uparrow\\liminf f_n$, so MCT applies to the increasing lower envelope.</p><p><b>Assumptions that matter:</b> the functions must be measurable and nonnegative; the result is an inequality, not usually equality; and it is especially useful when convergence is too weak for stronger interchange theorems.</p>",
+    "motivation": "<p>Sequences of functions often do not increase neatly. They may oscillate, have moving spikes, or settle only in an eventual lower sense. Fatou's lemma handles this rougher situation by focusing on the liminf, the value that remains after ignoring early behavior and looking at the lower envelope of the tails.</p><p>The lemma does not promise equality. It gives a safe inequality for nonnegative functions: the integral of the eventual lower pointwise value is no larger than the eventual lower integral. The proof turns the tail infima into an increasing sequence and then applies monotone convergence. This is why Fatou's lemma is a bridge from MCT to more flexible convergence theorems.</p>",
+    "definition": "<p>Fatou's lemma gives a lower-bound inequality for nonnegative measurable functions:</p><p>$$\\int\\liminf_{n\\to\\infty} f_n\\,d\\mu\\le\\liminf_{n\\to\\infty}\\int f_n\\,d\\mu$$</p><p><b>Assumptions that matter:</b> The functions $f_n$ are nonnegative and measurable; no monotone convergence of the original sequence is required.</p>",
     "worked": {
       "problem": "On $X=\\{a,b\\}$ with equal probabilities, let $f_n(a)=1$ for all $n$ and $f_n(b)=2$ if $n$ is odd, $0$ if $n$ is even. Verify Fatou's lemma.",
       "skills": [
@@ -2386,34 +2795,34 @@
     ],
     "applications": [
       {
-        "title": "Lower bounds in learning",
-        "background": "Fatou is often used when losses converge imperfectly but remain nonnegative.",
-        "numbers": "If expected losses have liminf $1.2$, then $E[\\liminf L_n]\\le1.2$."
+        "title": "Lower-bound risk",
+        "background": "If eventual pointwise losses have an integral, Fatou prevents limiting training risks from falling below it.",
+        "numbers": "If eventual pointwise losses have integral $1.7$, then liminf training risks cannot be below $1.7$."
       },
       {
         "title": "Escaping spikes",
-        "background": "Narrow spikes can keep integrals large while pointwise limits vanish, and Fatou's inequality remains true.",
-        "numbers": "For $n1_{(0,1/n)}$, each integral is $1$, but the pointwise liminf integral is $0$."
+        "background": "Functions $f_n=n1_{[0,1/n]}$ keep mass while moving into thinner intervals.",
+        "numbers": "They have integrals $1$ but pointwise liminf $0$, so Fatou gives $0\\le1$."
       },
       {
-        "title": "Probability of eventual events",
-        "background": "Fatou underlies inequalities relating probabilities of repeated events to limiting event behavior.",
-        "numbers": "If event indicators have probabilities alternating $0.2$ and $0.6$, the liminf of probabilities is $0.2$."
+        "title": "Eventual events",
+        "background": "Indicators turn Fatou's lemma into a probability inequality for eventual occurrence.",
+        "numbers": "$P(\\liminf A_n)\\le\\liminf P(A_n)$."
       },
       {
         "title": "Optimization limits",
-        "background": "Lower semicontinuity arguments use Fatou-like reasoning to control objectives under limits.",
-        "numbers": "If nonnegative penalties have integrals bounded by $10$, Fatou bounds the limiting lower penalty integral by $10$."
+        "background": "If validation losses have liminf integrals, a candidate limit is controlled by the lower-bound direction.",
+        "numbers": "The liminf integrals are $0.42$."
       },
       {
         "title": "Risk certificates",
-        "background": "When model risks are estimated across checkpoints, Fatou gives a conservative statement about eventual lower risk.",
-        "numbers": "Checkpoint risks $0.9,0.7,0.85,0.75$ have tail lower values moving toward at most $0.75$."
+        "background": "Lower envelopes with increasing areas protect mass in the limit.",
+        "numbers": "Areas $0.3,0.35,0.37$ yield at least $0.37$ in the limit."
       },
       {
-        "title": "Series and envelopes",
-        "background": "The proof's lower envelopes $g_k=\\inf_{n\\ge k}f_n$ are increasing, turning a messy sequence into an MCT sequence.",
-        "numbers": "For values $[3,1,2,1.5]$, tail infima start $1$, $1$, $1.5$, $1.5$, showing the lower envelope rises."
+        "title": "Series envelopes",
+        "background": "Tail infimum functions protect against undercounting nonnegative mass.",
+        "numbers": "Tail infimum functions protect against undercounting nonnegative mass."
       }
     ],
     "applicationsClose": "Fatou's lemma is the dependable inequality for rough convergence: lower limiting behavior can be integrated without pretending every limit exchange is equality.",
@@ -2421,6 +2830,57 @@
       "Fatou applies to nonnegative measurable functions.",
       "It states $\\int\\liminf f_n\\,d\\mu\\le\\liminf\\int f_n\\,d\\mu$.",
       "It follows from MCT applied to increasing lower envelopes and is often strict when mass moves or spikes."
+    ],
+    "connectionsProse": "<p>This lesson introduces a limit theorem that works even when a sequence is not monotone. Fatou's lemma looks at the eventual lower value of a nonnegative sequence and compares its integral with the eventual lower behavior of the integrals. It is weaker than equality, but it is very robust. This makes it a basic tool for proving convergence results and protecting lower bounds.</p>",
+    "symbols": [
+      {
+        "sym": "$\\liminf f_n$",
+        "desc": "the eventual lower pointwise value"
+      },
+      {
+        "sym": "$g_k$",
+        "desc": "the tail infimum"
+      },
+      {
+        "sym": "nonnegative measurable functions",
+        "desc": "the functions to which Fatou applies"
+      },
+      {
+        "sym": "$\\le$",
+        "desc": "the inequality direction that makes Fatou a lower-bound theorem"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define $g_k(x)=\\inf_{n\\ge k} f_n(x)$.",
+        "result": "$g_k(x)=\\inf_{n\\ge k} f_n(x)$",
+        "why": "This is the lower envelope of the tail starting at $k$."
+      },
+      {
+        "do": "Observe $g_k\\le g_{k+1}$.",
+        "result": "$g_k\\le g_{k+1}$",
+        "why": "Dropping the first term from a tail can only raise its infimum."
+      },
+      {
+        "do": "Identify the increasing limit of $g_k$.",
+        "result": "$g_k\\uparrow\\liminf_{n\\to\\infty}f_n$",
+        "why": "This is the definition of pointwise liminf."
+      },
+      {
+        "do": "Apply MCT.",
+        "result": "$\\int\\liminf f_n\\,d\\mu=\\lim_k\\int g_k\\,d\\mu$",
+        "why": "The lower envelopes increase."
+      },
+      {
+        "do": "Since $g_k\\le f_n$ for every $n\\ge k$, compare integrals.",
+        "result": "$\\int g_k\\,d\\mu\\le\\inf_{n\\ge k}\\int f_n\\,d\\mu$",
+        "why": "Integrals preserve order."
+      },
+      {
+        "do": "Let $k\\to\\infty$.",
+        "result": "$\\int\\liminf f_n\\,d\\mu\\le\\liminf_n\\int f_n\\,d\\mu$",
+        "why": "This is Fatou's inequality."
+      }
     ],
     "prereqs": [
       "math-07-09"
@@ -2449,8 +2909,8 @@
         "almost everywhere convergence"
       ]
     },
-    "motivation": "<p>You already know that finite sums are friendly: if $a_{n,k}\\to a_k$ for $k=1,2,3$, then $\\sum_k a_{n,k}\\to\\sum_k a_k$. Integrals feel like infinite sums, so it is tempting to do the same thing.</p><p>The catch is that mass can escape or spike. The <b>dominated convergence theorem</b> says the tempting move is safe when every function in the sequence stays below one integrable guardrail. The guardrail is the teacher in the room: it prevents wild behavior while the pointwise limit settles down.</p>",
-    "definition": "<p>Let $(X,\\mathcal F,\\mu)$ be a measure space. Suppose $f_n:X\\to\\mathbb R$ are measurable, $f_n(x)\\to f(x)$ for almost every $x$, and there is an integrable function $g$ with $|f_n(x)|\\le g(x)$ for every $n$ and almost every $x$. Then $f$ is integrable and $$\\lim_{n\\to\\infty}\\int_X f_n\\,d\\mu=\\int_X f\\,d\\mu.$$</p><p>The reason the conclusion is believable is that $|f_n-f|\\le |f_n|+|f|\\le2g$ almost everywhere, and the region where $|f_n-f|$ is large shrinks pointwise. Integrability of $g$ turns that shrinking into small total area.</p><p><b>Assumptions that matter:</b> convergence is almost everywhere, not necessarily everywhere; the same dominating function $g$ must work for all $n$; $g$ must have finite integral; and measurability is required so the integrals are defined.</p>",
+    "motivation": "<p>A pointwise limit can be misleading for integrals if mass escapes into thinner and taller spikes. The functions may converge to zero at every fixed point while their integrals stay away from zero. To rule out this behavior, all functions in the sequence need to be controlled by one integrable envelope.</p><p>Dominated convergence uses that envelope to make limits and integrals commute. The dominating function keeps positive and negative parts uniformly integrable, while Fatou's lemma supplies the two inequalities that trap the limiting integral. In applications, the domination condition often appears as bounded losses, bounded gradients, or an integrable tail bound.</p>",
+    "definition": "<p>The dominated convergence theorem says that pointwise convergence plus one integrable dominating function lets limits pass through integrals:</p><p>$$f_n\\to f\\ \\text{a.e.},\\ |f_n|\\le g,\\ \\int |g|\\,d\\mu<\\infty\\quad\\Rightarrow\\quad \\int f_n\\,d\\mu\\to\\int f\\,d\\mu$$</p><p><b>Assumptions that matter:</b> The functions are measurable, convergence holds almost everywhere, and the same integrable $g$ dominates every $|f_n|$.</p>",
     "worked": {
       "problem": "Let $f_n(x)=x^n$ on $[0,1]$ with Lebesgue measure. Use dominated convergence to find $\\lim_{n\\to\\infty}\\int_0^1 x^n\\,dx$.",
       "skills": [
@@ -2659,34 +3119,34 @@
     ],
     "applications": [
       {
-        "title": "Interchanging validation averages and model limits",
-        "background": "When models are trained longer, their loss functions may settle pointwise. DCT tells you when the averaged validation loss also settles.",
-        "numbers": "If $|L_n(x)|\\le0.2$ on $1000$ equally weighted cases and $L_n(x_i)\\to L(x_i)$, the average limit is safe; the dominating average is at most $0.2$."
+        "title": "Model limits",
+        "background": "If losses $f_n\\to f$ and all are bounded by $10$, dominated convergence applies on a probability space.",
+        "numbers": "Validation risk limits pass through expectation on a probability space."
       },
       {
-        "title": "Monte Carlo with bounded payoffs",
-        "background": "Financial simulations often approximate a payoff by smoother versions. A fixed cap prevents rare simulated paths from dominating the limit.",
-        "numbers": "A payoff clipped between $0$ and $50$ dollars has $g=50$ on a probability space, so $\\mathbb E[g]=50<\\infty$."
+        "title": "Bounded payoffs",
+        "background": "Monte Carlo payoffs in $[-2,2]$ share a constant dominating function.",
+        "numbers": "$g=2$ has integral $2$."
       },
       {
-        "title": "Truncated exponential tails",
-        "background": "Data pipelines often truncate continuous features for computation, then let the cutoff grow. DCT proves the truncated integral returns to the full one.",
-        "numbers": "$\\int_0^{10}e^{-x}\\,dx=1-e^{-10}\\approx0.999955$, already within $0.000045$ of $1$."
+        "title": "Truncated tails",
+        "background": "$f_n=x1_{x\\le n}$ under density $e^{-x}$ is dominated by $x$.",
+        "numbers": "The integral of $x$ under that density is $1$."
       },
       {
-        "title": "Numerical quadrature refinement",
-        "background": "Approximating an integrand by bounded step functions is common in scientific computing. A common envelope lets the refined areas converge to the true area.",
-        "numbers": "If approximations to $\\sin x$ on $[0,\\pi]$ are bounded by $1$, the envelope area is $\\pi\\approx3.142$."
+        "title": "Quadrature refinement",
+        "background": "Bounded integrands under a constant envelope allow grid limits to match the integral.",
+        "numbers": "$g=1$."
       },
       {
-        "title": "Safe limit of expected gradients",
-        "background": "Optimization sometimes studies gradients as batch size or smoothing changes. DCT justifies moving the limit inside an expectation when gradients are uniformly bounded.",
-        "numbers": "If $|g_n(Z)|\\le4$ always, then $\\mathbb E|4|=4$, so the expected-gradient limit is valid under pointwise convergence."
+        "title": "Expected gradients",
+        "background": "If coordinate gradients satisfy $|G_n|\\le5$ and converge, their expectations converge too.",
+        "numbers": "The common bound is $5$."
       },
       {
-        "title": "A warning about spikes",
-        "background": "The classic spike example shows why the bound matters. Pointwise convergence alone can hide fixed area in thinner and taller regions.",
-        "numbers": "$n\\mathbf1_{(0,1/n)}$ has area $1$ for every $n$, although it is $0$ at each fixed positive $x$ eventually."
+        "title": "Spike warning",
+        "background": "$f_n=n1_{[0,1/n]}$ has pointwise limit $0$ but no integrable shared bound.",
+        "numbers": "Its integral is $1$, so DCT does not apply."
       }
     ],
     "applicationsClose": "The shared pattern is safe exchange: a pointwise limit may enter an integral only when an integrable envelope keeps every approximation honest.",
@@ -2695,6 +3155,62 @@
       "The theorem concludes both integrability of the limit and convergence of the integrals.",
       "Finite intervals with uniformly bounded functions are friendly DCT settings.",
       "Tall moving spikes show why domination cannot be skipped."
+    ],
+    "connectionsProse": "<p>This lesson gives one of the most useful conditions for exchanging limits and integrals. Pointwise convergence alone can miss moving spikes of mass, so a shared integrable bound is needed. Dominated convergence supplies that bound and turns pointwise convergence into convergence of integrals. It is the formal justification behind many limits of expected losses, gradients, and numerical approximations.</p>",
+    "symbols": [
+      {
+        "sym": "$g$",
+        "desc": "the dominating integrable function"
+      },
+      {
+        "sym": "almost everywhere",
+        "desc": "outside a measure-zero set"
+      },
+      {
+        "sym": "$\\liminf$ and $\\limsup$",
+        "desc": "bracket possible integral limits"
+      },
+      {
+        "sym": "integrable",
+        "desc": "means $\\int |g|\\,d\\mu<\\infty$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume $f_n\\to f$ almost everywhere and $|f_n|\\le g$ with $g$ integrable.",
+        "result": "$f_n\\to f$ a.e. and $|f_n|\\le g$",
+        "why": "This gives pointwise convergence plus a shared integrable ceiling."
+      },
+      {
+        "do": "Pass the bound to the limit.",
+        "result": "$|f|\\le g$ almost everywhere",
+        "why": "Pointwise limits preserve the bound outside a null set."
+      },
+      {
+        "do": "Apply Fatou's lemma to the nonnegative functions $g+f_n$.",
+        "result": "$g+f_n\\ge0$",
+        "why": "They are nonnegative because $f_n\\ge-g$."
+      },
+      {
+        "do": "Use Fatou's inequality.",
+        "result": "$\\int(g+f)\\,d\\mu\\le\\liminf_n\\int(g+f_n)\\,d\\mu$",
+        "why": "This is the lower inequality."
+      },
+      {
+        "do": "Cancel $\\int g\\,d\\mu<\\infty$.",
+        "result": "$\\int f\\,d\\mu\\le\\liminf_n\\int f_n\\,d\\mu$",
+        "why": "The dominating integral is finite."
+      },
+      {
+        "do": "Apply the same argument to $g-f_n$.",
+        "result": "$\\limsup_n\\int f_n\\,d\\mu\\le\\int f\\,d\\mu$",
+        "why": "This is equivalent to the liminf inequality for negatives."
+      },
+      {
+        "do": "Combine liminf and limsup inequalities.",
+        "result": "$\\int f_n\\,d\\mu\\to\\int f\\,d\\mu$",
+        "why": "The possible integral limits are trapped at the same value."
+      }
     ],
     "prereqs": [
       "math-07-10"
@@ -2723,8 +3239,8 @@
         "Minkowski's inequality"
       ]
     },
-    "motivation": "<p>You already know how to measure a vector such as $(3,4)$: its Euclidean length is $5$. A function can also have a size, but its coordinates are spread across a continuum.</p><p>An <b>$L^p$ space</b> gives a careful answer: raise the function's magnitude to the $p$th power, integrate, then take a $p$th root. This is how analysis turns functions into points you can compare, approximate, and optimize.</p>",
-    "definition": "<p>For $1\\le p<\\infty$, the space $L^p(X,\\mathcal F,\\mu)$ consists of measurable functions $f$ with $$\\|f\\|_p=\\left(\\int_X |f|^p\\,d\\mu\\right)^{1/p}<\\infty,$$ where functions equal almost everywhere are treated as the same element. For $p=\\infty$, $\\|f\\|_\\infty$ is the essential supremum, the smallest almost-everywhere bound.</p><p>The formula is a genuine norm for $p\\ge1$: nonnegative size is clear, scaling follows from $|cf|^p=|c|^p|f|^p$, and the triangle inequality is Minkowski's inequality. For $p=2$, the norm comes from the inner product $\\langle f,h\\rangle=\\int f h\\,d\\mu$ in real spaces.</p><p><b>Assumptions that matter:</b> functions are measurable; equality is almost everywhere equality; $p\\ge1$ is needed for the norm triangle inequality; and the measure space determines which functions have finite $L^p$ size.</p>",
+    "motivation": "<p>After defining integration, it becomes possible to measure the size of functions themselves. The $L^1$ norm measures average absolute magnitude, $L^2$ measures energy or root-mean-square size on a probability space, and higher $p$ values penalize large deviations more strongly. These are function-space versions of familiar vector norms.</p><p>The formula first removes signs, raises magnitudes to the $p$th power, integrates, and then takes the $p$th root. The root restores the original units of the function. Scaling behaves as expected because constants factor out of the integral as $|c|^p$ before the root is taken. The triangle inequality is deeper, but the derivation here shows why the expression has the right homogeneity.</p>",
+    "definition": "<p>For $p\\ge1$, the $L^p$ norm of a measurable function is</p><p>$$\\lVert f\\rVert_p=\\left(\\int |f|^p\\,d\\mu\\right)^{1/p}$$</p><p><b>Assumptions that matter:</b> Functions are identified up to almost-everywhere equality, and $f$ belongs to $L^p(X,\\mu)$ when this norm is finite.</p>",
     "worked": {
       "problem": "On $[0,1]$, compute $\\|f\\|_1$, $\\|f\\|_2$, and $\\|f\\|_\\infty$ for $f(x)=2x$.",
       "skills": [
@@ -2929,33 +3445,33 @@
     "applications": [
       {
         "title": "Mean absolute error",
-        "background": "$L^1$ loss is popular when robustness matters because it grows linearly with error instead of squaring outliers.",
-        "numbers": "Errors $2,-1,3$ have mean absolute error $(2+1+3)/3=2$."
+        "background": "Values $(1,2,3)$ with probabilities $(0.2,0.5,0.3)$ give an $L^1$ size.",
+        "numbers": "$\\lVert X\\rVert_1=2.1$."
       },
       {
-        "title": "Root mean squared error",
-        "background": "$L^2$ loss is central in least squares and Gaussian noise models. Squaring makes large errors more expensive.",
-        "numbers": "Errors $2,-1,3$ have RMSE $\\sqrt{(4+1+9)/3}=\\sqrt{14/3}\\approx2.160$."
+        "title": "RMS error",
+        "background": "The same values give an $L^2$ size through the square moment.",
+        "numbers": "$\\lVert X\\rVert_2=\\sqrt{4.9}=2.214$."
+      },
+      {
+        "title": "Fourth-moment penalty",
+        "background": "The $L^4$ norm penalizes the larger value more strongly.",
+        "numbers": "$\\lVert X\\rVert_4=(0.2+8+24.3)^{1/4}=2.388$."
       },
       {
         "title": "Signal energy",
-        "background": "Engineering often treats $L^2$ norm squared as energy. A short pulse with larger amplitude can have the same energy as a longer smaller pulse.",
-        "numbers": "A signal equal to $4$ for $0.5$ seconds has energy $\\int 16\\,dt=8$."
+        "background": "Values $1,-1$ on equal halves have constant squared magnitude.",
+        "numbers": "The $L^2$ norm is $1$."
       },
       {
-        "title": "Image difference norms",
-        "background": "Computer vision compares images by treating pixel differences as a finite function. Different $p$ values highlight different visual errors.",
-        "numbers": "Pixel errors $[0,10,0,0]$ have $L^1$ average $2.5$ and max norm $10$."
+        "title": "Image difference",
+        "background": "Error $0.2$ on area $0.25$ and $0.8$ on area $0.75$ gives a spatial $L^2$ norm.",
+        "numbers": "The $L^2$ norm is $\\sqrt{0.49}=0.7$."
       },
       {
-        "title": "Regularization",
-        "background": "Model training adds penalties to control parameter size. The finite-dimensional version mirrors $L^p$ geometry.",
-        "numbers": "Weights $[3,4]$ have $L^2$ norm $5$ and $L^1$ norm $7$."
-      },
-      {
-        "title": "Probability moments",
-        "background": "A random variable belongs to $L^p$ exactly when its $p$th absolute moment is finite. This separates finite mean from finite variance.",
-        "numbers": "If $X$ is $0$ with probability $0.5$ and $4$ with probability $0.5$, then $\\|X\\|_2=\\sqrt{8}\\approx2.828$."
+        "title": "Moment control",
+        "background": "On a probability space, an $L^2$ norm controls the second moment.",
+        "numbers": "If $\\lVert X\\rVert_2=3$, then $\\mathbb E[X^2]=9$."
       }
     ],
     "applicationsClose": "$L^p$ spaces give one vocabulary for errors, signals, images, weights, and random variables: choose the power that matches what size should mean.",
@@ -2964,6 +3480,61 @@
       "Functions equal almost everywhere represent the same $L^p$ element.",
       "$L^2$ has inner-product geometry; larger $p$ values emphasize peaks more strongly.",
       "Finite measure spaces and infinite measure spaces can have very different membership behavior."
+    ],
+    "connectionsProse": "<p>This lesson organizes measurable functions by average size. The $L^p$ norm uses the Lebesgue integral to measure magnitude after taking powers, which makes it suitable for errors, signals, moments, and energies. The earlier integral machinery ensures these quantities are defined on general measure spaces, not only finite vectors. The scaling derivation shows why the formula behaves like a norm.</p>",
+    "symbols": [
+      {
+        "sym": "$L^p(X,\\mu)$",
+        "desc": "the space of measurable functions with finite $p$-norm"
+      },
+      {
+        "sym": "$p\\ge1$",
+        "desc": "the exponent range for norms"
+      },
+      {
+        "sym": "almost-everywhere equality",
+        "desc": "the equality used for functions in $L^p$"
+      },
+      {
+        "sym": "$\\lVert f\\rVert_p$",
+        "desc": "the norm"
+      },
+      {
+        "sym": "$L^2$",
+        "desc": "has inner product $\\int fh\\,d\\mu$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a measurable function $f$ and remove signs with $|f|$.",
+        "result": "$|f|$",
+        "why": "To measure its magnitude, signs should not cancel."
+      },
+      {
+        "do": "Raise to the $p$th power.",
+        "result": "$|f|^p$",
+        "why": "This emphasizes large values according to $p$."
+      },
+      {
+        "do": "Integrate the powered magnitude.",
+        "result": "$\\int |f|^p\\,d\\mu$",
+        "why": "This averages the powered magnitude over the measure space."
+      },
+      {
+        "do": "Take the $p$th root.",
+        "result": "$\\lVert f\\rVert_p=(\\int|f|^p\\,d\\mu)^{1/p}$",
+        "why": "This returns the units to those of $f$."
+      },
+      {
+        "do": "For scaling, compute the norm of $cf$.",
+        "result": "$\\lVert cf\\rVert_p=(\\int |c|^p|f|^p\\,d\\mu)^{1/p}$",
+        "why": "Constants factor out of the integral."
+      },
+      {
+        "do": "Take the root.",
+        "result": "$\\lVert cf\\rVert_p=|c|\\lVert f\\rVert_p$",
+        "why": "This is one norm axiom; Minkowski supplies the triangle inequality for $p\\ge1$."
+      }
     ],
     "prereqs": [
       "math-07-11"
@@ -2992,8 +3563,8 @@
         "Lebesgue measure"
       ]
     },
-    "motivation": "<p>You already know that a rectangle with width $3$ and height $4$ has area $12$. Product measure is the measure-theoretic version of that familiar multiplication.</p><p>The deeper gift is that it works beyond rectangles. Once we define size on $X$ and size on $Y$, product measure builds size on pairs $(x,y)$. That is the doorway to double integrals and joint probability models.</p>",
-    "definition": "<p>Given measure spaces $(X,\\mathcal A,\\mu)$ and $(Y,\\mathcal B,\\nu)$, the product sigma-algebra $\\mathcal A\\otimes\\mathcal B$ is generated by measurable rectangles $A\\times B$. The <b>product measure</b> $\\mu\\times\\nu$ is the measure satisfying $$(\\mu\\times\\nu)(A\\times B)=\\mu(A)\\nu(B)$$ for measurable $A$ and $B$, with standard existence and uniqueness for sigma-finite measures.</p><p>The rectangle rule determines more complicated sets by countable approximation: build the product sigma-algebra from rectangles, then extend the rectangle sizes consistently. This is the same idea that area is forced once you know all rectangle areas.</p><p><b>Assumptions that matter:</b> rectangles must use measurable sides; sigma-finiteness gives the clean uniqueness theorem; the product sigma-algebra is the measurable universe for pairs; and product measure is not automatically the same as every possible joint measure unless independence or construction says so.</p>",
+    "motivation": "<p>Many problems involve pairs: two random variables, an image coordinate, a data point and a time step, or a parameter and a simulation seed. If each coordinate has its own measure, the product space needs a measure on pairs. Rectangles are the basic sets where the answer is forced: size should be the product of the coordinate sizes.</p><p>Product measure extends this rectangle rule to the sigma-algebra generated by measurable rectangles. For probability spaces, the same construction expresses independence when rectangle probabilities multiply. Sigma-finiteness is the regularity condition that makes this extension unique and well behaved. Once product measure exists, joint distributions and iterated integrals have a rigorous base.</p>",
+    "definition": "<p>The product measure $\\mu\\times\\nu$ is the measure on the product sigma-algebra that agrees with the rectangle rule:</p><p>$$(\\mu\\times\\nu)(A\\times B)=\\mu(A)\\nu(B)$$</p><p><b>Assumptions that matter:</b> The rectangles are measurable, the product sigma-algebra is $\\mathcal A\\otimes\\mathcal B$, and sigma-finiteness gives a unique well-behaved extension.</p>",
     "worked": {
       "problem": "Let $\\mu$ be length on $[0,2]$ and $\\nu$ be counting measure on $\\{a,b,c\\}$. Find $(\\mu\\times\\nu)([0.5,1.5]\\times\\{a,c\\})$.",
       "skills": [
@@ -3193,33 +3764,33 @@
     "applications": [
       {
         "title": "Joint feature grids",
-        "background": "Feature engineering often crosses two categorical variables. Product counting measure explains the size of the grid.",
-        "numbers": "With $6$ regions and $4$ device types, the product grid has $6\\cdot4=24$ cells."
+        "background": "$P(X\\in A)=0.4$ and $P(Y\\in B)=0.25$ under independence multiply on rectangles.",
+        "numbers": "$P(A\\times B)=0.1$."
       },
       {
-        "title": "Area in image coordinates",
-        "background": "Digital and continuous images both live on product spaces: horizontal coordinate times vertical coordinate.",
-        "numbers": "A crop from $x=10$ to $50$ and $y=20$ to $70$ has area $40\\cdot50=2000$ square pixels."
+        "title": "Image area",
+        "background": "A rectangle with width $0.2$ and height $0.5$ has product area.",
+        "numbers": "Its product measure is $0.1$."
       },
       {
-        "title": "Independent random choices",
-        "background": "Product probability models two independent experiments. Rectangle probabilities multiply because neither choice changes the other.",
-        "numbers": "If click probability is $0.2$ and conversion probability is $0.05$, the independent joint probability is $0.01$."
+        "title": "Independent choices",
+        "background": "Two fair coins have independent coordinate masses for HH.",
+        "numbers": "$0.5\\cdot0.5=0.25$."
       },
       {
-        "title": "Batch and time axes",
-        "background": "Training logs often combine examples and time steps. Product measure counts total observations.",
-        "numbers": "A batch of $32$ sequences with $128$ tokens has $32\\cdot128=4096$ token positions."
+        "title": "Batch-time axes",
+        "background": "$100$ examples and $20$ time steps form a counting product space.",
+        "numbers": "The counting product size is $2000$."
       },
       {
         "title": "Simulation design",
-        "background": "Parameter sweeps form product spaces of settings. Counting the product prevents underestimating computational cost.",
-        "numbers": "$5$ learning rates times $3$ batch sizes times $4$ seeds gives $60$ runs."
+        "background": "A $5\\times4$ parameter grid combines two finite axes.",
+        "numbers": "It has $20$ product cells."
       },
       {
-        "title": "Continuous-discrete mixtures",
-        "background": "Many datasets pair a continuous time with a discrete label. Product measure combines length and count naturally.",
-        "numbers": "Three labels over a $10$ second interval have product size $3\\cdot10=30$ label-seconds."
+        "title": "Continuous-discrete mixture",
+        "background": "Interval length $0.3$ and class probability $0.2$ multiply in a mixed product space.",
+        "numbers": "The joint mass is $0.06$."
       }
     ],
     "applicationsClose": "Product measure is the quiet multiplication behind area, pair counts, joint probabilities, and crossed experimental designs.",
@@ -3228,6 +3799,57 @@
       "Product measure satisfies $(\\mu\\times\\nu)(A\\times B)=\\mu(A)\\nu(B)$ on rectangles.",
       "Lebesgue area, finite pair counts, and independent joint probabilities are product measures in familiar clothing.",
       "A product measure is a construction; not every joint measure is automatically a product measure."
+    ],
+    "connectionsProse": "<p>This lesson extends measure from one space to pairs of spaces. Product measure is the measure-theoretic version of rectangle area and independent joint probability. It lets a size on $X$ and a size on $Y$ combine into a size on pairs $(x,y)$. This construction is the foundation for joint distributions, grids, images, and data-by-time spaces.</p>",
+    "symbols": [
+      {
+        "sym": "$(X,\\mathcal A,\\mu)$ and $(Y,\\mathcal B,\\nu)$",
+        "desc": "measure spaces"
+      },
+      {
+        "sym": "$\\mathcal A\\otimes\\mathcal B$",
+        "desc": "the product sigma-algebra"
+      },
+      {
+        "sym": "$\\mu\\times\\nu$",
+        "desc": "the product measure"
+      },
+      {
+        "sym": "$A\\times B$",
+        "desc": "a rectangle of pairs"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with measurable rectangles $A\\times B$.",
+        "result": "$A\\times B$",
+        "why": "These are the basic observable sets in a product space."
+      },
+      {
+        "do": "Define the product measure on rectangles.",
+        "result": "$(\\mu\\times\\nu)(A\\times B)=\\mu(A)\\nu(B)$",
+        "why": "This matches ordinary rectangle area."
+      },
+      {
+        "do": "Generate $\\mathcal A\\otimes\\mathcal B$ from countable operations on rectangles.",
+        "result": "$\\mathcal A\\otimes\\mathcal B$",
+        "why": "This creates all product measurable sets."
+      },
+      {
+        "do": "For disjoint finite rectangles $R_i=A_i\\times B_i$, add their product measures.",
+        "result": "$\\sum_i(\\mu\\times\\nu)(R_i)$",
+        "why": "Countable additivity extends the rectangle rule."
+      },
+      {
+        "do": "For independent probability spaces, apply the rectangle rule to the joint law.",
+        "result": "$P_{X,Y}(A\\times B)=P_X(A)P_Y(B)$",
+        "why": "This is independence expressed as product measure."
+      },
+      {
+        "do": "Use sigma-finiteness.",
+        "result": "a unique product measure",
+        "why": "Sigma-finiteness ensures this rectangle rule determines a unique product measure and prevents ambiguous extensions."
+      }
     ],
     "prereqs": [
       "math-07-12"
@@ -3256,8 +3878,8 @@
         "sections"
       ]
     },
-    "motivation": "<p>You already know how to add a rectangular grid by rows or by columns and get the same total. Double integrals are the continuous version of that idea.</p><p><b>Fubini's theorem</b> says that, under the right integrability condition, a function on pairs can be integrated by first integrating over $y$ for each $x$, then over $x$, or the other way around. It turns a two-dimensional problem into two one-dimensional ones.</p>",
-    "definition": "<p>Let $(X,\\mathcal A,\\mu)$ and $(Y,\\mathcal B,\\nu)$ be sigma-finite measure spaces. If $f$ is integrable on the product space, meaning $\\int_{X\\times Y}|f|\\,d(\\mu\\times\\nu)<\\infty$, then $$\\int_{X\\times Y}f\\,d(\\mu\\times\\nu)=\\int_X\\left(\\int_Y f(x,y)\\,d\\nu(y)\\right)d\\mu(x)=\\int_Y\\left(\\int_X f(x,y)\\,d\\mu(x)\\right)d\\nu(y).$$</p><p>Tonelli's theorem is the nonnegative companion: if $f\\ge0$, the iterated integrals agree with the product integral even if the value is infinite. Fubini adds signed functions by requiring absolute integrability so positive and negative parts cannot cancel misleadingly.</p><p><b>Assumptions that matter:</b> the product spaces are sigma-finite; the function is measurable; signed functions need absolute integrability; and changing order without these conditions can give wrong or undefined results.</p>",
+    "motivation": "<p>Computing a joint integral directly can be difficult, but many joint spaces have a coordinate structure. For rectangles, integrating first in $y$ and then in $x$ clearly gives the same value as multiplying the two coordinate measures. Fubini's theorem says this agreement extends far beyond rectangle indicators when the right integrability conditions hold.</p><p>The theorem has two closely related forms. Tonelli's theorem handles nonnegative functions and allows the value $\\infty$; Fubini's theorem handles signed functions when the absolute integral is finite. Together they justify changing the order of summation or integration in product spaces. This is why row-first and column-first computations agree when the hypotheses are satisfied.</p>",
+    "definition": "<p>Fubini's theorem states that an absolutely integrable function on a product measure space can be integrated one coordinate at a time:</p><p>$$\\int_{X\\times Y} f\\,d(\\mu\\times\\nu)=\\int_X\\int_Y f(x,y)\\,d\\nu(y)\\,d\\mu(x)$$</p><p><b>Assumptions that matter:</b> Tonelli applies to nonnegative functions, while signed functions require absolute integrability; the product spaces are taken with product measure.</p>",
     "worked": {
       "problem": "Compute $\\int_0^2\\int_0^3 (x+2y)\\,dy\\,dx$ and interpret it as an integral over a rectangle.",
       "skills": [
@@ -3462,33 +4084,33 @@
     "applications": [
       {
         "title": "Marginalizing joint densities",
-        "background": "Probability models often start with a joint density and need a marginal density. Fubini is the theorem behind integrating out variables.",
-        "numbers": "If $f(x,y)=2$ on $0<y<x<1$, then $f_X(x)=\\int_0^x2\\,dy=2x$."
+        "background": "The joint density $xy$ on the unit square can be integrated in either order.",
+        "numbers": "$\\int_0^1\\int_0^1 xy\\,dy\\,dx=1/4$."
       },
       {
-        "title": "Expected loss over data and randomness",
-        "background": "Training may average over examples and augmentation noise. Fubini lets those averages be computed in either order when integrability holds.",
-        "numbers": "If loss is $x+z$ with $x,z\\sim U[0,1]$, the mean is $0.5+0.5=1$."
+        "title": "Expected loss over data and dropout",
+        "background": "Average losses $1,3$ over two data points and $0.5,1.5$ over two masks can be averaged by either coordinate first.",
+        "numbers": "The total mean is $1.5$."
       },
       {
-        "title": "Image total brightness",
-        "background": "An image intensity function is integrated over horizontal and vertical coordinates. Row sums and column sums agree in total.",
-        "numbers": "A $10\\times20$ constant image with brightness $0.3$ has total brightness $10\\cdot20\\cdot0.3=60$."
+        "title": "Image brightness",
+        "background": "Summing rows then columns of a $2\\times2$ image $\\begin{bmatrix}1&2\\3&4\\end{bmatrix}$ gives the same total either way.",
+        "numbers": "The total is $10$."
       },
       {
-        "title": "Database aggregation order",
-        "background": "Grouped sums over two dimensions can be computed by users first or days first. Finite Fubini says the total is unchanged.",
-        "numbers": "Three users over four days with average count $5$ give total $3\\cdot4\\cdot5=60$."
+        "title": "Database aggregation",
+        "background": "Group sums $7$ and $5$ can be aggregated independent of grouping order.",
+        "numbers": "They total $12$."
       },
       {
-        "title": "Attention score summaries",
-        "background": "Attention matrices are functions on query-key pairs. Summing by rows or columns is an iterated sum on a finite product space.",
-        "numbers": "A $2\\times3$ matrix with all entries $1/6$ has total mass $6\\cdot1/6=1$."
+        "title": "Attention summaries",
+        "background": "A $3\\times4$ attention table can be summed row-first or column-first.",
+        "numbers": "It has $12$ weights whose total is unchanged."
       },
       {
         "title": "Simulation averages",
-        "background": "Monte Carlo experiments may average over seeds and parameter settings. Fubini supports rearranging loops for efficiency.",
-        "numbers": "$4$ seeds times $5$ settings with average metric $0.7$ produce total metric sum $14$."
+        "background": "$5$ seeds and $10$ examples form a product averaging problem.",
+        "numbers": "They give $50$ losses averaged in either order."
       }
     ],
     "applicationsClose": "Fubini is the principled version of changing loop order: rows first or columns first, the integrable total is the same.",
@@ -3497,6 +4119,57 @@
       "It equates the product integral with either order of iterated integration.",
       "Tonelli covers nonnegative functions, even when the value may be infinite.",
       "Changing order without nonnegativity or absolute integrability can fail."
+    ],
+    "connectionsProse": "<p>This lesson explains when an integral over pairs can be computed one coordinate at a time. Product measures make the joint space precise, and Fubini's theorem gives the rule for iterated integration when the hypotheses are met. The theorem supports the everyday practice of summing by rows then columns, averaging over data then randomness, or reversing those orders. Its proof begins with rectangle indicators because their product structure is transparent.</p>",
+    "symbols": [
+      {
+        "sym": "$\\int_X\\int_Y f(x,y)\\,d\\nu(y)\\,d\\mu(x)$",
+        "desc": "an iterated integral"
+      },
+      {
+        "sym": "$\\mu\\times\\nu$",
+        "desc": "the product measure"
+      },
+      {
+        "sym": "sigma-finite spaces",
+        "desc": "avoid pathologies"
+      },
+      {
+        "sym": "absolute integrability",
+        "desc": "means $\\int |f|<\\infty$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $f=c\\,1_{A\\times B}$.",
+        "result": "$f=c\\,1_{A\\times B}$",
+        "why": "This is the simplest function on a product space."
+      },
+      {
+        "do": "Compute the product integral.",
+        "result": "$\\int f\\,d(\\mu\\times\\nu)=c\\mu(A)\\nu(B)$",
+        "why": "This uses the product rectangle rule."
+      },
+      {
+        "do": "Integrate in $y$ first.",
+        "result": "$\\int_Y c1_A(x)1_B(y)\\,d\\nu(y)=c1_A(x)\\nu(B)$",
+        "why": "For fixed $x$, only the $B$ part is averaged over $Y$."
+      },
+      {
+        "do": "Integrate the result over $x$.",
+        "result": "$\\int_X c1_A(x)\\nu(B)\\,d\\mu(x)=c\\mu(A)\\nu(B)$",
+        "why": "This matches the product integral."
+      },
+      {
+        "do": "Add finitely many such rectangle indicators by linearity.",
+        "result": "simple functions follow",
+        "why": "Linearity extends the rectangle calculation."
+      },
+      {
+        "do": "Use monotone convergence for nonnegative functions and absolute integrability for signed functions.",
+        "result": "Tonelli and Fubini in their full forms",
+        "why": "This extends from simple functions to the theorem's full hypotheses."
+      }
     ],
     "prereqs": [
       "math-07-13"
@@ -3525,8 +4198,8 @@
         "conditional probability"
       ]
     },
-    "motivation": "<p>You already know that probabilities add for disjoint outcomes: if a fair die lands in $\\{1,2\\}$ or in $\\{5\\}$, the probability is $2/6+1/6=3/6$.</p><p>A <b>probability space</b> says that this is not a special trick for dice. It is a measure space whose total size is $1$. The sample space is the universe, events are measurable sets, and probability is the measure assigned to those sets.</p>",
-    "definition": "<p>A probability space is a triple $(\\Omega,\\mathcal F,P)$ where $\\Omega$ is the sample space, $\\mathcal F$ is a sigma-algebra of events, and $P:\\mathcal F\\to[0,1]$ is a measure with $P(\\Omega)=1$. Countable additivity means that for disjoint events $A_1,A_2,\\ldots$, $$P\\left(\\bigcup_i A_i\\right)=\\sum_i P(A_i).$$</p><p>Basic probability rules are measure rules. Since $\\Omega=A\\cup A^c$ disjointly, $1=P(\\Omega)=P(A)+P(A^c)$, so $P(A^c)=1-P(A)$. Since $A\\cup B$ counts the overlap once, $P(A\\cup B)=P(A)+P(B)-P(A\\cap B)$.</p><p><b>Assumptions that matter:</b> only events in $\\mathcal F$ receive probabilities; total mass is exactly $1$; countable additivity is stronger than finite additivity; and probability zero does not always mean impossible in continuous spaces.</p>",
+    "motivation": "<p>Probability rules become simpler when probability is viewed as measure with total mass one. The whole sample space has measure $1$, an event is a measurable set, and a probability is the measure of that set. Complement and union formulas are then consequences of splitting sets into disjoint pieces.</p><p>This perspective explains why the same additivity rules apply to finite experiments, continuous distributions, and empirical datasets. It also prepares the integral view of expectation: once probability is a measure, averaging a random variable is integration with respect to that measure. The derivation here recovers familiar probability identities from the measure axioms.</p>",
+    "definition": "<p>A probability space is a measure space whose total mass is one:</p><p>$$(\\Omega,\\mathcal F,P),\\qquad P(\\Omega)=1$$</p><p><b>Assumptions that matter:</b> Events are members of $\\mathcal F$, and $P$ is a countably additive measure on those events.</p>",
     "worked": {
       "problem": "A biased coin has $P(H)=0.7$ and $P(T)=0.3$. For two independent tosses, build the product probability and find $P(\\text{at least one head})$.",
       "skills": [
@@ -3726,33 +4399,33 @@
     "applications": [
       {
         "title": "Dataset proportions",
-        "background": "Empirical distributions are probability measures on finite sample spaces. Each example receives mass $1/n$.",
-        "numbers": "In $200$ examples, $50$ positives have empirical probability $50/200=0.25$."
+        "background": "$73$ positives in $1000$ examples define an empirical probability.",
+        "numbers": "The empirical probability is $0.073$."
       },
       {
-        "title": "Continuous feature models",
-        "background": "Uniform and density-based models use length or area normalized to total mass one.",
-        "numbers": "Uniform on $[0,4]$ gives $P(1\\le X\\le3)=2/4=0.5$."
+        "title": "A/B tests",
+        "background": "If treatment and control partition the sample space, complements give the control probability.",
+        "numbers": "If $P(T)=0.5$, then $P(T^c)=0.5$."
       },
       {
-        "title": "A/B testing",
-        "background": "Experiment outcomes are events in a probability space. Complements and intersections keep the bookkeeping exact.",
-        "numbers": "If conversion is $0.08$, non-conversion is $0.92$ by the complement rule."
+        "title": "Union events",
+        "background": "If $P(A)=0.3$, $P(B)=0.4$, and $P(A\\cap B)=0.12$, inclusion-exclusion gives the union probability.",
+        "numbers": "$P(A\\cup B)=0.58$."
       },
       {
         "title": "Confusion matrices",
-        "background": "Classifier metrics are probabilities of intersections between predicted and true-label events.",
-        "numbers": "If $P(Y=1)=0.3$ and recall is $0.8$, then true-positive mass is $0.24$."
+        "background": "A false-positive event with $40$ of $1000$ rows has empirical probability.",
+        "numbers": "The probability is $0.04$."
       },
       {
-        "title": "Reliability of independent services",
-        "background": "System reliability often models component failures as events. Independence uses product probability.",
-        "numbers": "If two services fail with probabilities $0.02$ and $0.03$ independently, both fail with probability $0.0006$."
+        "title": "Independent services",
+        "background": "Failures with probabilities $0.01$ and $0.02$ multiply under independence.",
+        "numbers": "The joint probability is $0.0002$."
       },
       {
-        "title": "Rare events with zero-looking mass",
-        "background": "Continuous probability reminds us that individual exact values can have probability zero while intervals matter.",
-        "numbers": "For a uniform arrival time over $60$ seconds, exactly $10.000$ seconds has probability $0$, but $10$ to $11$ seconds has probability $1/60$."
+        "title": "Rare continuous events",
+        "background": "In continuous probability, point events and interval events can behave differently.",
+        "numbers": "A point event can have probability $0$ while an interval event has positive probability."
       }
     ],
     "applicationsClose": "Probability spaces make every rule of probability a rule about measuring sets with total mass one.",
@@ -3761,6 +4434,61 @@
       "Events are measurable sets; probabilities are their measures.",
       "Complement and union formulas follow from countable additivity.",
       "Continuous spaces can assign probability zero to individual possible outcomes."
+    ],
+    "connectionsProse": "<p>This lesson identifies probability as a special case of measure theory. The sample space is the whole measurable space, events are measurable sets, and probability is a measure whose total mass is one. Familiar probability rules are therefore not separate assumptions; they follow from additivity. This viewpoint prepares the later lessons on random variables, distributions, and expectations.</p>",
+    "symbols": [
+      {
+        "sym": "$\\Omega$",
+        "desc": "the sample space"
+      },
+      {
+        "sym": "$\\mathcal F$",
+        "desc": "the event sigma-algebra"
+      },
+      {
+        "sym": "$P$",
+        "desc": "a measure with $P(\\Omega)=1$"
+      },
+      {
+        "sym": "$A^c$",
+        "desc": "the complement"
+      },
+      {
+        "sym": "$A\\cap B$",
+        "desc": "the overlap"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a probability space $(\\Omega,\\mathcal F,P)$ and event $A$.",
+        "result": "$P(\\Omega)=1$",
+        "why": "This means $P(\\Omega)=1$."
+      },
+      {
+        "do": "Split $\\Omega=A\\cup A^c$ disjointly.",
+        "result": "$\\Omega=A\\cup A^c$",
+        "why": "Every outcome is either in $A$ or not."
+      },
+      {
+        "do": "Apply additivity.",
+        "result": "$1=P(\\Omega)=P(A)+P(A^c)$",
+        "why": "Disjoint event probabilities add."
+      },
+      {
+        "do": "Rearrange.",
+        "result": "$P(A^c)=1-P(A)$",
+        "why": "This is the complement rule."
+      },
+      {
+        "do": "For two events, split $A\\cup B$ into disjoint pieces $A$ and $B\\setminus A$.",
+        "result": "$A\\cup B=A\\cup(B\\setminus A)$",
+        "why": "This avoids double-counting the overlap."
+      },
+      {
+        "do": "Add and rewrite $P(B\\setminus A)=P(B)-P(A\\cap B)$.",
+        "result": "$P(A\\cup B)=P(A)+P(B)-P(A\\cap B)$",
+        "why": "This gives the union formula."
+      }
     ],
     "prereqs": [
       "math-07-14"
@@ -3789,8 +4517,8 @@
         "distribution functions"
       ]
     },
-    "motivation": "<p>You already use random variables as numbers produced by chance: die roll, click count, waiting time. Measure theory asks one careful question: what must be true so events like $X\\le3$ have probabilities?</p><p>The answer is simple and powerful. A random variable is a measurable function from outcomes to values. Measurability means numerical questions about the function pull back to legitimate events in the original probability space.</p>",
-    "definition": "<p>Given a probability space $(\\Omega,\\mathcal F,P)$, a real-valued <b>random variable</b> is a measurable function $X:\\Omega\\to\\mathbb R$, meaning $X^{-1}(B)=\\{\\omega:X(\\omega)\\in B\\}\\in\\mathcal F$ for every Borel set $B\\subseteq\\mathbb R$.</p><p>The distribution of $X$ is the pushforward measure $P_X$ on $\\mathbb R$ defined by $P_X(B)=P(X\\in B)$. This rule is forced by preimages: to measure a set of values, look at the outcomes that land there and use the original probability measure.</p><p><b>Assumptions that matter:</b> the codomain uses the Borel sigma-algebra unless stated otherwise; measurability is what makes $P(X\\in B)$ meaningful; two random variables equal almost surely have the same distribution; and a random variable need not be random as a function, only its input outcome is uncertain.</p>",
+    "motivation": "<p>In elementary probability, a random variable is often described as a numerical outcome of an experiment. Measure theory makes that precise by treating it as a measurable function from the outcome space to the value space. The measurability condition ensures that value questions such as $X\\le t$ are genuine events.</p><p>The distribution of $X$ is obtained by pushing the original probability measure forward through $X$. Instead of measuring values directly, we measure the outcomes that map into a value set. This definition works for discrete, continuous, and mixed random variables in the same way. It also explains why transformations of random variables create new distributions.</p>",
+    "definition": "<p>A random variable is a measurable map from the outcome space to a value space, and its distribution is the pushforward measure</p><p>$$P_X(B)=P(X^{-1}(B))$$</p><p><b>Assumptions that matter:</b> $X$ is measurable, $B$ is a Borel set of values, and $P_X$ measures outcomes by pulling value-sets back to events in $\\Omega$.</p>",
     "worked": {
       "problem": "A fair die has $\\Omega=\\{1,2,3,4,5,6\\}$ and $X(\\omega)=\\omega^2$. Find $P_X(\\{1,4,9\\})$ and $P(X>20)$.",
       "skills": [
@@ -3989,34 +4717,34 @@
     ],
     "applications": [
       {
-        "title": "Model scores as random variables",
-        "background": "A model score depends on a randomly drawn example. Measurability lets threshold events receive probabilities.",
-        "numbers": "If $S\\sim U[0,1]$, then $P(S\\ge0.9)=0.1$."
+        "title": "Model scores",
+        "background": "If $P(\\omega:s(\\omega)>0.8)=0.12$, the score distribution assigns that mass to high score values.",
+        "numbers": "$P_s((0.8,1])=0.12$."
       },
       {
-        "title": "Labels as indicator variables",
-        "background": "Binary labels are random variables taking values 0 and 1. Their distribution is the class balance.",
-        "numbers": "A dataset with positive rate $0.12$ has $P(Y=1)=0.12$ and $P(Y=0)=0.88$."
+        "title": "Label indicators",
+        "background": "$Y=1_A$ pushes event mass onto the value $1$.",
+        "numbers": "$P_Y(\\{1\\})=P(A)$."
       },
       {
-        "title": "Feature transformations",
-        "background": "Preprocessing maps raw outcomes into numeric features. The transformed feature is another random variable when the map is measurable.",
-        "numbers": "If age $A$ is uniform from $20$ to $60$, then $P(A/10\\le3)=P(A\\le30)=10/40=0.25$."
+        "title": "Feature transforms",
+        "background": "If $Z=2X+1$ and $P(X\\le3)=0.7$, the transformed threshold corresponds to the same event.",
+        "numbers": "$P(Z\\le7)=0.7$."
       },
       {
-        "title": "Pushforward distributions in simulation",
-        "background": "Simulators generate base randomness, then map it to outputs. The output distribution is a pushforward measure.",
-        "numbers": "If $U\\sim U[0,1]$ and $X=10U$, then $P(X\\le3)=P(U\\le0.3)=0.3$."
+        "title": "Simulation",
+        "background": "Mapping random seeds to outputs turns seed measure into output distribution.",
+        "numbers": "Mapping random seeds to outputs turns seed measure into output distribution."
       },
       {
         "title": "Ranking buckets",
-        "background": "A continuous score can be mapped to discrete buckets for monitoring. Bucket counts are probabilities of preimages.",
-        "numbers": "If scores are uniform and bucket high is $[0.8,1]$, high-bucket mass is $0.2$."
+        "background": "A bucket map with bucket masses $0.2,0.5,0.3$ defines a discrete pushforward law.",
+        "numbers": "The bucket masses are $0.2,0.5,0.3$."
       },
       {
-        "title": "Loss as a random variable",
-        "background": "When the data point is random, the loss is random too. Expected risk begins by treating loss as a measurable function.",
-        "numbers": "If loss is $0$ on $70\\%$ of examples and $2$ on $30\\%$, then its distribution has masses $0.7$ at 0 and $0.3$ at 2."
+        "title": "Loss as random variable",
+        "background": "$L(h(X),Y)$ has a distribution induced by the underlying data-generating probability.",
+        "numbers": "Its mean is risk."
       }
     ],
     "applicationsClose": "A random variable is the bridge from uncertain outcomes to numerical events you can measure, model, and optimize.",
@@ -4025,6 +4753,61 @@
       "Events about values, such as $X\\in B$, are preimages in the original sample space.",
       "The distribution of $X$ is the pushforward measure $P_X(B)=P(X\\in B)$.",
       "Indicators, scores, labels, losses, and transformed features are all random variables when measurable."
+    ],
+    "connectionsProse": "<p>This lesson gives the measure-theoretic definition of a random variable. A random variable is a measurable map from outcomes to a value space, so value conditions pull back to events. Its distribution is the measure created by pushing the original probability measure through that map. This is how a model score, label, feature transform, or loss obtains its own probability law.</p>",
+    "symbols": [
+      {
+        "sym": "$X$",
+        "desc": "a random variable"
+      },
+      {
+        "sym": "$P_X$",
+        "desc": "its distribution or law"
+      },
+      {
+        "sym": "$B$",
+        "desc": "a Borel set of values"
+      },
+      {
+        "sym": "$X^{-1}(B)=\\{\\omega:X(\\omega)\\in B\\}$",
+        "desc": "a preimage event"
+      },
+      {
+        "sym": "pushforward",
+        "desc": "moving the measure through $X$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $X:\\Omega\\to\\mathbb R$ be measurable.",
+        "result": "$X:\\Omega\\to\\mathbb R$",
+        "why": "This ensures value conditions pull back to events."
+      },
+      {
+        "do": "For a Borel set $B\\subseteq\\mathbb R$, define $P_X(B)=P(X^{-1}(B))$.",
+        "result": "$P_X(B)=P(X^{-1}(B))$",
+        "why": "This measures the outcomes whose values land in $B$."
+      },
+      {
+        "do": "Check the empty set.",
+        "result": "$P_X(\\varnothing)=P(X^{-1}(\\varnothing))=P(\\varnothing)=0$",
+        "why": "The distribution has zero empty mass."
+      },
+      {
+        "do": "For disjoint Borel sets $B_i$, take preimages.",
+        "result": "$X^{-1}(B_i)$ are disjoint",
+        "why": "A single outcome cannot land in two disjoint value sets."
+      },
+      {
+        "do": "Use preimage union preservation.",
+        "result": "$X^{-1}(\\bigcup_iB_i)=\\bigcup_iX^{-1}(B_i)$",
+        "why": "This transfers countable unions back to outcomes."
+      },
+      {
+        "do": "Apply countable additivity of $P$.",
+        "result": "$P_X(\\bigcup_iB_i)=\\sum_iP_X(B_i)$",
+        "why": "Thus $P_X$ is a probability measure."
+      }
     ],
     "prereqs": [
       "math-07-15"
@@ -4053,8 +4836,8 @@
         "change of variables"
       ]
     },
-    "motivation": "<p>You already compute averages: add values and divide by how many there are. If values have unequal probabilities, you weight them. If outcomes are continuous, the same idea needs an integral.</p><p>Measure theory gives the clean version: expectation is the Lebesgue integral of a random variable with respect to probability. This one definition covers finite tables, densities, indicators, and losses in machine learning.</p>",
-    "definition": "<p>For a random variable $X$ on $(\\Omega,\\mathcal F,P)$, the <b>expectation</b> is $$\\mathbb E[X]=\\int_\\Omega X\\,dP$$ when the integral is defined. For nonnegative $X$, the expectation may be infinite. For signed $X$, we require $\\mathbb E[X^+]<\\infty$ and $\\mathbb E[X^-]<\\infty$ for a finite expectation.</p><p>For an indicator, $\\mathbb E[\\mathbf1_A]=\\int \\mathbf1_A\\,dP=P(A)$ because the function is 1 on $A$ and 0 outside. Linearity follows from linearity of the Lebesgue integral: $\\mathbb E[aX+bY]=a\\mathbb E[X]+b\\mathbb E[Y]$ when the expectations exist.</p><p><b>Assumptions that matter:</b> $X$ must be measurable; finite expectation requires integrability of the positive and negative parts; probability supplies total mass one; and expectation is not the same as a typical value when tails are heavy.</p>",
+    "motivation": "<p>An ordinary average adds observed values and divides by how many observations there are. A probability average does the same thing, except the weights come from probability mass instead of from a fixed list. If $X$ takes values $0,1,3$ with probabilities $0.2,0.5,0.3$, the average is $0\\cdot0.2+1\\cdot0.5+3\\cdot0.3=1.4$.</p><p>The Lebesgue integral writes that same calculation without separating the discrete and continuous cases. The random variable $X$ is a measurable function on the outcome space $\\Omega$, and the probability measure $P$ supplies the weights. The expectation is $$\\mathbb E[X]=\\int_\\Omega X\\,dP.$$ For an indicator function this gives $\\mathbb E[\\mathbf 1_A]=P(A)$; for a loss function it gives the risk $\\mathbb E[L]=\\int L\\,dP$; for a density it gives the familiar integral $\\int x f(x)\\,dx$.</p><p>This is the foundation of expected loss in machine learning. Training objectives often replace the true probability measure by an empirical one, but the object being approximated is still an integral. The same definition also supports Jensen's inequality, moment bounds, and change-of-measure formulas later in the probability track.</p>",
+    "definition": "<p>When the Lebesgue integral is defined, expectation is integration with respect to the probability measure:</p><p>$$\\mathbb E[X]=\\int_\\Omega X\\,dP$$</p><p><b>Assumptions that matter:</b> For signed $X$, require $\\mathbb E[X^+]<\\infty$ or $\\mathbb E[X^-]<\\infty$ so the expression is not $\\infty-\\infty$.</p>",
     "worked": {
       "problem": "A random variable has $P(X=0)=0.2$, $P(X=3)=0.5$, and $P(X=10)=0.3$. Compute $\\mathbb E[X]$ and $\\mathbb E[X^2]$.",
       "skills": [
@@ -4258,34 +5041,34 @@
     ],
     "applications": [
       {
-        "title": "Risk minimization",
-        "background": "Supervised learning chooses parameters to minimize expected loss over the data distribution. Empirical risk is a finite approximation to this integral.",
-        "numbers": "Losses $0.2,0.4,0.9$ on three equally weighted examples have empirical risk $1.5/3=0.5$."
+        "title": "Expected loss",
+        "background": "If losses $L\\in\\{1,4,10\\}$ occur with probabilities $(0.2,0.5,0.3)$, expectation averages them by probability mass.",
+        "numbers": "$\\mathbb E[L]=1(0.2)+4(0.5)+10(0.3)=5.2$."
       },
       {
-        "title": "Click-through value",
-        "background": "Expected value combines possible revenue with probabilities. Ranking systems often optimize expected utility rather than raw score.",
-        "numbers": "A click worth $4$ dollars with click probability $0.03$ has expected value $0.12$ dollars."
+        "title": "Empirical risk",
+        "background": "The empirical measure on four losses $(1.0,0.5,2.0,1.5)$ gives the sample average as an integral.",
+        "numbers": "$\\int L\\,dP_n=(1.0+0.5+2.0+1.5)/4=1.25$."
       },
       {
-        "title": "Indicator metrics",
-        "background": "Accuracy is the expectation of an indicator for correct prediction. This makes metrics into integrals.",
-        "numbers": "If $87$ of $100$ predictions are correct, empirical $\\mathbb E[\\mathbf1_{correct}]=0.87$."
+        "title": "Indicator metric",
+        "background": "If a classifier violates a latency budget on event $A$ with $P(A)=0.07$, the indicator expectation is the event probability.",
+        "numbers": "$\\mathbb E[\\mathbf 1_A]=0.07$."
       },
       {
         "title": "Mean squared error",
-        "background": "MSE is the expectation of squared prediction error, a second moment of the error random variable.",
-        "numbers": "Errors $1,-1,3$ have MSE $(1+1+9)/3=11/3\\approx3.667$."
-      },
-      {
-        "title": "Queue waiting time",
-        "background": "Operations teams use expected waiting time to summarize random service delays.",
-        "numbers": "Waiting times $1$ min with prob $0.5$ and $5$ min with prob $0.5$ have expectation $3$ min."
+        "background": "If errors are $1,2,3$ with probabilities $(0.2,0.5,0.3)$, squared error is another expected value.",
+        "numbers": "$\\mathbb E[E^2]=0.2(1)^2+0.5(2)^2+0.3(3)^2=4.9$."
       },
       {
         "title": "A/B experiment lift",
-        "background": "Expected outcome per user turns random conversions into a comparable metric across variants.",
-        "numbers": "If variant A converts at $0.10$ for $20$ dollars and B at $0.12$ for $18$ dollars, expected revenues are $2.00$ and $2.16$."
+        "background": "If treatment lift is $-1,0,3$ with probabilities $(0.2,0.5,0.3)$, expectation gives average lift.",
+        "numbers": "The expected lift is $-0.2+0+0.9=0.7$."
+      },
+      {
+        "title": "Jensen for risk",
+        "background": "With $X\\in\\{0,1,3\\}$ and probabilities $(0.2,0.5,0.3)$, convexity of squaring gives Jensen's inequality.",
+        "numbers": "$(\\mathbb E[X])^2=1.4^2=1.96\\le\\mathbb E[X^2]=3.2$."
       }
     ],
     "applicationsClose": "Expectation is the same averaging idea in every setting: integrate the value of interest against the probability measure that says how often it occurs.",
@@ -4294,6 +5077,83 @@
       "For discrete variables, expectation becomes a probability-weighted sum.",
       "Indicators satisfy $\\mathbb E[\\mathbf1_A]=P(A)$.",
       "Linearity of expectation comes from linearity of the integral and does not require independence."
+    ],
+    "connectionsProse": "<p>This lesson connects the integral built in `math-07-08` with the average used throughout probability and machine learning. Earlier lessons made two pieces precise. A random variable is a measurable function, and the Lebesgue integral adds a measurable function over a measure space. When the measure is a probability measure, that integral is expectation.</p><p>This viewpoint is more than a change in notation. It makes discrete averages, continuous averages, indicator probabilities, expected losses, and moments all part of one definition. It also explains why convergence theorems matter in probability: they are the rules that allow limits to pass through expectations when a model, estimator, or approximation improves.</p>",
+    "symbols": [
+      {
+        "sym": "$\\Omega$",
+        "desc": "the outcome space"
+      },
+      {
+        "sym": "$\\mathcal F$",
+        "desc": "the event sigma-algebra"
+      },
+      {
+        "sym": "$P$",
+        "desc": "the probability measure"
+      },
+      {
+        "sym": "$X$",
+        "desc": "a measurable real-valued function"
+      },
+      {
+        "sym": "$X^+=\\max(X,0)$ and $X^-=\\max(-X,0)$",
+        "desc": "positive and negative parts"
+      },
+      {
+        "sym": "$\\mathbf 1_A$",
+        "desc": "the indicator of event $A$"
+      },
+      {
+        "sym": "$\\varphi$",
+        "desc": "a convex function"
+      },
+      {
+        "sym": "$m$",
+        "desc": "the mean"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write a simple random variable as $X=\\sum_{k=1}^n x_k\\mathbf 1_{A_k}$, where the disjoint events $A_k$ are the value regions $\\{\\omega:X(\\omega)=x_k\\}$.",
+        "result": "$X=\\sum_{k=1}^n x_k\\mathbf 1_{A_k}$",
+        "why": "This partitions the outcomes by the value of $X$."
+      },
+      {
+        "do": "Integrate the simple function.",
+        "result": "$\\int X\\,dP=\\sum_{k=1}^n x_k P(A_k)$",
+        "why": "This is the Lebesgue integral rule for simple functions."
+      },
+      {
+        "do": "Read $P(A_k)$ as $P(X=x_k)$.",
+        "result": "$P(A_k)=P(X=x_k)$",
+        "why": "This changes the same weights from event notation to distribution notation."
+      },
+      {
+        "do": "Conclude the finite-valued expectation formula.",
+        "result": "$\\mathbb E[X]=\\sum_{k=1}^n x_kP(X=x_k)$",
+        "why": "This recovers the familiar weighted average from the integral definition."
+      },
+      {
+        "do": "For an indicator, set $X=\\mathbf 1_A=1\\cdot\\mathbf 1_A+0\\cdot\\mathbf 1_{A^c}$.",
+        "result": "$X=\\mathbf 1_A=1\\cdot\\mathbf 1_A+0\\cdot\\mathbf 1_{A^c}$",
+        "why": "This is the simplest two-value simple function."
+      },
+      {
+        "do": "Integrate the indicator.",
+        "result": "$\\mathbb E[\\mathbf 1_A]=1\\cdot P(A)+0\\cdot P(A^c)=P(A)$",
+        "why": "This shows probabilities are special expectations."
+      },
+      {
+        "do": "For a convex function $\\varphi$, draw a supporting line at the mean $m=\\mathbb E[X]$.",
+        "result": "$\\varphi(x)\\ge \\varphi(m)+a(x-m)$",
+        "why": "This is the defining geometric property of convexity."
+      },
+      {
+        "do": "Take expectations of both sides.",
+        "result": "$\\mathbb E[\\varphi(X)]\\ge\\varphi(m)+a(\\mathbb E[X]-m)=\\varphi(m)$",
+        "why": "This gives Jensen's inequality $\\varphi(\\mathbb E[X])\\le\\mathbb E[\\varphi(X)]$."
+      }
     ],
     "prereqs": [
       "math-07-16"
@@ -4322,8 +5182,8 @@
         "Lebesgue decomposition"
       ]
     },
-    "motivation": "<p>You already know a density idea from calculus: if mass along a line has density $3$ kilograms per meter over $2$ meters, total mass is $6$ kilograms. The density converts length into another measure.</p><p>The <b>Radon–Nikodym theorem</b> gives the general version. If a measure $\\nu$ is absolutely continuous with respect to a reference measure $\\mu$, then $\\nu$ can be recovered by integrating a measurable derivative $d\\nu/d\\mu$ against $\\mu$.</p>",
-    "definition": "<p>Let $(X,\\mathcal F)$ be a measurable space, and let $\\mu$ and $\\nu$ be sigma-finite measures. If $\\nu$ is absolutely continuous with respect to $\\mu$, written $\\nu\\ll\\mu$, meaning $\\mu(A)=0$ implies $\\nu(A)=0$, then there exists a measurable function $h\\ge0$ such that $$\\nu(A)=\\int_A h\\,d\\mu\\quad\\text{for every }A\\in\\mathcal F.$$ The function $h$ is unique up to $\\mu$-almost everywhere equality and is written $h=\\dfrac{d\\nu}{d\\mu}$.</p><p>The condition is necessary: if $\\nu(A)=\\int_A h\\,d\\mu$ and $\\mu(A)=0$, then the integral over $A$ is $0$, so $\\nu(A)=0$. The theorem says this necessary condition is also sufficient under sigma-finiteness.</p><p><b>Assumptions that matter:</b> sigma-finiteness keeps the theorem in its standard form; absolute continuity is required; the derivative is a function defined only up to $\\mu$-null sets; and atoms or singular mass can prevent a density with respect to the chosen reference measure.</p>",
+    "motivation": "<p>Sometimes two measures live on the same measurable space and one is used as a reference for the other. If the target measure never assigns positive mass to a reference-null set, then the target can be described by a density relative to the reference. This condition is called absolute continuity.</p><p>The Radon--Nikodym derivative is that relative density. On a finite space it is simply the ratio of masses on each atom, and integrating the ratio against the reference measure reconstructs the target measure. The theorem says that the same representation holds in much broader sigma-finite settings. This is the measure-theoretic basis for likelihood ratios and change of measure.</p>",
+    "definition": "<p>If $\\nu\\ll\\mu$ on a sigma-finite measure space, the Radon--Nikodym theorem gives a nonnegative measurable derivative $h=d\\nu/d\\mu$ such that</p><p>$$\\nu(A)=\\int_A h\\,d\\mu$$</p><p><b>Assumptions that matter:</b> Absolute continuity $\\nu\\ll\\mu$ is required, and the derivative is unique up to $\\mu$-almost everywhere equality.</p>",
     "worked": {
       "problem": "On $[0,2]$, let $\\mu$ be Lebesgue measure and define $\\nu(A)=\\int_A 3x\\,dx$. Find $d\\nu/d\\mu$ and compute $\\nu([0.5,1.5])$.",
       "skills": [
@@ -4528,33 +5388,33 @@
     "applications": [
       {
         "title": "Likelihood ratios",
-        "background": "Statistics compares two probability models by the density of one with respect to the other. This is exactly a Radon–Nikodym derivative.",
-        "numbers": "If $P(1)=0.75$ and $Q(1)=0.5$, the likelihood ratio at $1$ is $1.5$."
+        "background": "If $P=(0.2,0.5,0.3)$ and $Q=(0.1,0.6,0.3)$, the derivative is a componentwise ratio.",
+        "numbers": "$dP/dQ=(2,0.833,1)$."
       },
       {
         "title": "Importance sampling",
-        "background": "Monte Carlo estimates under one distribution can be computed using samples from another by weighting with $dP/dQ$.",
-        "numbers": "If $g(x)=10$ and weight $dP/dQ=0.2$ on a sample, its weighted contribution is $2$."
+        "background": "Under $Q=(0.5,0.5)$ and $P=(0.2,0.8)$, importance weights are density ratios.",
+        "numbers": "The weights are $(0.4,1.6)$."
       },
       {
         "title": "Dataset reweighting",
-        "background": "Fairness and domain adaptation often change the measure over examples while keeping the same support.",
-        "numbers": "A group with original mass $0.2$ weighted by $3$ contributes new unnormalized mass $0.6$."
+        "background": "Source mass $0.4$ and target mass $0.6$ in a bin produce a reweighting factor.",
+        "numbers": "The ratio is $1.5$."
       },
       {
-        "title": "Continuous densities",
-        "background": "A probability density is a Radon–Nikodym derivative with respect to Lebesgue measure.",
-        "numbers": "Density $f(x)=2x$ on $[0,1]$ gives $P([0.5,1])=\\int_{0.5}^1 2x\\,dx=0.75$."
+        "title": "Continuous density",
+        "background": "If $dP/dm=2$ on $[0,0.5]$ and $0$ elsewhere, interval probability is density times length.",
+        "numbers": "$P([0,0.25])=0.5$."
       },
       {
-        "title": "Change of measure in risk",
-        "background": "Robust evaluation may ask how expected loss changes under a shifted population measure.",
-        "numbers": "Loss $4$ with weight $1.25$ contributes $5$ to the reweighted expectation integrand."
+        "title": "Change of measure",
+        "background": "For $h=2$ on mass $0.25$ and $0.5$ on mass $0.5$, integrating the density reconstructs target mass.",
+        "numbers": "$\\nu(A)=0.75$."
       },
       {
-        "title": "Detecting singular behavior",
-        "background": "If a new distribution places mass where the old one has none, density ratios cannot fix it. The support mismatch is structural.",
-        "numbers": "If training probability for a segment is $0$ but deployment probability is $0.05$, no finite $dP_{deploy}/dP_{train}$ exists there."
+        "title": "Singular warning",
+        "background": "If $Q(A)=0$ but $P(A)=0.1$, absolute continuity fails on that event.",
+        "numbers": "$dP/dQ$ does not exist as an ordinary finite density on that event."
       }
     ],
     "applicationsClose": "Radon–Nikodym derivatives are the rigorous form of density, likelihood ratio, and reweighting: one measure expressed through another.",
@@ -4563,6 +5423,61 @@
       "Under sigma-finiteness, $\\nu\\ll\\mu$ gives a derivative $d\\nu/d\\mu$ with $\\nu(A)=\\int_A d\\nu/d\\mu\\,d\\mu$.",
       "The derivative is unique up to $\\mu$-almost everywhere equality.",
       "Point masses are not absolutely continuous with respect to Lebesgue measure."
+    ],
+    "connectionsProse": "<p>This lesson connects measures through densities. When one measure gives zero mass to every set that a reference measure considers null, the Radon--Nikodym theorem represents the target measure by integrating a derivative against the reference measure. This is the rigorous form of a density ratio. It is central in likelihood ratios, importance sampling, and distribution-shift reweighting.</p>",
+    "symbols": [
+      {
+        "sym": "$\\nu\\ll\\mu$",
+        "desc": "absolute continuity"
+      },
+      {
+        "sym": "$h=d\\nu/d\\mu$",
+        "desc": "the Radon--Nikodym derivative"
+      },
+      {
+        "sym": "$\\mu$",
+        "desc": "the reference measure"
+      },
+      {
+        "sym": "$\\nu$",
+        "desc": "the target measure"
+      },
+      {
+        "sym": "sigma-finite",
+        "desc": "the space is a countable union of finite-measure pieces"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume $\\nu(A)=\\int_A h\\,d\\mu$ for a nonnegative measurable $h$.",
+        "result": "$\\nu(A)=\\int_A h\\,d\\mu$",
+        "why": "This is the density representation."
+      },
+      {
+        "do": "If $\\mu(A)=0$, integrate over $A$.",
+        "result": "$\\int_A h\\,d\\mu=0$",
+        "why": "Integrating over a null set gives zero."
+      },
+      {
+        "do": "Therefore $\\nu(A)=0$.",
+        "result": "$\\nu(A)=0$",
+        "why": "This proves absolute continuity $\\nu\\ll\\mu$ is necessary."
+      },
+      {
+        "do": "On a finite space with $\\mu_i>0$, define $h_i=\\nu_i/\\mu_i$.",
+        "result": "$h_i=\\nu_i/\\mu_i$",
+        "why": "This is the only possible density value on atom $i$."
+      },
+      {
+        "do": "For any set $A$, compute the integral.",
+        "result": "$\\int_A h\\,d\\mu=\\sum_{i\\in A}h_i\\mu_i=\\sum_{i\\in A}\\nu_i=\\nu(A)$",
+        "why": "The density reconstructs the measure."
+      },
+      {
+        "do": "Apply the theorem on sigma-finite measure spaces.",
+        "result": "$h=d\\nu/d\\mu$ unique up to $\\mu$-almost everywhere equality",
+        "why": "The same reconstruction holds beyond finite spaces."
+      }
     ],
     "prereqs": [
       "math-07-17"
@@ -4591,8 +5506,8 @@
         "likelihood"
       ]
     },
-    "motivation": "<p>You already know that a histogram bar with height $0.2$ over width $3$ has area $0.6$. Continuous probability works the same way: the height is not probability by itself; area is probability.</p><p>A <b>density</b> is the function that converts reference measure, usually length or area, into probability. It tells you where mass is concentrated, but you integrate it over a set to get probability.</p>",
-    "definition": "<p>A probability measure $P$ on $\\mathbb R$ has density $f$ with respect to Lebesgue measure $m$ if $$P(A)=\\int_A f(x)\\,dx$$ for every Borel set $A$. Equivalently, $f=dP/dm$. A valid density satisfies $f(x)\\ge0$ almost everywhere and $\\int_{\\mathbb R}f(x)\\,dx=1$.</p><p>The cumulative distribution function is recovered by integration: $F(t)=P(X\\le t)=\\int_{-\\infty}^t f(x)\\,dx$. When $F$ is differentiable at $t$, $F'(t)=f(t)$, so density is the local rate at which cumulative probability grows.</p><p><b>Assumptions that matter:</b> densities depend on the reference measure; density values can exceed $1$; probabilities are integrals over sets, not point heights; and individual points have probability zero for Lebesgue densities.</p>",
+    "motivation": "<p>A continuous density is best understood as a rate of probability accumulation, not as point probability. To find the probability of an interval, integrate the density over that interval. To find the cumulative distribution function, integrate the density from the left up to the threshold.</p><p>This view matches the Radon--Nikodym theorem with Lebesgue measure as the reference measure. If $f=dP/dm$, then $P(A)=\\int_A f(x)\\,dx$ for Borel sets $A$. When the CDF is differentiable, the density is its derivative. Single points have zero probability under ordinary densities because they have zero Lebesgue measure.</p>",
+    "definition": "<p>A density $f=dP/dm$ represents a probability measure $P$ relative to Lebesgue measure $m$ by</p><p>$$P(A)=\\int_A f(x)\\,dx$$</p><p><b>Assumptions that matter:</b> The set $A$ is Borel, $f\\ge0$, and $\\int_\\mathbb R f(x)\\,dx=1$ for a probability density.</p>",
     "worked": {
       "problem": "Let $f(x)=2x$ on $0\\le x\\le1$ and $0$ otherwise. Verify it is a density and compute $P(0.5\\le X\\le1)$.",
       "skills": [
@@ -4791,34 +5706,34 @@
     ],
     "applications": [
       {
-        "title": "Score calibration",
-        "background": "A score distribution density shows where model outputs concentrate. Threshold probabilities are tail integrals.",
-        "numbers": "For $f(s)=2s$, $P(S\\ge0.9)=1-0.81=0.19$."
+        "title": "Uniform score",
+        "background": "Density $1/2$ on $[0,2]$ gives interval probabilities by area.",
+        "numbers": "$P(0.5\\le X\\le1.5)=0.5$."
       },
       {
-        "title": "Likelihood in continuous models",
-        "background": "Continuous observations have density values used in likelihoods. The value is not a probability of the exact point.",
-        "numbers": "Normal density can be about $0.399$ at its mean, while $P(X=0)=0$ for a continuous normal."
+        "title": "Triangular density",
+        "background": "$f(x)=2x$ on $[0,1]$ accumulates probability quadratically.",
+        "numbers": "$F(0.5)=0.25$."
       },
       {
-        "title": "Arrival-time modeling",
-        "background": "Exponential densities model waiting times when events arrive at a constant average rate.",
-        "numbers": "With rate $2$, $P(T>1)=e^{-2}\\approx0.135$."
+        "title": "Likelihood",
+        "background": "Observations $0.2,0.4$ under $f(x)=2x$ have likelihood from multiplying density values.",
+        "numbers": "$0.4\\cdot0.8=0.32$."
       },
       {
         "title": "Histogram normalization",
-        "background": "Histograms estimate densities by making total bar area one, not total bar height one.",
-        "numbers": "A bin of width $0.5$ with density height $1.2$ has probability mass $0.6$."
+        "background": "Bin count $30$ out of $100$ in width $0.2$ estimates density by mass divided by width.",
+        "numbers": "$0.30/0.2=1.5$."
       },
       {
         "title": "Generative models",
-        "background": "Density models assign likelihood to data points and integrate to probabilities over regions.",
-        "numbers": "If a model density is roughly $0.04$ across a region of volume $10$, that region has probability about $0.4$."
+        "background": "A normalizing flow with base density $0.2$ and Jacobian factor $3$ multiplies those factors.",
+        "numbers": "The density is $0.6$."
       },
       {
         "title": "Anomaly thresholds",
-        "background": "Tail probabilities from densities help flag rare measurements rather than relying only on raw values.",
-        "numbers": "If $P(X>8)=0.01$, then among $10,000$ independent cases you expect about $100$ exceedances."
+        "background": "If $P(X>t)=0.01$, the upper tail probability is a density integral.",
+        "numbers": "The upper tail interval has density integral $0.01$."
       }
     ],
     "applicationsClose": "Densities are local rates of probability; integration over the region is what turns those rates into masses you can act on.",
@@ -4827,6 +5742,61 @@
       "Densities must be nonnegative almost everywhere and integrate to one.",
       "Density values may exceed one; probabilities of intervals are areas.",
       "CDFs, likelihoods, thresholds, and tail probabilities are all density calculations."
+    ],
+    "connectionsProse": "<p>This lesson specializes the Radon--Nikodym idea to ordinary continuous distributions. A density with respect to Lebesgue measure tells how probability accumulates over intervals. The density is not the probability of a single point; points have zero Lebesgue length under ordinary densities. Interval probabilities, cumulative distribution functions, and likelihood calculations all come from integrating the density.</p>",
+    "symbols": [
+      {
+        "sym": "$f=dP/dm$",
+        "desc": "the density"
+      },
+      {
+        "sym": "$m$",
+        "desc": "Lebesgue measure"
+      },
+      {
+        "sym": "$F$",
+        "desc": "the cumulative distribution function"
+      },
+      {
+        "sym": "$dx$",
+        "desc": "integration with respect to Lebesgue measure"
+      },
+      {
+        "sym": "$A$",
+        "desc": "a Borel set"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Suppose $P(A)=\\int_A f(x)\\,dx$ for every Borel set $A$.",
+        "result": "$P(A)=\\int_A f(x)\\,dx$",
+        "why": "This defines a probability measure by a density."
+      },
+      {
+        "do": "Set $A=(-\\infty,t]$.",
+        "result": "$F(t)=P(X\\le t)=\\int_{-\\infty}^t f(x)\\,dx$",
+        "why": "The CDF is accumulated density."
+      },
+      {
+        "do": "If $f\\ge0$ and $\\int_\\mathbb R f(x)\\,dx=1$, compute total mass.",
+        "result": "$P(\\mathbb R)=1$",
+        "why": "This is total probability."
+      },
+      {
+        "do": "For an interval $(a,b]$, subtract CDF values.",
+        "result": "$P(a<X\\le b)=F(b)-F(a)=\\int_a^b f(x)\\,dx$",
+        "why": "This gives interval probabilities."
+      },
+      {
+        "do": "When $F$ is differentiable at $t$, apply the fundamental theorem of calculus.",
+        "result": "$F'(t)=f(t)$",
+        "why": "Density is the derivative of accumulated probability."
+      },
+      {
+        "do": "Integrate over a point.",
+        "result": "$\\int_{\\{t\\}}f(x)\\,dx=0$",
+        "why": "Probability comes from intervals, not single points."
+      }
     ],
     "prereqs": [
       "math-07-18"
@@ -4856,8 +5826,8 @@
         "$L^p$ spaces"
       ]
     },
-    "motivation": "<p>You have now seen the pieces: measure spaces assign sizes, probability spaces have total size one, random variables are measurable functions, and expectation is an integral. This capstone puts them into one working machine.</p><p>The payoff is practical. Modern ML constantly averages losses over data, pushes distributions through models, changes measures for reweighting, and integrates over joint spaces. Measure theory is the quiet grammar that keeps all of those operations honest.</p>",
-    "definition": "<p>The measure-theoretic foundation of probability starts with $(\\Omega,\\mathcal F,P)$, a measure space with $P(\\Omega)=1$. Events are sets in $\\mathcal F$. Random variables are measurable maps $X:\\Omega\\to S$ into another measurable space. Their distributions are pushforward measures $P_X(B)=P(X\\in B)$. Expectations are Lebesgue integrals $\\mathbb E[g(X)]=\\int_\\Omega g(X(\\omega))\\,dP(\\omega)=\\int_S g(x)\\,dP_X(x)$ when integrable.</p><p>Product measures build joint spaces, Fubini justifies iterated averaging, densities are Radon–Nikodym derivatives, and $L^p$ spaces describe finite moments and loss sizes. The identities fit together because each one is a statement about measurable functions and measures.</p><p><b>Assumptions that matter:</b> events must be measurable; functions must be measurable to define distributions and expectations; integrability conditions justify finite expectations and changing order of integration; and the choice of reference measure determines whether a density exists.</p>",
+    "motivation": "<p>The section's separate constructions now fit into one probability framework. A probability model begins with $(\\Omega,\\mathcal F,P)$, where $P$ is a measure on events. Random variables are measurable maps out of that space, and their distributions are pushforward measures. Expectations are Lebesgue integrals of measurable functions.</p><p>Densities and likelihood ratios are Radon--Nikodym derivatives, while product measures describe joint spaces and support iterated averaging. This synthesis matters because later probability and machine-learning arguments often move among these forms without changing the underlying object. Expected loss, empirical risk, distribution shift, and moment control all use this same measure-theoretic chain.</p>",
+    "definition": "<p>Measure-theoretic probability starts from a probability space, sends measurable maps to pushforward distributions, and computes averages as Lebesgue integrals:</p><p>$$(\\Omega,\\mathcal F,P),\\quad P_X(B)=P(X^{-1}(B)),\\quad \\mathbb E[g(X)]=\\int g(X)\\,dP$$</p><p><b>Assumptions that matter:</b> $P$ is a measure on events, random variables are measurable maps, densities are Radon--Nikodym derivatives, and product measures govern joint spaces.</p>",
     "worked": {
       "problem": "A user is drawn uniformly from two groups: $G=A$ with probability $0.4$ and $G=B$ with probability $0.6$. Conditional on group, a click $Y\\in\\{0,1\\}$ has $P(Y=1\\mid A)=0.10$ and $P(Y=1\\mid B)=0.25$. A model predicts $p(A)=0.20$ and $p(B)=0.30$. Compute the joint probabilities, the overall click rate, and the expected squared error $(Y-p(G))^2$.",
       "skills": [
@@ -5077,39 +6047,34 @@
     ],
     "applications": [
       {
-        "title": "Empirical risk as an integral",
-        "background": "Training loss is a random variable on the data-generating probability space. The empirical average is the finite measure version of expected risk.",
-        "numbers": "Five losses $0.2,0.1,0.5,0.4,0.3$ have empirical expectation $1.5/5=0.3$."
+        "title": "Empirical risk",
+        "background": "$R_n(h)=\\int L(h(x),y)\\,dP_n$ equals the average loss.",
+        "numbers": "It is $1.25$ for four losses $(1,0.5,2,1.5)$."
       },
       {
-        "title": "Distribution shift by density ratios",
-        "background": "When deployment differs from training but is absolutely continuous, Radon–Nikodym weights adjust expectations.",
-        "numbers": "A sample loss $0.8$ with weight $1.25$ contributes $1.0$ to an importance-weighted average."
+        "title": "Expected population risk",
+        "background": "Replacing $P_n$ by $P$ gives the target quantity optimized in learning theory.",
+        "numbers": "Replacing $P_n$ by $P$ gives the target quantity optimized in learning theory."
       },
       {
-        "title": "Joint modeling of features and labels",
-        "background": "A supervised dataset samples pairs $(X,Y)$ from a joint probability measure. Marginals and conditionals come from measuring slices and projections.",
-        "numbers": "If $P(Y=1)=0.19$ in the worked table, then among $10,000$ users the expected clicks are $1900$."
+        "title": "Distribution shift",
+        "background": "If $dP_{target}/dP_{train}=1.5$ in a bin, losses in that bin are reweighted.",
+        "numbers": "They receive $1.5\\times$ weight."
       },
       {
-        "title": "Threshold metrics as indicator expectations",
-        "background": "Precision, recall, and selection rates are expectations of indicator functions or ratios of such expectations.",
-        "numbers": "If $P(S\\ge0.8)=0.12$, then the expected selected count in $5000$ cases is $600$."
+        "title": "Joint modeling",
+        "background": "Product measures combine independent masses for joint events.",
+        "numbers": "$P(X\\in A,Y\\in B)=0.1$ from masses $0.4$ and $0.25$ under independence."
       },
       {
-        "title": "Continuous score densities",
-        "background": "Score distributions are pushforward measures from examples through the model. Densities allow threshold and calibration calculations.",
-        "numbers": "For $f(s)=2s$, top $10\\%$ threshold solves $1-t^2=0.10$, so $t=\\sqrt{0.90}\\approx0.949$."
+        "title": "Threshold metrics",
+        "background": "An FPR is an expectation of an indicator.",
+        "numbers": "$40/1000=0.04$."
       },
       {
-        "title": "Fubini for nested averages",
-        "background": "ML systems often average over users, items, and random augmentations. Fubini explains when loop order can change without changing the target.",
-        "numbers": "A mean loss of $0.4$ over $100$ users and $20$ augmentations corresponds to total summed loss $0.4\\cdot2000=800$."
-      },
-      {
-        "title": "Moment control with $L^p$",
-        "background": "Generalization and stability arguments often require losses or gradients to have finite moments. $L^p$ spaces name those requirements.",
-        "numbers": "Gradient magnitudes $[1,2,5]$ have empirical $L^2$ size $\\sqrt{(1+4+25)/3}=\\sqrt{10}\\approx3.162$."
+        "title": "Moment control",
+        "background": "$\\lVert X\\rVert_2=2.214$ means the square moment is fixed for the checked discrete example.",
+        "numbers": "$\\mathbb E[X^2]=4.9$."
       }
     ],
     "applicationsClose": "Measure-theoretic probability gives one durable language for ML: measurable data, distributions as measures, predictions as functions, and objectives as integrals.",
@@ -5119,6 +6084,33 @@
       "Expectation, risk, moments, and metrics are Lebesgue integrals.",
       "Product measures, Fubini, densities, and Radon–Nikodym derivatives make joint models and reweighting precise.",
       "The foundations matter because they state exactly when common ML operations are valid."
+    ],
+    "connectionsProse": "<p>This capstone lesson gathers the section into the probability language used later in the track. The earlier lessons introduced measurable spaces, measures, measurable maps, integrals, product measures, and Radon--Nikodym derivatives. Together they explain probability spaces, random variables, distributions, expectations, densities, and joint laws. The same chain also supports expected loss and risk in machine learning.</p>",
+    "symbols": [
+      {
+        "sym": "$(\\Omega,\\mathcal F,P)$",
+        "desc": "the probability space"
+      },
+      {
+        "sym": "$X:\\Omega\\to S$",
+        "desc": "a random variable"
+      },
+      {
+        "sym": "$P_X$",
+        "desc": "the pushforward distribution"
+      },
+      {
+        "sym": "$\\mathbb E[g(X)]$",
+        "desc": "an integral"
+      },
+      {
+        "sym": "$dP/dQ$",
+        "desc": "a density ratio"
+      },
+      {
+        "sym": "$P\\times Q$",
+        "desc": "a product measure"
+      }
     ],
     "prereqs": [
       "math-07-19"

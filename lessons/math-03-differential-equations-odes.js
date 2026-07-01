@@ -28,8 +28,8 @@
         "graphs"
       ]
     },
-    "motivation": "<p>You already know how to read a derivative as a rate. If $s(t)$ is position, then $s'(t)$ is velocity; if $L(w)$ is loss, then $L'(w)$ says how the loss changes when the weight moves.</p><p>A <b>differential equation</b> turns that rate information into a puzzle: find the unknown function whose derivative obeys a given rule. Instead of being handed the path, you are handed the motion law and asked to recover the path.</p>",
-    "definition": "<p>A <b>differential equation</b> is an equation involving an unknown function and one or more of its derivatives. For example, $\\dfrac{dy}{dx}=3x^2$ asks for a function $y(x)$ whose derivative with respect to $x$ is $3x^2$. The independent variable is $x$, the dependent variable is $y$, and $\\dfrac{dy}{dx}$ is the rate of change of $y$ with respect to $x$.</p><p>The key fact comes from reversing differentiation: if $\\dfrac{dy}{dx}=g(x)$, then $y=\\int g(x)\\,dx+C$. The constant $C$ appears because many functions can have the same derivative; they differ by vertical shifts.</p><p><b>Assumptions that matter:</b> variables must be named clearly; a derivative such as $y'$ means derivative of the unknown function; a solution is a function, not just a number; and an interval of validity matters because formulas can break at endpoints or singularities.</p>",
+    "motivation": "<p>A differential equation describes a function by describing its rate of change. Instead of giving the curve directly, it gives a motion law and asks for the function whose derivative obeys that law. The concrete gap is that the curve is not supplied directly.</p><p>The load-bearing idea is that the rate law itself becomes the description of the unknown function. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A differential equation is an equation that describes an unknown function through one or more of its derivatives. For example, $y'=3x^2$ has the family of solutions $y=x^3+C$.</p><p><b>Assumptions that matter:</b> The independent variable, dependent function, derivative notation, and any initial data must be identified before solving.</p>",
     "worked": {
       "problem": "Solve the differential equation $\\dfrac{dy}{dx}=3x^2$ and then choose the solution with $y(0)=2$.",
       "skills": [
@@ -228,34 +228,34 @@
     ],
     "applications": [
       {
-        "title": "Velocity from acceleration",
-        "background": "Classical mechanics made differential equations famous because forces determine acceleration, not position directly. Integrating the rate law recovers motion.",
-        "numbers": "If $v'(t)=4$ m/s$^2$ and $v(0)=3$, then $v(t)=4t+3$, so after $5$ seconds the velocity is $23$ m/s."
+        "title": "Velocity law",
+        "background": "$v'=4$, $v(0)=3$ gives a linear velocity model.",
+        "numbers": "$v(5)=23$"
       },
       {
-        "title": "Continuous-time population growth",
-        "background": "Population models use rates because births accumulate continuously rather than in neat yearly jumps.",
-        "numbers": "If $P'(t)=0.2P(t)$ and $P(0)=100$, then $P(t)=100e^{0.2t}$; at $t=10$, $P\\approx739$ individuals."
+        "title": "Growth law",
+        "background": "$P'=0.2P$, $P(0)=100$ gives exponential growth.",
+        "numbers": "$P(10)\\approx738.91$"
       },
       {
-        "title": "Neural ODEs",
-        "background": "Neural ODE models replace a finite stack of layers with a learned continuous flow. The network learns the derivative of the hidden state.",
-        "numbers": "If a toy hidden state satisfies $h'(t)=0.5h(t)$ with $h(0)=2$, then $h(4)=2e^2\\approx14.78$."
+        "title": "Neural state",
+        "background": "$h'=0.5h$, $h(0)=2$ gives exponential hidden-state growth.",
+        "numbers": "$h(4)\\approx14.78$"
       },
       {
         "title": "Gradient flow",
-        "background": "Optimization can be idealized as continuous movement downhill on a loss surface.",
-        "numbers": "For $L(w)=\\tfrac12w^2$, gradient flow is $w'=-w$, so $w(0)=8$ gives $w(3)=8e^{-3}\\approx0.398$."
+        "background": "$w'=-w$, $w(0)=8$ gives exponential decay.",
+        "numbers": "$w(3)\\approx0.398$"
       },
       {
-        "title": "RC circuits",
-        "background": "Electrical circuits with resistors and capacitors are governed by rates of voltage change.",
-        "numbers": "A simple discharge $V'=-0.1V$ with $V(0)=5$ gives $V(10)=5e^{-1}\\approx1.84$ volts."
+        "title": "RC discharge",
+        "background": "$V'=-0.1V$, $V(0)=5$ gives voltage decay.",
+        "numbers": "$V(10)\\approx1.84$"
       },
       {
-        "title": "Queue backlog",
-        "background": "Systems engineers model backlog by arrival rate minus service rate, which is a derivative of queue length.",
-        "numbers": "If $Q'(t)=120-100=20$ requests per second and $Q(0)=50$, then $Q(6)=170$ requests."
+        "title": "Queue law",
+        "background": "$Q'=20$, $Q(0)=50$ gives constant backlog growth.",
+        "numbers": "$Q(6)=170$"
       }
     ],
     "applicationsClose": "The common thread is that a derivative law describes how a quantity moves; solving the differential equation turns that law back into a function.",
@@ -264,6 +264,25 @@
       "A solution is a function that makes the equation true on an interval.",
       "Initial conditions choose one solution from a family.",
       "Many ML and CS dynamics are rate laws in practical clothing."
+    ],
+    "connectionsProse": "<p>This lesson connects basic derivative notation and antiderivatives to the question of what a differential equation is. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for the vocabulary used by every later ODE method, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$x$ or $t$",
+        "desc": "the independent variable"
+      },
+      {
+        "sym": "$y(x)$ or $s(t)$",
+        "desc": "the unknown function"
+      },
+      {
+        "sym": "$y'$ and $dy/dx$",
+        "desc": "derivatives"
+      },
+      {
+        "sym": "$C$",
+        "desc": "an integration constant"
+      }
     ]
   });
 
@@ -289,8 +308,8 @@
         "partial derivatives"
       ]
     },
-    "motivation": "<p>You already sort equations without thinking: linear equations, quadratics, exponentials. Differential equations deserve the same kindness before we solve them.</p><p>Classification asks a few calm questions. How high is the derivative? Is there one independent variable or several? Does the unknown function appear linearly? The answers point toward the right method and keep us from forcing the wrong one.</p>",
-    "definition": "<p>The <b>order</b> of a differential equation is the highest derivative that appears. An <b>ordinary differential equation</b> uses derivatives with respect to one independent variable, such as $\\dfrac{dy}{dx}$; a <b>partial differential equation</b> uses partial derivatives such as $\\dfrac{\\partial u}{\\partial t}$ when the unknown depends on several variables.</p><p>A first-order ODE is <b>linear</b> when it can be written $a_1(x)y'+a_0(x)y=g(x)$, where $y$ and $y'$ appear only to the first power and are not multiplied together. Dividing by $a_1(x)$, when nonzero, gives $y'+p(x)y=q(x)$.</p><p><b>Assumptions that matter:</b> classification is about the equation before solving; coefficients such as $p(x)$ may vary with $x$; nonlinear terms include $y^2$, $yy'$, $\\sin y$, or $e^y$; and a system has more than one unknown function.</p>",
+    "motivation": "<p>Classification tells which solving tools are reasonable before any algebra begins. Order, ordinary versus partial, linearity, and systems are labels that prevent using a method on the wrong kind of equation. The concrete gap is that many equations look similar on the page.</p><p>The load-bearing idea is that order, variable type, linearity, and coupling identify the right toolbox. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Classification is a decision procedure for differential equations: check the highest derivative for order, the number of independent variables for ODE versus PDE, and whether the unknown appears linearly.</p><p><b>Assumptions that matter:</b> The equation must be written clearly enough to identify the unknown function, independent variables, derivative orders, and powers or products of the unknown.</p>",
     "worked": {
       "problem": "Classify $y''+3y'+2y=\\sin x$ by order, ordinary versus partial, and linear versus nonlinear.",
       "skills": [
@@ -489,34 +508,34 @@
     ],
     "applications": [
       {
-        "title": "Solver selection",
-        "background": "Numerical libraries ask for classification because different algorithms fit different structures.",
-        "numbers": "A first-order system with $100$ unknowns stores a state vector of length $100$; a scalar first-order ODE stores one value."
+        "title": "Second-order forced equation",
+        "background": "$y''+3y'+2y=\\sin x$ is classified by its highest derivative and linear form.",
+        "numbers": "second-order, ordinary, linear"
       },
       {
-        "title": "Physics models",
-        "background": "Newton's law usually produces second-order ODEs because acceleration is a second derivative of position.",
-        "numbers": "If $x''=-9.8$, the order is $2$ and integrating twice introduces two constants."
+        "title": "Free fall equation",
+        "background": "$x''=-9.8$ is a second-order ODE.",
+        "numbers": "order $2$ and needs two constants"
       },
       {
-        "title": "Heat diffusion",
-        "background": "The heat equation is a PDE because temperature depends on both time and position.",
-        "numbers": "In $u_t=0.01u_{xx}$, time derivative order is $1$ and space derivative order is $2$."
+        "title": "Heat equation",
+        "background": "$u_t=0.01u_{xx}$ has different derivative orders in time and space.",
+        "numbers": "first time order and second space order"
       },
       {
-        "title": "Neural network dynamics",
-        "background": "Continuous-depth models often use first-order systems for hidden vectors.",
-        "numbers": "A hidden state with $64$ coordinates gives $64$ coupled equations $h_i'=f_i(h,t)$."
+        "title": "Hidden-state system",
+        "background": "A 64-coordinate hidden state becomes a coupled first-order system.",
+        "numbers": "64 first-order equations"
       },
       {
-        "title": "Epidemic modeling",
-        "background": "Many compartment models are nonlinear systems because populations multiply in contact terms.",
-        "numbers": "The term $\\beta SI$ is nonlinear; with $S=900$, $I=10$, $\\beta=0.0002$, new infection rate is $1.8$ per day."
+        "title": "SIR nonlinearity",
+        "background": "SIR term $0.0002SI$ with $S=900,I=10$ multiplies two unknown states.",
+        "numbers": "nonlinear rate $1.8$"
       },
       {
-        "title": "Control engineering",
-        "background": "Linear first-order equations are easier to stabilize and analyze than nonlinear ones.",
-        "numbers": "For $y'+5y=u(t)$, the coefficient $5$ gives a time constant $1/5=0.2$ seconds."
+        "title": "Linear time constant",
+        "background": "$y'+5y=u$ is first-order linear with coefficient $5$.",
+        "numbers": "time constant $1/5=0.2$"
       }
     ],
     "applicationsClose": "Classification is not bureaucracy; it is the first act of understanding what kind of change law you have.",
@@ -525,6 +544,29 @@
       "ODEs use ordinary derivatives; PDEs use partial derivatives.",
       "Linear equations keep the unknown function and derivatives to first power with no products.",
       "Systems track several unknown functions at once."
+    ],
+    "connectionsProse": "<p>This lesson connects the habit of inspecting formulas before solving them to classifying differential equations. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for choosing separation, linear methods, systems, or numerical tools, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$y^{(n)}$",
+        "desc": "the $n$th derivative"
+      },
+      {
+        "sym": "$a_i(x)$",
+        "desc": "coefficient functions"
+      },
+      {
+        "sym": "$g(x)$",
+        "desc": "forcing"
+      },
+      {
+        "sym": "$u_t$ and $u_{xx}$",
+        "desc": "partial derivatives"
+      },
+      {
+        "sym": "$x$",
+        "desc": "the vector state in a system"
+      }
     ],
     "prereqs": [
       "math-03-01"
@@ -552,8 +594,8 @@
         "initial value problems"
       ]
     },
-    "motivation": "<p>When you integrate $y'=2x$, you get $y=x^2+C$. That little $C$ is not clutter; it says many curves share the same slope rule.</p><p>An <b>initial condition</b> gives the missing anchor point. It tells the solution where to pass, turning a family of possible paths into one specific path. This is how a model becomes a prediction instead of a cloud of possibilities.</p>",
-    "definition": "<p>A <b>solution</b> of a differential equation on an interval is a function that has the required derivatives on that interval and makes the equation true at every point there. An <b>initial value problem</b> combines a differential equation with data such as $y(x_0)=y_0$, meaning the solution must pass through $(x_0,y_0)$.</p><p>The constant is found by substitution. If $y=x^2+C$ and $y(1)=5$, then $5=1+C$, so $C=4$. The derivative law gives shape; the initial condition fixes location.</p><p><b>Assumptions that matter:</b> the proposed solution must satisfy the equation on an interval, not only at one point; the initial point must lie in that interval; and formulas with denominators or logarithms may restrict where the solution is valid.</p>",
+    "motivation": "<p>A differential equation usually gives a family of curves. An initial condition anchors the family at one point, turning a general solution into a specific prediction. The concrete gap is that a rate law alone leaves many possible curves.</p><p>The load-bearing idea is that the initial condition selects the one curve that passes through the starting point. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A solution satisfies the differential equation on an interval, and an initial condition selects one member from a family of solutions.</p><p>For $y'=2x$, integration gives $$y=x^2+C,$$ and the condition $y(1)=5$ selects $y=x^2+4$.</p><p><b>Assumptions that matter:</b> The solution formula must satisfy both the ODE and the initial condition on its interval of validity.</p>",
     "worked": {
       "problem": "Find the solution of $y'=-2y$ satisfying $y(0)=7$, given the general solution $y=Ce^{-2x}$.",
       "skills": [
@@ -752,34 +794,34 @@
     ],
     "applications": [
       {
-        "title": "Forecast initialization",
-        "background": "Weather and simulation models need starting measurements because rate laws alone do not say where the system begins.",
-        "numbers": "If $T'=0.1T$, then starts $T(0)=10$ and $T(0)=20$ give $10e^{0.1t}$ and $20e^{0.1t}$, twice apart forever."
+        "title": "Scaled starts",
+        "background": "$T'=0.1T$ with starts 10 and 20 gives two exponential solutions.",
+        "numbers": "solutions that remain in ratio $2$"
       },
       {
-        "title": "Checkpointed training",
-        "background": "Optimizer dynamics depend on the current weights; resuming from a checkpoint is an initial condition.",
-        "numbers": "For toy $w'=-0.5w$, starting at $w(0)=8$ gives $w(4)=8e^{-2}\\approx1.08$."
+        "title": "Decay initial value",
+        "background": "$w'=-0.5w$, $w(0)=8$ fixes the constant.",
+        "numbers": "$w(4)\\approx1.08$"
       },
       {
-        "title": "Battery discharge",
-        "background": "A circuit law gives the rate, while the measured voltage gives the starting constant.",
-        "numbers": "If $V=Ce^{-t/5}$ and $V(0)=12$, then $V(10)=12e^{-2}\\approx1.62$ volts."
+        "title": "Capacitor curve",
+        "background": "$V=Ce^{-t/5}$, $V(0)=12$ fixes $C$.",
+        "numbers": "$V(10)\\approx1.62$"
       },
       {
-        "title": "Epidemic projections",
-        "background": "The same infection-rate equation predicts different futures from different initial case counts.",
-        "numbers": "With $I'=0.2I$, $I(0)=50$ gives $I(7)=50e^{1.4}\\approx203$."
+        "title": "Infection growth",
+        "background": "$I'=0.2I$, $I(0)=50$ fixes the trajectory.",
+        "numbers": "$I(7)\\approx202.76$"
       },
       {
-        "title": "Personalization state",
-        "background": "Recommendation systems update user embeddings over time; the current embedding anchors the trajectory.",
-        "numbers": "For one coordinate $z'=-z$, $z(0)=0.6$ gives $z(2)=0.6e^{-2}\\approx0.081$."
+        "title": "Latent decay",
+        "background": "$z'=-z$, $z(0)=0.6$ gives a selected exponential.",
+        "numbers": "$z(2)\\approx0.0812$"
       },
       {
-        "title": "Robotics pose",
-        "background": "A velocity field needs the robot's starting pose before it can produce a path.",
-        "numbers": "If $x'(t)=2$ and $x(0)=5$, then $x(3)=11$ meters, not $6$ meters."
+        "title": "Constant motion",
+        "background": "$x'=2$, $x(0)=5$ gives a line.",
+        "numbers": "$x(3)=11$"
       }
     ],
     "applicationsClose": "Initial conditions are the bridge from a general law of motion to one actual story.",
@@ -788,6 +830,52 @@
       "A general solution usually contains constants.",
       "An initial condition selects a particular solution.",
       "The interval of validity matters when formulas can break."
+    ],
+    "connectionsProse": "<p>This lesson connects families of antiderivatives and constants of integration to solutions and initial conditions. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for initial-value problems throughout the section, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$x_0$",
+        "desc": "the starting input"
+      },
+      {
+        "sym": "$y_0$",
+        "desc": "the starting value"
+      },
+      {
+        "sym": "$C$",
+        "desc": "selects one solution"
+      },
+      {
+        "sym": "interval of validity",
+        "desc": "where the formula satisfies the equation"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $y'=2x$.",
+        "result": "$y'=2x$",
+        "why": "the rate law names the derivative"
+      },
+      {
+        "do": "Integrate.",
+        "result": "$y=x^2+C$",
+        "why": "antiderivatives differ by constants"
+      },
+      {
+        "do": "Apply $y(1)=5$.",
+        "result": "$5=1+C$",
+        "why": "the chosen curve must pass through the point"
+      },
+      {
+        "do": "Solve for the constant.",
+        "result": "$C=4$",
+        "why": "subtract the known value"
+      },
+      {
+        "do": "State the selected solution.",
+        "result": "$y=x^2+4$",
+        "why": "this member of the family satisfies both the ODE and the initial condition"
+      }
     ],
     "prereqs": [
       "math-03-02"
@@ -815,8 +903,8 @@
         "numerical Euler steps"
       ]
     },
-    "motivation": "<p>You know that a derivative is the slope of a tangent line. A direction field simply draws that slope at many points in the plane.</p><p>For an equation like $y'=x-y$, every point $(x,y)$ receives a little line segment with slope $x-y$. A solution curve is a path that threads through those little segments, always matching the local direction.</p>",
-    "definition": "<p>For a first-order ODE $y'=f(x,y)$, a <b>direction field</b> assigns to each point $(x,y)$ a short segment with slope $f(x,y)$. If a solution passes through $(x_0,y_0)$, its tangent slope there must be $f(x_0,y_0)$.</p><p>The construction is direct: choose grid points, compute $f(x,y)$ at each one, and draw a small line with that slope. Points where $f(x,y)=0$ have horizontal segments, which often reveal equilibrium or turning behavior.</p><p><b>Assumptions that matter:</b> the field shows local slope, not step size; it is qualitative unless paired with numerical values; and if $f$ is undefined at a point, the field is not defined there.</p>",
+    "motivation": "<p>A direction field draws the slope required by $y'=f(x,y)$ at many points. A solution curve is a path whose tangent follows those local line segments. The concrete gap is that some ODEs are easier to understand visually than symbolically.</p><p>The load-bearing idea is that a grid of local slopes shows the motion a solution must follow. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A direction field is built by computing the slope $f(x,y)$ at grid points for an ODE $$y'=f(x,y).$$ A short segment with that slope is drawn at each point.</p><p><b>Assumptions that matter:</b> Draw segments only where $f(x,y)$ is defined; horizontal segments occur where $f=0$.</p>",
     "worked": {
       "problem": "For $y'=x-y$, compute the direction-field slopes at $(0,0)$, $(1,0)$, $(1,2)$, and $(2,2)$.",
       "skills": [
@@ -1015,34 +1103,34 @@
     ],
     "applications": [
       {
-        "title": "Numerical solvers",
-        "background": "Euler and Runge-Kutta methods follow the same slopes that a direction field displays.",
-        "numbers": "For $y'=x-y$ at $(0,1)$ with $h=0.1$, the first Euler change is $-0.1$."
+        "title": "Sample slopes",
+        "background": "For $y'=x-y$, slopes at selected grid points organize the field.",
+        "numbers": "at $(0,0),(1,0),(1,2),(2,2)$ are $0,1,-1,0$"
       },
       {
-        "title": "Population equilibria",
-        "background": "Direction fields show whether populations grow or shrink around carrying capacity.",
-        "numbers": "For $P'=0.2P(1-P/1000)$, $P=500$ gives slope $50$ per time unit and $P=1200$ gives $-48$."
+        "title": "Euler preview",
+        "background": "Euler at $(0,1)$ with $h=0.1$ for $y'=x-y$ uses the local slope.",
+        "numbers": "changes by $-0.1$"
       },
       {
-        "title": "Training dynamics",
-        "background": "Gradient flow fields show where parameters move under continuous optimization.",
-        "numbers": "For $w'=-2w$, slopes are $-4,0,4$ at $w=2,0,-2$, all pointing toward $0$."
+        "title": "Logistic field",
+        "background": "Logistic slope $0.2P(1-P/1000)$ changes sign past carrying capacity.",
+        "numbers": "$50$ at $P=500$ and $-48$ at $P=1200$"
       },
       {
-        "title": "Control stability",
-        "background": "Engineers read slope fields to see whether a system returns to a target after disturbance.",
-        "numbers": "For $y'=5-y$, slopes are $2$ at $y=3$ and $-2$ at $y=7$, pointing to $5$."
+        "title": "Linear decay slopes",
+        "background": "$w'=-2w$ gives slopes determined by the vertical coordinate.",
+        "numbers": "$-4,0,4$ at $w=2,0,-2$"
       },
       {
-        "title": "Epidemic thresholds",
-        "background": "A direction field can reveal whether cases rise or fall at different infection levels.",
-        "numbers": "With $I'=0.1I(1-I/200)$, $I=50$ gives $3.75$ and $I=250$ gives $-6.25$."
+        "title": "Target-seeking field",
+        "background": "$y'=5-y$ points upward below the target and downward above it.",
+        "numbers": "slopes $2$ at $y=3$ and $-2$ at $y=7$"
       },
       {
-        "title": "Serving queues",
-        "background": "Backlog dynamics can be sketched before solving exact formulas.",
-        "numbers": "If $Q'=80-0.5Q$, then slope is $30$ at $Q=100$ and $-20$ at $Q=200$, so the balance is $Q=160$."
+        "title": "Queue balance",
+        "background": "$Q'=80-0.5Q$ has a horizontal direction at balance.",
+        "numbers": "balances at $Q=160$"
       }
     ],
     "applicationsClose": "A direction field is a map of local advice: every little segment says, if the solution passes here, it must point this way.",
@@ -1051,6 +1139,25 @@
       "Horizontal segments occur where $f(x,y)=0$.",
       "Solution curves follow the local line segments.",
       "Direction fields support qualitative thinking and numerical methods."
+    ],
+    "connectionsProse": "<p>This lesson connects derivatives as slopes of tangent lines to direction fields. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for equilibria, phase planes, and numerical stepping, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$f(x,y)$",
+        "desc": "the slope rule"
+      },
+      {
+        "sym": "$(x,y)$",
+        "desc": "a point in the plane"
+      },
+      {
+        "sym": "slope $0$",
+        "desc": "a horizontal tangent"
+      },
+      {
+        "sym": "undefined $f$",
+        "desc": "no segment is drawn there"
+      }
     ],
     "prereqs": [
       "math-03-03"
@@ -1078,8 +1185,8 @@
         "partial fractions"
       ]
     },
-    "motivation": "<p>Some differential equations look tangled but have a generous structure: all the $y$ pieces can move to one side, and all the $x$ pieces to the other.</p><p>That is the separable idea. We separate, integrate both sides, then use an initial condition if one is given. It is one of the friendliest first real solving methods for ODEs.</p>",
-    "definition": "<p>A first-order ODE is <b>separable</b> if it can be written $\\dfrac{dy}{dx}=g(x)h(y)$. Where $h(y)\\ne0$, we rewrite it as $\\dfrac{1}{h(y)}\\,dy=g(x)\\,dx$ and integrate both sides.</p><p>The method is justified by the chain rule. Since $dy/dx$ measures how $y$ changes with $x$, multiplying by $dx$ is shorthand for arranging the differential relationship so each side has one variable before integration.</p><p><b>Assumptions that matter:</b> dividing by $h(y)$ can temporarily lose constant solutions where $h(y)=0$; logarithms require absolute values when integrating $1/y$; and the final solution may be implicit if solving for $y$ is hard.</p>",
+    "motivation": "<p>A differential equation such as $y'=xy$ says that the slope depends on both the input $x$ and the current value $y$. That can seem harder than a plain antiderivative because the unknown function appears on the right side too. The separable structure is what makes this example manageable: the right side is a product of one factor involving $x$ and one factor involving $y$.</p><p>Separation uses that product structure. We divide by the $y$ factor, place the $x$ factor with $dx$, and integrate. The result is not a shortcut around calculus; it is the chain rule in reverse. After integration, the constant of integration represents the whole family of solution curves, and the initial condition chooses the one curve that passes through the starting point.</p>",
+    "definition": "<p>A first-order equation is separable when the right side factors into an $x$ part and a $y$ part:</p><p>$$\\frac{dy}{dx}=g(x)h(y).$$</p><p><b>Assumptions that matter:</b> Division by $h(y)$ is only valid where $h(y)\\ne0$; constant solutions created by $h(y)=0$ should be checked separately.</p>",
     "worked": {
       "problem": "Solve $\\dfrac{dy}{dx}=xy$ with $y(0)=2$.",
       "skills": [
@@ -1279,33 +1386,33 @@
     "applications": [
       {
         "title": "Exponential growth",
-        "background": "Growth proportional to current size is the classic separable model.",
-        "numbers": "If $P'=0.3P$ and $P(0)=100$, then $P(5)=100e^{1.5}\\approx448$."
+        "background": "$P'=0.3P$, $P(0)=100$ separates to $P=100e^{0.3t}$.",
+        "numbers": "$P(5)=100e^{1.5}\\approx448.17$"
       },
       {
-        "title": "Radioactive decay",
-        "background": "Constant percentage decay separates because the rate is proportional to amount remaining.",
-        "numbers": "With $A'=-0.02A$, half-life solves $0.5=e^{-0.02t}$, so $t\\approx34.66$."
+        "title": "Radioactive half-life",
+        "background": "$A'=-0.02A$ gives $A=A_0e^{-0.02t}$; setting $A/A_0=0.5$ solves the half-life.",
+        "numbers": "$t=\\ln2/0.02\\approx34.66$"
       },
       {
-        "title": "Logistic population",
-        "background": "The logistic equation adds a carrying-capacity factor and is still separable.",
-        "numbers": "For $P'=0.1P(1-P/1000)$, at $P=200$ the growth rate is $16$ per time unit."
+        "title": "Logistic growth rate",
+        "background": "$P'=0.1P(1-P/1000)$ is separable; at $P=200$ the instantaneous rate is computed directly.",
+        "numbers": "$0.1\\cdot200\\cdot0.8=16$"
       },
       {
-        "title": "Gradient flow",
-        "background": "Quadratic loss gives separable weight dynamics.",
-        "numbers": "For $w'=-0.5w$, $w(6)=w(0)e^{-3}$, so $20$ shrinks to about $0.996$."
+        "title": "Gradient flow for a quadratic",
+        "background": "$w'=-0.5w$ gives $w=20e^{-0.5t}$ from $w(0)=20$.",
+        "numbers": "$w(6)=20e^{-3}\\approx0.996$"
       },
       {
-        "title": "Cooling toward ambient",
-        "background": "Newton cooling separates after subtracting ambient temperature.",
-        "numbers": "If $T'= -0.1(T-20)$ and $T(0)=70$, then $T(10)=20+50e^{-1}\\approx38.39$."
+        "title": "Newton cooling",
+        "background": "$T'=-0.1(T-20)$ gives $T=20+50e^{-0.1t}$ from $T(0)=70$.",
+        "numbers": "$T(10)\\approx38.39^\\circ$"
       },
       {
-        "title": "Attention score decay",
-        "background": "Toy continuous memory decay often uses proportional rate laws.",
-        "numbers": "A score $s'= -0.7s$ with $s(0)=1$ gives $s(3)=e^{-2.1}\\approx0.122$."
+        "title": "Memory-score decay",
+        "background": "$s'=-0.7s$, $s(0)=1$ gives exponential decay.",
+        "numbers": "$s(3)=e^{-2.1}\\approx0.122$"
       }
     ],
     "applicationsClose": "Separation is a disciplined untangling: one variable per side, one integral per side, then the initial condition brings the curve home.",
@@ -1314,6 +1421,85 @@
       "Move $y$ terms with $dy$ and $x$ terms with $dx$, then integrate.",
       "Watch for constant solutions lost by division.",
       "Many growth, decay, and saturation models are separable."
+    ],
+    "connectionsProse": "<p>This lesson builds on two familiar ideas: derivatives as rates of change, and antiderivatives as the way to recover a function from its rate. A separable equation is the first major ODE-solving method where those two ideas work together. The equation gives a rate law, and the special separable form lets each variable move to its own side before integration.</p><p>This method leads directly into many later lessons. Logistic growth, Newton cooling, several first-order models, Bernoulli substitutions, and homogeneous substitutions all use separation either directly or after a change of variables. Learning the method carefully also builds the habit that matters throughout ODEs: check where division is allowed, integrate both sides, and use the initial condition only after the general relationship is found.</p>",
+    "symbols": [
+      {
+        "sym": "$x$",
+        "desc": "the independent variable"
+      },
+      {
+        "sym": "$y(x)$",
+        "desc": "the unknown dependent function"
+      },
+      {
+        "sym": "$g(x)$",
+        "desc": "the factor depending only on $x$"
+      },
+      {
+        "sym": "$h(y)$",
+        "desc": "the factor depending only on $y$"
+      },
+      {
+        "sym": "$C$",
+        "desc": "the integration constant"
+      },
+      {
+        "sym": "$dy$ and $dx$",
+        "desc": "mark the variables being integrated after separation"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $\\dfrac{dy}{dx}=g(x)h(y)$.",
+        "result": "$\\dfrac{dy}{dx}=g(x)h(y)$",
+        "why": "the right side factors into an $x$ part and a $y$ part"
+      },
+      {
+        "do": "Divide by $h(y)$ where $h(y)\\ne0$.",
+        "result": "$\\dfrac{1}{h(y)}\\dfrac{dy}{dx}=g(x)$",
+        "why": "this isolates the unknown-function factor"
+      },
+      {
+        "do": "Multiply by $dx$.",
+        "result": "$\\dfrac{1}{h(y)}\\,dy=g(x)\\,dx$",
+        "why": "this is shorthand for the chain-rule-backed differential relationship"
+      },
+      {
+        "do": "Integrate both sides.",
+        "result": "$\\int \\dfrac{1}{h(y)}\\,dy=\\int g(x)\\,dx+C$",
+        "why": "each side now has one variable"
+      },
+      {
+        "do": "For $y'=xy$, divide by $y$.",
+        "result": "$\\dfrac{1}{y}\\,dy=x\\,dx$",
+        "why": "this is valid away from $y=0$, and the initial value $2$ keeps this solution nonzero near $0$"
+      },
+      {
+        "do": "Integrate.",
+        "result": "$\\ln|y|=x^2/2+C$",
+        "why": "the left antiderivative is logarithmic"
+      },
+      {
+        "do": "Exponentiate.",
+        "result": "$|y|=e^C e^{x^2/2}$",
+        "why": "exponentials undo logarithms"
+      },
+      {
+        "do": "Absorb sign and $e^C$ into one nonzero constant.",
+        "result": "$y=Ce^{x^2/2}$",
+        "why": "the constant carries the branch"
+      },
+      {
+        "do": "Apply $y(0)=2$.",
+        "result": "$2=Ce^0=C$",
+        "why": "the initial value fixes the curve"
+      },
+      {
+        "do": "State and check the solution.",
+        "result": "$y=2e^{x^2/2}$",
+        "why": "differentiating gives $y'=2xe^{x^2/2}=xy$, so the equation and initial value both check"
+      }
     ],
     "prereqs": [
       "math-03-04"
@@ -1341,8 +1527,8 @@
         "exponential decay"
       ]
     },
-    "motivation": "<p>Not every equation separates. A term like $y'+2y=6$ ties the function and derivative together, but it does so linearly, which is still wonderfully structured.</p><p>Linear first-order equations describe relaxation toward a target: temperature toward a room, voltage toward a source, weights toward a regularized optimum. The equation says the rate plus a scaled amount balances an input.</p>",
-    "definition": "<p>A <b>linear first-order ODE</b> can be written in standard form $y'+p(x)y=q(x)$. The coefficient $p(x)$ multiplies $y$, and $q(x)$ is a forcing term depending only on the independent variable.</p><p>For constant coefficients, $y'+ay=b$ has equilibrium $y=b/a$ when $a\\ne0$. Subtracting the equilibrium gives $u'= -a u$, so solutions relax exponentially: $y=b/a+Ce^{-ax}$.</p><p><b>Assumptions that matter:</b> the equation must be solved on intervals where $p$ and $q$ are continuous; nonlinear terms like $y^2$ do not belong; and standard form requires the coefficient of $y'$ to be $1$.</p>",
+    "motivation": "<p>A linear first-order equation lets $y$ and $y'$ appear only to the first power. With constant coefficients, it describes relaxation toward an equilibrium set by the forcing. The concrete gap is that the forcing term hides the simple decay variable.</p><p>The load-bearing idea is that subtracting the equilibrium exposes exponential decay of the deviation. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A first-order linear equation has standard form $y'+p(x)y=q(x)$. For constants, $y'+ay=b$ relaxes toward $b/a$:</p><p>$$y=\\frac{b}{a}+Ce^{-ax}.$$</p><p><b>Assumptions that matter:</b> In the constant-coefficient formula, $a\\ne0$; for variable coefficients, use standard form before applying an integrating factor.</p>",
     "worked": {
       "problem": "Solve $y'+2y=6$ with $y(0)=1$.",
       "skills": [
@@ -1541,34 +1727,34 @@
     ],
     "applications": [
       {
-        "title": "Newton cooling",
-        "background": "Cooling toward ambient temperature is linear after the ambient value is included.",
-        "numbers": "If $T'+0.2T=4$, equilibrium is $20$ and $T(0)=80$ gives $T=20+60e^{-0.2t}$."
+        "title": "Cooling",
+        "background": "$T'+0.2T=4$, $T(0)=80$ gives $T=20+60e^{-0.2t}$.",
+        "numbers": "$T(10)\\approx28.12$"
       },
       {
         "title": "Exponential smoothing",
-        "background": "Streaming metrics often relax toward a current signal with a first-order linear law.",
-        "numbers": "For $m'+5m=5x$ and $x=10$, equilibrium is $10$ and time constant is $0.2$."
+        "background": "$m'+5m=50$ relaxes toward a constant target.",
+        "numbers": "target $10$ and time constant $0.2$"
       },
       {
         "title": "RC charging",
-        "background": "A capacitor charging through a resistor follows a linear first-order equation.",
-        "numbers": "If $V'+2V=10$, then equilibrium voltage is $5$ and $V(0)=0$ gives $V=5-5e^{-2t}$."
+        "background": "$V'+2V=10$, $V(0)=0$ charges toward $5$.",
+        "numbers": "$V(1)\\approx4.32$"
       },
       {
-        "title": "Regularized gradient flow",
-        "background": "A quadratic loss plus L2 penalty gives linear dynamics for one weight.",
-        "numbers": "For $w'+3w=6$, the weight tends to $2$ as $w=2+Ce^{-3t}$."
+        "title": "Regularized flow",
+        "background": "$w'+3w=6$ has a constant equilibrium.",
+        "numbers": "tends to $2$"
       },
       {
-        "title": "Queue relaxation",
-        "background": "Service systems can be approximated by linear pull toward a target backlog.",
-        "numbers": "If $Q'+0.1Q=50$, equilibrium is $500$ requests."
+        "title": "Queue",
+        "background": "$Q'+0.1Q=50$ balances inflow and service.",
+        "numbers": "balances at $500$"
       },
       {
-        "title": "Kalman-filter intuition",
-        "background": "Many filters update states through linear dynamics plus forcing.",
-        "numbers": "The scalar model $x'+0.4x=2$ has steady state $5$ and half-life $\\ln2/0.4\\approx1.73$."
+        "title": "Half-life",
+        "background": "$x'+0.4x=2$ decays toward its target with rate $0.4$.",
+        "numbers": "half-life $\\ln2/0.4\\approx1.73$"
       }
     ],
     "applicationsClose": "Linear first-order equations are the algebra of gentle feedback: deviation from balance changes exponentially.",
@@ -1577,6 +1763,71 @@
       "Constant-coefficient equations often relax toward an equilibrium.",
       "Linearity forbids powers or nonlinear functions of $y$.",
       "These equations model smoothing, cooling, circuits, queues, and simple optimization flow."
+    ],
+    "connectionsProse": "<p>This lesson connects exponential decay and relaxation toward a target to linear first-order equations. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for cooling, circuits, queues, and smoothing models, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$p(x)$",
+        "desc": "the coefficient of $y$ in standard form"
+      },
+      {
+        "sym": "$q(x)$",
+        "desc": "forcing"
+      },
+      {
+        "sym": "$a,b$",
+        "desc": "constants"
+      },
+      {
+        "sym": "$y_*$",
+        "desc": "equilibrium"
+      },
+      {
+        "sym": "$u$",
+        "desc": "deviation from equilibrium"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Find equilibrium by setting $y'=0$.",
+        "result": "$ay_*=b$",
+        "why": "a constant solution has no rate"
+      },
+      {
+        "do": "Divide by the coefficient.",
+        "result": "$y_*=b/a$",
+        "why": "this identifies the target value"
+      },
+      {
+        "do": "Define the deviation.",
+        "result": "$u=y-y_*$",
+        "why": "measure distance from equilibrium"
+      },
+      {
+        "do": "Differentiate the deviation.",
+        "result": "$u'=y'$",
+        "why": "the equilibrium is constant"
+      },
+      {
+        "do": "Substitute into the ODE.",
+        "result": "$u'+a u=0$",
+        "why": "the forcing cancels"
+      },
+      {
+        "do": "Separate variables.",
+        "result": "$du/u=-a\\,dx$",
+        "why": "this is proportional decay"
+      },
+      {
+        "do": "Integrate.",
+        "result": "$u=Ce^{-ax}$",
+        "why": "distance decays exponentially"
+      },
+      {
+        "do": "Return to $y$ and apply the example $y'+2y=6$, $y(0)=1$.",
+        "result": "$y=3-2e^{-2x}$",
+        "why": "the equilibrium is $3$ and the initial deviation is $-2$"
+      }
     ],
     "prereqs": [
       "math-03-05"
@@ -1604,8 +1855,8 @@
         "definite integrals"
       ]
     },
-    "motivation": "<p>When $p(x)$ changes with $x$, a first-order linear equation may not have a simple equilibrium shortcut. But the product rule gives us a way in.</p><p>The integrating factor is chosen so the left side becomes $\\dfrac{d}{dx}(\\mu y)$. Then one integration solves the equation. It is a clever multiplier, not magic.</p>",
-    "definition": "<p>For $y'+p(x)y=q(x)$, an <b>integrating factor</b> is $\\mu(x)=e^{\\int p(x)\\,dx}$. Multiplying the equation by $\\mu$ gives $\\mu y'+\\mu p y=\\mu q$.</p><p>Because $\\mu'=p\\mu$, the left side is exactly $\\mu y'+\\mu' y=\\dfrac{d}{dx}(\\mu y)$ by the product rule. Then $\\mu y=\\int \\mu q\\,dx+C$.</p><p><b>Assumptions that matter:</b> the equation must first be in standard linear form; $p$ and $q$ should be continuous on the interval; and the constant from $\\int p(x)\\,dx$ can be ignored because it only rescales $\\mu$.</p>",
+    "motivation": "<p>An integrating factor is a multiplier chosen so the left side of a linear equation becomes one product derivative. It extends the first-order linear method to variable coefficients. The concrete gap is that the left side is almost, but not yet, one derivative.</p><p>The load-bearing idea is that a multiplier is chosen so the product rule matches exactly. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>For a linear equation in standard form $y'+p(x)y=q(x)$, an integrating factor is</p><p>$$\\mu(x)=e^{\\int p(x)dx}.$$</p><p><b>Assumptions that matter:</b> The equation must first be in standard form; the multiplier is chosen so $(\\mu y)'=\\mu q$.</p>",
     "worked": {
       "problem": "Solve $y'+3y=e^{-x}$ with $y(0)=0$.",
       "skills": [
@@ -1814,34 +2065,34 @@
     ],
     "applications": [
       {
-        "title": "Time-varying forcing",
-        "background": "Integrating factors handle inputs that change over time.",
-        "numbers": "For $y'+y=t$, the solution is $y=t-1+Ce^{-t}$."
+        "title": "Ramp forcing",
+        "background": "$y'+y=t$ uses an integrating factor to combine the left side.",
+        "numbers": "$y=t-1+Ce^{-t}$"
       },
       {
-        "title": "Learning-rate schedules",
-        "background": "A training statistic may relax while the target itself changes.",
-        "numbers": "If $m'+2m=2t$, then $m=t-0.5+Ce^{-2t}$."
+        "title": "Smoothed ramp",
+        "background": "$m'+2m=2t$ has a linear particular response.",
+        "numbers": "$m=t-0.5+Ce^{-2t}$"
       },
       {
-        "title": "Drug concentration",
-        "background": "Infusion rates and elimination combine into linear equations.",
-        "numbers": "For $C'+0.3C=6$, steady concentration is $20$ mg/L."
+        "title": "Concentration target",
+        "background": "$C'+0.3C=6$ relaxes to its steady state.",
+        "numbers": "steady value $20$"
       },
       {
-        "title": "RC circuits with input",
-        "background": "Changing voltage sources produce forced linear equations.",
-        "numbers": "If $V'+5V=10e^{-t}$, an integrating factor $e^{5t}$ gives a response term $2.5e^{-t}$."
+        "title": "Voltage forcing",
+        "background": "$V'+5V=10e^{-t}$ has an exponential particular term.",
+        "numbers": "particular term $2.5e^{-t}$"
       },
       {
-        "title": "Cache warmup",
-        "background": "A cache hit rate can approach a moving demand level.",
-        "numbers": "For $h'+h=0.9$, $h(0)=0.1$ gives $h(2)=0.9-0.8e^{-2}\\approx0.792$."
+        "title": "Score smoothing",
+        "background": "$h'+h=0.9$, $h(0)=0.1$ moves toward $0.9$.",
+        "numbers": "$h(2)\\approx0.792$"
       },
       {
-        "title": "Momentum averages",
-        "background": "Continuous analogues of exponential moving averages are linear forced equations.",
-        "numbers": "If $m'+10m=10g$ and $g=0.4$, then $m(t)$ tends to $0.4$ with time constant $0.1$."
+        "title": "Feature tracking",
+        "background": "$m'+10m=10g$, $g=0.4$ relaxes quickly.",
+        "numbers": "tends to $0.4$ with time constant $0.1$"
       }
     ],
     "applicationsClose": "The integrating factor is product-rule engineering: choose the multiplier that makes one side integrable in a single stroke.",
@@ -1850,6 +2101,67 @@
       "$\\mu=e^{\\int p(x)\\,dx}$ makes $(\\mu y)'=\\mu q$.",
       "Continuity of $p$ and $q$ sets the interval where the method is valid.",
       "Forced linear systems in ML, circuits, and filtering use this structure."
+    ],
+    "connectionsProse": "<p>This lesson connects the product rule from calculus to integrating factors. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for variable-coefficient first-order linear equations, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mu(x)$",
+        "desc": "the integrating factor"
+      },
+      {
+        "sym": "$p(x)$ and $q(x)$",
+        "desc": "known functions"
+      },
+      {
+        "sym": "$C$",
+        "desc": "the integration constant"
+      },
+      {
+        "sym": "$(e^{4x}y)'=8$",
+        "desc": "the worked-step result with the math delimiter closed"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with standard linear form.",
+        "result": "$y'+p(x)y=q(x)$",
+        "why": "standard form identifies the coefficient that drives the multiplier"
+      },
+      {
+        "do": "Multiply by an unknown $\\mu(x)$.",
+        "result": "$\\mu y'+\\mu p y=\\mu q$",
+        "why": "seek a product-rule pattern"
+      },
+      {
+        "do": "Compare with the product rule.",
+        "result": "$(\\mu y)'=\\mu y'+\\mu' y$",
+        "why": "the first term already matches"
+      },
+      {
+        "do": "Require matching $y$ coefficients.",
+        "result": "$\\mu'=p\\mu$",
+        "why": "this makes the product rule exact"
+      },
+      {
+        "do": "Separate the multiplier equation.",
+        "result": "$d\\mu/\\mu=p(x)\\,dx$",
+        "why": "solve for the multiplier"
+      },
+      {
+        "do": "Integrate.",
+        "result": "$\\mu=e^{\\int p(x)dx}$",
+        "why": "exponentials undo the logarithm"
+      },
+      {
+        "do": "Rewrite the ODE.",
+        "result": "$(\\mu y)'=\\mu q$",
+        "why": "the ODE has become one derivative"
+      },
+      {
+        "do": "Integrate and apply the example $y'+3y=e^{-x}$.",
+        "result": "$\\mu y=\\int \\mu q\\,dx+C$ and $y=\\tfrac12(e^{-x}-e^{-3x})$",
+        "why": "the product derivative can be undone directly"
+      }
     ],
     "prereqs": [
       "math-03-06"
@@ -1877,8 +2189,8 @@
         "implicit curves"
       ]
     },
-    "motivation": "<p>Some differential equations arrive as $M(x,y)\\,dx+N(x,y)\\,dy=0$. At first that can feel less familiar than $y'=f(x,y)$.</p><p>The gift is that the left side may be the total differential of one function $F(x,y)$. Then the solutions are simply level curves $F(x,y)=C$.</p>",
-    "definition": "<p>An equation $M(x,y)\\,dx+N(x,y)\\,dy=0$ is <b>exact</b> on a region when there is a function $F(x,y)$ such that $F_x=M$ and $F_y=N$. Then $dF=F_x\\,dx+F_y\\,dy=M\\,dx+N\\,dy$, so solutions satisfy $F(x,y)=C$.</p><p>On a simply connected region, a practical test is $M_y=N_x$. This is the equality of mixed partial derivatives: if $F_x=M$, then $M_y=F_{xy}$; if $F_y=N$, then $N_x=F_{yx}$.</p><p><b>Assumptions that matter:</b> $M$ and $N$ need continuous partial derivatives on the region; the region should have no holes for the simple test to guarantee exactness; and the answer is often implicit.</p>",
+    "motivation": "<p>An exact equation is a hidden total differential. Once the potential function is recovered, solutions are level curves of that potential. The concrete gap is that the equation may not solve cleanly for y as a function of x.</p><p>The load-bearing idea is that a potential function turns the solution into a level curve. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>An equation $M(x,y)dx+N(x,y)dy=0$ is exact when it is the differential of a potential $F(x,y)$, so $F_x=M$ and $F_y=N$.</p><p>$$M_y=N_x.$$</p><p><b>Assumptions that matter:</b> The usual exactness test applies on a region where the needed partial derivatives are continuous.</p>",
     "worked": {
       "problem": "Solve $(2xy+3)\\,dx+(x^2+4y)\\,dy=0$.",
       "skills": [
@@ -2087,34 +2399,34 @@
     ],
     "applications": [
       {
-        "title": "Conservation laws",
-        "background": "Exact equations describe motion along level sets of conserved quantities.",
-        "numbers": "If $F=x^2+y^2$, the level $F=25$ is a circle of radius $5$."
+        "title": "Circle level set",
+        "background": "$F=x^2+y^2=25$ is a potential level curve.",
+        "numbers": "radius $5$"
       },
       {
-        "title": "Energy landscapes",
-        "background": "Potential functions in physics and ML assign an energy to states; gradients describe change.",
-        "numbers": "For $F=w^2+b^2$, moving on $F=1$ keeps $w^2+b^2=1$."
+        "title": "Weight constraint",
+        "background": "$F=w^2+b^2=1$ constrains two parameters.",
+        "numbers": "keeps $(w,b)$ on a unit circle"
       },
       {
-        "title": "Implicit curves",
-        "background": "Computer graphics often represents shapes by level sets $F(x,y)=C$.",
-        "numbers": "The function $F=x^2+y^2-9$ has zero level set a circle of radius $3$."
+        "title": "Implicit radius",
+        "background": "$F=x^2+y^2-9=0$ defines a circle.",
+        "numbers": "radius $3$"
       },
       {
-        "title": "Gradient checks",
-        "background": "Exactness is related to whether a vector field can be a gradient of a scalar loss.",
-        "numbers": "For field $(2x,2y)$, the potential is $x^2+y^2$ because partials match."
+        "title": "Conservative field",
+        "background": "Field $(2x,2y)$ comes from a potential.",
+        "numbers": "potential $x^2+y^2$"
       },
       {
-        "title": "Thermodynamics",
-        "background": "State functions have exact differentials, meaning their changes do not depend on path.",
-        "numbers": "If $dF=3T^2\\,dT+2V\\,dV$, then $F=T^3+V^2+C$."
+        "title": "Thermodynamic differential",
+        "background": "$dF=3T^2dT+2VdV$ integrates componentwise.",
+        "numbers": "$F=T^3+V^2+C$"
       },
       {
-        "title": "Path independence",
-        "background": "In optimization, conservative vector fields have line integrals determined only by endpoints.",
-        "numbers": "For $F=x^2+y^2$, change from $(1,2)$ to $(3,4)$ is $25-5=20$."
+        "title": "Potential change",
+        "background": "Potential change from $(1,2)$ to $(3,4)$ for $F=x^2+y^2$ is endpoint subtraction.",
+        "numbers": "$25-5=20$"
       }
     ],
     "applicationsClose": "Exactness says the differential pieces belong to one hidden whole; solving means finding that whole.",
@@ -2123,6 +2435,72 @@
       "The practical test is $M_y=N_x$ on a suitable region.",
       "Solutions are implicit level curves $F(x,y)=C$.",
       "Potential functions connect ODEs to gradients, energy, and conservation."
+    ],
+    "connectionsProse": "<p>This lesson connects partial derivatives and level curves to exact equations. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for conservative fields and energy-like implicit solutions, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$M,N$",
+        "desc": "coefficient functions"
+      },
+      {
+        "sym": "$F$",
+        "desc": "the potential"
+      },
+      {
+        "sym": "$F_x,F_y$",
+        "desc": "partial derivatives"
+      },
+      {
+        "sym": "$C$",
+        "desc": "labels a level curve"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Set the coefficient functions.",
+        "result": "$M=2xy+3$, $N=x^2+4y$",
+        "why": "identify the differential coefficients"
+      },
+      {
+        "do": "Compute $M_y$.",
+        "result": "$M_y=2x$",
+        "why": "differentiate $M$ with respect to $y$"
+      },
+      {
+        "do": "Compute $N_x$.",
+        "result": "$N_x=2x$",
+        "why": "differentiate $N$ with respect to $x$"
+      },
+      {
+        "do": "Use exactness.",
+        "result": "$M_y=N_x$",
+        "why": "seek $F$ with $F_x=M$, $F_y=N$"
+      },
+      {
+        "do": "Integrate $M$ in $x$.",
+        "result": "$F=x^2y+3x+\\phi(y)$",
+        "why": "the missing part may depend on $y$"
+      },
+      {
+        "do": "Differentiate in $y$.",
+        "result": "$F_y=x^2+\\phi'(y)$",
+        "why": "match $N$"
+      },
+      {
+        "do": "Set equal to $N$.",
+        "result": "$x^2+\\phi'(y)=x^2+4y$, so $\\phi'=4y$",
+        "why": "determine the missing $y$-only term"
+      },
+      {
+        "do": "Integrate $\\phi'$.",
+        "result": "$\\phi=2y^2$",
+        "why": "recover the missing potential term"
+      },
+      {
+        "do": "State the implicit solution.",
+        "result": "$x^2y+3x+2y^2=C$",
+        "why": "solutions are level curves of the potential"
+      }
     ],
     "prereqs": [
       "math-03-07"
@@ -2150,8 +2528,8 @@
         "change of variables"
       ]
     },
-    "motivation": "<p>Some nonlinear equations are kinder than they look. Bernoulli equations contain a power $y^n$, but that power is organized enough to be removed by a substitution.</p><p>The pattern is encouraging: instead of inventing a new method from scratch, we change variables until an old method reappears.</p>",
-    "definition": "<p>A <b>Bernoulli equation</b> has the form $y'+p(x)y=q(x)y^n$, where $n\\ne0$ and $n\\ne1$. Divide by $y^n$ where $y\\ne0$ and set $v=y^{1-n}$.</p><p>Differentiating gives $v'=(1-n)y^{-n}y'$. This turns the Bernoulli equation into the linear equation $v'+(1-n)p(x)v=(1-n)q(x)$.</p><p><b>Assumptions that matter:</b> the substitution usually works where $y\\ne0$; constant zero solutions should be checked separately when allowed; and $n=0$ or $n=1$ is already linear rather than Bernoulli in the special sense.</p>",
+    "motivation": "<p>A Bernoulli equation is nonlinear in $y$, but the power is organized enough that one substitution turns it into a linear first-order equation. The concrete gap is that the equation is nonlinear in y but has one organized power.</p><p>The load-bearing idea is that the substitution y^(1-n) converts the problem to a linear one. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A Bernoulli equation has the form</p><p>$$y'+p(x)y=q(x)y^n.$$</p><p><b>Assumptions that matter:</b> Use $n\\ne0,1$ for the nonlinear case, and check $y=0$ separately when division by powers of $y$ is used.</p>",
     "worked": {
       "problem": "Solve $y'+y=xy^2$ with $y(0)=1/3$.",
       "skills": [
@@ -2365,34 +2743,34 @@
     ],
     "applications": [
       {
-        "title": "Saturating growth variants",
-        "background": "Bernoulli forms appear when growth includes both linear and power-law feedback.",
-        "numbers": "For $y'+y=y^2$, the substitution $v=1/y$ makes $v'-v=-1$."
+        "title": "Basic Bernoulli",
+        "background": "$y'+y=y^2$ uses $v=1/y$.",
+        "numbers": "$v'-v=-1$"
       },
       {
-        "title": "Nonlinear damping",
-        "background": "Physical damping can include powers of velocity while retaining transformable structure.",
-        "numbers": "If $v'+0.2v=0.01v^2$, then $u=1/v$ gives $u'-0.2u=-0.01$."
+        "title": "Transformed growth",
+        "background": "$v'+0.2v=0.01v^2$ with $u=1/v$ becomes linear.",
+        "numbers": "$u'-0.2u=-0.01$"
       },
       {
-        "title": "Adaptive gain control",
-        "background": "Some signal systems reduce gain according to its square.",
-        "numbers": "For $a'+a=0.5a^2$, starting at $1$ gives $a(2)=1/(0.5+0.5e^2)\\approx0.238$."
+        "title": "Amplitude saturation",
+        "background": "$a'+a=0.5a^2$, $a(0)=1$ solves by Bernoulli substitution.",
+        "numbers": "$a(2)=1/(0.5+0.5e^2)\\approx0.238$"
       },
       {
-        "title": "Model confidence dynamics",
-        "background": "A toy confidence variable can have nonlinear reinforcement but linear decay.",
-        "numbers": "For $c'+2c=tc^2$, $v=1/c$ gives $v'-2v=-t$."
+        "title": "Time-varying coefficient",
+        "background": "$c'+2c=tc^2$ uses reciprocal substitution.",
+        "numbers": "$v'-2v=-t$"
       },
       {
-        "title": "Epidemic simplifications",
-        "background": "Certain reciprocal substitutions convert nonlinear rate equations into linear ones.",
-        "numbers": "If $I'-I=I^2$, then $1/I=-1+Ce^{-t}$."
+        "title": "Infection nonlinearity",
+        "background": "$I'-I=I^2$ becomes linear in $1/I$.",
+        "numbers": "$1/I=-1+Ce^{-t}$"
       },
       {
-        "title": "Numerical validation",
-        "background": "Solvers can be checked against Bernoulli equations with known closed forms.",
-        "numbers": "For $y'+y=y^2$, $y(0)=0.5$ gives $y=1/(1+e^x)$ and $y(1)\\approx0.269$."
+        "title": "Initial-value Bernoulli",
+        "background": "$y'+y=y^2$, $y(0)=0.5$ fixes the constant.",
+        "numbers": "$y(1)=1/(1+e)\\approx0.269$"
       }
     ],
     "applicationsClose": "Bernoulli equations teach a durable lesson: the right variable can reveal linear structure inside nonlinear clothing.",
@@ -2401,6 +2779,62 @@
       "Use $v=y^{1-n}$ to get a linear first-order equation.",
       "Check separately for constant solutions lost by division.",
       "Substitution is a central ODE skill, not a trick to memorize once."
+    ],
+    "connectionsProse": "<p>This lesson connects linear first-order equations and substitutions to bernoulli equations. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for more nonlinear first-order models, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$n$",
+        "desc": "the nonlinear power"
+      },
+      {
+        "sym": "$v$",
+        "desc": "the transformed dependent variable"
+      },
+      {
+        "sym": "$p,q$",
+        "desc": "known functions"
+      },
+      {
+        "sym": "$y=0$",
+        "desc": "must be checked separately when division is used"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with the Bernoulli form.",
+        "result": "$y'+p(x)y=q(x)y^n$, $n\\ne0,1$",
+        "why": "the nonlinear term is a single power"
+      },
+      {
+        "do": "Divide by $y^n$.",
+        "result": "$y^{-n}y'+p y^{1-n}=q$",
+        "why": "put powers where one substitution can reach them"
+      },
+      {
+        "do": "Set the substitution.",
+        "result": "$v=y^{1-n}$",
+        "why": "this is the power already present"
+      },
+      {
+        "do": "Differentiate $v$.",
+        "result": "$v'=(1-n)y^{-n}y'$",
+        "why": "chain rule"
+      },
+      {
+        "do": "Replace the powered terms.",
+        "result": "$y^{-n}y'=v'/(1-n)$ and $y^{1-n}=v$",
+        "why": "rewrite the equation in $v$"
+      },
+      {
+        "do": "Multiply by $1-n$.",
+        "result": "$v'+(1-n)p v=(1-n)q$",
+        "why": "the transformed equation is linear in $v$"
+      },
+      {
+        "do": "Apply $y'+y=xy^2$, $y(0)=1/3$.",
+        "result": "$v=1/y$, $v'-v=-x$, and $y=1/(x+2e^x+1)$",
+        "why": "the nonlinear equation becomes a first-order linear equation"
+      }
     ],
     "prereqs": [
       "math-03-08"
@@ -2428,8 +2862,8 @@
         "implicit solutions"
       ]
     },
-    "motivation": "<p>Some equations do not care about the absolute size of $x$ and $y$ separately. They care about their ratio, the slope from the origin.</p><p>For these equations, $v=y/x$ is the natural new variable. It says, let us track the shape ratio first; then $y=vx$ translates that ratio back into the original curve.</p>",
-    "definition": "<p>A first-order equation is <b>homogeneous</b> in this sense when it can be written $\\dfrac{dy}{dx}=F\\left(\\dfrac{y}{x}\\right)$, or when $M(x,y)$ and $N(x,y)$ are homogeneous functions of the same degree in $M\\,dx+N\\,dy=0$.</p><p>Use $v=y/x$, so $y=vx$. Differentiating by the product rule gives $\\dfrac{dy}{dx}=v+x\\dfrac{dv}{dx}$. Substitution often turns the equation into a separable equation in $v$ and $x$.</p><p><b>Assumptions that matter:</b> the substitution requires $x\\ne0$ on the interval; this is different from linear homogeneous equations; and after solving for $v$, return to $y$ using $y=vx$.</p>",
+    "motivation": "<p>When the slope depends only on the ratio $y/x$, the curve's scale matters less than its shape from the origin. The substitution $v=y/x$ tracks that ratio directly. The concrete gap is that the slope depends on position only through y/x.</p><p>The load-bearing idea is that tracking the ratio y/x removes the scale from the equation. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A homogeneous first-order substitution applies when the slope depends only on $y/x$:</p><p>$$y'=F(y/x).$$</p><p><b>Assumptions that matter:</b> Work on an interval where $x\\ne0$, and use $v=y/x$ so $y=vx$.</p>",
     "worked": {
       "problem": "Solve $\\dfrac{dy}{dx}=1+\\dfrac{y}{x}$ with $y(1)=2$.",
       "skills": [
@@ -2638,34 +3072,34 @@
     ],
     "applications": [
       {
-        "title": "Scale-invariant geometry",
-        "background": "Homogeneous equations often describe curves whose slopes depend on direction from the origin.",
-        "numbers": "For $y'=y/x$, solutions $y=Ax$ keep ratio $A$ constant."
+        "title": "Pure ratio slope",
+        "background": "$y'=y/x$ keeps the ratio constant along rays.",
+        "numbers": "$y=Ax$ and constant ratio $A$"
       },
       {
-        "title": "Ray tracing",
-        "background": "Some geometric paths depend on angle or ratio more than absolute distance.",
-        "numbers": "At point $(4,2)$, $y/x=0.5$; an equation $y'=1+y/x$ gives slope $1.5$."
+        "title": "Point slope",
+        "background": "At $(4,2)$, $y/x=0.5$ for $y'=1+y/x$.",
+        "numbers": "$y'=1.5$"
       },
       {
-        "title": "Feature normalization",
-        "background": "Ratios remove scale, much like homogeneous substitutions remove absolute magnitude.",
-        "numbers": "Vectors $(2,4)$ and $(10,20)$ both have ratio $y/x=2$."
+        "title": "Scale invariance",
+        "background": "Two points can have the same ratio despite different sizes.",
+        "numbers": "$(2,4)$ and $(10,20)$ both have ratio $2$"
       },
       {
-        "title": "Phase-plane sketches",
-        "background": "Direction fields with ratio-only slopes look similar along rays from the origin.",
-        "numbers": "On the ray $y=3x$, every point has $y/x=3$, so $y'=1+3=4$ for $y'=1+y/x$."
+        "title": "Ray slope",
+        "background": "On ray $y=3x$, the rule $1+y/x$ is constant.",
+        "numbers": "$y'=4$"
       },
       {
-        "title": "Dimensional analysis",
-        "background": "Engineering models often reduce variables to dimensionless ratios.",
-        "numbers": "If height and width double from $(3,6)$ to $(6,12)$, the ratio stays $2$."
+        "title": "Doubling",
+        "background": "Doubling a point from $(3,6)$ to $(6,12)$ preserves scale-free information.",
+        "numbers": "keeps ratio $2$"
       },
       {
-        "title": "Algorithm scaling",
-        "background": "Scale-free rules behave the same after multiplying all measurements.",
-        "numbers": "A decision based on $y/x>0.8$ gives the same result for $(5,4.5)$ and $(50,45)$."
+        "title": "Threshold",
+        "background": "Threshold $y/x>0.8$ depends only on the ratio.",
+        "numbers": "true for $(5,4.5)$ and $(50,45)$ because both ratios are $0.9$"
       }
     ],
     "applicationsClose": "Homogeneous substitution is ratio thinking: when scale is not the story, let $v=y/x$ tell the story.",
@@ -2674,6 +3108,72 @@
       "The derivative becomes $y'=v+xv'$.",
       "The transformed equation is usually separable.",
       "This homogeneous idea is different from a linear homogeneous equation."
+    ],
+    "connectionsProse": "<p>This lesson connects ratios, scaling, and product-rule differentiation to homogeneous substitutions. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for more change-of-variable methods, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$v$",
+        "desc": "the ratio $y/x$"
+      },
+      {
+        "sym": "$x\\ne0$",
+        "desc": "required on the interval"
+      },
+      {
+        "sym": "$F(y/x)$",
+        "desc": "the ratio-only slope rule"
+      },
+      {
+        "sym": "$C$",
+        "desc": "the integration constant"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Set the ratio variable.",
+        "result": "$v=y/x$",
+        "why": "the right side depends on this ratio"
+      },
+      {
+        "do": "Rewrite the dependent variable.",
+        "result": "$y=vx$",
+        "why": "return to the original variable"
+      },
+      {
+        "do": "Differentiate.",
+        "result": "$y'=v+xv'$",
+        "why": "product rule"
+      },
+      {
+        "do": "Substitute into $y'=1+y/x$.",
+        "result": "$v+xv'=1+v$",
+        "why": "replace the ODE"
+      },
+      {
+        "do": "Cancel $v$.",
+        "result": "$xv'=1$",
+        "why": "the equation is separable"
+      },
+      {
+        "do": "Separate variables.",
+        "result": "$dv=dx/x$",
+        "why": "put each variable on its own side"
+      },
+      {
+        "do": "Integrate.",
+        "result": "$v=\\ln|x|+C$",
+        "why": "logarithm appears"
+      },
+      {
+        "do": "Return to $y$.",
+        "result": "$y=x(\\ln|x|+C)$",
+        "why": "undo the substitution"
+      },
+      {
+        "do": "Use $y(1)=2$.",
+        "result": "$C=2$",
+        "why": "the initial condition fixes the curve"
+      }
     ],
     "prereqs": [
       "math-03-09"
@@ -2701,8 +3201,8 @@
         "dimensional analysis"
       ]
     },
-    "motivation": "<p>The hardest part of many ODE problems is not integration. It is listening to the story carefully enough to write the rate law.</p><p>First-order models usually say one of three things: change is proportional to the amount, change is proportional to the gap from a target, or change equals input minus output. Once the equation is honest, the solution follows.</p>",
-    "definition": "<p>A first-order ODE model chooses a state variable, an independent variable, a rate law, and an initial condition. The state might be temperature $T(t)$, population $P(t)$, concentration $C(t)$, or a parameter $w(t)$.</p><p>Units are the built-in error check. If $T'=-k(T-20)$, then $T'$ has units degrees per minute, $(T-20)$ has degrees, so $k$ must have units $1/$minute. This keeps constants meaningful.</p><p><b>Assumptions that matter:</b> simple models freeze many real factors; proportionality constants must have units; solutions are trusted only where assumptions remain reasonable; and initial data anchors the prediction.</p>",
+    "motivation": "<p>Modeling means translating a story about change into a rate law with units that match. The mathematics starts only after the state variable, rate, constant, and initial condition are named. The concrete gap is that the story must be translated before algebra can begin.</p><p>The load-bearing idea is that naming the state, target, rate constant, and initial condition creates the ODE. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>First-order modeling translates a changing quantity into a rate law, often by naming a state, a target, a rate constant, and an initial condition.</p><p>For Newton cooling, $$T'=-k(T-20).$$</p><p><b>Assumptions that matter:</b> Units must match, the target or ambient value must be stated, and the sign of the rate should match the story.</p>",
     "worked": {
       "problem": "A drink at $80^\\circ$C cools in a $20^\\circ$C room according to $T'=-0.2(T-20)$, with $t$ in minutes. Find $T(5)$.",
       "skills": [
@@ -2906,34 +3406,34 @@
     ],
     "applications": [
       {
-        "title": "Newton cooling",
-        "background": "Heat exchange is often proportional to temperature gap from surroundings.",
-        "numbers": "A $60^\\circ$ gap with $k=0.2$ cools initially at $12^\\circ$C per minute."
+        "title": "Cooling gap",
+        "background": "Cooling gap $60$ with $k=0.2$ gives initial proportional cooling.",
+        "numbers": "cools initially at $12^\\circ$/min"
       },
       {
-        "title": "Tank mixing",
-        "background": "Chemical engineering tracks amount by input minus output.",
-        "numbers": "Inflow $12$ g/min and outflow $S/25$ gives equilibrium $S=300$ g."
+        "title": "Tank balance",
+        "background": "Tank inflow $12$ g/min and outflow $S/25$ balance when rates match.",
+        "numbers": "$S=300$ g"
       },
       {
-        "title": "Queueing systems",
-        "background": "Backlog changes by arrivals minus completions.",
-        "numbers": "At $Q=100$, $Q'=90-0.3(100)=60$ jobs/min."
+        "title": "Queue rate",
+        "background": "$Q'=90-0.3Q$ at $Q=100$ gives net accumulation.",
+        "numbers": "$60$ jobs/min"
       },
       {
-        "title": "Gradient flow",
-        "background": "Continuous optimization models weights moving opposite gradients.",
-        "numbers": "For $J=0.2(w-5)^2$, $w'=-0.4(w-5)$ moves $w=1$ upward at rate $1.6$."
+        "title": "Gradient model",
+        "background": "For $J=0.2(w-5)^2$, gradient flow moves $w=1$ toward $5$.",
+        "numbers": "$w'=-0.4(w-5)$ moves $w=1$ at rate $1.6$"
       },
       {
-        "title": "Epidemic saturation",
-        "background": "Logistic terms model limited susceptible population or attention.",
-        "numbers": "At $P=500$ with $K=1000$, $P'=0.5\\cdot500\\cdot0.5=125$."
+        "title": "Logistic model",
+        "background": "Logistic $0.5P(1-P/1000)$ at half carrying capacity is largest.",
+        "numbers": "at $P=500$ gives $125$"
       },
       {
-        "title": "Online metric smoothing",
-        "background": "Dashboards often smooth noisy measurements with first-order dynamics.",
-        "numbers": "If $m'=0.2(x-m)$, signal $x=70$ and current $m=50$ gives $m'=4$ units/min."
+        "title": "Smoothing model",
+        "background": "$m'=0.2(70-50)$ measures movement toward a target.",
+        "numbers": "$4$ units/min"
       }
     ],
     "applicationsClose": "Modeling is translation with accountability: every term must say what changes, why, and in what units.",
@@ -2942,6 +3442,71 @@
       "Common first-order patterns are proportional growth, gap decay, and input minus output.",
       "Units are a powerful check on constants and terms.",
       "Initial conditions turn a model into a prediction."
+    ],
+    "connectionsProse": "<p>This lesson connects solved first-order equations and units for rates to modeling with first-order odes. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for building usable models before solving them, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$T$",
+        "desc": "the state"
+      },
+      {
+        "sym": "$t$",
+        "desc": "time"
+      },
+      {
+        "sym": "$k$",
+        "desc": "a rate constant with units $1/$time"
+      },
+      {
+        "sym": "ambient temperature",
+        "desc": "the target"
+      },
+      {
+        "sym": "initial condition",
+        "desc": "fixes the starting gap"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Choose the state.",
+        "result": "$T(t)$",
+        "why": "the temperature changes over time"
+      },
+      {
+        "do": "Identify ambient temperature.",
+        "result": "$20$",
+        "why": "the gap is $T-20$"
+      },
+      {
+        "do": "State proportional cooling.",
+        "result": "$T'=-k(T-20)$",
+        "why": "hotter objects cool faster toward the room"
+      },
+      {
+        "do": "Use the data.",
+        "result": "$k=0.2$ and $T(0)=80$",
+        "why": "units are per minute"
+      },
+      {
+        "do": "Separate the gap equation.",
+        "result": "$d(T-20)/(T-20)=-0.2dt$",
+        "why": "the gap decays"
+      },
+      {
+        "do": "Integrate.",
+        "result": "$T-20=Ce^{-0.2t}$",
+        "why": "proportional decay gives an exponential gap"
+      },
+      {
+        "do": "Use the initial condition.",
+        "result": "$C=60$",
+        "why": "$T(0)=80$ starts $60$ above ambient"
+      },
+      {
+        "do": "Compute the prediction.",
+        "result": "$T(5)=20+60e^{-1}\\approx42.07$",
+        "why": "the model now gives a number"
+      }
     ],
     "prereqs": [
       "math-03-10"
@@ -2969,8 +3534,8 @@
         "intervals of validity"
       ]
     },
-    "motivation": "<p>After solving several equations, it is natural to ask a deeper question: when are we guaranteed that a solution exists at all, and when is it the only one through a starting point?</p><p>The existence–uniqueness theorem is the reassurance behind many models and numerical solvers. It says that if the slope field is continuous and not too wild in $y$, then one and only one solution curve passes through the initial point.</p>",
-    "definition": "<p>For the initial value problem $y'=f(x,y)$, $y(x_0)=y_0$, if $f$ and $\\dfrac{\\partial f}{\\partial y}$ are continuous in a rectangle around $(x_0,y_0)$, then there is some interval around $x_0$ on which a unique solution exists.</p><p>The continuity of $f$ gives local slopes to follow. The continuity of $f_y$ controls how sharply slopes change as $y$ changes, preventing two nearby solution curves from crossing through the same point.</p><p><b>Assumptions that matter:</b> the theorem is local, not necessarily global; it gives a guarantee, not a formula; failure of the hypotheses does not always mean failure of uniqueness; and the rectangle must surround the initial point.</p>",
+    "motivation": "<p>Existence says a solution starts at the initial point. Uniqueness says there is not a second solution curve passing through the same point under the same well-behaved slope rule. The concrete gap is that a drawn slope field can suggest paths but not guarantee a single one.</p><p>The load-bearing idea is that continuity and controlled y-dependence give local existence and uniqueness. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>The existence–uniqueness theorem says that an IVP $y'=f(x,y)$, $y(x_0)=y_0$ has a local solution, and that solution is unique, when the slope field is continuous and has controlled dependence on $y$ near the initial point.</p><p><b>Assumptions that matter:</b> Continuity gives slopes to follow, and controlled $y$-dependence, often checked through $f_y$, prevents two nearby curves from splitting through one initial point.</p>",
     "worked": {
       "problem": "Use the theorem for $y'=x+y^2$, $y(0)=1$.",
       "skills": [
@@ -3174,34 +3739,34 @@
     ],
     "applications": [
       {
-        "title": "Numerical solver trust",
-        "background": "ODE solvers approximate a solution curve; uniqueness says there is one curve to approximate near the start.",
-        "numbers": "For $y'=xy$, $f_y=x$ is continuous, so the path through $(1,2)$ is unique locally."
+        "title": "Product slope",
+        "background": "For $y'=xy$, $f_y=x$ is continuous.",
+        "numbers": "the path through $(1,2)$ is unique locally"
       },
       {
-        "title": "Direction-field crossings",
-        "background": "In a uniqueness region, two solution curves cannot cross at the same point.",
-        "numbers": "For $y'=x+y$, both $f$ and $f_y=1$ are continuous, so one point means one curve."
+        "title": "Linear slope",
+        "background": "For $y'=x+y$, $f_y=1$ controls dependence on $y$.",
+        "numbers": "no crossings in the region"
       },
       {
-        "title": "Model debugging",
-        "background": "If a right side is undefined at initial data, the model may be ill-posed.",
-        "numbers": "The equation $y'=1/(y-2)$ with $y(0)=2$ fails because the slope is undefined."
+        "title": "Undefined slope",
+        "background": "$y'=1/(y-2)$ cannot start at the singular value.",
+        "numbers": "fails at $y(0)=2$ because the slope is undefined"
       },
       {
-        "title": "Nonunique edge cases",
-        "background": "Failed hypotheses warn us to be careful, and sometimes real nonuniqueness appears.",
-        "numbers": "For $y'=\\sqrt{|y|}$, $y(0)=0$, both $y=0$ and delayed-growth curves can satisfy the same start."
+        "title": "Nonunique example",
+        "background": "$y'=\\sqrt{|y|}$ has weak dependence at $y=0$.",
+        "numbers": "$y(0)=0$ has nonunique delayed-start behavior"
       },
       {
-        "title": "Neural ODE flows",
-        "background": "Continuous normalizing flows rely on well-behaved vector fields so trajectories are deterministic.",
-        "numbers": "If a learned field has derivative with respect to state bounded by $3$, nearby states separate at a controlled local rate."
+        "title": "Neural ODE field",
+        "background": "A Neural ODE field with bounded state derivative is locally controlled.",
+        "numbers": "state derivative bounded by $3$"
       },
       {
-        "title": "Physical determinism",
-        "background": "Classical models often assume one future from one state; uniqueness is the mathematical version of that assumption.",
-        "numbers": "For $v'=-0.1v$, $v(0)=20$ gives one trajectory $20e^{-0.1t}$, not several."
+        "title": "Velocity decay",
+        "background": "$v'=-0.1v$, $v(0)=20$ has a unique exponential trajectory.",
+        "numbers": "one trajectory $20e^{-0.1t}$"
       }
     ],
     "applicationsClose": "Existence–uniqueness is the quiet contract behind deterministic modeling: start here, follow this well-behaved slope field, and one local path is determined.",
@@ -3210,6 +3775,25 @@
       "Check continuity of $f_y$ for uniqueness in the theorem.",
       "The guarantee is local and may not provide a formula.",
       "When hypotheses fail, investigate rather than assume the model is safe."
+    ],
+    "connectionsProse": "<p>This lesson connects slope fields and initial conditions to the existence–uniqueness theorem. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for knowing when an IVP is well posed, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$f(x,y)$",
+        "desc": "the slope field"
+      },
+      {
+        "sym": "$f_y$",
+        "desc": "measures slope sensitivity to $y$"
+      },
+      {
+        "sym": "$(x_0,y_0)$",
+        "desc": "the initial point"
+      },
+      {
+        "sym": "guaranteed interval",
+        "desc": "local"
+      }
     ],
     "prereqs": [
       "math-03-11"
@@ -3238,8 +3822,8 @@
         "linear operators"
       ]
     },
-    "motivation": "<p>You already know that a first-order equation needs one initial value. A second-order equation tracks both a quantity and its velocity, so it needs two pieces of starting information.</p><p>The comforting news is that linearity keeps the world organized. If two independent solutions are known, every solution is a weighted blend of them, and the initial conditions simply choose the weights.</p>",
-    "definition": "<p>A <b>second-order linear ODE</b> has the form $a_2(t)y''+a_1(t)y'+a_0(t)y=g(t)$, where $y$ is the unknown function of $t$, primes mean derivatives, and the coefficients $a_2,a_1,a_0$ are given functions. If $g(t)=0$, the equation is homogeneous; otherwise it is forced.</p><p>For the homogeneous equation, the solution set is a two-dimensional vector space on any interval where $a_2(t)\\ne0$ and the coefficients are continuous. Two solutions $y_1,y_2$ form a fundamental set when their Wronskian $W=y_1y_2'-y_1'y_2$ is not zero at one point, and then $y=C_1y_1+C_2y_2$ gives every homogeneous solution.</p><p><b>Assumptions that matter:</b> the equation is linear in $y,y',y''$; coefficients are continuous on the interval; $a_2(t)$ does not vanish there; and initial data $y(t_0),y'(t_0)$ are specified at a point inside the interval.</p>",
+    "motivation": "<p>A second-order linear homogeneous equation has a two-dimensional solution space. Two independent solutions are enough because two initial values determine the two constants. The concrete gap is that one solution is not enough for a second-order equation.</p><p>The load-bearing idea is that two independent modes span the solution family. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A second-order linear equation has a two-dimensional homogeneous solution space when two independent solutions are available.</p><p>$$y=C_1y_1+C_2y_2.$$</p><p><b>Assumptions that matter:</b> Independence is checked by a nonzero Wronskian on the interval, and two initial data values set the constants.</p>",
     "worked": {
       "problem": "For $y''+y'-2y=0$, use $y_1=e^t$ and $y_2=e^{-2t}$ to solve $y(0)=3$, $y'(0)=0$.",
       "skills": [
@@ -3428,34 +4012,34 @@
     ],
     "applications": [
       {
-        "title": "Mechanical position and velocity",
-        "background": "Newtonian mechanics naturally gives second-order equations because force controls acceleration. That is why a spring needs position and velocity to predict its future.",
-        "numbers": "For $x''+4x=0$ with $x(0)=3$ and $x'(0)=0$, the solution is $x=3\\cos2t$; at $t=\\pi/4$, $x=0$."
+        "title": "Oscillator",
+        "background": "$x''+4x=0$, $x(0)=3$, $x'(0)=0$ gives $x=3\\cos2t$.",
+        "numbers": "$x(\\pi/4)=0$"
       },
       {
-        "title": "Circuit charge and current",
-        "background": "RLC circuits use charge $q$ and current $q'$ in the same second-order pattern. The mathematics predates digital electronics but still guides filters.",
-        "numbers": "If $q=2e^{-t}+e^{-3t}$ coulombs, then $q(0)=3$ and current $q'(0)=-2-3=-5$ amperes."
+        "title": "Mode mixture",
+        "background": "$q=2e^{-t}+e^{-3t}$ has computable initial data.",
+        "numbers": "$q(0)=3$, $q'(0)=-5$"
       },
       {
-        "title": "Optimizer momentum",
-        "background": "Heavy-ball optimization behaves like a damped second-order system near a quadratic minimum, which is why velocity is stored in the algorithm.",
-        "numbers": "For mode $e^{-0.5t}$, after $t=4$ the factor is $e^{-2}\\u0007pprox0.135$, so an error of $10$ falls to about $1.35$."
+        "title": "Error mode",
+        "background": "Error mode $10e^{-0.5t}$ decays exponentially.",
+        "numbers": "$1.35$ at $t=4$"
       },
       {
-        "title": "Camera stabilization",
-        "background": "A stabilizer has to infer position and angular velocity, not just a static angle. Second-order models make overshoot visible.",
-        "numbers": "A response $\\theta=5e^{-2t}$ degrees has $\\theta(1)\\u0007pprox0.68$ degrees and angular speed $\\theta'(1)\\u0007pprox-1.35$ degrees per second."
+        "title": "Angle decay",
+        "background": "$5e^{-2t}$ gives decaying angle.",
+        "numbers": "$0.677^\\circ$ at $t=1$"
       },
       {
-        "title": "Population with inertia",
-        "background": "Some ecological models include delayed or inertial adjustment rather than first-order growth. The second state can represent adjustment speed.",
-        "numbers": "If a disturbance has modes $6e^{-t}-2e^{-2t}$, its initial size is $4$ and by $t=2$ it is $6e^{-2}-2e^{-4}\\u0007pprox0.775$."
+        "title": "Two decays",
+        "background": "$6e^{-t}-2e^{-2t}$ combines two modes.",
+        "numbers": "$0.775$ at $t=2$"
       },
       {
-        "title": "Signal smoothing",
-        "background": "Second-order low-pass filters smooth signals while controlling ringing. The theory separates natural modes from forcing.",
-        "numbers": "Two decay modes $0.7e^{-3t}+0.3e^{-9t}$ have value $1$ at $0$ and about $0.7e^{-3}+0.3e^{-9}\\u0007pprox0.035$ at $t=1$."
+        "title": "Weighted modes",
+        "background": "$0.7e^{-3}+0.3e^{-9}$ evaluates the two-mode state.",
+        "numbers": "$\\approx0.0350$ at $t=1$"
       }
     ],
     "applicationsClose": "Across mechanics, circuits, filters, and optimization, the same two-dimensional solution space carries the state forward.",
@@ -3464,6 +4048,62 @@
       "A nonzero Wronskian means two solutions are independent and form a fundamental set.",
       "Initial position and velocity choose the constants in the general solution.",
       "Linearity makes superposition reliable."
+    ],
+    "connectionsProse": "<p>This lesson connects linear combinations and two initial data values to second-order linear ode theory. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for the theory behind second-order homogeneous solutions, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$a_2,a_1,a_0$",
+        "desc": "coefficient functions"
+      },
+      {
+        "sym": "$g$",
+        "desc": "forcing"
+      },
+      {
+        "sym": "$W$",
+        "desc": "the Wronskian"
+      },
+      {
+        "sym": "$C_1,C_2$",
+        "desc": "constants set by position and velocity"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Verify $y_1=e^t$ and $y_2=e^{-2t}$ solve $y''+y'-2y=0$.",
+        "result": "$0$",
+        "why": "substitution gives zero"
+      },
+      {
+        "do": "Compute the Wronskian.",
+        "result": "$W=y_1y_2'-y_1'y_2=-3e^{-t}$",
+        "why": "nonzero means independence"
+      },
+      {
+        "do": "Write the general solution.",
+        "result": "$y=C_1e^t+C_2e^{-2t}$",
+        "why": "linearity allows combinations"
+      },
+      {
+        "do": "Apply $y(0)=3$.",
+        "result": "$C_1+C_2=3$",
+        "why": "the initial position gives one equation"
+      },
+      {
+        "do": "Differentiate.",
+        "result": "$y'=C_1e^t-2C_2e^{-2t}$",
+        "why": "velocity supplies the second equation"
+      },
+      {
+        "do": "Apply $y'(0)=0$.",
+        "result": "$C_1-2C_2=0$",
+        "why": "the initial velocity fixes the second relation"
+      },
+      {
+        "do": "Solve the constants.",
+        "result": "$C_1=2$, $C_2=1$, so $y=2e^t+e^{-2t}$",
+        "why": "two independent data values determine the solution"
+      }
     ],
     "prereqs": [
       "math-03-12"
@@ -3492,8 +4132,8 @@
         "stability"
       ]
     },
-    "motivation": "<p>You already know that $e^{rt}$ is special because differentiating it only multiplies by $r$. Constant-coefficient ODEs are built to reward that fact.</p><p>Instead of guessing many shapes, we try one exponential, turn derivatives into powers of $r$, and solve an algebraic equation. The roots become the natural modes of the system.</p>",
-    "definition": "<p>For $ay''+by'+cy=0$ with constants $a\\ne0,b,c$, try $y=e^{rt}$. Substitution gives $(ar^2+br+c)e^{rt}=0$, so the <b>characteristic equation</b> is $ar^2+br+c=0$.</p><p>Distinct real roots $r_1,r_2$ give $C_1e^{r_1t}+C_2e^{r_2t}$. A repeated root $r$ gives $(C_1+C_2t)e^{rt}$. Complex roots $\\u0007lpha\\pm i\\beta$ give $e^{\\u0007lpha t}(C_1\\cos\\beta t+C_2\\sin\\beta t)$.</p><p><b>Assumptions that matter:</b> coefficients are constant, the equation is homogeneous, and roots are counted with multiplicity. Complex roots appear in conjugate pairs when the coefficients are real.</p>",
+    "motivation": "<p>Constant coefficients make exponentials natural because derivatives of $e^{rt}$ only multiply by powers of $r$. The ODE becomes a polynomial equation for the growth or decay rates. The concrete gap is that differentiation of a general function is hard to predict.</p><p>The load-bearing idea is that exponentials turn derivatives into powers of a rate r. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>For a constant-coefficient homogeneous equation, trying $y=e^{rt}$ turns the ODE into the characteristic equation.</p><p>$$ar^2+br+c=0.$$</p><p><b>Assumptions that matter:</b> Coefficients are constant, $e^{rt}\\ne0$, and distinct roots give independent exponential modes.</p>",
     "worked": {
       "problem": "Solve $y''-3y'+2y=0$ with $y(0)=5$, $y'(0)=8$.",
       "skills": [
@@ -3702,34 +4342,34 @@
     ],
     "applications": [
       {
-        "title": "Damped mechanical modes",
-        "background": "A mass-spring-damper with constant mass, damping, and stiffness has constant coefficients. Its roots tell whether it returns smoothly or rings.",
-        "numbers": "For $r^2+6r+8=0$, roots $-2,-4$ give modes $e^{-2t},e^{-4t}$; at $t=1$, they are $0.135$ and $0.018$."
+        "title": "Decay modes",
+        "background": "$r^2+6r+8=0$ gives modes $e^{-2t},e^{-4t}$.",
+        "numbers": "at $t=1$ they are $0.135,0.0183$"
       },
       {
-        "title": "Electrical transients",
-        "background": "RLC circuits respond with exponentials after a switch. Engineers read roots to estimate settling.",
-        "numbers": "A pole at $-50$ has time constant $1/50=0.02$s; about $4$ time constants gives $0.08$s to settle near $2\\%$."
+        "title": "Fast pole",
+        "background": "Pole $-50$ sets the time constant.",
+        "numbers": "time constant $0.02$s and four-time-constant settling about $0.08$s"
       },
       {
-        "title": "Gradient descent near a quadratic",
-        "background": "Linearized optimization error often evolves by constant modes, so root signs become convergence rates.",
-        "numbers": "Mode $e^{-0.2t}$ keeps $e^{-2}=0.135$ after $10$ units; mode $e^{-1.0t}$ keeps only $e^{-10}\\u0007pprox0.000045$."
+        "title": "Slow mode",
+        "background": "Mode $e^{-0.2t}$ decays over 10 units.",
+        "numbers": "keeps $0.135$ after $10$ units"
       },
       {
-        "title": "Audio resonators",
-        "background": "A simple resonator is modeled by constant-coefficient equations. Complex roots encode frequency and decay.",
-        "numbers": "Roots $-3\\pm40i$ decay with factor $e^{-3t}$ and oscillate at angular frequency $40$ rad/s, about $6.37$ cycles/s."
+        "title": "Oscillatory roots",
+        "background": "Roots $-3\\pm40i$ determine oscillation frequency.",
+        "numbers": "$40/(2\\pi)\\approx6.37$ Hz"
       },
       {
-        "title": "Server recovery models",
-        "background": "After a sudden load drop, queue length can be approximated by decaying modes. The slowest root dominates user-visible recovery.",
-        "numbers": "If $q(t)=100e^{-t}+20e^{-5t}$, then $q(3)\\u0007pprox4.98+0.000006$, so the $e^{-t}$ mode controls the tail."
+        "title": "Queue recovery",
+        "background": "$100e^{-3}+20e^{-15}$ evaluates recovery at $t=3$.",
+        "numbers": "$\\approx4.98$"
       },
       {
-        "title": "Numerical stability tests",
-        "background": "Before simulating an ODE, roots give a baseline behavior the numerical method should respect.",
-        "numbers": "For $y'=-10y$, Euler with step $h=0.05$ multiplies by $1-0.5=0.5$ per step; $10$ steps give $0.5^{10}\\u0007pprox0.00098$."
+        "title": "Euler multiplier",
+        "background": "Euler multiplier $0.5$ for $y'=-10y$, $h=0.05$ repeats ten steps.",
+        "numbers": "$0.5^{10}\\approx0.00098$"
       }
     ],
     "applicationsClose": "Roots are small algebraic objects, but they carry decay, growth, oscillation, and numerical stability across many systems.",
@@ -3738,6 +4378,67 @@
       "Distinct, repeated, and complex roots each have a specific solution form.",
       "The real part of a root controls growth or decay; the imaginary part controls oscillation.",
       "Initial conditions choose the constants after the modes are known."
+    ],
+    "connectionsProse": "<p>This lesson connects exponential solutions from first-order equations to constant-coefficient homogeneous equations. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for constant-coefficient linear ODEs of higher order, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$r$",
+        "desc": "a characteristic root"
+      },
+      {
+        "sym": "$a,b,c$",
+        "desc": "constants"
+      },
+      {
+        "sym": "$C_i$",
+        "desc": "mode weights"
+      },
+      {
+        "sym": "$\\alpha\\pm i\\beta$",
+        "desc": "complex roots producing $e^{\\alpha t}\\cos\\beta t$ and $e^{\\alpha t}\\sin\\beta t$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $ay''+by'+cy=0$.",
+        "result": "$ay''+by'+cy=0$",
+        "why": "coefficients are constants"
+      },
+      {
+        "do": "Try an exponential.",
+        "result": "$y=e^{rt}$",
+        "why": "exponentials keep their shape under differentiation"
+      },
+      {
+        "do": "Compute derivatives.",
+        "result": "$y'=re^{rt}$ and $y''=r^2e^{rt}$",
+        "why": "each derivative multiplies by $r$"
+      },
+      {
+        "do": "Substitute.",
+        "result": "$(ar^2+br+c)e^{rt}=0$",
+        "why": "all terms share the exponential"
+      },
+      {
+        "do": "Set the polynomial to zero.",
+        "result": "$ar^2+br+c=0$",
+        "why": "since $e^{rt}\\ne0$"
+      },
+      {
+        "do": "Use distinct roots.",
+        "result": "$e^{r_1t},e^{r_2t}$",
+        "why": "distinct roots give independent modes"
+      },
+      {
+        "do": "Solve $y''-3y'+2y=0$.",
+        "result": "roots $1,2$",
+        "why": "the characteristic equation factors"
+      },
+      {
+        "do": "Apply $y(0)=5$, $y'(0)=8$.",
+        "result": "$C_1=2$, $C_2=3$ and $y=2e^t+3e^{2t}$",
+        "why": "the initial data solve $C_1+C_2=5$, $C_1+2C_2=8$"
+      }
     ],
     "prereqs": [
       "math-03-13"
@@ -3766,8 +4467,8 @@
         "particular solutions"
       ]
     },
-    "motivation": "<p>You can already solve the natural motion of a constant-coefficient ODE. Real systems also get pushed: a motor supplies a sinusoid, a heater supplies a constant input, or a data pipeline receives a trend.</p><p>Undetermined coefficients says: if the input is made of exponentials, polynomials, sines, or cosines, guess a matching shape. The ODE turns that guess into algebra.</p>",
-    "definition": "<p>For $L[y]=g(t)$, where $L$ is a constant-coefficient linear operator, the full solution is $y=y_h+y_p$. The homogeneous part $y_h$ solves $L[y_h]=0$; the particular part $y_p$ is one function with $L[y_p]=g(t)$.</p><p>The method chooses a trial form for $y_p$ from the shape of $g(t)$. If the trial overlaps a homogeneous mode, multiply by enough powers of $t$ to make it independent. Then substitute and solve for the unknown coefficients.</p><p><b>Assumptions that matter:</b> coefficients are constant; the forcing is a finite combination of the standard trial families; and resonance is handled by multiplying the trial by $t$ once for each overlap.</p>",
+    "motivation": "<p>When forcing has a standard shape, a matching trial form turns a nonhomogeneous constant-coefficient ODE into algebra. The concrete gap is that the natural modes do not include the forced response.</p><p>The load-bearing idea is that a matching trial form reduces the particular solution to algebra. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Undetermined coefficients solves a nonhomogeneous constant-coefficient ODE by adding one particular solution to the homogeneous solution.</p><p>$$y=y_h+y_p.$$</p><p><b>Assumptions that matter:</b> The forcing must have a standard trial shape; if the trial overlaps a homogeneous mode, multiply by enough powers of $t$.</p>",
     "worked": {
       "problem": "Find a particular solution of $y''-3y'+2y=e^{3t}$.",
       "skills": [
@@ -3996,34 +4697,34 @@
     ],
     "applications": [
       {
-        "title": "Servo tracking",
-        "background": "Control engineers use sinusoidal and step inputs to test whether a device follows commands. Undetermined coefficients gives the steady response.",
-        "numbers": "For $x''+4x=8\\cos t$, the particular amplitude is $8/(4-1)=8/3\\u0007pprox2.67$."
+        "title": "Cosine forcing",
+        "background": "$x''+4x=8\\cos t$ has a nonresonant cosine trial.",
+        "numbers": "particular amplitude $8/(4-1)=8/3\\approx2.67$"
       },
       {
-        "title": "Thermal forcing",
-        "background": "A building heated by a nearly constant source can be approximated by a constant forcing term.",
-        "numbers": "For $T'+0.5T=10$, the steady particular value is $T_p=20$ because $0.5\\cdot20=10$."
+        "title": "Constant forcing",
+        "background": "$T'+0.5T=10$ has a constant particular solution.",
+        "numbers": "constant particular value $20$"
       },
       {
-        "title": "Trend removal",
-        "background": "Polynomial forcing represents ramps in demand or baseline drift in data streams.",
-        "numbers": "For $y'+y=2t$, a trial $At+B$ gives $A=2$, $A+B=0$, so $y_p=2t-2$."
+        "title": "Ramp forcing",
+        "background": "$y'+y=2t$ uses a linear trial.",
+        "numbers": "trial $At+B$ and $y_p=2t-2$"
       },
       {
-        "title": "Signal processing",
-        "background": "Sinusoidal tests measure frequency response, a practice that goes back to analog filters.",
-        "numbers": "For $y''+9y=5\\cos2t$, amplitude is $5/(9-4)=1$, so $y_p=\\cos2t$."
+        "title": "Harmonic response",
+        "background": "$y''+9y=5\\cos2t$ has a cosine particular solution.",
+        "numbers": "amplitude $1$"
       },
       {
-        "title": "Optimizer bias correction",
-        "background": "Exponential inputs model decaying bias or scheduled learning-rate effects.",
-        "numbers": "For $m'+3m=e^{-t}$, $m_p=\\frac12e^{-t}$ because $(-1+3)/2=1$."
+        "title": "Exponential forcing",
+        "background": "$m'+3m=e^{-t}$ uses an exponential trial.",
+        "numbers": "$m_p=0.5e^{-t}$"
       },
       {
-        "title": "Queue warm starts",
-        "background": "A sudden constant arrival surplus can be modeled as forcing toward a new equilibrium.",
-        "numbers": "If $q'+4q=12$, the particular queue level is $q_p=3$ since $4\\cdot3=12$."
+        "title": "Queue forcing",
+        "background": "$q'+4q=12$ has a constant particular state.",
+        "numbers": "$q_p=3$"
       }
     ],
     "applicationsClose": "The same move appears everywhere: match the input's shape, substitute, and let coefficients reveal the steady response.",
@@ -4032,6 +4733,57 @@
       "Undetermined coefficients works for standard forcing families with constant coefficients.",
       "Resonance means the trial overlaps the homogeneous solution, so multiply by powers of $t$.",
       "Coefficient matching is the algebraic heart of the method."
+    ],
+    "connectionsProse": "<p>This lesson connects homogeneous modes and standard forcing shapes to method of undetermined coefficients. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for nonhomogeneous constant-coefficient equations, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$L$",
+        "desc": "the linear differential operator"
+      },
+      {
+        "sym": "$y_h$",
+        "desc": "homogeneous solution"
+      },
+      {
+        "sym": "$y_p$",
+        "desc": "one particular solution"
+      },
+      {
+        "sym": "$A$",
+        "desc": "an unknown trial coefficient"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Solve the homogeneous characteristic equation for $y''-3y'+2y=e^{3t}$.",
+        "result": "$r^2-3r+2=0$ has roots $1,2$",
+        "why": "these give natural modes"
+      },
+      {
+        "do": "Choose a trial particular solution.",
+        "result": "$y_p=Ae^{3t}$",
+        "why": "$e^{3t}$ is not a natural mode and matches the forcing shape"
+      },
+      {
+        "do": "Compute derivatives.",
+        "result": "$y_p'=3Ae^{3t}$ and $y_p''=9Ae^{3t}$",
+        "why": "substitution needs the trial derivatives"
+      },
+      {
+        "do": "Substitute.",
+        "result": "$(9A-9A+2A)e^{3t}=e^{3t}$",
+        "why": "collect coefficients"
+      },
+      {
+        "do": "Solve for $A$.",
+        "result": "$2A=1$, so $A=1/2$",
+        "why": "matching coefficients makes the ODE true"
+      },
+      {
+        "do": "Combine homogeneous and particular parts.",
+        "result": "$C_1e^t+C_2e^{2t}+\\tfrac12e^{3t}$",
+        "why": "the full solution is natural motion plus forced response"
+      }
     ],
     "prereqs": [
       "math-03-14"
@@ -4060,8 +4812,8 @@
         "integrating factors"
       ]
     },
-    "motivation": "<p>Undetermined coefficients is lovely when the forcing has a familiar shape. But life does not always hand us polynomials or clean sinusoids.</p><p>Variation of parameters keeps the two homogeneous solutions and lets their coefficients become functions. The price is integration; the reward is a method that works far more broadly.</p>",
-    "definition": "<p>For the standard equation $y''+p(t)y'+q(t)y=g(t)$ with fundamental solutions $y_1,y_2$, seek $y_p=u_1(t)y_1(t)+u_2(t)y_2(t)$. Imposing $u_1'y_1+u_2'y_2=0$ prevents extra second-derivative clutter, and the ODE gives $u_1'y_1'+u_2'y_2'=g$.</p><p>Solving this $2\\times2$ system gives $u_1'=-y_2g/W$ and $u_2'=y_1g/W$, where $W=y_1y_2'-y_1'y_2$. Integrate $u_1',u_2'$ and build $y_p$.</p><p><b>Assumptions that matter:</b> the equation is in standard form with leading coefficient $1$; $p,q,g$ are continuous on the interval; and $W\\ne0$ there so the two homogeneous solutions stay independent.</p>",
+    "motivation": "<p>Variation of parameters keeps the homogeneous solutions but lets their coefficients become functions. It replaces guessing a forcing shape with a systematic integral recipe. The concrete gap is that guessing a trial form only works for selected inputs.</p><p>The load-bearing idea is that letting the mode weights vary produces integral formulas. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Variation of parameters finds a particular solution by replacing constant homogeneous coefficients with functions.</p><p>$$y_p=u_1y_1+u_2y_2.$$</p><p><b>Assumptions that matter:</b> The equation is in standard form with leading coefficient $1$, and $y_1,y_2$ form a fundamental homogeneous pair with nonzero Wronskian.</p>",
     "worked": {
       "problem": "Use variation of parameters to find a particular solution of $y''+y=e^t$.",
       "skills": [
@@ -4265,34 +5017,34 @@
     ],
     "applications": [
       {
-        "title": "Arbitrary force records",
-        "background": "Experimental mechanics often measures a force that is not a clean sine wave. Variation of parameters can use that measured input directly.",
-        "numbers": "If $g(t)=2e^t$ in $y''+y=g$, the worked result doubles to $y_p=e^t$."
+        "title": "Scaled forcing",
+        "background": "If $g=2e^t$ in $y''+y=g$, the particular response scales linearly.",
+        "numbers": "particular solution is $e^t$"
       },
       {
-        "title": "Green's functions",
-        "background": "Physics packages the same idea into an impulse response, then integrates against the forcing.",
-        "numbers": "For $y''+y=g(t)$ with zero initial data, $y(t)=\\int_0^t\\sin(t-s)g(s)\\,ds$; if $g(s)=1$, then $y=1-\\cos t$."
+        "title": "Zero-state step",
+        "background": "Zero-state $y''+y=1$ responds to constant forcing.",
+        "numbers": "$y=1-\\cos t$"
       },
       {
-        "title": "Adaptive control",
-        "background": "Controllers sometimes see time-varying loads where a fixed trial function is unrealistic.",
-        "numbers": "A load $g(t)=t$ in $y''+y=g$ has particular $y_p=t$, since $0+t=t$."
+        "title": "Ramp input",
+        "background": "$y''+y=t$ has a simple particular response.",
+        "numbers": "$y_p=t$"
       },
       {
-        "title": "Signal reconstruction",
-        "background": "A linear filter's response to any input is built by integrating weighted sine and cosine modes.",
-        "numbers": "For input $g(t)=3\\cos t$ in $y''+4y=g$, the amplitude is $3/(4-1)=1$, so the particular response is $\\cos t$."
+        "title": "Cosine input",
+        "background": "$y''+4y=3\\cos t$ is nonresonant.",
+        "numbers": "response $\\cos t$"
       },
       {
-        "title": "Neural differential equations",
-        "background": "When a learned forcing term is inserted into a linearized ODE, numerical variation-of-parameters formulas describe the response.",
-        "numbers": "If a learned input is constant $0.2$ in $y'+5y=0.2$, the steady particular value is $0.04$."
+        "title": "First-order steady state",
+        "background": "$y'+5y=0.2$ has a constant target.",
+        "numbers": "steady value $0.04$"
       },
       {
-        "title": "Epidemic response models",
-        "background": "Time-varying interventions act like forcing terms in linearized compartment models.",
-        "numbers": "If perturbation mode solves $z'+0.4z=u(t)$ and $u=8$ for a short window, the steady target during that window is $8/0.4=20$."
+        "title": "Queue target",
+        "background": "$z'+0.4z=8$ balances at a target.",
+        "numbers": "steady target $20$"
       }
     ],
     "applicationsClose": "Whenever guessing becomes brittle, variation of parameters keeps the linear structure and lets integration carry the input.",
@@ -4301,6 +5053,62 @@
       "The Wronskian is the determinant that solves for $u_1'$ and $u_2'$.",
       "The equation must be in standard form before applying the formula.",
       "The method works for many forcings that undetermined coefficients cannot guess."
+    ],
+    "connectionsProse": "<p>This lesson connects homogeneous solution bases and the Wronskian to variation of parameters. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for a systematic method for arbitrary forcing, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$u_1,u_2$",
+        "desc": "varying coefficients"
+      },
+      {
+        "sym": "$W=y_1y_2'-y_1'y_2$",
+        "desc": "the Wronskian"
+      },
+      {
+        "sym": "$g(t)$",
+        "desc": "forcing"
+      },
+      {
+        "sym": "standard form",
+        "desc": "has leading coefficient $1$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with homogeneous solutions.",
+        "result": "$y_1,y_2$",
+        "why": "they span natural motion"
+      },
+      {
+        "do": "Try varying coefficients.",
+        "result": "$y_p=u_1y_1+u_2y_2$",
+        "why": "let weights vary"
+      },
+      {
+        "do": "Impose an auxiliary condition.",
+        "result": "$u_1'y_1+u_2'y_2=0$",
+        "why": "this removes second-derivative clutter"
+      },
+      {
+        "do": "Differentiate and substitute into the ODE.",
+        "result": "homogeneous terms cancel",
+        "why": "only the forcing terms remain"
+      },
+      {
+        "do": "Record the remaining condition.",
+        "result": "$u_1'y_1'+u_2'y_2'=g$",
+        "why": "this completes a $2\\times2$ system"
+      },
+      {
+        "do": "Solve for the coefficient derivatives.",
+        "result": "$u_1'=-y_2g/W$, $u_2'=y_1g/W$",
+        "why": "the Wronskian is the determinant"
+      },
+      {
+        "do": "Integrate and apply $y''+y=e^t$.",
+        "result": "$y_1=\\cos t$, $y_2=\\sin t$, $W=1$, and a particular solution is $e^t/2$",
+        "why": "integrating $u_1',u_2'$ gives the particular response"
+      }
     ],
     "prereqs": [
       "math-03-15"
@@ -4329,8 +5137,8 @@
         "stability"
       ]
     },
-    "motivation": "<p>You have probably pushed a swing. Push at random times and little happens; push in rhythm and the motion grows. That everyday feeling is resonance.</p><p>The math separates natural motion from forced motion. The denominator that looks like algebra is really a frequency comparison: far from the natural frequency, response is small; close to it, response can become large.</p>",
-    "definition": "<p>A basic forced oscillator is $mx''+cx'+kx=F_0\\cos(\\omega t)$, where $m$ is mass, $c$ is damping, $k$ is stiffness, and $\\omega$ is forcing angular frequency. With no damping, the natural frequency is $\\omega_0=\\sqrt{k/m}$.</p><p>For $x''+\\omega_0^2x=F_0\\cos(\\omega t)$ and $\\omega\\ne\\omega_0$, a particular solution has amplitude $A=F_0/(\\omega_0^2-\\omega^2)$. If $\\omega=\\omega_0$ and damping is zero, the resonant particular solution grows like $t\\sin(\\omega_0t)$.</p><p><b>Assumptions that matter:</b> the model is linear; the forcing is sinusoidal; damping changes infinite resonance into a finite peak; and units of $\\omega$ are radians per unit time.</p>",
+    "motivation": "<p>A sinusoidal force produces a sinusoidal response whose amplitude depends on the gap between forcing frequency and natural frequency. Resonance is the limiting case where that gap vanishes in the undamped model. The concrete gap is that forcing frequency may compete with a system natural frequency.</p><p>The load-bearing idea is that substitution shows how the frequency gap controls amplitude. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Forced oscillation studies an oscillator driven by a sinusoidal input; in the undamped nonresonant case the response amplitude is controlled by the frequency gap.</p><p>$$A=\\frac{F_0}{\\omega_0^2-\\omega^2}.$$</p><p><b>Assumptions that matter:</b> This displayed amplitude is for the undamped model with $\\omega\\ne\\omega_0$; resonance requires a different trial form.</p>",
     "worked": {
       "problem": "Solve $x''+4x=3\\cos t$ with $x(0)=0$, $x'(0)=0$.",
       "skills": [
@@ -4529,34 +5337,34 @@
     ],
     "applications": [
       {
-        "title": "Bridge and building safety",
-        "background": "Resonance became a central engineering concern after visible failures and oscillations in structures. Designers keep forcing frequencies away from natural frequencies.",
-        "numbers": "If a bridge mode is $2.0$ Hz and pedestrian forcing is $1.9$ Hz, the gap is only $5\\%$, so damping must be checked carefully."
+        "title": "Bridge mode",
+        "background": "Bridge mode $2.0$ Hz and forcing $1.9$ Hz are close.",
+        "numbers": "differ by $5\\%$"
       },
       {
-        "title": "MRI and spectroscopy",
-        "background": "Resonance is useful when controlled: systems absorb strongly at characteristic frequencies.",
-        "numbers": "A signal at $64$ MHz is selected while one at $63$ MHz is attenuated if the bandwidth is $0.5$ MHz."
+        "title": "Bandwidth",
+        "background": "Bandwidth $0.5$ MHz around a center selects nearby frequencies.",
+        "numbers": "selects $64$ MHz and attenuates $63$ MHz if centered tightly"
       },
       {
-        "title": "Audio equalizers",
-        "background": "Filters boost or cut frequencies by exploiting oscillator-like frequency response.",
-        "numbers": "A bandpass centered at $1000$ Hz with quality factor $Q=10$ has bandwidth $100$ Hz."
+        "title": "Equalizer",
+        "background": "Equalizer with center $1000$ Hz and $Q=10$ has bandwidth center divided by $Q$.",
+        "numbers": "bandwidth $100$ Hz"
       },
       {
-        "title": "Optimization momentum",
-        "background": "Momentum can oscillate around minima like a forced damped system when gradients have periodic components.",
-        "numbers": "An envelope $e^{-0.1t}$ leaves $e^{-1}=0.368$ after $10$ steps but $e^{-5}=0.0067$ after $50$ steps."
+        "title": "Damped envelope",
+        "background": "Envelope $e^{-0.1t}$ decays over time.",
+        "numbers": "leaves $0.368$ at $t=10$ and $0.0067$ at $t=50$"
       },
       {
-        "title": "Server autoscaling",
-        "background": "Periodic traffic can excite delayed controllers. Damping corresponds to conservative gain or smoothing.",
-        "numbers": "If demand oscillates every $10$ minutes, its angular frequency is $2\\pi/10\\u0007pprox0.628$ rad/min."
+        "title": "Daily cycle",
+        "background": "Period $10$ min converts to angular frequency.",
+        "numbers": "$2\\pi/10\\approx0.628$ rad/min"
       },
       {
-        "title": "Sensor vibration",
-        "background": "Accelerometers are modeled as damped oscillators, and resonance determines usable bandwidth.",
-        "numbers": "A sensor natural frequency of $200$ Hz should measure a $20$ Hz signal safely because the ratio is $0.1$."
+        "title": "Sensor ratio",
+        "background": "A forcing-to-natural frequency comparison checks resonance risk.",
+        "numbers": "$20/200=0.1$ is well below natural frequency"
       }
     ],
     "applicationsClose": "Forced oscillation teaches one reusable question: how close is the input frequency to the system's own modes, and how much damping protects it?",
@@ -4565,6 +5373,61 @@
       "Without damping, matching the forcing frequency to the natural frequency causes resonance.",
       "Damping makes resonance finite and transients decay.",
       "Frequency response is algebraic evidence of physical amplification."
+    ],
+    "connectionsProse": "<p>This lesson connects second-order oscillators and sinusoidal forcing to forced oscillations and resonance. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for resonance, filters, sensors, and vibration models, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$m,c,k$",
+        "desc": "mass, damping, stiffness"
+      },
+      {
+        "sym": "$F_0$",
+        "desc": "forcing amplitude"
+      },
+      {
+        "sym": "$\\omega$",
+        "desc": "forcing angular frequency"
+      },
+      {
+        "sym": "$\\omega_0$",
+        "desc": "natural frequency"
+      },
+      {
+        "sym": "$A$",
+        "desc": "response amplitude"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Try a cosine particular solution for $x''+\\omega_0^2x=F_0\\cos\\omega t$.",
+        "result": "$x_p=A\\cos\\omega t$",
+        "why": "forcing is cosine"
+      },
+      {
+        "do": "Compute the second derivative.",
+        "result": "$x_p''=-A\\omega^2\\cos\\omega t$",
+        "why": "substitution needs acceleration"
+      },
+      {
+        "do": "Substitute.",
+        "result": "$A(\\omega_0^2-\\omega^2)\\cos\\omega t=F_0\\cos\\omega t$",
+        "why": "collect the cosine terms"
+      },
+      {
+        "do": "Match coefficients.",
+        "result": "$A=F_0/(\\omega_0^2-\\omega^2)$",
+        "why": "valid when $\\omega\\ne\\omega_0$"
+      },
+      {
+        "do": "Handle resonance.",
+        "result": "multiply by $t$",
+        "why": "if $\\omega=\\omega_0$, the trial overlaps the homogeneous mode and produces growing resonant form"
+      },
+      {
+        "do": "Apply $x''+4x=3\\cos t$.",
+        "result": "$A=3/(4-1)=1$",
+        "why": "the frequency gap is nonzero"
+      }
     ],
     "prereqs": [
       "math-03-16"
@@ -4593,8 +5456,8 @@
         "superposition"
       ]
     },
-    "motivation": "<p>Second-order equations already showed the pattern: each independent mode gets one constant. A third-order equation simply needs three constants; an $n$th-order equation needs $n$.</p><p>The bookkeeping grows, but the idea stays friendly. A constant-coefficient equation becomes a characteristic polynomial whose roots list the modes.</p>",
-    "definition": "<p>An $n$th-order linear ODE has the form $a_n(t)y^{(n)}+\\cdots+a_1(t)y'+a_0(t)y=g(t)$. On an interval where $a_n\\ne0$ and coefficients are continuous, $n$ initial values determine a unique solution.</p><p>For constant-coefficient homogeneous equations, trying $e^{rt}$ gives the characteristic polynomial. A root $r$ of multiplicity $m$ contributes $e^{rt},te^{rt},\\ldots,t^{m-1}e^{rt}$. Complex conjugate roots are rewritten as real sine-cosine modes.</p><p><b>Assumptions that matter:</b> the leading coefficient must not vanish on the interval; roots are counted with multiplicity; and $n$ independent initial conditions are needed for an $n$th-order equation.</p>",
+    "motivation": "<p>An $n$th-order linear equation needs $n$ independent constants. Constant coefficients turn the search for those modes into an $n$th-degree characteristic polynomial. The concrete gap is that more stored derivative data requires more constants.</p><p>The load-bearing idea is that an nth-degree characteristic polynomial supplies the needed modes. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>An $n$th-order linear constant-coefficient ODE uses a characteristic polynomial of degree $n$ to supply $n$ modes and constants.</p><p>$$a_nr^n+\\cdots+a_1r+a_0=0.$$</p><p><b>Assumptions that matter:</b> The leading coefficient is nonzero, and repeated roots require multiplying by powers of $t$.</p>",
     "worked": {
       "problem": "Solve $y'''-6y''+11y'-6y=0$ with $y(0)=6$, $y'(0)=14$, $y''(0)=36$.",
       "skills": [
@@ -4788,34 +5651,34 @@
     ],
     "applications": [
       {
-        "title": "Beam bending",
-        "background": "Euler-Bernoulli beam theory uses fourth-order ODEs because curvature and load are linked through multiple derivatives.",
-        "numbers": "A cantilever deflection often scales like $L^4$; doubling length from $2$m to $4$m multiplies deflection by $16$."
+        "title": "Beam scaling",
+        "background": "Beam deflection scaling $L^4$ magnifies length changes.",
+        "numbers": "doubling length multiplies deflection by $16$"
       },
       {
-        "title": "High-order filters",
-        "background": "Analog filter design uses polynomials whose roots are poles. More order means sharper frequency separation.",
-        "numbers": "A fourth-order rolloff drops about $80$ dB per decade, compared with $20$ dB for first order."
+        "title": "Filter order",
+        "background": "Fourth-order filter rolloff compounds across stages.",
+        "numbers": "about $80$ dB per decade"
       },
       {
-        "title": "Compartment chains",
-        "background": "Biological or queueing chains with several stages can collapse to higher-order equations.",
-        "numbers": "Four identical decay stages with rate $2$ have repeated root $-2$ and modes up to $t^3e^{-2t}$."
+        "title": "Repeated decay",
+        "background": "Four identical decay stages with rate $2$ create repeated-root modes.",
+        "numbers": "repeated root $-2$ and modes through $t^3e^{-2t}$"
       },
       {
-        "title": "Spline theory",
-        "background": "Cubic splines minimize bending energy and are connected to fourth derivatives.",
-        "numbers": "A cubic segment has four coefficients, so four boundary constraints determine it."
+        "title": "Spline segment",
+        "background": "A cubic spline segment is governed by a fourth-order coefficient set.",
+        "numbers": "four coefficients"
       },
       {
-        "title": "Control plants",
-        "background": "Aircraft and robotics models often have fourth or higher order because position, velocity, actuator, and sensor dynamics interact.",
-        "numbers": "Roots $-0.5,-2,-10,-20$ imply the $-0.5$ pole sets a settling time around $4/0.5=8$s."
+        "title": "Slow pole",
+        "background": "Slow pole $-0.5$ sets settling time by $4/|r|$.",
+        "numbers": "settling about $4/0.5=8$s"
       },
       {
-        "title": "Sequence models",
-        "background": "Linear recurrence filters are discrete cousins of higher-order ODEs.",
-        "numbers": "A recurrence with roots $0.9$ and $0.5$ keeps $0.9^{20}=0.122$ but $0.5^{20}\\u0007pprox0.000001$ after $20$ steps."
+        "title": "Discrete root",
+        "background": "Discrete root $0.9$ decays over repeated steps.",
+        "numbers": "keeps $0.9^{20}\\approx0.122$"
       }
     ],
     "applicationsClose": "Higher order adds more modes, but the slowest and most resonant modes still tell the practical story.",
@@ -4824,6 +5687,58 @@
       "Constant coefficients lead to characteristic polynomials of degree $n$.",
       "Repeated roots add powers of $t$ multiplying the exponential.",
       "Late-time behavior is often controlled by the root with largest real part."
+    ],
+    "connectionsProse": "<p>This lesson connects constant-coefficient characteristic equations to higher-order linear odes. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for higher-order dynamics and repeated modes, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$y^{(n)}$",
+        "desc": "the $n$th derivative"
+      },
+      {
+        "sym": "$a_n$",
+        "desc": "the leading coefficient"
+      },
+      {
+        "sym": "root multiplicity $m$",
+        "desc": "contributes $t^0e^{rt}$ through $t^{m-1}e^{rt}$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Try an exponential for $y'''-6y''+11y'-6y=0$.",
+        "result": "$y=e^{rt}$",
+        "why": "derivatives become powers of $r$"
+      },
+      {
+        "do": "Substitute.",
+        "result": "$(r^3-6r^2+11r-6)e^{rt}=0$",
+        "why": "the exponential factors out"
+      },
+      {
+        "do": "Set the characteristic polynomial.",
+        "result": "$r^3-6r^2+11r-6=0$",
+        "why": "$e^{rt}\\ne0$"
+      },
+      {
+        "do": "Factor.",
+        "result": "$(r-1)(r-2)(r-3)=0$",
+        "why": "roots are $1,2,3$"
+      },
+      {
+        "do": "Write the solution.",
+        "result": "$y=C_1e^t+C_2e^{2t}+C_3e^{3t}$",
+        "why": "each root gives a mode"
+      },
+      {
+        "do": "Use $y(0)=6$, $y'(0)=14$, $y''(0)=36$.",
+        "result": "$C_1+C_2+C_3=6$, $C_1+2C_2+3C_3=14$, $C_1+4C_2+9C_3=36$",
+        "why": "three initial data values determine three constants"
+      },
+      {
+        "do": "Solve the system.",
+        "result": "the constants are $1,2,3$",
+        "why": "the initial data select one solution"
+      }
     ],
     "prereqs": [
       "math-03-17"
@@ -4852,8 +5767,8 @@
         "linearization"
       ]
     },
-    "motivation": "<p>Many processes cannot be described by one number. A pendulum needs angle and angular velocity; an epidemic needs susceptible and infected groups; an optimizer may store parameters and momentum.</p><p>A first-order system puts all those quantities into a state vector. The derivative vector tells how the entire state moves next.</p>",
-    "definition": "<p>A first-order system has the form $\\mathbf{x}'=\\mathbf{f}(t,\\mathbf{x})$, where $\\mathbf{x}(t)$ is a vector of state variables. A linear time-invariant system is $\\mathbf{x}'=A\\mathbf{x}+\\mathbf{b}(t)$, where $A$ is a constant matrix.</p><p>A higher-order scalar ODE can be rewritten as a first-order system by naming derivatives as new variables. For example, if $y''+3y'+2y=0$, set $x_1=y$ and $x_2=y'$, so $x_1'=x_2$ and $x_2'=-2x_1-3x_2$.</p><p><b>Assumptions that matter:</b> the state variables must contain enough information to predict the next derivative; linear systems use matrix multiplication; and initial data specify the whole vector $\\mathbf{x}(t_0)$.</p>",
+    "motivation": "<p>A system tracks several changing quantities at once. Rewriting higher-order scalar equations as first-order systems puts all needed memory into one state vector. The concrete gap is that a higher-order scalar equation carries hidden memory.</p><p>The load-bearing idea is that a state vector stores all variables needed for first-order evolution. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A system of first-order ODEs tracks a vector state and its component rates.</p><p>$$x'=f(t,x).$$</p><p><b>Assumptions that matter:</b> Each state component must store enough information to make the next derivative first-order.</p>",
     "worked": {
       "problem": "Rewrite $y''+3y'+2y=0$ as a first-order system and solve for $y(0)=3$, $y'(0)=0$.",
       "skills": [
@@ -5057,34 +5972,34 @@
     ],
     "applications": [
       {
-        "title": "Epidemic compartments",
-        "background": "SIR models track susceptible, infected, and recovered populations as a coupled state.",
-        "numbers": "If $S'= -0.002SI$ with $S=900$, $I=10$, then $S'=-18$ people per day."
+        "title": "SIR system",
+        "background": "SIR $S'=-0.002SI$ with $S=900,I=10$ gives susceptible change.",
+        "numbers": "$-18$"
       },
       {
-        "title": "Predator-prey dynamics",
-        "background": "Lotka-Volterra systems were early examples of nonlinear coupled ODEs in ecology.",
-        "numbers": "For $x'=0.5x-0.02xy$ with $x=40,y=10$, prey growth is $20-8=12$ per month."
+        "title": "Predator-prey",
+        "background": "Predator-prey $x'=0.5x-0.02xy$ at $(40,10)$ gives prey growth.",
+        "numbers": "$12$"
       },
       {
-        "title": "Momentum optimization",
-        "background": "Algorithms with momentum keep both parameter and velocity, making them first-order systems in a larger state.",
-        "numbers": "If $v'= -0.1v-2x$ with $x=3,v=4$, then $v'=-0.4-6=-6.4$."
+        "title": "Momentum state",
+        "background": "Momentum state $v'=-0.1v-2x$ at $(x,v)=(3,4)$ gives acceleration.",
+        "numbers": "$-6.4$"
       },
       {
-        "title": "Chemical reactions",
-        "background": "Mass-action kinetics turns reaction networks into systems of ODEs.",
-        "numbers": "For $A\\to B$ at rate $0.3A$ and $A=50$, $A'=-15$, $B'=15$ molecules per second."
+        "title": "Reaction",
+        "background": "Reaction $A\\to B$ at rate $0.3A$, $A=50$, transfers mass.",
+        "numbers": "$A'=-15$, $B'=15$"
       },
       {
-        "title": "Robotics state space",
-        "background": "Controllers represent position, velocity, and sometimes actuator states as one vector.",
-        "numbers": "A state $(x,v)=(2,-1)$ with $x'=v$ has immediate position derivative $-1$ m/s."
+        "title": "Position-velocity",
+        "background": "State $(x,v)=(2,-1)$ stores velocity directly.",
+        "numbers": "$x'=-1$"
       },
       {
-        "title": "Recommendation dynamics",
-        "background": "User interest and item exposure can be modeled as coupled states in simplified simulations.",
-        "numbers": "If interest $i'=0.4c-0.1i$ and clicks $c=5,i=8$, then $i'=2-0.8=1.2$ units/day."
+        "title": "Interest coupling",
+        "background": "Interest $i'=0.4c-0.1i$ with $c=5,i=8$ combines signals.",
+        "numbers": "$1.2$"
       }
     ],
     "applicationsClose": "Systems are the natural language of interacting quantities: collect the state, compute the derivative, and follow the vector field.",
@@ -5093,6 +6008,62 @@
       "Higher-order ODEs can be rewritten as first-order systems by adding derivative variables.",
       "Equilibria occur where every component derivative is zero.",
       "Matrix form makes linear systems ready for linear algebra tools."
+    ],
+    "connectionsProse": "<p>This lesson connects position-velocity state descriptions to systems of first-order odes. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for matrix methods and phase-plane analysis, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mathbf{x}$",
+        "desc": "the state vector"
+      },
+      {
+        "sym": "$\\mathbf{f}$",
+        "desc": "the vector field"
+      },
+      {
+        "sym": "$A$",
+        "desc": "a system matrix"
+      },
+      {
+        "sym": "$\\mathbf{b}(t)$",
+        "desc": "forcing"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Set $x_1=y$ for $y''+3y'+2y=0$.",
+        "result": "$x_1=y$",
+        "why": "first state is position"
+      },
+      {
+        "do": "Set $x_2=y'$.",
+        "result": "$x_2=y'$",
+        "why": "second state stores velocity"
+      },
+      {
+        "do": "Differentiate $x_1$.",
+        "result": "$x_1'=y'=x_2$",
+        "why": "the first equation is first-order"
+      },
+      {
+        "do": "Solve the ODE for $y''$.",
+        "result": "$y''=-3y'-2y$",
+        "why": "isolate acceleration"
+      },
+      {
+        "do": "Substitute states.",
+        "result": "$x_2'=-2x_1-3x_2$",
+        "why": "write acceleration in state variables"
+      },
+      {
+        "do": "Write vector form.",
+        "result": "$x'=\\begin{bmatrix}0&1\\-2&-3\\end{bmatrix}x$",
+        "why": "the system is linear"
+      },
+      {
+        "do": "Translate initial data.",
+        "result": "$x(0)=(3,0)$",
+        "why": "$y(0)=3$, $y'(0)=0$ become state coordinates"
+      }
     ],
     "prereqs": [
       "math-03-18"
@@ -5121,8 +6092,8 @@
         "linear systems"
       ]
     },
-    "motivation": "<p>For the scalar equation $x'=ax$, the solution is $x(t)=e^{at}x(0)$. A linear system $\\mathbf{x}'=A\\mathbf{x}$ asks for the same idea when $a$ is a matrix.</p><p>The answer is $e^{At}$: a matrix that moves every initial state to its state at time $t$.</p>",
-    "definition": "<p>The <b>matrix exponential</b> is defined by the power series $$e^{At}=I+At+\\dfrac{(At)^2}{2!}+\\dfrac{(At)^3}{3!}+\\cdots.$$ For $\\mathbf{x}'=A\\mathbf{x}$, the solution is $\\mathbf{x}(t)=e^{At}\\mathbf{x}(0)$.</p><p>The derivative works term by term: differentiating the series gives $Ae^{At}$, so $\\frac{d}{dt}(e^{At}\\mathbf{x}_0)=Ae^{At}\\mathbf{x}_0=A\\mathbf{x}(t)$. If $A$ is diagonal, exponentiate each diagonal entry.</p><p><b>Assumptions that matter:</b> $A$ is a constant square matrix; the series converges for all finite matrices; and $e^{(A+B)t}=e^{At}e^{Bt}$ only when $A$ and $B$ commute.</p>",
+    "motivation": "<p>The matrix exponential is the flow map for a constant linear system. It generalizes $x(t)=e^{at}x(0)$ from one scalar rate to a whole matrix of coupled rates. The concrete gap is that coupled coordinates cannot be advanced by a scalar factor.</p><p>The load-bearing idea is that the matrix exponential is the state-transition map. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>The matrix exponential is the state-transition matrix for a constant linear system.</p><p>$$e^{At}=I+At+\\frac{(At)^2}{2!}+\\cdots.$$</p><p><b>Assumptions that matter:</b> $A$ is a constant square matrix, and the power series can be differentiated term by term for finite matrices.</p>",
     "worked": {
       "problem": "Solve $\\mathbf{x}'=\\begin{bmatrix}2&0\\0&-1\\end{bmatrix}\\mathbf{x}$ with $\\mathbf{x}(0)=(3,4)$.",
       "skills": [
@@ -5301,34 +6272,34 @@
     ],
     "applications": [
       {
-        "title": "State-space control",
-        "background": "Control theory uses $e^{At}$ to predict a plant between measurements.",
-        "numbers": "If a mode has rate $-4$, then over $0.5$s it multiplies by $e^{-2}\\u0007pprox0.135$."
+        "title": "Stable mode",
+        "background": "Mode rate $-4$ over $0.5$s multiplies by an exponential factor.",
+        "numbers": "$e^{-2}\\approx0.135$"
       },
       {
-        "title": "Continuous-time Markov chains",
-        "background": "Transition probabilities for finite Markov jump processes are matrix exponentials of rate matrices.",
-        "numbers": "A two-state leaving rate $0.2$ over $5$ units gives stay factor $e^{-1}\\u0007pprox0.368$."
+        "title": "Retention",
+        "background": "Leaving rate $0.2$ over $5$ units gives stay probability.",
+        "numbers": "$e^{-1}\\approx0.368$"
       },
       {
-        "title": "Neural ODE solvers",
-        "background": "Linear layers inside continuous-depth models use matrix flows as local building blocks.",
-        "numbers": "A stable eigenvalue $-0.1$ over depth $20$ gives factor $e^{-2}\\u0007pprox0.135$."
+        "title": "Depth damping",
+        "background": "Stable eigenvalue $-0.1$ over depth $20$ decays a mode.",
+        "numbers": "$0.135$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Rotations can be generated by exponentiating skew-symmetric matrices.",
-        "numbers": "Angular speed $\\pi/2$ rad/s for $2$s gives angle $\\pi$, a $180$ degree rotation."
+        "title": "Rotation",
+        "background": "Angular speed $\\pi/2$ for $2$s gives total angle.",
+        "numbers": "$\\pi$, or $180^\\circ$"
       },
       {
-        "title": "Kalman filters",
-        "background": "Continuous dynamics are discretized with a state-transition matrix before sensor updates.",
-        "numbers": "For velocity damping $-0.5$, a $0.1$s step uses factor $e^{-0.05}\\u0007pprox0.951$."
+        "title": "Small damping",
+        "background": "Damping $-0.5$ over $0.1$s gives a short-step factor.",
+        "numbers": "$e^{-0.05}\\approx0.951$"
       },
       {
-        "title": "Epidemic linearization",
-        "background": "Early outbreak growth is often approximated by a matrix exponential around a disease-free state.",
-        "numbers": "Growth rate $0.08$/day over $30$ days multiplies infections by $e^{2.4}\\u0007pprox11.0$."
+        "title": "Growth",
+        "background": "Growth rate $0.08$ for $30$ days compounds exponentially.",
+        "numbers": "$e^{2.4}\\approx11.02$"
       }
     ],
     "applicationsClose": "The matrix exponential is the bridge from a differential law now to a state transition later.",
@@ -5337,6 +6308,62 @@
       "The power series definition works for every square matrix.",
       "Diagonal matrices exponentiate entry by entry.",
       "Matrix exponentials are central state-transition operators."
+    ],
+    "connectionsProse": "<p>This lesson connects the scalar exponential solution of x prime equals ax to the matrix exponential. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for linear systems with constant matrices, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "a constant square matrix"
+      },
+      {
+        "sym": "$I$",
+        "desc": "the identity"
+      },
+      {
+        "sym": "$x_0$",
+        "desc": "the initial state"
+      },
+      {
+        "sym": "$e^{At}$",
+        "desc": "the state-transition matrix"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define the matrix exponential.",
+        "result": "$e^{At}=I+At+(At)^2/2!+\\cdots$",
+        "why": "use the same power series as the scalar exponential"
+      },
+      {
+        "do": "Differentiate term by term.",
+        "result": "$A+A^2t+A^3t^2/2!+\\cdots$",
+        "why": "convergence permits this for finite matrices"
+      },
+      {
+        "do": "Factor out $A$.",
+        "result": "$Ae^{At}$",
+        "why": "the derivative has the original series after $A$"
+      },
+      {
+        "do": "Let the state be advanced by the exponential.",
+        "result": "$x(t)=e^{At}x_0$",
+        "why": "this proposes the flow map"
+      },
+      {
+        "do": "Differentiate the state.",
+        "result": "$x'=Ae^{At}x_0=Ax(t)$",
+        "why": "it satisfies the system"
+      },
+      {
+        "do": "Check the initial value.",
+        "result": "$e^{A0}=I$, so $x(0)=x_0$",
+        "why": "the flow starts at the initial state"
+      },
+      {
+        "do": "Evaluate a diagonal example.",
+        "result": "for $A=\\operatorname{diag}(2,-1)$, $e^{At}=\\operatorname{diag}(e^{2t},e^{-t})$",
+        "why": "diagonal entries exponentiate independently"
+      }
     ],
     "prereqs": [
       "math-03-19"
@@ -5365,8 +6392,8 @@
         "matrix exponential"
       ]
     },
-    "motivation": "<p>A coupled system can feel tangled because each variable affects the others. Eigenvectors reveal special directions where the tangle disappears.</p><p>Along an eigenvector, the matrix only stretches by an eigenvalue. That turns a vector ODE into the familiar scalar equation $z'=\\lambda z$.</p>",
-    "definition": "<p>For $\\mathbf{x}'=A\\mathbf{x}$, if $A\\mathbf{v}=\\lambda\\mathbf{v}$, then $\\mathbf{x}(t)=Ce^{\\lambda t}\\mathbf{v}$ is a solution. A basis of eigenvectors gives the general solution as a sum of modes.</p><p>If $A=PDP^{-1}$ with diagonal $D$, then $e^{At}=Pe^{Dt}P^{-1}$. Complex eigenvalues give spiraling sine-cosine behavior, and repeated eigenvalues may require generalized eigenvectors.</p><p><b>Assumptions that matter:</b> the matrix is constant; enough independent eigenvectors make the clean diagonal formula possible; and real systems with complex eigenvalues are rewritten as real-valued combinations.</p>",
+    "motivation": "<p>Eigenvectors find directions where a coupled linear system behaves like a scalar exponential. In those coordinates, each mode grows or decays by its own eigenvalue. The concrete gap is that a matrix can mix coordinates in ordinary axes.</p><p>The load-bearing idea is that eigenvector coordinates separate the system into scalar modes. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Eigenvalue methods solve $x'=Ax$ by finding directions $v$ where the matrix acts like scalar multiplication.</p><p>$$Av=\\lambda v.$$</p><p><b>Assumptions that matter:</b> If enough eigenvectors form a basis, the solution is a sum of modal exponentials.</p>",
     "worked": {
       "problem": "Solve $\\mathbf{x}'=\\begin{bmatrix}2&1\\1&2\\end{bmatrix}\\mathbf{x}$ with $\\mathbf{x}(0)=(4,2)$.",
       "skills": [
@@ -5565,34 +6592,34 @@
     ],
     "applications": [
       {
-        "title": "Principal axes of dynamics",
-        "background": "Eigenvectors are dynamic coordinates, not just algebraic objects. They reveal independent modes in coupled systems.",
-        "numbers": "For eigenvalues $-1$ and $-4$, after $t=2$ the factors are $0.135$ and $0.000335$."
+        "title": "Two stable eigenvalues",
+        "background": "Eigenvalues $-1,-4$ decay at different speeds.",
+        "numbers": "factors $0.135$ and $0.000335$ at $t=2$"
       },
       {
-        "title": "Google PageRank intuition",
-        "background": "Eigenvector centrality uses a vector unchanged in direction by a link matrix. The steady vector is an eigenvector.",
-        "numbers": "A damping factor $0.85$ shrinks nonleading modes roughly by $0.85^{10}\\u0007pprox0.197$ after $10$ iterations."
+        "title": "Discrete damping",
+        "background": "Damping $0.85$ repeated ten times shrinks a mode.",
+        "numbers": "$0.85^{10}\\approx0.197$"
       },
       {
-        "title": "PCA and linear flows",
-        "background": "PCA finds data directions; ODE eigenvectors find motion directions. Both choose useful coordinates.",
-        "numbers": "Variance eigenvalues $9$ and $1$ mean the first principal direction has $9$ times the variance."
+        "title": "PCA variance",
+        "background": "PCA variances $9,1$ compare strength along eigen-directions.",
+        "numbers": "a $9:1$ direction ratio"
       },
       {
-        "title": "Coupled thermal zones",
-        "background": "Two rooms exchanging heat have common and difference modes.",
-        "numbers": "A difference mode $e^{-0.3t}$ drops to $e^{-3}\\u0007pprox0.050$ after $10$ minutes."
+        "title": "Difference mode",
+        "background": "Difference mode $e^{-0.3t}$ decays over 10 minutes.",
+        "numbers": "$0.050$ after $10$ minutes"
       },
       {
-        "title": "Recurrent neural networks",
-        "background": "Linearized RNN behavior is governed by eigenvalues of the recurrence or continuous generator.",
-        "numbers": "A discrete eigenvalue $1.02$ grows by $1.02^{100}\\u0007pprox7.24$, a gradient explosion warning."
+        "title": "Discrete growth",
+        "background": "Discrete eigenvalue $1.02$ compounds over 100 steps.",
+        "numbers": "$1.02^{100}\\approx7.24$"
       },
       {
-        "title": "Vibration modes",
-        "background": "Structures decompose into eigenmodes that vibrate independently for small motion.",
-        "numbers": "A mode at $12$ Hz completes $12$ cycles per second, while a $3$ Hz mode completes $3$."
+        "title": "Vibration mode",
+        "background": "A $12$ Hz vibration eigenmode repeats in time.",
+        "numbers": "completes $12$ cycles per second"
       }
     ],
     "applicationsClose": "Eigenvalue methods turn coupled motion into modal stories: each direction has its own exponential clock.",
@@ -5601,6 +6628,62 @@
       "A basis of eigenvectors lets you decompose any initial state into modes.",
       "Eigenvalue real parts determine growth or decay; imaginary parts determine rotation.",
       "Diagonalization is the matrix exponential made transparent."
+    ],
+    "connectionsProse": "<p>This lesson connects eigenvectors and scalar exponential growth to eigenvalue methods for systems. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for modal solutions for coupled systems, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "the system matrix"
+      },
+      {
+        "sym": "$v$",
+        "desc": "an eigenvector"
+      },
+      {
+        "sym": "$\\lambda$",
+        "desc": "its rate"
+      },
+      {
+        "sym": "$PDP^{-1}$",
+        "desc": "diagonalizes $A$ when enough eigenvectors exist"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Suppose $Av=\\lambda v$.",
+        "result": "$Av=\\lambda v$",
+        "why": "$v$ is an eigenvector"
+      },
+      {
+        "do": "Try a modal solution.",
+        "result": "$x(t)=Ce^{\\lambda t}v$",
+        "why": "scalar exponential along that direction"
+      },
+      {
+        "do": "Differentiate.",
+        "result": "$x'=C\\lambda e^{\\lambda t}v$",
+        "why": "the scalar exponential contributes $\\lambda$"
+      },
+      {
+        "do": "Apply $A$ to the trial solution.",
+        "result": "$Ax=Ce^{\\lambda t}Av=C\\lambda e^{\\lambda t}v$",
+        "why": "the eigenvector relation replaces $Av$"
+      },
+      {
+        "do": "Compare both sides.",
+        "result": "$x'=Ax$",
+        "why": "the modal expression is a solution"
+      },
+      {
+        "do": "Add modes when eigenvectors form a basis.",
+        "result": "a sum of eigenvector modes",
+        "why": "linearity allows superposition"
+      },
+      {
+        "do": "Apply $A=\\begin{bmatrix}2&1\\1&2\\end{bmatrix}$ and $(4,2)=3(1,1)+1(1,-1)$.",
+        "result": "$x(t)=3e^{3t}(1,1)+e^t(1,-1)$",
+        "why": "eigenpairs are $3,(1,1)$ and $1,(1,-1)$"
+      }
     ],
     "prereqs": [
       "math-03-20"
@@ -5629,8 +6712,8 @@
         "stability classification"
       ]
     },
-    "motivation": "<p>A formula for $x(t)$ and $y(t)$ is wonderful, but sometimes a picture tells the story first. The phase plane puts the state $(x,y)$ on the axes and draws the velocity vector at each point.</p><p>Instead of asking where the object is in physical space, we ask where the system is in state space and where it will move next.</p>",
-    "definition": "<p>For a two-dimensional autonomous system $x'=f(x,y)$, $y'=g(x,y)$, the <b>phase plane</b> is the $(x,y)$-plane equipped with arrows $(f(x,y),g(x,y))$. A trajectory is a curve tangent to those arrows.</p><p>The $x$-nullcline is where $x'=0$; the $y$-nullcline is where $y'=0$. Intersections of nullclines are equilibria. For linear systems, eigenvalues classify nearby trajectory shapes.</p><p><b>Assumptions that matter:</b> autonomous systems have no explicit time dependence; arrows describe direction, not fixed step length; and uniqueness means trajectories cannot cross where the vector field is well behaved.</p>",
+    "motivation": "<p>The phase plane shows a two-dimensional autonomous system as arrows in state space. Nullclines and equilibria organize the picture before exact solutions are known. The concrete gap is that time graphs can hide the geometry of a two-state system.</p><p>The load-bearing idea is that arrows, nullclines, and equilibria organize motion in state space. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Phase-plane analysis studies an autonomous two-state system by drawing its vector field, nullclines, equilibria, and local linear behavior.</p><p>$$x'=f(x,y),\\qquad y'=g(x,y).$$</p><p><b>Assumptions that matter:</b> The system is autonomous and two-dimensional for the phase-plane picture.</p>",
     "worked": {
       "problem": "Analyze the phase-plane ingredients of $x'=y$, $y'=-2x-3y$.",
       "skills": [
@@ -5824,34 +6907,34 @@
     ],
     "applications": [
       {
-        "title": "Predator-prey portraits",
-        "background": "Ecologists use phase planes to see cycles without solving formulas exactly.",
-        "numbers": "At prey $40$, predator $10$ with $x'=0.5x-0.02xy$, $x'=20-8=12$ prey/month."
+        "title": "Predator-prey arrow",
+        "background": "Predator-prey at $(40,10)$ gives a prey component.",
+        "numbers": "$12$"
       },
       {
-        "title": "Pendulum state space",
-        "background": "A pendulum is clearer in angle-velocity space than in time plots alone.",
-        "numbers": "At angle $0.1$ rad and velocity $0$, the small-angle acceleration is about $-9.8\\cdot0.1=-0.98$ rad/s$^2$ for unit length."
+        "title": "Pendulum arrow",
+        "background": "Pendulum at angle $0.1$ rad and zero velocity has restoring acceleration.",
+        "numbers": "about $-0.98$"
       },
       {
-        "title": "Optimization trajectories",
-        "background": "Two-parameter gradient descent traces a path in a parameter phase plane.",
-        "numbers": "For loss gradient $(4,-2)$ and learning rate $0.1$, the update direction is $(-0.4,0.2)$."
+        "title": "Gradient arrow",
+        "background": "Gradient $(4,-2)$ with step $0.1$ gives descent update direction.",
+        "numbers": "$(-0.4,0.2)$"
       },
       {
-        "title": "Epidemic thresholds",
-        "background": "Nullclines show whether infections rise or fall at different susceptible levels.",
-        "numbers": "If $I'=0.3SI/1000-0.1I$ and $S=200$, then coefficient is $0.06-0.1=-0.04$, so infections decline."
+        "title": "Epidemic coefficient",
+        "background": "Epidemic coefficient $0.3S/1000-0.1$ at $S=200$ determines infection direction.",
+        "numbers": "$-0.04$"
       },
       {
-        "title": "Robotics controllers",
-        "background": "Phase portraits reveal overshoot and convergence for position-velocity controllers.",
-        "numbers": "At $(x,v)=(1,-0.2)$ with $v'=-4x-2v$, acceleration is $-4+0.4=-3.6$."
+        "title": "Controller acceleration",
+        "background": "Controller acceleration $-4x-2v$ at $(1,-0.2)$ combines position and velocity.",
+        "numbers": "$-3.6$"
       },
       {
-        "title": "Queue-control systems",
-        "background": "Backlog and service rate form a two-state picture for autoscaling policies.",
-        "numbers": "If backlog derivative is arrivals minus service $120-100=20$ jobs/min, arrows point toward larger backlog."
+        "title": "Queue arrow",
+        "background": "Queue arrow compares arrival and service rates.",
+        "numbers": "$120-100=20$ points toward larger backlog"
       }
     ],
     "applicationsClose": "The phase plane turns a system into a map of possible futures, one arrow and one trajectory at a time.",
@@ -5860,6 +6943,57 @@
       "Nullclines show where one component of motion is zero.",
       "Equilibria are intersections of nullclines.",
       "Eigenvalues classify linear phase portraits near equilibria."
+    ],
+    "connectionsProse": "<p>This lesson connects systems of first-order equations and vector fields to phase-plane analysis. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for qualitative analysis without closed forms, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$x,y$",
+        "desc": "state coordinates"
+      },
+      {
+        "sym": "nullclines",
+        "desc": "derivative-zero curves"
+      },
+      {
+        "sym": "equilibria",
+        "desc": "intersections"
+      },
+      {
+        "sym": "eigenvalues",
+        "desc": "classify nearby linear behavior"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the vector field for $x'=y$, $y'=-2x-3y$.",
+        "result": "$(f,g)=(y,-2x-3y)$",
+        "why": "arrows show instantaneous motion"
+      },
+      {
+        "do": "Find the $x$-nullcline.",
+        "result": "$y=0$",
+        "why": "here horizontal motion is zero"
+      },
+      {
+        "do": "Find the $y$-nullcline.",
+        "result": "$-2x-3y=0$",
+        "why": "here vertical motion is zero"
+      },
+      {
+        "do": "Intersect the nullclines.",
+        "result": "$(0,0)$",
+        "why": "both derivatives vanish"
+      },
+      {
+        "do": "Write matrix form.",
+        "result": "$A=\\begin{bmatrix}0&1\\-2&-3\\end{bmatrix}$",
+        "why": "the system is linear"
+      },
+      {
+        "do": "Find eigenvalues.",
+        "result": "$r^2+3r+2=0$, so $r=-1,-2$",
+        "why": "trajectories approach the equilibrium along stable directions"
+      }
     ],
     "prereqs": [
       "math-03-21"
@@ -5888,8 +7022,8 @@
         "phase portraits"
       ]
     },
-    "motivation": "<p>A ball resting in a bowl and a pencil balanced on its tip are both still, but only one is forgiving. Equilibrium alone is not enough; we need stability.</p><p>Stability asks whether small perturbations fade, persist, or grow. That question is central in models, algorithms, and controlled systems.</p>",
-    "definition": "<p>An <b>equilibrium</b> of $\\mathbf{x}'=\\mathbf{f}(\\mathbf{x})$ is a state $\\mathbf{x}^*$ where $\\mathbf{f}(\\mathbf{x}^*)=\\mathbf{0}$. It is stable if nearby solutions remain nearby, asymptotically stable if they also approach it, and unstable if some nearby solutions move away.</p><p>For one-dimensional $x'=f(x)$, signs of $f$ on either side often decide stability. If arrows point toward the equilibrium from both sides, it is stable; if they point away, it is unstable.</p><p><b>Assumptions that matter:</b> the system is autonomous; the vector field is regular enough for uniqueness; and local stability describes nearby behavior, not necessarily the whole state space.</p>",
+    "motivation": "<p>An equilibrium is a state where the derivative is zero. Stability asks whether small nearby disturbances stay near, return, or move away. The concrete gap is that a zero derivative marks rest but not its durability.</p><p>The load-bearing idea is that nearby arrows decide whether disturbances return or move away. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>An equilibrium is a state where the derivative is zero; stability describes what nearby solution curves do after small disturbances.</p><p>$$f(y^*)=0.$$</p><p><b>Assumptions that matter:</b> For a one-dimensional autonomous equation, sign tests on either side of the equilibrium show whether arrows point toward or away.</p>",
     "worked": {
       "problem": "Find and classify equilibria of $y'=y(1-y/10)$.",
       "skills": [
@@ -6093,34 +7227,34 @@
     ],
     "applications": [
       {
-        "title": "Population carrying capacity",
-        "background": "Logistic growth models limited resources through a stable equilibrium.",
-        "numbers": "With $K=1000$, $P=900$ grows if $P'=0.2P(1-P/1000)=18$ per year."
+        "title": "Logistic near capacity",
+        "background": "Logistic with $K=1000$ at $P=900$ still grows.",
+        "numbers": "$18$"
       },
       {
-        "title": "Chemical equilibrium",
-        "background": "Reaction rates balance at equilibrium, and stability tells whether perturbations are corrected.",
-        "numbers": "If $A'=10-0.5A$, equilibrium is $A=20$ because production equals removal."
+        "title": "Balance",
+        "background": "$A'=10-0.5A$ balances when inflow equals outflow.",
+        "numbers": "$A=20$"
       },
       {
-        "title": "Training fixed points",
-        "background": "An optimizer stops at a point where the gradient is zero; stability decides whether iterates stay there.",
-        "numbers": "For $w'=-2(w-3)$, $w=3$ is stable and error halves roughly every $\\ln2/2\\u0007pprox0.347$ time units."
+        "title": "Return rate",
+        "background": "$w'=-2(w-3)$ returns to equilibrium $3$.",
+        "numbers": "half-life $\\ln2/2\\approx0.347$"
       },
       {
-        "title": "Control setpoints",
-        "background": "Thermostats and cruise control create stable equilibria around desired values.",
-        "numbers": "If $T'=0.1(70-T)$, at $T=65$ the temperature rises at $0.5$ degrees/min."
+        "title": "Temperature target",
+        "background": "$T'=0.1(70-T)$ at $T=65$ moves upward.",
+        "numbers": "$0.5$ deg/min"
       },
       {
-        "title": "Epidemic thresholds",
-        "background": "Disease-free equilibria are stable only when transmission is weak enough.",
-        "numbers": "If early $I'=(0.8-1.0)I=-0.2I$, infections decay by $e^{-2}\\u0007pprox0.135$ after $10$ days."
+        "title": "Decay factor",
+        "background": "$I'=-0.2I$ decays exponentially.",
+        "numbers": "factor $e^{-2}\\approx0.135$ after $10$ days"
       },
       {
-        "title": "Recommendation feedback loops",
-        "background": "Platform dynamics can have stable or unstable engagement equilibria depending on feedback strength.",
-        "numbers": "If $s'=1.2s-s^2$, equilibria are $0$ and $1.2$; the positive one attracts scores below and above it."
+        "title": "Quadratic growth",
+        "background": "$s'=1.2s-s^2$ factors to find stationary states.",
+        "numbers": "equilibria $0$ and $1.2$"
       }
     ],
     "applicationsClose": "Equilibrium is stillness; stability is the promise, or warning, about what happens after a small nudge.",
@@ -6129,6 +7263,57 @@
       "Stable means nearby states remain nearby; asymptotically stable means they approach.",
       "One-dimensional arrow signs often classify equilibria.",
       "For linear systems, eigenvalue real parts classify local stability."
+    ],
+    "connectionsProse": "<p>This lesson connects direction fields and autonomous rate laws to equilibria and stability. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for stability and linearization, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$x^*$ or $y^*$",
+        "desc": "an equilibrium"
+      },
+      {
+        "sym": "stable",
+        "desc": "nearby solutions remain nearby"
+      },
+      {
+        "sym": "asymptotically stable",
+        "desc": "nearby solutions approach"
+      },
+      {
+        "sym": "unstable",
+        "desc": "some perturbations move away"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Set the logistic derivative to zero.",
+        "result": "$y(1-y/10)=0$",
+        "why": "equilibria make the derivative zero"
+      },
+      {
+        "do": "Solve for equilibria.",
+        "result": "$y=0$ or $y=10$",
+        "why": "these are stationary states"
+      },
+      {
+        "do": "Test inside the interval.",
+        "result": "at $y=5$, derivative $2.5$",
+        "why": "arrows point right"
+      },
+      {
+        "do": "Test above carrying capacity.",
+        "result": "at $y=12$, derivative $-2.4$",
+        "why": "arrows point left"
+      },
+      {
+        "do": "Read stability near $10$.",
+        "result": "$10$ is stable",
+        "why": "nearby arrows point toward $10$"
+      },
+      {
+        "do": "Read stability near $0$.",
+        "result": "$0$ is unstable for positive populations",
+        "why": "positive-side arrows point away"
+      }
     ],
     "prereqs": [
       "math-03-22"
@@ -6157,8 +7342,8 @@
         "phase planes"
       ]
     },
-    "motivation": "<p>Nonlinear systems can be hard, but near one equilibrium they often have a local personality. Linearization listens to the first derivative information and builds the closest linear system.</p><p>This is like zooming in on a curve until it looks like a line, except now the line is a matrix and the curve is a vector field.</p>",
-    "definition": "<p>For $\\mathbf{x}'=\\mathbf{f}(\\mathbf{x})$ with equilibrium $\\mathbf{x}^*$, write $\\mathbf{u}=\\mathbf{x}-\\mathbf{x}^*$. The linearization is $\\mathbf{u}'=J(\\mathbf{x}^*)\\mathbf{u}$, where $J$ is the Jacobian matrix of first partial derivatives.</p><p>This comes from the first-order Taylor expansion $\\mathbf{f}(\\mathbf{x}^*+\\mathbf{u})=\\mathbf{f}(\\mathbf{x}^*)+J(\\mathbf{x}^*)\\mathbf{u}+\\text{higher-order terms}$. Since $\\mathbf{f}(\\mathbf{x}^*)=0$, the Jacobian gives the leading local motion.</p><p><b>Assumptions that matter:</b> the vector field is differentiable near the equilibrium; nonzero real-part eigenvalues give reliable local classification; and zero or purely imaginary eigenvalues require more care.</p>",
+    "motivation": "<p>Linearization replaces a nonlinear vector field near an equilibrium by its best first-order matrix approximation. The Jacobian carries the local motion. The concrete gap is that a nonlinear field can be too complicated globally.</p><p>The load-bearing idea is that near an equilibrium the first-order matrix part controls local motion. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Linearization approximates a nonlinear system near an equilibrium by its Jacobian matrix acting on perturbations.</p><p>$$u'=Ju.$$</p><p><b>Assumptions that matter:</b> The vector field is differentiable near the equilibrium, and higher-order terms are small for small perturbations.</p>",
     "worked": {
       "problem": "Linearize $x'=x(2-x-y)$, $y'=y(1+x-2y)$ at $(1,1)$.",
       "skills": [
@@ -6372,34 +7557,34 @@
     ],
     "applications": [
       {
-        "title": "Nonlinear control",
-        "background": "Controllers are often designed from a linearized plant around an operating point.",
-        "numbers": "If a Jacobian pole is $-4$, local settling time is about $4/4=1$s."
+        "title": "Settling",
+        "background": "Jacobian pole $-4$ sets settling by roughly four time constants.",
+        "numbers": "settling about $1$s"
       },
       {
-        "title": "Epidemic thresholds",
-        "background": "Linearizing disease dynamics around the disease-free state gives early growth or decay.",
-        "numbers": "If the Jacobian growth rate is $0.06$/day, cases multiply by $e^{1.8}\\u0007pprox6.05$ in $30$ days."
+        "title": "Local growth",
+        "background": "Growth rate $0.06$/day compounds over $30$ days.",
+        "numbers": "factor $e^{1.8}\\approx6.05$"
       },
       {
-        "title": "Neural network training",
-        "background": "Loss surfaces are nonlinear, but local Hessian or Jacobian information predicts small-step behavior.",
-        "numbers": "A curvature $20$ suggests gradient descent step size below about $2/20=0.1$ for a simple quadratic."
+        "title": "Step size",
+        "background": "Curvature $20$ limits stable gradient-step size.",
+        "numbers": "below $0.1$"
       },
       {
-        "title": "Power grids",
-        "background": "Grid stability is checked by linearizing around a synchronized operating point.",
-        "numbers": "An oscillatory eigenvalue $-0.2\\pm6i$ has decay time $1/0.2=5$s and frequency $6/(2\\pi)\\u0007pprox0.955$ Hz."
+        "title": "Spiral frequency",
+        "background": "Eigenvalue $-0.2\\pm6i$ oscillates with angular frequency $6$.",
+        "numbers": "frequency $6/(2\\pi)\\approx0.955$ Hz"
       },
       {
-        "title": "Robotics balance",
-        "background": "Balancing robots are nonlinear, yet small-angle linearization makes feedback design possible.",
-        "numbers": "For small $\\theta=0.05$, $\\sin\\theta\\u0007pprox0.05$ with error below $0.00003$."
+        "title": "Small-angle approximation",
+        "background": "$\\sin(0.05)$ is close to its linearization.",
+        "numbers": "$\\approx0.05$ with error about $0.00002$"
       },
       {
-        "title": "Recommendation feedback",
-        "background": "Local linearization can reveal whether engagement feedback damps or amplifies perturbations.",
-        "numbers": "A local multiplier rate $0.02$/hour grows by $e^{0.48}\\u0007pprox1.62$ over a day."
+        "title": "Daily compounding",
+        "background": "Rate $0.02$/hour over a day exponentiates.",
+        "numbers": "$e^{0.48}\\approx1.62$"
       }
     ],
     "applicationsClose": "Linearization is not the whole nonlinear story, but it is often the first honest local map.",
@@ -6408,6 +7593,62 @@
       "It comes from the first-order Taylor expansion of the vector field.",
       "Eigenvalues of the Jacobian classify many local equilibria.",
       "Zero or purely imaginary eigenvalues require nonlinear follow-up."
+    ],
+    "connectionsProse": "<p>This lesson connects Taylor approximation and Jacobian matrices to linearization. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for local stability of nonlinear systems, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$J$",
+        "desc": "the Jacobian"
+      },
+      {
+        "sym": "$x^*$",
+        "desc": "equilibrium"
+      },
+      {
+        "sym": "$u$",
+        "desc": "perturbation"
+      },
+      {
+        "sym": "higher-order terms",
+        "desc": "smaller near the equilibrium"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Verify equilibrium for $x'=x(2-x-y)$, $y'=y(1+x-2y)$ at $(1,1)$.",
+        "result": "both right sides are $0$",
+        "why": "linearization is taken at an equilibrium"
+      },
+      {
+        "do": "Compute the Jacobian.",
+        "result": "$J=\\begin{bmatrix}2-2x-y&-x\\y&1+x-4y\\end{bmatrix}$",
+        "why": "partial derivatives of the vector field"
+      },
+      {
+        "do": "Evaluate at $(1,1)$.",
+        "result": "$J=\\begin{bmatrix}-1&-1\\1&-2\\end{bmatrix}$",
+        "why": "local coefficients are frozen at the equilibrium"
+      },
+      {
+        "do": "Define displacement.",
+        "result": "$u=(x,y)-(1,1)$",
+        "why": "measure perturbation from equilibrium"
+      },
+      {
+        "do": "Use Taylor expansion.",
+        "result": "$f(x^*+u)=f(x^*)+Ju+O(\\|u\\|^2)$",
+        "why": "first-order approximation"
+      },
+      {
+        "do": "Use equilibrium cancellation.",
+        "result": "$u'=Ju$",
+        "why": "$f(x^*)=0$"
+      },
+      {
+        "do": "Classify eigenvalues.",
+        "result": "$\\lambda^2+3\\lambda+3=0$ with real part $-1.5$",
+        "why": "the linearized equilibrium is locally attracting with spiral behavior"
+      }
     ],
     "prereqs": [
       "math-03-23"
@@ -6436,8 +7677,8 @@
         "initial values"
       ]
     },
-    "motivation": "<p>Some differential equations refuse to give elementary closed forms. A power series lets us still solve locally by writing the function as a long polynomial with unknown coefficients.</p><p>The ODE then becomes a coefficient-matching machine. Each coefficient teaches the next one.</p>",
-    "definition": "<p>A <b>series solution</b> assumes $y=\\sum_{n=0}^{\\infty}a_n(x-x_0)^n$ near a point $x_0$. Differentiate term by term, substitute into the ODE, align powers, and match coefficients.</p><p>At an ordinary point, where the coefficient of the highest derivative is nonzero and analytic after standardizing the equation, this process produces a convergent power series solution. Initial conditions usually set the first coefficients.</p><p><b>Assumptions that matter:</b> term-by-term differentiation is justified within the radius of convergence; the expansion point should be ordinary unless using Frobenius methods; and recurrence relations must be indexed carefully.</p>",
+    "motivation": "<p>A power series solves an ODE locally by turning the unknown function into unknown coefficients. The ODE becomes a coefficient-matching rule. The concrete gap is that closed elementary formulas are not always available.</p><p>The load-bearing idea is that the ODE can determine the coefficients of a local power series. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A series solution assumes the unknown function has a local power series and determines its coefficients by matching powers.</p><p>$$y=\\sum_{n=0}^\\infty a_nx^n.$$</p><p><b>Assumptions that matter:</b> The series is local around an expansion point, and the radius of convergence limits where the result is valid.</p>",
     "worked": {
       "problem": "Use a power series to solve $y'=y$, $y(0)=1$.",
       "skills": [
@@ -6646,34 +7887,34 @@
     ],
     "applications": [
       {
-        "title": "Airy functions",
-        "background": "Airy equations arise in optics and quantum mechanics, and their solutions are naturally defined by series.",
-        "numbers": "For $y''-xy=0$, recurrence steps show $a_2=0$ and $a_3=a_0/6$, so a solution begins $1+x^3/6+\\cdots$."
+        "title": "Airy series",
+        "background": "Airy equation $y''-xy=0$ with $a_0=1,a_1=0$ has a local series.",
+        "numbers": "begins $1+x^3/6+\\cdots$"
       },
       {
-        "title": "Numerical solvers",
-        "background": "Taylor methods use derivatives from the ODE to step forward with controlled local error.",
-        "numbers": "Using $e^x\\u0007pprox1+x+x^2/2$ at $x=0.1$ gives $1.105$, close to $1.10517$."
+        "title": "Exponential approximation",
+        "background": "$1+0.1+0.1^2/2$ approximates $e^{0.1}$.",
+        "numbers": "$1.105$ approximates $e^{0.1}\\approx1.10517$"
       },
       {
-        "title": "Small-angle physics",
-        "background": "Series replace nonlinear functions by manageable polynomials near equilibrium.",
-        "numbers": "At $\\theta=0.1$, $\\sin\\theta\\u0007pprox0.1-0.001/6=0.099833$."
+        "title": "Sine approximation",
+        "background": "The cubic Taylor polynomial approximates $\\sin0.1$.",
+        "numbers": "$\\sin0.1\\approx0.1-0.001/6=0.099833$"
       },
       {
-        "title": "Activation approximations",
-        "background": "Hardware sometimes approximates expensive functions by polynomials.",
-        "numbers": "A sigmoid near $0$ satisfies $\\sigma(x)\\u0007pprox0.5+x/4$; at $x=0.2$, this gives $0.55$ versus about $0.5498$."
+        "title": "Sigmoid approximation",
+        "background": "Sigmoid approximation $0.5+x/4$ near $0$ is linear.",
+        "numbers": "gives $0.55$ at $x=0.2$"
       },
       {
-        "title": "Uncertainty propagation",
-        "background": "Series expansions estimate how small input noise changes outputs.",
-        "numbers": "For $f(x)=e^x$ near $0$, variance scale is approximately $(f'(0))^2=1$."
+        "title": "Variance scale",
+        "background": "For $e^x$ near $0$, the derivative controls first-order variance scaling.",
+        "numbers": "$(f'(0))^2=1$"
       },
       {
-        "title": "Special-function libraries",
-        "background": "Libraries compute functions with series in safe regions and switch methods elsewhere.",
-        "numbers": "For $\\cos0.3\\u0007pprox1-0.09/2+0.0081/24=0.9553375$, close to $0.9553365$."
+        "title": "Cosine approximation",
+        "background": "A fourth-degree cosine series approximates $\\cos0.3$.",
+        "numbers": "$\\cos0.3\\approx1-0.09/2+0.0081/24=0.9553375$"
       }
     ],
     "applicationsClose": "Series solutions are patient: when closed forms are unavailable, coefficients still reveal the local function.",
@@ -6682,6 +7923,62 @@
       "Initial conditions set the first coefficients.",
       "Recurrences generate the rest of the series.",
       "Series are local objects governed by radius of convergence."
+    ],
+    "connectionsProse": "<p>This lesson connects Taylor series and coefficient matching to series solutions. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for special functions and local approximation methods, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$a_n$",
+        "desc": "coefficients"
+      },
+      {
+        "sym": "$x_0$",
+        "desc": "expansion point"
+      },
+      {
+        "sym": "recurrence",
+        "desc": "each coefficient determines later ones"
+      },
+      {
+        "sym": "radius of convergence",
+        "desc": "bounds validity"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume a power series for $y'=y$, $y(0)=1$.",
+        "result": "$y=\\sum_{n=0}^\\infty a_nx^n$",
+        "why": "local power series"
+      },
+      {
+        "do": "Differentiate.",
+        "result": "$y'=\\sum_{n=1}^\\infty n a_nx^{n-1}$",
+        "why": "differentiate term by term"
+      },
+      {
+        "do": "Reindex.",
+        "result": "$y'=\\sum_{n=0}^\\infty (n+1)a_{n+1}x^n$",
+        "why": "align powers of $x$"
+      },
+      {
+        "do": "Set $y'=y$ and match powers.",
+        "result": "$(n+1)a_{n+1}=a_n$",
+        "why": "equal power series have equal coefficients"
+      },
+      {
+        "do": "Use the initial condition.",
+        "result": "$a_0=1$",
+        "why": "$y(0)=1$"
+      },
+      {
+        "do": "Apply the recurrence.",
+        "result": "$a_n=1/n!$",
+        "why": "each coefficient determines the next"
+      },
+      {
+        "do": "State the series.",
+        "result": "$y=\\sum x^n/n!=e^x$",
+        "why": "the series is the exponential"
+      }
     ],
     "prereqs": [
       "math-03-24"
@@ -6710,8 +8007,8 @@
         "error function"
       ]
     },
-    "motivation": "<p>Not every useful differential equation ends in elementary functions like polynomials, exponentials, or sines. Rather than treating that as failure, mathematics names the recurring solutions.</p><p>Special functions are like standard library calls for analysis: carefully studied, efficiently computed, and shared across physics, statistics, and machine learning.</p>",
-    "definition": "<p>A <b>special function</b> is a named function, often defined by a differential equation, integral, or series, that recurs across applications. Examples include Bessel functions from radial waves, Legendre polynomials from spherical geometry, the Gamma function extending factorials, and the error function from Gaussian integrals.</p><p>For instance, $J_0(x)$ solves $x^2y''+xy'+x^2y=0$ with $J_0(0)=1$, and its series begins $J_0(x)=1-x^2/4+x^4/64-\\cdots$. The Gamma function satisfies $\\Gamma(n)=(n-1)!$ for positive integers.</p><p><b>Assumptions that matter:</b> definitions come with domains, normalization choices, and convergence conditions; numerical libraries choose algorithms by input range; and named functions are often the closed form, not a stepping stone to elementary functions.</p>",
+    "motivation": "<p>Special functions are named solutions that appear too often to treat as failures of elementary algebra. They are standard functions defined by ODEs, integrals, or series. The concrete gap is that important ODE solutions may not be elementary.</p><p>The load-bearing idea is that standard names and defining properties make those solutions usable. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Special functions are named functions defined by standard ODEs, integrals, recurrences, or series when elementary formulas are not enough.</p><p><b>Assumptions that matter:</b> Normalization choices and defining properties are part of the function's definition.</p>",
     "worked": {
       "problem": "Use the first three terms $J_0(x)\\u0007pprox1-x^2/4+x^4/64$ to estimate $J_0(0.5)$.",
       "skills": [
@@ -6885,34 +8182,34 @@
     ],
     "applications": [
       {
-        "title": "Radial waves and Bessel functions",
-        "background": "Bessel functions appear when waves are circular or cylindrical, such as drumheads and antennas.",
-        "numbers": "Using $J_0(1)\\u0007pprox1-1/4+1/64=0.765625$, the value is close to the true $0.7652$."
+        "title": "Bessel approximation",
+        "background": "$J_0(1)$ can be estimated from its series.",
+        "numbers": "$J_0(1)\\approx1-1/4+1/64=0.765625$"
       },
       {
-        "title": "Spherical harmonics",
-        "background": "Legendre polynomials help describe functions on spheres, from gravity fields to lighting.",
-        "numbers": "For $P_1(x)=x$, $P_2(1)=1$ and $P_2(0)=-0.5$, showing different angular weights."
+        "title": "Legendre values",
+        "background": "$P_2$ has simple endpoint and midpoint values.",
+        "numbers": "$P_2(1)=1$ and $P_2(0)=-0.5$"
       },
       {
-        "title": "Gaussian probabilities",
-        "background": "The error function packages the integral of the bell curve, central to statistics.",
-        "numbers": "One standard deviation gives $\\Phi(1)\\u0007pprox0.8413$, so the central interval $[-1,1]$ has probability about $0.6826$."
+        "title": "Normal mass",
+        "background": "$\\Phi(1)$ gives one-sided standard normal mass.",
+        "numbers": "$\\Phi(1)\\approx0.8413$, so central normal mass is $0.6826$"
       },
       {
-        "title": "Bayesian distributions",
-        "background": "The Gamma function normalizes gamma and beta distributions used for positive rates and probabilities.",
-        "numbers": "For integer shape $3$, $\\Gamma(3)=2!=2$, so a Gamma density constant can include division by $2$."
+        "title": "Gamma recurrence",
+        "background": "$\\Gamma$ extends factorials.",
+        "numbers": "$\\Gamma(3)=2!=2$"
       },
       {
-        "title": "Kernel methods",
-        "background": "Special functions appear in kernels for radial domains and Gaussian processes.",
-        "numbers": "A squared-exponential kernel with distance $2$ and length $1$ gives $e^{-2^2/2}=e^{-2}\\u0007pprox0.135$."
+        "title": "Kernel value",
+        "background": "Squared-exponential kernel at distance $2$, length $1$, decays exponentially.",
+        "numbers": "$e^{-2}\\approx0.135$"
       },
       {
-        "title": "Scientific ML libraries",
-        "background": "Physics-informed models often call special functions to compare neural predictions with known analytic baselines.",
-        "numbers": "If a model predicts $J_0(0.5)=0.94$, the three-term series $0.93848$ gives absolute error about $0.00152$."
+        "title": "Bessel prediction",
+        "background": "Prediction $J_0(0.5)=0.94$ compared with three-term series.",
+        "numbers": "three-term $0.93848$ has error $0.00152$"
       }
     ],
     "applicationsClose": "Special functions are not exotic decorations; they are reusable named solutions for patterns that nature and data keep producing.",
@@ -6921,6 +8218,29 @@
       "Bessel, Legendre, Gamma, and error functions each package a recurring mathematical pattern.",
       "A named special function can be the best closed form available.",
       "Numerical values usually come from series, recurrences, asymptotics, or library algorithms."
+    ],
+    "connectionsProse": "<p>This lesson connects series, integrals, and named solution families to special functions. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for Bessel, Legendre, Gamma, and error functions, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$J_0$",
+        "desc": "a Bessel function"
+      },
+      {
+        "sym": "$P_n$",
+        "desc": "a Legendre polynomial"
+      },
+      {
+        "sym": "$\\Gamma$",
+        "desc": "the Gamma function"
+      },
+      {
+        "sym": "$\\operatorname{erf}$",
+        "desc": "the error function"
+      },
+      {
+        "sym": "normalization choices",
+        "desc": "part of each definition"
+      }
     ],
     "prereqs": [
       "math-03-25"
@@ -6955,8 +8275,8 @@
         "probability — $\\mathbb{E}[e^{-sX}]$ is the moment-generating function"
       ]
     },
-    "motivation": "<p>Let's start with something you can already do. If I hand you $y'=-2y$, you can almost see the answer — it is an exponential, $e^{-2t}$. That instinct is exactly right.</p><p>Now let me raise the stakes, gently. Solve $y''+3y'+2y=\\sin t$ with $y(0)=y'(0)=0$. The usual calculus route asks you to guess the shape of the answer, match coefficients, and chase down constants — it works, but it is fiddly, and it is easy to lose your place. If that feels daunting, you are not missing anything.</p><p>So here is the happy idea: what if we could take this tangled differential equation, turn it into an ordinary algebra problem, solve for one thing, and translate back? That is the Laplace transform. The key: it rewrites a function of time $t$ in a basis of exponentials $e^{st}$ — chosen because exponentials are the <b>eigenfunctions of the derivative</b> ($\\frac{d}{dt}e^{st}=s\\,e^{st}$), so differentiation becomes multiplication by $s$. Like shifting from a car's meshed gears (time) to a dashboard of separate dials ($s$-domain), where the problem is decoupled.</p>",
-    "definition": "<p>The Laplace transform of $f(t)$ is $$ F(s)=\\mathcal{L}\\{f(t)\\}=\\int_0^\\infty e^{-st}f(t)\\,dt, $$ valid where the integral converges ($\\operatorname{Re}(s)>a$). Here $e^{-st}$ is a probe exponential, $F(s)$ is $f$ re-expressed in the $s$-domain, and the one-sided $\\int_0^\\infty$ means we care about systems starting at $t=0$.</p><p>The property that does all the work turns differentiation into multiplication: $$ \\mathcal{L}\\{f'(t)\\}=sF(s)-f(0). $$ Derive it once by integration by parts ($u=e^{-st},dv=f'dt$): $\\int_0^\\infty e^{-st}f'\\,dt=[e^{-st}f]_0^\\infty+s\\int_0^\\infty e^{-st}f\\,dt=(0-f(0))+sF(s)$. Notice where $f(0)$ enters — that is how the initial condition rides along.</p><p><b>Assumptions:</b> linear, usually constant-coefficient systems (nonlinear gets only a local picture); the region of convergence matters; it is one-sided, so initial conditions are already baked in; inversion needs care with repeated or complex roots.</p>",
+    "motivation": "<p>The Laplace transform rewrites a time function as an algebraic function of $s$. Its main value for ODEs is that differentiation becomes multiplication by $s$ plus an initial-value term. The concrete gap is that derivatives complicate time-domain equations.</p><p>The load-bearing idea is that the transform turns differentiation into algebra plus initial data. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>The Laplace transform maps a time function to an $s$-domain function by exponential weighting.</p><p>$$F(s)=\\int_0^\\infty e^{-st}f(t)\\,dt.$$</p><p><b>Assumptions that matter:</b> The integral must converge in a region of $s$ values, and boundary terms must vanish when deriving derivative rules.</p>",
     "worked": {
       "problem": "Solve the initial-value problem $y'+2y=2$, with $y(0)=0$. Let $Y=\\mathcal{L}\\{y(t)\\}$.",
       "skills": [
@@ -7130,34 +8450,34 @@
     ],
     "applications": [
       {
-        "title": "Momentum & training stability",
-        "background": "Polyak's 1964 heavy-ball method; near a minimum it is a damped oscillator $\\ddot x+c\\dot x+x=0$ with poles $s=\\tfrac{-c\\pm\\sqrt{c^2-4}}{2}$.",
-        "numbers": "$c=0.5$: $-0.25\\pm0.97i$ (oscillates); $c=2$: $-1$ (critical, fastest); $c=3$: $-0.38,-2.62$ ($2.6\\times$ slower)."
+        "title": "Heavy-ball pole",
+        "background": "Heavy-ball pole with $c=2$ identifies critical damping.",
+        "numbers": "$-1$ critical damping"
       },
       {
-        "title": "EMA — Adam, BatchNorm, EMA teachers",
-        "background": "A running average $m_t=\\beta m_{t-1}+(1-\\beta)x_t$ is the discrete twin of $y=1-e^{-at}$.",
-        "numbers": "Memory $\\approx1/(1-\\beta)$: $\\beta=0.9\\to\\sim10$ steps ($1-0.9^{10}=65\\%$); $0.99\\to100$; $0.999\\to1000$."
+        "title": "EMA memory",
+        "background": "EMA memory for $\\beta=0.99$ is approximated by reciprocal leakage.",
+        "numbers": "about $1/(1-0.99)=100$ steps"
       },
       {
-        "title": "State-space models (S4/Mamba)",
-        "background": "A mode discretizes to $x_t=r\\,x_{t-1}+\\cdots$ with $r=e^{\\text{pole}\\cdot\\Delta}$; memory $\\approx1/(1-r)$.",
-        "numbers": "$r=0.99\\to100$ steps; $r=0.999\\to1000$; $r=1.001\\to$ unstable ($\\sim0.1\\%$/step growth)."
+        "title": "State-space memory",
+        "background": "State-space multiplier $r=0.999$ has long memory.",
+        "numbers": "about $1000$ steps"
       },
       {
-        "title": "Neural ODEs & diffusion",
-        "background": "Both are defined by differential equations, so step size is capped by stability.",
-        "numbers": "Explicit Euler on $x'=\\lambda x$ needs $|1+h\\lambda|<1$; a stiff $\\lambda=-10$ forces $h<0.2$."
+        "title": "Euler stability",
+        "background": "Euler stability for $x'=-10x$ bounds step size.",
+        "numbers": "needs $h<0.2$"
       },
       {
-        "title": "Control ↔ RL",
-        "background": "Feedback moves a plant's poles; RL inherits this through optimal control.",
-        "numbers": "Plant $1/(s+1)$ (pole $-1$, settling $\\sim4$s); gain $K=9\\to$ pole $-10\\to$ settling $\\approx0.4$s, a $10\\times$ speed-up."
+        "title": "Pole placement",
+        "background": "Plant pole moved from $-1$ to $-10$ changes settling speed.",
+        "numbers": "from about $4$s to $0.4$s"
       },
       {
-        "title": "Core CS — queues",
-        "background": "Queueing theory (Erlang, early 1900s) uses the transform of the service-time distribution.",
-        "numbers": "M/M/1 with $\\lambda=8,\\mu=10$: $\\rho=0.8$, $L=\\rho/(1-\\rho)=4$, $W=L/\\lambda=0.5$s; service transform $\\mu/(s+\\mu)$ has a pole at $-10$."
+        "title": "Queue transform",
+        "background": "M/M/1 with $\\rho=0.8$ gives queue formulas.",
+        "numbers": "$L=4$ and $W=0.5$s when arrivals are $8$/s"
       }
     ],
     "applicationsClose": "The thread through all six: compute a pole, read its real part, know the behavior. One idea, six uniforms.",
@@ -7167,6 +8487,62 @@
       "Worked example: $y'+2y=2,\\ y(0)=0\\Rightarrow y=1-e^{-2t}$ — a pole at $-2$, so it decays (stable).",
       "The poles are the system's modes; their real parts decide stability.",
       "The same idea powers momentum, EMA/Adam, state-space models, control/RL, and queueing."
+    ],
+    "connectionsProse": "<p>This lesson connects integration by parts and exponential weighting to the laplace transform. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for Laplace methods for initial-value problems, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$s$",
+        "desc": "the transform variable"
+      },
+      {
+        "sym": "$F(s)$",
+        "desc": "the transformed function"
+      },
+      {
+        "sym": "$\\mathcal L$",
+        "desc": "denotes the transform"
+      },
+      {
+        "sym": "region of convergence",
+        "desc": "states where the integral exists"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define the transform.",
+        "result": "$F(s)=\\int_0^\\infty e^{-st}f(t)\\,dt$",
+        "why": "exponential weighting measures time behavior"
+      },
+      {
+        "do": "To transform $f'$, integrate by parts.",
+        "result": "$\\int_0^\\infty e^{-st}f'(t)dt$",
+        "why": "move differentiation from $f$ to the exponential"
+      },
+      {
+        "do": "Choose parts.",
+        "result": "$u=e^{-st}$, $dv=f'(t)dt$",
+        "why": "the exponential differentiates simply"
+      },
+      {
+        "do": "Evaluate the boundary term.",
+        "result": "$[e^{-st}f(t)]_0^\\infty=0-f(0)$",
+        "why": "when the transform converges"
+      },
+      {
+        "do": "Record the remaining integral.",
+        "result": "$s\\int_0^\\infty e^{-st}f(t)dt=sF(s)$",
+        "why": "differentiating $e^{-st}$ brings down $-s$ and the sign changes"
+      },
+      {
+        "do": "State the derivative rule.",
+        "result": "$\\mathcal L\\{f'\\}=sF(s)-f(0)$",
+        "why": "differentiation becomes algebra plus initial data"
+      },
+      {
+        "do": "Apply $y'+2y=2$, $y(0)=0$.",
+        "result": "$(s+2)Y=2/s$, so $Y=2/(s(s+2))$ and $y=1-e^{-2t}$",
+        "why": "the transformed equation is algebraic"
+      }
     ]
   });
 
@@ -7192,8 +8568,8 @@
         "convolution"
       ]
     },
-    "motivation": "<p>You have just learned how the Laplace transform turns a time function into an $s$-domain expression. That is useful only if we can come home again.</p><p>The <b>inverse Laplace transform</b> is the return trip. It asks: which time function has this algebraic shadow? The friendly surprise is that many expressions break into a few table entries, just like decomposing a chord into notes.</p>",
-    "definition": "<p>If $F(s)=\\mathcal{L}\\{f(t)\\}$ on a region where the transform converges, then the <b>inverse Laplace transform</b> is written $f(t)=\\mathcal{L}^{-1}\\{F(s)\\}$. In practice we rewrite $F(s)$ into known forms such as $1/(s+a)$, $a/(s^2+a^2)$, or $s/(s^2+a^2)$.</p><p>The reason partial fractions work is linearity: if $F(s)=A/(s+1)+B/(s+3)$, then $\\mathcal{L}^{-1}\\{F\\}=Ae^{-t}+Be^{-3t}$. Algebra separates the modes, and the table turns each mode back into time.</p><p><b>Assumptions that matter:</b> $F(s)$ must be a transform on a valid region of convergence; one-sided Laplace inverses describe $t\\ge0$ signals; repeated roots produce powers of $t$; complex roots produce sines, cosines, and decaying oscillations.</p>",
+    "motivation": "<p>The inverse Laplace transform turns algebraic pieces in $s$ back into time-domain modes. Partial fractions separate those modes. The concrete gap is that an s-domain formula is not yet a time prediction.</p><p>The load-bearing idea is that simple pole pieces invert to individual time-domain modes. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>The inverse Laplace transform converts an algebraic transform $F(s)$ back to a time function $f(t)$, often after partial fractions.</p><p>$$\\mathcal L^{-1}\\{1/(s+a)\\}=e^{-at}.$$</p><p><b>Assumptions that matter:</b> Table entries apply after the transform is decomposed into recognizable pieces.</p>",
     "worked": {
       "problem": "Find $\\mathcal{L}^{-1}\\left\\{\\dfrac{5s+7}{(s+1)(s+3)}\\right\\}$.",
       "skills": [
@@ -7382,34 +8758,34 @@
     ],
     "applications": [
       {
-        "title": "Control-system impulse response",
-        "background": "Engineers identify a system by its transfer function, then invert it to see the actual time response after a short impulse.",
-        "numbers": "For $H(s)=4/(s+4)$, the impulse response is $h(t)=4e^{-4t}$. At $t=0.5$, $h(0.5)=4e^{-2}\\approx0.541$."
+        "title": "Single pole",
+        "background": "$4/(s+4)$ inverts to a fast exponential.",
+        "numbers": "$4e^{-4t}$ and value $0.541$ at $t=0.5$"
       },
       {
-        "title": "RC circuit discharge",
-        "background": "Circuit theory used Laplace tables long before digital simulation because capacitors naturally create first-order poles.",
-        "numbers": "With $F(s)=5/(s+2)$ volts, $v(t)=5e^{-2t}$. After $1$ second, $v(1)\\approx0.677$ volts."
+        "title": "Decay pole",
+        "background": "$5/(s+2)$ inverts directly.",
+        "numbers": "$5e^{-2t}$ and $0.677$ at $t=1$"
       },
       {
-        "title": "Damped vibration modes",
-        "background": "Mechanical systems often reveal several decaying modes after partial fractions.",
-        "numbers": "If $X(s)=1/(s+1)+2/(s+5)$, then $x(t)=e^{-t}+2e^{-5t}$. At $t=1$, $x(1)\\approx0.368+0.013=0.381$."
+        "title": "Two poles",
+        "background": "$1/(s+1)+2/(s+5)$ combines two exponentials.",
+        "numbers": "$0.381$ at $t=1$"
       },
       {
-        "title": "Audio filter ringing",
-        "background": "Second-order filters produce sinusoids multiplied by exponentials, which is why filters can ring after a click.",
-        "numbers": "$F(s)=10/((s+1)^2+100)$ gives $f(t)=e^{-t}\\sin(10t)$. The envelope at $t=0.2$ is $e^{-0.2}\\approx0.819$."
+        "title": "Damped sinusoid",
+        "background": "$10/((s+1)^2+100)$ gives a shifted sine response.",
+        "numbers": "$e^{-t}\\sin10t$ with envelope $0.819$ at $t=0.2$"
       },
       {
-        "title": "Queue service times",
-        "background": "Laplace transforms of waiting-time distributions are inverted to recover probabilities in queueing theory.",
-        "numbers": "For exponential service transform $6/(s+6)$, the density is $6e^{-6t}$. At $t=0.1$, density is $6e^{-0.6}\\approx3.29$."
+        "title": "Density",
+        "background": "$6/(s+6)$ gives exponential density.",
+        "numbers": "$6e^{-6t}=3.29$ at $t=0.1$"
       },
       {
-        "title": "ML state-space layers",
-        "background": "Modern sequence models use continuous-time modes whose inverse transforms describe memory kernels.",
-        "numbers": "A pole at $-0.02$ gives kernel $e^{-0.02t}$. At $t=100$, the weight is $e^{-2}\\approx0.135$, so old tokens still contribute."
+        "title": "Kernel weight",
+        "background": "Pole $-0.02$ gives a long exponential kernel.",
+        "numbers": "$e^{-2}\\approx0.135$ at $t=100$"
       }
     ],
     "applicationsClose": "In every setting, inversion turns a pole or algebraic factor into a concrete signal over time.",
@@ -7418,6 +8794,62 @@
       "Partial fractions expose simple poles, repeated poles, and oscillatory pairs.",
       "Linearity lets you invert each table-sized term separately.",
       "Poles become time-domain modes such as decays, ramps times decays, and damped oscillations."
+    ],
+    "connectionsProse": "<p>This lesson connects partial fractions and transform tables to the inverse laplace transform. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for returning algebraic Laplace answers to time, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$F(s)$",
+        "desc": "the algebraic transform"
+      },
+      {
+        "sym": "$f(t)$",
+        "desc": "the time function"
+      },
+      {
+        "sym": "poles",
+        "desc": "denominator roots"
+      },
+      {
+        "sym": "residues $A,B$",
+        "desc": "mode weights"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Decompose $(5s+7)/((s+1)(s+3))$.",
+        "result": "$F=A/(s+1)+B/(s+3)$",
+        "why": "simple poles correspond to exponentials"
+      },
+      {
+        "do": "Combine fractions.",
+        "result": "$A(s+3)+B(s+1)=5s+7$",
+        "why": "put over the common denominator"
+      },
+      {
+        "do": "Match coefficients.",
+        "result": "$A+B=5$ and $3A+B=7$",
+        "why": "equal polynomials have equal coefficients"
+      },
+      {
+        "do": "Subtract equations.",
+        "result": "$2A=2$, so $A=1$",
+        "why": "solve one residue"
+      },
+      {
+        "do": "Solve the other residue.",
+        "result": "$B=4$",
+        "why": "use $A+B=5$"
+      },
+      {
+        "do": "Use the inverse table.",
+        "result": "$\\mathcal L^{-1}\\{1/(s+a)\\}=e^{-at}$",
+        "why": "each simple pole gives an exponential"
+      },
+      {
+        "do": "Invert the pieces.",
+        "result": "$e^{-t}+4e^{-3t}$",
+        "why": "the time signal is the sum of modes"
+      }
     ],
     "prereqs": [
       "math-03-27"
@@ -7446,8 +8878,8 @@
         "linear systems"
       ]
     },
-    "motivation": "<p>You can solve many initial-value problems by guessing a homogeneous solution plus a particular solution. That is a good skill, but the constants can feel like bookkeeping.</p><p>Laplace methods make the bookkeeping automatic. Derivatives become algebraic expressions involving $Y(s)$ and the initial values, so the problem is solved in one lane: transform, solve for $Y$, invert.</p>",
-    "definition": "<p>For a one-sided IVP, write $Y(s)=\\mathcal{L}\\{y(t)\\}$. The derivative rules are $\\mathcal{L}\\{y'\\}=sY-y(0)$ and $\\mathcal{L}\\{y''\\}=s^2Y-sy(0)-y'(0)$. Applying these rules to a linear constant-coefficient ODE turns the IVP into an equation for $Y(s)$.</p><p>The method is not magic: integration by parts moves differentiation from $y$ onto $e^{-st}$, and the boundary term at $t=0$ is exactly the initial condition. That is why the initial data appear during algebra rather than at the end.</p><p><b>Assumptions that matter:</b> the ODE is linear with coefficients that do not depend on $t$ for the clean table method; the input and solution should have Laplace transforms; discontinuous forcing is allowed when modeled with step or impulse transforms.</p>",
+    "motivation": "<p>Laplace methods carry initial conditions into the transformed equation immediately. The constants are handled during algebra rather than after solving. The concrete gap is that constants can be cumbersome when solved after the fact.</p><p>The load-bearing idea is that the transform carries initial values directly into the algebra. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Solving an IVP with Laplace transforms means transforming the ODE, using derivative rules that include initial values, solving algebraically for $Y(s)$, and inverting.</p><p>$$\\mathcal L\\{y'\\}=sY-y(0),\\qquad \\mathcal L\\{y''\\}=s^2Y-sy(0)-y'(0).$$</p><p><b>Assumptions that matter:</b> The transforms must exist and the resulting algebraic expression must be invertible by tables or decomposition.</p>",
     "worked": {
       "problem": "Solve $y''+3y'+2y=0$ with $y(0)=1$ and $y'(0)=0$.",
       "skills": [
@@ -7671,34 +9103,34 @@
     ],
     "applications": [
       {
-        "title": "Mass-spring-damper response",
-        "background": "Mechanical vibration analysis uses IVPs because the starting position and velocity matter.",
-        "numbers": "For $y''+3y'+2y=0$, $y(0)=1$, $y'(0)=0$, the response is $2e^{-t}-e^{-2t}$; at $t=1$, $y\\approx0.600$."
+        "title": "Worked IVP value",
+        "background": "The worked IVP solution is evaluated at one time.",
+        "numbers": "$y(1)\\approx0.600$"
       },
       {
-        "title": "Drug concentration with infusion",
-        "background": "Compartment models describe how medication accumulates and clears from blood.",
-        "numbers": "$c'+0.2c=10$, $c(0)=0$ gives $c=50(1-e^{-0.2t})$. At $t=5$ hours, $c\\approx31.6$."
+        "title": "Concentration",
+        "background": "$c'+0.2c=10$, $c(0)=0$ solves by transform or first-order methods.",
+        "numbers": "$c(5)\\approx31.61$"
       },
       {
-        "title": "Thermal warm-up",
-        "background": "Newton cooling models sensors and chips moving toward ambient temperature.",
-        "numbers": "$T'+0.1T=7$, $T(0)=20$ gives $T=70-50e^{-0.1t}$. At $t=10$, $T\\approx51.6$."
+        "title": "Temperature",
+        "background": "$T'+0.1T=7$, $T(0)=20$ relaxes to $70$.",
+        "numbers": "$T(10)\\approx51.61$"
       },
       {
-        "title": "Control step response",
-        "background": "Control engineers measure how fast feedback drives a plant toward a command.",
-        "numbers": "$x'+8x=8$, $x(0)=0$ gives $x=1-e^{-8t}$. The 2 percent settling time is about $4/8=0.5$ seconds."
+        "title": "Fast settling",
+        "background": "$x'+8x=8$, $x(0)=0$ has time constant $1/8$.",
+        "numbers": "2 percent settling about $0.5$s"
       },
       {
-        "title": "Training dynamics near a quadratic minimum",
-        "background": "Gradient flow near a one-dimensional quadratic is a linear IVP.",
-        "numbers": "$w'+0.5w=0$, $w(0)=4$ gives $w=4e^{-0.5t}$. At $t=6$, $w\\approx0.199$."
+        "title": "Weight decay",
+        "background": "$w'+0.5w=0$, $w(0)=4$ decays exponentially.",
+        "numbers": "$w(6)\\approx0.199$"
       },
       {
-        "title": "State-space memory kernel",
-        "background": "Continuous-time sequence layers solve linear IVPs to mix current input with decaying memory.",
-        "numbers": "$h'+0.01h=x(t)$ has a natural decay $e^{-0.01t}$; after $100$ steps the old state weight is $e^{-1}\\approx0.368$."
+        "title": "Natural decay",
+        "background": "Natural decay $e^{-0.01t}$ over 100 steps gives a memory factor.",
+        "numbers": "keeps $0.368$ after $100$ steps"
       }
     ],
     "applicationsClose": "Laplace IVP solving gives one repeatable route from initial state and forcing to a time response.",
@@ -7707,6 +9139,63 @@
       "Solve for $Y(s)$, decompose it, then invert term by term.",
       "The denominator of $Y(s)$ reveals the poles and natural modes.",
       "Step responses, circuits, mechanics, and training dynamics all use the same IVP pattern."
+    ],
+    "connectionsProse": "<p>This lesson connects Laplace derivative rules and initial conditions to solving ivps with laplace. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for efficient solving of linear IVPs, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$Y(s)$",
+        "desc": "the transform of $y(t)$"
+      },
+      {
+        "sym": "initial values",
+        "desc": "enter derivative transforms"
+      },
+      {
+        "sym": "partial fractions",
+        "desc": "separate modes"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $Y=\\mathcal L\\{y\\}$ for $y''+3y'+2y=0$, $y(0)=1$, $y'(0)=0$.",
+        "result": "$Y=\\mathcal L\\{y\\}$",
+        "why": "transform the unknown"
+      },
+      {
+        "do": "Transform the first derivative.",
+        "result": "$\\mathcal L\\{y'\\}=sY-1$",
+        "why": "use $y(0)=1$"
+      },
+      {
+        "do": "Transform the second derivative.",
+        "result": "$\\mathcal L\\{y''\\}=s^2Y-s$",
+        "why": "use $y(0)=1$, $y'(0)=0$"
+      },
+      {
+        "do": "Substitute into the ODE.",
+        "result": "$(s^2Y-s)+3(sY-1)+2Y=0$",
+        "why": "the transformed equation is algebraic"
+      },
+      {
+        "do": "Collect terms.",
+        "result": "$(s^2+3s+2)Y=s+3$",
+        "why": "solve for $Y$"
+      },
+      {
+        "do": "Factor the denominator.",
+        "result": "$Y=(s+3)/((s+1)(s+2))$",
+        "why": "prepare partial fractions"
+      },
+      {
+        "do": "Decompose.",
+        "result": "$Y=2/(s+1)-1/(s+2)$",
+        "why": "separate simple modes"
+      },
+      {
+        "do": "Invert.",
+        "result": "$y=2e^{-t}-e^{-2t}$",
+        "why": "each pole becomes an exponential"
+      }
     ],
     "prereqs": [
       "math-03-28"
@@ -7735,8 +9224,8 @@
         "stability regions"
       ]
     },
-    "motivation": "<p>Some differential equations do not hand us a neat formula. But if we know the current point and the current slope, we can still take a small step.</p><p><b>Euler's method</b> is that humble step repeated. It is not fancy, and that is its gift: it makes numerical solution feel like walking along tangent lines.</p>",
-    "definition": "<p>For an IVP $y'=f(t,y)$ with $y(t_0)=y_0$, choose a step size $h$. Euler's method updates $$t_{n+1}=t_n+h,\\qquad y_{n+1}=y_n+h f(t_n,y_n).$$ Here $f(t_n,y_n)$ is the slope at the current point, and $h f(t_n,y_n)$ is the tangent-line change.</p><p>The formula comes from the first-order Taylor approximation $y(t+h)\\approx y(t)+h y'(t)$. Euler replaces $y'(t)$ with the ODE's slope rule $f(t,y)$.</p><p><b>Assumptions that matter:</b> $f$ should be reasonably smooth near the path; smaller $h$ usually reduces error but costs more steps; explicit Euler can become unstable when slopes decay very fast, especially for stiff equations.</p>",
+    "motivation": "<p>Euler's method follows the tangent line implied by the ODE for one small step, then repeats. It is the first-order Taylor approximation used as a numerical solver. The concrete gap is that exact formulas are not always available.</p><p>The load-bearing idea is that the current slope gives a short computable step. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Euler's method advances an approximate solution by taking one tangent-line step using the ODE slope at the current point.</p><p>$$y_{n+1}=y_n+h f(t_n,y_n).$$</p><p><b>Assumptions that matter:</b> The step size $h$ should be small enough for the tangent approximation and stability requirements of the problem.</p>",
     "worked": {
       "problem": "Use Euler's method with $h=0.5$ for $y'=y-t$, $y(0)=1$, to estimate $y(1)$.",
       "skills": [
@@ -7960,34 +9449,34 @@
     ],
     "applications": [
       {
-        "title": "Simulating population growth",
-        "background": "Numerical ODE methods let ecologists simulate models before closed forms are available.",
-        "numbers": "For $p'=0.1p$, $p_0=1000$, $h=1$, Euler gives $p_1=1100$ and $p_2=1210$."
+        "title": "Population step",
+        "background": "$p'=0.1p$, $p_0=1000$, $h=1$ uses Euler growth.",
+        "numbers": "$1100$ then $1210$"
       },
       {
-        "title": "Gradient descent as Euler",
-        "background": "Gradient descent is explicit Euler applied to gradient flow $w'=-\\nabla L(w)$.",
-        "numbers": "For $L(w)=w^2$, $w'=-2w$. With $w_0=5$ and $h=0.1$, $w_1=5+0.1(-10)=4$."
+        "title": "Gradient flow",
+        "background": "$w'=-2w$, $w_0=5$, $h=0.1$ takes one descent step.",
+        "numbers": "$w_1=4$"
       },
       {
-        "title": "Physics game motion",
-        "background": "Games often update velocity and position in small time steps for speed.",
-        "numbers": "With acceleration $a=-9.8$, $v_0=20$, $h=0.1$, Euler gives $v_1=20-0.98=19.02$ m/s."
+        "title": "Projectile velocity",
+        "background": "Acceleration $-9.8$, $v_0=20$, $h=0.1$ updates velocity.",
+        "numbers": "$v_1=19.02$"
       },
       {
-        "title": "Epidemic SIR prototype",
-        "background": "Early outbreak models are often tested with simple time stepping before fitting data.",
-        "numbers": "If $S'= -0.0002SI$, $S=990$, $I=10$, and $h=1$, then $S_1=990-1.98=988.02$."
+        "title": "SIR step",
+        "background": "$S'= -0.0002SI$ with $S=990,I=10,h=1$ updates susceptibles.",
+        "numbers": "$S_1=988.02$"
       },
       {
-        "title": "Battery-state estimation",
-        "background": "Embedded systems integrate current over time to estimate charge.",
-        "numbers": "If charge rate is $q'=-0.3$ amp-hours per hour and $h=0.5$, then $q$ changes by $-0.15$ amp-hours in one step."
+        "title": "Charge update",
+        "background": "Charge rate $-0.3$ for a half-step changes charge linearly.",
+        "numbers": "for $h=0.5$ changes charge by $-0.15$"
       },
       {
-        "title": "Neural ODE baseline solver",
-        "background": "Before adaptive solvers, explicit Euler is the simplest way to test a neural ODE vector field.",
-        "numbers": "For hidden state $h'=0.4h$, $h_0=2$, step $0.25$ gives $h_1=2+0.25(0.8)=2.2$."
+        "title": "Hidden state",
+        "background": "Hidden state $h'=0.4h$, $h_0=2$, step $0.25$ uses one Euler step.",
+        "numbers": "$h_1=2.2$"
       }
     ],
     "applicationsClose": "Euler's method is a small tangent-line idea that appears anywhere a changing state is simulated in steps.",
@@ -7996,6 +9485,57 @@
       "It comes from the first-order Taylor approximation.",
       "Smaller steps usually help accuracy but increase computation.",
       "Stiff or fast-decaying systems can make explicit Euler unstable."
+    ],
+    "connectionsProse": "<p>This lesson connects tangent-line approximation from calculus to Euler's method. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for basic numerical ODE solving, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$h$",
+        "desc": "step size"
+      },
+      {
+        "sym": "$t_n,y_n$",
+        "desc": "numerical values"
+      },
+      {
+        "sym": "$f(t_n,y_n)$",
+        "desc": "the current slope"
+      },
+      {
+        "sym": "local error",
+        "desc": "comes from omitted higher terms"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Taylor expand one step.",
+        "result": "$y(t+h)=y(t)+hy'(t)+O(h^2)$",
+        "why": "local linear approximation"
+      },
+      {
+        "do": "Replace the derivative by the ODE slope.",
+        "result": "$y'(t)=f(t,y)$",
+        "why": "the differential equation supplies the derivative"
+      },
+      {
+        "do": "Drop the higher-order term.",
+        "result": "first-order method",
+        "why": "this makes a computable approximation"
+      },
+      {
+        "do": "Define the next time.",
+        "result": "$t_{n+1}=t_n+h$",
+        "why": "advance the grid"
+      },
+      {
+        "do": "Define the next value.",
+        "result": "$y_{n+1}=y_n+h f(t_n,y_n)$",
+        "why": "move along the current slope"
+      },
+      {
+        "do": "Apply $y'=y-t$, $y(0)=1$, $h=0.5$.",
+        "result": "$y_1=1.5$ at $t=0.5$; $y_2=2.0$ at $t=1$",
+        "why": "the first slope is $1$ and the second slope is $1.0$"
+      }
     ],
     "prereqs": [
       "math-03-29"
@@ -8024,8 +9564,8 @@
         "stability regions"
       ]
     },
-    "motivation": "<p>Euler's method is brave but impatient: it looks at the slope at the left edge and trusts it for the whole step. Curves rarely behave that politely.</p><p><b>Runge–Kutta methods</b> slow down just enough to ask for more slope information. They combine slopes inside the interval, so one step can be much more accurate without solving the ODE exactly.</p>",
-    "definition": "<p>For $y'=f(t,y)$, a Runge–Kutta method computes several trial slopes $k_i$ and uses a weighted average. The classical fourth-order method is $$k_1=f(t_n,y_n),$$ $$k_2=f(t_n+h/2,y_n+hk_1/2),$$ $$k_3=f(t_n+h/2,y_n+hk_2/2),$$ $$k_4=f(t_n+h,y_n+hk_3),$$ and $$y_{n+1}=y_n+\\dfrac{h}{6}(k_1+2k_2+2k_3+k_4).$$</p><p>The weights are chosen so the Taylor expansion matches the true solution through fourth order. Midpoint and Heun methods are simpler second-order relatives that use two slopes.</p><p><b>Assumptions that matter:</b> the vector field should be smooth enough for the order claim; larger steps still can be unstable; adaptive solvers estimate error by comparing two Runge–Kutta formulas of different orders.</p>",
+    "motivation": "<p>Runge–Kutta methods improve on Euler by sampling several slopes within one step. RK4 combines those slopes to match the Taylor expansion through fourth order. The concrete gap is that one endpoint slope may miss curvature across a step.</p><p>The load-bearing idea is that several sampled slopes approximate the average slope better. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Runge–Kutta methods advance an ODE solution by combining several slope samples inside one step; classical RK4 uses weights $1,2,2,1$.</p><p>$$\\Delta y=\\frac{h}{6}(k_1+2k_2+2k_3+k_4).$$</p><p><b>Assumptions that matter:</b> The function evaluations must use the prescribed intermediate states, and accuracy still depends on step size and smoothness.</p>",
     "worked": {
       "problem": "Use classical RK4 with $h=0.5$ for $y'=y$, $y(0)=1$, to estimate $y(0.5)$.",
       "skills": [
@@ -8249,34 +9789,34 @@
     ],
     "applications": [
       {
-        "title": "Scientific simulation",
-        "background": "Runge and Kutta developed these methods around 1900 to compute trajectories without closed forms.",
-        "numbers": "For $y'=y$, one RK4 step with $h=0.5$ gives $1.64844$ versus exact $1.64872$, error about $0.00028$."
+        "title": "RK4 error",
+        "background": "RK4 for $y'=y$, $h=0.5$ is compared to the exact exponential.",
+        "numbers": "error about $0.00028$"
       },
       {
-        "title": "Robot motion planning",
-        "background": "Robots integrate velocity commands to predict future positions.",
-        "numbers": "If $x'=v=1.2$ m/s for $h=0.1$, every RK method gives $x$ change $0.12$ m for that constant velocity."
+        "title": "Constant velocity",
+        "background": "Constant velocity $1.2$ for $h=0.1$ integrates exactly.",
+        "numbers": "changes position by $0.12$"
       },
       {
-        "title": "Weather-model time stepping",
-        "background": "Atmospheric models use multi-stage solvers because one slope over a large grid cell is not enough.",
-        "numbers": "A temperature tendency of $-0.3$, $-0.4$, $-0.5$, $-0.6$ K/hour in RK4 over $h=1$ changes temperature by $(1/6)(-0.3-0.8-1.0-0.6)=-0.45$ K."
+        "title": "Temperature slopes",
+        "background": "Slopes $-0.3,-0.4,-0.5,-0.6$ over $h=1$ average by RK weights.",
+        "numbers": "change temperature by $-0.45$"
       },
       {
-        "title": "Neural ODE training",
-        "background": "Neural ODEs rely on black-box ODE solvers, many of which are adaptive Runge–Kutta methods.",
-        "numbers": "If an adaptive solver takes 32 function evaluations and each vector-field call costs 2 ms, the forward solve costs about 64 ms."
+        "title": "Vector-field cost",
+        "background": "32 vector-field calls at 2 ms each add computational cost.",
+        "numbers": "64 ms"
       },
       {
-        "title": "Computer graphics particles",
-        "background": "Particle systems integrate forces frame by frame; RK methods reduce drift compared with Euler.",
-        "numbers": "At 60 frames per second, $h=1/60\\approx0.0167$. A velocity slope of $9$ units/s changes velocity by about $0.150$ per frame."
+        "title": "Frame update",
+        "background": "At 60 fps, slope $9$ over one frame updates velocity.",
+        "numbers": "changes velocity by $0.150$ per frame"
       },
       {
-        "title": "Pharmacokinetic simulation",
-        "background": "Drug models with several compartments are often solved numerically rather than by hand.",
-        "numbers": "If concentration slopes sampled by RK4 are $-2.0,-1.8,-1.7,-1.5$ mg/L/hour and $h=0.25$, the change is $0.25(-10.5/6)=-0.4375$ mg/L."
+        "title": "Concentration slopes",
+        "background": "Slopes $-2.0,-1.8,-1.7,-1.5$ over $h=0.25$ combine by RK4 weights.",
+        "numbers": "change concentration by $-0.4375$"
       }
     ],
     "applicationsClose": "Runge–Kutta methods reuse the same idea everywhere: spend extra slope evaluations to buy a more trustworthy step.",
@@ -8285,6 +9825,57 @@
       "RK4 uses weights $1,2,2,1$ and has fourth-order local accuracy under smoothness assumptions.",
       "Second-order methods such as midpoint and Heun already improve on Euler.",
       "Adaptive ODE solvers estimate error by comparing formulas or step sizes."
+    ],
+    "connectionsProse": "<p>This lesson connects Euler stepping and Taylor accuracy to Runge–Kutta methods. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for higher-accuracy numerical solvers, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$k_i$",
+        "desc": "sampled slopes"
+      },
+      {
+        "sym": "$h$",
+        "desc": "step size"
+      },
+      {
+        "sym": "RK4 weights",
+        "desc": "$1,2,2,1$"
+      },
+      {
+        "sym": "order four",
+        "desc": "local Taylor matching through degree four"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Compute $k_1$ for $y'=y$, $y(0)=1$, $h=0.5$.",
+        "result": "$k_1=f(0,1)=1$",
+        "why": "slope at the left edge"
+      },
+      {
+        "do": "Compute $k_2$.",
+        "result": "$k_2=f(0.25,1+0.25)=1.25$",
+        "why": "midpoint using $k_1$"
+      },
+      {
+        "do": "Compute $k_3$.",
+        "result": "$k_3=f(0.25,1+0.25\\cdot1.25)=1.3125$",
+        "why": "midpoint using $k_2$"
+      },
+      {
+        "do": "Compute $k_4$.",
+        "result": "$k_4=f(0.5,1+0.5\\cdot1.3125)=1.65625$",
+        "why": "right edge using $k_3$"
+      },
+      {
+        "do": "Average with RK4 weights.",
+        "result": "$\\Delta y=\\frac{0.5}{6}(1+2(1.25)+2(1.3125)+1.65625)=0.6484375$",
+        "why": "the weighted average approximates the step's average slope"
+      },
+      {
+        "do": "Update the value.",
+        "result": "$y(0.5)\\approx1.6484375$, close to $e^{0.5}\\approx1.64872$",
+        "why": "RK4 matches the curve accurately over the step"
+      }
     ],
     "prereqs": [
       "math-03-30"
@@ -8313,8 +9904,8 @@
         "Green's functions"
       ]
     },
-    "motivation": "<p>An initial-value problem starts at one time and marches forward. But many physical shapes are pinned at two ends: a heated rod has temperatures at both ends, and a string is fixed at both endpoints.</p><p>A <b>boundary value problem</b> asks for the curve that fits conditions at separate locations. Instead of marching with known initial data, we must satisfy a global constraint.</p>",
-    "definition": "<p>A typical second-order boundary value problem is $y''=f(x,y,y')$ on $a\\le x\\le b$ with boundary conditions such as $y(a)=\\alpha$ and $y(b)=\\beta$. The unknown is the entire function $y(x)$, not just a final value.</p><p>Finite differences replace derivatives with grid formulas. For equally spaced grid points, $y''(x_i)\\approx(y_{i-1}-2y_i+y_{i+1})/h^2$. This turns a differential equation plus boundary values into algebraic equations for interior unknowns.</p><p><b>Assumptions that matter:</b> boundary conditions must be enough and compatible; nonlinear BVPs may have multiple solutions or none; finite-difference accuracy depends on smoothness and grid spacing.</p>",
+    "motivation": "<p>A boundary value problem asks for a whole curve that satisfies conditions at separate points. Finite differences turn derivative constraints into algebraic equations for interior values. The concrete gap is that conditions at two endpoints cannot be handled by marching alone.</p><p>The load-bearing idea is that grid values and derivative approximations turn the problem into algebra. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A boundary value problem specifies conditions at two or more boundary points rather than all data at one initial point.</p><p>$$y''(x_i)\\approx\\frac{y_{i-1}-2y_i+y_{i+1}}{h^2}.$$</p><p><b>Assumptions that matter:</b> Boundary conditions must be compatible with a solution, and finite-difference accuracy depends on grid spacing.</p>",
     "worked": {
       "problem": "Solve $y''=2$ on $0\\le x\\le1$ with $y(0)=0$ and $y(1)=3$.",
       "skills": [
@@ -8523,34 +10114,34 @@
     ],
     "applications": [
       {
-        "title": "Heat in a rod",
-        "background": "Fourier's heat theory led to boundary problems because endpoint temperatures constrain the whole rod.",
-        "numbers": "If $T''=0$, $T(0)=20$, $T(1)=80$, then $T(x)=20+60x$ and $T(0.25)=35$ degrees."
+        "title": "Linear temperature",
+        "background": "$T''=0$, $T(0)=20$, $T(1)=80$ gives a straight line.",
+        "numbers": "$T(0.25)=35$"
       },
       {
-        "title": "Bridge cable sag",
-        "background": "A hanging cable shape is determined by supports at both ends and load along the span.",
-        "numbers": "For simplified $y''=0.02$, $y(0)=0$, $y(100)=0$, the midpoint solution is $y(50)=-25$ after solving constants."
+        "title": "Sag curve",
+        "background": "$y''=0.02$, $y(0)=y(100)=0$ gives a symmetric quadratic.",
+        "numbers": "midpoint $y(50)=-25$"
       },
       {
-        "title": "Electrostatic potential",
-        "background": "Voltage in a charge-free region satisfies a boundary problem; electrodes set boundary values.",
-        "numbers": "In one dimension with $V''=0$, $V(0)=0$, $V(10)=5$, the potential at $x=4$ is $2$ volts."
+        "title": "Voltage line",
+        "background": "$V''=0$, $V(0)=0$, $V(10)=5$ is linear.",
+        "numbers": "$V(4)=2$"
       },
       {
-        "title": "Image inpainting",
-        "background": "Classical image repair fills missing pixels by solving equations constrained by known boundary pixels.",
-        "numbers": "If missing values lie between boundary intensities $40$ and $100$ over 3 equal gaps, the linear fill gives $60$ and $80$."
+        "title": "Linear fill",
+        "background": "Linear fill between 40 and 100 over three equal gaps gives evenly spaced values.",
+        "numbers": "60 and 80"
       },
       {
-        "title": "Finite element simulation",
-        "background": "Engineering meshes convert boundary-value physics into large sparse linear systems.",
-        "numbers": "With 1000 interior nodes in a 1D mesh, the second-derivative matrix has about $3\\cdot1000-2=2998$ nonzero entries."
+        "title": "Tridiagonal matrix",
+        "background": "1000 interior 1D nodes give a tridiagonal finite-difference system.",
+        "numbers": "about $2998$ tridiagonal nonzeros"
       },
       {
-        "title": "Constrained trajectory planning",
-        "background": "Robotics plans paths that begin and end at prescribed states.",
-        "numbers": "A straight path from $x(0)=2$ to $x(5)=12$ has constant velocity $(12-2)/5=2$ units/s and midpoint $x(2.5)=7$."
+        "title": "Path boundary",
+        "background": "Path from $x(0)=2$ to $x(5)=12$ is linear.",
+        "numbers": "velocity $2$ and midpoint $7$"
       }
     ],
     "applicationsClose": "Boundary value thinking turns local differential laws plus endpoint facts into a whole compatible shape.",
@@ -8559,6 +10150,62 @@
       "Second-order BVPs often use two boundary conditions to determine two constants.",
       "Finite differences turn BVPs into algebraic systems for grid values.",
       "Heat, structures, fields, images, and paths all use boundary constraints."
+    ],
+    "connectionsProse": "<p>This lesson connects integration constants and endpoint conditions to boundary value problems. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for finite-difference methods for boundary problems, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$a,b$",
+        "desc": "boundary endpoints"
+      },
+      {
+        "sym": "$\\alpha,\\beta$",
+        "desc": "boundary values"
+      },
+      {
+        "sym": "$h$",
+        "desc": "grid spacing"
+      },
+      {
+        "sym": "$y_i$",
+        "desc": "approximates $y(x_i)$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Integrate $y''=2$ once.",
+        "result": "$y'=2x+C_1$",
+        "why": "reverse the second derivative"
+      },
+      {
+        "do": "Integrate again.",
+        "result": "$y=x^2+C_1x+C_2$",
+        "why": "recover the function family"
+      },
+      {
+        "do": "Apply $y(0)=0$.",
+        "result": "$C_2=0$",
+        "why": "the left boundary fixes one constant"
+      },
+      {
+        "do": "Apply $y(1)=3$.",
+        "result": "$1+C_1=3$",
+        "why": "the right boundary fixes the other constant"
+      },
+      {
+        "do": "Solve.",
+        "result": "$C_1=2$",
+        "why": "subtract the known term"
+      },
+      {
+        "do": "State the solution.",
+        "result": "$y=x^2+2x$",
+        "why": "it satisfies both boundary values"
+      },
+      {
+        "do": "Use finite differences.",
+        "result": "$y''(x_i)\\approx(y_{i-1}-2y_i+y_{i+1})/h^2$",
+        "why": "adding forward and backward Taylor expansions cancels first derivatives"
+      }
     ],
     "prereqs": [
       "math-03-31"
@@ -8587,8 +10234,8 @@
         "eigenfunction expansions"
       ]
     },
-    "motivation": "<p>Linear algebra taught you to decompose vectors into eigenvectors. Boundary-value problems have a similar gift: many functions decompose into eigenfunctions.</p><p><b>Sturm–Liouville theory</b> is the framework that makes those modes trustworthy. It tells us when eigenvalues are real, modes are orthogonal, and complicated signals can be built from simple shapes.</p>",
-    "definition": "<p>A regular Sturm–Liouville problem has the form $$-(p(x)y')'+q(x)y=\\lambda w(x)y$$ on $a\\le x\\le b$, with boundary conditions that make the operator self-adjoint. Here $p(x)>0$ controls derivative energy, $q(x)$ is a potential term, $w(x)>0$ is a weight, and $\\lambda$ is an eigenvalue.</p><p>The key orthogonality comes from self-adjointness. If $y_m$ and $y_n$ solve the problem with different eigenvalues, subtracting the two integrated equations gives $(\\lambda_m-\\lambda_n)\\int_a^b w(x)y_m(x)y_n(x)\\,dx=0$, so the weighted inner product must be zero.</p><p><b>Assumptions that matter:</b> coefficients must be regular enough, $p$ and $w$ stay positive, and the boundary conditions must cancel boundary terms. Singular endpoints need extra care.</p>",
+    "motivation": "<p>Sturm–Liouville theory gives boundary-value problems an eigenvector-like structure. Under the right boundary conditions, eigenfunctions are orthogonal modes. The concrete gap is that boundary-value operators need a mode structure.</p><p>The load-bearing idea is that self-adjoint form makes distinct eigenfunctions orthogonal. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>Sturm–Liouville theory studies self-adjoint boundary-value eigenproblems whose eigenfunctions form orthogonal modes.</p><p>$$-(py')'+qy=\\lambda wy.$$</p><p><b>Assumptions that matter:</b> The boundary conditions must be self-adjoint so boundary terms cancel, and the weight $w$ defines the relevant inner product.</p>",
     "worked": {
       "problem": "Find eigenvalues and eigenfunctions for $-y''=\\lambda y$ on $0<x<\\pi$, with $y(0)=0$ and $y(\\pi)=0$.",
       "skills": [
@@ -8812,34 +10459,34 @@
     ],
     "applications": [
       {
-        "title": "Fourier sine series",
-        "background": "Fourier used heat flow to discover that functions can be expanded in boundary-compatible modes.",
-        "numbers": "For $f(x)=x$ on $[0,\\pi]$, the first sine coefficient is $2$, so the first approximation is $2\\sin x$."
+        "title": "Sine coefficient",
+        "background": "For $f(x)=x$ on $[0,\\pi]$, the first sine coefficient is computed by orthogonality.",
+        "numbers": "$2$"
       },
       {
-        "title": "Vibrating string",
-        "background": "A fixed string vibrates in modes whose frequencies are set by boundary conditions.",
-        "numbers": "For length $L=1$ and wave speed $c=100$ m/s, mode $n=3$ has frequency $3c/(2L)=150$ Hz."
+        "title": "String mode",
+        "background": "String length $1$, speed $100$, mode $3$ has frequency proportional to mode number.",
+        "numbers": "$150$ Hz"
       },
       {
-        "title": "Heat equation decay",
-        "background": "Separation of variables turns heat diffusion into decaying Sturm–Liouville modes.",
-        "numbers": "On $[0,1]$, mode $n=2$ decays like $e^{-4\\pi^2\\kappa t}$. With $\\kappa=0.01$, at $t=10$ the factor is $e^{-3.948}\\approx0.019$."
+        "title": "Heat mode",
+        "background": "Heat mode $n=2$, $\\kappa=0.01$, $t=10$ decays exponentially.",
+        "numbers": "$e^{-3.948}\\approx0.0193$"
       },
       {
-        "title": "Quantum particle in a box",
-        "background": "The Schrödinger equation in a box has exactly the sine eigenfunctions of a fixed-end BVP.",
-        "numbers": "Energy levels scale like $n^2$; if $E_1=0.5$ eV, then $E_3=9E_1=4.5$ eV."
+        "title": "Box level",
+        "background": "If $E_1=0.5$ eV, energy scales like $n^2$.",
+        "numbers": "box level $E_3=4.5$ eV"
       },
       {
-        "title": "Spectral graph learning",
-        "background": "Graph Laplacian eigenvectors are the discrete relatives of Sturm–Liouville modes and support smoothing on networks.",
-        "numbers": "A graph signal coefficient along eigenvalue $\\lambda=4$ under heat smoothing $e^{-0.2\\lambda}$ is multiplied by $e^{-0.8}\\approx0.449$."
+        "title": "Graph heat",
+        "background": "Graph heat smoothing with $\\lambda=4$ and factor $0.2$ damps a mode.",
+        "numbers": "multiplies by $e^{-0.8}\\approx0.449$"
       },
       {
-        "title": "PDE neural operators",
-        "background": "Neural operators often learn mappings between functions represented in spectral bases.",
-        "numbers": "Keeping 16 Fourier modes for each of 64 channels stores $16\\cdot64=1024$ spectral coefficients per layer."
+        "title": "Mode storage",
+        "background": "Keeping 16 modes for 64 channels stores mode-channel coefficients.",
+        "numbers": "1024 coefficients"
       }
     ],
     "applicationsClose": "Sturm–Liouville theory is the bridge from boundary constraints to orthogonal coordinates for functions.",
@@ -8848,6 +10495,62 @@
       "Different eigenvalues produce weighted-orthogonal eigenfunctions.",
       "Boundary conditions quantize the allowed modes.",
       "Fourier series, heat flow, quantum boxes, and spectral ML all rely on modal decompositions."
+    ],
+    "connectionsProse": "<p>This lesson connects eigenvectors, inner products, and boundary conditions to Sturm–Liouville theory. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for Fourier-type mode expansions and PDE separation, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$p,q,w$",
+        "desc": "coefficient and weight functions"
+      },
+      {
+        "sym": "$\\lambda$",
+        "desc": "an eigenvalue"
+      },
+      {
+        "sym": "$y_n$",
+        "desc": "an eigenfunction"
+      },
+      {
+        "sym": "self-adjoint boundary conditions",
+        "desc": "cancel boundary terms"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with two eigenfunction equations.",
+        "result": "$-(py_m')'+qy_m=\\lambda_mwy_m$ and $-(py_n')'+qy_n=\\lambda_nwy_n$",
+        "why": "compare two modes"
+      },
+      {
+        "do": "Multiply crosswise.",
+        "result": "first by $y_n$ and second by $y_m$",
+        "why": "prepare for subtraction"
+      },
+      {
+        "do": "Subtract and integrate over $[a,b]$.",
+        "result": "common $q$ terms cancel",
+        "why": "isolate the eigenvalue difference"
+      },
+      {
+        "do": "Integrate derivative terms by parts.",
+        "result": "boundary terms cancel",
+        "why": "self-adjoint boundary conditions cancel boundary terms"
+      },
+      {
+        "do": "Record the result.",
+        "result": "$(\\lambda_m-\\lambda_n)\\int_a^b w y_my_n\\,dx=0$",
+        "why": "only weighted inner product remains"
+      },
+      {
+        "do": "Use distinct eigenvalues.",
+        "result": "$\\int_a^b w y_my_n\\,dx=0$",
+        "why": "if $\\lambda_m\\ne\\lambda_n$, divide by the nonzero difference"
+      },
+      {
+        "do": "Apply the standard interval example.",
+        "result": "for $-y''=\\lambda y$ on $(0,\\pi)$ with zero endpoints, eigenfunctions are $\\sin nx$ and eigenvalues $n^2$",
+        "why": "sines satisfy the boundary conditions and eigenvalue equation"
+      }
     ],
     "prereqs": [
       "math-03-32"
@@ -8876,8 +10579,8 @@
         "optimization"
       ]
     },
-    "motivation": "<p>A residual network updates a hidden state by adding a learned change: $h_{k+1}=h_k+F(h_k)$. That already looks like Euler's method.</p><p>A <b>Neural ODE</b> takes the limit seriously. It learns the vector field $f_\\theta(t,h)$ and lets an ODE solver move the hidden state continuously from input time to output time.</p>",
-    "definition": "<p>A Neural ODE defines hidden states by $$\\dfrac{dh(t)}{dt}=f_\\theta(t,h(t)),\\qquad h(t_0)=h_0,$$ and outputs $h(t_1)$ after numerical integration. The function $f_\\theta$ is a neural network with parameters $\\theta$; the solver decides intermediate times and step sizes.</p><p>The connection to ResNets comes from Euler: $h(t+h)\\approx h(t)+h f_\\theta(t,h(t))$. A residual block is one explicit step; a Neural ODE asks an adaptive solver to choose many such steps more flexibly.</p><p><b>Assumptions that matter:</b> the vector field should be regular enough for a unique solution; solver tolerances affect speed and accuracy; training through the solve needs gradients, often by backpropagating through solver operations or using an adjoint equation.</p>",
+    "motivation": "<p>A Neural ODE replaces a finite stack of residual updates with a learned continuous-time vector field. The solver, not a fixed layer count, chooses the intermediate steps. The concrete gap is that a fixed layer stack is a discrete approximation.</p><p>The load-bearing idea is that a learned vector field defines continuous hidden-state motion. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A Neural ODE models hidden-state evolution with a learned continuous-time vector field.</p><p>$$\\frac{dh}{dt}=f_\\theta(t,h).$$</p><p><b>Assumptions that matter:</b> A numerical ODE solver approximates the trajectory, and solver tolerances control the accuracy-cost tradeoff.</p>",
     "worked": {
       "problem": "A one-dimensional Neural ODE has $h'=\\theta h$ with $\\theta=0.4$ and $h(0)=2$. Use two Euler steps of size $0.5$ to estimate $h(1)$.",
       "skills": [
@@ -9051,39 +10754,34 @@
     ],
     "applications": [
       {
-        "title": "Continuous-depth classification",
-        "background": "Neural ODEs were introduced to treat depth as continuous rather than a fixed number of layers.",
-        "numbers": "If a solver takes 20 vector-field calls and the classifier head takes 1 call, the ODE block uses about 20 times the core network evaluations of one residual layer."
+        "title": "ODE block cost",
+        "background": "20 vector-field calls make the ODE block more expensive than one residual call.",
+        "numbers": "about 20 times one residual-layer call"
       },
       {
-        "title": "Irregular time-series modeling",
-        "background": "Medical and sensor data often arrive at uneven times, making continuous-time hidden states natural.",
-        "numbers": "A hidden state with decay rate $0.3$ over a gap of $5$ hours keeps factor $e^{-1.5}\\approx0.223$ of its old value."
+        "title": "Decay over hours",
+        "background": "Decay rate $0.3$ over 5 hours gives exponential retention.",
+        "numbers": "$e^{-1.5}\\approx0.223$"
       },
       {
-        "title": "Continuous normalizing flows",
-        "background": "CNFs use ODEs to transform samples while tracking density through the divergence of the vector field.",
-        "numbers": "With constant divergence $0.2$ over $3$ seconds, log density changes by $-0.6$, so density is multiplied by $e^{-0.6}\\approx0.549$."
+        "title": "Density change",
+        "background": "Constant divergence $0.2$ over 3 seconds changes density by an exponential factor.",
+        "numbers": "$e^{-0.6}\\approx0.549$"
       },
       {
-        "title": "Latent trajectory interpolation",
-        "background": "A learned ODE can move latent codes smoothly between observations instead of jumping between discrete states.",
-        "numbers": "If $z'=0.5$ and $z(0)=1$, then after $2$ time units $z=2$, so a midpoint at $t=1$ is $1.5$."
+        "title": "Latent drift",
+        "background": "$z'=0.5$, $z(0)=1$ moves linearly.",
+        "numbers": "$z(2)=2$ and midpoint $1.5$"
       },
       {
-        "title": "Memory and compute tradeoff",
-        "background": "Adjoint methods were popularized because storing every solver state can be costly.",
-        "numbers": "Saving 100 states of dimension 256 in float32 costs $100\\cdot256\\cdot4=102400$ bytes, about 100 KB per example."
+        "title": "State memory",
+        "background": "Saving 100 states of dimension 256 in float32 stores all solver states.",
+        "numbers": "102400 bytes"
       },
       {
-        "title": "Stability in learned dynamics",
-        "background": "A Neural ODE with negative eigenvalues contracts hidden states, while positive eigenvalues can amplify them.",
-        "numbers": "A scalar rate $-1.2$ over $t=4$ multiplies perturbations by $e^{-4.8}\\approx0.0082$, a strong contraction."
-      },
-      {
-        "title": "Diffusion-model probability flow ODE",
-        "background": "Score-based diffusion samplers can use an ODE version that transports noise back to data deterministically.",
-        "numbers": "If a one-dimensional probability-flow drift is $-0.4x$ for one unit and $x=3$, the exact multiplier is $e^{-0.4}\\approx0.670$, giving $x\\approx2.01$."
+        "title": "Contraction",
+        "background": "Rate $-1.2$ over 4 units contracts exponentially.",
+        "numbers": "$e^{-4.8}\\approx0.0082$"
       }
     ],
     "applicationsClose": "Neural ODEs turn numerical differential equations into trainable layers, so solver accuracy, stability, and cost become ML design choices.",
@@ -9092,6 +10790,57 @@
       "Residual networks resemble Euler discretizations of continuous dynamics.",
       "ODE solver tolerances trade speed for accuracy during training and inference.",
       "Continuous flows support irregular time series, density models, and diffusion-related samplers."
+    ],
+    "connectionsProse": "<p>This lesson connects residual network updates and Euler steps to neural odes. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for continuous-depth machine-learning models, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$h(t)$",
+        "desc": "hidden state"
+      },
+      {
+        "sym": "$f_\\theta$",
+        "desc": "the learned vector field"
+      },
+      {
+        "sym": "$\\theta$",
+        "desc": "parameters"
+      },
+      {
+        "sym": "solver tolerances",
+        "desc": "control numerical accuracy"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a residual block.",
+        "result": "$h_{k+1}=h_k+\\Delta t\\,F_\\theta(t_k,h_k)$",
+        "why": "update equals current state plus learned change"
+      },
+      {
+        "do": "Rearrange as a quotient.",
+        "result": "$(h_{k+1}-h_k)/\\Delta t=F_\\theta(t_k,h_k)$",
+        "why": "this is a difference quotient"
+      },
+      {
+        "do": "Let the step shrink.",
+        "result": "$\\Delta t\\to0$",
+        "why": "the quotient becomes $dh/dt$"
+      },
+      {
+        "do": "Define the Neural ODE.",
+        "result": "$dh/dt=f_\\theta(t,h)$",
+        "why": "the network supplies the vector field"
+      },
+      {
+        "do": "Define the output.",
+        "result": "$h(t_1)$ from $h(t_0)=h_0$",
+        "why": "numerical integration advances the hidden state"
+      },
+      {
+        "do": "Apply $h'=0.4h$, $h(0)=2$ with two Euler steps of size $0.5$.",
+        "result": "$2\\to2.4\\to2.88$",
+        "why": "the continuous model can be approximated by numerical steps"
+      }
     ],
     "prereqs": [
       "math-03-33"
@@ -9120,8 +10869,8 @@
         "numerical simulation"
       ]
     },
-    "motivation": "<p>Ordinary differential equations describe motion when the slope is determined. Many systems are not that quiet: molecules jitter, markets jump, and generative models deliberately inject noise.</p><p>A <b>stochastic differential equation</b> keeps the drift of an ODE and adds a noise term. Diffusion models use this idea twice: corrupt data into noise, then learn how to reverse the corruption.</p>",
-    "definition": "<p>A common Itô SDE is $$dX_t=f(X_t,t)\\,dt+g(t)\\,dW_t,$$ where $f$ is the drift, $g$ is the diffusion scale, and $W_t$ is Brownian motion. Over a small step $\\Delta t$, Euler–Maruyama uses $$X_{n+1}=X_n+f(X_n,t_n)\\Delta t+g(t_n)\\sqrt{\\Delta t}\\,\\varepsilon_n,$$ with $\\varepsilon_n\\sim\\mathcal{N}(0,1)$.</p><p>The $\\sqrt{\\Delta t}$ appears because Brownian increments satisfy $W_{t+\\Delta t}-W_t\\sim\\mathcal{N}(0,\\Delta t)$. Diffusion models choose a forward noising SDE or discrete schedule, then learn a score $\\nabla_x\\log p_t(x)$ to guide denoising.</p><p><b>Assumptions that matter:</b> stochastic simulations approximate distributions, not single deterministic paths; random seeds change sample paths; score-based reverse dynamics require a trained score estimate and careful step sizes.</p>",
+    "motivation": "<p>A stochastic differential equation keeps deterministic drift and adds calibrated random motion. Diffusion models use this structure to add noise forward and guide denoising backward. The concrete gap is that deterministic drift does not capture random fluctuations.</p><p>The load-bearing idea is that Brownian increments add noise with variance proportional to time. The derivation or explanation below keeps the algebra tied to that idea, so each step shows why the method applies rather than only recording a formal manipulation. After the structure is clear, the initial data, constants, or numerical values have a specific role to play.</p>",
+    "definition": "<p>A stochastic differential equation combines deterministic drift with Brownian noise.</p><p>$$dX_t=f(X_t,t)dt+g(t)dW_t.$$</p><p><b>Assumptions that matter:</b> Brownian increments have mean zero and variance equal to the time step, so simulations sample random increments.</p>",
     "worked": {
       "problem": "Use one Euler–Maruyama step for $dX_t=-0.5X_t\\,dt+0.2\\,dW_t$ with $X_0=1$, $\\Delta t=0.04$, and sampled $\\varepsilon=1.5$.",
       "skills": [
@@ -9305,39 +11054,34 @@
     ],
     "applications": [
       {
-        "title": "Score-based image generation",
-        "background": "Modern diffusion generators learn the score of noisy data distributions and follow reverse stochastic dynamics toward images.",
-        "numbers": "If a sampler uses 50 steps and each denoiser call costs 40 ms, one image takes about $50\\cdot40=2000$ ms, or 2 seconds."
+        "title": "Denoiser cost",
+        "background": "50 denoiser calls at 40 ms accumulate runtime.",
+        "numbers": "2000 ms"
       },
       {
-        "title": "DDPM forward noising",
-        "background": "Denoising diffusion probabilistic models gradually mix data with Gaussian noise according to a variance schedule.",
-        "numbers": "With $\\alpha=0.81$, clean pixel value $0.6$, and noise $-1.0$, the noisy value is $0.9\\cdot0.6+\\sqrt{0.19}(-1)\\approx0.104$."
+        "title": "DDPM noising",
+        "background": "DDPM noising with $\\alpha=0.81$, $x=0.6$, noise $-1$ combines signal and noise.",
+        "numbers": "$0.104$"
       },
       {
-        "title": "Langevin sampling",
-        "background": "Langevin dynamics combines score ascent with random kicks to sample from a target density.",
-        "numbers": "For score $-2$, step $0.005$, and noise sample $1$, the update change is $0.005(-2)+\\sqrt{0.01}(1)=-0.01+0.1=0.09$."
+        "title": "Langevin step",
+        "background": "Langevin step with score $-2$, step $0.005$, noise $1$ combines drift and random motion.",
+        "numbers": "changes by $0.09$"
       },
       {
-        "title": "Stochastic gradient noise",
-        "background": "Mini-batch training behaves partly like an SDE because batch gradients fluctuate around the full gradient.",
-        "numbers": "If gradient noise standard deviation is $0.3$ and learning rate is $0.01$, the parameter noise scale per step is about $0.003$."
+        "title": "Gradient noise",
+        "background": "Gradient noise standard deviation $0.3$ with learning rate $0.01$ scales update noise.",
+        "numbers": "$0.003$"
       },
       {
-        "title": "Black-Scholes option model",
-        "background": "Financial mathematics modeled stock prices with geometric Brownian motion decades before ML diffusion models.",
-        "numbers": "With volatility $20\\%$ yearly, a one-day standard deviation is $0.20\\sqrt{1/252}\\approx0.0126$, about $1.26\\%$."
+        "title": "Daily volatility",
+        "background": "Volatility $20\\%$ yearly converts to one-day standard deviation.",
+        "numbers": "$0.20\\sqrt{1/252}\\approx0.0126$"
       },
       {
-        "title": "Molecular diffusion",
-        "background": "Einstein's Brownian-motion work connects microscopic random motion to macroscopic diffusion.",
-        "numbers": "In one dimension, mean squared displacement is $2Dt$. With $D=0.5$ and $t=10$, it equals $10$, so root mean square displacement is $\\sqrt{10}\\approx3.16$."
-      },
-      {
-        "title": "Probability-flow ODE alternative",
-        "background": "Score-based models can sometimes replace the reverse SDE with a deterministic ODE for faster or repeatable sampling.",
-        "numbers": "If deterministic drift is $-0.1x$ for 10 units from $x=5$, the exact output is $5e^{-1}\\approx1.84$."
+        "title": "Brownian diffusion",
+        "background": "Brownian diffusion with $D=0.5,t=10$ gives RMS displacement.",
+        "numbers": "$\\sqrt{10}\\approx3.16$"
       }
     ],
     "applicationsClose": "SDEs give one language for random physical motion, noisy optimization, and the forward and reverse processes in diffusion generation.",
@@ -9346,6 +11090,61 @@
       "Euler–Maruyama adds a noise term scaled by $\\sqrt{\\Delta t}$.",
       "Diffusion models corrupt data with noise and learn scores or noise predictions to reverse the process.",
       "Sample paths are random, so simulations describe distributions as much as individual trajectories."
+    ],
+    "connectionsProse": "<p>This lesson connects Euler stepping and random variation to stochastic differential equations & diffusion. The reader can bring the familiar habit of reading a derivative as a local rate of change. Here that habit is organized around the structure that makes this particular kind of equation useful. The lesson prepares for diffusion models and stochastic dynamics, where recognizing the structure before solving is often the most important step.</p>",
+    "symbols": [
+      {
+        "sym": "$f$",
+        "desc": "drift"
+      },
+      {
+        "sym": "$g$",
+        "desc": "diffusion scale"
+      },
+      {
+        "sym": "$W_t$",
+        "desc": "Brownian motion"
+      },
+      {
+        "sym": "$\\Delta t$",
+        "desc": "step size"
+      },
+      {
+        "sym": "$\\varepsilon_n$",
+        "desc": "a standard normal sample"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with the SDE.",
+        "result": "$dX_t=f(X_t,t)dt+g(t)dW_t$",
+        "why": "drift plus Brownian noise"
+      },
+      {
+        "do": "Approximate drift over a small step.",
+        "result": "$f(X_n,t_n)\\Delta t$",
+        "why": "Euler's deterministic idea"
+      },
+      {
+        "do": "Use Brownian increments.",
+        "result": "$\\Delta W\\sim\\mathcal N(0,\\Delta t)$",
+        "why": "variance grows like time"
+      },
+      {
+        "do": "Represent the random increment.",
+        "result": "$\\Delta W=\\sqrt{\\Delta t}\\,\\varepsilon_n$ with $\\varepsilon_n\\sim\\mathcal N(0,1)$",
+        "why": "standardize the normal sample"
+      },
+      {
+        "do": "Combine terms.",
+        "result": "$X_{n+1}=X_n+f(X_n,t_n)\\Delta t+g(t_n)\\sqrt{\\Delta t}\\varepsilon_n$",
+        "why": "Euler-Maruyama step"
+      },
+      {
+        "do": "Apply $dX=-0.5Xdt+0.2dW$, $X_0=1$, $\\Delta t=0.04$, $\\varepsilon=1.5$.",
+        "result": "$1-0.02+0.06=1.04$",
+        "why": "drift and diffusion both contribute to the update"
+      }
     ],
     "prereqs": [
       "math-03-34"

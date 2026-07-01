@@ -28,8 +28,8 @@
         "bases"
       ]
     },
-    "motivation": "<p>You already add arrows and multiply them by numbers. If a feature vector is $[2,5]$, doubling it gives $[4,10]$, and adding $[1,-1]$ gives $[3,4]$.</p><p>A <b>vector space</b> is the setting where those two operations are legal and reliable. Functional analysis begins by letting the vectors be functions, signals, or infinite sequences, not just short coordinate lists.</p>",
-    "definition": "<p>A <b>vector space</b> $V$ over a field such as $\\mathbb{R}$ is a set whose elements can be added and multiplied by scalars. For $u,v\\in V$ and $a\\in\\mathbb{R}$, closure requires $u+v\\in V$ and $av\\in V$. The operations also obey the familiar rules: associativity, commutativity of addition, a zero vector, additive inverses, distributive laws, and $1v=v$.</p><p>The reason these rules matter is that they make linear combinations meaningful. If $a_1v_1+\\cdots+a_kv_k$ always stays in $V$, then span, basis, dimension, and linear maps have a stable home.</p><p><b>Assumptions that matter:</b> the scalar field must be fixed; the zero vector must be in the set; and checking a proposed space usually reduces to checking closure under addition and scalar multiplication, because the other rules are inherited from the ambient space.</p>",
+    "motivation": "<p>A vector space is the setting where linear combinations make sense. If two objects are allowed models, signals, or states, then adding them and multiplying them by scalars should produce another object of the same kind. That closure property is what lets a learner average embeddings, mix signals, add polynomial terms, or form residual directions without leaving the space being studied.</p><p>In functional analysis this matters more than it first appears, because the objects are often not finite coordinate vectors. They may be functions in a hypothesis class or infinite coefficient sequences in a basis expansion. The subspace test in this lesson is the local version of the same idea: check zero, addition, and scaling, and then the larger machinery of linear analysis can safely apply inside the candidate set.</p>",
+    "definition": "<p>A <b>vector space</b> is a set of objects closed under vector addition and scalar multiplication; a subset $W$ is a subspace when it contains zero and remains closed under those same two operations.</p><p><b>Assumptions that matter:</b> the ambient operations are fixed, the scalars come from the chosen field, and closure means the result stays inside the same set.</p>",
     "worked": {
       "problem": "Show that $W=\\{(x,y)\\in\\mathbb{R}^2: x+y=0\\}$ is a vector space under ordinary addition and scalar multiplication.",
       "skills": [
@@ -239,33 +239,33 @@
     "applications": [
       {
         "title": "Feature vectors",
-        "background": "Machine-learning examples are usually encoded as vectors so arithmetic can be shared across data points.",
-        "numbers": "If $x=[2,5]$ and $z=[1,-1]$, then $0.5x+z=[2,1.5]$, still a valid two-feature vector."
+        "background": "Feature vectors stay in the same space under linear combinations.",
+        "numbers": "$0.5[2,5]+[1,-1]=[2,1.5]$."
       },
       {
         "title": "Image space",
-        "background": "A grayscale image with fixed size can be treated as one vector of pixel intensities.",
-        "numbers": "Two $2$ by $2$ images $[1,2,3,4]$ and $[4,3,2,1]$ average to $[2.5,2.5,2.5,2.5]$."
+        "background": "Averaging images is coordinatewise vector addition and scaling.",
+        "numbers": "average of $[1,2,3,4]$ and $[4,3,2,1]$ is $[2.5,2.5,2.5,2.5]$."
       },
       {
         "title": "Polynomial models",
-        "background": "Regression with polynomial features uses a vector space of basis functions.",
-        "numbers": "$3+2x-x^2$ plus $1+x^2$ equals $4+2x$, still degree at most $2$."
+        "background": "Polynomial model classes are closed under addition when degree limits are respected.",
+        "numbers": "$(3+2x-x^2)+(1+x^2)=4+2x$."
       },
       {
-        "title": "Signals",
-        "background": "Audio and sensor traces are functions, and many function families behave like vector spaces.",
-        "numbers": "Signals $s(t)=2t$ and $r(t)=1-t$ combine as $s+r=1+t$."
+        "title": "Signal mixtures",
+        "background": "Signals can be mixed by adding and scaling functions.",
+        "numbers": "$2t+(1-t)=1+t$."
       },
       {
-        "title": "Embeddings",
-        "background": "Text and item embeddings are vectors so systems can add, average, and compare them.",
-        "numbers": "A mean embedding of $[1,3]$, $[2,5]$, and $[4,1]$ is $[7/3,3]$."
+        "title": "Mean embeddings",
+        "background": "A mean embedding is an average of vector embeddings.",
+        "numbers": "$([1,3]+[2,5]+[4,1])/3=[7/3,3]$."
       },
       {
-        "title": "Constraint subspaces",
-        "background": "Linear constraints through the origin define feasible directions in optimization.",
-        "numbers": "The constraint $x_1+x_2+x_3=0$ accepts $[1,-1,0]$ and $[2,0,-2]$; their sum $[3,-1,-2]$ also sums to $0$."
+        "title": "Constraint subspace",
+        "background": "A sum-zero constraint is preserved by adding compatible vectors.",
+        "numbers": "$[1,-1,0]+[2,0,-2]=[3,-1,-2]$ and the coordinates still sum to $0$."
       }
     ],
     "applicationsClose": "The common thread is closure: once your objects form a vector space, linear combinations become safe moves.",
@@ -273,6 +273,71 @@
       "A vector space is closed under vector addition and scalar multiplication.",
       "The zero vector is a fast test: if it is missing, the set is not a vector space.",
       "Functions, polynomials, signals, images, and embeddings can all be vectors when the operations fit."
+    ],
+    "connectionsProse": "<p>This opening lesson supplies the algebraic ground for the whole section. Earlier linear algebra work treated vectors as coordinate lists, and that picture is still useful here. Functional analysis keeps the same addition and scaling rules while allowing the vectors to be functions, signals, distributions of coefficients, or infinite sequences. Once those rules are stable, later lessons can talk about norms, limits, operators, and projections without rechecking the basic algebra each time.</p>",
+    "symbols": [
+      {
+        "sym": "$V$",
+        "desc": "a vector space"
+      },
+      {
+        "sym": "$u,v$",
+        "desc": "vectors"
+      },
+      {
+        "sym": "$a,b,c$",
+        "desc": "scalars"
+      },
+      {
+        "sym": "$W$",
+        "desc": "a candidate subspace"
+      },
+      {
+        "sym": "closure",
+        "desc": "the result stays inside the same set"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write an arbitrary element of $W$",
+        "result": "$u=(a,-a)$",
+        "why": "every point in $W$ has coordinates summing to $0$"
+      },
+      {
+        "do": "Write a second arbitrary element",
+        "result": "$v=(b,-b)$",
+        "why": "the addition check needs two general points"
+      },
+      {
+        "do": "Add the two vectors",
+        "result": "$u+v=(a+b,-a-b)$",
+        "why": "addition is coordinatewise"
+      },
+      {
+        "do": "Sum the coordinates",
+        "result": "$(a+b)+(-a-b)=0$",
+        "why": "the terms cancel"
+      },
+      {
+        "do": "Scale $u$ by $c$",
+        "result": "$cu=(ca,-ca)$",
+        "why": "scalar multiplication is coordinatewise"
+      },
+      {
+        "do": "Sum the scaled coordinates",
+        "result": "$ca-ca=0$",
+        "why": "scaling preserves the defining equation"
+      },
+      {
+        "do": "Check the zero vector",
+        "result": "$(0,0)\\in W$",
+        "why": "$0+0=0$"
+      },
+      {
+        "do": "Conclude the subspace test",
+        "result": "$W$ is a vector space",
+        "why": "it contains zero and is closed under addition and scaling inside $\\mathbb R^2$"
+      }
     ]
   });
 
@@ -298,8 +363,8 @@
         "composition"
       ]
     },
-    "motivation": "<p>You already know matrices as machines that turn one vector into another. A matrix sends $[1,2]$ to a new vector by multiplying and adding coordinates.</p><p>A <b>linear operator</b> is the same idea in a wider setting. It may act on coordinate vectors, functions, signals, or sequences, but it must preserve linear combinations exactly.</p>",
-    "definition": "<p>A map $T:V\\to W$ between vector spaces is <b>linear</b> if for every $u,v\\in V$ and scalars $a,b$, $$T(au+bv)=aT(u)+bT(v).$$ This one statement contains additivity $T(u+v)=T(u)+T(v)$ and homogeneity $T(av)=aT(v)$.</p><p>The formula is powerful because it says the operator is determined by what it does to a basis. If $x=c_1v_1+\\cdots+c_nv_n$, then $T(x)=c_1T(v_1)+\\cdots+c_nT(v_n)$.</p><p><b>Assumptions that matter:</b> the domain and codomain must be vector spaces over the same scalar field; linearity must hold for all vectors and scalars, not just examples; and maps with offsets, such as $T(x)=Ax+b$ with $b\\ne0$, are affine rather than linear.</p>",
+    "motivation": "<p>Once vectors can be added and scaled, the next question is which transformations preserve that structure. A linear operator sends a linear combination of inputs to the same linear combination of outputs. That is why knowing the operator on basis vectors is enough in finite dimensions: every other input is built from those basis vectors with fixed coefficients.</p><p>This simple preservation rule is the reason very different procedures can share one analysis. A dense layer, a fixed convolution, and differentiation all distribute over sums and scalars when the underlying assumptions are fixed. Functional analysis uses that shared structure to study stability, approximation, spectra, and kernels in spaces much larger than ordinary matrix spaces.</p>",
+    "definition": "<p>A <b>linear operator</b> $T:V\\to W$ is a map that preserves addition and scalar multiplication.</p><p>$$T(au+bv)=aT(u)+bT(v).$$</p><p><b>Assumptions that matter:</b> $V$ and $W$ are vector spaces over the same scalar field, and the coefficients in a basis expansion are fixed by the input vector.</p>",
     "worked": {
       "problem": "Let $T(x,y)=(2x-y,x+3y)$. Show that $T$ is linear and compute $T(3,-1)$.",
       "skills": [
@@ -503,34 +568,34 @@
     ],
     "applications": [
       {
-        "title": "Dense neural-network layers",
-        "background": "A dense layer before adding bias is a linear operator from input features to hidden units.",
-        "numbers": "With $A=\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}$ and $x=[1,2]$, $Ax=[5,11]$."
+        "title": "Dense layer",
+        "background": "A fixed matrix acts linearly on an input vector.",
+        "numbers": "$\\begin{bmatrix}1&2\\3&4\\end{bmatrix}[1,2]^T=[5,11]^T$."
       },
       {
-        "title": "Convolutions",
-        "background": "Signal filters are linear when the filter weights are fixed, which is why they can be analyzed as operators.",
-        "numbers": "Kernel $[1,0,-1]$ on samples $[2,5,4]$ gives $1\\cdot2+0\\cdot5-1\\cdot4=-2$."
+        "title": "Fixed convolution",
+        "background": "A fixed convolution filter is a linear dot product on a window.",
+        "numbers": "$[1,0,-1]\\cdot[2,5,4]=-2$."
       },
       {
         "title": "Differentiation",
-        "background": "Calculus operators such as differentiation are linear on suitable function spaces.",
-        "numbers": "If $p=3x^2$ and $q=5x$, then $(p+q)'=6x+5=p'+q'$."
+        "background": "Differentiation is linear on differentiable functions.",
+        "numbers": "$\\frac{d}{dx}\\left(3x^2+5x\\right)=6x+5$."
       },
       {
         "title": "Expectation",
-        "background": "Probability uses expectation as a linear operator from random variables to numbers.",
-        "numbers": "If $E[X]=2$ and $E[Y]=5$, then $E[3X-Y]=6-5=1$."
+        "background": "Expectation preserves linear combinations.",
+        "numbers": "$E[3X-Y]=3\\cdot2-5=1$."
       },
       {
-        "title": "Dimensionality reduction",
-        "background": "PCA projection is a linear operator that keeps selected directions.",
-        "numbers": "Projecting $[3,4]$ onto the first coordinate gives $[3,0]$."
+        "title": "PCA projection",
+        "background": "Projection onto a coordinate subspace is linear.",
+        "numbers": "$[3,4]$ onto first coordinate becomes $[3,0]$."
       },
       {
-        "title": "Graph transformations",
-        "background": "Adjacency matrices act linearly on node-feature vectors in graph learning.",
-        "numbers": "For $A=\\begin{bmatrix}0&1\\\\1&0\\end{bmatrix}$ and features $[7,2]$, $Ax=[2,7]$."
+        "title": "Graph swap matrix",
+        "background": "A permutation matrix linearly swaps coordinates.",
+        "numbers": "$\\begin{bmatrix}0&1\\1&0\\end{bmatrix}[7,2]^T=[2,7]^T$."
       }
     ],
     "applicationsClose": "Whenever a system distributes over add-and-scale, linear-operator thinking lets you study the whole map from a few reliable rules.",
@@ -538,6 +603,52 @@
       "A linear operator satisfies $T(au+bv)=aT(u)+bT(v)$.",
       "Matrices, derivatives, expectations, and fixed convolutions are central examples.",
       "Offsets break linearity, even when the rest of the formula looks matrix-like."
+    ],
+    "connectionsProse": "<p>This lesson builds directly on vector spaces by studying maps that respect their two basic operations. A linear operator is the natural way to move from one vector space to another without breaking addition or scaling. Matrices are the finite-dimensional model, but the same definition also covers derivatives, projections, expectations, shifts, and integral transforms. Later operator norms, boundedness, compactness, and spectral decompositions all begin with this linearity rule.</p>",
+    "symbols": [
+      {
+        "sym": "$T:V\\to W$",
+        "desc": "the operator"
+      },
+      {
+        "sym": "$v_i$",
+        "desc": "basis vectors"
+      },
+      {
+        "sym": "$c_i$",
+        "desc": "coordinates"
+      },
+      {
+        "sym": "$T(au+bv)=aT(u)+bT(v)$",
+        "desc": "linearity"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a basis expansion",
+        "result": "$x=c_1v_1+\\cdots+c_nv_n$",
+        "why": "a basis writes every vector as a unique linear combination"
+      },
+      {
+        "do": "Apply $T$",
+        "result": "$T(x)=T(c_1v_1+\\cdots+c_nv_n)$",
+        "why": "$T$ acts on vectors"
+      },
+      {
+        "do": "Pull out the first scalar",
+        "result": "$T(c_1v_1+\\cdots)=c_1T(v_1)+T(c_2v_2+\\cdots)$",
+        "why": "linearity preserves scaling and sums"
+      },
+      {
+        "do": "Repeat for each term",
+        "result": "$T(x)=c_1T(v_1)+\\cdots+c_nT(v_n)$",
+        "why": "each basis component is handled the same way"
+      },
+      {
+        "do": "Conclude basis determination",
+        "result": "$T$ is determined by the images $T(v_i)$",
+        "why": "the coefficients $c_i$ are fixed by $x$"
+      }
     ],
     "prereqs": [
       "math-05-01"
@@ -566,8 +677,8 @@
         "inequalities"
       ]
     },
-    "motivation": "<p>You already measure ordinary vectors by length. The vector $(3,4)$ has length $5$, and that number tells you how large the vector is.</p><p>A <b>norm</b> extends length to many vector spaces, including spaces of functions. Once a norm is chosen, we can discuss distance, convergence, stability, and error in one precise vocabulary.</p>",
-    "definition": "<p>A <b>norm</b> on a vector space $V$ is a function $\\|\\cdot\\|:V\\to[0,\\infty)$ satisfying three rules: $\\|v\\|=0$ only for $v=0$, $\\|av\\|=|a|\\|v\\|$, and $\\|u+v\\|\\le\\|u\\|+\\|v\\|$. A vector space with a chosen norm is a <b>normed space</b>.</p><p>The triangle inequality is the key geometric rule. Going from $0$ to $u+v$ directly cannot be longer than going first to $u$ and then adding $v$. The norm also creates distance by $d(u,v)=\\|u-v\\|$.</p><p><b>Assumptions that matter:</b> different norms can live on the same vector space; convergence depends on the chosen norm; and in finite dimensions common norms agree about which sequences converge, although they measure sizes differently.</p>",
+    "motivation": "<p>A norm is more than a length formula. It is the rule that turns an algebraic vector space into a space where closeness can be measured. Once $\\|u-v\\|$ is available, the same language can describe residual error in regression, perturbation size in robustness, and the magnitude of a function difference.</p><p>The axioms are exactly the properties needed for this measurement to behave like size. Positivity says only the zero vector has zero size, homogeneity says scaling changes size by the absolute scale factor, and the triangle inequality says indirect travel is not shorter than the direct displacement. The derivation shows that these three rules automatically create a metric, so every normed space comes with a usable notion of distance.</p>",
+    "definition": "<p>A <b>norm</b> assigns each vector a nonnegative size satisfying positivity, homogeneity, and the triangle inequality. It induces a distance by taking the norm of the displacement.</p><p>$$d(u,v)=\\|u-v\\|.$$</p><p><b>Assumptions that matter:</b> the vector space and scalar field are fixed, and the same norm is used for all distance and convergence statements.</p>",
     "worked": {
       "problem": "Compute $\\|x\\|_1$, $\\|x\\|_2$, and $\\|x\\|_\\infty$ for $x=(3,-4,12)$.",
       "skills": [
@@ -771,34 +882,34 @@
     ],
     "applications": [
       {
-        "title": "Training error",
-        "background": "Losses often measure prediction error by a norm of residuals.",
-        "numbers": "Residuals $[2,-1,2]$ have $\\ell_2$ norm $\\sqrt{4+1+4}=3$."
+        "title": "Residual norm",
+        "background": "Regression error can be measured by a vector norm.",
+        "numbers": "$[2,-1,2]$ has $\\ell_2$ norm $3$."
       },
       {
-        "title": "Regularization",
-        "background": "Norm penalties keep parameter vectors from growing too large.",
-        "numbers": "Weights $[3,4]$ have $\\ell_2$ penalty $\\|w\\|_2^2=25$."
+        "title": "Weight penalty",
+        "background": "Regularization often penalizes squared weight norm.",
+        "numbers": "$[3,4]$ gives $\\|w\\|_2^2=25$."
       },
       {
         "title": "Gradient clipping",
-        "background": "Optimizers cap update size by rescaling large gradient vectors.",
-        "numbers": "Gradient $[6,8]$ has norm $10$; clipping to norm $5$ scales it to $[3,4]$."
+        "background": "Clipping rescales a large gradient to a target norm.",
+        "numbers": "$[6,8]$ has norm $10$ and clips to norm $5$ as $[3,4]$."
       },
       {
-        "title": "Adversarial perturbations",
-        "background": "Robustness work measures how small an input change can fool a model.",
-        "numbers": "Perturbation $[0.01,-0.02,0.02]$ has $\\ell_\\infty$ size $0.02$."
+        "title": "$\\ell_\\infty$ perturbation",
+        "background": "The infinity norm measures the largest coordinate perturbation.",
+        "numbers": "$[0.01,-0.02,0.02]$ has size $0.02$."
       },
       {
-        "title": "Nearest neighbors",
-        "background": "Retrieval systems need a distance between embeddings before they can search.",
-        "numbers": "Embeddings $[1,2]$ and $[4,6]$ are Euclidean distance $5$ apart."
+        "title": "Embedding distance",
+        "background": "Embedding differences can be measured as Euclidean displacement.",
+        "numbers": "$[1,2]$ to $[4,6]$ is $5$."
       },
       {
-        "title": "Function approximation",
-        "background": "Approximation theory measures the error between functions with norms.",
-        "numbers": "If $|f(t)-g(t)|\\le0.03$ for all $t$, then $\\|f-g\\|_\\infty\\le0.03$."
+        "title": "Function error",
+        "background": "Uniform error is controlled by the supremum norm.",
+        "numbers": "if $|f(t)-g(t)|\\le0.03$ for all $t$, then $\\|f-g\\|_\\infty\\le0.03$."
       }
     ],
     "applicationsClose": "A norm is the measuring stick that turns abstract vectors into sizes, distances, errors, and stable comparisons.",
@@ -806,6 +917,72 @@
       "A norm is nonnegative, scales by absolute scalar size, and satisfies the triangle inequality.",
       "A normed space is a vector space together with a chosen norm.",
       "Different norms answer different practical questions about size and error."
+    ],
+    "connectionsProse": "<p>Vector spaces provide algebra, and this lesson adds size. A norm tells us how large a vector is and therefore how far two vectors are from each other. With that distance in place, statements about convergence, approximation error, robustness, and regularization become precise. Banach spaces, Hilbert spaces, bounded operators, and weak convergence all depend on having a fixed norm before any limiting argument begins.</p>",
+    "symbols": [
+      {
+        "sym": "$\\|v\\|$",
+        "desc": "the norm of $v$"
+      },
+      {
+        "sym": "$d(u,v)$",
+        "desc": "distance"
+      },
+      {
+        "sym": "$a$",
+        "desc": "a scalar"
+      },
+      {
+        "sym": "$u,v,w$",
+        "desc": "vectors"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "State positivity",
+        "result": "$\\|v\\|\\ge0$ and $\\|v\\|=0\\iff v=0$",
+        "why": "only the zero vector has no size"
+      },
+      {
+        "do": "State homogeneity",
+        "result": "$\\|av\\|=|a|\\|v\\|$",
+        "why": "scaling a vector scales its length by the absolute scalar"
+      },
+      {
+        "do": "State triangle inequality",
+        "result": "$\\|u+v\\|\\le\\|u\\|+\\|v\\|$",
+        "why": "a direct trip is no longer than going in two legs"
+      },
+      {
+        "do": "Define distance",
+        "result": "$d(u,v)=\\|u-v\\|$",
+        "why": "distance is the size of the displacement"
+      },
+      {
+        "do": "Check nonnegativity",
+        "result": "$d(u,v)\\ge0$",
+        "why": "this follows from positivity"
+      },
+      {
+        "do": "Check identity of indiscernibles",
+        "result": "$d(u,v)=0\\iff u=v$",
+        "why": "$u-v=0$"
+      },
+      {
+        "do": "Check symmetry",
+        "result": "$d(u,v)=\\|u-v\\|=\\|-(v-u)\\|=|{-1}|\\|v-u\\|=d(v,u)$",
+        "why": "homogeneity handles the minus sign"
+      },
+      {
+        "do": "Check triangle",
+        "result": "$d(u,w)=\\|u-w\\|=\\|(u-v)+(v-w)\\|\\le\\|u-v\\|+\\|v-w\\|$",
+        "why": "the norm triangle inequality applies to the two displacements"
+      },
+      {
+        "do": "Conclude metric structure",
+        "result": "a norm creates a metric",
+        "why": "all distance rules follow"
+      }
     ],
     "prereqs": [
       "math-05-02"
@@ -834,8 +1011,8 @@
         "series"
       ]
     },
-    "motivation": "<p>You have seen decimal approximations like $1$, $1.4$, $1.41$, $1.414$. The terms get closer to each other because they are trying to reach $\\sqrt2$.</p><p><b>Completeness</b> asks whether the place you are working contains the limit of every sequence that should converge. A <b>Banach space</b> is a normed space complete enough that limits do not fall through cracks.</p>",
-    "definition": "<p>A sequence $(x_n)$ in a normed space is <b>Cauchy</b> if for every tolerance $\\varepsilon>0$, there is an index $N$ such that $\\|x_n-x_m\\|<\\varepsilon$ whenever $n,m\\ge N$. A normed space is <b>complete</b> if every Cauchy sequence converges to a point in the space. A complete normed space is called a <b>Banach space</b>.</p><p>Cauchy means the terms eventually crowd together, even if we do not yet know the destination. Completeness says every such crowding sequence has a destination inside the same space.</p><p><b>Assumptions that matter:</b> Cauchy is measured with the chosen norm; a sequence can be Cauchy in a larger space while failing to converge inside a smaller one; and finite-dimensional normed spaces over $\\mathbb{R}$ are complete, but infinite-dimensional function spaces require care.</p>",
+    "motivation": "<p>A Cauchy sequence is a sequence whose late terms become close to each other, even before a candidate limit has been named. Completeness says that this internal settling is enough: there is an actual point in the space that the sequence approaches. Without completeness, approximations can look perfectly stable from within the norm while still having no legal destination in the space.</p><p>A Banach space is simply a normed space where that failure has been ruled out. This is why the lesson is definition-heavy rather than formula-heavy. The examples distinguish complete and incomplete settings: real numbers contain the limits of their Cauchy sequences, while rational numbers can have rational approximations that settle toward an irrational limit not present in the space.</p>",
+    "definition": "<p>A <b>Banach space</b> is a normed vector space in which every Cauchy sequence converges to an element of the same space.</p><p>$$\\forall\\varepsilon>0\\;\\exists N\\;\\forall n,m\\ge N:\\ \\|x_n-x_m\\|<\\varepsilon.$$</p><p><b>Assumptions that matter:</b> the norm is fixed, convergence is measured in that norm, and completeness is about limits remaining inside the space.</p>",
     "worked": {
       "problem": "Show that $x_n=1/n$ is Cauchy in $\\mathbb{R}$ and find its limit.",
       "skills": [
@@ -1039,34 +1216,34 @@
     ],
     "applications": [
       {
-        "title": "Fixed-point algorithms",
-        "background": "Banach's fixed-point theorem guarantees convergence for contractions on complete spaces.",
-        "numbers": "If error shrinks by $0.5$ each step from $10$, after $10$ steps it is $10/1024\\approx0.00977$."
+        "title": "Fixed-point iteration",
+        "background": "A contraction iteration has errors that shrink geometrically.",
+        "numbers": "error $10(0.5)^{10}=0.00977$."
       },
       {
-        "title": "Infinite series of updates",
-        "background": "Optimization and numerical methods often add infinitely many corrections, so the sum needs a complete home.",
-        "numbers": "Updates with norms $1/2,1/4,1/8,\\ldots$ have total size $1$."
+        "title": "Infinite updates",
+        "background": "A complete space contains the limit of a convergent update series.",
+        "numbers": "$1/2+1/4+1/8+\\cdots=1$."
       },
       {
-        "title": "Uniform limits of functions",
-        "background": "Spaces of continuous functions with sup norm are Banach spaces, so uniform limits stay continuous.",
-        "numbers": "If $\\|f_n-f\\|_\\infty<0.001$, every output differs by less than $0.001$."
+        "title": "Uniform function limit",
+        "background": "Supremum-norm convergence controls every output at once.",
+        "numbers": "$\\|f_n-f\\|_\\infty<0.001$ means every output differs by less than $0.001$."
       },
       {
-        "title": "Stable numerical solvers",
-        "background": "Completeness lets a sequence of approximations converge to an actual solution rather than a missing object.",
-        "numbers": "Approximations $0.7,0.70,0.707,0.7071$ can converge to $1/\\sqrt2\\approx0.7071$ in $\\mathbb{R}$."
+        "title": "Decimal approximations",
+        "background": "Real numbers contain limits of Cauchy decimal approximations.",
+        "numbers": "$0.7071$ approximates $1/\\sqrt2$ in complete $\\mathbb R$."
       },
       {
-        "title": "Parameter spaces",
-        "background": "Finite-dimensional weight spaces are complete under usual norms, which supports convergence arguments.",
-        "numbers": "Weights $w_n=(1/n,3)$ converge to $(0,3)$, still a valid weight vector."
+        "title": "Weight sequence",
+        "background": "Coordinatewise settling remains inside Euclidean space.",
+        "numbers": "$(1/n,3)\\to(0,3)$ remains in $\\mathbb R^2$."
       },
       {
-        "title": "Reinforcement-learning value iteration",
-        "background": "Discounted Bellman operators are contractions under sup norm in standard theory.",
-        "numbers": "With discount $\\gamma=0.9$, an initial value error $5$ is bounded by $5(0.9)^{20}\\approx0.608$."
+        "title": "Value iteration",
+        "background": "Discounted errors decay but may remain visible after finite steps.",
+        "numbers": "$5(0.9)^{20}\\approx0.608$."
       }
     ],
     "applicationsClose": "Completeness is quiet but essential: it says the limits promised by approximation actually live where the problem lives.",
@@ -1074,6 +1251,29 @@
       "A Banach space is a complete normed space.",
       "Cauchy sequences are sequences whose late terms become mutually close.",
       "Completeness depends on the normed space, not just on the formula for the sequence."
+    ],
+    "connectionsProse": "<p>This lesson follows norms by asking whether limits stay inside the space. In finite-dimensional Euclidean spaces that usually happens automatically, but functional analysis often works in spaces where missing limits are a real issue. Completeness is the condition that prevents a Cauchy approximation process from converging to something outside the allowed space. Hilbert spaces later add inner products to this same completeness requirement.</p>",
+    "symbols": [
+      {
+        "sym": "$(x_n)$",
+        "desc": "a sequence"
+      },
+      {
+        "sym": "$\\varepsilon$",
+        "desc": "a tolerance"
+      },
+      {
+        "sym": "$N$",
+        "desc": "the point after which all late terms are close"
+      },
+      {
+        "sym": "$\\|x_n-x_m\\|$",
+        "desc": "pairwise distance"
+      },
+      {
+        "sym": "Banach",
+        "desc": "complete normed space"
+      }
     ],
     "prereqs": [
       "math-05-03"
@@ -1102,8 +1302,8 @@
         "Pythagorean theorem"
       ]
     },
-    "motivation": "<p>You already know the dot product: $[1,2]\\cdot[3,4]=11$. It is not just multiplication; it tells whether two directions point together, against each other, or at right angles.</p><p>An <b>inner product</b> carries that alignment idea into abstract vector spaces. It gives geometry to vectors: angles, orthogonality, projection, and the norm $\\|x\\|=\\sqrt{\\langle x,x\\rangle}$.</p>",
-    "definition": "<p>An inner product on a real vector space $V$ assigns a number $\\langle x,y\\rangle$ to each pair of vectors. It is linear in one slot, symmetric $\\langle x,y\\rangle=\\langle y,x\\rangle$, and positive definite: $\\langle x,x\\rangle\\ge0$ with equality only when $x=0$.</p><p>The induced norm comes from self-alignment: $$\\|x\\|=\\sqrt{\\langle x,x\\rangle}.$$ Orthogonality means $\\langle x,y\\rangle=0$. In $\\mathbb{R}^n$, the standard inner product is $\\langle x,y\\rangle=\\sum_i x_i y_i$.</p><p><b>Assumptions that matter:</b> complex spaces use conjugate symmetry instead of ordinary symmetry; positive definiteness is what prevents nonzero vectors from having zero length; and not every norm comes from an inner product.</p>",
+    "motivation": "<p>An inner product records how much two vectors point in the same direction. When the two vectors are the same, that self-alignment gives squared length. When the value is zero, the vectors are orthogonal, which is the geometry behind residual checks, Fourier coefficients, and least-squares normal equations.</p><p>The Cauchy-Schwarz inequality is the central safety bound for this geometry. It says that alignment cannot exceed the product of the two lengths, so an inner product measurement is controlled by the norms of its inputs. The derivation subtracts the best multiple of one vector from another and uses nonnegativity of squared length, which is the same projection idea that later becomes a full theorem in Hilbert spaces.</p>",
+    "definition": "<p>An <b>inner product</b> is a positive-definite bilinear measurement of alignment; it induces the norm $\\|x\\|=\\sqrt{\\langle x,x\\rangle}$ and obeys Cauchy-Schwarz.</p><p>$$|\\langle x,y\\rangle|\\le\\|x\\|\\|y\\|.$$</p><p><b>Assumptions that matter:</b> the real-case derivation uses bilinearity and positive definiteness; in complex spaces conjugates are handled by the complex inner-product convention.</p>",
     "worked": {
       "problem": "For $x=(1,2,2)$ and $y=(2,0,1)$, compute $\\langle x,y\\rangle$, $\\|x\\|$, and decide whether the vectors are orthogonal.",
       "skills": [
@@ -1313,33 +1513,33 @@
     "applications": [
       {
         "title": "Cosine similarity",
-        "background": "Search and recommendation systems compare embeddings by the angle between them.",
-        "numbers": "$[1,1]\\cdot[2,0]=2$ and norms are $\\sqrt2$ and $2$, so similarity is $0.707$."
+        "background": "Cosine similarity normalizes an inner product by lengths.",
+        "numbers": "$[1,1]\\cdot[2,0]=2$ and norms $\\sqrt2,2$ give $0.707$."
       },
       {
-        "title": "Least squares geometry",
-        "background": "Residuals at the best fit are orthogonal to the model's feature directions.",
-        "numbers": "If residual $r=[1,-1]$ and feature $x=[1,1]$, then $\\langle r,x\\rangle=0$."
+        "title": "Least-squares residual",
+        "background": "A fitted residual is checked by orthogonality.",
+        "numbers": "$[1,-1]\\cdot[1,1]=0$."
       },
       {
         "title": "Signal energy",
-        "background": "Signal processing uses inner products to measure energy and correlation.",
-        "numbers": "For samples $s=[2,-1,2]$, energy is $\\langle s,s\\rangle=9$."
+        "background": "A signal's self inner product is its squared energy.",
+        "numbers": "$[2,-1,2]$ has $\\langle s,s\\rangle=9$."
       },
       {
-        "title": "Attention scores",
-        "background": "Transformer attention begins by comparing query and key vectors with dot products.",
-        "numbers": "Query $[1,2]$ and key $[3,1]$ give score $1\\cdot3+2\\cdot1=5$."
+        "title": "Attention score",
+        "background": "Attention logits use dot-product alignment.",
+        "numbers": "$[1,2]\\cdot[3,1]=5$."
       },
       {
-        "title": "Kernel methods",
-        "background": "Many kernels behave like inner products in hidden feature spaces.",
-        "numbers": "The linear kernel gives $K([1,2],[3,4])=11$."
+        "title": "Linear kernel",
+        "background": "The linear kernel is the ordinary inner product.",
+        "numbers": "$K([1,2],[3,4])=11$."
       },
       {
-        "title": "Fourier coefficients",
-        "background": "Orthogonal basis functions let signals be decomposed by inner products.",
-        "numbers": "If a unit basis vector $e$ has $\\langle f,e\\rangle=2.5$, then the coefficient along $e$ is $2.5$."
+        "title": "Fourier coefficient",
+        "background": "A coefficient on a unit direction is an inner product.",
+        "numbers": "if unit $e$ has $\\langle f,e\\rangle=2.5$, the coefficient is $2.5$."
       }
     ],
     "applicationsClose": "Inner products reveal alignment, and alignment is the hidden geometry behind similarity, projection, energy, and decomposition.",
@@ -1347,6 +1547,67 @@
       "An inner product is a positive, symmetric, linear pairing of vectors.",
       "It induces the norm $\\|x\\|=\\sqrt{\\langle x,x\\rangle}$.",
       "Orthogonality means inner product zero, not necessarily visual perpendicularity on a page."
+    ],
+    "connectionsProse": "<p>Norms measure size, and inner products add geometry. This lesson explains how alignment, angle, orthogonality, energy, and projection all come from one bilinear measurement. The Hilbert-space model entry then combines this geometry with completeness. Orthonormal bases, projections, best approximation, Riesz representation, and RKHS evaluation all use the inner product as their basic measuring device.</p>",
+    "symbols": [
+      {
+        "sym": "$\\langle x,y\\rangle$",
+        "desc": "the inner product"
+      },
+      {
+        "sym": "$\\|x\\|=\\sqrt{\\langle x,x\\rangle}$",
+        "desc": "the induced norm"
+      },
+      {
+        "sym": "$a$",
+        "desc": "a projection coefficient"
+      },
+      {
+        "sym": "orthogonal",
+        "desc": "inner product $0$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Handle the zero case",
+        "result": "if $y=0$, then $|\\langle x,y\\rangle|=0$",
+        "why": "the inequality is done"
+      },
+      {
+        "do": "Define the projection coefficient",
+        "result": "$a=\\langle x,y\\rangle/\\langle y,y\\rangle$",
+        "why": "this is the coefficient of $x$ along $y$ when $y\\ne0$"
+      },
+      {
+        "do": "Subtract the parallel part",
+        "result": "$x-ay$",
+        "why": "this removes the component along $y$"
+      },
+      {
+        "do": "Use positivity",
+        "result": "$0\\le\\langle x-ay,x-ay\\rangle$",
+        "why": "squared length is nonnegative"
+      },
+      {
+        "do": "Expand in the real case",
+        "result": "$\\|x\\|^2-2a\\langle x,y\\rangle+a^2\\|y\\|^2$",
+        "why": "bilinearity distributes the inner product"
+      },
+      {
+        "do": "Substitute $a$",
+        "result": "$0\\le\\|x\\|^2-\\langle x,y\\rangle^2/\\|y\\|^2$",
+        "why": "the projection coefficient simplifies the quadratic"
+      },
+      {
+        "do": "Rearrange",
+        "result": "$\\langle x,y\\rangle^2\\le\\|x\\|^2\\|y\\|^2$",
+        "why": "move the second term to the other side"
+      },
+      {
+        "do": "Take square roots",
+        "result": "$|\\langle x,y\\rangle|\\le\\|x\\|\\|y\\|$",
+        "why": "both sides are nonnegative"
+      }
     ],
     "prereqs": [
       "math-05-04"
@@ -1375,8 +1636,8 @@
         "projection theorem"
       ]
     },
-    "motivation": "<p>Inner products give geometry. Completeness gives trustworthy limits. Functional analysis becomes especially powerful when a space has both.</p><p>A <b>Hilbert space</b> is where infinite-dimensional geometry behaves as much as possible like Euclidean geometry. You can talk about right angles, lengths, projections, and convergent approximation sequences in one place.</p>",
-    "definition": "<p>A <b>Hilbert space</b> is an inner-product space that is complete under the norm $\\|x\\|=\\sqrt{\\langle x,x\\rangle}$. Completeness means every Cauchy sequence measured by that norm converges to an element of the space.</p><p>Every finite-dimensional Euclidean space $\\mathbb{R}^n$ is Hilbert. Infinite-dimensional examples include $\\ell^2$, the space of square-summable sequences, and $L^2$ spaces of square-integrable functions. In each case, squared size must add up to something finite.</p><p><b>Assumptions that matter:</b> the norm must come from the inner product; completeness is part of the definition; and some natural inner-product spaces, such as polynomials with an $L^2$ inner product, are not complete until their limits are included.</p>",
+    "motivation": "<p>In ordinary Euclidean space, a vector has a length, two vectors can be perpendicular, and a Cauchy sequence of vectors has a limit in the same space. Those facts are so familiar that it is easy to forget how much they support: least squares has a closest fitted vector, Fourier coefficients have a squared-energy sum, and an optimizer can measure whether updates are getting small.</p><p>A Hilbert space keeps exactly that structure in a larger setting. The inner product gives the geometry, and the induced norm $\\|x\\|=\\sqrt{\\langle x,x\\rangle}$ measures convergence. Completeness then says that if a sequence of vectors becomes internally consistent under that norm, its limit is still a valid vector in the space. That last condition is essential in infinite dimensions, where a sequence of polynomials, signals, or basis expansions can approach a limit that is not present unless the space has been completed.</p><p>The model example is $\\ell^2$, the space of infinite sequences whose squared entries add to a finite number. A sequence such as $(1,1/2,1/4,\\ldots)$ is a genuine Hilbert-space vector because its squared entries form a convergent geometric series. That single example previews the rest of the section: infinite objects can be treated geometrically when their energy is finite and their limits remain inside the space.</p>",
+    "definition": "<p>A <b>Hilbert space</b> is an inner-product space that is complete under the norm induced by that inner product.</p><p>$$H\\text{ is Hilbert} \\quad\\Longleftrightarrow\\quad H\\text{ is an inner-product space complete under }\\|x\\|=\\sqrt{\\langle x,x\\rangle}.$$</p><p><b>Assumptions that matter:</b> the inner product is fixed, convergence is measured by its induced norm, and every Cauchy sequence in that norm must converge to an element of $H$.</p>",
     "worked": {
       "problem": "Show that $x=(1,1/2,1/4,1/8,\\ldots)$ belongs to $\\ell^2$ and compute its $\\ell^2$ norm.",
       "skills": [
@@ -1580,34 +1841,34 @@
     ],
     "applications": [
       {
-        "title": "Signal energy",
-        "background": "Hilbert spaces formalize finite-energy signals, a core idea in communications and audio.",
-        "numbers": "Samples $[1,2,2]$ have energy $1^2+2^2+2^2=9$ and norm $3$."
+        "title": "Finite-energy signals",
+        "background": "A finite signal vector has Hilbert norm equal to the square root of its energy.",
+        "numbers": "Samples $(1,2,2)$ have energy $1^2+2^2+2^2=9$ and Hilbert norm $3$."
       },
       {
-        "title": "Fourier analysis",
-        "background": "Square-integrable functions form the natural home for Fourier series.",
-        "numbers": "Coefficients $1,1/2,1/4,\\ldots$ have squared energy $4/3$."
+        "title": "Fourier coefficients",
+        "background": "Square-summable coefficients form an $\\ell^2$ vector.",
+        "numbers": "Coefficients $(1,1/2,1/4,\\ldots)$ have squared energy $4/3$ and norm $1.1547$."
       },
       {
-        "title": "Kernel methods",
-        "background": "Reproducing-kernel Hilbert spaces let algorithms act linearly in high-dimensional feature spaces.",
-        "numbers": "If feature vectors have inner product $K(x,z)=0.8$ and norms $1$, their cosine similarity is $0.8$."
+        "title": "Kernel feature vectors",
+        "background": "Kernel values determine Hilbert-space cosines between hidden features.",
+        "numbers": "If hidden features have $k(a,a)=4$, $k(b,b)=9$, and $k(a,b)=3$, their Hilbert cosine is $3/(2\\cdot3)=0.5$."
       },
       {
-        "title": "Quantum states",
-        "background": "Quantum mechanics models states as unit vectors in Hilbert space.",
+        "title": "Quantum-style unit states",
+        "background": "A unit state has total squared amplitude one.",
         "numbers": "Amplitudes $(1/\\sqrt2,1/\\sqrt2)$ have squared norm $1/2+1/2=1$."
       },
       {
-        "title": "Least-squares approximation",
-        "background": "Hilbert geometry guarantees closest points in closed subspaces.",
-        "numbers": "Approximating $[3,4]$ by the $x$-axis gives $[3,0]$ with error norm $4$."
+        "title": "Least-squares geometry",
+        "background": "Projection geometry measures residual length in a Hilbert norm.",
+        "numbers": "Projecting $(3,4)$ onto the $x$-axis gives $(3,0)$ and residual norm $4$."
       },
       {
         "title": "Embedding normalization",
-        "background": "Many retrieval systems normalize vectors so they lie on a unit sphere in Euclidean Hilbert space.",
-        "numbers": "Vector $[3,4]$ normalizes to $[0.6,0.8]$ with norm $1$."
+        "background": "Embeddings can be scaled to unit Hilbert norm.",
+        "numbers": "Vector $(3,4)$ becomes $(0.6,0.8)$ after division by its Hilbert norm $5$."
       }
     ],
     "applicationsClose": "Hilbert spaces are where infinite-dimensional approximation keeps the geometric comfort of dot products and right angles.",
@@ -1615,6 +1876,75 @@
       "A Hilbert space is a complete inner-product space.",
       "The norm in a Hilbert space comes from $\\|x\\|=\\sqrt{\\langle x,x\\rangle}$.",
       "$\\ell^2$ and $L^2$ are central infinite-dimensional examples."
+    ],
+    "connectionsProse": "<p>This lesson joins two ideas that have already been introduced separately. A norm tells us when vectors are close and when a sequence of approximations is settling down. An inner product gives geometry: lengths, angles, orthogonality, and projections. A Hilbert space is the setting where both structures work together and where limits of Cauchy sequences stay inside the space.</p><p>This matters because functional analysis often studies vectors that are not short coordinate lists. They may be signals, square-integrable functions, infinite coefficient sequences, or kernel sections. Hilbert spaces let those objects keep the familiar geometry of Euclidean space while allowing infinitely many coordinates. The next lessons on orthonormal bases, projections, best approximation, Riesz representation, and RKHS all rely on this combination of geometry and completeness.</p>",
+    "symbols": [
+      {
+        "sym": "$H$",
+        "desc": "the Hilbert space"
+      },
+      {
+        "sym": "$x$",
+        "desc": "a vector, function, or sequence in it"
+      },
+      {
+        "sym": "$\\langle x,y\\rangle$",
+        "desc": "the inner product"
+      },
+      {
+        "sym": "$\\|x\\|$",
+        "desc": "the norm induced by that inner product"
+      },
+      {
+        "sym": "$\\ell^2$",
+        "desc": "the space of square-summable sequences"
+      },
+      {
+        "sym": "completeness",
+        "desc": "every Cauchy sequence in this norm converges to an element of $H$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the sequence",
+        "result": "$x=(1,1/2,1/4,1/8,\\ldots)$",
+        "why": "$\\ell^2$ membership is tested by the squared entries"
+      },
+      {
+        "do": "Square each entry",
+        "result": "$1,1/4,1/16,1/64,\\ldots$",
+        "why": "$\\|x\\|_2^2=\\sum_k |x_k|^2$"
+      },
+      {
+        "do": "Recognize the ratio",
+        "result": "$r=1/4$",
+        "why": "each squared term is one fourth of the previous one"
+      },
+      {
+        "do": "Use the geometric-series formula",
+        "result": "$\\sum_{k=0}^\\infty r^k=1/(1-r)$",
+        "why": "$|r|<1$"
+      },
+      {
+        "do": "Substitute the ratio",
+        "result": "$\\sum_{k=0}^\\infty (1/4)^k=1/(1-1/4)$",
+        "why": "this is the exact squared norm"
+      },
+      {
+        "do": "Simplify",
+        "result": "$1/(1-1/4)=1/(3/4)=4/3$",
+        "why": "subtracting the denominator gives the finite energy"
+      },
+      {
+        "do": "Take the square root",
+        "result": "$\\|x\\|_2=\\sqrt{4/3}=2/\\sqrt3\\approx1.1547$",
+        "why": "norm is the square root of squared norm"
+      },
+      {
+        "do": "Conclude membership",
+        "result": "$x\\in\\ell^2$",
+        "why": "the squared sum is finite"
+      }
     ],
     "prereqs": [
       "math-05-05"
@@ -1643,8 +1973,8 @@
         "orthogonality"
       ]
     },
-    "motivation": "<p>Coordinates are easiest when the axes are perpendicular and each axis has length $1$. Then the coefficient along an axis is just a dot product.</p><p>An <b>orthonormal basis</b> carries that clean coordinate system into Hilbert spaces. It lets vectors, functions, and signals be decomposed into independent pieces whose energies add simply.</p>",
-    "definition": "<p>A family $(e_k)$ in an inner-product space is <b>orthonormal</b> if $\\langle e_i,e_j\\rangle=0$ for $i\\ne j$ and $\\|e_k\\|=1$ for every $k$. It is an orthonormal basis when its closed span is the whole space. In finite dimensions, every vector has the expansion $x=\\sum_k \\langle x,e_k\\rangle e_k$.</p><p>The coefficient formula comes from taking an inner product with $e_j$: if $x=\\sum_k c_k e_k$, then $\\langle x,e_j\\rangle=\\sum_k c_k\\langle e_k,e_j\\rangle=c_j$ because all cross terms vanish and $\\langle e_j,e_j\\rangle=1$.</p><p><b>Assumptions that matter:</b> orthonormal means both orthogonal and unit length; infinite bases may require limits of partial sums; and a merely orthogonal basis needs division by $\\|e_k\\|^2$ to compute coefficients.</p>",
+    "motivation": "<p>A general basis can represent vectors, but its coordinates may be hard to compute and its lengths may not decompose cleanly. An orthonormal basis removes those complications. Each coordinate is obtained by testing against the matching basis vector, and the perpendicularity of the other directions makes all cross terms vanish.</p><p>Parseval's identity is the energy statement that results. The squared norm of the vector becomes the sum of squared coefficients, just as in ordinary right-triangle geometry. In functional analysis this is the bridge from infinite objects to manageable coefficient sequences: the geometry of a signal or function can be studied through the energy of its orthonormal expansion.</p>",
+    "definition": "<p>An <b>orthonormal basis</b> is a spanning family of unit, mutually orthogonal vectors, so coordinates are inner products and squared norm is coefficient energy.</p><p>$$x=\\sum_k \\langle x,e_k\\rangle e_k,\\qquad \\|x\\|^2=\\sum_k |\\langle x,e_k\\rangle|^2.$$</p><p><b>Assumptions that matter:</b> the basis is orthonormal in the chosen inner product and spans the space under the relevant finite or Hilbert-space limit sense.</p>",
     "worked": {
       "problem": "For $e_1=(1/\\sqrt2,1/\\sqrt2)$ and $e_2=(1/\\sqrt2,-1/\\sqrt2)$, show they are orthonormal and find coordinates of $x=(3,1)$.",
       "skills": [
@@ -1849,33 +2179,33 @@
     "applications": [
       {
         "title": "Fourier features",
-        "background": "Fourier bases decompose signals into orthogonal waves.",
-        "numbers": "Coefficients $3$ and $4$ on unit waves give signal norm $5$."
+        "background": "Orthonormal Fourier coefficients add by squared energy.",
+        "numbers": "coefficients $3,4$ on unit waves give norm $5$."
       },
       {
         "title": "PCA coordinates",
-        "background": "Principal components are chosen orthonormally so coordinates are uncorrelated directions of variance.",
-        "numbers": "Data point coordinates $(2,-1)$ in two PCs have squared length $4+1=5$."
+        "background": "PCA coordinates in orthonormal components preserve Euclidean length.",
+        "numbers": "$(2,-1)$ has squared length $5$."
       },
       {
-        "title": "Embedding compression",
-        "background": "An orthonormal basis lets systems keep the largest coefficients and discard small ones cleanly.",
-        "numbers": "Keeping coefficients $5$ and $1$ while dropping $0.1$ loses energy $0.01$."
+        "title": "Compression",
+        "background": "Dropping an orthonormal coefficient loses its squared magnitude as energy.",
+        "numbers": "dropping coefficient $0.1$ loses energy $0.01$."
       },
       {
-        "title": "Wavelet transforms",
-        "background": "Wavelets use orthonormal localized basis functions for images and audio.",
-        "numbers": "Coefficients $[8,0,0,0]$ have energy $64$, concentrated in one component."
+        "title": "Wavelet transform",
+        "background": "An orthonormal wavelet transform preserves energy.",
+        "numbers": "$[8,0,0,0]$ has energy $64$."
       },
       {
-        "title": "QR factorization",
-        "background": "Numerical linear algebra builds orthonormal columns to solve least-squares problems stably.",
-        "numbers": "If $Q$ has orthonormal columns and $c=[3,4]$, then $\\|Qc\\|=5$."
+        "title": "QR",
+        "background": "Multiplication by an orthonormal-column matrix preserves coefficient norm.",
+        "numbers": "if $Q$ has orthonormal columns and $c=[3,4]$, then $\\|Qc\\|=5$."
       },
       {
-        "title": "Attention head analysis",
-        "background": "Orthogonal directions can separate independent semantic features in representation analysis.",
-        "numbers": "A vector $x=2e_1+0.5e_2$ has coefficient $2$ along feature direction $e_1$."
+        "title": "Feature analysis",
+        "background": "Inner products read off orthonormal feature coordinates.",
+        "numbers": "$x=2e_1+0.5e_2$ has coefficient $2$ along $e_1$."
       }
     ],
     "applicationsClose": "Orthonormal bases make decomposition honest: coefficients are independent, energies add, and reconstruction is transparent.",
@@ -1883,6 +2213,67 @@
       "Orthonormal means mutually orthogonal and each vector has norm $1$.",
       "In an orthonormal basis, coefficients are inner products $\\langle x,e_k\\rangle$.",
       "Parseval's identity says squared norm is the sum of squared orthonormal coefficients."
+    ],
+    "connectionsProse": "<p>After Hilbert spaces, this lesson introduces the cleanest coordinate systems available there. An orthonormal basis uses unit directions that are mutually perpendicular, so coefficients can be read by inner products. This connects the familiar coordinate picture from Euclidean space to Fourier, wavelet, PCA, and feature expansions. Projection and best approximation become especially transparent once the allowed directions are orthonormal.</p>",
+    "symbols": [
+      {
+        "sym": "$e_k$",
+        "desc": "basis vectors"
+      },
+      {
+        "sym": "$c_k$",
+        "desc": "coordinates"
+      },
+      {
+        "sym": "orthonormal",
+        "desc": "$\\langle e_i,e_j\\rangle=\\delta_{ij}$"
+      },
+      {
+        "sym": "Parseval",
+        "desc": "the squared-energy identity"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the expansion",
+        "result": "$x=\\sum_k c_ke_k$",
+        "why": "the orthonormal basis spans the space"
+      },
+      {
+        "do": "Take inner product with $e_j$",
+        "result": "$\\langle x,e_j\\rangle=\\langle\\sum_k c_ke_k,e_j\\rangle$",
+        "why": "this tests the $j$th direction"
+      },
+      {
+        "do": "Move the sum out",
+        "result": "$\\sum_k c_k\\langle e_k,e_j\\rangle$",
+        "why": "the inner product is linear"
+      },
+      {
+        "do": "Use orthonormality",
+        "result": "$\\langle e_k,e_j\\rangle=0$ for $k\\ne j$ and $1$ for $k=j$",
+        "why": "orthonormal directions are perpendicular and unit length"
+      },
+      {
+        "do": "Read the coefficient",
+        "result": "$\\langle x,e_j\\rangle=c_j$",
+        "why": "only one term remains"
+      },
+      {
+        "do": "Compute squared norm",
+        "result": "$\\|x\\|^2=\\langle\\sum_i c_ie_i,\\sum_j c_je_j\\rangle$",
+        "why": "norm comes from the inner product"
+      },
+      {
+        "do": "Remove cross terms",
+        "result": "cross terms vanish",
+        "why": "orthogonality kills all $i\\ne j$ terms"
+      },
+      {
+        "do": "Get Parseval",
+        "result": "$\\|x\\|^2=\\sum_k c_k^2$",
+        "why": "only squared coefficients remain"
+      }
     ],
     "prereqs": [
       "math-05-06"
@@ -1911,8 +2302,8 @@
         "normal equations"
       ]
     },
-    "motivation": "<p>If sunlight drops a shadow of a point onto the floor, the shadow is the closest floor point directly below it. Orthogonal projection is the same idea in vector geometry.</p><p>A <b>projection</b> onto a subspace keeps the part you can represent in that subspace and leaves an error perpendicular to everything in the subspace. This is the geometry behind least squares.</p>",
-    "definition": "<p>For a Hilbert space vector $x$ and a closed subspace $M$, the orthogonal projection $p=P_Mx$ is the vector in $M$ such that $x-p\\perp M$. If $M$ has an orthonormal basis $e_1,\\ldots,e_k$, then $$P_Mx=\\sum_{j=1}^k\\langle x,e_j\\rangle e_j.$$</p><p>The formula works because each coefficient captures exactly the component of $x$ along one unit direction in $M$, and orthogonality makes the remaining error invisible to every basis direction.</p><p><b>Assumptions that matter:</b> the subspace should be closed for existence in infinite dimensions; the simple coefficient formula assumes an orthonormal basis; and projection is linear, idempotent $P^2=P$, and distance-decreasing.</p>",
+    "motivation": "<p>A projection separates a vector into an allowed component and an error component. The allowed component lies in the chosen subspace, while the residual contains everything that the subspace cannot express. When the subspace has an orthonormal basis, the projection is built by taking each inner-product coefficient and adding the corresponding basis direction.</p><p>The important point is not only that the formula produces a vector in the subspace. It also makes the residual orthogonal to every direction in that subspace. Because of Pythagoras, any other candidate in the subspace adds extra squared distance, so the projection is the closest allowed vector.</p>",
+    "definition": "<p>The <b>orthogonal projection</b> $P_Mx$ of $x$ onto a closed subspace $M$ is the vector $p\\in M$ such that the residual $x-p$ is orthogonal to $M$.</p><p>$$P_Mx=\\sum_j\\langle x,e_j\\rangle e_j.$$</p><p><b>Assumptions that matter:</b> $M$ is closed, the listed $e_j$ form an orthonormal basis for $M$, and the inner product determines orthogonality.</p>",
     "worked": {
       "problem": "Project $x=(3,4)$ onto the line spanned by $u=(1,0)$.",
       "skills": [
@@ -2116,34 +2507,34 @@
     ],
     "applications": [
       {
-        "title": "Least-squares regression",
-        "background": "Linear regression projects labels onto the column space of the design matrix.",
-        "numbers": "Projecting $y=[1,2,2]$ onto constants gives prediction $[5/3,5/3,5/3]$."
+        "title": "Regression on constants",
+        "background": "Projecting data onto constants gives the mean vector.",
+        "numbers": "$[1,2,2]$ projects to $[5/3,5/3,5/3]$."
       },
       {
-        "title": "PCA reconstruction",
-        "background": "PCA keeps the projection onto top principal directions.",
-        "numbers": "If coefficients are $5,2,0.1$, keeping the first two leaves squared error $0.01$."
+        "title": "PCA",
+        "background": "Projection keeps selected principal coefficients and drops the rest.",
+        "numbers": "keeping coefficients $5,2$ and dropping $0.1$ leaves squared error $0.01$."
       },
       {
-        "title": "Residual diagnostics",
-        "background": "At a least-squares solution, the residual is orthogonal to all fitted features.",
-        "numbers": "Residual $[1,-1]$ and feature $[1,1]$ have dot product $0$."
+        "title": "Residual check",
+        "background": "A projection residual is orthogonal to retained directions.",
+        "numbers": "$[1,-1]\\cdot[1,1]=0$."
       },
       {
         "title": "Denoising",
-        "background": "Signal processing projects noisy data onto a subspace of trusted signal patterns.",
-        "numbers": "Signal $3e_1+0.2e_2$ projected onto span$(e_1)$ becomes $3e_1$, dropping noise energy $0.04$."
+        "background": "Projection can keep a signal component and drop a noise component.",
+        "numbers": "$3e_1+0.2e_2$ projects to $3e_1$ and drops energy $0.04$."
       },
       {
-        "title": "Embedding debiasing",
-        "background": "Some representation methods remove a direction by subtracting its projection.",
-        "numbers": "For $x=[3,4]$ and direction $u=[1,0]$, removing projection leaves $[0,4]$."
+        "title": "Debiasing",
+        "background": "Subtracting a projection removes a selected direction.",
+        "numbers": "$[3,4]$ minus projection onto $[1,0]$ leaves $[0,4]$."
       },
       {
-        "title": "Computer graphics shadows",
-        "background": "A shadow on a plane is a geometric projection of a point onto a lower-dimensional surface.",
-        "numbers": "Point $(2,3,5)$ projected onto the $xy$-plane becomes $(2,3,0)$."
+        "title": "Shadow",
+        "background": "A coordinate-plane shadow is an orthogonal projection.",
+        "numbers": "$(2,3,5)$ projected onto the $xy$-plane is $(2,3,0)$."
       }
     ],
     "applicationsClose": "Projection separates what a subspace can explain from the perpendicular error it cannot.",
@@ -2151,6 +2542,67 @@
       "The orthogonal projection $p$ lies in the subspace and has residual $x-p$ perpendicular to it.",
       "With an orthonormal basis, projection keeps coefficients $\\langle x,e_j\\rangle$ along the basis directions.",
       "Projection is the geometric heart of least squares and low-dimensional approximation."
+    ],
+    "connectionsProse": "<p>This lesson uses orthonormal coordinates to formalize the idea of keeping the part of a vector that lies in a chosen subspace. Projection is already familiar from shadows and least squares, and Hilbert spaces make it an exact geometric operation. The residual left after projection is perpendicular to the subspace. That orthogonality is the engine behind best approximation, regression normal equations, PCA truncation, and denoising.</p>",
+    "symbols": [
+      {
+        "sym": "$P_Mx=p$",
+        "desc": "the projection"
+      },
+      {
+        "sym": "$M$",
+        "desc": "a closed subspace"
+      },
+      {
+        "sym": "$e_j$",
+        "desc": "orthonormal directions"
+      },
+      {
+        "sym": "$x-p$",
+        "desc": "residual error"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Choose an orthonormal basis",
+        "result": "$e_1,\\ldots,e_k$ for $M$",
+        "why": "coefficients are inner products"
+      },
+      {
+        "do": "Define the projection",
+        "result": "$p=\\sum_j\\langle x,e_j\\rangle e_j$",
+        "why": "this keeps each basis component inside $M$"
+      },
+      {
+        "do": "Test the residual",
+        "result": "$\\langle x-p,e_i\\rangle=\\langle x,e_i\\rangle-\\sum_j\\langle x,e_j\\rangle\\langle e_j,e_i\\rangle$",
+        "why": "subtract the projected component and use linearity"
+      },
+      {
+        "do": "Use orthonormality",
+        "result": "the sum equals $\\langle x,e_i\\rangle$",
+        "why": "only the $j=i$ term survives"
+      },
+      {
+        "do": "Conclude orthogonality",
+        "result": "$\\langle x-p,e_i\\rangle=0$ for every basis vector",
+        "why": "so $x-p\\perp M$"
+      },
+      {
+        "do": "Compare any other $m\\in M$",
+        "result": "$x-m=(x-p)+(p-m)$",
+        "why": "split the error into residual plus in-subspace difference"
+      },
+      {
+        "do": "Identify orthogonal terms",
+        "result": "$x-p\\perp(p-m)$",
+        "why": "$p-m\\in M$"
+      },
+      {
+        "do": "Apply Pythagoras",
+        "result": "$\\|x-m\\|^2=\\|x-p\\|^2+\\|p-m\\|^2\\ge\\|x-p\\|^2$",
+        "why": "extra in-subspace movement can only add squared distance"
+      }
     ],
     "prereqs": [
       "math-05-07"
@@ -2179,8 +2631,8 @@
         "convex sets"
       ]
     },
-    "motivation": "<p>Approximation is honest math for limited resources. You may not be able to store a whole signal, fit every data point, or keep every basis direction.</p><p>The best approximation principle says: in a Hilbert space, the closest point in a closed subspace is the orthogonal projection. The error is not random; it is perpendicular to everything the approximation was allowed to use.</p>",
-    "definition": "<p>Given a Hilbert space $H$, a closed subspace $M$, and a vector $x\\in H$, a <b>best approximation</b> is a point $m^\\ast\\in M$ minimizing $\\|x-m\\|$ over $m\\in M$. The projection theorem says $m^\\ast=P_Mx$, and it is characterized by $$x-m^\\ast\\perp M.$$</p><p>Why orthogonality is necessary: if the error had a component along some direction in $M$, moving a little in that direction would reduce the error. At the minimum, no allowed direction can reduce it, so every allowed direction is orthogonal to the residual.</p><p><b>Assumptions that matter:</b> closedness of the subspace gives existence; Hilbert geometry gives the orthogonal characterization; and for non-subspace or non-closed sets, closest points may require extra conditions.</p>",
+    "motivation": "<p>Best approximation starts from a practical limitation: the target vector may not lie in the model space. The goal is then to choose the allowed vector with the smallest error norm. In a Hilbert space, the decisive condition is geometric rather than mysterious: at the closest point, the residual must be orthogonal to every direction in which the model can move.</p><p>For a one-parameter model, this condition becomes the familiar least-squares normal equation. Expanding the squared error gives a quadratic in the coefficient, and differentiating identifies the minimum. Rewriting the result as an orthogonality statement shows the deeper pattern that survives beyond one-dimensional regression.</p>",
+    "definition": "<p>A <b>best approximation</b> to $y$ from a model subspace is the allowed vector $m^*$ minimizing $\\|y-m\\|$; in a Hilbert space its residual is orthogonal to the model space.</p><p>$$a=\\frac{\\langle y,x\\rangle}{\\langle x,x\\rangle},\\qquad \\langle y-ax,x\\rangle=0.$$</p><p><b>Assumptions that matter:</b> the model direction $x$ is nonzero, squared norm is minimized, and the Hilbert inner product defines orthogonality.</p>",
     "worked": {
       "problem": "Find the best constant approximation to data $y=(2,4,7)$ in Euclidean norm.",
       "skills": [
@@ -2394,34 +2846,34 @@
     ],
     "applications": [
       {
-        "title": "Linear regression",
-        "background": "Least squares chooses predictions closest to labels in Euclidean norm.",
-        "numbers": "For through-origin fit to $(1,2),(2,3)$, the slope is $8/5=1.6$."
+        "title": "Through-origin line",
+        "background": "Least squares through the origin fits one slope coefficient.",
+        "numbers": "points $(1,2),(2,3)$ give slope $(2\\cdot1+3\\cdot2)/(1^2+2^2)=8/5=1.6$."
       },
       {
         "title": "PCA compression",
-        "background": "PCA gives the best low-dimensional reconstruction under squared error among linear subspaces.",
-        "numbers": "Dropping coefficient $0.1$ loses squared error $0.01$."
+        "background": "The best orthogonal approximation drops small coefficients.",
+        "numbers": "dropping coefficient $0.1$ loses squared error $0.01$."
       },
       {
         "title": "Fourier truncation",
-        "background": "Keeping the largest Fourier modes is an orthogonal best approximation among chosen frequencies.",
-        "numbers": "Dropping coefficients $0.3$ and $0.4$ gives error norm $0.5$."
+        "background": "Discarded orthonormal coefficients determine truncation error.",
+        "numbers": "dropping $0.3,0.4$ gives error norm $0.5$."
       },
       {
-        "title": "Averaging as approximation",
-        "background": "The mean is the best constant predictor under squared loss.",
-        "numbers": "Data $2,4,7$ have best constant $13/3\\approx4.333$."
+        "title": "Best constant",
+        "background": "The best constant approximation is the mean.",
+        "numbers": "data $2,4,7$ have mean $13/3\\approx4.333$."
       },
       {
-        "title": "Denoising autoencoders",
-        "background": "A model bottleneck approximates data inside a lower-dimensional representational family.",
-        "numbers": "If reconstruction error vector is $[0.1,-0.2]$, squared error is $0.05$."
+        "title": "Autoencoder residual",
+        "background": "Reconstruction quality is measured by residual squared norm.",
+        "numbers": "$[0.1,-0.2]$ has squared error $0.05$."
       },
       {
-        "title": "Model distillation",
-        "background": "A smaller model tries to approximate a larger model's outputs as closely as its class allows.",
-        "numbers": "Predictions $[0.7,0.2]$ versus targets $[0.8,0.1]$ have error norm $\\sqrt{0.02}\\approx0.141$."
+        "title": "Distillation",
+        "background": "A student-teacher probability mismatch is a vector residual.",
+        "numbers": "$[0.7,0.2]-[0.8,0.1]=[-0.1,0.1]$ has norm $\\sqrt{0.02}\\approx0.141$."
       }
     ],
     "applicationsClose": "Best approximation says that limited models do their best when the remaining error points in no allowed direction.",
@@ -2429,6 +2881,71 @@
       "In a Hilbert space, the closest point in a closed subspace is the orthogonal projection.",
       "The residual of the best approximation is orthogonal to every allowed direction.",
       "Least squares, PCA, averaging, and Fourier truncation are all best-approximation stories."
+    ],
+    "connectionsProse": "<p>Projection leads naturally to best approximation. Instead of representing a target exactly, this lesson studies the closest vector allowed by a model space. In Euclidean regression this is least squares; in Hilbert spaces it is the projection theorem in action. Later Riesz, RKHS, and representer-theorem arguments use the same split between visible model directions and orthogonal residuals.</p>",
+    "symbols": [
+      {
+        "sym": "$y$",
+        "desc": "the target vector"
+      },
+      {
+        "sym": "$x$",
+        "desc": "a feature direction"
+      },
+      {
+        "sym": "$a$",
+        "desc": "the fitted coefficient"
+      },
+      {
+        "sym": "$m^*$",
+        "desc": "the closest point"
+      },
+      {
+        "sym": "residual",
+        "desc": "$y-m^*$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Choose the model form",
+        "result": "$ax$",
+        "why": "the model space is span$(x)$"
+      },
+      {
+        "do": "Define the error objective",
+        "result": "$E(a)=\\|y-ax\\|^2$",
+        "why": "squared distance gives the same minimizer"
+      },
+      {
+        "do": "Expand as an inner product",
+        "result": "$E(a)=\\langle y-ax,y-ax\\rangle$",
+        "why": "Hilbert norm comes from the inner product"
+      },
+      {
+        "do": "Distribute",
+        "result": "$\\|y\\|^2-2a\\langle y,x\\rangle+a^2\\|x\\|^2$",
+        "why": "bilinearity expands the quadratic"
+      },
+      {
+        "do": "Differentiate",
+        "result": "$E'(a)=-2\\langle y,x\\rangle+2a\\|x\\|^2$",
+        "why": "this is a quadratic in $a$"
+      },
+      {
+        "do": "Set the derivative to zero",
+        "result": "$E'(a)=0$",
+        "why": "a quadratic minimum has zero derivative"
+      },
+      {
+        "do": "Solve for the coefficient",
+        "result": "$a=\\langle y,x\\rangle/\\langle x,x\\rangle$",
+        "why": "$x$ is nonzero"
+      },
+      {
+        "do": "Rewrite as orthogonality",
+        "result": "$\\langle y-ax,x\\rangle=0$",
+        "why": "the residual is orthogonal to the feature direction"
+      }
     ],
     "prereqs": [
       "math-05-08"
@@ -2457,8 +2974,8 @@
         "adjoints"
       ]
     },
-    "motivation": "<p>A linear measurement turns a vector into a number: sum its coordinates, sample a feature score, or compute a weighted average. In Euclidean space, every such measurement is a dot product with some weight vector.</p><p>The <b>Riesz representation theorem</b> says the same beautiful fact holds in every Hilbert space, as long as the measurement is continuous. Linear functionals are not mysterious; they are inner products with representing vectors.</p>",
-    "definition": "<p>For a real Hilbert space $H$, every bounded linear functional $F:H\\to\\mathbb{R}$ has a unique vector $y\\in H$ such that $$F(x)=\\langle x,y\\rangle\\quad\\text{for all }x\\in H.$$ Also $\\|F\\|=\\|y\\|$.</p><p>Uniqueness comes from geometry: if $\\langle x,y_1\\rangle=\\langle x,y_2\\rangle$ for all $x$, then $\\langle x,y_1-y_2\\rangle=0$ for all $x$. Taking $x=y_1-y_2$ forces $\\|y_1-y_2\\|^2=0$, so the vectors are equal.</p><p><b>Assumptions that matter:</b> the space must be Hilbert, not just normed; the functional must be bounded, equivalently continuous; and complex Hilbert spaces require a convention about which inner-product slot is linear.</p>",
+    "motivation": "<p>A linear functional takes a vector and returns one number. In finite-dimensional Euclidean space, such a measurement is usually written as a dot product with a coefficient vector. Riesz representation says that the same idea holds in every Hilbert space, provided the functional is continuous.</p><p>The theorem is powerful because it identifies the measurement with its representing vector. Uniqueness means there is only one vector that gives all the same readings, and the norm equality means the size of the functional is exactly the Hilbert norm of that vector. The derivation here focuses on those two structural facts once the representation exists.</p>",
+    "definition": "<p>The <b>Riesz representation theorem</b> says every bounded linear functional on a Hilbert space is uniquely represented by inner product with one vector.</p><p>$$F(x)=\\langle x,y\\rangle,\\qquad \\|F\\|=\\|y\\|.$$</p><p><b>Assumptions that matter:</b> $H$ is a Hilbert space, $F$ is linear and bounded, and the inner-product convention is fixed.</p>",
     "worked": {
       "problem": "For $F(x_1,x_2,x_3)=2x_1-x_2+4x_3$ on $\\mathbb{R}^3$, find the Riesz representing vector and $\\|F\\|$.",
       "skills": [
@@ -2662,34 +3179,34 @@
     ],
     "applications": [
       {
-        "title": "Gradients as representing vectors",
-        "background": "In Euclidean optimization, the derivative as a linear functional is represented by the gradient vector.",
-        "numbers": "If $Df(w)[h]=2h_1-3h_2$, then $\\nabla f(w)=(2,-3)$."
+        "title": "Gradient",
+        "background": "A derivative functional is represented by a gradient vector.",
+        "numbers": "if $Df(w)[h]=2h_1-3h_2$, then $\\nabla f(w)=(2,-3)$."
       },
       {
-        "title": "Attention scoring",
-        "background": "A fixed query defines a linear score on keys by inner product.",
-        "numbers": "Query $q=[2,-1]$ gives functional $F(k)=2k_1-k_2$ with representing vector $q$."
+        "title": "Attention query",
+        "background": "A query vector represents a linear key-scoring functional.",
+        "numbers": "$q=[2,-1]$ represents $F(k)=2k_1-k_2$."
       },
       {
-        "title": "Weighted averages",
-        "background": "A weighted integral is a linear measurement represented by its weight function in $L^2$.",
-        "numbers": "$F(f)=\\int_0^1 f(t)2t\\,dt$ has representing function $2t$ and norm $2/\\sqrt3$."
+        "title": "Weighted integral",
+        "background": "An $L^2$ weighted integral is represented by its weight function.",
+        "numbers": "$F(f)=\\int_0^1 f(t)2t\\,dt$ has representing function $2t$ with norm $2/\\sqrt3$."
       },
       {
-        "title": "Kernel evaluation",
-        "background": "Reproducing-kernel Hilbert spaces use Riesz to represent evaluation by a kernel section.",
-        "numbers": "If $f(x)=\\langle f,k_x\\rangle$ and $\\|k_x\\|=2$, then $|f(x)|\\le2\\|f\\|$."
+        "title": "RKHS evaluation",
+        "background": "Point evaluation is bounded by the norm of its kernel representer.",
+        "numbers": "if $\\|k_x\\|=2$, then $|f(x)|\\le2\\|f\\|$."
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "A linear sensitivity map has a vector whose norm is the worst-case amplification.",
-        "numbers": "Sensitivity $F(h)=3h_1+4h_2$ has norm $5$, so unit perturbations change output by at most $5$."
+        "title": "Sensitivity",
+        "background": "The norm of a linear measurement controls sensitivity.",
+        "numbers": "$F(h)=3h_1+4h_2$ has norm $5$."
       },
       {
-        "title": "Dual embeddings",
-        "background": "Linear probes in representation learning are functionals, represented by probe weight vectors.",
-        "numbers": "Probe weight $w=[1,2,2]$ has norm $3$, so $|w\\cdot x|\\le3\\|x\\|$."
+        "title": "Linear probe",
+        "background": "A probe vector bounds all normalized readings.",
+        "numbers": "$w=[1,2,2]$ has norm $3$, so $|w\\cdot x|\\le3\\|x\\|$."
       }
     ],
     "applicationsClose": "Riesz says continuous linear questions in Hilbert space always have a vector asking them.",
@@ -2697,6 +3214,67 @@
       "Every bounded linear functional on a Hilbert space is inner product with one unique vector.",
       "The functional norm equals the norm of its representing vector.",
       "Gradients, linear probes, weighted averages, and kernel evaluation all use this representation idea."
+    ],
+    "connectionsProse": "<p>This lesson turns inner products into a language for measurements. A continuous linear functional may look like an outside probe of a Hilbert space, but Riesz says it is represented by a vector inside the same space. That result links gradients, linear probes, evaluation maps, and dual norms to Hilbert geometry. The RKHS lessons later depend on applying this theorem to point evaluation.</p>",
+    "symbols": [
+      {
+        "sym": "$F$",
+        "desc": "a bounded linear functional"
+      },
+      {
+        "sym": "$y$",
+        "desc": "the representing vector"
+      },
+      {
+        "sym": "$H$",
+        "desc": "the Hilbert space"
+      },
+      {
+        "sym": "$\\|F\\|$",
+        "desc": "the dual/operator norm of the measurement"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume two representations",
+        "result": "$F(x)=\\langle x,y_1\\rangle=\\langle x,y_2\\rangle$ for all $x$",
+        "why": "two vectors represent the same functional"
+      },
+      {
+        "do": "Subtract",
+        "result": "$\\langle x,y_1-y_2\\rangle=0$ for all $x$",
+        "why": "the readings agree"
+      },
+      {
+        "do": "Choose the difference as input",
+        "result": "$x=y_1-y_2$",
+        "why": "the statement holds for every vector"
+      },
+      {
+        "do": "Get zero norm",
+        "result": "$\\|y_1-y_2\\|^2=0$",
+        "why": "inner product of the difference with itself is zero"
+      },
+      {
+        "do": "Conclude uniqueness",
+        "result": "$y_1=y_2$",
+        "why": "positive definiteness"
+      },
+      {
+        "do": "Bound the functional",
+        "result": "$|F(x)|=|\\langle x,y\\rangle|\\le\\|x\\|\\|y\\|$",
+        "why": "Cauchy-Schwarz"
+      },
+      {
+        "do": "Test an aligned unit vector",
+        "result": "for $x=y/\\|y\\|$ when $y\\ne0$, $|F(x)|=\\|y\\|$",
+        "why": "the upper bound is attained on a unit vector"
+      },
+      {
+        "do": "Conclude norm equality",
+        "result": "$\\|F\\|=\\|y\\|$",
+        "why": "upper bound and attainment match"
+      }
     ],
     "prereqs": [
       "math-05-09"
@@ -2725,8 +3303,8 @@
         "duality"
       ]
     },
-    "motivation": "<p>A linear map can rotate, scale, mix, smooth, or differentiate. But for analysis and ML, we often need to know whether small inputs stay controlled.</p><p>A <b>bounded linear operator</b> has one global stretch limit. That single number, the operator norm, turns vague stability into a precise inequality.</p>",
-    "definition": "<p>A linear operator $T:V\\to W$ between normed spaces is <b>bounded</b> if there exists $C\\ge0$ such that $$\\|Tx\\|_W\\le C\\|x\\|_V\\quad\\text{for all }x\\in V.$$ The smallest such $C$ is the <b>operator norm</b>, written $$\\|T\\|=\\sup_{\\|x\\|\\le1}\\|Tx\\|.$$</p><p>For linear maps, boundedness and continuity are equivalent. If $\\|Tx\\|\\le C\\|x\\|$, then nearby inputs have nearby outputs because $\\|Tx-Ty\\|=\\|T(x-y)\\|\\le C\\|x-y\\|$.</p><p><b>Assumptions that matter:</b> the norms on domain and codomain must be specified; all linear maps in finite-dimensional spaces are bounded; and in infinite-dimensional spaces some natural linear maps, such as differentiation on broad function spaces, can be unbounded.</p>",
+    "motivation": "<p>A linear map can be algebraically valid while still behaving badly with respect to a norm. Boundedness rules out uncontrolled stretching by requiring $\\|Tx\\|$ to be at most a fixed constant times $\\|x\\|$. That turns input error bounds into output error bounds immediately.</p><p>The key linear fact is that comparing two outputs is the same as applying the operator to the difference of the inputs. Once $Tx-Ty=T(x-y)$, the single stretch bound gives the epsilon-delta continuity proof. This is why bounded linear maps are the stable operators of functional analysis.</p>",
+    "definition": "<p>A <b>bounded linear operator</b> is a linear map $T:V\\to W$ whose output norm is controlled by a constant multiple of the input norm.</p><p>$$\\|Tx\\|_W\\le C\\|x\\|_V\\quad\\text{for all }x.$$</p><p><b>Assumptions that matter:</b> $T$ is linear, the domain and codomain norms are fixed, and a single constant $C$ must work for every input.</p>",
     "worked": {
       "problem": "For $T(x,y)=(2x,3y)$ on $\\mathbb{R}^2$ with the Euclidean norm, find $\\|T\\|$.",
       "skills": [
@@ -2930,34 +3508,34 @@
     ],
     "applications": [
       {
-        "title": "Neural-network Lipschitz bounds",
-        "background": "Bounding layer norms helps control how much inputs can affect outputs.",
-        "numbers": "Layer norms $2$, $1.5$, and $3$ give network bound at most $2\\cdot1.5\\cdot3=9$."
+        "title": "Network Lipschitz bound",
+        "background": "Layer stretch bounds multiply through a network.",
+        "numbers": "layer norms $2,1.5,3$ multiply to $9$."
       },
       {
         "title": "Gradient stability",
-        "background": "Backpropagation multiplies by linearized operators, so their norms influence exploding or vanishing gradients.",
-        "numbers": "Repeated norm $0.8$ over $10$ layers gives factor $0.8^{10}\\approx0.107$."
+        "background": "Repeated contraction shrinks perturbations geometrically.",
+        "numbers": "$0.8^{10}\\approx0.107$."
       },
       {
-        "title": "Convolution filters",
-        "background": "A fixed filter is a bounded linear operator on finite signals.",
-        "numbers": "A moving average of three values has weights $1/3,1/3,1/3$ and does not amplify constant input $[6,6,6]$, returning $6$."
+        "title": "Moving average",
+        "background": "A bounded averaging operator preserves constant signals.",
+        "numbers": "weights $1/3,1/3,1/3$ map constant $[6,6,6]$ to $6$."
       },
       {
-        "title": "Robustness certificates",
-        "background": "If a classifier's score map has a small operator norm, input perturbation effects are limited.",
-        "numbers": "With norm bound $4$, perturbation $0.01$ changes score by at most $0.04$."
+        "title": "Robustness",
+        "background": "A bounded operator turns input perturbation size into output-change size.",
+        "numbers": "norm $4$ and perturbation $0.01$ give score change at most $0.04$."
       },
       {
-        "title": "Numerical conditioning",
-        "background": "Matrix operator norms quantify how much data errors can be amplified.",
-        "numbers": "If $\\|A\\|=20$ and input error is $0.001$, output error is at most $0.02$."
+        "title": "Conditioning",
+        "background": "Operator bounds propagate numerical input error.",
+        "numbers": "$\\|A\\|=20$ and input error $0.001$ give output error at most $0.02$."
       },
       {
-        "title": "Regularizing linear layers",
-        "background": "Spectral normalization constrains the largest singular value, which is the Euclidean operator norm.",
-        "numbers": "If the largest singular value is clipped from $5$ to $1$, worst-case stretch drops by factor $5$."
+        "title": "Spectral normalization",
+        "background": "Clipping a largest singular value limits worst-case stretch.",
+        "numbers": "clipping largest singular value from $5$ to $1$ reduces worst stretch by factor $5$."
       }
     ],
     "applicationsClose": "Bounded operators make stability quantitative: one stretch factor controls every input direction.",
@@ -2965,6 +3543,67 @@
       "A bounded linear operator satisfies $\\|Tx\\|\\le C\\|x\\|$ for all inputs.",
       "The operator norm is the smallest such $C$, equivalently the largest unit-input output norm.",
       "For linear maps, boundedness is the same as continuity."
+    ],
+    "connectionsProse": "<p>Linear operators preserve vector-space structure, and this lesson adds a global stability condition. Boundedness says one constant controls how much the operator can stretch every input. For linear maps, that condition is equivalent to continuity, so analytic stability becomes an operator inequality. Operator norms, sensitivity bounds, compactness, and spectral normalization all build on this idea.</p>",
+    "symbols": [
+      {
+        "sym": "$T:V\\to W$",
+        "desc": "a linear map"
+      },
+      {
+        "sym": "$C$",
+        "desc": "a valid stretch bound"
+      },
+      {
+        "sym": "$\\|T\\|$",
+        "desc": "the smallest such bound"
+      },
+      {
+        "sym": "$V,W$",
+        "desc": "spaces with possibly different norms"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume boundedness",
+        "result": "$\\|Tx\\|_W\\le C\\|x\\|_V$ for all $x$",
+        "why": "$T$ is bounded"
+      },
+      {
+        "do": "Compare two outputs",
+        "result": "$Tx-Ty=T(x-y)$",
+        "why": "$T$ is linear"
+      },
+      {
+        "do": "Take norms",
+        "result": "$\\|Tx-Ty\\|_W=\\|T(x-y)\\|_W$",
+        "why": "the output difference is an operator applied to the input difference"
+      },
+      {
+        "do": "Apply the bound",
+        "result": "$\\|T(x-y)\\|_W\\le C\\|x-y\\|_V$",
+        "why": "use boundedness on $x-y$"
+      },
+      {
+        "do": "Choose input closeness",
+        "result": "$\\delta=\\varepsilon/C$ when $C>0$",
+        "why": "this turns the stretch bound into the desired tolerance"
+      },
+      {
+        "do": "Check epsilon-delta continuity",
+        "result": "$\\|x-y\\|<\\delta$ implies $\\|Tx-Ty\\|<\\varepsilon$",
+        "why": "multiply by $C$"
+      },
+      {
+        "do": "Handle $C=0$",
+        "result": "outputs are identical",
+        "why": "continuity is immediate"
+      },
+      {
+        "do": "Conclude",
+        "result": "bounded linear maps are continuous",
+        "why": "the epsilon-delta condition holds"
+      }
     ],
     "prereqs": [
       "math-05-10"
@@ -2992,8 +3631,8 @@
         "Lipschitz constants"
       ]
     },
-    "motivation": "<p>You already measure vectors by length. Operator norms ask the next natural question: how much can a linear map enlarge that length?</p><p>The answer is a worst-case stretch over unit inputs. That single number lets you bound errors, gradients, perturbations, and stability with calm confidence.</p>",
-    "definition": "<p>For a linear map $A:X\\to Y$ between normed spaces, the <b>operator norm</b> is $$\\|A\\|=\\sup_{x\\ne0}\\frac{\\|Ax\\|_Y}{\\|x\\|_X}=\\sup_{\\|x\\|_X=1}\\|Ax\\|_Y.$$ The two forms agree because any nonzero $x$ can be written as $\\|x\\|u$ with $\\|u\\|=1$.</p><p><b>Assumptions that matter:</b> the map is linear, the domain and codomain norms are fixed, and a finite operator norm is exactly boundedness for a linear operator.</p>",
+    "motivation": "<p>The operator norm is a worst-case measurement. Instead of checking every possible input size separately, we normalize inputs to length one and ask for the largest output length. Linearity makes this enough, because any nonzero input is a scale times a unit input.</p><p>This viewpoint turns stability into one number. If the norm is small, every perturbation is controlled; if it is large, some direction can be stretched strongly. The diagonal example makes the idea visible: the direction with scale $3$ dominates the direction with scale $2$, so the Euclidean operator norm is the larger stretch.</p>",
+    "definition": "<p>The <b>operator norm</b> of a linear map is its largest stretch factor over nonzero inputs, equivalently the largest output norm over unit inputs.</p><p>$$\\|A\\|=\\sup_{x\\ne0}\\frac{\\|Ax\\|}{\\|x\\|}=\\sup_{\\|u\\|=1}\\|Au\\|.$$</p><p><b>Assumptions that matter:</b> domain and codomain norms are fixed, and the supremum is taken over inputs allowed by the domain.</p>",
     "worked": {
       "problem": "Find the Euclidean operator norm of $A=\\begin{pmatrix}3&0\\\\0&2\\end{pmatrix}$.",
       "skills": [
@@ -3202,34 +3841,34 @@
     ],
     "applications": [
       {
-        "title": "Neural-network sensitivity",
-        "background": "A linear layer cannot amplify perturbations by more than its operator norm.",
-        "numbers": "If $\\|W\\|=2.5$ and $\\|\\Delta x\\|=0.04$, then $\\|W\\Delta x\\|\\le0.10$."
+        "title": "Layer sensitivity",
+        "background": "A layer's operator norm bounds output perturbations.",
+        "numbers": "$\\|W\\|=2.5$, $\\|\\Delta x\\|=0.04$ gives $\\|W\\Delta x\\|\\le0.10$."
       },
       {
-        "title": "Adversarial robustness",
-        "background": "Worst-case score movement begins with bounding each layer's stretch.",
-        "numbers": "A norm-$3$ score layer maps an input change $0.01$ to at most $0.03$."
+        "title": "Score robustness",
+        "background": "A score map changes at most norm times input change.",
+        "numbers": "norm $3$ and input change $0.01$ gives at most $0.03$."
       },
       {
-        "title": "Gradient descent stability",
-        "background": "Smoothness constants are often operator norms of Hessians or Jacobians.",
-        "numbers": "If $\\|H\\|=8$, a basic safe step scale is about $1/8=0.125$."
+        "title": "Smoothness",
+        "background": "A Hessian norm suggests a safe gradient step scale.",
+        "numbers": "$\\|H\\|=8$ suggests step scale $1/8=0.125$."
       },
       {
         "title": "Feature scaling",
-        "background": "Preprocessing can stretch some directions much more than others.",
-        "numbers": "Scaling coordinates by $10$ and $0.5$ has Euclidean operator norm $10$."
+        "background": "Diagonal feature scaling is governed by its largest scale.",
+        "numbers": "diagonal scales $10,0.5$ have Euclidean operator norm $10$."
       },
       {
-        "title": "Numerical error",
-        "background": "Matrix computations propagate roundoff according to operator norms.",
-        "numbers": "With $\\|A\\|=6$ and input error $0.0002$, output error is at most $0.0012$."
+        "title": "Roundoff",
+        "background": "Operator norm propagates numerical roundoff error.",
+        "numbers": "$\\|A\\|=6$ and error $0.0002$ give $0.0012$."
       },
       {
-        "title": "Attention projections",
-        "background": "Query and key projections are linear maps before attention scores are formed.",
-        "numbers": "If $\\|W_Q\\|=1.2$ and $\\|x\\|=5$, then $\\|q\\|\\le6$."
+        "title": "Attention projection",
+        "background": "Projection matrix norm bounds query vector length.",
+        "numbers": "$\\|W_Q\\|=1.2$, $\\|x\\|=5$ gives $\\|q\\|\\le6$."
       }
     ],
     "applicationsClose": "Operator norms are stretch meters: one number controls amplification, stability, and perturbation size.",
@@ -3238,6 +3877,71 @@
       "Finite operator norm means a linear map is bounded.",
       "The chosen vector norms matter.",
       "Euclidean matrix operator norms are largest singular values."
+    ],
+    "connectionsProse": "<p>Bounded operators have stretch limits, and this lesson measures the best such limit. The operator norm records the largest output length produced by a unit input. In finite dimensions this connects to singular values, conditioning, layer sensitivity, and spectral normalization. Later duality and compact-operator lessons use operator norms to control functionals and infinite-dimensional maps.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "a linear operator"
+      },
+      {
+        "sym": "$x$",
+        "desc": "any input"
+      },
+      {
+        "sym": "$u$",
+        "desc": "a unit input"
+      },
+      {
+        "sym": "$\\sup$",
+        "desc": "least upper bound"
+      },
+      {
+        "sym": "domain and codomain norms",
+        "desc": "the norms that must be fixed"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with stretch",
+        "result": "$\\|A\\|=\\sup_{x\\ne0}\\|Ax\\|/\\|x\\|$",
+        "why": "stretch is output length divided by input length"
+      },
+      {
+        "do": "Normalize an input",
+        "result": "$u=x/\\|x\\|$",
+        "why": "$u$ has norm $1$"
+      },
+      {
+        "do": "Use linearity",
+        "result": "$Ax=A(\\|x\\|u)=\\|x\\|Au$",
+        "why": "the scale can be pulled through the operator"
+      },
+      {
+        "do": "Divide by input norm",
+        "result": "$\\|Ax\\|/\\|x\\|=\\|Au\\|$",
+        "why": "the scale cancels"
+      },
+      {
+        "do": "Equate the suprema",
+        "result": "$\\sup_{x\\ne0}\\|Ax\\|/\\|x\\|=\\sup_{\\|u\\|=1}\\|Au\\|$",
+        "why": "every nonzero input determines a unit direction"
+      },
+      {
+        "do": "Compute the diagonal example",
+        "result": "for $A=\\operatorname{diag}(3,2)$ and $u=(s,t)$ with $s^2+t^2=1$, $\\|Au\\|^2=9s^2+4t^2$",
+        "why": "the matrix scales the two coordinates"
+      },
+      {
+        "do": "Use the unit constraint",
+        "result": "$4+5s^2\\le9$",
+        "why": "substitute $t^2=1-s^2$"
+      },
+      {
+        "do": "Test the maximizing direction",
+        "result": "$\\|A\\|=3$",
+        "why": "square roots give the upper bound and $u=(1,0)$ attains it"
+      }
     ],
     "prereqs": [
       "math-05-11"
@@ -3265,8 +3969,8 @@
         "basis coordinates"
       ]
     },
-    "motivation": "<p>A coordinate, a dot product with a weight vector, and a directional derivative all do the same kind of thing: they measure a vector linearly.</p><p>The <b>dual space</b> gathers every continuous linear measurement into one space, so we can reason about observers as carefully as we reason about the objects observed.</p>",
-    "definition": "<p>For a normed space $X$, the <b>dual space</b> $X^\\ast$ is the space of continuous linear functionals $f:X\\to\\mathbb{R}$ or $\\mathbb{C}$. Its norm is $$\\|f\\|=\\sup_{\\|x\\|\\le1}|f(x)|.$$ In a Hilbert space, each vector $a$ gives $f_a(x)=\\langle x,a\\rangle$, with $\\|f_a\\|=\\|a\\|$.</p><p><b>Assumptions that matter:</b> the functionals are linear and continuous, the norm on $X$ determines the dual norm, and identifying functionals with vectors requires inner-product structure.</p>",
+    "motivation": "<p>A vector can be tested by many linear measurements: a coordinate readout, a gradient direction, a constraint differential, or an expectation. The dual space collects the measurements that are continuous under the chosen norm. Each functional then has its own norm, defined by the largest reading it can produce on the unit ball.</p><p>In Euclidean space, this abstract definition reduces to a familiar coefficient-vector calculation. The functional $f(x,y)=3x-4y$ is inner product with $(3,-4)$, so Cauchy-Schwarz gives the upper bound and alignment attains it. The lesson therefore shows both sides of the dual norm: a universal bound and a unit input that reaches the bound.</p>",
+    "definition": "<p>The <b>dual space</b> $X^*$ is the vector space of continuous linear functionals on $X$, with norm equal to the largest absolute reading on the unit ball.</p><p>$$\\|f\\|=\\sup_{\\|x\\|\\le1}|f(x)|.$$</p><p><b>Assumptions that matter:</b> the norm on $X$ is fixed, only continuous linear functionals belong to $X^*$, and the Euclidean example uses the ordinary inner product.</p>",
     "worked": {
       "problem": "On Euclidean $\\mathbb{R}^2$, find the norm of $f(x,y)=3x-4y$.",
       "skills": [
@@ -3470,34 +4174,34 @@
     ],
     "applications": [
       {
-        "title": "Gradients",
-        "background": "A derivative is a linear functional that reads a small move and returns first-order loss change.",
-        "numbers": "For $g=(3,4)$ and $h=(0.01,0)$, $df(h)=0.03$ and $\\|df\\|=5$."
+        "title": "Gradient functional",
+        "background": "A gradient defines a local linear measurement.",
+        "numbers": "$g=(3,4)$ has $\\|df\\|=5$, and $df(0.01,0)=0.03$."
       },
       {
-        "title": "Linear probes",
-        "background": "A probe reads an embedding by applying a dual vector.",
-        "numbers": "$a=(1,-1,2)$ on $(0.5,0.2,0.1)$ returns $0.5$."
+        "title": "Probe",
+        "background": "A probe reads a weighted sum of feature coordinates.",
+        "numbers": "$(1,-1,2)\\cdot(0.5,0.2,0.1)=0.5$."
       },
       {
-        "title": "Sensitivity",
-        "background": "Dual norms turn perturbation budgets into score-change bounds.",
-        "numbers": "For $w=(2,-3,1)$ and $\\ell_\\infty$ radius $0.01$, the bound is $0.01\\|w\\|_1=0.06$."
+        "title": "$\\ell_\\infty$ perturbation",
+        "background": "The dual of an infinity perturbation uses an $\\ell_1$ coefficient norm.",
+        "numbers": "$0.01\\| (2,-3,1)\\|_1=0.06$."
       },
       {
-        "title": "Constraints",
-        "background": "Linear constraints in optimization are dual-space objects.",
-        "numbers": "The constraint differential $h_1+2h_2$ has Euclidean norm $\\sqrt5\\approx2.236$."
+        "title": "Constraint differential",
+        "background": "A constraint derivative is a linear functional on perturbations.",
+        "numbers": "$h_1+2h_2$ has Euclidean norm $\\sqrt5\\approx2.236$."
       },
       {
-        "title": "Expectations",
-        "background": "Expectation is a linear functional on random variables.",
-        "numbers": "If $|X|\\le3$, then $|E[X]|\\le3$."
+        "title": "Expectation",
+        "background": "Expectation is a bounded linear functional under bounded outcomes.",
+        "numbers": "if $|X|\\le3$, then $|E[X]|\\le3$."
       },
       {
-        "title": "Model scores",
-        "background": "A linear classifier score is a dual pairing between weights and features.",
-        "numbers": "With $w=(0.2,-0.5)$ and $x=(10,4)$, the score is $0$."
+        "title": "Classifier score",
+        "background": "A classifier score is a linear functional of features.",
+        "numbers": "$(0.2,-0.5)\\cdot(10,4)=0$."
       }
     ],
     "applicationsClose": "Dual spaces make measurement mathematical, from gradients to probes to optimization certificates.",
@@ -3506,6 +4210,67 @@
       "The dual norm is $\\sup_{\\|x\\|\\le1}|f(x)|$.",
       "Inner products identify Hilbert spaces with their duals.",
       "Changing the primal norm changes the dual norm."
+    ],
+    "connectionsProse": "<p>This lesson studies the space of continuous linear measurements on a normed space. After Riesz, Hilbert-space measurements can be represented by vectors, but general normed spaces still need the broader dual-space language. Dual norms quantify the size of probes, gradients, constraints, and sensitivity certificates. Hahn-Banach and weak convergence both rely on these continuous linear observers.</p>",
+    "symbols": [
+      {
+        "sym": "$X^*$",
+        "desc": "the dual space"
+      },
+      {
+        "sym": "$f:X\\to\\mathbb R$",
+        "desc": "a continuous linear functional"
+      },
+      {
+        "sym": "$\\|f\\|=\\sup_{\\|x\\|\\le1}|f(x)|$",
+        "desc": "the dual norm"
+      },
+      {
+        "sym": "$a$",
+        "desc": "the representing coefficient vector in Euclidean space"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define the functional",
+        "result": "$f(x,y)=3x-4y$",
+        "why": "this is a linear functional"
+      },
+      {
+        "do": "Write vector notation",
+        "result": "$z=(x,y)$ and $a=(3,-4)$",
+        "why": "$f(z)=\\langle z,a\\rangle$"
+      },
+      {
+        "do": "Apply Cauchy-Schwarz",
+        "result": "$|f(z)|\\le\\|z\\|\\|a\\|$",
+        "why": "the functional is an inner product with $a$"
+      },
+      {
+        "do": "Restrict to the unit ball",
+        "result": "$|f(z)|\\le\\|a\\|$",
+        "why": "$\\|z\\|\\le1$"
+      },
+      {
+        "do": "Compute the coefficient norm",
+        "result": "$\\|a\\|=\\sqrt{3^2+(-4)^2}=5$",
+        "why": "Euclidean norm"
+      },
+      {
+        "do": "Choose an aligned unit input",
+        "result": "$z=a/5=(3/5,-4/5)$",
+        "why": "it is unit and aligned"
+      },
+      {
+        "do": "Evaluate the functional",
+        "result": "$f(z)=9/5+16/5=5$",
+        "why": "the upper bound is attained"
+      },
+      {
+        "do": "Conclude the norm",
+        "result": "$\\|f\\|=5$",
+        "why": "the upper bound is attained"
+      }
     ],
     "prereqs": [
       "math-05-12"
@@ -3533,8 +4298,8 @@
         "convex sets"
       ]
     },
-    "motivation": "<p>Sometimes a measurement is defined only on a smaller subspace. The hopeful question is whether it can be extended consistently to the whole space.</p><p><b>Hahn-Banach</b> says that bounded linear measurements can be extended without becoming larger. It is a quiet engine behind separation, duality, and the abundance of linear witnesses.</p>",
-    "definition": "<p>If $M$ is a linear subspace of a real normed space $X$ and $f:M\\to\\mathbb{R}$ is bounded and linear, then there is a bounded linear $F:X\\to\\mathbb{R}$ with $F|_M=f$ and $\\|F\\|=\\|f\\|$. Related real, complex, and dominated-sublinear versions carry the same extension idea.</p><p><b>Assumptions that matter:</b> the starting map is linear on a subspace, boundedness is measured by the given norm, the extension is not usually unique, and the theorem guarantees existence rather than a simple formula in every setting.</p>",
+    "motivation": "<p>Often a measurement is first defined only on a smaller subspace where the relevant data live. Hahn-Banach says that, under the right boundedness condition, the measurement can be continued to the ambient space while preserving its norm. The extension may not be unique, but the theorem guarantees that no extra stretch is required.</p><p>This matters because global witnesses can be built from local information. A norm-preserving functional can certify a vector's norm, separate a point from a convex set, or provide a dual certificate for an optimization problem. The derivation uses the $x$-axis in $\\mathbb R^2$ to show the norm-preserving idea without hiding it inside the general theorem.</p>",
+    "definition": "<p>The <b>Hahn-Banach theorem</b> extends a bounded linear functional from a subspace to the whole normed space without increasing its norm.</p><p>$$F|_M=f,\\qquad \\|F\\|=\\|f\\|.$$</p><p><b>Assumptions that matter:</b> $M$ is a subspace of $X$, $f$ is bounded on $M$, and the extension preserves the chosen norm bound.</p>",
     "worked": {
       "problem": "Let $M=\\{(t,0):t\\in\\mathbb{R}\\}$ and $f(t,0)=2t$ in Euclidean $\\mathbb{R}^2$. Give a norm-preserving extension.",
       "skills": [
@@ -3738,34 +4503,34 @@
     ],
     "applications": [
       {
-        "title": "Separating hyperplanes",
-        "background": "Hahn-Banach supports theorems that separate points from convex sets.",
-        "numbers": "The unit disk and point $(3,0)$ are separated by $F(x,y)=x$: values are at most $1$ on the disk and $3$ at the point."
+        "title": "Separating disk from point",
+        "background": "A functional can separate a convex set from an outside point.",
+        "numbers": "$F(x,y)=x$ is at most $1$ on the unit disk and equals $3$ at $(3,0)$."
       },
       {
-        "title": "Support vector machines",
-        "background": "Maximum-margin classifiers use separating hyperplane geometry.",
-        "numbers": "If projections differ by $2$, a unit normal gives margin $1$ on each side."
+        "title": "SVM margin",
+        "background": "A unit normal functional measures signed distance to a separating hyperplane.",
+        "numbers": "projections differing by $2$ give margin $1$ on each side with a unit normal."
       },
       {
-        "title": "Dual certificates",
-        "background": "Optimization can prove optimality with a linear witness.",
-        "numbers": "If every feasible $x$ has $c\\cdot x\\le10$ and one reaches $10$, optimality is certified."
+        "title": "Dual certificate",
+        "background": "A global linear bound certifies optimality when it is attained.",
+        "numbers": "if all feasible $x$ satisfy $c\\cdot x\\le10$ and one reaches $10$, optimum is certified."
       },
       {
-        "title": "Norm witnesses",
-        "background": "The theorem implies enough functionals exist to detect vector norms.",
-        "numbers": "For $x=(3,4)$, $F(z)=\\langle z,x/5\\rangle$ has norm $1$ and $F(x)=5$."
+        "title": "Norm witness",
+        "background": "A norm-one functional can witness a vector's norm.",
+        "numbers": "for $x=(3,4)$, $F(z)=\\langle z,x/5\\rangle$ has norm $1$ and $F(x)=5$."
       },
       {
-        "title": "Regularization",
-        "background": "Dual norms describe certificates for sparse or robust solutions.",
-        "numbers": "For $w=(2,-1,0)$, $\\|w\\|_\\infty=2$ is the dual norm to $\\ell_1$."
+        "title": "Dual norm",
+        "background": "A dual norm reports the largest coordinate probe for the matching unit ball.",
+        "numbers": "for $w=(2,-1,0)$, $\\|w\\|_\\infty=2$."
       },
       {
-        "title": "Fairness penalties",
-        "background": "Linear measurements of gaps can become terms in larger objectives.",
-        "numbers": "A gap $0.04$ with multiplier $25$ contributes $1.0$ to a Lagrangian."
+        "title": "Lagrangian gap",
+        "background": "A multiplier converts constraint violation into objective-gap contribution.",
+        "numbers": "multiplier $25$ times gap $0.04$ contributes $1.0$."
       }
     ],
     "applicationsClose": "Hahn-Banach is an extension and witness theorem: it ensures linear measurements are plentiful enough for analysis.",
@@ -3774,6 +4539,71 @@
       "The extension can preserve the norm.",
       "Extensions need not be unique.",
       "Separation and convex duality grow from this idea."
+    ],
+    "connectionsProse": "<p>Dual spaces make linear measurements central, and Hahn-Banach explains why enough of those measurements exist. The theorem extends a bounded functional from a subspace to the whole space without increasing its norm. This is one of the main tools behind separation, certificates, and support hyperplanes in analysis and optimization. The concrete example keeps the theorem grounded in a simple Euclidean extension.</p>",
+    "symbols": [
+      {
+        "sym": "$M$",
+        "desc": "a subspace"
+      },
+      {
+        "sym": "$X$",
+        "desc": "the larger normed space"
+      },
+      {
+        "sym": "$f$",
+        "desc": "the original functional"
+      },
+      {
+        "sym": "$F$",
+        "desc": "the extension"
+      },
+      {
+        "sym": "$F|_M=f$",
+        "desc": "agreement on $M$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define the subspace functional",
+        "result": "$M=\\{(t,0):t\\in\\mathbb R\\}$ and $f(t,0)=2t$",
+        "why": "the measurement is defined on the $x$-axis"
+      },
+      {
+        "do": "Compute the stretch ratio",
+        "result": "$|f(t,0)|/\\|(t,0)\\|=|2t|/|t|$ for $t\\ne0$",
+        "why": "this measures the functional norm on $M$"
+      },
+      {
+        "do": "Simplify",
+        "result": "$2$",
+        "why": "$|t|$ cancels"
+      },
+      {
+        "do": "Conclude the subspace norm",
+        "result": "$\\|f\\|=2$ on $M$",
+        "why": "the ratio is constant for nonzero $t$"
+      },
+      {
+        "do": "Define an extension",
+        "result": "$F(x,y)=2x$",
+        "why": "it agrees with $f$ when $y=0$"
+      },
+      {
+        "do": "Identify the coefficient vector",
+        "result": "$(2,0)$",
+        "why": "Euclidean functionals are dot products with coefficient vectors"
+      },
+      {
+        "do": "Compute the extension norm",
+        "result": "$\\|F\\|=\\sqrt{2^2+0^2}=2$",
+        "why": "Euclidean dual norm equals coefficient norm"
+      },
+      {
+        "do": "Conclude norm preservation",
+        "result": "$F$ is a norm-preserving extension",
+        "why": "it agrees on $M$ and has the same norm"
+      }
     ],
     "prereqs": [
       "math-05-13"
@@ -3801,8 +4631,8 @@
         "linear functionals"
       ]
     },
-    "motivation": "<p>Norm convergence asks vectors to become close in length. Weak convergence asks a gentler question: does every continuous linear observer see convergence?</p><p>This is powerful in infinite dimensions, where sequences may keep moving while all fixed measurements settle down.</p>",
-    "definition": "<p>A sequence $x_n$ in a normed space $X$ <b>converges weakly</b> to $x$, written $x_n\\rightharpoonup x$, if $f(x_n)\\to f(x)$ for every $f\\in X^\\ast$. In a Hilbert space this becomes $\\langle x_n,y\\rangle\\to\\langle x,y\\rangle$ for every fixed $y$.</p><p><b>Assumptions that matter:</b> the continuous dual determines the tests, norm convergence implies weak convergence, and in infinite dimensions weak convergence can be strictly weaker than norm convergence.</p>",
+    "motivation": "<p>Norm convergence is a demanding condition because it measures the full distance between vectors. Weak convergence asks for something gentler: fix any continuous linear functional and look only at its scalar readings. If all such readings converge to the readings of a limit vector, the sequence converges weakly.</p><p>The standard basis in $\\ell^2$ shows why the distinction matters. Each $e_n$ keeps norm $1$, so it never approaches $0$ in norm. But any fixed square-summable observer has coordinates tending to zero, so its reading of $e_n$ vanishes; every fixed observer sees convergence to $0$.</p>",
+    "definition": "<p>A sequence $x_n$ <b>converges weakly</b> to $x$ when every continuous linear functional sees scalar convergence to its value at $x$.</p><p>$$x_n\\rightharpoonup x \\quad\\Longleftrightarrow\\quad f(x_n)\\to f(x)\\text{ for every }f\\in X^*.$$</p><p><b>Assumptions that matter:</b> weak convergence depends on the chosen dual space, and in Hilbert spaces Riesz lets fixed vectors act as the tests.</p>",
     "worked": {
       "problem": "In $\\ell_2$, show that the standard basis vectors $e_n$ converge weakly to $0$ but not in norm.",
       "skills": [
@@ -4006,34 +4836,34 @@
     ],
     "applications": [
       {
-        "title": "Training probes",
-        "background": "A model representation can be stable under many linear probes even if parameters move.",
-        "numbers": "If probe readings change by less than $0.001$ after epoch $50$, those measured behaviors are stable."
+        "title": "Probe stability",
+        "background": "Weak convergence can show up as stable scalar probe readings.",
+        "numbers": "readings change by less than $0.001$ after epoch $50$."
       },
       {
-        "title": "Probability limits",
-        "background": "Convergence in distribution is a weak-style idea using test functions.",
-        "numbers": "A sample mean near $0.50$ with error $0.01$ stabilizes expectations of simple bounded tests."
+        "title": "Distribution-style limits",
+        "background": "Simple expectations can stabilize before stronger convergence is visible.",
+        "numbers": "a sample mean $0.50$ with error $0.01$ stabilizes simple expectations."
       },
       {
         "title": "Embedding drift",
-        "background": "A vector can move into directions fixed probes barely see.",
-        "numbers": "For $e_n$, coordinate probe $5$ reads $0$ for every $n\\ne5$, while $\\|e_n\\|=1$."
+        "background": "A fixed coordinate probe may miss movement in other coordinates.",
+        "numbers": "coordinate probe $5$ reads $0$ for $e_n$ whenever $n\\ne5$, while $\\|e_n\\|=1$."
       },
       {
-        "title": "Inverse problems",
-        "background": "Weak convergence can be enough when only sensor readings matter.",
-        "numbers": "If $20$ sensor functionals vary by at most $0.005$, measured predictions are stable."
+        "title": "Sensor inverse problem",
+        "background": "Finitely many sensor functionals can be stable even if full states are not.",
+        "numbers": "$20$ sensor functionals varying by at most $0.005$ means measured predictions are stable."
       },
       {
-        "title": "Kernel analysis",
-        "background": "Bounded RKHS sequences are often studied through weak subsequences.",
-        "numbers": "If $\\|f_n\\|\\le3$ and $k(x,x)=4$, then $|f_n(x)|\\le6$."
+        "title": "RKHS bound",
+        "background": "RKHS norm bounds convert weak control into pointwise bounds.",
+        "numbers": "$\\|f_n\\|\\le3$ and $k(x,x)=4$ imply $|f_n(x)|\\le6$."
       },
       {
         "title": "Optimization existence",
-        "background": "Weak compactness helps prove minimizers exist for regularized objectives.",
-        "numbers": "A sequence with norms at most $2$ has uniformly bounded linear readings by $2\\|f\\|$."
+        "background": "Bounded sequences have uniformly bounded readings under fixed functionals.",
+        "numbers": "if $\\|x_n\\|\\le2$, any norm-$5$ functional reads at most $10$ in magnitude."
       }
     ],
     "applicationsClose": "Weak convergence is the art of trusting all linear measurements, even when full norm distance is too strict.",
@@ -4042,6 +4872,67 @@
       "Norm convergence implies weak convergence.",
       "Infinite-dimensional weak convergence may not imply norm convergence.",
       "Hilbert-space weak convergence is tested by fixed inner products."
+    ],
+    "connectionsProse": "<p>This lesson weakens the usual idea of convergence by testing vectors through dual measurements. Norm convergence requires the vectors themselves to get close in length. Weak convergence only requires every continuous linear observer to see convergence. That distinction is essential in infinite-dimensional spaces, where bounded sequences may have stable observable behavior without converging strongly.</p>",
+    "symbols": [
+      {
+        "sym": "$x_n\\rightharpoonup x$",
+        "desc": "weak convergence"
+      },
+      {
+        "sym": "$X^*$",
+        "desc": "the set of continuous linear tests"
+      },
+      {
+        "sym": "$e_n$",
+        "desc": "the $n$th standard basis vector"
+      },
+      {
+        "sym": "norm convergence",
+        "desc": "$\\|x_n-x\\|\\to0$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Fix an observer",
+        "result": "$y=(y_1,y_2,\\ldots)\\in\\ell^2$",
+        "why": "weak convergence tests against one fixed vector at a time"
+      },
+      {
+        "do": "Compute the reading",
+        "result": "$\\langle e_n,y\\rangle=y_n$",
+        "why": "only coordinate $n$ survives"
+      },
+      {
+        "do": "Use square summability",
+        "result": "$y_n\\to0$",
+        "why": "terms of a convergent series must vanish"
+      },
+      {
+        "do": "Conclude scalar convergence",
+        "result": "$\\langle e_n,y\\rangle\\to0$ for every fixed $y$",
+        "why": "each observer's reading vanishes"
+      },
+      {
+        "do": "Conclude weak convergence",
+        "result": "$e_n\\rightharpoonup0$",
+        "why": "the Hilbert-space weak convergence criterion holds"
+      },
+      {
+        "do": "Compute each norm",
+        "result": "$\\|e_n\\|=1$",
+        "why": "each has one unit coordinate"
+      },
+      {
+        "do": "Compute distance to zero",
+        "result": "$\\|e_n-0\\|=1$ for every $n$",
+        "why": "subtracting zero changes nothing"
+      },
+      {
+        "do": "Separate weak from norm convergence",
+        "result": "$e_n$ does not converge to $0$ in norm",
+        "why": "the distance never goes to zero"
+      }
     ],
     "prereqs": [
       "math-05-14"
@@ -4069,8 +4960,8 @@
         "eigenvalues"
       ]
     },
-    "motivation": "<p>Bounded operators control size. Compact operators do more: they squeeze bounded families into output families with convergent subsequences.</p><p>That extra squeezing makes infinite-dimensional problems feel closer to finite-dimensional ones, especially in approximation and kernels.</p>",
-    "definition": "<p>A linear operator $T:X\\to Y$ is <b>compact</b> if every bounded sequence $(x_n)$ in $X$ has a subsequence $(Tx_{n_k})$ that converges in norm in $Y$. Every bounded finite-rank operator is compact because bounded sets in finite-dimensional spaces have convergent subsequences.</p><p><b>Assumptions that matter:</b> compactness is stronger than boundedness in infinite dimensions, automatic for bounded maps from finite-dimensional domains, and central to matrix-like spectral behavior.</p>",
+    "motivation": "<p>A bounded operator prevents outputs from becoming too large, but boundedness alone does not force outputs to settle down. Compactness says that from any bounded input sequence, the output sequence contains a convergent subsequence. It is a sequential form of compression: the image of a bounded set may be infinite, but it cannot spread out too freely.</p><p>This lesson is explain-only because the main work is recognizing the definition and its examples. Diagonal damping on $\\ell^2$ illustrates compact behavior by making the basis outputs shrink to zero. The identity operator shows the contrast: it is bounded, but it preserves the separated standard basis, so no convergent subsequence appears.</p>",
+    "definition": "<p>A <b>compact operator</b> maps every bounded input sequence to an output sequence with a norm-convergent subsequence.</p><p>$$\\|x_n\\|\\le C\\quad\\Longrightarrow\\quad Tx_{n_k}\\text{ converges in norm for some subsequence }(n_k).$$</p><p><b>Assumptions that matter:</b> compactness is a sequential norm-convergence property, and boundedness alone does not imply it in infinite-dimensional spaces.</p>",
     "worked": {
       "problem": "For $T:\\ell_2\\to\\ell_2$ with $T(x)_n=x_n/n$, show $T e_n\\to0$ in norm.",
       "skills": [
@@ -4270,33 +5161,33 @@
     "applications": [
       {
         "title": "Low-rank compression",
-        "background": "Finite-rank maps are compact and model dimensionality reduction.",
-        "numbers": "A rank-$5$ projection keeps $5$ numbers from a $1000$-coordinate vector."
+        "background": "Finite-rank maps compress a high-dimensional input to a smaller range.",
+        "numbers": "rank-$5$ projection keeps $5$ numbers from $1000$."
       },
       {
-        "title": "Integral smoothing",
-        "background": "Smoothing kernels often define compact operators.",
-        "numbers": "A $5$-point average maps $[1,3,5,7,9]$ to center value $5$."
+        "title": "Smoothing",
+        "background": "A smoothing average compresses local variation.",
+        "numbers": "$[1,3,5,7,9]$ has 5-point average center value $5$."
       },
       {
-        "title": "PCA covariance",
-        "background": "Covariance operators often have compact spectral behavior.",
-        "numbers": "Eigenvalues $4,1,0.25$ have first-two variance share $5/5.25\\approx95.2\\%$."
+        "title": "Covariance spectrum",
+        "background": "Compact covariance structure concentrates mass in leading modes.",
+        "numbers": "eigenvalues $4,1,0.25$ give first-two share $5/5.25=95.2\\%$."
       },
       {
-        "title": "Denoising",
-        "background": "Compact-like diagonal damping reduces high-frequency components.",
-        "numbers": "Weights $1,1/2,1/4,1/8$ reduce the fourth component to $12.5\\%$."
+        "title": "Diagonal damping",
+        "background": "Diagonal damping shrinks higher-index coordinates.",
+        "numbers": "weights $1,1/2,1/4,1/8$ reduce the fourth component to $12.5\\%$."
       },
       {
-        "title": "Kernel approximations",
-        "background": "Mercer operators are compact in common settings.",
-        "numbers": "Eigenvalues $0.5,0.2,0.05$ have first-two mass $0.7$."
+        "title": "Kernel approximation",
+        "background": "Kernel operator spectra can be approximated by leading eigenvalues.",
+        "numbers": "eigenvalues $0.5,0.2,0.05$ have first-two mass $0.7$."
       },
       {
-        "title": "Recommender embeddings",
-        "background": "Finite embeddings are compact approximations of high-dimensional behavior.",
-        "numbers": "Using $64$ factors instead of $1024$ raw coordinates is a $16$ times reduction."
+        "title": "Recommender factors",
+        "background": "A low-rank factor representation reduces coordinate count.",
+        "numbers": "$64$ factors instead of $1024$ coordinates is a $16$ times reduction."
       }
     ],
     "applicationsClose": "Compact operators provide the finite-dimensional feeling inside infinite-dimensional analysis.",
@@ -4305,6 +5196,25 @@
       "Finite-rank bounded operators are compact.",
       "Bounded does not imply compact in infinite dimensions.",
       "Compactness supports eigenvalue decay and approximation."
+    ],
+    "connectionsProse": "<p>Bounded operators control size, and compact operators add a stronger limiting property. They send bounded input sequences to output sequences with norm-convergent subsequences. This makes some infinite-dimensional behavior resemble finite-dimensional matrix behavior. Compactness prepares the ground for spectral decompositions, kernel operators, smoothing maps, and low-rank approximations.</p>",
+    "symbols": [
+      {
+        "sym": "$T:X\\to Y$",
+        "desc": "a linear map"
+      },
+      {
+        "sym": "bounded sequence",
+        "desc": "$\\|x_n\\|\\le C$"
+      },
+      {
+        "sym": "compact",
+        "desc": "some output subsequence $Tx_{n_k}$ converges in norm"
+      },
+      {
+        "sym": "finite-rank",
+        "desc": "the range is finite-dimensional"
+      }
     ],
     "prereqs": [
       "math-05-15"
@@ -4332,8 +5242,8 @@
         "self-adjoint operators"
       ]
     },
-    "motivation": "<p>Diagonal matrices are easy because each coordinate acts independently. The spectral theorem tells us when an operator can be understood that way after rotating coordinates.</p><p>For symmetric matrices, and for compact self-adjoint operators, orthonormal eigenvectors reveal independent modes of action.</p>",
-    "definition": "<p>In finite-dimensional real Euclidean space, every symmetric matrix $A=A^T$ has an orthonormal eigenbasis and can be written $A=Q\\Lambda Q^T$, where $Q$ is orthogonal and $\\Lambda$ is diagonal. Compact self-adjoint operators on Hilbert spaces have an analogous eigen-expansion for their nonzero spectrum.</p><p><b>Assumptions that matter:</b> self-adjointness gives orthogonal eigenvectors, compactness keeps infinite-dimensional spectra matrix-like, and eigenvalues control quadratic forms and operator size.</p>",
+    "motivation": "<p>A complicated linear operator becomes much easier to understand when there is an orthonormal basis of eigenvectors. In that coordinate system, applying the operator only multiplies each coordinate by its eigenvalue. Geometry, energy, and curvature then reduce to scalar weights along perpendicular directions.</p><p>Self-adjointness is the condition that makes this diagonal picture reliable. It forces eigenvectors with distinct eigenvalues to be orthogonal, so cross terms vanish in quadratic forms. The derivation shows the algebra of that orthogonality and then computes the quadratic form as a sum of eigenvalue-weighted squared coefficients.</p>",
+    "definition": "<p>The <b>spectral theorem</b> says a suitable self-adjoint operator can be analyzed through orthonormal eigenvectors and real eigenvalue weights; in finite dimensions this is the symmetric-matrix decomposition.</p><p>$$A=Q\\Lambda Q^T,\\qquad \\langle x,Ax\\rangle=\\sum_i\\lambda_i c_i^2.$$</p><p><b>Assumptions that matter:</b> the operator is self-adjoint and the stated finite-dimensional diagonal form assumes an orthonormal eigenbasis.</p>",
     "worked": {
       "problem": "For $A=\\operatorname{diag}(2,5)$ and $x=(3,4)$, compute $x^TAx$ spectrally.",
       "skills": [
@@ -4533,33 +5443,33 @@
     "applications": [
       {
         "title": "PCA",
-        "background": "PCA diagonalizes covariance to find orthogonal variance directions.",
-        "numbers": "Eigenvalues $9,4,1$ give first PC share $9/14\\approx64.3\\%$."
+        "background": "PCA variance shares are eigenvalue shares.",
+        "numbers": "eigenvalues $9,4,1$ give first PC share $9/14=64.3\\%$."
       },
       {
         "title": "Hessian curvature",
-        "background": "Optimization curvature is read from Hessian eigenvalues.",
-        "numbers": "Eigenvalues $100$ and $1$ mean one direction is $100$ times steeper."
+        "background": "Hessian eigenvalues describe curvature along orthogonal directions.",
+        "numbers": "eigenvalues $100$ and $1$ mean one direction is $100$ times steeper."
       },
       {
         "title": "Graph learning",
-        "background": "Graph Laplacian eigenvectors reveal clusters and smooth modes.",
-        "numbers": "A second eigenvalue $0.03$ suggests a weakly connected cut."
+        "background": "A Laplacian eigenvalue can reveal weak connectivity.",
+        "numbers": "second Laplacian eigenvalue $0.03$ marks a weak cut."
       },
       {
         "title": "Kernel methods",
-        "background": "Mercer's theorem is spectral decomposition for kernel operators.",
-        "numbers": "Eigenvalues $0.6,0.3,0.1$ have first-two mass $90\\%$."
+        "background": "Kernel spectra summarize variance or energy in leading modes.",
+        "numbers": "eigenvalues $0.6,0.3,0.1$ have first-two mass $90\\%$."
       },
       {
         "title": "Signal filtering",
-        "background": "Orthogonal spectral modes separate frequencies for compression.",
-        "numbers": "Keeping $12$ of $64$ modes keeps $18.75\\%$ of coefficients."
+        "background": "Spectral filtering keeps selected modal coefficients.",
+        "numbers": "keeping $12$ of $64$ modes keeps $18.75\\%$ of coefficients."
       },
       {
         "title": "Linear dynamics",
-        "background": "Eigenvalues determine mode growth or decay.",
-        "numbers": "A mode with eigenvalue $0.8$ becomes $0.8^5\\approx0.328$ after $5$ steps."
+        "background": "An eigenvalue controls repeated action along its eigenvector.",
+        "numbers": "eigenvalue $0.8$ gives $0.8^5\\approx0.328$ after $5$ steps."
       }
     ],
     "applicationsClose": "The spectral theorem is diagonal thinking with proof: right coordinates turn operators into independent modes.",
@@ -4568,6 +5478,67 @@
       "Finite-dimensional spectral form is $A=Q\\Lambda Q^T$.",
       "Eigenvalues control quadratic forms and norms for self-adjoint operators.",
       "Compact self-adjoint operators preserve much of this structure."
+    ],
+    "connectionsProse": "<p>This lesson brings Hilbert geometry to operators with especially nice symmetry. Self-adjoint operators behave like symmetric matrices: eigenvectors from different eigenvalues are orthogonal, and the operator can be understood through scalar weights on orthonormal directions. This is the operator form behind PCA, Hessian curvature, graph Laplacians, and kernel spectra. Mercer theory later applies the same spectral idea to positive kernel operators.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "self-adjoint"
+      },
+      {
+        "sym": "$q_i$",
+        "desc": "orthonormal eigenvectors"
+      },
+      {
+        "sym": "$\\lambda_i$",
+        "desc": "eigenvalues"
+      },
+      {
+        "sym": "$Q\\Lambda Q^T$",
+        "desc": "the finite-dimensional spectral form"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write eigen equations",
+        "result": "$Au=\\lambda u$ and $Av=\\mu v$",
+        "why": "$u,v$ are eigenvectors"
+      },
+      {
+        "do": "Assume self-adjointness",
+        "result": "$\\langle Au,v\\rangle=\\langle u,Av\\rangle$",
+        "why": "this is the defining symmetry"
+      },
+      {
+        "do": "Substitute eigen equations",
+        "result": "$\\lambda\\langle u,v\\rangle=\\mu\\langle u,v\\rangle$",
+        "why": "the operator acts by eigenvalue scaling"
+      },
+      {
+        "do": "Subtract",
+        "result": "$(\\lambda-\\mu)\\langle u,v\\rangle=0$",
+        "why": "move both sides together"
+      },
+      {
+        "do": "Use distinct eigenvalues",
+        "result": "$\\langle u,v\\rangle=0$",
+        "why": "$\\lambda\\ne\\mu$"
+      },
+      {
+        "do": "Expand in an eigenbasis",
+        "result": "$x=\\sum_i c_iq_i$",
+        "why": "the eigenbasis is orthonormal"
+      },
+      {
+        "do": "Apply the operator",
+        "result": "$Ax=\\sum_i \\lambda_i c_iq_i$",
+        "why": "each eigenvector is scaled by its eigenvalue"
+      },
+      {
+        "do": "Compute the quadratic form",
+        "result": "$\\langle x,Ax\\rangle=\\sum_i\\lambda_i c_i^2$",
+        "why": "cross terms vanish"
+      }
     ],
     "prereqs": [
       "math-05-16"
@@ -4595,8 +5566,8 @@
         "orthogonal projection"
       ]
     },
-    "motivation": "<p>An RKHS lets functions behave like vectors in a Hilbert space. The special gift is that evaluating a function at a point is a continuous linear measurement.</p><p>That means kernels are not just similarities; they are the inner-product machinery of a function space.</p>",
-    "definition": "<p>A <b>reproducing kernel Hilbert space</b> $\\mathcal{H}$ is a Hilbert space of functions where each evaluation map $f\\mapsto f(x)$ is continuous. Therefore there is a representer $k_x\\in\\mathcal{H}$ such that $$f(x)=\\langle f,k_x\\rangle_{\\mathcal{H}}.$$ The kernel is $k(x,z)=\\langle k_z,k_x\\rangle_{\\mathcal{H}}$.</p><p><b>Assumptions that matter:</b> point evaluation must be continuous, the kernel is positive definite, and the inner product lives in function space rather than raw input space.</p>",
+    "motivation": "<p>In a general function space, evaluating a function at one point need not be a well-behaved operation. An RKHS is built so that evaluation is continuous and linear. By Riesz representation, every evaluation map is then represented by a specific Hilbert-space vector, called a kernel section.</p><p>The reproducing property is the central payoff. Instead of treating $f(x)$ as an external lookup, the RKHS writes it as an inner product $\\langle f,k_x\\rangle_{\\mathcal H}$. This turns pointwise prediction, kernel similarity, and norm-based control into Hilbert-space geometry.</p>",
+    "definition": "<p>A <b>reproducing kernel Hilbert space</b> is a Hilbert space of functions in which each point-evaluation map is continuous and therefore represented by a kernel section.</p><p>$$f(x)=\\langle f,k_x\\rangle_{\\mathcal H},\\qquad k(x,z)=\\langle k_z,k_x\\rangle_{\\mathcal H}.$$</p><p><b>Assumptions that matter:</b> evaluation at each point is continuous and linear, and the Riesz theorem supplies the representing section $k_x$.</p>",
     "worked": {
       "problem": "With $k(x,z)=1+xz$ and $f=2k_1-k_3$, compute $f(4)$.",
       "skills": [
@@ -4795,34 +5766,34 @@
     ],
     "applications": [
       {
-        "title": "Kernel ridge regression",
-        "background": "RKHS norms regularize learned functions.",
-        "numbers": "If $\\lambda=0.1$ and $\\|f\\|=3$, the penalty is $0.1\\cdot9=0.9$."
+        "title": "Kernel ridge penalty",
+        "background": "RKHS regularization penalizes squared function norm.",
+        "numbers": "$\\lambda=0.1$, $\\|f\\|=3$ gives $0.9$."
       },
       {
-        "title": "Gaussian processes",
-        "background": "Kernels are covariance functions, while RKHS gives matching deterministic geometry.",
-        "numbers": "If $k(x,x)=1$, the prior variance at $x$ is $1$."
+        "title": "GP covariance",
+        "background": "A kernel diagonal gives prior point variance.",
+        "numbers": "$k(x,x)=1$ gives prior variance $1$."
       },
       {
-        "title": "Similarity geometry",
-        "background": "Kernel sections act like hidden feature vectors.",
-        "numbers": "If $k(a,a)=4$, $k(b,b)=9$, and $k(a,b)=3$, cosine is $3/(2\\cdot3)=0.5$."
+        "title": "Kernel-section cosine",
+        "background": "Kernel values compute cosines between hidden kernel sections.",
+        "numbers": "$k(a,a)=4$, $k(b,b)=9$, $k(a,b)=3$ gives $0.5$."
       },
       {
-        "title": "SVMs",
-        "background": "SVM decision functions are finite sums of RKHS kernel sections.",
-        "numbers": "Coefficients $1.2,-0.7$ give $1.2k(x,x_1)-0.7k(x,x_2)+b$."
+        "title": "SVM form",
+        "background": "Kernel sections combine into a prediction function.",
+        "numbers": "coefficients $1.2,-0.7$ give $1.2k(x,x_1)-0.7k(x,x_2)+b$."
       },
       {
-        "title": "Interpolation",
-        "background": "RKHS interpolation balances fit and norm.",
-        "numbers": "Errors $0.1$ and $-0.2$ have squared error $0.01+0.04=0.05$."
+        "title": "RKHS norm",
+        "background": "Kernel algebra computes norms of section combinations.",
+        "numbers": "for $f=k_1-k_2$ and $k(x,z)=1+xz$, $\\|f\\|^2=2-6+5=1$."
       },
       {
-        "title": "Uncertainty bounds",
-        "background": "Norm bounds imply pointwise bounds through kernel diagonals.",
-        "numbers": "If $\\|f\\|\\le4$ and $k(x,x)=0.25$, then $|f(x)|\\le2$."
+        "title": "Pointwise bound",
+        "background": "The reproducing property bounds individual predictions.",
+        "numbers": "$\\|f\\|\\le4$, $k(x,x)=0.25$ gives $|f(x)|\\le2$."
       }
     ],
     "applicationsClose": "RKHS thinking turns function learning into Hilbert-space geometry carried by kernels.",
@@ -4831,6 +5802,71 @@
       "Kernel sections represent point evaluation.",
       "$k(x,x)$ controls pointwise bounds.",
       "Kernel predictors are finite linear combinations of kernel sections."
+    ],
+    "connectionsProse": "<p>This lesson starts the kernel-learning spine of the section. A Hilbert space has already supplied inner products, Riesz representation, and bounded linear measurements. An RKHS applies those ideas to a space whose vectors are functions, with point evaluation as a continuous linear functional. Positive-definite kernels, Mercer expansions, and the representer theorem all depend on this evaluation-as-inner-product structure.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mathcal H$",
+        "desc": "the RKHS"
+      },
+      {
+        "sym": "$E_x$",
+        "desc": "evaluation at $x$"
+      },
+      {
+        "sym": "$k_x$",
+        "desc": "the representer of evaluation"
+      },
+      {
+        "sym": "$k(x,z)$",
+        "desc": "the kernel value"
+      },
+      {
+        "sym": "$\\|f\\|_{\\mathcal H}$",
+        "desc": "function-space norm"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Fix an input",
+        "result": "$x$",
+        "why": "evaluation at that point is a map on functions"
+      },
+      {
+        "do": "Define evaluation",
+        "result": "$E_x(f)=f(x)$",
+        "why": "this records the value of $f$ at $x$"
+      },
+      {
+        "do": "Assume RKHS continuity",
+        "result": "$E_x$ is continuous and linear",
+        "why": "that is the RKHS condition"
+      },
+      {
+        "do": "Apply Riesz",
+        "result": "a unique $k_x\\in\\mathcal H$ with $E_x(f)=\\langle f,k_x\\rangle_{\\mathcal H}$",
+        "why": "continuous linear functionals on Hilbert spaces are represented by vectors"
+      },
+      {
+        "do": "Rewrite evaluation",
+        "result": "$f(x)=\\langle f,k_x\\rangle_{\\mathcal H}$",
+        "why": "this is the reproducing property"
+      },
+      {
+        "do": "Define the kernel",
+        "result": "$k(x,z)=k_z(x)$",
+        "why": "the kernel is the value of the $z$-section at $x$"
+      },
+      {
+        "do": "Use reproduction on a section",
+        "result": "$k(x,z)=\\langle k_z,k_x\\rangle_{\\mathcal H}$",
+        "why": "take $f=k_z$"
+      },
+      {
+        "do": "Apply Cauchy-Schwarz",
+        "result": "$|f(x)|\\le\\|f\\|\\sqrt{k(x,x)}$",
+        "why": "$\\|k_x\\|^2=k(x,x)$"
+      }
     ],
     "prereqs": [
       "math-05-17"
@@ -4858,8 +5894,8 @@
         "symmetric matrices"
       ]
     },
-    "motivation": "<p>A similarity score is useful only if it describes possible geometry. Positive definiteness is the test that prevents impossible inner products.</p><p>When every finite Gram matrix is positive semidefinite, the kernel can safely act like an inner product in a hidden feature space.</p>",
-    "definition": "<p>A symmetric kernel $k$ is <b>positive definite</b> if for every finite set $x_1,\\ldots,x_n$ and coefficients $c_i$, $$\\sum_i\\sum_j c_i c_j k(x_i,x_j)\\ge0.$$ Equivalently, each Gram matrix $K_{ij}=k(x_i,x_j)$ is positive semidefinite.</p><p><b>Assumptions that matter:</b> the condition must hold for every finite sample and coefficient vector; positive semidefinite allows zero directions; and symmetry is part of the real-valued kernel setting.</p>",
+    "motivation": "<p>A kernel is often introduced as a similarity function, but not every similarity can be an inner product. For a finite set of inputs, the matrix of pairwise kernel values must have nonnegative quadratic forms. Otherwise some linear combination of hidden feature vectors would have negative squared length, which is impossible.</p><p>Positive definiteness is therefore the algebraic checkpoint for kernel geometry. If the kernel is already an inner product in a feature space, the PSD condition follows by collecting the weighted feature vectors and taking a squared norm. The two-point example with $k(x,z)=1+xz$ shows the same test as a concrete Gram-matrix determinant.</p>",
+    "definition": "<p>A <b>positive-definite kernel</b> is a symmetric kernel whose every finite Gram matrix is positive semidefinite.</p><p>$$\\sum_i\\sum_j c_ic_jk(x_i,x_j)=c^TKc\\ge0.$$</p><p><b>Assumptions that matter:</b> the condition must hold for every finite set of inputs and every real coefficient vector $c$.</p>",
     "worked": {
       "problem": "For $k(x,z)=1+xz$ and points $1,2$, build the Gram matrix and check it is positive definite.",
       "skills": [
@@ -5064,33 +6100,33 @@
     "applications": [
       {
         "title": "SVM convexity",
-        "background": "Kernel SVM dual problems need PSD Gram matrices.",
-        "numbers": "A determinant $0.75>0$ with diagonal $1$ is safe for two points."
+        "background": "A positive semidefinite Gram matrix keeps the SVM quadratic program convex.",
+        "numbers": "determinant $0.75>0$ with diagonal $1$ is safe for two points."
       },
       {
-        "title": "Gaussian processes",
-        "background": "Covariance kernels must be PSD to define valid finite covariances.",
-        "numbers": "Covariance $0.8$ with variances $1,1$ has determinant $0.36>0$."
+        "title": "GP covariance",
+        "background": "A valid covariance matrix must be PSD.",
+        "numbers": "covariance $0.8$ with unit variances has determinant $0.36>0$."
       },
       {
-        "title": "Similarity design",
-        "background": "PSD tests catch impossible similarities.",
-        "numbers": "Matrix $[[1,2],[2,1]]$ fails because $(1,-1)$ gives $-2$."
+        "title": "Bad similarity",
+        "background": "A similarity matrix with negative quadratic form cannot be a kernel Gram matrix.",
+        "numbers": "$[[1,2],[2,1]]$ gives $(1,-1)K(1,-1)^T=-2$."
       },
       {
-        "title": "Polynomial features",
-        "background": "Polynomial kernels compute expanded-feature dot products.",
+        "title": "Polynomial kernel",
+        "background": "Polynomial kernels compute inner products in lifted feature spaces.",
         "numbers": "$(1+2\\cdot3)^2=49$."
       },
       {
-        "title": "Kernel distances",
-        "background": "PSD kernels define squared feature distances.",
-        "numbers": "If $k(a,a)=k(b,b)=1$ and $k(a,b)=0.2$, distance squared is $1.6$."
+        "title": "Kernel distance",
+        "background": "Kernel diagonals and cross values determine hidden feature distance.",
+        "numbers": "if diagonals are $1$ and cross value $0.2$, squared distance is $1.6$."
       },
       {
-        "title": "Numerical repair",
-        "background": "Tiny negative eigenvalues can be clipped to restore PSD.",
-        "numbers": "Changing eigenvalue $-0.001$ to $0$ changes trace by $0.001$."
+        "title": "PSD repair",
+        "background": "Clipping a small negative eigenvalue repairs a nearly PSD matrix.",
+        "numbers": "clipping eigenvalue $-0.001$ to $0$ changes trace by $0.001$."
       }
     ],
     "applicationsClose": "Positive definiteness is the trust contract that lets similarities become geometry.",
@@ -5099,6 +6135,71 @@
       "The test is $c^T K c\\ge0$ for all coefficient vectors.",
       "Inner-product kernels are automatically PSD.",
       "SVMs, Gaussian processes, and kernel PCA depend on PSD kernels."
+    ],
+    "connectionsProse": "<p>RKHS theory needs kernels that can act like inner products. This lesson gives the finite consistency test: every Gram matrix built from the kernel must be positive semidefinite. That condition ensures that finite collections of kernel values describe possible geometry rather than contradictory similarities. Mercer expansions and kernel methods rely on this positivity throughout.</p>",
+    "symbols": [
+      {
+        "sym": "$k$",
+        "desc": "a symmetric kernel"
+      },
+      {
+        "sym": "$x_i$",
+        "desc": "sample inputs"
+      },
+      {
+        "sym": "$c_i$",
+        "desc": "real coefficients"
+      },
+      {
+        "sym": "$K_{ij}=k(x_i,x_j)$",
+        "desc": "the Gram matrix"
+      },
+      {
+        "sym": "PSD",
+        "desc": "$c^TKc\\ge0$ for all $c$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume a feature inner product",
+        "result": "$k(x,z)=\\langle\\Phi(x),\\Phi(z)\\rangle$",
+        "why": "the kernel is a hidden feature inner product"
+      },
+      {
+        "do": "Form the PSD test sum",
+        "result": "$\\sum_i\\sum_j c_ic_jk(x_i,x_j)$",
+        "why": "PSD tests all finite coefficients"
+      },
+      {
+        "do": "Substitute the feature inner product",
+        "result": "$\\sum_i\\sum_j c_ic_j\\langle\\Phi(x_i),\\Phi(x_j)\\rangle$",
+        "why": "replace $k$ by its feature representation"
+      },
+      {
+        "do": "Move sums inside",
+        "result": "$\\langle\\sum_i c_i\\Phi(x_i),\\sum_j c_j\\Phi(x_j)\\rangle$",
+        "why": "linearity of the inner product combines the weighted features"
+      },
+      {
+        "do": "Recognize a squared norm",
+        "result": "$\\|\\sum_i c_i\\Phi(x_i)\\|^2$",
+        "why": "the two summed vectors are the same"
+      },
+      {
+        "do": "Use nonnegativity",
+        "result": "$\\ge0$",
+        "why": "norms are nonnegative"
+      },
+      {
+        "do": "Conclude positivity",
+        "result": "every feature inner-product kernel is positive semidefinite",
+        "why": "all finite coefficient tests pass"
+      },
+      {
+        "do": "Check a concrete Gram matrix",
+        "result": "for $k(x,z)=1+xz$ at $1,2$, $K=\\begin{pmatrix}2&3\\3&5\\end{pmatrix}$ with determinant $1>0$",
+        "why": "the two-point test is positive"
+      }
     ],
     "prereqs": [
       "math-05-18"
@@ -5126,8 +6227,8 @@
         "RKHS"
       ]
     },
-    "motivation": "<p>A kernel can feel like a black box. Mercer's theorem opens it by showing that nice kernels decompose into orthogonal modes.</p><p>It is the kernel version of diagonalizing a symmetric positive matrix: similarities become weighted products of eigenfunctions.</p>",
-    "definition": "<p>For a continuous symmetric positive-definite kernel on a compact domain, the integral operator $(Tf)(x)=\\int k(x,z)f(z)\\,dz$ is compact, self-adjoint, and positive under standard hypotheses. Mercer's theorem gives $$k(x,z)=\\sum_{m=1}^{\\infty}\\lambda_m\\phi_m(x)\\phi_m(z),$$ with $\\lambda_m\\ge0$ and orthonormal eigenfunctions $\\phi_m$.</p><p><b>Assumptions that matter:</b> compact domain, continuity, symmetry, positive definiteness, and measure choices matter; convergence details depend on the theorem version; and the expansion generalizes PSD matrix diagonalization.</p>",
+    "motivation": "<p>Mercer's theorem explains how a positive kernel can be understood as a sum of independent modes. Each eigenfunction supplies a coordinate direction, and each nonnegative eigenvalue supplies its weight. The kernel value is then built by multiplying matching modal coordinates and summing them.</p><p>The feature-map interpretation comes from splitting each eigenvalue into square roots. Placing $\\sqrt{\\lambda_m}\\phi_m(x)$ into the $m$th coordinate makes the kernel equal to an ordinary inner product in feature space. This is the bridge between spectral analysis of kernel operators and the computational feature viewpoint used in learning algorithms.</p>",
+    "definition": "<p><b>Mercer's theorem</b> decomposes a suitable positive kernel into nonnegative eigenvalue weights and orthonormal eigenfunctions, giving a feature inner product.</p><p>$$k(x,z)=\\sum_m\\lambda_m\\phi_m(x)\\phi_m(z)=\\langle\\Phi(x),\\Phi(z)\\rangle.$$</p><p><b>Assumptions that matter:</b> compactness, positivity, and regularity assumptions supply the spectral expansion and ensure $\\lambda_m\\ge0$.</p>",
     "worked": {
       "problem": "Given $k(x,z)=4\\phi_1(x)\\phi_1(z)+\\phi_2(x)\\phi_2(z)$, with $\\phi_1(a)=0.5$, $\\phi_1(b)=1$, $\\phi_2(a)=2$, $\\phi_2(b)=-1$, compute $k(a,b)$.",
       "skills": [
@@ -5327,33 +6428,33 @@
     "applications": [
       {
         "title": "Kernel PCA",
-        "background": "Mercer eigenfunctions are population kernel PCA directions.",
-        "numbers": "Eigenvalues $5,2,0.5$ give first share $5/7.5=66.7\\%$."
+        "background": "Kernel PCA variance shares come from kernel eigenvalues.",
+        "numbers": "eigenvalues $5,2,0.5$ give first share $5/7.5=66.7\\%$."
       },
       {
-        "title": "Gaussian processes",
-        "background": "Mercer modes describe covariance structure.",
-        "numbers": "Eigenvalue $4$ corresponds to mode standard deviation $2$."
+        "title": "GP modes",
+        "background": "A Gaussian-process eigenvalue gives variance in one mode.",
+        "numbers": "eigenvalue $4$ gives mode standard deviation $2$."
       },
       {
-        "title": "Low-rank kernels",
-        "background": "Nyström methods keep leading spectral mass.",
-        "numbers": "Keeping $10$ and $3$ out of total $14$ preserves $92.9\\%$."
+        "title": "Nyström low rank",
+        "background": "Low-rank kernel approximation preserves leading spectral mass.",
+        "numbers": "keeping $10$ and $3$ out of total $14$ preserves $92.9\\%$."
       },
       {
-        "title": "Smoothing splines",
-        "background": "Smooth kernels often have fast eigenvalue decay.",
-        "numbers": "Values $1,1/4,1/9$ make the third mode $11.1\\%$ of the first."
+        "title": "Smoothing decay",
+        "background": "Smoothing kernels often have decaying eigenvalues.",
+        "numbers": "$1/9$ is $11.1\\%$ of the first eigenvalue $1$."
       },
       {
         "title": "Effective dimension",
-        "background": "Learning is easier when only a few eigenvalues are large.",
-        "numbers": "If $20$ of $1000$ eigenvalues exceed $0.01$, active dimension is near $20$."
+        "background": "Counting eigenvalues above a threshold estimates active dimension.",
+        "numbers": "$20$ eigenvalues above $0.01$ among $1000$ gives active dimension near $20$."
       },
       {
         "title": "Spectral denoising",
-        "background": "Small eigenvalue components can be filtered out.",
-        "numbers": "Dropping a $0.03$ mode removes only $0.03$ variance contribution."
+        "background": "Dropping a small eigenmode removes its variance contribution.",
+        "numbers": "dropping a $0.03$ eigenmode removes $0.03$ variance contribution."
       }
     ],
     "applicationsClose": "Mercer's theorem is spectral geometry for kernels: similarity decomposes into weighted orthogonal modes.",
@@ -5362,6 +6463,71 @@
       "The expansion generalizes PSD matrix diagonalization.",
       "Large eigenvalues mark dominant kernel features.",
       "Low-rank kernel approximations keep leading components."
+    ],
+    "connectionsProse": "<p>Positive kernels have finite Gram matrices with valid geometry, and Mercer gives the corresponding infinite-dimensional spectral picture under suitable assumptions. The theorem decomposes a well-behaved positive kernel into orthonormal eigenfunctions with nonnegative weights. This mirrors the spectral theorem for positive symmetric matrices. Kernel PCA, Gaussian processes, Nyström approximation, and RKHS feature maps all use this modal viewpoint.</p>",
+    "symbols": [
+      {
+        "sym": "$T$",
+        "desc": "the integral operator"
+      },
+      {
+        "sym": "$\\lambda_m$",
+        "desc": "nonnegative eigenvalues"
+      },
+      {
+        "sym": "$\\phi_m$",
+        "desc": "orthonormal eigenfunctions"
+      },
+      {
+        "sym": "$\\Phi$",
+        "desc": "the Mercer feature map"
+      },
+      {
+        "sym": "compactness and positivity",
+        "desc": "conditions that supply the spectral expansion"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with Mercer's expansion",
+        "result": "$k(x,z)=\\sum_m\\lambda_m\\phi_m(x)\\phi_m(z)$",
+        "why": "Mercer provides eigenvalues and eigenfunctions"
+      },
+      {
+        "do": "Note positivity",
+        "result": "$\\lambda_m\\ge0$",
+        "why": "the kernel operator is positive"
+      },
+      {
+        "do": "Define feature coordinates",
+        "result": "$\\Phi_m(x)=\\sqrt{\\lambda_m}\\phi_m(x)$",
+        "why": "square roots split the weight evenly"
+      },
+      {
+        "do": "Compute feature inner product",
+        "result": "$\\langle\\Phi(x),\\Phi(z)\\rangle=\\sum_m\\Phi_m(x)\\Phi_m(z)$",
+        "why": "ordinary coordinate inner product sums coordinate products"
+      },
+      {
+        "do": "Substitute coordinates",
+        "result": "$\\sum_m\\sqrt{\\lambda_m}\\phi_m(x)\\sqrt{\\lambda_m}\\phi_m(z)$",
+        "why": "replace each feature coordinate"
+      },
+      {
+        "do": "Multiply square roots",
+        "result": "$\\sum_m\\lambda_m\\phi_m(x)\\phi_m(z)$",
+        "why": "this recovers the Mercer weights"
+      },
+      {
+        "do": "Conclude kernel equality",
+        "result": "$k(x,z)=\\langle\\Phi(x),\\Phi(z)\\rangle$",
+        "why": "the sums match"
+      },
+      {
+        "do": "Compute the example",
+        "result": "$4(0.5)(1)+1(2)(-1)=2-2=0$",
+        "why": "modal contributions can cancel"
+      }
     ],
     "prereqs": [
       "math-05-19"
@@ -5389,8 +6555,8 @@
         "orthogonal projection"
       ]
     },
-    "motivation": "<p>Linear models are trainable and understandable, but raw data often need nonlinear boundaries. Kernels give us nonlinear feature spaces while keeping the computations in similarities.</p><p>The <b>kernel trick</b> computes hidden feature dot products with $k(x,z)$. The <b>representer theorem</b> says many regularized learners only need kernels centered at training points.</p>",
-    "definition": "<p>If $k(x,z)=\\langle\\Phi(x),\\Phi(z)\\rangle$, the <b>kernel trick</b> replaces feature-space dot products by kernel evaluations. The <b>representer theorem</b> says that for many objectives consisting of training loss plus a nondecreasing penalty in $\\|f\\|_{\\mathcal{H}}$, a minimizer has $$f(x)=\\sum_{i=1}^n\\alpha_i k(x_i,x).$$ Learning becomes solving for coefficients using the Gram matrix $K_{ij}=k(x_i,x_j)$.</p><p><b>Assumptions that matter:</b> $k$ must be positive definite, the regularizer must depend appropriately on the RKHS norm, and the $n\\times n$ Gram matrix can be expensive for large $n$.</p>",
+    "motivation": "<p>The kernel trick uses kernel values to compute feature-space inner products without explicitly constructing the feature vectors. That handles the computational side, but regularized learning also needs a structural reason that finitely many training examples are enough. The representer theorem gives that reason.</p><p>Training losses depend on $f$ only through values at the training inputs. Any component of $f$ orthogonal to the span of the training kernel sections is invisible to those values, while it can only increase the RKHS norm. Removing that component cannot worsen a nondecreasing norm regularizer, so a minimizer can be written with one coefficient per training example.</p>",
+    "definition": "<p>The <b>kernel trick</b> computes feature-space inner products through $k$, and the <b>representer theorem</b> says regularized empirical minimizers can be chosen in the span of training kernel sections.</p><p>$$f(x)=\\sum_i\\alpha_i k(x_i,x).$$</p><p><b>Assumptions that matter:</b> losses depend on $f$ only through training values, the regularizer is nondecreasing in $\\|f\\|$, and the RKHS projection onto the training span is available.</p>",
     "worked": {
       "problem": "Kernel ridge regression uses $\\alpha=(K+\\lambda I)^{-1}y$. For $x_1=0$, $x_2=2$, $k(x,z)=1+xz$, $y=(1,3)$, and $\\lambda=1$, compute $\\alpha$ and $f(1)$.",
       "skills": [
@@ -5604,39 +6770,34 @@
     ],
     "applications": [
       {
-        "title": "Kernel ridge regression",
-        "background": "The representer theorem turns function learning into solving for $n$ coefficients.",
-        "numbers": "With $500$ examples, the Gram matrix has $500^2=250000$ entries."
+        "title": "KRR size",
+        "background": "Kernel ridge regression stores and solves with the Gram matrix.",
+        "numbers": "$500$ examples require $500^2=250000$ Gram entries."
       },
       {
-        "title": "Support vector machines",
-        "background": "SVM predictions use kernels against support vectors.",
-        "numbers": "If $80$ of $1000$ examples are support vectors, prediction needs $80$ kernel evaluations."
+        "title": "SVM prediction",
+        "background": "An SVM prediction sums kernels over support vectors.",
+        "numbers": "$80$ support vectors require $80$ kernel evaluations per example."
       },
       {
-        "title": "Nonlinear classification",
-        "background": "Polynomial kernels create nonlinear boundaries through linear algebra.",
-        "numbers": "For $k(x,z)=(1+xz)^2$, points $2$ and $3$ have similarity $49$ instead of linear similarity $6$."
+        "title": "Polynomial trick",
+        "background": "A polynomial kernel avoids explicitly building polynomial features.",
+        "numbers": "$k(2,3)=(1+2\\cdot3)^2=49$ instead of explicit features."
       },
       {
         "title": "RBF similarity",
-        "background": "Gaussian kernels make nearby points much more similar than far points.",
-        "numbers": "With distance $2$, $e^{-2}\\approx0.135$ for $k=e^{-\\|x-z\\|^2/2}$."
+        "background": "An RBF kernel turns squared distance into similarity.",
+        "numbers": "distance $2$ gives $e^{-2}=0.135$ for $k=e^{-\\|x-z\\|^2/2}$."
       },
       {
         "title": "Kernel PCA",
-        "background": "Kernel PCA replaces dot products by Gram entries.",
-        "numbers": "Eigenvalues $6,2,1$ give first component share $6/9=66.7\\%$."
+        "background": "Kernel PCA uses Gram-matrix eigenvalues for variance share.",
+        "numbers": "eigenvalues $6,2,1$ give first share $6/9=66.7\\%$."
       },
       {
-        "title": "Gaussian processes",
-        "background": "GP posterior means are weighted kernel similarities.",
-        "numbers": "Weights $(0.4,-0.1)$ and similarities $(0.8,0.3)$ give mean $0.32-0.03=0.29$."
-      },
-      {
-        "title": "Scaling limits",
-        "background": "Kernel methods can be memory-heavy because Gram matrices grow quadratically.",
-        "numbers": "$10000$ examples require $100000000$ entries, about $800$ MB at $8$ bytes each."
+        "title": "GP posterior mean",
+        "background": "A GP posterior mean is a weighted sum of kernel similarities.",
+        "numbers": "weights $(0.4,-0.1)$ and similarities $(0.8,0.3)$ give $0.32-0.03=0.29$."
       }
     ],
     "applicationsClose": "The kernel trick and representer theorem make rich nonlinear learning finite: similarities in, coefficients out.",
@@ -5645,6 +6806,80 @@
       "The representer theorem gives $f(x)=\\sum_i\\alpha_i k(x_i,x)$ for many regularized learners.",
       "Positive-definite kernels are required for valid geometry.",
       "Kernel power comes with quadratic Gram-matrix scaling."
+    ],
+    "connectionsProse": "<p>This capstone lesson ties the RKHS sequence to practical kernel learning. Positive kernels supply valid inner products, RKHS theory supplies point evaluation by kernel sections, and the representer theorem explains why regularized solutions live in a finite span of training sections. The result is that many infinite-dimensional learning problems reduce to Gram matrices and coefficient vectors. Kernel ridge regression and SVM prediction are standard examples of this reduction.</p>",
+    "symbols": [
+      {
+        "sym": "$\\Phi$",
+        "desc": "a feature map"
+      },
+      {
+        "sym": "$k(x,z)=\\langle\\Phi(x),\\Phi(z)\\rangle$",
+        "desc": "the kernel inner product"
+      },
+      {
+        "sym": "$K$",
+        "desc": "the Gram matrix"
+      },
+      {
+        "sym": "$\\alpha_i$",
+        "desc": "learned coefficients"
+      },
+      {
+        "sym": "$\\lambda$",
+        "desc": "ridge strength"
+      },
+      {
+        "sym": "$M$",
+        "desc": "the span of training kernel sections"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define the training span",
+        "result": "$M=\\operatorname{span}\\{k_{x_1},\\ldots,k_{x_n}\\}$",
+        "why": "training losses only evaluate $f$ at training points"
+      },
+      {
+        "do": "Decompose any function",
+        "result": "$f=f_M+f_\\perp$ with $f_M\\in M$ and $f_\\perp\\perp M$",
+        "why": "Hilbert projection"
+      },
+      {
+        "do": "Evaluate the perpendicular part",
+        "result": "$f_\\perp(x_i)=\\langle f_\\perp,k_{x_i}\\rangle=0$",
+        "why": "$k_{x_i}\\in M$"
+      },
+      {
+        "do": "Preserve training values",
+        "result": "$f(x_i)=f_M(x_i)$ for every training input",
+        "why": "the perpendicular part is invisible to the loss"
+      },
+      {
+        "do": "Use Pythagoras",
+        "result": "$\\|f\\|^2=\\|f_M\\|^2+\\|f_\\perp\\|^2\\ge\\|f_M\\|^2$",
+        "why": "orthogonal norm squares add"
+      },
+      {
+        "do": "Remove the perpendicular part",
+        "result": "the objective cannot get worse",
+        "why": "the regularizer is nondecreasing in $\\|f\\|$"
+      },
+      {
+        "do": "Conclude finite representation",
+        "result": "$f(x)=\\sum_i\\alpha_i k(x_i,x)$",
+        "why": "a minimizer lies in the training span"
+      },
+      {
+        "do": "Solve the KRR system",
+        "result": "for $x_1=0,x_2=2,k=1+xz,y=(1,3),\\lambda=1$, $K=\\begin{pmatrix}1&1\\1&5\\end{pmatrix}$ and $(K+I)\\alpha=y$ gives $\\alpha=(3/11,5/11)$",
+        "why": "kernel ridge regression reduces to a Gram-matrix linear system"
+      },
+      {
+        "do": "Predict at $1$",
+        "result": "$f(1)=\\frac3{11}k(0,1)+\\frac5{11}k(2,1)=\\frac3{11}+\\frac{15}{11}=18/11\\approx1.636$",
+        "why": "use the learned coefficient representation"
+      }
     ],
     "prereqs": [
       "math-05-20"

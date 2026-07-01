@@ -28,8 +28,8 @@
         "proof methods"
       ]
     },
-    "motivation": "<p>You already make logical decisions every day: if it is raining and you have to walk, take an umbrella. The words if, and, or, and not carry structure that can be studied without knowing anything about weather.</p><p><b>Propositional logic</b> keeps the statements simple and studies how their truth values combine. That small discipline pays off later when code branches, proofs, database filters, and ML rules all need conditions that mean exactly what we think they mean.</p>",
-    "definition": "<p>A <b>proposition</b> is a statement that is either true or false. If $p$ and $q$ are propositions, then $\\neg p$ means not $p$, $p\\land q$ means both are true, $p\\lor q$ means at least one is true, $p\\to q$ means if $p$ then $q$, and $p\\leftrightarrow q$ means they have the same truth value.</p><p>The conditional $p\\to q$ is false only when $p$ is true and $q$ is false. One way to see the equivalence $p\\to q\\equiv \\neg p\\lor q$ is to check the four rows: only the row $p=T,q=F$ makes both expressions false; all other rows are true.</p><p><b>Assumptions that matter:</b> each proposition has exactly one truth value in the situation being analyzed; $\\lor$ is inclusive or unless stated otherwise; and logical equivalence means two formulas have the same truth value in every possible assignment.</p>",
+    "motivation": "<p>Propositional logic studies whole statements that are either true or false. Instead of looking inside a sentence, it treats a proposition such as “the score passes the threshold” as one unit and then studies how compound statements behave. This lets a reader reason exactly about combinations like “passes score and passes policy” or “not disabled and eligible.”</p><p>The important point is that logical connectives have fixed meanings. Inclusive OR is true when either side is true, AND requires both sides, and a conditional fails only when a true assumption leads to a false conclusion. Truth tables make those meanings visible by checking every possible assignment, so two formulas are equivalent only when their columns match in every row.</p>",
+    "definition": "<p>Propositional logic studies propositions and compound formulas through truth values. A central equivalence is $$p\\to q\\equiv\\neg p\\lor q$$.</p><p><b>Assumptions that matter:</b> $p$ and $q$ are propositions with definite truth values, $\\lor$ is inclusive OR, and equivalence means matching truth values in every truth-table row.</p>",
     "worked": {
       "problem": "Build the truth table for $(p\\to q)\\land p$ and decide whether it logically implies $q$.",
       "skills": [
@@ -229,33 +229,33 @@
     "applications": [
       {
         "title": "Program branches",
-        "background": "Programming languages inherited Boolean logic from mathematical logic. Every if statement evaluates a proposition before choosing a path.",
-        "numbers": "If $p$ is user authenticated and $q$ is quota remaining, then $p\\land q$ is true for $(T,T)$ and false for $(T,F),(F,T),(F,F)$."
+        "background": "Boolean flags enumerate branch rows.",
+        "numbers": "three Boolean flags give $2^3=8$ possible branch rows."
       },
       {
         "title": "Database filters",
-        "background": "Query systems use logical connectives to filter rows. A small mistake in and versus or can change many results.",
-        "numbers": "For 1000 rows, suppose 300 satisfy $p$, 200 satisfy $q$, and 80 satisfy both. The inclusive-or count is $300+200-80=420$."
+        "background": "Inclusive OR combines overlapping filters without double-counting.",
+        "numbers": "300 rows satisfy $p$, 200 satisfy $q$, 80 satisfy both, so inclusive OR returns $300+200-80=420$."
       },
       {
         "title": "Circuit gates",
-        "background": "Digital circuits implement logic physically. AND, OR, and NOT gates are propositions made out of voltage levels.",
-        "numbers": "An AND gate with inputs $1$ and $0$ outputs $0$; an OR gate on the same inputs outputs $1$."
+        "background": "Gate outputs follow fixed truth-table meanings.",
+        "numbers": "inputs $(1,0)$ give AND output $0$ and OR output $1$."
       },
       {
-        "title": "Rule-based alerts",
-        "background": "Monitoring systems combine conditions to avoid noisy pages. Logic states exactly when an alert should fire.",
-        "numbers": "If error rate high is $T$, traffic high is $T$, and maintenance is $F$, then $T\\land T\\land\\neg F=T$."
+        "title": "Rule alerts",
+        "background": "Compound alert rules can be evaluated exactly.",
+        "numbers": "$T\\land T\\land\\neg F=T$, so the alert fires."
       },
       {
         "title": "Feature flags",
-        "background": "Large systems often enable features only when several safety propositions hold. Logic keeps rollout criteria auditable.",
-        "numbers": "If eligible users are 20 percent of 50,000 users and kill switch is false, then about $0.20\\cdot50000=10000$ users can see the feature."
+        "background": "Eligibility and kill-switch logic determines exposure.",
+        "numbers": "20 percent of 50,000 eligible users gives $0.20\\cdot50000=10000$ users when the kill switch is false."
       },
       {
-        "title": "ML decision rules",
-        "background": "Even learned systems often end with logical gates, such as thresholds and policy checks. The learned score is numeric, but the release rule is Boolean.",
-        "numbers": "If score above $0.8$ is $T$ for 120 items and policy pass is $T$ for 100 of those, an AND rule selects 100 items."
+        "title": "ML release rule",
+        "background": "A conjunction requires every release condition to pass.",
+        "numbers": "if 120 items pass score and 100 of those pass policy, an AND release rule selects 100 items."
       }
     ],
     "applicationsClose": "Propositional logic is the small grammar behind precise decisions in proofs, programs, circuits, and deployed models.",
@@ -264,6 +264,64 @@
       "$\\neg$, $\\land$, $\\lor$, $\\to$, and $\\leftrightarrow$ combine propositions in defined ways.",
       "$p\\to q$ is false only when $p$ is true and $q$ is false.",
       "Truth tables prove equivalence and implication by checking every assignment."
+    ],
+    "connectionsProse": "<p>This lesson begins with the smallest units of discrete reasoning: statements that have definite truth values. Students who have seen program conditions, filters, or simple algebraic claims already know the habit of deciding whether a condition holds. Propositional logic gives that habit precise symbols for not, and, or, if-then, and if-and-only-if. It prepares the reader for predicate logic, Boolean algebra, proof methods, database filters, and rule-based ML system checks.</p>",
+    "symbols": [
+      {
+        "sym": "$p,q$",
+        "desc": "propositions"
+      },
+      {
+        "sym": "$T,F$",
+        "desc": "truth values"
+      },
+      {
+        "sym": "$\\neg$",
+        "desc": "not"
+      },
+      {
+        "sym": "$\\land$",
+        "desc": "and"
+      },
+      {
+        "sym": "$\\lor$",
+        "desc": "inclusive or"
+      },
+      {
+        "sym": "$\\to$",
+        "desc": "conditional"
+      },
+      {
+        "sym": "$\\equiv$",
+        "desc": "same truth value in every row"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "List four assignments",
+        "result": "$(T,T),(T,F),(F,T),(F,F)$",
+        "why": "two propositions give $2^2=4$ rows"
+      },
+      {
+        "do": "Evaluate the conditional",
+        "result": "$p\\to q$ is $T,F,T,T$",
+        "why": "only true antecedent and false consequent breaks a conditional"
+      },
+      {
+        "do": "Evaluate the negation",
+        "result": "$\\neg p$ is $F,F,T,T$",
+        "why": "negation flips $p$"
+      },
+      {
+        "do": "Evaluate the OR formula",
+        "result": "$\\neg p\\lor q$ is $T,F,T,T$",
+        "why": "OR is true when either side is true"
+      },
+      {
+        "do": "Compare the columns row by row",
+        "result": "$p\\to q\\equiv\\neg p\\lor q$",
+        "why": "the columns match in every row"
+      }
     ]
   });
 
@@ -289,8 +347,8 @@
         "functions"
       ]
     },
-    "motivation": "<p>Propositional logic treats a sentence as one block. But mathematics often needs a sentence with a variable: $x$ is even, $n$ is prime, user $u$ clicked item $i$. The truth depends on which object you plug in.</p><p><b>Predicate logic</b> adds variables and quantifiers, so we can say all, some, or none with care. This is the language of definitions, database queries, correctness statements, and many ML data conditions.</p>",
-    "definition": "<p>A <b>predicate</b> $P(x)$ is a statement whose truth depends on the object $x$ from a specified <b>domain</b>. The universal statement $\\forall x\\,P(x)$ means $P(x)$ is true for every $x$ in the domain. The existential statement $\\exists x\\,P(x)$ means at least one domain element makes $P(x)$ true.</p><p>Negation swaps the quantifier and negates the predicate: $\\neg\\forall x\\,P(x)\\equiv\\exists x\\,\\neg P(x)$ and $\\neg\\exists x\\,P(x)\\equiv\\forall x\\,\\neg P(x)$. This follows because one counterexample disproves an all-statement, while disproving existence means every possible example fails.</p><p><b>Assumptions that matter:</b> the domain must be stated or understood; the order of mixed quantifiers matters; and a witness for $\\exists$ is one concrete object that makes the predicate true.</p>",
+    "motivation": "<p>Predicate logic lets a statement depend on an object from a domain. Instead of saying only “the row is valid,” it can say $P(r)$, meaning row $r$ has the property $P$. Quantifiers then describe how widely the property holds: every row has it, some row has it, or no row has it.</p><p>The load-bearing habit is to separate the domain, the predicate, and the quantifier. An existential claim needs one witness that makes the statement true. A universal claim needs every domain element to pass, so one counterexample is enough to refute it. This exact language prevents vague statements such as “the model works on the data” from hiding which objects and which conditions are being claimed.</p>",
+    "definition": "<p>Predicate logic studies statements such as $P(x)$ whose truth depends on an object $x$ from a stated domain, together with quantified claims such as $\\forall xP(x)$ and $\\exists xP(x)$.</p><p><b>Assumptions that matter:</b> The domain must be stated, a witness makes an existential claim true, and a single counterexample refutes a universal claim.</p>",
     "worked": {
       "problem": "Let the domain be $\\{1,2,3,4\\}$ and let $P(x)$ mean $x^2<10$. Evaluate $\\forall x\\,P(x)$ and $\\exists x\\,\\neg P(x)$.",
       "skills": [
@@ -495,33 +553,33 @@
     "applications": [
       {
         "title": "Database queries",
-        "background": "Predicate logic is the mathematical ancestor of query languages. A WHERE clause is a predicate evaluated on each row.",
-        "numbers": "If 10,000 rows are checked and 420 satisfy $P(r)$, then $\\exists r\\,P(r)$ is true and $\\forall r\\,P(r)$ is false unless 420 equals 10,000."
+        "background": "A nonempty satisfying set proves an existential claim but not a universal one.",
+        "numbers": "420 of 10,000 rows satisfy $P(r)$, so $\\exists rP(r)$ is true and $\\forall rP(r)$ is false."
       },
       {
-        "title": "Type and contract checking",
-        "background": "Software contracts often say every input satisfying a precondition produces an output satisfying a postcondition.",
-        "numbers": "If 200 tests satisfy the precondition and 199 satisfy the postcondition, the universal tested claim has 1 observed counterexample."
+        "title": "Contracts",
+        "background": "A postcondition claim is tested on precondition-satisfying cases.",
+        "numbers": "200 precondition-satisfying tests with 199 postcondition passes give 1 observed counterexample."
       },
       {
         "title": "Data validation",
-        "background": "ML pipelines use predicates to state schema rules before training. This prevents silent garbage from entering a model.",
-        "numbers": "For predicate $0\\le x\\le1$, values $0.2,0.9,1.3$ give two passes and one counterexample."
+        "background": "Universal range claims fail when one value lies outside the allowed interval.",
+        "numbers": "values $0.2,0.9,1.3$ under $0\\le x\\le1$ give two passes and one counterexample."
       },
       {
         "title": "Graph properties",
-        "background": "Relations on nodes are described with quantifiers. Connectivity and reachability both use there exists a path language.",
-        "numbers": "In a 5-node graph, the claim every node has degree at least 2 requires checking 5 degrees; degrees $2,3,2,1,4$ disprove it."
+        "background": "A degree condition over all nodes is a universal statement.",
+        "numbers": "degrees $2,3,2,1,4$ disprove “every degree is at least 2” by one node."
       },
       {
         "title": "Fairness statements",
-        "background": "Fairness constraints often quantify over groups or individuals. The domain must be explicit to avoid vague promises.",
-        "numbers": "If 4 groups have selection rates $0.51,0.50,0.49,0.52$, the predicate rate at least $0.50$ fails for one group."
+        "background": "Quantified guarantees must name every group under consideration.",
+        "numbers": "group rates $0.51,0.50,0.49,0.52$ give one group below 0.50."
       },
       {
         "title": "Optimization guarantees",
-        "background": "Mathematical ML uses quantified claims such as every gradient step decreases loss under assumptions. The assumptions define the domain.",
-        "numbers": "If $L$ drops on 8 of 10 tested steps, that supports but does not prove $\\forall t, L_{t+1}<L_t$; two failures refute it for those steps."
+        "background": "A universal tested claim fails on every step where the promised drop is absent.",
+        "numbers": "if loss drops on 8 of 10 tested steps, the universal tested claim has 2 failures."
       }
     ],
     "applicationsClose": "Predicate logic is how mathematics says every, some, and none without leaving the domain or witness ambiguous.",
@@ -530,6 +588,33 @@
       "$\\forall$ means every domain element; $\\exists$ means at least one witness.",
       "Negating a quantified statement swaps $\\forall$ with $\\exists$ and negates the predicate.",
       "The order of mixed quantifiers can change the meaning."
+    ],
+    "connectionsProse": "<p>This lesson extends propositional logic by allowing statements to depend on objects. A proposition says that a whole sentence is true or false, while a predicate becomes true or false after an object from a domain is supplied. This is the language behind database checks, validation rules, graph properties, and mathematical claims about all examples or at least one example. It also prepares the reader for proof methods, relations, sets, and quantified ML guarantees.</p>",
+    "symbols": [
+      {
+        "sym": "$P(x)$",
+        "desc": "predicate"
+      },
+      {
+        "sym": "$x$",
+        "desc": "domain element"
+      },
+      {
+        "sym": "$\\forall$",
+        "desc": "every"
+      },
+      {
+        "sym": "$\\exists$",
+        "desc": "at least one"
+      },
+      {
+        "sym": "$\\neg$",
+        "desc": "not"
+      },
+      {
+        "sym": "witness",
+        "desc": "an object making an existential claim true"
+      }
     ],
     "prereqs": [
       "math-14-01"
@@ -558,8 +643,8 @@
         "Cartesian products"
       ]
     },
-    "motivation": "<p>You already sort things into collections: clicked users, training examples, even numbers, tokens in a vocabulary. A set is the simplest careful version of that idea.</p><p>Once collections have names, we can ask what belongs, what overlaps, what is excluded, and how many possibilities remain. That is the start of both discrete math and practical data reasoning.</p>",
-    "definition": "<p>A <b>set</b> is a collection of distinct objects called elements. We write $x\\in A$ when $x$ is in $A$. The union $A\\cup B$ contains elements in $A$ or $B$; the intersection $A\\cap B$ contains elements in both; the difference $A\\setminus B$ contains elements in $A$ but not $B$.</p><p>For finite sets, the inclusion-exclusion rule $|A\\cup B|=|A|+|B|-|A\\cap B|$ prevents double-counting. Adding $|A|$ and $|B|$ counts the overlap twice, so subtracting the intersection once leaves each element counted exactly once.</p><p><b>Assumptions that matter:</b> sets do not count duplicates; the universe determines complements; $\\subseteq$ allows equality; and cardinality $|A|$ means the number of distinct elements in a finite set.</p>",
+    "motivation": "<p>Sets are collections with distinct elements. They let data reasoning talk cleanly about membership, overlap, exclusion, and Cartesian products. Once a collection is treated as a set, asking whether an element belongs, whether two collections overlap, or how many distinct items remain becomes precise.</p><p>The main value is that set operations match common data tasks. A union merges sources, an intersection finds shared items, a difference removes exclusions, and a complement depends on a stated universe. Because duplicates are not counted as new elements, sets are especially useful for deduplication, coverage, leakage checks, and candidate generation.</p>",
+    "definition": "<p>A set is a collection of distinct elements. Set operations describe membership, overlap, removal, and complements, while finite cardinality counts distinct elements.</p><p><b>Assumptions that matter:</b> Duplicates do not create new set elements, and complements require a stated universe.</p>",
     "worked": {
       "problem": "Let $A=\\{1,2,3,5\\}$ and $B=\\{3,4,5,6\\}$. Find $A\\cup B$, $A\\cap B$, $A\\setminus B$, and $|A\\cup B|$.",
       "skills": [
@@ -759,34 +844,34 @@
     ],
     "applications": [
       {
-        "title": "Training and validation splits",
-        "background": "ML workflows separate examples into sets so evaluation is honest. Overlap between train and test can leak information.",
-        "numbers": "If train has 80,000 ids, test has 20,000 ids, and overlap is 50 ids, then the distinct total is $80000+20000-50=99950$."
+        "title": "Train/test leakage",
+        "background": "The union of train and test ids counts distinct ids after overlap is removed.",
+        "numbers": "train 80,000, test 20,000, overlap 50 gives $80000+20000-50=99950$ distinct ids."
       },
       {
-        "title": "Vocabulary sets",
-        "background": "Natural language systems track sets of tokens. Comparing vocabularies reveals coverage and missing words.",
-        "numbers": "If vocabulary A has 12,000 tokens, B has 9,000, and overlap has 7,500, the union has $12000+9000-7500=13500$ tokens."
+        "title": "Vocabulary coverage",
+        "background": "Two token vocabularies combine by union and share by intersection.",
+        "numbers": "12,000 and 9,000 token sets with 7,500 overlap have union 13,500."
       },
       {
         "title": "Recommendation candidates",
-        "background": "A recommender may union candidates from several retrieval systems before ranking them.",
-        "numbers": "If source A returns 100 items, source B returns 80, and 30 overlap, the union has $100+80-30=150$ items."
+        "background": "Candidate sources are deduplicated by set union.",
+        "numbers": "sources returning 100 and 80 with 30 overlap give 150 unique candidates."
       },
       {
-        "title": "Access-control groups",
-        "background": "Security policies often grant permissions by membership in groups. Sets make the policy auditable.",
-        "numbers": "If 25 engineers are in group A and 18 in group B with 5 in both, then 38 distinct people are in at least one group."
+        "title": "Access groups",
+        "background": "Membership in at least one group is a union.",
+        "numbers": "25 and 18 engineers with 5 in both give 38 people in at least one group."
       },
       {
         "title": "Image labels",
-        "background": "Multilabel datasets attach a set of labels to each example. Intersection measures shared concepts.",
-        "numbers": "For labels $\\{cat,indoor,pet\\}$ and $\\{dog,indoor,pet\\}$, intersection size is 2 and union size is 4."
+        "background": "Shared labels form an intersection and all distinct labels form a union.",
+        "numbers": "$\\{cat,indoor,pet\\}$ and $\\{dog,indoor,pet\\}$ have intersection size 2 and union size 4."
       },
       {
-        "title": "A/B experiment audiences",
-        "background": "Experiment platforms reason about sets of eligible users, excluded users, and assigned users.",
-        "numbers": "From 1,000,000 users, excluding a set of 40,000 leaves $960000$ eligible users if the exclusion set is fully inside the universe."
+        "title": "Experiment exclusions",
+        "background": "Removing excluded users is a set difference from the universe of users.",
+        "numbers": "from 1,000,000 users, excluding 40,000 leaves 960,000 eligible users."
       }
     ],
     "applicationsClose": "Sets are the quiet bookkeeping behind membership, overlap, exclusion, and finite counting.",
@@ -795,6 +880,33 @@
       "Union means in either set; intersection means in both; difference means in the first but not the second.",
       "For finite sets, $|A\\cup B|=|A|+|B|-|A\\cap B|$.",
       "Complements require a universe, and Cartesian products create ordered pairs."
+    ],
+    "connectionsProse": "<p>Sets give discrete mathematics a clean language for collections. The reader may already know lists or tables from programming, but sets focus on membership and distinct elements rather than order or repetition. This makes them the natural foundation for logic, relations, functions, inclusion-exclusion, probability events, and feature groups. Later counting lessons rely on set operations to say exactly which outcomes are being counted.</p>",
+    "symbols": [
+      {
+        "sym": "$x\\in A$",
+        "desc": "membership"
+      },
+      {
+        "sym": "$A\\cup B$",
+        "desc": "union"
+      },
+      {
+        "sym": "$A\\cap B$",
+        "desc": "intersection"
+      },
+      {
+        "sym": "$A\\setminus B$",
+        "desc": "difference"
+      },
+      {
+        "sym": "$A^c$",
+        "desc": "complement relative to a universe"
+      },
+      {
+        "sym": "$|A|$",
+        "desc": "finite cardinality"
+      }
     ],
     "prereqs": [
       "math-14-02"
@@ -823,8 +935,8 @@
         "directed graphs"
       ]
     },
-    "motivation": "<p>Many ideas are not single-object properties. User follows user, number divides number, point is near point, item is similar to item. Each sentence relates two objects.</p><p>A <b>relation</b> is the mathematical container for those pairwise connections. Once we name the pairs, we can test patterns like reflexive, symmetric, and transitive, which later become graph structure, equivalence classes, and database joins.</p>",
-    "definition": "<p>A <b>binary relation</b> from set $A$ to set $B$ is a subset $R\\subseteq A\\times B$. If $(a,b)\\in R$, we may write $aRb$. When $R$ is on one set $A$, it is a subset of $A\\times A$.</p><p>For a relation on $A$, <b>reflexive</b> means every $a\\in A$ has $(a,a)\\in R$; <b>symmetric</b> means $(a,b)\\in R$ implies $(b,a)\\in R$; <b>transitive</b> means $(a,b)$ and $(b,c)$ imply $(a,c)$. These definitions are just quantified statements over ordered pairs.</p><p><b>Assumptions that matter:</b> ordered pairs remember order; properties such as symmetry are checked relative to the chosen set; and absence of a pair is meaningful information.</p>",
+    "motivation": "<p>A relation records which ordered pairs are connected. In a database, the pair might be a user and a course; in a graph, it might be a source node and a target node; in a similarity system, it might be two items that pass a threshold. The relation is the set of pairs that actually hold, not the full list of possible pairs.</p><p>Many important properties are checked by looking for required pairs or missing counterexample pairs. Reflexive means every object relates to itself. Symmetric means a pair must be mirrored in the opposite direction. Transitive means a two-step connection forces the direct shortcut. These definitions are simple, but they are useful because they let finite structures be tested exactly.</p>",
+    "definition": "<p>A relation is a subset of a Cartesian product, so it records which ordered pairs are connected. Reflexive, symmetric, and transitive properties are definitions checked against required pairs.</p><p><b>Assumptions that matter:</b> The underlying sets must be stated, ordered pairs matter, and missing required pairs create counterexamples to relation properties.</p>",
     "worked": {
       "problem": "On $A=\\{1,2,3\\}$, let $R=\\{(1,1),(2,2),(3,3),(1,2),(2,1)\\}$. Decide whether $R$ is reflexive, symmetric, and transitive.",
       "skills": [
@@ -1033,34 +1145,34 @@
     ],
     "applications": [
       {
-        "title": "Social graphs",
-        "background": "Follow and friendship data are relations on users. Directed follow is not necessarily symmetric; friendship usually is designed to be symmetric.",
-        "numbers": "If user 1 follows 2 and 2 follows 3, transitivity would require 1 follows 3, which many social graphs do not require."
-      },
-      {
         "title": "Database joins",
-        "background": "A join table stores related pairs such as user enrolled in course. It is literally a finite relation.",
-        "numbers": "With 4 users and 3 courses, the Cartesian product has 12 possible pairs; a relation might store only 7 actual enrollments."
+        "background": "A join relation stores the user-course pairs that actually hold.",
+        "numbers": "4 users and 3 courses create 12 possible pairs; a relation may store 7 enrollments."
       },
       {
         "title": "Equivalence classes",
-        "background": "Relations that are reflexive, symmetric, and transitive group objects into classes. This is how equality-like behavior is generalized.",
-        "numbers": "Modulo 3 on $\\{0,1,2,3,4,5\\}$ creates classes $\\{0,3\\}$, $\\{1,4\\}$, and $\\{2,5\\}$."
+        "background": "A relation can group objects that are equivalent under a rule.",
+        "numbers": "modulo 3 on $\\{0,1,2,3,4,5\\}$ creates 3 classes of size 2."
       },
       {
-        "title": "Partial orders",
-        "background": "Relations like subset and divides organize objects without requiring every pair to be comparable.",
-        "numbers": "For sets $\\{1\\}$, $\\{1,2\\}$, and $\\{2\\}$, the first is subset of the second, but $\\{1\\}$ and $\\{2\\}$ are not comparable."
+        "title": "Dependency closure",
+        "background": "Reachability adds indirect dependency pairs to direct ones.",
+        "numbers": "10 direct dependencies plus 2 transitive-only dependencies give 12 total reachable dependencies."
       },
       {
-        "title": "Recommendation similarity",
-        "background": "Item-item similarity graphs are relations after thresholding scores. Graph algorithms then explore neighborhoods.",
-        "numbers": "If 10,000 item pairs are scored and 640 exceed threshold $0.85$, the relation contains 640 ordered or unordered links depending on design."
+        "title": "Similarity graphs",
+        "background": "Thresholded similar item pairs form a relation.",
+        "numbers": "10,000 scored item pairs with 640 above threshold give density $640/10000=0.064$."
       },
       {
-        "title": "Program dependencies",
-        "background": "Build systems use depends-on relations. Transitive closure tells which files must rebuild after a change.",
-        "numbers": "If A depends on B and B depends on C, then C is in A's transitive dependency chain even if A does not directly mention C."
+        "title": "A relation as a matrix",
+        "background": "A Boolean matrix can mark whether each ordered pair is present.",
+        "numbers": "a 5-by-5 Boolean relation has 25 possible entries."
+      },
+      {
+        "title": "Non-transitive similarity",
+        "background": "High pairwise similarity does not automatically satisfy transitivity.",
+        "numbers": "$s(A,B)=0.92$ and $s(B,C)=0.91$ pass a 0.9 threshold, but $s(A,C)=0.84$ fails, so one transitive shortcut is missing."
       }
     ],
     "applicationsClose": "Relations are pair bookkeeping; their properties explain patterns in graphs, data, order, and similarity.",
@@ -1069,6 +1181,33 @@
       "Reflexive means every element relates to itself.",
       "Symmetric means every pair comes with its reverse.",
       "Transitive means every two-step chain has the corresponding shortcut."
+    ],
+    "connectionsProse": "<p>Relations build directly on sets by selecting ordered pairs from a Cartesian product. Once the reader can talk about elements and membership, a relation simply records which pairs are connected. This language supports graph edges, joins, dependency links, similarity links, and ordering rules. It also leads naturally to functions, equivalence classes, partial orders, and lattice structure.</p>",
+    "symbols": [
+      {
+        "sym": "$R\\subseteq A\\times B$",
+        "desc": "relation"
+      },
+      {
+        "sym": "$(a,b)\\in R$",
+        "desc": "related pair"
+      },
+      {
+        "sym": "$aRb$",
+        "desc": "infix notation"
+      },
+      {
+        "sym": "reflexive",
+        "desc": "every element relates to itself"
+      },
+      {
+        "sym": "symmetric",
+        "desc": "each related pair is mirrored"
+      },
+      {
+        "sym": "transitive",
+        "desc": "two-step related pairs force the direct pair"
+      }
     ],
     "prereqs": [
       "math-14-03"
@@ -1097,8 +1236,8 @@
         "cardinality"
       ]
     },
-    "motivation": "<p>You met functions as formulas and graphs. Discrete math widens the picture: a function can map usernames to ids, states to next states, or feature vectors to labels. No formula is required.</p><p>The essential promise is still the same: each input in the domain gets exactly one output. That promise is what makes lookup, composition, inversion, and counting possible.</p>",
-    "definition": "<p>A <b>function</b> $f:A\\to B$ assigns every element $a\\in A$ exactly one element $f(a)\\in B$. As a relation, it is a subset of $A\\times B$ where each $a\\in A$ appears as the first coordinate in exactly one ordered pair.</p><p>The function is <b>injective</b> if different inputs have different outputs; <b>surjective</b> if every element of $B$ is hit by at least one input; and <b>bijective</b> if both hold. For finite sets with $|A|=m$ and $|B|=n$, the number of all functions $A\\to B$ is $n^m$ because each of $m$ inputs has $n$ independent output choices.</p><p><b>Assumptions that matter:</b> the codomain $B$ is part of the function data; every domain element must be assigned; and a many-to-one assignment may still be a function even though it is not injective.</p>",
+    "motivation": "<p>A function is a relation with one output for every input. The input side is the domain, and each domain element must be assigned a codomain element. Outputs may be shared unless the function is required to be injective, so many different inputs can map to the same label, bucket, or rounded value.</p><p>For finite sets, counting functions is a repeated-choice problem. Each input independently receives one of the available outputs. Because the same output can be reused, the number of choices does not shrink from one input to the next. Multiplying the same number of choices once per input gives the full count of possible assignments.</p>",
+    "definition": "<p>A function $f:A\\to B$ assigns exactly one codomain element to each domain element. If $|A|=m$ and $|B|=n$, the number of functions is $$n^m$$.</p><p><b>Assumptions that matter:</b> Every domain element must receive one output, outputs may be reused, and $A$ and $B$ are finite sets.</p>",
     "worked": {
       "problem": "Let $A=\\{1,2,3\\}$ and $B=\\{a,b,c\\}$. The relation $R=\\{(1,a),(2,a),(3,c)\\}$ is from $A$ to $B$. Is it a function? Is it injective or surjective?",
       "skills": [
@@ -1307,34 +1446,34 @@
     ],
     "applications": [
       {
-        "title": "Hash functions",
-        "background": "Hashing maps keys to buckets for fast lookup. Collisions mean the function is usually not injective.",
-        "numbers": "Mapping 1000 keys into 100 buckets cannot be injective because $1000>100$; at least one bucket receives multiple keys."
+        "title": "Binary classifiers",
+        "background": "A classifier on a finite input space is a function into labels.",
+        "numbers": "3 binary features give 8 inputs; with 2 labels, possible classifiers on that finite domain total $2^8=256$."
       },
       {
-        "title": "Classification models",
-        "background": "A classifier is a function from features to labels. The same label can be assigned to many examples.",
-        "numbers": "For 3 binary features there are $2^3=8$ possible inputs; with 2 labels, there are $2^8=256$ possible classifiers on that finite input set."
+        "title": "Hashing",
+        "background": "An injective hash assignment is impossible when keys outnumber buckets.",
+        "numbers": "mapping 1000 keys to 100 buckets cannot be injective because $1000>100$."
       },
       {
-        "title": "Embeddings",
-        "background": "An embedding function maps tokens or items into vectors. It need not be injective, though collisions can lose information.",
-        "numbers": "A vocabulary of 50,000 tokens mapped to 768-dimensional vectors assigns one vector per token, so 50,000 function values are stored or learned."
+        "title": "Transition tables",
+        "background": "A deterministic transition table chooses one next state per state-symbol pair.",
+        "numbers": "5 states and 3 symbols require $5\\cdot3=15$ function entries."
       },
       {
-        "title": "Database primary keys",
-        "background": "A primary-key lookup maps each key to one row. If keys are unique, the key-to-row map is injective into stored rows.",
-        "numbers": "If 20,000 keys return 20,000 distinct rows, no two keys share a row in that table."
+        "title": "Finite label functions",
+        "background": "Every example receives one label.",
+        "numbers": "4 examples into 3 labels give $3^4=81$ labelings."
       },
       {
-        "title": "State transitions",
-        "background": "Deterministic automata use transition functions: current state and input symbol determine exactly one next state.",
-        "numbers": "With 5 states and 3 input symbols, the transition table has $5\\cdot3=15$ entries."
+        "title": "Exactly two positives",
+        "background": "Binary label functions can be counted by total assignments or by selected positive positions.",
+        "numbers": "among 6 binary-labeled examples, all label functions total $2^6=64$, and exactly two positives total $\\binom62=15$."
       },
       {
-        "title": "Feature preprocessing",
-        "background": "Normalization maps raw feature values to transformed values. It may be invertible or may collapse information.",
-        "numbers": "Rounding ages to decades maps ages 21 and 29 both to 20, so the map is a function but not injective."
+        "title": "Rounding feature",
+        "background": "A deterministic transform may map different inputs to the same output.",
+        "numbers": "ages 21 and 29 both map to 20, giving a valid function that is not injective."
       }
     ],
     "applicationsClose": "The function promise, exactly one output per input, underlies lookup tables, models, transitions, and finite counting.",
@@ -1343,6 +1482,64 @@
       "Injective means no two inputs share an output; surjective means every codomain element is hit.",
       "A finite set of size $m$ mapping to a set of size $n$ has $n^m$ possible functions.",
       "Every function is a relation, but not every relation is a function."
+    ],
+    "connectionsProse": "<p>Functions are special relations, so this lesson follows naturally after sets and relations. A relation may connect one input to many outputs, but a function assigns exactly one output to each input. That restriction is the basis for transition tables, classifiers, hash maps, feature transformations, and deterministic rules. Counting finite functions also previews product-rule reasoning and hypothesis-space sizes.</p>",
+    "symbols": [
+      {
+        "sym": "$f:A\\to B$",
+        "desc": "function"
+      },
+      {
+        "sym": "$A$",
+        "desc": "domain"
+      },
+      {
+        "sym": "$B$",
+        "desc": "codomain"
+      },
+      {
+        "sym": "$f(a)$",
+        "desc": "output"
+      },
+      {
+        "sym": "injective",
+        "desc": "no shared outputs"
+      },
+      {
+        "sym": "surjective",
+        "desc": "every codomain element hit"
+      },
+      {
+        "sym": "$n^m$",
+        "desc": "all finite functions"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "List the domain elements",
+        "result": "$m$ inputs",
+        "why": "each must receive one output"
+      },
+      {
+        "do": "Choose an output for the first input",
+        "result": "$n$ choices",
+        "why": "any codomain element is allowed"
+      },
+      {
+        "do": "Repeat for each remaining input",
+        "result": "$n$ choices each time",
+        "why": "sharing outputs is allowed"
+      },
+      {
+        "do": "Multiply the independent choices",
+        "result": "$n\\cdot n\\cdots n$",
+        "why": "the product rule counts repeated choices"
+      },
+      {
+        "do": "Count the factors",
+        "result": "$n^m$",
+        "why": "there are $m$ domain elements"
+      }
     ],
     "prereqs": [
       "math-14-04"
@@ -1371,8 +1568,8 @@
         "divisibility"
       ]
     },
-    "motivation": "<p>Some claims come in an infinite row: one for $n=1$, one for $n=2$, one for $n=3$, and so on. Checking ten cases can build confidence, but it cannot check forever.</p><p><b>Proof by induction</b> is the domino method. Prove the first domino falls, then prove any falling domino knocks down the next one. Together, those two facts carry the claim through all positive integers.</p>",
-    "definition": "<p>To prove a statement $P(n)$ for all integers $n\\ge n_0$, induction has two parts. The <b>base case</b> proves $P(n_0)$. The <b>inductive step</b> assumes $P(k)$ for an arbitrary $k\\ge n_0$ and proves $P(k+1)$.</p><p>The logic works because the base case gives $P(n_0)$; the step then gives $P(n_0+1)$; applying the step again gives $P(n_0+2)$; and so on. The arbitrary $k$ is what makes one step reusable infinitely many times.</p><p><b>Assumptions that matter:</b> induction applies to well-ordered integer domains such as $n\\ge n_0$; the inductive hypothesis is assumed only for the chosen $k$ during the step; and the base case must match the claimed starting value.</p>",
+    "motivation": "<p>Induction proves infinitely many integer-indexed claims by proving the first case and a reusable next-step. The base case starts the chain at a known index. The inductive step says that whenever one link in the chain is true, the next link must also be true.</p><p>The important subtlety is that the inductive step is proved for an arbitrary index, not for one special number. That makes the step reusable. Once the base case is established, the step carries truth from the base case to the next case, then to the next, and so on. This is why induction is a natural proof language for recursive algorithms and loop invariants.</p>",
+    "definition": "<p>Proof by induction proves a family of statements $P(n)$ by proving a base case and a reusable step from $P(k)$ to $P(k+1)$.</p><p><b>Assumptions that matter:</b> The starting index must be stated, the base case must be proved, and the inductive step must work for an arbitrary valid $k$.</p>",
     "worked": {
       "problem": "Prove by induction that $1+2+\\cdots+n=\\dfrac{n(n+1)}{2}$ for all $n\\ge1$.",
       "skills": [
@@ -1582,33 +1779,33 @@
     "applications": [
       {
         "title": "Recursive algorithms",
-        "background": "Induction is the natural proof method for recursive code because the code calls itself on smaller inputs.",
-        "numbers": "If a recursive function handles size 1 and reduces size $n$ to $n-1$, induction proves correctness for sizes 1 through 1000 and beyond."
+        "background": "A base size and a size-reduction step can cover all positive input sizes.",
+        "numbers": "a proof for size 1 plus a size-$n$ to size-$(n-1)$ step covers every positive size."
       },
       {
-        "title": "Loop invariants",
-        "background": "A loop invariant is induction in programming clothing: true before the loop, preserved by one iteration.",
-        "numbers": "If a sum loop starts at 0 and adds $a_i$ on iteration $i$, after 5 iterations it holds $a_1+\\cdots+a_5$."
+        "title": "Loop invariant",
+        "background": "Induction over iterations verifies a running quantity.",
+        "numbers": "after 5 iterations a sum loop stores $a_1+\\cdots+a_5$."
       },
       {
-        "title": "Binary tree sizes",
-        "background": "Data structures often have recursive shape. Induction proves node-count formulas.",
-        "numbers": "A full binary tree of height 3 has $1+2+4+8=15=2^4-1$ nodes."
+        "title": "Binary trees",
+        "background": "Induction over height proves the full-tree node count.",
+        "numbers": "height 3 full binary tree has $1+2+4+8=15=2^4-1$ nodes."
       },
       {
-        "title": "Geometric growth in systems",
-        "background": "Repeated doubling appears in search, memory, and parallel branching. Induction confirms the exact count.",
-        "numbers": "Starting with 1 task and doubling for 10 rounds gives $2^{10}=1024$ tasks."
+        "title": "Doubling systems",
+        "background": "Each round follows from the previous count by the same step.",
+        "numbers": "starting with 1 task and doubling for 10 rounds gives $2^{10}=1024$."
       },
       {
-        "title": "Dynamic programming correctness",
-        "background": "DP fills solutions for increasing subproblem sizes. Induction proves each filled entry is correct after smaller entries are correct.",
-        "numbers": "If entries for lengths 0 through 4 are correct and the recurrence uses only shorter lengths, it proves length 5 next."
+        "title": "Dynamic programming",
+        "background": "Correct smaller entries plus a valid recurrence justify the next entry.",
+        "numbers": "correct entries for lengths 0 through 4 plus a valid recurrence prove length 5 next."
       },
       {
-        "title": "Gradient-step recurrences",
-        "background": "Simple optimization recurrences can be unrolled and proved by induction.",
-        "numbers": "If error satisfies $e_{t+1}=0.8e_t$ with $e_0=5$, induction gives $e_4=5(0.8)^4=2.048$."
+        "title": "Gradient error recurrence",
+        "background": "A repeated multiplicative error update can be verified by induction.",
+        "numbers": "$e_{t+1}=0.8e_t$, $e_0=5$ gives $e_4=5(0.8)^4=2.048$."
       }
     ],
     "applicationsClose": "Induction is the proof engine for anything built one integer step, recursive call, or iteration at a time.",
@@ -1617,6 +1814,29 @@
       "The inductive hypothesis assumes $P(k)$ only to prove $P(k+1)$.",
       "The base case must match the first value in the claim.",
       "Recursion, loops, summations, and recurrences are natural induction settings."
+    ],
+    "connectionsProse": "<p>Induction is the first proof method in this section that is designed for infinitely many related claims. It connects naturally to integer-indexed sequences, loops, recursion, and recurrence relations. A reader who can verify one case at a time can now learn how a proof covers all later cases at once. This method supports later lessons on recurrences, counting identities, and algorithm correctness.</p>",
+    "symbols": [
+      {
+        "sym": "$P(n)$",
+        "desc": "statement at index $n$"
+      },
+      {
+        "sym": "$n_0$",
+        "desc": "starting index"
+      },
+      {
+        "sym": "base case",
+        "desc": "proves $P(n_0)$"
+      },
+      {
+        "sym": "inductive hypothesis",
+        "desc": "assumes $P(k)$"
+      },
+      {
+        "sym": "inductive step",
+        "desc": "proves $P(k+1)$"
+      }
     ],
     "prereqs": [
       "math-14-05"
@@ -1645,8 +1865,8 @@
         "sets"
       ]
     },
-    "motivation": "<p>Sometimes a direct proof feels like pushing a door from the wrong side. Instead, assume the claim is false and follow that assumption honestly. If it forces an impossibility, the false assumption must be the part that failed.</p><p><b>Proof by contradiction</b> is especially useful for impossibility, uniqueness, irrationality, and no-counterexample statements. It rewards careful negation and calm bookkeeping.</p>",
-    "definition": "<p>To prove a statement $P$ by contradiction, assume $\\neg P$ and derive a contradiction such as $Q\\land\\neg Q$, $0=1$, or violation of a known theorem. Since $\\neg P$ cannot be true, conclude $P$.</p><p>The logical backbone is that $\\neg P\\to F$ is equivalent to $P$, where $F$ is a false statement. In words: if denying $P$ inevitably leads to falsehood, then $P$ must be true.</p><p><b>Assumptions that matter:</b> the negation must be exact; the contradiction must follow from the assumption and accepted facts; and contradiction proves truth in ordinary two-valued logic where every proposition is true or false.</p>",
+    "motivation": "<p>Contradiction proves a claim by assuming its denial and following that denial until it violates an accepted fact. The temporary assumption is not believed to be true; it is used to test what would happen if the target claim failed. If the consequences are impossible, the denial must be rejected.</p><p>The method depends on careful negation and a genuine contradiction. It is not enough for the temporary assumption to seem unlikely. The chain must reach something impossible, such as more objects than available slots under a claimed limit, two different values both equal to the same unique value, or a rule and its violation holding together.</p>",
+    "definition": "<p>Proof by contradiction proves a target claim $P$ by assuming its denial $\\neg P$ and deriving an impossibility.</p><p><b>Assumptions that matter:</b> The denial must be the exact logical negation, each implication from the temporary assumption must be valid, and the final conflict must be a genuine contradiction.</p>",
     "worked": {
       "problem": "Prove that $\\sqrt2$ is irrational.",
       "skills": [
@@ -1860,34 +2080,34 @@
     ],
     "applications": [
       {
-        "title": "Impossibility proofs",
-        "background": "Computer science often needs to prove something cannot exist, such as a perfect compressor for all files. Contradiction is a natural tool.",
-        "numbers": "There are $2^8=256$ one-byte strings but only $1+2+4+8+16+32+64+128=255$ strings shorter than 8 bits, so not every byte can compress."
+        "title": "Compression lower bound",
+        "background": "Assuming every byte string compresses would require too many shorter outputs.",
+        "numbers": "there are 256 one-byte strings but only $1+2+4+8+16+32+64+128=255$ shorter binary strings, so not every byte string compresses."
       },
       {
-        "title": "Pigeonhole reasoning",
-        "background": "Pigeonhole arguments are often contradiction proofs: assume no container is crowded, then total capacity is too small.",
-        "numbers": "101 users assigned to 100 shards force one shard to have at least 2 users."
+        "title": "Pigeonhole proof",
+        "background": "Too many users for too few shards contradicts a one-per-shard assumption.",
+        "numbers": "101 users in 100 shards contradict the assumption of at most one user per shard."
       },
       {
-        "title": "Uniqueness of solutions",
-        "background": "To prove a solution is unique, assume two different solutions and show they must be equal. The contradiction is the word different.",
-        "numbers": "If $2x=6$ and $2y=6$, then $x=3$ and $y=3$, so two solutions are actually the same."
+        "title": "Uniqueness",
+        "background": "Two alleged different solutions collapse to the same value.",
+        "numbers": "if $2x=6$ and $2y=6$, both equal 3, so two different solutions contradict equality."
       },
       {
-        "title": "Security reasoning",
-        "background": "Proofs of protocol flaws often assume an attacker cannot do something, then construct a case that violates the assumption.",
-        "numbers": "If 2 distinct messages produce the same 4-bit hash among 17 messages, collision resistance at that size is contradicted because only 16 hashes exist."
+        "title": "Hash security",
+        "background": "A perfect no-collision claim fails when messages outnumber hashes.",
+        "numbers": "17 messages and 16 four-bit hashes force a collision, contradicting perfect collision avoidance."
       },
       {
         "title": "Data validation",
-        "background": "Contradiction helps detect impossible records created by inconsistent constraints.",
-        "numbers": "If age must be at least 0 and a row has age $-3$, assuming the row is valid gives $-3\\ge0$, a contradiction."
+        "background": "An observed invalid value contradicts a universal validity rule.",
+        "numbers": "a row with age $-3$ contradicts a validity rule requiring age at least 0."
       },
       {
-        "title": "Optimization lower bounds",
-        "background": "Some lower bounds show that a faster algorithm would imply an impossible distinction among too many inputs.",
-        "numbers": "If an algorithm with one yes-or-no question tried to distinguish 3 cases, it has only $2$ possible answer patterns, so two cases collide."
+        "title": "Decision lower bound",
+        "background": "A binary question cannot distinguish more cases than its answer patterns.",
+        "numbers": "one yes-or-no question has only 2 answer patterns, so it cannot distinguish 3 cases."
       }
     ],
     "applicationsClose": "Contradiction is disciplined refusal: when the denial collapses, the original claim stands.",
@@ -1896,6 +2116,25 @@
       "The negation must be exact, especially with quantifiers.",
       "Contradiction is useful for impossibility, irrationality, uniqueness, and pigeonhole claims.",
       "The contradiction must follow from accepted facts and the temporary assumption."
+    ],
+    "connectionsProse": "<p>Contradiction is another general proof method, and it pairs well with logic and quantified statements. The reader has already seen how a claim can be negated and how a single counterexample can disprove a universal statement. This lesson turns that habit into a method for proving impossibility, uniqueness, and forced collisions. It prepares the ground for pigeonhole arguments and lower-bound reasoning.</p>",
+    "symbols": [
+      {
+        "sym": "$P$",
+        "desc": "target claim"
+      },
+      {
+        "sym": "$\\neg P$",
+        "desc": "temporary denial"
+      },
+      {
+        "sym": "$F$",
+        "desc": "false statement or impossibility"
+      },
+      {
+        "sym": "contradiction examples",
+        "desc": "$0=1$ or a reduced fraction with a common factor"
+      }
     ],
     "prereqs": [
       "math-14-06"
@@ -1924,8 +2163,8 @@
         "partitions"
       ]
     },
-    "motivation": "<p>Counting becomes easier when choices split into cases: choose a red item or a blue item, take a bus or a train, select a model from family A or family B. If the cases do not overlap, adding is exactly right.</p><p>The <b>sum rule</b> is the counting version of union for disjoint sets. It teaches a habit that matters everywhere in combinatorics: first define the cases so nothing is missed and nothing is counted twice.</p>",
-    "definition": "<p>If a task can be done in one of $m$ ways or in one of $n$ other ways, and no way belongs to both cases, then the task can be done in $m+n$ ways. More generally, if finite sets $A_1,\\ldots,A_k$ are pairwise disjoint, then $|A_1\\cup\\cdots\\cup A_k|=|A_1|+\\cdots+|A_k|$.</p><p>The rule follows because disjoint cases have no shared elements. Placing the cases side by side does not create duplicates, so counting each case separately and adding counts each outcome exactly once.</p><p><b>Assumptions that matter:</b> the cases must be disjoint for the plain sum rule; if cases overlap, use inclusion-exclusion; and the cases together must cover exactly the outcomes you want to count.</p>",
+    "motivation": "<p>The sum rule counts choices split into disjoint cases. The important habit is not the addition itself; it is making cases that cover everything once. If every outcome belongs to exactly one case, then adding the case sizes counts every outcome exactly once.</p><p>This is often the first step in a larger counting problem. Before adding, the cases must be checked for overlap and coverage. If cases overlap, inclusion-exclusion is needed instead. If the problem involves a sequence of choices rather than alternatives among cases, the product rule is the correct tool.</p>",
+    "definition": "<p>For pairwise disjoint finite sets, the size of the union is the sum of the case sizes: $$|A_1\\cup\\cdots\\cup A_k|=|A_1|+\\cdots+|A_k|$$.</p><p><b>Assumptions that matter:</b> The sets must be finite, pairwise disjoint, and together cover exactly the outcomes being counted.</p>",
     "worked": {
       "problem": "A menu offers 4 soups, 6 salads, and 5 sandwiches. If you choose exactly one item from exactly one category, how many choices are there?",
       "skills": [
@@ -2124,34 +2363,34 @@
     ],
     "applications": [
       {
-        "title": "Case-based counting",
-        "background": "Combinatorics often starts by partitioning a hard count into simpler cases. The sum rule is the arithmetic of that partition.",
-        "numbers": "If a search result is from 12 documents, 8 images, or 5 videos with no overlap, total results are $12+8+5=25$."
+        "title": "Search types",
+        "background": "Disjoint result types can be added directly.",
+        "numbers": "12 documents, 8 images, and 5 videos with no overlap give 25 results."
       },
       {
-        "title": "Dataset composition",
-        "background": "ML teams report totals by disjoint splits or modalities. The sum rule keeps these summaries transparent.",
-        "numbers": "Train 70,000, validation 15,000, and test 15,000 examples sum to 100,000 examples."
+        "title": "Dataset splits",
+        "background": "Train, validation, and test partitions are designed to be disjoint.",
+        "numbers": "70,000 train, 15,000 validation, 15,000 test give 100,000 examples."
       },
       {
-        "title": "Error taxonomies",
-        "background": "Model errors are often assigned to one primary category so teams can count causes without double-counting.",
-        "numbers": "If 18 errors are labeling issues, 25 are retrieval issues, and 7 are ranking issues, disjoint categories give 50 errors."
+        "title": "Error taxonomy",
+        "background": "Primary error categories count once per item when categories are disjoint.",
+        "numbers": "18 label, 25 retrieval, and 7 ranking errors give 50 primary errors."
       },
       {
         "title": "User funnels",
-        "background": "A funnel can split users into mutually exclusive paths. Adding path counts gives the total population covered.",
-        "numbers": "If 300 users enter by search, 120 by ads, and 80 by referral with no duplicated attribution, total entrants are 500."
+        "background": "Entrants from disjoint sources add to a total entrant count.",
+        "numbers": "300 search, 120 ads, and 80 referral entrants give 500 users."
       },
       {
-        "title": "File-type indexing",
-        "background": "Search systems often shard by type. If shards are disjoint, total indexed files are a sum.",
-        "numbers": "1.2 million HTML files plus 0.4 million PDFs plus 0.1 million images gives 1.7 million files."
+        "title": "File indexing",
+        "background": "File type partitions can be summed when each file has one type.",
+        "numbers": "1.2 million HTML, 0.4 million PDFs, and 0.1 million images give 1.7 million files."
       },
       {
-        "title": "Model selection menus",
-        "background": "AutoML systems may offer families of candidate models. Counting candidates by family uses the sum rule when families are distinct.",
-        "numbers": "10 linear choices, 24 tree choices, and 6 kernel choices give 40 candidates."
+        "title": "Model menu",
+        "background": "Alternative model-family choices form disjoint cases.",
+        "numbers": "10 linear, 24 tree, and 6 kernel choices give 40 candidates."
       }
     ],
     "applicationsClose": "The sum rule is simple because its discipline comes before the arithmetic: make clean cases, then add.",
@@ -2160,6 +2399,52 @@
       "Pairwise disjoint finite sets satisfy $|A_1\\cup\\cdots\\cup A_k|=|A_1|+\\cdots+|A_k|$.",
       "If cases overlap, subtract overlap with inclusion-exclusion instead of using the plain sum rule.",
       "Good counting starts by defining cases that cover exactly the desired outcomes."
+    ],
+    "connectionsProse": "<p>The sum rule begins the main counting spine of the section. It uses sets and disjoint cases to count outcomes without double-counting. The reader may already add category totals in ordinary data summaries; this lesson explains when that addition is valid. It supports later work on combinations, identities, inclusion-exclusion, probability, and complexity counts.</p>",
+    "symbols": [
+      {
+        "sym": "$A_i$",
+        "desc": "case set"
+      },
+      {
+        "sym": "$\\cup$",
+        "desc": "union"
+      },
+      {
+        "sym": "$|A_i|$",
+        "desc": "number of outcomes in case $i$"
+      },
+      {
+        "sym": "pairwise disjoint",
+        "desc": "$A_i\\cap A_j=\\varnothing$ for $i\\ne j$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "State pairwise disjointness",
+        "result": "no element lies in two different $A_i$",
+        "why": "overlap would cause double-counting"
+      },
+      {
+        "do": "Count the first case",
+        "result": "$|A_1|$",
+        "why": "every element counted belongs to the union"
+      },
+      {
+        "do": "Add the second case",
+        "result": "$|A_1|+|A_2|$",
+        "why": "no element duplicates an $A_1$ element because the sets are disjoint"
+      },
+      {
+        "do": "Continue through all cases",
+        "result": "$|A_1|+\\cdots+|A_k|$",
+        "why": "each new set adds only new elements"
+      },
+      {
+        "do": "Recognize the union",
+        "result": "$|A_1\\cup\\cdots\\cup A_k|=|A_1|+\\cdots+|A_k|$",
+        "why": "the union is exactly all these elements together"
+      }
     ],
     "prereqs": [
       "math-14-07"
@@ -2188,8 +2473,8 @@
         "counting functions"
       ]
     },
-    "motivation": "<p>Some choices happen in sequence: choose a shirt then pants, a username then a password, a model then a learning rate. Each first choice opens a set of second choices.</p><p>The <b>product rule</b> says to multiply when choices are chained and the number of options at each step is known. It is the counting heart of Cartesian products, search spaces, and combinatorial explosions.</p>",
-    "definition": "<p>If a task has $m$ choices for step 1 and, after each such choice, $n$ choices for step 2, then the two-step task has $mn$ outcomes. More generally, $k$ sequential steps with $n_1,n_2,\\ldots,n_k$ choices have $n_1n_2\\cdots n_k$ outcomes.</p><p>The rule follows by arranging outcomes in rows: each of the $m$ first choices has $n$ partners, so there are $n$ outcomes in each row and $m$ rows total. This is the size rule for Cartesian products: $|A\\times B|=|A||B|$.</p><p><b>Assumptions that matter:</b> the choice counts must apply at the relevant step; if later counts depend on earlier choices, split into cases or multiply the conditional counts along each branch; and outcomes are ordered by the sequence of choices.</p>",
+    "motivation": "<p>The product rule counts sequential choices. After one choice is made, the next choice is paired with it, and each completed sequence becomes an ordered tuple. The total grows by multiplying because each earlier partial outcome branches into the choices available at the next step.</p><p>This explains both useful design spaces and combinatorial explosion. A small number of options at each stage can produce a large number of total configurations. The product rule is therefore a tool for counting what is possible and for recognizing when an exhaustive search is becoming too large.</p>",
+    "definition": "<p>If a process has $k$ sequential steps with $n_i$ choices at step $i$, then the number of ordered outcomes is $$n_1n_2\\cdots n_k$$.</p><p><b>Assumptions that matter:</b> Each outcome is an ordered tuple, and the stated number of choices is available for each corresponding partial outcome.</p>",
     "worked": {
       "problem": "A login code has 2 uppercase letters followed by 3 digits. Repetition is allowed. How many codes are possible?",
       "skills": [
@@ -2389,33 +2674,33 @@
     "applications": [
       {
         "title": "Hyperparameter grids",
-        "background": "Grid search tries every combination of selected hyperparameter values. Product-rule growth is why grids become expensive quickly.",
-        "numbers": "6 learning rates, 4 depths, and 3 regularization values create $6\\cdot4\\cdot3=72$ runs."
+        "background": "Independent hyperparameter choices multiply into runs.",
+        "numbers": "6 learning rates, 4 depths, 3 regularization values give 72 runs."
       },
       {
         "title": "Password spaces",
-        "background": "Security estimates often count possible strings. More positions multiply the search space.",
-        "numbers": "An 8-character lowercase password has $26^8=208827064576$ possibilities."
+        "background": "Each character position contributes one sequential choice.",
+        "numbers": "8 lowercase characters give $26^8=208827064576$ strings."
       },
       {
         "title": "Feature crosses",
-        "background": "Categorical feature crosses combine categories from multiple fields. The number of crossed buckets multiplies.",
-        "numbers": "20 cities crossed with 5 device types and 3 membership tiers gives $20\\cdot5\\cdot3=300$ buckets."
+        "background": "A crossed bucket records one choice from each categorical feature.",
+        "numbers": "20 cities, 5 device types, and 3 tiers give 300 crossed buckets."
       },
       {
-        "title": "Cartesian product datasets",
-        "background": "Testing sometimes generates all pairs or tuples of parameter settings. The product rule predicts test count.",
-        "numbers": "7 browsers, 3 locales, and 4 screen sizes make $7\\cdot3\\cdot4=84$ configurations."
+        "title": "Test configurations",
+        "background": "Configuration matrices grow by multiplying option counts.",
+        "numbers": "7 browsers, 3 locales, 4 screen sizes give 84 configurations."
       },
       {
-        "title": "Neural architecture choices",
-        "background": "Architecture search can choose layer count, width, activation, and optimizer. Each independent menu multiplies the candidates.",
-        "numbers": "3 depths, 4 widths, 2 activations, and 2 optimizers give $3\\cdot4\\cdot2\\cdot2=48$ candidates."
+        "title": "Architecture search",
+        "background": "Architecture dimensions define a product search space.",
+        "numbers": "3 depths, 4 widths, 2 activations, 2 optimizers give 48 candidates."
       },
       {
-        "title": "State spaces",
-        "background": "Discrete systems have states described by several variables. Total states are often a Cartesian product.",
-        "numbers": "A robot with 10 positions, 4 headings, and 2 gripper states has $10\\cdot4\\cdot2=80$ states."
+        "title": "Robot states",
+        "background": "A finite state can be a tuple of position, heading, and gripper state.",
+        "numbers": "10 positions, 4 headings, 2 gripper states give 80 states."
       }
     ],
     "applicationsClose": "The product rule explains both elegant counting and painful explosion: every independent step multiplies the space.",
@@ -2424,6 +2709,52 @@
       "For sets, $|A\\times B|=|A||B|$.",
       "Repeated equal choices give powers, such as $n^k$.",
       "If later choice counts depend on earlier choices, count each branch carefully."
+    ],
+    "connectionsProse": "<p>The product rule follows the sum rule by counting sequences of choices rather than disjoint alternatives. It connects to Cartesian products from set language and to functions, where each input receives an output. This lesson gives the arithmetic behind search grids, feature crosses, passwords, and state spaces. It also prepares the reader for permutations, binomial expansions, and complexity growth.</p>",
+    "symbols": [
+      {
+        "sym": "$n_i$",
+        "desc": "choices at step $i$"
+      },
+      {
+        "sym": "$k$",
+        "desc": "number of steps"
+      },
+      {
+        "sym": "ordered tuple",
+        "desc": "records the sequence"
+      },
+      {
+        "sym": "$A\\times B$",
+        "desc": "Cartesian product with $|A\\times B|=|A||B|$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Count step 1",
+        "result": "$n_1$ choices",
+        "why": "the first coordinate can be chosen in $n_1$ ways"
+      },
+      {
+        "do": "Attach step 2 to each first choice",
+        "result": "$n_1n_2$ partial outcomes",
+        "why": "each first choice branches into $n_2$ choices"
+      },
+      {
+        "do": "Attach step 3 to each partial outcome",
+        "result": "$n_1n_2n_3$ partial outcomes",
+        "why": "each existing partial outcome branches again"
+      },
+      {
+        "do": "Continue through step $k$",
+        "result": "$n_1n_2\\cdots n_k$",
+        "why": "the same branching argument repeats"
+      },
+      {
+        "do": "Interpret each completed branch",
+        "result": "$n_1n_2\\cdots n_k$ ordered tuples",
+        "why": "each full outcome is one ordered tuple"
+      }
     ],
     "prereqs": [
       "math-14-08"
@@ -2452,8 +2783,8 @@
         "ranking"
       ]
     },
-    "motivation": "<p>Choosing Alice, Bo, and Chen for a committee is different from ranking them first, second, and third. Same people, different order question.</p><p><b>Permutations</b> count arrangements. They appear whenever order, position, ranking, schedule, or sequence matters, and they grow quickly because each position leaves fewer remaining choices.</p>",
-    "definition": "<p>A <b>permutation</b> of $n$ distinct objects is an ordering of all $n$ objects. The number is $n!=n(n-1)(n-2)\\cdots1$. The number of ordered selections of $r$ objects from $n$ distinct objects without replacement is $P(n,r)=\\dfrac{n!}{(n-r)!}$.</p><p>The formula comes from the product rule. The first position has $n$ choices, the second has $n-1$, and so on until $r$ positions are filled. Multiplying gives $n(n-1)\\cdots(n-r+1)$, which equals $n!/(n-r)!$.</p><p><b>Assumptions that matter:</b> the objects are distinct unless stated otherwise; order matters; and without replacement means an object cannot be used twice in the same arrangement.</p>",
+    "motivation": "<p>Permutations count arrangements where position matters. Ranking the same five recommendations in a different order is a different output. A first-place item and a third-place item are not interchangeable when the positions have meaning.</p><p>Because selection is without replacement, each filled position removes one object from the remaining choices. The first position has the full set available, the second has one fewer, and the pattern continues until the requested number of positions is filled. Factorials give a compact way to write that decreasing product.</p>",
+    "definition": "<p>The number of ordered selections of $r$ objects from $n$ distinct objects without replacement is $$P(n,r)=\\frac{n!}{(n-r)!}$$.</p><p><b>Assumptions that matter:</b> Objects are distinct, order matters, and selection is without replacement.</p>",
     "worked": {
       "problem": "How many ways can gold, silver, and bronze medals be awarded among 8 runners, assuming no ties?",
       "skills": [
@@ -2657,34 +2988,34 @@
     ],
     "applications": [
       {
-        "title": "Ranked search results",
-        "background": "Search and recommendation systems care about order because users see rank 1 before rank 2. Permutations count possible rankings.",
-        "numbers": "Choosing an ordered top 3 from 50 candidates gives $50\\cdot49\\cdot48=117600$ rankings."
+        "title": "Ranked search",
+        "background": "Top positions are ordered and cannot repeat the same candidate.",
+        "numbers": "ordered top 3 from 50 candidates gives $50\\cdot49\\cdot48=117600$."
       },
       {
-        "title": "Experiment ordering",
-        "background": "When tasks are shown in sequence, order can affect behavior. Permutations count possible presentation orders.",
-        "numbers": "Six survey questions can appear in $6!=720$ orders."
+        "title": "Survey order",
+        "background": "Every ordering of distinct questions is a permutation.",
+        "numbers": "6 questions can appear in $6!=720$ orders."
       },
       {
-        "title": "Scheduling jobs",
-        "background": "Schedulers arrange distinct jobs on a machine. Even small job sets create many possible schedules.",
-        "numbers": "Eight jobs have $8!=40320$ possible full orders."
+        "title": "Job scheduling",
+        "background": "A schedule orders each distinct job once.",
+        "numbers": "8 distinct jobs have $8!=40320$ schedules."
       },
       {
-        "title": "Random shuffling",
-        "background": "Shuffling datasets before training samples one permutation of the examples. This can reduce ordering artifacts.",
-        "numbers": "A mini dataset of 10 examples has $10!=3628800$ possible shuffles."
+        "title": "Dataset shuffling",
+        "background": "A shuffle is an ordering of all examples.",
+        "numbers": "10 examples have $10!=3628800$ possible shuffles."
       },
       {
-        "title": "Access-token characters without repetition",
-        "background": "Some code systems forbid repeated symbols. Ordered positions make permutations relevant.",
-        "numbers": "A 6-character code from 36 symbols without repetition has $36\\cdot35\\cdot34\\cdot33\\cdot32\\cdot31$ possibilities."
+        "title": "No-repeat access token",
+        "background": "Token characters selected without replacement form an ordered sequence.",
+        "numbers": "6 characters from 36 symbols gives $36\\cdot35\\cdot34\\cdot33\\cdot32\\cdot31$ tokens."
       },
       {
-        "title": "Feature ordering in pipelines",
-        "background": "Some preprocessing pipelines apply transformations in order, and different orders can produce different outputs.",
-        "numbers": "Four distinct transformations can be ordered in $4!=24$ ways."
+        "title": "Pipeline order",
+        "background": "Applying transformations in different orders can produce different pipelines.",
+        "numbers": "4 transformations can be ordered in $4!=24$ ways."
       }
     ],
     "applicationsClose": "Whenever position changes identity, permutations give the count.",
@@ -2693,6 +3024,57 @@
       "All $n$ objects can be arranged in $n!$ ways.",
       "Ordered selections without replacement use $P(n,r)=n!/(n-r)!$.",
       "The formula comes from the product rule with shrinking choices."
+    ],
+    "connectionsProse": "<p>Permutations specialize the product rule to ordered selections without replacement. The reader has already seen that sequential choices multiply; this lesson adds the condition that each selected object is used only once. That condition makes the number of choices shrink from position to position. The idea is central to rankings, schedules, shuffles, and ordered pipeline choices.</p>",
+    "symbols": [
+      {
+        "sym": "$n$",
+        "desc": "distinct objects"
+      },
+      {
+        "sym": "$r$",
+        "desc": "ordered positions"
+      },
+      {
+        "sym": "$n!$",
+        "desc": "product down to 1"
+      },
+      {
+        "sym": "$P(n,r)$",
+        "desc": "ordered selections without replacement"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Fill the first ordered position",
+        "result": "$n$ choices",
+        "why": "any object can be first"
+      },
+      {
+        "do": "Fill the second position",
+        "result": "$n-1$ choices",
+        "why": "one object was already used"
+      },
+      {
+        "do": "Continue until $r$ positions are filled",
+        "result": "last position has $n-r+1$ choices",
+        "why": "each previous position removes one object"
+      },
+      {
+        "do": "Multiply by the product rule",
+        "result": "$n(n-1)\\cdots(n-r+1)$",
+        "why": "ordered positions are sequential choices"
+      },
+      {
+        "do": "Expand the factorial",
+        "result": "$n!=n(n-1)\\cdots(n-r+1)(n-r)!$",
+        "why": "the leading decreasing product is part of $n!$"
+      },
+      {
+        "do": "Divide by the unused tail",
+        "result": "$P(n,r)=n!/(n-r)!$",
+        "why": "cancelling $(n-r)!$ leaves the decreasing product"
+      }
     ],
     "prereqs": [
       "math-14-09"
@@ -2721,8 +3103,8 @@
         "counting events"
       ]
     },
-    "motivation": "<p>If you pick three features for a model, the set {age, country, device} is the same choice no matter which one you wrote first. That is not a permutation question anymore.</p><p><b>Combinations</b> count unordered selections. They are the mathematics of committees, subsets, mini-batches, feature choices, and the binomial coefficients that appear throughout probability and ML.</p>",
-    "definition": "<p>The number of ways to choose $r$ objects from $n$ distinct objects without regard to order is $\\binom{n}{r}=\\dfrac{n!}{r!(n-r)!}$. This is read $n$ choose $r$.</p><p>The formula starts with ordered selections $P(n,r)=n!/(n-r)!$. Each unordered group of $r$ objects can be internally ordered in $r!$ ways, so the ordered count overcounts each group by $r!$. Dividing by $r!$ gives $\\binom{n}{r}$.</p><p><b>Assumptions that matter:</b> objects are distinct unless stated otherwise; order does not matter inside the selected group; and $0\\le r\\le n$ for the standard finite formula.</p>",
+    "motivation": "<p>Combinations count selected groups when internal order does not matter. A mini-batch or feature subset is the same group no matter how it is listed. The outcome is the chosen collection, not a ranking or sequence.</p><p>The standard derivation starts with the easier ordered count. Each unordered group of size $r$ appears once for every possible ordering of its members, so the permutation count counts each group $r!$ times. Dividing by those internal orderings leaves each unordered group counted once.</p>",
+    "definition": "<p>The number of unordered selections of $r$ objects from $n$ distinct objects is $$\\binom nr=\\dfrac{n!}{r!(n-r)!}$$.</p><p><b>Assumptions that matter:</b> Objects are distinct, order does not matter, and each selected group has exactly $r$ elements.</p>",
     "worked": {
       "problem": "How many 3-person committees can be chosen from 8 people?",
       "skills": [
@@ -2922,33 +3304,33 @@
     "applications": [
       {
         "title": "Feature subset selection",
-        "background": "Model builders may search over subsets of features. Combinations count possible subsets when order is irrelevant.",
-        "numbers": "Choosing 5 features from 30 gives $\\binom{30}{5}=142506$ subsets."
+        "background": "A selected feature set is unordered.",
+        "numbers": "choosing 5 from 30 gives $\\binom{30}{5}=142506$ subsets."
       },
       {
-        "title": "Mini-batch sampling",
-        "background": "A mini-batch is usually treated as a set or multiset of examples. Without replacement and without order, combinations apply.",
-        "numbers": "Choosing 4 examples from 20 gives $\\binom{20}{4}=4845$ batches."
+        "title": "Mini-batches",
+        "background": "A batch contains examples without internal ranking.",
+        "numbers": "choosing 4 examples from 20 gives $\\binom{20}{4}=4845$."
       },
       {
-        "title": "Committee and reviewer assignment",
-        "background": "Selecting reviewers or committee members is unordered unless roles are assigned afterward.",
-        "numbers": "Choosing 3 reviewers from 12 candidates gives $\\binom{12}{3}=220$ panels."
+        "title": "Reviewer panels",
+        "background": "A panel is the same group regardless of listing order.",
+        "numbers": "choosing 3 from 12 gives 220 panels."
       },
       {
         "title": "Pairwise comparisons",
-        "background": "Many algorithms compare all unordered pairs of items. The count is a combination.",
+        "background": "An unordered pair does not distinguish first from second.",
         "numbers": "100 items have $\\binom{100}{2}=4950$ unordered pairs."
       },
       {
-        "title": "A/B test segment choices",
-        "background": "Experiment designers may choose subsets of segments for targeting. The order of chosen segments is irrelevant.",
-        "numbers": "Choosing 3 segments from 9 gives $\\binom{9}{3}=84$ segment sets."
+        "title": "Segment choices",
+        "background": "A chosen set of audience segments is unordered.",
+        "numbers": "choosing 3 from 9 gives 84 segment sets."
       },
       {
         "title": "Graph edges",
-        "background": "An undirected simple graph has possible edges equal to unordered pairs of vertices.",
-        "numbers": "A graph with 50 vertices has $\\binom{50}{2}=1225$ possible undirected edges."
+        "background": "An undirected edge is an unordered pair of vertices.",
+        "numbers": "50 vertices have $\\binom{50}{2}=1225$ possible undirected edges."
       }
     ],
     "applicationsClose": "Combinations count chosen groups after removing all the orderings that do not change the group.",
@@ -2957,6 +3339,52 @@
       "$\\binom{n}{r}=\\dfrac{n!}{r!(n-r)!}$.",
       "The division by $r!$ removes the internal orderings of the selected group.",
       "$\\binom{n}{r}=\\binom{n}{n-r}$ because choosing a group also chooses its complement."
+    ],
+    "connectionsProse": "<p>Combinations come after permutations because they count selections when order is not part of the outcome. The reader has already seen how ordered selections are counted by multiplying decreasing choices. This lesson removes the internal orderings that should not create new outcomes. It is the counting tool behind subsets, panels, mini-batches, graph edges, and feature selection.</p>",
+    "symbols": [
+      {
+        "sym": "$\\binom nr$",
+        "desc": "read “$n$ choose $r$”"
+      },
+      {
+        "sym": "$n$",
+        "desc": "available distinct objects"
+      },
+      {
+        "sym": "$r$",
+        "desc": "selected objects"
+      },
+      {
+        "sym": "$r!$",
+        "desc": "internal orderings removed"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "First count ordered selections",
+        "result": "$P(n,r)=n!/(n-r)!$",
+        "why": "permutations are easier because positions matter"
+      },
+      {
+        "do": "Count internal orders of one selected group",
+        "result": "$r!$",
+        "why": "the $r$ selected objects can be arranged in $r!$ orders"
+      },
+      {
+        "do": "Identify overcounting",
+        "result": "each unordered group is counted exactly $r!$ times",
+        "why": "all internal orderings describe the same group"
+      },
+      {
+        "do": "Divide the ordered count",
+        "result": "$P(n,r)/r!$",
+        "why": "division removes duplicate internal orderings"
+      },
+      {
+        "do": "Substitute the permutation formula",
+        "result": "$\\binom nr=P(n,r)/r!=n!/(r!(n-r)!)$",
+        "why": "each unordered group remains counted once"
+      }
     ],
     "prereqs": [
       "math-14-10"
@@ -2985,8 +3413,8 @@
         "probability"
       ]
     },
-    "motivation": "<p>You know how to expand $(x+y)^2$: it becomes $x^2+2xy+y^2$. The coefficient 2 appears because $xy$ can happen in two orders: choose $x$ then $y$, or $y$ then $x$.</p><p>The <b>binomial theorem</b> generalizes that story. In $(x+y)^n$, each factor offers a choice of $x$ or $y$, and combinations count how many ways lead to the same power pattern.</p>",
-    "definition": "<p>For every integer $n\\ge0$, $$ (x+y)^n=\\sum_{k=0}^{n}\\binom{n}{k}x^{n-k}y^k. $$ Here $k$ is the number of factors contributing $y$, so $n-k$ factors contribute $x$.</p><p>Why the coefficient is $\\binom{n}{k}$: expanding $(x+y)^n$ means choosing one term from each of $n$ factors. To produce $x^{n-k}y^k$, choose exactly which $k$ of the $n$ factors supply $y$. There are $\\binom{n}{k}$ such choices.</p><p><b>Assumptions that matter:</b> $n$ is a nonnegative integer in this finite form; $x$ and $y$ commute under multiplication; and each term's coefficient counts choices of factor positions, not new algebraic variables.</p>",
+    "motivation": "<p>The binomial theorem explains why combination numbers appear when a two-choice expression is multiplied many times. Each factor chooses one of two terms. After all choices are made, terms with the same number of $y$ choices combine into one coefficient.</p><p>For a fixed power $y^k$, the only question is which $k$ of the $n$ factors supplied $y$. The remaining factors supply $x$. There are $\\binom nk$ ways to choose those positions, so that combination number becomes the coefficient of $x^{n-k}y^k$.</p>",
+    "definition": "<p>For a nonnegative integer $n$, the binomial theorem expands a repeated two-term product as $$(x+y)^n=\\sum_{k=0}^n\\binom nkx^{n-k}y^k$$.</p><p><b>Assumptions that matter:</b> $x$ and $y$ commute, and $n$ is a nonnegative integer so the product has $n$ factors.</p>",
     "worked": {
       "problem": "Expand $(2a-b)^4$.",
       "skills": [
@@ -3201,33 +3629,33 @@
     "applications": [
       {
         "title": "Binomial probabilities",
-        "background": "The binomial distribution counts successes in independent yes-or-no trials. Its probabilities come directly from the binomial theorem.",
-        "numbers": "For 10 trials with success probability $0.3$, exactly 4 successes has probability $\\binom{10}{4}(0.3)^4(0.7)^6\\approx0.2001$."
+        "background": "Exactly $k$ successes use a binomial coefficient and success/failure probabilities.",
+        "numbers": "10 trials, success probability 0.3, exactly 4 successes gives $\\binom{10}{4}(0.3)^4(0.7)^6\\approx0.2001$."
       },
       {
         "title": "Dropout masks",
-        "background": "Neural-network dropout randomly keeps or drops units. Counting how many units are kept is a binomial question.",
-        "numbers": "With 8 units and keep probability $0.75$, exactly 6 kept has probability $\\binom86(0.75)^6(0.25)^2\\approx0.3115$."
+        "background": "Kept units are success positions in independent Bernoulli trials.",
+        "numbers": "8 units with keep probability 0.75, exactly 6 kept gives $\\binom86(0.75)^6(0.25)^2\\approx0.3115$."
       },
       {
-        "title": "Feature subset probabilities",
-        "background": "Random feature selection chooses each feature independently in some methods. The number selected follows binomial coefficients.",
-        "numbers": "If 20 features are each chosen with probability $0.1$, exactly 2 chosen has probability $\\binom{20}{2}(0.1)^2(0.9)^{18}\\approx0.2852$."
+        "title": "Random features",
+        "background": "Independent feature inclusion has binomial counts by selected positions.",
+        "numbers": "20 features chosen independently with probability 0.1, exactly 2 chosen gives $\\binom{20}{2}(0.1)^2(0.9)^{18}\\approx0.2852$."
       },
       {
-        "title": "Polynomial expansion",
-        "background": "Algebra systems and symbolic ML methods expand powers of sums. The theorem supplies coefficients without repeated multiplication.",
-        "numbers": "The coefficient of $x^7y^3$ in $(x+y)^{10}$ is $\\binom{10}{3}=120$."
+        "title": "Polynomial coefficient",
+        "background": "A coefficient counts the factors that supply $y$.",
+        "numbers": "coefficient of $x^7y^3$ in $(x+y)^{10}$ is $\\binom{10}{3}=120$."
       },
       {
-        "title": "Ensemble voting",
-        "background": "A majority vote among independent classifiers can be analyzed with binomial probabilities when each classifier has the same accuracy.",
-        "numbers": "For 5 classifiers each correct with probability $0.8$, majority correctness is $\\binom53(0.8)^3(0.2)^2+\\binom54(0.8)^4(0.2)+\\binom55(0.8)^5=0.94208$."
+        "title": "Ensemble majority",
+        "background": "Majority correctness sums the cases with 3, 4, or 5 correct classifiers.",
+        "numbers": "5 classifiers with accuracy 0.8 have majority-correct probability $\\binom53(0.8)^3(0.2)^2+\\binom54(0.8)^4(0.2)+\\binom55(0.8)^5=0.94208$."
       },
       {
-        "title": "Counting subsets",
-        "background": "Setting $x=y=1$ in the binomial theorem proves that the total number of subsets of an $n$-element set is $2^n$.",
-        "numbers": "For $n=6$, $\\sum_{k=0}^6\\binom6k=(1+1)^6=64$ subsets."
+        "title": "Subset count",
+        "background": "Setting both terms to 1 sums all binomial coefficients.",
+        "numbers": "$\\sum_{k=0}^6\\binom6k=(1+1)^6=64$ subsets."
       }
     ],
     "applicationsClose": "The binomial theorem is the bridge from two choices per factor to coefficients, probabilities, subsets, and polynomial structure.",
@@ -3236,6 +3664,57 @@
       "The coefficient $\\binom{n}{k}$ counts which $k$ factors contribute the $y$ term.",
       "Binomial coefficients power subset counts and binomial probabilities.",
       "Signs and scalar coefficients must be carried through the powers carefully."
+    ],
+    "connectionsProse": "<p>The binomial theorem links algebraic expansion to combination counting. It depends on the product rule because expanding a product means making a choice from each factor. It also depends on combinations because only the positions of the chosen terms matter for each coefficient. The theorem later supports binomial probability, generating functions, and subset-count identities.</p>",
+    "symbols": [
+      {
+        "sym": "$n$",
+        "desc": "nonnegative integer"
+      },
+      {
+        "sym": "$k$",
+        "desc": "number of factors contributing $y$"
+      },
+      {
+        "sym": "$x,y$",
+        "desc": "commuting terms"
+      },
+      {
+        "sym": "$\\binom nk$",
+        "desc": "coefficient of $x^{n-k}y^k$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the product",
+        "result": "$(x+y)^n$ as $n$ factors",
+        "why": "each factor contributes one term in an expansion"
+      },
+      {
+        "do": "Choose from each factor",
+        "result": "either $x$ or $y$",
+        "why": "expansion distributes over all choices"
+      },
+      {
+        "do": "Fix the power of $y$",
+        "result": "choose exactly $k$ factor positions to supply $y$",
+        "why": "a term with $y^k$ has $k$ $y$ choices"
+      },
+      {
+        "do": "Fill the remaining positions",
+        "result": "$n-k$ positions supply $x$",
+        "why": "every factor contributes exactly one term"
+      },
+      {
+        "do": "Count the $y$ positions",
+        "result": "$\\binom nk$ choices",
+        "why": "only the set of positions matters"
+      },
+      {
+        "do": "Sum over all possible $k$",
+        "result": "$(x+y)^n=\\sum_{k=0}^n\\binom nkx^{n-k}y^k$",
+        "why": "$k=0$ through $n$ covers every expansion term"
+      }
     ],
     "prereqs": [
       "math-14-11"
@@ -3264,8 +3743,8 @@
         "recurrences"
       ]
     },
-    "motivation": "<p>You already know that $\\binom{n}{k}$ counts ways to choose $k$ items from $n$. The lovely surprise is that the same collection can often be counted in two different ways.</p><p>A <b>combinatorial identity</b> is an equality that becomes trustworthy when both sides count the same thing. Instead of pushing symbols alone, we ask what story the symbols are telling.</p>",
-    "definition": "<p>A <b>combinatorial identity</b> is an equation between counting expressions, such as $$\\sum_{k=0}^n \\binom{n}{k}=2^n.$$ Here $n$ is the number of available objects and $k$ is a chosen subset size. The left side counts all subsets by first grouping them according to size; the right side counts each object as either in or out.</p><p>Vandermonde's identity says $\\sum_{k=0}^r \\binom{m}{k}\\binom{n}{r-k}=\\binom{m+n}{r}$. It follows by choosing $r$ people from two groups: choose $k$ from the first group and $r-k$ from the second, then sum over possible $k$.</p><p><b>Assumptions that matter:</b> counts are finite; $\\binom{n}{k}=0$ when $k<0$ or $k>n$; and a valid combinatorial proof must count every object exactly once on each side.</p>",
+    "motivation": "<p>A combinatorial identity is often two honest counts of the same finite set. One side may count all objects directly, while the other side splits them into cases and adds those cases. If both descriptions count exactly the same objects once, the algebraic equality follows from counting rather than symbolic manipulation alone.</p><p>Vandermonde's identity is a model example. A committee can be chosen from a combined population all at once, or it can be counted by how many members come from the first group and how many from the second. The case split is disjoint and complete, so summing the case counts must match the direct count.</p>",
+    "definition": "<p>Combinatorial identities can be proved by counting the same finite set in two ways. Vandermonde's identity is $$\\sum_{k=0}^r\\binom mk\\binom n{r-k}=\\binom{m+n}r$$.</p><p><b>Assumptions that matter:</b> The groups are disjoint, committees have size $r$, and the sum ranges over possible values of $k$ that split the selected committee.</p>",
     "worked": {
       "problem": "Prove and evaluate $\\sum_{k=0}^5 \\binom{5}{k}=2^5$.",
       "skills": [
@@ -3465,33 +3944,33 @@
     "applications": [
       {
         "title": "Feature subset search",
-        "background": "Feature selection tries many subsets of variables before training. Combinatorial identities keep the count visible.",
-        "numbers": "With $12$ candidate features, all subsets number $2^{12}=4096$; nonempty subsets number $4095$."
+        "background": "Every binary feature is either included or excluded.",
+        "numbers": "12 binary features produce $2^{12}=4096$ subsets and 4095 nonempty subsets."
       },
       {
-        "title": "Ensemble model choices",
-        "background": "Bagging and ensemble methods often combine groups of base learners. Counting by size says how many candidate ensembles exist.",
-        "numbers": "From $8$ trained models, exactly three-model ensembles number $\\binom83=56$."
+        "title": "Ensembles",
+        "background": "An ensemble of fixed size is an unordered model subset.",
+        "numbers": "from 8 trained models, exactly 3-model ensembles number $\\binom83=56$."
       },
       {
-        "title": "A/B test segment combinations",
-        "background": "Experiment platforms can define audiences by selected attributes. Subset identities count possible segment definitions.",
-        "numbers": "With $6$ binary attributes, there are $2^6=64$ possible attribute-inclusion patterns."
+        "title": "Audience attributes",
+        "background": "Each binary attribute contributes an inclusion pattern.",
+        "numbers": "6 binary attributes give $2^6=64$ inclusion patterns."
       },
       {
-        "title": "Polynomial feature expansion",
-        "background": "A degree-limited feature map counts monomials using combinations with repetition.",
-        "numbers": "For $d=4$ inputs and degree $2$, the number of degree-2 monomials is $\\binom{4+2-1}{2}=10$."
+        "title": "Polynomial features",
+        "background": "Degree-2 monomials with repetition are combinations with repetition.",
+        "numbers": "4 inputs and degree 2 monomials with repetition give $\\binom{4+2-1}{2}=10$."
       },
       {
-        "title": "Database projection lists",
-        "background": "Query planners may consider sets of columns to materialize. Subset counting gives the planning space.",
-        "numbers": "Choosing any 4 columns from 20 gives $\\binom{20}{4}=4845$ possible projections."
+        "title": "Projection lists",
+        "background": "Choosing output columns is an unordered subset count.",
+        "numbers": "choosing 4 columns from 20 gives $\\binom{20}{4}=4845$."
       },
       {
-        "title": "Counting labels in multi-label ML",
-        "background": "A multi-label classifier may assign any subset of labels. The basic subset identity gives output-space size.",
-        "numbers": "With $10$ labels, possible label sets total $2^{10}=1024$; excluding no-label gives $1023$."
+        "title": "Multi-label outputs",
+        "background": "A label set includes or excludes each possible label.",
+        "numbers": "10 labels give $2^{10}=1024$ label sets and 1023 nonempty label sets."
       }
     ],
     "applicationsClose": "The common thread is re-counting: when two expressions count the same finite choices, an identity becomes a reliable tool.",
@@ -3500,6 +3979,57 @@
       "Pascal's identity splits choices by whether a special item is included.",
       "The binomial sum $\\sum_k\\binom nk=2^n$ counts all subsets.",
       "Vandermonde counts selections from two groups either separately or all at once."
+    ],
+    "connectionsProse": "<p>Combinatorial identities come after the main counting rules because they use those rules to explain algebraic equalities. The reader has seen sums, products, combinations, and binomial coefficients. This lesson shows how two different counting methods can describe the same finite set. That viewpoint is useful in probability, feature counting, subset search, and simplifying formulas.</p>",
+    "symbols": [
+      {
+        "sym": "$m,n$",
+        "desc": "group sizes"
+      },
+      {
+        "sym": "$r$",
+        "desc": "total selected"
+      },
+      {
+        "sym": "$k$",
+        "desc": "selected from the first group"
+      },
+      {
+        "sym": "$\\sum$",
+        "desc": "adds disjoint cases"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Split the population",
+        "result": "groups of sizes $m$ and $n$",
+        "why": "the identity tracks selections from two groups"
+      },
+      {
+        "do": "Count committees directly",
+        "result": "$\\binom{m+n}r$",
+        "why": "choose all $r$ members from the combined population at once"
+      },
+      {
+        "do": "Case-split by first-group members",
+        "result": "$k$ members from the first group",
+        "why": "each committee has a definite value of $k$"
+      },
+      {
+        "do": "Count a fixed case",
+        "result": "$\\binom mk\\binom n{r-k}$",
+        "why": "choose $k$ from the first group and $r-k$ from the second"
+      },
+      {
+        "do": "Multiply within the fixed case",
+        "result": "$\\binom mk\\binom n{r-k}$",
+        "why": "the two group choices are made together by the product rule"
+      },
+      {
+        "do": "Sum over all possible $k$",
+        "result": "$\\sum_{k=0}^r\\binom mk\\binom n{r-k}=\\binom{m+n}r$",
+        "why": "the cases are disjoint and cover every committee"
+      }
     ],
     "prereqs": [
       "math-14-12"
@@ -3528,8 +4058,8 @@
         "probability rules"
       ]
     },
-    "motivation": "<p>You already know a small overcount: if 12 students like tea and 9 like coffee, adding gives 21, but students who like both were counted twice.</p><p><b>Inclusion–exclusion</b> is the careful repair. Add the single sets, subtract overlaps, then add back triple overlaps when needed. It is bookkeeping with integrity.</p>",
-    "definition": "<p>For two finite sets, $$|A\\cup B|=|A|+|B|-|A\\cap B|.$$ The subtraction is needed because every element in $A\\cap B$ appears once in $|A|$ and once in $|B|$.</p><p>For three sets, $$|A\\cup B\\cup C|=|A|+|B|+|C|-|A\\cap B|-|A\\cap C|-|B\\cap C|+|A\\cap B\\cap C|.$$ A triple-overlap element is added three times, subtracted three times, and added once, so it is counted exactly once.</p><p><b>Assumptions that matter:</b> the sets are finite or have well-defined sizes; intersections are counted consistently; and complements must be taken relative to a stated universe.</p>",
+    "motivation": "<p>Suppose 55 users use mobile and 40 users use desktop. Adding gives 95 device-usages, not necessarily 95 users, because the users who use both devices appear in both counts. If 20 users use both, those 20 users were counted twice. Subtracting the overlap once leaves each user counted exactly once.</p><p>The same repair pattern extends to three sets. First add the three single-set counts. Then subtract the pairwise overlaps, because each overlapping item has been counted too often. But an item in all three sets has then been added three times and subtracted three times, leaving zero copies. It must be added back once. Inclusion–exclusion is careful bookkeeping: every element in the union ends with coefficient 1.</p>",
+    "definition": "<p>Inclusion–exclusion counts a union of overlapping finite sets by adding easy counts and repairing overcounts. For two sets, $$|A\\cup B|=|A|+|B|-|A\\cap B|$$. For three sets, $$|A\\cup B\\cup C|=|A|+|B|+|C|-|A\\cap B|-|A\\cap C|-|B\\cap C|+|A\\cap B\\cap C|$$.</p><p><b>Assumptions that matter:</b> The sets are finite, overlaps are counted with intersections, and complements require a stated universe.</p>",
     "worked": {
       "problem": "In a group of 100 users, 55 use mobile, 40 use desktop, and 20 use both. How many use at least one of the two?",
       "skills": [
@@ -3729,33 +4259,33 @@
     "applications": [
       {
         "title": "Deduplicating alerts",
-        "background": "Monitoring systems often emit several alerts for one incident. Inclusion–exclusion estimates unique incidents from overlapping alert streams.",
-        "numbers": "If CPU alerts hit 40 hosts, memory 30, and both 12, unique alerted hosts are $40+30-12=58$."
+        "background": "Overlapping alert sources should count hosts once.",
+        "numbers": "CPU alerts hit 40 hosts, memory alerts hit 30 hosts, and 12 hosts hit both; unique alerted hosts are $40+30-12=58$."
       },
       {
         "title": "Search result blending",
-        "background": "Search engines merge results from several retrievers. Overlap must be removed before counting unique documents.",
-        "numbers": "Retriever A returns 100 docs, B returns 80, overlap 25; union size is $155$."
+        "background": "Merged retrieval results subtract overlapping documents.",
+        "numbers": "Retriever A returns 100 documents, B returns 80, and 25 overlap; the merged result set has $100+80-25=155$ unique documents."
       },
       {
         "title": "Data quality checks",
-        "background": "Datasets may fail multiple validation rules. Inclusion–exclusion separates total bad rows from duplicated failure counts.",
-        "numbers": "Rule counts 300 and 220 with 75 overlap give $300+220-75=445$ bad rows."
+        "background": "Rows failing either rule are counted by a union.",
+        "numbers": "Rule counts are 300 and 220 with 75 rows failing both; rows failing at least one rule total $300+220-75=445$."
       },
       {
-        "title": "Probability of events",
-        "background": "The same formula works for probabilities when events overlap. It prevents probabilities from exceeding 1.",
-        "numbers": "$P(A)=0.4$, $P(B)=0.3$, $P(A\\cap B)=0.1$ gives $P(A\\cup B)=0.6$."
+        "title": "Discrete probability",
+        "background": "The same union repair applies to event probabilities.",
+        "numbers": "If $P(A)=0.4$, $P(B)=0.3$, and $P(A\\cap B)=0.1$, then $P(A\\cup B)=0.4+0.3-0.1=0.6$."
       },
       {
         "title": "Cache coverage",
-        "background": "Systems may ask how many requests are served by either of two caches. Shared hits should not be counted twice.",
-        "numbers": "Cache 1 hits 700 requests, cache 2 hits 500, both hit 250, so at least one hits $950$."
+        "background": "At least one cache hit is the union of cache-hit sets.",
+        "numbers": "Cache 1 hits 700 requests, cache 2 hits 500, and both hit 250; at least one cache hits $700+500-250=950$ requests."
       },
       {
         "title": "Multi-label evaluation",
-        "background": "An item can be assigned several labels. Counting items with any sensitive label needs overlap-aware union counts.",
-        "numbers": "Labels have counts 45, 35, 20, pair overlaps 10, 5, 4, triple 2; union is $45+35+20-19+2=83$."
+        "background": "Three label sets require pairwise subtraction and triple add-back.",
+        "numbers": "Label counts are 45, 35, and 20; pair overlaps are 10, 5, and 4; triple overlap is 2. The union is $45+35+20-(10+5+4)+2=83$ items."
       }
     ],
     "applicationsClose": "Wherever categories overlap, inclusion–exclusion is the quiet discipline that counts people, rows, requests, and events once.",
@@ -3764,6 +4294,86 @@
       "For three sets, subtract pairwise overlaps and add back the triple overlap.",
       "Exactly-one and neither questions often use inclusion–exclusion plus complements.",
       "Always state the universe when using complements."
+    ],
+    "connectionsProse": "<p>This lesson builds on sets, unions, intersections, and the counting habit from the sum rule. The sum rule works when cases are disjoint. Inclusion–exclusion handles the next common situation: the cases overlap, so a plain sum counts some objects more than once.</p><p>This idea shows up whenever data, events, labels, alerts, or retrieval results are merged. A user may be in two audiences, a row may fail two validation rules, and a document may come from two retrievers. Inclusion–exclusion gives the exact union count by adding the easy counts and then repairing the overlap.</p>",
+    "symbols": [
+      {
+        "sym": "$A,B,C$",
+        "desc": "finite sets"
+      },
+      {
+        "sym": "$\\cup$",
+        "desc": "union, or membership in at least one set"
+      },
+      {
+        "sym": "$\\cap$",
+        "desc": "intersection, or membership in all named sets"
+      },
+      {
+        "sym": "$|A|$",
+        "desc": "the number of elements in $A$"
+      },
+      {
+        "sym": "complements",
+        "desc": "require a stated universe"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Split the union into disjoint pieces",
+        "result": "$A\\setminus B$, $B\\setminus A$, and $A\\cap B$",
+        "why": "every element in $A\\cup B$ belongs to exactly one of these three regions"
+      },
+      {
+        "do": "Count $A$ by regions",
+        "result": "$|A\\setminus B|+|A\\cap B|$",
+        "why": "$A$ consists of its outside-$B$ part plus the overlap"
+      },
+      {
+        "do": "Count $B$ by regions",
+        "result": "$|B\\setminus A|+|A\\cap B|$",
+        "why": "$B$ has the same kind of split"
+      },
+      {
+        "do": "Add the single-set counts",
+        "result": "$|A|+|B|=|A\\setminus B|+|B\\setminus A|+2|A\\cap B|$",
+        "why": "the overlap appears in both sets"
+      },
+      {
+        "do": "Subtract one overlap",
+        "result": "$|A|+|B|-|A\\cap B|=|A\\setminus B|+|B\\setminus A|+|A\\cap B|$",
+        "why": "each region is counted once"
+      },
+      {
+        "do": "Recognize the right-hand side",
+        "result": "$|A\\cup B|$",
+        "why": "it is the disjoint-region count of the union"
+      },
+      {
+        "do": "Check an element that lies only in one set",
+        "result": "final count 1",
+        "why": "it is added once, subtracted zero times, and added back zero times"
+      },
+      {
+        "do": "Check an element that lies in exactly two sets",
+        "result": "final count 1",
+        "why": "it is added twice and subtracted once in its pairwise intersection"
+      },
+      {
+        "do": "Check an element that lies in all three sets",
+        "result": "temporary count 0",
+        "why": "it is added three times and subtracted three times, once for each pair"
+      },
+      {
+        "do": "Add the triple intersection once",
+        "result": "$3-3+1=1$",
+        "why": "the all-three element must be counted once"
+      },
+      {
+        "do": "Cover all cases",
+        "result": "the three-set formula counts every union element once",
+        "why": "every union element falls into exactly one of these cases"
+      }
     ],
     "prereqs": [
       "math-14-13"
@@ -3792,8 +4402,8 @@
         "hashing"
       ]
     },
-    "motivation": "<p>You already trust the idea: if 13 people choose birth months, at least two share a month. There are only 12 months.</p><p>The <b>pigeonhole principle</b> gives that intuition a clean mathematical voice. It is a proof method for guarantees, especially when the exact repeated item is not known.</p>",
-    "definition": "<p>If $N$ objects are placed into $k$ boxes and $N>k$, then at least one box contains at least two objects. More generally, at least one box contains at least $\\lceil N/k\\rceil$ objects.</p><p>The generalized version follows because if every box had at most $\\lceil N/k\\rceil-1$ objects, then the total would be at most $k(\\lceil N/k\\rceil-1)$, which is less than $N$ when $\\lceil N/k\\rceil$ is the smallest integer not below $N/k$.</p><p><b>Assumptions that matter:</b> every object must be assigned to a box; boxes must cover all possible categories; and the conclusion guarantees existence, not which box is crowded.</p>",
+    "motivation": "<p>Pigeonhole reasoning turns crowding into certainty. If too many objects must fit into too few boxes, some box must hold a repeat or a high load. The conclusion does not identify which box is crowded; it guarantees that at least one such box exists.</p><p>The generalized version gives a load guarantee. If $N$ objects are distributed across $k$ boxes, then the average load is $N/k$. Since a box count must be an integer, some box must reach at least the ceiling of that average. Assuming every box is below that level would make the total capacity too small for all $N$ objects.</p>",
+    "definition": "<p>If $N$ objects are placed into $k$ boxes, some box has at least $$\\lceil N/k\\rceil$$ objects.</p><p><b>Assumptions that matter:</b> Every object is placed in one of the $k$ boxes, box loads are integers, and $k$ is positive.</p>",
     "worked": {
       "problem": "How many people guarantee that at least 4 share a birth month?",
       "skills": [
@@ -3993,33 +4603,33 @@
     "applications": [
       {
         "title": "Hash collisions",
-        "background": "Hash tables deliberately map a huge key space into fewer buckets. Pigeonhole says collisions are unavoidable.",
-        "numbers": "Mapping 10,000 user ids to 1,024 buckets guarantees a bucket with at least $\\lceil10000/1024\\rceil=10$ ids."
+        "background": "Many ids mapped to fewer buckets force a loaded bucket.",
+        "numbers": "10,000 ids into 1,024 buckets force a bucket with at least $\\lceil10000/1024\\rceil=10$ ids."
       },
       {
-        "title": "Birthday paradox setup",
-        "background": "Probability refines pigeonhole, but the deterministic floor is simple. With more people than days, a shared birthday is certain.",
-        "numbers": "With 367 people and 366 possible birthdays including leap day, at least two share a birthday."
+        "title": "Birthdays",
+        "background": "People are objects and possible birthdays are boxes.",
+        "numbers": "367 people and 366 possible birthdays force a shared birthday."
       },
       {
         "title": "Load balancing",
-        "background": "Distributed systems spread tasks across machines. Average load gives a minimum worst-case guarantee.",
-        "numbers": "101 tasks on 20 workers force some worker to hold at least $\\lceil101/20\\rceil=6$ tasks."
+        "background": "A worker must receive at least the ceiling average load.",
+        "numbers": "101 tasks on 20 workers force at least 6 tasks on one worker."
       },
       {
-        "title": "Remainder arguments",
-        "background": "Number theory uses pigeonholes for congruence guarantees. Same remainder means divisible difference.",
-        "numbers": "Choosing 11 integers guarantees two share a remainder modulo 10, so their difference is a multiple of 10."
+        "title": "Remainders",
+        "background": "Remainder classes act as boxes.",
+        "numbers": "11 integers force two with the same remainder modulo 10."
       },
       {
-        "title": "Cache slots",
-        "background": "Limited cache slots cannot hold all active items uniquely. Pigeonhole predicts conflict pressure.",
-        "numbers": "250 active keys in 64 cache sets force at least $\\lceil250/64\\rceil=4$ keys in one set."
+        "title": "Cache sets",
+        "background": "Active keys assigned to cache sets force one set to be crowded.",
+        "numbers": "250 active keys in 64 cache sets force at least 4 keys in one set."
       },
       {
-        "title": "Mini-batch grouping",
-        "background": "ML training may bucket examples by sequence length. Too many examples for few buckets forces a crowded bucket.",
-        "numbers": "513 sequences placed into 32 length buckets force some bucket to contain at least $\\lceil513/32\\rceil=17$ sequences."
+        "title": "Sequence buckets",
+        "background": "Bucketing sequences by length guarantees one busy length bucket.",
+        "numbers": "513 sequences in 32 length buckets force at least 17 sequences in one bucket."
       }
     ],
     "applicationsClose": "The pigeonhole principle is small but sturdy: when finite capacity is exceeded, repetition or crowding is not an accident but a certainty.",
@@ -4028,6 +4638,57 @@
       "The generalized guarantee is at least $\\lceil N/k\\rceil$ objects in some box.",
       "Many proofs choose boxes as remainders, categories, buckets, or labels.",
       "The principle proves existence without identifying the crowded box."
+    ],
+    "connectionsProse": "<p>The pigeonhole principle follows naturally from counting objects and boxes. It uses contradiction, the sum rule, and integer ceilings to turn a counting imbalance into a guaranteed collision or load. The reader has already seen examples where too many items cannot fit under a claimed limit. This lesson makes that reasoning exact for hashing, sharding, birthdays, and load balancing.</p>",
+    "symbols": [
+      {
+        "sym": "$N$",
+        "desc": "objects"
+      },
+      {
+        "sym": "$k$",
+        "desc": "boxes"
+      },
+      {
+        "sym": "$\\lceil x\\rceil$",
+        "desc": "smallest integer at least $x$"
+      },
+      {
+        "sym": "crowded box",
+        "desc": "a box meeting the guaranteed load"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Place objects into boxes",
+        "result": "$N$ objects and $k$ boxes",
+        "why": "the principle concerns distributing objects among boxes"
+      },
+      {
+        "do": "Define the guaranteed load",
+        "result": "$q=\\lceil N/k\\rceil$",
+        "why": "the ceiling is the smallest integer at least the average"
+      },
+      {
+        "do": "Assume the contrary",
+        "result": "every box has at most $q-1$ objects",
+        "why": "contradiction tests failure of the guarantee"
+      },
+      {
+        "do": "Bound total capacity under that assumption",
+        "result": "at most $k(q-1)$ objects",
+        "why": "there are $k$ boxes each holding at most $q-1$"
+      },
+      {
+        "do": "Use the ceiling inequality",
+        "result": "$k(q-1)<N$",
+        "why": "$q-1<N/k$, and multiplying by $k$ preserves the inequality"
+      },
+      {
+        "do": "Contradict the placement of all objects",
+        "result": "some box has at least $q$ objects",
+        "why": "capacity below $N$ cannot hold all $N$ objects"
+      }
     ],
     "prereqs": [
       "math-14-14"
@@ -4056,8 +4717,8 @@
         "difference equations"
       ]
     },
-    "motivation": "<p>You already compute patterns step by step: today's balance depends on yesterday's balance, and today's dynamic-programming table entry depends on earlier entries.</p><p>A <b>recurrence relation</b> turns that dependency into a definition. It is a natural language for counting processes that unfold one size at a time.</p>",
-    "definition": "<p>A recurrence relation defines a sequence $a_0,a_1,a_2,\\ldots$ by giving initial values and a rule for later terms, such as $a_n=a_{n-1}+2$ with $a_0=3$. Initial values anchor the sequence; the recurrence propagates it.</p><p>For counting binary strings with no consecutive 1s, let $a_n$ be the number of valid length-$n$ strings. A valid string ending in 0 follows any valid length $n-1$ string; a valid string ending in 10 follows any valid length $n-2$ string. Thus $a_n=a_{n-1}+a_{n-2}$.</p><p><b>Assumptions that matter:</b> the recurrence rule must apply only where earlier terms exist; initial conditions must be enough to start the rule; and $a_n$ should have a consistent meaning for every $n$.</p>",
+    "motivation": "<p>A recurrence defines a sequence by giving starting values and a rule for later terms. Instead of writing a direct formula immediately, it says how to compute the next value from earlier values. This mirrors many algorithms that solve a problem by referring to smaller subproblems.</p><p>The key modeling step is to split a size-$n$ object into cases that refer to smaller sizes. For binary strings with no consecutive 1s, the final symbol gives a clean split. Strings ending in 0 reduce to any valid shorter string, while strings ending in 1 must have a preceding 0, reducing to a still shorter valid prefix.</p>",
+    "definition": "<p>A recurrence relation defines sequence terms from earlier terms. For binary strings with no consecutive 1s, the count satisfies $$a_n=a_{n-1}+a_{n-2}$$.</p><p><b>Assumptions that matter:</b> $a_n$ counts valid length-$n$ strings, cases are split by final symbol, and initial values anchor the recurrence.</p>",
     "worked": {
       "problem": "Find $a_1$ through $a_5$ for $a_n=3a_{n-1}+2$ with $a_0=1$.",
       "skills": [
@@ -4261,34 +4922,34 @@
     ],
     "applications": [
       {
-        "title": "Dynamic programming tables",
-        "background": "Dynamic programming defines each table cell from smaller subproblems. Recurrences are the blueprint.",
-        "numbers": "If $D(n)=D(n-1)+n$ and $D(0)=0$, then $D(4)=1+2+3+4=10$ operations."
+        "title": "DP tables",
+        "background": "A recurrence can fill table values from previous values.",
+        "numbers": "$D(n)=D(n-1)+n$, $D(0)=0$ gives $D(4)=1+2+3+4=10$."
       },
       {
-        "title": "Fibonacci growth",
-        "background": "The Fibonacci recurrence appears in tilings and branching processes. It is a first friendly second-order recurrence.",
+        "title": "Fibonacci",
+        "background": "A second-order recurrence adds two previous values.",
         "numbers": "$F_5=5$ and $F_6=8$, so $F_7=13$."
       },
       {
-        "title": "Tree node counts",
-        "background": "Complete binary trees grow recursively: each level doubles. A recurrence expresses that expansion.",
-        "numbers": "With $N_h=2N_{h-1}+1$ and $N_0=1$, $N_3=15$ nodes."
+        "title": "Binary tree nodes",
+        "background": "Tree height recurrences describe recursive structure size.",
+        "numbers": "$N_h=2N_{h-1}+1$, $N_0=1$ gives $N_3=15$."
       },
       {
-        "title": "Training checkpoints",
-        "background": "A schedule may update a budget from the previous epoch. Recurrences make the schedule reproducible.",
-        "numbers": "If batch size follows $b_n=2b_{n-1}$ from $32$, then after 3 doublings it is $256$."
+        "title": "Batch schedule",
+        "background": "Repeated doubling is a first-order recurrence.",
+        "numbers": "$b_n=2b_{n-1}$ from 32 gives 256 after 3 doublings."
       },
       {
-        "title": "Queue backlogs",
-        "background": "Backlog today depends on yesterday plus arrivals minus service. This is a practical recurrence.",
-        "numbers": "With $q_n=q_{n-1}+12-10$ and $q_0=5$, $q_4=13$."
+        "title": "Queue backlog",
+        "background": "Backlog evolves by previous backlog plus arrivals minus service.",
+        "numbers": "$q_n=q_{n-1}+12-10$, $q_0=5$ gives $q_4=13$."
       },
       {
-        "title": "Autoregressive models",
-        "background": "Sequence models often predict from previous tokens or states. The indexing mirrors recurrence thinking.",
-        "numbers": "If hidden size update cost is $c_n=c_{n-1}+64$ from $0$, then 10 steps accumulate $640$ units."
+        "title": "Autoregressive cost",
+        "background": "A running cost can increase by a fixed amount per step.",
+        "numbers": "$c_n=c_{n-1}+64$ from 0 gives 640 after 10 steps."
       }
     ],
     "applicationsClose": "Recurrences let discrete processes speak step by step, from simple schedules to dynamic programs and sequence models.",
@@ -4297,6 +4958,57 @@
       "First-order rules use one previous term; second-order rules use two.",
       "Counting recurrences often come from splitting the last step into cases.",
       "Iteration is the safest first way to understand a recurrence."
+    ],
+    "connectionsProse": "<p>Recurrence relations connect counting to sequences and algorithms. After learning to count static sets of outcomes, the reader now describes a quantity by how it grows from smaller cases. This is the natural language of dynamic programming, recursive algorithms, autoregressive costs, and branching structures. It also prepares the reader for solving linear recurrences and using generating functions.</p>",
+    "symbols": [
+      {
+        "sym": "$a_n$",
+        "desc": "sequence term at size $n$"
+      },
+      {
+        "sym": "initial values",
+        "desc": "anchor the recurrence"
+      },
+      {
+        "sym": "first-order",
+        "desc": "uses one previous term"
+      },
+      {
+        "sym": "second-order",
+        "desc": "uses two previous terms"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define the counted quantity",
+        "result": "$a_n$ counts valid length-$n$ strings",
+        "why": "the recurrence needs a precise sequence"
+      },
+      {
+        "do": "Split by final symbol",
+        "result": "final symbol 0 or 1",
+        "why": "these cases are disjoint and cover all valid strings"
+      },
+      {
+        "do": "Count strings ending in 0",
+        "result": "$a_{n-1}$",
+        "why": "the first $n-1$ symbols can be any valid string"
+      },
+      {
+        "do": "Analyze strings ending in 1",
+        "result": "the ending must be 01",
+        "why": "a previous 1 would create consecutive 1s"
+      },
+      {
+        "do": "Count the remaining prefix",
+        "result": "$a_{n-2}$",
+        "why": "the first $n-2$ symbols can be any valid string"
+      },
+      {
+        "do": "Add the disjoint cases",
+        "result": "$a_n=a_{n-1}+a_{n-2}$",
+        "why": "ending in 0 and ending in 1 are disjoint and complete"
+      }
     ],
     "prereqs": [
       "math-14-15"
@@ -4325,8 +5037,8 @@
         "dynamic programming"
       ]
     },
-    "motivation": "<p>Iterating a recurrence is honest but slow. If you need the 1000th term, computing every previous term may hide the pattern.</p><p>For many linear recurrences, a special guess unlocks the formula. Geometric sequences are the key: if each term is a power, the recurrence becomes an algebra equation.</p>",
-    "definition": "<p>A homogeneous linear recurrence with constant coefficients has the form $a_n=c_1a_{n-1}+\\cdots+c_da_{n-d}$. Trying $a_n=r^n$ gives a <b>characteristic equation</b>. For $a_n=5a_{n-1}-6a_{n-2}$, the equation is $r^2=5r-6$, or $r^2-5r+6=0$.</p><p>If the characteristic roots are distinct, say $r_1$ and $r_2$, then $a_n=A r_1^n+B r_2^n$, and the constants come from initial conditions. The reason is linearity: each root-power sequence satisfies the recurrence, and sums of solutions also satisfy it.</p><p><b>Assumptions that matter:</b> this lesson focuses on homogeneous recurrences with constant coefficients and distinct roots; repeated roots and nonhomogeneous terms need extra modifications; and initial conditions determine the constants.</p>",
+    "motivation": "<p>Solving a recurrence changes step-by-step computation into a formula. For homogeneous linear recurrences, geometric sequences make the recurrence become an algebra equation. This works because shifting a geometric sequence only changes it by powers of the same base.</p><p>The characteristic equation finds the bases that can appear in solutions. Once those bases are known, the general solution is a combination of the corresponding geometric sequences. Initial conditions then choose the constants, turning the family of possible solutions into the one sequence specified by the recurrence.</p>",
+    "definition": "<p>A homogeneous linear recurrence with constant coefficients can be solved by trying geometric terms. For $$a_n=5a_{n-1}-6a_{n-2},\\quad a_0=2,\\quad a_1=5$$ the solution is $$a_n=2^n+3^n$$.</p><p><b>Assumptions that matter:</b> The recurrence is homogeneous, has constant coefficients, and has initial conditions that determine the constants.</p>",
     "worked": {
       "problem": "Solve $a_n=5a_{n-1}-6a_{n-2}$ with $a_0=2$ and $a_1=5$.",
       "skills": [
@@ -4565,34 +5277,34 @@
     ],
     "applications": [
       {
-        "title": "Fibonacci formulas",
-        "background": "The Fibonacci recurrence has characteristic roots involving the golden ratio. The formula explains its growth rate.",
-        "numbers": "$F_{20}=6765$, while $\\varphi^{20}/\\sqrt5\\approx6765$ gives a close integer."
+        "title": "Fibonacci growth",
+        "background": "Characteristic roots explain the rounded exponential growth estimate.",
+        "numbers": "$F_{20}=6765$, and $\\varphi^{20}/\\sqrt5\\approx6765$ gives the rounded growth estimate."
       },
       {
-        "title": "Algorithm recurrences",
-        "background": "Some algorithm costs follow linear recurrences. Solving them reveals the growth rate.",
-        "numbers": "If $T_n=2T_{n-1}$ and $T_0=1$, then $T_{30}=2^{30}=1,073,741,824$."
+        "title": "Algorithm recurrence",
+        "background": "Repeated doubling has an explicit power-of-two form.",
+        "numbers": "$T_n=2T_{n-1}$, $T_0=1$ gives $T_{30}=2^{30}=1,073,741,824$."
       },
       {
-        "title": "Population models",
-        "background": "Age-structured populations can be approximated by recurrence rules. Characteristic roots describe long-run growth.",
-        "numbers": "If $a_n=3a_{n-1}$ from $100$, then after 5 periods $a_5=100\\cdot3^5=24,300$."
+        "title": "Population model",
+        "background": "A first-order multiplicative recurrence grows geometrically.",
+        "numbers": "$a_n=3a_{n-1}$ from 100 gives $a_5=100\\cdot3^5=24300$."
       },
       {
-        "title": "Signal filters",
-        "background": "Simple digital filters update from previous outputs. Linear recurrences describe their impulse response.",
-        "numbers": "For $y_n=0.5y_{n-1}$ with $y_0=1$, $y_6=0.5^6=0.015625$."
+        "title": "Signal filter",
+        "background": "A decaying recurrence has a closed geometric form.",
+        "numbers": "$y_n=0.5y_{n-1}$, $y_0=1$ gives $y_6=0.015625$."
       },
       {
-        "title": "Gradient momentum memory",
-        "background": "Exponential moving averages are first-order recurrences. Solving shows how old gradients fade.",
-        "numbers": "With $m_n=0.9m_{n-1}$ and $m_0=1$, the weight after 10 steps is $0.9^{10}\\approx0.349$."
+        "title": "Momentum memory",
+        "background": "Exponential decay describes retained momentum weight.",
+        "numbers": "$m_n=0.9m_{n-1}$, $m_0=1$ gives $m_{10}=0.9^{10}\\approx0.349$."
       },
       {
-        "title": "Branching search trees",
-        "background": "A search that branches by a fixed factor has geometric recurrence behavior.",
-        "numbers": "If nodes per depth satisfy $N_d=3N_{d-1}$ and $N_0=1$, depth 6 has $729$ nodes."
+        "title": "Branching search",
+        "background": "Each depth multiplies the number of nodes by the branching factor.",
+        "numbers": "$N_d=3N_{d-1}$, $N_0=1$ gives depth 6 count $729$."
       }
     ],
     "applicationsClose": "Solving recurrences changes perspective: from marching term by term to seeing the powers that control growth.",
@@ -4601,6 +5313,77 @@
       "The characteristic equation turns the recurrence into algebra.",
       "Distinct roots give a sum of geometric terms.",
       "Initial conditions determine the constants in the closed form."
+    ],
+    "connectionsProse": "<p>This lesson follows recurrence relations by asking when a recursive description can be turned into a closed formula. The reader has already seen sequences defined from previous terms. Linear recurrences with constant coefficients have a special structure that can be solved with characteristic roots. The method connects recurrence growth to geometric sequences and later to algorithmic growth rates.</p>",
+    "symbols": [
+      {
+        "sym": "$a_n$",
+        "desc": "sequence"
+      },
+      {
+        "sym": "$r$",
+        "desc": "characteristic root"
+      },
+      {
+        "sym": "$A,B$",
+        "desc": "constants set by initial conditions"
+      },
+      {
+        "sym": "homogeneous",
+        "desc": "no extra forcing term"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Try a geometric solution",
+        "result": "$a_n=r^n$",
+        "why": "geometric sequences keep the same shape after shifting"
+      },
+      {
+        "do": "Substitute into the recurrence",
+        "result": "$r^n=5r^{n-1}-6r^{n-2}$",
+        "why": "the trial solution must satisfy the recurrence"
+      },
+      {
+        "do": "Divide by the common power",
+        "result": "$r^2=5r-6$",
+        "why": "dividing by $r^{n-2}$ turns shifts into powers of $r$"
+      },
+      {
+        "do": "Move all terms to one side",
+        "result": "$r^2-5r+6=0$",
+        "why": "this is the characteristic equation"
+      },
+      {
+        "do": "Factor the equation",
+        "result": "$(r-2)(r-3)=0$",
+        "why": "factoring finds the characteristic roots"
+      },
+      {
+        "do": "Write the general solution",
+        "result": "$a_n=A2^n+B3^n$",
+        "why": "distinct roots contribute geometric terms"
+      },
+      {
+        "do": "Use the first initial condition",
+        "result": "$A+B=2$",
+        "why": "$a_0=2$"
+      },
+      {
+        "do": "Use the second initial condition",
+        "result": "$2A+3B=5$",
+        "why": "$a_1=5$"
+      },
+      {
+        "do": "Solve the constants",
+        "result": "$A=1$, $B=1$",
+        "why": "the two linear equations determine the two constants"
+      },
+      {
+        "do": "State the closed form",
+        "result": "$a_n=2^n+3^n$",
+        "why": "substituting the constants gives the specified sequence"
+      }
     ],
     "prereqs": [
       "math-14-16"
@@ -4629,8 +5412,8 @@
         "coefficient extraction"
       ]
     },
-    "motivation": "<p>You already use lists of numbers: $1,1,2,3,5,8$ tells a story term by term. A generating function packages that list as coefficients of powers of $x$.</p><p>The gift is that counting choices become multiplication, and recurrence rules become algebra. We do not evaluate $x$ so much as use it as a label for size.</p>",
-    "definition": "<p>The ordinary generating function for a sequence $a_0,a_1,a_2,\\ldots$ is $$A(x)=\\sum_{n\\ge0}a_nx^n.$$ The notation $[x^n]A(x)$ means the coefficient of $x^n$ in $A(x)$.</p><p>For example, $1+x+x^2+\\cdots=1/(1-x)$ as a formal power series because multiplying by $(1-x)$ cancels all terms after the constant: $(1-x)(1+x+x^2+\\cdots)=1$.</p><p><b>Assumptions that matter:</b> in combinatorics, power series may be treated formally without worrying about numerical convergence; coefficients must match the counted sizes; and multiplication of generating functions corresponds to splitting size between independent choices.</p>",
+    "motivation": "<p>A generating function stores a sequence as coefficients of powers of $x$. The variable records size, and algebra combines counts. The coefficient of $x^n$ is the count for size $n$, so the series is a bookkeeping device rather than an ordinary number to evaluate.</p><p>The geometric series is the basic model. It has one term at every nonnegative size, so every coefficient is 1. Multiplying by $x$ shifts every coefficient up by one power. Subtracting the shifted series cancels all positive powers, leaving a simple algebraic equation for the whole series.</p>",
+    "definition": "<p>An ordinary generating function stores a sequence as coefficients: $$A(x)=\\sum_{n\\ge0}a_nx^n$$. The basic geometric series satisfies $$1+x+x^2+\\cdots=1/(1-x)$$.</p><p><b>Assumptions that matter:</b> The manipulation is formal power-series bookkeeping, and $[x^n]A(x)$ denotes the coefficient at size $n$.</p>",
     "worked": {
       "problem": "Use generating functions to count ways to make total 4 using parts of size 1 and 2, with unlimited copies and order ignored.",
       "skills": [
@@ -4829,34 +5612,34 @@
     ],
     "applications": [
       {
-        "title": "Polynomial multiplication as convolution",
-        "background": "Signal processing and probability use the same coefficient rule: multiplication combines independent sizes.",
-        "numbers": "$ (1+2x)(3+4x)$ has $x$ coefficient $1\\cdot4+2\\cdot3=10$."
+        "title": "Convolution",
+        "background": "Multiplying generating functions combines choices and adds sizes.",
+        "numbers": "$(1+2x)(3+4x)$ has $x$ coefficient $1\\cdot4+2\\cdot3=10$."
       },
       {
-        "title": "Counting feature budgets",
-        "background": "Feature selection with budgets can be encoded by powers of $x$. Coefficients count feasible totals.",
-        "numbers": "If text choices contribute $1+x+x^2$ and image choices $1+x$, coefficient of $x^2$ is $2$."
+        "title": "Feature budgets",
+        "background": "The coefficient of a power counts ways to hit that total budget.",
+        "numbers": "$(1+x+x^2)(1+x)$ has coefficient of $x^2$ equal 2."
       },
       {
         "title": "Dice sums",
-        "background": "A die has generating function $x+x^2+\\cdots+x^6$. Two dice use its square.",
-        "numbers": "The coefficient of $x^7$ in $(x+\\cdots+x^6)^2$ is $6$, matching sums to 7."
+        "background": "A coefficient in a product of die polynomials counts sum outcomes.",
+        "numbers": "coefficient of $x^7$ in $(x+\\cdots+x^6)^2$ is 6."
       },
       {
-        "title": "Integer partitions with limited parts",
-        "background": "Generating functions count ways to build totals from allowed part sizes.",
-        "numbers": "Using parts 1 and 3 for total 6 gives coefficient of $x^6$ in $(1+x+x^2+\\cdots)(1+x^3+x^6+\\cdots)$, which is $3$."
+        "title": "Parts 1 and 3",
+        "background": "Allowed part sizes are encoded as powers of $x$.",
+        "numbers": "coefficient of $x^6$ in $(1+x+x^2+\\cdots)(1+x^3+x^6+\\cdots)$ is 3."
       },
       {
-        "title": "Binomial coefficients",
-        "background": "The polynomial $(1+x)^n$ stores subset counts. Coefficients are binomial coefficients.",
-        "numbers": "In $(1+x)^8$, coefficient of $x^3$ is $\\binom83=56$."
+        "title": "Binomial coefficient",
+        "background": "The binomial theorem is a generating-function coefficient statement.",
+        "numbers": "in $(1+x)^8$, coefficient of $x^3$ is $\\binom83=56$."
       },
       {
-        "title": "Dynamic programming compression",
-        "background": "Generating functions can summarize a DP table by size. Algebraic operations mirror transitions.",
-        "numbers": "If current counts are $1+3x+2x^2$ and a choice adds 0 or 1, multiplying by $1+x$ gives coefficient of $x^2$ equal $3+2=5$."
+        "title": "DP compression",
+        "background": "A product can compress a small dynamic-programming convolution.",
+        "numbers": "$(1+3x+2x^2)(1+x)$ has $x^2$ coefficient $3+2=5$."
       }
     ],
     "applicationsClose": "Generating functions are counting ledgers: coefficients hold answers, while algebra moves entire families of answers at once.",
@@ -4865,6 +5648,53 @@
       "Coefficient notation $[x^n]A(x)$ means the coefficient of $x^n$.",
       "Multiplication combines independent choices by adding exponents.",
       "Formal power series can be used for counting even when numerical convergence is not the focus."
+    ],
+    "connectionsProse": "<p>Generating functions continue the sequence block by representing counts as coefficients of a formal power series. The reader has seen sequences, recurrences, and binomial coefficients; this lesson packages those counts into algebraic objects. Multiplication of generating functions corresponds to combining choices, so earlier product-rule ideas reappear in coefficient form. This prepares the reader for compact recurrence solving and constrained counting.</p>",
+    "symbols": [
+      {
+        "sym": "$A(x)=\\sum_{n\\ge0}a_nx^n$",
+        "desc": "ordinary generating function"
+      },
+      {
+        "sym": "$a_n$",
+        "desc": "coefficient/count at size $n$"
+      },
+      {
+        "sym": "$[x^n]A(x)$",
+        "desc": "coefficient of $x^n$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define the series",
+        "result": "$S=1+x+x^2+x^3+\\cdots$",
+        "why": "the series has one term at every nonnegative size"
+      },
+      {
+        "do": "Multiply by $x$",
+        "result": "$xS=x+x^2+x^3+\\cdots$",
+        "why": "multiplication by $x$ shifts each term up one power"
+      },
+      {
+        "do": "Subtract the shifted series",
+        "result": "$S-xS=1$",
+        "why": "every positive-power term cancels"
+      },
+      {
+        "do": "Factor the left side",
+        "result": "$(1-x)S=1$",
+        "why": "$S-xS$ has common factor $S$"
+      },
+      {
+        "do": "Solve for the series",
+        "result": "$S=1/(1-x)$",
+        "why": "divide by $1-x$ formally"
+      },
+      {
+        "do": "Interpret the coefficients",
+        "result": "$[x^n]S=1$",
+        "why": "there is one object of every size"
+      }
     ],
     "prereqs": [
       "math-14-17"
@@ -4893,8 +5723,8 @@
         "Bayes rule"
       ]
     },
-    "motivation": "<p>You already reason with chance when you say a fair coin has two equally likely outcomes. Discrete probability keeps that common sense precise when there are many outcomes.</p><p>In ML, probability is the language of uncertainty: labels, tokens, model errors, sampled batches, and randomized algorithms all live here.</p>",
-    "definition": "<p>A discrete probability space has a countable sample space $\\Omega$ and probabilities $P(\\omega)\\ge0$ for outcomes $\\omega$, with $\\sum_{\\omega\\in\\Omega}P(\\omega)=1$. For an event $A\\subseteq\\Omega$, $P(A)=\\sum_{\\omega\\in A}P(\\omega)$.</p><p>If all outcomes are equally likely, then $P(A)=|A|/|\\Omega|$. The complement rule $P(A^c)=1-P(A)$ follows because $A$ and $A^c$ are disjoint and together cover the whole sample space.</p><p><b>Assumptions that matter:</b> probabilities must be nonnegative and sum to 1; equally likely formulas require genuine symmetry; and independence means $P(A\\cap B)=P(A)P(B)$, not merely that events feel unrelated.</p>",
+    "motivation": "<p>Discrete probability turns counts or weights over countable outcomes into chances. For equally likely outcomes, probability is favorable count divided by total count. More generally, each outcome has a probability, and event probabilities come from adding the probabilities of outcomes in the event.</p><p>The complement rule is one of the most useful bookkeeping facts. An event and its complement are disjoint and together cover the entire sample space. Since total probability is 1, knowing the chance that the event happens immediately gives the chance that it does not happen.</p>",
+    "definition": "<p>Discrete probability assigns probabilities to outcomes in a finite or countable sample space and adds outcome probabilities over events. The complement rule is $$P(A^c)=1-P(A)$$.</p><p><b>Assumptions that matter:</b> The event $A$ and complement $A^c$ are disjoint, together cover $\\Omega$, and total probability is $P(\\Omega)=1$.</p>",
     "worked": {
       "problem": "A fair die is rolled twice. What is the probability the sum is 7?",
       "skills": [
@@ -5093,34 +5923,34 @@
     ],
     "applications": [
       {
-        "title": "Model accuracy as probability",
-        "background": "Accuracy estimates the probability a model is correct on a random example from a distribution.",
-        "numbers": "If 460 of 500 validation examples are correct, estimated accuracy is $460/500=0.92$."
+        "title": "Accuracy estimate",
+        "background": "Empirical accuracy is correct outcomes divided by total evaluated outcomes.",
+        "numbers": "460 correct of 500 gives $460/500=0.92$."
       },
       {
-        "title": "Mini-batch sampling",
-        "background": "Training samples batches from data. Hypergeometric or binomial counts describe label mixes.",
-        "numbers": "With class rate $0.2$, expected positives in a batch of 64 are $64\\cdot0.2=12.8$."
+        "title": "Mini-batch labels",
+        "background": "Expected positives multiply batch size by class probability.",
+        "numbers": "class rate 0.2 in batch 64 gives expected positives $64\\cdot0.2=12.8$."
       },
       {
-        "title": "Dropout masks",
-        "background": "Dropout randomly keeps or removes activations. A Bernoulli variable models each unit.",
-        "numbers": "With keep probability $0.8$ across 100 units, expected kept units are $80$."
+        "title": "Dropout",
+        "background": "Expected kept units multiply units by keep probability.",
+        "numbers": "keep probability 0.8 across 100 units gives expected kept units 80."
       },
       {
-        "title": "Randomized hashing",
-        "background": "Hash functions are often analyzed probabilistically. Collision chance is a discrete event.",
-        "numbers": "Two independent keys into 1000 buckets collide with probability $1/1000=0.001$."
+        "title": "Hashing",
+        "background": "Two independent uniform bucket choices collide when the second matches the first.",
+        "numbers": "two independent keys into 1000 buckets collide with probability $1/1000=0.001$."
       },
       {
         "title": "A/B testing",
-        "background": "Experiment outcomes are random variables. Counts become estimated probabilities.",
-        "numbers": "If 52 conversions occur among 1000 users, conversion estimate is $0.052$."
+        "background": "A conversion-rate estimate is conversions divided by exposed users.",
+        "numbers": "52 conversions among 1000 users gives estimate 0.052."
       },
       {
-        "title": "Language-model tokens",
-        "background": "A next-token distribution assigns probabilities to a finite vocabulary slice.",
-        "numbers": "If token probabilities are $0.50,0.30,0.20$, their sum is $1.00$ and the top-token chance is $0.50$."
+        "title": "Token distribution",
+        "background": "A valid discrete distribution has probabilities summing to one.",
+        "numbers": "probabilities 0.50, 0.30, 0.20 sum to 1.00, with top-token chance 0.50."
       }
     ],
     "applicationsClose": "Discrete probability is the bridge from counting possibilities to quantifying uncertainty in data, algorithms, and models.",
@@ -5129,6 +5959,60 @@
       "For equally likely outcomes, probability is favorable count divided by total count.",
       "Complements and inclusion–exclusion work for probabilities just as they do for counts.",
       "Expectation is a probability-weighted average."
+    ],
+    "connectionsProse": "<p>Discrete probability uses the counting tools of the section to reason about uncertainty over finite or countable outcomes. Sets become events, unions and complements become event operations, and counts become probabilities when outcomes are equally likely. This lesson connects combinatorics to accuracy estimates, dropout masks, collisions, and token distributions. It also sets up probabilistic uses of inclusion-exclusion and binomial coefficients.</p>",
+    "symbols": [
+      {
+        "sym": "$\\Omega$",
+        "desc": "sample space"
+      },
+      {
+        "sym": "$\\omega$",
+        "desc": "outcome"
+      },
+      {
+        "sym": "$P(\\omega)$",
+        "desc": "outcome probability"
+      },
+      {
+        "sym": "$A$",
+        "desc": "event"
+      },
+      {
+        "sym": "$A^c$",
+        "desc": "complement"
+      },
+      {
+        "sym": "$E[X]$",
+        "desc": "expectation"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Split the sample space",
+        "result": "$A$ and $A^c$",
+        "why": "an event and its complement are disjoint"
+      },
+      {
+        "do": "Use coverage of the sample space",
+        "result": "$P(A\\cup A^c)=P(\\Omega)=1$",
+        "why": "the event or its complement contains every outcome"
+      },
+      {
+        "do": "Add probabilities of disjoint events",
+        "result": "$P(A\\cup A^c)=P(A)+P(A^c)$",
+        "why": "disjoint event probabilities add"
+      },
+      {
+        "do": "Combine the equations",
+        "result": "$P(A)+P(A^c)=1$",
+        "why": "both expressions equal the probability of the full sample space"
+      },
+      {
+        "do": "Subtract $P(A)$",
+        "result": "$P(A^c)=1-P(A)$",
+        "why": "isolate the complement probability"
+      }
     ],
     "prereqs": [
       "math-14-18"
@@ -5157,8 +6041,8 @@
         "Boolean algebra"
       ]
     },
-    "motivation": "<p>You already know some comparisons are incomplete. Two feature sets may not contain each other; two tasks may not depend on each other. A total line is too strict.</p><p>A <b>partially ordered set</b> lets some pairs be comparable and others remain independent. A lattice adds reliable meet and join operations, which is why these ideas appear in logic, permissions, and dataflow.</p>",
-    "definition": "<p>A <b>poset</b> is a set $P$ with a relation $\\le$ that is reflexive, antisymmetric, and transitive. Reflexive means $a\\le a$; antisymmetric means $a\\le b$ and $b\\le a$ imply $a=b$; transitive means $a\\le b$ and $b\\le c$ imply $a\\le c$.</p><p>A <b>lattice</b> is a poset where every pair $a,b$ has a greatest lower bound $a\\wedge b$ called the meet, and a least upper bound $a\\vee b$ called the join. For subsets ordered by inclusion, meet is intersection and join is union.</p><p><b>Assumptions that matter:</b> the order relation must be stated; comparable does not mean equal; not every poset is a lattice; and meet/join are defined by the order, not by ordinary arithmetic unless the order says so.</p>",
+    "motivation": "<p>A partial order allows some pairs to be comparable and others independent. Subset inclusion is the guiding example: one feature set may be contained in another, but two feature sets can also overlap without either containing the other. This is often a better model than forcing every object into a single ranked line.</p><p>A lattice adds meet and join operations, which summarize common lower information and combined upper information. In a subset lattice, meet is intersection because it keeps what both sets share, and join is union because it combines everything from either set. The definitions are about bounds, but in common finite examples they match practical operations on sets, permissions, or constraints.</p>",
+    "definition": "<p>A poset is a set with a partial order: a relation that is reflexive, antisymmetric, and transitive. A lattice is a poset where each pair has a meet $a\\wedge b$ and a join $a\\vee b$.</p><p><b>Assumptions that matter:</b> The order relation must be stated, some pairs may be incomparable, and in subset lattices meet is intersection while join is union.</p>",
     "worked": {
       "problem": "In the subset poset of $\\{1,2,3\\}$ ordered by inclusion, find the meet and join of $A=\\{1,2\\}$ and $B=\\{2,3\\}$.",
       "skills": [
@@ -5357,34 +6241,34 @@
     ],
     "applications": [
       {
-        "title": "Feature-set lattices",
-        "background": "Feature subsets ordered by inclusion form a lattice. Meet keeps common features; join combines candidates.",
-        "numbers": "For $A=\\{1,2,5\\}$ and $B=\\{2,3\\}$, meet size is $1$ and join size is $4$."
+        "title": "Feature-set lattice",
+        "background": "Feature sets ordered by inclusion meet by intersection and join by union.",
+        "numbers": "$A=\\{1,2,5\\}$ and $B=\\{2,3\\}$ have meet size 1 and join size 4."
       },
       {
-        "title": "Permission systems",
-        "background": "Access rights often form partial orders. Joining permissions combines capabilities safely.",
-        "numbers": "If role A grants $\\{read,write\\}$ and role B grants $\\{read,delete\\}$, the join grants 3 distinct permissions."
+        "title": "Permissions",
+        "background": "Joining roles combines distinct permissions.",
+        "numbers": "roles $\\{read,write\\}$ and $\\{read,delete\\}$ join to 3 distinct permissions."
       },
       {
-        "title": "Dataflow analysis",
-        "background": "Compilers use lattices to merge facts from different control-flow paths. Meet or join summarizes safe information.",
-        "numbers": "If path facts are variables initialized $\\{x,y\\}$ and $\\{y,z\\}$, definitely initialized variables are intersection $\\{y\\}$."
+        "title": "Dataflow facts",
+        "background": "A meet keeps facts true along both paths.",
+        "numbers": "$\\{x,y\\}$ and $\\{y,z\\}$ meet to $\\{y\\}$, one definitely initialized variable."
       },
       {
-        "title": "Divisibility lattices",
-        "background": "Divisibility uses gcd as meet and lcm as join. This gives a number-theoretic lattice on divisors of a fixed number.",
-        "numbers": "For 12 and 18, meet is $\\gcd(12,18)=6$ and join is $\\operatorname{lcm}(12,18)=36$."
+        "title": "Divisibility lattice",
+        "background": "Under divisibility, meet and join correspond to gcd and lcm.",
+        "numbers": "for 12 and 18, meet is 6 and join is 36."
       },
       {
         "title": "Version constraints",
-        "background": "Package versions with dependency constraints are partially ordered. Some versions are incomparable when neither satisfies the other's constraints.",
-        "numbers": "Constraint $\\{1.0,1.1\\}$ joined with $\\{1.1,1.2\\}$ by union has 3 allowed versions."
+        "background": "Joining allowed-version sets combines possibilities.",
+        "numbers": "$\\{1.0,1.1\\}$ joined with $\\{1.1,1.2\\}$ gives 3 allowed versions."
       },
       {
-        "title": "Concept hierarchies",
-        "background": "Ontologies and taxonomies are often partial, not total. Least common ancestors behave like joins when they exist.",
-        "numbers": "If two labels share one parent among 20 class labels, their common abstraction can reduce two labels to one parent category."
+        "title": "Concept hierarchy",
+        "background": "A hierarchy can replace specific labels with a shared upper concept.",
+        "numbers": "two labels sharing one parent can reduce two labels to one abstraction."
       }
     ],
     "applicationsClose": "Posets respect partial information, and lattices add dependable ways to merge or compare that information.",
@@ -5393,6 +6277,37 @@
       "Pairs in a poset need not be comparable.",
       "A lattice gives every pair a meet and a join.",
       "Subset lattices use intersection as meet and union as join."
+    ],
+    "connectionsProse": "<p>Posets and lattices extend relation language by studying relations that behave like order. The reader has already seen reflexive and transitive properties, and this lesson adds antisymmetry to make a partial order. Unlike a total order, a partial order allows some pairs to remain incomparable. Lattices then connect ordering to set operations, permissions, constraints, and information flow.</p>",
+    "symbols": [
+      {
+        "sym": "$\\le$",
+        "desc": "partial order"
+      },
+      {
+        "sym": "reflexive",
+        "desc": "each element is below itself"
+      },
+      {
+        "sym": "antisymmetric",
+        "desc": "two-way comparison forces equality"
+      },
+      {
+        "sym": "transitive",
+        "desc": "comparisons compose"
+      },
+      {
+        "sym": "$a\\wedge b$",
+        "desc": "meet"
+      },
+      {
+        "sym": "$a\\vee b$",
+        "desc": "join"
+      },
+      {
+        "sym": "comparable",
+        "desc": "one element is below the other"
+      }
     ],
     "prereqs": [
       "math-14-19"
@@ -5421,8 +6336,8 @@
         "hashing"
       ]
     },
-    "motivation": "<p>You already use modular arithmetic whenever a clock wraps: 10 hours after 5 o'clock is 3 o'clock, not 15. The clock kept the remainder modulo 12.</p><p>Modulo arithmetic is the mathematics of wraparound. It is essential for hashing, checksums, cryptography, periodic schedules, and many discrete proofs.</p>",
-    "definition": "<p>For integers $a,b$ and positive integer $m$, we write $a\\equiv b\\pmod m$ when $m$ divides $a-b$. Equivalently, $a$ and $b$ have the same remainder after division by $m$.</p><p>Congruences respect addition and multiplication: if $a\\equiv b\\pmod m$ and $c\\equiv d\\pmod m$, then $a+c\\equiv b+d\\pmod m$ and $ac\\equiv bd\\pmod m$. This works because the differences contain factors of $m$.</p><p><b>Assumptions that matter:</b> the modulus $m$ is positive; division is delicate because not every number has a modular inverse; and congruence classes group infinitely many integers by the same remainder.</p>",
+    "motivation": "<p>Modular arithmetic keeps remainders after division. Numbers that differ by a multiple of the modulus belong to the same residue class, so they behave the same for remainder-based purposes. This is why a clock can treat times separated by a full day as the same hour.</p><p>The main algebraic fact is that congruence is compatible with addition and multiplication. If two numbers have the same remainder as two other numbers, adding the first pair or multiplying the first pair gives a result with the same remainder as doing the operation on the second pair. The derivation proves this by showing the differences remain divisible by the modulus.</p>",
+    "definition": "<p>Modular congruence means two integers have the same remainder modulo a positive modulus: $a\\equiv b\\pmod m$. Congruence is preserved by addition and multiplication.</p><p><b>Assumptions that matter:</b> The modulus $m$ is positive, and congruence means the difference is divisible by $m$.</p>",
     "worked": {
       "problem": "Compute $37+58\\pmod{12}$ and $37\\cdot58\\pmod{12}$.",
       "skills": [
@@ -5627,33 +6542,33 @@
     "applications": [
       {
         "title": "Hash tables",
-        "background": "Hashing often uses remainders to assign keys to buckets. Modulo arithmetic makes bucket indices finite.",
-        "numbers": "With $h(k)=k\\bmod100$, key 12345 maps to bucket 45."
+        "background": "A hash bucket can be selected by a remainder.",
+        "numbers": "$h(k)=k\\bmod100$ maps key 12345 to bucket 45."
       },
       {
         "title": "Checksums",
-        "background": "Simple checksums reduce sums modulo a base to catch transcription errors.",
-        "numbers": "Digits 4, 8, 2 sum to 14; modulo 10 checksum remainder is 4."
+        "background": "A checksum can reduce a digit sum modulo a base.",
+        "numbers": "digits 4, 8, 2 sum to 14; modulo 10 remainder is 4."
       },
       {
-        "title": "Clock arithmetic",
-        "background": "Scheduling systems wrap times around daily or weekly cycles.",
-        "numbers": "A job 50 hours after Monday 09:00 is Wednesday 11:00 because $9+50=59\\equiv11\\pmod{24}$ with two extra days."
+        "title": "Clock time",
+        "background": "Clock arithmetic identifies times separated by full cycles.",
+        "numbers": "50 hours after Monday 09:00 gives $9+50=59\\equiv11\\pmod{24}$, so Wednesday 11:00."
       },
       {
         "title": "Cryptography",
-        "background": "Many cryptographic systems use modular multiplication and inverses. The arithmetic is exact but wrapped.",
-        "numbers": "Modulo 11, $3\\cdot4=12\\equiv1$, so 4 is the inverse of 3."
+        "background": "A modular inverse multiplies to 1 modulo the modulus.",
+        "numbers": "modulo 11, $3\\cdot4=12\\equiv1$, so 4 is the inverse of 3."
       },
       {
         "title": "Sharding",
-        "background": "Databases often assign records to shards by modulo. It is simple and deterministic.",
-        "numbers": "User id 987 with 16 shards goes to shard $987\\bmod16=11$."
+        "background": "Remainders assign ids to finite shard numbers.",
+        "numbers": "user id 987 with 16 shards goes to shard $987\\bmod16=11$."
       },
       {
-        "title": "Cyclic positional features",
-        "background": "Periodic features can be represented by remainders before encoding.",
-        "numbers": "Hour 27 maps to hour $27\\bmod24=3$, so it has the same daily position as 03:00."
+        "title": "Cyclic features",
+        "background": "Cyclic quantities wrap around by reducing modulo the period.",
+        "numbers": "hour 27 maps to $27\\bmod24=3$."
       }
     ],
     "applicationsClose": "Modular arithmetic is the disciplined version of wraparound: reduce, operate, and interpret the remainder.",
@@ -5662,6 +6577,62 @@
       "Addition and multiplication preserve congruence.",
       "Every integer belongs to exactly one residue class modulo $m$.",
       "Division modulo $m$ requires an inverse, which may not exist."
+    ],
+    "connectionsProse": "<p>Modular arithmetic follows the counting and structure lessons by focusing on remainders. The reader already knows integer division informally, and this lesson turns the remainder into an equivalence relation on integers. It is essential for hash buckets, clocks, sharding, cyclic features, checksums, and many finite-state systems. The preservation laws show why ordinary addition and multiplication still work after reducing modulo a number.</p>",
+    "symbols": [
+      {
+        "sym": "$a\\equiv b\\pmod m$",
+        "desc": "same remainder modulo $m$"
+      },
+      {
+        "sym": "$m$",
+        "desc": "positive modulus"
+      },
+      {
+        "sym": "$q,r$",
+        "desc": "integer quotients"
+      },
+      {
+        "sym": "residue class",
+        "desc": "all integers with one remainder"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume the first congruence",
+        "result": "$a\\equiv b\\pmod m$, so $a-b=qm$",
+        "why": "congruence means the difference is a multiple of $m$"
+      },
+      {
+        "do": "Assume the second congruence",
+        "result": "$c\\equiv d\\pmod m$, so $c-d=rm$",
+        "why": "the same divisibility definition applies"
+      },
+      {
+        "do": "Add the differences",
+        "result": "$(a+c)-(b+d)=(a-b)+(c-d)=(q+r)m$",
+        "why": "sums of multiples of $m$ are multiples of $m$"
+      },
+      {
+        "do": "Conclude addition preservation",
+        "result": "$a+c\\equiv b+d\\pmod m$",
+        "why": "$m$ divides the difference"
+      },
+      {
+        "do": "Rewrite for products",
+        "result": "$a=b+qm$ and $c=d+rm$",
+        "why": "this expresses each congruent number as a representative plus a multiple of $m$"
+      },
+      {
+        "do": "Multiply",
+        "result": "$ac=(b+qm)(d+rm)=bd+m(br+dq+qrm)$",
+        "why": "all extra terms contain a factor of $m$"
+      },
+      {
+        "do": "Conclude multiplication preservation",
+        "result": "$ac\\equiv bd\\pmod m$",
+        "why": "$ac-bd$ is divisible by $m$"
+      }
     ],
     "prereqs": [
       "math-14-20"
@@ -5690,8 +6661,8 @@
         "binary variables"
       ]
     },
-    "motivation": "<p>You already combine conditions: a filter might keep rows where age is high and country is allowed, or where a trusted flag is true. Boolean algebra is the arithmetic of those conditions.</p><p>It matters because logic grows quickly. Algebraic laws let us simplify predicates, reason about circuits, and make model rules easier to audit.</p>",
-    "definition": "<p>Boolean algebra uses values $0$ and $1$ or false and true, with operations AND ($\\land$), OR ($\\lor$), and NOT ($\\neg$). Key laws include identity, commutativity, associativity, distributivity, and complements such as $x\\land\\neg x=0$ and $x\\lor\\neg x=1$.</p><p>De Morgan's laws say $\\neg(x\\land y)=\\neg x\\lor\\neg y$ and $\\neg(x\\lor y)=\\neg x\\land\\neg y$. They follow from checking the four possible truth assignments for $x,y$; in every row, both sides match.</p><p><b>Assumptions that matter:</b> variables are Boolean unless stated otherwise; AND binds like intersection, OR like union, and NOT like complement; and simplification must preserve the truth value for every assignment.</p>",
+    "motivation": "<p>Boolean algebra treats true and false values as algebraic objects. Expressions can be rearranged, simplified, or rewritten as long as every truth assignment gives the same final value. This makes logical rules easier to implement and easier to check.</p><p>De Morgan's law is a central example because it explains how negation moves across AND and OR. Saying that not both conditions hold is equivalent to saying at least one condition fails. A truth table proves the law by checking all assignments and confirming that the final columns match exactly.</p>",
+    "definition": "<p>Boolean algebra studies expressions built from false/true values and logical operations. De Morgan's law states $$\\neg(x\\land y)=\\neg x\\lor\\neg y$$.</p><p><b>Assumptions that matter:</b> Variables take Boolean values $0$ or $1$, and equivalence means identical truth values for all assignments.</p>",
     "worked": {
       "problem": "Simplify $x\\land(y\\lor\\neg y)$.",
       "skills": [
@@ -5891,33 +6862,33 @@
     "applications": [
       {
         "title": "Feature filters",
-        "background": "Data pipelines combine Boolean predicates to include or exclude rows. Simplification reduces redundant checks.",
-        "numbers": "Rule $age\\_ok\\land(country\\_ok\\lor\\neg country\\_ok)$ simplifies to $age\\_ok$."
+        "background": "Boolean identities can remove tautological subexpressions.",
+        "numbers": "$age\\_ok\\land(country\\_ok\\lor\\neg country\\_ok)$ simplifies to $age\\_ok$."
       },
       {
         "title": "Decision trees",
-        "background": "Each path in a decision tree is a conjunction of tests. Boolean algebra can detect impossible or redundant paths.",
-        "numbers": "A path containing $x>5$ and not $x>5$ has form $p\\land\\neg p=0$, so it covers 0 rows."
+        "background": "A contradictory path cannot cover any rows.",
+        "numbers": "a path with $p\\land\\neg p$ covers 0 rows."
       },
       {
-        "title": "Circuit design",
-        "background": "Digital circuits implement Boolean expressions. Fewer gates mean lower cost and delay.",
-        "numbers": "Expression $(x\\land y)\\lor(x\\land\\neg y)$ uses two ANDs and one OR before simplifying to just wire $x$."
+        "title": "Circuits",
+        "background": "Equivalent Boolean expressions can reduce gate count.",
+        "numbers": "$(x\\land y)\\lor(x\\land\\neg y)$ uses two ANDs and one OR before simplifying to wire $x$."
       },
       {
-        "title": "Search query logic",
-        "background": "Search systems parse AND, OR, and NOT. De Morgan's laws help rewrite excluded conditions.",
-        "numbers": "NOT(red OR blue) equals NOT red AND NOT blue, so two exclusions replace one grouped exclusion."
+        "title": "Search exclusions",
+        "background": "De Morgan's law pushes NOT into an OR query.",
+        "numbers": "NOT(red OR blue) rewrites to NOT red AND NOT blue."
       },
       {
         "title": "Access control",
-        "background": "Permissions are Boolean combinations of roles and resource flags. Simplification improves audits.",
+        "background": "Simplifying Boolean rules clarifies the active condition.",
         "numbers": "$(admin\\lor owner)\\land\\neg admin$ simplifies to $owner\\land\\neg admin$."
       },
       {
-        "title": "Binary indicators in ML",
-        "background": "Boolean features often become 0/1 variables. Logical relations can remove duplicate features.",
-        "numbers": "If feature $z=x\\land1$, then $z=x$, so storing both adds no information."
+        "title": "Binary indicators",
+        "background": "Multiplying by true preserves a Boolean indicator.",
+        "numbers": "$z=x\\land1$ equals $x$, so storing both adds no information."
       }
     ],
     "applicationsClose": "Boolean algebra is logic with a calculator: every simplification is valid only if it preserves all possible truth assignments.",
@@ -5926,6 +6897,65 @@
       "Complement laws give $x\\land\\neg x=0$ and $x\\lor\\neg x=1$.",
       "De Morgan's laws move NOT across AND and OR by switching the operation.",
       "Absorption and distributivity simplify redundant rules and circuits."
+    ],
+    "connectionsProse": "<p>Boolean algebra returns to propositional logic with an algebraic viewpoint. The reader has already worked with truth values, connectives, and truth tables. This lesson treats those connectives as operations that can be simplified while preserving every possible assignment. It connects directly to circuits, search filters, decision rules, binary features, and program conditions.</p>",
+    "symbols": [
+      {
+        "sym": "$0,1$",
+        "desc": "false and true"
+      },
+      {
+        "sym": "$\\land$",
+        "desc": "AND"
+      },
+      {
+        "sym": "$\\lor$",
+        "desc": "OR"
+      },
+      {
+        "sym": "$\\neg$",
+        "desc": "NOT"
+      },
+      {
+        "sym": "$\\oplus$",
+        "desc": "XOR"
+      },
+      {
+        "sym": "equivalence",
+        "desc": "identical truth values in all rows"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "List truth-table rows",
+        "result": "$(0,0),(0,1),(1,0),(1,1)$",
+        "why": "two Boolean variables have four assignments"
+      },
+      {
+        "do": "Compute the AND column",
+        "result": "$x\\land y$ is $0,0,0,1$",
+        "why": "AND is true only when both inputs are true"
+      },
+      {
+        "do": "Negate the AND column",
+        "result": "$\\neg(x\\land y)$ is $1,1,1,0$",
+        "why": "NOT flips each Boolean value"
+      },
+      {
+        "do": "Compute negated inputs",
+        "result": "$\\neg x$ is $1,1,0,0$ and $\\neg y$ is $1,0,1,0$",
+        "why": "each input column is flipped"
+      },
+      {
+        "do": "OR the negated-input columns",
+        "result": "$1,1,1,0$",
+        "why": "OR is true when at least one side is true"
+      },
+      {
+        "do": "Compare final columns",
+        "result": "$\\neg(x\\land y)=\\neg x\\lor\\neg y$",
+        "why": "the columns match for all Boolean assignments"
+      }
     ],
     "prereqs": [
       "math-14-21"
@@ -5954,8 +6984,8 @@
         "graphs"
       ]
     },
-    "motivation": "<p>You already feel the difference between checking 10 examples and checking 10 million. The exact seconds depend on hardware, but the growth pattern often decides whether an idea can run at all.</p><p><b>Big-O</b> is a language for upper-bounding growth. Counting operations, pairs, subsets, or states lets us predict when an ML pipeline will scale and when it will collapse.</p>",
-    "definition": "<p>We write $f(n)=O(g(n))$ if there are constants $C>0$ and $n_0$ such that $0\\le f(n)\\le Cg(n)$ for all $n\\ge n_0$. The function $n$ usually measures input size, such as examples, features, tokens, or graph nodes.</p><p>The definition ignores constant factors and lower-order terms because it studies eventual growth. For example, $3n^2+10n+5=O(n^2)$ since for $n\\ge1$, $3n^2+10n+5\\le18n^2$.</p><p><b>Assumptions that matter:</b> Big-O is an upper bound, not an exact runtime; the variable $n$ must be stated; constants can matter in real systems even when asymptotics hide them; and different resources such as time, memory, and communication may have different bounds.</p>",
+    "motivation": "<p>Big-O uses counting to describe how work grows with input size. It does not try to preserve every small constant or lower-order term. Instead, it gives an eventual upper bound that captures the dominant growth pattern once the input is large enough.</p><p>For ML systems, counting examples, features, pairs, tokens, subsets, or states often decides whether a method can scale. A linear pass over examples may be practical, while all pairs or all subsets can become too large quickly. The derivation shows how a polynomial with several terms can be bounded by a constant multiple of its dominant term after a chosen threshold.</p>",
+    "definition": "<p>Big-O gives an eventual upper bound on growth. For example, $$3n^2+10n+5=O(n^2)$$.</p><p><b>Assumptions that matter:</b> Big-O requires constants $C>0$ and $n_0$ such that the bound holds for all $n\\ge n_0$.</p>",
     "worked": {
       "problem": "An ML validation job compares every pair of $n=5000$ embeddings once, and each cosine comparison costs $d=128$ multiply-adds. Estimate the operation count and Big-O in $n$ and $d$.",
       "skills": [
@@ -6159,34 +7189,34 @@
     ],
     "applications": [
       {
-        "title": "Linear model inference",
-        "background": "A linear model scores each example by a dot product. Counting features gives the cost.",
-        "numbers": "For $n=1,000,000$ examples and $d=100$ features, inference uses $100,000,000$ multiply-adds, or $O(nd)$."
+        "title": "Linear inference",
+        "background": "A dense pass over examples and features scales with their product.",
+        "numbers": "1,000,000 examples and 100 features use $100,000,000$ multiply-adds, or $O(nd)$."
       },
       {
-        "title": "Pairwise retrieval evaluation",
-        "background": "Evaluating all query-document pairs can become quadratic or bilinear. Counting pairs warns before launching.",
+        "title": "Retrieval evaluation",
+        "background": "Scoring every query-document pair is a product count.",
         "numbers": "10,000 queries against 50,000 documents gives $5\\times10^8$ scores."
       },
       {
         "title": "Transformer attention",
-        "background": "Self-attention compares every token with every token. This is why long contexts are expensive.",
-        "numbers": "For $L=4096$ and $d=128$, score work is $4096^2\\cdot128=2,147,483,648$ multiply-adds."
+        "background": "All token pairs with feature dimension create quadratic sequence growth.",
+        "numbers": "$L=4096$, $d=128$ gives $4096^2\\cdot128=2,147,483,648$ score multiply-adds, or $O(L^2d)$."
       },
       {
-        "title": "Hyperparameter grid search",
-        "background": "Grid search multiplies choices across parameters. Combinatorics gives total trials.",
-        "numbers": "Learning rates 5 choices, batch sizes 4, depths 6 gives $5\\cdot4\\cdot6=120$ runs."
+        "title": "Grid search",
+        "background": "Independent hyperparameter choices multiply into candidate runs.",
+        "numbers": "5 learning rates, 4 batch sizes, 6 depths give 120 runs."
       },
       {
         "title": "Feature subset explosion",
-        "background": "Trying every feature subset is usually infeasible because the count is exponential.",
-        "numbers": "With 30 features, subsets total $2^{30}=1,073,741,824$."
+        "background": "Every feature can be included or excluded.",
+        "numbers": "30 features give $2^{30}=1,073,741,824$ subsets."
       },
       {
-        "title": "Mini-batch training epochs",
-        "background": "Epoch cost is often examples times per-example model cost. Big-O separates scalable pieces.",
-        "numbers": "If one example costs 20,000 operations and an epoch has 200,000 examples, the epoch costs $4\\times10^9$ operations."
+        "title": "Epoch cost",
+        "background": "Total epoch work multiplies examples by per-example operations.",
+        "numbers": "200,000 examples at 20,000 operations each cost $4\\times10^9$ operations."
       }
     ],
     "applicationsClose": "Big-O is not a stopwatch, but it is a compass: counting the work tells you which ML designs can survive scale.",
@@ -6195,6 +7225,65 @@
       "Always say what $n$ measures: examples, features, tokens, nodes, or something else.",
       "Loops, pairs, subsets, and recurrences are common sources of complexity counts.",
       "In ML, $O(nd)$, $O(n^2d)$, and $O(2^d)$ describe very different scaling realities."
+    ],
+    "connectionsProse": "<p>This capstone gathers the section's counting habits and applies them to computational growth. The reader has counted functions, subsets, pairs, grids, strings, and recurrence growth. Big-O keeps the same concern with size but focuses on how work scales as the input grows. This is especially important in ML systems, where examples, features, tokens, pairs, and states can all become large.</p>",
+    "symbols": [
+      {
+        "sym": "$f(n)$",
+        "desc": "cost function"
+      },
+      {
+        "sym": "$g(n)$",
+        "desc": "comparison growth"
+      },
+      {
+        "sym": "$C$",
+        "desc": "constant multiplier"
+      },
+      {
+        "sym": "$n_0$",
+        "desc": "threshold"
+      },
+      {
+        "sym": "$O(g(n))$",
+        "desc": "eventual upper bound"
+      },
+      {
+        "sym": "$n,d,L$",
+        "desc": "may measure examples, features, or tokens"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with the definition",
+        "result": "need $C>0$ and $n_0$ such that $0\\le3n^2+10n+5\\le Cn^2$ for $n\\ge n_0$",
+        "why": "Big-O is an eventual upper bound"
+      },
+      {
+        "do": "Choose a threshold",
+        "result": "$n_0=1$",
+        "why": "then $n\\le n^2$ and $1\\le n^2$"
+      },
+      {
+        "do": "Bound the linear term",
+        "result": "$10n\\le10n^2$ for $n\\ge1$",
+        "why": "$n\\le n^2$ after the threshold"
+      },
+      {
+        "do": "Bound the constant term",
+        "result": "$5\\le5n^2$ for $n\\ge1$",
+        "why": "$1\\le n^2$ after the threshold"
+      },
+      {
+        "do": "Add the bounds",
+        "result": "$3n^2+10n+5\\le3n^2+10n^2+5n^2=18n^2$",
+        "why": "each term is bounded by a multiple of $n^2$"
+      },
+      {
+        "do": "Choose the constant",
+        "result": "$C=18$",
+        "why": "this proves $3n^2+10n+5=O(n^2)$"
+      }
     ],
     "prereqs": [
       "math-14-22"

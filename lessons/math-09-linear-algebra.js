@@ -28,8 +28,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>You already know how to give directions: go 3 blocks east and 2 blocks north. A vector records that same idea as ordered numbers, such as $\\begin{bmatrix}3\\\\2\\end{bmatrix}$.</p><p>A <b>linear combination</b> is the patient act of scaling vectors and adding them. This is the first big language of ML because data points, features, embeddings, gradients, and model weights are all vectors being combined.</p>",
-    "definition": "<p>A <b>vector</b> in $\\mathbb{R}^n$ is an ordered list of $n$ real numbers. If $\\mathbf{v}_1,\\ldots,\\mathbf{v}_k$ are vectors in the same $\\mathbb{R}^n$ and $c_1,\\ldots,c_k$ are real numbers, then $c_1\\mathbf{v}_1+\\cdots+c_k\\mathbf{v}_k$ is a <b>linear combination</b>.</p><p>The rule comes from two allowed moves: scalar multiplication stretches each component, and vector addition adds matching components. For $c\\begin{bmatrix}a\\\\b\\end{bmatrix}+d\\begin{bmatrix}e\\\\f\\end{bmatrix}$, the result is $\\begin{bmatrix}ca+de\\\\cb+df\\end{bmatrix}$.</p><p><b>Assumptions that matter:</b> all vectors in a sum must have the same length; scalars are real numbers here; order of components matters; and the zero vector is allowed because choosing all coefficients $0$ is still a linear combination.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. A vector records several coordinates as one object. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>A linear combination scales vectors and adds them, which is the basic operation behind feature weights and embedding mixtures. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Length and combination rule:</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Write $\\begin{bmatrix}7\\\\1\\end{bmatrix}$ as a linear combination of $\\mathbf{u}=\\begin{bmatrix}2\\\\1\\end{bmatrix}$ and $\\mathbf{v}=\\begin{bmatrix}1\\\\-1\\end{bmatrix}$.",
       "skills": [
@@ -258,34 +258,34 @@
     ],
     "applications": [
       {
-        "title": "Embedding mixtures",
-        "background": "Recommendation systems often blend embeddings to represent a combined taste or context. The arithmetic is just linear combination of vectors.",
-        "numbers": "If item vectors are $[2,1]$ and $[0,3]$, a blend $0.7[2,1]+0.3[0,3]=[1.4,1.6]$."
+        "title": "Embedding mixture",
+        "background": "The computation is shown directly.",
+        "numbers": "$0.7(2,1)+0.3(0,3)=(1.4,1.6)$."
       },
       {
-        "title": "RGB colors",
-        "background": "Digital color stores red, green, and blue as a vector. Mixing light is vector addition with weights.",
-        "numbers": "Half red $[255,0,0]$ plus half blue $[0,0,255]$ gives $[127.5,0,127.5]$."
+        "title": "RGB blend",
+        "background": "The computation is shown directly.",
+        "numbers": "$0.25(255,0,0)+0.75(0,0,255)=(63.75,0,191.25)$."
       },
       {
-        "title": "Forces in physics engines",
-        "background": "Game and robotics simulators add force vectors because several pushes can act at once.",
-        "numbers": "Forces $[3,4]$ and $[-1,2]$ add to $[2,6]$, with net vertical force $6$."
+        "title": "Force sum",
+        "background": "The computation is shown directly.",
+        "numbers": "$(3,2)+(-1,4)=(2,6)$."
       },
       {
-        "title": "Linear model features",
-        "background": "A linear predictor combines feature vectors or feature values with coefficients.",
-        "numbers": "Weights $[0.5,-2]$ on features $[6,1]$ give $0.5\\cdot6-2\\cdot1=1$."
+        "title": "Linear score",
+        "background": "The computation is shown directly.",
+        "numbers": "$2(1,0,-1)-3(0,1,1)=(2,-3,-5)$."
       },
       {
-        "title": "Portfolio allocation",
-        "background": "Finance represents asset returns as vectors over scenarios, then combines them by investment weights.",
-        "numbers": "$0.6[0.02,-0.01]+0.4[0.01,0.03]=[0.016,0.006]$ scenario returns."
+        "title": "Application 5",
+        "background": "Portfolio weights",
+        "numbers": "Portfolio weights $0.6,0.4$ on returns $0.10,0.02$ give $0.068$."
       },
       {
-        "title": "Image filters",
-        "background": "A small image patch can be represented as a vector of pixel values, and filters form weighted combinations.",
-        "numbers": "Weights $[1,0,-1]$ on pixels $[120,125,140]$ give $120+0-140=-20$, detecting an edge."
+        "title": "Application 6",
+        "background": "Length of",
+        "numbers": "Length of $(3,2)$ is $\\sqrt{13}\\approx3.606$."
       }
     ],
     "applicationsClose": "Vectors let many quantities wear the same uniform: scale the pieces, add components, and read the result.",
@@ -294,6 +294,48 @@
       "Linear combinations have the form $c_1\\mathbf{v}_1+\\cdots+c_k\\mathbf{v}_k$.",
       "All vectors being added must have the same dimension.",
       "Embeddings, pixels, forces, and model weights all use vector-combination thinking."
+    ],
+    "connectionsProse": "<p>This lesson focuses on vectors and linear combinations as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. A vector records several coordinates as one object. Span, basis, projections, and least squares all reuse this same operation.</p>",
+    "symbols": [
+      {
+        "sym": "$v_i$",
+        "desc": "coordinate $i$"
+      },
+      {
+        "sym": "$c_i$",
+        "desc": "scalar weights"
+      },
+      {
+        "sym": "$\\lVert v\\rVert$",
+        "desc": "Euclidean length."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write $v=(v_1,\\dots,v_n)$",
+        "result": "$v=(v_1,\\dots,v_n)$",
+        "why": "list the coordinates."
+      },
+      {
+        "do": "In two perpendicular axes, Pythagoras gives $\\lVert v\\rVert^2=v_1^2+v_2^2$",
+        "result": "$\\lVert v\\rVert^2=v_1^2+v_2^2$",
+        "why": "squared lengths add for right angles."
+      },
+      {
+        "do": "Add each new perpendicular coordinate the same way",
+        "result": "Add each new perpendicular coordinate the same way",
+        "why": "this gives $\\lVert v\\rVert=\\sqrt{\\sum_i v_i^2}$."
+      },
+      {
+        "do": "For $c_1a+c_2b$, multiply each vector coordinate by its scalar",
+        "result": "$c_1a+c_2b$",
+        "why": "scaling changes length and direction."
+      },
+      {
+        "do": "Add matching coordinates",
+        "result": "Add matching coordinates",
+        "why": "vector addition is coordinatewise."
+      }
     ]
   });
 
@@ -319,8 +361,8 @@
         "intersection geometry"
       ]
     },
-    "motivation": "<p>You already know how to solve one equation like $2x+3=11$. A system asks for values that satisfy several equations together, such as a point where two lines meet.</p><p>In ML, systems appear whenever constraints, fitted equations, or normal equations must agree at once. The core question is honest and simple: is there no solution, exactly one solution, or infinitely many?</p>",
-    "definition": "<p>A <b>system of linear equations</b> is a collection of equations whose variables appear only to the first power, such as $a_{11}x_1+\\cdots+a_{1n}x_n=b_1$. In matrix form it is $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$, where $\\mathbf{A}$ stores coefficients, $\\mathbf{x}$ stores unknowns, and $\\mathbf{b}$ stores right-hand sides.</p><p>Each equation cuts out a line, plane, or higher-dimensional flat set. A solution is an intersection point of all those sets. Equivalently, $\\mathbf{b}$ must be a linear combination of the columns of $\\mathbf{A}$ using the entries of $\\mathbf{x}$ as weights.</p><p><b>Assumptions that matter:</b> equations must be linear; variables must be consistently ordered; row equations and column combinations are two views of the same system; and inconsistency means no vector $\\mathbf{x}$ satisfies every equation.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. A linear system asks for numbers that satisfy several linear constraints at once. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>In ML, the same form appears when a model must fit multiple equations or when normal equations summarize least squares. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Solve $2x+y=5$, $x-y=1$:</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Solve the system $x+2y=7$ and $3x-y=4$.",
       "skills": [
@@ -544,34 +586,34 @@
     ],
     "applications": [
       {
-        "title": "Line intersections in graphics",
-        "background": "Computer graphics computes where rays and line segments meet by solving small linear systems.",
-        "numbers": "Lines $x+y=5$ and $x-y=1$ meet at $(3,2)$."
+        "title": "Application 1",
+        "background": "Two lines meet at",
+        "numbers": "Two lines meet at $(2,1)$."
       },
       {
-        "title": "Fitting simple models",
-        "background": "Normal equations in least squares are systems whose unknowns are model parameters.",
-        "numbers": "Equations $2w+b=5$ and $w+b=3$ give $w=2$, $b=1$."
+        "title": "Application 2",
+        "background": "Linear model",
+        "numbers": "Linear model $a+b=3$, $a+2b=4$ gives $a=2,b=1$."
       },
       {
-        "title": "Circuit analysis",
-        "background": "Kirchhoff laws produce linear systems for unknown currents in a circuit.",
-        "numbers": "If $I_1+I_2=3$ and $2I_1-I_2=0$, then $3I_1=3$, so $I_1=1$, $I_2=2$."
+        "title": "Application 3",
+        "background": "Circuit currents satisfying",
+        "numbers": "Circuit currents satisfying $i_1+i_2=5$, $i_1-i_2=1$ give $3,2$."
       },
       {
-        "title": "Resource allocation",
-        "background": "Operations teams use systems when resources must satisfy multiple totals.",
-        "numbers": "If CPU plus memory units total $10$ and CPU units are $4$ more than memory, then $c+m=10$, $c-m=4$, so $c=7$, $m=3$."
+        "title": "Application 4",
+        "background": "Resource mix",
+        "numbers": "Resource mix $2x+y=5$, $x-y=1$ gives $x=2,y=1$."
       },
       {
-        "title": "Calibration constraints",
-        "background": "Sensor calibration can solve for scale and offset from two known readings.",
-        "numbers": "$10a+b=21$ and $20a+b=41$ subtract to $10a=20$, so $a=2$, $b=1$."
+        "title": "Application 5",
+        "background": "Calibration offsets",
+        "numbers": "Calibration offsets $c_1+c_2=7$, $c_1-c_2=1$ give $4,3$."
       },
       {
-        "title": "Column combination test",
-        "background": "A system $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$ asks if $\\mathbf{b}$ is built from columns of $\\mathbf{A}$.",
-        "numbers": "Columns $[1,0]$ and $[1,1]$ make $[5,2]$ using weights $3$ and $2$ because $3[1,0]+2[1,1]=[5,2]$."
+        "title": "Application 6",
+        "background": "Inconsistent equations",
+        "numbers": "Inconsistent equations $x+y=1$, $2x+2y=3$ have parallel augmented rows and no solution."
       }
     ],
     "applicationsClose": "Systems teach the central habit of linear algebra: many equations, one shared answer if the geometry allows it.",
@@ -579,6 +621,52 @@
       "A linear system can have no solution, exactly one solution, or infinitely many.",
       "$\\mathbf{A}\\mathbf{x}=\\mathbf{b}$ stores coefficients, unknowns, and right-hand sides compactly.",
       "Solving a system is also asking whether $\\mathbf{b}$ is a column combination of $\\mathbf{A}$."
+    ],
+    "connectionsProse": "<p>This lesson focuses on systems of linear equations as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. A linear system asks for numbers that satisfy several linear constraints at once. Gaussian elimination and augmented matrices turn these constraints into a repeatable solving process.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "the coefficient matrix"
+      },
+      {
+        "sym": "$x$",
+        "desc": "the unknown vector"
+      },
+      {
+        "sym": "$b$",
+        "desc": "the right-hand side"
+      },
+      {
+        "sym": "an augmented matrix $[A\\mid b]$ stores both.",
+        "desc": "an augmented matrix $[A\\mid b]$ stores both."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write augmented matrix $\\begin{bmatrix}2&1&5\\1&-1&1\\end{bmatrix}$",
+        "result": "$\\begin{bmatrix}2&1&5\\1&-1&1\\end{bmatrix}$",
+        "why": "coefficients and outputs sit together."
+      },
+      {
+        "do": "Swap rows to put pivot $1$ first",
+        "result": "$1$",
+        "why": "smaller pivots simplify arithmetic."
+      },
+      {
+        "do": "Replace row 2 by row 2 minus $2$ row 1: $[0,3,3]$",
+        "result": "$[0,3,3]$",
+        "why": "eliminate $x$ from the second equation."
+      },
+      {
+        "do": "Divide row 2 by $3$: $[0,1,1]$",
+        "result": "$[0,1,1]$",
+        "why": "solve for $y$."
+      },
+      {
+        "do": "Substitute into row 1: $x-y=1$ gives $x=2$",
+        "result": "$x=2$",
+        "why": "back-substitution finishes the system."
+      }
     ],
     "prereqs": [
       "math-09-01"
@@ -607,8 +695,8 @@
         "rank"
       ]
     },
-    "motivation": "<p>You can solve a two-equation system by adding or subtracting equations. Gaussian elimination is that same instinct made systematic for many variables.</p><p>The method is powerful because it separates the hard part from the bookkeeping: create zeros below pivots, then read the solution by back-substitution. This is the workhorse underneath many numerical linear algebra routines.</p>",
-    "definition": "<p><b>Gaussian elimination</b> transforms an augmented matrix $[\\mathbf{A}\\mid\\mathbf{b}]$ using elementary row operations until it reaches row echelon form. The allowed operations are swapping rows, multiplying a row by a nonzero scalar, and adding a multiple of one row to another row.</p><p>These operations preserve the solution set because they replace equations by equivalent equations. A <b>pivot</b> is the leading nonzero entry used to eliminate entries below it. Once the matrix is triangular, back-substitution solves from the last variable upward.</p><p><b>Assumptions that matter:</b> row operations act on equations, not columns; multiplying by zero is not allowed because it loses information; a zero row with nonzero right side means inconsistency; and pivoting may require swapping rows.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Gaussian elimination is a systematic way to solve a system by removing one variable at a time. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It turns a tangled system into triangular form, where back-substitution is direct. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> For $\\begin{bmatrix}2&1\\4&3\\end{bmatrix}x=(5,11)$:</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Use elimination to solve $x+y+z=6$, $2x+y-z=3$, and $x-y+2z=7$.",
       "skills": [
@@ -832,34 +920,34 @@
     ],
     "applications": [
       {
-        "title": "Numerical solvers",
-        "background": "Scientific libraries solve many linear systems by elimination variants with pivoting.",
-        "numbers": "A $3\\times3$ triangular system with rows $2x+y=5$ and $3y=6$ gives $y=2$, then $x=1.5$."
+        "title": "Application 1",
+        "background": "The worked system solves to",
+        "numbers": "The worked system solves to $(2,1)$."
       },
       {
-        "title": "Least-squares internals",
-        "background": "Even when systems are overdetermined, algorithms solve related square systems using elimination-like factorizations.",
-        "numbers": "Normal equations $\\begin{bmatrix}2&1\\\\1&1\\end{bmatrix}[w,b]^T=[5,3]^T$ reduce to $w=2$, $b=1$."
+        "title": "Application 2",
+        "background": "Elimination multiplier is",
+        "numbers": "Elimination multiplier is $4/2=2$."
       },
       {
-        "title": "Computer graphics transforms",
-        "background": "Solving for intersections and barycentric coordinates uses elimination in small matrices.",
-        "numbers": "Equations $a+b=1$ and $2a-b=0$ give $a=1/3$, $b=2/3$."
+        "title": "Residual check",
+        "background": "The computation is shown directly.",
+        "numbers": "$A(2,1)=(5,11)$."
       },
       {
-        "title": "Circuit simulation",
-        "background": "Sparse elimination solves large Kirchhoff systems in circuit tools.",
-        "numbers": "If $V_1-V_2=5$ and $2V_2=6$, then $V_2=3$, $V_1=8$."
+        "title": "Application 4",
+        "background": "Determinant from pivots after elimination is",
+        "numbers": "Determinant from pivots after elimination is $2\\cdot1=2$."
       },
       {
-        "title": "Data cleaning constraints",
-        "background": "Consistency checks reduce equations to reveal contradictions.",
-        "numbers": "Rows reducing to $0=4$ means the recorded constraints cannot all be true."
+        "title": "Application 5",
+        "background": "Three right-hand sides with the same",
+        "numbers": "Three right-hand sides with the same $A$ reuse the same elimination."
       },
       {
-        "title": "Feature engineering",
-        "background": "Elimination can detect redundant linear features.",
-        "numbers": "If feature $f_3=f_1+f_2$, the row relation $f_1+f_2-f_3=0$ shows dependence."
+        "title": "Application 6",
+        "background": "A zero pivot triggers a row swap; swapping",
+        "numbers": "A zero pivot triggers a row swap; swapping $\\begin{bmatrix}0&1\\2&3\\end{bmatrix}$ puts pivot $2$ first."
       }
     ],
     "applicationsClose": "Gaussian elimination is careful algebra with a memory: every zero created makes the remaining problem easier.",
@@ -868,6 +956,53 @@
       "Pivots organize which variables are determined.",
       "A contradiction row means no solution; free variables mean infinitely many solutions.",
       "Back-substitution reads an echelon system from bottom to top."
+    ],
+    "connectionsProse": "<p>This lesson focuses on Gaussian elimination as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Gaussian elimination is a systematic way to solve a system by removing one variable at a time. The same row operations later become elementary matrices and LU factors.</p>",
+    "symbols": [
+      {
+        "sym": "A pivot",
+        "desc": "the coefficient used to eliminate entries below it"
+      },
+      {
+        "sym": "an augmented row stores one equation",
+        "desc": "an augmented row stores one equation"
+      },
+      {
+        "sym": "triangular form",
+        "desc": "zeros below pivots."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Use the first row as pivot",
+        "result": "Use the first row as pivot",
+        "why": "it contains $2x+y=5$."
+      },
+      {
+        "do": "Replace row 2 by row 2 minus $2$ row 1",
+        "result": "$2$",
+        "why": "this cancels the $4x$ term."
+      },
+      {
+        "do": "The second row becomes $y=1$",
+        "result": "$y=1$",
+        "why": "the lower equation has one unknown."
+      },
+      {
+        "do": "Substitute $y=1$ into $2x+y=5$",
+        "result": "$2x+y=5$",
+        "why": "back-substitution uses the solved variable."
+      },
+      {
+        "do": "Solve $x=2$",
+        "result": "$x=2$",
+        "why": "the solution is $(2,1)$."
+      },
+      {
+        "do": "The row operation preserves the solution set because subtracting a multiple of one true equation from another true equation gives another true equation.",
+        "result": "The row operation preserves the solution set because subtracting a multiple of one true equation from another true equation gives another true equation.",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-02"
@@ -895,8 +1030,8 @@
         "linear transformations"
       ]
     },
-    "motivation": "<p>You already used tables of numbers as coefficient lists. A matrix makes that table an object you can add, scale, multiply by vectors, and eventually multiply by other matrices.</p><p>This is where linear algebra starts to feel like a language rather than a pile of equations. Matrices store data, transformations, graph connections, and model parameters in a form computers can move through quickly.</p>",
-    "definition": "<p>A <b>matrix</b> $\\mathbf{A}$ with $m$ rows and $n$ columns is called an $m\\times n$ matrix. Its entry in row $i$, column $j$ is $a_{ij}$. Matrices of the same shape add entrywise, and a scalar multiplies every entry.</p><p>For an $m\\times n$ matrix $\\mathbf{A}$ and a vector $\\mathbf{x}\\in\\mathbb{R}^n$, the product $\\mathbf{A}\\mathbf{x}$ is the vector of row dot products. Equivalently, it is a linear combination of the columns of $\\mathbf{A}$ using the entries of $\\mathbf{x}$ as weights.</p><p><b>Assumptions that matter:</b> shapes must match; only same-shaped matrices can be added; $\\mathbf{A}\\mathbf{x}$ requires the number of columns of $\\mathbf{A}$ to equal the length of $\\mathbf{x}$; and the identity matrix $\\mathbf{I}$ leaves compatible vectors unchanged.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Matrix algebra defines how arrays add, scale, and multiply so they act consistently on vectors. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>This is a language lesson: no theorem needs forcing, but the operations must be explained with concrete arithmetic. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> the lesson introduces operations and compatibility rules rather than a non-obvious formula. Show addition, scalar multiplication, and multiplication by examples.</p><p><b>Assumptions that matter:</b> Use the stated closure, compatibility, indexing, or shape conditions; this lesson is conceptual rather than a proof.</p>",
     "worked": {
       "problem": "Compute $\\mathbf{A}\\mathbf{x}$ for $\\mathbf{A}=\\begin{bmatrix}1&2&0\\\\-1&3&4\\end{bmatrix}$ and $\\mathbf{x}=\\begin{bmatrix}5\\\\-1\\\\2\\end{bmatrix}$.",
       "skills": [
@@ -1100,34 +1235,34 @@
     ],
     "applications": [
       {
-        "title": "Neural-network layers",
-        "background": "A dense layer stores weights in a matrix and maps an input vector to output activations.",
-        "numbers": "$\\begin{bmatrix}1&2\\\\-1&0\\end{bmatrix}[3,4]^T=[11,-3]^T$ before bias and activation."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$\\begin{bmatrix}1&2\\3&4\\end{bmatrix}+\\begin{bmatrix}2&0\\1&2\\end{bmatrix}=\\begin{bmatrix}3&2\\4&6\\end{bmatrix}$."
       },
       {
-        "title": "Data tables",
-        "background": "A dataset with rows as examples and columns as features is a matrix.",
-        "numbers": "A $1000\\times20$ design matrix stores 1000 examples with 20 features each."
+        "title": "Application 2",
+        "background": "The computation is shown directly.",
+        "numbers": "$3A=\\begin{bmatrix}3&6\\9&12\\end{bmatrix}$."
       },
       {
-        "title": "Graph adjacency",
-        "background": "Graphs can be stored as adjacency matrices whose entries count or mark edges.",
-        "numbers": "$A_{23}=1$ can mean node 2 links to node 3; row sum $3$ means node 2 has three outgoing links."
+        "title": "Application 3",
+        "background": "The computation is shown directly.",
+        "numbers": "$AB=\\begin{bmatrix}4&4\\10&8\\end{bmatrix}$."
       },
       {
-        "title": "Image batches",
-        "background": "Images become matrices or tensors; grayscale is the simplest case.",
-        "numbers": "A $28\\times28$ image has 784 pixel entries, often flattened into a vector."
+        "title": "Application 4",
+        "background": "A",
+        "numbers": "A $64\\times128$ weight matrix maps $128$ features to $64$ outputs."
       },
       {
-        "title": "Linear constraints",
-        "background": "Matrix-vector products evaluate many equations at once.",
-        "numbers": "$\\begin{bmatrix}1&1\\\\2&-1\\end{bmatrix}[3,2]^T=[5,4]^T$ checks two constraints."
+        "title": "Application 5",
+        "background": "A",
+        "numbers": "A $3\\times3$ image kernel has $9$ learned numbers."
       },
       {
-        "title": "Recommendation factors",
-        "background": "Latent-factor recommenders store user and item factors in matrices.",
-        "numbers": "A user vector $[2,1]$ dotted with item vector $[3,4]$ gives score $10$."
+        "title": "Application 6",
+        "background": "A",
+        "numbers": "A $1000\\times50$ data matrix has $50{,}000$ entries."
       }
     ],
     "applicationsClose": "Matrix algebra is compact bookkeeping for linear structure, from equations to data tables to model layers.",
@@ -1135,6 +1270,25 @@
       "Matrix addition and scalar multiplication are entrywise.",
       "Matrix-vector multiplication requires compatible shapes.",
       "$\\mathbf{A}\\mathbf{x}$ can be read as row dot products or as a column combination."
+    ],
+    "connectionsProse": "<p>This lesson focuses on matrix algebra as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Matrix algebra defines how arrays add, scale, and multiply so they act consistently on vectors. These rules support composition, inverses, transformations, and model weight matrices.</p>",
+    "symbols": [
+      {
+        "sym": "$A_{ij}$",
+        "desc": "row $i$, column $j$"
+      },
+      {
+        "sym": "$A+B$ adds matching entries",
+        "desc": "$A+B$ adds matching entries"
+      },
+      {
+        "sym": "$cA$ scales every entry",
+        "desc": "$cA$ scales every entry"
+      },
+      {
+        "sym": "$AB$",
+        "desc": "defined when columns of $A$ match rows of $B$."
+      }
     ],
     "prereqs": [
       "math-09-03"
@@ -1162,8 +1316,8 @@
         "linear transformations"
       ]
     },
-    "motivation": "<p>You already know function composition: if one rule changes an input and the next rule changes the result, the combined rule is a composition. Matrices do the same thing for linear transformations.</p><p>This viewpoint makes matrix multiplication feel less arbitrary. The entry formula is just the bookkeeping needed so $\\mathbf{A}\\mathbf{B}\\mathbf{x}$ gives the same result as first applying $\\mathbf{B}$, then applying $\\mathbf{A}$.</p>",
-    "definition": "<p>If $\\mathbf{A}$ is $m\\times n$ and $\\mathbf{B}$ is $n\\times p$, then $\\mathbf{A}\\mathbf{B}$ is the $m\\times p$ matrix whose entry $(i,j)$ is row $i$ of $\\mathbf{A}$ dotted with column $j$ of $\\mathbf{B}$.</p><p>The definition is forced by composition: the $j$th column of $\\mathbf{A}\\mathbf{B}$ is $\\mathbf{A}$ applied to the $j$th column of $\\mathbf{B}$. That way $(\\mathbf{A}\\mathbf{B})\\mathbf{x}=\\mathbf{A}(\\mathbf{B}\\mathbf{x})$ for every compatible vector $\\mathbf{x}$.</p><p><b>Assumptions that matter:</b> inner dimensions must match; order matters because $\\mathbf{A}\\mathbf{B}$ usually differs from $\\mathbf{B}\\mathbf{A}$; multiplication is associative; and identity matrices act like do-nothing transformations.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Matrix multiplication represents doing one linear transformation after another. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>The product $AB$ means apply $B$ first, then $A$. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Matrix multiplication as composition is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Compute $\\mathbf{A}\\mathbf{B}$ for $\\mathbf{A}=\\begin{bmatrix}1&2\\\\0&3\\end{bmatrix}$ and $\\mathbf{B}=\\begin{bmatrix}4&1\\\\-1&2\\end{bmatrix}$.",
       "skills": [
@@ -1377,34 +1531,34 @@
     ],
     "applications": [
       {
-        "title": "Stacked neural layers",
-        "background": "Without nonlinear activations, stacked linear layers collapse into one matrix product.",
-        "numbers": "If $W_2W_1=\\begin{bmatrix}3&6\\\\1&1\\end{bmatrix}$, then input $[1,2]^T$ maps to $[15,3]^T$."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$A=\\begin{bmatrix}1&2\\3&4\\end{bmatrix}$, $B=\\begin{bmatrix}2&0\\1&2\\end{bmatrix}$ gives $AB=\\begin{bmatrix}4&4\\10&8\\end{bmatrix}$."
       },
       {
-        "title": "Graphics pipelines",
-        "background": "Scaling, rotation, and projection are composed by multiplying transformation matrices.",
-        "numbers": "Scaling by 2 then rotating $90^\\circ$ sends $[1,0]^T$ to $[0,2]^T$."
+        "title": "Application 2",
+        "background": "Applying",
+        "numbers": "Applying $B$ then $A$ to $(1,1)$ gives $(8,18)$."
       },
       {
-        "title": "Markov transitions",
-        "background": "Two time steps of a Markov chain use a square of the transition matrix.",
-        "numbers": "If $P=\\begin{bmatrix}0.8&0.2\\\\0.1&0.9\\end{bmatrix}$, then $P^2_{11}=0.8^2+0.2\\cdot0.1=0.66$."
+        "title": "Application 3",
+        "background": "A",
+        "numbers": "A $256\\times128$ layer after a $128\\times64$ layer gives a $256\\times64$ product."
       },
       {
-        "title": "Coordinate changes",
-        "background": "Changing coordinates into a basis and then applying a map composes matrices.",
-        "numbers": "If $B^{-1}x=[2,1]^T$ and diagonal scaling gives $[4,3]^T$, the two operations are one product."
+        "title": "Application 4",
+        "background": "Two Markov steps use",
+        "numbers": "Two Markov steps use $P^2$; if stay probability is $0.8$, two stays give $0.64$."
       },
       {
-        "title": "Database recommendations",
-        "background": "A user-item matrix times an item-tag matrix produces user-tag scores.",
-        "numbers": "User ratings $[5,0,2]$ times tag column $[1,0,3]^T$ gives score $11$."
+        "title": "Application 5",
+        "background": "Rotation then scale is one matrix product.",
+        "numbers": "Rotation then scale is one matrix product."
       },
       {
-        "title": "Robotics kinematics",
-        "background": "Robot arms compose joint transformations from base to hand.",
-        "numbers": "A translation $[2,0]$ after rotation can put a point at $[2,1]$ instead of $[1,2]$, showing order matters."
+        "title": "Application 6",
+        "background": "Database factor product",
+        "numbers": "Database factor product $(1000\\times20)(20\\times500)$ gives $1000\\times500$ scores."
       }
     ],
     "applicationsClose": "Composition is the soul of matrix multiplication: one transformation after another becomes one new transformation.",
@@ -1412,6 +1566,48 @@
       "$\\mathbf{A}\\mathbf{B}$ is defined when columns of $\\mathbf{A}$ match rows of $\\mathbf{B}$.",
       "The product encodes applying $\\mathbf{B}$ first, then $\\mathbf{A}$.",
       "Matrix multiplication is associative but generally not commutative."
+    ],
+    "connectionsProse": "<p>This lesson focuses on matrix multiplication as composition, as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Matrix multiplication represents doing one linear transformation after another. Layered models, Markov steps, and coordinate changes all use this composition view.</p>",
+    "symbols": [
+      {
+        "sym": "$A\\circ B$",
+        "desc": "composition"
+      },
+      {
+        "sym": "$AB$",
+        "desc": "its matrix"
+      },
+      {
+        "sym": "$i,j,k$ index rows, columns, and the summed middle dimension.",
+        "desc": "$i,j,k$ index rows, columns, and the summed middle dimension."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $B$ send input $x$ to $Bx$",
+        "result": "$Bx$",
+        "why": "first transformation."
+      },
+      {
+        "do": "Apply $A$ to that output: $A(Bx)$",
+        "result": "$A(Bx)$",
+        "why": "second transformation."
+      },
+      {
+        "do": "The composed map is linear, so it has a matrix.",
+        "result": "The composed map is linear, so it has a matrix.",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Its $j$th column is $A$ times the $j$th column of $B$",
+        "result": "$B$",
+        "why": "columns track where basis vectors go."
+      },
+      {
+        "do": "Therefore $(AB)_{ij}=\\sum_k A_{ik}B_{kj}$",
+        "result": "$(AB)_{ij}=\\sum_k A_{ik}B_{kj}$",
+        "why": "row $i$ of $A$ dots column $j$ of $B$."
+      }
     ],
     "prereqs": [
       "math-09-04"
@@ -1440,8 +1636,8 @@
         "solving systems"
       ]
     },
-    "motivation": "<p>You already know the inverse of multiplying by 5 is dividing by 5. Matrices can have the same undoing idea, but only when no information has been collapsed.</p><p>An inverse matrix is precious in theory because it says a linear transformation is reversible. In computation, we usually solve systems without explicitly forming the inverse, but the idea still guides the whole story.</p>",
-    "definition": "<p>A square matrix $\\mathbf{A}$ is <b>invertible</b> if there exists a matrix $\\mathbf{A}^{-1}$ such that $\\mathbf{A}^{-1}\\mathbf{A}=\\mathbf{I}$ and $\\mathbf{A}\\mathbf{A}^{-1}=\\mathbf{I}$. For a $2\\times2$ matrix $\\begin{bmatrix}a&b\\\\c&d\\end{bmatrix}$, the inverse exists exactly when $ad-bc\\ne0$, and then $$\\mathbf{A}^{-1}=\\dfrac{1}{ad-bc}\\begin{bmatrix}d&-b\\\\-c&a\\end{bmatrix}.$$</p><p>The formula comes from asking for a matrix that sends the columns of $\\mathbf{A}$ back to the standard basis. If the columns collapse onto one line, the determinant $ad-bc$ is zero and no undoing map can recover lost direction.</p><p><b>Assumptions that matter:</b> only square matrices can have two-sided inverses; invertibility requires independent columns; and for solving $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$, the inverse gives $\\mathbf{x}=\\mathbf{A}^{-1}\\mathbf{b}$ when it exists.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. An inverse matrix undoes a linear transformation. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>Solving $Ax=b$ is the same as applying $A^{-1}$ when the inverse exists. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> For $A=\\begin{bmatrix}2&1\\1&1\\end{bmatrix}$:</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Find the inverse of $\\mathbf{A}=\\begin{bmatrix}2&1\\\\5&3\\end{bmatrix}$ and solve $\\mathbf{A}\\mathbf{x}=\\begin{bmatrix}1\\\\4\\end{bmatrix}$.",
       "skills": [
@@ -1650,34 +1846,34 @@
     ],
     "applications": [
       {
-        "title": "Undoing normalization",
-        "background": "Feature scaling is often reversed by applying an inverse transformation.",
-        "numbers": "If $z=(x-10)/2$, then $x=2z+10$; $z=3$ returns $x=16$."
+        "title": "Undo normalization $z=(x-10)/2$",
+        "background": "inverse gives",
+        "numbers": "inverse gives $x=2z+10$, so $z=3$ gives $16$."
       },
       {
-        "title": "Solving model equations",
-        "background": "Theoretical linear systems use inverses to state solutions compactly.",
-        "numbers": "If $A^{-1}b=[2,1]^T$, then $Ax=b$ has solution $[2,1]^T$."
+        "title": "Application 2",
+        "background": "The worked inverse solves",
+        "numbers": "The worked inverse solves $b=(5,3)$ as $(2,1)$."
       },
       {
-        "title": "Graphics inverse transforms",
-        "background": "To map a screen point back to object coordinates, graphics engines apply inverse transforms.",
-        "numbers": "Scaling by 4 sends $[2,3]$ to $[8,12]$; the inverse scale sends $[8,12]$ back to $[2,3]$."
+        "title": "Application 3",
+        "background": "Graphics inverse scale by",
+        "numbers": "Graphics inverse scale by $2$ is scale by $0.5$."
       },
       {
-        "title": "Covariance whitening",
-        "background": "Whitening uses inverse square-root matrices to rescale correlated data.",
-        "numbers": "A diagonal variance matrix $\\operatorname{diag}(4,9)$ has inverse square-root $\\operatorname{diag}(1/2,1/3)$."
+        "title": "Application 4",
+        "background": "Whitening by covariance",
+        "numbers": "Whitening by covariance $\\operatorname{diag}(4,9)$ uses inverse square roots $0.5,0.333$."
       },
       {
-        "title": "Control systems",
-        "background": "Controllers often need to undo a linear plant model when possible.",
-        "numbers": "If output $y=3u$, inverse control uses $u=y/3$; desired $y=12$ needs $u=4$."
+        "title": "Control gain inverse",
+        "background": "output",
+        "numbers": "output $6$ through gain $3$ needs input $2$."
       },
       {
-        "title": "Cryptography toy maps",
-        "background": "Some linear ciphers over modular arithmetic require invertible matrices.",
-        "numbers": "Modulo 5, determinant 2 is invertible because $2\\cdot3=6\\equiv1$, so undoing is possible."
+        "title": "Application 6",
+        "background": "A singular matrix",
+        "numbers": "A singular matrix $\\begin{bmatrix}1&2\\2&4\\end{bmatrix}$ has determinant $0$ and no inverse."
       }
     ],
     "applicationsClose": "An inverse is an undo button, and linear algebra teaches exactly when that button exists.",
@@ -1685,6 +1881,48 @@
       "A two-sided inverse satisfies $A^{-1}A=I$ and $AA^{-1}=I$.",
       "For $2\\times2$ matrices, determinant $ad-bc$ must be nonzero.",
       "Inverses solve $Ax=b$ in theory, though numerical code often uses factorizations instead."
+    ],
+    "connectionsProse": "<p>This lesson focuses on matrix inverses as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. An inverse matrix undoes a linear transformation. Determinants, conditioning, and pseudoinverses refine when this undoing is possible or stable.</p>",
+    "symbols": [
+      {
+        "sym": "$A^{-1}$",
+        "desc": "the inverse"
+      },
+      {
+        "sym": "$I$",
+        "desc": "the identity"
+      },
+      {
+        "sym": "$\\det A$ detects invertibility in square matrices.",
+        "desc": "$\\det A$ detects invertibility in square matrices."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Compute determinant $2\\cdot1-1\\cdot1=1$",
+        "result": "$2\\cdot1-1\\cdot1=1$",
+        "why": "nonzero means invertible."
+      },
+      {
+        "do": "Swap diagonal entries and negate off-diagonal entries",
+        "result": "Swap diagonal entries and negate off-diagonal entries",
+        "why": "the 2-by-2 adjugate rule."
+      },
+      {
+        "do": "Divide by determinant to get $A^{-1}=\\begin{bmatrix}1&-1\\-1&2\\end{bmatrix}$.",
+        "result": "$A^{-1}=\\begin{bmatrix}1&-1\\-1&2\\end{bmatrix}$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Multiply $AA^{-1}$",
+        "result": "$AA^{-1}$",
+        "why": "the result is $I$, so the matrix really undoes $A$."
+      },
+      {
+        "do": "Solve $Ax=(5,3)$ by $x=A^{-1}b=(2,1)$.",
+        "result": "$x=A^{-1}b=(2,1)$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-05"
@@ -1713,8 +1951,8 @@
         "dimension"
       ]
     },
-    "motivation": "<p>You already know how to combine vectors and solve equations. Elementary matrices turn elimination from a procedure into matrix algebra.</p><p>This lesson gives that idea a precise name and a dependable test, so later ML geometry feels organized instead of mysterious.</p>",
-    "definition": "<p><b>Elementary matrices</b> is a core linear algebra idea about how vectors and matrices behave under linear combination. In this lesson, the phrase is read through $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$, row reduction, and the geometry of $\\mathbb{R}^n$.</p><p>If $E=\\begin{bmatrix}1&0\\\\-2&1\\end{bmatrix}$, then $EA$ replaces row 2 by row 2 minus twice row 1.</p><p><b>Assumptions that matter:</b> all vectors live in compatible dimensions; scalars are real numbers; conclusions about spaces require closure under addition and scalar multiplication; and row reduction preserves the linear relationships needed for the test.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. An elementary matrix performs one row operation by ordinary matrix multiplication. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>This connects elimination to matrix algebra and explains why row operations can be stored and composed. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Row operation $R_2\\leftarrow R_2-2R_1$:</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Work through a concrete elementary matrices calculation: If $E=\\begin{bmatrix}1&0\\\\-2&1\\end{bmatrix}$, then $EA$ replaces row 2 by row 2 minus twice row 1.",
       "skills": [
@@ -1918,34 +2156,34 @@
     ],
     "applications": [
       {
-        "title": "Feature spaces",
-        "background": "ML features live in vector spaces where scaling and adding examples or directions is meaningful.",
-        "numbers": "If $v=[2,3]$ and $w=[1,-1]$, then $0.5v+w=[2,0.5]$ is another vector in the same ambient space."
+        "title": "Application 1",
+        "background": "Elimination matrix above creates zero below the pivot.",
+        "numbers": "Elimination matrix above creates zero below the pivot."
       },
       {
-        "title": "Embeddings",
-        "background": "Embedding models rely on spans, bases, and independence to represent meaning in many directions.",
-        "numbers": "Two directions $[1,0]$ and $[0,1]$ can represent $[0.2,0.9]$ as $0.2[1,0]+0.9[0,1]$."
+        "title": "Application 2",
+        "background": "Swap matrix",
+        "numbers": "Swap matrix $\\begin{bmatrix}0&1\\1&0\\end{bmatrix}$ swaps two rows and has determinant $-1$."
       },
       {
-        "title": "Dimensionality reduction",
-        "background": "PCA searches for a lower-dimensional subspace that keeps much of the data variation.",
-        "numbers": "If two principal directions explain $70\\%$ and $20\\%$ of variance, a 2-D subspace keeps $90\\%$."
+        "title": "Application 3",
+        "background": "Scaling row 1 by",
+        "numbers": "Scaling row 1 by $3$ uses $\\begin{bmatrix}3&0\\0&1\\end{bmatrix}$ and determinant $3$."
       },
       {
-        "title": "Solving constraints",
-        "background": "Null spaces describe changes that leave linear measurements unchanged.",
-        "numbers": "For measurement row $[1,2]$, change $[-2,1]$ gives $[1,2]\\cdot[-2,1]=0$."
+        "title": "Application 4",
+        "background": "Applying",
+        "numbers": "Applying $E$ to $b=(5,11)$ gives $(5,1)$."
       },
       {
-        "title": "Data rank",
-        "background": "Rank tells how many independent directions the columns of a data matrix really contain.",
-        "numbers": "Columns $[1,2]$ and $[2,4]$ have rank $1$, not $2$, because one is twice the other."
+        "title": "Application 5",
+        "background": "Undoing the elimination applies",
+        "numbers": "Undoing the elimination applies $E^{-1}$ to recover row 2."
       },
       {
-        "title": "Model identifiability",
-        "background": "Parameters are identifiable only outside null directions that leave predictions unchanged.",
-        "numbers": "If $Xh=0$ for $h=[-2,1]$, then weights $w$ and $w+h$ give the same predictions on $X$."
+        "title": "Application 6",
+        "background": "Product",
+        "numbers": "Product $E_2E_1$ stores two elimination steps for reuse."
       }
     ],
     "applicationsClose": "Elementary matrices gives one more way to see the same linear structure: what can be built, what is lost, and how many directions truly matter.",
@@ -1953,6 +2191,48 @@
       "Linear combinations are the test language for this topic.",
       "Row reduction turns geometric claims into solvable equations.",
       "Dimension counts independent directions, not the number of coordinates written down."
+    ],
+    "connectionsProse": "<p>This lesson focuses on elementary matrices as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. An elementary matrix performs one row operation by ordinary matrix multiplication. This prepares for LU factorization, where many row operations are recorded together.</p>",
+    "symbols": [
+      {
+        "sym": "$E$",
+        "desc": "an elementary matrix"
+      },
+      {
+        "sym": "$R_i$",
+        "desc": "row $i$"
+      },
+      {
+        "sym": "left multiplication changes rows.",
+        "desc": "left multiplication changes rows."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with identity $I$",
+        "result": "$I$",
+        "why": "multiplying by $I$ leaves rows unchanged."
+      },
+      {
+        "do": "Perform the same row operation on $I$ to get $E=\\begin{bmatrix}1&0\\-2&1\\end{bmatrix}$.",
+        "result": "$E=\\begin{bmatrix}1&0\\-2&1\\end{bmatrix}$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Multiply $EA$",
+        "result": "$EA$",
+        "why": "row 1 stays row 1, row 2 becomes row 2 minus $2$ row"
+      },
+      {
+        "do": "4. For $A=\\begin{bmatrix}2&1\\4&3\\end{bmatrix}$, $EA=\\begin{bmatrix}2&1\\0&1\\end{bmatrix}$.",
+        "result": "$EA=\\begin{bmatrix}2&1\\0&1\\end{bmatrix}$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "The inverse elementary matrix reverses the operation: $E^{-1}=\\begin{bmatrix}1&0\\2&1\\end{bmatrix}$.",
+        "result": "$E^{-1}=\\begin{bmatrix}1&0\\2&1\\end{bmatrix}$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-06"
@@ -1981,8 +2261,8 @@
         "dimension"
       ]
     },
-    "motivation": "<p>You already know how to combine vectors and solve equations. LU splits a matrix into lower and upper triangular factors.</p><p>This lesson gives that idea a precise name and a dependable test, so later ML geometry feels organized instead of mysterious.</p>",
-    "definition": "<p><b>LU factorization</b> is a core linear algebra idea about how vectors and matrices behave under linear combination. In this lesson, the phrase is read through $\\mathbf{A}\\mathbf{x}=\\mathbf{b}$, row reduction, and the geometry of $\\mathbb{R}^n$.</p><p>If $L=\\begin{bmatrix}1&0\\\\2&1\\end{bmatrix}$ and $U=\\begin{bmatrix}3&1\\\\0&4\\end{bmatrix}$, then $LU=\\begin{bmatrix}3&1\\\\6&6\\end{bmatrix}$.</p><p><b>Assumptions that matter:</b> all vectors live in compatible dimensions; scalars are real numbers; conclusions about spaces require closure under addition and scalar multiplication; and row reduction preserves the linear relationships needed for the test.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. LU factorization records Gaussian elimination as $A=LU$. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>The upper matrix $U$ is what elimination produces, and the lower matrix $L$ stores the multipliers needed to recover $A$. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> For $A=\\begin{bmatrix}2&1\\4&3\\end{bmatrix}$:</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Work through a concrete lu factorization calculation: If $L=\\begin{bmatrix}1&0\\\\2&1\\end{bmatrix}$ and $U=\\begin{bmatrix}3&1\\\\0&4\\end{bmatrix}$, then $LU=\\begin{bmatrix}3&1\\\\6&6\\end{bmatrix}$.",
       "skills": [
@@ -2191,34 +2471,34 @@
     ],
     "applications": [
       {
-        "title": "Feature spaces",
-        "background": "ML features live in vector spaces where scaling and adding examples or directions is meaningful.",
-        "numbers": "If $v=[2,3]$ and $w=[1,-1]$, then $0.5v+w=[2,0.5]$ is another vector in the same ambient space."
+        "title": "Application 1",
+        "background": "Worked",
+        "numbers": "Worked $A$ has $L=\\begin{bmatrix}1&0\\2&1\\end{bmatrix}$ and $U=\\begin{bmatrix}2&1\\0&1\\end{bmatrix}$."
       },
       {
-        "title": "Embeddings",
-        "background": "Embedding models rely on spans, bases, and independence to represent meaning in many directions.",
-        "numbers": "Two directions $[1,0]$ and $[0,1]$ can represent $[0.2,0.9]$ as $0.2[1,0]+0.9[0,1]$."
+        "title": "Application 2",
+        "background": "The computation is shown directly.",
+        "numbers": "$b=(5,11)$ gives $y=(5,1)$, then $x=(2,1)$."
       },
       {
-        "title": "Dimensionality reduction",
-        "background": "PCA searches for a lower-dimensional subspace that keeps much of the data variation.",
-        "numbers": "If two principal directions explain $70\\%$ and $20\\%$ of variance, a 2-D subspace keeps $90\\%$."
+        "title": "Determinant is product of $U$ pivots",
+        "background": "The computation is shown directly.",
+        "numbers": "$2\\cdot1=2$."
       },
       {
-        "title": "Solving constraints",
-        "background": "Null spaces describe changes that leave linear measurements unchanged.",
-        "numbers": "For measurement row $[1,2]$, change $[-2,1]$ gives $[1,2]\\cdot[-2,1]=0$."
+        "title": "Application 4",
+        "background": "Ten right-hand sides reuse one LU.",
+        "numbers": "Ten right-hand sides reuse one LU."
       },
       {
-        "title": "Data rank",
-        "background": "Rank tells how many independent directions the columns of a data matrix really contain.",
-        "numbers": "Columns $[1,2]$ and $[2,4]$ have rank $1$, not $2$, because one is twice the other."
+        "title": "Application 5",
+        "background": "Pivot",
+        "numbers": "Pivot $0$ requires row permutation $PA=LU$."
       },
       {
-        "title": "Model identifiability",
-        "background": "Parameters are identifiable only outside null directions that leave predictions unchanged.",
-        "numbers": "If $Xh=0$ for $h=[-2,1]$, then weights $w$ and $w+h$ give the same predictions on $X$."
+        "title": "Triangular solve with $U$ needs back-substitution",
+        "background": "The computation is shown directly.",
+        "numbers": "$y=1$, then $x=2$."
       }
     ],
     "applicationsClose": "LU factorization gives one more way to see the same linear structure: what can be built, what is lost, and how many directions truly matter.",
@@ -2226,6 +2506,53 @@
       "Linear combinations are the test language for this topic.",
       "Row reduction turns geometric claims into solvable equations.",
       "Dimension counts independent directions, not the number of coordinates written down."
+    ],
+    "connectionsProse": "<p>This lesson focuses on LU factorization as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. LU factorization records Gaussian elimination as $A=LU$. This factorization is a practical bridge from elimination to numerical solving.</p>",
+    "symbols": [
+      {
+        "sym": "$L$",
+        "desc": "lower triangular"
+      },
+      {
+        "sym": "$U$",
+        "desc": "upper triangular"
+      },
+      {
+        "sym": "multipliers",
+        "desc": "entries below the diagonal of $L$."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Pivot on $2$",
+        "result": "$2$",
+        "why": "first pivot."
+      },
+      {
+        "do": "Multiplier is $4/2=2$",
+        "result": "$4/2=2$",
+        "why": "amount of row 1 subtracted from row"
+      },
+      {
+        "do": "3. Eliminate to get $U=\\begin{bmatrix}2&1\\0&1\\end{bmatrix}$.",
+        "result": "$U=\\begin{bmatrix}2&1\\0&1\\end{bmatrix}$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Store the multiplier below the diagonal in $L=\\begin{bmatrix}1&0\\2&1\\end{bmatrix}$.",
+        "result": "$L=\\begin{bmatrix}1&0\\2&1\\end{bmatrix}$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Multiply $LU$ to check $\\begin{bmatrix}2&1\\4&3\\end{bmatrix}$",
+        "result": "$\\begin{bmatrix}2&1\\4&3\\end{bmatrix}$",
+        "why": "factorization is correct."
+      },
+      {
+        "do": "Solve $Ly=b$ then $Ux=y$",
+        "result": "$Ux=y$",
+        "why": "two triangular solves replace fresh elimination."
+      }
     ],
     "prereqs": [
       "math-09-07"
@@ -2254,8 +2581,8 @@
         "null spaces"
       ]
     },
-    "motivation": "<p>You already know that adding two arrows in the plane gives another arrow in the plane. That closure is not an accident; it is the heart of a vector space.</p><p>A <b>subspace</b> is a smaller linear world inside a bigger one. Lines through the origin, planes through the origin, column spaces, and null spaces all matter in ML because they describe the directions a model can represent or ignore.</p>",
-    "definition": "<p>A <b>vector space</b> is a set of vectors where you can add any two vectors in the set and multiply any vector by any real scalar without leaving the set, along with the usual algebra rules. A <b>subspace</b> of $\\mathbb{R}^n$ is a nonempty subset that is closed under addition and scalar multiplication.</p><p>The practical subspace test is short: the set must contain $\\mathbf{0}$, and whenever $\\mathbf{u}$ and $\\mathbf{v}$ are in the set, every linear combination $a\\mathbf{u}+b\\mathbf{v}$ must also be in the set. This single combination test includes both closure rules.</p><p><b>Assumptions that matter:</b> the ambient vector space is fixed; subspaces must pass through the zero vector; equations defining subspaces must be homogeneous, like $x+2y-z=0$; and a translated line such as $x+y=1$ is not a subspace because it misses the origin.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. A vector space is a set where vectors can be added and scaled without leaving the set. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>A subspace is a smaller vector space inside a larger one, such as all solutions of a homogeneous linear system. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> this is a definition lesson. Teach the two closure checks with examples rather than inventing a proof.</p><p><b>Assumptions that matter:</b> Use the stated closure, compatibility, indexing, or shape conditions; this lesson is conceptual rather than a proof.</p>",
     "worked": {
       "problem": "Decide whether $S=\\{(x,y,z):x+2y-z=0\\}$ is a subspace of $\\mathbb{R}^3$.",
       "skills": [
@@ -2459,34 +2786,34 @@
     ],
     "applications": [
       {
-        "title": "Null spaces in model parameters",
-        "background": "A null space describes parameter changes that do not change predictions, which matters for identifiability.",
-        "numbers": "If $Xh=0$ with $h=[-2,1]^T$, then $X(w+h)=Xw$; predictions are unchanged."
+        "title": "Null space of $[1\\ 1]$ is $\\{(t,-t)",
+        "background": "t\\in\\mathbb R\\}",
+        "numbers": "t\\in\\mathbb R\\}$; using $t=3$ gives $(3,-3)$."
       },
       {
-        "title": "Feature constraint sets",
-        "background": "Homogeneous constraints form subspaces that algorithms can safely project onto.",
-        "numbers": "The constraint $x_1+x_2+x_3=0$ includes $[1,-1,0]$ and $[2,0,-2]$, and their sum $[3,-1,-2]$ still sums to $0$."
+        "title": "Plane $z=0$ is closed",
+        "background": "The computation is shown directly.",
+        "numbers": "$(1,2,0)+(3,4,0)=(4,6,0)$."
       },
       {
-        "title": "Signal subspaces",
-        "background": "Signal processing often models valid signals as combinations inside a subspace.",
-        "numbers": "All signals $a[1,1,1]+b[1,0,-1]$ form a 2-D subspace; choosing $a=2,b=3$ gives $[5,2,-1]$."
+        "title": "Application 3",
+        "background": "The set",
+        "numbers": "The set $x+y=1$ is not a subspace because $(0,0)$ is missing."
       },
       {
-        "title": "Computer graphics planes",
-        "background": "Planes through the origin are subspaces used for projections and coordinates.",
-        "numbers": "The plane $z=0$ contains $[1,2,0]$ and $[3,-1,0]$; their sum $[4,1,0]$ stays in the plane."
+        "title": "Application 4",
+        "background": "Signals spanned by two basis waves form a",
+        "numbers": "Signals spanned by two basis waves form a 2-D subspace."
       },
       {
-        "title": "Error residuals",
-        "background": "Residual vectors orthogonal to a model subspace form another subspace in least squares.",
-        "numbers": "Vectors $r$ with $[1,1]^Tr=0$ satisfy $r_1+r_2=0$, so $[2,-2]$ is allowed."
+        "title": "Application 5",
+        "background": "Residuals orthogonal to two columns live in a subspace of dimension",
+        "numbers": "Residuals orthogonal to two columns live in a subspace of dimension $n-2$."
       },
       {
-        "title": "Embedding directions",
-        "background": "A collection of semantic directions closed under linear combination behaves like a subspace approximation.",
-        "numbers": "If gender direction is $g=[1,-1]$, all multiples such as $0.5g=[0.5,-0.5]$ lie on the same 1-D subspace."
+        "title": "Application 6",
+        "background": "Embedding directions satisfying",
+        "numbers": "Embedding directions satisfying $w^Tx=0$ form a hyperplane subspace."
       }
     ],
     "applicationsClose": "Subspaces are the safe rooms of linear algebra: once you enter, every linear combination stays inside.",
@@ -2495,6 +2822,21 @@
       "Closure under $a\\mathbf{u}+b\\mathbf{v}$ is the main test.",
       "Homogeneous linear equations define subspaces; shifted equations usually do not.",
       "Null spaces and column spaces are central subspaces of matrices."
+    ],
+    "connectionsProse": "<p>This lesson focuses on vector spaces and subspaces as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. A vector space is a set where vectors can be added and scaled without leaving the set. Null spaces, column spaces, and solution sets all use this language.</p>",
+    "symbols": [
+      {
+        "sym": "$V$",
+        "desc": "a vector space"
+      },
+      {
+        "sym": "$W\\subseteq V$",
+        "desc": "a subspace"
+      },
+      {
+        "sym": "closure",
+        "desc": "$u+v$ and $cu$ remain in the set."
+      }
     ],
     "prereqs": [
       "math-09-08"
@@ -2522,8 +2864,8 @@
         "rank"
       ]
     },
-    "motivation": "<p>Give someone the east vector and the north vector, and they can reach any point on a flat map. Give them only the east vector, and they stay on one line.</p><p><b>Span</b> names this reachability. In ML, the columns of a data or feature matrix span the predictions a linear model can make, so span tells us what is possible before optimization even begins.</p>",
-    "definition": "<p>The <b>span</b> of vectors $\\mathbf{v}_1,\\ldots,\\mathbf{v}_k$ is the set of all linear combinations $c_1\\mathbf{v}_1+\\cdots+c_k\\mathbf{v}_k$. It is written $\\operatorname{span}\\{\\mathbf{v}_1,\\ldots,\\mathbf{v}_k\\}$.</p><p>The span is always a subspace because adding two linear combinations gives another linear combination, and scaling a linear combination just scales its coefficients. To test whether $\\mathbf{b}$ is in the span, solve $c_1\\mathbf{v}_1+\\cdots+c_k\\mathbf{v}_k=\\mathbf{b}$.</p><p><b>Assumptions that matter:</b> all spanning vectors must live in the same ambient space; extra redundant vectors do not change the span; and spanning all of $\\mathbb{R}^n$ requires enough independent directions to reach every coordinate direction.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. The span of vectors is everything you can build from their linear combinations. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It tells which targets a set of features or directions can represent. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Span is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Decide whether $\\mathbf{b}=\\begin{bmatrix}7\\\\4\\end{bmatrix}$ is in the span of $\\mathbf{v}_1=\\begin{bmatrix}1\\\\2\\end{bmatrix}$ and $\\mathbf{v}_2=\\begin{bmatrix}3\\\\-1\\end{bmatrix}$.",
       "skills": [
@@ -2732,34 +3074,34 @@
     ],
     "applications": [
       {
-        "title": "Column space of data",
-        "background": "Linear predictions lie in the span of the feature columns.",
-        "numbers": "If columns are $[1,1]^T$ and $[1,-1]^T$, weights $4,2$ produce prediction $[6,2]^T$."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$(3,7)$ is in span of $(3,2)$ and $(1,-1)$ because $2(3,2)-3(1,-1)=(3,7)$."
       },
       {
-        "title": "Image compression",
-        "background": "A few basis images span the reconstructions a model can form.",
-        "numbers": "$0.8$ times one pattern plus $0.2$ times another gives a reconstructed pixel vector like $[10,12,9]$."
+        "title": "Application 2",
+        "background": "Columns",
+        "numbers": "Columns $(1,0),(0,1)$ span $\\mathbb R^2$."
       },
       {
-        "title": "Audio synthesis",
-        "background": "Synthesizers span sounds by combining waveforms.",
-        "numbers": "A signal $3\\sin t+0.5\\sin(2t)$ lies in the span of two sine waves."
+        "title": "Application 3",
+        "background": "One vector",
+        "numbers": "One vector $(2,4)$ spans a line; $(1,3)$ is not on it."
       },
       {
-        "title": "Robotics motion",
-        "background": "Allowed actuator directions span the velocities a robot can create.",
-        "numbers": "Thrusters $[1,0]$ and $[0,1]$ can create velocity $[2,-3]$ using coefficients $2$ and $-3$."
+        "title": "Application 4",
+        "background": "Three RGB basis colors span all triples",
+        "numbers": "Three RGB basis colors span all triples; $(128,64,0)$ uses coefficients $128,64,0$."
       },
       {
-        "title": "Recommendation embeddings",
-        "background": "User preferences are often approximated in the span of latent factors.",
-        "numbers": "Factors $[1,0,1]$ and $[0,1,1]$ combine as $2f_1+3f_2=[2,3,5]$."
+        "title": "Application 5",
+        "background": "PCA with two components spans a",
+        "numbers": "PCA with two components spans a 2-D reconstruction plane."
       },
       {
-        "title": "PCA reconstruction",
-        "background": "Principal components span the low-dimensional approximation space.",
-        "numbers": "With components $u_1,u_2$, coefficients $5$ and $-1$ reconstruct $5u_1-u_2$."
+        "title": "Application 6",
+        "background": "Robot motions",
+        "numbers": "Robot motions $(1,0)$ and $(0,2)$ reach $(3,4)$ with coefficients $3,2$."
       }
     ],
     "applicationsClose": "Span is reachability: the vectors you choose determine the world your linear combinations can visit.",
@@ -2768,6 +3110,48 @@
       "Span membership is solved by a linear system.",
       "The span is always a subspace.",
       "Redundant vectors can enlarge a list without enlarging its span."
+    ],
+    "connectionsProse": "<p>This lesson focuses on span as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. The span of vectors is everything you can build from their linear combinations. Solvability, rank, projections, and PCA all depend on knowing what a span can reach.</p>",
+    "symbols": [
+      {
+        "sym": "$\\operatorname{span}\\{v_i\\}$",
+        "desc": "all linear combinations"
+      },
+      {
+        "sym": "$c_i$",
+        "desc": "coefficients"
+      },
+      {
+        "sym": "$V$",
+        "desc": "the matrix with $v_i$ as columns."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with vectors $v_1,\\dots,v_k$",
+        "result": "$v_1,\\dots,v_k$",
+        "why": "available directions."
+      },
+      {
+        "do": "Scale them by arbitrary coefficients $c_i$",
+        "result": "$c_i$",
+        "why": "choose how much of each direction."
+      },
+      {
+        "do": "Add them: $c_1v_1+\\cdots+c_kv_k$",
+        "result": "$c_1v_1+\\cdots+c_kv_k$",
+        "why": "this creates one reachable vector."
+      },
+      {
+        "do": "Let coefficients range over all real numbers",
+        "result": "Let coefficients range over all real numbers",
+        "why": "the collection of all reachable vectors is the span."
+      },
+      {
+        "do": "To test whether $b$ is in the span, solve $Vc=b$",
+        "result": "$Vc=b$",
+        "why": "columns of $V$ are the spanning vectors."
+      }
     ],
     "prereqs": [
       "math-09-09"
@@ -2796,8 +3180,8 @@
         "dimension"
       ]
     },
-    "motivation": "<p>You can carry two tools that do the same job, but the second one does not expand what you can do. Linear independence detects that redundancy exactly.</p><p>Independent vectors each add a new direction. This matters because redundant features, duplicate columns, and over-parameterized models can make solutions non-unique.</p>",
-    "definition": "<p>Vectors $\\mathbf{v}_1,\\ldots,\\mathbf{v}_k$ are <b>linearly independent</b> if the equation $c_1\\mathbf{v}_1+\\cdots+c_k\\mathbf{v}_k=\\mathbf{0}$ has only the trivial solution $c_1=\\cdots=c_k=0$. If some coefficient can be nonzero, the vectors are <b>linearly dependent</b>.</p><p>The test works because a nontrivial zero combination can be rearranged to express one vector as a combination of the others. That vector was not adding a new direction.</p><p><b>Assumptions that matter:</b> all vectors are in the same vector space; the zero vector in any list makes the list dependent; and more than $n$ vectors in $\\mathbb{R}^n$ must be dependent.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Vectors are linearly independent when none is redundant. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>In a data matrix, independence means columns carry distinct directions rather than repeating the same feature. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Linear independence is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Use the lesson definition on $A=\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}$ and the vectors $[1,2]^T$, $[2,4]^T$, and $[-2,1]^T$.",
       "skills": [
@@ -3001,34 +3385,34 @@
     ],
     "applications": [
       {
-        "title": "Feature spaces",
-        "background": "ML features live in vector spaces where scaling and adding examples or directions is meaningful.",
-        "numbers": "If $v=[2,3]$ and $w=[1,-1]$, then $0.5v+w=[2,0.5]$ is another vector in the same ambient space."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$(1,1)$ and $(1,-1)$ are independent; determinant $-2\\ne0$."
       },
       {
-        "title": "Embeddings",
-        "background": "Embedding models rely on spans, bases, and independence to represent meaning in many directions.",
-        "numbers": "Two directions $[1,0]$ and $[0,1]$ can represent $[0.2,0.9]$ as $0.2[1,0]+0.9[0,1]$."
+        "title": "Application 2",
+        "background": "The computation is shown directly.",
+        "numbers": "$(1,2)$ and $(2,4)$ are dependent because $2(1,2)-(2,4)=0$."
       },
       {
-        "title": "Dimensionality reduction",
-        "background": "PCA searches for a lower-dimensional subspace that keeps much of the data variation.",
-        "numbers": "If two principal directions explain $70\\%$ and $20\\%$ of variance, a 2-D subspace keeps $90\\%$."
+        "title": "Application 3",
+        "background": "Duplicate feature columns give rank",
+        "numbers": "Duplicate feature columns give rank $1$ for $\\begin{bmatrix}1&2\\2&4\\end{bmatrix}$."
       },
       {
-        "title": "Solving constraints",
-        "background": "Null spaces describe changes that leave linear measurements unchanged.",
-        "numbers": "For measurement row $[1,2]$, change $[-2,1]$ gives $[1,2]\\cdot[-2,1]=0$."
+        "title": "Application 4",
+        "background": "Three one-hot vectors in",
+        "numbers": "Three one-hot vectors in $\\mathbb R^3$ are independent."
       },
       {
-        "title": "Data rank",
-        "background": "Rank tells how many independent directions the columns of a data matrix really contain.",
-        "numbers": "Columns $[1,2]$ and $[2,4]$ have rank $1$, not $2$, because one is twice the other."
+        "title": "Application 5",
+        "background": "Basis compression removes a vector if coefficients like",
+        "numbers": "Basis compression removes a vector if coefficients like $(2,-1,0)$ produce zero."
       },
       {
-        "title": "Model identifiability",
-        "background": "Parameters are identifiable only outside null directions that leave predictions unchanged.",
-        "numbers": "If $Xh=0$ for $h=[-2,1]$, then weights $w$ and $w+h$ give the same predictions on $X$."
+        "title": "Application 6",
+        "background": "Independent columns make a unique coordinate vector.",
+        "numbers": "Independent columns make a unique coordinate vector."
       }
     ],
     "applicationsClose": "Linear independence gives one more way to see the same linear structure: what can be built, what is lost, and how many directions truly matter.",
@@ -3036,6 +3420,43 @@
       "Linear combinations are the test language for this topic.",
       "Row reduction turns geometric claims into solvable equations.",
       "Dimension counts independent directions, not the number of coordinates written down."
+    ],
+    "connectionsProse": "<p>This lesson focuses on linear independence as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Vectors are linearly independent when none is redundant. Basis, dimension, rank, and identifiable features all rely on this nonredundancy test.</p>",
+    "symbols": [
+      {
+        "sym": "$c_i$",
+        "desc": "dependence coefficients"
+      },
+      {
+        "sym": "the zero vector",
+        "desc": "the target in the test"
+      },
+      {
+        "sym": "trivial solution",
+        "desc": "all coefficients are zero."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Set $c_1v_1+\\cdots+c_kv_k=0$",
+        "result": "$c_1v_1+\\cdots+c_kv_k=0$",
+        "why": "ask whether zero can be built nontrivially."
+      },
+      {
+        "do": "If only $c_i=0$ works, the vectors are independent",
+        "result": "$c_i=0$",
+        "why": "no vector can be made from the others."
+      },
+      {
+        "do": "If a nonzero coefficient solution exists, isolate one vector",
+        "result": "If a nonzero coefficient solution exists, isolate one vector",
+        "why": "it is a combination of the rest."
+      },
+      {
+        "do": "For $(1,1)$ and $(1,-1)$, solve $c_1(1,1)+c_2(1,-1)=0$: equations $c_1+c_2=0$, $c_1-c_2=0$ give $c_1=c_2=0$.",
+        "result": "$c_1=c_2=0$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-10"
@@ -3064,8 +3485,8 @@
         "dimension"
       ]
     },
-    "motivation": "<p>Once you have just enough independent directions to reach a space, every vector gets a unique address. That is what a basis provides.</p><p>Dimension is then not about how many vectors are listed, but how many independent directions the space contains. This is the bridge from geometry to compact ML representations.</p>",
-    "definition": "<p>A <b>basis</b> for a vector space is a list of vectors that spans the space and is linearly independent. The <b>dimension</b> is the number of vectors in any basis for that space.</p><p>Spanning gives existence of coordinates; independence gives uniqueness. If two different coefficient lists represented the same vector, subtracting them would create a nontrivial zero combination, contradicting independence.</p><p><b>Assumptions that matter:</b> the basis belongs to a specified space; every basis of the same finite-dimensional space has the same size; and coordinates depend on the chosen basis even though dimension does not.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. A basis is a nonredundant set of vectors that spans a space. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>Dimension is the number of vectors in any basis, so it counts degrees of freedom. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> this lesson defines a structural pair. Demonstrate the two checks, spanning and independence, with small coordinate examples.</p><p><b>Assumptions that matter:</b> Use the stated closure, compatibility, indexing, or shape conditions; this lesson is conceptual rather than a proof.</p>",
     "worked": {
       "problem": "Show that $[1,0]^T$ and $[1,1]^T$ form a basis of $\\mathbb{R}^2$, then find coordinates of $[5,2]^T$.",
       "skills": [
@@ -3274,34 +3695,34 @@
     ],
     "applications": [
       {
-        "title": "Feature spaces",
-        "background": "ML features live in vector spaces where scaling and adding examples or directions is meaningful.",
-        "numbers": "If $v=[2,3]$ and $w=[1,-1]$, then $0.5v+w=[2,0.5]$ is another vector in the same ambient space."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$\\{(1,0),(0,1)\\}$ is a basis of $\\mathbb R^2$ and dimension is $2$."
       },
       {
-        "title": "Embeddings",
-        "background": "Embedding models rely on spans, bases, and independence to represent meaning in many directions.",
-        "numbers": "Two directions $[1,0]$ and $[0,1]$ can represent $[0.2,0.9]$ as $0.2[1,0]+0.9[0,1]$."
+        "title": "Application 2",
+        "background": "Basis",
+        "numbers": "Basis $\\{(1,1),(1,-1)\\}$ represents $(3,1)$ as $2(1,1)+1(1,-1)$."
       },
       {
-        "title": "Dimensionality reduction",
-        "background": "PCA searches for a lower-dimensional subspace that keeps much of the data variation.",
-        "numbers": "If two principal directions explain $70\\%$ and $20\\%$ of variance, a 2-D subspace keeps $90\\%$."
+        "title": "Application 3",
+        "background": "A plane through the origin in",
+        "numbers": "A plane through the origin in $\\mathbb R^3$ has dimension $2$."
       },
       {
-        "title": "Solving constraints",
-        "background": "Null spaces describe changes that leave linear measurements unchanged.",
-        "numbers": "For measurement row $[1,2]$, change $[-2,1]$ gives $[1,2]\\cdot[-2,1]=0$."
+        "title": "Application 4",
+        "background": "Null space",
+        "numbers": "Null space $x+y+z=0$ has dimension $2$."
       },
       {
-        "title": "Data rank",
-        "background": "Rank tells how many independent directions the columns of a data matrix really contain.",
-        "numbers": "Columns $[1,2]$ and $[2,4]$ have rank $1$, not $2$, because one is twice the other."
+        "title": "Application 5",
+        "background": "A rank-",
+        "numbers": "A rank-$5$ embedding subspace needs $5$ basis vectors."
       },
       {
-        "title": "Model identifiability",
-        "background": "Parameters are identifiable only outside null directions that leave predictions unchanged.",
-        "numbers": "If $Xh=0$ for $h=[-2,1]$, then weights $w$ and $w+h$ give the same predictions on $X$."
+        "title": "Application 6",
+        "background": "A",
+        "numbers": "A $10$-feature model with rank $7$ has $7$ independent feature directions."
       }
     ],
     "applicationsClose": "Basis and dimension gives one more way to see the same linear structure: what can be built, what is lost, and how many directions truly matter.",
@@ -3309,6 +3730,21 @@
       "Linear combinations are the test language for this topic.",
       "Row reduction turns geometric claims into solvable equations.",
       "Dimension counts independent directions, not the number of coordinates written down."
+    ],
+    "connectionsProse": "<p>This lesson focuses on basis and dimension as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. A basis is a nonredundant set of vectors that spans a space. Rank, nullity, PCA components, and low-rank models are all dimension counts in practice.</p>",
+    "symbols": [
+      {
+        "sym": "A basis",
+        "desc": "a spanning independent set"
+      },
+      {
+        "sym": "$\\dim V$",
+        "desc": "its size"
+      },
+      {
+        "sym": "coordinates",
+        "desc": "coefficients in that basis."
+      }
     ],
     "prereqs": [
       "math-09-11"
@@ -3337,8 +3773,8 @@
         "dimension"
       ]
     },
-    "motivation": "<p>A matrix is more than an array. It is a map from input space to output space, and every map has directions it can see, directions it loses, outputs it can reach, and outputs it can never reach.</p><p>The four fundamental subspaces organize that entire story. They are the conceptual foundation for least squares, rank, nullity, PCA, and the singular value decomposition.</p>",
-    "definition": "<p>For an $m\\times n$ matrix $\\mathbf{A}$, the four fundamental subspaces are: the <b>column space</b> $\\operatorname{Col}(\\mathbf{A})\\subseteq\\mathbb{R}^m$, the <b>null space</b> $\\operatorname{Null}(\\mathbf{A})\\subseteq\\mathbb{R}^n$, the <b>row space</b> $\\operatorname{Row}(\\mathbf{A})\\subseteq\\mathbb{R}^n$, and the <b>left null space</b> $\\operatorname{Null}(\\mathbf{A}^T)\\subseteq\\mathbb{R}^m$.</p><p>The column space is everything $\\mathbf{A}\\mathbf{x}$ can output. The null space is every input sent to zero. The row space contains the input directions measured by the rows. The left null space contains output-side directions orthogonal to every column.</p><p><b>Assumptions that matter:</b> row space and null space live in the input space $\\mathbb{R}^n$; column space and left null space live in the output space $\\mathbb{R}^m$; and rank-nullity says $\\dim\\operatorname{Row}(A)+\\dim\\operatorname{Null}(A)=n$.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Every matrix organizes four spaces: what its columns can produce, which inputs it kills, what its rows measure, and which output directions are unreachable. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>These spaces explain solvability and least squares. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> For $A\\in\\mathbb R^{m\\times n}$:</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Use the lesson definition on $A=\\begin{bmatrix}1&2\\\\2&4\\end{bmatrix}$ and the vectors $[1,2]^T$, $[2,4]^T$, and $[-2,1]^T$.",
       "skills": [
@@ -3542,34 +3978,34 @@
     ],
     "applications": [
       {
-        "title": "Feature spaces",
-        "background": "ML features live in vector spaces where scaling and adding examples or directions is meaningful.",
-        "numbers": "If $v=[2,3]$ and $w=[1,-1]$, then $0.5v+w=[2,0.5]$ is another vector in the same ambient space."
+        "title": "Application 1",
+        "background": "For",
+        "numbers": "For $A=[1\\ 1]$, column space is $\\mathbb R$ and null space is span of $(1,-1)$."
       },
       {
-        "title": "Embeddings",
-        "background": "Embedding models rely on spans, bases, and independence to represent meaning in many directions.",
-        "numbers": "Two directions $[1,0]$ and $[0,1]$ can represent $[0.2,0.9]$ as $0.2[1,0]+0.9[0,1]$."
+        "title": "Application 2",
+        "background": "Rank is",
+        "numbers": "Rank is $1$, nullity is $1$, total $2$."
       },
       {
-        "title": "Dimensionality reduction",
-        "background": "PCA searches for a lower-dimensional subspace that keeps much of the data variation.",
-        "numbers": "If two principal directions explain $70\\%$ and $20\\%$ of variance, a 2-D subspace keeps $90\\%$."
+        "title": "Application 3",
+        "background": "For",
+        "numbers": "For $A=\\begin{bmatrix}1&0\\0&0\\end{bmatrix}$, left null space is span of $(0,1)$."
       },
       {
-        "title": "Solving constraints",
-        "background": "Null spaces describe changes that leave linear measurements unchanged.",
-        "numbers": "For measurement row $[1,2]$, change $[-2,1]$ gives $[1,2]\\cdot[-2,1]=0$."
+        "title": "Application 4",
+        "background": "Least-squares residual lies in",
+        "numbers": "Least-squares residual lies in $\\mathcal N(A^T)$."
       },
       {
-        "title": "Data rank",
-        "background": "Rank tells how many independent directions the columns of a data matrix really contain.",
-        "numbers": "Columns $[1,2]$ and $[2,4]$ have rank $1$, not $2$, because one is twice the other."
+        "title": "Application 5",
+        "background": "Unidentifiable model updates live in",
+        "numbers": "Unidentifiable model updates live in $\\mathcal N(A)$."
       },
       {
-        "title": "Model identifiability",
-        "background": "Parameters are identifiable only outside null directions that leave predictions unchanged.",
-        "numbers": "If $Xh=0$ for $h=[-2,1]$, then weights $w$ and $w+h$ give the same predictions on $X$."
+        "title": "Application 6",
+        "background": "A",
+        "numbers": "A $100\\times20$ design matrix of rank $18$ has nullity $2$."
       }
     ],
     "applicationsClose": "The four fundamental subspaces gives one more way to see the same linear structure: what can be built, what is lost, and how many directions truly matter.",
@@ -3578,6 +4014,56 @@
       "The null space is what $A$ sends to zero.",
       "The row space contains the independent input directions measured by rows.",
       "Rank and nullity split the domain into visible and lost directions."
+    ],
+    "connectionsProse": "<p>This lesson focuses on the four fundamental subspaces as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Every matrix organizes four spaces: what its columns can produce, which inputs it kills, what its rows measure, and which output directions are unreachable. Projection, least squares, and pseudoinverses use these spaces to explain what can and cannot be solved.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mathcal C(A)$ column space",
+        "desc": "$\\mathcal C(A)$ column space"
+      },
+      {
+        "sym": "$\\mathcal N(A)$ null space",
+        "desc": "$\\mathcal N(A)$ null space"
+      },
+      {
+        "sym": "$\\mathcal C(A^T)$ row space",
+        "desc": "$\\mathcal C(A^T)$ row space"
+      },
+      {
+        "sym": "$\\mathcal N(A^T)$ left null space",
+        "desc": "$\\mathcal N(A^T)$ left null space"
+      },
+      {
+        "sym": "rank",
+        "desc": "column-space dimension."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Column space is $\\{Ax:x\\in\\mathbb R^n\\}$",
+        "result": "$\\{Ax:x\\in\\mathbb R^n\\}$",
+        "why": "all reachable outputs."
+      },
+      {
+        "do": "Null space is $\\{x:Ax=0\\}$",
+        "result": "$\\{x:Ax=0\\}$",
+        "why": "inputs erased by $A$."
+      },
+      {
+        "do": "Row space is the column space of $A^T$",
+        "result": "$A^T$",
+        "why": "directions measured by rows."
+      },
+      {
+        "do": "Left null space is $\\{y:A^Ty=0\\}$",
+        "result": "$\\{y:A^Ty=0\\}$",
+        "why": "output directions orthogonal to every column."
+      },
+      {
+        "do": "Rank-nullity gives $\\dim\\operatorname{col}(A)+\\dim\\operatorname{null}(A)=n$",
+        "result": "$\\dim\\operatorname{col}(A)+\\dim\\operatorname{null}(A)=n$",
+        "why": "domain splits into measured and erased directions."
+      }
     ],
     "prereqs": [
       "math-09-12"
@@ -3606,8 +4092,8 @@
         "range"
       ]
     },
-    "motivation": "<p>You already know how to move a vector such as $\\begin{bmatrix}2 \\\\ 1\\end{bmatrix}$ by stretching, rotating, or projecting it. The new question is not just where one vector goes, but whether the rule behaves predictably for every vector.</p><p>A <b>linear transformation</b> is the kind of vector-moving rule that respects the structure of vector space. If you understand what it does to a few building blocks, you can understand what it does to every vector built from them.</p>",
-    "definition": "<p>A transformation $T:V\\to W$ from a vector space $V$ to a vector space $W$ is <b>linear</b> if for all vectors $u,v\\in V$ and all scalars $c$, it satisfies $T(u+v)=T(u)+T(v)$ and $T(cu)=cT(u)$. The first rule says adding before or after applying $T$ gives the same result; the second says scaling before or after applying $T$ gives the same result.</p><p>These two rules combine into one useful fact: $T(au+bv)=aT(u)+bT(v)$. Derive it directly: $T(au+bv)=T(au)+T(bv)=aT(u)+bT(v)$. So a linear transformation preserves linear combinations, which is why bases are so powerful.</p><p><b>Assumptions that matter:</b> the zero vector must map to the zero vector because $T(0)=T(0\\cdot v)=0\\cdot T(v)=0$; translations such as $T(x)=x+b$ with $b\\ne0$ are not linear; and the domain and codomain must be vector spaces over the same scalar field.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. A linear transformation preserves addition and scaling. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>That makes it predictable from what it does to basis vectors. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Linear transformations is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Let $T:\\mathbb R^2\\to\\mathbb R^2$ be $T\\left(\\begin{bmatrix}x \\\\ y\\end{bmatrix}\\right)=\\begin{bmatrix}2x-y \\\\ x+3y\\end{bmatrix}$. Compute $T\\left(\\begin{bmatrix}3 \\\\ -1\\end{bmatrix}\\right)$ and verify one linearity check using $u=\\begin{bmatrix}1 \\\\ 2\\end{bmatrix}$ and $v=\\begin{bmatrix}2 \\\\ -1\\end{bmatrix}$.",
       "skills": [
@@ -3821,34 +4307,34 @@
     ],
     "applications": [
       {
-        "title": "Image rotation",
-        "background": "Computer graphics uses linear transformations to rotate pixel coordinates around the origin before drawing them on screen.",
-        "numbers": "A $90^{\\circ}$ rotation sends $\\begin{bmatrix}x \\\\ y\\end{bmatrix}$ to $\\begin{bmatrix}-y \\\\ x\\end{bmatrix}$, so $\\begin{bmatrix}3 \\\\ 1\\end{bmatrix}$ becomes $\\begin{bmatrix}-1 \\\\ 3\\end{bmatrix}$."
+        "title": "Application 1",
+        "background": "Rotation by",
+        "numbers": "Rotation by $90^\\circ$ sends $(1,0)$ to $(0,1)$ and $(0,1)$ to $(-1,0)$."
       },
       {
-        "title": "Feature mixing",
-        "background": "Many ML preprocessing steps create new features as weighted sums of old features. With no intercept, that mixing is linear.",
-        "numbers": "From features $\\begin{bmatrix}10 \\\\ 4\\end{bmatrix}$, the map $\\begin{bmatrix}0.7x+0.3y \\\\ x-y\\end{bmatrix}$ gives $\\begin{bmatrix}8.2 \\\\ 6\\end{bmatrix}$."
+        "title": "Application 2",
+        "background": "Scaling",
+        "numbers": "Scaling $(x,y)$ by $(2,3)$ sends $(4,5)$ to $(8,15)$."
       },
       {
-        "title": "Projection onto an axis",
-        "background": "Projection removes a component while keeping the part aligned with a chosen direction, a basic operation in geometry and data reduction.",
-        "numbers": "Projecting $\\begin{bmatrix}5 \\\\ -2\\end{bmatrix}$ onto the $x$-axis gives $\\begin{bmatrix}5 \\\\ 0\\end{bmatrix}$."
+        "title": "Application 3",
+        "background": "Projection onto x-axis sends",
+        "numbers": "Projection onto x-axis sends $(3,4)$ to $(3,0)$."
       },
       {
-        "title": "Audio channel mixing",
-        "background": "Stereo-to-mono conversion combines left and right audio channels by a weighted linear rule.",
-        "numbers": "Left $0.8$ and right $0.2$ become mono $0.5(0.8)+0.5(0.2)=0.5$."
+        "title": "Application 4",
+        "background": "Audio mix matrix",
+        "numbers": "Audio mix matrix $\\begin{bmatrix}0.5&0.5\\0.5&-0.5\\end{bmatrix}$ sends $(6,2)$ to $(4,2)$."
       },
       {
-        "title": "Embedding compression",
-        "background": "A learned linear layer can compress an embedding before a classifier uses it. The layer preserves linear-combination arithmetic before nonlinearities appear.",
-        "numbers": "For $z=0.2x_1-0.1x_2+0.5x_3$ and input $(3,4,2)$, the compressed coordinate is $0.6-0.4+1=1.2$."
+        "title": "Application 5",
+        "background": "Finite difference",
+        "numbers": "Finite difference $T(x_1,x_2,x_3)=(x_2-x_1,x_3-x_2)$ sends $(1,4,9)$ to $(3,5)$."
       },
       {
-        "title": "Finite differences in signals",
-        "background": "Signal processing often uses linear transformations to measure change between neighboring samples.",
-        "numbers": "The difference map $(a,b,c)\\mapsto(b-a,c-b)$ sends $(2,5,4)$ to $(3,-1)$."
+        "title": "Application 6",
+        "background": "Feature mixing",
+        "numbers": "Feature mixing $\\begin{bmatrix}1&2\\0&1\\end{bmatrix}(2,3)=(8,3)$."
       }
     ],
     "applicationsClose": "The same idea wears many uniforms: rotate, project, mix, compress, or differ, but preserve vector addition and scaling.",
@@ -3857,6 +4343,43 @@
       "Every linear transformation sends the zero vector to the zero vector.",
       "Knowing the images of basis vectors determines the whole transformation.",
       "Rotations, projections, feature mixing, and linear layers are transformation thinking in practice."
+    ],
+    "connectionsProse": "<p>This lesson focuses on linear transformations as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. A linear transformation preserves addition and scaling. This connects abstract maps with the concrete matrices used in data and models.</p>",
+    "symbols": [
+      {
+        "sym": "$T$",
+        "desc": "a transformation"
+      },
+      {
+        "sym": "$e_i$",
+        "desc": "basis vectors"
+      },
+      {
+        "sym": "$A$",
+        "desc": "the matrix representing $T$."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Linearity means $T(u+v)=T(u)+T(v)$ and $T(cu)=cT(u)$",
+        "result": "$T(cu)=cT(u)$",
+        "why": "sums and scales pass through."
+      },
+      {
+        "do": "Write any $x$ in the standard basis: $x=x_1e_1+\\cdots+x_ne_n$.",
+        "result": "$x=x_1e_1+\\cdots+x_ne_n$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Apply $T$: $T(x)=x_1T(e_1)+\\cdots+x_nT(e_n)$",
+        "result": "$T(x)=x_1T(e_1)+\\cdots+x_nT(e_n)$",
+        "why": "use linearity term by term."
+      },
+      {
+        "do": "Put $T(e_i)$ as columns of a matrix $A$",
+        "result": "$A$",
+        "why": "then $T(x)=Ax$."
+      }
     ],
     "prereqs": [
       "math-09-13"
@@ -3885,8 +4408,8 @@
         "systems of linear equations"
       ]
     },
-    "motivation": "<p>You just learned that a linear transformation is determined by what it does to basis vectors. A matrix is the most compact way to store that information.</p><p>For a transformation from $\\mathbb R^2$ to $\\mathbb R^2$, the first column tells where $e_1$ goes and the second column tells where $e_2$ goes. Then matrix-vector multiplication rebuilds the image of any input vector as the same linear combination of those columns.</p>",
-    "definition": "<p>If $T:\\mathbb R^n\\to\\mathbb R^m$ is linear, its standard matrix $A$ is the $m\\times n$ matrix whose $j$th column is $T(e_j)$, where $e_j$ is the $j$th standard basis vector. Then for every $x\\in\\mathbb R^n$, $T(x)=Ax$.</p><p>Why this works: every input $x=\\begin{bmatrix}x_1 \\\\ \\cdots \\\\ x_n\\end{bmatrix}$ equals $x_1e_1+\\cdots+x_ne_n$. By linearity, $T(x)=x_1T(e_1)+\\cdots+x_nT(e_n)$, which is exactly how $Ax$ combines the columns of $A$.</p><p><b>Assumptions that matter:</b> the columns are written in the chosen ordered basis; a map $\\mathbb R^n\\to\\mathbb R^m$ has an $m\\times n$ matrix; and changing the basis changes the matrix even when the underlying transformation stays the same.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Once a basis is chosen, every linear transformation has a matrix. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>The columns are the transformed basis vectors. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Matrix of a linear transformation is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Find the standard matrix for the linear transformation with $T(e_1)=\\begin{bmatrix}2 \\\\ 1\\end{bmatrix}$ and $T(e_2)=\\begin{bmatrix}-1 \\\\ 3\\end{bmatrix}$, then compute $T\\left(\\begin{bmatrix}4 \\\\ -2\\end{bmatrix}\\right)$.",
       "skills": [
@@ -4095,34 +4618,34 @@
     ],
     "applications": [
       {
-        "title": "Dense neural-network layers",
-        "background": "Before an activation function, a dense layer is matrix multiplication. Each row forms one weighted sum for a hidden unit.",
-        "numbers": "With $W=\\begin{bmatrix}1 & -2 \\\\ 0.5 & 3\\end{bmatrix}$ and $x=\\begin{bmatrix}4 \\\\ 1\\end{bmatrix}$, $Wx=\\begin{bmatrix}2 \\\\ 5\\end{bmatrix}$."
+        "title": "Application 1",
+        "background": "If",
+        "numbers": "If $T(e_1)=(2,1)$ and $T(e_2)=(0,3)$, then $A=\\begin{bmatrix}2&0\\1&3\\end{bmatrix}$."
       },
       {
-        "title": "2-D graphics transforms",
-        "background": "Graphics libraries store rotations, scalings, and shears as matrices so they can be applied quickly to many points.",
-        "numbers": "The scale matrix $\\begin{bmatrix}2 & 0 \\\\ 0 & 0.5\\end{bmatrix}$ sends $\\begin{bmatrix}3 \\\\ 8\\end{bmatrix}$ to $\\begin{bmatrix}6 \\\\ 4\\end{bmatrix}$."
+        "title": "Application 2",
+        "background": "The computation is shown directly.",
+        "numbers": "$T(4,5)=4(2,1)+5(0,3)=(8,19)$."
       },
       {
-        "title": "Color transformations",
-        "background": "Image pipelines use matrices to mix color channels, for example converting RGB-like values into luminance and contrast channels.",
-        "numbers": "The row $[0.3,0.6,0.1]$ applied to RGB $(100,150,80)$ gives luminance $30+90+8=128$."
+        "title": "Application 3",
+        "background": "Dense layer with 3 inputs and 2 outputs has a",
+        "numbers": "Dense layer with 3 inputs and 2 outputs has a $2\\times3$ matrix."
       },
       {
-        "title": "Dimensionality reduction",
-        "background": "Linear projections are the first step in methods such as PCA, where data is expressed along selected directions.",
-        "numbers": "Projecting $x=\\begin{bmatrix}6 \\\\ 2\\end{bmatrix}$ onto direction row $[0.8,0.6]$ gives $0.8\\cdot6+0.6\\cdot2=6.0$."
+        "title": "Application 4",
+        "background": "Color transform from RGB to grayscale weights",
+        "numbers": "Color transform from RGB to grayscale weights $(0.3,0.6,0.1)$ maps $(100,50,0)$ to $60$."
       },
       {
-        "title": "Markov transition matrices",
-        "background": "Stochastic matrices move probability vectors between states in simulations and ranking systems.",
-        "numbers": "With $P=\\begin{bmatrix}0.9 & 0.2 \\\\ 0.1 & 0.8\\end{bmatrix}$ and state $\\begin{bmatrix}0.7 \\\\ 0.3\\end{bmatrix}$, the next state is $\\begin{bmatrix}0.69 \\\\ 0.31\\end{bmatrix}$."
+        "title": "Application 5",
+        "background": "Markov transition columns summing to",
+        "numbers": "Markov transition columns summing to $1$ preserve total probability."
       },
       {
-        "title": "Linear regression design matrices",
-        "background": "Batch prediction for many examples is matrix multiplication: rows hold examples and columns hold features.",
-        "numbers": "For features $(1,2,5)$ and weights $(0.5,1,-0.2)$, the prediction is $0.5+2-1=1.5$."
+        "title": "Application 6",
+        "background": "Linear regression design matrix with",
+        "numbers": "Linear regression design matrix with 100 rows and 3 features maps weights to 100 predictions."
       }
     ],
     "applicationsClose": "Matrices turn linear transformations into computable objects: columns store geometry, rows compute outputs, and products compose actions.",
@@ -4131,6 +4654,48 @@
       "A map $\\mathbb R^n\\to\\mathbb R^m$ is represented by an $m\\times n$ matrix.",
       "Matrix-vector multiplication recombines the image columns using the input coordinates.",
       "Composition of linear transformations corresponds to matrix multiplication."
+    ],
+    "connectionsProse": "<p>This lesson focuses on the matrix of a linear transformation as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Once a basis is chosen, every linear transformation has a matrix. Change of basis and similarity build on this column interpretation.</p>",
+    "symbols": [
+      {
+        "sym": "$A_j$",
+        "desc": "column $j$ of $A$"
+      },
+      {
+        "sym": "$T(e_j)$",
+        "desc": "the image of basis vector $e_j$"
+      },
+      {
+        "sym": "coordinates depend on the chosen basis.",
+        "desc": "coordinates depend on the chosen basis."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Choose basis vectors $e_1,\\dots,e_n$",
+        "result": "$e_1,\\dots,e_n$",
+        "why": "these define coordinates."
+      },
+      {
+        "do": "Compute $T(e_j)$ for each basis vector",
+        "result": "$T(e_j)$",
+        "why": "this shows where each coordinate direction goes."
+      },
+      {
+        "do": "Place $T(e_j)$ in column $j$",
+        "result": "$j$",
+        "why": "column $j$ is the output caused by input coordinate $j=1$."
+      },
+      {
+        "do": "For $x=\\sum_j x_je_j$, linearity gives $T(x)=\\sum_j x_jT(e_j)$.",
+        "result": "$T(x)=\\sum_j x_jT(e_j)$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Matrix-column multiplication gives the same sum, so $T(x)=Ax$.",
+        "result": "$T(x)=Ax$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-14"
@@ -4159,8 +4724,8 @@
         "orthonormal bases"
       ]
     },
-    "motivation": "<p>The vector itself is not its coordinate list. The same arrow in the plane can be described as $\\begin{bmatrix}3 \\\\ 1\\end{bmatrix}$ in the standard basis, or by different coordinates in a tilted basis.</p><p>Change of basis is the careful bookkeeping that translates between coordinate languages. This matters because a transformation may look complicated in one basis and simple in another, especially when the basis vectors line up with the transformation's natural directions.</p>",
-    "definition": "<p>Let $B=(b_1,\\ldots,b_n)$ be an ordered basis of $\\mathbb R^n$. The coordinate vector $[v]_B=\\begin{bmatrix}c_1 \\\\ \\cdots \\\\ c_n\\end{bmatrix}$ means $v=c_1b_1+\\cdots+c_nb_n$. If $P_B=\\begin{bmatrix}b_1 & \\cdots & b_n\\end{bmatrix}$ has the basis vectors as columns, then $v=P_B[v]_B$.</p><p>To move from standard coordinates to $B$-coordinates, solve $P_B[v]_B=v$, so $[v]_B=P_B^{-1}v$. For a transformation with standard matrix $A$, its matrix in the $B$ basis is $[T]_B=P_B^{-1}AP_B$, because $P_B$ converts $B$-coordinates to standard coordinates, $A$ applies the transformation, and $P_B^{-1}$ converts back.</p><p><b>Assumptions that matter:</b> the basis vectors must be linearly independent so $P_B$ is invertible; the order of basis vectors matters; and a change of basis changes coordinate descriptions, not the geometric vector or transformation itself.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Change of basis rewrites the same vector using a different coordinate grid. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>The point does not move; only its coordinates change. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Change of basis is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Let $B=(b_1,b_2)$ with $b_1=\\begin{bmatrix}1 \\\\ 1\\end{bmatrix}$ and $b_2=\\begin{bmatrix}1 \\\\ -1\\end{bmatrix}$. Find $[v]_B$ for $v=\\begin{bmatrix}4 \\\\ 2\\end{bmatrix}$.",
       "skills": [
@@ -4369,34 +4934,34 @@
     ],
     "applications": [
       {
-        "title": "Principal component coordinates",
-        "background": "PCA rotates data into directions of largest variance. The data point is the same, but its coordinate language changes.",
-        "numbers": "If PC coordinates are $\\begin{bmatrix}5 \\\\ 1\\end{bmatrix}$ with basis vectors $\\begin{bmatrix}0.8 \\\\ 0.6\\end{bmatrix}$ and $\\begin{bmatrix}-0.6 \\\\ 0.8\\end{bmatrix}$, the standard vector is $\\begin{bmatrix}3.4 \\\\ 3.8\\end{bmatrix}$."
+        "title": "Application 1",
+        "background": "Basis",
+        "numbers": "Basis $b_1=(1,1)$, $b_2=(1,-1)$ represents $(3,1)$ as $(2,1)$."
       },
       {
-        "title": "Camera coordinate frames",
-        "background": "Robotics and vision constantly translate between world coordinates and camera coordinates. The object does not move when the basis changes.",
-        "numbers": "If camera basis vectors are $b_1=(0,1)$ and $b_2=(-1,0)$, camera coordinates $(2,3)$ reconstruct world vector $2(0,1)+3(-1,0)=(-3,2)$."
+        "title": "Application 2",
+        "background": "PCA coordinates are",
+        "numbers": "PCA coordinates are $Q^Tx$; if $Q=I$, coordinates stay $(3,1)$."
       },
       {
-        "title": "Fourier bases",
-        "background": "Signals are often easier to describe by sinusoidal basis functions than by raw time samples.",
-        "numbers": "A signal with coefficients $3$ on a low-frequency basis and $0.5$ on a high-frequency basis is represented as $3\\phi_1+0.5\\phi_2$."
+        "title": "Application 3",
+        "background": "Camera basis changes a world point into camera coordinates.",
+        "numbers": "Camera basis changes a world point into camera coordinates."
       },
       {
-        "title": "Word embedding subspaces",
-        "background": "Researchers sometimes examine embeddings in a smaller basis of interpretable directions, such as sentiment and formality axes.",
-        "numbers": "If an embedding has coordinates $\\begin{bmatrix}1.2 \\\\ -0.4\\end{bmatrix}$ in those axes, the negative second coordinate means $0.4$ units opposite the formality basis direction."
+        "title": "Application 4",
+        "background": "Diagonal basis for",
+        "numbers": "Diagonal basis for $A$ makes powers easy."
       },
       {
-        "title": "Diagonalizing dynamics",
-        "background": "A linear recurrence can be hard in standard coordinates but simple in an eigenbasis, where directions evolve independently.",
-        "numbers": "If eigenbasis coordinates are $\\begin{bmatrix}2 \\\\ 1\\end{bmatrix}$ and eigenvalues are $3$ and $0.5$, one step gives $\\begin{bmatrix}6 \\\\ 0.5\\end{bmatrix}$ in that basis."
+        "title": "Application 5",
+        "background": "Whitening with standard deviations",
+        "numbers": "Whitening with standard deviations $2,3$ uses coordinates $(x_1/2,x_2/3)$."
       },
       {
-        "title": "Whitening features",
-        "background": "Some preprocessing changes to a basis where features are uncorrelated and similarly scaled, which can help optimization.",
-        "numbers": "If a centered feature vector has new coordinates $\\begin{bmatrix}2 \\\\ -1\\end{bmatrix}$ after whitening, its squared length in the whitened space is $2^2+(-1)^2=5$."
+        "title": "Application 6",
+        "background": "Fourier basis coefficient for a normalized vector is an inner product, e.g. dot with",
+        "numbers": "Fourier basis coefficient for a normalized vector is an inner product, e.g. dot with $(1,1)/\\sqrt2$ gives $4/\\sqrt2\\approx2.828$ for $(3,1)$."
       }
     ],
     "applicationsClose": "Change of basis reminds you to separate the object from its description: vectors stay put while coordinate languages shift around them.",
@@ -4405,6 +4970,43 @@
       "The basis matrix $P_B$ converts $B$-coordinates to standard coordinates by $v=P_B[v]_B$.",
       "$P_B^{-1}$ converts standard coordinates back to $B$-coordinates when $B$ is a true basis.",
       "The same transformation has matrix $P_B^{-1}AP_B$ in the $B$ basis."
+    ],
+    "connectionsProse": "<p>This lesson focuses on change of basis as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Change of basis rewrites the same vector using a different coordinate grid. Eigenvector coordinates, PCA coordinates, whitening, and Fourier features all use this translation.</p>",
+    "symbols": [
+      {
+        "sym": "$P$",
+        "desc": "the basis matrix"
+      },
+      {
+        "sym": "$[x]_B$",
+        "desc": "coordinates of $x$ in basis $B$"
+      },
+      {
+        "sym": "$P^{-1}AP$",
+        "desc": "the same transformation in the new coordinates."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Put new basis vectors as columns of $P$",
+        "result": "$P$",
+        "why": "$P$ maps new coordinates to standard coordinates."
+      },
+      {
+        "do": "If $[x]_B$ is the coordinate vector in basis $B$, then $x=P[x]_B$",
+        "result": "$x=P[x]_B$",
+        "why": "basis vectors are combined by those coordinates."
+      },
+      {
+        "do": "Multiply by $P^{-1}$ to get $[x]_B=P^{-1}x$",
+        "result": "$[x]_B=P^{-1}x$",
+        "why": "inverse converts standard coordinates back."
+      },
+      {
+        "do": "A matrix in the new basis is $P^{-1}AP$",
+        "result": "$P^{-1}AP$",
+        "why": "convert in, apply $A$, convert out."
+      }
     ],
     "prereqs": [
       "math-09-15"
@@ -4433,8 +5035,8 @@
         "orientation"
       ]
     },
-    "motivation": "<p>A matrix does more than move points. It stretches regions. A square might become a parallelogram, a cube might become a slanted box, and sometimes an entire region collapses flat.</p><p>The <b>determinant</b> is the number that records this scaling. Its absolute value tells how area or volume changes, and its sign tells whether orientation is preserved or flipped.</p>",
-    "definition": "<p>For a $2\\times2$ matrix $A=\\begin{bmatrix}a & b \\\\ c & d\\end{bmatrix}$, the determinant is $\\det(A)=ad-bc$, also written $\\begin{vmatrix}a & b \\\\ c & d\\end{vmatrix}=ad-bc$. For a square $n\\times n$ matrix, $|\\det(A)|$ is the factor by which $A$ scales $n$-dimensional volume.</p><p>In two dimensions, the columns $\\begin{bmatrix}a \\\\ c\\end{bmatrix}$ and $\\begin{bmatrix}b \\\\ d\\end{bmatrix}$ form a parallelogram. The signed area is $ad-bc$: the $ad$ part measures one diagonal product and $bc$ subtracts the opposite slant. If the columns line up, the parallelogram has area zero, and the determinant is zero.</p><p><b>Assumptions that matter:</b> determinants are defined only for square matrices; a zero determinant means the transformation is not invertible; swapping two rows flips the sign; and multiplying one row by $c$ multiplies the determinant by $c$.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. The determinant measures signed area or volume scaling. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It also detects whether a square linear map collapses space. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> For $2\\times2$ matrix $A=\\begin{bmatrix}a&b\\c&d\\end{bmatrix}$:</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Compute the determinant of $A=\\begin{bmatrix}2 & -1 \\\\ 1 & 3\\end{bmatrix}$ and interpret the result as area scaling.",
       "skills": [
@@ -4643,34 +5245,34 @@
     ],
     "applications": [
       {
-        "title": "Invertibility checks",
-        "background": "Linear systems have unique solutions exactly when the coefficient matrix does not collapse space. The determinant is a quick square-matrix test.",
-        "numbers": "$\\det\\left(\\begin{bmatrix}2 & 1 \\\\ 5 & 3\\end{bmatrix}\\right)=6-5=1$, so the system has a unique solution."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$\\det\\begin{bmatrix}2&1\\1&1\\end{bmatrix}=1$, so invertible."
       },
       {
-        "title": "Area scaling in graphics",
-        "background": "A 2-D transform can resize every drawn shape. The determinant tells how much area changes.",
-        "numbers": "Scaling $x$ by $3$ and $y$ by $2$ has matrix $\\begin{bmatrix}3 & 0 \\\\ 0 & 2\\end{bmatrix}$ and determinant $6$, so a $10$ pixel area becomes $60$."
+        "title": "Application 2",
+        "background": "The computation is shown directly.",
+        "numbers": "$\\det\\begin{bmatrix}1&2\\2&4\\end{bmatrix}=0$, so columns are dependent."
       },
       {
-        "title": "Change of variables",
-        "background": "Calculus uses Jacobian determinants to adjust area or volume when changing coordinates.",
-        "numbers": "The polar-coordinate area factor is $r$; at radius $r=4$, a tiny rectangle in $(r,\\theta)$ space scales by factor $4$."
+        "title": "Application 3",
+        "background": "Area of a unit square under",
+        "numbers": "Area of a unit square under $\\begin{bmatrix}3&0\\0&2\\end{bmatrix}$ becomes $6$."
       },
       {
-        "title": "Detecting degenerate features",
-        "background": "If two feature directions are dependent, a determinant can reveal that a two-dimensional feature space has collapsed.",
-        "numbers": "Columns $(1,2)$ and $(3,6)$ give determinant $1\\cdot6-3\\cdot2=0$, so they carry only one direction of information."
+        "title": "Application 4",
+        "background": "Reflection has determinant",
+        "numbers": "Reflection has determinant $-1$."
       },
       {
-        "title": "Probability density transforms",
-        "background": "Normalizing flows in ML transform random variables and adjust density using determinant magnitudes.",
-        "numbers": "If a 2-D flow has determinant magnitude $0.25$, density multiplies by $1/0.25=4$ at that local transform."
+        "title": "Application 5",
+        "background": "Change-of-variables density under scale",
+        "numbers": "Change-of-variables density under scale $2,3$ divides by $6$."
       },
       {
-        "title": "Orientation in meshes",
-        "background": "Computer graphics and geometry use determinant signs to detect whether triangles have been flipped.",
-        "numbers": "A transform with determinant $-2$ doubles triangle area and reverses vertex orientation."
+        "title": "Application 6",
+        "background": "Triangle area from columns",
+        "numbers": "Triangle area from columns $(3,0),(0,4)$ is $\\frac12|12|=6$."
       }
     ],
     "applicationsClose": "Determinants compress a square linear transformation into one geometric fact: how much volume changes and whether orientation survives.",
@@ -4679,6 +5281,48 @@
       "The absolute determinant is the area or volume scale factor.",
       "A zero determinant means collapse and non-invertibility.",
       "A negative determinant means orientation is reversed."
+    ],
+    "connectionsProse": "<p>This lesson focuses on determinants as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. The determinant measures signed area or volume scaling. This determinant test leads directly to invertibility and eigenvalue computations.</p>",
+    "symbols": [
+      {
+        "sym": "$\\det A$",
+        "desc": "signed volume scale"
+      },
+      {
+        "sym": "sign",
+        "desc": "orientation"
+      },
+      {
+        "sym": "zero determinant",
+        "desc": "collapse."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Columns are edge vectors $(a,c)$ and $(b,d)$ of a parallelogram.",
+        "result": "$(b,d)$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "The signed area equals base-times-height with orientation.",
+        "result": "The signed area equals base-times-height with orientation.",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Expanding that oriented area gives $ad-bc$",
+        "result": "$ad-bc$",
+        "why": "the positive diagonal contribution minus the crossing contribution."
+      },
+      {
+        "do": "If $ad-bc=0$, the parallelogram has zero area",
+        "result": "$ad-bc=0$",
+        "why": "columns lie on one line."
+      },
+      {
+        "do": "Therefore a square matrix is invertible only when its determinant is nonzero.",
+        "result": "Therefore a square matrix is invertible only when its determinant is nonzero.",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-16"
@@ -4707,8 +5351,8 @@
         "orthogonal directions"
       ]
     },
-    "motivation": "<p>Most vectors change direction when a matrix acts on them. But some directions are special: the transformation only stretches, shrinks, or reverses them. Those directions reveal the matrix's natural axes.</p><p>The eigenvalue equation is the language for finding those axes. It is central in ML because covariance matrices, graph matrices, linear recurrences, and attention-style transformations all have directions that explain dominant behavior.</p>",
-    "definition": "<p>For a square matrix $A$, a nonzero vector $v$ is an <b>eigenvector</b> with <b>eigenvalue</b> $\\lambda$ if $Av=\\lambda v$. The matrix may change the length and sign of $v$, but it does not push $v$ out of its own span.</p><p>To find eigenvalues, rewrite $Av=\\lambda v$ as $(A-\\lambda I)v=0$. A nonzero solution exists only when $A-\\lambda I$ is singular, so $\\det(A-\\lambda I)=0$. This determinant equation is the characteristic equation.</p><p><b>Assumptions that matter:</b> $A$ must be square; the eigenvector $v$ cannot be the zero vector; eigenvalues may be real or complex; and repeated eigenvalues do not automatically provide enough independent eigenvectors for diagonalization.</p>",
+    "motivation": "<p>A matrix can mix coordinates in a way that is hard to read from its entries alone. For example, $A=\\begin{bmatrix}4&1\\2&3\\end{bmatrix}$ sends most vectors to a new direction. But the vector $v=\\begin{bmatrix}1\\1\\end{bmatrix}$ behaves simply: $Av=\\begin{bmatrix}5\\5\\end{bmatrix}=5v$. Along that line, the whole matrix acts like multiplication by the number $5$.</p><p>That is the point of the eigenvalue equation. It searches for directions where the matrix becomes a scalar stretch. If $Av=\\lambda v$, then repeated application is easy: $A^k v=\\lambda^k v$. This is why eigenvalues describe growth in linear dynamical systems, variance directions in PCA, and stability of optimization updates.</p>",
+    "definition": "<p><b>Definition.</b> The lesson defines The eigenvalue equation with the central condition.</p><p>$$Av=\\lambda v,\\qquad v\\ne0.$$</p><p><b>Assumptions that matter:</b> The eigenvector is nonzero, and matrix dimensions must make the products meaningful.</p>",
     "worked": {
       "problem": "Find the eigenvalues and one eigenvector for each eigenvalue of $A=\\begin{bmatrix}2 & 0 \\\\ 0 & 3\\end{bmatrix}$.",
       "skills": [
@@ -4927,34 +5571,34 @@
     ],
     "applications": [
       {
-        "title": "Principal component analysis",
-        "background": "PCA finds directions of largest variance by solving an eigenvalue problem for the covariance matrix.",
-        "numbers": "For $C=\\begin{bmatrix}5 & 0 \\\\ 0 & 2\\end{bmatrix}$, eigenvalue $5$ is larger than $2$, so the first coordinate is the principal direction."
+        "title": "PCA variance direction",
+        "background": "covariance",
+        "numbers": "covariance $\\begin{bmatrix}4&1\\1&3\\end{bmatrix}$ has eigenvalues $\\frac{7\\pm\\sqrt5}{2}\\approx4.618,2.382$, so the first principal direction explains more variance."
       },
       {
-        "title": "PageRank-style steady directions",
-        "background": "Ranking algorithms based on link graphs look for vectors that are unchanged up to scale by a transition matrix.",
-        "numbers": "If $Pp=p$, then $p$ is an eigenvector with eigenvalue $1$; for $p=\\begin{bmatrix}0.6 \\\\ 0.4\\end{bmatrix}$, the probabilities still sum to $1$."
+        "title": "Linear dynamics",
+        "background": "if",
+        "numbers": "if $x_{t+1}=Ax_t$ and $x_0=(1,1)$, then $x_3=5^3(1,1)=(125,125)$ for the worked $A$."
       },
       {
-        "title": "Linear dynamical systems",
-        "background": "Repeatedly applying a matrix amplifies eigen-directions according to their eigenvalues.",
-        "numbers": "If $Av=1.2v$, then after $5$ steps $A^5v=1.2^5v\\approx2.49v$."
+        "title": "Optimization stability",
+        "background": "error update",
+        "numbers": "error update $e_{t+1}=0.8e_t$ has eigenvalue $0.8$, so after $10$ steps the multiplier is $0.8^{10}\\approx0.107$."
       },
       {
-        "title": "Stability of updates",
-        "background": "Optimization and control use eigenvalues to decide whether repeated linearized updates grow or decay.",
-        "numbers": "An eigenvalue $0.8$ shrinks after $10$ steps to $0.8^{10}\\approx0.107$ of its original size."
+        "title": "Graph diffusion",
+        "background": "a graph operator with eigenvalue",
+        "numbers": "a graph operator with eigenvalue $0.5$ halves that mode each step; after $4$ steps it is $0.5^4=0.0625$ of its start."
       },
       {
-        "title": "Spectral graph features",
-        "background": "Graph ML often studies eigenvectors of adjacency or Laplacian matrices to reveal communities and smooth signals.",
-        "numbers": "For a two-node connected graph adjacency $\\begin{bmatrix}0 & 1 \\\\ 1 & 0\\end{bmatrix}$, $\\begin{bmatrix}1 \\\\ 1\\end{bmatrix}$ has eigenvalue $1$ and represents both nodes moving together."
+        "title": "PageRank-style steady direction",
+        "background": "a stochastic matrix eigenvalue",
+        "numbers": "a stochastic matrix eigenvalue $1$ marks a stationary direction; $P=\\begin{bmatrix}0.8&0.3\\0.2&0.7\\end{bmatrix}$ has stationary vector proportional to $(3,2)$."
       },
       {
-        "title": "Attention and low-rank structure",
-        "background": "Large models often contain matrices with dominant directions. Eigen-analysis helps describe which directions are amplified.",
-        "numbers": "If a symmetric weight matrix has top eigenvalue $6$ and next eigenvalue $1.5$, the top direction is amplified $4$ times as strongly in one multiplication."
+        "title": "Spectral filtering",
+        "background": "a filter",
+        "numbers": "a filter $g(\\lambda)=1/(1+\\lambda)$ applied to Laplacian eigenvalue $3$ scales that component by $0.25$."
       }
     ],
     "applicationsClose": "Eigenvalues and eigenvectors reveal the directions a matrix treats as its own natural coordinate system.",
@@ -4963,6 +5607,76 @@
       "Eigenvectors keep their direction under $A$; eigenvalues tell the stretch, shrink, or reversal factor.",
       "Eigenvalues solve $\\det(A-\\lambda I)=0$.",
       "PCA, graph methods, dynamics, and stability all rely on eigen-directions."
+    ],
+    "connectionsProse": "<p>This lesson builds on matrix multiplication and linear transformations. A matrix usually turns a vector and changes its direction, but some special vectors keep their direction and only get stretched or flipped. Those vectors are eigenvectors, and the stretch factors are eigenvalues.</p><p>This idea leads directly into many of the strongest tools in the rest of the section. The characteristic polynomial is how we find eigenvalues, diagonalization uses eigenvectors to simplify matrix powers, the spectral theorem explains why symmetric matrices have especially clean geometry, and PCA chooses directions by solving an eigenvalue problem for a covariance matrix.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "the matrix or linear map"
+      },
+      {
+        "sym": "$v$",
+        "desc": "an eigenvector and must be nonzero"
+      },
+      {
+        "sym": "$\\lambda$",
+        "desc": "the eigenvalue, the scalar stretch on that vector"
+      },
+      {
+        "sym": "$I$",
+        "desc": "the identity matrix"
+      },
+      {
+        "sym": "$\\det$",
+        "desc": "the determinant, used here to detect when a nonzero null-space vector exists."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $Av=\\lambda v$",
+        "result": "$Av=\\lambda v$",
+        "why": "this is the defining condition: the matrix output stays on the same line."
+      },
+      {
+        "do": "Move the right side to the left: $Av-\\lambda v=0$",
+        "result": "$Av-\\lambda v=0$",
+        "why": "eigenvectors are solutions of a homogeneous system."
+      },
+      {
+        "do": "Insert the identity matrix: $Av-\\lambda Iv=0$",
+        "result": "$Av-\\lambda Iv=0$",
+        "why": "$Iv=v$, so this only lets the scalar multiply through a matrix."
+      },
+      {
+        "do": "Factor the vector: $(A-\\lambda I)v=0$",
+        "result": "$(A-\\lambda I)v=0$",
+        "why": "the unknown vector is now acted on by one matrix."
+      },
+      {
+        "do": "A nonzero solution exists only if $A-\\lambda I$ is singular",
+        "result": "$A-\\lambda I$",
+        "why": "an invertible matrix would force $v=0$."
+      },
+      {
+        "do": "Singularity is detected by determinant zero, so $\\det(A-\\lambda I)=0$",
+        "result": "$\\det(A-\\lambda I)=0$",
+        "why": "this is the eigenvalue equation."
+      },
+      {
+        "do": "For $A=\\begin{bmatrix}4&1\\2&3\\end{bmatrix}$, compute $\\det\\begin{bmatrix}4-\\lambda&1\\2&3-\\lambda\\end{bmatrix}=(4-\\lambda)(3-\\lambda)-2=\\lambda^2-7\\lambda+10$.",
+        "result": "$\\det\\begin{bmatrix}4-\\lambda&1\\2&3-\\lambda\\end{bmatrix}=(4-\\lambda)(3-\\lambda)-2=\\lambda^2-7\\lambda+10$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Factor $\\lambda^2-7\\lambda+10=(\\lambda-5)(\\lambda-2)$",
+        "result": "$\\lambda^2-7\\lambda+10=(\\lambda-5)(\\lambda-2)$",
+        "why": "the eigenvalues are $5$ and $2$."
+      },
+      {
+        "do": "For $\\lambda=5$, solve $(A-5I)v=0$ to get $v\\propto(1,1)$; for $\\lambda=2$, solve $(A-2I)v=0$ to get $v\\propto(1,-2)$.",
+        "result": "$v\\propto(1,-2)$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-17"
@@ -4992,8 +5706,8 @@
         "matrix powers"
       ]
     },
-    "motivation": "<p>You already know how to test whether a square matrix collapses space: compute its determinant. If $\\det(A)=0$, some nonzero direction gets sent to zero.</p><p>Eigenvalues ask a slightly gentler question. Instead of asking whether $A$ sends a direction to zero, we ask whether $A-\\lambda I$ does. The values of $\\lambda$ that make this happen are the eigenvalues, and the determinant packages all of them into one polynomial.</p>",
-    "definition": "<p>For an $n\\times n$ matrix $A$, the <b>characteristic polynomial</b> is $p_A(\\lambda)=\\det(A-\\lambda I)$, where $I$ is the $n\\times n$ identity matrix and $\\lambda$ is a scalar. The <b>characteristic equation</b> is $\\det(A-\\lambda I)=0$.</p><p>Here is why this finds eigenvalues. A nonzero vector $v$ is an eigenvector with eigenvalue $\\lambda$ when $Av=\\lambda v$. Subtracting gives $(A-\\lambda I)v=0$. A nonzero solution exists exactly when $A-\\lambda I$ is singular, and that happens exactly when $\\det(A-\\lambda I)=0$.</p><p><b>Assumptions that matter:</b> $A$ must be square; $I$ has the same size as $A$; roots may be real or complex; repeated roots count with algebraic multiplicity; and some authors use $\\det(\\lambda I-A)$, which changes signs in some degrees but has the same roots.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. The characteristic polynomial packages eigenvalue finding into one scalar equation. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>Its roots are the eigenvalues. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> The characteristic polynomial is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Find the characteristic polynomial and eigenvalues of $A=\\begin{bmatrix}2 & 1 \\\\ 0 & 3\\end{bmatrix}$.",
       "skills": [
@@ -5202,34 +5916,34 @@
     ],
     "applications": [
       {
-        "title": "Stability of an iterative update",
-        "background": "Numerical algorithms often repeat $x_{k+1}=Ax_k$. The characteristic roots describe whether repeated application grows, shrinks, or preserves modes.",
-        "numbers": "For $A=\\begin{bmatrix}0.5 & 0 \\\\ 0 & 0.2\\end{bmatrix}$, $p_A(\\lambda)=(0.5-\\lambda)(0.2-\\lambda)$, so both modes shrink because $0.5$ and $0.2$ are below $1$."
+        "title": "Application 1",
+        "background": "Worked trace",
+        "numbers": "Worked trace $7$ and determinant $10$ give $\\lambda^2-7\\lambda+10$."
       },
       {
-        "title": "Markov-chain mixing",
-        "background": "A Markov chain moves probability mass between states. The root $1$ preserves total probability, while smaller roots control how quickly memory of the start fades.",
-        "numbers": "For $\\begin{bmatrix}0.9 & 0.1 \\\\ 0.1 & 0.9\\end{bmatrix}$, the characteristic roots are $1$ and $0.8$, so the difference between states shrinks by $20\\%$ per step."
+        "title": "Application 2",
+        "background": "Stability of update with roots",
+        "numbers": "Stability of update with roots $0.9,0.5$ is stable because both magnitudes are below $1$."
       },
       {
-        "title": "Principal component analysis",
-        "background": "PCA studies eigenvalues of a covariance matrix. The characteristic polynomial is the algebraic route to the variances of principal directions.",
-        "numbers": "For covariance $\\begin{bmatrix}4 & 0 \\\\ 0 & 1\\end{bmatrix}$, the roots are $4$ and $1$, so the first principal direction carries four times the variance of the second."
+        "title": "Application 3",
+        "background": "Recurrence polynomial",
+        "numbers": "Recurrence polynomial $r^2-3r+2$ has modes $2^t$ and $1^t$."
       },
       {
-        "title": "Second-order recurrence behavior",
-        "background": "Linear recurrences can be written with companion matrices. Their characteristic roots tell whether sequences grow, decay, or oscillate.",
-        "numbers": "The recurrence $x_{k+2}=3x_{k+1}-2x_k$ has companion roots from $r^2-3r+2=0$, namely $1$ and $2$, so one mode doubles."
+        "title": "Application 4",
+        "background": "Matrix with characteristic",
+        "numbers": "Matrix with characteristic $\\lambda^2+1$ has rotation eigenvalues $\\pm i$."
       },
       {
-        "title": "Graph diffusion",
-        "background": "Graph-based smoothing uses matrices built from adjacency or Laplacian operators. Characteristic roots reveal which patterns survive smoothing.",
-        "numbers": "For $A=\\begin{bmatrix}1 & 1 \\\\ 1 & 1\\end{bmatrix}$, $p_A(\\lambda)=\\lambda^2-2\\lambda$, so roots $2$ and $0$ separate the all-ones pattern from the difference pattern."
+        "title": "Application 5",
+        "background": "Graph Laplacian polynomial with root",
+        "numbers": "Graph Laplacian polynomial with root $0$ signals a connected component."
       },
       {
-        "title": "Damped rotations",
-        "background": "Optimization and control can create spiral dynamics. Complex characteristic roots identify oscillation plus decay or growth.",
-        "numbers": "For $0.9\\begin{bmatrix}0 & -1 \\\\ 1 & 0\\end{bmatrix}$, roots are $0.9i$ and $-0.9i$, so the state rotates while its size is scaled by $0.9$ each step."
+        "title": "Application 6",
+        "background": "Damped rotation roots",
+        "numbers": "Damped rotation roots $0.8e^{\\pm i\\theta}$ decay by $0.8^{5}\\approx0.328$ after 5 steps."
       }
     ],
     "applicationsClose": "Across updates, chains, covariance, recurrences, graphs, and rotations, the determinant equation names the hidden modes.",
@@ -5238,6 +5952,58 @@
       "Eigenvalues are exactly the roots of $\\det(A-\\lambda I)=0$.",
       "Triangular matrices reveal their characteristic roots on the diagonal.",
       "Repeated or complex roots are normal and carry important geometric information."
+    ],
+    "connectionsProse": "<p>This lesson focuses on the characteristic polynomial as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. The characteristic polynomial packages eigenvalue finding into one scalar equation. Diagonalization, stability analysis, and recurrences all use this polynomial view.</p>",
+    "symbols": [
+      {
+        "sym": "$p(\\lambda)$",
+        "desc": "the characteristic polynomial"
+      },
+      {
+        "sym": "roots",
+        "desc": "eigenvalues"
+      },
+      {
+        "sym": "trace",
+        "desc": "diagonal sum."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start from eigenvalue equation $Av=\\lambda v$.",
+        "result": "$Av=\\lambda v$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Rearrange to $(A-\\lambda I)v=0$.",
+        "result": "$(A-\\lambda I)v=0$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Require a nonzero solution, so $A-\\lambda I$ must be singular.",
+        "result": "$A-\\lambda I$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Set $p(\\lambda)=\\det(A-\\lambda I)$.",
+        "result": "$p(\\lambda)=\\det(A-\\lambda I)$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "For $A=\\begin{bmatrix}4&1\\2&3\\end{bmatrix}$, $p(\\lambda)=\\lambda^2-7\\lambda+10$.",
+        "result": "$p(\\lambda)=\\lambda^2-7\\lambda+10$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Roots $5,2$ are the eigenvalues.",
+        "result": "$5,2$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "The coefficients record trace and determinant in 2-D: $\\lambda^2-\\operatorname{tr}(A)\\lambda+\\det(A)$.",
+        "result": "$\\lambda^2-\\operatorname{tr}(A)\\lambda+\\det(A)$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-18"
@@ -5267,8 +6033,8 @@
         "linear recurrences"
       ]
     },
-    "motivation": "<p>You already know diagonal matrices are easy. Multiplying by $\\begin{bmatrix}3 & 0 \\\\ 0 & 5\\end{bmatrix}$ just scales the first coordinate by $3$ and the second by $5$.</p><p>Diagonalization asks whether a not-so-diagonal matrix becomes that simple after choosing better axes. If the axes are eigenvectors, the matrix stops mixing coordinates and only stretches each one. That is why powers, recurrences, and dynamics become much easier.</p>",
-    "definition": "<p>A square matrix $A$ is <b>diagonalizable</b> if there is an invertible matrix $P$ and a diagonal matrix $D$ such that $A=PDP^{-1}$. The columns of $P$ are eigenvectors of $A$, and the matching diagonal entries of $D$ are their eigenvalues.</p><p>Why the formula appears: if $Ap_i=\\lambda_i p_i$ for each eigenvector column $p_i$, then $AP=PD$, because multiplying $A$ by $P$ applies $A$ to each column, while multiplying $P$ by $D$ scales each column by its eigenvalue. Since the columns form a basis, $P$ is invertible, and $AP=PD$ becomes $A=PDP^{-1}$.</p><p><b>Assumptions that matter:</b> $A$ must be square; $P$ must have a full basis of linearly independent eigenvectors; repeated eigenvalues may or may not provide enough eigenvectors; and distinct eigenvalues always give linearly independent eigenvectors.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Diagonalization rewrites a matrix in its eigenvector coordinates. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>In that basis, the matrix only scales each coordinate. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Diagonalization is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Diagonalize $A=\\begin{bmatrix}2 & 1 \\\\ 0 & 3\\end{bmatrix}$.",
       "skills": [
@@ -5482,34 +6248,34 @@
     ],
     "applications": [
       {
-        "title": "Fast matrix powers",
-        "background": "Repeated transitions appear in simulations, recurrences, and discrete-time systems. Diagonalization turns many multiplications into simple powers of eigenvalues.",
-        "numbers": "If $D=\\begin{bmatrix}0.9 & 0 \\\\ 0 & 0.5\\end{bmatrix}$, then $D^{10}=\\begin{bmatrix}0.9^{10} & 0 \\\\ 0 & 0.5^{10}\\end{bmatrix}\\approx\\begin{bmatrix}0.349 & 0 \\\\ 0 & 0.00098\\end{bmatrix}$."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$A^3=P\\operatorname{diag}(125,8)P^{-1}$."
       },
       {
-        "title": "PCA coordinate systems",
-        "background": "PCA rotates data into eigenvector directions of the covariance matrix. In that basis, covariance is diagonal, so features are uncorrelated by construction.",
-        "numbers": "If the diagonal covariance is $\\begin{bmatrix}9 & 0 \\\\ 0 & 1\\end{bmatrix}$, the first principal coordinate has standard deviation $3$ and the second has standard deviation $1$."
+        "title": "Application 2",
+        "background": "PCA diagonalizes covariance into variances.",
+        "numbers": "PCA diagonalizes covariance into variances."
       },
       {
-        "title": "Markov-chain long-term behavior",
-        "background": "A diagonal form separates the steady distribution from decaying modes. This explains why many chains forget their initial state.",
-        "numbers": "A mode with eigenvalue $0.7$ has weight $0.7^5\\approx0.168$ after five steps, while the eigenvalue $1$ mode remains unchanged."
+        "title": "Application 3",
+        "background": "Markov chain long-run behavior keeps eigenvalue",
+        "numbers": "Markov chain long-run behavior keeps eigenvalue $1$ and damps $|\\lambda|<1$."
       },
       {
-        "title": "Graph spectral filters",
-        "background": "Graph signal processing diagonalizes graph operators so filters can scale low- and high-frequency graph patterns separately.",
-        "numbers": "A filter that maps eigenvalues $0,2$ to gains $1,0.2$ keeps a smooth component of size $5$ at $5$ and shrinks a rough component of size $5$ to $1$."
+        "title": "Application 4",
+        "background": "Graph filter",
+        "numbers": "Graph filter $g(D)$ applies one scalar per eigenmode."
       },
       {
-        "title": "Linear differential systems",
-        "background": "Continuous-time dynamics $x'(t)=Ax(t)$ become independent exponentials after diagonalization. Each eigenvalue controls one mode.",
-        "numbers": "If $D=\\begin{bmatrix}-1 & 0 \\\\ 0 & -3\\end{bmatrix}$, then after $t=2$ the mode scales are $e^{-2}\\approx0.135$ and $e^{-6}\\approx0.00248$."
+        "title": "Application 5",
+        "background": "Differential system",
+        "numbers": "Differential system $x'=Ax$ has $e^{At}=Pe^{Dt}P^{-1}$."
       },
       {
-        "title": "Embedding anisotropy correction",
-        "background": "Some representation pipelines whiten or rescale embedding directions using eigencoordinates of a covariance estimate.",
-        "numbers": "If variances along two eigenvectors are $16$ and $4$, whitening scales those coordinates by $1/4$ and $1/2$, making both output variances equal to $1$."
+        "title": "Application 6",
+        "background": "Anisotropy correction scales eigenvalue",
+        "numbers": "Anisotropy correction scales eigenvalue $5$ direction by $1/\\sqrt5\\approx0.447$."
       }
     ],
     "applicationsClose": "Diagonalization is the same comfort in many settings: find the right axes, then each coordinate tells its own simpler story.",
@@ -5518,6 +6284,53 @@
       "The order of eigenvectors in $P$ must match the order of eigenvalues in $D$.",
       "A matrix is diagonalizable exactly when it has enough independent eigenvectors to form a basis.",
       "Matrix powers and linear dynamics become simple in diagonal coordinates."
+    ],
+    "connectionsProse": "<p>This lesson focuses on diagonalization as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Diagonalization rewrites a matrix in its eigenvector coordinates. Matrix powers, differential systems, PCA, and graph filters become simpler in this basis.</p>",
+    "symbols": [
+      {
+        "sym": "$P$ eigenvector matrix",
+        "desc": "$P$ eigenvector matrix"
+      },
+      {
+        "sym": "$D$ diagonal eigenvalue matrix",
+        "desc": "$D$ diagonal eigenvalue matrix"
+      },
+      {
+        "sym": "diagonalizable",
+        "desc": "enough independent eigenvectors."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Put independent eigenvectors in $P$",
+        "result": "$P$",
+        "why": "columns are directions where $A$ acts simply."
+      },
+      {
+        "do": "Put matching eigenvalues in diagonal $D$",
+        "result": "$D$",
+        "why": "each eigenvector's stretch."
+      },
+      {
+        "do": "Since $Av_i=\\lambda_i v_i$, matrix form is $AP=PD$.",
+        "result": "$AP=PD$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Multiply by $P^{-1}$ to get $A=PDP^{-1}$.",
+        "result": "$A=PDP^{-1}$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Powers become $A^k=PD^kP^{-1}$",
+        "result": "$A^k=PD^kP^{-1}$",
+        "why": "middle factors cancel."
+      },
+      {
+        "do": "For $P=\\begin{bmatrix}1&1\\1&-1\\end{bmatrix}$ and $D=\\operatorname{diag}(5,2)$, $A=\\begin{bmatrix}3.5&1.5\\1.5&3.5\\end{bmatrix}$.",
+        "result": "$A=\\begin{bmatrix}3.5&1.5\\1.5&3.5\\end{bmatrix}$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-19"
@@ -5547,8 +6360,8 @@
         "matrix representations"
       ]
     },
-    "motivation": "<p>You already know a vector can have different coordinates in different bases. The vector itself has not changed; only the measuring grid has changed.</p><p>Similarity applies that idea to matrices. Two matrices can look different while representing the same linear transformation in two coordinate systems. This is why diagonalization is a special case of similarity, and why eigenvalues survive coordinate changes.</p>",
-    "definition": "<p>Square matrices $A$ and $B$ are <b>similar</b> if there is an invertible matrix $P$ such that $B=P^{-1}AP$. The matrix $P$ changes coordinates from the $B$-coordinate description to the $A$-coordinate description.</p><p>The characteristic polynomial is preserved by similarity: $\\det(B-\\lambda I)=\\det(P^{-1}AP-\\lambda I)=\\det(P^{-1}(A-\\lambda I)P)$. Determinants multiply, so this equals $\\det(P^{-1})\\det(A-\\lambda I)\\det(P)=\\det(A-\\lambda I)$ because $\\det(P^{-1})\\det(P)=1$.</p><p><b>Assumptions that matter:</b> $A$ and $B$ must be square matrices of the same size; $P$ must be invertible; similarity preserves eigenvalues, trace, determinant, rank, and characteristic polynomial; but it does not mean entries are equal or that the matrices are visually close.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Similar matrices describe the same linear transformation in different coordinates. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>Their entries change, but eigenvalues, trace, determinant, and rank stay the same. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Similarity is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Let $A=\\begin{bmatrix}2 & 1 \\\\ 0 & 3\\end{bmatrix}$ and $P=\\begin{bmatrix}1 & 1 \\\\ 0 & 1\\end{bmatrix}$. Compute $B=P^{-1}AP$.",
       "skills": [
@@ -5752,34 +6565,34 @@
     ],
     "applications": [
       {
-        "title": "Coordinate changes in graphics",
-        "background": "Graphics pipelines describe the same geometric transformation in object, world, camera, and screen coordinates. Similarity is the matrix version of changing that coordinate language.",
-        "numbers": "If a scale has diagonal form $D=\\begin{bmatrix}2 & 0 \\\\ 0 & 1\\end{bmatrix}$ in object axes, a basis change $P$ gives world representation $PDP^{-1}$ with the same determinant $2$."
+        "title": "Application 1",
+        "background": "Diagonalization is similarity with",
+        "numbers": "Diagonalization is similarity with $B=D$."
       },
       {
-        "title": "Diagonalization as similarity",
-        "background": "When an eigenvector basis exists, diagonalization is just choosing coordinates where the transformation is easiest to read.",
-        "numbers": "$A=\\begin{bmatrix}2 & 1 \\\\ 0 & 3\\end{bmatrix}$ is similar to $D=\\begin{bmatrix}2 & 0 \\\\ 0 & 3\\end{bmatrix}$, and both have trace $5$ and determinant $6$."
+        "title": "Application 2",
+        "background": "Similar matrices have the same determinant; worked",
+        "numbers": "Similar matrices have the same determinant; worked $D$ has determinant $10$, so $A$ does too."
       },
       {
-        "title": "Numerical algorithms",
-        "background": "Algorithms often transform a matrix to a similar Hessenberg, triangular, or Schur form to make eigenvalue computation more stable.",
-        "numbers": "A similarity step preserves $p_A(\\lambda)$, so a matrix with determinant $12$ and trace $7$ keeps determinant $12$ and trace $7$ after the step."
+        "title": "Same trace",
+        "background": "The computation is shown directly.",
+        "numbers": "$5+2=7$."
       },
       {
-        "title": "State-space models",
-        "background": "Control systems can use different state coordinates for the same physical system. Similar matrices represent the same dynamics under different state variables.",
-        "numbers": "A mode with eigenvalue $0.95$ remains $0.95$ after any invertible state reparameterization, so its ten-step decay remains $0.95^{10}\\approx0.599$."
+        "title": "Application 4",
+        "background": "State-space coordinate changes preserve system poles.",
+        "numbers": "State-space coordinate changes preserve system poles."
       },
       {
-        "title": "Feature whitening",
-        "background": "Whitening changes feature coordinates so covariance becomes diagonal or identity-like. The underlying linear structure is easier to read after the coordinate change.",
-        "numbers": "If covariance eigenvalues are $9$ and $4$, rescaling eigencoordinates by $1/3$ and $1/2$ gives variances $1$ and $1$."
+        "title": "Application 5",
+        "background": "Whitening changes coordinates but not rank.",
+        "numbers": "Whitening changes coordinates but not rank."
       },
       {
-        "title": "Graph embeddings",
-        "background": "Graph operators may be represented in node coordinates or spectral coordinates. Similarity-like basis changes preserve the operator's eigenvalue information.",
-        "numbers": "If a graph filter has spectral gains $1$ and $0.25$, a component of size $8$ in the second spectral coordinate becomes $2$ after filtering."
+        "title": "Application 6",
+        "background": "If",
+        "numbers": "If $A$ has eigenvalues $5,2$, every similar $B$ has spectral radius $5$."
       }
     ],
     "applicationsClose": "Similarity keeps the transformation fixed while changing the coordinate story, so invariants become the things you can trust.",
@@ -5788,6 +6601,48 @@
       "Similarity represents a change of basis, not a change of the underlying linear map.",
       "Characteristic polynomial, eigenvalues, trace, determinant, and rank are preserved.",
       "Diagonalization is the special case where a matrix is similar to a diagonal matrix."
+    ],
+    "connectionsProse": "<p>This lesson focuses on similarity as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Similar matrices describe the same linear transformation in different coordinates. Diagonalization is the central example, and invariants make coordinate changes safe.</p>",
+    "symbols": [
+      {
+        "sym": "$B=P^{-1}AP$",
+        "desc": "similar to $A$"
+      },
+      {
+        "sym": "$P$",
+        "desc": "invertible"
+      },
+      {
+        "sym": "invariants",
+        "desc": "quantities unchanged by coordinate change."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $x=Py$ convert new coordinates $y$ into old coordinates.",
+        "result": "$y$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Apply $A$ in old coordinates: $Ax=APy$.",
+        "result": "$Ax=APy$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Convert back by $P^{-1}$: $y'=P^{-1}APy$.",
+        "result": "$y'=P^{-1}APy$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Therefore the new-coordinate matrix is $B=P^{-1}AP$.",
+        "result": "$B=P^{-1}AP$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "If $Av=\\lambda v$, then $B(P^{-1}v)=\\lambda(P^{-1}v)$",
+        "result": "$B(P^{-1}v)=\\lambda(P^{-1}v)$",
+        "why": "eigenvalues are preserved."
+      }
     ],
     "prereqs": [
       "math-09-20"
@@ -5817,8 +6672,8 @@
         "canonical forms"
       ]
     },
-    "motivation": "<p>You already know the happy case: enough eigenvectors give a diagonal matrix in the right coordinates. But some matrices refuse to provide a full eigenvector basis.</p><p>Jordan form is the honest backup plan. It says a matrix can still be organized into nearly diagonal blocks. Each block has one eigenvalue on the diagonal and small ones just above it, recording the missing eigenvectors and the extra polynomial behavior they create.</p>",
-    "definition": "<p>A <b>Jordan block</b> of size $k$ for eigenvalue $\\lambda$ is $J_k(\\lambda)=\\begin{bmatrix}\\lambda & 1 & 0 \\\\ 0 & \\lambda & 1 \\\\ 0 & 0 & \\lambda\\end{bmatrix}$ in the $k=3$ case, with the same pattern for other sizes. A Jordan form is a block diagonal matrix made from such blocks.</p><p>The reason it appears is generalized eigenvectors. If $A$ has too few ordinary eigenvectors for an eigenvalue, we build chains such as $(A-\\lambda I)v_1=0$ and $(A-\\lambda I)v_2=v_1$. In that chain basis, $A$ acts like $\\lambda$ times the identity plus a shift along the chain, which creates the ones above the diagonal.</p><p><b>Assumptions that matter:</b> exact Jordan form is normally stated over the complex numbers; numerical software often uses Schur form instead because Jordan form is sensitive to perturbations; diagonal matrices are Jordan forms with only size-one blocks; and a matrix is diagonalizable exactly when every Jordan block has size $1$.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Jordan form handles matrices that do not have enough eigenvectors to diagonalize. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It shows that a repeated eigenvalue can bring a small coupling term along with the scalar stretch. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> The Jordan form is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Find a Jordan form for $A=\\begin{bmatrix}5 & 2 \\\\ 0 & 5\\end{bmatrix}$.",
       "skills": [
@@ -6027,34 +6882,34 @@
     ],
     "applications": [
       {
-        "title": "Defective dynamical systems",
-        "background": "Some repeated updates have too few eigenvectors, so diagonalization misses a transient term. Jordan form shows the polynomial factor multiplying the usual exponential behavior.",
-        "numbers": "For $J=\\begin{bmatrix}0.8 & 1 \\\\ 0 & 0.8\\end{bmatrix}$, $J^4=\\begin{bmatrix}0.4096 & 2.048 \\\\ 0 & 0.4096\\end{bmatrix}$ because $4\\cdot0.8^3=2.048$."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$J=\\begin{bmatrix}2&1\\0&2\\end{bmatrix}$ has one eigenvalue $2$ repeated."
       },
       {
-        "title": "Matrix exponentials",
-        "background": "Linear differential equations use $e^{At}$. A Jordan block makes the exponential include both $e^{\\lambda t}$ and polynomial factors in $t$.",
-        "numbers": "For $J=\\begin{bmatrix}-2 & 1 \\\\ 0 & -2\\end{bmatrix}$, $e^{Jt}=e^{-2t}\\begin{bmatrix}1 & t \\\\ 0 & 1\\end{bmatrix}$, so at $t=1$ the scale is $e^{-2}\\approx0.135$."
+        "title": "Application 2",
+        "background": "The computation is shown directly.",
+        "numbers": "$J^3=\\begin{bmatrix}8&12\\0&8\\end{bmatrix}$."
       },
       {
-        "title": "Sensitivity of eigen-computations",
-        "background": "Jordan form is mathematically clean but numerically fragile. Tiny perturbations can split a repeated eigenvalue, which is why software prefers more stable decompositions.",
-        "numbers": "$\\begin{bmatrix}1 & 1 \\\\ 0 & 1\\end{bmatrix}$ has repeated eigenvalue $1$, but changing the lower-left entry to $0.0001$ gives approximate eigenvalues $1.01$ and $0.99$."
+        "title": "Application 3",
+        "background": "The computation is shown directly.",
+        "numbers": "$e^{Jt}=e^{2t}\\begin{bmatrix}1&t\\0&1\\end{bmatrix}$."
       },
       {
-        "title": "Optimization momentum near degeneracy",
-        "background": "Linearized training dynamics can have nearly defective blocks. Jordan-style thinking explains why a decaying mode may still create a temporary surge.",
-        "numbers": "A block with eigenvalue $0.95$ has superdiagonal coefficient $10\\cdot0.95^9\\approx6.30$ in the tenth power, even though the diagonal scale is $0.95^{10}\\approx0.599$."
+        "title": "Application 4",
+        "background": "Defective dynamics include a",
+        "numbers": "Defective dynamics include a $t e^{\\lambda t}$ term."
       },
       {
-        "title": "Controllability and state chains",
-        "background": "Control theory uses chains of generalized eigenvectors to understand how inputs move through state variables. Jordan blocks reveal linked state directions.",
-        "numbers": "In $J=\\begin{bmatrix}3 & 1 \\\\ 0 & 3\\end{bmatrix}$, the second coordinate contributes to the first after one multiplication because $J\\begin{bmatrix}0 \\\\ 1\\end{bmatrix}=\\begin{bmatrix}1 \\\\ 3\\end{bmatrix}$."
+        "title": "Application 5",
+        "background": "Near repeated eigenvalues, small perturbations can change eigenvectors sharply.",
+        "numbers": "Near repeated eigenvalues, small perturbations can change eigenvectors sharply."
       },
       {
-        "title": "Polynomial features of repeated roots",
-        "background": "Repeated roots in linear recurrences create terms like $k\\lambda^k$, not just $\\lambda^k$. Jordan blocks are the matrix reason for that extra factor.",
-        "numbers": "For a repeated root $0.5$ with one size-two block, the extra term at $k=6$ is $6\\cdot0.5^6=0.09375$."
+        "title": "Application 6",
+        "background": "Optimization update with Jordan block",
+        "numbers": "Optimization update with Jordan block $0.9I+N$ has polynomial factor $k0.9^{k-1}$."
       }
     ],
     "applicationsClose": "Jordan form teaches one final linear-algebra lesson: even when diagonal simplicity fails, the remaining structure is still organized and computable.",
@@ -6063,6 +6918,48 @@
       "Diagonal matrices are Jordan forms whose blocks all have size $1$.",
       "A size-larger-than-one block records missing ordinary eigenvectors and uses generalized eigenvectors instead.",
       "Powers and exponentials of Jordan blocks include polynomial factors as well as eigenvalue powers."
+    ],
+    "connectionsProse": "<p>This lesson focuses on the Jordan form as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Jordan form handles matrices that do not have enough eigenvectors to diagonalize. This explains repeated-eigenvalue behavior in powers and differential equations.</p>",
+    "symbols": [
+      {
+        "sym": "$J$ Jordan block",
+        "desc": "$J$ Jordan block"
+      },
+      {
+        "sym": "$N$ nilpotent part",
+        "desc": "$N$ nilpotent part"
+      },
+      {
+        "sym": "generalized eigenvector extends an eigenvector chain.",
+        "desc": "generalized eigenvector extends an eigenvector chain."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For a defective eigenvalue $\\lambda$, find eigenvectors from $(A-\\lambda I)v=0$",
+        "result": "$(A-\\lambda I)v=0$",
+        "why": "there are too few."
+      },
+      {
+        "do": "Find a generalized eigenvector $w$ satisfying $(A-\\lambda I)w=v$",
+        "result": "$(A-\\lambda I)w=v$",
+        "why": "this creates the missing chain."
+      },
+      {
+        "do": "In basis $(v,w)$, the block becomes $J=\\begin{bmatrix}\\lambda&1\\0&\\lambda\\end{bmatrix}$.",
+        "result": "$J=\\begin{bmatrix}\\lambda&1\\0&\\lambda\\end{bmatrix}$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Write $J=\\lambda I+N$ with $N^2=0$",
+        "result": "$N^2=0$",
+        "why": "split scalar part and nilpotent coupling."
+      },
+      {
+        "do": "Then $J^k=\\lambda^k I+k\\lambda^{k-1}N$",
+        "result": "$J^k=\\lambda^k I+k\\lambda^{k-1}N$",
+        "why": "binomial expansion stops at $N^2$."
+      }
     ],
     "prereqs": [
       "math-09-21"
@@ -6091,8 +6988,8 @@
         "matrix multiplication"
       ]
     },
-    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Inner products</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
-    "definition": "<p><b>Inner products</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. An inner product generalizes the dot product. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It turns vectors into lengths, angles, and projections in spaces that may not look like ordinary coordinate space. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> this is an axiomatic definition. Explain positivity, symmetry, and linearity, then show how the usual dot product satisfies them.</p><p><b>Assumptions that matter:</b> Use the stated closure, compatibility, indexing, or shape conditions; this lesson is conceptual rather than a proof.</p>",
     "worked": {
       "problem": "Compute $langle(1,2),(3,4)\\rangle$ and the norm of $(3,4)$.",
       "skills": [
@@ -6291,34 +7188,34 @@
     ],
     "applications": [
       {
-        "title": "Inner products in ML geometry",
-        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
-        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+        "title": "Application 1",
+        "background": "Dot product",
+        "numbers": "Dot product $\\langle(1,2),(3,4)\\rangle=11$."
       },
       {
-        "title": "Principal components",
-        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
-        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+        "title": "Length from inner product",
+        "background": "The computation is shown directly.",
+        "numbers": "$\\sqrt{11}$ for $(1,\\sqrt{10})$."
       },
       {
-        "title": "Optimization curvature",
-        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
-        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+        "title": "Application 3",
+        "background": "Weighted inner product with weights",
+        "numbers": "Weighted inner product with weights $(2,1)$ gives $\\langle(1,2),(3,4)\\rangle_W=2\\cdot3+2\\cdot4=14$."
       },
       {
-        "title": "Recommendation embeddings",
-        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
-        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+        "title": "Application 4",
+        "background": "Function inner product",
+        "numbers": "Function inner product $\\int_0^1 x\\cdot x^2dx=1/4$."
       },
       {
-        "title": "Numerical stability",
-        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
-        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+        "title": "Application 5",
+        "background": "Cosine similarity",
+        "numbers": "Cosine similarity $11/(\\sqrt5\\sqrt{25})\\approx0.984$."
       },
       {
-        "title": "Iterative systems",
-        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
-        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+        "title": "Application 6",
+        "background": "Orthogonal residual has inner product",
+        "numbers": "Orthogonal residual has inner product $0$ with fitted column."
       }
     ],
     "applicationsClose": "Inner products matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
@@ -6327,6 +7224,21 @@
       "Check dimensions and nonzero assumptions.",
       "Verify the result in the original coordinates.",
       "The concept is most useful when it reveals geometry."
+    ],
+    "connectionsProse": "<p>This lesson focuses on inner products as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. An inner product generalizes the dot product. Orthogonality, projections, QR, and least squares all depend on this measurement.</p>",
+    "symbols": [
+      {
+        "sym": "$\\langle u,v\\rangle$",
+        "desc": "the inner product"
+      },
+      {
+        "sym": "$\\lVert v\\rVert=\\sqrt{\\langle v,v\\rangle}$",
+        "desc": "the induced norm"
+      },
+      {
+        "sym": "orthogonality",
+        "desc": "inner product zero."
+      }
     ],
     "prereqs": [
       "math-09-22"
@@ -6355,8 +7267,8 @@
         "matrix multiplication"
       ]
     },
-    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Orthogonality</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
-    "definition": "<p><b>Orthogonality</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Orthogonal vectors have zero inner product. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>They separate information cleanly because movement in one direction contributes nothing to the other. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Orthogonality is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Show that $(1,2)$ and $(2,-1)$ are orthogonal.",
       "skills": [
@@ -6555,34 +7467,34 @@
     ],
     "applications": [
       {
-        "title": "Orthogonality in ML geometry",
-        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
-        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$(1,1)\\cdot(1,-1)=0$."
       },
       {
-        "title": "Principal components",
-        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
-        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+        "title": "Application 2",
+        "background": "Pythagorean length of",
+        "numbers": "Pythagorean length of $(1,1)+(1,-1)=(2,0)$ is $2$."
       },
       {
-        "title": "Optimization curvature",
-        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
-        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+        "title": "Application 3",
+        "background": "Orthogonal feature columns have cross-product",
+        "numbers": "Orthogonal feature columns have cross-product $X_i^TX_j=0$."
       },
       {
-        "title": "Recommendation embeddings",
-        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
-        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+        "title": "Application 4",
+        "background": "PCA directions are orthogonal; two components have dot",
+        "numbers": "PCA directions are orthogonal; two components have dot $0$."
       },
       {
-        "title": "Numerical stability",
-        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
-        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+        "title": "Application 5",
+        "background": "QR columns satisfy",
+        "numbers": "QR columns satisfy $q_1^Tq_2=0$."
       },
       {
-        "title": "Iterative systems",
-        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
-        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+        "title": "Application 6",
+        "background": "Residual",
+        "numbers": "Residual $r=(1,-1)$ is orthogonal to column $(1,1)$ since dot is $0$."
       }
     ],
     "applicationsClose": "Orthogonality matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
@@ -6591,6 +7503,48 @@
       "Check dimensions and nonzero assumptions.",
       "Verify the result in the original coordinates.",
       "The concept is most useful when it reveals geometry."
+    ],
+    "connectionsProse": "<p>This lesson focuses on orthogonality as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Orthogonal vectors have zero inner product. Orthonormal bases, QR, PCA, and residual checks all use this separation.</p>",
+    "symbols": [
+      {
+        "sym": "$u\\perp v$",
+        "desc": "orthogonal"
+      },
+      {
+        "sym": "$\\theta$",
+        "desc": "angle"
+      },
+      {
+        "sym": "dot product zero",
+        "desc": "the algebraic test."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start from the geometric dot product $u\\cdot v=\\lVert u\\rVert\\lVert v\\rVert\\cos\\theta$.",
+        "result": "$u\\cdot v=\\lVert u\\rVert\\lVert v\\rVert\\cos\\theta$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Orthogonal means angle $90^\\circ$",
+        "result": "$90^\\circ$",
+        "why": "directions meet at a right angle."
+      },
+      {
+        "do": "Since $\\cos90^\\circ=0$, $u\\cdot v=0$.",
+        "result": "$u\\cdot v=0$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Conversely, if nonzero vectors have dot product zero, then $\\cos\\theta=0$, so $\\theta=90^\\circ$.",
+        "result": "$\\theta=90^\\circ$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Pythagoras follows: $\\lVert u+v\\rVert^2=\\lVert u\\rVert^2+2u\\cdot v+\\lVert v\\rVert^2$ becomes a sum of squares.",
+        "result": "$\\lVert u+v\\rVert^2=\\lVert u\\rVert^2+2u\\cdot v+\\lVert v\\rVert^2$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-23"
@@ -6619,8 +7573,8 @@
         "matrix multiplication"
       ]
     },
-    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Orthogonal projections</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
-    "definition": "<p><b>Orthogonal projections</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Projection finds the closest point on a line or subspace. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It keeps the component in the chosen direction and drops the orthogonal residual. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Projection onto nonzero $u$:</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Project $a=(3,4)$ onto $b=(1,2)$.",
       "skills": [
@@ -6819,34 +7773,34 @@
     ],
     "applications": [
       {
-        "title": "Orthogonal projections in ML geometry",
-        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
-        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+        "title": "Application 1",
+        "background": "Project",
+        "numbers": "Project $(3,4)$ onto $(1,0)$ gives $(3,0)$."
       },
       {
-        "title": "Principal components",
-        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
-        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+        "title": "Application 2",
+        "background": "Project",
+        "numbers": "Project $(3,4)$ onto $(1,1)$ gives $3.5(1,1)=(3.5,3.5)$."
       },
       {
-        "title": "Optimization curvature",
-        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
-        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+        "title": "Application 3",
+        "background": "Residual from second projection is",
+        "numbers": "Residual from second projection is $(-0.5,0.5)$ with dot $0$."
       },
       {
-        "title": "Recommendation embeddings",
-        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
-        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+        "title": "Application 4",
+        "background": "Least squares projects",
+        "numbers": "Least squares projects $y$ onto column space."
       },
       {
-        "title": "Numerical stability",
-        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
-        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+        "title": "Application 5",
+        "background": "Recommendation latent factor keeps component along user vector.",
+        "numbers": "Recommendation latent factor keeps component along user vector."
       },
       {
-        "title": "Iterative systems",
-        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
-        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+        "title": "Application 6",
+        "background": "Cosine projection length onto unit",
+        "numbers": "Cosine projection length onto unit $u=(0.6,0.8)$ is $3\\cdot0.6+4\\cdot0.8=5$."
       }
     ],
     "applicationsClose": "Orthogonal projections matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
@@ -6855,6 +7809,48 @@
       "Check dimensions and nonzero assumptions.",
       "Verify the result in the original coordinates.",
       "The concept is most useful when it reveals geometry."
+    ],
+    "connectionsProse": "<p>This lesson focuses on orthogonal projections as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Projection finds the closest point on a line or subspace. Least squares is the same closest-point idea in a column space.</p>",
+    "symbols": [
+      {
+        "sym": "$\\hat v$",
+        "desc": "projected vector"
+      },
+      {
+        "sym": "$r=v-\\hat v$",
+        "desc": "residual"
+      },
+      {
+        "sym": "$u$",
+        "desc": "the target direction."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Seek $\\hat v=cu$ on the line",
+        "result": "$\\hat v=cu$",
+        "why": "any point on the line is a scalar multiple."
+      },
+      {
+        "do": "The residual $v-cu$ should be orthogonal to $u$ at the closest point.",
+        "result": "$u$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Set $u^T(v-cu)=0$",
+        "result": "$u^T(v-cu)=0$",
+        "why": "perpendicular residual condition."
+      },
+      {
+        "do": "Solve $u^Tv-c u^Tu=0$ for $c=(u^Tv)/(u^Tu)$.",
+        "result": "$c=(u^Tv)/(u^Tu)$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Thus $\\operatorname{proj}_u v=\\frac{u^Tv}{u^Tu}u$.",
+        "result": "$\\operatorname{proj}_u v=\\frac{u^Tv}{u^Tu}u$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-24"
@@ -6883,8 +7879,8 @@
         "matrix multiplication"
       ]
     },
-    "motivation": "<p>You have seen matrices act on vectors. Now we want a way to expose the hidden directions, coordinates, or geometric relationships that make a matrix easier to understand.</p><p><b>Gram–Schmidt</b> is one of those organizing ideas. It is patient linear algebra: write the right equation, compute carefully, and then check that the geometry agrees.</p>",
-    "definition": "<p><b>Gram–Schmidt</b> turns a matrix or vector question into a precise equation with dimensions that must match. The main symbols are vectors such as $u$ and $v$, matrices such as $A$, scalars such as $lambda$, and basis matrices such as $P$.</p><p>The reason this works is that linear algebra preserves structure: linear combinations remain linear combinations, dot products measure aligned components, and similar matrices describe the same transformation in different coordinates.</p><p><b>Assumptions that matter:</b> square-matrix ideas require square matrices; basis matrices must be invertible; orthogonal formulas require nonzero vectors; and every computed answer should be verified in the original equation.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Gram–Schmidt turns independent vectors into orthonormal vectors spanning the same subspace. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It does this by subtracting projections that point in directions already chosen. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Gram–Schmidt is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Apply Gram–Schmidt to $v_1=(1,1)$ and $v_2=(1,0)$.",
       "skills": [
@@ -7083,34 +8079,34 @@
     ],
     "applications": [
       {
-        "title": "Gram–Schmidt in ML geometry",
-        "background": "This idea gives models a way to see structure in high-dimensional data instead of treating every coordinate as unrelated.",
-        "numbers": "For vectors $(3,4)$ and $(1,2)$, the dot product is $11$ and the norm of $(3,4)$ is $5$, numbers that feed angles and projections."
+        "title": "Application 1",
+        "background": "From",
+        "numbers": "From $v_1=(1,1)$, $q_1=(1,1)/\\sqrt2$."
       },
       {
-        "title": "Principal components",
-        "background": "PCA summarizes data by directions and coordinate changes derived from covariance matrices.",
-        "numbers": "Eigenvalues $9,2,1$ mean the first two components preserve $11/12approx91.7%$ of total variance."
+        "title": "Application 2",
+        "background": "With",
+        "numbers": "With $v_2=(1,-1)$, projection is $0$, so $q_2=(1,-1)/\\sqrt2$."
       },
       {
-        "title": "Optimization curvature",
-        "background": "Near a solution, a loss is often approximated by a quadratic matrix expression.",
-        "numbers": "Curvature $8$ along a direction and step $0.1$ contributes $0.5cdot8cdot0.01=0.04$ to the quadratic change."
+        "title": "Application 3",
+        "background": "For",
+        "numbers": "For $v_2=(1,0)$ after $v_1=(1,1)$, residual is $(0.5,-0.5)$."
       },
       {
-        "title": "Recommendation embeddings",
-        "background": "Embedding search depends on geometry: lengths, angles, projections, and subspaces all affect similarity.",
-        "numbers": "Two unit item vectors with dot product $0.75$ have cosine similarity $0.75$."
+        "title": "Application 4",
+        "background": "Residual norm is",
+        "numbers": "Residual norm is $\\sqrt{0.5}\\approx0.707$."
       },
       {
-        "title": "Numerical stability",
-        "background": "Linear algebra algorithms prefer bases or factorizations that avoid magnifying rounding error.",
-        "numbers": "Orthogonal vectors of norm $1$ preserve length, so a vector of norm $5$ remains norm $5$ after an orthogonal change of basis."
+        "title": "Application 5",
+        "background": "Orthonormal design columns make",
+        "numbers": "Orthonormal design columns make $X^TX=I$."
       },
       {
-        "title": "Iterative systems",
-        "background": "Repeated matrix actions explain diffusion, ranking, and recurrence behavior.",
-        "numbers": "A component scaled by $0.6$ becomes $10,6,3.6$ after two steps, while one scaled by $1.1$ becomes $10,11,12.1$."
+        "title": "Application 6",
+        "background": "QR factorization stores Gram–Schmidt coefficients in",
+        "numbers": "QR factorization stores Gram–Schmidt coefficients in $R$."
       }
     ],
     "applicationsClose": "Gram–Schmidt matters because it connects a symbolic calculation to a geometric story you can verify with numbers.",
@@ -7119,6 +8115,48 @@
       "Check dimensions and nonzero assumptions.",
       "Verify the result in the original coordinates.",
       "The concept is most useful when it reveals geometry."
+    ],
+    "connectionsProse": "<p>This lesson focuses on Gram–Schmidt as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Gram–Schmidt turns independent vectors into orthonormal vectors spanning the same subspace. QR factorization stores this orthonormalization process in matrix form.</p>",
+    "symbols": [
+      {
+        "sym": "$v_i$",
+        "desc": "original vectors"
+      },
+      {
+        "sym": "$q_i$",
+        "desc": "orthonormal vectors"
+      },
+      {
+        "sym": "$u_i$",
+        "desc": "residual directions before normalization."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Set $q_1=v_1/\\lVert v_1\\rVert$",
+        "result": "$q_1=v_1/\\lVert v_1\\rVert$",
+        "why": "normalize the first direction."
+      },
+      {
+        "do": "Remove from $v_2$ its component along $q_1$: $u_2=v_2-(q_1^Tv_2)q_1$",
+        "result": "$u_2=v_2-(q_1^Tv_2)q_1$",
+        "why": "subtract the projection."
+      },
+      {
+        "do": "Check $q_1^Tu_2=0$",
+        "result": "$q_1^Tu_2=0$",
+        "why": "the remaining part is orthogonal."
+      },
+      {
+        "do": "Normalize $q_2=u_2/\\lVert u_2\\rVert$.",
+        "result": "$q_2=u_2/\\lVert u_2\\rVert$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Repeat for later vectors by subtracting all previous projections.",
+        "result": "Repeat for later vectors by subtracting all previous projections.",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-25"
@@ -7146,8 +8184,8 @@
         "triangular systems"
       ]
     },
-    "motivation": "<p>You already know that perpendicular axes make geometry easier: a shadow on the $x$-axis does not interfere with a shadow on the $y$-axis. Matrices become easier for the same reason.</p><p><b>QR factorization</b> rewrites a matrix as an orthonormal part $Q$ and an upper-triangular part $R$. It is one of linear algebra's best housekeeping tools: first straighten the directions, then solve with a triangle.</p>",
-    "definition": "<p>For a matrix $A$ with linearly independent columns, a <b>QR factorization</b> is $A=QR$, where the columns of $Q$ are orthonormal, so $Q^TQ=I$, and $R$ is upper triangular. If $A$ is $m\\times n$ with $m\\ge n$, the thin form has $Q$ of size $m\\times n$ and $R$ of size $n\\times n$.</p><p>Why it works: Gram-Schmidt builds $q_1,q_2,\\ldots$ by subtracting from each new column its projections onto the earlier $q$ directions, then normalizing. The coefficients of those projections become entries of $R$, so each original column is reconstructed from the orthonormal columns of $Q$.</p><p><b>Assumptions that matter:</b> the basic thin QR described here needs independent columns so no zero vector appears during normalization; $Q^TQ=I$ does not mean $QQ^T=I$ unless $Q$ is square; and signs of columns can differ while still giving a valid QR.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. QR factorization writes a matrix as orthonormal directions times an upper-triangular coefficient matrix. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It is a stable way to solve least squares without forming $A^TA$. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> QR factorization is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Find a thin QR factorization of $A=\\begin{bmatrix}1&1\\\\1&0\\\\0&1\\end{bmatrix}$.",
       "skills": [
@@ -7366,34 +8404,34 @@
     ],
     "applications": [
       {
-        "title": "Least-squares regression",
-        "background": "QR is a numerically stable way to solve tall regression systems without forming $A^TA$ directly.",
-        "numbers": "If $R=\\begin{bmatrix}10&2\\\\0&3\\end{bmatrix}$ and $Q^Ty=(14,6)^T$, back substitution gives $x_2=2$, then $10x_1+4=14$, so $x_1=1$."
+        "title": "Application 1",
+        "background": "For",
+        "numbers": "For $A=\\begin{bmatrix}1&1\\1&2\\1&3\\end{bmatrix}$, QR has diagonal magnitudes $\\sqrt3\\approx1.732$ and $\\sqrt2\\approx1.414$."
       },
       {
-        "title": "Feature orthogonalization",
-        "background": "Correlated features make coefficients hard to interpret. QR separates new information from what earlier features already explain.",
-        "numbers": "For $a_1=(1,1,1)$ and $a_2=(1,2,3)$, the residual $(-1,0,1)$ has dot product $0$ with $a_1$."
+        "title": "Application 2",
+        "background": "The computation is shown directly.",
+        "numbers": "$Q^TQ=I$ keeps column norms $1$."
       },
       {
-        "title": "Eigenvalue algorithms",
-        "background": "The classic QR algorithm repeatedly factors a matrix and reverses the factors to reveal eigenvalues.",
-        "numbers": "A diagonal matrix $\\operatorname{diag}(5,2)$ already has $Q=I$, $R=A$, so one QR step keeps diagonal entries $5$ and $2$."
+        "title": "Application 3",
+        "background": "Least squares via QR avoids squaring condition numbers.",
+        "numbers": "Least squares via QR avoids squaring condition numbers."
       },
       {
-        "title": "Streaming sensor bases",
-        "background": "When new sensor channels arrive, Gram-Schmidt can keep only the part not explained by older channels.",
-        "numbers": "If a new channel $(2,3,0)$ follows basis $(1,0,0)$, the retained novelty is $(0,3,0)$."
+        "title": "Application 4",
+        "background": "Orthogonalizing features makes cross-products",
+        "numbers": "Orthogonalizing features makes cross-products $0$."
       },
       {
-        "title": "Solving rotations separately from scales",
-        "background": "In graphics and robotics, orthogonal matrices preserve lengths while triangular matrices encode shear and scale.",
-        "numbers": "A vector length $5$ stays length $5$ after multiplying by square $Q$ because $\\|Qv\\|^2=v^TQ^TQv=v^Tv$."
+        "title": "Application 5",
+        "background": "QR iteration is the basis of eigenvalue algorithms.",
+        "numbers": "QR iteration is the basis of eigenvalue algorithms."
       },
       {
-        "title": "Avoiding squared condition numbers",
-        "background": "Normal equations use $A^TA$, which can magnify numerical sensitivity. QR avoids that square in many solvers.",
-        "numbers": "If $\\kappa(A)=100$, then $\\kappa(A^TA)=10000$ for full-rank $A$, a much harsher solve."
+        "title": "Application 6",
+        "background": "A rotation matrix is already",
+        "numbers": "A rotation matrix is already $Q$, so its $R$ is identity."
       }
     ],
     "applicationsClose": "QR's shared gift is clean geometry before computation: perpendicular columns first, triangular arithmetic second.",
@@ -7402,6 +8440,48 @@
       "Gram-Schmidt subtracts projections and normalizes what remains.",
       "Thin QR is especially useful for tall matrices with independent columns.",
       "Least squares, eigenvalue methods, and stable numerical linear algebra rely on QR."
+    ],
+    "connectionsProse": "<p>This lesson focuses on QR factorization as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. QR factorization writes a matrix as orthonormal directions times an upper-triangular coefficient matrix. Least squares solvers and eigenvalue algorithms both use this factorization.</p>",
+    "symbols": [
+      {
+        "sym": "$Q$ has orthonormal columns",
+        "desc": "$Q$ has orthonormal columns"
+      },
+      {
+        "sym": "$R$",
+        "desc": "upper triangular"
+      },
+      {
+        "sym": "$r_{ij}=q_i^Ta_j$.",
+        "desc": "$r_{ij}=q_i^Ta_j$."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Apply Gram–Schmidt to columns of $A$",
+        "result": "$A$",
+        "why": "produce orthonormal columns $q_i$."
+      },
+      {
+        "do": "Each original column $a_j$ can be expressed as $a_j=\\sum_{i\\le j} r_{ij}q_i$",
+        "result": "$a_j=\\sum_{i\\le j} r_{ij}q_i$",
+        "why": "later columns use current and previous directions."
+      },
+      {
+        "do": "Put $q_i$ into $Q$ and coefficients $r_{ij}$ into $R$",
+        "result": "$R$",
+        "why": "matrix form is $A=QR$."
+      },
+      {
+        "do": "Since $Q^TQ=I$, least squares $\\min\\lVert Ax-b\\rVert$ becomes $\\min\\lVert Rx-Q^Tb\\rVert$.",
+        "result": "$\\min\\lVert Rx-Q^Tb\\rVert$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Solve triangular $Rx=Q^Tb$ by back-substitution.",
+        "result": "$Rx=Q^Tb$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-26"
@@ -7429,8 +8509,8 @@
         "symmetric matrices"
       ]
     },
-    "motivation": "<p>You already know a diagonal matrix is easy: it stretches each coordinate axis separately. The hard question is when a non-diagonal matrix is secretly just that simple in a rotated coordinate system.</p><p>The <b>Spectral Theorem</b> says symmetric real matrices have exactly this kindness. They have real eigenvalues, perpendicular eigenvectors, and an orthonormal basis that turns the matrix into pure axis-by-axis scaling.</p>",
-    "definition": "<p>If $A$ is a real symmetric matrix, meaning $A^T=A$, then there is an orthogonal matrix $Q$ and a real diagonal matrix $\\Lambda$ such that $$A=Q\\Lambda Q^T.$$ The columns of $Q$ are orthonormal eigenvectors of $A$, and the diagonal entries of $\\Lambda$ are the corresponding eigenvalues.</p><p>The key reason is symmetry: for eigenvectors $u$ and $v$ with eigenvalues $\\lambda$ and $\\mu$, $u^TAv=(Au)^Tv$ gives $\\mu u^Tv=\\lambda u^Tv$. If $\\lambda\\ne\\mu$, then $(\\mu-\\lambda)u^Tv=0$, so $u$ and $v$ are orthogonal. The full theorem also guarantees enough eigenvectors to form a basis.</p><p><b>Assumptions that matter:</b> this statement is for real symmetric matrices; non-symmetric matrices may have complex eigenvalues or too few eigenvectors; and $Q^T=Q^{-1}$ because $Q$ is orthogonal.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Symmetric matrices have perpendicular eigenvectors and real eigenvalues. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>This is why covariance matrices, Hessians, and graph Laplacians have clean geometric interpretations. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> The Spectral Theorem is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Diagonalize $A=\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}$ using the Spectral Theorem.",
       "skills": [
@@ -7639,34 +8719,34 @@
     ],
     "applications": [
       {
-        "title": "PCA directions",
-        "background": "PCA studies a symmetric covariance matrix, so the Spectral Theorem guarantees perpendicular principal directions.",
-        "numbers": "Covariance $\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}$ has eigenvalues $3$ and $1$, so variance is three times larger along $(1,1)$ than along $(1,-1)$."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$S=\\begin{bmatrix}3&1\\1&3\\end{bmatrix}$ has eigenvalues $4,2$."
       },
       {
-        "title": "Graph Laplacians",
-        "background": "Undirected graph Laplacians are symmetric, making their spectra central to clustering and graph learning.",
-        "numbers": "For two nodes connected by one edge, $L=\\begin{bmatrix}1&-1\\\\-1&1\\end{bmatrix}$ has eigenvalues $0$ and $2$."
+        "title": "Application 2",
+        "background": "Eigenvectors",
+        "numbers": "Eigenvectors $(1,1)/\\sqrt2$ and $(1,-1)/\\sqrt2$ are orthogonal."
       },
       {
-        "title": "Stable covariance models",
-        "background": "Covariance matrices must be symmetric, and spectral decomposition exposes their variance axes.",
-        "numbers": "If eigenvalues are $9$ and $1$, one standard deviation is $3$ along the first eigenvector and $1$ along the second."
+        "title": "Application 3",
+        "background": "Covariance eigendecomposition gives PCA axes.",
+        "numbers": "Covariance eigendecomposition gives PCA axes."
       },
       {
-        "title": "Quadratic loss geometry",
-        "background": "Near a minimum, many losses look like $\\tfrac12 x^THx$ with symmetric Hessian $H$.",
-        "numbers": "Eigenvalues $100$ and $1$ mean curvature is 100 times steeper in one orthogonal direction."
+        "title": "Application 4",
+        "background": "Quadratic",
+        "numbers": "Quadratic $x^TSx$ in eigen-coordinates is $4z_1^2+2z_2^2$."
       },
       {
-        "title": "Symmetric attention kernels",
-        "background": "Some kernel methods build symmetric similarity matrices so eigenvectors give reusable basis functions.",
-        "numbers": "A $2\\times2$ kernel $\\begin{bmatrix}1&0.6\\\\0.6&1\\end{bmatrix}$ has eigenvalues $1.6$ and $0.4$."
+        "title": "Application 5",
+        "background": "Graph Laplacian eigenvectors form graph Fourier modes.",
+        "numbers": "Graph Laplacian eigenvectors form graph Fourier modes."
       },
       {
-        "title": "Matrix powers",
-        "background": "Spectral form makes repeated symmetric transformations easy to compute.",
-        "numbers": "If $A=Q\\operatorname{diag}(3,1)Q^T$, then $A^4=Q\\operatorname{diag}(81,1)Q^T$."
+        "title": "Application 6",
+        "background": "Matrix power",
+        "numbers": "Matrix power $S^3=Q\\operatorname{diag}(64,8)Q^T$."
       }
     ],
     "applicationsClose": "The Spectral Theorem says symmetric structure is readable as perpendicular axes and real stretches, a language reused across ML.",
@@ -7675,6 +8755,53 @@
       "Eigenvectors for distinct eigenvalues are orthogonal.",
       "In the eigenbasis, applying $A$ means scaling each coordinate separately.",
       "PCA, covariance, Hessians, kernels, and graph Laplacians all lean on this theorem."
+    ],
+    "connectionsProse": "<p>This lesson focuses on the spectral theorem as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Symmetric matrices have perpendicular eigenvectors and real eigenvalues. Covariance matrices, Hessians, graph Laplacians, and quadratic forms use this structure.</p>",
+    "symbols": [
+      {
+        "sym": "Symmetric",
+        "desc": "$A=A^T$"
+      },
+      {
+        "sym": "$Q$",
+        "desc": "orthogonal"
+      },
+      {
+        "sym": "$\\Lambda$",
+        "desc": "diagonal eigenvalue matrix."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $A=A^T$ and $Av=\\lambda v$, $Aw=\\mu w$.",
+        "result": "$Aw=\\mu w$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Compute $v^TAw$ two ways: $v^TAw=\\mu v^Tw$ from $Aw=\\mu w$.",
+        "result": "$Aw=\\mu w$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Also $v^TAw=(A v)^Tw=\\lambda v^Tw$ because $A^T=A$.",
+        "result": "$A^T=A$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Subtract to get $(\\mu-\\lambda)v^Tw=0$.",
+        "result": "$(\\mu-\\lambda)v^Tw=0$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "If $\\lambda\\ne\\mu$, then $v^Tw=0$",
+        "result": "$v^Tw=0$",
+        "why": "different eigenspaces are orthogonal."
+      },
+      {
+        "do": "With an orthonormal eigenbasis, $A=Q\\Lambda Q^T$.",
+        "result": "$A=Q\\Lambda Q^T$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-27"
@@ -7702,8 +8829,8 @@
         "Hessians"
       ]
     },
-    "motivation": "<p>You already trust the one-dimensional square $ax^2$ when $a>0$: it is never negative and it forms a bowl. In many variables, the expression $x^TAx$ plays the same role.</p><p>A <b>positive-definite</b> matrix makes that bowl positive in every nonzero direction. This is why it appears in covariance, least squares, Newton's method, and the geometry of safe optimization.</p>",
-    "definition": "<p>A real symmetric matrix $A$ is <b>positive definite</b> if $x^TAx>0$ for every nonzero vector $x$. It is positive semidefinite if $x^TAx\\ge0$ for every $x$. By the Spectral Theorem, $A=Q\\Lambda Q^T$, and $x^TAx=y^T\\Lambda y=\\sum_i \\lambda_i y_i^2$ with $y=Q^Tx$.</p><p>This derivation gives the key test: a symmetric matrix is positive definite exactly when all eigenvalues are positive. For a $2\\times2$ symmetric matrix $\\begin{bmatrix}a&b\\\\b&d\\end{bmatrix}$, positive definiteness is also equivalent to $a>0$ and $ad-b^2>0$.</p><p><b>Assumptions that matter:</b> the eigenvalue test is stated for symmetric matrices; $x=0$ is excluded from strict positivity because it always gives $0$; and positive semidefinite allows flat directions while positive definite does not.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. A positive-definite matrix makes every nonzero quadratic form positive. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>In optimization, it means the local surface is a bowl. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Positive-definite matrices is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Decide whether $A=\\begin{bmatrix}2&1\\\\1&2\\end{bmatrix}$ is positive definite.",
       "skills": [
@@ -7902,34 +9029,34 @@
     ],
     "applications": [
       {
-        "title": "Convex quadratic losses",
-        "background": "Least-squares objectives have Hessians of the form $2X^TX$, often positive definite when features are independent.",
-        "numbers": "If $X^TX=\\begin{bmatrix}4&1\\\\1&3\\end{bmatrix}$, determinant $11>0$ and first entry $4>0$, so the bowl is strict."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$\\begin{bmatrix}2&1\\1&2\\end{bmatrix}$ has eigenvalues $1,3$, so it is positive definite."
       },
       {
-        "title": "Covariance matrices",
-        "background": "Covariance measures spread, and variance in any direction cannot be negative, so covariance matrices are positive semidefinite.",
-        "numbers": "For variances $4$ and $9$ with covariance $3$, determinant $36-9=27>0$, so the covariance is positive definite."
+        "title": "Application 2",
+        "background": "For",
+        "numbers": "For $x=(1,2)$, $x^TAx=14$."
       },
       {
-        "title": "Gaussian distributions",
-        "background": "A multivariate Gaussian needs a positive-definite covariance so distances and densities are meaningful.",
-        "numbers": "With covariance $\\operatorname{diag}(4,1)$, vector $(2,1)$ has Mahalanobis square $2^2/4+1^2/1=2$."
+        "title": "Application 3",
+        "background": "Covariance with positive variances is PSD; adding",
+        "numbers": "Covariance with positive variances is PSD; adding $0.1I$ makes eigenvalues at least $0.1$."
       },
       {
-        "title": "Kernel methods",
-        "background": "Kernel matrices must be positive semidefinite so they behave like dot products in a feature space.",
-        "numbers": "Matrix $\\begin{bmatrix}1&0.8\\\\0.8&1\\end{bmatrix}$ has determinant $0.36>0$, so it is positive definite."
+        "title": "Application 4",
+        "background": "Hessian",
+        "numbers": "Hessian $\\operatorname{diag}(2,200)$ gives convex quadratic."
       },
       {
-        "title": "Newton optimization",
-        "background": "Newton's method trusts curvature; positive-definite Hessians point toward local minima.",
-        "numbers": "For $H=\\operatorname{diag}(10,2)$ and gradient $(5,4)$, the Newton step solves $Hp=-g$, giving $p=(-0.5,-2)$."
+        "title": "Application 5",
+        "background": "Kernel Gram matrix must be PSD; negative eigenvalue fails.",
+        "numbers": "Kernel Gram matrix must be PSD; negative eigenvalue fails."
       },
       {
-        "title": "Regularization",
-        "background": "Adding $\\lambda I$ lifts eigenvalues and can turn flat curvature into strict curvature.",
-        "numbers": "Eigenvalues $0$ and $3$ become $0.1$ and $3.1$ after adding $0.1I$, making the matrix positive definite."
+        "title": "Application 6",
+        "background": "Cholesky works on PD matrices; diagonal",
+        "numbers": "Cholesky works on PD matrices; diagonal $4,9$ has Cholesky diagonal $2,3$."
       }
     ],
     "applicationsClose": "Positive definiteness is the same trustworthy bowl shape wearing covariance, kernel, Hessian, and regularization clothing.",
@@ -7938,6 +9065,48 @@
       "For symmetric matrices, positive definiteness is equivalent to all eigenvalues being positive.",
       "Positive semidefinite matrices may have zero eigenvalues and flat directions.",
       "Covariances, kernels, Hessians, and regularized losses use this positivity condition."
+    ],
+    "connectionsProse": "<p>This lesson focuses on positive-definite matrices as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. A positive-definite matrix makes every nonzero quadratic form positive. Convex optimization, covariance regularization, kernels, and Cholesky factorization all use this test.</p>",
+    "symbols": [
+      {
+        "sym": "$A\\succ0$",
+        "desc": "positive definite"
+      },
+      {
+        "sym": "$x^TAx$",
+        "desc": "a quadratic form"
+      },
+      {
+        "sym": "$\\lambda_i$",
+        "desc": "eigenvalues."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For symmetric $A$, spectral theorem gives $A=Q\\Lambda Q^T$.",
+        "result": "$A=Q\\Lambda Q^T$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Write $x^TAx=x^TQ\\Lambda Q^Tx$.",
+        "result": "$x^TAx=x^TQ\\Lambda Q^Tx$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Let $z=Q^Tx$",
+        "result": "$z=Q^Tx$",
+        "why": "rotation preserves nonzero vectors."
+      },
+      {
+        "do": "Then $x^TAx=z^T\\Lambda z=\\sum_i\\lambda_i z_i^2$.",
+        "result": "$x^TAx=z^T\\Lambda z=\\sum_i\\lambda_i z_i^2$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "This is positive for every nonzero $x$ exactly when all $\\lambda_i>0$.",
+        "result": "$\\lambda_i>0$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-28"
@@ -7965,8 +9134,8 @@
         "eigenvalues"
       ]
     },
-    "motivation": "<p>You already know $3x^2$ as a one-variable curve. In two or more variables, squared terms can also mix: $2x_1x_2$ matters just as much as $x_1^2$.</p><p>A <b>quadratic form</b> packages all of that into $x^TAx$. It is the language of ellipses, energy, curvature, variance, and second-order approximations in ML.</p>",
-    "definition": "<p>Given a square matrix $A$ and vector $x$, the expression $x^TAx$ is a <b>quadratic form</b>. When $A$ is symmetric, the coefficients are easy to read: for $A=\\begin{bmatrix}a&b\\\\b&d\\end{bmatrix}$, $$x^TAx=ax_1^2+2bx_1x_2+dx_2^2.$$ The factor $2$ appears because the off-diagonal terms $b x_1x_2$ and $b x_2x_1$ both contribute.</p><p>If $A=Q\\Lambda Q^T$, then $x^TAx=\\sum_i\\lambda_i y_i^2$ where $y=Q^Tx$. So eigenvalues tell whether the form is a bowl, cap, saddle, or flat in particular directions.</p><p><b>Assumptions that matter:</b> only the symmetric part of $A$ affects $x^TAx$; positive, negative, and zero eigenvalues determine shape; and geometric statements usually assume $A$ is symmetric.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. A quadratic form $x^TAx$ measures how a matrix weights directions. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It is the local shape of a second-order loss and the geometry of ellipses. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Quadratic forms is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Expand and classify $q(x)=x^TAx$ for $A=\\begin{bmatrix}3&1\\\\1&2\\end{bmatrix}$.",
       "skills": [
@@ -8175,34 +9344,34 @@
     ],
     "applications": [
       {
-        "title": "Second-order loss approximations",
-        "background": "Taylor expansion near a parameter vector uses a quadratic form to describe curvature.",
-        "numbers": "With $H=\\operatorname{diag}(8,2)$ and step $(0.1,-0.3)$, the increase is $0.13$."
+        "title": "Application 1",
+        "background": "With",
+        "numbers": "With $A=\\begin{bmatrix}2&1\\1&2\\end{bmatrix}$ and $x=(1,2)$, value is $14$."
       },
       {
-        "title": "Mahalanobis distance",
-        "background": "Statistics measures distance using covariance-aware ellipses rather than ordinary circles.",
-        "numbers": "If $\\Sigma=\\operatorname{diag}(4,1)$, then $x=(2,1)$ has distance square $x^T\\Sigma^{-1}x=1+1=2$."
+        "title": "Application 2",
+        "background": "Ridge penalty",
+        "numbers": "Ridge penalty $\\lambda\\lVert w\\rVert^2$ with $\\lambda=0.1$, $\\lVert w\\rVert^2=25$ gives $2.5$."
       },
       {
-        "title": "Ridge penalties",
-        "background": "Regularization often adds a quadratic form to discourage large weights.",
-        "numbers": "For $\\lambda=0.1$ and $w=(3,4)$, penalty $0.1w^Tw=0.1\\cdot25=2.5$."
+        "title": "Application 3",
+        "background": "Mahalanobis distance with covariance",
+        "numbers": "Mahalanobis distance with covariance $\\operatorname{diag}(4,9)$ and $x=(2,3)$ is $1+1=2$."
       },
       {
-        "title": "Energy in physical systems",
-        "background": "Many energies are quadratic in displacement or velocity, which makes quadratic forms a shared language across engineering.",
-        "numbers": "With stiffness $K=\\operatorname{diag}(10,2)$ and displacement $(0.5,1)$, energy $\\tfrac12 x^TKx=\\tfrac12(2.5+2)=2.25$."
+        "title": "Application 4",
+        "background": "Confidence ellipse",
+        "numbers": "Confidence ellipse $x^TA^{-1}x=5.99$ is a 95% boundary in 2-D."
       },
       {
-        "title": "Confidence ellipses",
-        "background": "Ellipses arise from setting a positive-definite quadratic form equal to a constant.",
-        "numbers": "$x_1^2/9+x_2^2/4=1$ has radii $3$ and $2$ along the coordinate axes."
+        "title": "Application 5",
+        "background": "Hessian eigenvalues",
+        "numbers": "Hessian eigenvalues $1,3$ mean curvature ratio $3$."
       },
       {
-        "title": "Curvature-aware optimization",
-        "background": "Optimizers use curvature to avoid stepping too far in steep directions.",
-        "numbers": "If eigenvalues of $H$ are $100$ and $1$, the same coordinate step costs 100 times more in the first eigen-direction."
+        "title": "Application 6",
+        "background": "Energy in spring matrix",
+        "numbers": "Energy in spring matrix $K=2I$ at $x=(3,4)$ is $x^TKx=50$."
       }
     ],
     "applicationsClose": "Quadratic forms let one expression describe bowls, ellipses, penalties, energies, and local loss geometry.",
@@ -8211,6 +9380,48 @@
       "For symmetric $2\\times2$ matrices, off-diagonal entries contribute twice to the cross term.",
       "Eigenvalue signs classify the shape as bowl, cap, saddle, or flat.",
       "ML uses quadratic forms for curvature, covariance-aware distance, and regularization."
+    ],
+    "connectionsProse": "<p>This lesson focuses on quadratic forms as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. A quadratic form $x^TAx$ measures how a matrix weights directions. Curvature, Mahalanobis distance, and confidence ellipses are all quadratic-form ideas.</p>",
+    "symbols": [
+      {
+        "sym": "$x$",
+        "desc": "the input vector"
+      },
+      {
+        "sym": "$A$ sets curvature",
+        "desc": "$A$ sets curvature"
+      },
+      {
+        "sym": "$\\lambda_i$",
+        "desc": "directional curvatures."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with symmetric $A=Q\\Lambda Q^T$",
+        "result": "$A=Q\\Lambda Q^T$",
+        "why": "rotate to eigen-directions."
+      },
+      {
+        "do": "Let $z=Q^Tx$",
+        "result": "$z=Q^Tx$",
+        "why": "express $x$ in eigen-coordinates."
+      },
+      {
+        "do": "Substitute: $x^TAx=z^T\\Lambda z$.",
+        "result": "$x^TAx=z^T\\Lambda z$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Expand diagonal multiplication: $\\sum_i\\lambda_i z_i^2$.",
+        "result": "$\\sum_i\\lambda_i z_i^2$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Signs and sizes of $\\lambda_i$ tell whether the form is a bowl, dome, or saddle.",
+        "result": "$\\lambda_i$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-29"
@@ -8238,8 +9449,8 @@
         "least squares"
       ]
     },
-    "motivation": "<p>You already know symmetric matrices have eigenvectors that behave beautifully. But ML is full of rectangular matrices: data tables, embeddings, image patches, and neural-network weights.</p><p>The <b>Singular Value Decomposition</b> is the version that works for every matrix. It finds input directions, output directions, and nonnegative stretch factors connecting them.</p>",
-    "definition": "<p>Every real $m\\times n$ matrix $A$ has an SVD $$A=U\\Sigma V^T,$$ where $U$ and $V$ have orthonormal columns and $\\Sigma$ is diagonal-shaped with nonnegative entries $\\sigma_1\\ge\\sigma_2\\ge\\cdots\\ge0$ called <b>singular values</b>. The columns of $V$ are right singular vectors, and the columns of $U$ are left singular vectors.</p><p>Why this follows from spectral ideas: $A^TA$ is symmetric positive semidefinite, so it has orthonormal eigenvectors $v_i$ and nonnegative eigenvalues $\\lambda_i$. The singular values are $\\sigma_i=\\sqrt{\\lambda_i}$, and when $\\sigma_i>0$, $u_i=Av_i/\\sigma_i$.</p><p><b>Assumptions that matter:</b> singular values are never negative; zero singular values reveal rank deficiency; and unlike eigen-decomposition, SVD exists for rectangular and non-symmetric matrices.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. SVD decomposes any matrix into input directions, stretches, and output directions. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>Unlike eigen-decomposition, it works for rectangular matrices too. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Singular Value Decomposition (SVD) is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Find an SVD of $A=\\begin{bmatrix}3&0\\\\0&1\\end{bmatrix}$.",
       "skills": [
@@ -8443,34 +9654,34 @@
     ],
     "applications": [
       {
-        "title": "Low-rank approximation",
-        "background": "SVD gives the best rank-$k$ approximation in Frobenius and spectral norm, which is why it is a compression workhorse.",
-        "numbers": "If singular values are $10,3,1$, rank 2 keeps $109/110=99.1\\%$ of squared energy."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$A=\\begin{bmatrix}3&0\\0&1\\0&0\\end{bmatrix}$ has singular values $3,1$."
       },
       {
-        "title": "Latent semantic analysis",
-        "background": "Early information retrieval used SVD to reduce term-document matrices into latent topics.",
-        "numbers": "A rank-50 approximation to a $10000\\times1000$ matrix stores roughly $50(10000+1000+1)=550050$ numbers instead of $10,000,000$."
+        "title": "Application 2",
+        "background": "Rank-1 approximation keeps error",
+        "numbers": "Rank-1 approximation keeps error $\\sigma_2=1$ in spectral norm."
       },
       {
-        "title": "Image compression",
-        "background": "Grayscale images are matrices, and SVD stores dominant visual patterns first.",
-        "numbers": "A $100\\times100$ image rank 10 approximation stores $10(100+100+1)=2010$ numbers instead of $10000$."
+        "title": "Application 3",
+        "background": "Explained Frobenius energy by first singular value is",
+        "numbers": "Explained Frobenius energy by first singular value is $9/(9+1)=0.9$."
       },
       {
-        "title": "PCA computation",
-        "background": "PCA can be computed by applying SVD to a centered data matrix.",
-        "numbers": "If centered $X$ has singular values $6$ and $2$ over $n=5$ examples, variances are $36/4=9$ and $4/4=1$."
+        "title": "Application 4",
+        "background": "Numerical rank with threshold",
+        "numbers": "Numerical rank with threshold $2$ is $1$."
       },
       {
-        "title": "Numerical rank detection",
-        "background": "Small singular values often signal redundant columns or near-dependencies.",
-        "numbers": "Singular values $100,1,0.0001$ suggest effective rank $2$ if tolerance is $0.001$."
+        "title": "Application 5",
+        "background": "Condition number is",
+        "numbers": "Condition number is $3/1=3$."
       },
       {
-        "title": "Embedding analysis",
-        "background": "SVD reveals dominant directions in embedding or activation matrices.",
-        "numbers": "If the first singular value is $20$ and total squared energy is $500$, the first direction explains $400/500=80\\%$."
+        "title": "Application 6",
+        "background": "Low-rank image compression with",
+        "numbers": "Low-rank image compression with $100\\times100$ rank $10$ stores about $10(100+100+1)=2010$ numbers."
       }
     ],
     "applicationsClose": "SVD is the universal matrix microscope: it shows directions, stretches, rank, compression, and energy in one view.",
@@ -8479,6 +9690,57 @@
       "Singular values are nonnegative square roots of eigenvalues of $A^TA$.",
       "Rank equals the number of positive singular values.",
       "Low-rank approximation, PCA, compression, and numerical diagnostics all use SVD."
+    ],
+    "connectionsProse": "<p>This lesson focuses on Singular Value Decomposition (SVD) as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. SVD decomposes any matrix into input directions, stretches, and output directions. Pseudoinverses, PCA, low-rank approximation, and conditioning all use singular values.</p>",
+    "symbols": [
+      {
+        "sym": "$U$ output singular vectors",
+        "desc": "$U$ output singular vectors"
+      },
+      {
+        "sym": "$\\Sigma$ diagonal singular-value matrix",
+        "desc": "$\\Sigma$ diagonal singular-value matrix"
+      },
+      {
+        "sym": "$V$ input singular vectors",
+        "desc": "$V$ input singular vectors"
+      },
+      {
+        "sym": "$\\sigma_i$ singular values.",
+        "desc": "$\\sigma_i$ singular values."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Form $A^TA$",
+        "result": "$A^TA$",
+        "why": "it is symmetric positive semidefinite."
+      },
+      {
+        "do": "Spectral theorem gives $A^TA=V\\Lambda V^T$ with orthonormal $V$.",
+        "result": "$V$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Singular values are $\\sigma_i=\\sqrt{\\lambda_i}$",
+        "result": "$\\sigma_i=\\sqrt{\\lambda_i}$",
+        "why": "$\\lambda_i$ are squared output lengths of input directions."
+      },
+      {
+        "do": "Define $u_i=Av_i/\\sigma_i$ for nonzero $\\sigma_i$",
+        "result": "$\\sigma_i$",
+        "why": "normalize each output direction."
+      },
+      {
+        "do": "Then $Av_i=\\sigma_i u_i$ for every singular pair.",
+        "result": "$Av_i=\\sigma_i u_i$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Stacking these relations gives $A=U\\Sigma V^T$.",
+        "result": "$A=U\\Sigma V^T$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-30"
@@ -8506,8 +9768,8 @@
         "linear regression"
       ]
     },
-    "motivation": "<p>You already know that an overdetermined system can ask for too much: three data points may not lie exactly on one line. Instead of giving up, we ask for the closest line.</p><p><b>Least squares</b> chooses parameters that minimize the squared residual $\\|Ax-b\\|^2$. Geometrically, it projects $b$ onto the column space of $A$.</p>",
-    "definition": "<p>For a tall matrix $A$ and target vector $b$, the least-squares problem is $$\\min_x \\|Ax-b\\|_2^2.$$ At the optimum $\\hat x$, the residual $r=b-A\\hat x$ is orthogonal to every column of $A$, so $A^Tr=0$. This gives the <b>normal equations</b> $$A^TA\\hat x=A^Tb.$$</p><p>If $A$ has independent columns, $A^TA$ is positive definite and the solution is unique. With QR, $A=QR$, the problem becomes $R\\hat x=Q^Tb$, which is usually more stable than solving the normal equations directly.</p><p><b>Assumptions that matter:</b> uniqueness needs full column rank; squared residuals emphasize large errors; and forming $A^TA$ can worsen conditioning even though it is algebraically correct.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. Least squares finds the vector whose predictions are closest to the data when exact equations cannot all be satisfied. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It is projection onto the column space of the design matrix. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Least squares is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Fit $y\\approx c$ to data $2,4,5$ by least squares.",
       "skills": [
@@ -8711,34 +9973,34 @@
     ],
     "applications": [
       {
-        "title": "Linear regression",
-        "background": "Least squares is the classical foundation of supervised regression and still underlies many ML baselines.",
-        "numbers": "For points $(1,2)$ and $(2,5)$ through the origin, slope $m=12/5=2.4$."
+        "title": "Application 1",
+        "background": "For",
+        "numbers": "For $A=\\begin{bmatrix}1&1\\1&2\\1&3\\end{bmatrix}$, $b=(1,2,2)$ gives $x=(2/3,1/2)$."
       },
       {
-        "title": "Calibration",
-        "background": "Models often need a linear correction to align scores with observed outcomes.",
-        "numbers": "If predictions $[1,2,3]$ should match $[2,4,5]$, a fitted slope through zero is $(1\\cdot2+2\\cdot4+3\\cdot5)/(1+4+9)=25/14$."
+        "title": "Application 2",
+        "background": "Predictions are",
+        "numbers": "Predictions are $(1.167,1.667,2.167)$."
       },
       {
-        "title": "Sensor fusion",
-        "background": "Multiple noisy measurements of one quantity are often combined by minimizing squared error.",
-        "numbers": "Readings $9.8,10.1,10.0$ have least-squares constant $9.9667$."
+        "title": "Application 3",
+        "background": "Residual is",
+        "numbers": "Residual is $(-0.167,0.333,-0.167)$ and sums to $0$."
       },
       {
-        "title": "Recommendation baselines",
-        "background": "A simple user or item bias can be fitted as an average residual before more complex models are added.",
-        "numbers": "Residuals $1,-2,4$ give best constant bias $(1-2+4)/3=1$."
+        "title": "Application 4",
+        "background": "Calibration line slope is",
+        "numbers": "Calibration line slope is $0.5$."
       },
       {
-        "title": "Curve fitting",
-        "background": "Polynomial regression is least squares with columns $1,x,x^2$ and beyond.",
-        "numbers": "For $x=2$, row $[1,2,4]$ times coefficients $(1,0.5,-0.1)$ predicts $1.6$."
+        "title": "Application 5",
+        "background": "Residual norm squared is about",
+        "numbers": "Residual norm squared is about $0.167$."
       },
       {
-        "title": "Batch metric smoothing",
-        "background": "When a line is fit to noisy daily metrics, squared residuals choose the trend with minimum total squared miss.",
-        "numbers": "Errors $1,-1,2$ have squared loss $1+1+4=6$, while errors $0,0,3$ have squared loss $9$."
+        "title": "Application 6",
+        "background": "Ridge version adds",
+        "numbers": "Ridge version adds $\\lambda I$ to $A^TA$."
       }
     ],
     "applicationsClose": "Least squares is projection thinking with data: choose the model point whose residual is perpendicular to every allowed adjustment.",
@@ -8747,6 +10009,61 @@
       "At the solution, the residual is orthogonal to the column space of $A$.",
       "The normal equations are $A^TA\\hat x=A^Tb$.",
       "QR often solves least squares more stably than forming $A^TA$."
+    ],
+    "connectionsProse": "<p>This lesson focuses on least squares as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. Least squares finds the vector whose predictions are closest to the data when exact equations cannot all be satisfied. QR and pseudoinverse methods solve the same fitting problem from different factorizations.</p>",
+    "symbols": [
+      {
+        "sym": "$A$ design matrix",
+        "desc": "$A$ design matrix"
+      },
+      {
+        "sym": "$x$ coefficients",
+        "desc": "$x$ coefficients"
+      },
+      {
+        "sym": "$b$ observations",
+        "desc": "$b$ observations"
+      },
+      {
+        "sym": "$r$ residual",
+        "desc": "$r$ residual"
+      },
+      {
+        "sym": "normal equations",
+        "desc": "$A^TAx=A^Tb$."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Minimize $\\lVert Ax-b\\rVert^2$",
+        "result": "$\\lVert Ax-b\\rVert^2$",
+        "why": "squared residual length."
+      },
+      {
+        "do": "Let residual $r=b-Ax$.",
+        "result": "$r=b-Ax$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "At the closest point, residual is orthogonal to every column of $A$",
+        "result": "$A$",
+        "why": "otherwise moving in that column direction would reduce error."
+      },
+      {
+        "do": "Orthogonality gives $A^Tr=0$.",
+        "result": "$A^Tr=0$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Substitute $r=b-Ax$: $A^T(b-Ax)=0$.",
+        "result": "$A^T(b-Ax)=0$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Rearrange to normal equations $A^TAx=A^Tb$.",
+        "result": "$A^TAx=A^Tb$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-31"
@@ -8774,8 +10091,8 @@
         "SVD"
       ]
     },
-    "motivation": "<p>You already know that square invertible matrices solve $Ax=b$ by $x=A^{-1}b$. But real data matrices are often tall, wide, or redundant, so the ordinary inverse does not exist.</p><p>The <b>pseudoinverse</b> $A^+$ extends the inverse idea. It gives least-squares solutions when exact solutions are impossible and minimum-norm solutions when many exact solutions exist.</p>",
-    "definition": "<p>If $A=U\\Sigma V^T$ is an SVD, the <b>Moore-Penrose pseudoinverse</b> is $$A^+=V\\Sigma^+U^T,$$ where $\\Sigma^+$ is formed by replacing each positive singular value $\\sigma_i$ with $1/\\sigma_i$ and leaving zeros as zeros, then transposing the diagonal shape.</p><p>For a full-column-rank tall matrix, $A^+=(A^TA)^{-1}A^T$, so $A^+b$ is the least-squares solution. For a full-row-rank wide matrix, $A^+=A^T(AA^T)^{-1}$, giving the minimum-norm exact solution when one exists.</p><p><b>Assumptions that matter:</b> tiny singular values can make $A^+b$ unstable; zeros are not inverted; and regularized variants often replace $1/\\sigma$ by safer shrinkage factors.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. The pseudoinverse extends inverse-like solving to rectangular or rank-deficient matrices. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It gives least-squares solutions and, when many exact solutions exist, chooses the minimum-norm one. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> The pseudoinverse is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Find $A^+$ for $A=\\begin{bmatrix}2&0\\\\0&0\\end{bmatrix}$ and solve $A^+b$ for $b=(6,5)^T$.",
       "skills": [
@@ -8974,34 +10291,34 @@
     ],
     "applications": [
       {
-        "title": "Least-squares prediction",
-        "background": "The pseudoinverse gives the fitted coefficients directly when a system has more equations than unknowns.",
-        "numbers": "For a constant fit to $2,4,5$, $A^+b=(2+4+5)/3=11/3$."
+        "title": "Application 1",
+        "background": "For diagonal",
+        "numbers": "For diagonal $A=\\operatorname{diag}(3,1,0)$, $A^+=\\operatorname{diag}(1/3,1,0)$."
       },
       {
-        "title": "Minimum-norm solutions",
-        "background": "Underdetermined systems have many exact answers, and the pseudoinverse picks the smallest Euclidean norm.",
-        "numbers": "$x_1+x_2=6$ has $(6,0)$ and $(3,3)$, but $(3,3)$ has norm $\\sqrt{18}$ versus $6$."
+        "title": "Application 2",
+        "background": "The computation is shown directly.",
+        "numbers": "$b=(6,2,5)$ maps to $x=(2,2,0)$."
       },
       {
-        "title": "Linear decoder fitting",
-        "background": "A linear decoder from activations to targets is often solved by least squares with a pseudoinverse.",
-        "numbers": "If $A^+y=(0.2,-0.5,1.1)$, those are the decoder weights minimizing squared training error."
+        "title": "Application 3",
+        "background": "Least-squares line example gives",
+        "numbers": "Least-squares line example gives $A^+b=(2/3,1/2)$."
       },
       {
-        "title": "Deblurring toy systems",
-        "background": "Inverse problems often lose information; pseudoinverses reverse only recoverable directions.",
-        "numbers": "Matrix $\\operatorname{diag}(2,0)$ maps $(3,9)$ to $(6,0)$, so the pseudoinverse returns $(3,0)$, not the lost 9."
+        "title": "Application 4",
+        "background": "Minimum-norm solution of",
+        "numbers": "Minimum-norm solution of $[1\\ 1]x=4$ is $(2,2)$."
       },
       {
-        "title": "Numerical instability",
-        "background": "Tiny singular values turn into huge reciprocals, amplifying noise.",
-        "numbers": "A singular value $0.001$ becomes reciprocal $1000$, so noise $0.01$ can become size $10$."
+        "title": "Application 5",
+        "background": "Small singular value",
+        "numbers": "Small singular value $0.01$ becomes reciprocal $100$, showing instability."
       },
       {
-        "title": "Ridge as softened pseudoinverse",
-        "background": "Regularization replaces harsh reciprocals with shrinkage factors to control noise.",
-        "numbers": "For singular value $0.1$ and ridge $\\lambda=0.01$, factor $\\sigma/(\\sigma^2+\\lambda)=0.1/0.02=5$ instead of $10$."
+        "title": "Application 6",
+        "background": "Ridge filter for singular value",
+        "numbers": "Ridge filter for singular value $3$ with $\\lambda=1$ is $3/(9+1)=0.3$."
       }
     ],
     "applicationsClose": "The pseudoinverse is practical humility: invert the directions you can, choose the cleanest answer when you cannot.",
@@ -9010,6 +10327,58 @@
       "Positive singular values are reciprocated; zero singular values remain zero.",
       "$A^+b$ gives least-squares solutions for tall systems and minimum-norm solutions for wide systems.",
       "Small singular values can make pseudoinverse solutions sensitive to noise."
+    ],
+    "connectionsProse": "<p>This lesson focuses on the pseudoinverse as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. The pseudoinverse extends inverse-like solving to rectangular or rank-deficient matrices. Least squares, minimum-norm solutions, and regularization all use this inverse-like operator.</p>",
+    "symbols": [
+      {
+        "sym": "$A^+$",
+        "desc": "pseudoinverse"
+      },
+      {
+        "sym": "$\\Sigma^+$ reciprocates nonzero singular values",
+        "desc": "$\\Sigma^+$ reciprocates nonzero singular values"
+      },
+      {
+        "sym": "zero singular values stay zero.",
+        "desc": "zero singular values stay zero."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with SVD $A=U\\Sigma V^T$.",
+        "result": "$A=U\\Sigma V^T$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Nonzero singular directions satisfy $Av_i=\\sigma_i u_i$.",
+        "result": "$Av_i=\\sigma_i u_i$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "To invert that direction, map $u_i$ back to $v_i$ and divide by $\\sigma_i$.",
+        "result": "$\\sigma_i$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Leave zero singular directions at zero",
+        "result": "Leave zero singular directions at zero",
+        "why": "they cannot be inverted."
+      },
+      {
+        "do": "Stack those reciprocal actions in $\\Sigma^+$.",
+        "result": "$\\Sigma^+$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "The pseudoinverse is $A^+=V\\Sigma^+U^T$.",
+        "result": "$A^+=V\\Sigma^+U^T$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Least-squares solution is $x=A^+b$.",
+        "result": "$x=A^+b$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-32"
@@ -9037,8 +10406,8 @@
         "matrix norms"
       ]
     },
-    "motivation": "<p>You already know that a cloud of points can be stretched more in one direction than another. If we want a simpler picture, we should keep the direction where the data actually moves.</p><p><b>PCA</b> turns that instinct into an algorithm: center the data, find covariance eigenvectors, and project onto the directions with largest variance.</p>",
-    "definition": "<p>Given centered data matrix $X$ with rows as examples, the sample covariance is $S=\\dfrac1{n-1}X^TX$. PCA chooses orthonormal directions $v_i$ that maximize projected variance. By the Spectral Theorem, $S=V\\Lambda V^T$, and the principal components are the eigenvectors with largest eigenvalues.</p><p>Equivalently, if $X=U\\Sigma V^T$, then the PCA directions are columns of $V$, and the variances are $\\sigma_i^2/(n-1)$. Keeping the top $k$ directions gives the best rank-$k$ reconstruction among all $k$-dimensional linear subspaces.</p><p><b>Assumptions that matter:</b> data should be centered before PCA; feature scaling affects the directions; PCA is linear; and high variance is useful only when it aligns with the signal you care about.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. PCA finds orthogonal directions of maximum variance. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>Algebraically, those directions are eigenvectors of the covariance matrix. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Principal Component Analysis (PCA) is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "For centered points $(1,1)$, $(-1,-1)$, $(2,2)$, and $(-2,-2)$, find the first principal direction and variance.",
       "skills": [
@@ -9247,34 +10616,34 @@
     ],
     "applications": [
       {
-        "title": "Dimensionality reduction",
-        "background": "PCA reduces feature dimension while keeping directions with large variance.",
-        "numbers": "Singular values $8,4,2$ need top two components for $80/84=95.2\\%$ energy."
+        "title": "Application 1",
+        "background": "Data",
+        "numbers": "Data $(2,0),(0,1),(-2,0),(0,-1)$ has covariance $\\operatorname{diag}(2,0.5)$."
       },
       {
-        "title": "Visualization",
-        "background": "High-dimensional data is often projected onto two principal components for plotting.",
-        "numbers": "If PC scores are $(2.1,-0.4)$ for one example, that point appears at those coordinates in the PCA plot."
+        "title": "Application 2",
+        "background": "First PC is x-axis with variance",
+        "numbers": "First PC is x-axis with variance $2$."
       },
       {
-        "title": "Noise filtering",
-        "background": "Low-variance directions can be dominated by measurement noise, so truncating PCA can denoise.",
-        "numbers": "Variances $25,9,0.04$ suggest dropping the third direction if sensor noise variance is about $0.05$."
+        "title": "Application 3",
+        "background": "Explained variance ratio of PC1 is",
+        "numbers": "Explained variance ratio of PC1 is $2/(2+0.5)=0.8$."
       },
       {
-        "title": "Image compression",
-        "background": "PCA and SVD both express images or patches using dominant patterns.",
-        "numbers": "Keeping 20 components for 784-pixel digits stores 20 scores per image instead of 784 raw values."
+        "title": "Application 4",
+        "background": "Project point",
+        "numbers": "Project point $(2,1)$ onto PC1 gives coordinate $2$."
       },
       {
-        "title": "Whitening",
-        "background": "Whitening rescales PCA coordinates to unit variance, often before independent component methods.",
-        "numbers": "A component with variance $9$ is divided by $3$, so a score $6$ becomes $2$."
+        "title": "Application 5",
+        "background": "Whitening scales x by",
+        "numbers": "Whitening scales x by $1/\\sqrt2\\approx0.707$ and y by $1/\\sqrt{0.5}\\approx1.414$."
       },
       {
-        "title": "Embedding diagnostics",
-        "background": "PCA can reveal whether embeddings collapse into a few dominant directions.",
-        "numbers": "If PC1 explains $70\\%$ of variance, subtracting or normalizing that direction may change similarity behavior strongly."
+        "title": "Application 6",
+        "background": "Dropping PC2 leaves reconstruction",
+        "numbers": "Dropping PC2 leaves reconstruction $(2,0)$ for point $(2,1)$."
       }
     ],
     "applicationsClose": "PCA is disciplined simplification: rotate to variance axes, keep the loud directions, and know exactly how much you kept.",
@@ -9283,6 +10652,57 @@
       "PCA directions are orthonormal and ordered by variance.",
       "SVD of centered data gives the same directions through $X=U\\Sigma V^T$.",
       "Centering and scaling choices matter before interpreting PCA."
+    ],
+    "connectionsProse": "<p>This lesson focuses on Principal Component Analysis (PCA) as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. PCA finds orthogonal directions of maximum variance. Dimensionality reduction, whitening, denoising, and reconstruction all use these coordinates.</p>",
+    "symbols": [
+      {
+        "sym": "$X$ centered data matrix",
+        "desc": "$X$ centered data matrix"
+      },
+      {
+        "sym": "$C=X^TX/n$ covariance",
+        "desc": "$C=X^TX/n$ covariance"
+      },
+      {
+        "sym": "$u$ principal direction",
+        "desc": "$u$ principal direction"
+      },
+      {
+        "sym": "$\\lambda$ explained variance.",
+        "desc": "$\\lambda$ explained variance."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Center data so each feature has mean zero",
+        "result": "Center data so each feature has mean zero",
+        "why": "PCA studies variance around the mean."
+      },
+      {
+        "do": "For unit direction $u$, projected data are $Xu$.",
+        "result": "$Xu$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Projected variance is $\\frac1n\\lVert Xu\\rVert^2=u^T(\\frac1nX^TX)u=u^TCu$.",
+        "result": "$\\frac1n\\lVert Xu\\rVert^2=u^T(\\frac1nX^TX)u=u^TCu$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Maximize $u^TCu$ subject to $u^Tu=1$.",
+        "result": "$u^Tu=1$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Lagrange multipliers give $Cu=\\lambda u$",
+        "result": "$Cu=\\lambda u$",
+        "why": "principal directions are covariance eigenvectors."
+      },
+      {
+        "do": "The variance in direction $u$ is the eigenvalue $\\lambda$.",
+        "result": "$\\lambda$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-33"
@@ -9311,8 +10731,8 @@
         "least squares"
       ]
     },
-    "motivation": "<p>You already know how to measure the length of a vector. For $v=\\begin{bmatrix}3 \\ 4\\end{bmatrix}$, the Euclidean length is $5$. A matrix asks for one more layer of thinking: is the matrix large because its entries are large, or because it can stretch some input vector a lot?</p><p><b>Matrix norms</b> give both readings. The Frobenius norm treats the matrix like one long list of entries. The spectral norm treats the matrix like a transformation and asks for its largest stretch. In ML, both ideas show up constantly: parameter size, perturbation size, stable training, and sensitivity to noise.</p>",
-    "definition": "<p>For a matrix $A=[a_{ij}]$, the <b>Frobenius norm</b> is $\\|A\\|_F=\\sqrt{\\sum_{i,j} a_{ij}^2}$. It is the ordinary Euclidean length of all entries after flattening the matrix into one vector.</p><p>The <b>spectral norm</b> is $\\|A\\|_2=\\max_{x\\ne0}\\dfrac{\\|Ax\\|_2}{\\|x\\|_2}=\\sigma_{\\max}(A)$. It measures the largest factor by which $A$ can stretch any nonzero vector. For a real matrix, $\\|A\\|_2=\\sqrt{\\lambda_{\\max}(A^T A)}$, because $\\|Ax\\|_2^2=x^T A^T A x$ and the largest Rayleigh quotient of the symmetric matrix $A^T A$ is its largest eigenvalue.</p><p><b>Assumptions that matter:</b> entries are real unless stated otherwise; $\\|x\\|_2$ is the Euclidean vector norm; $\\sigma_{\\max}(A)$ means the largest singular value; norms are nonnegative, equal zero only for the zero matrix, scale by $|c|$ under multiplication by a scalar, and obey the triangle inequality. The spectral norm is an operator norm, so it also satisfies $\\|Ax\\|_2\\le\\|A\\|_2\\|x\\|_2$.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. A matrix norm measures the size of a matrix as an operator or as a collection of entries. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>Norms control sensitivity, regularization, and approximation error. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Matrix norms is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "For $A=\\begin{bmatrix}1 & 2 \\ 0 & 3\\end{bmatrix}$, compute $\\|A\\|_F$ and $\\|A\\|_2$.",
       "skills": [
@@ -9537,39 +10957,34 @@
     ],
     "applications": [
       {
-        "title": "Weight decay in linear models",
-        "background": "Regularization became central in statistics because models with smaller parameters often generalize better. Matrix norms make smallness measurable for a whole weight table.",
-        "numbers": "For weights $W=\\begin{bmatrix}1 & -2 \\ 0 & 2\\end{bmatrix}$, $\\|W\\|_F=\\sqrt{1+4+0+4}=3$, so an $L_2$ penalty with strength $0.01$ contributes $0.01\\cdot9=0.09$ if it uses $\\|W\\|_F^2$."
+        "title": "Application 1",
+        "background": "For",
+        "numbers": "For $A=\\begin{bmatrix}1&2\\3&4\\end{bmatrix}$, $\\lVert A\\rVert_2\\approx5.465$."
       },
       {
-        "title": "Gradient clipping",
-        "background": "Deep-learning optimizers clip large updates to avoid unstable jumps. The Frobenius norm is the natural size measure when a gradient is a matrix.",
-        "numbers": "For $G=\\begin{bmatrix}3 & 4 \\ 0 & 0\\end{bmatrix}$, $\\|G\\|_F=5$. A clip threshold $2$ rescales by $2/5=0.4$, producing entries $1.2,1.6,0,0$."
+        "title": "Application 2",
+        "background": "Frobenius norm is",
+        "numbers": "Frobenius norm is $\\sqrt{30}\\approx5.477$."
       },
       {
-        "title": "Sensitivity of a linear layer",
-        "background": "A neural-network layer $y=Wx$ cannot amplify input changes by more than its spectral norm. This is why spectral normalization is used to control Lipschitz behavior.",
-        "numbers": "If $\\|W\\|_2=1.8$ and an input perturbation has $\\|\\Delta x\\|_2=0.05$, then $\\|W\\Delta x\\|_2\\le1.8\\cdot0.05=0.09$."
+        "title": "Application 3",
+        "background": "Diagonal",
+        "numbers": "Diagonal $\\operatorname{diag}(3,1)$ has spectral norm $3$."
       },
       {
-        "title": "Image filter energy",
-        "background": "Convolution kernels are small matrices. Their Frobenius norm measures total filter energy, a useful sanity check in signal processing and computer vision.",
-        "numbers": "For edge filter $K=\\begin{bmatrix}1 & 0 & -1 \\ 1 & 0 & -1 \\ 1 & 0 & -1\\end{bmatrix}$, $\\|K\\|_F=\\sqrt{6}\\approx2.449$ because six entries have square $1$."
+        "title": "Application 4",
+        "background": "Gradient clipping rescales vector norm",
+        "numbers": "Gradient clipping rescales vector norm $10$ to $5$ by multiplier $0.5$."
       },
       {
-        "title": "Low-rank approximation error",
-        "background": "The Eckart-Young theorem connects singular values to best low-rank approximations. Frobenius error tells how much squared energy remains after truncation.",
-        "numbers": "If singular values are $5,2,1$, the best rank-$1$ Frobenius error is $\\sqrt{2^2+1^2}=\\sqrt5\\approx2.236$."
+        "title": "Application 5",
+        "background": "Rank-1 SVD error for singular values",
+        "numbers": "Rank-1 SVD error for singular values $3,1$ is spectral norm $1$."
       },
       {
-        "title": "Condition numbers",
-        "background": "Numerical linear algebra studies how input errors grow when solving systems. The spectral norm feeds the common condition number $\\kappa_2(A)=\\|A\\|_2\\|A^{-1}\\|_2$.",
-        "numbers": "If $\\|A\\|_2=10$ and $\\|A^{-1}\\|_2=0.4$, then $\\kappa_2(A)=4$, so relative errors can be amplified by about a factor of $4$."
-      },
-      {
-        "title": "Covariance and whitening",
-        "background": "Whitening rescales data so directions have comparable variance. The spectral norm of a covariance matrix reads the largest variance direction.",
-        "numbers": "For covariance $\\Sigma=\\begin{bmatrix}9 & 0 \\ 0 & 1\\end{bmatrix}$, $\\|\\Sigma\\|_2=9$; after scaling by $\\begin{bmatrix}1/3 & 0 \\ 0 & 1\\end{bmatrix}$, both variances become $1$."
+        "title": "Application 6",
+        "background": "Weight decay penalty",
+        "numbers": "Weight decay penalty $0.01\\lVert W\\rVert_F^2$ with $\\lVert W\\rVert_F^2=30$ gives $0.3$."
       }
     ],
     "applicationsClose": "Across regularization, clipping, filtering, compression, conditioning, and whitening, matrix norms turn a table of numbers into a dependable statement about size or stretch.",
@@ -9578,6 +10993,48 @@
       "$\\|A\\|_2=\\sigma_{\\max}(A)$ is the largest factor by which $A$ stretches a vector.",
       "For real matrices, $\\|A\\|_2=\\sqrt{\\lambda_{\\max}(A^T A)}$.",
       "Frobenius norms are convenient for total parameter or error size; spectral norms control sensitivity and amplification."
+    ],
+    "connectionsProse": "<p>This lesson focuses on matrix norms as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. A matrix norm measures the size of a matrix as an operator or as a collection of entries. Condition numbers and approximation errors are measured through these norms.</p>",
+    "symbols": [
+      {
+        "sym": "$\\lVert A\\rVert_2$",
+        "desc": "spectral norm"
+      },
+      {
+        "sym": "$\\lVert A\\rVert_F$",
+        "desc": "Frobenius norm"
+      },
+      {
+        "sym": "$\\sigma_{\\max}$",
+        "desc": "largest singular value."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "The operator 2-norm is $\\lVert A\\rVert_2=\\max_{\\lVert x\\rVert=1}\\lVert Ax\\rVert$",
+        "result": "$\\lVert A\\rVert_2=\\max_{\\lVert x\\rVert=1}\\lVert Ax\\rVert$",
+        "why": "maximum stretch of a unit vector."
+      },
+      {
+        "do": "Square it: $\\lVert Ax\\rVert^2=x^TA^TAx$.",
+        "result": "$\\lVert Ax\\rVert^2=x^TA^TAx$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "The maximum Rayleigh quotient of $A^TA$ is its largest eigenvalue.",
+        "result": "$A^TA$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Therefore $\\lVert A\\rVert_2=\\sqrt{\\lambda_{\\max}(A^TA)}=\\sigma_{\\max}$.",
+        "result": "$\\lVert A\\rVert_2=\\sqrt{\\lambda_{\\max}(A^TA)}=\\sigma_{\\max}$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Frobenius norm sums squared entries: $\\lVert A\\rVert_F=\\sqrt{\\sum_{ij}A_{ij}^2}$.",
+        "result": "$\\lVert A\\rVert_F=\\sqrt{\\sum_{ij}A_{ij}^2}$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-34"
@@ -9605,8 +11062,8 @@
         "matrix inverses"
       ]
     },
-    "motivation": "<p>You already know some calculations are touchy: a tiny change in input can produce a big change in output. Matrices have the same personality.</p><p>The <b>condition number</b> measures this sensitivity. A well-conditioned matrix behaves predictably; an ill-conditioned one stretches some directions much more than others, so noise can dominate.</p>",
-    "definition": "<p>For an invertible matrix $A$, the 2-norm condition number is $$\\kappa_2(A)=\\|A\\|_2\\|A^{-1}\\|_2=\\dfrac{\\sigma_{\\max}}{\\sigma_{\\min}},$$ where $\\sigma_{\\max}$ and $\\sigma_{\\min}$ are the largest and smallest singular values. If $A$ is singular, $\\kappa_2(A)=\\infty$.</p><p>The ratio appears because $A$ can stretch one direction by $\\sigma_{\\max}$ while barely stretching another by $\\sigma_{\\min}$. Solving $Ax=b$ reverses those stretches, so small components in weak directions can be amplified.</p><p><b>Assumptions that matter:</b> condition number depends on the chosen norm; this lesson uses the Euclidean 2-norm; large condition number does not mean every input is unstable, but it warns that some direction is.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. The condition number measures how much a matrix can amplify relative error. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>Large condition numbers warn that solves and least-squares fits may be unstable. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> The condition number is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Find $\\kappa_2(A)$ for $A=\\begin{bmatrix}10&0\\\\0&1\\end{bmatrix}$ and interpret it.",
       "skills": [
@@ -9805,34 +11262,34 @@
     ],
     "applications": [
       {
-        "title": "Linear solves",
-        "background": "Numerical linear algebra uses condition numbers to predict how input error affects solutions.",
-        "numbers": "If $\\kappa=1000$ and input error is $10^{-6}$, solution error may be around $10^{-3}$."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$A=\\operatorname{diag}(2,0.5)$ has condition number $4$."
       },
       {
-        "title": "Least-squares design matrices",
-        "background": "Highly correlated features make regression coefficients unstable.",
-        "numbers": "If singular values are $20$ and $0.02$, then $\\kappa=1000$, a warning sign for coefficient variance."
+        "title": "Application 2",
+        "background": "A",
+        "numbers": "A $1\\%$ input error can become about $4\\%$ solution error."
       },
       {
-        "title": "Feature scaling",
-        "background": "Standardizing features can reduce artificial conditioning problems caused by units.",
-        "numbers": "Columns with norms $1000$ and $1$ can give stretch ratios near $1000$ before scaling."
+        "title": "Normal equations square conditioning",
+        "background": "The computation is shown directly.",
+        "numbers": "$\\kappa(A^TA)=16$ for this $A$."
       },
       {
-        "title": "Regularization",
-        "background": "Ridge regression lifts small singular directions and improves effective conditioning.",
-        "numbers": "Eigenvalues $100$ and $0.01$ become $101$ and $1.01$ after adding $1I$, reducing ratio from $10000$ to $100$."
+        "title": "Application 4",
+        "background": "Feature scaling from standard deviations",
+        "numbers": "Feature scaling from standard deviations $100,1$ gives condition number $100$."
       },
       {
-        "title": "Neural network layers",
-        "background": "Very large or tiny singular values can cause activation or gradient amplification and shrinkage.",
-        "numbers": "Five layers each with spectral stretch $3$ can amplify a direction by up to $3^5=243$."
+        "title": "Application 5",
+        "background": "Ridge raises smallest singular value, reducing instability.",
+        "numbers": "Ridge raises smallest singular value, reducing instability."
       },
       {
-        "title": "Data inversion",
-        "background": "Inverse problems such as deblurring are sensitive when blur nearly erases some frequencies.",
-        "numbers": "A frequency singular value $0.001$ means inversion multiplies that component by $1000$."
+        "title": "Application 6",
+        "background": "SVD singular values",
+        "numbers": "SVD singular values $10,0.01$ give $\\kappa=1000$."
       }
     ],
     "applicationsClose": "The condition number is a sensitivity thermometer: it does not fix instability, but it tells you when to respect it.",
@@ -9841,6 +11298,52 @@
       "Orthogonal matrices have condition number $1$, the best possible.",
       "Singular matrices have infinite condition number.",
       "Large condition numbers warn of possible error amplification in solves, inverses, and regression."
+    ],
+    "connectionsProse": "<p>This lesson focuses on the condition number as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. The condition number measures how much a matrix can amplify relative error. Scaling, ridge regularization, and SVD diagnostics all respond to this sensitivity.</p>",
+    "symbols": [
+      {
+        "sym": "$\\kappa(A)$",
+        "desc": "condition number"
+      },
+      {
+        "sym": "$\\delta b$ input perturbation",
+        "desc": "$\\delta b$ input perturbation"
+      },
+      {
+        "sym": "$\\delta x$ solution perturbation",
+        "desc": "$\\delta x$ solution perturbation"
+      },
+      {
+        "sym": "norm",
+        "desc": "usually the 2-norm."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "A perturbation in $b$ changes solution by $\\delta x=A^{-1}\\delta b$",
+        "result": "$\\delta x=A^{-1}\\delta b$",
+        "why": "from $A(x+\\delta x)=b+\\delta b$."
+      },
+      {
+        "do": "Bound output error: $\\lVert\\delta x\\rVert\\le\\lVert A^{-1}\\rVert\\lVert\\delta b\\rVert$.",
+        "result": "$\\lVert\\delta x\\rVert\\le\\lVert A^{-1}\\rVert\\lVert\\delta b\\rVert$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Also $\\lVert b\\rVert=\\lVert Ax\\rVert\\le\\lVert A\\rVert\\lVert x\\rVert$, so $1/\\lVert x\\rVert\\le\\lVert A\\rVert/\\lVert b\\rVert$.",
+        "result": "$1/\\lVert x\\rVert\\le\\lVert A\\rVert/\\lVert b\\rVert$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Combine to get relative error bound $\\frac{\\lVert\\delta x\\rVert}{\\lVert x\\rVert}\\le\\lVert A\\rVert\\lVert A^{-1}\\rVert\\frac{\\lVert\\delta b\\rVert}{\\lVert b\\rVert}$.",
+        "result": "$\\frac{\\lVert\\delta x\\rVert}{\\lVert x\\rVert}\\le\\lVert A\\rVert\\lVert A^{-1}\\rVert\\frac{\\lVert\\delta b\\rVert}{\\lVert b\\rVert}$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Define $\\kappa(A)=\\lVert A\\rVert\\lVert A^{-1}\\rVert$.",
+        "result": "$\\kappa(A)=\\lVert A\\rVert\\lVert A^{-1}\\rVert$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-35"
@@ -9868,8 +11371,8 @@
         "outer products"
       ]
     },
-    "motivation": "<p>You already know scalars, vectors, and matrices. A grayscale image needs two axes, a color image needs height, width, and channel, and a batch adds another axis in front.</p><p>A <b>tensor</b> is the common language for these multi-axis arrays. The math is not mystical: it is careful bookkeeping of indices and how operations sum over them.</p>",
-    "definition": "<p>In ML practice, a tensor is a multidimensional array. A scalar has order 0, a vector order 1, a matrix order 2, and an array $T_{i,j,k}$ has order 3. The <b>shape</b> lists axis lengths, such as $2\\times3\\times4$.</p><p>Many tensor operations are built from two ideas: elementwise operations keep the same shape, while contractions sum over one or more matching indices. Matrix multiplication is a contraction: $(AB)_{ij}=\\sum_k A_{ik}B_{kj}$.</p><p><b>Assumptions that matter:</b> ML libraries use specific axis conventions; reshaping changes how entries are grouped but not their values; broadcasting can silently repeat axes; and tensor in ML often means array, while tensor in differential geometry has a stricter transformation meaning.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. A tensor is a multi-index array. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>Vectors have one index, matrices have two, and tensors add more axes for batches, channels, heads, time, or spatial dimensions. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> this lesson is about representation and indexing rather than a formula. Explain shape, axes, slicing, and contraction with concrete shapes.</p><p><b>Assumptions that matter:</b> Use the stated closure, compatibility, indexing, or shape conditions; this lesson is conceptual rather than a proof.</p>",
     "worked": {
       "problem": "A batch of $2$ RGB images has shape $2\\times4\\times4\\times3$. How many numbers are stored, and what is the shape after flattening each image?",
       "skills": [
@@ -10068,34 +11571,34 @@
     ],
     "applications": [
       {
-        "title": "Image batches",
-        "background": "Computer vision models process images as tensors with batch, spatial, and channel axes.",
-        "numbers": "A batch $16\\times224\\times224\\times3$ stores $16\\cdot224\\cdot224\\cdot3=2,408,448$ numbers."
+        "title": "Application 1",
+        "background": "Image batch shape",
+        "numbers": "Image batch shape $32\\times224\\times224\\times3$ has $4{,}816{,}896$ numbers."
       },
       {
-        "title": "Transformer activations",
-        "background": "Language models use tensors indexed by batch, token position, and hidden channel.",
-        "numbers": "Shape $4\\times128\\times768$ contains $393,216$ activation values."
+        "title": "Application 2",
+        "background": "Transformer activations",
+        "numbers": "Transformer activations $16\\times128\\times768$ have $1{,}572{,}864$ numbers."
       },
       {
-        "title": "Convolution kernels",
-        "background": "A convolution layer stores filters with spatial, input-channel, and output-channel axes.",
-        "numbers": "A $3\\times3\\times64\\times128$ kernel has $73,728$ weights."
+        "title": "Application 3",
+        "background": "Conv kernel",
+        "numbers": "Conv kernel $3\\times3\\times64\\times128$ has $73{,}728$ weights."
       },
       {
-        "title": "Attention scores",
-        "background": "Attention forms pairwise token scores for each head and example.",
-        "numbers": "Batch $2$, heads $8$, sequence $128$ gives score tensor $2\\times8\\times128\\times128=262,144$ entries."
+        "title": "Application 4",
+        "background": "Attention scores with batch",
+        "numbers": "Attention scores with batch $2$, heads $8$, length $128$ have $262{,}144$ entries."
       },
       {
-        "title": "Broadcasting bias",
-        "background": "Bias vectors are often broadcast across batch and sequence axes.",
-        "numbers": "Adding bias shape $768$ to activations $4\\times128\\times768$ reuses the 768 numbers across $512$ token examples."
+        "title": "Application 5",
+        "background": "Bias of shape",
+        "numbers": "Bias of shape $768$ broadcasts across $16\\times128$ positions."
       },
       {
-        "title": "Loss aggregation",
-        "background": "Training losses often reduce tensors by summing or averaging over examples and tokens.",
-        "numbers": "A token-loss tensor $32\\times50$ has $1600$ losses; its mean divides their sum by $1600$."
+        "title": "Application 6",
+        "background": "Mean loss over",
+        "numbers": "Mean loss over $32$ examples sums losses then divides by $32$."
       }
     ],
     "applicationsClose": "Tensors are the shape grammar of ML: once axes are clear, operations become sums, broadcasts, reshapes, and linear maps.",
@@ -10104,6 +11607,21 @@
       "Entry count is the product of axis lengths.",
       "Contractions sum over matching indices; matrix multiplication is the basic example.",
       "Clear axis bookkeeping prevents many deep-learning bugs."
+    ],
+    "connectionsProse": "<p>This lesson focuses on tensors as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. A tensor is a multi-index array. Modern model activations, attention scores, and convolution kernels all have tensor shapes.</p>",
+    "symbols": [
+      {
+        "sym": "$T_{ijk}$",
+        "desc": "an entry with three indices"
+      },
+      {
+        "sym": "shape lists axis lengths",
+        "desc": "shape lists axis lengths"
+      },
+      {
+        "sym": "contraction sums over a shared index.",
+        "desc": "contraction sums over a shared index."
+      }
     ],
     "prereqs": [
       "math-09-36"
@@ -10131,8 +11649,8 @@
         "separable operators"
       ]
     },
-    "motivation": "<p>You already know how a scalar times a matrix scales every entry. The Kronecker product does that idea repeatedly: each entry of one matrix scales a full copy of another matrix.</p><p>This creates large matrices with strong structure. In ML and scientific computing, that structure can save memory, speed computation, and express separable transformations.</p>",
-    "definition": "<p>For matrices $A=[a_{ij}]$ of size $m\\times n$ and $B$ of size $p\\times q$, the <b>Kronecker product</b> $A\\otimes B$ is the $mp\\times nq$ block matrix where block $(i,j)$ is $a_{ij}B$.</p><p>A key identity connects it to vectorization: $\\operatorname{vec}(AXB^T)=(B\\otimes A)\\operatorname{vec}(X)$, when dimensions match and $\\operatorname{vec}$ stacks columns. This is how two smaller left-right transformations become one large linear map on a flattened matrix.</p><p><b>Assumptions that matter:</b> order matters, so usually $A\\otimes B\\ne B\\otimes A$; vectorization convention matters; and Kronecker structure is useful only when the problem truly separates across axes.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. The Kronecker product builds a large structured matrix by replacing each entry of one matrix with a scaled copy of another. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>It is how separable grids, tensor-product features, and structured covariance matrices stay manageable. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> The Kronecker product is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "Compute $A\\otimes B$ for $A=\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}$ and $B=\\begin{bmatrix}0&5\\\\6&7\\end{bmatrix}$.",
       "skills": [
@@ -10331,34 +11849,34 @@
     ],
     "applications": [
       {
-        "title": "Separable image filters",
-        "background": "A 2-D blur can sometimes be applied as separate row and column operations instead of one huge matrix.",
-        "numbers": "A $100\\times100$ image has $10000$ pixels; two $100\\times100$ factors use $20000$ entries instead of a dense $10000\\times10000$ matrix."
+        "title": "Application 1",
+        "background": "The computation is shown directly.",
+        "numbers": "$\\begin{bmatrix}1&2\\3&4\\end{bmatrix}\\otimes\\begin{bmatrix}0&1\\1&0\\end{bmatrix}$ is $4\\times4$."
       },
       {
-        "title": "Structured covariance",
-        "background": "Multi-axis data may use covariance that separates time and space with a Kronecker product.",
-        "numbers": "A time covariance $10\\times10$ and sensor covariance $5\\times5$ produce a $50\\times50$ covariance from only $100+25$ stored entries."
+        "title": "Application 2",
+        "background": "Sum of its entries is",
+        "numbers": "Sum of its entries is $(1+2+3+4)(0+1+1+0)=20$."
       },
       {
-        "title": "Fast linear layers",
-        "background": "Kronecker-factored weights approximate a large matrix with smaller factors.",
-        "numbers": "A $64\\times64$ dense matrix has $4096$ weights; $8\\times8$ and $8\\times8$ Kronecker factors have $128$ weights."
+        "title": "Application 3",
+        "background": "Determinant rule for two",
+        "numbers": "Determinant rule for two $2\\times2$ matrices gives $\\det(A\\otimes B)=\\det(A)^2\\det(B)^2$; with dets $-2,-1$ gives $4$."
       },
       {
-        "title": "Second-order optimization",
-        "background": "K-FAC approximates neural-network curvature with Kronecker factors to make natural-gradient steps practical.",
-        "numbers": "Factors $100\\times100$ and $50\\times50$ store $12500$ entries versus a dense $5000\\times5000$ matrix with $25,000,000$."
+        "title": "Application 4",
+        "background": "Separable image filter",
+        "numbers": "Separable image filter $3\\times3$ from two length-3 vectors uses $6$ parameters instead of $9$."
       },
       {
-        "title": "Tensor product features",
-        "background": "Feature crosses can be represented as products of entries from two feature vectors.",
-        "numbers": "Vectors of lengths $3$ and $4$ create $12$ pairwise product features."
+        "title": "Application 5",
+        "background": "Grid covariance",
+        "numbers": "Grid covariance $20\\times20$ and $30\\times30$ factors produce a $600\\times600$ covariance."
       },
       {
-        "title": "Grid operators",
-        "background": "Finite-difference operators on rectangular grids often separate into Kronecker sums and products.",
-        "numbers": "A $20\\times30$ grid has $600$ states, but row and column operators are only $20\\times20$ and $30\\times30$."
+        "title": "Application 6",
+        "background": "Tensor-product features of sizes",
+        "numbers": "Tensor-product features of sizes $5$ and $7$ produce $35$ features."
       }
     ],
     "applicationsClose": "The Kronecker product is block structure made algebraic: small maps combine into large maps without forgetting their axes.",
@@ -10367,6 +11885,48 @@
       "Shapes multiply: $(m\\times n)\\otimes(p\\times q)$ becomes $mp\\times nq$.",
       "Vectorization identities connect Kronecker products to matrix transformations on flattened tensors.",
       "Kronecker structure saves memory when a large map separates across axes."
+    ],
+    "connectionsProse": "<p>This lesson focuses on the Kronecker product as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. The Kronecker product builds a large structured matrix by replacing each entry of one matrix with a scaled copy of another. Separable filters, grid covariances, and tensor-product features use this structure.</p>",
+    "symbols": [
+      {
+        "sym": "$\\otimes$",
+        "desc": "Kronecker product"
+      },
+      {
+        "sym": "blocks",
+        "desc": "scaled copies"
+      },
+      {
+        "sym": "dimensions multiply by axis.",
+        "desc": "dimensions multiply by axis."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Take matrices $A=[a_{ij}]$ and $B$",
+        "result": "$B$",
+        "why": "one provides block weights, the other provides block shape."
+      },
+      {
+        "do": "Replace each scalar $a_{ij}$ by block $a_{ij}B$",
+        "result": "$a_{ij}B$",
+        "why": "this preserves the row-column layout of $A$."
+      },
+      {
+        "do": "The resulting block matrix is $A\\otimes B$.",
+        "result": "$A\\otimes B$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Dimensions multiply: if $A$ is $m\\times n$ and $B$ is $p\\times q$, then $A\\otimes B$ is $mp\\times nq$.",
+        "result": "$mp\\times nq$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "Matrix-vector products can be interpreted as applying one factor along one tensor axis and the other factor along another.",
+        "result": "Matrix-vector products can be interpreted as applying one factor along one tensor axis and the other factor along another.",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-37"
@@ -10394,8 +11954,8 @@
         "matrix norms"
       ]
     },
-    "motivation": "<p>You already multiply inputs by a matrix: $y=Wx$. In a neural network, that matrix is not just a table of numbers. It is a learned linear map from one representation space to another.</p><p>The ML capstone idea is that many useful updates or weights are lower-dimensional than they look. <b>Low-rank factorization</b> writes a big matrix as two skinny matrices, reducing parameters and focusing learning on a smaller subspace.</p>",
-    "definition": "<p>A weight matrix $W\\in\\mathbb{R}^{m\\times n}$ maps an input vector $x\\in\\mathbb{R}^n$ to output $y=Wx\\in\\mathbb{R}^m$. If $W$ has rank $r$, it can be factored as $W=BA$ with $B\\in\\mathbb{R}^{m\\times r}$ and $A\\in\\mathbb{R}^{r\\times n}$. The computation becomes $$x\\mapsto A x\\mapsto B(Ax).$$</p><p>When $r\\ll\\min(m,n)$, the factorization stores $r(m+n)$ parameters instead of $mn$. SVD gives the best rank-$r$ approximation $W_r=U_r\\Sigma_rV_r^T$. In LoRA-style fine-tuning, the frozen base weight $W_0$ is updated by a trainable low-rank matrix $\\Delta W=BA$, so the layer uses $W_0x+BAx$.</p><p><b>Assumptions that matter:</b> low rank restricts the update to an $r$-dimensional bottleneck; rank must be chosen large enough for the task; and factorization saves parameters only when $r(m+n)<mn$.</p>",
+    "motivation": "<p>Start from computations that are already familiar: scaling quantities, adding matching coordinates, and keeping track of how inputs produce outputs. A weight matrix is a linear map from input features to output features. The new step is to treat that pattern as a reusable object rather than as one isolated calculation.</p><p>Low-rank factorization replaces one large map by two smaller maps through a bottleneck. The verified work below turns this intuition into a concrete rule, definition, or computation. As you read the steps, keep track of which objects are directions, coefficients, transformations, or measurements; that bookkeeping is what makes the later applications feel like ordinary uses of the same idea.</p>",
+    "definition": "<p><b>Definition.</b> Weights as linear maps; low-rank factorization is defined by the computation below.</p><p><b>Assumptions that matter:</b> Work with compatible dimensions over the real numbers unless the lesson states a nonzero, invertible, symmetric, or rank condition.</p>",
     "worked": {
       "problem": "A frozen $4\\times3$ weight $W_0$ is adapted by LoRA-style $\\Delta W=BA$ with rank $r=2$, where $A=\\begin{bmatrix}1&0&2\\\\0&1&-1\\end{bmatrix}$ and $B=\\begin{bmatrix}1&0\\\\0&2\\\\1&1\\\\-1&1\\end{bmatrix}$. For $x=(2,3,1)^T$, compute $\\Delta y=BAx$ and compare parameter counts.",
       "skills": [
@@ -10614,34 +12174,34 @@
     ],
     "applications": [
       {
-        "title": "LoRA fine-tuning",
-        "background": "LoRA freezes a pretrained weight and trains a low-rank update, making adaptation cheaper while preserving the base model.",
-        "numbers": "For $4096\\times4096$ and rank $8$, train $65,536$ update parameters instead of $16,777,216$."
+        "title": "Application 1",
+        "background": "A",
+        "numbers": "A $1024\\times1024$ dense layer has $1{,}048{,}576$ weights."
       },
       {
-        "title": "Bottleneck linear layers",
-        "background": "A factorization $W=BA$ computes through a smaller hidden dimension, like a linear bottleneck.",
-        "numbers": "A $512\\times512$ dense map has $262,144$ weights; rank $32$ factors use $32(512+512)=32,768$."
+        "title": "Application 2",
+        "background": "Rank-",
+        "numbers": "Rank-$8$ LoRA update stores $8(1024+1024)=16{,}384$ weights."
       },
       {
-        "title": "Model compression",
-        "background": "SVD can replace a trained dense matrix by a lower-rank approximation when singular values decay.",
-        "numbers": "Singular values $20,5,1$ keep rank 1 with error $\\sqrt{26}$ and retain $400/(426)\\approx93.9\\%$ energy."
+        "title": "Application 3",
+        "background": "Compression ratio is",
+        "numbers": "Compression ratio is $16{,}384/1{,}048{,}576=1.5625\\%$."
       },
       {
-        "title": "Embedding factorization",
-        "background": "Large user-item or token-context tables can be modeled as products of lower-dimensional embeddings.",
-        "numbers": "A $10000\\times5000$ table has $50,000,000$ entries; rank $64$ factors use $64(10000+5000)=960,000$."
+        "title": "Application 4",
+        "background": "Bottleneck",
+        "numbers": "Bottleneck $512\\to64\\to512$ stores $65{,}536$ weights instead of $262{,}144$."
       },
       {
-        "title": "Adapter modules",
-        "background": "Adapters often down-project activations, apply a small transformation, then up-project, mirroring low-rank maps.",
-        "numbers": "Hidden size $768$ with bottleneck $16$ uses $768\\cdot16+16\\cdot768=24,576$ weights before biases."
+        "title": "Application 5",
+        "background": "Rank of",
+        "numbers": "Rank of $AB$ is at most $8$ if bottleneck is $8$."
       },
       {
-        "title": "Controlling update capacity",
-        "background": "Low rank limits how many independent directions a fine-tuning update can change, which can reduce overfitting.",
-        "numbers": "Rank $4$ update $BA$ maps every input through only 4 intermediate coordinates, no matter how large $m$ and $n$ are."
+        "title": "Application 6",
+        "background": "SVD singular values",
+        "numbers": "SVD singular values $10,3,1$ rank-2 approximation has spectral error $1$."
       }
     ],
     "applicationsClose": "Weights as linear maps make ML architecture concrete: every factorization changes parameter count, compute path, rank, and what directions the model can adapt.",
@@ -10650,6 +12210,52 @@
       "A rank-$r$ factorization $W=BA$ uses $r(m+n)$ parameters instead of $mn$.",
       "SVD gives the best low-rank approximation to an existing matrix.",
       "LoRA-style updates train $\\Delta W=BA$ while keeping the base weight frozen."
+    ],
+    "connectionsProse": "<p>This lesson focuses on weights as linear maps and low-rank factorization, as part of the linear-algebra toolkit. It builds on the idea that vectors and matrices can represent structured quantities, transformations, and constraints. A weight matrix is a linear map from input features to output features. Compression, adapter layers, and SVD approximations all use this factorized-map view.</p>",
+    "symbols": [
+      {
+        "sym": "$W$",
+        "desc": "the weight matrix"
+      },
+      {
+        "sym": "$r$",
+        "desc": "rank or bottleneck size"
+      },
+      {
+        "sym": "$A,B$",
+        "desc": "low-rank factors"
+      },
+      {
+        "sym": "singular values order approximation quality.",
+        "desc": "singular values order approximation quality."
+      }
+    ],
+    "derivation": [
+      {
+        "do": "A dense layer computes $y=Wx$",
+        "result": "$y=Wx$",
+        "why": "matrix rows are output features."
+      },
+      {
+        "do": "If $W\\in\\mathbb R^{m\\times n}$ has rank $r$, write $W\\approx AB$ with $A\\in\\mathbb R^{m\\times r}$ and $B\\in\\mathbb R^{r\\times n}$",
+        "result": "$B\\in\\mathbb R^{r\\times n}$",
+        "why": "the map passes through $r$ latent coordinates."
+      },
+      {
+        "do": "Parameter count changes from $mn$ to $r(m+n)$",
+        "result": "$r(m+n)$",
+        "why": "count entries in both factors."
+      },
+      {
+        "do": "SVD gives best rank-$r$ approximation by keeping the top $r$ singular values.",
+        "result": "$r$",
+        "why": "This is the next computation or definition step."
+      },
+      {
+        "do": "The approximation error in spectral norm is the next singular value $\\sigma_{r+1}$.",
+        "result": "$\\sigma_{r+1}$",
+        "why": "This is the next computation or definition step."
+      }
     ],
     "prereqs": [
       "math-09-38"

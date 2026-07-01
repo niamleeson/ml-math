@@ -28,8 +28,8 @@
         "functions"
       ]
     },
-    "motivation": "<p>You already draw little maps: friends connected to friends, webpages connected by links, cities connected by roads. Graph theory gives those maps a precise vocabulary.</p><p>A <b>graph</b> keeps only what matters for connection. Once the same graph can be written as a picture, a list, or a matrix, algorithms have something exact to compute with.</p>",
-    "definition": "<p>An <b>undirected graph</b> is $G=(V,E)$, where $V$ is a set of vertices and $E$ is a set of edges. In a simple graph, each edge is a two-element set $\\{u,v\\}$ with $u,v\\in V$ and $u\\ne v$. An <b>adjacency list</b> records each vertex's neighbors. An <b>adjacency matrix</b> $A$ has $A_{ij}=1$ when vertices $i$ and $j$ are adjacent, and $0$ otherwise.</p><p>For an undirected simple graph, the matrix is symmetric because $\\{i,j\\}=\\{j,i\\}$: if $i$ is connected to $j$, then $j$ is connected to $i$. The diagonal is zero because simple graphs have no self-loops.</p><p><b>Assumptions that matter:</b> unless stated otherwise, graphs here are finite, undirected, and simple; vertex labels are names, not sizes; and the same graph may have many drawings but one connection structure.</p>",
+    "motivation": "<p>When a relationship dataset is small, a picture may be the easiest way to understand it. As soon as the graph is used in code, the same information has to be stored in a form that supports lookup, traversal, or matrix operations. Edge lists, adjacency lists, and adjacency matrices all describe the same graph, but they make different operations convenient.</p><p>The important habit is to separate the graph itself from its representation. The graph is the set of vertices and edges; the representation is the storage choice. An edge list is compact for listing relationships, adjacency lists are natural for walking through neighbors, and an adjacency matrix makes connection tests and linear-algebra operations direct.</p>",
+    "definition": "<p>A graph is a set of vertices together with edges between selected pairs of vertices. The same graph can be shown as an edge list, adjacency lists, or an adjacency matrix; for the four-edge graph, one representation is $E=\\{12,13,24,35\\}$.</p><p><b>Assumptions that matter:</b> The lesson defines equivalent representations, so there is no theorem to prove. Use the same four-edge graph as $E=\\{12,13,24,35\\}$, adjacency lists, and a $5\\times5$ matrix.</p>",
     "worked": {
       "problem": "Represent the graph with $V=\\{A,B,C,D\\}$ and $E=\\{\\{A,B\\},\\{A,C\\},\\{B,D\\}\\}$ as an adjacency list and matrix in the order $A,B,C,D$.",
       "skills": [
@@ -233,34 +233,34 @@
     ],
     "applications": [
       {
-        "title": "Web links",
-        "background": "Search engines model pages as vertices and hyperlinks as directed edges, a view that made large-scale ranking possible.",
-        "numbers": "If pages $A,B,C$ have links $A\\to B$, $A\\to C$, $C\\to A$, the adjacency matrix rows are $[0,1,1]$, $[0,0,0]$, $[1,0,0]$."
+        "title": "Edge-list storage",
+        "background": "Edge list storage records each edge once.",
+        "numbers": "$m=4$ records"
       },
       {
-        "title": "Social recommendations",
-        "background": "Friend and follow graphs record relationships so systems can suggest people or communities.",
-        "numbers": "If user $u$ follows $12$ accounts and $3$ also follow $v$, then a common-neighbor feature can include the number $3$."
+        "title": "Adjacency-list storage",
+        "background": "Undirected adjacency lists store each edge at both endpoints.",
+        "numbers": "$2m=8$ neighbor entries"
       },
       {
-        "title": "Sparse ML features",
-        "background": "Many datasets are mostly zeros, just like sparse graphs. Adjacency lists mirror sparse-vector storage.",
-        "numbers": "A graph with $10,000$ vertices and $40,000$ edges stores $80,000$ undirected neighbor entries rather than $100,000,000$ matrix entries."
+        "title": "Matrix storage",
+        "background": "The adjacency matrix stores one entry for each ordered vertex pair.",
+        "numbers": "The $5\\times5$ adjacency matrix has $25$ entries"
       },
       {
-        "title": "Knowledge graphs",
-        "background": "Knowledge bases represent entities and relations as graph triples. This supports question answering and retrieval.",
-        "numbers": "Triples like $(Ada, wrote, Notes)$ and $(Notes, about, engines)$ form $2$ directed labeled edges among $3$ entities."
+        "title": "Matrix density",
+        "background": "Matrix density compares present off-diagonal entries with possible ones.",
+        "numbers": "$2m/[n(n-1)]=8/20=0.4$"
       },
       {
-        "title": "Molecule graphs",
-        "background": "Chemistry treats atoms as vertices and bonds as edges, letting ML predict molecular properties.",
-        "numbers": "Water has vertices $O,H_1,H_2$ and edges $\\{O,H_1\\}$, $\\{O,H_2\\}$, so its adjacency list has $2+1+1=4$ neighbor entries."
+        "title": "Neighbor lookup",
+        "background": "Vertex $1$ has neighbors $\\{2,3\\}$.",
+        "numbers": "lookup returns $2$ IDs"
       },
       {
-        "title": "Neural network computation graphs",
-        "background": "Automatic differentiation stores operations and dependencies as a directed graph.",
-        "numbers": "For $z=(x+y)y$, edges $x\\to x+y$, $y\\to x+y$, $y\\to z$, and $x+y\\to z$ record $4$ dependencies."
+        "title": "Degree row sums",
+        "background": "Matrix row sums are degrees.",
+        "numbers": "$(2,2,2,1,1)$"
       }
     ],
     "applicationsClose": "The same connection structure can wear many uniforms: links, friends, molecules, features, and computations all become vertices plus edges.",
@@ -269,6 +269,37 @@
       "Adjacency lists are compact for sparse graphs; matrices make edge lookup direct.",
       "Undirected simple graph matrices are symmetric with zero diagonal.",
       "The drawing may change, but the adjacency structure is the graph."
+    ],
+    "connectionsProse": "<p>This lesson begins with the basic language of graph theory: objects and the relationships between them. A graph separates vertices, which are the objects, from edges, which are the links. That separation makes the same structure easy to draw, store, or compute with. The lesson also prepares the reader for degree counts, paths, matrices, and algorithms, because all of those later ideas depend on choosing a clear representation.</p>",
+    "symbols": [
+      {
+        "sym": "$G=(V,E)$",
+        "desc": "graph"
+      },
+      {
+        "sym": "$V$",
+        "desc": "vertices"
+      },
+      {
+        "sym": "$E$",
+        "desc": "edges"
+      },
+      {
+        "sym": "$n=|V|$",
+        "desc": "number of vertices"
+      },
+      {
+        "sym": "$m=|E|$",
+        "desc": "number of edges"
+      },
+      {
+        "sym": "$A$",
+        "desc": "adjacency matrix"
+      },
+      {
+        "sym": "$A_{ij}=1$",
+        "desc": "if $ij\\in E$"
+      }
     ]
   });
 
@@ -294,8 +325,8 @@
         "induction"
       ]
     },
-    "motivation": "<p>You already know that a busy airport has many routes and a small town may have only one. In a graph, that local busyness is called degree.</p><p>The lovely surprise is that all degrees cannot vary independently. Because every edge touches two endpoints, the total degree count must be exactly twice the number of edges.</p>",
-    "definition": "<p>In an undirected graph, the <b>degree</b> $\\deg(v)$ of a vertex $v$ is the number of edges incident to $v$. For a finite simple graph $G=(V,E)$, the <b>handshake lemma</b> says $$\\sum_{v\\in V}\\deg(v)=2|E|.$$</p><p>Why it is true: count endpoint-edge incidences. Each edge $\\{u,v\\}$ contributes one incidence at $u$ and one at $v$, so it contributes $2$ to the sum of degrees. Adding over all edges gives $2|E|$.</p><p><b>Assumptions that matter:</b> this statement is for finite undirected graphs; a loop would contribute $2$ to degree by convention; and in a simple graph no pair of vertices has more than one edge.</p>",
+    "motivation": "<p>Degree is local, but degree sums are global. If one vertex has degree $3$, that means three edge-ends touch it. Adding degrees across all vertices counts all of those edge-ends throughout the graph.</p><p>In an undirected graph, every edge has two endpoints. That means each edge contributes exactly two to the total degree count. This explains both the formula $\\sum_v \\deg(v)=2|E|$ and the useful parity check that odd-degree vertices must occur in pairs.</p>",
+    "definition": "<p>The handshake lemma says that in an undirected graph, the sum of all vertex degrees equals twice the number of edges.</p><p>$$\\sum_{v\\in V}d(v)=2|E|$$</p><p><b>Assumptions that matter:</b> Edges are undirected and each edge has exactly two endpoints, so every edge contributes two incidences.</p>",
     "worked": {
       "problem": "A graph has degrees $3,2,2,1,0$. How many edges does it have, and how many vertices have odd degree?",
       "skills": [
@@ -494,34 +525,34 @@
     ],
     "applications": [
       {
-        "title": "Friendship networks",
-        "background": "Undirected friendship graphs are the namesake of the lemma: every friendship raises two people's friend counts.",
-        "numbers": "If there are $10,000$ friendships, the sum of all friend counts is $20,000$."
+        "title": "Recover edge count",
+        "background": "Degrees $(3,2,2,1)$ sum to $8$.",
+        "numbers": "$m=4$"
       },
       {
         "title": "Average degree",
-        "background": "Network scientists summarize sparsity with average degree before choosing algorithms.",
-        "numbers": "A graph with $n=1000$ and $m=3000$ has average degree $2m/n=6000/1000=6$."
+        "background": "The same degree sum over four vertices gives average degree.",
+        "numbers": "$8/4=2$"
       },
       {
-        "title": "Molecule valence checks",
-        "background": "Chemical graphs use degrees to approximate valence and catch invalid structures.",
-        "numbers": "Methane has carbon degree $4$ and four hydrogen degrees $1$, so the degree sum is $8$ and there are $4$ bonds."
+        "title": "Odd-degree parity",
+        "background": "Odd-degree vertices are the vertices with odd entries in the sequence.",
+        "numbers": "the two vertices of degrees $3$ and $1$"
       },
       {
-        "title": "Feature engineering",
-        "background": "Graph ML often uses node degree as a first structural feature.",
-        "numbers": "If a creator connects to $37$ advertisers, the scalar feature $\\deg(v)=37$ can enter a ranking model."
+        "title": "Degree sequence edge count",
+        "background": "A graph with degree sequence $(3,3,2,2,2)$ has sum $12$.",
+        "numbers": "$m=6$"
       },
       {
-        "title": "Anomaly detection",
-        "background": "Unexpectedly high degree can signal spam, bots, or hubs in network data.",
-        "numbers": "If median degree is $12$ but one account has degree $5000$, its degree is about $417$ times the median."
+        "title": "Impossible parity",
+        "background": "A proposed degree sequence cannot have odd total degree.",
+        "numbers": "summing to $9$ is impossible"
       },
       {
-        "title": "Storage estimates",
-        "background": "Degree sums estimate adjacency-list memory for undirected graphs.",
-        "numbers": "For $m=75,000$ edges, adjacency lists contain $2m=150,000$ neighbor ids."
+        "title": "Tree degree sum",
+        "background": "In a tree with $n=7$, the edge count is $m=6$.",
+        "numbers": "degree sum must be $12$"
       }
     ],
     "applicationsClose": "Degree counting is humble but powerful: every local endpoint count is tied to a global edge count.",
@@ -530,6 +561,52 @@
       "The handshake lemma is $\\sum_v\\deg(v)=2|E|$.",
       "Every finite undirected graph has an even number of odd-degree vertices.",
       "Average degree is $2|E|/|V|$."
+    ],
+    "connectionsProse": "<p>This lesson builds on the idea that edges touch vertices. The degree of a vertex turns that local picture into a number: how many edges meet at that vertex. Once every vertex has a degree, the whole graph has a simple global check. The handshake lemma is one of the first examples of a graph fact that follows from counting the same structure in two ways.</p>",
+    "symbols": [
+      {
+        "sym": "$d(v)$",
+        "desc": "degree of vertex $v$"
+      },
+      {
+        "sym": "$\\deg(v)$",
+        "desc": "degree of vertex $v$"
+      },
+      {
+        "sym": "$|E|=m$",
+        "desc": "number of edges"
+      },
+      {
+        "sym": "incidence",
+        "desc": "an edge-end touching a vertex"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $d(v)$ count incident edges at vertex $v$.",
+        "result": "$d(v)$",
+        "why": "degree is local edge count"
+      },
+      {
+        "do": "Sum $d(v)$ over all vertices.",
+        "result": "$\\sum_{v\\in V}d(v)$",
+        "why": "this counts incidences"
+      },
+      {
+        "do": "Count the contribution of one undirected edge.",
+        "result": "$2$ incidences",
+        "why": "each undirected edge has exactly two endpoints"
+      },
+      {
+        "do": "Replace the incidence count by the edge count.",
+        "result": "$\\sum_{v\\in V}d(v)=2|E|$",
+        "why": "each edge contributes exactly two incidences"
+      },
+      {
+        "do": "Use parity of the total degree sum.",
+        "result": "the number of odd-degree vertices is even",
+        "why": "the sum is even"
+      }
     ],
     "prereqs": [
       "math-15-01"
@@ -558,8 +635,8 @@
         "matrix powers"
       ]
     },
-    "motivation": "<p>You already know the difference between wandering and taking a clean route. A graph makes that distinction precise.</p><p>A walk may revisit places; a path is a no-repeated-vertices route. This simple vocabulary is the foundation for reachability, shortest paths, and graph search.</p>",
-    "definition": "<p>A <b>walk</b> from $v_0$ to $v_k$ is a sequence $v_0,v_1,\\ldots,v_k$ where each consecutive pair is joined by an edge. Its length is $k$, the number of edges traversed. A <b>trail</b> repeats no edge. A <b>path</b> repeats no vertex.</p><p>Every path is a walk because it satisfies the same adjacency condition plus a stricter no-repeat rule. If a walk repeats a vertex, the closed loop between the repeats can be removed to produce a shorter walk with the same endpoints; repeating this gives a path whenever any walk exists.</p><p><b>Assumptions that matter:</b> length counts edges, not vertices; a single vertex is a path of length $0$; and in directed graphs every step must follow edge direction.</p>",
+    "motivation": "<p>In many graph problems, moving from one vertex to another is the basic operation. Sometimes repeated vertices are harmless, as in a random walk or a process that can return to a previous state. Other times repetition is exactly what we want to avoid, as in a simple route or a shortest path in an unweighted graph.</p><p>The load-bearing distinction is that walks are flexible and paths are simple. Walks are useful for counting all possible step sequences, especially with adjacency matrices. Paths are useful for distances, connectivity, and cycle definitions because they show that vertices can be connected without unnecessary repeats.</p>",
+    "definition": "<p>A walk is a sequence $v_0,v_1,\\ldots,v_k$ in which consecutive vertices are adjacent, and its length is $k$. A path is a walk with no repeated vertices.</p><p><b>Assumptions that matter:</b> Path and walk are definitions. Use adjacency powers later for counting walks; do not pretend the definition itself has a proof.</p>",
     "worked": {
       "problem": "In the graph with edges $AB,BC,CD,BD$, classify the sequence $A,B,C,B,D$ as a walk, trail, or path, and find its length.",
       "skills": [
@@ -768,34 +845,34 @@
     ],
     "applications": [
       {
-        "title": "Routing",
-        "background": "Road and packet networks both need legal step-by-step routes through allowed connections.",
-        "numbers": "A route $A,B,D,E$ has length $3$ because it traverses $AB$, $BD$, and $DE$."
+        "title": "Simple path",
+        "background": "In path graph $1-2-3-4$, there is one length-$3$ path from $1$ to $4$.",
+        "numbers": "one length-$3$ path"
       },
       {
-        "title": "Collaborative filtering",
-        "background": "User-item graphs use short paths to find similar users and candidate items.",
-        "numbers": "The path user $U\\to$ item $X\\to$ user $V\\to$ item $Y$ has length $3$ and suggests $Y$."
+        "title": "Two-step walk count",
+        "background": "In the same graph, the adjacency-square entry counts two-step walks.",
+        "numbers": "$(A^2)_{13}=1$"
       },
       {
-        "title": "Knowledge graph reasoning",
-        "background": "Multi-hop questions follow paths through facts rather than one direct edge.",
-        "numbers": "If $Ada\\to London$ and $London\\to UK$, a length-$2$ path links Ada to UK."
+        "title": "Three-step walk count",
+        "background": "The adjacency-cube entry counts three-step walks.",
+        "numbers": "$(A^3)_{14}=1$"
       },
       {
-        "title": "Program dependencies",
-        "background": "Build systems walk dependency graphs to decide what must be compiled first.",
-        "numbers": "If app depends on library $B$ and $B$ depends on $C$, the path app,$B$,$C$ has length $2$."
+        "title": "Walk that is not a path",
+        "background": "Walk $1,2,1,2$ repeats vertices.",
+        "numbers": "length $3$ but is not a path"
       },
       {
-        "title": "Random walks",
-        "background": "Many graph algorithms deliberately wander with walks that may revisit vertices.",
-        "numbers": "A walk $A,B,A,C$ has length $3$ and revisits $A$, so it is useful for sampling but not a path."
+        "title": "Distance",
+        "background": "Distance from $1$ to $4$ is the length of the shortest path.",
+        "numbers": "$3$"
       },
       {
-        "title": "Matrix powers",
-        "background": "Adjacency matrices count walks algebraically, linking graph movement to linear algebra.",
-        "numbers": "If $(A^2)_{ij}=5$, there are $5$ walks of length $2$ from $i$ to $j$."
+        "title": "Closed route",
+        "background": "A route $1,2,3,2,1$ returns to its start.",
+        "numbers": "length $4$ and endpoints both $1$"
       }
     ],
     "applicationsClose": "From routing to recommendations, graph movement begins with the same question: which sequences of adjacent vertices are allowed?",
@@ -804,6 +881,25 @@
       "A path is a walk with no repeated vertices.",
       "If a walk connects two vertices, a path also connects them after removing loops.",
       "Directed walks must follow edge directions."
+    ],
+    "connectionsProse": "<p>This lesson follows naturally after graphs and degrees, because it asks what it means to move through a graph. A walk is any sequence of adjacent steps, while a path is a walk with no repeated vertices. That distinction supports later lessons on reachability, shortest paths, cycles, and matrix powers. It also gives precise language for routes that are allowed to revisit places and routes that are not.</p>",
+    "symbols": [
+      {
+        "sym": "$v_0,v_1,\\ldots,v_k$",
+        "desc": "walk"
+      },
+      {
+        "sym": "$k$",
+        "desc": "length"
+      },
+      {
+        "sym": "path",
+        "desc": "walk with no repeated vertices"
+      },
+      {
+        "sym": "$v_0,v_k$",
+        "desc": "endpoints"
+      }
     ],
     "prereqs": [
       "math-15-02"
@@ -832,8 +928,8 @@
         "induction"
       ]
     },
-    "motivation": "<p>You know the feeling of walking around a block and ending where you started. In a graph, that closed clean route is a cycle.</p><p>Cycles are the difference between a network with redundancy and a tree-like network with exactly one way between places. They are small loops with big consequences.</p>",
-    "definition": "<p>A <b>cycle</b> is a sequence $v_0,v_1,\\ldots,v_k$ with $k\\ge3$, where $v_0=v_k$, consecutive vertices are adjacent, and $v_0,\\ldots,v_{k-1}$ are distinct. Its length is $k$.</p><p>A cycle is a closed walk with no repeated vertices except the return to the start. The condition $k\\ge3$ rules out immediate backtracking in a simple undirected graph. If every vertex in a finite graph has degree at least $2$, following unused exits must eventually repeat a vertex, and the first repeat contains a cycle.</p><p><b>Assumptions that matter:</b> this lesson uses simple undirected graphs unless stated otherwise; the same cycle can be written starting at different vertices; and reversing a cycle does not make a different undirected cycle.</p>",
+    "motivation": "<p>A connected graph can have just enough edges to hold together, or it can have extra edges. The extra edges are important because they create routes that return to where they started. That closed structure means one edge on the cycle is not essential for reachability between its endpoints.</p><p>Cycle rank measures how many independent redundancies a connected graph has beyond a tree. A tree on $n$ vertices uses $n-1$ edges, so every additional independent edge creates one independent cycle. This makes $m-n+1$ a compact count of how far a connected graph is from being acyclic.</p>",
+    "definition": "<p>A cycle is a closed path. For a connected graph, the cycle rank counts independent redundancies beyond a tree.</p><p>$$m-n+1$$</p><p><b>Assumptions that matter:</b> The formula stated here is for one connected component, with $n=|V|$ and $m=|E|$.</p>",
     "worked": {
       "problem": "Show that $A,B,C,D,A$ is a cycle in a graph with edges $AB,BC,CD,DA,AC$, and state its length.",
       "skills": [
@@ -1042,34 +1138,34 @@
     ],
     "applications": [
       {
-        "title": "Network redundancy",
-        "background": "Cycles give alternate routes, which is why communication networks often avoid pure tree shapes.",
-        "numbers": "In cycle $A,B,C,D,A$, if edge $AB$ fails, $A$ can still reach $B$ through $A,D,C,B$ with length $3$."
+        "title": "Cycle size",
+        "background": "$C_5$ has $5$ vertices and $5$ edges.",
+        "numbers": "$5$ vertices and $5$ edges"
       },
       {
-        "title": "Deadlock detection",
-        "background": "Operating systems look for cycles in resource-wait graphs to detect deadlocks.",
-        "numbers": "If process $P_1$ waits for $P_2$, $P_2$ waits for $P_3$, and $P_3$ waits for $P_1$, the length-$3$ cycle signals deadlock risk."
+        "title": "Cycle degree sum",
+        "background": "Each vertex of $C_5$ has degree $2$.",
+        "numbers": "degree sum is $10$"
       },
       {
-        "title": "Build systems",
-        "background": "Directed cycles in dependencies prevent a clean topological order.",
-        "numbers": "Edges $parser\\to lexer$ and $lexer\\to parser$ form a length-$2$ directed cycle of mutual dependence."
+        "title": "Cycle rank",
+        "background": "$C_5$ has one independent cycle.",
+        "numbers": "$5-5+1=1$"
       },
       {
-        "title": "Chemistry rings",
-        "background": "Molecular rings are graph cycles and strongly affect chemical properties.",
-        "numbers": "Benzene is modeled as a $6$-cycle of carbon atoms, so it has $6$ ring edges."
+        "title": "Diagonal redundancy",
+        "background": "A square with one diagonal has $n=4,m=5$.",
+        "numbers": "cycle rank $2$"
       },
       {
-        "title": "Graph neural networks",
-        "background": "Cycles affect how messages return to a node through neighbors.",
-        "numbers": "On triangle $A,B,C,A$, a two-layer message from $A$ can return through $A\\to B\\to C$ only with additional steps around the loop."
+        "title": "Breaking a cycle",
+        "background": "Removing one edge from $C_5$ leaves a path.",
+        "numbers": "$4$ edges"
       },
       {
-        "title": "Error-correcting codes",
-        "background": "Factor graphs with short cycles can make belief propagation double-count evidence.",
-        "numbers": "A $4$-cycle variable-check-variable-check-variable lets information return after $4$ messages."
+        "title": "Triangle",
+        "background": "A triangle is the shortest cycle.",
+        "numbers": "cycle length $3$"
       }
     ],
     "applicationsClose": "Cycles are loops of possibility and constraint: they give redundancy in routes but trouble in dependencies.",
@@ -1078,6 +1174,52 @@
       "Cycles can be written from different starting points without changing the underlying loop.",
       "Graphs without cycles are acyclic and lead naturally to trees.",
       "Directed cycles can represent circular dependencies."
+    ],
+    "connectionsProse": "<p>This lesson extends paths by allowing a route to close back on itself. A cycle is a closed path, so it captures the first kind of redundancy in a graph. Earlier ideas about paths and connectivity explain why a cycle gives an alternate way around. Later lessons use cycles to understand trees, spanning trees, coloring, planarity, and algorithms.</p>",
+    "symbols": [
+      {
+        "sym": "Cycle",
+        "desc": "closed path"
+      },
+      {
+        "sym": "$n=|V|$",
+        "desc": "number of vertices"
+      },
+      {
+        "sym": "$m=|E|$",
+        "desc": "number of edges"
+      },
+      {
+        "sym": "$m-n+1$",
+        "desc": "cycle rank for one connected component"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a connected graph with $n$ vertices.",
+        "result": "at least $n-1$ edges",
+        "why": "that many edges are needed to connect all vertices"
+      },
+      {
+        "do": "Compare with a tree.",
+        "result": "$n-1$ edges and no cycle",
+        "why": "a tree is minimally connected"
+      },
+      {
+        "do": "Add one extra edge to a tree.",
+        "result": "one closed route",
+        "why": "the tree already has a path between the edge's endpoints"
+      },
+      {
+        "do": "Count independent extra edges.",
+        "result": "one independent cycle per independent extra edge",
+        "why": "each extra edge creates one independent redundancy"
+      },
+      {
+        "do": "Subtract the tree edge count from $m$.",
+        "result": "$m-n+1$",
+        "why": "these are the edges beyond a tree"
+      }
     ],
     "prereqs": [
       "math-15-03"
@@ -1106,8 +1248,8 @@
         "components"
       ]
     },
-    "motivation": "<p>A map is less useful if it secretly breaks into islands. Graph connectivity names that simple concern: can you get from here to there?</p><p>Once connectivity is clear, a graph can be split into components, searched systematically, or repaired by adding the right edges.</p>",
-    "definition": "<p>An undirected graph is <b>connected</b> if for every pair of vertices $u,v\\in V$, there is a path from $u$ to $v$. A <b>connected component</b> is a largest set of vertices that are mutually reachable.</p><p>Reachability behaves like an equivalence relation: every vertex reaches itself by a length-$0$ path, paths can be reversed in undirected graphs, and two paths can be concatenated. Therefore vertices partition into components.</p><p><b>Assumptions that matter:</b> connected means path-connected in the graph; isolated vertices form one-vertex components; and directed graphs require separate notions such as strong and weak connectivity.</p>",
+    "motivation": "<p>Reachability is one of the most basic questions a graph can answer. Two vertices may be in the same dataset and still have no path between them. Components organize this situation by grouping together exactly the vertices that can reach each other.</p><p>The word maximal matters. A component is not just any connected subgraph; it is a connected piece that cannot be enlarged without losing connectedness. Algorithms such as BFS or DFS find components by starting at one vertex, exploring everything reachable from it, and then repeating from an unvisited vertex if needed.</p>",
+    "definition": "<p>A graph is connected when every vertex can reach every other vertex by a path. A connected component is a maximal connected piece, and $c(G)$ counts the components.</p><p><b>Assumptions that matter:</b> Connectedness and connected components are definitions. The lesson should explain maximality and why algorithms find components by exploring all reachable vertices.</p>",
     "worked": {
       "problem": "Find the connected components of a graph with vertices $A,B,C,D,E$ and edges $AB,BC,DE$.",
       "skills": [
@@ -1316,34 +1458,34 @@
     ],
     "applications": [
       {
-        "title": "Network outage analysis",
-        "background": "Engineers measure components after failures to see who remains reachable.",
-        "numbers": "If a $1000$-node network splits into components $920$, $50$, and $30$, then $92\\%$ remain in the largest component."
+        "title": "Component sizes",
+        "background": "Edges $12,23,45$ split the graph into two pieces.",
+        "numbers": "component sizes $3$ and $2$"
       },
       {
-        "title": "Social communities",
-        "background": "Disconnected components can reveal separate populations or data-ingestion gaps.",
-        "numbers": "A user graph with component sizes $10,000$ and $12$ suggests a tiny isolated group worth inspecting."
+        "title": "Component count",
+        "background": "The disconnected example has two components.",
+        "numbers": "$c(G)=2$"
       },
       {
-        "title": "Image segmentation",
-        "background": "Connected components label neighboring pixels that belong to the same object.",
-        "numbers": "If a binary image has blobs of $35$, $80$, and $12$ pixels, the largest connected component has $80$ pixels."
+        "title": "Connecting components",
+        "background": "Adding edge $34$ joins the two pieces.",
+        "numbers": "$c(G)=1$"
       },
       {
-        "title": "Distributed systems",
-        "background": "Service dependency graphs must stay connected enough for requests to flow.",
-        "numbers": "If frontend reaches API and API reaches database, a path of length $2$ connects frontend to database."
+        "title": "Bridge removal",
+        "background": "Removing bridge $23$ from path $1-2-3$ disconnects it.",
+        "numbers": "$2$ components"
       },
       {
-        "title": "Graph ML sampling",
-        "background": "Training often samples from the giant component to avoid isolated nodes with little context.",
-        "numbers": "If $9500$ of $10,000$ nodes are in one component, sampling there covers $95\\%$ of nodes."
+        "title": "Connected BFS",
+        "background": "In a connected $5$-vertex graph, BFS from one vertex reaches all vertices.",
+        "numbers": "$5$ vertices"
       },
       {
-        "title": "Transportation planning",
-        "background": "Connectivity checks whether every station can reach the rest of a transit network.",
-        "numbers": "Adding one bridge edge between two subway components reduces components from $2$ to $1$."
+        "title": "Disconnected BFS",
+        "background": "In the disconnected example, BFS from $1$ reaches only its component.",
+        "numbers": "$3$ vertices"
       }
     ],
     "applicationsClose": "Connectivity is the graph's answer to belonging: which vertices live in the same reachable world?",
@@ -1352,6 +1494,29 @@
       "Components are maximal mutually reachable vertex sets.",
       "Reachability partitions an undirected graph into components.",
       "Connecting $c$ components needs at least $c-1$ new edges."
+    ],
+    "connectionsProse": "<p>This lesson uses paths to define when a graph is in one piece. If every vertex can reach every other vertex, the graph is connected. If not, the connected components are the separate maximal pieces. This language is used by traversal algorithms, spanning trees, Laplacians, and spectral tests for connectedness.</p>",
+    "symbols": [
+      {
+        "sym": "Connected graph",
+        "desc": "a graph in which every vertex can reach every other vertex"
+      },
+      {
+        "sym": "component",
+        "desc": "maximal connected piece"
+      },
+      {
+        "sym": "reachable",
+        "desc": "connected by a path"
+      },
+      {
+        "sym": "bridge edge",
+        "desc": "edge whose removal can increase the number of components"
+      },
+      {
+        "sym": "$c(G)$",
+        "desc": "number of components"
+      }
     ],
     "prereqs": [
       "math-15-04"
@@ -1380,8 +1545,8 @@
         "acyclic graphs"
       ]
     },
-    "motivation": "<p>You have seen family trees and folder trees: branching structures with no loop that brings you back. Graph theory makes that picture exact.</p><p>Trees matter because they are the simplest connected graphs. Remove any edge and connection breaks; add any new edge and a cycle appears.</p>",
-    "definition": "<p>A <b>tree</b> is a connected undirected graph with no cycles. For a finite tree with $n$ vertices, the number of edges is $n-1$.</p><p>One reason: every tree with at least two vertices has a leaf, a vertex of degree $1$. Removing a leaf and its edge leaves a smaller tree. Repeating this removes one edge per removed vertex, so starting from $n$ vertices ends with $n-1$ edges.</p><p><b>Assumptions that matter:</b> a one-vertex graph is a tree with $0$ edges; finite tree facts may fail for infinite graphs without care; and connected plus acyclic are both required.</p>",
+    "motivation": "<p>A connected graph can contain redundant routes, but a tree has none. Between any two vertices there is exactly one path, so removing an edge separates the graph. This is why trees are useful whenever the goal is to preserve reachability with no extra edges.</p><p>The standard characterizations all describe the same structure from different angles. Connected and acyclic emphasizes the definition, unique paths emphasize navigation, and $m=n-1$ emphasizes the edge count. Together they make trees a bridge between graph structure and simple counting.</p>",
+    "definition": "<p>A tree is a graph that is connected and acyclic. Equivalently, there is a unique path between any two vertices, and a tree with $n$ vertices has $m=n-1$ edges.</p><p><b>Assumptions that matter:</b> The lesson should present the equivalent characterizations and explain them, not fake a proof.</p>",
     "worked": {
       "problem": "A connected graph has $8$ vertices and $7$ edges. If it has no cycles, is it a tree?",
       "skills": [
@@ -1580,34 +1745,34 @@
     ],
     "applications": [
       {
-        "title": "Decision trees",
-        "background": "ML decision trees branch without cycles so each input follows one root-to-leaf route.",
-        "numbers": "A tree with $16$ leaves and full binary splits has $31$ total nodes and $30$ edges."
+        "title": "Tree edge count",
+        "background": "A tree with $7$ vertices has one fewer edge.",
+        "numbers": "$6$ edges"
       },
       {
-        "title": "File systems",
-        "background": "Directories are organized as trees to give each file a unique path from the root.",
-        "numbers": "If a folder tree has $120$ folders/files, it has $119$ parent-child links."
+        "title": "Tree degree sum",
+        "background": "The degree sum is twice the edge count.",
+        "numbers": "$12$"
       },
       {
-        "title": "Parse trees",
-        "background": "Compilers represent expressions as trees so nested operations have a clear structure.",
-        "numbers": "Expression $(a+b)c$ has operator nodes $+$ and $\\cdot$ plus leaves $a,b,c$, giving $5$ nodes and $4$ edges."
+        "title": "Path leaves",
+        "background": "Path $P_7$ has leaves only at its endpoints.",
+        "numbers": "$2$ leaves"
       },
       {
-        "title": "Phylogenetics",
-        "background": "Evolutionary trees model branching ancestry without cycles.",
-        "numbers": "A rooted binary tree with $8$ species leaves has $7$ internal branching nodes and $14$ edges."
+        "title": "Star leaves",
+        "background": "Star $K_{1,6}$ has all noncenter vertices as leaves.",
+        "numbers": "$6$ leaves"
       },
       {
-        "title": "Broadcast protocols",
-        "background": "A tree-shaped broadcast avoids duplicate messages while reaching everyone.",
-        "numbers": "To reach $100$ machines in a tree, exactly $99$ transmissions along edges suffice."
+        "title": "Unique path",
+        "background": "The unique path between two leaves in $P_7$ runs through the whole path.",
+        "numbers": "length $6$"
       },
       {
-        "title": "Hierarchical clustering",
-        "background": "Dendrograms are trees showing how clusters merge over thresholds.",
-        "numbers": "Merging $10$ singleton clusters into one requires $9$ merge events, matching the tree idea."
+        "title": "Adding redundancy",
+        "background": "Adding one edge to a $7$-vertex tree creates one independent cycle.",
+        "numbers": "cycle rank $1$"
       }
     ],
     "applicationsClose": "Trees are the minimal connected skeletons hiding inside many hierarchical systems.",
@@ -1616,6 +1781,33 @@
       "A finite tree with $n$ vertices has $n-1$ edges.",
       "Every edge of a tree is essential for connectivity.",
       "Adding one edge to a tree creates a cycle."
+    ],
+    "connectionsProse": "<p>This lesson combines connectivity and cycles. A tree is connected enough to hold all vertices together, but sparse enough to have no cycles. That makes trees the minimal connected graphs. They are the reference point for spanning trees, traversal trees, recursion, and many proofs by induction on graphs.</p>",
+    "symbols": [
+      {
+        "sym": "Tree",
+        "desc": "connected acyclic graph"
+      },
+      {
+        "sym": "leaf",
+        "desc": "vertex with degree $1$"
+      },
+      {
+        "sym": "root",
+        "desc": "chosen starting vertex when oriented"
+      },
+      {
+        "sym": "parent/child",
+        "desc": "oriented tree relationship"
+      },
+      {
+        "sym": "$n$",
+        "desc": "vertices"
+      },
+      {
+        "sym": "$m$",
+        "desc": "edges"
+      }
     ],
     "prereqs": [
       "math-15-05"
@@ -1644,8 +1836,8 @@
         "induction"
       ]
     },
-    "motivation": "<p>A connected graph may have many redundant edges. That redundancy is useful, but sometimes you want the clean backbone.</p><p>A spanning tree is that backbone: all vertices remain, just enough edges stay to connect them, and every cycle has been removed.</p>",
-    "definition": "<p>A <b>spanning tree</b> of a connected graph $G=(V,E)$ is a subgraph $T=(V,E_T)$ that uses all vertices, is connected, and is a tree. Therefore if $|V|=n$, then $|E_T|=n-1$.</p><p>Existence comes from cycle removal. Start with a connected graph. If it has a cycle, remove one edge from that cycle; the graph stays connected because the rest of the cycle still gives an alternate route. Repeat until no cycles remain.</p><p><b>Assumptions that matter:</b> a spanning tree exists only for connected undirected graphs; disconnected graphs have spanning forests; and edge weights are irrelevant here until minimum spanning trees.</p>",
+    "motivation": "<p>A connected graph often contains more edges than are needed just to keep all vertices reachable. Those extra edges may be useful in the original network, but if the goal is only connectivity, they can be removed carefully. A spanning tree is what remains when all redundancy has been discarded without losing any vertex.</p><p>The key operation is removing an edge from a cycle. The rest of the cycle still connects the removed edge's endpoints, so the graph stays connected. Repeating this operation eventually leaves a connected graph with no cycles, which is exactly a tree spanning all vertices.</p>",
+    "definition": "<p>A spanning tree of a connected graph is a subgraph that includes all vertices and is a tree. It therefore has $n-1$ edges.</p><p><b>Assumptions that matter:</b> The starting graph is connected, and removing an edge from a cycle preserves connectivity.</p>",
     "worked": {
       "problem": "Find a spanning tree for the graph with vertices $A,B,C,D$ and edges $AB,BC,CD,DA,AC$.",
       "skills": [
@@ -1854,34 +2046,34 @@
     ],
     "applications": [
       {
-        "title": "Network broadcast",
-        "background": "Spanning trees prevent broadcast storms by forwarding along a loop-free backbone.",
-        "numbers": "For $500$ switches, a spanning tree uses $499$ active links."
+        "title": "Spanning-tree edge count",
+        "background": "Any spanning tree on $5$ vertices has one fewer edge.",
+        "numbers": "$4$ edges"
       },
       {
-        "title": "Circuit design",
-        "background": "Loop-free connection backbones can reduce redundant wiring while preserving reachability.",
-        "numbers": "Connecting $12$ modules minimally takes $11$ wires in a spanning tree."
+        "title": "Cayley count",
+        "background": "$K_4$ has $4^{4-2}$ spanning trees.",
+        "numbers": "$16$ spanning trees"
       },
       {
-        "title": "Clustering",
-        "background": "A graph can be summarized by a tree backbone before cutting weak links into clusters.",
-        "numbers": "A spanning tree on $100$ points has $99$ edges; cutting $4$ edges produces $5$ components."
+        "title": "Cycle spanning trees",
+        "background": "A cycle $C_5$ has one spanning tree per removed edge.",
+        "numbers": "$5$ spanning trees"
       },
       {
-        "title": "Maze generation",
-        "background": "Perfect mazes are spanning trees of grid graphs: every cell reachable with no loops.",
-        "numbers": "A $10\\times10$ grid has $100$ cells, so a perfect maze has $99$ open passages."
+        "title": "Already a tree",
+        "background": "A graph that is already a tree has no cycle edge to choose.",
+        "numbers": "$1$ spanning tree"
       },
       {
-        "title": "Data lineage",
-        "background": "A spanning tree can choose one explanation parent per artifact while keeping all artifacts reachable.",
-        "numbers": "For $30$ artifacts, the lineage tree has $29$ selected dependency links."
+        "title": "Square with diagonal",
+        "background": "A square with one diagonal has several spanning backbones.",
+        "numbers": "$8$ spanning trees"
       },
       {
-        "title": "Approximation algorithms",
-        "background": "Many graph algorithms first build a spanning tree as a cheap connected scaffold.",
-        "numbers": "If a connected graph has $1000$ vertices and $5000$ edges, the scaffold keeps $999$ edges and ignores $4001$."
+        "title": "Removing redundancy",
+        "background": "Removing two cycle edges from a connected $6$-vertex, $7$-edge graph reaches.",
+        "numbers": "$5$ tree edges"
       }
     ],
     "applicationsClose": "A spanning tree keeps the promise of connectivity while removing every loop of redundancy.",
@@ -1890,6 +2082,56 @@
       "Every spanning tree on $n$ vertices has $n-1$ edges.",
       "Connected graphs have spanning trees by repeated cycle removal.",
       "Disconnected graphs have spanning forests instead."
+    ],
+    "connectionsProse": "<p>This lesson builds from trees to connected graphs that may contain cycles. A spanning tree keeps every vertex but removes the cycle edges that are not needed for connectivity. It is a way to extract a minimal connected backbone from a larger graph. This idea prepares the reader for minimum spanning trees, network design, and cycle-rank reasoning.</p>",
+    "symbols": [
+      {
+        "sym": "Spanning tree",
+        "desc": "tree subgraph that includes all vertices"
+      },
+      {
+        "sym": "spanning",
+        "desc": "includes all vertices"
+      },
+      {
+        "sym": "tree edge",
+        "desc": "edge kept in the spanning tree"
+      },
+      {
+        "sym": "non-tree edge",
+        "desc": "edge not kept in the spanning tree"
+      },
+      {
+        "sym": "$\\tau(G)$",
+        "desc": "number of spanning trees"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with any connected graph.",
+        "result": "all vertices are reachable",
+        "why": "the graph is connected"
+      },
+      {
+        "do": "If there is a cycle, remove one edge from that cycle.",
+        "result": "one fewer edge",
+        "why": "the rest of the cycle still connects its endpoints"
+      },
+      {
+        "do": "Check connectivity after the removal.",
+        "result": "connectivity is preserved",
+        "why": "the removed edge's endpoints still have an alternate route"
+      },
+      {
+        "do": "Repeat until no cycles remain.",
+        "result": "connected and acyclic graph",
+        "why": "each removal decreases the edge count while preserving connectivity"
+      },
+      {
+        "do": "Recognize the final graph.",
+        "result": "a spanning tree with $n-1$ edges",
+        "why": "it is connected, acyclic, and includes all vertices"
+      }
     ],
     "prereqs": [
       "math-15-06"
@@ -1918,8 +2160,8 @@
         "trees"
       ]
     },
-    "motivation": "<p>If you ask who is one friendship away, then two friendships away, then three, you are already thinking breadth-first.</p><p><b>Breadth-first search</b> is the disciplined version: use a queue, explore nearest vertices first, and record levels from the start.</p>",
-    "definition": "<p>Breadth-first search, or <b>BFS</b>, starts at a source vertex $s$, marks $s$ at distance $0$, and repeatedly removes the oldest discovered vertex from a queue. Any undiscovered neighbor gets distance one more than the current vertex and is added to the queue.</p><p>The shortest-path guarantee comes from the queue order. All vertices at distance $d$ are processed before vertices at distance $d+1$, so when a vertex is first discovered, no shorter unweighted path is still waiting.</p><p><b>Assumptions that matter:</b> BFS shortest distances count edges and require unweighted graphs; neighbor order can change the BFS tree but not distances; and disconnected vertices remain undiscovered from the source.</p>",
+    "motivation": "<p>When every edge has the same cost, the shortest way to reach a vertex is the one with the fewest edges. BFS respects that structure by visiting all neighbors first, then all vertices two steps away, then all vertices three steps away, and so on. The queue enforces this layer order.</p><p>The main invariant is that vertices at distance $k$ are processed before vertices at distance $k+1$. Therefore, when BFS first discovers a vertex, no shorter unweighted route to it is still waiting to be found. The predecessor links recorded during discovery form a shortest-path tree for all reached vertices.</p>",
+    "definition": "<p>Breadth-first search starts from a source $s$, uses a queue, and processes vertices layer by layer. The key invariant is that all vertices at distance $k$ are processed before vertices at distance $k+1$.</p><p><b>Assumptions that matter:</b> Edges are unweighted, so first discovery gives shortest unweighted distance.</p>",
     "worked": {
       "problem": "Run BFS from $A$ on edges $AB,AC,BD,CE,DE$. Give distances from $A$.",
       "skills": [
@@ -2123,34 +2365,34 @@
     ],
     "applications": [
       {
-        "title": "Unweighted routing",
-        "background": "BFS gives hop counts when every link has equal cost.",
-        "numbers": "If router $T$ is discovered at level $5$, the minimum hop count from the source is $5$."
+        "title": "BFS distances",
+        "background": "With edges $sa,sb,ac,bd,ce$, BFS layers give.",
+        "numbers": "$d(s)=0,d(a)=1,d(b)=1,d(c)=2,d(d)=2,d(e)=3$"
       },
       {
-        "title": "Social distance",
-        "background": "Degrees of separation are BFS levels in a friendship graph.",
-        "numbers": "Your friends are level $1$; friends of friends not already seen are level $2$."
+        "title": "Shortest path",
+        "background": "The shortest $s\\to e$ path follows the layers.",
+        "numbers": "length $3$"
       },
       {
-        "title": "Web crawling",
-        "background": "Crawlers often explore links in breadth-first order to cover nearby pages before deep chains.",
-        "numbers": "Starting from one page with $20$ links, the first wave can add up to $20$ level-$1$ pages."
+        "title": "Layer size",
+        "background": "Layer $2$ contains vertices $c$ and $d$.",
+        "numbers": "$2$ vertices"
       },
       {
-        "title": "Puzzle solving",
-        "background": "For puzzles with equal-cost moves, BFS finds the fewest moves.",
-        "numbers": "If a state appears at depth $12$, then a $12$-move solution exists and no shorter one was missed."
+        "title": "Two-hop recommendation",
+        "background": "A two-hop friend recommendation from $s$ returns $\\{c,d\\}$.",
+        "numbers": "count $2$"
       },
       {
-        "title": "Bipartite checking",
-        "background": "BFS levels can color a graph by parity to test bipartiteness.",
-        "numbers": "Assign even levels blue and odd levels red; an edge within the same level reveals an odd cycle."
+        "title": "BFS tree",
+        "background": "The BFS tree has one fewer edge than reached vertices.",
+        "numbers": "$5$ edges for $6$ reached vertices"
       },
       {
-        "title": "Graph ML neighborhoods",
-        "background": "Many neighborhood features collect nodes within $k$ BFS hops.",
-        "numbers": "A $2$-hop neighborhood may include $10$ one-hop neighbors and $35$ new two-hop neighbors, total $45$ context nodes."
+        "title": "Discovery order",
+        "background": "Vertex $e$ is discovered after $c$.",
+        "numbers": "because it is in layer $3$"
       }
     ],
     "applicationsClose": "BFS is the graph's ripple pattern: distance emerges from the order of discovery.",
@@ -2159,6 +2401,29 @@
       "First discovery gives a shortest path length in unweighted graphs.",
       "BFS from one source finds exactly that source's connected component.",
       "The BFS tree can vary with neighbor order, but distances do not."
+    ],
+    "connectionsProse": "<p>This lesson turns reachability into an algorithm. Breadth-first search starts at one source vertex and explores the graph layer by layer. The layers match unweighted distances from the source. This prepares the reader for shortest paths, components, recommendation neighborhoods, and traversal trees.</p>",
+    "symbols": [
+      {
+        "sym": "$s$",
+        "desc": "source"
+      },
+      {
+        "sym": "queue",
+        "desc": "first-in, first-out structure that enforces layer order"
+      },
+      {
+        "sym": "layer",
+        "desc": "vertices at the same distance from the source"
+      },
+      {
+        "sym": "$d(v)$",
+        "desc": "distance to vertex $v$"
+      },
+      {
+        "sym": "$p(v)$",
+        "desc": "predecessor of vertex $v$"
+      }
     ],
     "prereqs": [
       "math-15-07"
@@ -2187,8 +2452,8 @@
         "cycles"
       ]
     },
-    "motivation": "<p>Sometimes you explore a maze by committing to one corridor until it ends, then backing up. That instinct is depth-first search.</p><p><b>Depth-first search</b> is less about nearest distances and more about structure: components, cycles, finishing times, and rooted search trees.</p>",
-    "definition": "<p>Depth-first search, or <b>DFS</b>, starts at a vertex, marks it visited, recursively visits an unvisited neighbor, and backtracks when no unvisited neighbor remains. Equivalently, it uses a stack.</p><p>DFS creates a search forest. Each tree edge records the first time a vertex is discovered. The backtracking order gives finishing times, which are useful because a vertex finishes only after all vertices reachable through its unvisited descendants have been explored.</p><p><b>Assumptions that matter:</b> DFS order depends on neighbor ordering; it does not guarantee shortest paths; and disconnected graphs require restarting DFS from unvisited vertices to cover all components.</p>",
+    "motivation": "<p>DFS is useful when a graph problem depends on nested exploration. The algorithm commits to a branch, records what is currently on the recursion stack, and only returns when no unexplored outgoing step remains. This makes the history of the search part of the information it discovers.</p><p>In directed graphs, a back edge to a vertex still on the stack signals a cycle because the current path can return to an ancestor. In a DAG, no such back edge exists, and reverse finish order places each prerequisite before the vertices that depend on it. The same traversal idea therefore supports both detecting cycles and ordering acyclic dependencies.</p>",
+    "definition": "<p>Depth-first search follows one path as far as possible before backtracking, maintaining discovery times, finish times, and a recursion stack.</p><p><b>Assumptions that matter:</b> DFS maintains a recursion stack; a back edge to the stack signals a directed cycle, and reverse finish order gives a topological order in a DAG.</p>",
     "worked": {
       "problem": "Run DFS from $A$ using alphabetical neighbors on edges $AB,AC,BD,CE$. List discovery order.",
       "skills": [
@@ -2397,34 +2662,34 @@
     ],
     "applications": [
       {
-        "title": "Maze solving",
-        "background": "DFS is the classic backtracking maze strategy: try a corridor, retreat at dead ends.",
-        "numbers": "In a maze graph, a DFS path of length $12$ may be found before a shortest path of length $8$."
+        "title": "Topological order",
+        "background": "In DAG $A\\to B,A\\to C,B\\to D,C\\to D$, DFS can output topological order.",
+        "numbers": "$A,B,C,D$ with $4$ vertices"
       },
       {
-        "title": "Cycle detection",
-        "background": "Compilers and build tools use DFS to find circular dependencies.",
-        "numbers": "If DFS sees $A\\to B\\to C\\to A$, the active-stack edge back to $A$ reports a cycle."
+        "title": "Stack depth",
+        "background": "The recursion stack length can reach $3$ on path.",
+        "numbers": "$A\\to B\\to D$"
       },
       {
-        "title": "Topological sorting",
-        "background": "Directed acyclic graphs can be ordered by reverse DFS finishing times.",
-        "numbers": "If task $C$ finishes before dependency $B$ in DFS, reversing finish order can place $B$ before $C$."
+        "title": "Back-edge cycle",
+        "background": "A back edge $D\\to B$ creates.",
+        "numbers": "one directed cycle"
       },
       {
-        "title": "Connected components",
-        "background": "DFS labels all vertices reachable from a start, then restarts for other components.",
-        "numbers": "If restarts happen $4$ times, the graph has $4$ components."
+        "title": "Multiple components",
+        "background": "DFS over two components starts.",
+        "numbers": "$2$ root calls"
       },
       {
-        "title": "Program analysis",
-        "background": "Control-flow analysis explores possible execution paths with DFS-like recursion.",
-        "numbers": "A branch graph with two nested if-statements can expose $4$ possible path leaves."
+        "title": "DFS tree size",
+        "background": "A DFS tree on $6$ reached vertices has.",
+        "numbers": "$5$ tree edges"
       },
       {
-        "title": "Memory tradeoffs",
-        "background": "DFS often stores a path stack rather than a whole frontier.",
-        "numbers": "In a depth-$100$ tree with branching factor $3$, DFS stack can hold about $100$ path nodes while BFS near the bottom may face $3^{10}=59049$ nodes at just level $10$."
+        "title": "Undirected triangle",
+        "background": "In an undirected triangle, DFS finds.",
+        "numbers": "$1$ non-tree edge completing the cycle"
       }
     ],
     "applicationsClose": "DFS is the patient explorer: it uncovers graph structure by going deep, finishing, and returning.",
@@ -2433,6 +2698,33 @@
       "DFS discovery order depends on neighbor order.",
       "DFS does not guarantee shortest paths.",
       "DFS forests reveal components, cycles, and useful finishing orders."
+    ],
+    "connectionsProse": "<p>This lesson introduces the other basic graph traversal. Depth-first search follows one path as far as possible before backtracking. That different exploration order reveals structure that BFS does not emphasize, such as recursion stacks, back edges, and finish times. DFS becomes a tool for components, cycle detection, and topological ordering.</p>",
+    "symbols": [
+      {
+        "sym": "Discovery time",
+        "desc": "time when a vertex is first reached"
+      },
+      {
+        "sym": "finish time",
+        "desc": "time when all outgoing exploration from a vertex is complete"
+      },
+      {
+        "sym": "recursion stack",
+        "desc": "currently active DFS path"
+      },
+      {
+        "sym": "tree edge",
+        "desc": "edge used to discover a new vertex"
+      },
+      {
+        "sym": "back edge",
+        "desc": "edge to a vertex still on the recursion stack"
+      },
+      {
+        "sym": "topological order",
+        "desc": "ordering of a DAG with prerequisites before dependents"
+      }
     ],
     "prereqs": [
       "math-15-08"
@@ -2461,8 +2753,8 @@
         "weighted paths"
       ]
     },
-    "motivation": "<p>BFS treats every edge as one step. But roads have lengths, links have latencies, and actions have costs.</p><p>Dijkstra's algorithm is the weighted version for nonnegative edges. It repeatedly trusts the unsettled vertex with the smallest tentative distance.</p>",
-    "definition": "<p>For a weighted graph with nonnegative edge weights $w(u,v)\\ge0$, Dijkstra's algorithm maintains tentative distances $d(v)$ from a source $s$. It repeatedly selects an unsettled vertex with smallest $d(v)$, settles it, and relaxes its outgoing edges by testing whether $d(u)+w(u,v)<d(v)$.</p><p>The greedy step is safe because weights are nonnegative. Any alternate path to the smallest unsettled vertex would have to pass through another unsettled vertex with distance at least as large, then add a nonnegative edge, so it cannot be cheaper.</p><p><b>Assumptions that matter:</b> edge weights must be nonnegative; unreachable vertices keep distance $\\infty$; and directed graphs relax only outgoing edges.</p>",
+    "motivation": "<p>In a weighted graph, the closest vertex is not necessarily the one with the fewest edges from the source. The algorithm therefore tracks the best distance found so far for each vertex. Relaxing an edge means checking whether a route through the current vertex improves that tentative value.</p><p>The nonnegative-weight assumption is what makes settling safe. Once the unsettled vertex with smallest tentative distance is chosen, any future route to it would have to pass through another unsettled vertex and then add nonnegative cost. That future route cannot be shorter, so the current distance can be finalized.</p>",
+    "definition": "<p>Dijkstra's algorithm keeps tentative distances, repeatedly settles the unsettled vertex with smallest tentative distance, and relaxes outgoing edges.</p><p>$$d(v)\\leftarrow\\min(d(v),d(u)+w(u,v))$$</p><p><b>Assumptions that matter:</b> All edge weights are nonnegative, so settling the smallest tentative distance is safe.</p>",
     "worked": {
       "problem": "Run Dijkstra from $A$ with edges $AB=2$, $AC=5$, $BC=1$, $BD=4$, $CD=1$.",
       "skills": [
@@ -2676,34 +2968,34 @@
     ],
     "applications": [
       {
-        "title": "Maps",
-        "background": "Road navigation uses Dijkstra-like methods when edge costs are nonnegative travel times.",
-        "numbers": "A route with edges $3.2$, $4.8$, and $2.0$ km has total length $10.0$ km."
+        "title": "Shortest to $a$",
+        "background": "In graph $s\\to a=2,s\\to b=5,a\\to b=1,a\\to c=2,b\\to c=1,c\\to d=1,b\\to d=3$.",
+        "numbers": "shortest $d(a)=2$"
       },
       {
-        "title": "Network latency",
-        "background": "Routers estimate least-latency paths through links with nonnegative delays.",
-        "numbers": "Path delays $12+7+5=24$ ms beat $10+20=30$ ms."
+        "title": "Relaxing $a\\to b$",
+        "background": "The route through $a$ improves the old tentative value.",
+        "numbers": "changes $d(b)$ from $5$ to $3$"
       },
       {
-        "title": "Game AI",
-        "background": "Grid pathfinding uses nonnegative movement costs to guide agents.",
-        "numbers": "Moving over grass cost $2$ and road cost $1$ makes three road steps cost $3$ versus two grass steps cost $4$."
+        "title": "Shortest to $c$",
+        "background": "The best route to $c$ has cost.",
+        "numbers": "$d(c)=4$"
       },
       {
-        "title": "Robotics",
-        "background": "Motion planners discretize space into weighted graphs of safe moves.",
-        "numbers": "If turn cost is $0.5$ and move cost is $1$, a path with $6$ moves and $2$ turns costs $7$."
+        "title": "Shortest to $d$",
+        "background": "The best route to $d$ has cost.",
+        "numbers": "$d(d)=5$"
       },
       {
-        "title": "Information retrieval",
-        "background": "Weighted graph search can rank paths through entity relationships.",
-        "numbers": "A confidence cost path $0.2+0.4+0.1=0.7$ is preferred over $1.3$ when lower cost is better."
+        "title": "Path cost",
+        "background": "Path $s,a,c,d$ has cost.",
+        "numbers": "$2+2+1=5$"
       },
       {
-        "title": "Feature pipelines",
-        "background": "Data lineage systems find cheapest recomputation paths when transformations have costs.",
-        "numbers": "If recomputing $X$ costs $6$ and loading cached $Y$ then transforming costs $2+1$, Dijkstra favors cost $3$."
+        "title": "Settled order",
+        "background": "The settled order is.",
+        "numbers": "$s,a,b,c,d$, five vertices"
       }
     ],
     "applicationsClose": "Dijkstra turns weighted reachability into an ordered expansion of trustworthy shortest distances.",
@@ -2712,6 +3004,61 @@
       "Relaxation tests whether going through one vertex improves another distance.",
       "The smallest unsettled tentative distance becomes final under nonnegative weights.",
       "Negative edges require a different algorithm."
+    ],
+    "connectionsProse": "<p>This lesson moves from unweighted distance to weighted shortest paths. Dijkstra's algorithm applies when edge weights are nonnegative. It keeps tentative distances and gradually settles vertices whose shortest distances are known. The method builds on paths, relaxation, and the idea that a shortest route can be extended edge by edge.</p>",
+    "symbols": [
+      {
+        "sym": "$d(v)$",
+        "desc": "tentative distance"
+      },
+      {
+        "sym": "$w(u,v)$",
+        "desc": "edge weight"
+      },
+      {
+        "sym": "relaxation",
+        "desc": "updating a tentative distance through an edge"
+      },
+      {
+        "sym": "priority queue",
+        "desc": "data structure for choosing the smallest tentative distance"
+      },
+      {
+        "sym": "settled vertex",
+        "desc": "vertex whose shortest distance is finalized"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Initialize tentative distances.",
+        "result": "$d(s)=0$ and others $\\infty$",
+        "why": "the source is reached with cost zero and all other costs are unknown"
+      },
+      {
+        "do": "Choose the unsettled vertex $u$ with smallest $d(u)$.",
+        "result": "$u$ is next",
+        "why": "it is currently the closest unsettled vertex"
+      },
+      {
+        "do": "Use the nonnegative-weight assumption.",
+        "result": "any later route to $u$ is at least as long as the current best",
+        "why": "a later route must add nonnegative cost after reaching another unsettled vertex"
+      },
+      {
+        "do": "Settle $u$.",
+        "result": "$d(u)$ is final",
+        "why": "no shorter route can appear later"
+      },
+      {
+        "do": "Relax every edge $u\\to v$.",
+        "result": "$d(v)\\leftarrow\\min(d(v),d(u)+w(u,v))$",
+        "why": "a route through $u$ may improve the best known distance to $v$"
+      },
+      {
+        "do": "Repeat.",
+        "result": "all needed vertices are settled",
+        "why": "each step finalizes one shortest distance"
+      }
     ],
     "prereqs": [
       "math-15-09"
@@ -2740,8 +3087,8 @@
         "paths"
       ]
     },
-    "motivation": "<p>Sometimes a cost can be negative: a rebate, a currency exchange gain, or a modeling reward. Dijkstra's greedy certainty no longer works there.</p><p><b>Bellman-Ford</b> takes a steadier route. It relaxes every edge repeatedly, allowing shortest paths with more and more edges to settle into place.</p>",
-    "definition": "<p>Bellman-Ford initializes $d(s)=0$ and all other distances to $\\infty$. Then it relaxes every edge $|V|-1$ times. For edge $u\\to v$ with weight $w(u,v)$, relaxation tests $d(u)+w(u,v)<d(v)$ and updates if true.</p><p>Why $|V|-1$ rounds: any shortest path with no negative cycle can be chosen simple, so it uses at most $|V|-1$ edges. After round $k$, all shortest paths using at most $k$ edges have been accounted for by induction over the last edge.</p><p><b>Assumptions that matter:</b> Bellman-Ford permits negative edges but reports failure if a reachable negative-weight cycle exists; distances to unreachable vertices remain $\\infty$; and edge order can affect intermediate values but not final correct distances.</p>",
+    "motivation": "<p>Negative edges break the reasoning used by Dijkstra's algorithm. A vertex that looks settled could later be improved by a path that uses a negative edge. Bellman–Ford avoids that problem by allowing improvements to propagate gradually through paths with more and more edges.</p><p>The core observation is that, without a negative cycle, a shortest path can be taken to be simple. A simple path on $n$ vertices has at most $n-1$ edges. After enough full passes of edge relaxation, every such path length has had a chance to influence the distances, and any further improvement indicates a reachable negative cycle.</p>",
+    "definition": "<p>Bellman–Ford repeatedly relaxes all edges to find shortest paths even when some edge weights are negative.</p><p>$$d(v)\\leftarrow\\min(d(v),d(u)+w)$$</p><p><b>Assumptions that matter:</b> Reachable negative cycles are absent when shortest distances are to be returned; an improvement after $n-1$ passes signals a reachable negative cycle.</p>",
     "worked": {
       "problem": "Run Bellman-Ford from $S$ on edges $S\\to A=4$, $S\\to B=5$, $B\\to A=-3$.",
       "skills": [
@@ -2945,34 +3292,34 @@
     ],
     "applications": [
       {
-        "title": "Currency arbitrage",
-        "background": "Taking negative logs turns profitable exchange cycles into negative cycles.",
-        "numbers": "If rates multiply to $1.05$, the log cost is $-\\ln(1.05)\\u0007pprox-0.049$, a negative cycle."
+        "title": "Shortest to $a$",
+        "background": "With $s\\to a=4,s\\to b=5,a\\to b=-2,b\\to c=3,a\\to c=4$.",
+        "numbers": "final $d(a)=4$"
       },
       {
-        "title": "Road rebates",
-        "background": "Some route models include rewards or credits, producing negative edges but usually no negative cycles.",
-        "numbers": "A toll credit of $3$ on a road with base cost $10$ gives edge weight $7$; a larger credit could make it $-2$."
+        "title": "Negative-edge relaxation",
+        "background": "Relaxing $a\\to b$ gives.",
+        "numbers": "$d(b)=2$"
       },
       {
-        "title": "ML structured prediction",
-        "background": "Dynamic programs over graphs can include negative scores when higher reward means lower cost.",
-        "numbers": "A transition score $+4$ can be represented as cost $-4$ in a shortest-path formulation."
+        "title": "Shortest to $c$",
+        "background": "Then the best route to $c$ goes through $b$.",
+        "numbers": "$d(c)=5$"
       },
       {
-        "title": "Network protocols",
-        "background": "Distance-vector routing resembles repeated edge relaxation and can suffer from problematic cycles.",
-        "numbers": "If a route improves from $12$ to $9$ through a neighbor, that is exactly a relaxation update."
+        "title": "Rejected direct route",
+        "background": "Direct $a\\to c$ gives cost.",
+        "numbers": "$8$, so it is not chosen"
       },
       {
-        "title": "Scheduling constraints",
-        "background": "Difference constraints $x_v\\le x_u+w$ can be solved by Bellman-Ford.",
-        "numbers": "Constraint $x_B\\le x_A+3$ acts like edge $A\\to B$ of weight $3$."
+        "title": "Pass count",
+        "background": "For $4$ vertices, Bellman–Ford uses.",
+        "numbers": "$3$ main passes"
       },
       {
-        "title": "Robotics with rewards",
-        "background": "Planning graphs may combine costs and rewards before seeking minimum total value.",
-        "numbers": "A path with costs $5,4$ and reward $3$ has total $5+4-3=6$."
+        "title": "Negative-cycle detection",
+        "background": "If an extra edge $c\\to a=-10$ improves after pass $3$.",
+        "numbers": "a negative cycle is detected"
       }
     ],
     "applicationsClose": "Bellman-Ford is the careful listener: it keeps relaxing until every finite simple path has had a chance to speak.",
@@ -2981,6 +3328,52 @@
       "It handles negative edge weights.",
       "A further improvement after those rounds signals a reachable negative cycle.",
       "Without negative cycles, a shortest path can be chosen simple."
+    ],
+    "connectionsProse": "<p>This lesson keeps the shortest-path goal but relaxes the weight assumption. Bellman–Ford can handle negative edge weights as long as reachable negative cycles are absent. It does this by repeated relaxation rather than by permanently settling the nearest vertex. The lesson prepares the reader for graphs where costs, credits, or adjustments may be negative.</p>",
+    "symbols": [
+      {
+        "sym": "$n=|V|$",
+        "desc": "number of vertices"
+      },
+      {
+        "sym": "$(u,v,w)$",
+        "desc": "edge from $u$ to $v$ with weight $w$"
+      },
+      {
+        "sym": "$d(v)\\leftarrow\\min(d(v),d(u)+w)$",
+        "desc": "relaxation"
+      },
+      {
+        "sym": "negative cycle",
+        "desc": "cycle with negative total weight"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Consider a shortest simple path.",
+        "result": "at most $n-1$ edges",
+        "why": "repeating a vertex would create a removable cycle unless a negative cycle exists"
+      },
+      {
+        "do": "Make one full pass over all edges.",
+        "result": "all shortest paths using one edge are correct",
+        "why": "each one-edge route has been relaxed"
+      },
+      {
+        "do": "Repeat for $k$ passes.",
+        "result": "all shortest paths using at most $k$ edges are correct",
+        "why": "each pass extends correct paths by one edge"
+      },
+      {
+        "do": "Run $n-1$ passes.",
+        "result": "every simple shortest path is covered",
+        "why": "a simple path has at most $n-1$ edges"
+      },
+      {
+        "do": "Check for a further improvement.",
+        "result": "a negative cycle is reachable",
+        "why": "no simple shortest path should still improve after $n-1$ passes"
+      }
     ],
     "prereqs": [
       "math-15-10"
@@ -3009,8 +3402,8 @@
         "optimization"
       ]
     },
-    "motivation": "<p>A spanning tree gives a connected backbone. If edges have costs, some backbones are cheaper than others.</p><p>A <b>minimum spanning tree</b> is the cheapest connected backbone. It is where graph structure and optimization first meet in a very friendly way.</p>",
-    "definition": "<p>In a connected undirected weighted graph, a <b>minimum spanning tree</b>, or <b>MST</b>, is a spanning tree whose total edge weight is as small as possible. Kruskal's algorithm sorts edges by weight and adds an edge when it connects two different components. Prim's algorithm grows one tree by repeatedly adding the cheapest edge leaving it.</p><p>The cut property explains the greedy choice: for any cut, a lightest edge crossing that cut is safe to include in some MST. If an MST used a heavier crossing edge instead, swapping in the lighter one would preserve connectivity and not increase total weight.</p><p><b>Assumptions that matter:</b> the graph is connected and undirected; weights may tie, so MSTs need not be unique; and MST minimizes total tree weight, not shortest path distances from a source.</p>",
+    "motivation": "<p>A spanning tree answers the question of how to connect all vertices with no redundant edges. In a weighted graph, there may be many spanning trees, and some are cheaper than others. The minimum spanning tree chooses the connected backbone with least total cost.</p><p>The cut property explains why greedy algorithms can be trusted. If a cut separates the vertices into two sides, any spanning tree must cross that cut at least once. Choosing the lightest available crossing edge is safe because a more expensive crossing edge can be exchanged without increasing the total weight.</p>",
+    "definition": "<p>A minimum spanning tree is a spanning tree of a weighted connected graph with minimum possible total edge weight.</p><p><b>Assumptions that matter:</b> For any cut, the lightest edge crossing that cut is safe to add to some MST. Use this to justify Kruskal and Prim rather than proving the full theorem here.</p>",
     "worked": {
       "problem": "Use Kruskal's algorithm on edges $AB=1$, $BC=2$, $AC=3$, $CD=4$, $BD=5$.",
       "skills": [
@@ -3219,34 +3612,34 @@
     ],
     "applications": [
       {
-        "title": "Network design",
-        "background": "MSTs model least-cost ways to connect sites when any connected backbone is acceptable.",
-        "numbers": "If selected cable edges cost $4,6,9,10$, the tree cost is $29$."
+        "title": "Kruskal total",
+        "background": "Kruskal choosing weights $1,2,3$ gives.",
+        "numbers": "MST total $6$"
       },
       {
-        "title": "Clustering",
-        "background": "Single-linkage clustering can be built from an MST, then cut large edges.",
-        "numbers": "Removing the largest $3$ edges of an MST creates $4$ clusters."
+        "title": "MST edge count",
+        "background": "A $4$-vertex MST has.",
+        "numbers": "$3$ edges"
       },
       {
-        "title": "Image segmentation",
-        "background": "Pixels or regions can be connected by similarity edges, then heavy edges are cut.",
-        "numbers": "An MST edge of weight $0.8$ between regions is less similar than one of weight $0.1$."
+        "title": "Cycle skip",
+        "background": "If edge weights are $1,2,3,10$, the $10$ edge is skipped.",
+        "numbers": "when it closes a cycle"
       },
       {
-        "title": "Approximation for tours",
-        "background": "MSTs give lower bounds and building blocks for traveling-salesperson approximations.",
-        "numbers": "Any tour on $10$ cities has at least the MST weight because deleting one tour edge leaves a spanning tree."
+        "title": "Exchange cost",
+        "background": "Replacing a chosen edge of weight $3$ by crossing edge $5$ raises total by.",
+        "numbers": "$2$"
       },
       {
-        "title": "Sensor networks",
-        "background": "Battery-powered sensors may choose low-cost communication links to maintain connectivity.",
-        "numbers": "Connecting $25$ sensors minimally uses $24$ links in the MST."
+        "title": "Complete graph candidate",
+        "background": "A complete graph $K_4$ candidate MST still uses only.",
+        "numbers": "$3$ of $6$ edges"
       },
       {
-        "title": "Feature graph pruning",
-        "background": "Graph-based ML pipelines can prune dense similarity graphs to a sparse backbone.",
-        "numbers": "A complete graph on $100$ examples has $4950$ edges; an MST keeps only $99$."
+        "title": "Disconnected input",
+        "background": "A disconnected two-component input has no MST.",
+        "numbers": "it has $2$ component trees instead"
       }
     ],
     "applicationsClose": "MSTs choose just enough weighted structure: all vertices connected, no cycles, and no cheaper tree left behind.",
@@ -3255,6 +3648,33 @@
       "Kruskal adds cheapest safe edges that connect different components.",
       "Prim grows a tree by cheapest outgoing edges.",
       "MSTs minimize total tree weight, not source-to-all shortest paths."
+    ],
+    "connectionsProse": "<p>This lesson adds weights to spanning trees. A minimum spanning tree connects every vertex while minimizing total edge weight. It keeps the same tree structure as before, but now every edge has a cost. The idea supports network design, clustering, approximation algorithms, and greedy methods such as Kruskal and Prim.</p>",
+    "symbols": [
+      {
+        "sym": "Weighted graph",
+        "desc": "graph whose edges have weights"
+      },
+      {
+        "sym": "spanning tree",
+        "desc": "tree that includes all vertices"
+      },
+      {
+        "sym": "total weight",
+        "desc": "sum of chosen edge weights"
+      },
+      {
+        "sym": "cut",
+        "desc": "partition of the vertices into two sides"
+      },
+      {
+        "sym": "safe edge",
+        "desc": "edge that can be added to some MST"
+      },
+      {
+        "sym": "MST",
+        "desc": "minimum spanning tree"
+      }
     ],
     "prereqs": [
       "math-15-11"
@@ -3283,8 +3703,8 @@
         "cuts"
       ]
     },
-    "motivation": "<p>Pipes, roads, and servers all have limits. A graph with capacities asks a natural question: how much can we send from start to finish without exceeding any limit?</p><p>Network flow turns that question into equations: capacity on each edge and conservation at every intermediate vertex.</p>",
-    "definition": "<p>A <b>flow network</b> is a directed graph with source $s$, sink $t$, and capacities $c(u,v)\\ge0$ on edges. A flow assigns values $f(u,v)$ satisfying capacity constraints $0\\le f(u,v)\\le c(u,v)$ and flow conservation at every vertex except $s,t$: inflow equals outflow. The <b>value</b> of the flow is the total flow leaving $s$.</p><p>Conservation is the graph version of no storage: an intermediate node cannot create or destroy flow. Augmenting-path methods increase flow by finding a path from $s$ to $t$ with unused residual capacity and pushing the minimum residual capacity along it.</p><p><b>Assumptions that matter:</b> capacities are nonnegative; this lesson uses single-source single-sink networks; and reverse residual edges represent the ability to undo previous choices.</p>",
+    "motivation": "<p>Many networks carry something: data packets, vehicles, water, tasks, or matched assignments. Each edge has a limit, and the total amount sent from the source to the sink depends on how these limits interact. A valid flow must never exceed an edge's capacity.</p><p>The second rule is conservation. Except at the source and sink, a vertex is not allowed to create or destroy flow; inflow must equal outflow. The value of the flow is then measured at the source or sink, giving a single number for how much the network successfully transports.</p>",
+    "definition": "<p>A network flow assigns flow $f(e)$ to directed edges with capacities $c(e)$, respecting capacity constraints and conservation at intermediate vertices. The value $|f|$ is the total net flow leaving the source.</p><p><b>Assumptions that matter:</b> Define capacity constraints and flow conservation, then show the value as total flow leaving the source. The theorem connecting flows to cuts is in the next lesson.</p>",
     "worked": {
       "problem": "In a network $s\\to a$ capacity $5$, $s\\to b$ capacity $3$, $a\\to t$ capacity $4$, $b\\to t$ capacity $3$, send a feasible maximum-looking flow and compute its value.",
       "skills": [
@@ -3488,34 +3908,34 @@
     ],
     "applications": [
       {
-        "title": "Traffic routing",
-        "background": "Road networks have capacities, and flow models estimate how many cars can move from origin to destination.",
-        "numbers": "Two parallel roads with capacities $600$ and $900$ cars/hour can carry $1500$ cars/hour together."
+        "title": "Two-path flow",
+        "background": "Two paths carrying $2$ and $2$ units give.",
+        "numbers": "flow value $4$"
       },
       {
-        "title": "Data-center serving",
-        "background": "Request routing uses capacity constraints so no service tier is overloaded.",
-        "numbers": "If model server A handles $300$ qps and B handles $500$ qps, total routed flow is $800$ qps."
+        "title": "Residual capacity",
+        "background": "Edge capacity $3$ with flow $2$ has.",
+        "numbers": "residual capacity $1$"
       },
       {
-        "title": "Bipartite matching",
-        "background": "Matching can be written as a flow problem with unit capacities.",
-        "numbers": "Three applicants and three jobs use capacity $1$ edges; a flow value $3$ means a perfect matching."
+        "title": "Conservation",
+        "background": "Conservation at vertex $a$ with inflow $2$ requires.",
+        "numbers": "outflow $2$"
       },
       {
-        "title": "Image segmentation",
-        "background": "Graph-cut vision methods use source-sink flows to separate foreground and background.",
-        "numbers": "A pixel edge capacity $0.2$ is easier to cut than one with capacity $5.0$."
+        "title": "Net source value",
+        "background": "Source outflow $5$ and inflow $1$ gives.",
+        "numbers": "value $4$"
       },
       {
-        "title": "Supply chains",
-        "background": "Factories, warehouses, and stores form capacity-limited directed networks.",
-        "numbers": "If warehouse edges to stores carry $40$, $35$, and $25$ units, the outgoing warehouse flow is $100$."
+        "title": "Bottleneck",
+        "background": "A bottleneck edge of capacity $2$ limits that path to.",
+        "numbers": "$2$"
       },
       {
-        "title": "Fair allocation",
-        "background": "Flow constraints can enforce quotas across groups or resources.",
-        "numbers": "If group A has capacity $60$ and group B capacity $40$, a feasible allocation cannot send more than $100$ total through them."
+        "title": "Augmentation",
+        "background": "Augmenting by residual amount $1$ raises total flow.",
+        "numbers": "from $4$ to $5$"
       }
     ],
     "applicationsClose": "Flows are movement with bookkeeping: every unit respects capacities and is conserved until it reaches the sink.",
@@ -3524,6 +3944,33 @@
       "Feasible flows obey capacity constraints and conservation.",
       "Flow value is total flow leaving the source, equivalently entering the sink.",
       "Augmenting paths push flow by their bottleneck residual capacity."
+    ],
+    "connectionsProse": "<p>This lesson changes the role of edges from connections to channels with capacity. A network flow sends quantity from a source to a sink while respecting those capacities. Intermediate vertices conserve flow, so they pass along what they receive. This language prepares the reader for cuts, max flow, bipartite matching, and routing problems.</p>",
+    "symbols": [
+      {
+        "sym": "$s$",
+        "desc": "source"
+      },
+      {
+        "sym": "$t$",
+        "desc": "sink"
+      },
+      {
+        "sym": "$c(e)$",
+        "desc": "capacity of edge $e$"
+      },
+      {
+        "sym": "$f(e)$",
+        "desc": "flow on edge $e$"
+      },
+      {
+        "sym": "conservation",
+        "desc": "inflow equals outflow at intermediate vertices"
+      },
+      {
+        "sym": "$|f|$",
+        "desc": "value of the flow"
+      }
     ],
     "prereqs": [
       "math-15-12"
@@ -3552,8 +3999,8 @@
         "cuts"
       ]
     },
-    "motivation": "<p>Imagine trying to send water from a source to a sink. No matter how clever the routing is, any wall that separates source from sink limits the total water crossing it.</p><p>The max-flow min-cut theorem says the best routing and the tightest wall meet at the same number. That equality is one of graph theory's great organizing ideas.</p>",
-    "definition": "<p>An <b>$s$-$t$ cut</b> is a partition $(S,T)$ of vertices with $s\\in S$ and $t\\in T$. Its capacity is the sum of capacities of directed edges from $S$ to $T$: $$c(S,T)=\\sum_{u\\in S,\\ v\\in T} c(u,v).$$ Every feasible flow has value at most every cut capacity.</p><p>The upper bound is simple: all flow from $s$ to $t$ must cross from $S$ to $T$ somewhere, and those crossing edges cannot carry more than their capacities. The <b>max-flow min-cut theorem</b> says the maximum flow value equals the minimum $s$-$t$ cut capacity.</p><p><b>Assumptions that matter:</b> cuts are directed from $S$ to $T$ for capacity; reverse edges from $T$ to $S$ do not add to cut capacity; and standard theorem statements assume finite networks with nonnegative capacities.</p>",
+    "motivation": "<p>A flow is a constructive object: it shows how much can be sent. A cut is an obstruction: it shows a boundary that all source-to-sink traffic must cross. If the total capacity across that boundary is small, no routing strategy can push more flow through the network than the cut allows.</p><p>The theorem says that the best construction and the tightest obstruction meet. When no augmenting path remains in the residual graph, the vertices still reachable from the source define a cut. Its capacity equals the current flow value, proving at the same time that the flow is maximum and the cut is minimum.</p>",
+    "definition": "<p>The max-flow min-cut theorem says that the maximum value of an $s$-$t$ flow equals the minimum capacity of an $s$-$t$ cut.</p><p>$$\\max |f|=\\min c(S,T)$$</p><p><b>Assumptions that matter:</b> The cut partitions vertices into $S$ and $T$ with $s\\in S,t\\in T$, and the residual graph has no augmenting path at optimality.</p>",
     "worked": {
       "problem": "For edges $s\\to a=5$, $s\\to b=3$, $a\\to t=4$, $b\\to t=3$, compute the cut capacity for $S=\\{s,a\\}$, $T=\\{b,t\\}$.",
       "skills": [
@@ -3762,34 +4209,34 @@
     ],
     "applications": [
       {
-        "title": "Bottleneck analysis",
-        "background": "Cuts identify the tightest separator limiting total throughput.",
-        "numbers": "If all traffic must cross links of capacities $10$, $15$, and $5$, that cut permits at most $30$ units."
+        "title": "Cut capacity",
+        "background": "Cut capacities $3$ and $2$ sum to.",
+        "numbers": "$5$"
       },
       {
-        "title": "Image segmentation",
-        "background": "Graph cuts separate foreground and background by minimizing boundary plus label costs.",
-        "numbers": "Cutting edges of weights $0.3$, $0.6$, and $1.1$ costs $2.0$."
+        "title": "Optimality certificate",
+        "background": "A flow of value $5$ proves.",
+        "numbers": "that cut is minimum"
       },
       {
-        "title": "Bipartite matching certificates",
-        "background": "A max flow paired with an equal cut proves no larger matching exists.",
-        "numbers": "If matching flow is $42$ and a cut has capacity $42$, the maximum matching size is $42$."
+        "title": "Upper bound",
+        "background": "No flow can exceed.",
+        "numbers": "$5$ across that cut"
       },
       {
-        "title": "Data-center capacity planning",
-        "background": "Min cuts reveal which service tier limits end-to-end throughput.",
-        "numbers": "If API-to-model edges total $900$ qps while frontend-to-API totals $1500$ qps, the $900$ qps cut is tighter."
+        "title": "Residual augment",
+        "background": "If the current flow is $4$, one residual augment of $1$ can reach.",
+        "numbers": "$5$"
       },
       {
-        "title": "Reliability",
-        "background": "Small cuts point to fragile separators in infrastructure graphs.",
-        "numbers": "A cut with two links of capacity $100$ each limits cross-region traffic to $200$ units."
+        "title": "Disconnecting cut",
+        "background": "Removing the two cut edges disconnects $s$ from $t$ with.",
+        "numbers": "capacity loss $5$"
       },
       {
-        "title": "Fairness constraints",
-        "background": "Flow cuts can certify that quota constraints cap feasible assignments.",
-        "numbers": "If a group quota cut has capacity $60$, no feasible assignment can route more than $60$ units through that group."
+        "title": "Matching via flow",
+        "background": "In bipartite matching, a max flow of $3$ gives.",
+        "numbers": "matching size $3$"
       }
     ],
     "applicationsClose": "Max-flow min-cut is a perfect meeting of construction and certificate: a routing plan and a bottleneck wall prove each other optimal.",
@@ -3798,6 +4245,61 @@
       "Cut capacity sums directed edges from the source side to the sink side.",
       "Every cut upper-bounds every feasible flow.",
       "The maximum flow value equals the minimum cut capacity."
+    ],
+    "connectionsProse": "<p>This lesson pairs flows with cuts. A cut separates the source from the sink, so every unit of flow must cross from the source side to the sink side somewhere. That makes cut capacity an upper bound on possible flow. The max-flow min-cut theorem explains when this upper bound is exactly attainable.</p>",
+    "symbols": [
+      {
+        "sym": "$(S,T)$",
+        "desc": "cut"
+      },
+      {
+        "sym": "$c(S,T)$",
+        "desc": "cut capacity"
+      },
+      {
+        "sym": "residual graph",
+        "desc": "graph of remaining augmenting possibilities"
+      },
+      {
+        "sym": "augmenting path",
+        "desc": "residual path that can increase flow"
+      },
+      {
+        "sym": "max flow",
+        "desc": "flow with maximum possible value"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Partition vertices into $S$ and $T$.",
+        "result": "$s\\in S,t\\in T$",
+        "why": "this defines an $s$-$t$ cut"
+      },
+      {
+        "do": "Measure net flow leaving $S$.",
+        "result": "the value of the flow",
+        "why": "conservation cancels flow through intermediate vertices inside $S$"
+      },
+      {
+        "do": "Compare net flow with crossing capacities.",
+        "result": "net flow leaving $S\\le c(S,T)$",
+        "why": "flow on each edge from $S$ to $T$ cannot exceed capacity"
+      },
+      {
+        "do": "Apply this to every cut.",
+        "result": "every cut capacity upper-bounds every flow value",
+        "why": "all $s$-$t$ flow must cross the cut"
+      },
+      {
+        "do": "Stop when no augmenting path remains.",
+        "result": "reachable residual vertices define a cut whose capacity equals the current flow",
+        "why": "all forward crossing residual capacity has been exhausted"
+      },
+      {
+        "do": "Match the lower and upper bounds.",
+        "result": "maximum flow equals minimum cut capacity",
+        "why": "the current flow reaches a cut upper bound"
+      }
     ],
     "prereqs": [
       "math-15-13"
@@ -3826,8 +4328,8 @@
         "incidence relations"
       ]
     },
-    "motivation": "<p>You already sort many relationships into two kinds of things: students and projects, users and items, documents and words. In those settings, the meaningful links go across the two kinds.</p><p>A <b>bipartite graph</b> keeps that separation visible. Once you can see the two sides, matching, recommendations, and two-coloring become much easier to reason about.</p>",
-    "definition": "<p>A graph $G=(V,E)$ is <b>bipartite</b> if $V=L\\cup R$, $L\\cap R=\\emptyset$, and every edge has one endpoint in $L$ and one endpoint in $R$. Edges inside $L$ or inside $R$ are not allowed.</p><p>The key test is that a graph is bipartite if and only if it has no odd cycle. A cycle in a bipartite graph must alternate $L,R,L,R,\\ldots$, so it returns to the starting side only after an even number of edges. If no odd cycle exists, parity of graph distance gives a consistent two-coloring in each component.</p><p><b>Assumptions that matter:</b> graphs are simple and undirected unless stated otherwise; isolated vertices may go on either side; and the two parts do not need equal size.</p>",
+    "motivation": "<p>When relationships always join two different kinds of objects, a bipartite graph is the natural model. Users connect to items, students to projects, and workers to tasks. The two-side structure prevents triangles and, more generally, prevents every odd cycle.</p><p>Parity is the central idea. Along a cycle in a bipartite graph, the vertices must alternate sides, so returning to the starting side takes an even number of steps. Conversely, if no odd cycle exists, distance parity from a root consistently assigns vertices to two sides in each component.</p>",
+    "definition": "<p>A graph is bipartite when its vertices can be split into parts $L$ and $R$ so every edge crosses between the parts. Equivalently, it has no odd cycle.</p><p><b>Assumptions that matter:</b> The parity assignment is made within each component from a chosen root.</p>",
     "worked": {
       "problem": "Decide whether $C_6$ with vertices $1,2,3,4,5,6$ in order is bipartite, and give a bipartition.",
       "skills": [
@@ -4026,34 +4528,34 @@
     ],
     "applications": [
       {
-        "title": "Recommendation systems",
-        "background": "User-item interactions form a natural bipartite graph because users and items are different kinds of vertices.",
-        "numbers": "If $1000$ users each click $12$ items on average, the graph has about $12000$ edges."
+        "title": "Complete bipartite edge count",
+        "background": "$K_{2,3}$ has.",
+        "numbers": "$2\\cdot3=6$ edges"
       },
       {
-        "title": "Document-word incidence",
-        "background": "Search engines can connect documents to the words they contain.",
-        "numbers": "A document containing $80$ distinct words has degree $80$ in the document-word graph."
+        "title": "Even cycle",
+        "background": "$C_6$ is bipartite with sides.",
+        "numbers": "size $3$ and $3$"
       },
       {
-        "title": "Course assignment",
-        "background": "Students connect to projects they are eligible for, and matching later chooses assignments.",
-        "numbers": "With $30$ students and $8$ projects, the complete eligibility graph has $240$ possible edges."
+        "title": "Triangle obstruction",
+        "background": "$K_3$ is not bipartite because it has.",
+        "numbers": "a $3$-cycle"
       },
       {
-        "title": "Rating matrices",
-        "background": "A bipartite graph can be stored as a rectangular matrix.",
-        "numbers": "For $5$ users and $4$ items, there are $20$ possible entries; $6$ ratings leave $14$ missing."
+        "title": "Path split",
+        "background": "A path on $5$ vertices splits as.",
+        "numbers": "$3$ and $2$"
       },
       {
-        "title": "Odd-cycle tests",
-        "background": "Two-team scheduling fails exactly when conflicts contain an odd cycle.",
-        "numbers": "Conflicts $A$--$B$, $B$--$C$, $C$--$A$ form a length-$3$ obstruction."
+        "title": "User-item maximum",
+        "background": "A user-item graph with $4$ users and $5$ items can have at most.",
+        "numbers": "$20$ edges"
       },
       {
-        "title": "Flow models",
-        "background": "Assignment flow networks often contain a bipartite layer between sources and sinks.",
-        "numbers": "If three workers each supply $1$ unit and three tasks each demand $1$, a perfect assignment flow has value $3$."
+        "title": "Two-coloring",
+        "background": "Two-coloring a connected bipartite graph uses exactly.",
+        "numbers": "$2$ colors if it has at least one edge"
       }
     ],
     "applicationsClose": "Bipartite graphs keep two kinds of objects separate, and that separation powers matching, matrices, and recommendation models.",
@@ -4062,6 +4564,56 @@
       "A graph is bipartite exactly when it has no odd cycle.",
       "$K_{m,n}$ has $mn$ possible crossing edges.",
       "Many rectangular datasets are bipartite graphs in disguise."
+    ],
+    "connectionsProse": "<p>This lesson studies graphs whose vertices split into two types. In a bipartite graph, every edge crosses between the two parts and no edge stays inside one part. That structure appears in user-item data, assignment problems, and matching. It also connects graph coloring to the absence of odd cycles.</p>",
+    "symbols": [
+      {
+        "sym": "$L,R$",
+        "desc": "parts of the bipartition"
+      },
+      {
+        "sym": "bipartition",
+        "desc": "split of vertices into two parts with all edges crossing"
+      },
+      {
+        "sym": "odd cycle",
+        "desc": "cycle with odd length"
+      },
+      {
+        "sym": "parity",
+        "desc": "even or odd distance from a root"
+      },
+      {
+        "sym": "$K_{a,b}$",
+        "desc": "complete bipartite graph"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume a graph is bipartite with sides $L,R$.",
+        "result": "cycles alternate $L,R,L,R$",
+        "why": "every edge crosses between the two parts"
+      },
+      {
+        "do": "Return to the starting side along a cycle.",
+        "result": "the number of steps is even",
+        "why": "alternation returns to the same side only after an even number of moves"
+      },
+      {
+        "do": "Assume conversely that there is no odd cycle.",
+        "result": "assign sides by parity of distance from a root",
+        "why": "distance parity is the natural two-side label"
+      },
+      {
+        "do": "Check an edge joining same-parity vertices.",
+        "result": "it would create an odd cycle through the root paths",
+        "why": "same parity root paths plus one edge have odd total length after cancelling overlap"
+      },
+      {
+        "do": "Conclude the parity assignment works.",
+        "result": "a bipartition",
+        "why": "no edge can join vertices on the same side"
+      }
     ],
     "prereqs": [
       "math-15-14"
@@ -4090,8 +4642,8 @@
         "optimization"
       ]
     },
-    "motivation": "<p>You already know the scheduling rule: one applicant cannot take two jobs, and one GPU cannot run two exclusive jobs at the same time. We need choices that do not collide.</p><p>A <b>matching</b> is exactly that collision-free set of chosen edges.</p>",
-    "definition": "<p>A <b>matching</b> in a graph $G=(V,E)$ is a set $M\\subseteq E$ such that no two edges in $M$ share a vertex. A matched vertex is incident to an edge of $M$; an unmatched vertex is not.</p><p>A matching is <b>maximum</b> if no larger matching exists and <b>perfect</b> if every vertex is matched. An augmenting path starts and ends at unmatched vertices and alternates outside and inside $M$; flipping its edges increases the matching size by one.</p><p><b>Assumptions that matter:</b> matching size counts selected edges; perfect may mean covering all vertices or all vertices on one specified side; and weights matter only in weighted matching problems.</p>",
+    "motivation": "<p>In an assignment problem, choosing one edge can rule out several others because the same user or item cannot be reused. A matching captures exactly that no-duplicate rule. The size of the matching counts how many successful pairings have been made.</p><p>The flow viewpoint turns the combinatorial rule into capacity constraints. Source-to-left and right-to-sink edges of capacity $1$ ensure that each vertex can carry at most one unit of selected assignment flow. An integral flow of value $k$ therefore corresponds to $k$ matched edges.</p>",
+    "definition": "<p>A matching is a set of edges no two of which share an endpoint. In a bipartite assignment network, an integral flow of value $k$ corresponds to a matching of size $k$.</p><p><b>Assumptions that matter:</b> Source-to-left and right-to-sink capacities are $1$, so each vertex can be used at most once.</p>",
     "worked": {
       "problem": "In a bipartite graph with $L=\\{a,b,c\\}$, $R=\\{1,2,3\\}$, and edges $a1,a2,b2,c2,c3$, find a matching of size $3$.",
       "skills": [
@@ -4290,34 +4842,34 @@
     ],
     "applications": [
       {
-        "title": "Job placement",
-        "background": "Matching theory models one-to-one assignment in labor markets and scheduling systems.",
-        "numbers": "A perfect matching between $6$ interns and $6$ projects contains exactly $6$ selected edges."
+        "title": "Matching size",
+        "background": "Edges $u_1i_1,u_2i_2,u_3i_3$ form.",
+        "numbers": "matching size $3$"
       },
       {
-        "title": "GPU scheduling",
-        "background": "ML platforms match jobs to compatible machines under hardware constraints.",
-        "numbers": "If $8$ jobs are assigned to $8$ GPUs, the matching has size $8$ and covers $16$ vertices."
+        "title": "Side-size bound",
+        "background": "With $4$ users and $3$ items, matching size is at most.",
+        "numbers": "$3$"
       },
       {
-        "title": "Ad serving",
-        "background": "An impression can show at most one ad, so selected impression-campaign edges must not reuse impressions.",
-        "numbers": "For $100$ impressions, a matching of size $92$ fills $92\\%$ of opportunities."
+        "title": "Augmenting path",
+        "background": "One augmenting path raises size.",
+        "numbers": "from $2$ to $3$"
       },
       {
-        "title": "Entity resolution",
-        "background": "Databases often require one source record to link to at most one target record.",
-        "numbers": "If $1000$ records produce $940$ accepted one-to-one links, $60$ source records remain unmatched."
+        "title": "Perfect matching",
+        "background": "A perfect matching on $6$ vertices has.",
+        "numbers": "$3$ edges"
       },
       {
-        "title": "Object detection evaluation",
-        "background": "Predicted boxes are matched to ground-truth boxes so one object is not counted twice.",
-        "numbers": "With IoU threshold $0.5$, detections scoring $0.8,0.6,0.3$ against distinct objects give $2$ matches."
+        "title": "Complete bipartite matching",
+        "background": "In $K_{2,3}$, maximum matching size is.",
+        "numbers": "$2$"
       },
       {
-        "title": "Kidney exchange",
-        "background": "Compatibility graphs help pair donors and recipients with disjoint selected exchanges.",
-        "numbers": "Three disjoint compatible pairs represent $3$ transplants involving $6$ people."
+        "title": "Flow assignment",
+        "background": "A max-flow value $3$ in the assignment network means.",
+        "numbers": "$3$ assignments"
       }
     ],
     "applicationsClose": "Matching turns compatibility into a careful set of yes decisions with no repeated endpoint.",
@@ -4326,6 +4878,61 @@
       "A perfect matching covers every relevant vertex.",
       "Augmenting paths are the engine behind growing matchings.",
       "Assignments in computing and ML often reduce to matching."
+    ],
+    "connectionsProse": "<p>This lesson builds on bipartite graphs and flows. A matching chooses edges that do not share endpoints, so each selected relationship uses each vertex at most once. This is the graph model behind assignments, pairings, and one-to-one recommendations. The flow construction gives a useful way to compute maximum matchings in bipartite graphs.</p>",
+    "symbols": [
+      {
+        "sym": "$M$",
+        "desc": "matching"
+      },
+      {
+        "sym": "matched/unmatched vertex",
+        "desc": "vertex that is or is not incident to a chosen edge"
+      },
+      {
+        "sym": "augmenting path",
+        "desc": "path that can increase the size of a matching"
+      },
+      {
+        "sym": "maximum matching",
+        "desc": "matching with largest possible size"
+      },
+      {
+        "sym": "perfect matching",
+        "desc": "matching that covers every vertex"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Model each possible assignment as an edge in a bipartite graph.",
+        "result": "assignment graph",
+        "why": "left and right vertices represent the two object types"
+      },
+      {
+        "do": "Apply the no-duplicate rule.",
+        "result": "no two chosen edges may share an endpoint",
+        "why": "a user or item cannot be reused"
+      },
+      {
+        "do": "Identify the feasible object.",
+        "result": "a matching",
+        "why": "that is exactly the no-shared-endpoint rule"
+      },
+      {
+        "do": "Add source-to-left and right-to-sink edges of capacity $1$.",
+        "result": "unit vertex capacities through the flow network",
+        "why": "each left or right vertex can carry at most one unit"
+      },
+      {
+        "do": "Read an integral flow.",
+        "result": "at most one unit through each vertex",
+        "why": "the capacity-$1$ edges enforce the matching constraint"
+      },
+      {
+        "do": "Count the flow value.",
+        "result": "a matching of size $k$",
+        "why": "a flow of value $k$ selects $k$ assignment edges"
+      }
     ],
     "prereqs": [
       "math-15-15"
@@ -4354,8 +4961,8 @@
         "partitions"
       ]
     },
-    "motivation": "<p>You already use coloring logic when you schedule exams or color a map: things that touch or conflict need different labels. The labels might be colors, times, frequencies, or registers.</p><p><b>Graph coloring</b> makes that everyday constraint mathematical.</p>",
-    "definition": "<p>A <b>proper vertex coloring</b> assigns a color to every vertex so adjacent vertices have different colors. The <b>chromatic number</b> $\\chi(G)$ is the minimum number of colors in a proper coloring.</p><p>A clique of size $k$ forces at least $k$ colors because every pair is adjacent. Bipartite graphs with at least one edge have $\\chi(G)=2$. Odd cycles need $3$ colors because two-color alternation fails at the closing edge.</p><p><b>Assumptions that matter:</b> this lesson uses vertex coloring; loops make proper coloring impossible; and greedy coloring can depend on vertex order.</p>",
+    "motivation": "<p>Coloring is a way to group vertices that do not conflict with each other. Vertices with the same color form an independent set, because an edge inside one color class would violate the rule. Finding a good coloring means covering all vertices with as few independent sets as possible.</p><p>Two kinds of evidence determine the exact chromatic number. A clique of size $r$ proves that at least $r$ colors are necessary, because every pair in the clique conflicts. An explicit coloring with $r$ colors proves that $r$ colors are sufficient, so the lower and upper bounds meet.</p>",
+    "definition": "<p>A proper coloring assigns colors to vertices so adjacent vertices receive different colors. The chromatic number $\\chi(G)$ is the smallest number of colors needed.</p><p>$$\\chi(G)$$</p><p><b>Assumptions that matter:</b> A clique gives a lower bound, and an explicit coloring gives an upper bound.</p>",
     "worked": {
       "problem": "Find the chromatic number of the cycle $C_5$.",
       "skills": [
@@ -4554,34 +5161,34 @@
     ],
     "applications": [
       {
-        "title": "Exam scheduling",
-        "background": "Coloring arose naturally in timetabling because shared students create conflict edges.",
-        "numbers": "A triangle of three mutually conflicting exams requires $3$ slots."
+        "title": "Odd cycle",
+        "background": "$C_5$ needs.",
+        "numbers": "$3$ colors"
       },
       {
-        "title": "Compiler registers",
-        "background": "Register allocation colors variables that are live at the same time.",
-        "numbers": "If an interference graph contains a $6$-clique, at least $6$ registers are needed."
+        "title": "Complete graph",
+        "background": "$K_4$ needs.",
+        "numbers": "$4$ colors"
       },
       {
-        "title": "Map coloring",
-        "background": "Maps become planar graphs whose neighboring regions must differ in color.",
-        "numbers": "A ring of $8$ regions can alternate two colors, so that subgraph needs only $2$ colors."
+        "title": "Bipartite graph",
+        "background": "A bipartite graph with an edge has.",
+        "numbers": "$\\chi=2$"
       },
       {
-        "title": "Wireless channels",
-        "background": "Transmitters that interfere cannot share a frequency.",
-        "numbers": "If four towers form $K_4$, then $4$ channels are necessary."
+        "title": "Tree coloring",
+        "background": "A triangle-free tree with at least one edge has.",
+        "numbers": "$\\chi=2$"
       },
       {
-        "title": "Parallel batches",
-        "background": "Tasks with conflict edges can run in the same batch only when they share no edge.",
-        "numbers": "A path of $10$ tasks can be batched in $2$ alternating groups of $5$ tasks each."
+        "title": "Scheduling",
+        "background": "A schedule conflict graph colored with $4$ colors needs.",
+        "numbers": "$4$ time slots"
       },
       {
-        "title": "Feature buckets",
-        "background": "Systems sometimes color conflict graphs to prevent incompatible features from sharing a bucket.",
-        "numbers": "Four disjoint triangles still need only $3$ colors total because colors can be reused across components."
+        "title": "Clique lower bound",
+        "background": "A clique of size $5$ proves.",
+        "numbers": "at least $5$ colors"
       }
     ],
     "applicationsClose": "Colors may look cosmetic, but mathematically they are scarce resources assigned under adjacency constraints.",
@@ -4590,6 +5197,51 @@
       "$\\chi(G)$ is the minimum number of colors needed.",
       "Cliques give lower bounds, while explicit colorings give upper bounds.",
       "Scheduling, registers, maps, and frequencies all use coloring logic."
+    ],
+    "connectionsProse": "<p>This lesson uses labels to manage conflicts. A graph coloring assigns colors so adjacent vertices receive different colors. The chromatic number is the smallest number of colors that can do the job. This connects graph structure to scheduling, resource allocation, independent sets, and cliques.</p>",
+    "symbols": [
+      {
+        "sym": "Coloring",
+        "desc": "assignment of colors to vertices"
+      },
+      {
+        "sym": "color class",
+        "desc": "set of vertices with the same color"
+      },
+      {
+        "sym": "independent set",
+        "desc": "set with no internal edges"
+      },
+      {
+        "sym": "clique",
+        "desc": "set in which every pair of vertices is adjacent"
+      },
+      {
+        "sym": "$\\chi(G)$",
+        "desc": "chromatic number"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "View a proper coloring as color classes.",
+        "result": "a partition of vertices into independent sets",
+        "why": "same-colored vertices cannot be adjacent"
+      },
+      {
+        "do": "Find a clique of size $r$.",
+        "result": "at least $r$ colors are needed",
+        "why": "every pair in the clique conflicts"
+      },
+      {
+        "do": "Produce a coloring using $k$ colors.",
+        "result": "$\\chi(G)\\le k$",
+        "why": "the coloring proves $k$ colors are sufficient"
+      },
+      {
+        "do": "Match a lower bound and a coloring.",
+        "result": "$\\chi(G)=r$",
+        "why": "a lower bound $r$ and an explicit $r$-coloring prove necessity and sufficiency"
+      }
     ],
     "prereqs": [
       "math-15-16"
@@ -4618,8 +5270,8 @@
         "paths"
       ]
     },
-    "motivation": "<p>You already know the graph picture: dots connected by lines. Planar graphs ask whether a graph has some crossing-free drawing, not whether the first sketch has crossings.</p><p><b>Planar graphs</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
-    "definition": "<p>A graph is <b>planar</b> if it can be drawn in the plane with edges intersecting only at shared endpoints. A crossing-free drawing is a plane embedding and its regions are faces, including the outside face.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "motivation": "<p>A messy drawing can make a planar graph look nonplanar. Edges may cross simply because of how the picture was arranged. The question of planarity asks whether the graph can be redrawn so edges meet only at shared endpoints.</p><p>Once a drawing has no crossings, the regions of the plane become part of the structure. These regions are called faces, including the unbounded outer face. Later formulas connect the numbers of vertices, edges, and faces, but this lesson first fixes the definitions needed to talk about planar drawings precisely.</p>",
+    "definition": "<p>A planar graph is a graph that has some drawing in the plane with no edge crossings except at shared endpoints. A plane embedding is such a crossing-free drawing, and its regions are faces.</p><p><b>Assumptions that matter:</b> This lesson defines planar drawing, faces, and crossings. Euler's formula and edge bounds are derived in the next lesson.</p>",
     "worked": {
       "problem": "Decide whether $K_4$ is planar and find its face count.",
       "skills": [
@@ -4818,34 +5470,34 @@
     ],
     "applications": [
       {
-        "title": "Small network sanity checks",
-        "background": "Engineers often test planar graphs on tiny graphs before trusting code on large ones.",
-        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+        "title": "Planar $K_4$",
+        "background": "$K_4$ is planar with.",
+        "numbers": "$V=4,E=6,F=4$"
       },
       {
-        "title": "Recommendation graphs",
-        "background": "Recommender systems use planar graphs ideas because user-item data is naturally relational.",
-        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+        "title": "Nonplanar $K_5$",
+        "background": "$K_5$ is nonplanar; it has $10$ edges while planar simple graphs with $5$ vertices have at most.",
+        "numbers": "$9$"
       },
       {
-        "title": "Social networks",
-        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
-        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+        "title": "Nonplanar $K_{3,3}$",
+        "background": "$K_{3,3}$ is nonplanar; it exceeds the bipartite planar bound $2V-4=8$ by.",
+        "numbers": "$1$ edge"
       },
       {
-        "title": "Molecular graphs",
-        "background": "Chemistry represents atoms and bonds as graphs, so planar graphs can become a model feature.",
-        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+        "title": "Tree embedding",
+        "background": "A tree with $6$ vertices is planar and has.",
+        "numbers": "$1$ face in an embedding"
       },
       {
-        "title": "Infrastructure routing",
-        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
-        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+        "title": "Road graph bound",
+        "background": "A planar road graph with $8$ vertices has at most.",
+        "numbers": "$18$ edges"
       },
       {
-        "title": "ML preprocessing",
-        "background": "Many ML pipelines build graph features before training a downstream model.",
-        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+        "title": "Square with diagonal",
+        "background": "A crossing-free square with a diagonal has.",
+        "numbers": "$V=4,E=5,F=3$"
       }
     ],
     "applicationsClose": "Planar graphs is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
@@ -4854,6 +5506,29 @@
       "Small graphs are enough to test the arithmetic and the assumptions.",
       "The same structure scales to networks, matrices, and ML pipelines.",
       "Always separate the graph property from a particular drawing or implementation."
+    ],
+    "connectionsProse": "<p>This lesson introduces graphs that can be drawn without crossings. A planar graph is not defined by one particular drawing, but by whether some crossing-free drawing exists. This makes planarity a structural property rather than an artistic one. The idea prepares the reader for faces, Euler's formula, and planar edge bounds.</p>",
+    "symbols": [
+      {
+        "sym": "Planar graph",
+        "desc": "graph that can be drawn without crossings"
+      },
+      {
+        "sym": "plane embedding",
+        "desc": "a crossing-free drawing"
+      },
+      {
+        "sym": "face",
+        "desc": "region of the plane in an embedding"
+      },
+      {
+        "sym": "crossing",
+        "desc": "intersection of edges away from shared endpoints"
+      },
+      {
+        "sym": "outer face",
+        "desc": "unbounded face"
+      }
     ],
     "prereqs": [
       "math-15-17"
@@ -4882,8 +5557,8 @@
         "paths"
       ]
     },
-    "motivation": "<p>You already know the graph picture: dots connected by lines. Euler found that connected planar drawings keep one invariant no matter how the graph bends.</p><p><b>Euler's formula</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
-    "definition": "<p>For a connected planar graph with $V$ vertices, $E$ edges, and $F$ faces, <b>Euler's formula</b> is $V-E+F=2$. A tree has $E=V-1$ and $F=1$, and adding an edge inside a face increases both $E$ and $F$ by one.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "motivation": "<p>A planar graph can be built from a tree by adding edges that create cycles without crossings. The tree case is easy to count: it has $V-1$ edges and one face. That already gives $V-E+F=2$.</p><p>Adding a planar edge inside a face increases the number of edges by one and splits one face into two. The two changes cancel in the expression $V-E+F$. This is why the same value persists as the drawing gains cycles and becomes a general connected planar graph.</p>",
+    "definition": "<p>Euler's formula says that every connected planar graph satisfies</p><p>$$V-E+F=2$$</p><p><b>Assumptions that matter:</b> The graph is connected and planar, and $F$ counts faces including the outer face.</p>",
     "worked": {
       "problem": "A connected planar graph has $V=10$ and $E=15$. Find $F$.",
       "skills": [
@@ -5082,34 +5757,34 @@
     ],
     "applications": [
       {
-        "title": "Small network sanity checks",
-        "background": "Engineers often test euler's formula on tiny graphs before trusting code on large ones.",
-        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+        "title": "Cube graph",
+        "background": "Cube graph satisfies Euler's formula.",
+        "numbers": "$8-12+6=2$"
       },
       {
-        "title": "Recommendation graphs",
-        "background": "Recommender systems use euler's formula ideas because user-item data is naturally relational.",
-        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+        "title": "$K_4$",
+        "background": "$K_4$ satisfies Euler's formula.",
+        "numbers": "$4-6+4=2$"
       },
       {
-        "title": "Social networks",
-        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
-        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+        "title": "Square with diagonal",
+        "background": "A square with a diagonal satisfies Euler's formula.",
+        "numbers": "$4-5+3=2$"
       },
       {
-        "title": "Molecular graphs",
-        "background": "Chemistry represents atoms and bonds as graphs, so euler's formula can become a model feature.",
-        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+        "title": "Solving for faces",
+        "background": "A planar connected graph with $V=6,E=9$ has.",
+        "numbers": "$F=5$"
       },
       {
-        "title": "Infrastructure routing",
-        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
-        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+        "title": "Triangulated maximum",
+        "background": "A triangulated planar graph with $V=6$ has maximum.",
+        "numbers": "$E=12$"
       },
       {
-        "title": "ML preprocessing",
-        "background": "Many ML pipelines build graph features before training a downstream model.",
-        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+        "title": "Tree faces",
+        "background": "A tree with $V=10,E=9$ has.",
+        "numbers": "$F=1$"
       }
     ],
     "applicationsClose": "Euler's formula is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
@@ -5118,6 +5793,52 @@
       "Small graphs are enough to test the arithmetic and the assumptions.",
       "The same structure scales to networks, matrices, and ML pipelines.",
       "Always separate the graph property from a particular drawing or implementation."
+    ],
+    "connectionsProse": "<p>This lesson gives the central invariant for connected planar graphs. After a planar drawing is fixed, it has vertices, edges, and faces. The individual drawing can change, but the quantity $V-E+F$ remains equal to $2$. This formula supports edge bounds, nonplanarity tests, and many counting arguments in planar graph theory.</p>",
+    "symbols": [
+      {
+        "sym": "$V$",
+        "desc": "vertices"
+      },
+      {
+        "sym": "$E$",
+        "desc": "edges"
+      },
+      {
+        "sym": "$F$",
+        "desc": "faces including the outer face"
+      },
+      {
+        "sym": "connected planar graph",
+        "desc": "connected graph with a crossing-free plane drawing"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a tree drawn in the plane.",
+        "result": "$E=V-1$ and one face, so $V-E+F=V-(V-1)+1=2$",
+        "why": "a tree is connected and acyclic with one outer face"
+      },
+      {
+        "do": "Add an edge that stays planar.",
+        "result": "one new edge",
+        "why": "the drawing remains crossing-free"
+      },
+      {
+        "do": "Track the face count.",
+        "result": "one face splits into two",
+        "why": "the new edge creates one new cycle inside a face"
+      },
+      {
+        "do": "Compare changes in the invariant.",
+        "result": "$E$ increases by $1$ and $F$ increases by $1$, so $V-E+F$ is unchanged",
+        "why": "the two changes cancel"
+      },
+      {
+        "do": "Repeat until the connected planar graph is built.",
+        "result": "$V-E+F=2$",
+        "why": "the invariant stayed equal to the tree value"
+      }
     ],
     "prereqs": [
       "math-15-18"
@@ -5146,8 +5867,8 @@
         "paths"
       ]
     },
-    "motivation": "<p>You already know the graph picture: dots connected by lines. The one-stroke drawing puzzle is graph theory: can one walk use every edge exactly once?</p><p><b>Eulerian graphs</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
-    "definition": "<p>An <b>Eulerian circuit</b> is a closed walk using every edge exactly once. A connected graph has one exactly when every vertex has even degree; it has an open Eulerian trail exactly when exactly two vertices have odd degree.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "motivation": "<p>When a route uses edges exactly once, every arrival at an internal vertex must be paired with a departure. That pairing explains why even degree is the natural condition for a closed Eulerian circuit. If all edge-containing parts are connected and all degrees are even, the route can keep pairing entrances and exits until every edge is used.</p><p>For an open Eulerian trail, exactly two vertices are allowed to be unpaired: the start and the end. Those two vertices have odd degree, while all other vertices still need even degree. This parity reasoning gives a clean local test for a global edge-covering route.</p>",
+    "definition": "<p>An Eulerian circuit is a closed route that uses every edge exactly once. An Eulerian trail uses every edge exactly once but may start and end at different vertices.</p><p><b>Assumptions that matter:</b> All degrees even gives an Eulerian circuit in each connected component containing edges; exactly two odd vertices gives an Eulerian trail but not a circuit.</p>",
     "worked": {
       "problem": "Degrees are $2,2,4,4$ in a connected graph. Does an Eulerian circuit exist?",
       "skills": [
@@ -5346,34 +6067,34 @@
     ],
     "applications": [
       {
-        "title": "Small network sanity checks",
-        "background": "Engineers often test eulerian graphs on tiny graphs before trusting code on large ones.",
-        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+        "title": "Cycle circuit",
+        "background": "Cycle $C_4$ has $0$ odd vertices.",
+        "numbers": "it has an Eulerian circuit"
       },
       {
-        "title": "Recommendation graphs",
-        "background": "Recommender systems use eulerian graphs ideas because user-item data is naturally relational.",
-        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+        "title": "Path trail",
+        "background": "Path $P_4$ has $2$ odd vertices.",
+        "numbers": "it has an Eulerian trail"
       },
       {
-        "title": "Social networks",
-        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
-        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+        "title": "Star obstruction",
+        "background": "Star $K_{1,3}$ has $4$ odd vertices.",
+        "numbers": "it has neither"
       },
       {
-        "title": "Molecular graphs",
-        "background": "Chemistry represents atoms and bonds as graphs, so eulerian graphs can become a model feature.",
-        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+        "title": "Even sequence",
+        "background": "A graph with degrees $(2,2,4,4)$ passes the parity test with.",
+        "numbers": "$0$ odd vertices"
       },
       {
-        "title": "Infrastructure routing",
-        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
-        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+        "title": "Open trail sequence",
+        "background": "Degrees $(1,3,2,2)$ give exactly $2$ odd vertices.",
+        "numbers": "an open trail exists"
       },
       {
-        "title": "ML preprocessing",
-        "background": "Many ML pipelines build graph features before training a downstream model.",
-        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+        "title": "Circuit edge use",
+        "background": "An Eulerian circuit in a $6$-edge graph uses exactly.",
+        "numbers": "$6$ edges"
       }
     ],
     "applicationsClose": "Eulerian graphs is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
@@ -5382,6 +6103,25 @@
       "Small graphs are enough to test the arithmetic and the assumptions.",
       "The same structure scales to networks, matrices, and ML pipelines.",
       "Always separate the graph property from a particular drawing or implementation."
+    ],
+    "connectionsProse": "<p>This lesson studies routes that use every edge exactly once. An Eulerian circuit returns to its starting vertex, while an Eulerian trail may start and end at different vertices. The key condition is about vertex degrees, not about the overall shape of the drawing. This contrasts with Hamiltonian questions, which focus on visiting vertices.</p>",
+    "symbols": [
+      {
+        "sym": "Eulerian circuit",
+        "desc": "closed route using every edge exactly once"
+      },
+      {
+        "sym": "Eulerian trail",
+        "desc": "route using every edge exactly once"
+      },
+      {
+        "sym": "odd/even degree",
+        "desc": "degree parity of a vertex"
+      },
+      {
+        "sym": "connected support",
+        "desc": "the edge-containing part is connected"
+      }
     ],
     "prereqs": [
       "math-15-19"
@@ -5410,8 +6150,8 @@
         "paths"
       ]
     },
-    "motivation": "<p>You already know the graph picture: dots connected by lines. Hamiltonian questions care about visiting places once, not using roads once.</p><p><b>Hamiltonian graphs</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
-    "definition": "<p>A <b>Hamiltonian cycle</b> visits every vertex exactly once and returns to the start. Unlike Eulerian circuits, there is no simple degree-parity characterization, and finding one is computationally hard in general.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "motivation": "<p>Eulerian routes allow vertices to repeat as long as edges are used exactly once. Hamiltonian routes do the opposite: vertices are the scarce resource, so revisiting a vertex is not allowed. This makes the problem sensitive to the global arrangement of the graph.</p><p>There is no simple parity test like the one for Eulerian graphs. A graph may have many vertices of large degree and still fail to contain a Hamiltonian cycle, while complete graphs have many such cycles. The lesson therefore focuses on the definitions and on contrasting vertex-covering routes with edge-covering routes.</p>",
+    "definition": "<p>A Hamiltonian path visits every vertex exactly once. A Hamiltonian cycle visits every vertex exactly once and returns to the start.</p><p><b>Assumptions that matter:</b> There is no simple degree-parity test like the Eulerian case; the lesson contrasts vertex-covering routes with edge-covering routes.</p>",
     "worked": {
       "problem": "Show that $K_5$ has a Hamiltonian cycle.",
       "skills": [
@@ -5610,34 +6350,34 @@
     ],
     "applications": [
       {
-        "title": "Small network sanity checks",
-        "background": "Engineers often test hamiltonian graphs on tiny graphs before trusting code on large ones.",
-        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+        "title": "Cycle graph",
+        "background": "$C_5$ has a Hamiltonian cycle of.",
+        "numbers": "length $5$"
       },
       {
-        "title": "Recommendation graphs",
-        "background": "Recommender systems use hamiltonian graphs ideas because user-item data is naturally relational.",
-        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+        "title": "$K_4$ cycles",
+        "background": "$K_4$ has.",
+        "numbers": "$3\\cdot2\\cdot1/2=3$ undirected Hamiltonian cycles"
       },
       {
-        "title": "Social networks",
-        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
-        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+        "title": "Path graph",
+        "background": "Path $P_5$ has a Hamiltonian path with $4$ edges.",
+        "numbers": "but no Hamiltonian cycle"
       },
       {
-        "title": "Molecular graphs",
-        "background": "Chemistry represents atoms and bonds as graphs, so hamiltonian graphs can become a model feature.",
-        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+        "title": "Star obstruction",
+        "background": "Star $K_{1,4}$ has no Hamiltonian path covering all leaves.",
+        "numbers": "it would need to revisit the center"
       },
       {
-        "title": "Infrastructure routing",
-        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
-        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+        "title": "TSP tour",
+        "background": "A TSP tour on $6$ cities is a Hamiltonian cycle with.",
+        "numbers": "$6$ edges"
       },
       {
-        "title": "ML preprocessing",
-        "background": "Many ML pipelines build graph features before training a downstream model.",
-        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+        "title": "$K_5$ cycles",
+        "background": "A complete graph $K_5$ has.",
+        "numbers": "$4\\cdot3\\cdot2\\cdot1/2=12$ undirected Hamiltonian cycles"
       }
     ],
     "applicationsClose": "Hamiltonian graphs is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
@@ -5646,6 +6386,25 @@
       "Small graphs are enough to test the arithmetic and the assumptions.",
       "The same structure scales to networks, matrices, and ML pipelines.",
       "Always separate the graph property from a particular drawing or implementation."
+    ],
+    "connectionsProse": "<p>This lesson shifts from covering edges to covering vertices. A Hamiltonian path visits every vertex exactly once, and a Hamiltonian cycle also returns to the start. The definition is simple, but the problem is much harder than the Eulerian case. It is the graph-theoretic core of tour and ordering problems such as the traveling salesperson problem.</p>",
+    "symbols": [
+      {
+        "sym": "Hamiltonian path",
+        "desc": "path visiting every vertex exactly once"
+      },
+      {
+        "sym": "Hamiltonian cycle",
+        "desc": "cycle visiting every vertex exactly once"
+      },
+      {
+        "sym": "spanning cycle",
+        "desc": "cycle covering all vertices"
+      },
+      {
+        "sym": "$n$",
+        "desc": "vertices"
+      }
     ],
     "prereqs": [
       "math-15-20"
@@ -5674,8 +6433,8 @@
         "linear algebra"
       ]
     },
-    "motivation": "<p>You already know the graph picture: dots connected by lines. A drawing helps people, but matrices help computers count walks and run algorithms.</p><p><b>The adjacency matrix</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
-    "definition": "<p>For vertices $1,\\ldots,n$, the <b>adjacency matrix</b> $A$ has $A_{ij}=1$ if $i$ and $j$ are adjacent and $0$ otherwise. For a simple undirected graph, $A$ is symmetric with zero diagonal, and $(A^k)_{ij}$ counts length-$k$ walks.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "motivation": "<p>An adjacency matrix answers a one-step question: whether vertex $i$ is connected to vertex $j$. A two-step walk from $i$ to $j$ must choose an intermediate vertex $k$. Matrix multiplication does exactly that kind of summation over possible intermediate choices.</p><p>This is the main bridge between graphs and matrix methods. The entry $(A^2)_{ij}$ counts length-$2$ walks, and the same reasoning extends by induction to $(A^k)_{ij}$. The graph has not changed, but the matrix representation lets algebra count routes through it.</p>",
+    "definition": "<p>The adjacency matrix has entry $A_{ij}=1$ when there is an edge from $i$ to $j$, and $0$ otherwise. Matrix powers count walks:</p><p>$$(A^k)_{ij}$$</p><p><b>Assumptions that matter:</b> The walk-counting statement follows from ordinary matrix multiplication over possible intermediate vertices.</p>",
     "worked": {
       "problem": "Write the adjacency matrix for path $1$--$2$--$3$.",
       "skills": [
@@ -5874,34 +6633,34 @@
     ],
     "applications": [
       {
-        "title": "Small network sanity checks",
-        "background": "Engineers often test the adjacency matrix on tiny graphs before trusting code on large ones.",
-        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+        "title": "$K_3$ diagonal",
+        "background": "For $K_3$, $A^2$ has diagonal entries.",
+        "numbers": "$2$"
       },
       {
-        "title": "Recommendation graphs",
-        "background": "Recommender systems use the adjacency matrix ideas because user-item data is naturally relational.",
-        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+        "title": "$K_3$ off-diagonal",
+        "background": "For $K_3$, off-diagonal entries of $A^2$ are.",
+        "numbers": "$1$"
       },
       {
-        "title": "Social networks",
-        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
-        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+        "title": "Triangle trace",
+        "background": "The trace of $A^3$ counts directed closed triangle walks.",
+        "numbers": "$\\mathrm{tr}(A^3)/6=1$ triangle in $K_3$"
       },
       {
-        "title": "Molecular graphs",
-        "background": "Chemistry represents atoms and bonds as graphs, so the adjacency matrix can become a model feature.",
-        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+        "title": "Path walk",
+        "background": "For path $1-2-3-4$.",
+        "numbers": "$(A^3)_{14}=1$"
       },
       {
-        "title": "Infrastructure routing",
-        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
-        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+        "title": "Degree row sums",
+        "background": "Row sum of $A$ gives degrees in $K_3$.",
+        "numbers": "$(2,2,2)$"
       },
       {
-        "title": "ML preprocessing",
-        "background": "Many ML pipelines build graph features before training a downstream model.",
-        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+        "title": "Total adjacency sum",
+        "background": "Total sum of $A$ in $K_3$ is.",
+        "numbers": "$6=2|E|$"
       }
     ],
     "applicationsClose": "The adjacency matrix is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
@@ -5910,6 +6669,52 @@
       "Small graphs are enough to test the arithmetic and the assumptions.",
       "The same structure scales to networks, matrices, and ML pipelines.",
       "Always separate the graph property from a particular drawing or implementation."
+    ],
+    "connectionsProse": "<p>This lesson returns to graph representations and connects them to linear algebra. The adjacency matrix records edges as entries of a matrix. Multiplying the matrix by itself combines adjacent steps. That makes matrix powers a systematic way to count walks of a fixed length.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "adjacency matrix"
+      },
+      {
+        "sym": "$A_{ij}$",
+        "desc": "entry of the adjacency matrix"
+      },
+      {
+        "sym": "$A^k$",
+        "desc": "matrix power"
+      },
+      {
+        "sym": "$k$",
+        "desc": "walk length"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define the adjacency entries.",
+        "result": "$A_{ij}=1$ if there is an edge from $i$ to $j$, otherwise $0$",
+        "why": "the matrix records one-step connections"
+      },
+      {
+        "do": "Write the square entry.",
+        "result": "$(A^2)_{ij}=\\sum_k A_{ik}A_{kj}$",
+        "why": "matrix multiplication sums over intermediate vertices"
+      },
+      {
+        "do": "Interpret one term.",
+        "result": "$A_{ik}A_{kj}=1$ exactly when $i\\to k\\to j$ is a length-$2$ walk",
+        "why": "both one-step edges must exist"
+      },
+      {
+        "do": "Sum over $k$.",
+        "result": "$(A^2)_{ij}$ counts length-$2$ walks",
+        "why": "each valid intermediate vertex contributes one"
+      },
+      {
+        "do": "Extend by induction.",
+        "result": "$(A^k)_{ij}=\\sum_r(A^{k-1})_{ir}A_{rj}$ counts length-$k$ walks",
+        "why": "a length-$k$ walk is a length-$(k-1)$ walk followed by one edge"
+      }
     ],
     "prereqs": [
       "math-15-21"
@@ -5938,8 +6743,8 @@
         "linear algebra"
       ]
     },
-    "motivation": "<p>You already know the graph picture: dots connected by lines. Adjacency says who touches whom; the Laplacian measures local disagreement across those touches.</p><p><b>The graph Laplacian</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
-    "definition": "<p>For adjacency matrix $A$ and degree matrix $D$, the unnormalized <b>graph Laplacian</b> is $L=D-A$. For a signal $x$, $(Lx)_i=\\sum_{j\\sim i}(x_i-x_j)$ and $x^TLx=\\sum_{(i,j)\\in E}(x_i-x_j)^2$.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "motivation": "<p>A graph often carries a number at each vertex. In a social graph the number might be a user's score, in a sensor network it might be a temperature, and in a GNN it might be one coordinate of a node embedding. A natural question is whether nearby vertices have similar values.</p><p>The graph Laplacian answers that question. If connected vertices have nearly the same values, the Laplacian energy is small. If connected vertices disagree sharply, the energy is large. This is why the Laplacian appears in smoothing, diffusion, clustering, and semi-supervised learning: it turns the idea \"neighbors should agree\" into a formula that can be computed and optimized.</p><p>For the path $1-2-3$, the matrices are $$A=\\begin{bmatrix}0&1&0\\1&0&1\\0&1&0\\end{bmatrix},\\quad D=\\begin{bmatrix}1&0&0\\0&2&0\\0&0&1\\end{bmatrix},\\quad L=D-A=\\begin{bmatrix}1&-1&0\\-1&2&-1\\0&-1&1\\end{bmatrix}.$$ The middle vertex has degree $2$, so its diagonal entry is $2$; each edge contributes a $-1$ off the diagonal.</p>",
+    "definition": "<p>The graph Laplacian is the degree matrix minus the adjacency matrix.</p><p>$$L=D-A$$</p><p><b>Assumptions that matter:</b> The energy identity below is derived for a simple undirected graph.</p>",
     "worked": {
       "problem": "Compute $L$ for path $1$--$2$--$3$.",
       "skills": [
@@ -6138,34 +6943,34 @@
     ],
     "applications": [
       {
-        "title": "Small network sanity checks",
-        "background": "Engineers often test the graph laplacian on tiny graphs before trusting code on large ones.",
-        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+        "title": "Smoothness energy",
+        "background": "On path $1-2-3$, $x=(3,1,3)$ gives.",
+        "numbers": "$x^TLx=(3-1)^2+(1-3)^2=8$"
       },
       {
-        "title": "Recommendation graphs",
-        "background": "Recommender systems use the graph laplacian ideas because user-item data is naturally relational.",
-        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+        "title": "Constant-signal check",
+        "background": "$x=(2,2,2)$ gives.",
+        "numbers": "$x^TLx=0$, so the signal is perfectly smooth on the connected path"
       },
       {
-        "title": "Social networks",
-        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
-        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+        "title": "One heat/GNN smoothing step",
+        "background": "$Lx=(2,-4,2)$, so.",
+        "numbers": "$x\\leftarrow x-0.1Lx=(2.8,1.4,2.8)$"
       },
       {
-        "title": "Molecular graphs",
-        "background": "Chemistry represents atoms and bonds as graphs, so the graph laplacian can become a model feature.",
-        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+        "title": "Connectedness test",
+        "background": "The path's Laplacian eigenvalues are $0,1,3$.",
+        "numbers": "the $0$ eigenvalue has multiplicity $1$ and the graph is connected"
       },
       {
-        "title": "Infrastructure routing",
-        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
-        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+        "title": "Normalized Laplacian coefficient",
+        "background": "$L_{\\mathrm{sym}}=I-D^{-1/2}AD^{-1/2}$ gives edge coefficient.",
+        "numbers": "$-1/\\sqrt{1\\cdot2}\\approx-0.707$ between an endpoint and the middle vertex"
       },
       {
-        "title": "ML preprocessing",
-        "background": "Many ML pipelines build graph features before training a downstream model.",
-        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+        "title": "Effective-resistance feature",
+        "background": "In a unit-resistor path, the resistance between vertices $1$ and $3$ is.",
+        "numbers": "$2$, matching the two series edges and recoverable from $L^+$"
       }
     ],
     "applicationsClose": "The graph Laplacian is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
@@ -6174,6 +6979,82 @@
       "Small graphs are enough to test the arithmetic and the assumptions.",
       "The same structure scales to networks, matrices, and ML pipelines.",
       "Always separate the graph property from a particular drawing or implementation."
+    ],
+    "connectionsProse": "<p>This lesson builds on the adjacency matrix and the degree of a vertex. The adjacency matrix records who is connected to whom, while the degree matrix records how many neighbors each vertex has. The graph Laplacian puts those two pieces together in one matrix, $L=D-A$.</p><p>The point of combining them is not just bookkeeping. The Laplacian measures how much a signal on the vertices disagrees across edges. That makes it central in spectral graph theory, graph clustering, diffusion on networks, and graph neural networks. Once the quadratic form $x^T Lx$ is derived, the matrix has a clear meaning: it turns graph structure into a numerical penalty for roughness.</p>",
+    "symbols": [
+      {
+        "sym": "$G=(V,E)$",
+        "desc": "the graph"
+      },
+      {
+        "sym": "$V$",
+        "desc": "vertices"
+      },
+      {
+        "sym": "$E$",
+        "desc": "undirected edges"
+      },
+      {
+        "sym": "$A$",
+        "desc": "adjacency matrix"
+      },
+      {
+        "sym": "$D$",
+        "desc": "degree matrix"
+      },
+      {
+        "sym": "$d_i$",
+        "desc": "degree of vertex $i$"
+      },
+      {
+        "sym": "$L$",
+        "desc": "graph Laplacian"
+      },
+      {
+        "sym": "$x_i$",
+        "desc": "value of a signal at vertex $i$"
+      },
+      {
+        "sym": "$x^TLx$",
+        "desc": "Laplacian energy"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with the definition of $L$.",
+        "result": "$x^T Lx=x^T(D-A)x$",
+        "why": "$L$ is defined as degree matrix minus adjacency matrix"
+      },
+      {
+        "do": "Expand the degree term.",
+        "result": "$x^TDx=\\sum_i d_i x_i^2$",
+        "why": "$D$ is diagonal and $D_{ii}=d_i$"
+      },
+      {
+        "do": "Expand the adjacency term.",
+        "result": "$x^TAx=\\sum_i\\sum_j A_{ij}x_ix_j$",
+        "why": "matrix multiplication sums over ordered vertex pairs"
+      },
+      {
+        "do": "Use the simple undirected adjacency entries.",
+        "result": "$x^TAx=2\\sum_{(i,j)\\in E}x_ix_j$",
+        "why": "$A_{ij}=1$ exactly when $i$ and $j$ are adjacent, and each edge is counted twice"
+      },
+      {
+        "do": "Rewrite the degree term by edges.",
+        "result": "$\\sum_i d_i x_i^2=\\sum_{(i,j)\\in E}(x_i^2+x_j^2)$",
+        "why": "each incident edge contributes one copy of its endpoint's square"
+      },
+      {
+        "do": "Subtract edge by edge.",
+        "result": "$x^TLx=\\sum_{(i,j)\\in E}(x_i^2+x_j^2-2x_ix_j)=\\sum_{(i,j)\\in E}(x_i-x_j)^2$",
+        "why": "combine the degree and adjacency contributions for each edge"
+      },
+      {
+        "do": "Interpret the identity.",
+        "result": "$x^TLx$ is total squared disagreement across edges",
+        "why": "it is $0$ exactly when $x_i=x_j$ on every edge, meaning $x$ is constant on each connected component"
+      }
     ],
     "prereqs": [
       "math-15-22"
@@ -6202,8 +7083,8 @@
         "linear algebra"
       ]
     },
-    "motivation": "<p>You already know the graph picture: dots connected by lines. A graph matrix can speak through its eigenvalues, revealing components and bottlenecks.</p><p><b>Spectral graph theory</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
-    "definition": "<p><b>Spectral graph theory</b> studies eigenvalues and eigenvectors of graph matrices such as $A$ and $L$. For an undirected Laplacian, $0=\\lambda_1\\le\\lambda_2\\le\\cdots$, and the number of zero eigenvalues equals the number of connected components.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "motivation": "<p>The Laplacian energy measures how much a vertex signal changes across edges. Eigenvectors of the Laplacian give special signals whose variation is organized by the graph itself. Small eigenvalues correspond to smooth signals, while larger eigenvalues correspond to more rapidly varying patterns.</p><p>The zero eigenvalue has a direct structural meaning. Since energy $0$ means no disagreement across any edge, the signal must be constant on each connected component. The second-smallest eigenvalue is therefore the first nonconstant mode in a connected graph, and it carries information about how strongly the graph holds together.</p>",
+    "definition": "<p>Spectral graph theory studies eigenvalues and eigenvectors of graph matrices such as the Laplacian. For an undirected graph, Laplacian eigenvalues are nonnegative and the multiplicity of $0$ equals the number of connected components.</p><p><b>Assumptions that matter:</b> The graph is undirected, so $L$ is symmetric and has real eigenvalues and orthogonal eigenvectors.</p>",
     "worked": {
       "problem": "A graph has Laplacian eigenvalues $0,0,3,5$. How many components?",
       "skills": [
@@ -6402,34 +7283,34 @@
     ],
     "applications": [
       {
-        "title": "Small network sanity checks",
-        "background": "Engineers often test spectral graph theory on tiny graphs before trusting code on large ones.",
-        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+        "title": "$P_3$ spectrum",
+        "background": "Path $P_3$ has Laplacian eigenvalues.",
+        "numbers": "$0,1,3$"
       },
       {
-        "title": "Recommendation graphs",
-        "background": "Recommender systems use spectral graph theory ideas because user-item data is naturally relational.",
-        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+        "title": "Algebraic connectivity",
+        "background": "Therefore.",
+        "numbers": "$\\lambda_2=1$"
       },
       {
-        "title": "Social networks",
-        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
-        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+        "title": "Star spectrum",
+        "background": "Star $K_{1,3}$ has eigenvalues.",
+        "numbers": "$0,1,1,4$"
       },
       {
-        "title": "Molecular graphs",
-        "background": "Chemistry represents atoms and bonds as graphs, so spectral graph theory can become a model feature.",
-        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+        "title": "Connected star",
+        "background": "The star has one zero eigenvalue.",
+        "numbers": "so it is connected"
       },
       {
-        "title": "Infrastructure routing",
-        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
-        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+        "title": "Largest star mode",
+        "background": "The largest star eigenvalue is.",
+        "numbers": "$4$"
       },
       {
-        "title": "ML preprocessing",
-        "background": "Many ML pipelines build graph features before training a downstream model.",
-        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+        "title": "Condition ratio",
+        "background": "For $P_3$, condition ratio among nonzero Laplacian modes is.",
+        "numbers": "$3/1=3$"
       }
     ],
     "applicationsClose": "Spectral graph theory is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
@@ -6438,6 +7319,61 @@
       "Small graphs are enough to test the arithmetic and the assumptions.",
       "The same structure scales to networks, matrices, and ML pipelines.",
       "Always separate the graph property from a particular drawing or implementation."
+    ],
+    "connectionsProse": "<p>This lesson continues from the graph Laplacian. Once a graph is represented by a symmetric matrix, its eigenvalues and eigenvectors describe modes of variation on the vertices. The spectrum gives numerical information about connectivity and bottlenecks. This prepares the reader for spectral clustering and graph-based learning methods.</p>",
+    "symbols": [
+      {
+        "sym": "$\\lambda$",
+        "desc": "eigenvalue"
+      },
+      {
+        "sym": "$v$",
+        "desc": "eigenvector"
+      },
+      {
+        "sym": "spectrum",
+        "desc": "set of eigenvalues"
+      },
+      {
+        "sym": "$\\lambda_2$",
+        "desc": "algebraic connectivity"
+      },
+      {
+        "sym": "$L$",
+        "desc": "Laplacian"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Use symmetry of $L$ for an undirected graph.",
+        "result": "real eigenvalues and orthogonal eigenvectors",
+        "why": "symmetric matrices have this spectral structure"
+      },
+      {
+        "do": "Apply the energy identity.",
+        "result": "$x^TLx\\ge0$",
+        "why": "the energy is a sum of squared edge disagreements"
+      },
+      {
+        "do": "Transfer nonnegativity to eigenvalues.",
+        "result": "every eigenvalue is nonnegative",
+        "why": "an eigenvector $v$ has $v^TLv=\\lambda v^Tv\\ge0$"
+      },
+      {
+        "do": "Check the constant vector.",
+        "result": "$L\\mathbf1=0$",
+        "why": "constant signals have no edge disagreement"
+      },
+      {
+        "do": "Interpret the zero eigenspace.",
+        "result": "multiplicity of $0$ equals the number of connected components",
+        "why": "energy $0$ means constant on each component"
+      },
+      {
+        "do": "Look at the first nonconstant mode.",
+        "result": "$\\lambda_2$ measures the first nonconstant smooth mode",
+        "why": "the zero mode is constant on a connected graph"
+      }
     ],
     "prereqs": [
       "math-15-23"
@@ -6466,8 +7402,8 @@
         "linear algebra"
       ]
     },
-    "motivation": "<p>You already know the graph picture: dots connected by lines. Probability gives a clean laboratory for asking what a typical network looks like.</p><p><b>Random graphs</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
-    "definition": "<p>In the Erdos-Renyi model $G(n,p)$, each possible undirected edge among $n$ vertices appears independently with probability $p$. Expected edges are $p\\binom n2$, and expected degree is $(n-1)p$.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "motivation": "<p>Random graphs are useful when the exact edge set is uncertain or when a simple baseline model is needed. Instead of asking whether one particular edge exists, the model assigns a probability to each possible edge. The simplest version treats all possible edges independently with the same probability.</p><p>Many first computations use indicator variables and linearity of expectation. Each possible edge contributes probability $p$ to the expected edge count, each possible triangle contributes probability $p^3$, and each fixed vertex is isolated only if all its possible incident edges are absent. These calculations are expectations, not threshold theorems.</p>",
+    "definition": "<p>In the random graph model $G(n,p)$, there are $n$ vertices and each possible edge is included independently with probability $p$.</p><p><b>Assumptions that matter:</b> This lesson defines the model and computes expectations by linearity. Do not present threshold theorems as if derived in this lesson.</p>",
     "worked": {
       "problem": "In $G(6,0.4)$, find expected edges and expected degree.",
       "skills": [
@@ -6666,34 +7602,34 @@
     ],
     "applications": [
       {
-        "title": "Small network sanity checks",
-        "background": "Engineers often test random graphs on tiny graphs before trusting code on large ones.",
-        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+        "title": "Expected edges",
+        "background": "In $G(10,0.2)$, expected edges are.",
+        "numbers": "$\\binom{10}{2}0.2=9$"
       },
       {
-        "title": "Recommendation graphs",
-        "background": "Recommender systems use random graphs ideas because user-item data is naturally relational.",
-        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+        "title": "Expected degree",
+        "background": "Expected degree of a vertex is.",
+        "numbers": "$(10-1)0.2=1.8$"
       },
       {
-        "title": "Social networks",
-        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
-        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+        "title": "Expected triangles",
+        "background": "Expected triangles are.",
+        "numbers": "$\\binom{10}{3}0.2^3=0.96$"
       },
       {
-        "title": "Molecular graphs",
-        "background": "Chemistry represents atoms and bonds as graphs, so random graphs can become a model feature.",
-        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+        "title": "Absent edge",
+        "background": "Probability a specific edge is absent is.",
+        "numbers": "$0.8$"
       },
       {
-        "title": "Infrastructure routing",
-        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
-        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+        "title": "Isolated vertex",
+        "background": "Probability a fixed vertex is isolated is.",
+        "numbers": "$0.8^9\\approx0.134$"
       },
       {
-        "title": "ML preprocessing",
-        "background": "Many ML pipelines build graph features before training a downstream model.",
-        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+        "title": "Expected isolated vertices",
+        "background": "Expected isolated vertices are.",
+        "numbers": "$10\\cdot0.8^9\\approx1.342$"
       }
     ],
     "applicationsClose": "Random graphs is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
@@ -6702,6 +7638,29 @@
       "Small graphs are enough to test the arithmetic and the assumptions.",
       "The same structure scales to networks, matrices, and ML pipelines.",
       "Always separate the graph property from a particular drawing or implementation."
+    ],
+    "connectionsProse": "<p>This lesson introduces probability into graph theory. A random graph model describes a distribution over possible graphs rather than one fixed graph. In $G(n,p)$, each possible edge is included independently with probability $p$. This gives a clean setting for expected edge counts, degrees, triangles, and isolated vertices.</p>",
+    "symbols": [
+      {
+        "sym": "$G(n,p)$",
+        "desc": "random graph model"
+      },
+      {
+        "sym": "$n$",
+        "desc": "vertices"
+      },
+      {
+        "sym": "$p$",
+        "desc": "edge probability"
+      },
+      {
+        "sym": "$\\mathbb E$",
+        "desc": "expected value"
+      },
+      {
+        "sym": "indicator variable",
+        "desc": "variable that is $1$ when an event occurs and $0$ otherwise"
+      }
     ],
     "prereqs": [
       "math-15-24"
@@ -6730,8 +7689,8 @@
         "linear algebra"
       ]
     },
-    "motivation": "<p>You already know the graph picture: dots connected by lines. Some clusters are curved or network-shaped; connectivity can matter more than raw distance.</p><p><b>Spectral clustering</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
-    "definition": "<p>Spectral clustering builds a similarity graph, forms a Laplacian such as $L=D-W$, computes a few small-eigenvalue eigenvectors, and clusters rows of that spectral embedding. Low-energy vectors change slowly across strong edges and can jump across weak cuts.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "motivation": "<p>A cut can be encoded by assigning different labels to vertices on different sides. The Laplacian energy of that label vector is large when many edges cross the split, because cut edges connect vertices with different labels. Minimizing that energy would favor cuts with few crossing edges.</p><p>The exact label problem is discrete and hard, so spectral clustering relaxes the labels to real numbers with normalization constraints. Under that relaxation, the Rayleigh quotient is minimized by the eigenvector for $\\lambda_2$. Sorting or taking signs of that vector turns the relaxed solution back into a practical graph partition.</p>",
+    "definition": "<p>Spectral clustering relaxes a discrete graph cut problem into an eigenvector problem. The relaxed Rayleigh quotient is minimized by the eigenvector for $\\lambda_2$.</p><p>$$\\frac{x^TLx}{x^Tx}$$</p><p><b>Assumptions that matter:</b> The relaxed vector is real-valued, constrained to be orthogonal to $\\mathbf1$, and has fixed length.</p>",
     "worked": {
       "problem": "Fiedler values are $[-0.8,-0.7,0.6,0.9]$. Split into two clusters by sign.",
       "skills": [
@@ -6930,34 +7889,34 @@
     ],
     "applications": [
       {
-        "title": "Small network sanity checks",
-        "background": "Engineers often test spectral clustering on tiny graphs before trusting code on large ones.",
-        "numbers": "A graph with $6$ vertices and $7$ edges has average degree $2E/V=14/6\\approx2.33$."
+        "title": "$P_4$ eigenvalues",
+        "background": "For path $P_4$, eigenvalues are approximately.",
+        "numbers": "$0,0.586,2,3.414$"
       },
       {
-        "title": "Recommendation graphs",
-        "background": "Recommender systems use spectral clustering ideas because user-item data is naturally relational.",
-        "numbers": "If $500$ users each connect to $20$ items, the graph has $10000$ observed edges."
+        "title": "Fiedler signs",
+        "background": "The Fiedler vector has signs.",
+        "numbers": "$+,+,-,-$"
       },
       {
-        "title": "Social networks",
-        "background": "Social platforms need graph methods to reason about friendships, follows, and communities.",
-        "numbers": "A user with $35$ neighbors contributes degree $35$ and receives $35$ one-hop signals."
+        "title": "Balanced split",
+        "background": "Splitting after vertex $2$ cuts.",
+        "numbers": "$1$ edge"
       },
       {
-        "title": "Molecular graphs",
-        "background": "Chemistry represents atoms and bonds as graphs, so spectral clustering can become a model feature.",
-        "numbers": "A carbon atom bonded to $4$ atoms has degree $4$ in the molecular graph."
+        "title": "Unbalanced split",
+        "background": "Splitting $\\{1\\}$ from the rest also cuts $1$ edge.",
+        "numbers": "but is less balanced"
       },
       {
-        "title": "Infrastructure routing",
-        "background": "Networks of services, roads, or machines are graphs where local constraints become global behavior.",
-        "numbers": "A service dependency graph with $12$ services and $18$ calls has density $18/\\binom{12}{2}=18/66\\approx0.27$ if undirected."
+        "title": "Relaxed objective",
+        "background": "The relaxed objective value is.",
+        "numbers": "$\\lambda_2\\approx0.586$"
       },
       {
-        "title": "ML preprocessing",
-        "background": "Many ML pipelines build graph features before training a downstream model.",
-        "numbers": "A node feature vector of length $16$ for $1000$ nodes gives a $1000\\times16$ feature matrix."
+        "title": "Disconnected pairs",
+        "background": "On two disconnected pairs, $\\lambda_2=0$ and the exact split has.",
+        "numbers": "cut size $0$"
       }
     ],
     "applicationsClose": "Spectral clustering is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
@@ -6966,6 +7925,61 @@
       "Small graphs are enough to test the arithmetic and the assumptions.",
       "The same structure scales to networks, matrices, and ML pipelines.",
       "Always separate the graph property from a particular drawing or implementation."
+    ],
+    "connectionsProse": "<p>This lesson uses spectral graph theory for clustering. A good two-way split should cut relatively few edges while keeping the sides meaningful. Spectral clustering relaxes that discrete cut problem into an eigenvector problem. The Fiedler vector then gives a real-valued guide for separating the vertices.</p>",
+    "symbols": [
+      {
+        "sym": "Fiedler vector",
+        "desc": "eigenvector associated with $\\lambda_2$"
+      },
+      {
+        "sym": "$\\lambda_2$",
+        "desc": "second-smallest Laplacian eigenvalue"
+      },
+      {
+        "sym": "Rayleigh quotient",
+        "desc": "$x^TLx/x^Tx$"
+      },
+      {
+        "sym": "cut",
+        "desc": "partition of vertices"
+      },
+      {
+        "sym": "relaxed labels",
+        "desc": "real-valued replacements for discrete side labels"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Encode a two-way split by a vector $x$.",
+        "result": "entries differ by side",
+        "why": "the vector stores the side labels"
+      },
+      {
+        "do": "Evaluate Laplacian energy.",
+        "result": "$x^TLx$ sums squared disagreements across edges",
+        "why": "the Laplacian energy identity counts edge disagreements"
+      },
+      {
+        "do": "Notice which edges contribute heavily.",
+        "result": "cut edges",
+        "why": "cut edges connect vertices with different labels"
+      },
+      {
+        "do": "Relax the discrete problem.",
+        "result": "real-valued $x$ orthogonal to $\\mathbf1$ with fixed length",
+        "why": "exact discrete minimization is hard"
+      },
+      {
+        "do": "Minimize the relaxed objective.",
+        "result": "$x^TLx/x^Tx$ is minimized by the eigenvector for $\\lambda_2$",
+        "why": "the Rayleigh quotient selects the first nonconstant Laplacian mode"
+      },
+      {
+        "do": "Convert the relaxed vector to a partition.",
+        "result": "split vertices by signs or sorted values",
+        "why": "the Fiedler vector gives an ordered real-valued guide"
+      }
     ],
     "prereqs": [
       "math-15-25"
@@ -6994,8 +8008,8 @@
         "linear algebra"
       ]
     },
-    "motivation": "<p>You already know the graph picture: dots connected by lines. Many ML examples are not isolated rows: papers cite papers, molecules have bonds, and users connect to items.</p><p><b>Graph neural networks & message passing</b> gives that intuition a precise form, so a small graph can teach the same rule used by large networks.</p>",
-    "definition": "<p>A basic <b>message passing</b> layer updates node $v$ by aggregating neighbor features: $h_v^{(t+1)}=\\sigma(W_{self}h_v^{(t)}+W_{nbr}\\sum_{u\\in N(v)}h_u^{(t)})$. Aggregation should be permutation-invariant, and after $k$ layers information can travel about $k$ hops.</p><p>The useful habit is to connect the definition to a checkable number or construction. Small examples reveal whether the condition is about vertices, edges, faces, matrices, probabilities, or learned messages.</p><p><b>Assumptions that matter:</b> we use simple undirected graphs unless stated otherwise; vertex labels fix the order of any matrix; and the stated theorem applies only when its hypotheses, such as connectedness or planarity, are satisfied.</p>",
+    "motivation": "<p>A node feature by itself describes one vertex, but many graph tasks depend on nearby context. In a citation graph, a paper is informed by neighboring papers; in a social graph, a user is informed by nearby users; in a molecule, an atom is informed by bonded atoms. Message passing is the mechanism for combining that local context.</p><p>A basic layer aggregates neighbor features, includes the node's own feature through a self-loop, and applies shared learned weights. Matrix notation expresses the same operation for all vertices at once. Repeating layers expands the receptive field, so information can travel from immediate neighbors to two-hop and farther neighborhoods.</p>",
+    "definition": "<p>A graph neural network message-passing layer updates each node feature from its neighbors, a self-loop, shared weights, and an activation. One mean-aggregation layer is</p><p>$$H^{(t+1)}=\\sigma(\\tilde D^{-1}\\tilde A H^{(t)}W)$$</p><p><b>Assumptions that matter:</b> The displayed layer uses self-loops and mean aggregation.</p>",
     "worked": {
       "problem": "A scalar layer uses $h_v^{new}=0.5h_v+0.25\\sum_{u\\in N(v)}h_u$. If $h_v=4$ and neighbors are $2,6,8$, compute the update.",
       "skills": [
@@ -7194,34 +8208,34 @@
     ],
     "applications": [
       {
-        "title": "Node classification",
-        "background": "GNNs classify nodes by combining their own features with neighborhood context.",
-        "numbers": "If a paper has $5$ cited neighbors and $4$ are AI papers, a simple neighbor label fraction is $4/5=0.8$."
+        "title": "Node $1$ mean",
+        "background": "On path $1-2-3$ with features $(1,2,4)$, self-loop mean aggregation gives node $1$.",
+        "numbers": "$(1+2)/2=1.5$"
       },
       {
-        "title": "Molecular property prediction",
-        "background": "Atoms are nodes and bonds are edges, so message passing follows chemical bonds.",
-        "numbers": "A carbon atom bonded to $4$ atoms receives $4$ incoming messages in one layer."
+        "title": "Node $2$ mean",
+        "background": "Node $2$ gets.",
+        "numbers": "$(1+2+4)/3=2.333$"
       },
       {
-        "title": "Recommendation graphs",
-        "background": "Users and items form bipartite graphs where messages pass between preferences and content.",
-        "numbers": "If a user connects to $12$ items, mean aggregation averages $12$ item embeddings."
+        "title": "Node $3$ mean",
+        "background": "Node $3$ gets.",
+        "numbers": "$(2+4)/2=3$"
       },
       {
-        "title": "Fraud detection",
-        "background": "Risk can be estimated from transaction or device-sharing neighborhoods.",
-        "numbers": "Neighbor risk scores $0.1,0.9,0.8$ have mean $0.6$."
+        "title": "Sum aggregation",
+        "background": "Sum aggregation gives.",
+        "numbers": "$(3,7,6)$"
       },
       {
-        "title": "Knowledge graphs",
-        "background": "Entities exchange typed messages along relation edges for completion tasks.",
-        "numbers": "An entity with $7$ outgoing relation edges sends or receives $7$ typed messages."
+        "title": "Scalar weight",
+        "background": "With scalar weight $W=2$ and no activation, mean outputs become.",
+        "numbers": "$(3,4.667,6)$"
       },
       {
-        "title": "Oversmoothing",
-        "background": "Too many averaging layers can make connected node embeddings too similar.",
-        "numbers": "On a single edge with values $0$ and $1$, full averaging sends both endpoints to $0.5$."
+        "title": "Two-hop receptive field",
+        "background": "Two hops let node $1$ receive information from node $3$ through node $2$.",
+        "numbers": "its two-hop receptive-field size is $3$"
       }
     ],
     "applicationsClose": "Graph neural networks & message passing is one more reminder that graph ideas become powerful when a local rule is turned into a reliable computation.",
@@ -7230,6 +8244,64 @@
       "Small graphs are enough to test the arithmetic and the assumptions.",
       "The same structure scales to networks, matrices, and ML pipelines.",
       "Always separate the graph property from a particular drawing or implementation."
+    ],
+    "connectionsProse": "<p>This lesson connects graph structure to learned representations. A graph neural network updates node features by sending messages along edges. The same local rule is shared across the graph, while the adjacency pattern decides which nodes exchange information. This brings together adjacency matrices, neighborhoods, smoothing, and modern graph-based machine learning.</p>",
+    "symbols": [
+      {
+        "sym": "$h_v$",
+        "desc": "node feature"
+      },
+      {
+        "sym": "$N(v)$",
+        "desc": "neighbors of $v$"
+      },
+      {
+        "sym": "$H$",
+        "desc": "feature matrix"
+      },
+      {
+        "sym": "$\\tilde A=A+I$",
+        "desc": "self-loop adjacency"
+      },
+      {
+        "sym": "$\\tilde D$",
+        "desc": "self-loop degree matrix"
+      },
+      {
+        "sym": "$W$",
+        "desc": "trainable weights"
+      },
+      {
+        "sym": "$\\sigma$",
+        "desc": "activation"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Give each node a feature vector.",
+        "result": "$h_v^{(t)}$",
+        "why": "the superscript records the layer or time step"
+      },
+      {
+        "do": "Collect neighbor messages.",
+        "result": "sum or average $h_u^{(t)}$ over $u\\in N(v)$",
+        "why": "neighbors provide the local graph context"
+      },
+      {
+        "do": "Include a self-loop.",
+        "result": "the node keeps its own information",
+        "why": "the update should not discard the current node feature"
+      },
+      {
+        "do": "Apply a shared weight matrix and nonlinearity.",
+        "result": "the same rule works at every node",
+        "why": "parameters are shared across the graph"
+      },
+      {
+        "do": "Write the mean-aggregation layer in matrix form.",
+        "result": "$H^{(t+1)}=\\sigma(\\tilde D^{-1}\\tilde A H^{(t)}W)$",
+        "why": "the matrix expression performs all node updates at once"
+      }
     ],
     "prereqs": [
       "math-15-26"

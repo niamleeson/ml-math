@@ -29,8 +29,8 @@
         "mathematical induction"
       ]
     },
-    "motivation": "<p>You already know how to check an example. If someone claims every even square comes from an even number, you can test $4$, $36$, and $100$. Examples build trust, but they do not cover infinitely many cases.</p><p>A <b>proof</b> is the way we cover all cases without listing them. Real analysis is proof-heavy because its claims are usually about every $\\varepsilon>0$, every large enough $N$, or every bounded sequence. The warm secret is that most proofs reuse a few dependable moves.</p>",
-    "definition": "<p>A <b>direct proof</b> starts from hypotheses and derives the conclusion. A <b>contrapositive proof</b> proves $\\neg Q\\Rightarrow\\neg P$ instead of $P\\Rightarrow Q$; these are logically equivalent. A <b>contradiction proof</b> assumes the statement is false and derives something impossible, such as $0=1$. <b>Induction</b> proves a base case and then proves $P(n)\\Rightarrow P(n+1)$ for all allowed $n$.</p><p>The key equivalence for implications is derived from truth values: $P\\Rightarrow Q$ fails only when $P$ is true and $Q$ is false. The contrapositive $\\neg Q\\Rightarrow\\neg P$ fails in exactly the same case, so proving one proves the other.</p><p><b>Assumptions that matter:</b> name the universe of discourse, keep quantifiers in order, do not prove only examples when the claim is universal, and when using contradiction make sure the contradiction follows from the negated claim plus accepted facts.</p>",
+    "motivation": "<p>Checking examples is useful for learning a pattern, but examples alone do not prove a universal statement. A claim about all natural numbers, all tolerances, or all points in an interval needs a reason that covers every case at once. Proof techniques are a small set of reliable forms for building that reason.</p><p>The method should match the statement. Direct proof follows the implication forward, contrapositive proves an equivalent reversed statement, contradiction shows an assumption cannot survive, induction handles step-by-step claims, and a counterexample disproves a universal claim. Real analysis uses these forms constantly because its definitions quantify over every $\\varepsilon>0$, every sufficiently large index, or every point in a domain.</p>",
+    "definition": "<p>Proof techniques are standard reasoning forms for proving or disproving quantified mathematical statements.</p><p><b>Assumptions that matter:</b> match the method to the statement: direct proof, contrapositive, contradiction, induction, or counterexample.</p>",
     "worked": {
       "problem": "Prove: if $n^2$ is even, then $n$ is even, for integer $n$.",
       "skills": [
@@ -254,34 +254,34 @@
     ],
     "applications": [
       {
-        "title": "Program invariants",
-        "background": "Proof ideas entered computing through formal verification: an invariant is a claim that stays true every time a loop runs.",
-        "numbers": "If a loop adds $1+2+\\cdots+n$, the invariant after $k=4$ steps is sum $=4\\cdot5/2=10$; after step $5$, add $5$ to get $15=5\\cdot6/2$."
+        "title": "Direct proof",
+        "background": "if $n=2k$, then $n^2=4k^2=2(2k^2)$ is even.",
+        "numbers": "if $n=2k$, then $n^2=4k^2=2(2k^2)$ is even."
       },
       {
-        "title": "Counterexample-driven testing",
-        "background": "A single failing input can refute a universal claim about software, just like a mathematical counterexample.",
-        "numbers": "Claim: sorting preserves the first item. Input $[3,1,2]$ sorts to $[1,2,3]$, so the first item changes from $3$ to $1$."
+        "title": "Contrapositive",
+        "background": "proving $n^2$ even implies $n$ even can use $n$ odd $\\Rightarrow n^2$ odd; $3^2=9$ illustrates the odd case.",
+        "numbers": "proving $n^2$ even implies $n$ even can use $n$ odd $\\Rightarrow n^2$ odd; $3^2=9$ illustrates the odd case."
       },
       {
-        "title": "Induction for recursive algorithms",
-        "background": "Recursive programs are often proved correct by induction on input size.",
-        "numbers": "If merge sort is correct for lists of length $4$, two correct sorted halves $[1,5]$ and $[2,3]$ merge to $[1,2,3,5]$ for length $4$."
+        "title": "Contradiction",
+        "background": "assume $\\sqrt2=a/b$ in lowest terms, then both $a,b$ become even.",
+        "numbers": "assume $\\sqrt2=a/b$ in lowest terms, then both $a,b$ become even."
       },
       {
-        "title": "Bounding numerical error",
-        "background": "Analysis proofs often bound error instead of computing it exactly.",
-        "numbers": "If each of $1000$ additions has error at most $10^{-12}$, a crude total bound is $1000\\cdot10^{-12}=10^{-9}$."
+        "title": "Induction",
+        "background": "$1+\\cdots+n=n(n+1)/2$ gives $55$ when $n=10$.",
+        "numbers": "$1+\\cdots+n=n(n+1)/2$ gives $55$ when $n=10$."
       },
       {
-        "title": "Generalization guarantees",
-        "background": "Learning theory proves statements of the form: with high probability, every model in a class has small gap.",
-        "numbers": "A bound $0.02+\\sqrt{\\log(100)/10000}\\approx0.02+0.0215=0.0415$ gives a concrete error-gap ceiling."
+        "title": "Counterexample",
+        "background": "one discontinuity refutes “all monotone functions are continuous”; a step at $0$ suffices.",
+        "numbers": "one discontinuity refutes “all monotone functions are continuous”; a step at $0$ suffices."
       },
       {
-        "title": "Termination arguments",
-        "background": "A proof that a quantity decreases to zero can show an algorithm stops.",
-        "numbers": "If an integer counter starts at $17$ and decreases by $3$ while positive, the values $17,14,11,8,5,2,-1$ show termination after $6$ decreases."
+        "title": "Epsilon proof planning",
+        "background": "to prove $1/n\\to0$ with $\\varepsilon=0.01$, choose $N=101$.",
+        "numbers": "to prove $1/n\\to0$ with $\\varepsilon=0.01$, choose $N=101$."
       }
     ],
     "applicationsClose": "Proof techniques are reusable habits: direct, contrapositive, contradiction, induction, and counterexample all turn infinite trust into finite reasoning.",
@@ -290,6 +290,25 @@
       "Contrapositive proof is logically equivalent to the original implication.",
       "Contradiction assumes the negation and derives impossibility.",
       "Induction proves a base case and a one-step transfer."
+    ],
+    "connectionsProse": "<p>Proof techniques are the working language of real analysis. The reader already knows how to test examples and compute with formulas, but analysis asks for statements that hold for every allowed object. Direct proof, contrapositive, contradiction, induction, and counterexample each give a reliable way to match reasoning to the shape of a claim. These methods will support the later lessons on limits, completeness, continuity, and convergence.</p>",
+    "symbols": [
+      {
+        "sym": "$P\\Rightarrow Q$",
+        "desc": "assumption $P$ guarantees conclusion $Q$"
+      },
+      {
+        "sym": "$\\forall$",
+        "desc": "every allowed object"
+      },
+      {
+        "sym": "$\\exists$",
+        "desc": "at least one object"
+      },
+      {
+        "sym": "$\\varepsilon$",
+        "desc": "an arbitrary positive error tolerance"
+      }
     ]
   });
 
@@ -315,8 +334,8 @@
         "induction"
       ]
     },
-    "motivation": "<p>You already count with $1,2,3,\\ldots$ and you already divide a pizza into fractions like $3/4$. Real analysis begins by slowing down and asking what these number systems really guarantee.</p><p>The natural numbers give the rhythm of induction and sequences. The rational numbers give exact ratios, dense order, and the first surprise: there are always more rationals between two rationals, yet they still leave gaps like $\\sqrt2$.</p>",
-    "definition": "<p>The <b>natural numbers</b> $\\mathbb{N}$ are the counting numbers, equipped with a first element and a successor operation. Their key proof principle is induction: if $P(1)$ is true and $P(n)\\Rightarrow P(n+1)$ for every $n\\in\\mathbb{N}$, then $P(n)$ is true for all $n$.</p><p>The <b>rational numbers</b> are $\\mathbb{Q}=\\{p/q:p,q\\in\\mathbb{Z},q\\ne0\\}$. Fractions represent the same rational when $p/q=r/s$ exactly when $ps=qr$. Between any two rationals $a<b$, the average $(a+b)/2$ is rational and satisfies $a<(a+b)/2<b$, so $\\mathbb{Q}$ is dense in itself.</p><p><b>Assumptions that matter:</b> denominators are never zero; rational equality is equality of numbers, not necessarily equality of written fractions; and density does not mean completeness, because sequences of rationals can converge toward irrational limits.</p>",
+    "motivation": "<p>Counting numbers model repeated steps, integers add signed direction, and rationals express exact ratios. These sets already support many computations, so they are the natural starting point for analysis. Their algebraic closure properties explain why operations such as adding counts or multiplying rational scales stay inside the expected system.</p><p>The important limitation is that rational numbers, although dense, still have gaps. Between any two rationals there is another rational, but some limiting processes point to values such as $\\sqrt2$ that no rational equals. This prepares the need for real numbers, where the gaps needed by limits are filled.</p>",
+    "definition": "<p>The basic number systems are $\\mathbb N$ for counting numbers, $\\mathbb Z$ for integers, and $\\mathbb Q=\\{p/q:q\\ne0\\}$ for rational ratios.</p><p><b>Assumptions that matter:</b> use closure properties for arithmetic inside a system, and use $(a+b)/2$ to see density of rationals between $a<b$.</p>",
     "worked": {
       "problem": "Show that there is a rational number strictly between $2/5$ and $3/5$.",
       "skills": [
@@ -515,34 +534,34 @@
     ],
     "applications": [
       {
-        "title": "Array indices and natural numbers",
-        "background": "Computer programs count positions with natural-number-like indices. Induction proves loops handle every position.",
-        "numbers": "For an array of length $5$, indices $0,1,2,3,4$ are visited by adding 1 each time; exactly $5$ visits occur."
+        "title": "Batch counts live in ",
+        "background": "Batch counts live in $\\mathbb N$; a batch of $128$ is a natural number.",
+        "numbers": "Batch counts live in $\\mathbb N$; a batch of $128$ is a natural number."
       },
       {
-        "title": "Rational timestamps",
-        "background": "Distributed systems often quantize time into rational ticks to avoid floating ambiguity.",
-        "numbers": "At $60$ frames per second, frame $37$ occurs at $37/60\\approx0.6167$ seconds."
+        "title": "Class-label offsets use ; label",
+        "background": "Class-label offsets use $\\mathbb Z$; label shift $-3$ is valid.",
+        "numbers": "Class-label offsets use $\\mathbb Z$; label shift $-3$ is valid."
       },
       {
-        "title": "Exact probability models",
-        "background": "Finite probability spaces use rational probabilities when outcomes are counted exactly.",
-        "numbers": "A fair die has probability $2/6=1/3$ of rolling an even number."
+        "title": "Learning rates like are rational",
+        "background": "Learning rates like $1/1000$ are rational.",
+        "numbers": "Learning rates like $1/1000$ are rational."
       },
       {
-        "title": "Feature binning",
-        "background": "Rational cut points divide a numeric feature into exact intervals.",
-        "numbers": "Bins of width $1/4$ over $[0,1]$ are $[0,0.25)$, $[0.25,0.5)$, $[0.5,0.75)$, $[0.75,1]$."
+        "title": "Quantized weights with denominator have",
+        "background": "Quantized weights with denominator $8$ have values $k/8$; $3/8=0.375$.",
+        "numbers": "Quantized weights with denominator $8$ have values $k/8$; $3/8=0.375$."
       },
       {
-        "title": "Fixed-point arithmetic",
-        "background": "Hardware and finance often store rationals with a fixed denominator instead of arbitrary floats.",
-        "numbers": "Cents store dollars in units of $1/100$; $12.34$ dollars is the integer $1234$ over $100$."
+        "title": "Between and , the rational",
+        "background": "Between $0.7$ and $0.8$, the rational midpoint is $0.75$.",
+        "numbers": "Between $0.7$ and $0.8$, the rational midpoint is $0.75$."
       },
       {
-        "title": "Search grids in ML",
-        "background": "Hyperparameter sweeps often choose rational grids before continuous tuning.",
-        "numbers": "A learning-rate grid $\\{1/1000,3/1000,10/1000\\}$ is $\\{0.001,0.003,0.010\\}$ exactly as rationals."
+        "title": "Rationals miss , motivating real",
+        "background": "Rationals miss $\\sqrt2\\approx1.41421356$, motivating real numbers.",
+        "numbers": "Rationals miss $\\sqrt2\\approx1.41421356$, motivating real numbers."
       }
     ],
     "applicationsClose": "Counting, ratios, grids, and induction all come from the same early number systems; real analysis keeps their strengths and then studies their gaps.",
@@ -551,6 +570,25 @@
       "$\\mathbb{Q}$ consists of integer ratios with nonzero denominator.",
       "Fractions are equal when cross products agree.",
       "Between two rationals, their midpoint is another rational."
+    ],
+    "connectionsProse": "<p>The natural, integer, and rational numbers are the first number systems used throughout mathematics. Counting indices, measuring signed offsets, and forming ratios already cover many ordinary computations. Real analysis begins with these familiar sets so the later need for real numbers is clear rather than mysterious. The rational numbers are especially important because they are dense, yet still incomplete.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mathbb N$",
+        "desc": "counting numbers"
+      },
+      {
+        "sym": "$\\mathbb Z$",
+        "desc": "integers"
+      },
+      {
+        "sym": "$\\mathbb Q=\\{p/q:q\\ne0\\}$",
+        "desc": "rational numbers with nonzero denominator"
+      },
+      {
+        "sym": "dense",
+        "desc": "every interval contains a point of the set"
+      }
     ],
     "prereqs": [
       "math-04-01"
@@ -579,8 +617,8 @@
         "least upper bound property"
       ]
     },
-    "motivation": "<p>You already use decimals as if every point on the number line has a name. Rationals name many points, but not all: no rational square equals $2$.</p><p>The <b>real numbers</b> are the completed number line. They keep rational arithmetic and order, add irrational points, and make rigorous convergence possible. Without $\\mathbb{R}$, a sequence could get closer and closer to a missing destination.</p>",
-    "definition": "<p>The real numbers $\\mathbb{R}$ form an ordered field containing $\\mathbb{Q}$: you can add, subtract, multiply, divide by nonzero numbers, and compare with $<$. They also satisfy <b>completeness</b>: every nonempty subset of $\\mathbb{R}$ that is bounded above has a least upper bound in $\\mathbb{R}$.</p><p>Completeness is the gap-filling axiom. For example, $S=\\{q\\in\\mathbb{Q}:q^2<2\\}$ is bounded above in $\\mathbb{Q}$ but has no rational least upper bound. In $\\mathbb{R}$, its supremum is $\\sqrt2$.</p><p><b>Assumptions that matter:</b> the usual algebraic rules hold, order is compatible with arithmetic, absolute value measures distance by $|x-y|$, and completeness is an axiom for $\\mathbb{R}$ rather than a theorem inherited from $\\mathbb{Q}$.</p>",
+    "motivation": "<p>Rational approximations can get closer and closer to a target without ever being exactly equal to it. The decimal approximations to $\\sqrt2$ show this clearly: each interval narrows, but rational endpoints alone do not explain why there is a final number being trapped. Real numbers supply that final landing place.</p><p>Calling $\\mathbb R$ a complete ordered field means it has arithmetic, order, and no missing limit points of the kind analysis needs. Completeness allows nested intervals, Cauchy sequences, and least upper bounds to produce real values. Later convergence proofs depend on this guarantee rather than on decimal notation itself.</p>",
+    "definition": "<p>The real numbers $\\mathbb R$ form a complete ordered field: arithmetic and order work as expected, and Cauchy or least-upper-bound gaps are filled.</p><p><b>Assumptions that matter:</b> nested decimal intervals such as $[1,2]$, $[1.4,1.5]$, $[1.41,1.42]$ point to a real limit such as $\\sqrt2$.</p>",
     "worked": {
       "problem": "Show that $\\sqrt2$ lies between $1.4$ and $1.5$.",
       "skills": [
@@ -779,34 +817,34 @@
     ],
     "applications": [
       {
-        "title": "Floating-point numbers approximate reals",
-        "background": "Computers cannot store every real, so floating-point arithmetic approximates the real line with finitely many representable numbers.",
-        "numbers": "The real $1/10$ is stored near $0.10000000000000000555$ in binary double precision."
+        "title": "A loss value is modeled",
+        "background": "A loss value $0.0137$ is modeled as real.",
+        "numbers": "A loss value $0.0137$ is modeled as real."
       },
       {
-        "title": "Optimization assumes real parameters",
-        "background": "Gradient methods usually model weights as real numbers even though hardware stores approximations.",
-        "numbers": "A weight update $w=1.2-0.1(0.7)=1.13$ is real arithmetic before rounding."
+        "title": "A continuous feature such as",
+        "background": "A continuous feature such as age $34.5$ lies in $\\mathbb R$.",
+        "numbers": "A continuous feature such as age $34.5$ lies in $\\mathbb R$."
       },
       {
-        "title": "Geometry and graphics",
-        "background": "Coordinates in graphics are modeled as real numbers so lines and curves can meet at non-grid points.",
-        "numbers": "The midpoint of $(0,0)$ and $(1,\\sqrt2)$ is $(0.5,0.7071\\ldots)$."
+        "title": "The diagonal of a unit",
+        "background": "The diagonal of a unit square has length $\\sqrt2$.",
+        "numbers": "The diagonal of a unit square has length $\\sqrt2$."
       },
       {
-        "title": "Probability thresholds",
-        "background": "Real-valued scores allow fine threshold changes in classifiers.",
-        "numbers": "A threshold moving from $0.700$ to $0.705$ changes the accepted interval by length $0.005$."
+        "title": "Decimal bisection traps in an",
+        "background": "Decimal bisection traps $\\sqrt2$ in an interval of width $10^{-3}$ after three displayed decimals.",
+        "numbers": "Decimal bisection traps $\\sqrt2$ in an interval of width $10^{-3}$ after three displayed decimals."
       },
       {
-        "title": "Numerical root finding",
-        "background": "Root finders rely on real-number completeness to bracket limits.",
-        "numbers": "If $f(1)=-1$ and $f(2)=2$, bisection first tests $1.5$, then halves the bracket length from $1$ to $0.5$."
+        "title": "Optimization assumes a minimizer can",
+        "background": "Optimization assumes a minimizer can be a real number such as $w=\\pi/4$.",
+        "numbers": "Optimization assumes a minimizer can be a real number such as $w=\\pi/4$."
       },
       {
-        "title": "Measurement models",
-        "background": "Physical measurements are modeled by real intervals because sensors have uncertainty.",
-        "numbers": "A reading $25.0\\pm0.1$ degrees means the real value is modeled in $[24.9,25.1]$, an interval of width $0.2$."
+        "title": "Probability scores fill , not",
+        "background": "Probability scores fill $[0,1]$, not just rational grid points.",
+        "numbers": "Probability scores fill $[0,1]$, not just rational grid points."
       }
     ],
     "applicationsClose": "The real numbers are the completed stage on which distance, limits, optimization, and measurement can behave without missing endpoints.",
@@ -815,6 +853,25 @@
       "Completeness fills rational gaps such as $\\sqrt2$.",
       "Absolute value $|x-y|$ measures distance on the real line.",
       "Intervals and bounds are the language of rigorous approximation."
+    ],
+    "connectionsProse": "<p>The real numbers extend the number systems from counting and ratios to a complete number line. This lesson connects rational approximation with the limits and endpoints that analysis needs. Once the real line is available, sequences can converge to values such as $\\sqrt2$ even when rational arithmetic only approaches them. Completeness of $\\mathbb R$ becomes the foundation for suprema, Cauchy sequences, continuity, and optimization.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mathbb R$",
+        "desc": "the real line"
+      },
+      {
+        "sym": "$<$",
+        "desc": "the order"
+      },
+      {
+        "sym": "completeness",
+        "desc": "no Cauchy or least-upper-bound gaps remain"
+      },
+      {
+        "sym": "$\\sqrt2$",
+        "desc": "the positive real whose square is $2$"
+      }
     ],
     "prereqs": [
       "math-04-02"
@@ -843,8 +900,8 @@
         "greatest lower bound"
       ]
     },
-    "motivation": "<p>You already know the difference between a ceiling and the lowest possible ceiling. The set $(0,1)$ has many upper bounds — $2$, $1.5$, and $1$ — but $1$ is the sharp one.</p><p>That sharp-bound idea is the heart of real analysis. Completeness says that sharp upper bounds exist for all nonempty real sets that are bounded above. It is the quiet engine behind convergence theorems.</p>",
-    "definition": "<p>An <b>upper bound</b> for a set $S\\subseteq\\mathbb{R}$ is a number $M$ such that $x\\le M$ for every $x\\in S$. The <b>supremum</b> $\\sup S$ is the least upper bound: it is an upper bound, and every smaller number fails to be an upper bound. Similarly, $m=\\inf S$ is the greatest lower bound.</p><p>The completeness axiom states: every nonempty subset of $\\mathbb{R}$ that is bounded above has a supremum in $\\mathbb{R}$. The useful epsilon form is: if $\\alpha=\\sup S$, then for every $\\varepsilon>0$ there is some $s\\in S$ with $\\alpha-\\varepsilon<s\\le\\alpha$. Otherwise $\\alpha-\\varepsilon$ would still be an upper bound, contradicting leastness.</p><p><b>Assumptions that matter:</b> $S$ must be nonempty for its supremum to be meaningful here, boundedness is required, the supremum may or may not belong to $S$, and completeness is special to $\\mathbb{R}$, not $\\mathbb{Q}$.</p>",
+    "motivation": "<p>A bounded set may have many upper bounds, but analysis often needs the best one. For an open interval such as $(0,1)$, the endpoint $1$ is not in the set, yet it is still the least ceiling. The supremum records this boundary without requiring membership.</p><p>The epsilon property of the supremum is what makes it useful in proofs. If $\\sup S-\\varepsilon$ were still an upper bound, then the proposed supremum would not be least. Therefore elements of the set must come within every positive distance below the supremum, which turns an endpoint statement into approximating elements.</p>",
+    "definition": "<p>For a nonempty set $S$ bounded above, $\\sup S$ is the least upper bound, and for every $\\varepsilon>0$ some $s\\in S$ satisfies $\\sup S-\\varepsilon<s\\le\\sup S$.</p><p><b>Assumptions that matter:</b> $S$ is nonempty and bounded above; infima follow by applying the same idea to $-S$.</p>",
     "worked": {
       "problem": "Find $\\sup S$ and $\\inf S$ for $S=(2,5]$.",
       "skills": [
@@ -1053,34 +1110,34 @@
     ],
     "applications": [
       {
-        "title": "Training-loss floors",
-        "background": "Empirical losses often approach a floor that behaves like an infimum even if no finite epoch attains it.",
-        "numbers": "For $L_t=0.15+2/t$, $L_{100}=0.17$, $L_{1000}=0.152$, and the infimum is $0.15$."
+        "title": "For , and although neither",
+        "background": "For $S=(0,1)$, $\\sup S=1$ and $\\inf S=0$ although neither is in $S$.",
+        "numbers": "For $S=(0,1)$, $\\sup S=1$ and $\\inf S=0$ although neither is in $S$."
       },
       {
-        "title": "Best possible validation score",
-        "background": "A hyperparameter search over an interval asks for a supremum of achievable scores.",
-        "numbers": "If scores are $s(\\lambda)=0.8- (\\lambda-0.3)^2$ on $[0,1]$, the supremum is $0.8$ at $\\lambda=0.3$."
+        "title": "Validation loss bounded below by",
+        "background": "Validation loss bounded below by $0$ has an infimum.",
+        "numbers": "Validation loss bounded below by $0$ has an infimum."
       },
       {
-        "title": "Binary search brackets",
-        "background": "Root-finding maintains an interval whose endpoints are bounds for the solution.",
-        "numbers": "Starting with $[1,2]$, after three bisections the bracket length is $1/8=0.125$."
+        "title": "If accuracies are below but",
+        "background": "If accuracies are below $0.93$ but reach $0.929$, the supremum can be $0.93$.",
+        "numbers": "If accuracies are below $0.93$ but reach $0.929$, the supremum can be $0.93$."
       },
       {
-        "title": "Robust safety limits",
-        "background": "Systems use worst-case upper bounds to guarantee capacity.",
-        "numbers": "If each request uses at most $12$ MB and there are $80$ requests, a memory upper bound is $960$ MB."
+        "title": "Binary search maintains a supremum-like",
+        "background": "Binary search maintains a supremum-like boundary; after $10$ halvings of width $1$, width is $0.0009765625$.",
+        "numbers": "Binary search maintains a supremum-like boundary; after $10$ halvings of width $1$, width is $0.0009765625$."
       },
       {
-        "title": "Quantile definitions",
-        "background": "Statistics defines quantiles using infima of sets of CDF values.",
-        "numbers": "If $F(3)=0.88$ and $F(4)=0.94$, the $0.90$ quantile is the infimum of $x$ with $F(x)\\ge0.90$, here between 3 and 4."
+        "title": "Supremum of a sequence set",
+        "background": "The set $\\{1-1/n:n\\ge1\\}$ has supremum $1$.",
+        "numbers": "The set $\\{1-1/n:n\\ge1\\}$ has supremum $1$."
       },
       {
-        "title": "Optimization constraints",
-        "background": "Feasible regions are sets, and optima are sharp bounds of objective values.",
-        "numbers": "For $f(x)=2x$ on $0<x<5$, the supremum is $10$ but no feasible $x$ attains value $10$."
+        "title": "Clipped activations in have output",
+        "background": "Clipped activations in $[-1,1]$ have output supremum at most $1$.",
+        "numbers": "Clipped activations in $[-1,1]$ have output supremum at most $1$."
       }
     ],
     "applicationsClose": "Suprema and infima are the sharp edges of sets; completeness guarantees those edges exist in the real line when boundedness allows them.",
@@ -1089,6 +1146,48 @@
       "The sharp bound may fail to belong to the set.",
       "Completeness guarantees suprema for nonempty bounded-above subsets of $\\mathbb{R}$.",
       "The epsilon property of supremum is a key proof tool."
+    ],
+    "connectionsProse": "<p>This lesson gives the first precise form of completeness. Earlier number systems let us compare and approximate, but the real numbers also guarantee best possible upper and lower bounds for nonempty bounded sets. Suprema and infima turn the informal idea of an endpoint into a usable mathematical object. The same language will appear in continuity proofs, compactness arguments, and optimization guarantees.</p>",
+    "symbols": [
+      {
+        "sym": "$\\sup S$",
+        "desc": "the least upper bound"
+      },
+      {
+        "sym": "$\\inf S$",
+        "desc": "the greatest lower bound"
+      },
+      {
+        "sym": "$\\varepsilon$",
+        "desc": "measures closeness to the endpoint"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Let $S$ be nonempty and bounded above",
+        "why": "this gives at least one ceiling."
+      },
+      {
+        "do": "Completeness states that the set of ceilings has a least element",
+        "result": "called $\\sup S$",
+        "why": "the real line has no gap at the best ceiling."
+      },
+      {
+        "do": "For every $\\varepsilon>0$",
+        "result": "$\\sup S-\\varepsilon$ is not an upper bound",
+        "why": "otherwise $\\sup S$ would not be least."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore some $s\\in S$ satisfies $\\sup S-\\varepsilon<s\\le\\sup S$",
+        "why": "elements of $S$ approach the supremum from below."
+      },
+      {
+        "do": "Establish the step",
+        "result": "The infimum follows by applying the same argument to $-S$",
+        "why": "lower bounds become upper bounds after negation."
+      }
     ],
     "prereqs": [
       "math-04-03"
@@ -1117,8 +1216,8 @@
         "power sets"
       ]
     },
-    "motivation": "<p>You already know finite counting. Infinite counting asks a subtler question: can the elements be arranged as a sequence $a_1,a_2,a_3,\\ldots$ so every element appears somewhere?</p><p>Some infinite sets can be listed, like the integers and rationals. The real numbers cannot. That difference is not about size in a vague sense; it is proved by exact maps and diagonal arguments.</p>",
-    "definition": "<p>A set $S$ is <b>countable</b> if it is finite or there is a surjection from $\\mathbb{N}$ onto $S$; equivalently, its elements can be listed in a sequence, possibly with repeats. A set is <b>uncountable</b> if no such listing exists.</p><p>The rationals are countable because pairs $(p,q)\\in\\mathbb{Z}\\times\\mathbb{N}$ can be arranged by increasing $|p|+q$, skipping duplicates. The interval $(0,1)$ is uncountable by Cantor's diagonal argument: any proposed decimal list can be defeated by building a new decimal that differs from the $n$th listed number in its $n$th digit.</p><p><b>Assumptions that matter:</b> listings must include every element after finitely many steps, decimal representations should avoid ambiguous tails like $0.4999\\ldots=0.5000\\ldots$, and countable unions of countable sets are countable.</p>",
+    "motivation": "<p>A set is countable when its elements can be assigned positions in a list. Finite sets, integers, and rational grid points fit this idea, even when the listing order takes some work. Countability is therefore a way to measure whether a collection can be searched or enumerated in sequence.</p><p>Cantor's diagonal argument shows that real numbers in $(0,1)$ are different. If a supposed list is given, a new decimal can be built to differ from the first entry in the first digit, the second entry in the second digit, and so on. The constructed number belongs to the interval but cannot be anywhere on the list, so no list can be complete.</p>",
+    "definition": "<p>A set is countable if it can be listed by natural-number positions; $(0,1)$ is uncountable by Cantor's diagonal construction.</p><p><b>Assumptions that matter:</b> the supposed list must include every number in the interval, and the new decimal is chosen to differ from the $n$th listed number in digit $n$.</p>",
     "worked": {
       "problem": "Explain why the set of even natural numbers is countable.",
       "skills": [
@@ -1327,34 +1426,34 @@
     ],
     "applications": [
       {
-        "title": "Dataset indexing",
-        "background": "Finite datasets are counted by assigning each example an integer id.",
-        "numbers": "A dataset with $1,000,000$ examples can be indexed by integers $0$ through $999,999$."
+        "title": "Integers are countable by listing",
+        "background": "Integers are countable by listing $0,1,-1,2,-2,\\ldots$.",
+        "numbers": "Integers are countable by listing $0,1,-1,2,-2,\\ldots$."
       },
       {
-        "title": "Vocabulary tokens",
-        "background": "A model vocabulary is finite, while all finite token sequences over it are countable.",
-        "numbers": "With vocabulary size $50000$, there are $50000^3=125,000,000,000,000$ sequences of length 3, still finite for fixed length."
+        "title": "Rational grid points are countable",
+        "background": "Rational grid points are countable, so a finite-precision model searches a countable subset.",
+        "numbers": "Rational grid points are countable, so a finite-precision model searches a countable subset."
       },
       {
-        "title": "Program strings",
-        "background": "All finite programs over a finite alphabet are countable because they can be listed by length.",
-        "numbers": "With $128$ ASCII characters, there are $128^5=34,359,738,368$ strings of length 5."
+        "title": "Real-valued weights form an uncountable",
+        "background": "Real-valued weights form an uncountable space.",
+        "numbers": "Real-valued weights form an uncountable space."
       },
       {
-        "title": "Real-valued parameters",
-        "background": "Even one real-valued weight ranges over an uncountable set in the mathematical model.",
-        "numbers": "The interval $[0,1]$ for a single weight is uncountable, unlike any finite grid of $1001$ values."
+        "title": "A vocabulary of tokens is",
+        "background": "A vocabulary of $50{,}000$ tokens is finite and countable.",
+        "numbers": "A vocabulary of $50{,}000$ tokens is finite and countable."
       },
       {
-        "title": "Compression limits",
-        "background": "Only countably many finite descriptions exist, so most real numbers cannot have finite descriptions.",
-        "numbers": "There are at most $2^{100}$ binary descriptions of length 100, but uncountably many reals in $[0,1]$."
+        "title": "Binary strings of length number",
+        "background": "Binary strings of length $10$ number $2^{10}=1024$.",
+        "numbers": "Binary strings of length $10$ number $2^{10}=1024$."
       },
       {
-        "title": "Hyperparameter grids versus continua",
-        "background": "A grid search is countable or finite; continuous optimization works over an uncountable idealization.",
-        "numbers": "A grid with $101$ learning rates and $51$ weight decays has $101\\cdot51=5151$ settings, while $[0,1]^2$ is uncountable."
+        "title": "All infinite binary sequences are",
+        "background": "All infinite binary sequences are uncountable by the same diagonal argument.",
+        "numbers": "All infinite binary sequences are uncountable by the same diagonal argument."
       }
     ],
     "applicationsClose": "Countability asks whether infinity can be put into a sequence; rationals can, reals cannot, and that split shapes analysis and computation.",
@@ -1363,6 +1462,48 @@
       "$\\mathbb{Z}$ and $\\mathbb{Q}$ are countable.",
       "Cantor's diagonal argument proves $(0,1)$ is uncountable.",
       "Finite strings over a finite alphabet are countable, but real intervals are not."
+    ],
+    "connectionsProse": "<p>Sequences list objects one at a time, so they provide a natural test for whether a set can be exhausted by counting. The rational numbers can be organized into such a list, but the real numbers in even a small interval cannot. This distinction explains why finite grids and rational approximations do not capture the full real line. The diagonal argument also introduces a proof pattern that uses an assumed list against itself.</p>",
+    "symbols": [
+      {
+        "sym": "Countable",
+        "desc": "there is a bijection with $\\mathbb N$ or a subset of it"
+      },
+      {
+        "sym": "uncountable",
+        "desc": "no such listing exists"
+      },
+      {
+        "sym": "bijection",
+        "desc": "one-to-one and onto"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Assume every number in $(0,1)$ has been listed as decimals $x_1,x_2,\\ldots$",
+        "why": "this is the countability claim."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Build a new decimal $y$ by choosing its $n$th digit different from the $n$th digit of $x_n$",
+        "why": "diagonal choice."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Then $y\\ne x_n$ for every $n$ because it differs in digit $n$",
+        "why": "no listed entry equals $y$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "But $y\\in(0,1)$",
+        "why": "the list missed a real number in the interval."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore $(0,1)$ is uncountable",
+        "why": "the original listing assumption is false."
+      }
     ],
     "prereqs": [
       "math-04-04"
@@ -1391,8 +1532,8 @@
         "absolute value"
       ]
     },
-    "motivation": "<p>You already read lists like $1,1/2,1/3,\\ldots$ and feel their direction. A sequence formalizes that feeling: it is a function whose input is a natural number.</p><p>Sequences are the laboratory of real analysis. Before functions vary continuously, sequences let us study indexed approximation, iteration, training epochs, and algorithms step by step.</p>",
-    "definition": "<p>A <b>sequence</b> of real numbers is a function $a:\\mathbb{N}\\to\\mathbb{R}$, usually written $(a_n)$, where $a_n$ is the $n$th term. A sequence is <b>bounded above</b> if $a_n\\le M$ for all $n$, <b>bounded below</b> if $m\\le a_n$ for all $n$, and <b>bounded</b> if $|a_n|\\le C$ for all $n$.</p><p>It is <b>increasing</b> if $a_{n+1}\\ge a_n$ for all $n$ and <b>decreasing</b> if $a_{n+1}\\le a_n$ for all $n$. Monotonicity is proved by comparing $a_{n+1}-a_n$ or $a_{n+1}/a_n$ when terms are positive.</p><p><b>Assumptions that matter:</b> the index $n$ is discrete, early terms do not always reveal long-run behavior, and formulas may be explicit like $a_n=1/n$ or recursive like $a_{n+1}=0.5a_n+1$.</p>",
+    "motivation": "<p>A sequence packages a changing quantity as $a_1,a_2,a_3,\\ldots$. The index can represent time, iteration number, sample size, or position in a construction. This makes sequences the natural first setting for convergence.</p><p>The geometric sequence $r^n$ captures the core behavior of repeated shrinkage. When $|r|<1$, each step multiplies size by a fixed factor below one. Logarithms identify how far out in the sequence we must go to make the term smaller than any chosen tolerance.</p>",
+    "definition": "<p>A sequence is an indexed list $a_1,a_2,a_3,\\ldots$; the geometric sequence $a_n=r^n$ converges to zero when $|r|<1$.</p><p>$$r^n\\to0\\qquad(|r|<1).$$</p><p><b>Assumptions that matter:</b> choose $N$ after the tolerance $\\varepsilon$ is given, and require $0<|r|<1$ for the logarithmic cutoff.</p>",
     "worked": {
       "problem": "For $a_n=3-1/n$, list the first four terms and decide whether the sequence is increasing and bounded above.",
       "skills": [
@@ -1601,34 +1742,34 @@
     ],
     "applications": [
       {
-        "title": "Training epochs",
-        "background": "Metrics over epochs are sequences, so monotonicity and boundedness describe learning curves.",
-        "numbers": "Losses $1.0,0.7,0.55,0.48$ form a decreasing prefix bounded below by $0$."
+        "title": "Learning-rate decay gives ",
+        "background": "Learning-rate decay $0.9^n$ gives $0.9^{10}\\approx0.3487$.",
+        "numbers": "Learning-rate decay $0.9^n$ gives $0.9^{10}\\approx0.3487$."
       },
       {
-        "title": "Iterative algorithms",
-        "background": "Fixed-point methods produce recursive sequences.",
-        "numbers": "Starting $x_1=0$ with $x_{n+1}=0.5x_n+1$ gives $1,1.5,1.75$, approaching $2$."
+        "title": "Running error is below after",
+        "background": "Running error $1/n$ is below $0.01$ after $n\\ge101$.",
+        "numbers": "Running error $1/n$ is below $0.01$ after $n\\ge101$."
       },
       {
-        "title": "Streaming averages",
-        "background": "A running average is a sequence indexed by sample count.",
-        "numbers": "Values $4,6,8$ give averages $4,5,6$ after $1,2,3$ samples."
+        "title": "Alternating signs form a sequence",
+        "background": "Alternating signs $(-1)^n$ form a sequence that does not converge.",
+        "numbers": "Alternating signs $(-1)^n$ form a sequence that does not converge."
       },
       {
-        "title": "Learning-rate schedules",
-        "background": "Step sizes are sequences chosen to control optimization.",
-        "numbers": "$\\eta_n=0.1/n$ gives $0.1,0.05,0.0333$ for the first three steps."
+        "title": "Momentum decay ",
+        "background": "Momentum decay $0.5^8=0.00390625$.",
+        "numbers": "Momentum decay $0.5^8=0.00390625$."
       },
       {
-        "title": "Queue lengths over time",
-        "background": "System load measurements form sequences sampled at discrete times.",
-        "numbers": "Queue sizes $2,5,3,8$ are bounded by $8$ over the observed window."
+        "title": "Validation checkpoints form a finite",
+        "background": "Validation checkpoints form a finite prefix such as $a_1,\\ldots,a_{20}$.",
+        "numbers": "Validation checkpoints form a finite prefix such as $a_1,\\ldots,a_{20}$."
       },
       {
-        "title": "Gradient norms",
-        "background": "Convergence diagnostics often track a sequence of gradient norms.",
-        "numbers": "Norms $0.9,0.4,0.18,0.08$ are positive and decreasing in this window."
+        "title": "Batch mean estimates often behave",
+        "background": "Batch mean estimates often behave like a sequence approaching a population mean.",
+        "numbers": "Batch mean estimates often behave like a sequence approaching a population mean."
       }
     ],
     "applicationsClose": "A sequence is just a numbered stream, but boundedness, monotonicity, and recursion make it powerful enough to model approximation and iteration.",
@@ -1637,6 +1778,47 @@
       "Boundedness controls how large terms can get.",
       "Monotonicity is usually proved by comparing consecutive terms.",
       "Recursive sequences describe many iterative algorithms."
+    ],
+    "connectionsProse": "<p>Sequences are the basic objects used to describe limiting processes. They appear whenever a value changes by step number: iterations of an algorithm, sample sizes, partial sums, or checkpoints in training. Real analysis studies sequences first because many later ideas reduce to controlling what happens far out in the index. Geometric sequences provide the cleanest model for convergence.</p>",
+    "symbols": [
+      {
+        "sym": "$a_n$",
+        "desc": "the $n$th term"
+      },
+      {
+        "sym": "$n\\in\\mathbb N$",
+        "desc": "the index"
+      },
+      {
+        "sym": "$r$",
+        "desc": "the common ratio"
+      },
+      {
+        "sym": "$\\lim a_n$",
+        "desc": "the sequence limit"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Define $a_n=r^n$ with $|r|<1$",
+        "why": "this is the basic geometric sequence."
+      },
+      {
+        "do": "Given $\\varepsilon>0$",
+        "result": "choose $N>\\log(\\varepsilon)/\\log(|r|)$",
+        "why": "logarithms solve $|r|^N<\\varepsilon$ because $0<|r|<1$."
+      },
+      {
+        "do": "For $n\\ge N$",
+        "result": "$|a_n|=|r|^n\\le |r|^N<\\varepsilon$",
+        "why": "later terms are smaller."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore $r^n\\to0$",
+        "why": "the sequence converges to zero."
+      }
     ],
     "prereqs": [
       "math-04-05"
@@ -1664,8 +1846,8 @@
         "squeeze theorem"
       ]
     },
-    "motivation": "<p>You can look at $1,1/2,1/3,\\ldots$ and feel it heading to $0$. Real analysis asks us to say exactly what that means.</p><p>The answer is the $\\varepsilon$-$N$ definition. It sounds formal at first, but it is simply a promise: after some point in the list, every term stays within your chosen tolerance.</p>",
-    "definition": "<p>A sequence $(a_n)$ <b>converges</b> to $L\\in\\mathbb{R}$, written $a_n\\to L$ or $\\lim_{n\\to\\infty}a_n=L$, if for every $\\varepsilon>0$ there exists $N\\in\\mathbb{N}$ such that $n\\ge N\\Rightarrow |a_n-L|<\\varepsilon$.</p><p>Every symbol has a job: $\\varepsilon$ is the tolerance chosen by someone else, $N$ is the threshold you are allowed to choose, and the implication controls all later indices, not just one term. For $a_n=1/n$, choosing $N>1/\\varepsilon$ works because $n\\ge N$ forces $1/n\\le1/N<\\varepsilon$.</p><p><b>Assumptions that matter:</b> the limit $L$ is finite in $\\mathbb{R}$, $N$ may depend on $\\varepsilon$, strict inequality can be achieved by choosing a slightly larger integer, and changing finitely many early terms does not change the limit.</p>",
+    "motivation": "<p>The limit definition is designed to ignore finitely many early terms. A sequence may start irregularly, but convergence only asks what happens after a sufficiently late cutoff. For every allowed error band, all later terms must remain inside that band.</p><p>In the proof that $1/n\\to0$, the tolerance $\\varepsilon$ is chosen first. The job is then to find a cutoff $N$ large enough that every reciprocal after that point is below $\\varepsilon$. This order of choices is the main discipline of epsilon proofs.</p>",
+    "definition": "<p>A sequence $a_n$ converges to $L$ when every error tolerance is eventually met.</p><p>$$\\forall\\varepsilon>0\\ \\exists N\\ \\text{such that}\\ n\\ge N\\Rightarrow |a_n-L|<\\varepsilon.$$</p><p><b>Assumptions that matter:</b> $\\varepsilon$ is chosen first, then $N$ must work for every later index.</p>",
     "worked": {
       "problem": "Prove $1/n\\to0$ using the $\\varepsilon$-$N$ definition.",
       "skills": [
@@ -1869,34 +2051,34 @@
     ],
     "applications": [
       {
-        "title": "Stopping criteria",
-        "background": "Optimization stops when a sequence of changes is below a tolerance.",
-        "numbers": "If update size is $1/n$, then below $0.001$ requires $n>1000$, so $N=1001$."
+        "title": "For , choose ",
+        "background": "For $1/n<0.001$, choose $N=1001$.",
+        "numbers": "For $1/n<0.001$, choose $N=1001$."
       },
       {
-        "title": "Validation-curve plateaus",
-        "background": "A metric sequence can converge to a performance ceiling or floor.",
-        "numbers": "For $a_n=0.9-0.3/n$, being within $0.01$ of $0.9$ needs $0.3/n<0.01$, so $n>30$."
+        "title": "For , choose ",
+        "background": "For $2/n<0.01$, choose $N=201$.",
+        "numbers": "For $2/n<0.01$, choose $N=201$."
       },
       {
-        "title": "Monte Carlo estimates",
-        "background": "Sample averages often converge to expected values as sample size grows.",
-        "numbers": "An error bound shaped like $2/\\sqrt n$ drops below $0.05$ when $\\sqrt n>40$, so $n>1600$."
+        "title": "The sequence converges to ",
+        "background": "The sequence $4+1/n$ converges to $4$; with $\\varepsilon=0.1$, $N=11$ works.",
+        "numbers": "The sequence $4+1/n$ converges to $4$; with $\\varepsilon=0.1$, $N=11$ works."
       },
       {
-        "title": "Iterative solvers",
-        "background": "Numerical methods track residual sequences approaching zero.",
-        "numbers": "Residual $r_k=0.5^k$ is below $0.01$ at $k=7$ because $0.5^7=0.0078125$."
+        "title": "SGD noise averages can be",
+        "background": "SGD noise averages can be modeled by $1/\\sqrt n$; to get below $0.05$, need $n>400$.",
+        "numbers": "SGD noise averages can be modeled by $1/\\sqrt n$; to get below $0.05$, need $n>400$."
       },
       {
-        "title": "Learning-rate decay",
-        "background": "Schedules are designed so step sizes converge to zero.",
-        "numbers": "$\\eta_n=0.1/n$ is below $10^{-4}$ after $n>1000$."
+        "title": "after ",
+        "background": "$0.8^n<0.01$ after $n\\ge21$.",
+        "numbers": "$0.8^n<0.01$ after $n\\ge21$."
       },
       {
-        "title": "Streaming calibration",
-        "background": "Online metrics stabilize when new examples have shrinking influence.",
-        "numbers": "The first example's weight in an average after $n=10000$ samples is $1/10000=0.0001$."
+        "title": "A nonconvergent oscillation stays distance",
+        "background": "A nonconvergent oscillation $(-1)^n$ stays distance $2$ between adjacent signs.",
+        "numbers": "A nonconvergent oscillation $(-1)^n$ stays distance $2$ between adjacent signs."
       }
     ],
     "applicationsClose": "The $\\varepsilon$-$N$ definition is a precise tail promise: choose any tolerance, and the sequence eventually stays inside it.",
@@ -1905,6 +2087,47 @@
       "$N$ may depend on $\\varepsilon$.",
       "Absolute value measures distance to the proposed limit.",
       "Oscillation can still converge if its amplitude shrinks to zero."
+    ],
+    "connectionsProse": "<p>Limits of sequences make the phrase “approaches a value” precise. The definition separates early behavior from eventual behavior, which is why it fits iterative processes so well. Once a cutoff index is chosen, every later term must stay within the requested error band. This epsilon-and-$N$ pattern becomes the model for Cauchy sequences, series, and function limits.</p>",
+    "symbols": [
+      {
+        "sym": "$\\varepsilon$",
+        "desc": "the allowed error"
+      },
+      {
+        "sym": "$N$",
+        "desc": "the cutoff index"
+      },
+      {
+        "sym": "$L$",
+        "desc": "the proposed limit"
+      },
+      {
+        "sym": "$|a_n-L|$",
+        "desc": "the distance to the limit"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "To prove $1/n\\to0$, start with an arbitrary $\\varepsilon>0$",
+        "why": "the error tolerance is chosen before $N$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Choose $N>1/\\varepsilon$",
+        "why": "this makes the reciprocal smaller than the tolerance."
+      },
+      {
+        "do": "If $n\\ge N$",
+        "result": "then $|1/n-0|=1/n\\le1/N<\\varepsilon$",
+        "why": "every later term is inside the band."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Since the choice works for every $\\varepsilon>0$, $\\lim_{n\\to\\infty}1/n=0$",
+        "why": "this is the definition."
+      }
     ],
     "prereqs": [
       "math-04-06"
@@ -1932,8 +2155,8 @@
         "index maps"
       ]
     },
-    "motivation": "<p>You have probably skimmed a long list by looking at every other term. That is a subsequence: not a new universe, just a careful infinite selection.</p><p>Subsequences reveal hidden behavior. A sequence may oscillate, but its even terms and odd terms can have separate limits. Real analysis uses subsequences to detect convergence, nonconvergence, and compactness.</p>",
-    "definition": "<p>A <b>subsequence</b> of $(a_n)$ is $(a_{n_k})$, where $n_1<n_2<n_3<\\cdots$ are natural numbers. The indices must strictly increase so the original order is preserved and infinitely many terms are selected.</p><p>If $a_n\\to L$, then every subsequence also converges to $L$. Proof: given $\\varepsilon>0$, choose $N$ so $n\\ge N\\Rightarrow |a_n-L|<\\varepsilon$. Since $n_k\\ge k$, all sufficiently large $k$ have $n_k\\ge N$, so $|a_{n_k}-L|<\\varepsilon$.</p><p><b>Assumptions that matter:</b> a subsequence is infinite, repeated finite selections do not count, indices are increasing, and different subsequential limits prove the original sequence cannot converge.</p>",
+    "motivation": "<p>Sometimes a sequence contains several behaviors interleaved with one another. A subsequence selects one ordered stream from the original sequence, such as only even terms or only saved checkpoints. The selected indices must keep increasing so that the subsequence still moves forward through the original sequence.</p><p>If the full sequence already converges, every subsequence must inherit the same limit. The reason is simple: selected late indices eventually pass any cutoff that works for the original sequence. This result is later paired with compactness, where one proves convergence by finding a well-behaved subsequence.</p>",
+    "definition": "<p>A subsequence $a_{n_k}$ selects terms from a sequence using increasing indices; every subsequence of a convergent sequence has the same limit.</p><p><b>Assumptions that matter:</b> the index sequence satisfies $n_k\\to\\infty$, so selected indices eventually pass any cutoff for the original sequence.</p>",
     "worked": {
       "problem": "For $a_n=(-1)^n+1/n$, find the limits of the even and odd subsequences.",
       "skills": [
@@ -2137,34 +2360,34 @@
     ],
     "applications": [
       {
-        "title": "Train versus validation alternation",
-        "background": "Logs often alternate metric types; subsequences separate them.",
-        "numbers": "If odd entries are training losses $0.6,0.4,0.3$ and even entries are validation losses $0.7,0.55,0.50$, analyze $a_{2k-1}$ and $a_{2k}$ separately."
+        "title": "Even terms of are and",
+        "background": "Even terms of $(-1)^n$ are $1$ and converge to $1$.",
+        "numbers": "Even terms of $(-1)^n$ are $1$ and converge to $1$."
       },
       {
-        "title": "Mini-batch cycles",
-        "background": "Cyclic data order can create subsequences for each phase of a cycle.",
-        "numbers": "A 3-batch cycle uses subsequences $a_{3k}$, $a_{3k+1}$, and $a_{3k+2}$; their limits reveal periodic bias."
+        "title": "Odd terms of are and",
+        "background": "Odd terms of $(-1)^n$ are $-1$ and converge to $-1$.",
+        "numbers": "Odd terms of $(-1)^n$ are $-1$ and converge to $-1$."
       },
       {
-        "title": "Checkpoint sampling",
-        "background": "Saving every tenth epoch forms a subsequence of a full training run.",
-        "numbers": "Epochs $10,20,30$ use index rule $n_k=10k$ and preserve chronological order."
+        "title": "Checkpoints every epochs form ",
+        "background": "Checkpoints every $5$ epochs form $a_5,a_{10},a_{15},\\ldots$.",
+        "numbers": "Checkpoints every $5$ epochs form $a_5,a_{10},a_{15},\\ldots$."
       },
       {
-        "title": "Detecting nonconvergence",
-        "background": "Different subsequential limits prove an oscillating algorithm has not settled.",
-        "numbers": "Updates $1,-1,1,-1$ have even subsequence $1$ and odd subsequence $-1$."
+        "title": "If , the subsequence still",
+        "background": "If $a_n=1/n$, the subsequence $a_{2k}=1/(2k)$ still converges to $0$.",
+        "numbers": "If $a_n=1/n$, the subsequence $a_{2k}=1/(2k)$ still converges to $0$."
       },
       {
-        "title": "Sparse evaluation",
-        "background": "Expensive validation may be run at square-number epochs.",
-        "numbers": "Epochs $1,4,9,16$ follow $n_k=k^2$; this is still a valid subsequence."
+        "title": "A validation curve with two",
+        "background": "A validation curve with two subsequential limits signals nonconvergence.",
+        "numbers": "A validation curve with two subsequential limits signals nonconvergence."
       },
       {
-        "title": "Cluster analysis in simulations",
-        "background": "Long simulations may visit several regimes; subsequences isolate visits near one regime.",
-        "numbers": "Samples near value $2$ at times $5,11,19$ form a subsequence if those times increase."
+        "title": "From epochs, saving every th",
+        "background": "From $32$ epochs, saving every $4$th gives $8$ subsequence terms.",
+        "numbers": "From $32$ epochs, saving every $4$th gives $8$ subsequence terms."
       }
     ],
     "applicationsClose": "Subsequences are infinite order-preserving selections; they inherit limits from convergent sequences and expose multiple behaviors in divergent ones.",
@@ -2173,6 +2396,43 @@
       "Every subsequence of a convergent sequence has the same limit.",
       "Two subsequences with different limits prove divergence.",
       "Subsequences are central to compactness arguments."
+    ],
+    "connectionsProse": "<p>Subsequences let us inspect selected parts of a sequence without changing their order. They are useful when the full sequence has complicated behavior but some hidden tail pattern is still stable. The basic compatibility result says that a convergent sequence passes its limit to every subsequence. Later compactness arguments will run in the opposite direction by extracting convergent subsequences from bounded data.</p>",
+    "symbols": [
+      {
+        "sym": "$n_k$",
+        "desc": "an increasing sequence of indices"
+      },
+      {
+        "sym": "$a_{n_k}$",
+        "desc": "the selected term"
+      },
+      {
+        "sym": "$K$",
+        "desc": "the subsequence cutoff"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Let $a_n\\to L$ and let $a_{n_k}$ be a subsequence with $n_k\\to\\infty$",
+        "why": "selected indices still go late."
+      },
+      {
+        "do": "Given $\\varepsilon>0$",
+        "result": "choose $N$ so $n\\ge N$ implies $|a_n-L|<\\varepsilon$",
+        "why": "use convergence of the full sequence."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Choose $K$ so $n_k\\ge N$ whenever $k\\ge K$",
+        "why": "subsequence indices eventually pass the cutoff."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Then $|a_{n_k}-L|<\\varepsilon$ for $k\\ge K$",
+        "why": "the subsequence has the same limit."
+      }
     ],
     "prereqs": [
       "math-04-07"
@@ -2200,8 +2460,8 @@
         "monotone subsequences"
       ]
     },
-    "motivation": "<p>A bounded sequence can still jump around forever. The surprise is that in the real line it cannot avoid having some convergent trail hiding inside it.</p><p>The <b>Bolzano-Weierstrass theorem</b> is one of the first compactness results: boundedness plus the completeness of $\\mathbb{R}$ forces a convergent subsequence. It is a gentle but powerful guarantee of structure.</p>",
-    "definition": "<p><b>Bolzano-Weierstrass:</b> every bounded sequence in $\\mathbb{R}$ has a convergent subsequence. One proof repeatedly bisects a closed interval containing infinitely many terms. At each stage choose a half that still contains infinitely many terms; the nested intervals have lengths tending to $0$, and completeness gives a unique point trapped inside. Selecting one term from each interval yields a subsequence converging to that point.</p><p>The epsilon reason: after enough bisections, the chosen interval length is below $\\varepsilon$. All later selected subsequence terms lie in that same tiny interval around the trapped point, so their distance from the point is below $\\varepsilon$.</p><p><b>Assumptions that matter:</b> the sequence must be bounded and real-valued, the selected indices must increase, and the theorem guarantees existence of a convergent subsequence, not convergence of the whole sequence.</p>",
+    "motivation": "<p>Boundedness confines a sequence to a finite interval, but it does not force the entire sequence to converge. The sequence $(-1)^n$ stays bounded and still oscillates forever. Bolzano-Weierstrass says that boundedness at least forces some subsequence to converge.</p><p>The proof repeatedly halves an interval that contains infinitely many terms. At each stage, one half must still contain infinitely many terms, so a later sequence term can be chosen inside it. The nested intervals shrink to length zero, making the chosen subsequence Cauchy and then convergent by completeness of $\\mathbb R$.</p>",
+    "definition": "<p>Bolzano-Weierstrass says every bounded real sequence has a convergent subsequence.</p><p><b>Assumptions that matter:</b> boundedness places all terms in a finite closed interval, and completeness of $\\mathbb R$ supplies the subsequential limit.</p>",
     "worked": {
       "problem": "Use Bolzano-Weierstrass to justify a convergent subsequence of $a_n=(-1)^n+1/n$, and identify one.",
       "skills": [
@@ -2405,34 +2665,34 @@
     ],
     "applications": [
       {
-        "title": "Checkpoint selection",
-        "background": "A bounded sequence of validation scores always has a convergent subsequence of checkpoints in the mathematical model.",
-        "numbers": "Scores in $[0,1]$ at epochs $1,2,\\ldots$ satisfy the boundedness hypothesis exactly."
+        "title": "Any sequence in has a",
+        "background": "Any sequence in $[0,1]$ has a convergent subsequence.",
+        "numbers": "Any sequence in $[0,1]$ has a convergent subsequence."
       },
       {
-        "title": "Parameter clipping",
-        "background": "Clipping weights to a bounded interval creates compactness in one dimension.",
-        "numbers": "If weights are clipped to $[-5,5]$, any infinite sequence of one weight has a convergent subsequence."
+        "title": "For values in , after",
+        "background": "For values in $[-1,1]$, after $10$ bisections interval width is $2/2^{10}=0.001953125$.",
+        "numbers": "For values in $[-1,1]$, after $10$ bisections interval width is $2/2^{10}=0.001953125$."
       },
       {
-        "title": "Simulation samples",
-        "background": "Bounded physical measurements contain stable subsequences even when the whole trace oscillates.",
-        "numbers": "Temperature readings in $[18,22]$ over infinitely many samples have a convergent subsequence."
+        "title": "Bounded validation losses have subsequential",
+        "background": "Bounded validation losses have subsequential limits.",
+        "numbers": "Bounded validation losses have subsequential limits."
       },
       {
-        "title": "Interval nesting algorithms",
-        "background": "Bisection and branch-and-bound shrink intervals using the same nested-interval idea.",
-        "numbers": "Starting length $4$, after $10$ halvings length is $4/1024\\approx0.00391$."
+        "title": "Embeddings clipped to norm at",
+        "background": "Embeddings clipped to norm at most $1$ have convergent coordinate subsequences.",
+        "numbers": "Embeddings clipped to norm at most $1$ have convergent coordinate subsequences."
       },
       {
-        "title": "Compactness intuition for optimization",
-        "background": "Existence proofs for minimizers often combine bounded feasible sets with convergent subsequences.",
-        "numbers": "A sequence of candidate losses $0.5,0.4,0.35$ with parameters in $[0,1]$ has subsequential parameter limits."
+        "title": "The sequence has subsequences converging",
+        "background": "The sequence $(-1)^n$ has subsequences converging to $1$ and $-1$.",
+        "numbers": "The sequence $(-1)^n$ has subsequences converging to $1$ and $-1$."
       },
       {
-        "title": "Adversarial examples on bounded pixels",
-        "background": "Images live in a bounded cube, which makes subsequence compactness plausible coordinatewise.",
-        "numbers": "A grayscale pixel sequence in $[0,255]$ has a convergent subsequence for that pixel value."
+        "title": "Compactness arguments in ML often",
+        "background": "Compactness arguments in ML often start by extracting a convergent subsequence from bounded parameters.",
+        "numbers": "Compactness arguments in ML often start by extracting a convergent subsequence from bounded parameters."
       }
     ],
     "applicationsClose": "Bolzano-Weierstrass is the hidden-convergence theorem: bounded real sequences may wander, but some infinite trail settles.",
@@ -2441,6 +2701,53 @@
       "The theorem relies on completeness of $\\mathbb{R}$.",
       "It does not imply the original sequence converges.",
       "Interval halving is the core proof idea."
+    ],
+    "connectionsProse": "<p>Bolzano-Weierstrass is the first major compactness result for sequences on the real line. It says that boundedness prevents a sequence from avoiding all limiting behavior. Even if the full sequence does not converge, some ordered selection of terms must settle down. The proof links interval bisection, nested control, Cauchy behavior, and completeness.</p>",
+    "symbols": [
+      {
+        "sym": "Bounded",
+        "desc": "$a_n\\in[a,b]$"
+      },
+      {
+        "sym": "subsequence",
+        "desc": "$a_{n_k}$ with increasing $n_k$"
+      },
+      {
+        "sym": "nested intervals",
+        "desc": "intervals contained in previous ones"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Place the bounded sequence inside a closed interval $[a,b]$",
+        "why": "boundedness supplies finite walls."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Split the interval in half",
+        "why": "at least one half contains infinitely many terms."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Keep that half and choose one sequence term inside it after the previously chosen index",
+        "why": "this builds a subsequence."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Repeat the halving",
+        "why": "the nested intervals have lengths $(b-a)/2^k$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "The chosen subsequence is Cauchy because later terms lie in the same tiny interval",
+        "why": "interval lengths go to zero."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Completeness of $\\mathbb R$ gives a limit",
+        "why": "the subsequence converges."
+      }
     ],
     "prereqs": [
       "math-04-08"
@@ -2468,8 +2775,8 @@
         "triangle inequality"
       ]
     },
-    "motivation": "<p>Usually convergence names a destination first. Cauchy sequences ask a more practical question: do the late terms crowd together so tightly that a destination must exist?</p><p>In the real numbers, the answer is yes. Cauchy is the internal test for convergence: terms eventually agree with each other, and completeness supplies the limit.</p>",
-    "definition": "<p>A sequence $(a_n)$ is <b>Cauchy</b> if for every $\\varepsilon>0$ there exists $N\\in\\mathbb{N}$ such that $m,n\\ge N\\Rightarrow |a_m-a_n|<\\varepsilon$. The definition compares tail terms to each other, not to a known $L$.</p><p>Every convergent sequence is Cauchy: if $a_n\\to L$, choose $N$ so $|a_n-L|<\\varepsilon/2$ for $n\\ge N$. Then for $m,n\\ge N$, the triangle inequality gives $|a_m-a_n|\\le |a_m-L|+|a_n-L|<\\varepsilon$. In $\\mathbb{R}$, completeness gives the converse: every Cauchy sequence converges.</p><p><b>Assumptions that matter:</b> both indices must be in the tail, $N$ depends on $\\varepsilon$, the triangle inequality is the proof engine, and Cauchy implies convergence in $\\mathbb{R}$ but not in every incomplete space.</p>",
+    "motivation": "<p>A usual limit proof compares each late term with a known number $L$. A Cauchy proof compares late terms with one another instead. This is especially useful when the eventual limit is hard to name but the tail of the process is visibly settling.</p><p>In $\\mathbb R$, late-term crowding is enough. A Cauchy sequence first becomes bounded, so Bolzano-Weierstrass supplies a convergent subsequence. The Cauchy property then pulls the whole tail close to that subsequential limit, proving that the entire sequence converges.</p>",
+    "definition": "<p>A sequence is Cauchy when late terms are close to one another: for every $\\varepsilon>0$ there is $N$ such that $m,n\\ge N$ implies $|a_m-a_n|<\\varepsilon$.</p><p><b>Assumptions that matter:</b> in $\\mathbb R$, completeness turns the Cauchy property into convergence.</p>",
     "worked": {
       "problem": "Prove $a_n=1/n$ is Cauchy.",
       "skills": [
@@ -2678,34 +2985,34 @@
     ],
     "applications": [
       {
-        "title": "Stopping without knowing the answer",
-        "background": "Numerical algorithms often stop when successive iterates are close, a Cauchy-style criterion.",
-        "numbers": "If $|x_{k+1}-x_k|<10^{-6}$ for many late $k$, the tail is empirically clustering."
+        "title": "For , gives ",
+        "background": "For $a_n=1/n$, $m,n\\ge200$ gives $|a_m-a_n|\\le1/200<0.01$.",
+        "numbers": "For $a_n=1/n$, $m,n\\ge200$ gives $|a_m-a_n|\\le1/200<0.01$."
       },
       {
-        "title": "Partial sums of series",
-        "background": "Series convergence is exactly Cauchy behavior of partial sums.",
-        "numbers": "For geometric tail $2^{-n}$, choosing $n=20$ gives tail below $9.54\\cdot10^{-7}$."
+        "title": "The partial sums of are",
+        "background": "The partial sums of $\\sum2^{-n}$ are Cauchy because the tail after $N$ is $2^{-N}$.",
+        "numbers": "The partial sums of $\\sum2^{-n}$ are Cauchy because the tail after $N$ is $2^{-N}$."
       },
       {
-        "title": "Distributed consensus",
-        "background": "Nodes reaching agreement means their values become pairwise close.",
-        "numbers": "If all node values after round 50 lie in $[1.000,1.003]$, every pair differs by at most $0.003$."
+        "title": "Floating-point iteration can stop when",
+        "background": "Floating-point iteration can stop when all last $5$ iterates differ by less than $10^{-6}$.",
+        "numbers": "Floating-point iteration can stop when all last $5$ iterates differ by less than $10^{-6}$."
       },
       {
-        "title": "Model checkpoint stability",
-        "background": "A run is stable when late checkpoints change little in parameter space.",
-        "numbers": "If parameter vectors at epochs after 100 differ by norm below $0.02$, they satisfy a practical Cauchy tolerance."
+        "title": "is not Cauchy because even",
+        "background": "$(-1)^n$ is not Cauchy because even and odd late terms differ by $2$.",
+        "numbers": "$(-1)^n$ is not Cauchy because even and odd late terms differ by $2$."
       },
       {
-        "title": "Compression refinement",
-        "background": "Progressive encoders produce better approximations whose differences shrink.",
-        "numbers": "If frame approximations differ by at most $255/2^k$, then at $k=12$ the bound is about $0.0623$ intensity units."
+        "title": "A contraction with has tail",
+        "background": "A contraction with $q=0.5$ has tail bound $2^{-10}/(1-0.5)=0.001953125$ after $10$ steps.",
+        "numbers": "A contraction with $q=0.5$ has tail bound $2^{-10}/(1-0.5)=0.001953125$ after $10$ steps."
       },
       {
-        "title": "Completeness of real arithmetic",
-        "background": "Cauchy decimal approximations define real numbers.",
-        "numbers": "Approximations $1.4,1.41,1.414,1.4142$ have pairwise tail differences below $0.001$ after the third term."
+        "title": "Completeness says a Cauchy parameter",
+        "background": "Completeness says a Cauchy parameter sequence in $\\mathbb R^d$ has a real limit vector.",
+        "numbers": "Completeness says a Cauchy parameter sequence in $\\mathbb R^d$ has a real limit vector."
       }
     ],
     "applicationsClose": "Cauchy sequences let the tail certify convergence internally; in $\\mathbb{R}$, completeness turns that clustering into an actual limit.",
@@ -2714,6 +3021,62 @@
       "Every convergent real sequence is Cauchy by the triangle inequality.",
       "Every Cauchy sequence in $\\mathbb{R}$ converges.",
       "Series convergence is Cauchy convergence of partial sums."
+    ],
+    "connectionsProse": "<p>Cauchy sequences shift attention from distance to an unknown limit to distance among late terms. This is useful because many algorithms can certify that successive or late iterates are close before the exact destination is known. In the real numbers, the completeness of the space turns that internal crowding into actual convergence. The proof uses boundedness, Bolzano-Weierstrass, and the triangle inequality together.</p>",
+    "symbols": [
+      {
+        "sym": "Cauchy",
+        "desc": "late terms are close to each other"
+      },
+      {
+        "sym": "$m,n$",
+        "desc": "two late indices"
+      },
+      {
+        "sym": "$L$",
+        "desc": "the eventual limit"
+      },
+      {
+        "sym": "$N$",
+        "desc": "the cutoff"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Assume $(a_n)$ is Cauchy",
+        "why": "late terms are close to each other."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Choose $N_1$ so $m,n\\ge N_1$ implies $|a_m-a_n|<1$",
+        "why": "the tail is bounded near $a_{N_1}$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "The finite initial segment plus the bounded tail makes the whole sequence bounded",
+        "why": "finitely many early terms have a maximum size."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Bolzano–Weierstrass gives a convergent subsequence $a_{n_k}\\to L$",
+        "why": "bounded real sequences have convergent subsequences."
+      },
+      {
+        "do": "Given $\\varepsilon>0$",
+        "result": "choose $N_2$ so $m,n\\ge N_2$ implies $|a_m-a_n|<\\varepsilon/2$",
+        "why": "use the Cauchy property."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Choose $k$ with $n_k\\ge N_2$ and $|a_{n_k}-L|<\\varepsilon/2$",
+        "why": "use subsequence convergence."
+      },
+      {
+        "do": "For $n\\ge N_2$",
+        "result": "$|a_n-L|\\le |a_n-a_{n_k}|+|a_{n_k}-L|<\\varepsilon$",
+        "why": "triangle inequality closes the proof."
+      }
     ],
     "prereqs": [
       "math-04-09"
@@ -2742,8 +3105,8 @@
         "absolute convergence"
       ]
     },
-    "motivation": "<p>You already add finite lists. An infinite series asks what happens when the list never stops: $a_1+a_2+a_3+\\cdots$.</p><p>The careful move is to stop after $n$ terms, study the partial sums $s_n$, and ask whether those sums converge. Infinite addition is not magic; it is a sequence limit.</p>",
-    "definition": "<p>Given a sequence $(a_n)$, the <b>infinite series</b> $\\sum_{n=1}^{\\infty}a_n$ has partial sums $s_N=\\sum_{n=1}^{N}a_n$. The series <b>converges</b> to $S$ if $s_N\\to S$ as $N\\to\\infty$; otherwise it diverges.</p><p>The geometric series is the model example: if $|r|<1$, then $\\sum_{n=0}^{\\infty}ar^n=a/(1-r)$. Derive it from finite sums: $s_N=a(1-r^{N+1})/(1-r)$, and $r^{N+1}\\to0$ when $|r|<1$.</p><p><b>Assumptions that matter:</b> terms must satisfy $a_n\\to0$ for convergence, but that condition alone is not sufficient; convergence means partial sums converge; absolute convergence of $\\sum |a_n|$ implies convergence of $\\sum a_n$; and rearrangements are delicate for conditionally convergent series.</p>",
+    "motivation": "<p>An expression with infinitely many additions is understood through finite partial sums. The $N$th partial sum is an ordinary finite number, so convergence of a series is really convergence of the sequence of those sums. This keeps infinite addition within the earlier theory of sequences.</p><p>The geometric series is the model case because its partial sums telescope after multiplying by the ratio. The finite formula shows exactly what remains: a power of $r$. When $|r|<1$, that remaining term tends to zero, leaving the closed form for the infinite sum.</p>",
+    "definition": "<p>An infinite series converges when its partial sums have a finite limit; for $|r|<1$, the geometric series has sum $1/(1-r)$.</p><p>$$\\sum_{n=0}^\\infty r^n=\\frac1{1-r}.$$</p><p><b>Assumptions that matter:</b> the formula follows from finite partial sums before taking the limit.</p>",
     "worked": {
       "problem": "Compute $\\sum_{n=0}^{\\infty}3(1/2)^n$.",
       "skills": [
@@ -2947,39 +3310,34 @@
     ],
     "applications": [
       {
-        "title": "Discounted reinforcement learning",
-        "background": "Discounted returns are geometric series when rewards are constant.",
-        "numbers": "With reward $2$ and $\\gamma=0.95$, return is $2/(1-0.95)=40$."
+        "title": "Application",
+        "background": "$\\sum_{n=0}^\\infty(1/2)^n=2$.",
+        "numbers": "$\\sum_{n=0}^\\infty(1/2)^n=2$."
       },
       {
-        "title": "Neural network residual corrections",
-        "background": "Iterative refinement can be modeled by shrinking error terms.",
-        "numbers": "Errors $1,0.5,0.25,\\ldots$ sum to $2$, so total correction is bounded."
+        "title": "The first terms sum to",
+        "background": "The first $10$ terms sum to $1.998046875$.",
+        "numbers": "The first $10$ terms sum to $1.998046875$."
       },
       {
-        "title": "Numerical approximation tails",
-        "background": "Series tail bounds tell you how many terms are enough.",
-        "numbers": "For a $1/n^2$ tail below $0.001$, the bound $1/N<0.001$ requires $N>1000$."
+        "title": "The remaining tail after terms",
+        "background": "The remaining tail after $10$ terms is $0.001953125$.",
+        "numbers": "The remaining tail after $10$ terms is $0.001953125$."
       },
       {
-        "title": "Computer graphics lighting",
-        "background": "Multiple light bounces with reflectance below 1 form a geometric decay.",
-        "numbers": "Reflectance $0.6$ gives total relative light $1/(1-0.6)=2.5$ over infinitely many bounces."
+        "title": "Telescoping ",
+        "background": "Telescoping $\\sum_{n=1}^{10}1/(n(n+1))=10/11\\approx0.90909$.",
+        "numbers": "Telescoping $\\sum_{n=1}^{10}1/(n(n+1))=10/11\\approx0.90909$."
       },
       {
-        "title": "Queueing and retries",
-        "background": "Repeated retry probabilities often form geometric sums.",
-        "numbers": "If retry probability is $0.2$, expected attempts are $1+0.2+0.04+\\cdots=1.25$."
+        "title": "Discounted reward with and reward",
+        "background": "Discounted reward with $\\gamma=0.9$ and reward $1$ has value $10$.",
+        "numbers": "Discounted reward with $\\gamma=0.9$ and reward $1$ has value $10$."
       },
       {
-        "title": "Power-series features",
-        "background": "Many functions are approximated by infinite polynomial series truncated in practice.",
-        "numbers": "For $e^1$, the first four terms $1+1+1/2+1/6=2.6667$ approximate $e\\approx2.7183$ with error about $0.0516$."
-      },
-      {
-        "title": "Signal decompositions",
-        "background": "Fourier series represent signals as infinite sums of waves, with coefficients controlling convergence.",
-        "numbers": "If amplitudes are $1/2^k$, total amplitude bound is $1$ because $1/2+1/4+\\cdots=1$."
+        "title": "A residual series with terms",
+        "background": "A residual series with terms $0.1^n$ sums to $1/(1-0.1)=1.111\\ldots$.",
+        "numbers": "A residual series with terms $0.1^n$ sums to $1/(1-0.1)=1.111\\ldots$."
       }
     ],
     "applicationsClose": "An infinite series is a sequence of partial sums in disguise; convergence means those finite sums approach one stable value.",
@@ -2988,6 +3346,53 @@
       "Geometric series converge for $|r|<1$ and sum to $a/(1-r)$.",
       "Terms must go to zero, but that alone does not guarantee convergence.",
       "Tail estimates turn infinite sums into practical finite approximations."
+    ],
+    "connectionsProse": "<p>Infinite series are sequences built from running totals. Instead of asking whether individual terms exist, analysis asks whether the partial sums approach a finite value. Geometric series are the central example because their finite sums can be computed exactly and their tails have explicit bounds. Those bounds will reappear in convergence tests and contraction arguments.</p>",
+    "symbols": [
+      {
+        "sym": "$S_N$",
+        "desc": "the $N$th partial sum"
+      },
+      {
+        "sym": "$r$",
+        "desc": "the ratio"
+      },
+      {
+        "sym": "convergence",
+        "desc": "$S_N$ has a finite limit"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Define $S_N=\\sum_{n=0}^{N}r^n$",
+        "why": "partial sums make the infinite sum finite first."
+      },
+      {
+        "do": "Multiply by $r$",
+        "result": "$rS_N=r+r^2+\\cdots+r^{N+1}$",
+        "why": "shift the same terms."
+      },
+      {
+        "do": "Subtract",
+        "result": "$(1-r)S_N=1-r^{N+1}$",
+        "why": "all middle terms cancel."
+      },
+      {
+        "do": "Divide",
+        "result": "$S_N=(1-r^{N+1})/(1-r)$",
+        "why": "solve the finite identity."
+      },
+      {
+        "do": "If $|r|<1$",
+        "result": "then $r^{N+1}\\to0$",
+        "why": "geometric sequences decay."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore $\\sum_{n=0}^\\infty r^n=1/(1-r)$",
+        "why": "the partial sums converge."
+      }
     ],
     "prereqs": [
       "math-04-10"
@@ -3016,8 +3421,8 @@
         "ratio and root limits"
       ]
     },
-    "motivation": "<p>You already know how to add a long finite list. A series asks for more: if the list never ends, do the partial sums settle down? The geometric series $1+\\dfrac12+\\dfrac14+\\cdots=2$ says yes, while $1+\\dfrac12+\\dfrac13+\\cdots$ says no.</p><p><b>Convergence tests</b> are careful shortcuts. They replace the impossible task of adding forever with a finite diagnosis: compare the tail to a series whose behavior you already trust, or measure how fast the terms shrink.</p>",
-    "definition": "<p>A series $\\sum_{n=1}^{\\infty}a_n$ converges when its partial sums $s_N=\\sum_{n=1}^{N}a_n$ converge to a finite limit. The first necessary test is $a_n\\to0$; if not, the series diverges. For nonnegative terms, comparison says $0\\le a_n\\le b_n$ and $\\sum b_n$ convergent implies $\\sum a_n$ convergent, while $0\\le b_n\\le a_n$ and $\\sum b_n$ divergent implies $\\sum a_n$ divergent.</p><p>The ratio test follows from comparison with a geometric series. If $\\lim |a_{n+1}/a_n|=L<1$, then eventually the terms shrink like $r^n$ for some $L<r<1$, so the tail is bounded by a convergent geometric tail. If $L>1$, the terms do not tend to zero.</p><p><b>Assumptions that matter:</b> comparison tests require eventual nonnegative terms; the term test proves only divergence; ratio and root tests are inconclusive when the limit is $1$; endpoint or borderline cases often need a different test.</p>",
+    "motivation": "<p>Most series do not come with a simple closed form for partial sums. Convergence tests solve a different problem: they decide whether the tail is small enough to settle. The ratio test works when late terms shrink at least as fast as a geometric sequence.</p><p>Once the ratio is bounded by $r<1$, every later term is controlled by repeated multiplication by $r$. The tail is then no larger than a geometric tail, which is already known to converge. This proves absolute convergence because the comparison is made with absolute values.</p>",
+    "definition": "<p>The ratio test proves absolute convergence when late term ratios are bounded by a fixed $r<1$.</p><p>$$|a_{n+1}/a_n|\\le r<1.$$</p><p><b>Assumptions that matter:</b> the ratio bound only needs to hold after some cutoff, and comparison is made with absolute values.</p>",
     "worked": {
       "problem": "Determine whether $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{4n+3}{n^3+1}$ converges.",
       "skills": [
@@ -3221,34 +3626,34 @@
     ],
     "applications": [
       {
-        "title": "Learning-rate schedules",
-        "background": "Classical stochastic approximation separates total movement from total noise using two series tests.",
-        "numbers": "For $\\eta_t=1/t$, $\\sum\\eta_t$ diverges but $\\sum\\eta_t^2=\\sum1/t^2$ converges, matching the standard condition."
+        "title": "For , the ratio is",
+        "background": "For $a_n=2^{-n}$, the ratio is $1/2$, so the series converges.",
+        "numbers": "For $a_n=2^{-n}$, the ratio is $1/2$, so the series converges."
       },
       {
-        "title": "Taylor tail control",
-        "background": "Numerical libraries approximate smooth functions by truncating infinite series and bounding the tail.",
-        "numbers": "For $e^{0.5}$, the fifth term is $0.5^5/5!=0.0002604$, already below $3\\times10^{-4}$."
+        "title": "For , ratio tends to",
+        "background": "For $a_n=n!/n^n$, ratio tends to $1/e<1$.",
+        "numbers": "For $a_n=n!/n^n$, ratio tends to $1/e<1$."
       },
       {
-        "title": "Discounted reinforcement learning",
-        "background": "Discounted returns are geometric series when rewards are bounded.",
-        "numbers": "If $|r_t|\\le3$ and $\\gamma=0.9$, then total magnitude is at most $3/(1-0.9)=30$."
+        "title": "For , ratio tends to",
+        "background": "For $a_n=1/n$, ratio tends to $1$, so the test is inconclusive.",
+        "numbers": "For $a_n=1/n$, ratio tends to $1$, so the test is inconclusive."
       },
       {
-        "title": "Iterative solver errors",
-        "background": "Many linear solvers reduce error by a fixed factor each iteration.",
-        "numbers": "Starting error $5$ with ratio $0.2$ has tail after step $4$ bounded by $5(0.2)^4/(1-0.2)=0.01$."
+        "title": "Root test on gives root",
+        "background": "Root test on $3^{-n}$ gives root limit $1/3$.",
+        "numbers": "Root test on $3^{-n}$ gives root limit $1/3$."
       },
       {
-        "title": "Feature expansions",
-        "background": "Kernel and basis methods may add infinitely many features in theory, then keep a finite prefix in practice.",
-        "numbers": "A tail $\\sum_{n=8}^{\\infty}0.1^n=0.1^8/0.9\\approx1.11\\times10^{-8}$ is negligible."
+        "title": "Tail of a ratio- series",
+        "background": "Tail of a ratio-$1/2$ series after $10$ is at most $0.001953125$ when the next scale is $2^{-10}$.",
+        "numbers": "Tail of a ratio-$1/2$ series after $10$ is at most $0.001953125$ when the next scale is $2^{-10}$."
       },
       {
-        "title": "Runtime expectations",
-        "background": "Expected costs can be infinite or finite depending on tail probabilities.",
-        "numbers": "If a retry takes $n$ ms with probability $2^{-n}$, comparison with $\\sum n/2^n=2$ shows finite expected time."
+        "title": "Power-series coefficients with root limit",
+        "background": "Power-series coefficients with root limit $3$ give radius $1/3$.",
+        "numbers": "Power-series coefficients with root limit $3$ give radius $1/3$."
       }
     ],
     "applicationsClose": "The same question keeps returning: does the long tail have finite total weight?",
@@ -3257,6 +3662,48 @@
       "Comparison tests transfer known behavior from simpler positive series.",
       "Ratio and root tests detect geometric-rate decay, but limit $1$ is inconclusive.",
       "Series tests are tail tools: finite early terms never decide convergence."
+    ],
+    "connectionsProse": "<p>Convergence tests are tools for deciding whether an infinite series has a finite sum without computing the sum directly. The ratio test compares late terms to a geometric pattern, which is already known to converge when the ratio is below one. This turns a difficult tail into a familiar tail estimate. The same comparison logic supports error bounds in numerical methods and power series.</p>",
+    "symbols": [
+      {
+        "sym": "$a_n$",
+        "desc": "the $n$th term"
+      },
+      {
+        "sym": "$r$",
+        "desc": "a comparison ratio below $1$"
+      },
+      {
+        "sym": "absolute convergence",
+        "desc": "$\\sum |a_n|$ converges"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Suppose $|a_{n+1}/a_n|\\le r<1$ for all large $n$",
+        "why": "this is the ratio-test hypothesis after some cutoff."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Then $|a_{N+k}|\\le |a_N|r^k$",
+        "why": "apply the inequality repeatedly."
+      },
+      {
+        "do": "Establish the step",
+        "result": "The tail is bounded by $|a_N|\\sum_{k=0}^\\infty r^k=|a_N|/(1-r)$",
+        "why": "compare with a geometric series."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Geometric tails go to zero as the starting index grows",
+        "why": "the series is Cauchy."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore the series converges absolutely",
+        "why": "absolute convergence follows from the comparison."
+      }
     ],
     "prereqs": [
       "math-04-11"
@@ -3285,8 +3732,8 @@
         "rearrangement"
       ]
     },
-    "motivation": "<p>You have seen that signs can help a series settle. The alternating harmonic series $1-\\dfrac12+\\dfrac13-\\dfrac14+\\cdots$ converges, even though the positive harmonic series diverges.</p><p>That raises a careful question: is the series converging because the magnitudes are genuinely small enough, or because positive and negative terms cancel in just the right order? Absolute and conditional convergence separate those two stories.</p>",
-    "definition": "<p>A series $\\sum a_n$ is <b>absolutely convergent</b> if $\\sum |a_n|$ converges. It is <b>conditionally convergent</b> if $\\sum a_n$ converges but $\\sum |a_n|$ diverges. Absolute convergence implies convergence because the positive and negative parts are each bounded by the absolute-value sum.</p><p>For alternating series $\\sum (-1)^n b_n$ with $b_n\\ge0$, if $b_n$ decreases to $0$, then the partial sums converge. The proof traps even and odd partial sums around the same limit: one monotone sequence descends, the other ascends, and the gap is $b_{N+1}\\to0$.</p><p><b>Assumptions that matter:</b> absolute convergence survives rearrangement; conditional convergence can change value under rearrangement; the alternating test needs eventual decrease and $b_n\\to0$; convergence of $\\sum a_n$ alone does not imply convergence of $\\sum |a_n|$.</p>",
+    "motivation": "<p>Positive and negative terms can cancel, and cancellation can make a series converge even when the magnitudes alone are too large. Absolute convergence removes the signs and asks for a stronger kind of convergence. If that stronger condition holds, the original signed series is safe.</p><p>The triangle inequality is the key estimate. Any signed tail has magnitude no larger than the corresponding tail of absolute values. If the absolute-value series has tails tending to zero, the signed partial sums are Cauchy, and completeness gives convergence.</p>",
+    "definition": "<p>A series is absolutely convergent when $\\sum |a_n|$ converges, and conditionally convergent when $\\sum a_n$ converges but $\\sum |a_n|$ diverges.</p><p><b>Assumptions that matter:</b> the triangle inequality controls signed tails by absolute-value tails.</p>",
     "worked": {
       "problem": "Classify $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{(-1)^{n+1}}{n}$ as absolutely convergent, conditionally convergent, or divergent.",
       "skills": [
@@ -3490,34 +3937,34 @@
     ],
     "applications": [
       {
-        "title": "Numerical summation order",
-        "background": "Floating-point arithmetic already depends on order; conditional series add a mathematical version of that fragility.",
-        "numbers": "Summing $1-1/2+1/3-1/4$ gives $0.5833$, while grouping $(1-1/2)+(-1/4+1/3)$ gives $0.5833$ here, but infinite rearrangements can change conditionally convergent limits."
+        "title": "is conditional",
+        "background": "$\\sum(-1)^{n+1}/n$ is conditional.",
+        "numbers": "$\\sum(-1)^{n+1}/n$ is conditional."
       },
       {
-        "title": "Fourier series",
-        "background": "Signals are often represented by signed sine and cosine coefficients whose absolute summability controls robustness.",
-        "numbers": "Coefficients $1/n^2$ are absolutely summable; coefficients $(-1)^n/n$ are only conditionally summable."
+        "title": "Its first terms sum to",
+        "background": "Its first $6$ terms sum to $0.616666\\ldots$.",
+        "numbers": "Its first $6$ terms sum to $0.616666\\ldots$."
       },
       {
-        "title": "Gradient noise cancellation",
-        "background": "Alternating errors may cancel in a fixed schedule, but absolute bounds are safer for proofs.",
-        "numbers": "Errors $0.1(-1)^t/t$ have conditional total, while $0.1/t^2$ has absolute total $0.1\\pi^2/6\\approx0.1645$."
+        "title": "is absolute because converges",
+        "background": "$\\sum(-1)^n/n^2$ is absolute because $\\sum1/n^2$ converges.",
+        "numbers": "$\\sum(-1)^n/n^2$ is absolute because $\\sum1/n^2$ converges."
       },
       {
-        "title": "Perturbation expansions",
-        "background": "Physics and approximation theory often distinguish convergent magnitude from lucky sign cancellation.",
-        "numbers": "Terms $(-0.2)^n$ converge absolutely because $\\sum0.2^n=0.25$ from $n=1$."
+        "title": "Dropout-style signed corrections need absolute",
+        "background": "Dropout-style signed corrections need absolute bounds for order-safe accumulation.",
+        "numbers": "Dropout-style signed corrections need absolute bounds for order-safe accumulation."
       },
       {
-        "title": "Regularization penalties",
-        "background": "Absolute summability of coefficients makes infinite linear models stable under reordering and implementation details.",
-        "numbers": "Weights $w_n=1/2^n$ satisfy $\\sum|w_n|=1$, so feature contributions stay bounded if $|x_n|\\le1$."
+        "title": "Alternating-series error after terms is",
+        "background": "Alternating-series error after $N$ terms is at most the next term; after $100$ terms it is below $1/101$.",
+        "numbers": "Alternating-series error after $N$ terms is at most the next term; after $100$ terms it is below $1/101$."
       },
       {
-        "title": "Monte Carlo control variates",
-        "background": "Signed corrections reduce variance by cancellation, but absolute bounds give reliable worst-case guarantees.",
-        "numbers": "Corrections $0.05(-1)^n/n$ cancel conditionally; replacing by $0.05/n^2$ gives absolute total about $0.0822$."
+        "title": "Rearranging a conditional series can",
+        "background": "Rearranging a conditional series can change its sum, so deterministic accumulation order matters.",
+        "numbers": "Rearranging a conditional series can change its sum, so deterministic accumulation order matters."
       }
     ],
     "applicationsClose": "Absolute convergence is convergence with a safety margin; conditional convergence is useful but order-sensitive.",
@@ -3526,6 +3973,53 @@
       "Absolute convergence implies ordinary convergence.",
       "Conditional convergence means the signed series converges but the absolute series diverges.",
       "Alternating cancellation can prove convergence, but it may depend on order."
+    ],
+    "connectionsProse": "<p>Signed series can converge because positive and negative terms cancel. Absolute convergence separates safe convergence from convergence that depends on a delicate order of cancellation. If the absolute values have a finite sum, every signed tail is automatically controlled. Conditional convergence is weaker and therefore requires more care in rearrangement and accumulation.</p>",
+    "symbols": [
+      {
+        "sym": "$a_n$",
+        "desc": "signed terms"
+      },
+      {
+        "sym": "$|a_n|$",
+        "desc": "removes signs"
+      },
+      {
+        "sym": "conditional",
+        "desc": "$\\sum a_n$ converges but $\\sum|a_n|$ diverges"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "If $\\sum |a_n|$ converges",
+        "result": "then for $m>n$, $|\\sum_{k=n}^m a_k|\\le\\sum_{k=n}^m |a_k|$",
+        "why": "triangle inequality."
+      },
+      {
+        "do": "Establish the step",
+        "result": "The absolute-value tail goes to zero",
+        "why": "convergence of $\\sum|a_n|$ makes its tails small."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore the original partial sums are Cauchy",
+        "why": "every signed tail is small."
+      },
+      {
+        "do": "Establish the step",
+        "result": "In $\\mathbb R$, Cauchy partial sums converge",
+        "why": "completeness finishes absolute convergence."
+      },
+      {
+        "do": "For $\\sum(-1)^{n+1}/n$",
+        "result": "alternating monotone terms go to $0$",
+        "why": "Leibniz gives convergence."
+      },
+      {
+        "do": "Establish the step",
+        "result": "But $\\sum1/n$ diverges",
+        "why": "the convergence is conditional."
+      }
     ],
     "prereqs": [
       "math-04-12"
@@ -3554,8 +4048,8 @@
         "sequential limits"
       ]
     },
-    "motivation": "<p>You already compute limits by simplifying, graphing, or substituting after removing a hole. Real analysis asks one more honest question: what does it mean to say the outputs get close?</p><p>The $\\varepsilon$-$\\delta$ definition answers with a game. Someone names an output tolerance $\\varepsilon>0$. You respond with an input tolerance $\\delta>0$ that forces every nearby input to produce an output within $\\varepsilon$ of the target.</p>",
-    "definition": "<p>We write $\\lim_{x\\to a}f(x)=L$ if for every $\\varepsilon>0$ there exists $\\delta>0$ such that whenever $0<|x-a|<\\delta$, we have $|f(x)-L|<\\varepsilon$. Here $\\varepsilon$ is the allowed output error, $\\delta$ is the input radius, $a$ is the approach point, and $L$ is the proposed limit.</p><p>For a proof, start from $|f(x)-L|$ and bound it by something involving $|x-a|$. If $|f(x)-L|\\le C|x-a|$, choose $\\delta=\\varepsilon/C$. The puncture $0<|x-a|$ means the value at $a$ itself is irrelevant.</p><p><b>Assumptions that matter:</b> $\\delta$ may depend on $\\varepsilon$ and on the point $a$; it must not depend on the particular $x$ chosen after the fact; both sides of $a$ are included unless the domain restricts the approach; the definition proves a claimed limit, not just a computed value.</p>",
+    "motivation": "<p>For functions, closeness is controlled near an input value rather than far out in an index. The epsilon-delta definition asks for an input radius that guarantees an output tolerance. This makes the idea of approaching a point independent of whether the function is defined at the point itself.</p><p>The proof for $x^2$ at $2$ shows the standard pattern. Factor the output error into a controllable input error and a nearby bounded factor. A preliminary bound such as $|x-2|<1$ keeps the extra factor under control, and the final choice of $\\delta$ satisfies both needs.</p>",
+    "definition": "<p>The function limit $\\lim_{x\\to a}f(x)=L$ means every output tolerance has an input radius that forces $f(x)$ close to $L$ whenever $0<|x-a|<\\delta$.</p><p>$$0<|x-a|<\\delta\\Rightarrow |f(x)-L|<\\varepsilon.$$</p><p><b>Assumptions that matter:</b> $x$ approaches $a$ but need not equal $a$.</p>",
     "worked": {
       "problem": "Prove $\\displaystyle\\lim_{x\\to3}(2x+1)=7$ using $\\varepsilon$-$\\delta$.",
       "skills": [
@@ -3764,34 +4258,34 @@
     ],
     "applications": [
       {
-        "title": "Numerical tolerance design",
-        "background": "Engineering code often translates an output tolerance into an input tolerance, exactly the epsilon-delta pattern.",
-        "numbers": "For $f(x)=2x$, output error below $0.001$ requires input error below $0.0005$."
+        "title": "For at with , choose",
+        "background": "For $x^2$ at $2$ with $\\varepsilon=0.01$, choose $\\delta=0.002$.",
+        "numbers": "For $x^2$ at $2$ with $\\varepsilon=0.01$, choose $\\delta=0.002$."
       },
       {
-        "title": "Gradient checking",
-        "background": "Finite-difference checks rely on limiting statements becoming true below small step sizes.",
-        "numbers": "If error is bounded by $5h$, then target error $10^{-4}$ is guaranteed when $h<2\\times10^{-5}$."
+        "title": "For at , works",
+        "background": "For $3x+1$ at $2$, $\\delta=\\varepsilon/3$ works.",
+        "numbers": "For $3x+1$ at $2$, $\\delta=\\varepsilon/3$ works."
       },
       {
-        "title": "Sensor calibration",
-        "background": "A sensor specification turns physical input closeness into voltage output closeness.",
-        "numbers": "If voltage is $0.02T+0.5$, keeping voltage within $0.01$ V requires temperature within $0.5^\\circ$C."
+        "title": "Numerical stability of a feature",
+        "background": "Numerical stability of a feature transform asks for this input-output control.",
+        "numbers": "Numerical stability of a feature transform asks for this input-output control."
       },
       {
-        "title": "Robust thresholds",
-        "background": "A classifier score near a threshold needs input margins so small perturbations do not flip decisions.",
-        "numbers": "If score changes at most $3\\|\\Delta x\\|$ and margin is $0.06$, perturbations below $0.02$ keep the sign."
+        "title": "Clipping a score near a",
+        "background": "Clipping a score near a threshold uses a chosen $\\delta$ margin.",
+        "numbers": "Clipping a score near a threshold uses a chosen $\\delta$ margin."
       },
       {
-        "title": "Floating-point APIs",
-        "background": "Libraries document tolerances because exact equality is rarely the right promise.",
-        "numbers": "If a routine has output error at most $10h$, choosing $h=10^{-8}$ gives error at most $10^{-7}$."
+        "title": "A discontinuous step fails because",
+        "background": "A discontinuous step fails because outputs differ by $1$ arbitrarily near $0$.",
+        "numbers": "A discontinuous step fails because outputs differ by $1$ arbitrarily near $0$."
       },
       {
-        "title": "Continuity proofs in optimization",
-        "background": "Existence theorems for minimizers start with rigorous control of objective changes.",
-        "numbers": "For $L(w)=w^2$ near $2$, $|w-2|<0.001$ gives $|L(w)-4|<5(0.001)=0.005$ using a local bound."
+        "title": "For at , , so",
+        "background": "For $\\sin x$ at $0$, $|\\sin x|\\le |x|$, so $\\delta=\\varepsilon$ works.",
+        "numbers": "For $\\sin x$ at $0$, $|\\sin x|\\le |x|$, so $\\delta=\\varepsilon$ works."
       }
     ],
     "applicationsClose": "Epsilon-delta rigor is the language of guaranteed tolerance transfer.",
@@ -3800,6 +4294,48 @@
       "A proof works by bounding $|f(x)-L|$ in terms of $|x-a|$.",
       "The value $f(a)$ is irrelevant to the limit because $0<|x-a|$ punctures the point.",
       "Delta may depend on epsilon and the approach point, but not on the later choice of $x$."
+    ],
+    "connectionsProse": "<p>Function limits extend the sequence-limit idea from late indices to nearby inputs. The key relationship is between an output tolerance and an input tolerance. An epsilon-delta proof records exactly how close the input must be to force the desired output closeness. This is the language needed for continuity, derivatives, and stability.</p>",
+    "symbols": [
+      {
+        "sym": "$\\varepsilon$",
+        "desc": "output tolerance"
+      },
+      {
+        "sym": "$\\delta$",
+        "desc": "input tolerance"
+      },
+      {
+        "sym": "$x\\to a$",
+        "desc": "$x$ approaches but need not equal $a$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "To prove $\\lim_{x\\to2}x^2=4$, start with $|x^2-4|=|x-2||x+2|$",
+        "why": "factor the error."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Require $|x-2|<1$",
+        "why": "this keeps $x\\in(1,3)$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Then $|x+2|<5$",
+        "why": "local input control bounds the extra factor."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Choose $\\delta=\\min(1,\\varepsilon/5)$",
+        "why": "this handles both requirements."
+      },
+      {
+        "do": "If $0<|x-2|<\\delta$",
+        "result": "then $|x^2-4|<5\\delta\\le\\varepsilon$",
+        "why": "the output error is controlled."
+      }
     ],
     "prereqs": [
       "math-04-13"
@@ -3828,8 +4364,8 @@
         "compact intervals"
       ]
     },
-    "motivation": "<p>You already recognize a continuous graph as one without a jump or hole. The $\\varepsilon$-$\\delta$ definition gives that picture a precise test at a point.</p><p>Continuity is a promise from the function: if you demand the output stay within $\\varepsilon$ of $f(a)$, I can tell you how close $x$ must stay to $a$. No surprise at the point.</p>",
-    "definition": "<p>A function $f$ is continuous at $a$ if for every $\\varepsilon>0$ there exists $\\delta>0$ such that $|x-a|<\\delta$ and $x$ in the domain imply $|f(x)-f(a)|<\\varepsilon$. Equivalently, $\\lim_{x\\to a}f(x)=f(a)$.</p><p>This is the limit definition with the target $L$ replaced by the actual value $f(a)$. The proof pattern is the same: start with $|f(x)-f(a)|$, bound it using $|x-a|$, and choose $\\delta$ small enough.</p><p><b>Assumptions that matter:</b> continuity is relative to the domain; endpoints use one-sided neighborhoods within the domain; $\\delta$ may depend on the point $a$; sums, products, quotients with nonzero denominator, and compositions preserve continuity when their parts are continuous.</p>",
+    "motivation": "<p>Continuity at a point is a limit statement tied to the function's actual value. The input is allowed to move slightly, and the output must remain close to $f(a)$. This turns nearby-input behavior into a local stability guarantee.</p><p>For $x^2$ at $2$, the same algebra used in the limit proof applies. The expression $|x^2-4|$ factors into $|x-2||x+2|$, so the input distance can be made small while $|x+2|$ is bounded locally. The result is a concrete $\\delta$ that proves continuity at the point.</p>",
+    "definition": "<p>A function $f$ is continuous at $a$ when nearby inputs have values near $f(a)$.</p><p>$$|x-a|<\\delta\\Rightarrow |f(x)-f(a)|<\\varepsilon.$$</p><p><b>Assumptions that matter:</b> the function value at $a$ is included, so the limit must match $f(a)$.</p>",
     "worked": {
       "problem": "Prove that $f(x)=x^2$ is continuous at $a=3$.",
       "skills": [
@@ -4038,34 +4574,34 @@
     ],
     "applications": [
       {
-        "title": "Stable preprocessing",
-        "background": "Feature transformations should not make tiny measurement noise produce huge output jumps unless intended.",
-        "numbers": "Standardization $z=(x-50)/10$ turns input error $0.2$ into output error $0.02$."
+        "title": "ReLU is continuous at because",
+        "background": "ReLU is continuous at $0$ because both one-sided values approach $0$.",
+        "numbers": "ReLU is continuous at $0$ because both one-sided values approach $0$."
       },
       {
-        "title": "Sensor calibration",
-        "background": "Continuity is a minimum expectation for many physical sensors.",
-        "numbers": "For $v(T)=0.01T+1$, changing $T$ by $0.5$ changes voltage by $0.005$ V."
+        "title": "A step activation is not",
+        "background": "A step activation is not continuous at $0$ because the jump size is $1$.",
+        "numbers": "A step activation is not continuous at $0$ because the jump size is $1$."
       },
       {
-        "title": "ReLU networks",
-        "background": "ReLU is continuous, so a network built from affine maps and ReLUs is continuous even though slopes can jump.",
-        "numbers": "$r(-0.001)=0$, $r(0)=0$, and $r(0.001)=0.001$ near the kink."
+        "title": "at uses for ",
+        "background": "$x^2$ at $2$ uses $\\delta=0.002$ for $\\varepsilon=0.01$.",
+        "numbers": "$x^2$ at $2$ uses $\\delta=0.002$ for $\\varepsilon=0.01$."
       },
       {
-        "title": "Loss curves",
-        "background": "Gradient methods rely on objectives that change predictably under small parameter moves.",
-        "numbers": "For $L(w)=(w-3)^2$, moving from $3$ to $3.01$ changes loss from $0$ to $0.0001$."
+        "title": "Continuous loss curves make small",
+        "background": "Continuous loss curves make small parameter perturbations predictable.",
+        "numbers": "Continuous loss curves make small parameter perturbations predictable."
       },
       {
-        "title": "Interpolation",
-        "background": "Graphics and data pipelines use continuous interpolation to avoid visual or statistical jumps.",
-        "numbers": "Linear interpolation from $10$ to $18$ over $4$ seconds gives $14$ at $2$ seconds."
+        "title": "Bilinear interpolation changes continuously across",
+        "background": "Bilinear interpolation changes continuously across pixels.",
+        "numbers": "Bilinear interpolation changes continuously across pixels."
       },
       {
-        "title": "Probability calibration",
-        "background": "Calibration curves model observed frequency as a continuous function of predicted probability.",
-        "numbers": "If $c(p)=0.8p+0.1$, then $p=0.70$ gives $0.66$ and $p=0.71$ gives $0.668$."
+        "title": "A polynomial feature map is",
+        "background": "A polynomial feature map is continuous at every real input.",
+        "numbers": "A polynomial feature map is continuous at every real input."
       }
     ],
     "applicationsClose": "Continuity is the first reliability promise: small enough input changes make output changes small enough too.",
@@ -4074,6 +4610,48 @@
       "Proofs bound $|f(x)-f(a)|$ using $|x-a|$.",
       "Continuity is checked relative to the domain, especially at endpoints.",
       "Sums, products, quotients away from zero, and compositions preserve continuity."
+    ],
+    "connectionsProse": "<p>Continuity adds the actual value of the function to the limit idea. A function is continuous at a point when nearby inputs have values near the function value at that point. This makes small perturbations predictable and rules out jumps. The proof for $x^2$ follows the same factor-and-bound pattern as the function-limit proof.</p>",
+    "symbols": [
+      {
+        "sym": "$f(a)$",
+        "desc": "the actual function value"
+      },
+      {
+        "sym": "continuity at $a$",
+        "desc": "limit and value match"
+      },
+      {
+        "sym": "$\\delta$",
+        "desc": "may depend on $a$ and $\\varepsilon$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "A function $f$ is continuous at $a$ when for every $\\varepsilon>0$ there is $\\delta>0$ with $|x-a|<\\delta\\Rightarrow |f(x)-f(a)|<\\varepsilon$",
+        "why": "this is the definition."
+      },
+      {
+        "do": "For $f(x)=x^2$ at $a=2$",
+        "result": "rewrite $|f(x)-f(2)|=|x-2||x+2|$",
+        "why": "reduce to the limit proof."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Keep $|x-2|<1$, so $|x+2|<5$",
+        "why": "bound the local factor."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Choose $\\delta=\\min(1,\\varepsilon/5)$",
+        "why": "a single input radius works."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore $x^2$ is continuous at $2$",
+        "why": "the limit equals the value."
+      }
     ],
     "prereqs": [
       "math-04-14"
@@ -4102,8 +4680,8 @@
         "compactness"
       ]
     },
-    "motivation": "<p>Once you can prove one function is continuous, you do not want to restart every proof from scratch. Real analysis gives you closure rules: continuous functions can be added, multiplied, divided safely away from zero, and composed.</p><p>On closed bounded intervals, continuity gives even stronger promises: no skipped heights and actual maximum and minimum values. These are existence theorems, and they are the quiet engine behind many algorithms.</p>",
-    "definition": "<p>If $f$ and $g$ are continuous at $a$, then $f+g$, $fg$, and $cf$ are continuous at $a$; $f/g$ is continuous at $a$ when $g(a)\\ne0$; and $g\\circ f$ is continuous at $a$ when $f$ is continuous at $a$ and $g$ is continuous at $f(a)$. These follow by translating epsilon tolerances through sums, products, and compositions.</p><p>Two major interval properties are the <b>Intermediate Value Theorem</b> and the <b>Extreme Value Theorem</b>. If $f$ is continuous on $[a,b]$, it takes every value between $f(a)$ and $f(b)$, and it attains both a maximum and a minimum on $[a,b]$.</p><p><b>Assumptions that matter:</b> the interval must be closed and bounded for the Extreme Value Theorem; IVT needs continuity on the whole interval; quotient continuity requires a nonzero denominator; a function may be continuous on an open interval and still fail to attain a maximum.</p>",
+    "motivation": "<p>A continuous function on an interval cannot jump from one side of a value to the other without reaching it. That is the content of the intermediate value theorem. It turns the geometric picture of an unbroken graph into a proof using suprema.</p><p>Extreme values require a different global guarantee. On a closed bounded interval, sequences of nearly maximal values have convergent subsequences, and the limit remains in the interval. Continuity carries the function values to the limit, so the supremum is actually attained.</p>",
+    "definition": "<p>The intermediate value theorem says a continuous function on $[a,b]$ reaches every value between $f(a)$ and $f(b)$; the extreme value theorem says it attains maxima and minima on closed bounded intervals.</p><p><b>Assumptions that matter:</b> continuity and the closed bounded interval are essential for the global conclusions.</p>",
     "worked": {
       "problem": "Show that $f(x)=\\dfrac{x^2+1}{x-2}$ is continuous on $[0,1]$ and attains a maximum and minimum there.",
       "skills": [
@@ -4302,34 +4880,34 @@
     ],
     "applications": [
       {
-        "title": "Root finding by bisection",
-        "background": "Bisection relies on IVT: a continuous sign change traps a root.",
-        "numbers": "If $f(1)=-2$ and $f(2)=3$, the first midpoint is $1.5$; the sign at $1.5$ chooses the next half interval."
+        "title": "If validation loss is continuous",
+        "background": "If validation loss is continuous and goes from $0.8$ to $0.2$, it equals $0.5$ somewhere.",
+        "numbers": "If validation loss is continuous and goes from $0.8$ to $0.2$, it equals $0.5$ somewhere."
       },
       {
-        "title": "Hyperparameter targets",
-        "background": "Smooth validation curves can guarantee an operating point between two tested settings.",
-        "numbers": "Metric $0.70$ at $\\lambda=0.01$ and $0.82$ at $\\lambda=1$ guarantees some setting with $0.75$."
+        "title": "A continuous score crossing from",
+        "background": "A continuous score crossing from $-1$ to $2$ has a zero.",
+        "numbers": "A continuous score crossing from $-1$ to $2$ has a zero."
       },
       {
-        "title": "Existence of best settings",
-        "background": "EVT says a continuous objective on a compact search interval has an optimizer.",
-        "numbers": "A continuous loss on $[0,10]$ has a minimum; on $(0,10)$ the minimum might sit at missing endpoint $0$."
+        "title": "On , attains maximum at",
+        "background": "On $[0,1]$, $x(1-x)$ attains maximum $0.25$ at $0.5$.",
+        "numbers": "On $[0,1]$, $x(1-x)$ attains maximum $0.25$ at $0.5$."
       },
       {
-        "title": "Safe composition in pipelines",
-        "background": "ML preprocessing chains rely on continuity rules through scaling, activation, and normalization.",
-        "numbers": "If $z=(x-5)/2$ and $r=\\max(0,z)$, then $x=7.2$ gives $z=1.1$ and $r=1.1$ continuously."
+        "title": "Calibration curves use intermediate crossing",
+        "background": "Calibration curves use intermediate crossing points.",
+        "numbers": "Calibration curves use intermediate crossing points."
       },
       {
-        "title": "Calibration thresholds",
-        "background": "A continuous score-to-rate curve lets teams solve for desired rates.",
-        "numbers": "If positive rate drops from $0.9$ to $0.2$, IVT gives a threshold with rate $0.5$."
+        "title": "A continuous clipped activation on",
+        "background": "A continuous clipped activation on $[-3,3]$ has a maximum and minimum.",
+        "numbers": "A continuous clipped activation on $[-3,3]$ has a maximum and minimum."
       },
       {
-        "title": "Graphics intersections",
-        "background": "Signed distance fields use continuity to detect surface crossings between samples.",
-        "numbers": "Values $-0.3$ and $0.1$ at neighboring points imply a zero crossing between them if the field is continuous."
+        "title": "Binary search for a root",
+        "background": "Binary search for a root relies on sign change and IVT.",
+        "numbers": "Binary search for a root relies on sign change and IVT."
       }
     ],
     "applicationsClose": "Continuity is not only local smoothness; it is an engine for building functions and proving solutions exist.",
@@ -4338,6 +4916,48 @@
       "IVT guarantees intermediate values on continuous intervals.",
       "EVT guarantees maxima and minima on closed bounded intervals.",
       "Closed and bounded assumptions matter; open intervals can lose extrema."
+    ],
+    "connectionsProse": "<p>Continuous functions on intervals carry local smoothness into global information. The intermediate value theorem says they cannot jump over a value, and the extreme value theorem says they attain maxima and minima on closed bounded intervals. Both results rely on completeness and compactness ideas from earlier lessons. They are basic tools for root finding, optimization, and calibration.</p>",
+    "symbols": [
+      {
+        "sym": "IVT",
+        "desc": "the intermediate value theorem"
+      },
+      {
+        "sym": "EVT",
+        "desc": "the extreme value theorem"
+      },
+      {
+        "sym": "$[a,b]$",
+        "desc": "a closed bounded interval"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For the intermediate value theorem",
+        "result": "take $f(a)<y<f(b)$ and define $S=\\{x\\in[a,b]:f(x)<y\\}$",
+        "why": "locate the crossing from below."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Let $c=\\sup S$",
+        "why": "completeness supplies the boundary point."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Continuity rules out $f(c)<y$ and $f(c)>y$",
+        "why": "either inequality would persist in a small neighborhood and contradict the boundary."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore $f(c)=y$",
+        "why": "the function reaches the intermediate value."
+      },
+      {
+        "do": "Extreme values follow by compactness",
+        "result": "every sequence approaching the supremum of $f([a,b])$ has a convergent subsequence whose limit stays in $[a,b]$",
+        "why": "continuity carries the value to the limit."
+      }
     ],
     "prereqs": [
       "math-04-15"
@@ -4366,8 +4986,8 @@
         "Cauchy sequences"
       ]
     },
-    "motivation": "<p>Ordinary continuity lets $\\delta$ depend on the point. Near a steep part of a graph, you may need a smaller input window than elsewhere.</p><p><b>Uniform continuity</b> asks for one input window that works across the whole domain. It is a stronger global promise: if two inputs are close enough, their outputs are close enough, no matter where the inputs live.</p>",
-    "definition": "<p>A function $f$ is uniformly continuous on a set $D$ if for every $\\varepsilon>0$ there exists $\\delta>0$ such that for all $x,y\\in D$, $|x-y|<\\delta$ implies $|f(x)-f(y)|<\\varepsilon$. The same $\\delta$ must work for every pair of points in $D$.</p><p>If $|f(x)-f(y)|\\le K|x-y|$ on $D$, then $f$ is uniformly continuous by choosing $\\delta=\\varepsilon/K$. Also, every continuous function on a closed bounded interval is uniformly continuous; this is the Heine-Cantor theorem.</p><p><b>Assumptions that matter:</b> uniform continuity is a property on a specified domain; the same formula can be uniformly continuous on one domain and not another; compactness often supplies uniform continuity; unbounded slopes near a missing point can make uniform continuity fail.</p>",
+    "motivation": "<p>Ordinary continuity may choose a different $\\delta$ at each point. That is enough for local reasoning but not enough when one tolerance must work over an entire domain. Uniform continuity asks for a single radius that applies everywhere.</p><p>Compactness provides the mechanism. The local neighborhoods supplied by continuity cover the domain, and compactness reduces this cover to finitely many neighborhoods. A finite collection can be controlled by one positive scale, giving a global $\\delta$ for the chosen $\\varepsilon$.</p>",
+    "definition": "<p>Uniform continuity means one input radius works across the whole domain.</p><p>$$d(x,y)<\\delta\\Rightarrow |f(x)-f(y)|<\\varepsilon\\quad\\text{for all }x,y\\in K.$$</p><p><b>Assumptions that matter:</b> compactness lets local continuity radii be reduced to finite global control.</p>",
     "worked": {
       "problem": "Prove $f(x)=3x+2$ is uniformly continuous on $\\mathbb{R}$.",
       "skills": [
@@ -4566,34 +5186,34 @@
     ],
     "applications": [
       {
-        "title": "Robust model guarantees",
-        "background": "Lipschitz certificates are uniform-continuity statements used in adversarial robustness.",
-        "numbers": "If $K=5$, perturbation norm $0.01$ changes score by at most $0.05$."
+        "title": "For a -Lipschitz function, guarantees",
+        "background": "For a $3$-Lipschitz function, $\\delta=0.1/3\\approx0.0333$ guarantees output error below $0.1$.",
+        "numbers": "For a $3$-Lipschitz function, $\\delta=0.1/3\\approx0.0333$ guarantees output error below $0.1$."
       },
       {
-        "title": "Interpolation grids",
-        "background": "Uniform continuity says one grid spacing can control approximation error over a whole interval.",
-        "numbers": "If $|f'|\\le4$, grid spacing $0.0025$ keeps linear sample-to-sample change below $0.01$."
+        "title": "is uniformly continuous on ",
+        "background": "$x^2$ is uniformly continuous on $[0,2]$; $\\delta=\\varepsilon/4$ works from $|x+y|\\le4$.",
+        "numbers": "$x^2$ is uniformly continuous on $[0,2]$; $\\delta=\\varepsilon/4$ works from $|x+y|\\le4$."
       },
       {
-        "title": "Compact domains",
-        "background": "Closed bounded feature ranges turn pointwise continuity into uniform control.",
-        "numbers": "Any continuous feature map on $[0,1]^{10}$ is uniformly continuous; the theorem supplies a global $\\delta$."
+        "title": "is not uniformly continuous on",
+        "background": "$x^2$ is not uniformly continuous on all $\\mathbb R$.",
+        "numbers": "$x^2$ is not uniformly continuous on all $\\mathbb R$."
       },
       {
-        "title": "Numerical integration",
-        "background": "Riemann integration proofs use uniform continuity to make oscillation small on every subinterval.",
-        "numbers": "If oscillation per subinterval is below $0.001$ over length $2$, upper-lower sum gap is below $0.002$."
+        "title": "Numerical quadrature uses one mesh",
+        "background": "Numerical quadrature uses one mesh width across the interval.",
+        "numbers": "Numerical quadrature uses one mesh width across the interval."
       },
       {
-        "title": "Simulation stability",
-        "background": "A uniform time-step guarantee is stronger than a guarantee that changes from state to state.",
-        "numbers": "If position update is $2$-Lipschitz in time, a step $h=0.01$ changes position by at most $0.02$."
+        "title": "A bounded-input neural layer with",
+        "background": "A bounded-input neural layer with Lipschitz constant $5$ needs input tolerance $0.002$ for output tolerance $0.01$.",
+        "numbers": "A bounded-input neural layer with Lipschitz constant $5$ needs input tolerance $0.002$ for output tolerance $0.01$."
       },
       {
-        "title": "Embedding drift",
-        "background": "Uniform bounds help monitor whether small input edits can move embeddings too far.",
-        "numbers": "With bound $\\|e(x)-e(y)\\|\\le12\\|x-y\\|$, an edit of size $0.003$ moves embedding at most $0.036$."
+        "title": "Embedding drift bounded by a",
+        "background": "Embedding drift bounded by a uniform Lipschitz constant gives global stability.",
+        "numbers": "Embedding drift bounded by a uniform Lipschitz constant gives global stability."
       }
     ],
     "applicationsClose": "Uniform continuity is global reliability: one closeness rule works everywhere in the chosen domain.",
@@ -4602,6 +5222,48 @@
       "Lipschitz bounds imply uniform continuity immediately.",
       "Continuous functions on closed bounded intervals are uniformly continuous.",
       "The domain matters: $1/x$ behaves differently on $[1,\\infty)$ and $(0,1)$."
+    ],
+    "connectionsProse": "<p>Uniform continuity strengthens ordinary continuity by using one input radius across the whole domain. This matters when a local guarantee must be applied globally, such as over an interval, a dataset domain, or a bounded parameter set. Compactness is what allows many local radii to be reduced to finite control. The result is a stable bridge from pointwise behavior to domain-wide behavior.</p>",
+    "symbols": [
+      {
+        "sym": "Uniform",
+        "desc": "one $\\delta$ for the whole domain"
+      },
+      {
+        "sym": "$K$",
+        "desc": "the domain"
+      },
+      {
+        "sym": "compactness",
+        "desc": "supplies finite control"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Suppose $f$ is continuous on compact $K$",
+        "why": "every point has its own radius for $\\varepsilon/2$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "These local neighborhoods cover $K$",
+        "why": "each point is protected by continuity."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Compactness gives a finite subcover",
+        "why": "finitely many local radii suffice."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Let $\\delta$ be a Lebesgue-number-scale radius for that finite cover",
+        "why": "points within $\\delta$ lie in a common protected neighborhood."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Then $d(x,y)<\\delta$ implies $|f(x)-f(y)|<\\varepsilon$ for all $x,y\\in K$",
+        "why": "the same radius works everywhere."
+      }
     ],
     "prereqs": [
       "math-04-16"
@@ -4630,8 +5292,8 @@
         "Lipschitz bounds"
       ]
     },
-    "motivation": "<p>You already use derivatives as slopes and rates of change. The rigorous definition asks exactly which slope: not a secant over a visible interval, but the limiting slope as the interval shrinks to zero.</p><p>This matters because corners, cusps, and vertical tangents can look almost slope-like from one side but fail to have one two-sided linear rate. The definition keeps us honest.</p>",
-    "definition": "<p>A function $f$ is differentiable at $a$ if the limit $$f'(a)=\\lim_{h\\to0}\\frac{f(a+h)-f(a)}{h}$$ exists as a finite real number. Equivalently, $$f(a+h)=f(a)+f'(a)h+r(h)h,$$ where $r(h)\\to0$ as $h\\to0$; this says the function has a linear approximation whose error is small compared with $h$.</p><p>Differentiability implies continuity: if the difference quotient tends to $f'(a)$, then $f(a+h)-f(a)=h\\cdot\\frac{f(a+h)-f(a)}{h}\\to0$, so $f(a+h)\\to f(a)$.</p><p><b>Assumptions that matter:</b> the two-sided limit must exist and be finite; differentiability is pointwise unless an interval is stated; a function can be continuous without being differentiable; derivative rules require the relevant derivatives to exist.</p>",
+    "motivation": "<p>A secant slope measures average change over a nonzero input gap. As the gap shrinks, those slopes may approach a stable value. The derivative is that limiting value when it exists.</p><p>For $f(x)=x^2$, the difference quotient simplifies exactly. The term $2a+h$ contains the desired local rate $2a$ plus a leftover $h$ that vanishes in the limit. This calculation illustrates how a derivative extracts the linear part of local change.</p>",
+    "definition": "<p>The derivative at $a$ is the limiting secant slope as the input increment tends to zero.</p><p>$$f'(a)=\\lim_{h\\to0}\\frac{f(a+h)-f(a)}{h}.$$</p><p><b>Assumptions that matter:</b> the quotient is formed for $h\\ne0$ before taking the limit.</p>",
     "worked": {
       "problem": "Use the definition to compute the derivative of $f(x)=x^2$ at $a=3$.",
       "skills": [
@@ -4835,34 +5497,34 @@
     ],
     "applications": [
       {
-        "title": "Backpropagation",
-        "background": "Neural-network training computes derivatives of loss with respect to parameters by chaining local derivatives.",
-        "numbers": "For $L(w)=(w-3)^2$, $L'(1)=2(1-3)=-4$, so a step with rate $0.1$ moves to $1.4$."
+        "title": "For at , the derivative",
+        "background": "For $x^2$ at $3$, the derivative is $6$.",
+        "numbers": "For $x^2$ at $3$, the derivative is $6$."
       },
       {
-        "title": "Gradient checking",
-        "background": "Finite differences test whether an implemented derivative matches the limiting slope.",
-        "numbers": "If analytic gradient is $6.000$ and finite difference is $6.002$, absolute error is $0.002$."
+        "title": "Linear approximation near $3$",
+        "background": "$(3.01)^2\\approx9+6(0.01)=9.06$.",
+        "numbers": "$(3.01)^2\\approx9+6(0.01)=9.06$."
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "A derivative turns small input changes into first-order output estimates.",
-        "numbers": "If $f'(5)=12$, then an input change $0.01$ predicts output change about $0.12$."
+        "title": "For at , derivative is",
+        "background": "For $e^x$ at $0$, derivative is $1$.",
+        "numbers": "For $e^x$ at $0$, derivative is $1$."
       },
       {
-        "title": "Nondifferentiable activations",
-        "background": "ReLU has a corner at zero, so frameworks choose a convention for the derivative there.",
-        "numbers": "For $r(x)=\\max(0,x)$, left slope $0$ and right slope $1$ disagree at $0$."
+        "title": "Gradient checks compare finite differences",
+        "background": "Gradient checks compare finite differences with derivative values.",
+        "numbers": "Gradient checks compare finite differences with derivative values."
       },
       {
-        "title": "Optimization stopping",
-        "background": "Small derivative magnitude near a point suggests locally flat loss, though not always a minimum.",
-        "numbers": "For $L(w)=w^4$, $L'(0.1)=4(0.001)=0.004$, already small."
+        "title": "Velocity is derivative of position",
+        "background": "Velocity is derivative of position; $s=t^2$ gives velocity $2t$.",
+        "numbers": "Velocity is derivative of position; $s=t^2$ gives velocity $2t$."
       },
       {
-        "title": "Physics rates",
-        "background": "Velocity is the derivative of position, made rigorous as a limiting average velocity.",
-        "numbers": "For $s(t)=t^2$, average velocity from $2$ to $2.01$ is $(4.0401-4)/0.01=4.01$, tending to $4$."
+        "title": "A kinked ReLU has left",
+        "background": "A kinked ReLU has left derivative $0$ and right derivative $1$ at $0$, so no derivative there.",
+        "numbers": "A kinked ReLU has left derivative $0$ and right derivative $1$ at $0$, so no derivative there."
       }
     ],
     "applicationsClose": "The derivative is a limit with a job: it turns local change into a precise linear rate.",
@@ -4871,6 +5533,48 @@
       "Differentiability implies continuity, but continuity need not imply differentiability.",
       "Corners fail because one-sided slope limits disagree.",
       "Derivatives justify linear approximations and gradient-based algorithms."
+    ],
+    "connectionsProse": "<p>The derivative makes local rate of change precise. It begins with slopes of secant lines, which compare two nearby function values, and then takes the limiting slope as the input gap shrinks to zero. This definition connects algebraic calculation with geometric tangent lines. It also prepares the ground for mean-value, Taylor, and optimization results.</p>",
+    "symbols": [
+      {
+        "sym": "$h$",
+        "desc": "the input increment"
+      },
+      {
+        "sym": "$f'(a)$",
+        "desc": "the derivative at $a$"
+      },
+      {
+        "sym": "the quotient",
+        "desc": "defined for $h\\ne0$ before the limit"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Start with $f(x)=x^2$ and the difference quotient $\\frac{f(a+h)-f(a)}{h}$",
+        "why": "this is the secant slope."
+      },
+      {
+        "do": "Substitute",
+        "result": "$\\frac{(a+h)^2-a^2}{h}$",
+        "why": "compute the change in $f$."
+      },
+      {
+        "do": "Expand",
+        "result": "$\\frac{2ah+h^2}{h}=2a+h$",
+        "why": "isolate the term that vanishes."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Let $h\\to0$",
+        "why": "the quotient tends to $2a$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore $(x^2)'\\big|_{x=a}=2a$",
+        "why": "the derivative is the limiting slope."
+      }
     ],
     "prereqs": [
       "math-04-17"
@@ -4899,8 +5603,8 @@
         "optimization"
       ]
     },
-    "motivation": "<p>If a car travels $100$ km in $2$ hours, its average speed is $50$ km/h. If its position was continuous and differentiable during the trip, then at some instant the speedometer had to read exactly $50$ km/h.</p><p>The Mean Value Theorem is that everyday idea in calculus form. It turns endpoint information into a guaranteed derivative value somewhere inside.</p>",
-    "definition": "<p>If $f$ is continuous on $[a,b]$ and differentiable on $(a,b)$, then there exists $c\\in(a,b)$ such that $$f'(c)=\\frac{f(b)-f(a)}{b-a}.$$ The right side is the secant slope; the theorem says a tangent slope matches it somewhere.</p><p>It follows from Rolle's theorem. Subtract the secant line from $f$ to make a new function $g$ with $g(a)=g(b)$. Rolle's theorem gives $g'(c)=0$, and unpacking $g'$ gives $f'(c)$ equal to the secant slope.</p><p><b>Assumptions that matter:</b> continuity on the closed interval and differentiability on the open interval are both required; corners or jumps can break the conclusion; MVT guarantees existence of at least one $c$, not a unique one.</p>",
+    "motivation": "<p>Average slope over an interval is easy to compute from endpoints, but it does not directly tell us a local derivative. The Mean Value Theorem supplies the missing link. Under continuity and differentiability assumptions, some interior point realizes that average slope as an instantaneous slope.</p><p>The proof removes the straight-line trend between the endpoints. After subtracting the secant line, the adjusted function has equal values at $a$ and $b$. Rolle's theorem then gives an interior point with zero adjusted derivative, which rearranges to the mean-value conclusion.</p>",
+    "definition": "<p>The Mean Value Theorem says a continuous function on $[a,b]$ that is differentiable inside has an interior point whose derivative equals the average slope.</p><p>$$f'(c)=\\frac{f(b)-f(a)}{b-a}.$$</p><p><b>Assumptions that matter:</b> continuity on the closed interval and differentiability on the open interval are required.</p>",
     "worked": {
       "problem": "Apply the Mean Value Theorem to $f(x)=x^2$ on $[1,3]$ and find $c$.",
       "skills": [
@@ -5104,34 +5808,34 @@
     ],
     "applications": [
       {
-        "title": "Lipschitz guarantees",
-        "background": "Derivative bounds become global change bounds through MVT.",
-        "numbers": "If $|f'|\\le4$ on an interval, moving $0.03$ changes $f$ by at most $0.12$."
+        "title": "For on , average slope",
+        "background": "For $f(x)=x^2$ on $[1,3]$, average slope is $4$, so $2c=4$ and $c=2$.",
+        "numbers": "For $f(x)=x^2$ on $[1,3]$, average slope is $4$, so $2c=4$ and $c=2$."
       },
       {
-        "title": "Gradient clipping intuition",
-        "background": "Bounding gradients bounds how much loss can change over a parameter step.",
-        "numbers": "Gradient norm bound $10$ and step norm $0.001$ give loss change at most about $0.01$."
+        "title": "If over length , output",
+        "background": "If $|f'|\\le3$ over length $0.2$, output changes by at most $0.6$.",
+        "numbers": "If $|f'|\\le3$ over length $0.2$, output changes by at most $0.6$."
       },
       {
-        "title": "Speed checks",
-        "background": "Average-speed arguments are direct MVT applications.",
-        "numbers": "Traveling $150$ km in $3$ hours guarantees an instant at $50$ km/h if position is smooth."
+        "title": "Since , ",
+        "background": "Since $|\\cos x|\\le1$, $|\\sin(x)-\\sin(y)|\\le |x-y|$.",
+        "numbers": "Since $|\\cos x|\\le1$, $|\\sin(x)-\\sin(y)|\\le |x-y|$."
       },
       {
-        "title": "Root uniqueness",
-        "background": "If a derivative is always positive, a function is strictly increasing and cannot cross zero twice.",
-        "numbers": "If $f'\\ge2$ and $f(1)=-1$, then $f(2)\\ge1$, so at most one root in a monotone interval."
+        "title": "Lipschitz loss bounds use derivative",
+        "background": "Lipschitz loss bounds use derivative suprema.",
+        "numbers": "Lipschitz loss bounds use derivative suprema."
       },
       {
-        "title": "Error bounds",
-        "background": "Taylor's theorem uses MVT-style reasoning to control the remainder.",
-        "numbers": "If $|f''|\\le3$, linearization error over $h=0.1$ is at most $3h^2/2=0.015$."
+        "title": "If training loss drops over",
+        "background": "If training loss drops $0.4$ over $10$ epochs, some epoch has average slope $-0.04$ per epoch.",
+        "numbers": "If training loss drops $0.4$ over $10$ epochs, some epoch has average slope $-0.04$ per epoch."
       },
       {
-        "title": "Robust scores",
-        "background": "A score derivative bound controls sensitivity to feature changes.",
-        "numbers": "If $|s'(x)|\\le0.8$, changing a scalar feature by $0.5$ changes score by at most $0.4$."
+        "title": "MVT justifies line-search slope estimates",
+        "background": "MVT justifies line-search slope estimates.",
+        "numbers": "MVT justifies line-search slope estimates."
       }
     ],
     "applicationsClose": "The Mean Value Theorem is the bridge from local derivative bounds to interval-wide guarantees.",
@@ -5140,6 +5844,48 @@
       "It guarantees $f'(c)=[f(b)-f(a)]/(b-a)$ for some interior $c$.",
       "Derivative bounds imply function-change bounds.",
       "Missing differentiability or continuity can break the theorem."
+    ],
+    "connectionsProse": "<p>The Mean Value Theorem connects average change over an interval with instantaneous change at some interior point. It turns endpoint information into a derivative statement. The proof subtracts the secant line so that Rolle's theorem can find a flat point in the adjusted function. This result is a core reason derivative bounds imply Lipschitz and stability bounds.</p>",
+    "symbols": [
+      {
+        "sym": "$[a,b]$",
+        "desc": "the interval"
+      },
+      {
+        "sym": "$c$",
+        "desc": "the guaranteed interior point"
+      },
+      {
+        "sym": "the secant slope",
+        "desc": "average rate of change"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For continuous $f$ on $[a,b]$ and differentiable inside",
+        "result": "define the secant line $\\ell(x)=f(a)+\\frac{f(b)-f(a)}{b-a}(x-a)$",
+        "why": "match endpoints."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Let $g(x)=f(x)-\\ell(x)$",
+        "why": "subtract the straight-line trend."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Then $g(a)=g(b)=0$",
+        "why": "the adjusted function has equal endpoint values."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Rolle's theorem gives some $c\\in(a,b)$ with $g'(c)=0$",
+        "why": "a differentiable function returning to the same height has a flat point."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Thus $f'(c)=\\frac{f(b)-f(a)}{b-a}$",
+        "why": "rearrange $g'(c)=0$."
+      }
     ],
     "prereqs": [
       "math-04-18"
@@ -5168,8 +5914,8 @@
         "error analysis"
       ]
     },
-    "motivation": "<p>Taylor polynomials are wonderfully practical: replace a hard function by a polynomial near a point. But approximation without an error statement is only a hope.</p><p>Taylor's theorem adds the missing honesty. It says exactly how the neglected part depends on a higher derivative and the distance from the center.</p>",
-    "definition": "<p>If $f$ has $n+1$ derivatives on an interval containing $a$ and $x$, then $$f(x)=\\sum_{k=0}^{n}\\frac{f^{(k)}(a)}{k!}(x-a)^k+R_n(x),$$ where the Lagrange remainder is $$R_n(x)=\\frac{f^{(n+1)}(c)}{(n+1)!}(x-a)^{n+1}$$ for some $c$ between $a$ and $x$.</p><p>The proof is an iterated Mean Value Theorem idea: build the polynomial matching derivatives through order $n$ at $a$, then use a Rolle-type argument to force the remaining error to be controlled by the $(n+1)$st derivative at an intermediate point.</p><p><b>Assumptions that matter:</b> the needed derivatives must exist on the interval; the unknown point $c$ lies between $a$ and $x$; practical error bounds replace $|f^{(n+1)}(c)|$ by a known maximum $M$; a Taylor polynomial is local unless the remainder is controlled.</p>",
+    "motivation": "<p>A polynomial is often easier to compute with than the original function. Taylor's theorem explains when a polynomial built from derivatives at a point is a valid local approximation. Matching more derivatives gives a higher-order approximation.</p><p>The remainder is the essential part of the theorem. It identifies the next derivative as the source of error and places it at some intermediate point. Bounding that derivative turns Taylor's formula into a practical error estimate rather than just a formal expansion.</p>",
+    "definition": "<p>Taylor's theorem approximates $f$ near $a$ by a polynomial and expresses the error through the next derivative.</p><p>$$P_n(x)=\\sum_{k=0}^n f^{(k)}(a)(x-a)^k/k!,\\qquad |R_n(x)|\\le M|x-a|^{n+1}/(n+1)!.$$</p><p><b>Assumptions that matter:</b> the needed derivatives exist, and the next derivative is bounded by $M$ for the error bound.</p>",
     "worked": {
       "problem": "Approximate $e^{0.2}$ with the degree $2$ Taylor polynomial at $0$ and bound the error.",
       "skills": [
@@ -5378,34 +6124,34 @@
     ],
     "applications": [
       {
-        "title": "Fast math libraries",
-        "background": "Implementations of exp, log, and trig use polynomial approximations with certified remainders on small intervals.",
-        "numbers": "$e^{0.1}\\approx1+0.1+0.005+0.0001667=1.1051667$, within about $4.2\\times10^{-6}$ after the next term."
+        "title": "with order- polynomial",
+        "background": "$e^1\\approx1+1+1/2+1/6=2.666666\\ldots$ with order-$3$ polynomial.",
+        "numbers": "$e^1\\approx1+1+1/2+1/6=2.666666\\ldots$ with order-$3$ polynomial."
       },
       {
-        "title": "Newton's method",
-        "background": "Newton steps come from a local Taylor model of a function or objective.",
-        "numbers": "For $f(x)=x^2-2$ at $x=1.5$, Newton gives $1.5-0.25/3=1.4167$."
+        "title": "The order- remainder for is",
+        "background": "The order-$3$ remainder for $e^1$ is at most $e/24\\approx0.11326$.",
+        "numbers": "The order-$3$ remainder for $e^1$ is at most $e/24\\approx0.11326$."
       },
       {
-        "title": "Loss curvature",
-        "background": "Second-order optimization reads the quadratic Taylor term as local curvature.",
-        "numbers": "If $L(w)\\approx2+0.5(w-4)^2$, moving $0.2$ raises loss by $0.5(0.04)=0.02$."
+        "title": "For , error is at",
+        "background": "For $\\sin x\\approx x$, error is at most $|x|^3/6$.",
+        "numbers": "For $\\sin x\\approx x$, error is at most $|x|^3/6$."
       },
       {
-        "title": "Quantization error",
-        "background": "Taylor bounds estimate how much nonlinear transforms amplify small rounding errors.",
-        "numbers": "If $|f''|\\le10$ and rounding $h=0.001$, second-order error is at most $10h^2/2=5\\times10^{-6}$."
+        "title": "Newton methods use a second-order",
+        "background": "Newton methods use a second-order Taylor model.",
+        "numbers": "Newton methods use a second-order Taylor model."
       },
       {
-        "title": "Activation approximations",
-        "background": "Inference kernels approximate activations by low-degree polynomials on bounded ranges.",
-        "numbers": "For $\\tanh(0.2)$, $x-x^3/3=0.19733$, close to $0.19738$."
+        "title": "Trust regions choose radius so",
+        "background": "Trust regions choose radius so the remainder stays small.",
+        "numbers": "Trust regions choose radius so the remainder stays small."
       },
       {
-        "title": "Uncertainty propagation",
-        "background": "The delta method is Taylor's theorem applied to random perturbations.",
-        "numbers": "For $g(x)=x^2$ near $3$ with standard deviation $0.1$, first-order output standard deviation is $|g'(3)|0.1=0.6$."
+        "title": "For at , gives at",
+        "background": "For $\\log(1+x)$ at $0$, $x-x^2/2$ gives $0.095$ at $x=0.1$.",
+        "numbers": "For $\\log(1+x)$ at $0$, $x-x^2/2$ gives $0.095$ at $x=0.1$."
       }
     ],
     "applicationsClose": "Taylor's theorem is local approximation with accountability: every polynomial comes with a remainder to bound.",
@@ -5414,6 +6160,47 @@
       "The Lagrange remainder uses an $(n+1)$st derivative at some intermediate point.",
       "Bounding that derivative gives practical numerical error bounds.",
       "Approximation quality depends on distance from the center and derivative size."
+    ],
+    "connectionsProse": "<p>Taylor's theorem turns differentiability into controlled approximation. A Taylor polynomial matches a function and several derivatives at a base point, while the remainder measures what has not been captured. The theorem is useful because it does not only approximate; it gives a boundable error term. That error term is central in numerical analysis, optimization, and local model building.</p>",
+    "symbols": [
+      {
+        "sym": "$P_n$",
+        "desc": "the Taylor polynomial"
+      },
+      {
+        "sym": "$R_n$",
+        "desc": "the remainder"
+      },
+      {
+        "sym": "$\\xi$",
+        "desc": "an intermediate point"
+      },
+      {
+        "sym": "$M$",
+        "desc": "bounds the next derivative"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Expand $f$ at $a$ through degree $n$",
+        "result": "$P_n(x)=\\sum_{k=0}^n f^{(k)}(a)(x-a)^k/k!$",
+        "why": "match derivatives at $a$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Define the error $R_n(x)=f(x)-P_n(x)$",
+        "why": "separate approximation from remainder."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Repeated Rolle-style reasoning gives $R_n(x)=f^{(n+1)}(\\xi)(x-a)^{n+1}/(n+1)!$ for some $\\xi$ between $a$ and $x$",
+        "why": "the unmatched derivative controls the error."
+      },
+      {
+        "do": "If $|f^{(n+1)}|\\le M$",
+        "result": "then $|R_n(x)|\\le M|x-a|^{n+1}/(n+1)!$",
+        "why": "turn the existence form into a bound."
+      }
     ],
     "prereqs": [
       "math-04-19"
@@ -5442,8 +6229,8 @@
         "accumulation"
       ]
     },
-    "motivation": "<p>You already think of $\\int_a^b f(x)\\,dx$ as area or accumulated change. Riemann's definition asks how to make that idea precise using only rectangles.</p><p>Take a partition of the interval, use the largest function value on each small piece for an upper rectangle and the smallest for a lower rectangle. If those two totals can be forced together, the area is well-defined.</p>",
-    "definition": "<p>A partition $P$ of $[a,b]$ is a finite list $a=x_0<x_1<\\cdots<x_n=b$. On each subinterval $[x_{i-1},x_i]$, let $M_i=\\sup f$ and $m_i=\\inf f$. The upper and lower sums are $$U(f,P)=\\sum_{i=1}^{n}M_i\\Delta x_i,\\qquad L(f,P)=\\sum_{i=1}^{n}m_i\\Delta x_i,$$ where $\\Delta x_i=x_i-x_{i-1}$.</p><p>A bounded function is Riemann integrable if for every $\\varepsilon>0$ there is a partition $P$ such that $U(f,P)-L(f,P)<\\varepsilon$. Continuous functions on $[a,b]$ are integrable because uniform continuity makes the oscillation on sufficiently small subintervals uniformly small.</p><p><b>Assumptions that matter:</b> the function must be bounded for the usual Riemann definition; partitions are finite; discontinuities are allowed if they are not too wild; upper and lower sums use suprema and infima, not just sampled endpoints.</p>",
+    "motivation": "<p>Area under a curve can be approximated by rectangles. Lower rectangles use the smallest value on each subinterval, while upper rectangles use the largest value. The true area, if it exists, must lie between those two sums.</p><p>Riemann integrability means the upper and lower estimates can be forced as close as desired. Refining the partition reduces the uncertainty until there is only one possible accumulated value. This definition is precise enough to support probability densities, averages, and physical accumulation.</p>",
+    "definition": "<p>A bounded function is Riemann integrable when upper and lower sums can be made arbitrarily close.</p><p>$$U(P,f)-L(P,f)<\\varepsilon.$$</p><p><b>Assumptions that matter:</b> partitions are finite, and lower and upper rectangle sums bracket the same accumulated value.</p>",
     "worked": {
       "problem": "Compute the Riemann integral of $f(x)=x$ on $[0,1]$ using equal partitions and lower and upper sums.",
       "skills": [
@@ -5653,34 +6440,34 @@
     ],
     "applications": [
       {
-        "title": "Area under ROC curves",
-        "background": "AUC is an integral of true positive rate over false positive rate, usually approximated from sampled thresholds.",
-        "numbers": "Trapezoids with widths $0.2$ and average heights $0.6,0.8,0.9,0.95,1.0$ give AUC $0.2(4.25)=0.85$."
+        "title": "For on , the integral",
+        "background": "For $f(x)=x$ on $[0,1]$, the integral is $1/2$.",
+        "numbers": "For $f(x)=x$ on $[0,1]$, the integral is $1/2$."
       },
       {
-        "title": "Expected values",
-        "background": "Continuous expectations are integrals, and Riemann sums are the first finite approximation.",
-        "numbers": "Values $1,4,9$ with equal weight $1/3$ give expected value estimate $(1+4+9)/3=4.667$."
+        "title": "For on , the integral",
+        "background": "For $f(x)=x^2$ on $[0,1]$, the integral is $1/3$.",
+        "numbers": "For $f(x)=x^2$ on $[0,1]$, the integral is $1/3$."
       },
       {
-        "title": "Training diagnostics",
-        "background": "Area under a loss curve measures cumulative training cost, not just final loss.",
-        "numbers": "Losses $1.0,0.8,0.7$ over two epochs give trapezoid area $[(1.0+0.7)/2+0.8]=1.65$."
+        "title": "A uniform partition with intervals",
+        "background": "A uniform partition with $1000$ intervals has mesh width $0.001$.",
+        "numbers": "A uniform partition with $1000$ intervals has mesh width $0.001$."
       },
       {
-        "title": "Sensor accumulation",
-        "background": "Distance from velocity samples is a physical Riemann-sum idea.",
-        "numbers": "Velocities $0,3,5$ m/s over two one-second intervals give left estimate $0+3=3$ m."
+        "title": "If oscillation per interval is",
+        "background": "If oscillation per interval is below $0.001$ over total length $2$, upper-lower gap is below $0.002$.",
+        "numbers": "If oscillation per interval is below $0.001$ over total length $2$, upper-lower gap is below $0.002$."
       },
       {
-        "title": "Histogram probabilities",
-        "background": "Density curves integrate to probability; histograms approximate the integral by rectangles.",
-        "numbers": "Three bins of width $0.5$ with heights $0.2,0.6,0.4$ have mass $0.5(1.2)=0.6$."
+        "title": "Pixel intensities averaged over a",
+        "background": "Pixel intensities averaged over a line segment approximate a Riemann integral.",
+        "numbers": "Pixel intensities averaged over a line segment approximate a Riemann integral."
       },
       {
-        "title": "Numerical quadrature",
-        "background": "Scientific computing refines partitions until rectangle or trapezoid estimates stabilize.",
-        "numbers": "If upper and lower sums differ by $0.0008$, the integral is known within that gap."
+        "title": "Probability density over must integrate",
+        "background": "Probability density over $[0,1]$ must integrate to $1$.",
+        "numbers": "Probability density over $[0,1]$ must integrate to $1$."
       }
     ],
     "applicationsClose": "Riemann integration is accumulation made rigorous by squeezing all sufficiently fine rectangle sums together.",
@@ -5689,6 +6476,48 @@
       "A bounded function is Riemann integrable when upper-lower gaps can be made arbitrarily small.",
       "Continuous functions on closed intervals are Riemann integrable.",
       "Riemann sums are the foundation behind numerical area and accumulation estimates."
+    ],
+    "connectionsProse": "<p>The Riemann integral defines accumulated area through finite partitions. Lower sums and upper sums trap the possible area from below and above. When the trap can be made arbitrarily tight, the function has a single well-defined integral. This viewpoint connects area, averaging, probability mass, and accumulated quantities.</p>",
+    "symbols": [
+      {
+        "sym": "$P$",
+        "desc": "a partition"
+      },
+      {
+        "sym": "$\\Delta x_i$",
+        "desc": "subinterval width"
+      },
+      {
+        "sym": "$L$ and $U$",
+        "desc": "lower and upper sums"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Partition $[a,b]$ into subintervals",
+        "why": "replace a continuum with finitely many pieces."
+      },
+      {
+        "do": "Establish the step",
+        "result": "On each piece, take $m_i=\\inf f$ and $M_i=\\sup f$",
+        "why": "lower and upper rectangle heights."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Form $L(P,f)=\\sum m_i\\Delta x_i$ and $U(P,f)=\\sum M_i\\Delta x_i$",
+        "why": "these bracket the area."
+      },
+      {
+        "do": "If for every $\\varepsilon>0$ some partition has $U(P,f)-L(P,f)<\\varepsilon$",
+        "result": "the lower and upper integrals agree",
+        "why": "there is a single area value."
+      },
+      {
+        "do": "Establish the step",
+        "result": "That common value is $\\int_a^b f(x)\\,dx$",
+        "why": "the Riemann integral."
+      }
     ],
     "prereqs": [
       "math-04-20"
@@ -5717,8 +6546,8 @@
         "change of variables"
       ]
     },
-    "motivation": "<p>Differentiation measures instantaneous change; integration measures accumulated change. The Fundamental Theorem of Calculus explains why these two ideas are not separate subjects.</p><p>If you accumulate a continuous function and then ask for the rate of accumulation, you recover the original function. If you know an antiderivative, you can compute a definite integral by endpoint subtraction.</p>",
-    "definition": "<p><b>FTC Part 1:</b> If $f$ is continuous on $[a,b]$ and $F(x)=\\int_a^x f(t)\\,dt$, then $F$ is differentiable on $(a,b)$ and $F'(x)=f(x)$. The proof compares $$\\frac{F(x+h)-F(x)}{h}=\\frac{1}{h}\\int_x^{x+h}f(t)\\,dt,$$ the average value of $f$ over a short interval; continuity makes that average tend to $f(x)$.</p><p><b>FTC Part 2:</b> If $G'(x)=f(x)$ on $[a,b]$, then $$\\int_a^b f(x)\\,dx=G(b)-G(a).$$ This follows because the accumulation function and $G$ have the same derivative, so they differ by a constant.</p><p><b>Assumptions that matter:</b> continuity of $f$ gives the clean Part 1 statement; antiderivatives must be valid on the whole interval for Part 2; endpoints matter; signed area can be negative when $f$ is below the axis.</p>",
+    "motivation": "<p>Accumulation and rate of change are inverse ideas in calculus. If $F(x)$ records the area accumulated up to $x$, then increasing $x$ by a small $h$ adds only the area over a short interval. Dividing by $h$ gives the average value of $f$ over that short interval.</p><p>Continuity makes that short-interval average approach the point value $f(x)$. Thus the derivative of the accumulation function is the original integrand. The antiderivative form follows by comparing any function $G$ with derivative $f$ to the accumulation function.</p>",
+    "definition": "<p>The Fundamental Theorem of Calculus says the derivative of accumulated area recovers the integrand, and definite integrals equal antiderivative endpoint differences.</p><p>$$F(x)=\\int_a^x f(t)\\,dt,\\qquad F'(x)=f(x),\\qquad \\int_a^b f=G(b)-G(a).$$</p><p><b>Assumptions that matter:</b> continuity of $f$ makes short-interval averages approach the point value.</p>",
     "worked": {
       "problem": "Use the Fundamental Theorem to compute $\\displaystyle\\int_1^3 2x\\,dx$.",
       "skills": [
@@ -5917,34 +6746,34 @@
     ],
     "applications": [
       {
-        "title": "Accumulated gradients",
-        "background": "Continuous-time optimization views parameter change as the integral of velocity or negative gradient flow.",
-        "numbers": "If $dw/dt=-0.2$ for $5$ seconds, total change is $\\int_0^5-0.2\\,dt=-1$."
+        "title": "Application",
+        "background": "$\\int_0^1 2x\\,dx=1^2-0^2=1$.",
+        "numbers": "$\\int_0^1 2x\\,dx=1^2-0^2=1$."
       },
       {
-        "title": "Probability from density",
-        "background": "A probability density accumulates to a cumulative distribution function, and FTC says the derivative of the CDF is the density.",
-        "numbers": "For density $f(x)=2x$ on $[0,1]$, $P(0.2\\le X\\le0.5)=0.5^2-0.2^2=0.21$."
+        "title": "Accumulated gradient over a path",
+        "background": "Accumulated gradient over a path recovers potential change.",
+        "numbers": "Accumulated gradient over a path recovers potential change."
       },
       {
-        "title": "Area under learning curves",
-        "background": "Training diagnostics integrate loss or accuracy over time to compare whole runs.",
-        "numbers": "If loss rate curve is $L(t)=1-t/10$ from $0$ to $5$, area is $[t-t^2/20]_0^5=3.75$."
+        "title": "Cumulative distribution derivatives recover density",
+        "background": "Cumulative distribution derivatives recover density.",
+        "numbers": "Cumulative distribution derivatives recover density."
       },
       {
-        "title": "Physics simulation",
-        "background": "Position is accumulated velocity; velocity is the derivative of position.",
-        "numbers": "Velocity $v(t)=3t^2$ from $0$ to $2$ gives displacement $t^3|_0^2=8$ meters."
+        "title": "Area under velocity gives displacement",
+        "background": "Area under velocity gives displacement; constant velocity $3$ for $4$ seconds gives $12$.",
+        "numbers": "Area under velocity gives displacement; constant velocity $3$ for $4$ seconds gives $12$."
       },
       {
-        "title": "Calibration curves",
-        "background": "A density over scores can be integrated to count mass in a score band.",
-        "numbers": "Uniform density $0.5$ on a length-$2$ interval gives mass $0.5(2)=1$."
+        "title": "Training loss decrease equals integral",
+        "background": "Training loss decrease equals integral of its time derivative in continuous-time models.",
+        "numbers": "Training loss decrease equals integral of its time derivative in continuous-time models."
       },
       {
-        "title": "Numerical checks",
-        "background": "FTC lets numerical integration and differentiation validate each other.",
-        "numbers": "If $F(x)=x^3$, then $F'(x)=3x^2$ and $\\int_1^2 3x^2\\,dx=8-1=7$."
+        "title": "Application",
+        "background": "$\\int_0^\\pi \\cos x\\,dx=0-0=0$.",
+        "numbers": "$\\int_0^\\pi \\cos x\\,dx=0-0=0$."
       }
     ],
     "applicationsClose": "The Fundamental Theorem is the great unifier: rates accumulate, and accumulated continuous rates differentiate back to themselves.",
@@ -5953,6 +6782,48 @@
       "If $G'=f$, then $\\int_a^b f=G(b)-G(a)$.",
       "Continuity and a valid antiderivative on the interval are the key hypotheses.",
       "FTC turns area, probability, motion, and training diagnostics into endpoint calculations when antiderivatives are known."
+    ],
+    "connectionsProse": "<p>The Fundamental Theorem of Calculus links the two main operations of calculus. Integration accumulates values over an interval, while differentiation reads off local rate of change. The theorem says that differentiating accumulated area recovers the original continuous function. It also turns definite integrals into endpoint differences of antiderivatives.</p>",
+    "symbols": [
+      {
+        "sym": "$F$",
+        "desc": "the accumulation function"
+      },
+      {
+        "sym": "$f$",
+        "desc": "the integrand"
+      },
+      {
+        "sym": "$G$",
+        "desc": "any antiderivative"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Define $F(x)=\\int_a^x f(t)\\,dt$",
+        "why": "accumulated area up to $x$."
+      },
+      {
+        "do": "Compute the difference quotient",
+        "result": "$\\frac{F(x+h)-F(x)}{h}=\\frac1h\\int_x^{x+h}f(t)\\,dt$",
+        "why": "subtract adjacent areas."
+      },
+      {
+        "do": "Establish the step",
+        "result": "By continuity, $f(t)$ is close to $f(x)$ when $t$ is close to $x$",
+        "why": "the average value over a short interval is close to $f(x)$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Let $h\\to0$ to get $F'(x)=f(x)$",
+        "why": "the local average becomes the point value."
+      },
+      {
+        "do": "If $G'=f$",
+        "result": "then $\\int_a^b f=G(b)-G(a)$",
+        "why": "apply the result to $G-G(a)$."
+      }
     ],
     "prereqs": [
       "math-04-21"
@@ -5980,8 +6851,8 @@
         "limits of functions"
       ]
     },
-    "motivation": "<p>You already know a numerical sequence like $1,1/2,1/3,\\ldots$ can settle toward $0$. Now replace each number by an entire function. Instead of one dot moving, a whole curve moves.</p><p>A <b>sequence of functions</b> lets us study approximations that improve step by step: polynomials approaching a target, kernels getting sharper, or models becoming more expressive. The warm question is the same as before: as $n$ grows, what remains?</p>",
-    "definition": "<p>A sequence of functions is a list $f_1,f_2,f_3,\\ldots$ where each $f_n$ maps the same domain $D$ into numbers. A candidate limit $f$ is found by checking, for each fixed input $x\\in D$, whether $f_n(x)$ approaches a number. In symbols, $f(x)=\\lim_{n\\to\\infty}f_n(x)$ when the limit exists.</p><p><b>Assumptions that matter:</b> all functions should be compared on a stated domain; the input $x$ is held fixed when taking the limit; and endpoints can behave differently from interior points.</p>",
+    "motivation": "<p>A sequence of functions can converge differently at different inputs. For each fixed $x$, the values $f_n(x)$ form an ordinary numeric sequence. Studying all those numeric sequences gives pointwise convergence.</p><p>The example $x^n$ on $[0,1]$ shows the endpoint issue. Every fixed $x<1$ produces geometric decay to zero, while $x=1$ stays equal to one forever. Because points close to one decay very slowly, no uniform cutoff controls the whole interval.</p>",
+    "definition": "<p>A sequence of functions $f_n$ can converge pointwise by fixing $x$ first; for $f_n(x)=x^n$ on $[0,1]$, the limit is $0$ for $x<1$ and $1$ at $x=1$.</p><p><b>Assumptions that matter:</b> endpoint behavior can differ from interior behavior, and pointwise convergence need not be uniform.</p>",
     "worked": {
       "problem": "For $f_n(x)=x^n$ on $[0,1]$, find the pointwise limit.",
       "skills": [
@@ -6150,34 +7021,34 @@
     ],
     "applications": [
       {
-        "title": "Polynomial approximation",
-        "background": "Approximation theory replaces complicated functions by improving polynomial lists.",
-        "numbers": "$p_3(1)=1+1+1/2+1/6=2.667$ and $p_6(1)\\approx2.7181$, approaching $e\\approx2.7183$."
+        "title": "for ",
+        "background": "$0.5^{10}=0.0009765625$ for $f_{10}(0.5)$.",
+        "numbers": "$0.5^{10}=0.0009765625$ for $f_{10}(0.5)$."
       },
       {
-        "title": "Kernel bandwidths",
-        "background": "Statistics studies sequences of kernels as smoothing becomes sharper.",
-        "numbers": "For $f_n(x)=e^{-nx^2}$, $f_{10}(0.2)=e^{-0.4}\\approx0.670$ but $f_{100}(0.2)=e^{-4}\\approx0.018$."
+        "title": "At , ",
+        "background": "At $x=0.9$, $0.9^{10}\\approx0.3487$.",
+        "numbers": "At $x=0.9$, $0.9^{10}\\approx0.3487$."
       },
       {
-        "title": "Training snapshots",
-        "background": "A model after each epoch is a function from inputs to predictions.",
-        "numbers": "For one input, predictions $0.20,0.35,0.44,0.49$ suggest a fixed-input limit near $0.5$."
+        "title": "At , every ",
+        "background": "At $x=1$, every $f_n(1)=1$.",
+        "numbers": "At $x=1$, every $f_n(1)=1$."
       },
       {
-        "title": "Iterative solvers",
-        "background": "Numerical methods often output one approximate function per iteration.",
-        "numbers": "$f_n(x)=\\cos(x)/n$ has $f_{20}(1)\\approx0.027$ and tends to $0$."
+        "title": "Model families indexed by width",
+        "background": "Model families indexed by width form sequences of functions.",
+        "numbers": "Model families indexed by width form sequences of functions."
       },
       {
-        "title": "Regularization paths",
-        "background": "Changing a penalty creates a sequence of fitted functions.",
-        "numbers": "$f_n(x)=x/(1+1/n)$ gives $f_{10}(2)=1.818$ and $f_{100}(2)=1.980$, approaching $2$."
+        "title": "Approximation curves can converge for",
+        "background": "Approximation curves can converge for each data point but fail uniformly.",
+        "numbers": "Approximation curves can converge for each data point but fail uniformly."
       },
       {
-        "title": "Wide-network limits",
-        "background": "Theory treats each width as a function and asks whether predictions settle.",
-        "numbers": "If $|f_n(x)-f(x)|\\le0.1/n$, then at width index $n=50$ the error is at most $0.002$."
+        "title": "Uniform error is stronger than",
+        "background": "Uniform error $\\sup_x|f_n-f|<0.01$ is stronger than test-point error.",
+        "numbers": "Uniform error $\\sup_x|f_n-f|<0.01$ is stronger than test-point error."
       }
     ],
     "applicationsClose": "Sequences of functions let one familiar limit idea act on whole curves, but the domain and fixed-input rule matter deeply.",
@@ -6186,6 +7057,48 @@
       "Pointwise analysis fixes $x$ first, then sends $n\\to\\infty$.",
       "Endpoints often behave differently from interior points.",
       "These sequences lead naturally to pointwise and uniform convergence."
+    ],
+    "connectionsProse": "<p>Sequences of functions add a new layer to ordinary sequences. Each index now carries an entire function, so convergence can be checked input by input or over the whole domain at once. The example $f_n(x)=x^n$ shows why those two notions differ. It also prepares the contrast between pointwise and uniform convergence.</p>",
+    "symbols": [
+      {
+        "sym": "$f_n$",
+        "desc": "the $n$th function"
+      },
+      {
+        "sym": "pointwise",
+        "desc": "fix $x$ first"
+      },
+      {
+        "sym": "uniform",
+        "desc": "control the supremum over $x$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Define $f_n(x)=x^n$ on $[0,1]$",
+        "why": "a concrete sequence of functions."
+      },
+      {
+        "do": "If $0\\le x<1$",
+        "result": "then $x^n\\to0$",
+        "why": "geometric decay."
+      },
+      {
+        "do": "If $x=1$",
+        "result": "then $x^n=1$ for every $n$",
+        "why": "the endpoint stays fixed."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore the pointwise limit is $f(x)=0$ for $x<1$ and $f(1)=1$",
+        "why": "limits depend on the input."
+      },
+      {
+        "do": "Establish the step",
+        "result": "The convergence is not uniform because $\\sup_{[0,1]}|f_n-f|$ stays $1$ near the endpoint",
+        "why": "no single $N$ controls all $x$."
+      }
     ],
     "prereqs": [
       "math-04-22"
@@ -6213,8 +7126,8 @@
         "supremum norms"
       ]
     },
-    "motivation": "<p>You already know that $1+1/2+1/4+\\cdots=2$. A <b>series of functions</b> asks the same question with terms that depend on $x$: add one curve, then another, then another.</p><p>The partial sums are the honest way to watch the build. Each $S_N(x)$ is ordinary and finite; the series converges where these finite sums settle as $N$ grows.</p>",
-    "definition": "<p>A series of functions has the form $\\sum_{n=0}^{\\infty} f_n(x)$. Its $N$th partial sum is $S_N(x)=\\sum_{n=0}^{N}f_n(x)$. The series converges at an input $x$ when $S_N(x)$ has a finite limit, and the sum function is $S(x)=\\lim_{N\\to\\infty}S_N(x)$.</p><p><b>Assumptions that matter:</b> convergence may hold for some inputs and fail for others; comparison tests often require bounding $|f_n(x)|$; and term-by-term operations need stronger convergence than pointwise convergence alone.</p>",
+    "motivation": "<p>Adding functions term by term creates a sequence of partial-sum functions. To know that the infinite sum behaves well on a domain, the tails must be controlled uniformly in $x$. A pointwise tail estimate is often not enough.</p><p>The M-test supplies a clean sufficient condition. If each $|f_n(x)|$ is bounded by a numeric $M_n$ and the numeric series converges, then every function tail is bounded by the same numeric tail. This makes the partial sums uniformly Cauchy and gives uniform convergence.</p>",
+    "definition": "<p>The Weierstrass M-test proves uniform convergence when $|f_n(x)|\\le M_n$ for all $x$ and $\\sum M_n$ converges.</p><p><b>Assumptions that matter:</b> the same numeric majorant controls every input in the domain.</p>",
     "worked": {
       "problem": "Find the sum of $\\sum_{n=0}^{\\infty} x^n$ for $|x|<1$.",
       "skills": [
@@ -6383,34 +7296,34 @@
     ],
     "applications": [
       {
-        "title": "Fourier series",
-        "background": "Fourier showed that periodic signals can be represented as infinite sums of sine and cosine functions.",
-        "numbers": "$\\sin x+(1/3)\\sin3x+(1/5)\\sin5x$ uses amplitudes $1$, $0.333$, and $0.2$."
+        "title": "on is bounded by if",
+        "background": "$\\sum x^n/2^n$ on $[0,1]$ is bounded by $\\sum2^{-n}=2$ if starting at $0$.",
+        "numbers": "$\\sum x^n/2^n$ on $[0,1]$ is bounded by $\\sum2^{-n}=2$ if starting at $0$."
       },
       {
-        "title": "Taylor models",
-        "background": "Calculus approximates smooth functions by adding polynomial terms one by one.",
-        "numbers": "For $e^{0.5}$, $1+0.5+0.5^2/2+0.5^3/6=1.6458$, close to $1.6487$."
+        "title": "Tail after terms of a",
+        "background": "Tail after $7$ terms of a $1/2$ majorant is $0.015625$.",
+        "numbers": "Tail after $7$ terms of a $1/2$ majorant is $0.015625$."
       },
       {
-        "title": "Kernel expansions",
-        "background": "Machine learning kernels can be understood through infinite feature expansions.",
-        "numbers": "For $e^{xy}$ with $xy=0.2$, $1+xy+(xy)^2/2=1.22$."
+        "title": "Neural basis expansions use coefficient",
+        "background": "Neural basis expansions use coefficient bounds to guarantee convergence.",
+        "numbers": "Neural basis expansions use coefficient bounds to guarantee convergence."
       },
       {
-        "title": "Boosting corrections",
-        "background": "Boosting adds correction functions to improve a current predictor.",
-        "numbers": "Corrections of sizes $0.4,0.2,0.1,0.05$ total $0.75$ after four rounds."
+        "title": "Fourier-like approximations need uniform tails",
+        "background": "Fourier-like approximations need uniform tails for pointwise plotting guarantees.",
+        "numbers": "Fourier-like approximations need uniform tails for pointwise plotting guarantees."
       },
       {
-        "title": "Signal compression",
-        "background": "Function series separate large low-frequency terms from small details.",
-        "numbers": "Coefficients $3$, $1$, and $0.25$ carry squared energy $9+1+0.0625=10.0625$."
+        "title": "Power series inside have geometric",
+        "background": "Power series inside $|x|\\le0.5$ have geometric tail bounds.",
+        "numbers": "Power series inside $|x|\\le0.5$ have geometric tail bounds."
       },
       {
-        "title": "Discounted returns",
-        "background": "Reinforcement learning uses infinite series of discounted rewards.",
-        "numbers": "With reward $2$ and discount $0.9$, total return is $2/(1-0.9)=20$."
+        "title": "If , total bound is",
+        "background": "If $M_n=10^{-n}$, total bound is $1/9$ when starting at $n=1$.",
+        "numbers": "If $M_n=10^{-n}$, total bound is $1/9$ when starting at $n=1$."
       }
     ],
     "applicationsClose": "Series of functions are infinite construction kits: convergence decides whether the construction has a stable final shape.",
@@ -6419,6 +7332,48 @@
       "Geometric series provide the basic exact model.",
       "The convergence set can be smaller than the original domain.",
       "Applications rely on controlling tail error."
+    ],
+    "connectionsProse": "<p>Series of functions combine infinite sums with function behavior across a domain. The main challenge is controlling all inputs while adding infinitely many terms. The Weierstrass M-test solves this by comparing each function term to a numeric majorant. When the numeric majorants have a convergent sum, the function series has a uniform tail bound.</p>",
+    "symbols": [
+      {
+        "sym": "$f_n$",
+        "desc": "a function term"
+      },
+      {
+        "sym": "$M_n$",
+        "desc": "a numeric majorant"
+      },
+      {
+        "sym": "uniform Cauchy",
+        "desc": "one cutoff controls all inputs"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Suppose $|f_n(x)|\\le M_n$ for every $x$ in the domain",
+        "why": "dominate each function by a numeric term."
+      },
+      {
+        "do": "If $\\sum M_n$ converges",
+        "result": "then its tails become small",
+        "why": "numeric convergence supplies a tail bound."
+      },
+      {
+        "do": "For $m>n$",
+        "result": "$|\\sum_{k=n}^m f_k(x)|\\le\\sum_{k=n}^m M_k$ for all $x$",
+        "why": "triangle inequality works uniformly."
+      },
+      {
+        "do": "Establish the step",
+        "result": "The function partial sums are uniformly Cauchy",
+        "why": "the same tail bound works for every $x$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore $\\sum f_n$ converges uniformly",
+        "why": "this is the Weierstrass M-test."
+      }
     ],
     "prereqs": [
       "math-04-23"
@@ -6446,8 +7401,8 @@
         "series of functions"
       ]
     },
-    "motivation": "<p>You have already practiced limits of $f_n(x)$ by fixing $x$. <b>Pointwise convergence</b> names exactly that habit. For each input, ask whether the output sequence settles.</p><p>The kindness and the danger are the same: pointwise convergence is easy to check input by input, but it may hide uneven behavior across the domain. A limit curve can lose continuity even when every $f_n$ is continuous.</p>",
-    "definition": "<p>A sequence $f_n$ converges <b>pointwise</b> to $f$ on $D$ if for every fixed $x\\in D$ and every $\\varepsilon>0$, there is an $N$ that may depend on $x$ and $\\varepsilon$ such that $n\\ge N$ implies $|f_n(x)-f(x)|<\\varepsilon$.</p><p><b>Assumptions that matter:</b> the phrase \"for every fixed $x$\" is essential; the required $N$ may change from point to point; pointwise convergence alone does not preserve continuity, boundedness, integrals, or derivatives.</p>",
+    "motivation": "<p>Pointwise convergence is the most direct way to define convergence for functions. Fix an input, then apply the familiar sequence-limit definition to the values at that input. The allowed cutoff $N$ may depend on the chosen input.</p><p>For $x^n$ on $[0,1)$, every fixed $x<1$ gives a ratio below one, so the values go to zero. But as $x$ approaches one, that ratio becomes closer to one and the necessary cutoff grows. This dependence on $x$ explains why pointwise convergence can fail to preserve continuity.</p>",
+    "definition": "<p>Pointwise convergence of $f_n$ to $f$ means that for each fixed $x$, the numeric sequence $f_n(x)$ converges to $f(x)$.</p><p><b>Assumptions that matter:</b> the cutoff $N$ may depend on the chosen input $x$.</p>",
     "worked": {
       "problem": "Show that $f_n(x)=x^n$ converges pointwise on $[0,1]$ and identify the limit.",
       "skills": [
@@ -6616,34 +7571,34 @@
     ],
     "applications": [
       {
-        "title": "Threshold classifiers",
-        "background": "Smooth threshold approximations can converge pointwise to a hard rule.",
-        "numbers": "$\\sigma(10(0.6-0.5))=0.731$ and $\\sigma(50(0.6-0.5))=0.993$, approaching $1$."
+        "title": "At , gives ",
+        "background": "At $x=0.5$, $n=10$ gives $0.0009765625$.",
+        "numbers": "At $x=0.5$, $n=10$ gives $0.0009765625$."
       },
       {
-        "title": "Narrowing kernels",
-        "background": "Density kernels may become spikes, disappearing away from the center.",
-        "numbers": "$e^{-10(0.2)^2}=0.670$ but $e^{-100(0.2)^2}=0.018$."
+        "title": "At , reaching below needs",
+        "background": "At $x=0.9$, reaching below $0.01$ needs $n\\ge44$.",
+        "numbers": "At $x=0.9$, reaching below $0.01$ needs $n\\ge44$."
       },
       {
-        "title": "Model snapshots",
-        "background": "Training predictions at one example form a numerical sequence.",
-        "numbers": "Predicted probabilities $0.40,0.46,0.49,0.505$ suggest a limit near $0.5$."
+        "title": "At , the needed is",
+        "background": "At $x=0.99$, the needed $n$ is much larger, about $459$ for $0.01$.",
+        "numbers": "At $x=0.99$, the needed $n$ is much larger, about $459$ for $0.01$."
       },
       {
-        "title": "Grid refinement",
-        "background": "Approximations can converge at each fixed coordinate as a grid is refined.",
-        "numbers": "If point error is $2^{-n}$, after $10$ refinements it is $1/1024\\approx0.00098$."
+        "title": "A model can converge on",
+        "background": "A model can converge on each fixed example but not uniformly over all inputs.",
+        "numbers": "A model can converge on each fixed example but not uniformly over all inputs."
       },
       {
-        "title": "Regularization annealing",
-        "background": "Reduced penalties can approach an unpenalized fit at each input.",
-        "numbers": "$f_n(3)=3/(1+0.2/n)$ gives $2.884$ at $n=5$ and $2.988$ at $n=50$."
+        "title": "Pointwise confidence estimates do not",
+        "background": "Pointwise confidence estimates do not guarantee worst-case confidence.",
+        "numbers": "Pointwise confidence estimates do not guarantee worst-case confidence."
       },
       {
-        "title": "Sensor simulations",
-        "background": "Simulations are often checked at fixed sensor locations.",
-        "numbers": "Temperature estimates $21.0,21.4,21.49,21.501$ suggest a pointwise limit near $21.5$."
+        "title": "The limit of continuous on",
+        "background": "The limit of continuous $x^n$ on $[0,1]$ is discontinuous, showing pointwise convergence does not preserve continuity.",
+        "numbers": "The limit of continuous $x^n$ on $[0,1]$ is discontinuous, showing pointwise convergence does not preserve continuity."
       }
     ],
     "applicationsClose": "Pointwise convergence is honest but local: it tells the truth at every fixed input while allowing global shape to change sharply.",
@@ -6652,6 +7607,48 @@
       "The required $N$ may depend on the input.",
       "Continuous functions can converge pointwise to a discontinuous limit.",
       "Uniform convergence strengthens this by choosing one $N$ for all inputs."
+    ],
+    "connectionsProse": "<p>Pointwise convergence fixes one input and then studies the resulting numeric sequence. This makes the definition approachable, but it also allows the required cutoff to vary from point to point. Near difficult parts of the domain, the cutoff may become very large. That is why pointwise convergence alone does not preserve many global properties.</p>",
+    "symbols": [
+      {
+        "sym": "$x$",
+        "desc": "fixed before choosing $N$"
+      },
+      {
+        "sym": "$f_n(x)$",
+        "desc": "the value of the $n$th function at that point"
+      },
+      {
+        "sym": "$f(x)$",
+        "desc": "the pointwise limit"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "For $f_n(x)=x^n$ on $[0,1)$",
+        "result": "fix one $x<1$",
+        "why": "pointwise convergence starts by freezing the input."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Since $0\\le x<1$, the geometric sequence $x^n$ tends to $0$",
+        "why": "the fixed input supplies a ratio below $1$."
+      },
+      {
+        "do": "Given $\\varepsilon>0$",
+        "result": "choose $N>\\log(\\varepsilon)/\\log(x)$ when $x>0$",
+        "why": "this makes $x^N<\\varepsilon$."
+      },
+      {
+        "do": "For $n\\ge N$",
+        "result": "$|f_n(x)-0|<\\varepsilon$",
+        "why": "convergence holds at that point."
+      },
+      {
+        "do": "Establish the step",
+        "result": "The needed $N$ grows as $x$ approaches $1$",
+        "why": "this is why pointwise need not be uniform."
+      }
     ],
     "prereqs": [
       "math-04-24"
@@ -6679,8 +7676,8 @@
         "continuity of limits"
       ]
     },
-    "motivation": "<p>Pointwise convergence can feel like checking one tile at a time. <b>Uniform convergence</b> asks for something stronger: after some stage, every tile is close at once.</p><p>The mental picture is a shrinking tube around the limit function. Uniform convergence says the entire graph of $f_n$ eventually fits inside any tube of radius $\\varepsilon$ around $f$.</p>",
-    "definition": "<p>A sequence $f_n$ converges <b>uniformly</b> to $f$ on $D$ if for every $\\varepsilon>0$ there is an $N$ such that for all $n\\ge N$ and all $x\\in D$, $|f_n(x)-f(x)|<\\varepsilon$. Equivalently, $\\sup_{x\\in D}|f_n(x)-f(x)|\\to0$.</p><p><b>Assumptions that matter:</b> the same $N$ must work for every input; the domain matters; and uniform convergence of continuous functions preserves continuity of the limit.</p>",
+    "motivation": "<p>Uniform convergence asks for the same cutoff to work for every input. Equivalently, the supremum of the error over the domain must go to zero. This makes it a worst-case convergence guarantee.</p><p>The preservation of continuity follows by using one approximating function $f_N$. Uniform convergence makes both $f(x)$ and $f(a)$ close to $f_N(x)$ and $f_N(a)$, while continuity of $f_N$ controls the middle difference. The three errors are each kept below $\\varepsilon/3$.</p>",
+    "definition": "<p>Uniform convergence means the worst-case error over the domain goes to zero.</p><p>$$\\sup_x|f_n(x)-f(x)|\\to0.$$</p><p><b>Assumptions that matter:</b> one cutoff controls all inputs, which lets continuity pass to the limit.</p>",
     "worked": {
       "problem": "Show that $f_n(x)=x/n$ converges uniformly to $0$ on $[0,2]$.",
       "skills": [
@@ -6849,34 +7846,34 @@
     ],
     "applications": [
       {
-        "title": "Stable approximation errors",
-        "background": "Uniform convergence gives one worst-case error bound.",
-        "numbers": "If $\\sup |f_n-f|\\le2/n$, then $n=1000$ guarantees error at most $0.002$ everywhere."
+        "title": "If , every prediction is",
+        "background": "If $\\sup|f_n-f|<0.01$, every prediction is within $0.01$.",
+        "numbers": "If $\\sup|f_n-f|<0.01$, every prediction is within $0.01$."
       },
       {
-        "title": "Continuity preservation",
-        "background": "A uniform limit of continuous functions is continuous.",
-        "numbers": "Sup errors $0.1,0.05,0.025$ squeeze the whole graph toward one continuous limit."
+        "title": "on converges uniformly with error",
+        "background": "$x^n$ on $[0,0.5]$ converges uniformly with error at most $0.5^n$.",
+        "numbers": "$x^n$ on $[0,0.5]$ converges uniformly with error at most $0.5^n$."
       },
       {
-        "title": "Numerical libraries",
-        "background": "Function approximations need maximum error guarantees, not just sample checks.",
-        "numbers": "A sine approximation with max error $10^{-6}$ on $[-\\pi,\\pi]$ is uniformly accurate over width $6.283$."
+        "title": "At , that uniform error",
+        "background": "At $n=10$, that uniform error is $0.0009765625$.",
+        "numbers": "At $n=10$, that uniform error is $0.0009765625$."
       },
       {
-        "title": "Calibration guarantees",
-        "background": "A surrogate calibration curve should be close for all scores.",
-        "numbers": "If $|\\hat c(p)-c(p)|\\le0.01$ for all $p\\in[0,1]$, every score has at most $1$ percentage point error."
+        "title": "Uniformly convergent continuous surrogate models",
+        "background": "Uniformly convergent continuous surrogate models keep continuity.",
+        "numbers": "Uniformly convergent continuous surrogate models keep continuity."
       },
       {
-        "title": "Interchanging integrals",
-        "background": "Uniform convergence lets limits pass through integrals on finite intervals.",
-        "numbers": "If $\\sup|f_n-f|\\le0.001$ on length $5$, then $|\\int f_n-\\int f|\\le0.005$."
+        "title": "Uniform loss convergence supports generalization",
+        "background": "Uniform loss convergence supports generalization bounds.",
+        "numbers": "Uniform loss convergence supports generalization bounds."
       },
       {
-        "title": "Power-series tails",
-        "background": "Uniform tail bounds justify finite polynomials across an interval.",
-        "numbers": "For $\\sum x^n$ on $|x|\\le0.5$, the tail after degree $5$ is at most $0.5^6/(1-0.5)=0.03125$."
+        "title": "Uniform convergence of gradients is",
+        "background": "Uniform convergence of gradients is a route to stable optimizer behavior.",
+        "numbers": "Uniform convergence of gradients is a route to stable optimizer behavior."
       }
     ],
     "applicationsClose": "Uniform convergence turns many pointwise promises into one global promise, protecting continuity, integrals, and worst-case error bounds.",
@@ -6885,6 +7882,44 @@
       "One $N$ must work for all inputs.",
       "Moving counterexample points often show non-uniformity.",
       "Uniform convergence preserves more structure than pointwise convergence."
+    ],
+    "connectionsProse": "<p>Uniform convergence controls the largest error over the entire domain. Unlike pointwise convergence, it uses one cutoff that works for all inputs. This stronger control is what lets continuity pass from approximating functions to their limit. The proof is a careful triangle-inequality argument using one continuous approximant.</p>",
+    "symbols": [
+      {
+        "sym": "$\\sup_x|f_n(x)-f(x)|$",
+        "desc": "the worst-case error"
+      },
+      {
+        "sym": "uniform convergence",
+        "desc": "that supremum goes to $0$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Suppose $f_n\\to f$ uniformly and each $f_n$ is continuous",
+        "why": "start with the preservation theorem."
+      },
+      {
+        "do": "Given $\\varepsilon>0$",
+        "result": "choose $N$ so $|f_N(x)-f(x)|<\\varepsilon/3$ for all $x$",
+        "why": "uniform convergence gives global approximation."
+      },
+      {
+        "do": "Establish the step",
+        "result": "By continuity of $f_N$ at $a$, choose $\\delta$ so $|x-a|<\\delta$ implies $|f_N(x)-f_N(a)|<\\varepsilon/3$",
+        "why": "one fixed function is continuous."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Use the triangle inequality on $|f(x)-f(a)|$ with three terms",
+        "why": "approximate both endpoint values by $f_N$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "The total is below $\\varepsilon$",
+        "why": "the limit $f$ is continuous."
+      }
     ],
     "prereqs": [
       "math-04-25"
@@ -6912,8 +7947,8 @@
         "term-by-term differentiation"
       ]
     },
-    "motivation": "<p>Polynomials are comfortable: add, differentiate, integrate, and evaluate them with ordinary arithmetic. A <b>power series</b> keeps that comfort while allowing infinitely many terms.</p><p>The beautiful payoff is <b>analyticity</b>. Some functions are not merely approximated by their Taylor series; near a point, they are exactly the sum of that series.</p>",
-    "definition": "<p>A power series centered at $a$ is $\\sum_{n=0}^{\\infty} c_n(x-a)^n$. It converges inside a radius $R$, diverges outside that radius, and needs separate endpoint checks. A function is <b>analytic</b> at $a$ if it equals a power series in some interval around $a$.</p><p><b>Assumptions that matter:</b> the radius comes from coefficient growth, often by the ratio test; endpoints are not decided by the radius alone; inside the radius, power series may be differentiated and integrated term by term.</p>",
+    "motivation": "<p>Power series behave like infinite polynomials centered at $c$. Each term has a coefficient and a power of the distance $x-c$. This structure lets convergence be decided by comparing coefficient growth with distance from the center.</p><p>The root test isolates exactly that comparison. The $n$th root of the absolute term separates into $\\sqrt[n]{|a_n|}$ and $|x-c|$. The boundary where their product crosses one determines the radius of convergence, while endpoint behavior needs separate analysis.</p>",
+    "definition": "<p>A power series $\\sum a_n(x-c)^n$ has a radius of convergence determined by coefficient growth.</p><p>$$R=1/L,\\qquad L=\\limsup\\sqrt[n]{|a_n|}.$$</p><p><b>Assumptions that matter:</b> convergence inside the radius follows from the root test; endpoints require separate checks.</p>",
     "worked": {
       "problem": "Find the radius of convergence for $\\sum_{n=0}^{\\infty}\\dfrac{x^n}{3^n}$ and its sum.",
       "skills": [
@@ -7082,34 +8117,34 @@
     ],
     "applications": [
       {
-        "title": "Fast elementary functions",
-        "background": "Computers evaluate functions with polynomial pieces derived from power series.",
-        "numbers": "For $\\sin(0.1)$, $0.1-0.1^3/6=0.0998333$, matching the true value to about $8$ decimal places."
+        "title": "has radius ",
+        "background": "$\\sum x^n$ has radius $1$.",
+        "numbers": "$\\sum x^n$ has radius $1$."
       },
       {
-        "title": "Analytic loss approximations",
-        "background": "Near a smooth minimum, Taylor series explain quadratic approximations.",
-        "numbers": "If $L(w)=L(0)+3w^2+2w^3+\\cdots$, then at $w=0.1$ the cubic term is $0.002$ and the quadratic term is $0.03$."
+        "title": "has radius ",
+        "background": "$\\sum (3x)^n$ has radius $1/3$.",
+        "numbers": "$\\sum (3x)^n$ has radius $1/3$."
       },
       {
-        "title": "Generating functions",
-        "background": "Combinatorics stores sequences as coefficients of power series.",
-        "numbers": "$1+x+x^2+\\cdots$ has coefficient $1$ for every count and sums to $1.25$ at $x=0.2$."
+        "title": "has infinite radius",
+        "background": "$e^x=\\sum x^n/n!$ has infinite radius.",
+        "numbers": "$e^x=\\sum x^n/n!$ has infinite radius."
       },
       {
-        "title": "Moment generating functions",
-        "background": "Probability uses analytic functions to encode moments by derivatives at zero.",
-        "numbers": "For $M(t)=e^{2t}$, $M'(0)=2$ and $M''(0)=4$."
+        "title": "Taylor approximations of activations use",
+        "background": "Taylor approximations of activations use power-series truncations.",
+        "numbers": "Taylor approximations of activations use power-series truncations."
       },
       {
-        "title": "Activation local behavior",
-        "background": "Smooth activations have local series that explain near-linear behavior.",
-        "numbers": "The sigmoid near $0$ is $0.5+x/4+\\cdots$; at $x=0.2$ this gives $0.55$, close to $0.5498$."
+        "title": "Inside , geometric tail after",
+        "background": "Inside $|x|\\le0.5$, geometric tail after $10$ is at most $0.001953125$.",
+        "numbers": "Inside $|x|\\le0.5$, geometric tail after $10$ is at most $0.001953125$."
       },
       {
-        "title": "Error control",
-        "background": "Power-series remainders give concrete accuracy guarantees.",
-        "numbers": "For $e^{0.1}$ after terms through $x^3/6$, the next term is $0.1^4/24\\approx0.00000417$."
+        "title": "Analytic kernels can be expanded",
+        "background": "Analytic kernels can be expanded into feature maps.",
+        "numbers": "Analytic kernels can be expanded into feature maps."
       }
     ],
     "applicationsClose": "Power series make infinite processes feel polynomial, and analyticity tells us when that polynomial language exactly matches the function nearby.",
@@ -7118,6 +8153,52 @@
       "The radius of convergence is often found with ratio or root tests.",
       "Endpoints require separate checks.",
       "Inside the radius, power series can be differentiated and integrated term by term."
+    ],
+    "connectionsProse": "<p>Power series are infinite polynomial expansions centered at a point. They are easier to control than arbitrary function series because powers separate coefficient growth from distance to the center. The radius of convergence marks the region where the series behaves reliably. Inside that radius, analytic functions can be studied through their coefficients and tails.</p>",
+    "symbols": [
+      {
+        "sym": "$c$",
+        "desc": "the center"
+      },
+      {
+        "sym": "$a_n$",
+        "desc": "coefficients"
+      },
+      {
+        "sym": "$R$",
+        "desc": "the radius of convergence"
+      },
+      {
+        "sym": "analytic",
+        "desc": "equal to a power series locally"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Consider $\\sum a_n(x-c)^n$",
+        "why": "terms are powers around center $c$."
+      },
+      {
+        "do": "Apply the root test to absolute values",
+        "result": "$\\sqrt[n]{|a_n(x-c)^n|}=\\sqrt[n]{|a_n|}\\,|x-c|$",
+        "why": "separate coefficient growth from distance."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Let $L=\\limsup\\sqrt[n]{|a_n|}$",
+        "why": "this measures asymptotic coefficient size."
+      },
+      {
+        "do": "Establish the step",
+        "result": "The series converges when $L|x-c|<1$ and diverges when $L|x-c|>1$",
+        "why": "root test."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore the radius is $R=1/L$",
+        "why": "endpoints need separate checks."
+      }
     ],
     "prereqs": [
       "math-04-26"
@@ -7145,8 +8226,8 @@
         "continuity"
       ]
     },
-    "motivation": "<p>You already trust distance on the real line: $|x-y|$ says how far two numbers are. A metric space keeps the useful rules of distance and lets the objects be vectors, functions, strings, distributions, or model parameters.</p><p>Once distance is defined, familiar ideas return: points can approach, sequences can converge, and maps can be continuous.</p>",
-    "definition": "<p>A <b>metric space</b> is a set $X$ together with a distance function $d:X\\times X\\to[0,\\infty)$ such that for all $x,y,z\\in X$: $d(x,y)=0$ exactly when $x=y$; $d(x,y)=d(y,x)$; and $d(x,z)\\le d(x,y)+d(y,z)$. The last rule is the triangle inequality.</p><p><b>Assumptions that matter:</b> the metric must be chosen and stated; different metrics on the same set can define different notions of closeness; and convergence means $d(x_n,x)\\to0$ in the chosen metric.</p>",
+    "motivation": "<p>Many spaces have a meaningful notion of distance even when their elements are not real numbers. A metric abstracts the rules that distance must obey. With those rules, balls and convergence can be defined in the same way across many settings.</p><p>The triangle inequality is the most important structural rule. It says that traveling through an intermediate point cannot beat the direct shortest-distance bound. In Euclidean space, Cauchy-Schwarz proves this rule algebraically, showing that the familiar distance fits the metric framework.</p>",
+    "definition": "<p>A metric space is a set $X$ with a distance function $d$ satisfying positivity, symmetry, and the triangle inequality.</p><p>$$d(x,z)\\le d(x,y)+d(y,z).$$</p><p><b>Assumptions that matter:</b> $d(x,y)=0$ only when $x=y$, and open balls use the chosen metric.</p>",
     "worked": {
       "problem": "Verify the triangle inequality for $d(x,y)=|x-y|$ using $x=2$, $y=5$, $z=9$.",
       "skills": [
@@ -7315,34 +8396,34 @@
     ],
     "applications": [
       {
-        "title": "Nearest-neighbor search",
-        "background": "Classifiers and retrieval systems depend on a chosen metric.",
-        "numbers": "Point $(1,2)$ is distance $5$ from $(4,6)$ in Euclidean metric but $7$ in Manhattan metric."
+        "title": "Euclidean distance between and is",
+        "background": "Euclidean distance between $(0,0)$ and $(3,4)$ is $5$.",
+        "numbers": "Euclidean distance between $(0,0)$ and $(3,4)$ is $5$."
       },
       {
-        "title": "Embedding similarity",
-        "background": "Vector databases turn similarity into distance for ranking.",
-        "numbers": "Unit vectors with cosine similarity $0.8$ have Euclidean distance $\\sqrt{2-2(0.8)}\\approx0.632$."
+        "title": "Cosine distance is used for",
+        "background": "Cosine distance is used for embeddings after normalization.",
+        "numbers": "Cosine distance is used for embeddings after normalization."
       },
       {
-        "title": "Function approximation",
-        "background": "Uniform error is a metric on bounded functions.",
-        "numbers": "If $\\sup|f-g|=0.02$, every prediction of $g$ is within $0.02$ of $f$."
+        "title": "Edit distance between strings is",
+        "background": "Edit distance between strings is a metric in NLP.",
+        "numbers": "Edit distance between strings is a metric in NLP."
       },
       {
-        "title": "Edit distance",
-        "background": "Computer science uses metrics beyond geometry, such as string distances.",
-        "numbers": "The words 'cat' and 'cut' have edit distance $1$ by replacing $a$ with $u$."
+        "title": "Wasserstein distance compares distributions",
+        "background": "Wasserstein distance compares distributions.",
+        "numbers": "Wasserstein distance compares distributions."
       },
       {
-        "title": "Distribution distance",
-        "background": "ML objectives compare probability distributions with distance-like quantities.",
-        "numbers": "For $p=(0.2,0.8)$ and $q=(0.5,0.5)$, $L^1$ distance is $0.6$."
+        "title": "Nearest-neighbor search only needs a",
+        "background": "Nearest-neighbor search only needs a metric-like distance.",
+        "numbers": "Nearest-neighbor search only needs a metric-like distance."
       },
       {
-        "title": "Optimization stopping",
-        "background": "Convergence of iterates is measured by a distance between parameters.",
-        "numbers": "If $\\|w_{t+1}-w_t\\|_2=0.001$ and tolerance is $0.005$, the step-size test passes."
+        "title": "In discrete metric, for distinct",
+        "background": "In discrete metric, $d(x,y)=1$ for distinct points, so every ball of radius $0.5$ is a singleton.",
+        "numbers": "In discrete metric, $d(x,y)=1$ for distinct points, so every ball of radius $0.5$ is a singleton."
       }
     ],
     "applicationsClose": "A metric is the quiet infrastructure under convergence: once distance is honest, limits and continuity can be discussed in many worlds.",
@@ -7351,6 +8432,43 @@
       "The chosen metric defines what close means.",
       "Convergence means distance to the proposed limit tends to zero.",
       "Vectors, functions, strings, and distributions can all live in metric spaces."
+    ],
+    "connectionsProse": "<p>Metric spaces keep the idea of distance while removing dependence on coordinates or the real line. Once a distance function satisfies the metric rules, analysis can discuss balls, limits, Cauchy sequences, compactness, and contractions. This abstraction lets the same proofs apply to vectors, functions, strings, distributions, and other objects. The Euclidean metric is the guiding example.</p>",
+    "symbols": [
+      {
+        "sym": "$X$",
+        "desc": "the set"
+      },
+      {
+        "sym": "$d$",
+        "desc": "the distance function"
+      },
+      {
+        "sym": "open balls",
+        "desc": "$B(x,r)=\\{y:d(x,y)<r\\}$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "A metric $d$ must satisfy $d(x,y)\\ge0$ and $d(x,y)=0$ only when $x=y$",
+        "why": "distance is nonnegative and separates points."
+      },
+      {
+        "do": "Establish the step",
+        "result": "It must satisfy $d(x,y)=d(y,x)$",
+        "why": "distance is symmetric."
+      },
+      {
+        "do": "Establish the step",
+        "result": "It must satisfy $d(x,z)\\le d(x,y)+d(y,z)$",
+        "why": "going through $y$ cannot be shorter than the shortest direct distance."
+      },
+      {
+        "do": "For Euclidean distance, the triangle inequality follows from Cauchy-Schwarz",
+        "result": "$\\|u+v\\|^2\\le(\\|u\\|+\\|v\\|)^2$",
+        "why": "algebra proves the metric rule."
+      }
     ],
     "prereqs": [
       "math-04-27"
@@ -7378,8 +8496,8 @@
         "limits of sequences"
       ]
     },
-    "motivation": "<p>On the real line, $(0,1)$ feels different from $[0,1]$. The first lets every point wiggle a little without leaving; the second includes the endpoints where the interval stops.</p><p><b>Open</b> and <b>closed</b> sets turn that feeling into metric-space language. They tell us where local arguments are safe and where limiting sequences stay inside.</p>",
-    "definition": "<p>In a metric space, the open ball of radius $r$ around $x$ is $B(x,r)=\\{y:d(x,y)<r\\}$. A set $U$ is <b>open</b> if every $x\\in U$ has some ball $B(x,r)$ contained in $U$. A set $C$ is <b>closed</b> if every convergent sequence from $C$ has its limit in $C$.</p><p><b>Assumptions that matter:</b> openness and closedness depend on the metric and ambient space; a set can be both open and closed; and a set can be neither open nor closed.</p>",
+    "motivation": "<p>Open sets formalize the idea that each included point has some room to move while staying inside. Closed sets formalize the idea that limits of internal sequences are not lost. These two views are linked through complements.</p><p>The sequence characterization of closed sets is often the most useful in analysis. If a sequence stays in a closed set and converges, the limit cannot fall outside because the open complement would eventually capture the tail. Conversely, if outside points had no protective ball, one could build a sequence from the set converging to that outside point.</p>",
+    "definition": "<p>A set is open when each of its points contains a small ball inside the set, and closed when its complement is open.</p><p><b>Assumptions that matter:</b> in metric spaces, closed sets are exactly the sets that keep limits of convergent sequences from the set.</p>",
     "worked": {
       "problem": "Decide whether $(0,1)$ and $[0,1]$ are open or closed in $\\mathbb{R}$.",
       "skills": [
@@ -7548,34 +8666,34 @@
     ],
     "applications": [
       {
-        "title": "Feasible regions",
-        "background": "Optimization constraints may be open or closed, affecting whether optima are attained.",
-        "numbers": "Minimize $x$ over $(0,1)$ has infimum $0$ but no minimizer; over $[0,1]$, the minimum is $0$."
+        "title": "is open in but not",
+        "background": "$(0,1)$ is open in $\\mathbb R$ but not closed.",
+        "numbers": "$(0,1)$ is open in $\\mathbb R$ but not closed."
       },
       {
-        "title": "Safe parameter ranges",
-        "background": "Strict inequalities create open sets with room for perturbation.",
-        "numbers": "If $0<\\eta<0.1$, then $\\eta=0.05$ has margin $0.05$ to each boundary."
+        "title": "is closed but not open",
+        "background": "$[0,1]$ is closed but not open in $\\mathbb R$.",
+        "numbers": "$[0,1]$ is closed but not open in $\\mathbb R$."
       },
       {
-        "title": "Clipping constraints",
-        "background": "Closed intervals are common in bounded numerical systems.",
-        "numbers": "A probability clipped to $[0,1]$ can converge to $0$ or $1$ and remain allowed."
+        "title": "If in , radius stays",
+        "background": "If $x=0.4$ in $(0,1)$, radius $0.1$ stays inside.",
+        "numbers": "If $x=0.4$ in $(0,1)$, radius $0.1$ stays inside."
       },
       {
-        "title": "Decision boundaries",
-        "background": "Classification regions depend on whether the threshold is included.",
-        "numbers": "Accept if $s\\ge0.7$ gives region $[0.7,1]$, including score $0.700$."
+        "title": "A margin set $\\{x",
+        "background": "f(x)>0.2\\}$ is open when $f$ is continuous.",
+        "numbers": "f(x)>0.2\\}$ is open when $f$ is continuous."
       },
       {
-        "title": "Robustness margins",
-        "background": "Open balls formalize perturbations that stay within a property.",
-        "numbers": "Certified radius $0.03$ in $L^\\infty$ means max pixel change below $0.03$ stays in the guarantee set."
+        "title": "Feasible constraints are closed for",
+        "background": "Feasible constraints $g(x)\\le0$ are closed for continuous $g$.",
+        "numbers": "Feasible constraints $g(x)\\le0$ are closed for continuous $g$."
       },
       {
-        "title": "Limit closure in algorithms",
-        "background": "Closed feasible sets keep convergent iterates feasible in the limit.",
-        "numbers": "If every iterate has norm at most $1$ and $w_t\\to w$, then closedness gives $\\|w\\|\\le1$."
+        "title": "If a point is from",
+        "background": "If a point is $0.05$ from a decision boundary, a ball of radius $0.025$ stays on the same side.",
+        "numbers": "If a point is $0.05$ from a decision boundary, a ball of radius $0.025$ stays on the same side."
       }
     ],
     "applicationsClose": "Open sets are about local freedom; closed sets are about safe limits. Analysis and ML guarantees need both ideas at the right moment.",
@@ -7584,6 +8702,47 @@
       "Closed means limits of convergent sequences from the set stay in the set.",
       "The ambient metric space matters.",
       "A set may be open, closed, both, or neither."
+    ],
+    "connectionsProse": "<p>Open and closed sets describe the local shape of a space. Open sets contain a small ball around each of their points, while closed sets keep the limits of convergent sequences that stay inside. These definitions connect geometry with convergence. They also provide the language used in compactness, constraints, continuity, and stability arguments.</p>",
+    "symbols": [
+      {
+        "sym": "$B(x,r)$",
+        "desc": "an open ball"
+      },
+      {
+        "sym": "$U$",
+        "desc": "open"
+      },
+      {
+        "sym": "$F$",
+        "desc": "closed"
+      },
+      {
+        "sym": "complement",
+        "desc": "all points not in the set"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "A set $U$ is open if every $x\\in U$ has some $r>0$ with $B(x,r)\\subset U$",
+        "why": "each point has breathing room."
+      },
+      {
+        "do": "Establish the step",
+        "result": "A set $F$ is closed if its complement is open",
+        "why": "outside points have room to stay outside."
+      },
+      {
+        "do": "If $F$ is closed and $x_n\\in F$ with $x_n\\to x$",
+        "result": "then $x\\in F$",
+        "why": "otherwise the open complement would contain a ball around $x$ that eventually contains $x_n$, contradiction."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Conversely, if every convergent sequence in $F$ has its limit in $F$, then the complement is open",
+        "why": "failure of openness would build a sequence in $F$ converging to an outside point."
+      }
     ],
     "prereqs": [
       "math-04-28"
@@ -7611,8 +8770,8 @@
         "optimization"
       ]
     },
-    "motivation": "<p>Closed intervals like $[0,1]$ have a comforting property: continuous functions reach their maximum and minimum there. Open intervals like $(0,1)$ do not always behave so kindly.</p><p><b>Compactness</b> is the deep reason. It says the set is small enough and complete enough that infinite searching cannot escape to a missing edge or infinity.</p>",
-    "definition": "<p>In $\\mathbb{R}^n$, the Heine-Borel theorem says a set is <b>compact</b> exactly when it is closed and bounded. Sequentially, compactness means every sequence in the set has a convergent subsequence whose limit is still in the set.</p><p><b>Assumptions that matter:</b> closed and bounded characterizes compactness in finite-dimensional Euclidean spaces, not every metric space; compactness is relative to the metric; and continuous functions on compact sets attain maxima and minima.</p>",
+    "motivation": "<p>Infinite sets can still be manageable when local information has finite control. Compactness records this by requiring every open cover to have a finite subcover. On real intervals, this aligns with the familiar condition of being closed and bounded.</p><p>The proof uses the same nested-interval intuition as Bolzano-Weierstrass. Boundedness lets us extract convergent subsequences, closedness keeps their limits inside, and metric-space equivalences connect sequential compactness with finite subcovers. This is why compact sets support global existence and uniformity results.</p>",
+    "definition": "<p>Compactness means every open cover has a finite subcover; in $\\mathbb R$, closed bounded intervals are compact.</p><p><b>Assumptions that matter:</b> boundedness supplies subsequences, closedness keeps limits inside, and metric compactness gives finite-cover control.</p>",
     "worked": {
       "problem": "Show that $[0,2]$ is compact and use it to find the maximum of $f(x)=x(2-x)$.",
       "skills": [
@@ -7786,34 +8945,34 @@
     ],
     "applications": [
       {
-        "title": "Existence of optima",
-        "background": "Continuous losses on compact parameter sets have minimizers.",
-        "numbers": "For $L(w)=(w-2)^2$ on $[-1,1]$, the minimum is at $w=1$ with loss $1$."
+        "title": "is compact",
+        "background": "$[0,1]$ is compact.",
+        "numbers": "$[0,1]$ is compact."
       },
       {
-        "title": "Hyperparameter boxes",
-        "background": "Search often restricts parameters to compact intervals.",
-        "numbers": "Learning rate in $[10^{-4},10^{-1}]$ and weight decay in $[0,0.1]$ form a closed bounded rectangle."
+        "title": "is not compact because the",
+        "background": "$(0,1)$ is not compact because the cover $(1/n,1)$ has no finite subcover.",
+        "numbers": "$(0,1)$ is not compact because the cover $(1/n,1)$ has no finite subcover."
       },
       {
-        "title": "Uniform continuity",
-        "background": "Continuous functions on compact sets cannot change arbitrarily suddenly.",
-        "numbers": "For $f(x)=x^2$ on $[0,3]$, $|f'(x)|\\le6$, so a $0.01$ move changes output by at most about $0.06$."
+        "title": "A continuous loss on compact",
+        "background": "A continuous loss on compact parameters attains a minimum.",
+        "numbers": "A continuous loss on compact parameters attains a minimum."
       },
       {
-        "title": "Subsequence extraction",
-        "background": "Compactness guarantees bounded histories have convergent subsequences.",
-        "numbers": "A sequence of weights in $[-5,5]$ has some convergent subsequence."
+        "title": "A grid with spacing on",
+        "background": "A grid with spacing $0.01$ on $[0,1]$ has $101$ points.",
+        "numbers": "A grid with spacing $0.01$ on $[0,1]$ has $101$ points."
       },
       {
-        "title": "Certified verification",
-        "background": "Finite coverings of compact domains support interval arithmetic.",
-        "numbers": "Cover $[0,1]$ by intervals of width $0.1$; only $10$ intervals are needed."
+        "title": "Clipping weights to creates a",
+        "background": "Clipping weights to $[-1,1]^d$ creates a closed bounded box.",
+        "numbers": "Clipping weights to $[-1,1]^d$ creates a closed bounded box."
       },
       {
-        "title": "Probability simplex",
-        "background": "Finite-dimensional probability vectors form compact feasible sets.",
-        "numbers": "For two classes, $p\\in[0,1]$; entropy is maximized at $p=0.5$ with value $\\ln2\\approx0.693$."
+        "title": "Robustness certificates often cover a",
+        "background": "Robustness certificates often cover a compact perturbation ball with finitely many local bounds.",
+        "numbers": "Robustness certificates often cover a compact perturbation ball with finitely many local bounds."
       }
     ],
     "applicationsClose": "Compactness is why finite-dimensional continuous optimization can make existence promises instead of chasing escaping sequences forever.",
@@ -7822,6 +8981,48 @@
       "Every sequence in a compact set has a convergent subsequence with limit in the set.",
       "Continuous functions on compact sets attain maxima and minima.",
       "Missing boundaries or unbounded directions often break compactness."
+    ],
+    "connectionsProse": "<p>Compactness is a way to turn infinitely many local facts into finitely many facts. On the real line, closed and bounded sets have this property. Compactness is powerful because it supports subsequence extraction, extreme values, uniform continuity, and finite coverings. It is the final structural idea needed before contraction mapping and convergence guarantees.</p>",
+    "symbols": [
+      {
+        "sym": "Open cover",
+        "desc": "open sets whose union contains $K$"
+      },
+      {
+        "sym": "finite subcover",
+        "desc": "finitely many still cover $K$"
+      },
+      {
+        "sym": "compact",
+        "desc": "finite control"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "In $\\mathbb R$, a compact set is one where every open cover has a finite subcover",
+        "why": "infinitely many local neighborhoods reduce to finitely many."
+      },
+      {
+        "do": "For $[a,b]$",
+        "result": "bisect intervals as in Bolzano-Weierstrass to show every sequence has a convergent subsequence",
+        "why": "boundedness creates nested intervals."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Closedness keeps the subsequential limit inside the set",
+        "why": "no boundary point is missing."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Sequential compactness implies finite-subcover compactness in metric spaces",
+        "why": "otherwise one can choose points escaping every finite cover and extract a convergent contradiction."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Therefore closed bounded intervals are compact",
+        "why": "this is Heine-Borel in one dimension."
+      }
     ],
     "prereqs": [
       "math-04-29"
@@ -7849,8 +9050,8 @@
         "iterative solvers"
       ]
     },
-    "motivation": "<p>Many algorithms repeat the same update: start with $x_0$, compute $x_1=T(x_0)$, then keep going. The natural question is whether this settles.</p><p>The contraction mapping theorem gives a practical answer. If the update always shrinks distances by a fixed factor below $1$, then all paths lead to one fixed point.</p>",
-    "definition": "<p>A map $T$ on a metric space $(X,d)$ is a <b>contraction</b> if there is a constant $0\\le q<1$ such that $d(Tx,Ty)\\le qd(x,y)$ for all $x,y\\in X$. If $X$ is complete and $T$ maps $X$ into itself, then $T$ has a unique fixed point $x^*$ with $T(x^*)=x^*$, and $x_{k+1}=T(x_k)$ converges to $x^*$ from any start.</p><p><b>Assumptions that matter:</b> completeness is essential; the map must send the space into itself; and the Lipschitz constant must be strictly less than $1$.</p>",
+    "motivation": "<p>Many numerical methods are built by turning a hard equation into a repeated update. Instead of solving $x=g(x)$ directly, we start from $x_0$ and compute $x_1=g(x_0)$, $x_2=g(x_1)$, and so on. This process is reliable only when the update pulls points closer together.</p><p>The contraction mapping theorem turns that picture into a proof. The shrinking condition gives a geometric tail bound, so the iterates are Cauchy. Completeness supplies the limit, and the same shrinking inequality forces the limit to be the unique fixed point.</p>",
+    "definition": "<p>In a complete metric space, a contraction $T:X\\to X$ has a unique fixed point and every iteration $T^n x_0$ converges to it.</p><p>$$d(Tx,Ty)\\le q\\,d(x,y),\\qquad 0\\le q<1.$$</p><p><b>Assumptions that matter:</b> $(X,d)$ is complete, $T$ maps $X$ into itself, and the same $q<1$ works for all pairs.</p>",
     "worked": {
       "problem": "Use the theorem for $T(x)=0.5x+1$ on $\\mathbb{R}$ and start $x_0=0$.",
       "skills": [
@@ -8024,34 +9225,34 @@
     ],
     "applications": [
       {
-        "title": "Fixed-point solvers",
-        "background": "Nonlinear equations are often rewritten as $x=T(x)$ and iterated.",
-        "numbers": "For $T(x)=0.5x+1$, an initial error $2$ is at most $2/1024\\approx0.00195$ after $10$ steps."
+        "title": "Fixed-point solver",
+        "background": "If $q=0.5$ and the initial gap bound is $1$, after $10$ steps the tail bound is $0.5^{10}/(1-0.5)=0.001953125$.",
+        "numbers": "If $q=0.5$ and the initial gap bound is $1$, after $10$ steps the tail bound is $0.5^{10}/(1-0.5)=0.001953125$."
       },
       {
-        "title": "Dynamic programming",
-        "background": "Bellman operators with discount are contractions under the sup norm.",
-        "numbers": "With discount $\\gamma=0.9$, value-iteration errors shrink by at most $10\\%$ each step relative to the previous bound."
+        "title": "Value iteration",
+        "background": "With discount $\\gamma=0.9$, the Bellman update is a $0.9$-contraction; after $44$ rounds, $0.9^{44}<0.01$, so the leading error factor is below one percent.",
+        "numbers": "With discount $\\gamma=0.9$, the Bellman update is a $0.9$-contraction; after $44$ rounds, $0.9^{44}<0.01$, so the leading error factor is below one percent."
       },
       {
-        "title": "Iterative linear solvers",
-        "background": "Linear updates converge when their iteration matrix shrinks distances.",
-        "numbers": "If an update matrix has norm $0.4$, error $1.0$ becomes at most $0.4$, then $0.16$, then $0.064$."
+        "title": "Gradient method near a strong convex optimum",
+        "background": "If the local contraction factor is $0.8$, then after $21$ steps the distance factor is $0.8^{21}\\approx0.00922$.",
+        "numbers": "If the local contraction factor is $0.8$, then after $21$ steps the distance factor is $0.8^{21}\\approx0.00922$."
       },
       {
-        "title": "Implicit neural layers",
-        "background": "Deep equilibrium models define activations as fixed points of a layer map.",
-        "numbers": "A layer with Lipschitz constant $0.7$ reduces a $3$-unit hidden-state error to at most $3(0.7)^5\\approx0.504$."
+        "title": "Fixed-point layer iteration budget",
+        "background": "A tolerance $10^{-3}$ with $q=0.5$ needs $n\\ge10$ because $2^{-10}=0.0009765625$.",
+        "numbers": "A tolerance $10^{-3}$ with $q=0.5$ needs $n\\ge10$ because $2^{-10}=0.0009765625$."
       },
       {
-        "title": "Policy evaluation",
-        "background": "RL value functions satisfy contraction equations because future rewards are discounted.",
-        "numbers": "With $\\gamma=0.95$, an error bound $1$ contracts to $0.95^{20}\\approx0.358$ after $20$ iterations."
+        "title": "Picard iteration for an ODE",
+        "background": "On a short interval with Lipschitz constant $L=2$ and length $h=0.2$, the Picard map has factor $Lh=0.4$, so the theorem applies.",
+        "numbers": "On a short interval with Lipschitz constant $L=2$ and length $h=0.2$, the Picard map has factor $Lh=0.4$, so the theorem applies."
       },
       {
-        "title": "Stability warnings",
-        "background": "Showing an update is not a contraction warns of stall or divergence.",
-        "numbers": "$T(x)=1.05x$ expands distance $2$ to $2.1$, so errors grow by $5\\%$ per step."
+        "title": "Denoising iteration",
+        "background": "If an update halves the distance between any two images, two starting images initially $12$ units apart are at most $12\\cdot0.5^5=0.375$ apart after five iterations.",
+        "numbers": "If an update halves the distance between any two images, two starting images initially $12$ units apart are at most $12\\cdot0.5^5=0.375$ apart after five iterations."
       }
     ],
     "applicationsClose": "The contraction theorem is convergence made visible: shrink distance by a fixed ratio, and the algorithm has one destination plus a geometric error clock.",
@@ -8060,6 +9261,75 @@
       "On a complete space, a contraction has a unique fixed point.",
       "Iterating the contraction converges from any starting point.",
       "The error shrinks geometrically, roughly like $q^k$."
+    ],
+    "connectionsProse": "<p>This lesson brings together several ideas from the section. A metric space gives a way to measure distance, a Cauchy sequence describes terms that crowd together, and completeness says that such a sequence has a point to crowd around. The contraction mapping theorem uses all three ideas in one useful result. The theorem is also a bridge from abstract analysis to algorithms because it gives both a fixed point and a rate of approach.</p>",
+    "symbols": [
+      {
+        "sym": "$(X,d)$",
+        "desc": "the metric space"
+      },
+      {
+        "sym": "complete",
+        "desc": "every Cauchy sequence in $X$ converges to a point of $X$"
+      },
+      {
+        "sym": "$T$",
+        "desc": "the update map"
+      },
+      {
+        "sym": "$q$",
+        "desc": "the contraction factor"
+      },
+      {
+        "sym": "$x^*$",
+        "desc": "the unique fixed point"
+      },
+      {
+        "sym": "$x_n=T^n x_0$",
+        "desc": "the $n$th iterate"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Let $x_{n+1}=T(x_n)$",
+        "why": "this is the iteration whose limit we want to prove exists."
+      },
+      {
+        "do": "Apply the contraction repeatedly",
+        "result": "$d(x_{n+1},x_n)\\le q^n d(x_1,x_0)$",
+        "why": "each new gap is at most $q$ times the previous gap."
+      },
+      {
+        "do": "For $m>n$, use the triangle inequality",
+        "result": "$d(x_m,x_n)\\le \\sum_{k=n}^{m-1}d(x_{k+1},x_k)$",
+        "why": "a long jump is bounded by short jumps."
+      },
+      {
+        "do": "Bound the sum by a geometric tail",
+        "result": "$d(x_m,x_n)\\le d(x_1,x_0)\\sum_{k=n}^{m-1}q^k\\le d(x_1,x_0)q^n/(1-q)$",
+        "why": "tails vanish because $q<1$."
+      },
+      {
+        "do": "Given $\\varepsilon>0$",
+        "result": "choose $n$ so $d(x_1,x_0)q^n/(1-q)<\\varepsilon$",
+        "why": "this proves $(x_n)$ is Cauchy."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Completeness gives a limit $x_n\\to x^*$",
+        "why": "Cauchy sequences in $X$ are guaranteed to converge inside $X$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Use $d(Tx^*,x^*)\\le d(Tx^*,T x_n)+d(x_{n+1},x^*)\\le qd(x^*,x_n)+d(x_{n+1},x^*)\\to0$",
+        "why": "the limit is fixed."
+      },
+      {
+        "do": "If $u$ and $v$ are fixed",
+        "result": "then $d(u,v)=d(Tu,Tv)\\le qd(u,v)$",
+        "why": "since $q<1$, this forces $d(u,v)=0$, so $u=v$."
+      }
     ],
     "prereqs": [
       "math-04-30"
@@ -8087,8 +9357,8 @@
         "fixed-point iteration"
       ]
     },
-    "motivation": "<p>Gradient descent feels simple: move downhill by $w_{k+1}=w_k-\\eta\\nabla f(w_k)$. The serious question is why this repeated move should converge instead of bounce, crawl, or explode.</p><p>The capstone idea is that assumptions turn the update into a reliable map. Smoothness limits how quickly gradients can change; curvature keeps the minimizer identifiable; and the learning rate controls whether the update is a contraction.</p>",
-    "definition": "<p>Gradient descent uses $w_{k+1}=T(w_k)=w_k-\\eta\\nabla f(w_k)$. For a one-dimensional quadratic $f(w)=\\frac{a}{2}(w-w^*)^2$, the update is $w_{k+1}-w^*=(1-\\eta a)(w_k-w^*)$, so it is a contraction exactly when $|1-\\eta a|<1$. More generally, $L$-Lipschitz gradients and $\\mu$-strong convexity give standard linear-rate guarantees for suitable $\\eta$.</p><p><b>Assumptions that matter:</b> smoothness means gradients are not changing too abruptly; strong convexity gives a single well-conditioned minimizer; step size must respect the largest curvature; stochastic gradients add noise and require smaller or decaying steps for exact convergence.</p>",
+    "motivation": "<p>Gradient descent produces a sequence, so convergence is an analysis question. The goal is to show not only that the objective improves, but that the iterates move toward a definite minimizer. Strong convexity and smoothness are the assumptions that make this possible.</p><p>Under a safe step size, the gradient update behaves like a contraction toward $x^*$. Each iteration reduces the distance by a factor such as $1-\\eta\\mu$. Repeating the inequality gives a geometric bound, which turns a qualitative convergence claim into an iteration-count estimate.</p>",
+    "definition": "<p>For strongly convex and smooth objectives, a safe gradient step can act like a contraction toward the minimizer.</p><p>$$\\|x_k-x^*\\|\\le(1-\\eta\\mu)^k\\|x_0-x^*\\|.$$</p><p><b>Assumptions that matter:</b> $f$ is $\\mu$-strongly convex and $L$-smooth, with $0<\\eta\\le1/L$.</p>",
     "worked": {
       "problem": "For $f(w)=\\frac12\\cdot4(w-3)^2$, run gradient descent with $\\eta=0.2$ from $w_0=0$ and prove contraction.",
       "skills": [
@@ -8277,39 +9547,34 @@
     ],
     "applications": [
       {
-        "title": "Why gradient descent converges on a quadratic",
-        "background": "A positive quadratic has a linear gradient, so the algorithm is exactly fixed-point iteration.",
-        "numbers": "For curvature $a=4$ and $\\eta=0.2$, the error factor is $|1-0.8|=0.2$; error $3$ becomes $0.6$, then $0.12$."
+        "title": "For and , ",
+        "background": "For $f(x)=\\tfrac12x^2$ and $\\eta=0.1$, $x_{k+1}=0.9x_k$.",
+        "numbers": "For $f(x)=\\tfrac12x^2$ and $\\eta=0.1$, $x_{k+1}=0.9x_k$."
       },
       {
-        "title": "Learning-rate upper bounds",
-        "background": "Smoothness limits how aggressive a step can be before overshooting dominates descent.",
-        "numbers": "If largest curvature is $L=50$, the simple safe step $1/L$ is $0.02$; step $0.1$ is five times larger."
+        "title": "Starting at , after steps",
+        "background": "Starting at $10$, after $10$ steps with factor $0.8$, distance is $10\\cdot0.8^{10}=1.073741824$.",
+        "numbers": "Starting at $10$, after $10$ steps with factor $0.8$, distance is $10\\cdot0.8^{10}=1.073741824$."
       },
       {
-        "title": "Strong convexity gives linear rates",
-        "background": "Strong convexity prevents flat valleys and gives a unique minimizer with geometric decay.",
-        "numbers": "With $L=10$, $\\mu=2$, step $1/L=0.1$ gives factor $1-\\mu/L=0.8$, so $100$ error units drop to $80$."
+        "title": "Factor needs steps to get",
+        "background": "Factor $0.8$ needs $21$ steps to get below one percent.",
+        "numbers": "Factor $0.8$ needs $21$ steps to get below one percent."
       },
       {
-        "title": "Fixed-point view of updates",
-        "background": "An optimum satisfies $\\nabla f(w^*)=0$, so it is a fixed point of $T(w)=w-\\eta\\nabla f(w)$.",
-        "numbers": "For $f(w)=(w-3)^2$, $T(w)=w-0.1\\cdot2(w-3)=0.8w+0.6$, whose fixed point is $3$."
+        "title": "If , the safe fixed",
+        "background": "If $L=5$, the safe fixed step is $\\eta\\le0.2$.",
+        "numbers": "If $L=5$, the safe fixed step is $\\eta\\le0.2$."
       },
       {
-        "title": "Divergence from too-large steps",
-        "background": "Oversized learning rates can create expanding oscillations even on easy losses.",
-        "numbers": "For $f(w)=5w^2$ and $\\eta=0.25$, multiplier is $-1.5$; magnitudes go $1,1.5,2.25,3.375$."
+        "title": "If and , rate factor",
+        "background": "If $\\mu=1$ and $\\eta=0.1$, rate factor is $0.9$.",
+        "numbers": "If $\\mu=1$ and $\\eta=0.1$, rate factor is $0.9$."
       },
       {
-        "title": "Stochastic gradient noise",
-        "background": "SGD uses noisy gradients, so constant steps often converge to a noise ball rather than the exact minimizer.",
-        "numbers": "If gradient noise standard deviation is $0.2$ and step is $0.01$, update noise scale is about $0.002$ per step."
-      },
-      {
-        "title": "Gradient clipping",
-        "background": "Deep learning often controls effective Lipschitz behavior when exact constants are unavailable.",
-        "numbers": "Clipping a gradient norm from $50$ to $5$ with step $0.01$ changes update length from $0.5$ to $0.05$."
+        "title": "Early stopping can be tied",
+        "background": "Early stopping can be tied to a tolerance: with factor $0.5$, ten steps reduce error below $0.001$ times a unit initial error.",
+        "numbers": "Early stopping can be tied to a tolerance: with factor $0.5$, ten steps reduce error below $0.001$ times a unit initial error."
       }
     ],
     "applicationsClose": "Gradient convergence is not magic: smoothness controls the landscape, curvature identifies the target, and the learning rate decides whether the update contracts or expands.",
@@ -8318,6 +9583,56 @@
       "For a quadratic, the error multiplier is $1-\\eta a$ in one dimension.",
       "Convergence requires the step size to respect curvature, such as $0<\\eta<2/L$ in the quadratic case.",
       "Strong convexity plus smoothness gives geometric convergence guarantees; noise and nonconvexity require more care."
+    ],
+    "connectionsProse": "<p>This capstone connects the section's convergence language to gradient methods. Sequences describe iterates, metrics measure distance to an optimum, and contraction estimates provide rates. Strong convexity and smoothness supply the analytic assumptions that make a gradient step reliable. The result is a real-analysis explanation of when a common optimization procedure converges geometrically.</p>",
+    "symbols": [
+      {
+        "sym": "$\\eta$",
+        "desc": "learning rate"
+      },
+      {
+        "sym": "$\\mu$",
+        "desc": "strong-convexity curvature"
+      },
+      {
+        "sym": "$L$",
+        "desc": "smoothness"
+      },
+      {
+        "sym": "$x^*$",
+        "desc": "the minimizer"
+      },
+      {
+        "sym": "$k$",
+        "desc": "the iteration count"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Establish the step",
+        "result": "Assume $f$ is $\\mu$-strongly convex and $L$-smooth",
+        "why": "curvature is bounded below by $\\mu$ and above by $L$."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Use the gradient step $x_{k+1}=x_k-\\eta\\nabla f(x_k)$ with $0<\\eta\\le1/L$",
+        "why": "the step is small enough for smoothness."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Strong convexity and smoothness imply $\\|x_{k+1}-x^*\\|\\le(1-\\eta\\mu)\\|x_k-x^*\\|$ for the quadratic model and, more generally, a contraction in the appropriate norm",
+        "why": "curvature pulls toward the minimizer."
+      },
+      {
+        "do": "Iterate the inequality",
+        "result": "$\\|x_k-x^*\\|\\le(1-\\eta\\mu)^k\\|x_0-x^*\\|$",
+        "why": "repeated contraction gives a geometric rate."
+      },
+      {
+        "do": "Establish the step",
+        "result": "Since $(1-\\eta\\mu)^k\\to0$, the iterates converge to $x^*$",
+        "why": "geometric decay proves convergence."
+      }
     ],
     "prereqs": [
       "math-04-31"

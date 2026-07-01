@@ -424,16 +424,22 @@ const inline = {
   "math-03-27": laplace
 };
 
-// Merge any per-batch authored files from tools/authored/*.js. A directory file
-// that defines the same id OVERRIDES the inline version above, so batches can
-// supersede the early hand-authored lessons as the section is filled out.
+// Merge any per-batch authored files from tools/authored/*.js. Files are applied in
+// sorted filename order. The merge is FIELD-LEVEL per lesson id: a later file that
+// defines the same id overrides only the fields it provides and preserves the rest
+// (e.g. a "zz-*" override can update motivation/definition/applications while keeping
+// the existing worked/practice). Whole-object batches behave as before (all fields set).
 const fs = require("fs");
 const path = require("path");
 const merged = Object.assign({}, inline);
 const dir = path.join(__dirname, "authored");
 if (fs.existsSync(dir)) {
   for (const f of fs.readdirSync(dir).sort()) {
-    if (f.endsWith(".js")) Object.assign(merged, require(path.join(dir, f)));
+    if (!f.endsWith(".js")) continue;
+    const batch = require(path.join(dir, f));
+    for (const id of Object.keys(batch)) {
+      merged[id] = Object.assign({}, merged[id] || {}, batch[id]);
+    }
   }
 }
 

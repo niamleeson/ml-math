@@ -1776,10 +1776,23 @@ const App = (function () {
     if (c.buildsOn && c.buildsOn.length) ci += `<li><b>Builds on</b> — ${c.buildsOn.join("; ")}.</li>`;
     if (c.leadsTo && c.leadsTo.length)   ci += `<li><b>Leads to</b> — ${c.leadsTo.join("; ")}.</li>`;
     if (c.usedWith && c.usedWith.length) ci += `<li><b>Used with</b> — ${c.usedWith.join("; ")}.</li>`;
-    const conn = `<h3 class="book-h">Connections</h3>` + (ci ? `<ul class="mbul">${ci}</ul>` : noteHTML);
+    // Prose connections (spec voice) take precedence when present; else fall back to the bullet triple.
+    const connBody = l.connectionsProse ? l.connectionsProse : (ci ? `<ul class="mbul">${ci}</ul>` : noteHTML);
+    const conn = `<h3 class="book-h">Connections</h3>` + connBody;
 
     const moti = `<h3 class="book-h">Motivation &amp; Intuition</h3>` + (l.motivation || noteHTML);
-    const defn = `<h3 class="book-h">Definition &amp; Assumptions</h3>` + (l.definition || noteHTML);
+    // Definition & Assumptions, optionally followed by a symbols table and a full "Why it's true"
+    // step-by-step derivation. Both are additive: they render only when the fields are present.
+    const symTbl = (l.symbols && l.symbols.length) ? symbolsTable(l.symbols) : "";
+    let derivHTML = "";
+    if (l.derivation) {
+      const d = l.derivation;
+      const inner = Array.isArray(d)
+        ? `<ol class="mnum">${d.map(s => `<li><b>${s.do}</b>${s.result ? ` &rarr; ${s.result}` : ""}${s.why ? ` &mdash; ${s.why}` : ""}</li>`).join("")}</ol>`
+        : `${d}`;
+      derivHTML = `<h4 class="book-h" style="font-size:16px">Why it&rsquo;s true — derivation</h4>${inner}`;
+    }
+    const defn = `<h3 class="book-h">Definition &amp; Assumptions</h3>` + (l.definition || noteHTML) + symTbl + derivHTML;
 
     const w = l.worked || {};
     let meta = "";

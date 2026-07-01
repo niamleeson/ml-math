@@ -28,8 +28,8 @@
         "composition of functions"
       ]
     },
-    "motivation": "<p>You already know how to follow a rule. If a parking garage charges $5 plus $2 per hour, then 3 hours costs $5+2\\cdot3=11$. Give the rule an input, and it gives back an output.</p><p>A <b>function</b> names that reliable behavior. The graph is not a separate mystery; it is the picture of all input-output pairs the rule produces. Once you can move between formula, table, and graph, calculus has a place to stand.</p>",
-    "definition": "<p>A <b>function</b> $f$ from a <b>domain</b> $D$ to a set of possible outputs $Y$ assigns each input $x$ in $D$ exactly one output, written $f(x)$. The <b>range</b> is the set of outputs that actually occur. The graph of $f$ is the set of points $(x,f(x))$ in the coordinate plane.</p><p>The vertical-line test follows from the definition: if a vertical line at $x=a$ hit the graph twice, then the same input $a$ would have two outputs, which is not a function. To find the natural real domain of a formula, exclude inputs that make the formula illegal, such as division by zero or an even root of a negative number.</p><p><b>Assumptions that matter:</b> we are working with real-valued functions unless stated otherwise; $x$ means an allowed input from the domain; $f(x)$ means the output assigned to that input; and every input in the domain must have one and only one output.</p>",
+    "motivation": "<p>A function is a rule with a strict input-output agreement: each allowed input has exactly one output. The graph gives a picture of that agreement by placing every pair $(x,f(x))$ in the coordinate plane. Reading the graph is therefore another way of reading the rule.</p><p>The main habit is to keep track of domain and range. The domain tells which inputs are allowed before any calculation begins, and the range records the outputs that actually occur. The vertical-line test is a graphical version of the same rule: if one input line hits two outputs, the relation is not a function.</p>",
+    "definition": "<p>This is an explain-only lesson: this is a definition lesson about inputs, outputs, domain, range, and graph reading. Teach the vertical-line test and evaluate concrete rules rather than forcing a proof.</p><p><b>Assumptions that matter:</b> Use the stated domain, graph, interval, or modeling conditions before applying the classification.</p>",
     "worked": {
       "problem": "For $f(x)=\\dfrac{x+2}{x-3}$, find $f(1)$, the natural real domain, and two points on the graph.",
       "skills": [
@@ -248,42 +248,61 @@
     ],
     "applications": [
       {
-        "title": "A machine-learning model is a function",
-        "background": "Supervised learning formalizes prediction as a rule from features to an output. Linear regression is the oldest friendly example: a line maps one measured feature to one prediction.",
-        "numbers": "For $f(x)=2.3x+4.1$, a house-size feature $x=10$ gives $f(10)=27.1$. The graph point is $(10,27.1)$."
+        "title": "Parking rule $f(h)=5+2h$",
+        "background": "Parking rule $f(h)=5+2h$ gives $f(3)=11$",
+        "numbers": "Parking rule $f(h)=5+2h$ gives $f(3)=11$"
       },
       {
-        "title": "Activation functions in neural networks",
-        "background": "Modern neural networks stack simple functions. ReLU became popular because it is cheap and keeps positive signals from saturating.",
-        "numbers": "For $r(x)=\\max(0,x)$, $r(-3)=0$ and $r(2.5)=2.5$. One rule, two graph points."
+        "title": "Temperature conversion $C(F)=\\frac59(F-32)$",
+        "background": "Temperature conversion $C(F)=\\frac59(F-32)$ gives $C(68)=20$",
+        "numbers": "Temperature conversion $C(F)=\\frac59(F-32)$ gives $C(68)=20$"
       },
       {
-        "title": "Hash tables as finite functions",
-        "background": "Computer science often uses functions on finite sets. A hash function maps keys to bucket numbers so data can be found quickly.",
-        "numbers": "If $h(k)=k\\bmod 10$, then $h(37)=7$ and $h(42)=2$; both are allowed outputs in buckets $0$ through $9$."
+        "title": "Feature map $f(x)=3x-1$",
+        "background": "Feature map $f(x)=3x-1$ sends $4$ to $11$",
+        "numbers": "Feature map $f(x)=3x-1$ sends $4$ to $11$"
       },
       {
-        "title": "Image coordinates and pixel intensity",
-        "background": "An image can be viewed as a function from pixel coordinates to brightness or color. This viewpoint is basic in computer vision.",
-        "numbers": "A grayscale image might have $I(20,15)=180$ on a $0$ to $255$ scale, meaning coordinate $(20,15)$ has brightness $180$."
+        "title": "Domain of $\\sqrt{x-2}$",
+        "background": "Domain of $\\sqrt{x-2}$ starts at $x=2$; $f(6)=2$",
+        "numbers": "Domain of $\\sqrt{x-2}$ starts at $x=2$; $f(6)=2$"
       },
       {
-        "title": "Loss as a function of a parameter",
-        "background": "Training adjusts parameters because the loss changes when the parameters change. Even a tiny model has a loss function you can graph.",
-        "numbers": "For $L(w)=(w-3)^2+2$, $L(1)=6$, $L(3)=2$, and $L(5)=6$, so the lowest plotted point is at $w=3$."
+        "title": "Application 5",
+        "background": "Table inputs $1,2,3$ with outputs $2,4,6$ fit $f(x)=2x$",
+        "numbers": "Table inputs $1,2,3$ with outputs $2,4,6$ fit $f(x)=2x$"
       },
       {
-        "title": "Database lookups are functions when keys are unique",
-        "background": "A primary key in a database is designed to choose exactly one row. That is the function rule in engineering clothing.",
-        "numbers": "If user id $104$ maps to score $87$, then lookup $s(104)=87$. If id $104$ returned both $87$ and $91$, the key rule would be broken."
+        "title": "The relation $(1,2),(1,3)$",
+        "background": "The relation $(1,2),(1,3)$ fails to be a function because input $1$ has two outputs",
+        "numbers": "The relation $(1,2),(1,3)$ fails to be a function because input $1$ has two outputs"
       }
     ],
-    "applicationsClose": "Across graphs, models, images, tables, and code, the same promise holds: each allowed input has one output you can reason about.",
     "takeaways": [
       "A function assigns every input in its domain exactly one output.",
       "The graph is the set of points $(x,f(x))$; the vertical-line test checks the one-output rule.",
       "Natural domains exclude illegal inputs such as zero denominators and negative radicands under even roots.",
       "ML models, losses, activations, and many data lookups are functions in practical form."
+    ],
+    "applicationsClose": "Across graphs, models, images, tables, and code, the same promise holds: each allowed input has one output you can reason about.",
+    "connectionsProse": "<p>This lesson begins with the basic language of functions, which is already present whenever one quantity is determined by another. Tables, formulas, and graphs are different ways to describe that same assignment from inputs to outputs. This foundation makes later calculus approachable because limits, derivatives, and integrals all act on functions.</p>",
+    "symbols": [
+      {
+        "sym": "$x$",
+        "desc": "is an input"
+      },
+      {
+        "sym": "$f(x)$",
+        "desc": "is the output"
+      },
+      {
+        "sym": "the domain",
+        "desc": "is the allowed input set"
+      },
+      {
+        "sym": "the range",
+        "desc": "is the set of outputs produced"
+      }
     ]
   });
 
@@ -309,8 +328,8 @@
         "piecewise functions"
       ]
     },
-    "motivation": "<p>You already recognize the shape of $y=x^2$: a calm U-shaped parabola. Now suppose you see $g(x)=3(x-2)^2+1$. It would be a shame to rebuild the whole graph from scratch.</p><p>Transformations let you read the new graph as a changed version of an old friend. Shift it, stretch it, or flip it; the basic shape remains visible. This is also the language behind centering data, scaling features, and adding biases.</p>",
-    "definition": "<p>Start with a base function $f(x)$. The graph of $f(x)+k$ shifts up by $k$; $f(x-h)$ shifts right by $h$; $a f(x)$ stretches vertically by factor $|a|$ and reflects across the $x$-axis if $a<0$; $f(bx)$ changes horizontal scale by factor $1/|b|$ and reflects across the $y$-axis if $b<0$.</p><p>Why the inside shift moves right: a point $(u,f(u))$ on the original graph appears on $g(x)=f(x-h)$ when $x-h=u$, so $x=u+h$. Every old input moves to the right by $h$. That one equation explains the counterintuitive part.</p><p><b>Assumptions that matter:</b> transformations preserve the base shape only where the transformed inputs remain in the domain; vertical changes affect outputs, horizontal changes affect inputs; and order matters when several transformations are combined.</p>",
+    "motivation": "<p>A transformation changes how inputs or outputs are recorded while preserving the underlying shape in a predictable way. Adding outside the function moves outputs up or down, multiplying outside stretches or reflects vertical distances, and changing the input inside the function moves or rescales the graph horizontally.</p><p>The important distinction is outside versus inside. Outside changes act directly on the output, so their visual effect follows the sign and scale you see. Inside changes act on the input needed to reach an old point, so horizontal shifts and scales often feel reversed until you track which old input is being used.</p>",
+    "definition": "<p>Central statement: $g(x)=f(bx)$ — the old input is reached when the new input is $x/b$, so horizontal lengths scale by $1/b$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Describe how $g(x)=-2\\sqrt{x-3}+4$ is obtained from $f(x)=\\sqrt{x}$, and give the new starting point.",
       "skills": [
@@ -540,42 +559,88 @@
     ],
     "applications": [
       {
-        "title": "Feature standardization",
-        "background": "Statistics and ML often center and scale features so optimization is less lopsided. This is a transformation of the input axis.",
-        "numbers": "With mean $100$ and standard deviation $15$, $x=130$ becomes $z=(130-100)/15=2$."
+        "title": "$f(x)=x^2$ shifted right $3$",
+        "background": "$f(x)=x^2$ shifted right $3$ gives $g(5)=(5-3)^2=4$",
+        "numbers": "$f(x)=x^2$ shifted right $3$ gives $g(5)=(5-3)^2=4$"
       },
       {
-        "title": "Bias terms in linear models",
-        "background": "A bias shifts a graph vertically. It lets a model fit data that does not pass through the origin.",
-        "numbers": "The line $y=3x$ gives $12$ at $x=4$; adding bias $-5$ gives $y=3x-5=7$."
+        "title": "Vertical shift $x^2+2$",
+        "background": "Vertical shift $x^2+2$ gives value $11$ at $x=3$",
+        "numbers": "Vertical shift $x^2+2$ gives value $11$ at $x=3$"
       },
       {
-        "title": "Data augmentation for images",
-        "background": "Computer vision training often shifts or flips images so a model learns the object rather than its exact location.",
-        "numbers": "A pixel at coordinate $(12,8)$ shifted right by $5$ appears at $(17,8)$; a horizontal flip in a width-$100$ image sends $x=12$ to $x=87$."
+        "title": "Reflection $-x^2$",
+        "background": "Reflection $-x^2$ gives $-9$ at $x=3$",
+        "numbers": "Reflection $-x^2$ gives $-9$ at $x=3$"
       },
       {
-        "title": "Normalizing loss curves",
-        "background": "Researchers rescale loss curves to compare training runs with different starting values. The shape is easier to compare after a vertical transformation.",
-        "numbers": "If loss drops from $2.4$ to $0.6$, normalized loss $(L-0.6)/(2.4-0.6)$ sends $2.4\\mapsto1$ and $0.6\\mapsto0$."
+        "title": "Vertical stretch $2x^2$",
+        "background": "Vertical stretch $2x^2$ gives $18$ at $x=3$",
+        "numbers": "Vertical stretch $2x^2$ gives $18$ at $x=3$"
       },
       {
-        "title": "Audio amplitude scaling",
-        "background": "Digital audio changes loudness by multiplying the waveform. A negative multiplier flips the wave phase.",
-        "numbers": "Samples $[0.2,-0.5,0.4]$ scaled by $0.5$ become $[0.1,-0.25,0.2]$."
+        "title": "Horizontal compression $f(2x)=4x^2$",
+        "background": "Horizontal compression $f(2x)=4x^2$ gives $16$ at $x=2$",
+        "numbers": "Horizontal compression $f(2x)=4x^2$ gives $16$ at $x=2$"
       },
       {
-        "title": "Coordinate transforms in graphics",
-        "background": "Computer graphics builds scenes by translating, scaling, and reflecting shapes. The same transformations you read on graphs move objects on screen.",
-        "numbers": "A point $(2,3)$ scaled by $4$ then shifted by $(10,-1)$ becomes $(18,11)$."
+        "title": "Combined $2(x-1)^2+3$",
+        "background": "Combined $2(x-1)^2+3$ gives $11$ at $x=3$",
+        "numbers": "Combined $2(x-1)^2+3$ gives $11$ at $x=3$"
       }
     ],
-    "applicationsClose": "Whether the object is a parabola, a feature, an image, or a sound wave, transformations tell you what changed without losing the original shape.",
     "takeaways": [
       "Outside changes move or scale outputs; inside changes move or scale inputs.",
       "$f(x-h)$ shifts right by $h$ because $x-h$ must equal the old input.",
       "Negative outside multipliers reflect across the $x$-axis; negative inside multipliers reflect across the $y$-axis.",
       "Standardization, biases, augmentation, and graphics all use transformation thinking."
+    ],
+    "applicationsClose": "Whether the object is a parabola, a feature, an image, or a sound wave, transformations tell you what changed without losing the original shape.",
+    "connectionsProse": "<p>This lesson builds on familiar parent graphs such as lines, parabolas, and absolute value graphs. Instead of plotting a new graph from scratch, transformations let you carry a known shape to a new location or scale. These ideas prepare the reader for recognizing families of functions quickly throughout calculus.</p>",
+    "symbols": [
+      {
+        "sym": "$h$",
+        "desc": "is horizontal shift"
+      },
+      {
+        "sym": "$k$",
+        "desc": "is vertical shift"
+      },
+      {
+        "sym": "$a$",
+        "desc": "is vertical scale"
+      },
+      {
+        "sym": "$b$",
+        "desc": "is horizontal reciprocal scale"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a point $(x,f(x))$ on the graph",
+        "result": "Start with a point $(x,f(x))$ on the graph",
+        "why": "this records the old input and output."
+      },
+      {
+        "do": "Add $k$ outside the function",
+        "result": "$g(x)=f(x)+k$",
+        "why": "every output increases by $k$, so the graph shifts vertically."
+      },
+      {
+        "do": "Replace $x$ by $x-h$",
+        "result": "$g(x)=f(x-h)$",
+        "why": "the old input $x-h$ equals the new coordinate $x$, so the graph shifts right by $h$."
+      },
+      {
+        "do": "Multiply outside",
+        "result": "$g(x)=a f(x)$",
+        "why": "every output is scaled by $a$."
+      },
+      {
+        "do": "Multiply inside",
+        "result": "$g(x)=f(bx)$",
+        "why": "the old input is reached when the new input is $x/b$, so horizontal lengths scale by $1/b$."
+      }
     ],
     "prereqs": [
       "math-01-01"
@@ -604,8 +669,8 @@
         "differential equations"
       ]
     },
-    "motivation": "<p>You already know the difference between adding and multiplying. Add 3 every step and you walk: $3,6,9,12$. Multiply by 3 every step and the numbers run away: $3,9,27,81$.</p><p>An <b>exponential function</b> captures that constant-factor change. It can model doubling, radioactive decay, compound interest, probability weights, and the natural growth curve whose slope equals its height. The graph is steep because multiplication stacks on itself.</p>",
-    "definition": "<p>An exponential function has the form $f(x)=C a^x$, where $C$ is the starting scale, $a$ is the base, and $a>0$ with $a\\ne1$. If $a>1$, the function grows; if $0<a<1$, it decays. The natural exponential is $e^x$, where $e\\approx2.71828$.</p><p>The key law is $a^{x+y}=a^x a^y$. It comes from counting factors for whole-number exponents: $a^{m+n}$ has $m+n$ copies of $a$, which split into $m$ copies times $n$ copies. The real-exponent version is defined so this law remains true continuously.</p><p><b>Assumptions that matter:</b> the base is positive so real-valued powers are well-defined for all real $x$; $a=1$ is excluded because it gives the constant function; and exponential models assume a constant multiplicative factor per equal input step.</p>",
+    "motivation": "<p>Linear growth adds the same amount over equal steps, but exponential growth multiplies by the same factor. That makes the current amount part of the future change: a larger current amount produces a larger next increase under the same relative rate.</p><p>Continuous exponentials arise by making the compounding steps very small. The base $e$ records the limiting factor produced by infinitely fine compounding, so $Ce^{rt}$ is the natural form when growth happens continuously at rate $r$.</p>",
+    "definition": "<p>Central statement: Therefore $y=C e^{rt}$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "A quantity starts at $12$ and grows by $25\\%$ each day. Write the exponential model and find the amount after $6$ days.",
       "skills": [
@@ -804,42 +869,93 @@
     ],
     "applications": [
       {
-        "title": "Compound interest",
-        "background": "Banks and finance made exponentials familiar long before ML. Reinvested interest earns interest on interest, so growth is multiplicative.",
-        "numbers": "$1000$ at $5\\%$ yearly for $10$ years becomes $1000(1.05)^{10}\\approx1628.89$."
+        "title": "Application 1",
+        "background": "$100e^{0.05\\cdot2}\\approx110.517$ after two years",
+        "numbers": "$100e^{0.05\\cdot2}\\approx110.517$ after two years"
       },
       {
-        "title": "Population growth and decay",
-        "background": "Early mathematical biology used exponentials for populations with roughly constant percentage growth, and for substances with constant percentage decay.",
-        "numbers": "A culture of $500$ cells doubling every hour has $500\\cdot2^6=32000$ cells after $6$ hours."
+        "title": "Half-life factor after $3$ half-lives",
+        "background": "Half-life factor after $3$ half-lives is $2^{-3}=0.125$",
+        "numbers": "Half-life factor after $3$ half-lives is $2^{-3}=0.125$"
       },
       {
-        "title": "Learning-rate schedules",
-        "background": "Optimization often lowers the learning rate smoothly so early steps explore and later steps settle.",
-        "numbers": "With $\\eta_t=0.1e^{-0.2t}$, $\\eta_5=0.1e^{-1}\\approx0.0368$."
+        "title": "Application 3",
+        "background": "Population $50e^{0.1\\cdot4}\\approx74.591$",
+        "numbers": "Population $50e^{0.1\\cdot4}\\approx74.591$"
       },
       {
-        "title": "Softmax probabilities",
-        "background": "Classification models use exponentials to turn arbitrary scores into positive weights that can be normalized.",
-        "numbers": "Logits $[2,0]$ give weights $[7.389,1]$, so the first probability is $7.389/(8.389)\\approx0.881$."
+        "title": "Application 4",
+        "background": "Neural activation $e^2\\approx7.389$",
+        "numbers": "Neural activation $e^2\\approx7.389$"
       },
       {
-        "title": "Exponential moving averages",
-        "background": "Signal processing and optimizers like Adam smooth noisy measurements with exponentially fading memory.",
-        "numbers": "With $m_t=0.9m_{t-1}+0.1x_t$, a value from $5$ steps ago has weight $0.1(0.9)^5\\approx0.059$."
+        "title": "Application 5",
+        "background": "Discount $200e^{-0.03\\cdot5}\\approx172.142$",
+        "numbers": "Discount $200e^{-0.03\\cdot5}\\approx172.142$"
       },
       {
-        "title": "Runtime blowup",
-        "background": "Computer science uses exponentials to describe algorithms whose work doubles with each added item, a warning sign for scale.",
-        "numbers": "A brute-force subset search over $n=30$ items checks $2^{30}=1,073,741,824$ subsets."
+        "title": "Application 6",
+        "background": "Doubling model $10\\cdot2^4=160$",
+        "numbers": "Doubling model $10\\cdot2^4=160$"
       }
     ],
-    "applicationsClose": "The shared pattern is constant-factor change: money, cells, probabilities, memories, and runtimes all multiply as the input moves.",
     "takeaways": [
       "$C a^x$ starts at scale $C$ and multiplies by $a$ for each unit increase in $x$.",
       "$a>1$ gives growth; $0<a<1$ gives decay; $e\\approx2.71828$ is the natural base.",
       "The law $a^{x+y}=a^x a^y$ is the engine behind exponential modeling.",
       "Softmax, learning-rate decay, moving averages, and runtime analysis all use exponential change."
+    ],
+    "applicationsClose": "The shared pattern is constant-factor change: money, cells, probabilities, memories, and runtimes all multiply as the input moves.",
+    "connectionsProse": "<p>This lesson builds on repeated multiplication and on the idea of a function as a changing quantity. Exponentials describe situations where equal steps multiply by equal factors. That pattern leads naturally to compounding, decay, and continuous growth models.</p>",
+    "symbols": [
+      {
+        "sym": "$C$",
+        "desc": "is initial amount"
+      },
+      {
+        "sym": "$a$",
+        "desc": "is per-step factor"
+      },
+      {
+        "sym": "$r$",
+        "desc": "is continuous growth rate"
+      },
+      {
+        "sym": "$e$",
+        "desc": "is the base from continuous compounding"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Require equal steps to multiply by the same factor",
+        "result": "Require equal steps to multiply by the same factor",
+        "why": "this is constant relative growth."
+      },
+      {
+        "do": "Let one unit step multiply by $a$",
+        "result": "Let one unit step multiply by $a$",
+        "why": "after $n$ integer steps the output is $C a^n$."
+      },
+      {
+        "do": "For continuous growth at rate $r$, split one time unit into $n$ pieces with factor $1+r/n$.",
+        "result": "For continuous growth at rate $r$, split one time unit into $n$ pieces with factor $1+r/n$.",
+        "why": ""
+      },
+      {
+        "do": "After one unit the factor is $(1+r/n)^n$",
+        "result": "After one unit the factor is $(1+r/n)^n$",
+        "why": "all small factors multiply."
+      },
+      {
+        "do": "Let $n\\to\\infty$ to define $e^r$",
+        "result": "Let $n\\to\\infty$ to define $e^r$",
+        "why": "continuous compounding is the limiting factor."
+      },
+      {
+        "do": "Therefore $y=C e^{rt}$.",
+        "result": "Therefore $y=C e^{rt}$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-02"
@@ -868,8 +984,8 @@
         "orders of growth"
       ]
     },
-    "motivation": "<p>You already know that $2^5=32$. A logarithm asks the same fact from the other side: what exponent on $2$ gives $32$? The answer is $5$.</p><p>This reversal is more than notation. Logs compress huge ranges and turn products into sums. That is why they are so useful when probabilities get tiny, when algorithms span many input sizes, and when a graph needs to show both $1$ and $1,000,000$ clearly.</p>",
-    "definition": "<p>For base $b>0$ with $b\\ne1$, $\\log_b(y)=x$ means exactly $b^x=y$. The natural logarithm is $\\ln y=\\log_e y$. The input $y$ must be positive over the real numbers, because $b^x$ is always positive.</p><p>The product rule comes from exponent laws. If $u=b^m$ and $v=b^n$, then $uv=b^{m+n}$. Taking $\\log_b$ gives $\\log_b(uv)=m+n=\\log_b u+\\log_b v$. So a product becomes a sum because multiplying powers adds exponents.</p><p><b>Assumptions that matter:</b> the base must be positive and not equal to $1$; log inputs must be positive; log rules such as $\\log(uv)=\\log u+\\log v$ require $u>0$ and $v>0$; and $\\ln$ means base $e$.</p>",
+    "motivation": "<p>A logarithm turns the question around. Instead of asking for $a^y$, it starts from a positive value $x$ and finds the exponent $y$ that makes $a^y=x$. That is why logarithms undo exponential functions.</p><p>Because exponents add when powers are multiplied, logarithms convert products into sums. This makes them useful whenever multiplicative structure is easier to analyze additively, including likelihoods, odds, and scale measurements.</p>",
+    "definition": "<p>Central statement: Take $\\log_a$ to get $\\log_a(xz)=m+n=\\log_a x+\\log_a z$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Solve $\\ln(x-1)=2$ and state the domain condition.",
       "skills": [
@@ -1073,42 +1189,84 @@
     ],
     "applications": [
       {
-        "title": "Log-likelihood",
-        "background": "Statistics uses likelihood to measure how well parameters explain data. Logs make products of probabilities computable and easier to optimize.",
-        "numbers": "For probabilities $0.9$, $0.8$, and $0.5$, log-likelihood is $\\ln0.9+\\ln0.8+\\ln0.5\\approx-0.105-0.223-0.693=-1.021$."
+        "title": "Application 1",
+        "background": "$\\log_2 8=3$",
+        "numbers": "$\\log_2 8=3$"
       },
       {
-        "title": "Cross-entropy loss",
-        "background": "Classification models are often trained by penalizing low probability on the true class. The penalty is a negative log.",
-        "numbers": "If the true-class probability is $0.95$, loss is $-\\ln0.95\\approx0.051$; if it is $0.05$, loss is $-\\ln0.05\\approx2.996$."
+        "title": "Application 2",
+        "background": "$\\ln(e^5)=5$",
+        "numbers": "$\\ln(e^5)=5$"
       },
       {
-        "title": "Numerical stability",
-        "background": "Products of many small probabilities can underflow to zero in floating-point arithmetic. Summing logs avoids that collapse.",
-        "numbers": "The product of $100$ probabilities each equal to $0.01$ is $10^{-200}$, while the log is $100\\ln0.01\\approx-460.5$."
+        "title": "Application 3",
+        "background": "$\\log_{10}(1000)=3$",
+        "numbers": "$\\log_{10}(1000)=3$"
       },
       {
-        "title": "Information in bits",
-        "background": "Information theory measures surprise with a logarithm. Rare events carry more bits because their probabilities require larger negative logs.",
-        "numbers": "An event with probability $1/8$ has $-\\log_2(1/8)=3$ bits of surprise."
+        "title": "Product rule",
+        "background": "Product rule gives $\\ln(2e^3)=\\ln2+3\\approx3.693$",
+        "numbers": "Product rule gives $\\ln(2e^3)=\\ln2+3\\approx3.693$"
       },
       {
-        "title": "Algorithm analysis",
-        "background": "Binary search is fast because each comparison halves the search space. Logs count how many halvings are needed.",
-        "numbers": "Searching $1,048,576=2^{20}$ sorted items takes at most about $20$ halvings."
+        "title": "Odds logit for $p=0.8$",
+        "background": "Odds logit for $p=0.8$ is $\\ln(4)\\approx1.386$",
+        "numbers": "Odds logit for $p=0.8$ is $\\ln(4)\\approx1.386$"
       },
       {
-        "title": "Log-scale hyperparameter search",
-        "background": "Learning rates often matter by multiplicative factors, so engineers search evenly in log space rather than ordinary space.",
-        "numbers": "The values $10^{-4}$, $10^{-3}$, $10^{-2}$, $10^{-1}$ are equally spaced by $1$ on a base-10 log scale."
+        "title": "Solving $3e^{2t}=12$",
+        "background": "Solving $3e^{2t}=12$ gives $t=\\ln4/2\\approx0.693$",
+        "numbers": "Solving $3e^{2t}=12$ gives $t=\\ln4/2\\approx0.693$"
       }
     ],
-    "applicationsClose": "Logs keep the exponent in view: they compress scale, tame products, and turn multiplicative structure into additive arithmetic.",
     "takeaways": [
       "$\\log_b(y)=x$ means $b^x=y$; the log asks for an exponent.",
       "The input to a real logarithm must be positive, and the base must be positive and not $1$.",
       "$\\log(uv)=\\log u+\\log v$ because multiplying powers adds exponents.",
       "Log-likelihood, cross-entropy, binary search, and log-scale tuning all rely on the same exponent-counting idea."
+    ],
+    "applicationsClose": "Logs keep the exponent in view: they compress scale, tame products, and turn multiplicative structure into additive arithmetic.",
+    "connectionsProse": "<p>This lesson builds on exponential notation. If exponentials answer what value a base produces, logarithms answer which exponent was used. This inverse viewpoint is essential for solving growth equations and for measuring relative scale.</p>",
+    "symbols": [
+      {
+        "sym": "$a>0$, $a\\ne1$",
+        "desc": "is the base"
+      },
+      {
+        "sym": "$x>0$",
+        "desc": "is the input"
+      },
+      {
+        "sym": "$\\log_a x$",
+        "desc": "is the exponent needed to get $x$ from base $a$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $a^y=x$",
+        "result": "Start with $a^y=x$",
+        "why": "exponentiation sends exponent $y$ to value $x$."
+      },
+      {
+        "do": "Define $y=\\log_a x$",
+        "result": "Define $y=\\log_a x$",
+        "why": "the logarithm names the exponent that produced $x$."
+      },
+      {
+        "do": "For a product, write $x=a^m$ and $z=a^n$",
+        "result": "For a product, write $x=a^m$ and $z=a^n$",
+        "why": "logs of the factors are $m$ and $n$."
+      },
+      {
+        "do": "Multiply",
+        "result": "$xz=a^{m+n}$",
+        "why": "exponents add under multiplication."
+      },
+      {
+        "do": "Take $\\log_a$ to get $\\log_a(xz)=m+n=\\log_a x+\\log_a z$.",
+        "result": "Take $\\log_a$ to get $\\log_a(xz)=m+n=\\log_a x+\\log_a z$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-03"
@@ -1138,8 +1296,8 @@
         "Fourier series"
       ]
     },
-    "motivation": "<p>You already know a repeating pattern when you see one: daylight, seasons, a swing, a sound wave. Trigonometric functions are the calm mathematical way to describe that repetition.</p><p>The beautiful shortcut is the unit circle. As a point travels around a circle of radius $1$, its horizontal coordinate is $\\cos\\theta$ and its vertical coordinate is $\\sin\\theta$. A wave is what you see when you watch one coordinate over time.</p>",
-    "definition": "<p>On the unit circle, an angle $\\theta$ in radians determines a point $(\\cos\\theta,\\sin\\theta)$. The functions repeat with period $2\\pi$: $\\sin(\\theta+2\\pi)=\\sin\\theta$ and $\\cos(\\theta+2\\pi)=\\cos\\theta$. The tangent is $\\tan\\theta=\\sin\\theta/\\cos\\theta$ where $\\cos\\theta\\ne0$.</p><p>The identity $\\sin^2\\theta+\\cos^2\\theta=1$ comes directly from the unit circle: every point on radius $1$ satisfies $x^2+y^2=1$, and here $x=\\cos\\theta$, $y=\\sin\\theta$. This is Pythagoras written in circular coordinates.</p><p><b>Assumptions that matter:</b> calculus uses radians, not degrees; tangent is undefined where $\\cos\\theta=0$; and periodicity means many different angles can have the same sine or cosine value.</p>",
+    "motivation": "<p>The unit circle gives sine and cosine a geometric meaning. At angle $\\theta$, cosine is the horizontal coordinate and sine is the vertical coordinate of the point on the circle. The identity $\\sin^2\\theta+\\cos^2\\theta=1$ is just the radius-one Pythagorean theorem.</p><p>Tangent compares the vertical coordinate to the horizontal coordinate, so it behaves like a slope. Periodicity comes from returning to the same point after a full turn, which is why sine and cosine repeat every $2\\pi$ radians.</p>",
+    "definition": "<p>Central statement: A full turn returns to the same point, so sine and cosine have period $2\\pi$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Evaluate $\\sin\\left(\\dfrac{5\\pi}{6}\\right)$, $\\cos\\left(\\dfrac{5\\pi}{6}\\right)$, and $\\tan\\left(\\dfrac{5\\pi}{6}\\right)$.",
       "skills": [
@@ -1348,42 +1506,88 @@
     ],
     "applications": [
       {
-        "title": "Positional encodings",
-        "background": "Transformers need a way to represent order. Sinusoidal encodings, introduced in the original Transformer, use many sine and cosine waves at different frequencies.",
-        "numbers": "For a simple channel $\\sin(p\\pi/2)$, positions $0,1,2,3$ map to $0,1,0,-1$."
+        "title": "Application 1",
+        "background": "$\\sin(\\pi/6)=0.5$",
+        "numbers": "$\\sin(\\pi/6)=0.5$"
       },
       {
-        "title": "Fourier analysis",
-        "background": "Fourier's nineteenth-century insight was that complicated periodic signals can be decomposed into sines and cosines. This powers audio, images, and PDE solvers.",
-        "numbers": "The signal $3\\sin(2t)+0.5\\cos(10t)$ has a low-frequency amplitude $3$ and high-frequency amplitude $0.5$."
+        "title": "Application 2",
+        "background": "$\\cos(\\pi/3)=0.5$",
+        "numbers": "$\\cos(\\pi/3)=0.5$"
       },
       {
-        "title": "Rotations in graphics",
-        "background": "Rotating a 2-D point uses cosine and sine because rotation preserves distance around a circle.",
-        "numbers": "Rotating $(1,0)$ by $\\pi/2$ gives $(\\cos\\pi/2,\\sin\\pi/2)=(0,1)$."
+        "title": "Application 3",
+        "background": "$\\tan(\\pi/4)=1$",
+        "numbers": "$\\tan(\\pi/4)=1$"
       },
       {
-        "title": "Seasonal features",
-        "background": "Calendar variables wrap around: December and January are close. Sine and cosine encode that circular structure for models.",
-        "numbers": "Day $91$ of a $365$-day year has angle $2\\pi(91/365)\\approx1.57$, so $\\sin\\theta\\approx1$ and $\\cos\\theta\\approx0$."
+        "title": "Unit-circle point at $\\pi/4$",
+        "background": "Unit-circle point at $\\pi/4$ is $(\\sqrt2/2,\\sqrt2/2)$",
+        "numbers": "Unit-circle point at $\\pi/4$ is $(\\sqrt2/2,\\sqrt2/2)$"
       },
       {
-        "title": "Signal sampling",
-        "background": "Digital signal processing tracks waves by sampling trig functions at discrete times.",
-        "numbers": "A $2$ Hz sine sampled at $t=0.125$ seconds has value $\\sin(2\\pi\\cdot2\\cdot0.125)=\\sin(\\pi/2)=1$."
+        "title": "Oscillation $3\\sin(2t)$",
+        "background": "Oscillation $3\\sin(2t)$ has amplitude $3$ and period $\\pi$",
+        "numbers": "Oscillation $3\\sin(2t)$ has amplitude $3$ and period $\\pi$"
       },
       {
-        "title": "Cosine similarity geometry",
-        "background": "Vector similarity is named after cosine because dot products encode angles between directions.",
-        "numbers": "For unit vectors at $60^\\circ$, similarity is $\\cos(\\pi/3)=0.5$."
+        "title": "Application 6",
+        "background": "For $\\theta=\\pi/3$, $\\sin^2\\theta+\\cos^2\\theta=0.75+0.25=1$",
+        "numbers": "For $\\theta=\\pi/3$, $\\sin^2\\theta+\\cos^2\\theta=0.75+0.25=1$"
       }
     ],
-    "applicationsClose": "The unit circle gives one language for waves, rotations, seasons, signals, and vector angles.",
     "takeaways": [
       "$\\cos\\theta$ and $\\sin\\theta$ are the $x$- and $y$-coordinates on the unit circle.",
       "They repeat every $2\\pi$, and calculus expects angles in radians.",
       "$\\sin^2\\theta+\\cos^2\\theta=1$ comes from the unit circle equation.",
       "Trig functions model periodic behavior in signals, encodings, rotations, and geometry."
+    ],
+    "applicationsClose": "The unit circle gives one language for waves, rotations, seasons, signals, and vector angles.",
+    "connectionsProse": "<p>This lesson builds on coordinates, angles, and the unit circle. Trigonometric functions turn rotation into ordinary functions of one variable. They will later supply the standard language for oscillation, waves, and circular motion.</p>",
+    "symbols": [
+      {
+        "sym": "$\\theta$",
+        "desc": "is angle in radians"
+      },
+      {
+        "sym": "$\\sin\\theta$",
+        "desc": "is vertical coordinate"
+      },
+      {
+        "sym": "$\\cos\\theta$",
+        "desc": "is horizontal coordinate"
+      },
+      {
+        "sym": "$\\tan\\theta$",
+        "desc": "is their ratio"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Put a point on the unit circle at angle $\\theta$ from the positive $x$-axis.",
+        "result": "Put a point on the unit circle at angle $\\theta$ from the positive $x$-axis.",
+        "why": ""
+      },
+      {
+        "do": "Define its coordinates as $(\\cos\\theta,\\sin\\theta)$",
+        "result": "Define its coordinates as $(\\cos\\theta,\\sin\\theta)$",
+        "why": "cosine is horizontal position and sine is vertical position."
+      },
+      {
+        "do": "The radius is $1$, so Pythagoras gives $\\cos^2\\theta+\\sin^2\\theta=1$.",
+        "result": "The radius is $1$, so Pythagoras gives $\\cos^2\\theta+\\sin^2\\theta=1$.",
+        "why": ""
+      },
+      {
+        "do": "Define $\\tan\\theta=\\sin\\theta/\\cos\\theta$ when $\\cos\\theta\\ne0$",
+        "result": "Define $\\tan\\theta=\\sin\\theta/\\cos\\theta$ when $\\cos\\theta\\ne0$",
+        "why": "slope is vertical change over horizontal change."
+      },
+      {
+        "do": "A full turn returns to the same point, so sine and cosine have period $2\\pi$.",
+        "result": "A full turn returns to the same point, so sine and cosine have period $2\\pi$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-04"
@@ -1412,8 +1616,8 @@
         "coordinate geometry"
       ]
     },
-    "motivation": "<p>Sometimes you know the ratio before you know the angle. A ramp rises $3$ meters over a $4$ meter run; a pair of vectors has cosine similarity $0.8$; a robot sees movement $(2,5)$. In each case, you want an angle back.</p><p>The only catch is that trig functions repeat. Many angles have the same sine, cosine, or tangent. Inverse trig functions solve this by returning one agreed-upon principal angle, like choosing one clean representative from a repeating family.</p>",
-    "definition": "<p>The functions $\\arcsin x$, $\\arccos x$, and $\\arctan x$ return principal angles. Specifically, $\\arcsin x\\in[-\\pi/2,\\pi/2]$ with input $x\\in[-1,1]$; $\\arccos x\\in[0,\\pi]$ with input $x\\in[-1,1]$; and $\\arctan x\\in(-\\pi/2,\\pi/2)$ with any real input.</p><p>The restriction is necessary. Since $\\sin(\\pi/6)=\\sin(5\\pi/6)=1/2$, sine cannot have a true inverse on all real angles. By restricting sine to $[-\\pi/2,\\pi/2]$, each output in $[-1,1]$ comes from exactly one angle, so $\\arcsin$ is well-defined.</p><p><b>Assumptions that matter:</b> inverse trig outputs are angles in radians unless stated otherwise; $\\arcsin$ and $\\arccos$ accept only inputs from $[-1,1]$; and $\\arctan(y/x)$ alone does not always identify the correct quadrant, which is why many systems use $\\operatorname{atan2}(y,x)$.</p>",
+    "motivation": "<p>Sine, cosine, and tangent are not one-to-one on their full domains because many angles can produce the same value. An inverse function needs one output for each input, so the original trigonometric function is restricted to a principal interval before it is inverted.</p><p>The result is not every possible angle, but a standard angle. $\\arcsin x$, $\\arccos x$, and $\\arctan x$ return principal values that make equations and geometric interpretations unambiguous.</p>",
+    "definition": "<p>Central statement: The same restriction idea gives $\\arccos x\\in[0,\\pi]$ and $\\arctan x\\in(-\\pi/2,\\pi/2)$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Evaluate $\\arcsin\\left(-\\dfrac12\\right)$, $\\arccos\\left(-\\dfrac12\\right)$, and $\\arctan(\\sqrt3)$.",
       "skills": [
@@ -1617,42 +1821,80 @@
     ],
     "applications": [
       {
-        "title": "Angles from cosine similarity",
-        "background": "Embedding models compare vectors by cosine similarity. Inverse cosine converts that similarity into a geometric angle.",
-        "numbers": "Similarity $0.5$ gives $\\theta=\\arccos(0.5)=\\pi/3\\approx60^\\circ$."
+        "title": "Application 1",
+        "background": "$\\arcsin(1/2)=\\pi/6$",
+        "numbers": "$\\arcsin(1/2)=\\pi/6$"
       },
       {
-        "title": "Robot heading with atan2",
-        "background": "Robots and games need a direction from horizontal and vertical movement. $\\operatorname{atan2}$ handles quadrants that plain arctangent can miss.",
-        "numbers": "For movement $(x,y)=(-3,3)$, $\\operatorname{atan2}(3,-3)=3\\pi/4\\approx135^\\circ$."
+        "title": "Application 2",
+        "background": "$\\arccos(1/2)=\\pi/3$",
+        "numbers": "$\\arccos(1/2)=\\pi/3$"
       },
       {
-        "title": "Camera field of view",
-        "background": "Computer graphics and vision use inverse tangent to convert sensor geometry into angular field of view.",
-        "numbers": "A sensor half-width $18$ mm with focal length $24$ mm gives half-angle $\\arctan(18/24)\\approx36.9^\\circ$, so full FOV is $73.8^\\circ$."
+        "title": "Application 3",
+        "background": "$\\arctan(1)=\\pi/4$",
+        "numbers": "$\\arctan(1)=\\pi/4$"
       },
       {
-        "title": "Gradient direction in two dimensions",
-        "background": "Optimization often cares about direction as well as size. An arctangent turns a gradient vector into a heading.",
-        "numbers": "For gradient $(4,3)$, the uphill angle is $\\arctan(3/4)\\approx0.644$ radians, about $36.9^\\circ$."
+        "title": "A slope $3/4$",
+        "background": "A slope $3/4$ has angle $\\arctan(0.75)\\approx0.644$ radians",
+        "numbers": "A slope $3/4$ has angle $\\arctan(0.75)\\approx0.644$ radians"
       },
       {
-        "title": "Slope angle of a ramp",
-        "background": "Civil engineering and robotics both convert rise-over-run ratios into angles to assess steepness.",
-        "numbers": "Rise $2$ over run $10$ gives angle $\\arctan(0.2)\\approx11.3^\\circ$."
+        "title": "Correlation $0.8$",
+        "background": "Correlation $0.8$ has angle $\\arccos(0.8)\\approx0.644$",
+        "numbers": "Correlation $0.8$ has angle $\\arccos(0.8)\\approx0.644$"
       },
       {
-        "title": "Phase recovery in signals",
-        "background": "Signals often store sine and cosine components separately. Inverse tangent recovers the phase angle from those components.",
-        "numbers": "If cosine component is $0$ and sine component is $1$, phase is $\\operatorname{atan2}(1,0)=\\pi/2$."
+        "title": "Height ratio $0.6$",
+        "background": "Height ratio $0.6$ gives launch angle $\\arcsin(0.6)\\approx0.644$",
+        "numbers": "Height ratio $0.6$ gives launch angle $\\arcsin(0.6)\\approx0.644$"
       }
     ],
-    "applicationsClose": "Inverse trig is the bridge back from ratios and similarities to angles you can picture.",
     "takeaways": [
       "$\\arcsin$, $\\arccos$, and $\\arctan$ return principal angles, not every possible angle.",
       "Restrictions make the inverse functions single-valued: arcsine and arctangent use central ranges; arccosine uses $[0,\\pi]$.",
       "$\\arcsin$ and $\\arccos$ require inputs in $[-1,1]$; $\\arctan$ accepts all real inputs.",
       "Angles from embeddings, headings, gradients, cameras, and signals all use inverse trig."
+    ],
+    "applicationsClose": "Inverse trig is the bridge back from ratios and similarities to angles you can picture.",
+    "connectionsProse": "<p>This lesson builds on trigonometric functions and inverse functions. Since trigonometric values repeat, inverse trigonometric functions need carefully chosen output intervals. These restricted inverses let calculus recover angles from ratios in a consistent way.</p>",
+    "symbols": [
+      {
+        "sym": "$\\arcsin x$, $\\arccos x$, and $\\arctan x$",
+        "desc": "are principal angles"
+      },
+      {
+        "sym": "$x$",
+        "desc": "is a ratio or coordinate, not an angle"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Sine is not one-to-one on all real numbers",
+        "result": "Sine is not one-to-one on all real numbers",
+        "why": "many angles share a sine value."
+      },
+      {
+        "do": "Restrict sine to $[-\\pi/2,\\pi/2]$",
+        "result": "Restrict sine to $[-\\pi/2,\\pi/2]$",
+        "why": "on that interval it increases without repeating values."
+      },
+      {
+        "do": "Define $\\arcsin x$ as the angle in that interval whose sine is $x$.",
+        "result": "Define $\\arcsin x$ as the angle in that interval whose sine is $x$.",
+        "why": ""
+      },
+      {
+        "do": "If $y=\\arcsin x$, then $\\sin y=x$.",
+        "result": "If $y=\\arcsin x$, then $\\sin y=x$.",
+        "why": ""
+      },
+      {
+        "do": "The same restriction idea gives $\\arccos x\\in[0,\\pi]$ and $\\arctan x\\in(-\\pi/2,\\pi/2)$.",
+        "result": "The same restriction idea gives $\\arccos x\\in[0,\\pi]$ and $\\arctan x\\in(-\\pi/2,\\pi/2)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-05"
@@ -1676,8 +1918,8 @@
         "convergence throughout ML — a loss settling toward a value, a learning rate shrinking to zero"
       ]
     },
-    "motivation": "<p>Sometimes you cannot simply plug in. Look at $f(x)=\\dfrac{x^2-1}{x-1}$ at $x=1$: you get $\\tfrac00$, undefined. And yet the graph clearly heads somewhere as $x$ slides toward $1$.</p><p>A <b>limit</b> answers exactly that — not the value at the point, but the value the function is heading toward. The destination can be clear even when the road has a pothole right at the end. That shift in question is the doorway to all of calculus.</p>",
-    "definition": "<p>$\\lim_{x\\to a}f(x)=L$ means $f(x)$ can be made as close to $L$ as we like by taking $x$ close enough to $a$ (from both sides), without ever setting $x=a$. Rigorously, the $\\varepsilon$–$\\delta$ statement: for every $\\varepsilon>0$ there is a $\\delta>0$ with $0<|x-a|<\\delta \\Rightarrow |f(x)-L|<\\varepsilon$.</p><p><b>Assumptions that matter:</b> the value $f(a)$ is irrelevant — it may be undefined and the limit can still exist. But the left and right limits must agree, or the limit does not exist.</p>",
+    "motivation": "<p>Substitution is often the first way to look for a limit, but it is not always enough. If substitution gives an expression like $0/0$, the nearby behavior is hidden by algebraic cancellation or another structure.</p><p>The key is that a limit uses nearby inputs rather than the target input alone. By rewriting the expression so the nearby values are visible, the limiting value can often be found even when the original formula has a hole at the point.</p>",
+    "definition": "<p>For $\\lim_{x\\to2}\\frac{x^2-4}{x-2}$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\lim_{x\\to1}\\frac{x^2-1}{x-1}$.",
       "skills": [
@@ -1861,34 +2103,34 @@
     ],
     "applications": [
       {
-        "title": "The gradient is a limit",
-        "background": "Backprop rests on $f'(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}$; a gradient check evaluates it at small finite $h$.",
-        "numbers": "For $f(x)=x^2$ at $x=2$, $h=0.001$ gives $\\frac{4.004001-4}{0.001}=4.001\\approx4$."
+        "title": "Application 1",
+        "background": "Removable limit above equals $4$",
+        "numbers": "Removable limit above equals $4$"
       },
       {
-        "title": "Numerical differentiation",
-        "background": "The central difference converges faster, but too-small $h$ triggers floating-point cancellation.",
-        "numbers": "At $x=2$, $h=0.01$: $\\frac{4.0401-3.9601}{0.02}=4.000$; the sweet spot is near $h\\approx10^{-8}$ in double precision."
+        "title": "Application 2",
+        "background": "$\\lim_{x\\to0}\\frac{\\sin x}{x}=1$",
+        "numbers": "$\\lim_{x\\to0}\\frac{\\sin x}{x}=1$"
       },
       {
-        "title": "Training convergence",
-        "background": "\"SGD converges\" means the loss has a limit; schedules send the learning rate's limit to 0.",
-        "numbers": "$\\eta_t=\\eta_0/t\\to0$ so updates settle instead of bouncing."
+        "title": "Application 3",
+        "background": "$\\lim_{x\\to3}(2x+1)=7$",
+        "numbers": "$\\lim_{x\\to3}(2x+1)=7$"
       },
       {
-        "title": "Activation saturation",
-        "background": "The sigmoid's limits are 1 and 0; deep in saturation the slope vanishes.",
-        "numbers": "At $x=6$, $\\sigma=0.9975$ with slope $\\approx0.0025$ — the vanishing-gradient problem."
+        "title": "Application 4",
+        "background": "$\\lim_{x\\to1}\\frac{x^3-1}{x-1}=3$",
+        "numbers": "$\\lim_{x\\to1}\\frac{x^3-1}{x-1}=3$"
       },
       {
-        "title": "Algorithm analysis (Big-O)",
-        "background": "Asymptotics are limits as $n\\to\\infty$.",
-        "numbers": "$\\lim_{n\\to\\infty}\\frac{3n^2+5n}{n^2}=3$, so $3n^2+5n=\\Theta(n^2)$."
+        "title": "Average velocity for $s=t^2$ near $3$",
+        "background": "Average velocity for $s=t^2$ near $3$ tends to $6$",
+        "numbers": "Average velocity for $s=t^2$ near $3$ tends to $6$"
       },
       {
-        "title": "Discounted returns in RL",
-        "background": "A discounted reward stream sums to a limit — the effective horizon.",
-        "numbers": "$\\sum_{t=0}^{\\infty}\\gamma^t=\\frac{1}{1-\\gamma}$; with $\\gamma=0.99$ that is $100$."
+        "title": "Application 6",
+        "background": "$\\lim_{x\\to0}\\frac{e^x-1}{x}=1$",
+        "numbers": "$\\lim_{x\\to0}\\frac{e^x-1}{x}=1$"
       }
     ],
     "applicationsClose": "One idea — \"what value is this heading toward?\" — reused six different ways.",
@@ -1897,6 +2139,48 @@
       "If direct substitution gives $\\tfrac00$, rewrite (factor and cancel) then substitute.",
       "Left and right limits must agree for the limit to exist.",
       "The derivative/gradient is a limit; finite differences approximate it (e.g. $4.001\\approx4$)."
+    ],
+    "connectionsProse": "<p>This lesson builds on evaluating functions near a point. Limits formalize the value a function approaches, even when the function may not be defined at the point itself. This idea supports the derivative, the definite integral, and continuity.</p>",
+    "symbols": [
+      {
+        "sym": "$\\lim_{x\\to a}f(x)=L$",
+        "desc": "means $f(x)$ approaches $L$ as $x$ approaches $a$"
+      },
+      {
+        "sym": "$a$",
+        "desc": "is the input approached"
+      },
+      {
+        "sym": "$L$",
+        "desc": "is the limiting value"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Direct substitution gives $0/0$",
+        "result": "Direct substitution gives $0/0$",
+        "why": "the expression is not defined at $x=2$."
+      },
+      {
+        "do": "Factor the numerator",
+        "result": "$x^2-4=(x-2)(x+2)$",
+        "why": "expose the removable factor."
+      },
+      {
+        "do": "Cancel $x-2$ for $x\\ne2$",
+        "result": "Cancel $x-2$ for $x\\ne2$",
+        "why": "limits use nearby inputs, not the point itself."
+      },
+      {
+        "do": "The simplified expression is $x+2$.",
+        "result": "The simplified expression is $x+2$.",
+        "why": ""
+      },
+      {
+        "do": "Let $x\\to2$ to get $4$",
+        "result": "Let $x\\to2$ to get $4$",
+        "why": "the nearby values approach $4$."
+      }
     ],
     "prereqs": [
       "math-01-06"
@@ -1925,8 +2209,8 @@
         "domain endpoints"
       ]
     },
-    "motivation": "<p>You already know that a two-sided limit asks where a function is heading as $x$ gets close to a point. But sometimes the road looks different depending on which side you approach from.</p><p>One-sided limits let us slow down and ask each direction separately. From the left, what value is the graph approaching? From the right, what value is it approaching? This is exactly what you need at jumps, corners, and endpoints.</p>",
-    "definition": "<p>The notation $\\lim_{x\\to a^-}f(x)=L$ means $f(x)$ approaches $L$ as $x$ approaches $a$ using values less than $a$. The notation $\\lim_{x\\to a^+}f(x)=R$ means $f(x)$ approaches $R$ using values greater than $a$.</p><p>The ordinary two-sided limit exists precisely when the two one-sided limits both exist and agree: $$\\lim_{x\\to a}f(x)=L \\quad\\text{if and only if}\\quad \\lim_{x\\to a^-}f(x)=L \\text{ and } \\lim_{x\\to a^+}f(x)=L.$$ This is not a new trick; it is the two-sided approach split into its two directions.</p><p><b>Assumptions that matter:</b> left-hand limits require domain points to the left of $a$; right-hand limits require domain points to the right of $a$; the value $f(a)$ itself does not decide either one-sided limit; and unequal one-sided limits make the two-sided limit fail to exist.</p>",
+    "motivation": "<p>A two-sided limit requires the same approached value from both directions. At a jump or endpoint, the left-hand and right-hand stories may not match, so treating them separately prevents us from hiding important behavior.</p><p>One-sided limits are especially useful for piecewise rules. The formula that applies to inputs below the point may differ from the formula above it, and the two-sided limit exists only when those two approaching values agree.</p>",
+    "definition": "<p>For $f(x)=0$ if $x<1$ and $f(x)=2$ if $x\\ge1$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "For $f(x)=\\begin{cases}2x+1,&x<1\\\\5,&x=1\\\\x^2+1,&x>1\\end{cases}$, find the left-hand limit, right-hand limit, and two-sided limit at $x=1$.",
       "skills": [
@@ -2140,34 +2424,34 @@
     ],
     "applications": [
       {
-        "title": "Threshold classifiers",
-        "background": "Many systems turn a score into a class by crossing a threshold. One-sided limits show what happens just below and just above the cutoff.",
-        "numbers": "For threshold $0.8$, scores $0.799$ and $0.801$ can output $0$ and $1$, so the one-sided limits are $0$ and $1$."
+        "title": "Step function above",
+        "background": "Step function above has left limit $0$ and right limit $2$",
+        "numbers": "Step function above has left limit $0$ and right limit $2$"
       },
       {
-        "title": "ReLU at zero",
-        "background": "ReLU became a standard neural-network activation because it is simple and avoids some saturation. Its slope changes abruptly at zero.",
-        "numbers": "For $r(x)=\\max(0,x)$, values from the left approach $0$ and values from the right also approach $0$, even though the slopes are $0$ and $1$."
+        "title": "ReLU $\\max(0,x)$",
+        "background": "ReLU $\\max(0,x)$ has both one-sided limits $0$ at $0$",
+        "numbers": "ReLU $\\max(0,x)$ has both one-sided limits $0$ at $0$"
       },
       {
-        "title": "Quantization boundaries",
-        "background": "Digital systems round continuous values into bins. At bin boundaries, the output can jump.",
-        "numbers": "If $q(x)=0$ for $x<0.5$ and $q(x)=1$ for $x\\ge0.5$, then the left limit at $0.5$ is $0$ and the right limit is $1$."
+        "title": "$1/x$",
+        "background": "$1/x$ has left limit $-\\infty$ and right limit $+\\infty$ at $0$",
+        "numbers": "$1/x$ has left limit $-\\infty$ and right limit $+\\infty$ at $0$"
       },
       {
-        "title": "Database pagination cutoffs",
-        "background": "Ranking systems often show items above a cutoff. A tiny score change around the cutoff can alter visibility.",
-        "numbers": "If rank score $s=10.00$ is required, $9.999$ is excluded and $10.001$ is included, a one-sided jump in displayed status."
+        "title": "Price threshold $f(x)=10$ below $100$ and $15$ above",
+        "background": "Price threshold $f(x)=10$ below $100$ and $15$ above has a jump of $5$",
+        "numbers": "Price threshold $f(x)=10$ below $100$ and $15$ above has a jump of $5$"
       },
       {
-        "title": "Loss functions with margins",
-        "background": "Hinge-style losses use a piecewise formula: no penalty beyond the margin, linear penalty inside it. One-sided analysis checks behavior at the margin.",
-        "numbers": "For $L(m)=\\max(0,1-m)$, as $m\\to1^-$, $L\\to0$; as $m\\to1^+$, $L\\to0$, so the value is continuous there."
+        "title": "Floor function at $3$",
+        "background": "Floor function at $3$ has left limit $2$ and right limit $3$",
+        "numbers": "Floor function at $3$ has left limit $2$ and right limit $3$"
       },
       {
-        "title": "Control systems with switches",
-        "background": "Thermostats and rule-based controllers switch actions at thresholds. One-sided limits separate behavior before and after switching.",
-        "numbers": "If heat turns on below $19^\\circ$C and off at or above $19^\\circ$C, the action limit from below is on and from above is off."
+        "title": "Domain boundary $\\sqrt{x}$",
+        "background": "Domain boundary $\\sqrt{x}$ has right limit $0$ at $0$",
+        "numbers": "Domain boundary $\\sqrt{x}$ has right limit $0$ at $0$"
       }
     ],
     "applicationsClose": "One-sided limits are how we read behavior at thresholds: not just where the graph is, but how it arrives from each side.",
@@ -2176,6 +2460,48 @@
       "A two-sided limit exists exactly when the left- and right-hand limits agree.",
       "The actual value $f(a)$ does not determine either one-sided limit.",
       "Jumps, thresholds, endpoints, and piecewise definitions are natural homes for one-sided limits."
+    ],
+    "connectionsProse": "<p>This lesson builds on ordinary limits by paying attention to direction. Some functions behave differently when an input approaches from the left than from the right. One-sided limits give the language needed for jumps, boundaries, and piecewise definitions.</p>",
+    "symbols": [
+      {
+        "sym": "$x\\to a^-$",
+        "desc": "means from below"
+      },
+      {
+        "sym": "$x\\to a^+$",
+        "desc": "means from above"
+      },
+      {
+        "sym": "a two-sided limit exists only when both one-sided limits agree",
+        "desc": "a two-sided limit exists only when both one-sided limits agree"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Approach $1$ using $x<1$",
+        "result": "Approach $1$ using $x<1$",
+        "why": "the formula is $0$."
+      },
+      {
+        "do": "The left-hand limit is therefore $\\lim_{x\\to1^-}f(x)=0$.",
+        "result": "The left-hand limit is therefore $\\lim_{x\\to1^-}f(x)=0$.",
+        "why": ""
+      },
+      {
+        "do": "Approach $1$ using $x>1$",
+        "result": "Approach $1$ using $x>1$",
+        "why": "the formula is $2$."
+      },
+      {
+        "do": "The right-hand limit is $\\lim_{x\\to1^+}f(x)=2$.",
+        "result": "The right-hand limit is $\\lim_{x\\to1^+}f(x)=2$.",
+        "why": ""
+      },
+      {
+        "do": "Since the one-sided limits differ, the two-sided limit does not exist.",
+        "result": "Since the one-sided limits differ, the two-sided limit does not exist.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-07"
@@ -2204,8 +2530,8 @@
         "composition"
       ]
     },
-    "motivation": "<p>You can often see continuity before you name it: a graph you can trace through a point without lifting your pencil feels continuous there. A hole, jump, or vertical blow-up feels different.</p><p>The precise idea is gentle: as the input approaches $a$, the output should approach the function's actual value at $a$. No mismatch between destination and arrival. This simple agreement is what lets calculus make reliable promises.</p>",
-    "definition": "<p>A function $f$ is <b>continuous at</b> $x=a$ if three conditions hold: $f(a)$ is defined, $\\lim_{x\\to a}f(x)$ exists, and $\\lim_{x\\to a}f(x)=f(a)$. It is continuous on an interval if it is continuous at every point of that interval, using one-sided continuity at endpoints.</p><p>The three conditions come from the idea of no surprise. You need an actual value to arrive at; nearby values must approach one destination; and that destination must equal the actual value. Polynomials are continuous everywhere because sums and products of continuous functions stay continuous. Rational functions are continuous wherever their denominators are not zero.</p><p><b>Assumptions that matter:</b> continuity is checked relative to the domain; endpoints use one-sided limits; changing a function at a single point can break or repair continuity there; and functions built by sums, products, quotients with nonzero denominators, and composition inherit continuity from their parts.</p>",
+    "motivation": "<p>A function can fail to be continuous in several ways: the value may be missing, the nearby values may not approach one number, or the approached value may not equal the assigned value. Continuity requires all three parts to line up.</p><p>This matters because many calculus theorems rely on functions having no sudden breaks. When a function is continuous, small changes in input produce controlled changes in output near that point.</p>",
+    "definition": "<p>Central statement: Since $f(3)=9$, $x^2$ is continuous at $3$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Choose $c$ so $f(x)=\\begin{cases}x^2+1,&x<2\\\\c,&x=2\\\\3x-1,&x>2\\end{cases}$ is continuous at $x=2$, if possible.",
       "skills": [
@@ -2404,34 +2730,34 @@
     ],
     "applications": [
       {
-        "title": "Smooth loss landscapes",
-        "background": "Gradient-based optimization relies on losses that change predictably under small parameter changes. Continuity is the first layer of that predictability.",
-        "numbers": "For $L(w)=(w-4)^2$, moving from $w=4.00$ to $w=4.01$ changes loss from $0$ to $0.0001$."
+        "title": "$x^2$",
+        "background": "$x^2$ is continuous at $3$ with value $9$",
+        "numbers": "$x^2$ is continuous at $3$ with value $9$"
       },
       {
-        "title": "ReLU is continuous but kinked",
-        "background": "ReLU is popular in neural networks. It has no jump at zero, even though its derivative changes there.",
-        "numbers": "$\\lim_{x\\to0^-}\\max(0,x)=0$, $\\lim_{x\\to0^+}\\max(0,x)=0$, and $r(0)=0$."
+        "title": "$1/x$",
+        "background": "$1/x$ is continuous at $2$ with value $0.5$",
+        "numbers": "$1/x$ is continuous at $2$ with value $0.5$"
       },
       {
-        "title": "Step functions are discontinuous",
-        "background": "Hard thresholds are easy to implement but can be hard to optimize because tiny input changes can flip the output.",
-        "numbers": "For $s(x)=0$ below $0.5$ and $1$ at or above $0.5$, the left limit is $0$ and the right limit is $1$."
+        "title": "$\\sqrt{x}$",
+        "background": "$\\sqrt{x}$ is continuous at $4$ with value $2$",
+        "numbers": "$\\sqrt{x}$ is continuous at $4$ with value $2$"
       },
       {
-        "title": "Sensor calibration",
-        "background": "Physical sensors are usually expected to change continuously with the measured quantity. Sudden jumps often mean a switch or fault.",
-        "numbers": "A temperature sensor modeled by $v(T)=0.02T+0.5$ changes from $1.000$ V at $25^\\circ$C to $1.002$ V at $25.1^\\circ$C."
+        "title": "ReLU",
+        "background": "ReLU is continuous at $0$ since both sides give $0$",
+        "numbers": "ReLU is continuous at $0$ since both sides give $0$"
       },
       {
-        "title": "Interpolation",
-        "background": "Graphics, animation, and data preprocessing often fill values between samples. Continuity keeps the filled curve from jumping.",
-        "numbers": "Linear interpolation from $(0,10)$ to $(4,18)$ gives value $14$ at $x=2$, halfway between the endpoints."
+        "title": "A removable hole with limit $4$ but value $5$",
+        "background": "A removable hole with limit $4$ but value $5$ is not continuous",
+        "numbers": "A removable hole with limit $4$ but value $5$ is not continuous"
       },
       {
-        "title": "Probability calibration curves",
-        "background": "Calibration plots compare predicted probability to observed frequency. A continuous curve means small probability changes lead to small expected frequency changes.",
-        "numbers": "If observed rate is modeled by $c(p)=0.9p+0.05$, then $c(0.70)=0.68$ and $c(0.71)=0.689$."
+        "title": "Piecewise jump from $1$ to $3$ at $0$",
+        "background": "Piecewise jump from $1$ to $3$ at $0$ is discontinuous by gap $2$",
+        "numbers": "Piecewise jump from $1$ to $3$ at $0$ is discontinuous by gap $2$"
       }
     ],
     "applicationsClose": "Continuity is the no-surprise condition that lets models, sensors, curves, and proofs behave reliably under small changes.",
@@ -2440,6 +2766,48 @@
       "Polynomials are continuous everywhere; rational functions are continuous where denominators are nonzero.",
       "A removable hole can be repaired by defining the missing value to equal the limit.",
       "Continuous functions can bend and kink, but they do not jump or tear at the point."
+    ],
+    "connectionsProse": "<p>This lesson builds on limits and function values. Continuity says that the approached value and the actual value are the same. It is the condition that lets graphs be read without holes or jumps at a point.</p>",
+    "symbols": [
+      {
+        "sym": "$a$",
+        "desc": "is the point tested"
+      },
+      {
+        "sym": "$f(a)$",
+        "desc": "is the actual value"
+      },
+      {
+        "sym": "the limit",
+        "desc": "is the approached value"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "To be continuous at $a$, $f(a)$ must be defined",
+        "result": "To be continuous at $a$, $f(a)$ must be defined",
+        "why": "the point has an output."
+      },
+      {
+        "do": "The limit $\\lim_{x\\to a}f(x)$ must exist",
+        "result": "The limit $\\lim_{x\\to a}f(x)$ must exist",
+        "why": "nearby values agree from both sides."
+      },
+      {
+        "do": "The two must match",
+        "result": "$\\lim_{x\\to a}f(x)=f(a)$",
+        "why": "no hole or jump remains."
+      },
+      {
+        "do": "For $f(x)=x^2$, $\\lim_{x\\to3}x^2=9$ by substitution.",
+        "result": "For $f(x)=x^2$, $\\lim_{x\\to3}x^2=9$ by substitution.",
+        "why": ""
+      },
+      {
+        "do": "Since $f(3)=9$, $x^2$ is continuous at $3$.",
+        "result": "Since $f(3)=9$, $x^2$ is continuous at $3$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-08"
@@ -2468,8 +2836,8 @@
         "existence proofs"
       ]
     },
-    "motivation": "<p>Imagine walking up a hill on a continuous trail. If you start at elevation $100$ meters and end at elevation $180$ meters, then at some moment you must have been at $150$ meters. You may not know when, but you know it happened.</p><p>The <b>Intermediate Value Theorem</b> turns that common-sense picture into a precise guarantee. It is one of the first times calculus says, with confidence, that a solution exists even before we know how to compute it.</p>",
-    "definition": "<p>If $f$ is continuous on the closed interval $[a,b]$ and $N$ is any number between $f(a)$ and $f(b)$, then there exists at least one $c$ in $[a,b]$ such that $f(c)=N$. For root-finding, the common special case is: if $f(a)$ and $f(b)$ have opposite signs, then some $c$ in $(a,b)$ satisfies $f(c)=0$.</p><p>Why it is true in the graph picture: a continuous graph cannot jump over a horizontal line. Starting below height $N$ and ending above height $N$ forces the curve to cross the line $y=N$ somewhere between the endpoints. The theorem gives existence, not necessarily uniqueness.</p><p><b>Assumptions that matter:</b> $f$ must be continuous on the whole closed interval $[a,b]$; the target value $N$ must lie between endpoint values; the theorem guarantees at least one point, not exactly one; and a discontinuous function can jump over the target without ever taking it.</p>",
+    "motivation": "<p>If a continuous function starts below a target value and ends above it, it cannot skip over the target. The graph may curve or wiggle, but without a jump it must pass through every intermediate height.</p><p>The theorem is an existence statement. It may not tell where the input is or whether it is unique, but it guarantees that at least one such input exists between the endpoints.</p>",
+    "definition": "<p>Central statement: Therefore some $c\\in(a,b)$ satisfies $f(c)=N$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Show that $f(x)=x^3-x-1$ has a root in $(1,2)$.",
       "skills": [
@@ -2673,34 +3041,34 @@
     ],
     "applications": [
       {
-        "title": "Bisection root-finding",
-        "background": "Bisection is an old and reliable numerical method. It repeatedly halves an interval where a continuous function changes sign.",
-        "numbers": "If $f(1)=-1$ and $f(2)=5$, the first midpoint is $1.5$; if $f(1.5)=-0.125$, the root remains in $[1.5,2]$."
+        "title": "Application 1",
+        "background": "$f(x)=x^2$ on $[1,3]$ hits $4$ at $x=2$",
+        "numbers": "$f(x)=x^2$ on $[1,3]$ hits $4$ at $x=2$"
       },
       {
-        "title": "Hyperparameter existence arguments",
-        "background": "When a validation metric changes continuously with a tuning parameter, IVT can guarantee that a target metric is reached somewhere in a range.",
-        "numbers": "Accuracy $0.70$ at $\\lambda=0.001$ and $0.82$ at $\\lambda=0.1$ guarantees some setting with accuracy $0.75$, if continuity holds."
+        "title": "$x^3-x-1$",
+        "background": "$x^3-x-1$ changes from $-1$ at $1$ to $5$ at $2$, so it has a root in $(1,2)$",
+        "numbers": "$x^3-x-1$ changes from $-1$ at $1$ to $5$ at $2$, so it has a root in $(1,2)$"
       },
       {
-        "title": "Calibration thresholds",
-        "background": "A calibrated score curve can be used to find a threshold for a desired positive rate. Continuity turns endpoint rates into a guarantee.",
-        "numbers": "If threshold $0.2$ gives positive rate $0.90$ and threshold $0.8$ gives $0.10$, then some threshold gives rate $0.50$."
+        "title": "Application 3",
+        "background": "Temperature from $60$ to $75$ hits $70$ at least once",
+        "numbers": "Temperature from $60$ to $75$ hits $70$ at least once"
       },
       {
-        "title": "Physical simulation",
-        "background": "Continuous motion cannot teleport across a wall or target height. IVT formalizes crossing events in simulation and robotics.",
-        "numbers": "If a robot's $x$-position is $-2$ meters at $t=0$ and $3$ meters at $t=5$, continuous motion implies some time has $x=0$."
+        "title": "Model score from $-0.2$ to $0.3$",
+        "background": "Model score from $-0.2$ to $0.3$ crosses decision threshold $0$",
+        "numbers": "Model score from $-0.2$ to $0.3$ crosses decision threshold $0$"
       },
       {
-        "title": "Computer graphics intersections",
-        "background": "Ray and curve intersection algorithms often bracket sign changes, then refine. The IVT is the existence guarantee behind the bracket.",
-        "numbers": "If a signed distance is $-0.4$ at one sample and $0.2$ at the next, a continuous surface crossing lies between them."
+        "title": "Application 5",
+        "background": "Continuous cost from $90$ to $110$ hits budget $100$",
+        "numbers": "Continuous cost from $90$ to $110$ hits budget $100$"
       },
       {
-        "title": "Fairness and operating points",
-        "background": "Changing a classification threshold can trade off rates. If rates vary continuously, intermediate operating points are guaranteed.",
-        "numbers": "If false positive rate changes from $0.30$ to $0.05$ as threshold rises, then a target FPR $0.10$ occurs at some threshold, assuming continuity."
+        "title": "Application 6",
+        "background": "$\\sin x$ on $[0,\\pi/2]$ hits $0.5$ at $\\pi/6$",
+        "numbers": "$\\sin x$ on $[0,\\pi/2]$ hits $0.5$ at $\\pi/6$"
       }
     ],
     "applicationsClose": "The IVT is a promise of passage: with continuity and endpoint bounds, some in-between input reaches the in-between value.",
@@ -2709,6 +3077,53 @@
       "Opposite signs at the endpoints guarantee at least one zero inside the interval.",
       "The theorem proves existence, not uniqueness or an exact formula for the solution.",
       "Continuity on the whole closed interval is essential; jumps and asymptotes can break the conclusion."
+    ],
+    "connectionsProse": "<p>This lesson builds on continuity over an interval. The Intermediate Value Theorem turns the visual idea of an unbroken graph into a precise guarantee. It prepares the reader for existence arguments, root-finding, and threshold crossing.</p>",
+    "symbols": [
+      {
+        "sym": "$[a,b]$",
+        "desc": "is the closed interval"
+      },
+      {
+        "sym": "$N$",
+        "desc": "is the target output"
+      },
+      {
+        "sym": "$c$",
+        "desc": "is the input guaranteed by the theorem"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $f$ be continuous on $[a,b]$",
+        "result": "Let $f$ be continuous on $[a,b]$",
+        "why": "there are no jumps or gaps on the interval."
+      },
+      {
+        "do": "Suppose $f(a)<N<f(b)$",
+        "result": "Suppose $f(a)<N<f(b)$",
+        "why": "the target lies between endpoint values."
+      },
+      {
+        "do": "Consider $g(x)=f(x)-N$",
+        "result": "Consider $g(x)=f(x)-N$",
+        "why": "hitting $N$ means finding a zero of $g$."
+      },
+      {
+        "do": "Then $g(a)<0$ and $g(b)>0$",
+        "result": "Then $g(a)<0$ and $g(b)>0$",
+        "why": "the sign changes."
+      },
+      {
+        "do": "Continuity prevents a sign change without passing through $0$.",
+        "result": "Continuity prevents a sign change without passing through $0$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore some $c\\in(a,b)$ satisfies $f(c)=N$.",
+        "result": "Therefore some $c\\in(a,b)$ satisfies $f(c)=N$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-09"
@@ -2736,8 +3151,8 @@
         "sequences and convergence"
       ]
     },
-    "motivation": "<p>You already know how to ask what happens near one input, like $x\\to2$. Now stretch the question: what happens when $x$ keeps going, past $10$, past $10^6$, with no final stopping point?</p><p>A <b>limit at infinity</b> gives language for long-run behavior. It is the math behind saying a curve levels off, a ratio settles, or one term eventually overwhelms another. The mental picture is a road that never ends, but whose elevation may approach a steady height.</p>",
-    "definition": "<p>$\\lim_{x\\to\\infty} f(x)=L$ means $f(x)$ can be made as close to $L$ as we like by taking $x$ sufficiently large. The negative-infinity version, $\\lim_{x\\to-\\infty}f(x)=L$, looks far to the left. For rational functions, divide numerator and denominator by the highest power of $x$ that appears in the denominator, then use terms like $1/x\\to0$.</p><p><b>Assumptions that matter:</b> $x\\to\\infty$ is not a number to substitute. We study eventual behavior. If the numerator degree is smaller than the denominator degree, the limit is $0$; equal degrees give the ratio of leading coefficients; larger numerator degree usually grows without bound or has no finite limit.</p>",
+    "motivation": "<p>For large inputs, not every term matters equally. In a polynomial or rational expression, the highest powers dominate because lower powers become small by comparison after dividing by the largest scale.</p><p>A limit at infinity captures that dominant behavior. It tells whether the function settles toward a number, grows without bound, or approaches another long-run pattern.</p>",
+    "definition": "<p>For $\\lim_{x\\to\\infty}\\frac{3x^2+1}{x^2-4}$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\lim_{x\\to\\infty}\\frac{3x^2-5x+1}{2x^2+7}$.",
       "skills": [
@@ -2916,34 +3331,34 @@
     ],
     "applications": [
       {
-        "title": "Algorithm growth",
-        "background": "Asymptotic analysis was built to compare programs when inputs become large, not just at one benchmark size.",
-        "numbers": "For costs $3n^2+20n$ and $n^2$, $\\lim_{n\\to\\infty}\\frac{3n^2+20n}{n^2}=3$, so the first is about $3$ times the second for huge $n$."
+        "title": "The worked rational limit",
+        "background": "The worked rational limit is $3$",
+        "numbers": "The worked rational limit is $3$"
       },
       {
-        "title": "Learning-rate schedules",
-        "background": "Optimization often uses a step size that fades so training can settle instead of bouncing forever.",
-        "numbers": "If $\\eta_t=0.1/(1+0.01t)$, then $\\eta_{100}=0.05$, $\\eta_{900}=0.01$, and $\\lim_{t\\to\\infty}\\eta_t=0$."
+        "title": "Application 2",
+        "background": "$\\lim_{x\\to\\infty}1/x=0$",
+        "numbers": "$\\lim_{x\\to\\infty}1/x=0$"
       },
       {
-        "title": "Sigmoid saturation",
-        "background": "The logistic function became common because it smoothly maps scores to probabilities.",
-        "numbers": "$\\sigma(8)=1/(1+e^{-8})\\approx0.9997$ and $\\lim_{x\\to\\infty}\\sigma(x)=1$."
+        "title": "Application 3",
+        "background": "$\\lim_{x\\to\\infty}\\frac{2x+5}{x}=2$",
+        "numbers": "$\\lim_{x\\to\\infty}\\frac{2x+5}{x}=2$"
       },
       {
-        "title": "Regularization strength over data size",
-        "background": "Some estimators reduce penalty weight as the sample size grows so data can speak more loudly.",
-        "numbers": "With $\\lambda_n=10/\\sqrt n$, $\\lambda_{100}=1$, $\\lambda_{10000}=0.1$, and $\\lambda_n\\to0$."
+        "title": "Logistic curve $1/(1+e^{-x})$",
+        "background": "Logistic curve $1/(1+e^{-x})$ tends to $1$",
+        "numbers": "Logistic curve $1/(1+e^{-x})$ tends to $1$"
       },
       {
-        "title": "Average of a long stream",
-        "background": "Running averages stabilize because the effect of one fixed early value fades.",
-        "numbers": "The contribution of the first example to the mean after $n$ points is $1/n$; at $n=1000$ it is $0.001$, and the limit is $0$."
+        "title": "$e^{-0.2t}$",
+        "background": "$e^{-0.2t}$ tends to $0$ as $t\\to\\infty$",
+        "numbers": "$e^{-0.2t}$ tends to $0$ as $t\\to\\infty$"
       },
       {
-        "title": "Cache hit-rate ceilings",
-        "background": "Systems curves often level off: adding memory helps, but only up to a workload's reuse limit.",
-        "numbers": "A model $h(m)=0.95-10/(m+20)$ gives $h(80)=0.85$, $h(980)\\approx0.94$, and $\\lim_{m\\to\\infty}h(m)=0.95$."
+        "title": "$\\frac{x}{x+10}$",
+        "background": "$\\frac{x}{x+10}$ tends to $1$",
+        "numbers": "$\\frac{x}{x+10}$ tends to $1$"
       }
     ],
     "applicationsClose": "Across these examples, the same question keeps returning: after the early details fade, what value or growth pattern remains?",
@@ -2951,6 +3366,44 @@
       "A limit at infinity studies long-run behavior, not substitution at a special number.",
       "For rational functions, compare highest powers and leading coefficients.",
       "Finite limits at infinity become horizontal asymptotes; infinite behavior means no finite settling value."
+    ],
+    "connectionsProse": "<p>This lesson builds on ordinary limits and long-run comparisons. Limits at infinity describe what remains important as the input grows without bound. They are the basis for horizontal asymptotes and end behavior.</p>",
+    "symbols": [
+      {
+        "sym": "$x\\to\\infty$",
+        "desc": "means input grows without bound"
+      },
+      {
+        "sym": "dominant term",
+        "desc": "means highest power controlling long-run size"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Identify the highest power $x^2$",
+        "result": "Identify the highest power $x^2$",
+        "why": "it dominates numerator and denominator."
+      },
+      {
+        "do": "Divide every term by $x^2$",
+        "result": "Divide every term by $x^2$",
+        "why": "compare terms on the same scale."
+      },
+      {
+        "do": "Get $\\frac{3+1/x^2}{1-4/x^2}$.",
+        "result": "Get $\\frac{3+1/x^2}{1-4/x^2}$.",
+        "why": ""
+      },
+      {
+        "do": "Let $x\\to\\infty$ so $1/x^2\\to0$ and $4/x^2\\to0$.",
+        "result": "Let $x\\to\\infty$ so $1/x^2\\to0$ and $4/x^2\\to0$.",
+        "why": ""
+      },
+      {
+        "do": "The limit is $3/1=3$.",
+        "result": "The limit is $3/1=3$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-10"
@@ -2978,8 +3431,8 @@
         "polynomial division"
       ]
     },
-    "motivation": "<p>Some graphs are busy up close but simple from far away. Others shoot upward near a forbidden input, like a wall the curve cannot cross. Asymptotes let you mark those big features before worrying about small details.</p><p>Think of an asymptote as a guide rail. A horizontal one says where the curve settles, a vertical one says where the function blows up, and a slant one says which tilted line the curve eventually shadows.</p>",
-    "definition": "<p>A <b>horizontal asymptote</b> $y=L$ occurs when $\\lim_{x\\to\\infty}f(x)=L$ or $\\lim_{x\\to-\\infty}f(x)=L$. A <b>vertical asymptote</b> $x=a$ occurs when $f(x)\\to\\infty$ or $f(x)\\to-\\infty$ as $x\\to a$ from at least one side. A <b>slant asymptote</b> $y=mx+b$ occurs when $f(x)-(mx+b)\\to0$ as $x\\to\\infty$ or $x\\to-\\infty$.</p><p><b>Assumptions that matter:</b> a zero denominator only gives a vertical asymptote if the factor does not cancel. A graph may cross a horizontal or slant asymptote at finite $x$; asymptotes describe approach behavior, not an uncrossable fence.</p>",
+    "motivation": "<p>Vertical asymptotes come from nearby inputs making function values grow without bound. Horizontal asymptotes describe long-run output levels as inputs go far left or right, while slant asymptotes describe long-run linear behavior.</p><p>This is a classification lesson because different formulas reveal asymptotes in different ways. Limits, factoring, and polynomial division all contribute to deciding which line the graph approaches.</p>",
+    "definition": "<p>This is an explain-only lesson: this is a classification lesson. Teach vertical, horizontal, and slant asymptotes from limits and polynomial division instead of presenting one theorem.</p><p><b>Assumptions that matter:</b> Use the stated domain, graph, interval, or modeling conditions before applying the classification.</p>",
     "worked": {
       "problem": "Find the vertical and slant asymptotes of $f(x)=\\dfrac{x^2+1}{x-2}$.",
       "skills": [
@@ -3158,34 +3611,34 @@
     ],
     "applications": [
       {
-        "title": "Training-loss floors",
-        "background": "Empirical learning curves often flatten because noise, model capacity, or irreducible error prevents zero loss.",
-        "numbers": "For $L(t)=0.12+3/(t+20)$, $L(80)=0.15$ and the horizontal asymptote is $0.12$."
+        "title": "$1/(x-2)$",
+        "background": "$1/(x-2)$ has vertical asymptote $x=2$",
+        "numbers": "$1/(x-2)$ has vertical asymptote $x=2$"
       },
       {
-        "title": "Numerical singularities",
-        "background": "Division by a nearly zero quantity can create huge values, so software libraries guard denominators.",
-        "numbers": "$1/(x-2)$ at $x=2.001$ is $1000$; at $x=1.999$ it is $-1000$, showing the vertical asymptote $x=2$."
+        "title": "$\\frac{3x+1}{x+2}$",
+        "background": "$\\frac{3x+1}{x+2}$ has horizontal asymptote $y=3$",
+        "numbers": "$\\frac{3x+1}{x+2}$ has horizontal asymptote $y=3$"
       },
       {
-        "title": "Throughput saturation",
-        "background": "Queueing systems slow dramatically as utilization approaches one, a classic operations result.",
-        "numbers": "For delay $W=1/(10-\\lambda)$, $\\lambda=9.5$ gives $W=2$, while $\\lambda=9.9$ gives $W=10$; vertical asymptote at $\\lambda=10$."
+        "title": "$\\frac{x^2+1}{x}=x+1/x$",
+        "background": "$\\frac{x^2+1}{x}=x+1/x$ has slant asymptote $y=x$",
+        "numbers": "$\\frac{x^2+1}{x}=x+1/x$ has slant asymptote $y=x$"
       },
       {
-        "title": "Model-size scaling laws",
-        "background": "Scaling-law curves often use simple asymptotic forms to estimate a performance floor.",
-        "numbers": "If error $E(N)=0.08+2/N^{0.5}$, then $E(10000)=0.10$ and the asymptote is $0.08$."
+        "title": "$e^{-x}$",
+        "background": "$e^{-x}$ has horizontal asymptote $y=0$",
+        "numbers": "$e^{-x}$ has horizontal asymptote $y=0$"
       },
       {
-        "title": "Memory overhead",
-        "background": "Amortized data-structure costs separate a steady per-item cost from fixed overhead.",
-        "numbers": "Cost per item $C(n)=4+128/n$ gives $C(32)=8$ bytes and approaches $4$ bytes as $n\\to\\infty$."
+        "title": "$\\ln x$",
+        "background": "$\\ln x$ has vertical asymptote $x=0$",
+        "numbers": "$\\ln x$ has vertical asymptote $x=0$"
       },
       {
-        "title": "Feature transforms",
-        "background": "Functions like $\\log(1+x)$ grow forever but more slowly than any line, shaping plots with no horizontal asymptote.",
-        "numbers": "$\\log(101)\\approx4.62$ and $\\log(10001)\\approx9.21$; it keeps rising, though slowly."
+        "title": "$\\frac{2x^2+1}{x^2+5}$",
+        "background": "$\\frac{2x^2+1}{x^2+5}$ has horizontal asymptote $y=2$",
+        "numbers": "$\\frac{2x^2+1}{x^2+5}$ has horizontal asymptote $y=2$"
       }
     ],
     "applicationsClose": "Asymptotes are a graph's big promises: where it settles, where it blows up, and which simple line it eventually imitates.",
@@ -3193,6 +3646,21 @@
       "Horizontal asymptotes come from limits at infinity.",
       "Vertical asymptotes require non-canceled denominator zeros and one-sided blow-up.",
       "Slant asymptotes appear when a function approaches a line rather than a constant."
+    ],
+    "connectionsProse": "<p>This lesson builds on limits near a point and at infinity. Asymptotes summarize how a graph behaves when it approaches a line without necessarily reaching it. They make end behavior and blow-up visible in a compact way.</p>",
+    "symbols": [
+      {
+        "sym": "$x=a$",
+        "desc": "is a vertical asymptote"
+      },
+      {
+        "sym": "$y=L$",
+        "desc": "is a horizontal asymptote"
+      },
+      {
+        "sym": "$y=mx+b$",
+        "desc": "is a slant asymptote"
+      }
     ],
     "prereqs": [
       "math-01-11"
@@ -3220,8 +3688,8 @@
         "continuity"
       ]
     },
-    "motivation": "<p>You can already find an average speed: distance divided by time. But if a car's position is $s(t)=t^2$, what is its speed at exactly $t=3$? A zero-length time interval gives $0/0$, so we need a sharper idea.</p><p>The <b>derivative</b> is that idea. It starts with slopes over small intervals and asks for the limit as the interval shrinks to zero. In ML language, it is the local signal that says which way a loss changes if a parameter moves a tiny bit.</p>",
-    "definition": "<p>The derivative of $f$ at $a$ is $$ f'(a)=\\lim_{h\\to0}\\frac{f(a+h)-f(a)}{h}, $$ when this limit exists. The numerator is the output change, $h$ is the input change, the fraction is a secant slope, and the limit is the tangent slope. For a derivative function, $$ f'(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}. $$</p><p><b>Assumptions that matter:</b> the two-sided limit must exist and be finite. A corner, cusp, vertical tangent, or jump can stop differentiability. Units matter: if $f$ is loss and $x$ is weight, $f'(x)$ is loss change per unit weight.</p>",
+    "motivation": "<p>Average speed is easy to compute over a time interval. If a car moves from position $s(3)$ to $s(3.1)$, its average speed is the change in position divided by $0.1$. Instantaneous speed asks for the same kind of rate at one time, where the interval has no visible width.</p><p>The derivative answers that by using nearby intervals and then taking a limit. For a function $f$, the quotient $$ \\frac{f(x+h)-f(x)}{h} $$ is the slope of the secant line through $x$ and $x+h$. As $h$ approaches $0$, those secant slopes approach the slope of the tangent line, if the limit exists. That limiting slope is $f'(x)$.</p><p>The important point is local linear behavior. Near a differentiable input, the function behaves almost like a line. The derivative is the slope of that line, so it tells how many output units change per one input unit at that exact location.</p>",
+    "definition": "<p>The derivative — definition and meaning is defined by the limiting formula</p><p>$$f'(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}.$$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Use the definition to find the derivative of $f(x)=x^2$.",
       "skills": [
@@ -3420,34 +3888,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern ML training updates parameters using derivatives of a loss, a direct descendant of steepest-descent methods from numerical analysis.",
-        "numbers": "For $L(w)=(w-3)^2$ at $w=1$, $L'=-4$; with learning rate $0.1$, $w_{new}=1-0.1(-4)=1.4$."
+        "title": "Instantaneous velocity",
+        "background": "$s(t)=t^2$ gives $s'(3)=6$, so position changes at $6$ units per time at $t=3$",
+        "numbers": "$s(t)=t^2$ gives $s'(3)=6$, so position changes at $6$ units per time at $t=3$"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop computes many derivatives efficiently by reusing local slope information through a computation graph.",
-        "numbers": "If $z=wx$, $L=z^2$, with $w=2,x=3$, then $z=6$ and $\\partial L/\\partial w=2z\\cdot x=36$."
+        "title": "Marginal cost",
+        "background": "$C(q)=q^2+10$ gives $C'(5)=10$, so the next unit near $q=5$ costs about $10$ units",
+        "numbers": "$C(q)=q^2+10$ gives $C'(5)=10$, so the next unit near $q=5$ costs about $10$ units"
       },
       {
-        "title": "Gradient checking",
-        "background": "Before trusting a custom layer, engineers compare analytic derivatives to finite differences.",
-        "numbers": "For $f(x)=x^2$ at $x=2$, $h=0.001$ gives $4.001$, while the derivative is $4$; error is $0.001$."
+        "title": "Loss sensitivity",
+        "background": "$L(w)=(w-2)^2$ gives $L'(3)=2$, so increasing $w$ locally raises loss at rate $2$",
+        "numbers": "$L(w)=(w-2)^2$ gives $L'(3)=2$, so increasing $w$ locally raises loss at rate $2$"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Derivatives quantify how much an output changes when one input is nudged, useful in science and product metrics.",
-        "numbers": "If revenue $R(p)=100p-2p^2$, then $R'(20)=100-80=20$, about $20$ extra units per price dollar near $p=20$."
+        "title": "Tangent line",
+        "background": "for $f(x)=x^2$ at $x=4$, slope $8$ and point $(4,16)$ give $y=16+8(x-4)$",
+        "numbers": "for $f(x)=x^2$ at $x=4$, slope $8$ and point $(4,16)$ give $y=16+8(x-4)$"
       },
       {
-        "title": "Tangent-line approximation",
-        "background": "Calculus turns a curved function into a local line for quick estimates.",
-        "numbers": "For $\\sqrt{x}$ near $x=4$, derivative $1/4$ gives $\\sqrt{4.4}\\approx2+0.25(0.4)=2.1$; actual is about $2.098$."
+        "title": "Linear prediction",
+        "background": "near $x=10$, $x^2$ changes by about $20(0.1)=2$ when $x$ increases by $0.1$",
+        "numbers": "near $x=10$, $x^2$ changes by about $20(0.1)=2$ when $x$ increases by $0.1$"
       },
       {
-        "title": "Physics engines",
-        "background": "Velocity is the derivative of position, so simulation systems update motion by local rates.",
-        "numbers": "If $s(t)=5t^2$, then $s'(3)=30$ meters per second."
+        "title": "Gradient check in one variable",
+        "background": "$\\frac{(3.001)^2-3^2}{0.001}=6.001$, close to $f'(3)=6$",
+        "numbers": "$\\frac{(3.001)^2-3^2}{0.001}=6.001$, close to $f'(3)=6$"
       }
     ],
     "applicationsClose": "The derivative is one local question with many uniforms: slope, speed, sensitivity, and gradient are all the same idea in context.",
@@ -3455,6 +3923,71 @@
       "A derivative is the limit of a difference quotient.",
       "It measures instantaneous rate of change and tangent slope.",
       "In ML, derivatives are the local signals used to update parameters."
+    ],
+    "connectionsProse": "<p>This lesson builds on limits and on the slope of a line. A secant line measures average change between two nearby input values. The derivative is what remains when the second point moves all the way into the first point by a limit. This one definition supports nearly everything that follows in the section. The power, product, quotient, chain, exponential, logarithmic, and trigonometric derivative rules are all efficient ways to evaluate the same limit. Linear approximation, optimization, related rates, Taylor series, numerical differentiation, and backpropagation all use the derivative as a local rate of change.</p>",
+    "symbols": [
+      {
+        "sym": "$f'(x)$",
+        "desc": "is the derivative of $f$ at input $x$"
+      },
+      {
+        "sym": "$h$",
+        "desc": "is the small input change"
+      },
+      {
+        "sym": "$f(x+h)-f(x)$",
+        "desc": "is the output change"
+      },
+      {
+        "sym": "the quotient",
+        "desc": "is average rate of change"
+      },
+      {
+        "sym": "the limit turns the average rate into the instantaneous rate when it exists",
+        "desc": "the limit turns the average rate into the instantaneous rate when it exists"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start from the definition",
+        "result": "$f'(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}$",
+        "why": "the derivative is the limiting secant slope."
+      },
+      {
+        "do": "Substitute $f(t)=t^2$",
+        "result": "$f'(x)=\\lim_{h\\to0}\\frac{(x+h)^2-x^2}{h}$",
+        "why": "the rule is applied to the chosen function."
+      },
+      {
+        "do": "Expand the square",
+        "result": "$(x+h)^2=x^2+2xh+h^2$",
+        "why": "this separates the change caused by $h$."
+      },
+      {
+        "do": "Subtract $x^2$",
+        "result": "$(x^2+2xh+h^2)-x^2=2xh+h^2$",
+        "why": "unchanged parts cancel."
+      },
+      {
+        "do": "Factor $h$",
+        "result": "$2xh+h^2=h(2x+h)$",
+        "why": "this exposes the common interval length."
+      },
+      {
+        "do": "Divide by $h$",
+        "result": "$\\frac{h(2x+h)}{h}=2x+h$ for $h\\ne0$",
+        "why": "the quotient is only evaluated for nearby nonzero intervals."
+      },
+      {
+        "do": "Take the limit",
+        "result": "$\\lim_{h\\to0}(2x+h)=2x$",
+        "why": "the remaining $h$ term vanishes."
+      },
+      {
+        "do": "Conclude $\\frac{d}{dx}x^2=2x$",
+        "result": "Conclude $\\frac{d}{dx}x^2=2x$",
+        "why": "the tangent slope at input $x$ is twice that input."
+      }
     ],
     "prereqs": [
       "math-01-12"
@@ -3482,8 +4015,8 @@
         "piecewise functions"
       ]
     },
-    "motivation": "<p>A graph can be connected and still have a sharp corner. You can trace $|x|$ without lifting your pencil, but at $0$ the left slope is $-1$ and the right slope is $1$.</p><p>This distinction matters because calculus needs more than connectedness when it asks for a slope. Continuity says the point is attached to the curve; differentiability says the curve looks like one line when you zoom in.</p>",
-    "definition": "<p>A function is <b>continuous</b> at $a$ when $\\lim_{x\\to a}f(x)=f(a)$. It is <b>differentiable</b> at $a$ when $f'(a)=\\lim_{h\\to0}\\frac{f(a+h)-f(a)}{h}$ exists as a finite two-sided limit. Differentiability implies continuity: if $f'(a)$ exists, then $f(a+h)-f(a)=h\\cdot\\frac{f(a+h)-f(a)}{h}\\to0\\cdot f'(a)=0$, so $f(a+h)\\to f(a)$.</p><p><b>Assumptions that matter:</b> the converse is false. Corners, cusps, vertical tangents, jumps, and holes can break differentiability; jumps and holes also break continuity. Piecewise functions must pass both a value test and a slope test at the join.</p>",
+    "motivation": "<p>Continuity only asks whether nearby outputs approach the function value. Differentiability asks more: the ratio of output change to input change must approach a finite limiting slope.</p><p>When that slope exists, the output change can be written as slope times input change in the limit, and the input change goes to zero. A corner such as $|x|$ shows why the reverse implication fails: the graph can meet without a single tangent slope.</p>",
+    "definition": "<p>Central statement: $|x|$ is continuous at $0$ but left slope $-1$ and right slope $1$ differ.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Decide whether $f(x)=|x|$ is continuous and differentiable at $x=0$.",
       "skills": [
@@ -3687,34 +4220,34 @@
     ],
     "applications": [
       {
-        "title": "ReLU activations",
-        "background": "ReLU became popular because it is simple and avoids some sigmoid saturation, even with a corner at zero.",
-        "numbers": "At $x=-0.1$, slope is $0$; at $x=0.1$, slope is $1$; the derivative at $0$ is not unique."
+        "title": "$x^2$",
+        "background": "$x^2$ is differentiable at $2$ and continuous with value $4$",
+        "numbers": "$x^2$ is differentiable at $2$ and continuous with value $4$"
       },
       {
-        "title": "L1 regularization",
-        "background": "The absolute value penalty encourages sparsity, which is useful for feature selection.",
-        "numbers": "For $\\lambda|w|$ with $\\lambda=0.2$, slopes are $-0.2$ for $w<0$ and $0.2$ for $w>0$, with a corner at $0$."
+        "title": "$|x|$",
+        "background": "$|x|$ is continuous at $0$ but not differentiable",
+        "numbers": "$|x|$ is continuous at $0$ but not differentiable"
       },
       {
-        "title": "Hinge loss",
-        "background": "Support vector machines use a piecewise linear loss with a kink at the margin.",
-        "numbers": "$\\max(0,1-yz)$ has slope $-y$ when $yz<1$ and $0$ when $yz>1$; at $yz=1$ it is nondifferentiable."
+        "title": "ReLU",
+        "background": "ReLU is continuous at $0$ but slopes $0$ and $1$ differ",
+        "numbers": "ReLU is continuous at $0$ but slopes $0$ and $1$ differ"
       },
       {
-        "title": "Clipping in systems",
-        "background": "Clipping protects values from exceeding a safe range but creates corners at the thresholds.",
-        "numbers": "For $c(x)=\\min(1,\\max(0,x))$, slopes are $0$ below $0$, $1$ between $0$ and $1$, and $0$ above $1$."
+        "title": "Step function",
+        "background": "Step function has jump $1$, so not continuous or differentiable",
+        "numbers": "Step function has jump $1$, so not continuous or differentiable"
       },
       {
-        "title": "Piecewise pricing",
-        "background": "Tiered pricing can be continuous while marginal price jumps at tier boundaries.",
-        "numbers": "If cost is $0.10q$ up to $1000$ and $100+0.06(q-1000)$ after, cost is continuous at $1000$ but slope changes from $0.10$ to $0.06$."
+        "title": "$\\sqrt{x}$",
+        "background": "$\\sqrt{x}$ is continuous at $0$ but derivative blows up",
+        "numbers": "$\\sqrt{x}$ is continuous at $0$ but derivative blows up"
       },
       {
-        "title": "Numerical optimizers",
-        "background": "Smooth optimizers expect reliable local slopes; nonsmooth points may require subgradients or smoothing.",
-        "numbers": "Replacing $|x|$ with $\\sqrt{x^2+0.01}$ gives derivative $x/\\sqrt{x^2+0.01}$, so at $x=0$ the slope is $0$ instead of undefined."
+        "title": "$x^{2/3}$",
+        "background": "$x^{2/3}$ is continuous at $0$ with vertical tangent",
+        "numbers": "$x^{2/3}$ is continuous at $0$ with vertical tangent"
       }
     ],
     "applicationsClose": "Continuity keeps the curve attached; differentiability gives it one clear local direction. Both are useful, and they are not the same promise.",
@@ -3722,6 +4255,53 @@
       "Differentiability implies continuity, but continuity does not imply differentiability.",
       "Corners, cusps, vertical tangents, jumps, and holes are the usual suspects.",
       "Many ML losses are intentionally continuous but nonsmooth, so optimizers use subgradients or conventions."
+    ],
+    "connectionsProse": "<p>This lesson builds on continuity and the derivative definition. Differentiability adds the stronger requirement that the local slope settle to one value. This connection explains why every differentiable function is continuous, while some continuous functions still have corners or vertical tangents.</p>",
+    "symbols": [
+      {
+        "sym": "Differentiable",
+        "desc": "means derivative exists"
+      },
+      {
+        "sym": "continuous",
+        "desc": "means limit equals value"
+      },
+      {
+        "sym": "one-sided slopes test corners",
+        "desc": "one-sided slopes test corners"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Suppose $f'(a)$ exists",
+        "result": "Suppose $f'(a)$ exists",
+        "why": "the difference quotient has a finite limit."
+      },
+      {
+        "do": "Rewrite $f(x)-f(a)=\\frac{f(x)-f(a)}{x-a}(x-a)$ for $x\\ne a$",
+        "result": "Rewrite $f(x)-f(a)=\\frac{f(x)-f(a)}{x-a}(x-a)$ for $x\\ne a$",
+        "why": "factor change into slope times input change."
+      },
+      {
+        "do": "Let $x\\to a$",
+        "result": "Let $x\\to a$",
+        "why": "the quotient tends to $f'(a)$ and $x-a\\to0$."
+      },
+      {
+        "do": "The product tends to $f'(a)\\cdot0=0$.",
+        "result": "The product tends to $f'(a)\\cdot0=0$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $f(x)\\to f(a)$, so $f$ is continuous at $a$.",
+        "result": "Therefore $f(x)\\to f(a)$, so $f$ is continuous at $a$.",
+        "why": ""
+      },
+      {
+        "do": "The converse fails",
+        "result": "$|x|$ is continuous at $0$ but left slope $-1$ and right slope $1$ differ.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-13"
@@ -3749,8 +4329,8 @@
         "linear approximation"
       ]
     },
-    "motivation": "<p>Using the derivative definition for $x^2$ was worth doing once. But doing that expansion for every power would become tiring fast, and calculus is kind enough to give us a pattern.</p><p>The <b>power rule</b> says a power's exponent drops down as a coefficient, then decreases by one. This is one of the main workhorses behind gradients for polynomial losses and simple model terms.</p>",
-    "definition": "<p>For any real exponent $n$ where the expression is defined, $$\\frac{d}{dx}x^n=nx^{n-1}.$$ For positive integers, the reason comes from expanding $(x+h)^n$: after subtracting $x^n$, the first surviving term is $nx^{n-1}h$, and every remaining term contains higher powers of $h$ that vanish after dividing by $h$ and taking $h\\to0$.</p><p><b>Assumptions that matter:</b> the derivative must be taken where $x^n$ is defined and differentiable. Negative powers exclude $x=0$. Fractional powers may have domain restrictions or fail to have finite derivative at endpoints such as $\\sqrt{x}$ at $0$.</p>",
+    "motivation": "<p>The derivative of $x^n$ measures how a power changes under a small input increase. Expanding $(x+h)^n$ shows that the first-order change is $n x^{n-1}h$, while higher powers of $h$ become negligible in the limit.</p><p>That first-order term is the slope. After dividing by $h$ and letting $h$ go to zero, only $n x^{n-1}$ remains, which is why powers can be differentiated so efficiently.</p>",
+    "definition": "<p>Central statement: The derivative is $n x^{n-1}$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Differentiate $f(x)=7x^5$.",
       "skills": [
@@ -3924,34 +4504,34 @@
     ],
     "applications": [
       {
-        "title": "Squared-error gradients",
-        "background": "Least squares became central because squaring errors gives smooth derivatives and strong geometric structure.",
-        "numbers": "For $L(w)=(w-5)^2$, $L'(2)=2(2-5)=-6$, so a $0.1$ step sends $w$ to $2.6$."
+        "title": "$\\frac{d}{dx}x^3=3x^2$, so at $2$ the slope",
+        "background": "$\\frac{d}{dx}x^3=3x^2$, so at $2$ the slope is $12$",
+        "numbers": "$\\frac{d}{dx}x^3=3x^2$, so at $2$ the slope is $12$"
       },
       {
-        "title": "Weight decay",
-        "background": "L2 regularization penalizes large weights with a square, making the gradient proportional to the weight.",
-        "numbers": "For penalty $0.01w^2$, derivative is $0.02w$; at $w=10$, the penalty gradient is $0.2$."
+        "title": "$\\frac{d}{dx}x^5=5x^4$, so at $1$ the slope",
+        "background": "$\\frac{d}{dx}x^5=5x^4$, so at $1$ the slope is $5$",
+        "numbers": "$\\frac{d}{dx}x^5=5x^4$, so at $1$ the slope is $5$"
       },
       {
-        "title": "Polynomial regression",
-        "background": "Polynomial features let linear models bend, and training needs derivatives of powers.",
-        "numbers": "If prediction includes $a x^3$ and loss gradient with respect to prediction is $2$, then contribution to $\\partial L/\\partial a$ at $x=4$ is $2\\cdot4^3=128$."
+        "title": "$\\frac{d}{dx}\\sqrt{x}=1/(2\\sqrt{x})$, so at $4$ the slope",
+        "background": "$\\frac{d}{dx}\\sqrt{x}=1/(2\\sqrt{x})$, so at $4$ the slope is $0.25$",
+        "numbers": "$\\frac{d}{dx}\\sqrt{x}=1/(2\\sqrt{x})$, so at $4$ the slope is $0.25$"
       },
       {
-        "title": "Backprop through powers",
-        "background": "Neural-network libraries store local derivative rules for operations such as square and cube.",
-        "numbers": "For $y=x^4$ at $x=2$, local derivative is $4x^3=32$; an upstream gradient $0.5$ becomes $16$."
+        "title": "$\\frac{d}{dx}x^{-1}=-x^{-2}$, so at $2$ the slope",
+        "background": "$\\frac{d}{dx}x^{-1}=-x^{-2}$, so at $2$ the slope is $-0.25$",
+        "numbers": "$\\frac{d}{dx}x^{-1}=-x^{-2}$, so at $2$ the slope is $-0.25$"
       },
       {
-        "title": "Physics-inspired losses",
-        "background": "Many models include energy terms like $kx^2/2$, inherited from springs and quadratic approximations.",
-        "numbers": "If $E=3x^2/2$, then $E'=3x$; at $x=0.4$, force magnitude is $1.2$."
+        "title": "Cost $q^4$",
+        "background": "Cost $q^4$ has marginal cost $108$ at $q=3$",
+        "numbers": "Cost $q^4$ has marginal cost $108$ at $q=3$"
       },
       {
-        "title": "Feature scaling effects",
-        "background": "High powers magnify large inputs, so derivatives can become large quickly.",
-        "numbers": "For $x^6$, derivative at $x=2$ is $6\\cdot32=192$, but at $x=0.5$ it is $6/32=0.1875$."
+        "title": "Regularizer $w^2$",
+        "background": "Regularizer $w^2$ has gradient $2w$, so at $w=-3$ it is $-6$",
+        "numbers": "Regularizer $w^2$ has gradient $2w$, so at $w=-3$ it is $-6$"
       }
     ],
     "applicationsClose": "The power rule is small, but it is everywhere: every square penalty, polynomial feature, and local backprop rule leans on it.",
@@ -3959,6 +4539,58 @@
       "$\\frac{d}{dx}x^n=nx^{n-1}$ where the derivative is defined.",
       "Constants stay in front of derivatives.",
       "Power-rule gradients drive many polynomial and squared-loss calculations in ML."
+    ],
+    "connectionsProse": "<p>This lesson builds on the derivative definition and polynomial powers. The power rule is the first major shortcut for evaluating derivatives. It turns repeated limit work into a simple rule that will be used throughout the rest of calculus.</p>",
+    "symbols": [
+      {
+        "sym": "$n$",
+        "desc": "is the power"
+      },
+      {
+        "sym": "$x$",
+        "desc": "is the input"
+      },
+      {
+        "sym": "$\\binom nk$ counts binomial terms",
+        "desc": "$\\binom nk$ counts binomial terms"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $\\frac{d}{dx}x^n=\\lim_{h\\to0}\\frac{(x+h)^n-x^n}{h}$.",
+        "result": "Start with $\\frac{d}{dx}x^n=\\lim_{h\\to0}\\frac{(x+h)^n-x^n}{h}$.",
+        "why": ""
+      },
+      {
+        "do": "Expand by the binomial theorem",
+        "result": "$(x+h)^n=x^n+n x^{n-1}h+\\binom n2x^{n-2}h^2+\\cdots+h^n$.",
+        "why": ""
+      },
+      {
+        "do": "Subtract $x^n$",
+        "result": "Subtract $x^n$",
+        "why": "the constant term cancels."
+      },
+      {
+        "do": "Factor $h$ from every remaining term.",
+        "result": "Factor $h$ from every remaining term.",
+        "why": ""
+      },
+      {
+        "do": "Divide by $h$ to get $n x^{n-1}+\\binom n2x^{n-2}h+\\cdots$.",
+        "result": "Divide by $h$ to get $n x^{n-1}+\\binom n2x^{n-2}h+\\cdots$.",
+        "why": ""
+      },
+      {
+        "do": "Let $h\\to0$",
+        "result": "Let $h\\to0$",
+        "why": "all terms with $h$ vanish."
+      },
+      {
+        "do": "The derivative is $n x^{n-1}$.",
+        "result": "The derivative is $n x^{n-1}$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-14"
@@ -3986,8 +4618,8 @@
         "linear combinations"
       ]
     },
-    "motivation": "<p>Real functions are rarely a single term. They are built from pieces: $3x^4$, $-2x$, $7$, and so on. The friendly news is that derivatives respect addition and subtraction.</p><p>The sum and difference rule is the first big modularity rule. It says you can handle one term at a time, which is exactly how larger models are built from smaller components.</p>",
-    "definition": "<p>If $f$ and $g$ are differentiable at $x$, then $$\\frac{d}{dx}[f(x)+g(x)]=f'(x)+g'(x),\\qquad \\frac{d}{dx}[f(x)-g(x)]=f'(x)-g'(x).$$ This follows directly from the difference quotient because $[f(x+h)+g(x+h)]-[f(x)+g(x)]$ splits into the change in $f$ plus the change in $g$.</p><p><b>Assumptions that matter:</b> each piece must be differentiable at the point. If one term has a corner or discontinuity there, the whole sum may fail to be differentiable even if the other terms are smooth.</p>",
+    "motivation": "<p>A sum changes by the change in the first function plus the change in the second function. The difference quotient for $f+g$ can therefore be separated into the quotient for $f$ and the quotient for $g$.</p><p>Taking the limit preserves that separation when both derivatives exist. This is why polynomial differentiation becomes straightforward after the power rule: each term contributes its own derivative.</p>",
+    "definition": "<p>Central statement: Replacing $g$ by $-g$ gives $(f-g)'=f'-g'$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Differentiate $p(x)=4x^5-3x^2+7x-9$.",
       "skills": [
@@ -4171,34 +4803,34 @@
     ],
     "applications": [
       {
-        "title": "Polynomial models",
-        "background": "Polynomial regression combines feature powers, and each coefficient contributes its own derivative term.",
-        "numbers": "For $y=2x^3-5x+1$, $dy/dx=6x^2-5$; at $x=2$, slope is $19$."
+        "title": "$(x^2+x^3)'=2x+3x^2$, at $2$",
+        "background": "$(x^2+x^3)'=2x+3x^2$, at $2$ gives $16$",
+        "numbers": "$(x^2+x^3)'=2x+3x^2$, at $2$ gives $16$"
       },
       {
-        "title": "Additive losses",
-        "background": "Training objectives often add data loss and regularization, so their gradients add too.",
-        "numbers": "If data gradient is $-6$ and L2 gradient is $0.4$, total gradient is $-5.6$."
+        "title": "$(x^3-x)'=3x^2-1$, at $1$",
+        "background": "$(x^3-x)'=3x^2-1$, at $1$ gives $2$",
+        "numbers": "$(x^3-x)'=3x^2-1$, at $1$ gives $2$"
       },
       {
-        "title": "Ensembles",
-        "background": "Averaged model outputs have derivatives that average the model derivatives.",
-        "numbers": "If two predictors have local slopes $3$ and $5$, their average has slope $(3+5)/2=4$."
+        "title": "$C(q)=q^2+5q+10$",
+        "background": "$C(q)=q^2+5q+10$ has $C'(4)=13$",
+        "numbers": "$C(q)=q^2+5q+10$ has $C'(4)=13$"
       },
       {
-        "title": "Taylor approximations",
-        "background": "Local polynomial approximations rely on differentiating sums of powers term by term.",
-        "numbers": "For $1+x+x^2/2$, derivative is $1+x$; at $x=0.2$, the local slope is $1.2$."
+        "title": "$L(w)=w^2+(w-1)^2$",
+        "background": "$L(w)=w^2+(w-1)^2$ has $L'(2)=6$",
+        "numbers": "$L(w)=w^2+(w-1)^2$ has $L'(2)=6$"
       },
       {
-        "title": "Cost functions in operations",
-        "background": "Total cost often combines fixed, linear, and quadratic terms.",
-        "numbers": "If $C(q)=100+4q+0.02q^2$, then $C'(50)=4+2=6$ dollars per unit."
+        "title": "Position $t^2+3t$",
+        "background": "Position $t^2+3t$ has velocity $9$ at $t=3$",
+        "numbers": "Position $t^2+3t$ has velocity $9$ at $t=3$"
       },
       {
-        "title": "Feature attribution for linear scores",
-        "background": "Linear scoring models add feature contributions, making sensitivity easy to read.",
-        "numbers": "For $s=2x_1-3x_2+5$, $\\partial s/\\partial x_1=2$ and $\\partial s/\\partial x_2=-3$."
+        "title": "Polynomial $4x^4-2x$",
+        "background": "Polynomial $4x^4-2x$ has slope $30$ at $x=1.5$",
+        "numbers": "Polynomial $4x^4-2x$ has slope $30$ at $x=1.5$"
       }
     ],
     "applicationsClose": "The rule's message is modular: if a function is assembled by adding pieces, its derivative is assembled the same way.",
@@ -4206,6 +4838,53 @@
       "Derivatives distribute over sums and differences.",
       "Differentiate polynomials term by term, preserving signs.",
       "Additive objectives have additive gradients."
+    ],
+    "connectionsProse": "<p>This lesson builds on the derivative as a limit of output change. When functions are added or subtracted, their output changes add or subtract too. This rule lets larger formulas be handled one term at a time.</p>",
+    "symbols": [
+      {
+        "sym": "$f,g$",
+        "desc": "are differentiable functions"
+      },
+      {
+        "sym": "$h$",
+        "desc": "is the input change"
+      },
+      {
+        "sym": "prime",
+        "desc": "means derivative with respect to $x$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $\\frac{d}{dx}(f+g)=\\lim_{h\\to0}\\frac{f(x+h)+g(x+h)-f(x)-g(x)}{h}$.",
+        "result": "Start with $\\frac{d}{dx}(f+g)=\\lim_{h\\to0}\\frac{f(x+h)+g(x+h)-f(x)-g(x)}{h}$.",
+        "why": ""
+      },
+      {
+        "do": "Regroup the numerator as $[f(x+h)-f(x)]+[g(x+h)-g(x)]$",
+        "result": "Regroup the numerator as $[f(x+h)-f(x)]+[g(x+h)-g(x)]$",
+        "why": "separate the two changes."
+      },
+      {
+        "do": "Split the fraction into two quotients.",
+        "result": "Split the fraction into two quotients.",
+        "why": ""
+      },
+      {
+        "do": "Take limits term by term when both derivatives exist.",
+        "result": "Take limits term by term when both derivatives exist.",
+        "why": ""
+      },
+      {
+        "do": "Get $(f+g)'=f'+g'$.",
+        "result": "Get $(f+g)'=f'+g'$.",
+        "why": ""
+      },
+      {
+        "do": "Replacing $g$ by $-g$ gives $(f-g)'=f'-g'$.",
+        "result": "Replacing $g$ by $-g$ gives $(f-g)'=f'-g'$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-15"
@@ -4233,8 +4912,8 @@
         "trigonometric functions"
       ]
     },
-    "motivation": "<p>It is tempting to think the derivative of $f(x)g(x)$ is just $f'(x)g'(x)$. But if width and height both change, area changes because width changes while height is present, and because height changes while width is present.</p><p>The product rule keeps both contributions. It is one of those rules that feels fussy at first, then becomes a trusted rhythm.</p>",
-    "definition": "<p>If $f$ and $g$ are differentiable, then $$\\frac{d}{dx}[f(x)g(x)]=f'(x)g(x)+f(x)g'(x).$$ From the difference quotient, add and subtract $f(x+h)g(x)$ in the numerator. The change splits into $f(x+h)[g(x+h)-g(x)]$ plus $g(x)[f(x+h)-f(x)]$, which tends to $f(x)g'(x)+g(x)f'(x)$.</p><p><b>Assumptions that matter:</b> both factors must be differentiable at the point. The rule is symmetric; either order gives the same result. Do not multiply the derivatives only — that misses the product's two change channels.</p>",
+    "motivation": "<p>When $f(x)g(x)$ changes, part of the change comes from $f$, part comes from $g$, and a very small overlap comes from both changing at once. In the limit, the overlap is too small to contribute to the derivative.</p><p>The resulting rule has two terms. One term changes $f$ while holding $g$ locally fixed, and the other changes $g$ while holding $f$ locally fixed.</p>",
+    "definition": "<p>Central statement: Therefore $(fg)'=f'g+fg'$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Differentiate $y=(x^2+1)(3x-4)$.",
       "skills": [
@@ -4438,34 +5117,34 @@
     ],
     "applications": [
       {
-        "title": "Gated neural units",
-        "background": "Gates multiply an activation by a learned value, so gradients must flow through both the gate and the activation.",
-        "numbers": "If output $y=ga$, upstream gradient is $5$, $g=0.2$, $a=3$, then $\\partial L/\\partial g=15$ and $\\partial L/\\partial a=1$."
+        "title": "$(x^2\\sin x)'=2x\\sin x+x^2\\cos x$, at $x=\\pi/2$",
+        "background": "$(x^2\\sin x)'=2x\\sin x+x^2\\cos x$, at $x=\\pi/2$ gives $\\pi$",
+        "numbers": "$(x^2\\sin x)'=2x\\sin x+x^2\\cos x$, at $x=\\pi/2$ gives $\\pi$"
       },
       {
-        "title": "Attention weights times values",
-        "background": "Attention forms weighted sums, and each term is a product of a weight and a value vector component.",
-        "numbers": "For one scalar term $av$, with upstream gradient $2$, $a=0.25$, $v=8$, gradients are $16$ for $a$ and $0.5$ for $v$."
+        "title": "$(xe^x)'=e^x+xe^x$, at $1$",
+        "background": "$(xe^x)'=e^x+xe^x$, at $1$ gives $2e\\approx5.437$",
+        "numbers": "$(xe^x)'=e^x+xe^x$, at $1$ gives $2e\\approx5.437$"
       },
       {
-        "title": "Revenue models",
-        "background": "Revenue is price times quantity, both of which may vary with price.",
-        "numbers": "If $R(p)=p(100-2p)$, then $R'=1(100-2p)+p(-2)=100-4p$; at $p=20$, slope is $20$."
+        "title": "Revenue $p(q)q=(10-q)q$",
+        "background": "Revenue $p(q)q=(10-q)q$ has derivative $10-2q$, at $3$ gives $4$",
+        "numbers": "Revenue $p(q)q=(10-q)q$ has derivative $10-2q$, at $3$ gives $4$"
       },
       {
-        "title": "Area growth",
-        "background": "The product rule was historically tied to geometry: changing area has width and height contributions.",
-        "numbers": "If width $w=t^2$ and height $h=3t$, area rate is $2t(3t)+t^2(3)=9t^2$; at $t=2$, rate is $36$."
+        "title": "$x^2\\ln x$",
+        "background": "$x^2\\ln x$ has slope $2x\\ln x+x$, at $e$ gives $3e\\approx8.155$",
+        "numbers": "$x^2\\ln x$ has slope $2x\\ln x+x$, at $e$ gives $3e\\approx8.155$"
       },
       {
-        "title": "Probability factorizations",
-        "background": "Likelihoods often multiply factors; derivatives of products motivate log-likelihoods.",
-        "numbers": "For $p(\\theta)=\\theta(1-\\theta)$, $p'=1(1-\\theta)+\\theta(-1)=1-2\\theta$; at $0.3$, slope is $0.4$."
+        "title": "$\\sqrt{x}(x+1)$",
+        "background": "$\\sqrt{x}(x+1)$ has slope $3.25$ at $4$",
+        "numbers": "$\\sqrt{x}(x+1)$ has slope $3.25$ at $4$"
       },
       {
-        "title": "Feature interactions",
-        "background": "Models sometimes include interaction terms where two features multiply.",
-        "numbers": "For score $s=x_1x_2$, if $x_1=4,x_2=7$, then $\\partial s/\\partial x_1=7$ and $\\partial s/\\partial x_2=4$."
+        "title": "$w\\sigma(w)$ with $\\sigma(0)=0.5$, $\\sigma'(0)=0.25$",
+        "background": "$w\\sigma(w)$ with $\\sigma(0)=0.5$, $\\sigma'(0)=0.25$ has derivative $0.5$ at $0$",
+        "numbers": "$w\\sigma(w)$ with $\\sigma(0)=0.5$, $\\sigma'(0)=0.25$ has derivative $0.5$ at $0$"
       }
     ],
     "applicationsClose": "Whenever a quantity is built by multiplying changing parts, the product rule reminds us to credit each part's change while the other part is present.",
@@ -4473,6 +5152,53 @@
       "$\\frac{d}{dx}[fg]=f'g+fg'$.",
       "Do not multiply derivatives only; that misses two separate contributions.",
       "Products appear in gates, attention, probabilities, revenue, and feature interactions."
+    ],
+    "connectionsProse": "<p>This lesson builds on derivatives of single functions and on products of quantities. Products are common in models where two changing factors interact. The product rule explains how each factor contributes to the local rate of the whole product.</p>",
+    "symbols": [
+      {
+        "sym": "$f,g$",
+        "desc": "are factors"
+      },
+      {
+        "sym": "$f',g'$",
+        "desc": "are their local rates"
+      },
+      {
+        "sym": "the two terms measure changing one factor while holding the other locally fixed",
+        "desc": "the two terms measure changing one factor while holding the other locally fixed"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $\\frac{f(x+h)g(x+h)-f(x)g(x)}{h}$.",
+        "result": "Start with $\\frac{f(x+h)g(x+h)-f(x)g(x)}{h}$.",
+        "why": ""
+      },
+      {
+        "do": "Add and subtract $f(x+h)g(x)$",
+        "result": "Add and subtract $f(x+h)g(x)$",
+        "why": "this creates two single-factor changes."
+      },
+      {
+        "do": "Regroup as $\\frac{f(x+h)[g(x+h)-g(x)]}{h}+\\frac{g(x)[f(x+h)-f(x)]}{h}$.",
+        "result": "Regroup as $\\frac{f(x+h)[g(x+h)-g(x)]}{h}+\\frac{g(x)[f(x+h)-f(x)]}{h}$.",
+        "why": ""
+      },
+      {
+        "do": "Let $h\\to0$",
+        "result": "Let $h\\to0$",
+        "why": "continuity from differentiability gives $f(x+h)\\to f(x)$."
+      },
+      {
+        "do": "The first term tends to $f(x)g'(x)$ and the second to $g(x)f'(x)$.",
+        "result": "The first term tends to $f(x)g'(x)$ and the second to $g(x)f'(x)$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $(fg)'=f'g+fg'$.",
+        "result": "Therefore $(fg)'=f'g+fg'$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-16"
@@ -4500,8 +5226,8 @@
         "normalization"
       ]
     },
-    "motivation": "<p>Ratios are everywhere: error per example, revenue per user, signal-to-noise. When the top and bottom both change, the slope of the ratio is not just top slope divided by bottom slope.</p><p>The <b>quotient rule</b> is the careful bookkeeping rule for ratios. It rewards a steady order: bottom times derivative of top, minus top times derivative of bottom, all over bottom squared.</p>",
-    "definition": "<p>If $f$ and $g$ are differentiable and $g(x)\\ne0$, then $$\\frac{d}{dx}\\left[\\frac{f(x)}{g(x)}\\right]=\\frac{g(x)f'(x)-f(x)g'(x)}{[g(x)]^2}.$$ One way to derive it is to write $f/g=f\\cdot g^{-1}$, use the product rule, and differentiate $g^{-1}$ as $-g'/g^2$.</p><p><b>Assumptions that matter:</b> the denominator cannot be zero at the point. Order matters in the numerator: denominator times top derivative minus numerator times bottom derivative. The squared denominator is always nonnegative, but the numerator controls the sign.</p>",
+    "motivation": "<p>A quotient can be rewritten as a product with a reciprocal. That means the product rule and chain rule are enough to derive the quotient rule, provided the denominator is not zero.</p><p>The numerator's change raises or lowers the ratio directly. The denominator's change works in the opposite direction because increasing the denominator makes the same numerator count for less.</p>",
+    "definition": "<p>Central statement: $(f'g-fg')/g^2$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Differentiate $y=\\dfrac{x^2+1}{x-3}$.",
       "skills": [
@@ -4705,34 +5431,34 @@
     ],
     "applications": [
       {
-        "title": "Rates per user",
-        "background": "Product metrics often divide an aggregate by active users, so both numerator and denominator can move.",
-        "numbers": "If clicks $C=10t$ and users $U=t+100$, then $(C/U)'=1000/(t+100)^2$; at $t=100$, slope is $0.025$."
+        "title": "$\\left(\\frac{x^2+1}{x}\\right)'=1-1/x^2$, at $2$",
+        "background": "$\\left(\\frac{x^2+1}{x}\\right)'=1-1/x^2$, at $2$ gives $0.75$",
+        "numbers": "$\\left(\\frac{x^2+1}{x}\\right)'=1-1/x^2$, at $2$ gives $0.75$"
       },
       {
-        "title": "Signal-to-noise ratios",
-        "background": "Engineering systems compare signal power to noise power, and tuning can change both.",
-        "numbers": "For $S(x)=x^2/(x+1)$, $S'(2)=(4+4)/9=8/9$."
+        "title": "$\\left(\\frac{x}{x+1}\\right)'=1/(x+1)^2$, at $3$",
+        "background": "$\\left(\\frac{x}{x+1}\\right)'=1/(x+1)^2$, at $3$ gives $0.0625$",
+        "numbers": "$\\left(\\frac{x}{x+1}\\right)'=1/(x+1)^2$, at $3$ gives $0.0625$"
       },
       {
-        "title": "Precision metrics",
-        "background": "Precision is true positives divided by predicted positives, a ratio that changes with thresholds.",
-        "numbers": "If $TP=80-2t$ and $P=100-t$, then precision derivative is $[(100-t)(-2)-(80-2t)(-1)]/(100-t)^2$; at $t=20$, it is $-60/6400=-0.009375$."
+        "title": "$\\left(\\frac{\\sin x}{x}\\right)'$ at $\\pi/2$",
+        "background": "$\\left(\\frac{\\sin x}{x}\\right)'$ at $\\pi/2$ is $-4/\\pi^2\\approx-0.405$",
+        "numbers": "$\\left(\\frac{\\sin x}{x}\\right)'$ at $\\pi/2$ is $-4/\\pi^2\\approx-0.405$"
       },
       {
-        "title": "Normalized features",
-        "background": "Normalization divides by a scale term to make features comparable.",
-        "numbers": "For $z=x/(x+10)$, $z'=10/(x+10)^2$; at $x=10$, slope is $0.025$."
+        "title": "Average cost $(q^2+10)/q$",
+        "background": "Average cost $(q^2+10)/q$ has derivative $1-10/q^2$, at $5$ gives $0.6$",
+        "numbers": "Average cost $(q^2+10)/q$ has derivative $1-10/q^2$, at $5$ gives $0.6$"
       },
       {
-        "title": "A/B test lift",
-        "background": "Lift is often a ratio of treatment to control, so uncertainty and sensitivity follow quotient structure.",
-        "numbers": "If lift $r=a/b$ with $a=0.12,b=0.10$, then changing $a$ by $0.001$ changes $r$ by about $0.001/0.10=0.01$."
+        "title": "Ratio $e^x/(1+x)$",
+        "background": "Ratio $e^x/(1+x)$ has slope $e/4\\approx0.680$ at $1$",
+        "numbers": "Ratio $e^x/(1+x)$ has slope $e/4\\approx0.680$ at $1$"
       },
       {
-        "title": "Average cost",
-        "background": "Average cost divides total cost by units, and its derivative shows whether scale is helping.",
-        "numbers": "For $C(q)=100+5q$, average $A=100/q+5$, so $A'=-100/q^2$; at $q=50$, slope is $-0.04$."
+        "title": "Odds $p/(1-p)$",
+        "background": "Odds $p/(1-p)$ has derivative $1/(1-p)^2$, at $p=0.8$ gives $25$",
+        "numbers": "Odds $p/(1-p)$ has derivative $1/(1-p)^2$, at $p=0.8$ gives $25$"
       }
     ],
     "applicationsClose": "Ratios are careful objects: the top's change helps, the bottom's change can dilute, and the quotient rule keeps the signs straight.",
@@ -4740,6 +5466,48 @@
       "$\\frac{d}{dx}(f/g)=\\frac{gf'-fg'}{g^2}$ when $g\\ne0$.",
       "The order $gf'-fg'$ matters.",
       "Quotient derivatives appear in normalized metrics, rates, ratios, and average costs."
+    ],
+    "connectionsProse": "<p>This lesson builds on the product rule and reciprocal powers. Quotients appear whenever one changing quantity is measured relative to another. The quotient rule keeps track of how numerator and denominator changes push the ratio in opposite directions.</p>",
+    "symbols": [
+      {
+        "sym": "$g(x)\\ne0$",
+        "desc": "is required"
+      },
+      {
+        "sym": "$f'g$",
+        "desc": "is numerator-change contribution"
+      },
+      {
+        "sym": "$fg'$",
+        "desc": "is denominator-change contribution"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write $f/g=f\\cdot g^{-1}$ with $g\\ne0$",
+        "result": "Write $f/g=f\\cdot g^{-1}$ with $g\\ne0$",
+        "why": "turn the quotient into a product."
+      },
+      {
+        "do": "Differentiate using the product rule",
+        "result": "$(f/g)'=f'g^{-1}+f(g^{-1})'$.",
+        "why": ""
+      },
+      {
+        "do": "Differentiate $g^{-1}$ by the chain rule",
+        "result": "$(g^{-1})'=-g^{-2}g'$.",
+        "why": ""
+      },
+      {
+        "do": "Substitute",
+        "result": "$(f/g)'=f'/g-fg'/g^2$.",
+        "why": ""
+      },
+      {
+        "do": "Put over a common denominator",
+        "result": "$(f'g-fg')/g^2$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-17"
@@ -4767,8 +5535,8 @@
         "partial derivatives"
       ]
     },
-    "motivation": "<p>Many functions are nested: $\\sqrt{1+x^2}$, $(3x-1)^5$, or a neural network layer inside a loss. The outside changes when the inside changes, and the inside changes when $x$ changes.</p><p>The <b>chain rule</b> is the language for that relay. It says total change equals outside sensitivity times inside sensitivity. If you understand this lesson, backprop becomes much less mysterious.</p>",
-    "definition": "<p>If $y=f(u)$ and $u=g(x)$ are differentiable, then $$\\frac{dy}{dx}=\\frac{dy}{du}\\cdot\\frac{du}{dx},$$ or equivalently $$(f\\circ g)'(x)=f'(g(x))g'(x).$$ The reason is that a small change $\\Delta x$ causes $\\Delta u\\approx g'(x)\\Delta x$, and that causes $\\Delta y\\approx f'(u)\\Delta u$, so $\\Delta y\\approx f'(g(x))g'(x)\\Delta x$.</p><p><b>Assumptions that matter:</b> the inner function must be differentiable at $x$, and the outer function must be differentiable at the inner value $g(x)$. Always identify the inner function before differentiating; missing the inner derivative is the classic error.</p>",
+    "motivation": "<p>A composed function changes in stages. A small change in $x$ first changes the inner value $g(x)$, and that changed inner value then changes the outer output $f(g(x))$.</p><p>The total local rate is the product of those local rates. The outside derivative is evaluated at the current inside value, then multiplied by the derivative of the inside function.</p>",
+    "definition": "<p>Central statement: Get $(f\\circ g)'(x)=f'(g(x))g'(x)$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Differentiate $y=(3x^2-1)^4$.",
       "skills": [
@@ -4972,34 +5740,34 @@
     ],
     "applications": [
       {
-        "title": "Backpropagation",
-        "background": "Backprop is the chain rule organized so each layer passes an upstream gradient to the layer before it.",
-        "numbers": "If $z=wx$, $a=z^2$, $L=3a$, with $w=2,x=4$, then $z=8$ and $dL/dw=3\\cdot2z\\cdot x=192$."
+        "title": "$(3x+1)^2$",
+        "background": "$(3x+1)^2$ has derivative $6(3x+1)$, at $2$ gives $42$",
+        "numbers": "$(3x+1)^2$ has derivative $6(3x+1)$, at $2$ gives $42$"
       },
       {
-        "title": "Squared loss with a linear model",
-        "background": "Least-squares training composes prediction, error, and square, so the chain rule gives the parameter gradient.",
-        "numbers": "For $L=(wx-y)^2$, $w=1,x=3,y=5$, error $=-2$, so $dL/dw=2(-2)\\cdot3=-12$."
+        "title": "$e^{2x}$",
+        "background": "$e^{2x}$ has derivative $2e^{2x}$, at $0$ gives $2$",
+        "numbers": "$e^{2x}$ has derivative $2e^{2x}$, at $0$ gives $2$"
       },
       {
-        "title": "Activation derivatives",
-        "background": "A neuron's activation is an outer nonlinear function applied to an inner affine score.",
-        "numbers": "For $a=(2x+1)^3$ at $x=1$, derivative is $3(3)^2\\cdot2=54$."
+        "title": "$\\sin(x^2)$",
+        "background": "$\\sin(x^2)$ has derivative $2x\\cos(x^2)$, at $0$ gives $0$",
+        "numbers": "$\\sin(x^2)$ has derivative $2x\\cos(x^2)$, at $0$ gives $0$"
       },
       {
-        "title": "Feature standardization",
-        "background": "Preprocessing maps raw values into standardized values before a model uses them.",
-        "numbers": "If $z=(x-10)/2$ and loss $L=z^2$, then $dL/dx=2z\\cdot(1/2)=z$; at $x=14$, $z=2$, gradient is $2$."
+        "title": "$\\ln(1+x^2)$",
+        "background": "$\\ln(1+x^2)$ has derivative $2x/(1+x^2)$, at $1$ gives $1$",
+        "numbers": "$\\ln(1+x^2)$ has derivative $2x/(1+x^2)$, at $1$ gives $1$"
       },
       {
-        "title": "Learning-rate schedules inside objectives",
-        "background": "Nested schedules occur when a parameter controls another quantity used by the loss.",
-        "numbers": "If $L(\\eta)=(1-5\\eta)^2$, then $L'=2(1-5\\eta)(-5)$; at $\\eta=0.1$, $L'=-5$."
+        "title": "Loss $(wx-y)^2$ with $x=3,w=2,y=5$",
+        "background": "Loss $(wx-y)^2$ with $x=3,w=2,y=5$ has derivative $6$ with respect to $w$",
+        "numbers": "Loss $(wx-y)^2$ with $x=3,w=2,y=5$ has derivative $6$ with respect to $w$"
       },
       {
-        "title": "Computer graphics transforms",
-        "background": "Composed transformations change coordinates layer by layer, and sensitivities multiply backward.",
-        "numbers": "If screen coordinate $s=3(2x+1)$, then $ds/dx=3\\cdot2=6$; a $0.1$ move in $x$ moves screen position by $0.6$."
+        "title": "$\\sqrt{1+x}$",
+        "background": "$\\sqrt{1+x}$ has slope $1/(2\\sqrt{1+x})$, at $3$ gives $0.25$",
+        "numbers": "$\\sqrt{1+x}$ has slope $1/(2\\sqrt{1+x})$, at $3$ gives $0.25$"
       }
     ],
     "applicationsClose": "The chain rule is the bridge from one local derivative to a whole pipeline: each layer tells how it changes, and multiplication carries the message through.",
@@ -5007,6 +5775,53 @@
       "For $y=f(g(x))$, the derivative is $f'(g(x))g'(x)$.",
       "Always multiply by the inner derivative.",
       "Backpropagation is the chain rule applied repeatedly through a computation graph."
+    ],
+    "connectionsProse": "<p>This lesson builds on composition of functions. Many useful formulas have an inside process followed by an outside process. The chain rule is the derivative rule that follows that path of dependence.</p>",
+    "symbols": [
+      {
+        "sym": "$g$",
+        "desc": "is the inner function"
+      },
+      {
+        "sym": "$f$",
+        "desc": "is the outer function"
+      },
+      {
+        "sym": "$u$",
+        "desc": "is the intermediate value"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $y=f(u)$ and $u=g(x)$",
+        "result": "Let $y=f(u)$ and $u=g(x)$",
+        "why": "the output changes through an intermediate variable."
+      },
+      {
+        "do": "For a small $\\Delta x$, the inner change is $\\Delta u\\approx g'(x)\\Delta x$.",
+        "result": "For a small $\\Delta x$, the inner change is $\\Delta u\\approx g'(x)\\Delta x$.",
+        "why": ""
+      },
+      {
+        "do": "The outer change is $\\Delta y\\approx f'(u)\\Delta u$",
+        "result": "The outer change is $\\Delta y\\approx f'(u)\\Delta u$",
+        "why": "use the local slope of $f$ at $u$."
+      },
+      {
+        "do": "Substitute the inner change",
+        "result": "$\\Delta y\\approx f'(g(x))g'(x)\\Delta x$.",
+        "why": ""
+      },
+      {
+        "do": "Divide by $\\Delta x$ and take the limit.",
+        "result": "Divide by $\\Delta x$ and take the limit.",
+        "why": ""
+      },
+      {
+        "do": "Get $(f\\circ g)'(x)=f'(g(x))g'(x)$.",
+        "result": "Get $(f\\circ g)'(x)=f'(g(x))g'(x)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-18"
@@ -5034,8 +5849,8 @@
         "Linear approximation"
       ]
     },
-    "motivation": "<p>You already know that $e^x$ grows fast. The lovely surprise is that its slope grows in exactly the same way: wherever the graph is tall, it is also steep by the same amount.</p><p>That self-copying behavior is why exponentials are the natural language of compounding, decay, softmax probabilities, and continuous-time dynamics. Once you know the small rule, the chain rule lets you differentiate a whole family of growth curves.</p>",
-    "definition": "<p>The central rule is $$\\dfrac{d}{dx}e^x=e^x.$$ More generally, if $u=u(x)$ is differentiable, then $$\\dfrac{d}{dx}e^{u(x)}=e^{u(x)}u'(x),$$ by the chain rule. For another positive base $a$, write $a^x=e^{x\\ln a}$, so $$\\dfrac{d}{dx}a^x=a^x\\ln a.$$ This derivation is the reason $e$ is special: it is the base whose multiplier $\\ln e$ is $1$.</p><p><b>Assumptions that matter:</b> the base must satisfy $a>0$ for real-valued $a^x$ on all real $x$; the exponent $u(x)$ must be differentiable where you want the derivative; and the chain-rule factor $u'(x)$ is part of the derivative, not an optional decoration.</p>",
+    "motivation": "<p>For $e^x$, a small input change factors out as the current value times a small growth factor. The remaining limit is the defining rate property of the base $e$.</p><p>Other exponential bases are converted through $a^x=e^{x\\ln a}$. The chain rule then shows that $\\ln a$ is the scale factor translating base-$a$ growth into natural exponential growth.</p>",
+    "definition": "<p>Central statement: For $a^x=e^{x\\ln a}$, apply the chain rule to get $(a^x)'=a^x\\ln a$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Differentiate $f(x)=3e^{2x}-5e^{-x}+4^x$.",
       "skills": [
@@ -5204,34 +6019,34 @@
     ],
     "applications": [
       {
-        "title": "Softmax gradients",
-        "background": "Classification models turn scores into probabilities with exponentials; training needs the slope of each exponential score.",
-        "numbers": "For logits $[2,1]$, $e^2=7.389$, $e^1=2.718$, sum $10.107$, so the first probability is $0.731$ and the derivative of $e^{z_1}$ is $7.389$."
+        "title": "$\\frac{d}{dx}e^x$ at $2$",
+        "background": "$\\frac{d}{dx}e^x$ at $2$ is $e^2\\approx7.389$",
+        "numbers": "$\\frac{d}{dx}e^x$ at $2$ is $e^2\\approx7.389$"
       },
       {
-        "title": "Continuous growth",
-        "background": "Population, interest, and viral spread models use $N(t)=N_0e^{rt}$ when the instantaneous rate is proportional to the current amount.",
-        "numbers": "$N_0=1000$, $r=0.03$ gives $N'(10)=0.03\\cdot1000e^{0.3}\\approx40.5$ people per year."
+        "title": "$\\frac{d}{dx}2^x$ at $3$",
+        "background": "$\\frac{d}{dx}2^x$ at $3$ is $8\\ln2\\approx5.545$",
+        "numbers": "$\\frac{d}{dx}2^x$ at $3$ is $8\\ln2\\approx5.545$"
       },
       {
-        "title": "Exponential decay in regularization schedules",
-        "background": "A learning rate schedule may shrink by an exponential curve so early steps are large and later steps are gentle.",
-        "numbers": "$\\eta(t)=0.1e^{-0.05t}$ has $\\eta'(20)=-0.005e^{-1}\\approx-0.00184$ per epoch."
+        "title": "$e^{-0.5t}$",
+        "background": "$e^{-0.5t}$ has derivative $-0.5e^{-0.5t}$, at $0$ gives $-0.5$",
+        "numbers": "$e^{-0.5t}$ has derivative $-0.5e^{-0.5t}$, at $0$ gives $-0.5$"
       },
       {
-        "title": "Neural ODE modes",
-        "background": "A linear mode $x'=\\lambda x$ has solution $x(t)=x_0e^{\\lambda t}$, so the derivative reveals whether the mode grows or decays.",
-        "numbers": "With $x_0=2$ and $\\lambda=-4$, $x'(0)=-8$ and $x(1)=2e^{-4}\\approx0.0366$."
+        "title": "$5e^{0.2t}$",
+        "background": "$5e^{0.2t}$ has rate $1$ at $t=0$",
+        "numbers": "$5e^{0.2t}$ has rate $1$ at $t=0$"
       },
       {
-        "title": "Half-life models",
-        "background": "Radioactive decay and cached signal freshness often use an exponential curve with negative rate.",
-        "numbers": "For half-life $7$ days, $k=\\ln2/7\\approx0.099$, so $A'(14)=-0.099A_0e^{-1.386}\\approx-0.0248A_0$ per day."
+        "title": "Softplus derivative of $\\ln(1+e^x)$ at $0$",
+        "background": "Softplus derivative of $\\ln(1+e^x)$ at $0$ is $0.5$",
+        "numbers": "Softplus derivative of $\\ln(1+e^x)$ at $0$ is $0.5$"
       },
       {
-        "title": "Loss curvature intuition",
-        "background": "Exponential losses penalize wrong margins sharply, and the derivative shows how quickly pressure increases.",
-        "numbers": "For $L(m)=e^{-m}$, $L'(m)=-e^{-m}$; at margin $m=-2$, $L'= -e^2\\approx-7.389$, a strong push to improve the margin."
+        "title": "Continuous growth $100e^{0.03t}$",
+        "background": "Continuous growth $100e^{0.03t}$ has initial rate $3$",
+        "numbers": "Continuous growth $100e^{0.03t}$ has initial rate $3$"
       }
     ],
     "applicationsClose": "The same rule appears in every uniform: an exponential slope is the exponential again, scaled by the rate sitting in the exponent.",
@@ -5239,6 +6054,48 @@
       "$\\dfrac{d}{dx}e^x=e^x$ is the special self-copying derivative.",
       "$\\dfrac{d}{dx}e^{u(x)}=e^{u(x)}u'(x)$, so the chain-rule factor matters.",
       "$\\dfrac{d}{dx}a^x=a^x\\ln a$ for $a>0$; exponentials power growth, decay, and softmax gradients."
+    ],
+    "connectionsProse": "<p>This lesson builds on exponential functions and the derivative definition. Exponentials are central because their rate is tied to their current size. The natural exponential $e^x$ is the base where that rate matches the function itself.</p>",
+    "symbols": [
+      {
+        "sym": "$e^x$",
+        "desc": "is the natural exponential"
+      },
+      {
+        "sym": "$a>0$",
+        "desc": "is any base"
+      },
+      {
+        "sym": "$\\ln a$ converts base $a$ growth to natural growth",
+        "desc": "$\\ln a$ converts base $a$ growth to natural growth"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Use the definition",
+        "result": "$\\frac{d}{dx}e^x=\\lim_{h\\to0}\\frac{e^{x+h}-e^x}{h}$.",
+        "why": ""
+      },
+      {
+        "do": "Factor $e^x$",
+        "result": "$e^x\\lim_{h\\to0}\\frac{e^h-1}{h}$.",
+        "why": ""
+      },
+      {
+        "do": "The defining limit of $e$ gives $\\lim_{h\\to0}\\frac{e^h-1}{h}=1$.",
+        "result": "The defining limit of $e$ gives $\\lim_{h\\to0}\\frac{e^h-1}{h}=1$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $(e^x)'=e^x$.",
+        "result": "Therefore $(e^x)'=e^x$.",
+        "why": ""
+      },
+      {
+        "do": "For $a^x=e^{x\\ln a}$, apply the chain rule to get $(a^x)'=a^x\\ln a$.",
+        "result": "For $a^x=e^{x\\ln a}$, apply the chain rule to get $(a^x)'=a^x\\ln a$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-19"
@@ -5266,8 +6123,8 @@
         "The quotient rule"
       ]
     },
-    "motivation": "<p>A logarithm asks how many powers you need. As the input gets bigger, one extra unit matters less and less, so the graph keeps rising but its slope fades.</p><p>The derivative makes that intuition precise: the slope of $\\ln x$ is $1/x$. That tiny formula is the backbone of log-likelihood, cross-entropy, entropy, and numerical stability tricks.</p>",
-    "definition": "<p>The basic rule is $$\\dfrac{d}{dx}\\ln x=\\dfrac1x,$$ for $x>0$. One clean derivation uses inverse functions: if $y=\\ln x$, then $x=e^y$. Differentiate both sides with respect to $x$: $1=e^y\\dfrac{dy}{dx}=x\\dfrac{dy}{dx}$, so $\\dfrac{dy}{dx}=1/x$. With a differentiable inside function $u(x)>0$, $$\\dfrac{d}{dx}\\ln(u(x))=\\dfrac{u'(x)}{u(x)}.$$ For base $a$, $$\\dfrac{d}{dx}\\log_a x=\\dfrac{1}{x\\ln a}.$$</p><p><b>Assumptions that matter:</b> the log input must be positive; the inside function must be differentiable; and for $\\ln|u|$ the rule $u'/u$ is valid where $u\\ne0$ because the absolute value protects the domain on each side of zero.</p>",
+    "motivation": "<p>The logarithm grows slowly because multiplying the input by a fixed factor only adds a fixed amount to the output. That slow growth appears in the derivative $1/x$, which gets smaller as $x$ gets larger.</p><p>Implicit differentiation makes the derivation clean. Writing $y=\\ln x$ as $e^y=x$ lets the exponential derivative and the chain rule solve for $dy/dx$.</p>",
+    "definition": "<p>Central statement: For $\\log_a x=\\ln x/\\ln a$, derivative is $1/(x\\ln a)$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Differentiate $f(x)=\\ln(x^2+1)-3\\log_2 x$.",
       "skills": [
@@ -5436,34 +6293,34 @@
     ],
     "applications": [
       {
-        "title": "Cross-entropy",
-        "background": "For a true class probability $p$, cross-entropy uses $-\\ln p$ so confident correct predictions are cheap and bad predictions are expensive.",
-        "numbers": "At $p=0.9$, loss $0.105$ and slope $-1.111$; at $p=0.1$, loss $2.303$ and slope $-10$."
+        "title": "$\\frac{d}{dx}\\ln x$ at $4$",
+        "background": "$\\frac{d}{dx}\\ln x$ at $4$ is $0.25$",
+        "numbers": "$\\frac{d}{dx}\\ln x$ at $4$ is $0.25$"
       },
       {
-        "title": "Maximum likelihood",
-        "background": "Products of probabilities become sums of logs, and optimization follows the derivative of the log-likelihood.",
-        "numbers": "For Bernoulli success rate $p$ with $7$ successes in $10$ trials, $\\ell(p)=7\\ln p+3\\ln(1-p)$ and $\\ell'(p)=7/p-3/(1-p)$, which is zero at $p=0.7$."
+        "title": "$\\frac{d}{dx}\\log_{10}x$ at $100$",
+        "background": "$\\frac{d}{dx}\\log_{10}x$ at $100$ is $1/(100\\ln10)\\approx0.00434$",
+        "numbers": "$\\frac{d}{dx}\\log_{10}x$ at $100$ is $1/(100\\ln10)\\approx0.00434$"
       },
       {
-        "title": "Log-sum-exp",
-        "background": "Numerically stable probability code uses logs to avoid overflow while preserving derivatives.",
-        "numbers": "For $x=[1000,999]$, $\\ln(e^{1000}+e^{999})=1000+\\ln(1+e^{-1})\\approx1000.313$ instead of overflowing."
+        "title": "$\\ln(1+x)$",
+        "background": "$\\ln(1+x)$ has slope $1/(1+x)$, at $3$ gives $0.25$",
+        "numbers": "$\\ln(1+x)$ has slope $1/(1+x)$, at $3$ gives $0.25$"
       },
       {
-        "title": "Information gain",
-        "background": "Entropy measures surprise with logarithms; derivatives show how entropy changes as probabilities move.",
-        "numbers": "For binary $H(p)=-p\\ln p-(1-p)\\ln(1-p)$, $H'(0.8)=\\ln(0.2/0.8)=\\ln0.25\\approx-1.386$."
+        "title": "Log loss $-\\ln p$",
+        "background": "Log loss $-\\ln p$ has derivative $-1/p$, at $p=0.8$ gives $-1.25$",
+        "numbers": "Log loss $-\\ln p$ has derivative $-1/p$, at $p=0.8$ gives $-1.25$"
       },
       {
-        "title": "Feature scaling on log axes",
-        "background": "Heavy-tailed counts are often transformed with $\\ln(1+x)$ so large changes are compressed.",
-        "numbers": "The derivative is $1/(1+x)$; at $x=9$ the slope is $0.1$, while at $x=99$ it is $0.01$."
+        "title": "$x\\ln x$",
+        "background": "$x\\ln x$ has derivative $\\ln x+1$, at $e^2$ gives $3$",
+        "numbers": "$x\\ln x$ has derivative $\\ln x+1$, at $e^2$ gives $3$"
       },
       {
-        "title": "Power-law estimation",
-        "background": "Log transforms turn $y=Cx^a$ into a line, and log derivatives identify the exponent as relative growth.",
-        "numbers": "If $y=x^{1.5}$, then $\\ln y=1.5\\ln x$ and $d\\ln y/d\\ln x=1.5$."
+        "title": "Elasticity derivative $d\\ln y/dy$ at $y=20$",
+        "background": "Elasticity derivative $d\\ln y/dy$ at $y=20$ is $0.05$",
+        "numbers": "Elasticity derivative $d\\ln y/dy$ at $y=20$ is $0.05$"
       }
     ],
     "applicationsClose": "A log derivative keeps asking one gentle question: how large is the change compared with the current size?",
@@ -5471,6 +6328,58 @@
       "$\\dfrac{d}{dx}\\ln x=1/x$ for $x>0$.",
       "$\\dfrac{d}{dx}\\ln u=u'/u$; it measures relative change.",
       "Base-$a$ logs add the scale $1/\\ln a$, and log derivatives drive likelihood and cross-entropy."
+    ],
+    "connectionsProse": "<p>This lesson builds on logarithms as inverse exponentials. Since $\\ln x$ undoes $e^x$, its derivative can be found by differentiating the inverse relation. The result makes relative change a central calculus idea.</p>",
+    "symbols": [
+      {
+        "sym": "$x>0$",
+        "desc": "$x>0$"
+      },
+      {
+        "sym": "$y$",
+        "desc": "is the logarithm"
+      },
+      {
+        "sym": "$a$",
+        "desc": "is a positive base not equal to $1$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $y=\\ln x$",
+        "result": "Let $y=\\ln x$",
+        "why": "this means $e^y=x$."
+      },
+      {
+        "do": "Differentiate both sides with respect to $x$.",
+        "result": "Differentiate both sides with respect to $x$.",
+        "why": ""
+      },
+      {
+        "do": "The left side gives $e^y\\frac{dy}{dx}$ by the chain rule.",
+        "result": "The left side gives $e^y\\frac{dy}{dx}$ by the chain rule.",
+        "why": ""
+      },
+      {
+        "do": "The right side gives $1$.",
+        "result": "The right side gives $1$.",
+        "why": ""
+      },
+      {
+        "do": "Solve $\\frac{dy}{dx}=1/e^y$.",
+        "result": "Solve $\\frac{dy}{dx}=1/e^y$.",
+        "why": ""
+      },
+      {
+        "do": "Since $e^y=x$, $\\frac{d}{dx}\\ln x=1/x$.",
+        "result": "Since $e^y=x$, $\\frac{d}{dx}\\ln x=1/x$.",
+        "why": ""
+      },
+      {
+        "do": "For $\\log_a x=\\ln x/\\ln a$, derivative is $1/(x\\ln a)$.",
+        "result": "For $\\log_a x=\\ln x/\\ln a$, derivative is $1/(x\\ln a)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-20"
@@ -5498,8 +6407,8 @@
         "Differential equations"
       ]
     },
-    "motivation": "<p>Sine and cosine are the curves of repeating motion. If position follows a sine wave, its slope is not random; it is another wave, shifted in phase.</p><p>This is why trig derivatives feel like a small table but act like a powerful language. They let you compute velocities, optimize periodic signals, and backpropagate through rotations and positional encodings.</p>",
-    "definition": "<p>The core rules are $$\\dfrac{d}{dx}\\sin x=\\cos x,\\qquad \\dfrac{d}{dx}\\cos x=-\\sin x.$$ From these and the quotient rule, $$\\dfrac{d}{dx}\\tan x=\\sec^2x.$$ With an inside function $u(x)$, the chain rule gives $\\dfrac{d}{dx}\\sin u=\\cos(u)u'$, $\\dfrac{d}{dx}\\cos u=-\\sin(u)u'$, and $\\dfrac{d}{dx}\\tan u=\\sec^2(u)u'$. The limit behind the first rule is $\\lim_{h\\to0}\\sin h/h=1$ when angles are in radians.</p><p><b>Assumptions that matter:</b> angles must be measured in radians for these derivative constants to be exactly right; tangent is differentiable only where $\\cos x\\ne0$; and every scaled or shifted angle needs the chain-rule multiplier.</p>",
+    "motivation": "<p>Sine and cosine are linked because they are the vertical and horizontal coordinates of the same rotating point. As the point moves around the circle, the rate of change of one coordinate is controlled by the other coordinate.</p><p>The derivation depends on angle-addition identities and the basic trigonometric limits. Radian measure is essential because those limits have the simple values used in the derivative formulas.</p>",
+    "definition": "<p>Central statement: The same identity method gives $(\\cos x)'=-\\sin x$, and quotient rule gives $(\\tan x)'=\\sec^2x$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Differentiate $f(x)=2\\sin(3x)-4\\cos x+\\tan(x^2)$.",
       "skills": [
@@ -5668,34 +6577,34 @@
     ],
     "applications": [
       {
-        "title": "Velocity from periodic position",
-        "background": "Physics and animation often store position as a sine or cosine wave; the derivative gives velocity.",
-        "numbers": "If $s(t)=4\\sin(3t)$, then $v(t)=12\\cos(3t)$, so the maximum speed is $12$."
+        "title": "$\\sin x$ slope at $\\pi/3$",
+        "background": "$\\sin x$ slope at $\\pi/3$ is $0.5$",
+        "numbers": "$\\sin x$ slope at $\\pi/3$ is $0.5$"
       },
       {
-        "title": "Fourier features",
-        "background": "Fourier feature maps feed sine and cosine waves into models so high-frequency patterns become learnable.",
-        "numbers": "For $\\phi(x)=\\sin(20x)$, $\\phi'(x)=20\\cos(20x)$; the frequency $20$ makes gradients twenty times larger than $\\sin x$."
+        "title": "$\\cos x$ slope at $\\pi/6$",
+        "background": "$\\cos x$ slope at $\\pi/6$ is $-0.5$",
+        "numbers": "$\\cos x$ slope at $\\pi/6$ is $-0.5$"
       },
       {
-        "title": "Transformer positional encodings",
-        "background": "Sinusoidal encodings let attention compare positions through phase differences.",
-        "numbers": "A component $\\sin(pos/10000^{2i/d})$ has derivative $\\cos(pos/c)/c$; if $c=1000$, the slope magnitude is at most $0.001$."
+        "title": "$\\tan x$ slope at $0$",
+        "background": "$\\tan x$ slope at $0$ is $1$",
+        "numbers": "$\\tan x$ slope at $0$ is $1$"
       },
       {
-        "title": "Rotations in graphics",
-        "background": "A 2-D rotation matrix uses sine and cosine, and gradients with respect to the angle support fitting and calibration.",
-        "numbers": "For $x'=x\\cos\\theta-y\\sin\\theta$, $dx'/d\\theta=-x\\sin\\theta-y\\cos\\theta$; with $(x,y)=(2,1)$ and $\\theta=0$, this is $-1$."
+        "title": "$3\\sin(2t)$",
+        "background": "$3\\sin(2t)$ has derivative $6\\cos(2t)$, at $0$ gives $6$",
+        "numbers": "$3\\sin(2t)$ has derivative $6\\cos(2t)$, at $0$ gives $6$"
       },
       {
-        "title": "Signal phase alignment",
-        "background": "To align two waves, optimization follows derivatives of trigonometric phase errors.",
-        "numbers": "For error $E(\\phi)=(\\sin\\phi-0.5)^2$, $E'(\\phi)=2(\\sin\\phi-0.5)\\cos\\phi$; at $\\phi=0$, $E'=-1$."
+        "title": "Harmonic position $\\cos t$",
+        "background": "Harmonic position $\\cos t$ has velocity $-1$ at $\\pi/2$",
+        "numbers": "Harmonic position $\\cos t$ has velocity $-1$ at $\\pi/2$"
       },
       {
-        "title": "Oscillating learning schedules",
-        "background": "Cosine decay schedules use smooth periodic pieces to reduce learning rates without sharp corners.",
-        "numbers": "$\\eta(t)=0.1(1+\\cos(\\pi t/100))/2$ has $\\eta'(50)=-0.05(\\pi/100)\\sin(\\pi/2)\\approx-0.00157$."
+        "title": "Application 6",
+        "background": "$\\sec^2(\\pi/4)=2$",
+        "numbers": "$\\sec^2(\\pi/4)=2$"
       }
     ],
     "applicationsClose": "Sine and cosine keep passing the slope back and forth; the frequency tells you how fast that handoff happens.",
@@ -5703,6 +6612,53 @@
       "$\\dfrac{d}{dx}\\sin x=\\cos x$ and $\\dfrac{d}{dx}\\cos x=-\\sin x$ in radians.",
       "$\\dfrac{d}{dx}\\tan x=\\sec^2x$ where $\\cos x\\ne0$.",
       "For $\\sin u$, $\\cos u$, and $\\tan u$, multiply by $u'$ through the chain rule."
+    ],
+    "connectionsProse": "<p>This lesson builds on trigonometric functions, limits, and angle measure in radians. Trigonometric derivatives describe how coordinates change during rotation. They are used throughout oscillation, waves, circular motion, and periodic modeling.</p>",
+    "symbols": [
+      {
+        "sym": "$x$",
+        "desc": "is in radians"
+      },
+      {
+        "sym": "$h$",
+        "desc": "is angle change"
+      },
+      {
+        "sym": "$\\sec x=1/\\cos x$",
+        "desc": "$\\sec x=1/\\cos x$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $\\frac{d}{dx}\\sin x=\\lim_{h\\to0}\\frac{\\sin(x+h)-\\sin x}{h}$.",
+        "result": "Start with $\\frac{d}{dx}\\sin x=\\lim_{h\\to0}\\frac{\\sin(x+h)-\\sin x}{h}$.",
+        "why": ""
+      },
+      {
+        "do": "Use $\\sin(x+h)=\\sin x\\cos h+\\cos x\\sin h$.",
+        "result": "Use $\\sin(x+h)=\\sin x\\cos h+\\cos x\\sin h$.",
+        "why": ""
+      },
+      {
+        "do": "Regroup as $\\sin x\\frac{\\cos h-1}{h}+\\cos x\\frac{\\sin h}{h}$.",
+        "result": "Regroup as $\\sin x\\frac{\\cos h-1}{h}+\\cos x\\frac{\\sin h}{h}$.",
+        "why": ""
+      },
+      {
+        "do": "Use limits $\\lim_{h\\to0}\\frac{\\sin h}{h}=1$ and $\\lim_{h\\to0}\\frac{\\cos h-1}{h}=0$.",
+        "result": "Use limits $\\lim_{h\\to0}\\frac{\\sin h}{h}=1$ and $\\lim_{h\\to0}\\frac{\\cos h-1}{h}=0$.",
+        "why": ""
+      },
+      {
+        "do": "Get $(\\sin x)'=\\cos x$.",
+        "result": "Get $(\\sin x)'=\\cos x$.",
+        "why": ""
+      },
+      {
+        "do": "The same identity method gives $(\\cos x)'=-\\sin x$, and quotient rule gives $(\\tan x)'=\\sec^2x$.",
+        "result": "The same identity method gives $(\\cos x)'=-\\sin x$, and quotient rule gives $(\\tan x)'=\\sec^2x$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-21"
@@ -5730,8 +6686,8 @@
         "Related rates"
       ]
     },
-    "motivation": "<p>Not every curve is kind enough to be written as $y=f(x)$. A circle, for example, is naturally $x^2+y^2=25$, and solving for $y$ splits it into two halves.</p><p>Implicit differentiation says: keep the relationship whole. Treat $y$ as a function of $x$, differentiate both sides, and every time you differentiate a $y$ expression, attach $dy/dx$ by the chain rule.</p>",
-    "definition": "<p>An equation $F(x,y)=0$ defines $y$ <b>implicitly</b> as a function of $x$ near points where the curve passes the vertical-line test locally. Differentiate both sides with respect to $x$ while remembering that $y=y(x)$. For example, $$\\dfrac{d}{dx}(y^2)=2y\\dfrac{dy}{dx}.$$ After differentiating, solve algebraically for $dy/dx$.</p><p><b>Assumptions that matter:</b> $y$ must be differentiable as a local function of $x$; if the coefficient of $dy/dx$ becomes zero, the tangent may be vertical or the local function description may fail; and every occurrence of $y$ needs the chain-rule factor.</p>",
+    "motivation": "<p>When $y$ depends on $x$ but is not isolated, differentiating terms involving $y$ requires the chain rule. Each derivative of a $y$ expression carries a factor of $dy/dx$.</p><p>After differentiating the whole equation, the slope can be solved algebraically. This is especially useful for circles, level curves, and constraints where solving for one branch would be awkward.</p>",
+    "definition": "<p>For $x^2+y^2=25$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find $dy/dx$ for $x^2+xy+y^2=7$.",
       "skills": [
@@ -5910,34 +6866,34 @@
     ],
     "applications": [
       {
-        "title": "Constrained optimization",
-        "background": "Many ML problems optimize while staying on a constraint surface, such as fixed norm or probability sum.",
-        "numbers": "On $w_1^2+w_2^2=1$, the implicit slope is $dw_2/dw_1=-w_1/w_2$; at $(0.6,0.8)$ it is $-0.75$."
+        "title": "Circle slope at $(3,4)$",
+        "background": "Circle slope at $(3,4)$ is $-0.75$",
+        "numbers": "Circle slope at $(3,4)$ is $-0.75$"
       },
       {
-        "title": "Decision boundaries",
-        "background": "A classifier boundary can be stored as $F(x,y)=0$ even when it is not easy to solve for $y$.",
-        "numbers": "If $F=x^2+y^2-4=0$, then $dy/dx=-x/y$; at $(1,\\sqrt3)$ the boundary slope is $-1/\\sqrt3\\approx-0.577$."
+        "title": "$xy=6$",
+        "background": "$xy=6$ gives $y'=-y/x$, at $(2,3)$ gives $-1.5$",
+        "numbers": "$xy=6$ gives $y'=-y/x$, at $(2,3)$ gives $-1.5$"
       },
       {
-        "title": "Implicit layers",
-        "background": "Deep equilibrium models define hidden states by fixed-point equations instead of explicit layer stacks.",
-        "numbers": "For $z=\\tanh(az+x)$, implicit differentiation gives $dz/dx=(1-\\tanh^2(az+x))/(1-a(1-\\tanh^2(az+x)))$. If $a=0.5$ and $z=0$, this is $1/(1-0.5)=2$."
+        "title": "$x^2+xy+y^2=7$",
+        "background": "$x^2+xy+y^2=7$ gives $y'=-(2x+y)/(x+2y)$, at $(1,2)$ gives $-0.8$",
+        "numbers": "$x^2+xy+y^2=7$ gives $y'=-(2x+y)/(x+2y)$, at $(1,2)$ gives $-0.8$"
       },
       {
-        "title": "Calibration curves",
-        "background": "A fitted contour of equal risk may be represented implicitly by two features.",
-        "numbers": "For $x^2+4y^2=8$, $dy/dx=-x/(4y)$; at $(2,1)$ the slope is $-0.5$."
+        "title": "Level curve $x^2+y^2=1$ at $(\\sqrt3/2,1/2)$",
+        "background": "Level curve $x^2+y^2=1$ at $(\\sqrt3/2,1/2)$ has slope $-\\sqrt3\\approx-1.732$",
+        "numbers": "Level curve $x^2+y^2=1$ at $(\\sqrt3/2,1/2)$ has slope $-\\sqrt3\\approx-1.732$"
       },
       {
-        "title": "Robotics constraints",
-        "background": "A robot arm endpoint often obeys geometric constraints; slopes describe how one joint must move as another changes.",
-        "numbers": "For $x^2+y^2=0.25$, at $(0.3,0.4)$ the slope is $-0.75$, so a $0.01$ increase in $x$ needs about $0.0075$ decrease in $y$."
+        "title": "Demand relation $pq=100$",
+        "background": "Demand relation $pq=100$ has $dq/dp=-q/p$, at $(10,10)$ gives $-1$",
+        "numbers": "Demand relation $pq=100$ has $dq/dp=-q/p$, at $(10,10)$ gives $-1$"
       },
       {
-        "title": "Iso-loss contours",
-        "background": "Near a minimum, equal-loss curves of a quadratic model are ellipses, and implicit slopes show local tradeoffs.",
-        "numbers": "For $L=w^2+9b^2=1$, $db/dw=-w/(9b)$; at $(0.6,0.2)$ the slope is $-0.333$."
+        "title": "Unit circle at $(0,1)$",
+        "background": "Unit circle at $(0,1)$ has slope $0$",
+        "numbers": "Unit circle at $(0,1)$ has slope $0$"
       }
     ],
     "applicationsClose": "Implicit differentiation keeps the relationship intact, then reads the local tradeoff from the differentiated constraint.",
@@ -5945,6 +6901,49 @@
       "Treat $y$ as $y(x)$ and differentiate both sides of the equation.",
       "Every derivative of a $y$ expression gets a $dy/dx$ factor from the chain rule.",
       "Solve the differentiated equation for $dy/dx$, while watching for vertical tangents or zero coefficients."
+    ],
+    "connectionsProse": "<p>This lesson builds on the chain rule and equations for curves. Some curves are easier to describe by a relation between $x$ and $y$ than by solving for $y$. Implicit differentiation keeps that relation intact while finding slope.</p>",
+    "symbols": [
+      {
+        "sym": "$dy/dx$",
+        "desc": "is the slope of the curve"
+      },
+      {
+        "sym": "$x,y$",
+        "desc": "are coordinates constrained by the equation"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Treat $y$ as a function of $x$",
+        "result": "Treat $y$ as a function of $x$",
+        "why": "the curve may have changing vertical coordinate."
+      },
+      {
+        "do": "Differentiate $x^2$ to get $2x$.",
+        "result": "Differentiate $x^2$ to get $2x$.",
+        "why": ""
+      },
+      {
+        "do": "Differentiate $y^2$ by the chain rule to get $2y\\,dy/dx$.",
+        "result": "Differentiate $y^2$ by the chain rule to get $2y\\,dy/dx$.",
+        "why": ""
+      },
+      {
+        "do": "Differentiate $25$ to get $0$.",
+        "result": "Differentiate $25$ to get $0$.",
+        "why": ""
+      },
+      {
+        "do": "Solve $2x+2y\\,dy/dx=0$ for $dy/dx=-x/y$.",
+        "result": "Solve $2x+2y\\,dy/dx=0$ for $dy/dx=-x/y$.",
+        "why": ""
+      },
+      {
+        "do": "At $(3,4)$ the slope is $-3/4$.",
+        "result": "At $(3,4)$ the slope is $-3/4$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-22"
@@ -5972,8 +6971,8 @@
         "Implicit differentiation"
       ]
     },
-    "motivation": "<p>Some derivatives look unpleasant because the function is built from many multiplying pieces, or because the variable appears in both the base and the exponent. If you attack directly, the algebra can sprawl.</p><p>Logarithmic differentiation is a calm detour: take $\\ln$ of both sides, use log rules to unpack the expression, differentiate implicitly, then multiply back by the original function.</p>",
-    "definition": "<p>For a positive differentiable function $y=f(x)$, take logs: $\\ln y=\\ln f(x)$. Differentiate implicitly to get $$\\dfrac{y'}{y}=\\dfrac{d}{dx}\\ln f(x),$$ so $$y'=f(x)\\dfrac{d}{dx}\\ln f(x).$$ The method is especially useful for products, quotients, powers, and expressions like $x^x$.</p><p><b>Assumptions that matter:</b> the function should be positive on the interval where you take $\\ln y$; if signs vary, use $\\ln|y|$ where $y\\ne0$; and after differentiating the log equation, remember to multiply by $y$ or by the original $f(x)$.</p>",
+    "motivation": "<p>Taking a logarithm can simplify structure before differentiating. Products become sums, quotients become differences, and exponents move down as factors, so the derivative is often easier on the log scale.</p><p>Because the logarithm is applied to the dependent variable, implicit differentiation is used. After finding $y'/y$, multiplying by $y$ returns the derivative of the original function.</p>",
+    "definition": "<p>For $y=x^x$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Differentiate $y=x^x$ for $x>0$.",
       "skills": [
@@ -6157,34 +7156,34 @@
     ],
     "applications": [
       {
-        "title": "Likelihood products",
-        "background": "Independent data likelihoods multiply many terms; logs turn the derivative into a manageable sum.",
-        "numbers": "If $P=p_1p_2p_3$ with relative slopes $0.2,-0.1,0.4$, then $P'/P=0.5$, so when $P=0.06$, $P'=0.03$."
+        "title": "$x^x$ derivative at $1$",
+        "background": "$x^x$ derivative at $1$ is $1$",
+        "numbers": "$x^x$ derivative at $1$ is $1$"
       },
       {
-        "title": "Elasticity",
-        "background": "Economics and ML monitoring often care about percent change rather than raw change; log derivatives measure that directly.",
-        "numbers": "For demand $D(p)=100p^{-2}$, $d\\ln D/d\\ln p=-2$, so a $1\\%$ price increase predicts about a $2\\%$ demand drop."
+        "title": "$x^x$ derivative at $e$",
+        "background": "$x^x$ derivative at $e$ is $2e^e\\approx30.309$",
+        "numbers": "$x^x$ derivative at $e$ is $2e^e\\approx30.309$"
       },
       {
-        "title": "Gradient of geometric means",
-        "background": "Geometric means are products under a root, common when combining multiplicative scores.",
-        "numbers": "For $G=(abc)^{1/3}$, $G'/G=(1/3)(a'/a+b'/b+c'/c)$; with relative slopes $0.3,0.0,-0.6$, $G'/G=-0.1$."
+        "title": "$y=x^2\\sqrt{x+1}$",
+        "background": "$y=x^2\\sqrt{x+1}$ has $y'/y=2/x+1/[2(x+1)]$, at $3$ with $y=18$ gives $13.5$",
+        "numbers": "$y=x^2\\sqrt{x+1}$ has $y'/y=2/x+1/[2(x+1)]$, at $3$ with $y=18$ gives $13.5$"
       },
       {
-        "title": "Variable exponent models",
-        "background": "Expressions like $x^x$ and $a(x)^{b(x)}$ appear in scaling laws and adaptive penalties.",
-        "numbers": "$d(x^x)/dx=x^x(\\ln x+1)$; at $x=2$, the slope is $4(1.693)=6.772$."
+        "title": "$y=(x^2+1)^3$ at $1$",
+        "background": "$y=(x^2+1)^3$ at $1$ has derivative $24$",
+        "numbers": "$y=(x^2+1)^3$ at $1$ has derivative $24$"
       },
       {
-        "title": "Numerical stability",
-        "background": "Computing gradients of products directly can underflow; log differentiation keeps intermediate values ordinary.",
-        "numbers": "A product of $100$ factors of $0.9$ is $0.9^{100}=0.0000266$, but the log is $100\\ln0.9=-10.536$."
+        "title": "$y=\\frac{x^3}{x+1}$",
+        "background": "$y=\\frac{x^3}{x+1}$ has log derivative $3/x-1/(x+1)$, at $2$ gives $1.167$ and $y'=3.111$",
+        "numbers": "$y=\\frac{x^3}{x+1}$ has log derivative $3/x-1/(x+1)$, at $2$ gives $1.167$ and $y'=3.111$"
       },
       {
-        "title": "Multiplicative feature interactions",
-        "background": "Some models combine positive features multiplicatively, and log derivatives reveal which factor drives sensitivity.",
-        "numbers": "For score $s=x^2z^3$, $s_x/s=2/x$; at $x=4$, a one-unit increase contributes relative slope $0.5$."
+        "title": "Elasticity of $x^x$",
+        "background": "Elasticity of $x^x$ is $x(\\ln x+1)$, at $1$ gives $1$",
+        "numbers": "Elasticity of $x^x$ is $x(\\ln x+1)$, at $1$ gives $1$"
       }
     ],
     "applicationsClose": "When multiplication makes a derivative noisy, logs make the same structure quiet: add relative changes, then multiply back.",
@@ -6192,6 +7191,48 @@
       "Take $\\ln$ of both sides, use log rules, differentiate implicitly, then multiply by the original function.",
       "The method shines for products, quotients, powers, and variable exponents like $x^x$.",
       "Log differentiation turns product sensitivity into sums of relative sensitivities."
+    ],
+    "connectionsProse": "<p>This lesson builds on logarithm rules, implicit differentiation, and the product rule. Logarithmic differentiation is useful when a formula has products, quotients, powers, or variable exponents. It turns a complicated derivative into simpler additive pieces.</p>",
+    "symbols": [
+      {
+        "sym": "$y$",
+        "desc": "is the original function"
+      },
+      {
+        "sym": "$\\ln y$",
+        "desc": "is differentiated implicitly"
+      },
+      {
+        "sym": "$x>0$ for real logarithms",
+        "desc": "$x>0$ for real logarithms"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Take logs",
+        "result": "$\\ln y=x\\ln x$",
+        "why": "the exponent moves down."
+      },
+      {
+        "do": "Differentiate both sides",
+        "result": "$\\frac{y'}{y}=\\ln x+1$",
+        "why": "use implicit differentiation on $\\ln y$."
+      },
+      {
+        "do": "Multiply by $y$",
+        "result": "$y'=y(\\ln x+1)$.",
+        "why": ""
+      },
+      {
+        "do": "Substitute $y=x^x$.",
+        "result": "Substitute $y=x^x$.",
+        "why": ""
+      },
+      {
+        "do": "Get $\\frac{d}{dx}x^x=x^x(\\ln x+1)$.",
+        "result": "Get $\\frac{d}{dx}x^x=x^x(\\ln x+1)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-23"
@@ -6219,8 +7260,8 @@
         "Linear approximation"
       ]
     },
-    "motivation": "<p>Real systems rarely change one variable at a time. A balloon's radius grows and its volume changes; a camera's distance changes and the image size changes; a training metric moves and the alert threshold moves with it.</p><p>Related rates are the chain rule with units attached. Write an equation connecting the quantities, differentiate with respect to time, and use the known rate to find the unknown rate.</p>",
-    "definition": "<p>A <b>related rates</b> problem starts with a relationship such as $V=\\frac43\\pi r^3$, where each variable depends on time $t$. Differentiate both sides with respect to $t$: $$\\dfrac{dV}{dt}=4\\pi r^2\\dfrac{dr}{dt}.$$ Then substitute the values at the instant of interest. The equation connects rates, not just values.</p><p><b>Assumptions that matter:</b> variables must be differentiable functions of time; substitute numerical values after differentiating unless the relationship is linear; units must match; and rates can be negative when a quantity is decreasing.</p>",
+    "motivation": "<p>The central move is to write the geometric or physical relation before differentiating. Since the variables depend on time, differentiating with respect to time produces rates such as $dA/dt$ and $dr/dt$.</p><p>Current numerical values are substituted after the derivative relation is found. This order matters because differentiating first preserves how the rates are connected at any moment.</p>",
+    "definition": "<p>For a circle with area $A=\\pi r^2$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Air enters a spherical balloon at $100\\text{ cm}^3/\\text{s}$. How fast is the radius increasing when $r=5\\text{ cm}$?",
       "skills": [
@@ -6399,34 +7440,34 @@
     ],
     "applications": [
       {
-        "title": "Training dynamics",
-        "background": "A metric changes because parameters change; related rates track how parameter motion affects loss.",
-        "numbers": "If $L=w^2$ and $dw/dt=-0.01$ at $w=5$, then $dL/dt=2(5)(-0.01)=-0.1$ per step."
+        "title": "Circle area rate above",
+        "background": "Circle area rate above is $3\\pi\\approx9.425$",
+        "numbers": "Circle area rate above is $3\\pi\\approx9.425$"
       },
       {
-        "title": "Computer vision scaling",
-        "background": "Object image area changes as camera distance changes, and the rate matters for tracking.",
-        "numbers": "If image height $h=200/d$ pixels and $dd/dt=-0.5$ m/s at $d=10$, then $dh/dt=-200d^{-2}dd/dt=1$ pixel/s."
+        "title": "Sphere volume $V=4\\pi r^3/3$ with $r=2$, $dr/dt=0.1$",
+        "background": "Sphere volume $V=4\\pi r^3/3$ with $r=2$, $dr/dt=0.1$ gives $dV/dt=1.6\\pi\\approx5.027$",
+        "numbers": "Sphere volume $V=4\\pi r^3/3$ with $r=2$, $dr/dt=0.1$ gives $dV/dt=1.6\\pi\\approx5.027$"
       },
       {
-        "title": "Network throughput",
-        "background": "Queue delay depends on utilization, so traffic changes produce amplified delay changes near capacity.",
-        "numbers": "For $W=1/(\\mu-\\lambda)$ with $\\mu=100$ and $d\\lambda/dt=2$, at $\\lambda=90$, $dW/dt=(\\mu-\\lambda)^{-2}d\\lambda/dt=0.02$ s/s."
+        "title": "Ladder $x^2+y^2=25$, $x=3$, $dx/dt=1$",
+        "background": "Ladder $x^2+y^2=25$, $x=3$, $dx/dt=1$ gives $dy/dt=-0.75$",
+        "numbers": "Ladder $x^2+y^2=25$, $x=3$, $dx/dt=1$ gives $dy/dt=-0.75$"
       },
       {
-        "title": "Uncertainty propagation over time",
-        "background": "Sensor error variances can depend on distance, and related rates quantify how fast uncertainty grows.",
-        "numbers": "If $\\sigma^2=0.01d^2$ and $dd/dt=3$ at $d=20$, then $d\\sigma^2/dt=0.02(20)(3)=1.2$ units per second."
+        "title": "Rectangle $A=lw$ with $l=4,w=5,l'=2,w'=1$",
+        "background": "Rectangle $A=lw$ with $l=4,w=5,l'=2,w'=1$ gives $A'=14$",
+        "numbers": "Rectangle $A=lw$ with $l=4,w=5,l'=2,w'=1$ gives $A'=14$"
       },
       {
-        "title": "A/B experiment monitoring",
-        "background": "A ratio metric changes because numerator and denominator both change.",
-        "numbers": "For CTR $c=C/I$, $dC/dt=30$, $dI/dt=1000$, $C=600$, $I=20000$: $dc/dt=(30I-600000)/I^2=0$, so CTR is steady."
+        "title": "Distance $s=\\sqrt{x^2+y^2}$ at $(3,4)$ with velocity $(1,2)$",
+        "background": "Distance $s=\\sqrt{x^2+y^2}$ at $(3,4)$ with velocity $(1,2)$ gives $s'=2.2$",
+        "numbers": "Distance $s=\\sqrt{x^2+y^2}$ at $(3,4)$ with velocity $(1,2)$ gives $s'=2.2$"
       },
       {
-        "title": "Robotics geometry",
-        "background": "A robot endpoint constrained by a link length has related horizontal and vertical velocities.",
-        "numbers": "On $x^2+y^2=1$, with $x=0.6$, $y=0.8$, and $dx/dt=0.1$, $dy/dt=-(0.6/0.8)(0.1)=-0.075$."
+        "title": "Cone volume $V=\\pi r^2h/3$ with $r=2,h=6,r'=0.1,h'=0.2$",
+        "background": "Cone volume $V=\\pi r^2h/3$ with $r=2,h=6,r'=0.1,h'=0.2$ gives $V'\\approx2.094$",
+        "numbers": "Cone volume $V=\\pi r^2h/3$ with $r=2,h=6,r'=0.1,h'=0.2$ gives $V'\\approx2.094$"
       }
     ],
     "applicationsClose": "Related rates are just the chain rule with a clock attached: values are connected, so their rates must be connected too.",
@@ -6434,6 +7475,48 @@
       "Write an equation connecting the quantities before differentiating.",
       "Differentiate with respect to time and attach a rate to each changing variable.",
       "Substitute values after differentiating, keep units, and let negative signs carry direction."
+    ],
+    "connectionsProse": "<p>This lesson builds on implicit differentiation and rates of change. Related rates problems describe several quantities changing at the same time. An equation connecting the quantities lets one measured rate determine another.</p>",
+    "symbols": [
+      {
+        "sym": "$t$",
+        "desc": "is time"
+      },
+      {
+        "sym": "$dA/dt$ and $dr/dt$",
+        "desc": "are rates"
+      },
+      {
+        "sym": "current values",
+        "desc": "are substituted after differentiating"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Identify the relation $A=\\pi r^2$",
+        "result": "Identify the relation $A=\\pi r^2$",
+        "why": "area depends on radius."
+      },
+      {
+        "do": "Treat $A$ and $r$ as functions of time.",
+        "result": "Treat $A$ and $r$ as functions of time.",
+        "why": ""
+      },
+      {
+        "do": "Differentiate both sides with respect to $t$",
+        "result": "$dA/dt=2\\pi r\\,dr/dt$.",
+        "why": ""
+      },
+      {
+        "do": "Substitute $r=3$ and $dr/dt=0.5$.",
+        "result": "Substitute $r=3$ and $dr/dt=0.5$.",
+        "why": ""
+      },
+      {
+        "do": "Compute $dA/dt=3\\pi\\approx9.425$.",
+        "result": "Compute $dA/dt=3\\pi\\approx9.425$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-24"
@@ -6461,8 +7544,8 @@
         "Taylor series"
       ]
     },
-    "motivation": "<p>Curves can be hard, but near one point a smooth curve is almost a line. That is not a trick; it is the local meaning of the derivative.</p><p>Linear approximation lets you make quick estimates without recomputing the whole function. It is the first-order version of the idea behind Taylor series, gradient descent steps, and local model explanations.</p>",
-    "definition": "<p>If $f$ is differentiable at $a$, the <b>linear approximation</b> near $a$ is $$L(x)=f(a)+f'(a)(x-a).$$ It is the tangent line used as a local stand-in for the curve. The derivation comes from the derivative definition: for $x$ close to $a$, $\\dfrac{f(x)-f(a)}{x-a}\\approx f'(a)$, so $f(x)\\approx f(a)+f'(a)(x-a)$.</p><p><b>Assumptions that matter:</b> the function must be differentiable at the base point; the estimate is local, so it gets worse as $x$ moves away; and strong curvature means the linear estimate can drift quickly.</p>",
+    "motivation": "<p>The derivative gives the slope of the tangent line at a base input. If the input moves a small amount, the tangent line predicts the output change by slope times displacement.</p><p>Curvature creates error, so the approximation is best for nearby inputs. This local linear viewpoint is also the starting point for differentials, error estimates, Newton's method, and Taylor polynomials.</p>",
+    "definition": "<p>Central statement: The approximation improves as $\\Delta x\\to0$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Use linear approximation at $a=4$ to estimate $\\sqrt{4.1}$.",
       "skills": [
@@ -6666,34 +7749,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent intuition",
-        "background": "A small parameter step changes loss approximately by slope times step.",
-        "numbers": "If $L'(w)=3$ and $\\Delta w=-0.01$, then $\\Delta L\\approx3(-0.01)=-0.03$."
+        "title": "Application 1",
+        "background": "$\\sqrt{4.1}\\approx2+(1/4)(0.1)=2.025$",
+        "numbers": "$\\sqrt{4.1}\\approx2+(1/4)(0.1)=2.025$"
       },
       {
-        "title": "Model explainability",
-        "background": "Local linear explanations approximate a nonlinear model near one input.",
-        "numbers": "If a feature slope is $0.8$ and the feature is $0.5$ above baseline, the local contribution is about $0.4$ score units."
+        "title": "Application 2",
+        "background": "True $\\sqrt{4.1}\\approx2.025$",
+        "numbers": "True $\\sqrt{4.1}\\approx2.025$"
       },
       {
-        "title": "Fast square-root estimates",
-        "background": "Numerical code often starts with a cheap local estimate before refining.",
-        "numbers": "$\\sqrt{101}$ near $100$ is $10+(1/(20))(1)=10.05$; the true value is about $10.0499$."
+        "title": "Application 3",
+        "background": "$e^{0.05}\\approx1+0.05=1.05$",
+        "numbers": "$e^{0.05}\\approx1+0.05=1.05$"
       },
       {
-        "title": "Sensor calibration",
-        "background": "Around an operating point, a nonlinear sensor curve can be treated as linear for small changes.",
-        "numbers": "If voltage slope is $0.02$ V/C at $25$ C, a $3$ C increase gives about $0.06$ V increase."
+        "title": "Application 4",
+        "background": "$\\ln(1.02)\\approx0.02$",
+        "numbers": "$\\ln(1.02)\\approx0.02$"
       },
       {
-        "title": "Probabilities near a logit",
-        "background": "The sigmoid is nonlinear, but near zero it is almost a line.",
-        "numbers": "$\\sigma(0)=0.5$, $\\sigma'(0)=0.25$, so $\\sigma(0.2)\\approx0.55$; the true value is about $0.5498$."
+        "title": "Application 5",
+        "background": "$\\sin(0.1)\\approx0.1$",
+        "numbers": "$\\sin(0.1)\\approx0.1$"
       },
       {
-        "title": "Compiler and graphics approximations",
-        "background": "Fast math libraries use polynomial and linear local approximations where exact functions are expensive.",
-        "numbers": "For $\\sin(0.03)$, the linear approximation at $0$ gives $0.03$; the true value is $0.0299955$."
+        "title": "Application 6",
+        "background": "For $x^2$ near $10$, $10.1^2\\approx100+20(0.1)=102$",
+        "numbers": "For $x^2$ near $10$, $10.1^2\\approx100+20(0.1)=102$"
       }
     ],
     "applicationsClose": "Linear approximation is the derivative made practical: for a small move, slope times distance is usually the first thing worth knowing.",
@@ -6701,6 +7784,48 @@
       "The tangent-line approximation is $L(x)=f(a)+f'(a)(x-a)$.",
       "It works locally for differentiable functions and gets less reliable far from the base point.",
       "First-order thinking powers gradient steps, quick estimates, and local explanations."
+    ],
+    "connectionsProse": "<p>This lesson builds on differentiability and tangent lines. A differentiable function looks nearly linear when viewed very close to a point. Linear approximation uses that local line as a practical estimate.</p>",
+    "symbols": [
+      {
+        "sym": "$a$",
+        "desc": "is the base point"
+      },
+      {
+        "sym": "$L(x)$",
+        "desc": "is the tangent-line approximation"
+      },
+      {
+        "sym": "$\\Delta x$",
+        "desc": "is the small input change"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "The derivative gives local slope $f'(a)$.",
+        "result": "The derivative gives local slope $f'(a)$.",
+        "why": ""
+      },
+      {
+        "do": "The tangent line through $(a,f(a))$ with that slope is $L(x)=f(a)+f'(a)(x-a)$.",
+        "result": "The tangent line through $(a,f(a))$ with that slope is $L(x)=f(a)+f'(a)(x-a)$.",
+        "why": ""
+      },
+      {
+        "do": "Let $\\Delta x=x-a$",
+        "result": "Let $\\Delta x=x-a$",
+        "why": "the input moves a small amount."
+      },
+      {
+        "do": "Then $f(a+\\Delta x)\\approx f(a)+f'(a)\\Delta x$",
+        "result": "Then $f(a+\\Delta x)\\approx f(a)+f'(a)\\Delta x$",
+        "why": "ignore higher-order curvature terms."
+      },
+      {
+        "do": "The approximation improves as $\\Delta x\\to0$.",
+        "result": "The approximation improves as $\\Delta x\\to0$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-25"
@@ -6728,8 +7853,8 @@
         "Taylor series"
       ]
     },
-    "motivation": "<p>Linear approximation says a small input change produces an output change of about slope times input change. Differentials give that sentence a compact notation.</p><p>Write $dy=f'(x)dx$. The symbol $dx$ is a small input change, and $dy$ is the tangent-line prediction for the output change. This is the language of error propagation, sensitivity, and continuous approximations.</p>",
-    "definition": "<p>For a differentiable function $y=f(x)$, the <b>differential</b> is $$dy=f'(x)\\,dx.$$ It comes directly from $f(x+\\Delta x)\\approx f(x)+f'(x)\\Delta x$: the predicted change is $dy=f'(x)dx$. The actual change is $\\Delta y=f(x+\\Delta x)-f(x)$; for small $dx=\\Delta x$, $dy$ is a close approximation.</p><p><b>Assumptions that matter:</b> the function must be differentiable at the point; $dx$ should be small for $dy$ to approximate $\\Delta y$ well; and $dy$ is the linear prediction, not automatically the exact output change.</p>",
+    "motivation": "<p>The actual output change $\\Delta y$ can be difficult to compute exactly, but the tangent-line change $dy$ is simple. It is the derivative at the point multiplied by the chosen input change $dx$.</p><p>This notation is especially helpful in applications. It separates the measured input uncertainty from the function's sensitivity, so approximate error propagation becomes a direct multiplication.</p>",
+    "definition": "<p>Central statement: For small $dx$, $\\Delta y\\approx dy$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Use differentials to approximate the change in $y=\\sqrt{x}$ when $x$ goes from $25$ to $25.4$.",
       "skills": [
@@ -6918,34 +8043,34 @@
     ],
     "applications": [
       {
-        "title": "Error propagation",
-        "background": "Measurements carry uncertainty, and differentials estimate how input uncertainty becomes output uncertainty.",
-        "numbers": "For $A=\\pi r^2$, $dA=2\\pi r dr$; with $r=5$ and $dr=0.02$, $dA=0.2\\pi\\approx0.628$."
+        "title": "$y=x^2$ at $x=3$, $dx=0.01$",
+        "background": "$y=x^2$ at $x=3$, $dx=0.01$ gives $dy=0.06$",
+        "numbers": "$y=x^2$ at $x=3$, $dx=0.01$ gives $dy=0.06$"
       },
       {
-        "title": "Gradient updates",
-        "background": "A tiny parameter update changes the loss by approximately the differential.",
-        "numbers": "If $dL=\\nabla L\\cdot dw$ in one dimension with slope $-4$ and $dw=0.01$, then $dL\\approx-0.04$."
+        "title": "$A=\\pi r^2$ at $r=10$, $dr=0.1$",
+        "background": "$A=\\pi r^2$ at $r=10$, $dr=0.1$ gives $dA=2\\pi\\approx6.283$",
+        "numbers": "$A=\\pi r^2$ at $r=10$, $dr=0.1$ gives $dA=2\\pi\\approx6.283$"
       },
       {
-        "title": "Quantization sensitivity",
-        "background": "Rounding a feature introduces small input error; differentials estimate output impact.",
-        "numbers": "For $f(x)=x^2$ at $x=8$, a quantization error $dx=0.005$ gives $dy=16(0.005)=0.08$."
+        "title": "$\\ln x$ at $x=100$, $dx=1$",
+        "background": "$\\ln x$ at $x=100$, $dx=1$ gives $dy=0.01$",
+        "numbers": "$\\ln x$ at $x=100$, $dx=1$ gives $dy=0.01$"
       },
       {
-        "title": "Probabilistic calibration",
-        "background": "Small logit changes near a probability can be translated into probability changes.",
-        "numbers": "At sigmoid logit $2$, $p=0.881$ and slope $p(1-p)=0.105$; $dx=0.1$ gives $dp\\approx0.0105$."
+        "title": "$e^x$ at $0$, $dx=0.02$",
+        "background": "$e^x$ at $0$, $dx=0.02$ gives $dy=0.02$",
+        "numbers": "$e^x$ at $0$, $dx=0.02$ gives $dy=0.02$"
       },
       {
-        "title": "Latency models",
-        "background": "If latency depends nonlinearly on load, differentials estimate the impact of small load changes.",
-        "numbers": "For $W=1/(1-\\rho)$ at $\\rho=0.8$, $dW=(1-\\rho)^{-2}d\\rho=25d\\rho$; $d\\rho=0.01$ gives $0.25$ extra time units."
+        "title": "$\\sqrt{x}$ at $25$, $dx=0.5$",
+        "background": "$\\sqrt{x}$ at $25$, $dx=0.5$ gives $dy=0.05$",
+        "numbers": "$\\sqrt{x}$ at $25$, $dx=0.5$ gives $dy=0.05$"
       },
       {
-        "title": "Scientific computing",
-        "background": "Differentials are the first term in numerical error analysis for algorithms.",
-        "numbers": "For $f(x)=e^x$ at $x=0$, an input rounding error $dx=10^{-6}$ gives $dy\\approx10^{-6}$."
+        "title": "Sensor scale $y=5x$, $dx=0.2$",
+        "background": "Sensor scale $y=5x$, $dx=0.2$ gives $dy=1$",
+        "numbers": "Sensor scale $y=5x$, $dx=0.2$ gives $dy=1$"
       }
     ],
     "applicationsClose": "Differentials make small-change reasoning portable: slope times input error predicts output error across many systems.",
@@ -6953,6 +8078,48 @@
       "For $y=f(x)$, the differential is $dy=f'(x)dx$.",
       "$dy$ is the tangent-line prediction for the actual change $\\Delta y$.",
       "Differentials are useful for estimates, uncertainty propagation, and small gradient steps."
+    ],
+    "connectionsProse": "<p>This lesson builds on linear approximation. Differentials give names to small input changes and their corresponding tangent-line output changes. They make local change calculations easier to track with units.</p>",
+    "symbols": [
+      {
+        "sym": "$dx$",
+        "desc": "is a small input change"
+      },
+      {
+        "sym": "$dy$",
+        "desc": "is the linearized output change"
+      },
+      {
+        "sym": "$f'(x)$ converts units of input to units of output",
+        "desc": "$f'(x)$ converts units of input to units of output"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start from linear approximation $f(x+\\Delta x)\\approx f(x)+f'(x)\\Delta x$.",
+        "result": "Start from linear approximation $f(x+\\Delta x)\\approx f(x)+f'(x)\\Delta x$.",
+        "why": ""
+      },
+      {
+        "do": "Define $dx=\\Delta x$",
+        "result": "Define $dx=\\Delta x$",
+        "why": "name the small input change."
+      },
+      {
+        "do": "Define $dy=f'(x)dx$",
+        "result": "Define $dy=f'(x)dx$",
+        "why": "the tangent-line output change."
+      },
+      {
+        "do": "The actual change is $\\Delta y=f(x+\\Delta x)-f(x)$.",
+        "result": "The actual change is $\\Delta y=f(x+\\Delta x)-f(x)$.",
+        "why": ""
+      },
+      {
+        "do": "For small $dx$, $\\Delta y\\approx dy$.",
+        "result": "For small $dx$, $\\Delta y\\approx dy$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-26"
@@ -6980,8 +8147,8 @@
         "Taylor series"
       ]
     },
-    "motivation": "<p>When a limit gives $0/0$ or $\\infty/\\infty$, it has not failed; it has only told you that the first substitution was inconclusive. The pieces are competing, and you need a better view of their relative size.</p><p>Indeterminate forms are a checklist of these competitions. Recognizing the form tells you whether to factor, rationalize, combine fractions, take logs, use a known limit, or prepare for L'Hopital's rule next.</p>",
-    "definition": "<p>An <b>indeterminate form</b> is a limiting pattern that does not determine a unique answer by arithmetic alone. The main forms are $$\\frac00,\\quad \\frac{\\infty}{\\infty},\\quad 0\\cdot\\infty,\\quad \\infty-\\infty,\\quad 0^0,\\quad 1^\\infty,\\quad \\infty^0.$$ For example, $x/x$ and $x^2/x$ both look like $0/0$ as $x\\to0$, but their limits are $1$ and $0$.</p><p><b>Assumptions that matter:</b> the form is a diagnosis, not an answer; rewrite before concluding; one-sided behavior can matter; and exponential forms are often handled by taking logs so powers become products.</p>",
+    "motivation": "<p>Forms such as $0/0$ are not values. They mean that two competing effects are happening at once, and the first substitution does not say which effect dominates.</p><p>Algebra, identities, logarithms, or later L'Hôpital's rule can expose the deciding structure. The goal is to rewrite the expression so known basic limits can be applied.</p>",
+    "definition": "<p>For $\\lim_{x\\to0}\\frac{1-\\cos x}{x^2}$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\lim_{x\\to0}\\frac{e^x-1}{x}$.",
       "skills": [
@@ -7165,34 +8332,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient definitions",
-        "background": "The derivative itself starts as the indeterminate form $0/0$ before simplification reveals the slope.",
-        "numbers": "For $f(x)=x^2$ at $x=3$, $((3+h)^2-9)/h=(6h+h^2)/h=6+h$, so the limit is $6$."
+        "title": "Worked limit",
+        "background": "Worked limit is $0.5$",
+        "numbers": "Worked limit is $0.5$"
       },
       {
-        "title": "Numerical stability",
-        "background": "Expressions like $e^x-1$ lose precision near zero, so libraries use special rewrites such as expm1.",
-        "numbers": "For $x=10^{-8}$, $e^x-1\\approx10^{-8}$; subtracting two nearly equal floating-point numbers can erase useful digits."
+        "title": "Application 2",
+        "background": "$\\lim_{x\\to0}\\frac{e^x-1}{x}=1$",
+        "numbers": "$\\lim_{x\\to0}\\frac{e^x-1}{x}=1$"
       },
       {
-        "title": "Softmax overflow and ratios",
-        "background": "Large exponentials create $\\infty/\\infty$ patterns unless scores are shifted before exponentiating.",
-        "numbers": "Softmax of $[1000,999]$ equals softmax of $[0,-1]$: probabilities are $1/(1+e^{-1})=0.731$ and $0.269$."
+        "title": "Application 3",
+        "background": "$\\lim_{x\\to0}x\\ln x=0$ from the right",
+        "numbers": "$\\lim_{x\\to0}x\\ln x=0$ from the right"
       },
       {
-        "title": "Asymptotic algorithm analysis",
-        "background": "Comparing growth rates often produces $\\infty/\\infty$, then leading terms decide the limit.",
-        "numbers": "$\\lim_{n\\to\\infty}(3n^2+n)/(5n^2-7)=3/5$, so the two runtimes differ by about a constant factor $0.6$."
+        "title": "Application 4",
+        "background": "$\\lim_{x\\to\\infty}\\frac{x}{e^x}=0$",
+        "numbers": "$\\lim_{x\\to\\infty}\\frac{x}{e^x}=0$"
       },
       {
-        "title": "Continuous compounding",
-        "background": "The classic $1^\\infty$ form defines exponential growth from many tiny multiplicative steps.",
-        "numbers": "$(1+0.05/n)^n\\to e^{0.05}\\approx1.05127$, the continuously compounded one-year factor at $5\\%$."
+        "title": "Application 5",
+        "background": "$\\lim_{x\\to0}(1+x)^{1/x}=e\\approx2.718$",
+        "numbers": "$\\lim_{x\\to0}(1+x)^{1/x}=e\\approx2.718$"
       },
       {
-        "title": "Activation approximations",
-        "background": "Small-input behavior of activations often depends on resolving $0/0$ or cancellation patterns.",
-        "numbers": "For $\\tanh x/x$ as $x\\to0$, $\\tanh x=x-x^3/3+\\cdots$, so the ratio tends to $1$."
+        "title": "Application 6",
+        "background": "$\\lim_{x\\to0}\\frac{\\ln(1+x)}{x}=1$",
+        "numbers": "$\\lim_{x\\to0}\\frac{\\ln(1+x)}{x}=1$"
       }
     ],
     "applicationsClose": "Indeterminate forms are not dead ends; they are signposts telling you to compare leading behavior more carefully.",
@@ -7200,6 +8367,45 @@
       "Forms like $0/0$, $\\infty/\\infty$, $0\\cdot\\infty$, $\\infty-\\infty$, $0^0$, $1^\\infty$, and $\\infty^0$ need rewriting.",
       "The form is not the answer; factor, rationalize, combine, substitute a new variable, or take logs.",
       "Resolving indeterminate forms is central to derivatives, numerical stability, asymptotics, and continuous compounding."
+    ],
+    "connectionsProse": "<p>This lesson builds on limits and algebraic rewriting. An indeterminate form signals that substitution has not revealed the limiting behavior. The expression needs to be transformed before the limit can be read.</p>",
+    "symbols": [
+      {
+        "sym": "$0/0$, $\\infty/\\infty$, $0\\cdot\\infty$, and $1^\\infty$",
+        "desc": "describe forms, not values"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Direct substitution gives $0/0$",
+        "result": "Direct substitution gives $0/0$",
+        "why": "more work is needed."
+      },
+      {
+        "do": "Multiply by the conjugate",
+        "result": "$\\frac{1-\\cos x}{x^2}\\cdot\\frac{1+\\cos x}{1+\\cos x}$.",
+        "why": ""
+      },
+      {
+        "do": "Use $1-\\cos^2x=\\sin^2x$.",
+        "result": "Use $1-\\cos^2x=\\sin^2x$.",
+        "why": ""
+      },
+      {
+        "do": "Rewrite as $\\left(\\frac{\\sin x}{x}\\right)^2\\frac{1}{1+\\cos x}$.",
+        "result": "Rewrite as $\\left(\\frac{\\sin x}{x}\\right)^2\\frac{1}{1+\\cos x}$.",
+        "why": ""
+      },
+      {
+        "do": "Let $x\\to0$ using $\\sin x/x\\to1$ and $\\cos x\\to1$.",
+        "result": "Let $x\\to0$ using $\\sin x/x\\to1$ and $\\cos x\\to1$.",
+        "why": ""
+      },
+      {
+        "do": "The limit is $1/2$.",
+        "result": "The limit is $1/2$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-27"
@@ -7227,8 +8433,8 @@
         "exponential and logarithmic functions"
       ]
     },
-    "motivation": "<p>You already know that some limits are honest after a rewrite. But a limit like $\\lim_{x\\to0}\\frac{e^x-1-x}{x^2}$ keeps saying $\\tfrac00$ even after the easy algebra is gone.</p><p><b>L'Hôpital's rule</b> gives a calm next move: if numerator and denominator both vanish or both grow without bound, compare their derivatives. It is like asking which runner is moving faster at the finish line, not where they happened to stand before the race got close.</p>",
-    "definition": "<p>Suppose $f$ and $g$ are differentiable near $a$ (except possibly at $a$), $g'(x)\\ne0$ near $a$, and direct substitution gives $\\frac00$ or $\\frac{\\infty}{\\infty}$. If $\\lim_{x\\to a}\\frac{f'(x)}{g'(x)}=L$ exists, then $$\\lim_{x\\to a}\\frac{f(x)}{g(x)}=L.$$ The same idea works for one-sided limits and many infinite limits when the same hypotheses hold.</p><p><b>Assumptions that matter:</b> the original quotient must first be an indeterminate form of type $0/0$ or $\\infty/\\infty$; the denominator derivative must not be zero near the point; and if one round still gives $0/0$ or $\\infty/\\infty$, you may repeat the rule only after checking the form again.</p>",
+    "motivation": "<p>When numerator and denominator both approach zero, their leading local behavior often comes from their tangent lines. Comparing those tangent-line slopes explains why derivative ratios can determine the original limit.</p><p>The rule also applies to suitable $\\infty/\\infty$ forms under its hypotheses. The important habit is to check the form first, then differentiate numerator and denominator separately.</p>",
+    "definition": "<p>Central statement: Thus $\\lim f/g=\\lim f'/g'$ when the derivative limit exists.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\lim_{x\\to0}\\frac{e^x-1-x}{x^2}$.",
       "skills": [
@@ -7422,34 +8628,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient checks",
-        "background": "Numerical gradient checks compare a tiny finite difference with the derivative used by backprop. L'Hôpital explains why the ratio has a stable limit.",
-        "numbers": "For $f(w)=e^w$ at $w=0$, $\\frac{e^h-1}{h}\\to1$; with $h=0.001$ the value is $1.000500\\approx1$."
+        "title": "Application 1",
+        "background": "$\\lim_{x\\to0}\\frac{\\sin x}{x}=\\lim\\frac{\\cos x}{1}=1$",
+        "numbers": "$\\lim_{x\\to0}\\frac{\\sin x}{x}=\\lim\\frac{\\cos x}{1}=1$"
       },
       {
-        "title": "Softmax stability",
-        "background": "Log-sum-exp and softplus appear in classifiers, and their tails often reduce to small-over-small limits.",
-        "numbers": "$\\ln(1+e^{-10})/e^{-10}=0.999977\\approx1$, matching the limit from the practice problem."
+        "title": "Application 2",
+        "background": "$\\lim_{x\\to0}\\frac{e^x-1}{x}=1$",
+        "numbers": "$\\lim_{x\\to0}\\frac{e^x-1}{x}=1$"
       },
       {
-        "title": "Asymptotic feature scaling",
-        "background": "When comparing transformations, derivative ratios reveal which grows faster.",
-        "numbers": "$\\lim_{x\\to\\infty}\\frac{\\ln x}{x}=\\lim\\frac{1/x}{1}=0$, so at $x=1000$, $\\ln x/x\\approx0.0069$."
+        "title": "Application 3",
+        "background": "$\\lim_{x\\to\\infty}\\frac{x}{e^x}=0$",
+        "numbers": "$\\lim_{x\\to\\infty}\\frac{x}{e^x}=0$"
       },
       {
-        "title": "Vanishing activations",
-        "background": "Saturation questions ask whether a numerator shrinks faster than a denominator near an extreme value.",
-        "numbers": "For sigmoid slope $\\sigma(x)(1-\\sigma(x))$, at $x=8$ it is about $0.000335$, essentially matching $e^{-8}=0.000335$."
+        "title": "Application 4",
+        "background": "$\\lim_{x\\to0}\\frac{1-\\cos x}{x^2}=\\lim\\frac{\\sin x}{2x}=0.5$",
+        "numbers": "$\\lim_{x\\to0}\\frac{1-\\cos x}{x^2}=\\lim\\frac{\\sin x}{2x}=0.5$"
       },
       {
-        "title": "Algorithmic approximations",
-        "background": "Many running-time comparisons are limits of quotients, and L'Hôpital can simplify logarithms against powers.",
-        "numbers": "$\\lim_{n\\to\\infty}\\frac{\\ln n}{\\sqrt n}=\\lim\\frac{1/n}{1/(2\\sqrt n)}=\\lim\\frac{2}{\\sqrt n}=0$."
+        "title": "Application 5",
+        "background": "$\\lim_{x\\to1}\\frac{\\ln x}{x-1}=1$",
+        "numbers": "$\\lim_{x\\to1}\\frac{\\ln x}{x-1}=1$"
       },
       {
-        "title": "Probability near zero",
-        "background": "Densities and cumulative probabilities often create $0/0$ ratios near a boundary.",
-        "numbers": "For $P(X\\le x)=1-e^{-2x}$, $\\lim_{x\\to0^+}\\frac{1-e^{-2x}}{x}=\\lim\\frac{2e^{-2x}}{1}=2$."
+        "title": "Application 6",
+        "background": "$\\lim_{x\\to\\infty}\\frac{\\ln x}{x}=0$",
+        "numbers": "$\\lim_{x\\to\\infty}\\frac{\\ln x}{x}=0$"
       }
     ],
     "applicationsClose": "The shared thread is rate comparison: when values hide the answer, derivatives reveal who is shrinking or growing faster.",
@@ -7457,6 +8663,48 @@
       "Use L'Hôpital only after confirming $0/0$ or $\\infty/\\infty$.",
       "Differentiate numerator and denominator separately; do not use the quotient rule.",
       "If the new quotient is still indeterminate, check the hypotheses and repeat."
+    ],
+    "connectionsProse": "<p>This lesson builds on indeterminate forms and derivatives. L'Hôpital's rule uses rates to compare two quantities whose values alone do not decide a limit. It is a theorem for specific forms, not a general simplification trick.</p>",
+    "symbols": [
+      {
+        "sym": "$f,g$",
+        "desc": "are numerator and denominator"
+      },
+      {
+        "sym": "$a$",
+        "desc": "is the limiting point"
+      },
+      {
+        "sym": "the rule applies to $0/0$ or $\\infty/\\infty$ forms",
+        "desc": "the rule applies to $0/0$ or $\\infty/\\infty$ forms"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Suppose $f(a)=g(a)=0$ and $g'(a)\\ne0$",
+        "result": "Suppose $f(a)=g(a)=0$ and $g'(a)\\ne0$",
+        "why": "this is a $0/0$ form with a nonzero denominator slope."
+      },
+      {
+        "do": "Near $a$, use linear approximations $f(x)\\approx f'(a)(x-a)$ and $g(x)\\approx g'(a)(x-a)$.",
+        "result": "Near $a$, use linear approximations $f(x)\\approx f'(a)(x-a)$ and $g(x)\\approx g'(a)(x-a)$.",
+        "why": ""
+      },
+      {
+        "do": "Divide the approximations",
+        "result": "$f(x)/g(x)\\approx f'(a)/g'(a)$.",
+        "why": ""
+      },
+      {
+        "do": "A full theorem justifies replacing the functions by derivative ratios under its hypotheses.",
+        "result": "A full theorem justifies replacing the functions by derivative ratios under its hypotheses.",
+        "why": ""
+      },
+      {
+        "do": "Thus $\\lim f/g=\\lim f'/g'$ when the derivative limit exists.",
+        "result": "Thus $\\lim f/g=\\lim f'/g'$ when the derivative limit exists.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-28"
@@ -7484,8 +8732,8 @@
         "polynomial factoring"
       ]
     },
-    "motivation": "<p>If you are looking for the highest or lowest point on a smooth hill, you naturally look where the slope becomes flat. That instinct is excellent, but calculus asks us to be a little more inclusive.</p><p>A <b>critical point</b> is any input in the domain where the derivative is zero or where the derivative does not exist. Flat tops count, sharp corners count, and vertical tangents count. This list becomes the candidate list for optimization.</p>",
-    "definition": "<p>A number $c$ is a <b>critical number</b> of $f$ if $c$ is in the domain of $f$ and either $f'(c)=0$ or $f'(c)$ does not exist. The point $(c,f(c))$ is then a critical point on the graph. The derivative condition comes from the tangent slope: local maxima and minima inside an interval must occur where the tangent is horizontal or where no tangent slope exists.</p><p><b>Assumptions that matter:</b> $c$ must belong to the function's domain; endpoints are candidates for absolute extrema but are not usually called critical numbers; and a critical point is only a candidate, not automatically a maximum or minimum.</p>",
+    "motivation": "<p>At a smooth local maximum or minimum, the graph cannot be rising through the point with a nonzero slope. The derivative must flatten to zero if it exists.</p><p>A point is also critical when the derivative is missing, because corners and cusps can still create local extrema. Critical points are candidates, not automatic maxima or minima; later tests classify them.</p>",
+    "definition": "<p>Central statement: If the derivative does not exist, $c$ is still critical because the slope test cannot be applied.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find the critical points of $f(x)=x^3-3x$.",
       "skills": [
@@ -7689,34 +8937,34 @@
     ],
     "applications": [
       {
-        "title": "Loss minimization",
-        "background": "Training searches for weights where the gradient is zero or numerically tiny.",
-        "numbers": "For $J(w)=(w-3)^2+2$, $J'(w)=2w-6$, so $w=3$ gives loss $2$."
+        "title": "$f=x^2-4x$",
+        "background": "$f=x^2-4x$ has $f'=2x-4$, critical point $x=2$",
+        "numbers": "$f=x^2-4x$ has $f'=2x-4$, critical point $x=2$"
       },
       {
-        "title": "Regularized regression",
-        "background": "L2 regularization adds a smooth penalty, shifting the critical point toward zero.",
-        "numbers": "If $J(w)=(w-5)^2+w^2$, then $J'(w)=4w-10$, so $w=2.5$ instead of $5$."
+        "title": "$x^3-3x$",
+        "background": "$x^3-3x$ has critical points $x=\\pm1$",
+        "numbers": "$x^3-3x$ has critical points $x=\\pm1$"
       },
       {
-        "title": "Robust losses",
-        "background": "Absolute value losses have corners, so nondifferentiable critical points matter.",
-        "numbers": "For $L(w)=|w-4|$, the critical point is $w=4$ even though $L'$ is undefined there."
+        "title": "$|x|$",
+        "background": "$|x|$ has critical point $0$ because derivative is missing",
+        "numbers": "$|x|$ has critical point $0$ because derivative is missing"
       },
       {
-        "title": "Learning-rate schedules",
-        "background": "A schedule can have turning points that mark warmup peaks.",
-        "numbers": "For $\\eta(t)=0.1t e^{-t}$, $\\eta'(t)=0.1e^{-t}(1-t)$, so the peak is at $t=1$."
+        "title": "$e^x$",
+        "background": "$e^x$ has no critical point because derivative is always positive",
+        "numbers": "$e^x$ has no critical point because derivative is always positive"
       },
       {
-        "title": "Signal processing",
-        "background": "Peaks in a smoothed signal occur among derivative-zero candidates.",
-        "numbers": "For $s(t)=t^3-3t$, candidates $t=-1,1$ have values $2$ and $-2$."
+        "title": "Loss $(w-5)^2$",
+        "background": "Loss $(w-5)^2$ has critical point $w=5$",
+        "numbers": "Loss $(w-5)^2$ has critical point $w=5$"
       },
       {
-        "title": "Database cost tuning",
-        "background": "A simplified query cost can have a best buffer size inside the allowed range.",
-        "numbers": "If $C(b)=b+100/b$, then $C'(b)=1-100/b^2$, so $b=10$ is the interior candidate."
+        "title": "Revenue $-q^2+10q$",
+        "background": "Revenue $-q^2+10q$ has critical point $q=5$",
+        "numbers": "Revenue $-q^2+10q$ has critical point $q=5$"
       }
     ],
     "applicationsClose": "Critical points are not the answer by themselves; they are the honest shortlist where important behavior can happen.",
@@ -7724,6 +8972,53 @@
       "Critical numbers occur where $f'=0$ or where $f'$ does not exist, but only inside the domain of $f$.",
       "Always check nondifferentiable points such as corners and cusps.",
       "Critical points are candidates that later tests classify."
+    ],
+    "connectionsProse": "<p>This lesson builds on the derivative as a sign and slope detector. Critical points identify interior locations where extrema may occur. They narrow optimization and graphing problems to a manageable candidate list.</p>",
+    "symbols": [
+      {
+        "sym": "$c$",
+        "desc": "is a critical point"
+      },
+      {
+        "sym": "interior",
+        "desc": "means not an endpoint"
+      },
+      {
+        "sym": "local extremum",
+        "desc": "means nearby values are all no larger or no smaller"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "At an interior local maximum or minimum, values on both sides are no better than $f(c)$.",
+        "result": "At an interior local maximum or minimum, values on both sides are no better than $f(c)$.",
+        "why": ""
+      },
+      {
+        "do": "For $h>0$, the quotient $[f(c+h)-f(c)]/h$ has one sign constraint.",
+        "result": "For $h>0$, the quotient $[f(c+h)-f(c)]/h$ has one sign constraint.",
+        "why": ""
+      },
+      {
+        "do": "For $h<0$, the quotient has the opposite sign constraint.",
+        "result": "For $h<0$, the quotient has the opposite sign constraint.",
+        "why": ""
+      },
+      {
+        "do": "If the derivative exists, the two-sided limit must be both nonnegative and nonpositive.",
+        "result": "If the derivative exists, the two-sided limit must be both nonnegative and nonpositive.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $f'(c)=0$.",
+        "result": "Therefore $f'(c)=0$.",
+        "why": ""
+      },
+      {
+        "do": "If the derivative does not exist, $c$ is still critical because the slope test cannot be applied.",
+        "result": "If the derivative does not exist, $c$ is still critical because the slope test cannot be applied.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-29"
@@ -7751,8 +9046,8 @@
         "continuity"
       ]
     },
-    "motivation": "<p>A critical point tells you where to look, but not what you found. A flat tangent can be the top of a hill, the bottom of a bowl, or just a pause on the way upward.</p><p>The <b>first derivative test</b> reads the motion around the point. If $f'$ changes from positive to negative, the graph rises then falls. If it changes from negative to positive, the graph falls then rises. The sign change tells the story.</p>",
-    "definition": "<p>Let $c$ be a critical number and suppose $f$ is continuous near $c$. Check the sign of $f'$ on intervals just to the left and right of $c$. If $f'$ changes from $+$ to $-$, $f(c)$ is a local maximum. If $f'$ changes from $-$ to $+$, $f(c)$ is a local minimum. If there is no sign change, $c$ is not a local extremum.</p><p><b>Assumptions that matter:</b> the sign chart must use intervals where $f'$ exists; continuity of $f$ at the candidate keeps the graph from jumping; and endpoints require separate absolute-extreme checks rather than the two-sided test.</p>",
+    "motivation": "<p>A positive derivative means the function is increasing locally, and a negative derivative means it is decreasing locally. Around a critical point, those signs show whether the graph climbs into the point or falls away from it.</p><p>A change from positive to negative gives a local maximum, while a change from negative to positive gives a local minimum. If the sign does not change, the critical point may be flat without being an extremum.</p>",
+    "definition": "<p>This is an explain-only lesson: this lesson is a decision procedure built from the meaning of derivative sign. Explain intervals, sign charts, and classification rather than forcing a separate formula.</p><p><b>Assumptions that matter:</b> Use the stated domain, graph, interval, or modeling conditions before applying the classification.</p>",
     "worked": {
       "problem": "Classify the critical points of $f(x)=x^3-3x$ using the first derivative test.",
       "skills": [
@@ -7981,34 +9276,34 @@
     ],
     "applications": [
       {
-        "title": "Training loss landscapes",
-        "background": "A zero gradient is ambiguous until the sign or direction changes around it are checked.",
-        "numbers": "For $J(w)=w^4-2w^2$, $w=0$ has zero gradient but is a local maximum, while $w=\\pm1$ are minima."
+        "title": "$f=x^2-4x$",
+        "background": "$f=x^2-4x$ has $f'<0$ before $2$ and $>0$ after, so $x=2$ is a minimum",
+        "numbers": "$f=x^2-4x$ has $f'<0$ before $2$ and $>0$ after, so $x=2$ is a minimum"
       },
       {
-        "title": "Learning-rate warmup",
-        "background": "Schedulers often increase first and decrease later, so the peak is a first-derivative-test moment.",
-        "numbers": "If $\\eta(t)=t e^{-t}$, $\\eta'(t)=e^{-t}(1-t)$ changes $+$ to $-$ at $t=1$."
+        "title": "$-x^2+4x$",
+        "background": "$-x^2+4x$ has maximum at $2$ with value $4$",
+        "numbers": "$-x^2+4x$ has maximum at $2$ with value $4$"
       },
       {
-        "title": "Throughput tuning",
-        "background": "Systems teams tune batch size by locating where throughput stops rising.",
-        "numbers": "For $T(b)=100b/(b+20)-0.2b$, the derivative changes sign near $b=80$, marking a peak."
+        "title": "$x^3$",
+        "background": "$x^3$ has $f'=3x^2\\ge0$ and no max/min at $0$",
+        "numbers": "$x^3$ has $f'=3x^2\\ge0$ and no max/min at $0$"
       },
       {
-        "title": "Robust regression",
-        "background": "Nonsmooth losses can still be classified by side slopes.",
-        "numbers": "$L(w)=|w-7|$ has slope $-1$ left of $7$ and $+1$ right of $7$, so $w=7$ is the minimum."
+        "title": "$x^3-3x$",
+        "background": "$x^3-3x$ has max at $-1$ and min at $1$",
+        "numbers": "$x^3-3x$ has max at $-1$ and min at $1$"
       },
       {
-        "title": "Cache sizing",
-        "background": "A cost can fall as cache grows, then rise when memory overhead dominates.",
-        "numbers": "For $C(c)=500/c+2c$, $C'(c)=-500/c^2+2$ changes from negative to positive at $c=\\sqrt{250}\\approx15.8$."
+        "title": "Revenue $-q^2+10q$",
+        "background": "Revenue $-q^2+10q$ increases before $5$ and decreases after",
+        "numbers": "Revenue $-q^2+10q$ increases before $5$ and decreases after"
       },
       {
-        "title": "Model selection curves",
-        "background": "Validation error often decreases, bottoms out, and then rises from overfitting.",
-        "numbers": "A toy curve $E(d)=0.02(d-6)^2+0.1$ has $E'(d)=0.04(d-6)$, changing $-$ to $+$ at degree $6$."
+        "title": "Loss $(w-5)^2$",
+        "background": "Loss $(w-5)^2$ decreases before $5$ and increases after",
+        "numbers": "Loss $(w-5)^2$ decreases before $5$ and increases after"
       }
     ],
     "applicationsClose": "The first derivative test turns a candidate into a behavior story: rising, falling, and what changes at the candidate.",
@@ -8016,6 +9311,21 @@
       "Positive $f'$ means increasing; negative $f'$ means decreasing.",
       "$+$ to $-$ gives a local maximum; $-$ to $+$ gives a local minimum.",
       "No sign change means the critical point is not a local extremum."
+    ],
+    "connectionsProse": "<p>This lesson builds on critical points and derivative signs. The first derivative test uses increasing and decreasing intervals to classify local behavior. It is a practical decision procedure for graphs and optimization.</p>",
+    "symbols": [
+      {
+        "sym": "$f'>0$",
+        "desc": "means increasing"
+      },
+      {
+        "sym": "$f'<0$",
+        "desc": "means decreasing"
+      },
+      {
+        "sym": "sign change determines local behavior",
+        "desc": "sign change determines local behavior"
+      }
     ],
     "prereqs": [
       "math-01-30"
@@ -8043,8 +9353,8 @@
         "sign charts"
       ]
     },
-    "motivation": "<p>The first derivative tells whether a graph is rising or falling. But two graphs can both rise while feeling very different: one bends upward like a bowl, the other bends downward as it levels off.</p><p><b>Concavity</b> describes that bending. It is the derivative of the derivative story: are slopes increasing, or are slopes decreasing? This is why concavity becomes the doorway to curvature, acceleration, and optimization confidence.</p>",
-    "definition": "<p>A function is <b>concave up</b> on an interval when $f'$ is increasing there, usually detected by $f''(x)>0$. It is <b>concave down</b> when $f'$ is decreasing, usually detected by $f''(x)<0$. A tangent line tends to lie below a concave-up graph and above a concave-down graph locally.</p><p><b>Assumptions that matter:</b> the second derivative test for concavity works on intervals where $f''$ exists; $f''=0$ at one point does not by itself prove a change in concavity; and concavity is an interval property, not just a point label.</p>",
+    "motivation": "<p>If slopes are increasing, tangent lines rotate upward as $x$ increases, and the graph is concave up. If slopes are decreasing, tangent lines rotate downward, and the graph is concave down.</p><p>The second derivative measures this change in slope. Its sign is therefore the main computational test for concavity wherever the second derivative exists.</p>",
+    "definition": "<p>Central statement: For $f=x^3$, $f''=6x$, so it is concave down for $x<0$ and up for $x>0$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Determine the concavity of $f(x)=\\ln x$ on its domain.",
       "skills": [
@@ -8243,34 +9553,34 @@
     ],
     "applications": [
       {
-        "title": "Convex losses",
-        "background": "Many optimization guarantees rely on bowl-shaped losses, which in one dimension means concave up.",
-        "numbers": "For $J(w)=(w-4)^2$, $J''(w)=2>0$, so every stationary point is globally safe."
+        "title": "$x^2$",
+        "background": "$x^2$ has $f''=2>0$, concave up",
+        "numbers": "$x^2$ has $f''=2>0$, concave up"
       },
       {
-        "title": "Diminishing returns",
-        "background": "Logarithms model gains that continue but slow down.",
-        "numbers": "$\\ln x$ has slopes $1,0.5,0.25$ at $x=1,2,4$, so it bends downward."
+        "title": "$-x^2$",
+        "background": "$-x^2$ has $f''=-2<0$, concave down",
+        "numbers": "$-x^2$ has $f''=-2<0$, concave down"
       },
       {
-        "title": "Newton's method",
-        "background": "Curvature controls the Newton step size.",
-        "numbers": "For $f(w)=w^2$, $f'(3)=6$ and $f''(3)=2$, so Newton moves by $6/2=3$ straight to $0$."
+        "title": "$x^3$",
+        "background": "$x^3$ changes concavity at $0$",
+        "numbers": "$x^3$ changes concavity at $0$"
       },
       {
-        "title": "Uncertainty penalties",
-        "background": "Entropy-style terms are concave, which rewards mixing rather than extremes.",
-        "numbers": "For $H(p)=-p\\ln p-(1-p)\\ln(1-p)$, $H''(p)=-1/p-1/(1-p)<0$; at $p=0.5$, $H''=-4$."
+        "title": "$\\ln x$",
+        "background": "$\\ln x$ has $f''=-1/x^2$, so at $2$ it is $-0.25$",
+        "numbers": "$\\ln x$ has $f''=-1/x^2$, so at $2$ it is $-0.25$"
       },
       {
-        "title": "Queueing delay",
-        "background": "Delay often curves upward as utilization approaches capacity.",
-        "numbers": "$D(\\rho)=1/(1-\\rho)$ has $D''(\\rho)=2/(1-\\rho)^3$; at $\\rho=0.8$, $D''=250$."
+        "title": "$e^x$",
+        "background": "$e^x$ has $f''=e^x$, so at $0$ it is $1$",
+        "numbers": "$e^x$ has $f''=e^x$, so at $0$ it is $1$"
       },
       {
-        "title": "Calibration curves",
-        "background": "Probability transforms can flatten at the ends and curve differently across ranges.",
-        "numbers": "Sigmoid slope drops from $0.25$ at $0$ to about $0.105$ at $2$, showing decreasing slope on the positive side."
+        "title": "Cost $q^3$",
+        "background": "Cost $q^3$ has marginal cost increasing at rate $6q$, so at $q=2$ the rate is $12$",
+        "numbers": "Cost $q^3$ has marginal cost increasing at rate $6q$, so at $q=2$ the rate is $12$"
       }
     ],
     "applicationsClose": "Concavity is the shape behind the slope: not just whether things move, but whether that motion is speeding up or slowing down.",
@@ -8278,6 +9588,53 @@
       "$f''>0$ means concave up; $f''<0$ means concave down.",
       "Concavity describes intervals, not isolated points.",
       "A zero second derivative is only a candidate for a change in concavity."
+    ],
+    "connectionsProse": "<p>This lesson builds on first derivatives and slope behavior. Concavity describes how the slope itself changes. It gives a precise way to talk about bending upward or bending downward.</p>",
+    "symbols": [
+      {
+        "sym": "$f''$",
+        "desc": "is the derivative of $f'$"
+      },
+      {
+        "sym": "concave up",
+        "desc": "means slopes increase"
+      },
+      {
+        "sym": "concave down",
+        "desc": "means slopes decrease"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Concavity is about the derivative $f'$",
+        "result": "Concavity is about the derivative $f'$",
+        "why": "slopes are themselves a function."
+      },
+      {
+        "do": "If $f'$ is increasing, then $f''>0$ where the second derivative exists.",
+        "result": "If $f'$ is increasing, then $f''>0$ where the second derivative exists.",
+        "why": ""
+      },
+      {
+        "do": "Increasing slopes make tangent lines rotate upward, so the graph is concave up.",
+        "result": "Increasing slopes make tangent lines rotate upward, so the graph is concave up.",
+        "why": ""
+      },
+      {
+        "do": "If $f'$ is decreasing, then $f''<0$.",
+        "result": "If $f'$ is decreasing, then $f''<0$.",
+        "why": ""
+      },
+      {
+        "do": "Decreasing slopes make the graph concave down.",
+        "result": "Decreasing slopes make the graph concave down.",
+        "why": ""
+      },
+      {
+        "do": "For $f=x^3$, $f''=6x$, so it is concave down for $x<0$ and up for $x>0$.",
+        "result": "For $f=x^3$, $f''=6x$, so it is concave down for $x<0$ and up for $x>0$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-31"
@@ -8305,8 +9662,8 @@
         "sign charts"
       ]
     },
-    "motivation": "<p>The first derivative test is dependable, but it asks you to make a sign chart. Sometimes the second derivative gives a faster reading: at a flat point, is the graph shaped like a bowl or like a cap?</p><p>The <b>second derivative test</b> says positive curvature at a stationary point means a local minimum, negative curvature means a local maximum, and zero curvature means we need more information. It is a local microscope.</p>",
-    "definition": "<p>If $f'(c)=0$ and $f''$ exists near $c$, then $f''(c)>0$ implies a local minimum at $c$, while $f''(c)<0$ implies a local maximum at $c$. If $f''(c)=0$, the test is inconclusive. The reason is the quadratic approximation $$f(c+h)\\approx f(c)+\\frac12 f''(c)h^2,$$ since the linear term vanishes when $f'(c)=0$.</p><p><b>Assumptions that matter:</b> the test applies only at stationary points with $f'(c)=0$; it does not classify corners where $f'$ is undefined; and $f''(c)=0$ does not mean neither, only that this test has gone silent.</p>",
+    "motivation": "<p>At a critical point with $f'(c)=0$, the linear term in the local approximation disappears. The first nonzero shape information often comes from the quadratic term involving $f''(c)$.</p><p>Positive second derivative bends the graph like a bowl, making nearby values larger than the center. Negative second derivative bends it like a cap, making nearby values smaller than the center.</p>",
+    "definition": "<p>Central statement: If $f''(c)=0$, the test gives no decision.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Use the second derivative test to classify the critical points of $f(x)=x^4-4x^2$.",
       "skills": [
@@ -8520,34 +9877,34 @@
     ],
     "applications": [
       {
-        "title": "Newton optimization",
-        "background": "Newton's method divides gradient by curvature, so the sign of $f''$ matters.",
-        "numbers": "For $J(w)=(w-4)^2$, at $w=1$ the step is $J'/J''=-6/2=-3$, so $w$ jumps to $4$."
+        "title": "$x^2$ at $0$",
+        "background": "$x^2$ at $0$ has $f''=2$, minimum",
+        "numbers": "$x^2$ at $0$ has $f''=2$, minimum"
       },
       {
-        "title": "Checking minima in ML",
-        "background": "A positive second derivative in one dimension means a stationary loss is locally bowl-shaped.",
-        "numbers": "$J(w)=0.5(w-2)^2+1$ has $J''=1>0$, so $w=2$ is a local minimum with loss $1$."
+        "title": "$-x^2$ at $0$",
+        "background": "$-x^2$ at $0$ has $f''=-2$, maximum",
+        "numbers": "$-x^2$ at $0$ has $f''=-2$, maximum"
       },
       {
-        "title": "Rejecting maxima",
-        "background": "Gradient zero alone can fool an optimizer if the point is a peak.",
-        "numbers": "$J(w)=-w^2$ has $J'(0)=0$ and $J''(0)=-2$, so $w=0$ is a maximum, not a minimum."
+        "title": "$x^4$",
+        "background": "$x^4$ has $f''(0)=0$, inconclusive but minimum",
+        "numbers": "$x^4$ has $f''(0)=0$, inconclusive but minimum"
       },
       {
-        "title": "Saddle warnings",
-        "background": "In higher dimensions, a zero or mixed curvature test warns that classification needs the Hessian.",
-        "numbers": "For $f(x)=x^3$, $f''(0)=0$; nearby values $-0.001$ and $0.001$ show no max or min."
+        "title": "$x^3$",
+        "background": "$x^3$ has $f''(0)=0$, inconclusive and no extremum",
+        "numbers": "$x^3$ has $f''(0)=0$, inconclusive and no extremum"
       },
       {
-        "title": "Hyperparameter curves",
-        "background": "A validation curve's local best can be confirmed by upward curvature.",
-        "numbers": "If $E(\\lambda)=10(\\lambda-0.1)^2+0.2$, then $E''=20>0$ and the best is $\\lambda=0.1$."
+        "title": "$x^3-3x$",
+        "background": "$x^3-3x$ has $f''(-1)=-6$ max and $f''(1)=6$ min",
+        "numbers": "$x^3-3x$ has $f''(-1)=-6$ max and $f''(1)=6$ min"
       },
       {
-        "title": "Economics of compute",
-        "background": "Cost curves often have stationary points that should be minima, not maxima.",
-        "numbers": "For $C(b)=b+64/b$, $C'(b)=1-64/b^2$ gives $b=8$, and $C''(8)=128/512=0.25>0$."
+        "title": "Loss $(w-5)^2$",
+        "background": "Loss $(w-5)^2$ has $f''=2$, so $w=5$ is a minimum",
+        "numbers": "Loss $(w-5)^2$ has $f''=2$, so $w=5$ is a minimum"
       }
     ],
     "applicationsClose": "Curvature is a local verdict: bowl, cap, or not enough information yet.",
@@ -8555,6 +9912,53 @@
       "At $f'(c)=0$, $f''(c)>0$ means local minimum and $f''(c)<0$ means local maximum.",
       "$f''(c)=0$ is inconclusive, not a classification.",
       "The test is the quadratic approximation made practical."
+    ],
+    "connectionsProse": "<p>This lesson builds on critical points and concavity. The second derivative test classifies a flat critical point by the local bending of the graph. It gives a quick alternative to a full sign chart when the curvature is decisive.</p>",
+    "symbols": [
+      {
+        "sym": "$c$",
+        "desc": "is critical"
+      },
+      {
+        "sym": "$h$",
+        "desc": "is a small displacement"
+      },
+      {
+        "sym": "$f''(c)$",
+        "desc": "is local curvature"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $f'(c)=0$",
+        "result": "Let $f'(c)=0$",
+        "why": "the tangent is flat."
+      },
+      {
+        "do": "Use the second-order Taylor approximation $f(c+h)\\approx f(c)+\\frac12 f''(c)h^2$.",
+        "result": "Use the second-order Taylor approximation $f(c+h)\\approx f(c)+\\frac12 f''(c)h^2$.",
+        "why": ""
+      },
+      {
+        "do": "Since $h^2>0$ for $h\\ne0$, the sign of the change is the sign of $f''(c)$.",
+        "result": "Since $h^2>0$ for $h\\ne0$, the sign of the change is the sign of $f''(c)$.",
+        "why": ""
+      },
+      {
+        "do": "If $f''(c)>0$, nearby values are larger, so $c$ is a local minimum.",
+        "result": "If $f''(c)>0$, nearby values are larger, so $c$ is a local minimum.",
+        "why": ""
+      },
+      {
+        "do": "If $f''(c)<0$, nearby values are smaller, so $c$ is a local maximum.",
+        "result": "If $f''(c)<0$, nearby values are smaller, so $c$ is a local maximum.",
+        "why": ""
+      },
+      {
+        "do": "If $f''(c)=0$, the test gives no decision.",
+        "result": "If $f''(c)=0$, the test gives no decision.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-32"
@@ -8582,8 +9986,8 @@
         "continuity"
       ]
     },
-    "motivation": "<p>Concavity tells whether a graph bends like a bowl or like a cap. Sometimes the graph switches from one kind of bending to the other, and that switch can mark a change in acceleration, confidence, or saturation.</p><p>An <b>inflection point</b> is not just where $f''=0$. It is where concavity actually changes. That small distinction saves a lot of mistakes.</p>",
-    "definition": "<p>A point $(c,f(c))$ is an <b>inflection point</b> if $f$ is continuous at $c$ and the concavity changes at $c$: from up to down or from down to up. Candidates occur where $f''(c)=0$ or where $f''$ is undefined, but the sign of $f''$ on both sides decides.</p><p><b>Assumptions that matter:</b> the function must be continuous at the point; $f''=0$ is only a candidate; and concavity must change across the point, not merely touch zero and keep the same sign.</p>",
+    "motivation": "<p>A zero of the second derivative is only a candidate for an inflection point. The graph must actually switch concavity from up to down or from down to up.</p><p>Checking signs on both sides keeps the test honest. If the sign of $f''$ changes, slopes switch from increasing to decreasing or the reverse, and the point is an inflection point.</p>",
+    "definition": "<p>Central statement: For $f=x^3$, $f''=6x$ changes from negative to positive at $0$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find the inflection point of $f(x)=x^3-3x$.",
       "skills": [
@@ -8797,34 +10201,34 @@
     ],
     "applications": [
       {
-        "title": "Sigmoid classifiers",
-        "background": "The sigmoid changes from accelerating to saturating at probability $0.5$.",
-        "numbers": "$\\sigma(0)=0.5$ and $\\sigma'(0)=0.25$, the largest slope on the curve."
+        "title": "$x^3$",
+        "background": "$x^3$ has inflection at $0$",
+        "numbers": "$x^3$ has inflection at $0$"
       },
       {
-        "title": "Training curves",
-        "background": "Loss often falls slowly, then rapidly, then slowly again; inflection marks the speed transition.",
-        "numbers": "A logistic decay midpoint at epoch $20$ has the steepest drop there, such as loss moving about $0.05$ per epoch."
+        "title": "$x^4$",
+        "background": "$x^4$ has $f''(0)=0$ but no inflection",
+        "numbers": "$x^4$ has $f''(0)=0$ but no inflection"
       },
       {
-        "title": "Epidemic and diffusion models",
-        "background": "S-shaped adoption curves use inflection points to mark peak growth rate.",
-        "numbers": "For $N(t)=1000/(1+e^{-0.3(t-10)})$, the inflection is at $t=10$ with $N=500$."
+        "title": "Logistic $1/(1+e^{-x})$",
+        "background": "Logistic $1/(1+e^{-x})$ has inflection at $0$ with value $0.5$",
+        "numbers": "Logistic $1/(1+e^{-x})$ has inflection at $0$ with value $0.5$"
       },
       {
-        "title": "Activation saturation",
-        "background": "Inflection separates the nearly linear central region from saturation behavior.",
-        "numbers": "For sigmoid, at $x=0$ slope is $0.25$; at $x=4$ slope is about $0.0177$."
+        "title": "$\\sin x$",
+        "background": "$\\sin x$ has inflections at $0$ and $\\pi$ in $[0,\\pi]$",
+        "numbers": "$\\sin x$ has inflections at $0$ and $\\pi$ in $[0,\\pi]$"
       },
       {
-        "title": "Rendering and splines",
-        "background": "Computer graphics uses curvature changes to shape smooth curves.",
-        "numbers": "For $y=x^3-3x$, the bend changes at $x=0$, where $y=0$."
+        "title": "$x^3-3x$",
+        "background": "$x^3-3x$ has inflection at $0$",
+        "numbers": "$x^3-3x$ has inflection at $0$"
       },
       {
-        "title": "Model calibration",
-        "background": "Calibration curves can reveal where confidence starts becoming over- or under-responsive.",
-        "numbers": "A fitted curve $p(s)=1/(1+e^{-2(s-0.7)})$ has inflection at score $s=0.7$ and probability $0.5$."
+        "title": "$\\ln x$",
+        "background": "$\\ln x$ has no inflection on $x>0$ because $f''<0$",
+        "numbers": "$\\ln x$ has no inflection on $x>0$ because $f''<0$"
       }
     ],
     "applicationsClose": "Inflection points are bend-change landmarks: they say where the graph's local geometry changes its mind.",
@@ -8832,6 +10236,49 @@
       "Inflection requires a change in concavity, not just $f''=0$.",
       "Candidates come from $f''=0$ or $f''$ undefined, then a sign chart decides.",
       "The function must be continuous at the inflection point."
+    ],
+    "connectionsProse": "<p>This lesson builds on concavity and the second derivative. Inflection points mark where the bending pattern changes. They help complete a graph's shape beyond just maxima and minima.</p>",
+    "symbols": [
+      {
+        "sym": "$f''$",
+        "desc": "is curvature"
+      },
+      {
+        "sym": "sign change",
+        "desc": "means crossing from concave up to concave down or back"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Concavity is controlled by the sign of $f''$.",
+        "result": "Concavity is controlled by the sign of $f''$.",
+        "why": ""
+      },
+      {
+        "do": "A possible inflection point occurs where $f''=0$ or $f''$ is undefined.",
+        "result": "A possible inflection point occurs where $f''=0$ or $f''$ is undefined.",
+        "why": ""
+      },
+      {
+        "do": "Check signs on both sides",
+        "result": "Check signs on both sides",
+        "why": "a zero alone is not enough."
+      },
+      {
+        "do": "If $f''$ changes sign, slopes switch from increasing to decreasing or vice versa.",
+        "result": "If $f''$ changes sign, slopes switch from increasing to decreasing or vice versa.",
+        "why": ""
+      },
+      {
+        "do": "That sign change is an inflection point.",
+        "result": "That sign change is an inflection point.",
+        "why": ""
+      },
+      {
+        "do": "For $f=x^3$, $f''=6x$ changes from negative to positive at $0$.",
+        "result": "For $f=x^3$, $f''=6x$ changes from negative to positive at $0$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-33"
@@ -8859,8 +10306,8 @@
         "linear approximation"
       ]
     },
-    "motivation": "<p>If you drive $120$ miles in $2$ hours, your average speed is $60$ mph. Even if your speed changed the whole time, there must have been at least one instant when the speedometer read $60$.</p><p>The <b>Mean Value Theorem</b> is that everyday fact for functions. It connects a whole-interval change to an instantaneous derivative somewhere inside the interval.</p>",
-    "definition": "<p>If $f$ is continuous on $[a,b]$ and differentiable on $(a,b)$, then there is at least one $c\\in(a,b)$ such that $$f'(c)=\\frac{f(b)-f(a)}{b-a}.$$ The right side is the secant slope across the interval; the theorem guarantees a tangent slope that matches it.</p><p><b>Assumptions that matter:</b> continuity on the closed interval prevents jumps; differentiability on the open interval prevents corners or cusps; and the theorem guarantees existence of at least one $c$, not necessarily a unique one.</p>",
+    "motivation": "<p>The theorem says that a smooth enough function cannot complete a net change without matching its average rate somewhere along the way. The graph may speed up and slow down, but at some interior point its instantaneous slope equals the secant slope.</p><p>Subtracting the secant line turns the statement into a function with equal endpoint values. Rolle's theorem then supplies a point where the adjusted function has horizontal tangent, which gives the desired slope equality.</p>",
+    "definition": "<p>Central statement: Since $g'(x)=f'(x)-m$, $f'(c)=m$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "For $f(x)=x^2$ on $[1,3]$, find a point $c$ guaranteed by the Mean Value Theorem.",
       "skills": [
@@ -9084,34 +10531,34 @@
     ],
     "applications": [
       {
-        "title": "Speed monitoring",
-        "background": "The classic interpretation says average speed forces an instant with that speed.",
-        "numbers": "A car covering $120$ miles in $2$ hours has average speed $60$ mph, so some instant was $60$ mph."
+        "title": "$f=x^2$ on $[1,3]$",
+        "background": "$f=x^2$ on $[1,3]$ has average slope $4$, so $c=2$",
+        "numbers": "$f=x^2$ on $[1,3]$ has average slope $4$, so $c=2$"
       },
       {
-        "title": "Training diagnostics",
-        "background": "A smooth loss curve with known endpoints must have an instantaneous slope matching the average drop.",
-        "numbers": "Loss $1.2$ to $0.6$ over $10$ epochs guarantees $L'(c)=-0.06$ somewhere."
+        "title": "Application 2",
+        "background": "Distance $100$ miles in $2$ hours means some instant speed was $50$ mph",
+        "numbers": "Distance $100$ miles in $2$ hours means some instant speed was $50$ mph"
       },
       {
-        "title": "Lipschitz bounds",
-        "background": "If derivatives are bounded, MVT bounds output changes.",
-        "numbers": "If $|f'|\\le3$ and inputs differ by $0.2$, outputs differ by at most $0.6$."
+        "title": "$\\sin x$ on $[0,\\pi]$",
+        "background": "$\\sin x$ on $[0,\\pi]$ has average slope $0$, so some $c$ has $\\cos c=0$",
+        "numbers": "$\\sin x$ on $[0,\\pi]$ has average slope $0$, so some $c$ has $\\cos c=0$"
       },
       {
-        "title": "Gradient clipping intuition",
-        "background": "Bounding gradients bounds how fast model scores can change along a line.",
-        "numbers": "With gradient norm at most $5$, a parameter move of length $0.01$ changes loss by at most about $0.05$."
+        "title": "$e^x$ on $[0,1]$",
+        "background": "$e^x$ on $[0,1]$ has average slope $e-1\\approx1.718$, so $c=\\ln(e-1)\\approx0.541$",
+        "numbers": "$e^x$ on $[0,1]$ has average slope $e-1\\approx1.718$, so $c=\\ln(e-1)\\approx0.541$"
       },
       {
-        "title": "Numerical error",
-        "background": "MVT helps turn a derivative maximum into an approximation error bound.",
-        "numbers": "For $\\sin x$, $|\\cos x|\\le1$, so changing $x$ by $0.001$ changes $\\sin x$ by at most $0.001$."
+        "title": "If $|f'|\\le3$ over length $4$, output",
+        "background": "If $|f'|\\le3$ over length $4$, output changes by at most $12$",
+        "numbers": "If $|f'|\\le3$ over length $4$, output changes by at most $12$"
       },
       {
-        "title": "Database latency trends",
-        "background": "If latency changes smoothly over load, an average increase reflects some instantaneous sensitivity.",
-        "numbers": "Latency from $80$ ms to $140$ ms as QPS goes $1000$ to $2000$ gives slope $0.06$ ms per QPS somewhere."
+        "title": "$x^3$ on $[0,2]$",
+        "background": "$x^3$ on $[0,2]$ has average slope $4$, so $c=2/\\sqrt3\\approx1.155$",
+        "numbers": "$x^3$ on $[0,2]$ has average slope $4$, so $c=2/\\sqrt3\\approx1.155$"
       }
     ],
     "applicationsClose": "MVT is the guarantee behind many estimates: a whole-interval change has an instantaneous witness.",
@@ -9119,6 +10566,53 @@
       "Continuity on $[a,b]$ and differentiability on $(a,b)$ are required.",
       "The theorem guarantees $f'(c)=\\frac{f(b)-f(a)}{b-a}$ for some interior $c$.",
       "It proves existence, not necessarily uniqueness."
+    ],
+    "connectionsProse": "<p>This lesson builds on continuity, differentiability, and average rate of change. The Mean Value Theorem connects a secant slope across an interval to a tangent slope inside it. It is one of the main bridges between global change and local derivative information.</p>",
+    "symbols": [
+      {
+        "sym": "$m$",
+        "desc": "is average rate"
+      },
+      {
+        "sym": "$c$",
+        "desc": "is the guaranteed interior point"
+      },
+      {
+        "sym": "continuity and differentiability",
+        "desc": "are the hypotheses"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume $f$ is continuous on $[a,b]$ and differentiable on $(a,b)$.",
+        "result": "Assume $f$ is continuous on $[a,b]$ and differentiable on $(a,b)$.",
+        "why": ""
+      },
+      {
+        "do": "Compute the secant slope $m=\\frac{f(b)-f(a)}{b-a}$.",
+        "result": "Compute the secant slope $m=\\frac{f(b)-f(a)}{b-a}$.",
+        "why": ""
+      },
+      {
+        "do": "Build $g(x)=f(x)-[f(a)+m(x-a)]$",
+        "result": "Build $g(x)=f(x)-[f(a)+m(x-a)]$",
+        "why": "subtract the secant line."
+      },
+      {
+        "do": "Then $g(a)=0$ and $g(b)=0$.",
+        "result": "Then $g(a)=0$ and $g(b)=0$.",
+        "why": ""
+      },
+      {
+        "do": "Rolle's theorem gives some $c$ with $g'(c)=0$.",
+        "result": "Rolle's theorem gives some $c$ with $g'(c)=0$.",
+        "why": ""
+      },
+      {
+        "do": "Since $g'(x)=f'(x)-m$, $f'(c)=m$.",
+        "result": "Since $g'(x)=f'(x)-m$, $f'(c)=m$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-34"
@@ -9147,8 +10641,8 @@
         "domain analysis"
       ]
     },
-    "motivation": "<p>Graphing is not guessing. Once you can read derivatives, you can build a trustworthy sketch from a small set of landmarks: intercepts, increasing intervals, extrema, concavity, and inflection points.</p><p><b>Curve sketching</b> is the organized version of that process. It turns local calculus facts into a global picture, the same way a few map features can orient you in a whole city.</p>",
-    "definition": "<p>To sketch a differentiable function, identify the domain, intercepts, asymptotic behavior, critical points from $f'$, increasing and decreasing intervals from the sign of $f'$, concavity from $f''$, and inflection points where concavity changes. Then plot the landmarks and connect them consistently.</p><p><b>Assumptions that matter:</b> the sketch is only as good as the domain and sign charts; endpoints and asymptotes need separate attention; and a clean sketch should honor every derivative sign and concavity interval you found.</p>",
+    "motivation": "<p>A graph can be understood by collecting reliable clues. Intercepts locate crossings, limits describe end behavior, $f'$ shows increasing and decreasing intervals, and $f''$ shows bending.</p><p>The purpose is to assemble these clues in a fixed order. A careful checklist prevents one feature, such as an intercept or asymptote, from being mistaken for the whole graph.</p>",
+    "definition": "<p>This is an explain-only lesson: this lesson organizes previous tests. Show a fixed checklist and a worked graph summary rather than forcing a proof.</p><p><b>Assumptions that matter:</b> Use the stated domain, graph, interval, or modeling conditions before applying the classification.</p>",
     "worked": {
       "problem": "Sketch the key features of $f(x)=x^3-3x^2$.",
       "skills": [
@@ -9393,34 +10887,34 @@
     ],
     "applications": [
       {
-        "title": "Loss landscape slices",
-        "background": "Plotting a one-dimensional slice through parameter space helps diagnose minima and saddles.",
-        "numbers": "$J(w)=w^4-2w^2$ has minima $J=-1$ at $w=\\pm1$ and a maximum $J=0$ at $w=0$."
+        "title": "$f=x^3-3x$",
+        "background": "$f=x^3-3x$ has critical points $-1,1$ and values $2,-2$",
+        "numbers": "$f=x^3-3x$ has critical points $-1,1$ and values $2,-2$"
       },
       {
-        "title": "Activation functions",
-        "background": "Sketching activations reveals saturation, linear regions, and curvature changes.",
-        "numbers": "Sigmoid passes through $(0,0.5)$ with slope $0.25$ and has horizontal limits $0$ and $1$."
+        "title": "It",
+        "background": "It increases on $(-\\infty,-1)$ and $(1,\\infty)$",
+        "numbers": "It increases on $(-\\infty,-1)$ and $(1,\\infty)$"
       },
       {
-        "title": "Throughput curves",
-        "background": "Systems performance often rises, peaks, and falls as overhead dominates.",
-        "numbers": "$T(b)=b e^{-b/100}$ peaks at $b=100$ with value about $36.8$."
+        "title": "It",
+        "background": "It decreases on $(-1,1)$",
+        "numbers": "It decreases on $(-1,1)$"
       },
       {
-        "title": "Regularization paths",
-        "background": "A curve of validation error against penalty strength can show the best region visually.",
-        "numbers": "$E(\\lambda)=5(\\lambda-0.2)^2+0.1$ has a minimum $0.1$ at $\\lambda=0.2$."
+        "title": "It",
+        "background": "It has inflection at $0$",
+        "numbers": "It has inflection at $0$"
       },
       {
-        "title": "Probability densities",
-        "background": "Sketching a density checks modes, tails, and symmetry.",
-        "numbers": "For $p(x)=e^{-x^2/2}$, the maximum is at $x=0$ and $p(2)/p(0)=e^{-2}\\approx0.135$."
+        "title": "$x/(x+1)$",
+        "background": "$x/(x+1)$ has vertical asymptote $x=-1$ and horizontal asymptote $y=1$",
+        "numbers": "$x/(x+1)$ has vertical asymptote $x=-1$ and horizontal asymptote $y=1$"
       },
       {
-        "title": "Latency under load",
-        "background": "Asymptotes warn where a service approaches capacity.",
-        "numbers": "$D(\\rho)=1/(1-\\rho)$ is $5$ at $\\rho=0.8$ and $10$ at $\\rho=0.9$, rising sharply near $1$."
+        "title": "$x^2-4$",
+        "background": "$x^2-4$ crosses at $x=\\pm2$",
+        "numbers": "$x^2-4$ crosses at $x=\\pm2$"
       }
     ],
     "applicationsClose": "A good sketch is compressed understanding: signs, bends, landmarks, and limits all in one picture.",
@@ -9428,6 +10922,29 @@
       "Start with domain, intercepts, and asymptotic behavior.",
       "Use $f'$ for increasing intervals and extrema; use $f''$ for concavity and inflection.",
       "Connect landmarks in a way that respects every sign chart."
+    ],
+    "connectionsProse": "<p>This lesson builds on limits, derivative tests, concavity, and asymptotes. Curve sketching brings those tools together into one organized picture. It is a synthesis skill rather than a new theorem.</p>",
+    "symbols": [
+      {
+        "sym": "Intercepts locate crossings",
+        "desc": "Intercepts locate crossings"
+      },
+      {
+        "sym": "critical points locate flat or sharp candidates",
+        "desc": "critical points locate flat or sharp candidates"
+      },
+      {
+        "sym": "$f'$",
+        "desc": "gives increasing/decreasing"
+      },
+      {
+        "sym": "$f''$",
+        "desc": "gives concavity"
+      },
+      {
+        "sym": "limits",
+        "desc": "give end behavior"
+      }
     ],
     "prereqs": [
       "math-01-35"
@@ -9456,8 +10973,8 @@
         "convexity"
       ]
     },
-    "motivation": "<p>Optimization is where derivatives start making decisions. We are not just describing a graph; we are choosing the least cost, greatest area, fastest runtime, or smallest loss.</p><p><b>Applied optimization</b> has a rhythm: define variables, write the quantity to optimize, use constraints to get one variable, differentiate, test candidates, and interpret the answer in the original units. That rhythm is also the heartbeat of machine learning.</p>",
-    "definition": "<p>An applied optimization problem asks for the maximum or minimum of an objective function on a domain. After modeling the objective as $F(x)$, candidates come from critical points inside the domain and endpoints on the boundary. Derivatives classify interior candidates; endpoint values must be compared directly.</p><p><b>Assumptions that matter:</b> the objective must match the real quantity being optimized; the domain and units matter; constraints must be substituted correctly; and a local optimum is not automatically the absolute optimum unless the domain, endpoints, or convexity justify it.</p>",
+    "motivation": "<p>The hardest part is usually modeling. The objective names what should be maximized or minimized, while the constraints describe which values are allowed.</p><p>Once the problem is reduced to one variable on a feasible domain, calculus supplies candidates from critical points and endpoints. Comparing objective values then identifies the best feasible choice.</p>",
+    "definition": "<p>This is an explain-only lesson: the method is a modeling workflow. Define variables, write the objective, use constraints to reduce to one variable, find candidates, and compare values.</p><p><b>Assumptions that matter:</b> Use the stated domain, graph, interval, or modeling conditions before applying the classification.</p>",
     "worked": {
       "problem": "A rectangle has perimeter $40$ meters. What dimensions maximize its area?",
       "skills": [
@@ -9722,39 +11239,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning loss",
-        "background": "Training is applied optimization: choose parameters that minimize prediction error plus penalties.",
-        "numbers": "For $J(w)=(w-5)^2+0.1w^2$, the minimizer is $w=50/11\\approx4.545$, not $5$, because the penalty pulls down."
+        "title": "Max area with perimeter $20$: $A=x(10-x)$",
+        "background": "Max area with perimeter $20$: $A=x(10-x)$ gives $x=5$, area $25$",
+        "numbers": "Max area with perimeter $20$: $A=x(10-x)$ gives $x=5$, area $25$"
       },
       {
-        "title": "Ridge regression intuition",
-        "background": "L2 regularization trades fit for smaller weights.",
-        "numbers": "If data wants $w=10$ and penalty is $\\lambda w^2$ with $\\lambda=1$, minimizing $(w-10)^2+w^2$ gives $w=5$."
+        "title": "Min $x^2+(10-x)^2$",
+        "background": "Min $x^2+(10-x)^2$ gives $x=5$, value $50$",
+        "numbers": "Min $x^2+(10-x)^2$ gives $x=5$, value $50$"
       },
       {
-        "title": "Batch size tuning",
-        "background": "Throughput can improve with batch size until memory or latency costs dominate.",
-        "numbers": "For cost $C(b)=b/100+64/b$, $C'(b)=0.01-64/b^2$, so $b=80$ minimizes the toy cost."
+        "title": "Revenue $q(100-q)$",
+        "background": "Revenue $q(100-q)$ maximizes at $q=50$, revenue $2500$",
+        "numbers": "Revenue $q(100-q)$ maximizes at $q=50$, revenue $2500$"
       },
       {
-        "title": "Ad budget allocation",
-        "background": "A concave response curve models diminishing returns from spend.",
-        "numbers": "Revenue $R(x)=100\\ln(1+x)$ and cost $2x$ gives $R'(x)=100/(1+x)-2$, so optimal spend is $x=49$."
+        "title": "Box volume $x^2(12-4x)$",
+        "background": "Box volume $x^2(12-4x)$ maximizes at $x=2$, volume $16$",
+        "numbers": "Box volume $x^2(12-4x)$ maximizes at $x=2$, volume $16$"
       },
       {
-        "title": "Serving latency tradeoff",
-        "background": "Caching reduces lookup time but costs memory; the best cache size balances both.",
-        "numbers": "If $C(c)=500/c+2c$, then $c=\\sqrt{250}\\approx15.8$ minimizes cost."
+        "title": "Closest point on $y=x$ to $(3,0)$",
+        "background": "Closest point on $y=x$ to $(3,0)$ is $(1.5,1.5)$ with distance $\\sqrt{4.5}\\approx2.121$",
+        "numbers": "Closest point on $y=x$ to $(3,0)$ is $(1.5,1.5)$ with distance $\\sqrt{4.5}\\approx2.121$"
       },
       {
-        "title": "Model threshold selection",
-        "background": "A decision threshold can maximize a simplified utility from true positives minus false positives.",
-        "numbers": "If $U(t)=3t(1-t)-0.2t$, then $U'(t)=2.8-6t$, so $t\\approx0.467$ is optimal in the toy model."
-      },
-      {
-        "title": "Experiment duration",
-        "background": "Longer experiments reduce noise but cost time, so there is often a sweet spot.",
-        "numbers": "For $C(d)=d+36/d$, $C'(d)=1-36/d^2$, giving $d=6$ days as the minimum."
+        "title": "Fence three sides with $60$ feet",
+        "background": "Fence three sides with $60$ feet gives dimensions $15$ by $30$, area $450$",
+        "numbers": "Fence three sides with $60$ feet gives dimensions $15$ by $30$, area $450$"
       }
     ],
     "applicationsClose": "Applied optimization is one pattern in many uniforms: model the quantity, respect the constraint, differentiate, test, and translate back to the real decision.",
@@ -9762,6 +11274,21 @@
       "Define variables and constraints before differentiating.",
       "Interior candidates come from critical points; endpoints and boundaries must also be checked.",
       "ML training is applied optimization with loss as the objective and model parameters as the variables."
+    ],
+    "connectionsProse": "<p>This lesson builds on critical points, endpoints, and derivative tests. Applied optimization translates a real constraint into a one-variable calculus problem. It connects the symbolic tools of the section to decision-making.</p>",
+    "symbols": [
+      {
+        "sym": "The objective",
+        "desc": "is the quantity optimized"
+      },
+      {
+        "sym": "constraints restrict allowed values",
+        "desc": "constraints restrict allowed values"
+      },
+      {
+        "sym": "feasible interval",
+        "desc": "is the domain that makes sense in context"
+      }
     ],
     "prereqs": [
       "math-01-36"
@@ -9789,8 +11316,8 @@
         "accumulation functions"
       ]
     },
-    "motivation": "<p>You already know how to differentiate $F(x)=x^3$: the result is $F'(x)=3x^2$. Antiderivatives ask the reverse question: if the rate is $3x^2$, what original function could have produced it?</p><p>The gentle catch is that derivatives forget constants. $x^3$, $x^3+7$, and $x^3-100$ all have derivative $3x^2$. So an antiderivative is not one function but a whole family, with the missing vertical shift written as $+C$.</p>",
-    "definition": "<p>An <b>antiderivative</b> of $f$ on an interval is a function $F$ such that $F'(x)=f(x)$ for every $x$ in that interval. The <b>indefinite integral</b> records the whole family: $$\\int f(x)\\,dx=F(x)+C,$$ where $C$ is an arbitrary constant.</p><p><b>Assumptions that matter:</b> work on one interval at a time, because constants can differ across disconnected pieces. The rules reverse derivative rules: $\\int x^n\\,dx=\\frac{x^{n+1}}{n+1}+C$ for $n\\ne-1$, while $\\int \\frac1x\\,dx=\\ln|x|+C$.</p>",
+    "motivation": "<p>Differentiation loses constants because every constant has derivative zero. That is why an antiderivative represents a whole family of functions rather than one function.</p><p>For powers, the reverse power rule is found by undoing the exponent drop and coefficient multiplication. The exception $n=-1$ leads to the logarithm, which becomes its own important antiderivative case.</p>",
+    "definition": "<p>Central statement: Thus $\\int x^n dx=x^{n+1}/(n+1)+C$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find $\\displaystyle\\int (6x^2-4x+5)\\,dx$.",
       "skills": [
@@ -9989,34 +11516,34 @@
     ],
     "applications": [
       {
-        "title": "Recovering position from velocity",
-        "background": "Physics stores motion as rates; antiderivatives turn velocity back into position once one starting point is known.",
-        "numbers": "If $v(t)=3t^2$ meters per second and $s(0)=2$, then $s(t)=t^3+2$; at $t=4$, $s=66$ meters."
+        "title": "$\\int x^2dx=x^3/3+C$, from $0$ to $3$",
+        "background": "$\\int x^2dx=x^3/3+C$, from $0$ to $3$ gives $9$",
+        "numbers": "$\\int x^2dx=x^3/3+C$, from $0$ to $3$ gives $9$"
       },
       {
-        "title": "Loss from a one-dimensional gradient",
-        "background": "Optimization often sees derivatives first; reconstructing a loss along a line explains what the optimizer is descending.",
-        "numbers": "For $g(w)=4w-8$, $L(w)=2w^2-8w+C$ and the minimum occurs where $g=0$, at $w=2$."
+        "title": "Application 2",
+        "background": "$\\int 2x dx=x^2+C$",
+        "numbers": "$\\int 2x dx=x^2+C$"
       },
       {
-        "title": "Cumulative clicks from click rate",
-        "background": "A traffic dashboard may report clicks per hour; the antiderivative estimates total clicks.",
-        "numbers": "Rate $r(t)=20+6t$ from hour $0$ gives $C(t)=20t+3t^2$; after $5$ hours, $175$ clicks."
+        "title": "Application 3",
+        "background": "$\\int 1/x dx=\\ln|x|+C$",
+        "numbers": "$\\int 1/x dx=\\ln|x|+C$"
       },
       {
-        "title": "Expected utility curves",
-        "background": "Marginal utility tells the gain from one more unit; antiderivatives recover total utility up to a baseline.",
-        "numbers": "If marginal utility is $10/(x+1)$, then utility is $10\\ln(x+1)+C$; from $x=0$ to $9$ the gain is $10\\ln10\\approx23.03$."
+        "title": "Velocity $v=3t^2$",
+        "background": "Velocity $v=3t^2$ gives position $t^3+C$",
+        "numbers": "Velocity $v=3t^2$ gives position $t^3+C$"
       },
       {
-        "title": "Calibration from density shape",
-        "background": "A probability density is the derivative of a cumulative distribution; antiderivatives build the CDF.",
-        "numbers": "For $f(x)=2x$ on $[0,1]$, $F(x)=x^2$; $P(X\\le0.7)=0.49$."
+        "title": "Marginal cost $2q$",
+        "background": "Marginal cost $2q$ gives cost $q^2+C$",
+        "numbers": "Marginal cost $2q$ gives cost $q^2+C$"
       },
       {
-        "title": "Battery usage from power draw",
-        "background": "Energy is accumulated power, so an antiderivative converts watts over time into watt-hours.",
-        "numbers": "Power $P(t)=50+10t$ watts for $t$ hours gives $E(t)=50t+5t^2$ Wh; after $3$ hours, $195$ Wh."
+        "title": "$\\int e^x dx=e^x+C$, increase from $0$ to $1$",
+        "background": "$\\int e^x dx=e^x+C$, increase from $0$ to $1$ is $e-1\\approx1.718$",
+        "numbers": "$\\int e^x dx=e^x+C$, increase from $0$ to $1$ is $e-1\\approx1.718$"
       }
     ],
     "applicationsClose": "Antiderivatives are the same quiet move everywhere: start with a rate, restore the accumulated quantity, and use one known value to place it correctly.",
@@ -10024,6 +11551,53 @@
       "An antiderivative $F$ satisfies $F'=f$ on an interval.",
       "Indefinite integrals include $+C$ because derivatives erase constants.",
       "The reverse power rule works for $x^n$ when $n\\ne-1$; $1/x$ gives a logarithm."
+    ],
+    "connectionsProse": "<p>This lesson builds on derivative rules, especially the power rule. Antiderivatives reverse differentiation by asking which function has a given derivative. They are the entry point to indefinite integrals and accumulated change.</p>",
+    "symbols": [
+      {
+        "sym": "$F$",
+        "desc": "is an antiderivative"
+      },
+      {
+        "sym": "$C$",
+        "desc": "is an arbitrary constant"
+      },
+      {
+        "sym": "$\\int f(x)dx$",
+        "desc": "denotes the family of antiderivatives"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Seek $F$ with $F'(x)=x^n$.",
+        "result": "Seek $F$ with $F'(x)=x^n$.",
+        "why": ""
+      },
+      {
+        "do": "Use the power rule in reverse",
+        "result": "derivative of $x^{n+1}$ is $(n+1)x^n$.",
+        "why": ""
+      },
+      {
+        "do": "Divide by $n+1$ to make the coefficient $1$.",
+        "result": "Divide by $n+1$ to make the coefficient $1$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $F=x^{n+1}/(n+1)$ for $n\\ne-1$.",
+        "result": "Therefore $F=x^{n+1}/(n+1)$ for $n\\ne-1$.",
+        "why": ""
+      },
+      {
+        "do": "Add $C$ because constants differentiate to $0$.",
+        "result": "Add $C$ because constants differentiate to $0$.",
+        "why": ""
+      },
+      {
+        "do": "Thus $\\int x^n dx=x^{n+1}/(n+1)+C$.",
+        "result": "Thus $\\int x^n dx=x^{n+1}/(n+1)+C$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-37"
@@ -10051,8 +11625,8 @@
         "limits"
       ]
     },
-    "motivation": "<p>If a car moves at a constant $60$ miles per hour for $2$ hours, distance is just rectangle area: $60\\cdot2=120$ miles. But real speed changes. What do we do when the top of the rectangle is a curve?</p><p>A <b>Riemann sum</b> says: use many narrow rectangles. Each one is simple; together they approximate the curvy total. As the rectangles get thinner, the approximation becomes the definite integral.</p>",
-    "definition": "<p>Partition $[a,b]$ into $n$ subintervals of width $\\Delta x=\\frac{b-a}{n}$. Choose a sample point $x_i^*$ in each subinterval. A Riemann sum is $$\\sum_{i=1}^n f(x_i^*)\\Delta x.$$ It means height times width, added across the interval.</p><p><b>Assumptions that matter:</b> for the limiting area to be well-defined, $f$ should be Riemann integrable; continuous functions are safe. Left, right, and midpoint choices can differ for finite $n$, but they converge to the same value for nice functions as $\\Delta x\\to0$.</p>",
+    "motivation": "<p>On each small subinterval, a rectangle uses one sample height to represent the function. Multiplying that height by the width gives a small area contribution.</p><p>As the partition is refined, the rectangles better track the curve. When the sums approach a single value independent of sample choices, that value is the definite integral.</p>",
+    "definition": "<p>Central statement: The limit is $\\int_a^b f(x)dx$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Approximate the area under $f(x)=x^2$ on $[0,2]$ using $4$ right-endpoint rectangles.",
       "skills": [
@@ -10251,34 +11825,34 @@
     ],
     "applications": [
       {
-        "title": "Numerical integration",
-        "background": "Computers rarely integrate symbolic formulas in production; they sample and add rectangles or improved rectangle-like rules.",
-        "numbers": "For $\\int_0^1x^2dx$, $10$ right rectangles give $0.385$ versus exact $0.3333$, an error of $0.0517$."
+        "title": "Right sum for $f=x$ on $[0,1]$ with $n=4$",
+        "background": "Right sum for $f=x$ on $[0,1]$ with $n=4$ is $(0.25+0.5+0.75+1)0.25=0.625$",
+        "numbers": "Right sum for $f=x$ on $[0,1]$ with $n=4$ is $(0.25+0.5+0.75+1)0.25=0.625$"
       },
       {
-        "title": "Expected value from sampled densities",
-        "background": "A density-weighted average is an integral; bins approximate it when only a histogram is available.",
-        "numbers": "Bins at $x=1,2,3$ with probabilities $0.2,0.5,0.3$ give $E[X]\\approx1(0.2)+2(0.5)+3(0.3)=2.1$."
+        "title": "Left sum",
+        "background": "Left sum is $(0+0.25+0.5+0.75)0.25=0.375$",
+        "numbers": "Left sum is $(0+0.25+0.5+0.75)0.25=0.375$"
       },
       {
-        "title": "Area under a precision-recall curve",
-        "background": "Model evaluation curves are often reported by summing sampled rectangles under a curve.",
-        "numbers": "Precisions $0.9,0.8,0.6$ over recall widths $0.2,0.3,0.5$ give area $0.18+0.24+0.30=0.72$."
+        "title": "Midpoint sum",
+        "background": "Midpoint sum is $0.5$ exactly for $f=x$",
+        "numbers": "Midpoint sum is $0.5$ exactly for $f=x$"
       },
       {
-        "title": "Training compute exposure",
-        "background": "Loss over training time can be summarized as an area, not just a final value.",
-        "numbers": "Losses $1.2,0.8,0.6$ across three one-hour intervals give $2.6$ loss-hours by left rectangles."
+        "title": "Right sum for $x^2$ with $n=2$",
+        "background": "Right sum for $x^2$ with $n=2$ is $(0.25+1)0.5=0.625$",
+        "numbers": "Right sum for $x^2$ with $n=2$ is $(0.25+1)0.5=0.625$"
       },
       {
-        "title": "Sensor energy estimation",
-        "background": "Edge devices sample power; rectangle sums estimate battery consumption between samples.",
-        "numbers": "Power readings $2.0,2.4,2.1$ W over $0.5$ h intervals give energy $(2.0+2.4+2.1)0.5=3.25$ Wh."
+        "title": "Left sum for $x^2$ with $n=2$",
+        "background": "Left sum for $x^2$ with $n=2$ is $0.125$",
+        "numbers": "Left sum for $x^2$ with $n=2$ is $0.125$"
       },
       {
-        "title": "Monte Carlo as random rectangles",
-        "background": "Monte Carlo integration samples random heights instead of a fixed grid, then averages.",
-        "numbers": "If sampled values of $x^2$ on $[0,1]$ average $0.34$ over $1000$ samples, the integral estimate is $0.34\\cdot1=0.34$."
+        "title": "Exact area under $x$ on $[0,1]$",
+        "background": "Exact area under $x$ on $[0,1]$ is $0.5$",
+        "numbers": "Exact area under $x$ on $[0,1]$ is $0.5$"
       }
     ],
     "applicationsClose": "Riemann sums turn curves into honest arithmetic: choose widths, sample heights, add. The same habit powers numerical integration, metrics, and sampled expectations.",
@@ -10286,6 +11860,53 @@
       "A Riemann sum is $\\sum f(x_i^*)\\Delta x$.",
       "Left, right, and midpoint choices differ at finite $n$ but agree in the limit for continuous functions.",
       "The definite integral is the limiting value of these rectangle sums."
+    ],
+    "connectionsProse": "<p>This lesson builds on area formulas and finite sums. Riemann sums approximate curved area by adding many rectangle areas. They make the definite integral a limit of ordinary arithmetic.</p>",
+    "symbols": [
+      {
+        "sym": "$\\Delta x$",
+        "desc": "is rectangle width"
+      },
+      {
+        "sym": "$x_i^*$",
+        "desc": "is sample point"
+      },
+      {
+        "sym": "the summation totals rectangle areas",
+        "desc": "the summation totals rectangle areas"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Split $[a,b]$ into $n$ pieces of width $\\Delta x=(b-a)/n$.",
+        "result": "Split $[a,b]$ into $n$ pieces of width $\\Delta x=(b-a)/n$.",
+        "why": ""
+      },
+      {
+        "do": "Choose a sample point $x_i^*$ in each piece.",
+        "result": "Choose a sample point $x_i^*$ in each piece.",
+        "why": ""
+      },
+      {
+        "do": "Rectangle $i$ has area $f(x_i^*)\\Delta x$.",
+        "result": "Rectangle $i$ has area $f(x_i^*)\\Delta x$.",
+        "why": ""
+      },
+      {
+        "do": "Add all rectangles",
+        "result": "$\\sum_{i=1}^n f(x_i^*)\\Delta x$.",
+        "why": ""
+      },
+      {
+        "do": "Let the largest width go to $0$.",
+        "result": "Let the largest width go to $0$.",
+        "why": ""
+      },
+      {
+        "do": "The limit is $\\int_a^b f(x)dx$.",
+        "result": "The limit is $\\int_a^b f(x)dx$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-38"
@@ -10313,8 +11934,8 @@
         "signed accumulation"
       ]
     },
-    "motivation": "<p>Riemann sums gave us a practical approximation: many rectangles under a curve. The definite integral is what those sums are aiming at when the rectangles become infinitely thin.</p><p>The word <b>area</b> is useful, but the deeper word is accumulation. Velocity accumulates into distance, density accumulates into probability, and loss over time accumulates into total training exposure.</p>",
-    "definition": "<p>The <b>definite integral</b> of $f$ from $a$ to $b$ is $$\\int_a^b f(x)\\,dx=\\lim_{n\\to\\infty}\\sum_{i=1}^n f(x_i^*)\\Delta x,$$ when this limit exists. Positive values add area above the axis; negative values subtract area below it.</p><p><b>Assumptions that matter:</b> continuous functions are integrable, and bounded functions with only finitely many jump discontinuities are safe in ordinary calculus. Orientation matters: $\\int_b^a f(x)\\,dx=-\\int_a^b f(x)\\,dx$, and units multiply, so height units times $x$-units become accumulated units.</p>",
+    "motivation": "<p>Positive function values contribute positive signed area, while negative values contribute negative signed area. This is why a definite integral can represent net displacement as well as geometric area.</p><p>The definition comes from refining Riemann sums until the accumulated total stabilizes. Constant functions anchor the meaning because height times total width gives the expected rectangle area.</p>",
+    "definition": "<p>Central statement: This anchors the integral as accumulated height times width.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\int_0^2 (3x^2+1)\\,dx$ using an antiderivative.",
       "skills": [
@@ -10513,34 +12134,34 @@
     ],
     "applications": [
       {
-        "title": "Probability from a density",
-        "background": "Continuous random variables assign probability by integrating a density over an interval.",
-        "numbers": "For $f(x)=2x$ on $[0,1]$, $P(X>0.5)=\\int_{0.5}^1 2x\\,dx=1-0.25=0.75$."
+        "title": "Application 1",
+        "background": "$\\int_0^3 2dx=6$",
+        "numbers": "$\\int_0^3 2dx=6$"
       },
       {
-        "title": "Expected value",
-        "background": "The mean of a continuous distribution is a weighted integral, the continuous version of a weighted average.",
-        "numbers": "For $f(x)=2x$ on $[0,1]$, $E[X]=\\int_0^1 x\\cdot2x\\,dx=2/3\\approx0.667$."
+        "title": "Application 2",
+        "background": "$\\int_0^1 xdx=0.5$",
+        "numbers": "$\\int_0^1 xdx=0.5$"
       },
       {
-        "title": "Area under ROC",
-        "background": "AUC measures ranking quality by integrating true-positive rate over false-positive rate.",
-        "numbers": "If $\\operatorname{TPR}(u)=0.6+0.4u$, then AUC $=\\int_0^1(0.6+0.4u)du=0.8$."
+        "title": "Application 3",
+        "background": "$\\int_0^2 x^2dx=8/3\\approx2.667$",
+        "numbers": "$\\int_0^2 x^2dx=8/3\\approx2.667$"
       },
       {
-        "title": "Average loss over time",
-        "background": "A final loss can hide training instability; integrated loss summarizes the whole run.",
-        "numbers": "If $L(t)=e^{-t}$ over $0\\le t\\le3$, total exposure is $1-e^{-3}\\approx0.950$, average $0.317$."
+        "title": "Application 4",
+        "background": "$\\int_0^\\pi\\sin xdx=2$",
+        "numbers": "$\\int_0^\\pi\\sin xdx=2$"
       },
       {
-        "title": "Work from force",
-        "background": "Mechanical work accumulates force over distance; this is the original physical intuition for integrals.",
-        "numbers": "A spring with $F(x)=10x$ N stretched to $0.3$ m uses $\\int_0^{0.3}10x\\,dx=0.45$ J."
+        "title": "Net displacement from $v=t-1$ on $[0,3]$",
+        "background": "Net displacement from $v=t-1$ on $[0,3]$ is $1.5$",
+        "numbers": "Net displacement from $v=t-1$ on $[0,3]$ is $1.5$"
       },
       {
-        "title": "Image intensity over a region",
-        "background": "Computer vision often sums brightness over pixels; the continuous model is an area integral.",
-        "numbers": "If intensity along a line is $I(x)=100x$ on $[0,1]$, total brightness is $50$ intensity-units."
+        "title": "Average value of $x^2$ on $[0,3]$",
+        "background": "Average value of $x^2$ on $[0,3]$ is $3$",
+        "numbers": "Average value of $x^2$ on $[0,3]$ is $3$"
       }
     ],
     "applicationsClose": "The definite integral is signed accumulation with units. Once you see that, probability, metrics, physics, and training curves all become the same calculation.",
@@ -10548,6 +12169,53 @@
       "$\\int_a^b f(x)\\,dx$ is the limit of Riemann sums.",
       "It measures signed accumulation, not just geometric area.",
       "For antiderivative $F$, endpoint subtraction gives $F(b)-F(a)$."
+    ],
+    "connectionsProse": "<p>This lesson builds on Riemann sums. The definite integral records signed accumulation over an interval. It turns many small local heights into one total net amount.</p>",
+    "symbols": [
+      {
+        "sym": "$a,b$",
+        "desc": "are bounds"
+      },
+      {
+        "sym": "$dx$",
+        "desc": "marks the variable and limiting width"
+      },
+      {
+        "sym": "signed area can be positive, negative, or zero",
+        "desc": "signed area can be positive, negative, or zero"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Begin with Riemann sums $\\sum f(x_i^*)\\Delta x$",
+        "result": "Begin with Riemann sums $\\sum f(x_i^*)\\Delta x$",
+        "why": "each term is a small signed rectangle."
+      },
+      {
+        "do": "Refine the partition so widths shrink.",
+        "result": "Refine the partition so widths shrink.",
+        "why": ""
+      },
+      {
+        "do": "If the sums approach one value independent of sample choices, call it $\\int_a^b f(x)dx$.",
+        "result": "If the sums approach one value independent of sample choices, call it $\\int_a^b f(x)dx$.",
+        "why": ""
+      },
+      {
+        "do": "For constant $c$, each rectangle has height $c$.",
+        "result": "For constant $c$, each rectangle has height $c$.",
+        "why": ""
+      },
+      {
+        "do": "The total is $c\\sum\\Delta x=c(b-a)$.",
+        "result": "The total is $c\\sum\\Delta x=c(b-a)$.",
+        "why": ""
+      },
+      {
+        "do": "This anchors the integral as accumulated height times width.",
+        "result": "This anchors the integral as accumulated height times width.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-39"
@@ -10575,8 +12243,8 @@
         "net change"
       ]
     },
-    "motivation": "<p>So far, derivatives measure instantaneous change, while integrals measure accumulated change. They may feel like separate tools. The Fundamental Theorem says they are two views of one machine.</p><p>If $A(x)$ means the area accumulated from $a$ to $x$, then increasing $x$ by a tiny amount adds a thin slice whose height is about $f(x)$. So the rate of change of accumulated area is the original function.</p>",
-    "definition": "<p>The <b>Fundamental Theorem of Calculus</b> has two parts. If $f$ is continuous, then $$A(x)=\\int_a^x f(t)\\,dt$$ is differentiable and $A'(x)=f(x)$. Also, if $F'(x)=f(x)$, then $$\\int_a^b f(x)\\,dx=F(b)-F(a).$$</p><p><b>Assumptions that matter:</b> continuity guarantees the clean derivative-of-accumulation statement. The variable inside the integral is a dummy variable, often $t$, so the upper endpoint $x$ can move. If the endpoint is $g(x)$, the chain rule gives $\\frac{d}{dx}\\int_a^{g(x)}f(t)\\,dt=f(g(x))g'(x)$.</p>",
+    "motivation": "<p>An accumulation function adds area from a fixed starting point up to a moving endpoint. If the endpoint moves a tiny amount, the new area is a thin strip whose height is approximately the function value at that endpoint.</p><p>This explains why differentiating accumulated area returns the original function. The second part says that definite integrals can be evaluated by any antiderivative, turning accumulation into endpoint subtraction.</p>",
+    "definition": "<p>Central statement: If $F'=f$, then $\\int_a^b f(x)dx=F(b)-F(a)$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Let $A(x)=\\displaystyle\\int_1^{x^2}\\ln(1+t)\\,dt$. Find $A'(x)$.",
       "skills": [
@@ -10775,34 +12443,34 @@
     ],
     "applications": [
       {
-        "title": "CDF and PDF",
-        "background": "In probability, a cumulative distribution is accumulated density; the FTC says the density is its derivative.",
-        "numbers": "If $F(x)=x^2$ on $[0,1]$, then $f(x)=F'(x)=2x$, and $P(0.3<X<0.7)=0.49-0.09=0.40$."
+        "title": "Application 1",
+        "background": "$\\int_0^3 x^2dx=3^3/3=9$",
+        "numbers": "$\\int_0^3 x^2dx=3^3/3=9$"
       },
       {
-        "title": "Backprop through an integral layer",
-        "background": "Some models integrate a learned field; gradients with respect to endpoints use the FTC directly.",
-        "numbers": "For $A(z)=\\int_0^z(1+t^2)dt$, $A'(z)=1+z^2$; at $z=3$, the endpoint gradient is $10$."
+        "title": "Application 2",
+        "background": "$\\frac{d}{dx}\\int_0^x\\cos tdt=\\cos x$",
+        "numbers": "$\\frac{d}{dx}\\int_0^x\\cos tdt=\\cos x$"
       },
       {
-        "title": "Total distance from velocity",
-        "background": "Velocity is the derivative of position; the FTC turns a velocity integral into net position change.",
-        "numbers": "If $v(t)=6t$ m/s from $0$ to $4$, distance is $[3t^2]_0^4=48$ m."
+        "title": "Application 3",
+        "background": "$\\int_1^e 1/x dx=1$",
+        "numbers": "$\\int_1^e 1/x dx=1$"
       },
       {
-        "title": "AUC from an analytic ROC curve",
-        "background": "When a ROC curve has a formula, the FTC gives an exact metric instead of a sampled estimate.",
-        "numbers": "For $\\operatorname{TPR}(u)=\\sqrt{u}$, AUC $=\\int_0^1u^{1/2}du=2/3\\approx0.667$."
+        "title": "Position change from velocity $2t$ over $[0,4]$",
+        "background": "Position change from velocity $2t$ over $[0,4]$ is $16$",
+        "numbers": "Position change from velocity $2t$ over $[0,4]$ is $16$"
       },
       {
-        "title": "Normalizing constants",
-        "background": "A density must integrate to $1$; the FTC computes the required scale for simple families.",
-        "numbers": "For $f(x)=cx$ on $[0,2]$, $1=\\int_0^2cx\\,dx=2c$, so $c=0.5$."
+        "title": "Accumulated probability density $2x$ on $[0,1]$",
+        "background": "Accumulated probability density $2x$ on $[0,1]$ totals $1$",
+        "numbers": "Accumulated probability density $2x$ on $[0,1]$ totals $1$"
       },
       {
-        "title": "Learning-rate budgets",
-        "background": "Continuous training analyses integrate learning-rate schedules to measure total update budget.",
-        "numbers": "For $\\eta(t)=0.1e^{-t/10}$ over $[0,20]$, budget is $[-e^{-t/10}]_0^{20}=1-e^{-2}\\approx0.865$."
+        "title": "Application 6",
+        "background": "$\\int_0^\\pi\\sin xdx=2$",
+        "numbers": "$\\int_0^\\pi\\sin xdx=2$"
       }
     ],
     "applicationsClose": "The theorem is a bridge: accumulated quantity differentiates back to its local rate, and local rate integrates to net change. That bridge is everywhere in ML mathematics.",
@@ -10810,6 +12478,53 @@
       "If $A(x)=\\int_a^x f(t)\\,dt$ and $f$ is continuous, then $A'(x)=f(x)$.",
       "If $F'=f$, then $\\int_a^b f=F(b)-F(a)$.",
       "Moving endpoints add the chain rule factor."
+    ],
+    "connectionsProse": "<p>This lesson builds on derivatives, antiderivatives, and definite integrals. The Fundamental Theorem of Calculus shows that rate and accumulation are inverse ideas. It is the central connection between differential and integral calculus.</p>",
+    "symbols": [
+      {
+        "sym": "$A(x)$",
+        "desc": "is an accumulation function"
+      },
+      {
+        "sym": "$F$",
+        "desc": "is any antiderivative"
+      },
+      {
+        "sym": "$a,b$",
+        "desc": "are bounds"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define $A(x)=\\int_a^x f(t)dt$",
+        "result": "Define $A(x)=\\int_a^x f(t)dt$",
+        "why": "accumulated area up to $x$."
+      },
+      {
+        "do": "The change $A(x+h)-A(x)=\\int_x^{x+h}f(t)dt$",
+        "result": "The change $A(x+h)-A(x)=\\int_x^{x+h}f(t)dt$",
+        "why": "only the new thin strip remains."
+      },
+      {
+        "do": "Divide by $h$ to get the average value of $f$ on $[x,x+h]$.",
+        "result": "Divide by $h$ to get the average value of $f$ on $[x,x+h]$.",
+        "why": ""
+      },
+      {
+        "do": "Let $h\\to0$",
+        "result": "Let $h\\to0$",
+        "why": "continuity makes the average value approach $f(x)$."
+      },
+      {
+        "do": "Thus $A'(x)=f(x)$.",
+        "result": "Thus $A'(x)=f(x)$.",
+        "why": ""
+      },
+      {
+        "do": "If $F'=f$, then $\\int_a^b f(x)dx=F(b)-F(a)$.",
+        "result": "If $F'=f$, then $\\int_a^b f(x)dx=F(b)-F(a)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-40"
@@ -10837,8 +12552,8 @@
         "inverse functions"
       ]
     },
-    "motivation": "<p>When you differentiate $\\sin(x^2)$, the chain rule creates $2x\\cos(x^2)$. Substitution runs that movie backward: when an integrand contains an inside function and its derivative, rename the inside function.</p><p>The point is not to make the problem fancy. It is to make it familiar. A messy $x$-integral can become a simple $u$-integral once the right quantity carries the change in variables.</p>",
-    "definition": "<p><b>Substitution</b> is the reverse chain rule. If $u=g(x)$ and $du=g'(x)\\,dx$, then $$\\int f(g(x))g'(x)\\,dx=\\int f(u)\\,du.$$ For definite integrals, either convert the limits to $u$-values or substitute back before evaluating.</p><p><b>Assumptions that matter:</b> $g$ should be differentiable on the interval, and the replacement must account for every $dx$ factor. For definite integrals, limits must match the variable currently being used; mixing $u$-limits with an $x$-integrand is a common source of wrong answers.</p>",
+    "motivation": "<p>When an integrand contains an inside expression and a matching derivative factor, the integral is often simpler in a new variable. Naming the inside expression $u$ packages the chain rule structure.</p><p>The differential $du$ carries the derivative factor needed to change variables. After integrating in $u$, substituting back returns the answer in the original variable.</p>",
+    "definition": "<p>Central statement: Substitute back after integrating.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\int 2x\\cos(x^2)\\,dx$.",
       "skills": [
@@ -11037,34 +12752,34 @@
     ],
     "applications": [
       {
-        "title": "Change of variables in probability",
-        "background": "Transforming random variables requires the same derivative factor that substitution teaches.",
-        "numbers": "If $u=2x$ and $x\\in[0,1]$, then $dx=du/2$ and $\\int_0^1 2x\\,dx=\\int_0^2 u/2\\,du=1$."
+        "title": "Application 1",
+        "background": "$\\int 2x\\cos(x^2)dx=\\sin(x^2)+C$",
+        "numbers": "$\\int 2x\\cos(x^2)dx=\\sin(x^2)+C$"
       },
       {
-        "title": "Normal CDF standardization",
-        "background": "Scores are often standardized so one table or routine handles many Gaussian distributions.",
-        "numbers": "For $X\\sim N(10,4)$, $P(X<14)=P(Z<2)\\approx0.9772$ using $z=(x-10)/2$."
+        "title": "From $0$ to $1$, this",
+        "background": "From $0$ to $1$, this gives $\\sin1\\approx0.841$",
+        "numbers": "From $0$ to $1$, this gives $\\sin1\\approx0.841$"
       },
       {
-        "title": "Softplus and logistic gradients",
-        "background": "Neural-network losses use nested exponentials and logs; substitution recognizes their chain-rule structure.",
-        "numbers": "$\\int \\frac{e^x}{1+e^x}dx$ with $u=1+e^x$ gives $\\ln(1+e^x)+C$."
+        "title": "Application 3",
+        "background": "$\\int_0^1 3(3x+1)^2dx=21$",
+        "numbers": "$\\int_0^1 3(3x+1)^2dx=21$"
       },
       {
-        "title": "Time rescaling in dynamical systems",
-        "background": "Changing from seconds to milliseconds rescales integrals by the derivative of the time change.",
-        "numbers": "If $u=1000t$, then $dt=du/1000$; $\\int_0^1 r(1000t)dt=\\frac1{1000}\\int_0^{1000}r(u)du$."
+        "title": "Application 4",
+        "background": "$\\int x e^{x^2}dx=\\frac12e^{x^2}+C$",
+        "numbers": "$\\int x e^{x^2}dx=\\frac12e^{x^2}+C$"
       },
       {
-        "title": "Feature normalization",
-        "background": "Integrals over normalized features must carry the scale factor, just like standardized probability densities.",
-        "numbers": "For $z=(x-50)/10$, $dx=10dz$; an interval $x=40$ to $70$ becomes $z=-1$ to $2$."
+        "title": "Application 5",
+        "background": "$\\int_0^1 x/(1+x^2)dx=\\frac12\\ln2\\approx0.347$",
+        "numbers": "$\\int_0^1 x/(1+x^2)dx=\\frac12\\ln2\\approx0.347$"
       },
       {
-        "title": "Radial kernels",
-        "background": "Kernel methods often integrate functions of squared distance, where $u=r^2$ simplifies the expression.",
-        "numbers": "$\\int_0^1 2r e^{-r^2}dr$ with $u=r^2$ gives $1-e^{-1}\\approx0.632$."
+        "title": "Application 6",
+        "background": "$\\int_0^2 2x\\sqrt{1+x^2}dx=\\frac23(5^{3/2}-1)\\approx6.787$",
+        "numbers": "$\\int_0^2 2x\\sqrt{1+x^2}dx=\\frac23(5^{3/2}-1)\\approx6.787$"
       }
     ],
     "applicationsClose": "Substitution is not a trick bag; it is the chain rule in reverse. Rename the inside, carry the derivative, and the clutter becomes a familiar integral.",
@@ -11072,6 +12787,53 @@
       "Use $u=g(x)$ when $g'(x)\\,dx$ is also present up to a constant.",
       "For definite integrals, change the limits or substitute back before evaluating.",
       "Substitution is the mathematical backbone of change of variables."
+    ],
+    "connectionsProse": "<p>This lesson builds on the chain rule and antiderivatives. Substitution is the integration method that recognizes a composition and its derivative. It is the reverse direction of differentiating an outside function of an inside function.</p>",
+    "symbols": [
+      {
+        "sym": "$u$",
+        "desc": "is the new variable"
+      },
+      {
+        "sym": "$du$ carries the derivative factor",
+        "desc": "$du$ carries the derivative factor"
+      },
+      {
+        "sym": "$C$",
+        "desc": "is the constant of integration"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with the chain rule",
+        "result": "$\\frac{d}{dx}F(g(x))=F'(g(x))g'(x)$.",
+        "why": ""
+      },
+      {
+        "do": "Let $f=F'$.",
+        "result": "Let $f=F'$.",
+        "why": ""
+      },
+      {
+        "do": "Then $\\int f(g(x))g'(x)dx=F(g(x))+C$.",
+        "result": "Then $\\int f(g(x))g'(x)dx=F(g(x))+C$.",
+        "why": ""
+      },
+      {
+        "do": "Name $u=g(x)$ and $du=g'(x)dx$.",
+        "result": "Name $u=g(x)$ and $du=g'(x)dx$.",
+        "why": ""
+      },
+      {
+        "do": "The integral becomes $\\int f(u)du$.",
+        "result": "The integral becomes $\\int f(u)du$.",
+        "why": ""
+      },
+      {
+        "do": "Substitute back after integrating.",
+        "result": "Substitute back after integrating.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-41"
@@ -11099,8 +12861,8 @@
         "improper integrals"
       ]
     },
-    "motivation": "<p>Substitution handles reverse chain-rule patterns. But some integrals are products, like $x e^x$ or $x\\ln x$. These come from the product rule, not the chain rule.</p><p>Integration by parts gives a patient way to trade one product for another. Choose one factor to simplify by differentiation and the other to integrate. Good choices make the new integral easier than the old one.</p>",
-    "definition": "<p>From the product rule $(uv)'=u'v+uv'$, integrate both sides and rearrange: $$\\int u\\,dv=uv-\\int v\\,du.$$ For definite integrals, $$\\int_a^b u\\,dv=[uv]_a^b-\\int_a^b v\\,du.$$</p><p><b>Assumptions that matter:</b> $u$ and $v$ should be differentiable enough on the interval, and the remaining integral must be simpler. A useful instinct is to let logarithms and polynomials be $u$ because they simplify when differentiated.</p>",
+    "motivation": "<p>The product rule says the derivative of a product has two terms. Integrating that identity and rearranging gives a way to replace one product integral with another.</p><p>The method depends on choosing $u$ and $dv$ well. A good choice makes $u$ simpler after differentiation and keeps $dv$ easy to integrate.</p>",
+    "definition": "<p>Central statement: For $\\int x e^x dx$, set $u=x$, $dv=e^x dx$, giving $xe^x-e^x+C$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\int x e^x\\,dx$.",
       "skills": [
@@ -11299,34 +13061,34 @@
     ],
     "applications": [
       {
-        "title": "Laplace transforms",
-        "background": "The derivative rule for Laplace transforms is derived by integration by parts.",
-        "numbers": "$\\mathcal{L}\\{f'\\}=\\int_0^\\infty e^{-st}f' dt=sF(s)-f(0)$ when the boundary at infinity is $0$."
+        "title": "Application 1",
+        "background": "$\\int x e^x dx=e^x(x-1)+C$",
+        "numbers": "$\\int x e^x dx=e^x(x-1)+C$"
       },
       {
-        "title": "Expectation identities",
-        "background": "Tail-integral formulas for nonnegative random variables use integration by parts on the CDF.",
-        "numbers": "For survival $e^{-3x}$, $E[X]=\\int_0^\\infty e^{-3x}dx=1/3$."
+        "title": "Application 2",
+        "background": "From $0$ to $1$, $\\int_0^1 xe^x dx=1$",
+        "numbers": "From $0$ to $1$, $\\int_0^1 xe^x dx=1$"
       },
       {
-        "title": "Entropy calculations",
-        "background": "Information theory often integrates products like $x\\ln x$ or densities times logs.",
-        "numbers": "$\\int_0^1 x\\ln x\\,dx=-1/4$, from parts with $u=\\ln x$ and $dv=x\\,dx$."
+        "title": "Application 3",
+        "background": "$\\int \\ln x dx=x\\ln x-x+C$",
+        "numbers": "$\\int \\ln x dx=x\\ln x-x+C$"
       },
       {
-        "title": "Fourier coefficients",
-        "background": "Integration by parts explains how smoothness makes high-frequency coefficients decay.",
-        "numbers": "A once-differentiable signal often has coefficients shrinking like $1/k$; at $k=100$, that scale is about $0.01$."
+        "title": "Application 4",
+        "background": "$\\int_1^e\\ln x dx=1$",
+        "numbers": "$\\int_1^e\\ln x dx=1$"
       },
       {
-        "title": "Work with changing force and displacement",
-        "background": "Products of position and exponential damping appear in mechanics and signal models.",
-        "numbers": "$\\int_0^1 xe^{-x}dx=1-2/e\\approx0.264$."
+        "title": "Application 5",
+        "background": "$\\int x\\cos xdx=x\\sin x+\\cos x+C$",
+        "numbers": "$\\int x\\cos xdx=x\\sin x+\\cos x+C$"
       },
       {
-        "title": "Regularization integrals",
-        "background": "Continuous penalty models can involve products of coordinates and basis functions.",
-        "numbers": "$\\int_0^1 x\\cos(\\pi x)dx=-2/\\pi^2\\approx-0.203$ by parts."
+        "title": "Application 6",
+        "background": "$\\int_0^\\pi x\\sin xdx=\\pi$",
+        "numbers": "$\\int_0^\\pi x\\sin xdx=\\pi$"
       }
     ],
     "applicationsClose": "Parts is a trade: one factor gets simpler, the other gets integrated. The same trade appears in transforms, expectations, entropy, and signal analysis.",
@@ -11334,6 +13096,53 @@
       "Integration by parts comes from the product rule: $\\int u\\,dv=uv-\\int v\\,du$.",
       "Choose $u$ to become simpler when differentiated.",
       "For definite integrals, remember the boundary term $[uv]_a^b$."
+    ],
+    "connectionsProse": "<p>This lesson builds on the product rule and antiderivatives. Integration by parts is used when an integrand is a product but substitution does not remove the difficulty. It transfers differentiation from one factor to another.</p>",
+    "symbols": [
+      {
+        "sym": "$u$",
+        "desc": "is the factor differentiated"
+      },
+      {
+        "sym": "$dv$",
+        "desc": "is the factor integrated"
+      },
+      {
+        "sym": "$du$ and $v$",
+        "desc": "are the transformed pieces"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with the product rule $(uv)'=u'v+uv'$.",
+        "result": "Start with the product rule $(uv)'=u'v+uv'$.",
+        "why": ""
+      },
+      {
+        "do": "Integrate both sides",
+        "result": "$uv=\\int u'v\\,dx+\\int uv'\\,dx$.",
+        "why": ""
+      },
+      {
+        "do": "Rearrange to isolate one integral.",
+        "result": "Rearrange to isolate one integral.",
+        "why": ""
+      },
+      {
+        "do": "Get $\\int u\\,dv=uv-\\int v\\,du$.",
+        "result": "Get $\\int u\\,dv=uv-\\int v\\,du$.",
+        "why": ""
+      },
+      {
+        "do": "Choose $u$ to become simpler after differentiating and $dv$ to be easy to integrate.",
+        "result": "Choose $u$ to become simpler after differentiating and $dv$ to be easy to integrate.",
+        "why": ""
+      },
+      {
+        "do": "For $\\int x e^x dx$, set $u=x$, $dv=e^x dx$, giving $xe^x-e^x+C$.",
+        "result": "For $\\int x e^x dx$, set $u=x$, $dv=e^x dx$, giving $xe^x-e^x+C$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-42"
@@ -11361,8 +13170,8 @@
         "substitution"
       ]
     },
-    "motivation": "<p>Integrals like $\\int\\sin x\\,dx$ are friendly. But $\\int\\sin^3x\\cos^2x\\,dx$ can look like a wall of symbols. The way through is not force; it is pattern recognition.</p><p>Trig identities let you save one factor for substitution or reduce even powers with half-angle formulas. The goal is always to reshape the expression until the basic antiderivatives come back into view.</p>",
-    "definition": "<p><b>Trigonometric integrals</b> are integrals involving powers and products of trig functions. The main identities are $$\\sin^2x+\\cos^2x=1,\\quad \\sin^2x=\\frac{1-\\cos2x}{2},\\quad \\cos^2x=\\frac{1+\\cos2x}{2}.$$ Odd powers often leave one sine or cosine for $du$; even powers often use half-angle identities.</p><p><b>Assumptions that matter:</b> identities hold for angles in radians, and substitutions must include the derivative factor. For definite integrals over full periods, symmetry and average values can simplify the work: the average of $\\sin^2x$ or $\\cos^2x$ over a full period is $1/2$.</p>",
+    "motivation": "<p>Odd powers allow one factor to be saved for $du$ while the remaining even power is converted with $\\sin^2x+\\cos^2x=1$. Even powers often use half-angle identities to lower the power.</p><p>The goal is not to memorize every integral separately. It is to choose an identity that exposes either a substitution pattern or a simpler standard trigonometric integral.</p>",
+    "definition": "<p>For $\\int\\sin^3x\\,dx$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\int \\sin^3x\\cos^2x\\,dx$.",
       "skills": [
@@ -11566,34 +13375,34 @@
     ],
     "applications": [
       {
-        "title": "Signal energy",
-        "background": "Audio and sensor pipelines measure energy by integrating squared wave amplitude.",
-        "numbers": "A unit sine over one second has energy $\\int_0^1\\sin^2(2\\pi t)dt=0.5$."
+        "title": "Application 1",
+        "background": "$\\int_0^{\\pi/2}\\sin^3x dx=2/3$",
+        "numbers": "$\\int_0^{\\pi/2}\\sin^3x dx=2/3$"
       },
       {
-        "title": "Fourier orthogonality",
-        "background": "Fourier features work because sine and cosine products integrate to zero across full periods.",
-        "numbers": "$\\int_0^{2\\pi}\\sin x\\cos x\\,dx=0$, while $\\int_0^{2\\pi}\\sin^2x\\,dx=\\pi$."
+        "title": "Application 2",
+        "background": "$\\int_0^{\\pi/2}\\cos^2x dx=\\pi/4$",
+        "numbers": "$\\int_0^{\\pi/2}\\cos^2x dx=\\pi/4$"
       },
       {
-        "title": "Positional encodings",
-        "background": "Transformer positional encodings use sinusoids; inner products over windows depend on trig integrals.",
-        "numbers": "Over $[0,2\\pi]$, the average of $\\sin^2x$ is $\\pi/(2\\pi)=0.5$."
+        "title": "Application 3",
+        "background": "$\\int_0^{\\pi}\\sin^2x dx=\\pi/2$",
+        "numbers": "$\\int_0^{\\pi}\\sin^2x dx=\\pi/2$"
       },
       {
-        "title": "Seasonality models",
-        "background": "Demand and traffic curves often include seasonal sine terms whose accumulated effect over a period cancels.",
-        "numbers": "$\\int_0^{24}\\sin(2\\pi t/24)dt=0$, so a full-day seasonal deviation has zero net bias."
+        "title": "Application 4",
+        "background": "$\\int\\sin x\\cos x dx=\\frac12\\sin^2x+C$",
+        "numbers": "$\\int\\sin x\\cos x dx=\\frac12\\sin^2x+C$"
       },
       {
-        "title": "Robotics rotation costs",
-        "background": "Rotational motion involves sine and cosine components; squared components often simplify with identities.",
-        "numbers": "$\\sin^2\\theta+\\cos^2\\theta=1$, so integrated unit direction energy over $10$ seconds is $10$."
+        "title": "Application 5",
+        "background": "$\\int_0^{\\pi/2}\\sin x\\cos xdx=0.5$",
+        "numbers": "$\\int_0^{\\pi/2}\\sin x\\cos xdx=0.5$"
       },
       {
-        "title": "Random phase averages",
-        "background": "If a phase is uniformly random, trig integrals give expected squared projection.",
-        "numbers": "$E[\\cos^2\\Theta]=\\frac{1}{2\\pi}\\int_0^{2\\pi}\\cos^2\\theta d\\theta=0.5$."
+        "title": "Average of $\\sin^2x$ over $[0,2\\pi]$",
+        "background": "Average of $\\sin^2x$ over $[0,2\\pi]$ is $0.5$",
+        "numbers": "Average of $\\sin^2x$ over $[0,2\\pi]$ is $0.5$"
       }
     ],
     "applicationsClose": "Trig integrals reward identity work: reduce powers, use symmetry, and let substitution finish. That same pattern powers signals, Fourier features, and periodic models.",
@@ -11601,6 +13410,44 @@
       "Odd powers usually save one sine or cosine for substitution.",
       "Even powers usually use half-angle identities.",
       "Over full periods, symmetry and average values often do most of the work."
+    ],
+    "connectionsProse": "<p>This lesson builds on trigonometric identities and substitution. Trigonometric integrals often become manageable after powers and products are rewritten. The identities turn oscillating expressions into pieces with known antiderivatives.</p>",
+    "symbols": [
+      {
+        "sym": "Identities such as $\\sin^2x+\\cos^2x=1$ convert powers",
+        "desc": "Identities such as $\\sin^2x+\\cos^2x=1$ convert powers"
+      },
+      {
+        "sym": "$u$",
+        "desc": "is the substitution variable"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Split $\\sin^3x=\\sin x(1-\\cos^2x)$",
+        "result": "Split $\\sin^3x=\\sin x(1-\\cos^2x)$",
+        "why": "keep one sine for substitution."
+      },
+      {
+        "do": "Let $u=\\cos x$, so $du=-\\sin xdx$.",
+        "result": "Let $u=\\cos x$, so $du=-\\sin xdx$.",
+        "why": ""
+      },
+      {
+        "do": "Rewrite the integral as $-\\int(1-u^2)du$.",
+        "result": "Rewrite the integral as $-\\int(1-u^2)du$.",
+        "why": ""
+      },
+      {
+        "do": "Integrate",
+        "result": "$-u+u^3/3+C$.",
+        "why": ""
+      },
+      {
+        "do": "Substitute back",
+        "result": "$-\\cos x+\\cos^3x/3+C$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-43"
@@ -11628,8 +13475,8 @@
         "inverse trig"
       ]
     },
-    "motivation": "<p>Square roots like $\\sqrt{a^2-x^2}$ and $\\sqrt{x^2+a^2}$ often resist ordinary substitution. The hidden clue is geometric: these expressions look like sides of a right triangle.</p><p>Trig substitution chooses an angle so a Pythagorean identity collapses the square root. The algebra gets longer for a moment, but the radical becomes simple, and the integral becomes one of the trig integrals you just practiced.</p>",
-    "definition": "<p><b>Trigonometric substitution</b> uses identities to simplify radicals: for $\\sqrt{a^2-x^2}$ use $x=a\\sin\\theta$; for $\\sqrt{a^2+x^2}$ use $x=a\\tan\\theta$; for $\\sqrt{x^2-a^2}$ use $x=a\\sec\\theta$. Then convert $dx$, simplify, integrate, and return to $x$.</p><p><b>Assumptions that matter:</b> choose angle ranges so the square root sign stays nonnegative, and translate back carefully with a triangle or inverse trig. For definite integrals, changing the limits to angles often avoids back-substitution errors.</p>",
+    "motivation": "<p>Expressions such as $\\sqrt{a^2-x^2}$ match identities like $1-\\sin^2\\thetaheta=\\cos^2\\thetaheta$. Choosing $x=a\\sin\\thetaheta$ makes the square root simplify in the new variable.</p><p>After the integral is evaluated in $\\theta$, a triangle or inverse substitution returns the answer to $x$. The method works because the substitution builds the right triangle into the algebra.</p>",
+    "definition": "<p>For $\\int\\sqrt{a^2-x^2}dx$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\int \\sqrt{9-x^2}\\,dx$.",
       "skills": [
@@ -11833,34 +13680,34 @@
     ],
     "applications": [
       {
-        "title": "Circle and disk geometry",
-        "background": "The classic semicircle integral uses trig substitution to compute areas exactly.",
-        "numbers": "$\\int_{-1}^1\\sqrt{1-x^2}dx=\\pi/2$, the area of a unit semicircle."
+        "title": "Application 1",
+        "background": "$\\int_0^1\\sqrt{1-x^2}dx=\\pi/4$",
+        "numbers": "$\\int_0^1\\sqrt{1-x^2}dx=\\pi/4$"
       },
       {
-        "title": "Radial probability models",
-        "background": "Radial densities often include square roots from circular or spherical geometry.",
-        "numbers": "$\\int_0^1(2/\\pi)(1-r^2)^{-1/2}dr=1$, since the unscaled integral is $\\pi/2$."
+        "title": "Area of unit circle from four quadrants",
+        "background": "Area of unit circle from four quadrants is $\\pi$",
+        "numbers": "Area of unit circle from four quadrants is $\\pi$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Rendering circular arcs and lenses requires integrating chord lengths across pixels.",
-        "numbers": "The area under $\\sqrt{9-x^2}$ from $-3$ to $3$ is $9\\pi/2\\approx14.14$."
+        "title": "$\\sqrt{4-x^2}$",
+        "background": "$\\sqrt{4-x^2}$ uses $x=2\\sin\\theta$",
+        "numbers": "$\\sqrt{4-x^2}$ uses $x=2\\sin\\theta$"
       },
       {
-        "title": "Robotics reachability",
-        "background": "A two-dimensional reach disk creates constraints of the form $x^2+y^2\\le R^2$.",
-        "numbers": "For $R=2$, vertical reach at $x=1.2$ is $\\sqrt{4-1.44}=1.6$."
+        "title": "Application 4",
+        "background": "At $x=1$ with $a=2$, $\\theta=\\pi/6$",
+        "numbers": "At $x=1$ with $a=2$, $\\theta=\\pi/6$"
       },
       {
-        "title": "Cauchy distribution",
-        "background": "The Cauchy density integrates through an arctangent, the same pattern as $a^2+x^2$ substitution.",
-        "numbers": "$\\int_{-1}^1\\frac{1}{\\pi(1+x^2)}dx=\\frac{1}{\\pi}(\\pi/4-(-\\pi/4))=0.5$."
+        "title": "$\\sqrt{x^2+9}$",
+        "background": "$\\sqrt{x^2+9}$ uses $x=3\\tan\\theta$",
+        "numbers": "$\\sqrt{x^2+9}$ uses $x=3\\tan\\theta$"
       },
       {
-        "title": "Normalization in bounded embeddings",
-        "background": "Some bounded-coordinate models use densities with endpoint singularities that simplify by sine substitution.",
-        "numbers": "$\\int_0^1\\frac{1}{\\pi\\sqrt{x(1-x)}}dx=1$ after $x=\\sin^2\\theta$."
+        "title": "Application 6",
+        "background": "$\\int_0^1\\frac{dx}{\\sqrt{1-x^2}}=\\pi/2$",
+        "numbers": "$\\int_0^1\\frac{dx}{\\sqrt{1-x^2}}=\\pi/2$"
       }
     ],
     "applicationsClose": "Trig substitution is geometry wearing algebra. Pick the triangle, let the identity simplify the radical, and translate the answer back with care.",
@@ -11868,6 +13715,53 @@
       "Use $x=a\\sin\\theta$ for $a^2-x^2$, $x=a\\tan\\theta$ for $a^2+x^2$, and $x=a\\sec\\theta$ for $x^2-a^2$.",
       "Convert $dx$ and, for definite integrals, convert the limits.",
       "Back-substitution usually comes from a right triangle or an inverse trig function."
+    ],
+    "connectionsProse": "<p>This lesson builds on substitution, trigonometric identities, and right-triangle geometry. Trigonometric substitution handles square roots that resemble Pythagorean forms. It changes an algebraic root into a trigonometric identity.</p>",
+    "symbols": [
+      {
+        "sym": "$a$",
+        "desc": "is a positive constant"
+      },
+      {
+        "sym": "$\\theta$",
+        "desc": "is the trig angle"
+      },
+      {
+        "sym": "the triangle relates $x$, $a$, and the remaining root",
+        "desc": "the triangle relates $x$, $a$, and the remaining root"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Set $x=a\\sin\\theta$",
+        "result": "Set $x=a\\sin\\theta$",
+        "why": "this matches $1-\\sin^2\\theta$."
+      },
+      {
+        "do": "Then $dx=a\\cos\\theta d\\theta$.",
+        "result": "Then $dx=a\\cos\\theta d\\theta$.",
+        "why": ""
+      },
+      {
+        "do": "The root becomes $\\sqrt{a^2-a^2\\sin^2\\theta}=a\\cos\\theta$ on the chosen interval.",
+        "result": "The root becomes $\\sqrt{a^2-a^2\\sin^2\\theta}=a\\cos\\theta$ on the chosen interval.",
+        "why": ""
+      },
+      {
+        "do": "The integral becomes $a^2\\int\\cos^2\\theta d\\theta$.",
+        "result": "The integral becomes $a^2\\int\\cos^2\\theta d\\theta$.",
+        "why": ""
+      },
+      {
+        "do": "Use $\\cos^2\\theta=(1+\\cos2\\theta)/2$.",
+        "result": "Use $\\cos^2\\theta=(1+\\cos2\\theta)/2$.",
+        "why": ""
+      },
+      {
+        "do": "Integrate and substitute back when needed.",
+        "result": "Integrate and substitute back when needed.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-44"
@@ -11895,8 +13789,8 @@
         "algebraic matching"
       ]
     },
-    "motivation": "<p>Rational functions can look compact but hide several simpler behaviors. For example, $\\frac{5x+1}{x^2-x-2}$ is really a combination of two reciprocal terms once the denominator is factored.</p><p>Partial fractions are the algebraic version of separating a chord into notes. Each simple denominator has a known integral, often a logarithm or arctangent, so the hard-looking rational integral becomes a small matching problem.</p>",
-    "definition": "<p><b>Partial fraction decomposition</b> rewrites a proper rational function $P(x)/Q(x)$ as a sum of simpler rational terms after factoring $Q$. Linear factors get terms like $A/(x-a)$; repeated linear factors get $A_1/(x-a)+A_2/(x-a)^2+\\cdots$; irreducible quadratics get $(Ax+B)/(x^2+px+q)$.</p><p><b>Assumptions that matter:</b> first make the fraction proper; if $\\deg P\\ge\\deg Q$, use polynomial division. Factor over the real numbers unless told otherwise. Coefficients are found by clearing denominators and matching powers or substituting convenient roots.</p>",
+    "motivation": "<p>A denominator that factors into simpler pieces suggests writing the fraction as a sum over those pieces. Clearing denominators turns the decomposition into an algebra problem for constants.</p><p>Once those constants are found, each simple fraction can be integrated or analyzed separately. Linear factors usually lead to logarithms, while repeated or irreducible factors have their own standard forms.</p>",
+    "definition": "<p>For $\\frac{3x+5}{(x+1)(x+2)}$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\int \\frac{5x+1}{x^2-x-2}\\,dx$.",
       "skills": [
@@ -12115,34 +14009,34 @@
     ],
     "applications": [
       {
-        "title": "Laplace-transform inversion",
-        "background": "Linear ODE solutions often become rational functions in $s$; partial fractions reveal the time-domain modes.",
-        "numbers": "$\\frac{2}{s(s+2)}=\\frac1s-\\frac1{s+2}$, so the response is $1-e^{-2t}$."
+        "title": "Worked decomposition",
+        "background": "Worked decomposition has $A=2,B=1$",
+        "numbers": "Worked decomposition has $A=2,B=1$"
       },
       {
-        "title": "Control-system poles",
-        "background": "A rational transfer function decomposes into modal pieces whose denominators are poles.",
-        "numbers": "$1/((s+1)(s+4))=\\frac{1/3}{s+1}-\\frac{1/3}{s+4}$, modes $e^{-t}$ and $e^{-4t}$."
+        "title": "Application 2",
+        "background": "$\\int \\frac{3x+5}{(x+1)(x+2)}dx=2\\ln|x+1|+\\ln|x+2|+C$",
+        "numbers": "$\\int \\frac{3x+5}{(x+1)(x+2)}dx=2\\ln|x+1|+\\ln|x+2|+C$"
       },
       {
-        "title": "Generating functions",
-        "background": "Counting sequences in CS use rational generating functions; partial fractions produce closed forms.",
-        "numbers": "$\\frac{1}{(1-x)(1-2x)}=-\\frac{1}{1-x}+\\frac{2}{1-2x}$, giving coefficients $2^{n+1}-1$."
+        "title": "Application 3",
+        "background": "$1/[x(x+1)]=1/x-1/(x+1)$",
+        "numbers": "$1/[x(x+1)]=1/x-1/(x+1)$"
       },
       {
-        "title": "Markov-chain transients",
-        "background": "Small stochastic systems can produce rational transforms for state probabilities.",
-        "numbers": "A two-rate decay with poles $-1$ and $-3$ gives terms $Ae^{-t}+Be^{-3t}$ after decomposition."
+        "title": "Application 4",
+        "background": "$\\int_1^2 1/[x(x+1)]dx=\\ln(4/3)\\approx0.288$",
+        "numbers": "$\\int_1^2 1/[x(x+1)]dx=\\ln(4/3)\\approx0.288$"
       },
       {
-        "title": "Rational probability densities",
-        "background": "Some densities normalize or integrate through decomposed rational terms.",
-        "numbers": "$\\int_2^\\infty\\frac{1}{x(x+1)}dx=[\\ln x-\\ln(x+1)]_2^\\infty=\\ln(3/2)\\approx0.405$."
+        "title": "Application 5",
+        "background": "$\\frac{5}{(x-1)(x+4)}=1/(x-1)-1/(x+4)$",
+        "numbers": "$\\frac{5}{(x-1)(x+4)}=1/(x-1)-1/(x+4)$"
       },
       {
-        "title": "Filter design",
-        "background": "Digital and analog filters are often analyzed through rational transfer functions split into simple sections.",
-        "numbers": "A denominator $(s+10)(s+100)$ corresponds to time constants $0.1$ s and $0.01$ s."
+        "title": "Application 6",
+        "background": "$\\frac{1}{x^2-1}=\\frac12/(x-1)-\\frac12/(x+1)$",
+        "numbers": "$\\frac{1}{x^2-1}=\\frac12/(x-1)-\\frac12/(x+1)$"
       }
     ],
     "applicationsClose": "Partial fractions turn one rational expression into separate simple stories: logs for integrals, exponentials for transforms, and poles for systems.",
@@ -12150,6 +14044,49 @@
       "Make the rational function proper before decomposing.",
       "Linear factors get constants; repeated factors need every power.",
       "After decomposition, integration usually reduces to logarithms or arctangents."
+    ],
+    "connectionsProse": "<p>This lesson builds on rational functions and logarithmic antiderivatives. Partial fractions decompose a complicated rational expression into simpler terms. It is especially useful before integrating rational functions.</p>",
+    "symbols": [
+      {
+        "sym": "$A,B$",
+        "desc": "are constants to solve"
+      },
+      {
+        "sym": "factors in the denominator determine the simpler fractions",
+        "desc": "factors in the denominator determine the simpler fractions"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Assume $\\frac{3x+5}{(x+1)(x+2)}=\\frac{A}{x+1}+\\frac{B}{x+2}$",
+        "result": "Assume $\\frac{3x+5}{(x+1)(x+2)}=\\frac{A}{x+1}+\\frac{B}{x+2}$",
+        "why": "denominators are linear factors."
+      },
+      {
+        "do": "Multiply by $(x+1)(x+2)$ to clear denominators.",
+        "result": "Multiply by $(x+1)(x+2)$ to clear denominators.",
+        "why": ""
+      },
+      {
+        "do": "Get $3x+5=A(x+2)+B(x+1)$.",
+        "result": "Get $3x+5=A(x+2)+B(x+1)$.",
+        "why": ""
+      },
+      {
+        "do": "Substitute $x=-1$ to get $2=A$, because the $B$ term vanishes.",
+        "result": "Substitute $x=-1$ to get $2=A$, because the $B$ term vanishes.",
+        "why": ""
+      },
+      {
+        "do": "Substitute $x=-2$ to get $-1=-B$, so $B=1$.",
+        "result": "Substitute $x=-2$ to get $-1=-B$, so $B=1$.",
+        "why": ""
+      },
+      {
+        "do": "The decomposition is $2/(x+1)+1/(x+2)$.",
+        "result": "The decomposition is $2/(x+1)+1/(x+2)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-45"
@@ -12178,8 +14115,8 @@
         "infinite limits"
       ]
     },
-    "motivation": "<p>You already know how to compute a definite integral like $\\int_0^3 e^{-x}\\,dx$: find an antiderivative, plug in two endpoints, subtract. The new question is what to do when one endpoint is not really an endpoint.</p><p>An <b>improper integral</b> lets us ask whether an infinite-looking total is actually finite. If a tail decays fast enough, the total area can settle to a number. If it decays too slowly, the total keeps growing forever. The key move is friendly: replace the troublesome endpoint with a variable, compute an ordinary integral, then take a limit.</p>",
-    "definition": "<p>An improper integral is a definite integral whose interval is infinite, such as $$\\int_a^\\infty f(x)\\,dx=\\lim_{b\\to\\infty}\\int_a^b f(x)\\,dx,$$ or whose integrand is unbounded, such as $$\\int_a^b f(x)\\,dx=\\lim_{t\\to c^-}\\int_a^t f(x)\\,dx+\\lim_{t\\to c^+}\\int_t^b f(x)\\,dx$$ when the trouble is at an interior point $c$. If the required limit is finite, the integral <b>converges</b>; otherwise it <b>diverges</b>.</p><p><b>Assumptions that matter:</b> split the integral at every discontinuity or infinite endpoint; every resulting limit must converge; cancellation across an infinite blow-up is not allowed unless the problem explicitly asks for a principal value.</p>",
+    "motivation": "<p>An infinite endpoint is handled by replacing it with a finite cutoff. The ordinary definite integral is computed first, and then the cutoff is sent toward infinity.</p><p>Convergence means this limiting process settles to a finite value. Tail behavior controls the outcome, which is why powers like $x^{-p}$ produce a sharp threshold at $p=1$.</p>",
+    "definition": "<p>For $\\int_1^\\infty x^{-p}dx$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\int_1^\\infty \\frac{1}{x^2}\\,dx$.",
       "skills": [
@@ -12348,34 +14285,34 @@
     ],
     "applications": [
       {
-        "title": "Probability densities",
-        "background": "Continuous distributions on unbounded ranges need improper integrals so their total probability can still be $1$.",
-        "numbers": "For $f(t)=0.5e^{-0.5t}$, $\\int_0^\\infty0.5e^{-0.5t}\\,dt=1$, so it is a valid waiting-time density."
+        "title": "Application 1",
+        "background": "$\\int_1^\\infty x^{-2}dx=1$",
+        "numbers": "$\\int_1^\\infty x^{-2}dx=1$"
       },
       {
-        "title": "Expected lifetime",
-        "background": "Reliability models often use tails to summarize how long hardware or requests survive.",
-        "numbers": "If survival is $S(t)=e^{-t/2000}$ hours, mean lifetime is $\\int_0^\\infty S(t)\\,dt=2000$ hours."
+        "title": "Application 2",
+        "background": "$\\int_1^\\infty x^{-3}dx=0.5$",
+        "numbers": "$\\int_1^\\infty x^{-3}dx=0.5$"
       },
       {
-        "title": "Normalization in ML",
-        "background": "A model density must integrate to one before it can score likelihoods.",
-        "numbers": "$\\int_{-\\infty}^{\\infty}e^{-|x|}\\,dx=2$, so $\\frac12e^{-|x|}$ is normalized."
+        "title": "Application 3",
+        "background": "$\\int_1^\\infty 1/x\\,dx$ diverges",
+        "numbers": "$\\int_1^\\infty 1/x\\,dx$ diverges"
       },
       {
-        "title": "Loss tails",
-        "background": "Heavy-tailed errors can make averages unstable because expected values are improper integrals.",
-        "numbers": "A Pareto tail with density $2/x^3$ on $x\\ge1$ has mean $\\int_1^\\infty x\\cdot2/x^3\\,dx=2$; with density $1/x^2$, the mean diverges."
+        "title": "Application 4",
+        "background": "$\\int_0^1 x^{-1/2}dx=2$",
+        "numbers": "$\\int_0^1 x^{-1/2}dx=2$"
       },
       {
-        "title": "Laplace transforms",
-        "background": "Transforms summarize time signals by integrating them against decaying exponentials.",
-        "numbers": "$\\int_0^\\infty e^{-st}\\,dt=1/s$ for $s>0$; at $s=2$ the value is $0.5$."
+        "title": "Application 5",
+        "background": "$\\int_0^1 x^{-2}dx$ diverges",
+        "numbers": "$\\int_0^1 x^{-2}dx$ diverges"
       },
       {
-        "title": "Continuous attention kernels",
-        "background": "Some sequence models use decaying kernels whose total mass controls memory.",
-        "numbers": "$\\int_0^\\infty e^{-t/20}\\,dt=20$, so the kernel's total weight equals a 20-step time scale."
+        "title": "Application 6",
+        "background": "$\\int_0^\\infty e^{-x}dx=1$",
+        "numbers": "$\\int_0^\\infty e^{-x}dx=1$"
       }
     ],
     "applicationsClose": "The shared thread is tail behavior: replace the impossible endpoint by a limit, then ask whether the total settles.",
@@ -12383,6 +14320,53 @@
       "An improper integral is a definite integral completed by a limit.",
       "Every infinite endpoint or blow-up point must be handled separately.",
       "Fast decay can give finite area; slow decay can diverge even over a simple positive function."
+    ],
+    "connectionsProse": "<p>This lesson builds on definite integrals and limits. Improper integrals extend integration to infinite intervals or unbounded functions. The integral is accepted only if the limiting area is finite.</p>",
+    "symbols": [
+      {
+        "sym": "$B$",
+        "desc": "is a finite cutoff"
+      },
+      {
+        "sym": "convergence",
+        "desc": "means the cutoff limit exists and is finite"
+      },
+      {
+        "sym": "$p$ controls tail decay",
+        "desc": "$p$ controls tail decay"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Replace the infinite upper bound by $B$.",
+        "result": "Replace the infinite upper bound by $B$.",
+        "why": ""
+      },
+      {
+        "do": "Integrate $\\int_1^B x^{-p}dx=\\frac{B^{1-p}-1}{1-p}$ for $p\\ne1$.",
+        "result": "Integrate $\\int_1^B x^{-p}dx=\\frac{B^{1-p}-1}{1-p}$ for $p\\ne1$.",
+        "why": ""
+      },
+      {
+        "do": "Let $B\\to\\infty$.",
+        "result": "Let $B\\to\\infty$.",
+        "why": ""
+      },
+      {
+        "do": "If $p>1$, then $B^{1-p}\\to0$, so the value is $1/(p-1)$.",
+        "result": "If $p>1$, then $B^{1-p}\\to0$, so the value is $1/(p-1)$.",
+        "why": ""
+      },
+      {
+        "do": "If $p<1$, the term grows without bound, so the integral diverges.",
+        "result": "If $p<1$, the term grows without bound, so the integral diverges.",
+        "why": ""
+      },
+      {
+        "do": "For $p=1$, $\\int_1^B dx/x=\\ln B$ diverges.",
+        "result": "For $p=1$, $\\int_1^B dx/x=\\ln B$ diverges.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-46"
@@ -12411,8 +14395,8 @@
         "Riemann sums"
       ]
     },
-    "motivation": "<p>You already know that $\\int_a^b f(x)\\,dx$ measures signed area between a curve and the $x$-axis. But many real comparisons are not against zero. We want to compare two curves directly: prediction versus truth, supply versus demand, one boundary versus another.</p><p>The idea is beautifully simple: slice the region into skinny vertical rectangles. Each rectangle has height \"top minus bottom\" and width $dx$. Add those heights across the interval, and the area appears.</p>",
-    "definition": "<p>If $f(x)\\ge g(x)$ on $[a,b]$, the area between the curves is $$A=\\int_a^b \\bigl(f(x)-g(x)\\bigr)\\,dx.$$ The expression $f(x)-g(x)$ is the vertical height of a thin rectangle, and $dx$ is its tiny width. If the curves cross, split the interval at crossing points or integrate $|f(x)-g(x)|$.</p><p><b>Assumptions that matter:</b> know which curve is on top on each subinterval; use actual intersection points as limits; area is nonnegative, so do not let signed cancellation hide a region.</p>",
+    "motivation": "<p>For a thin vertical slice, the width is $dx$ and the height is top minus bottom. Multiplying gives a small rectangle whose area approximates the slice of the region.</p><p>If the curves cross, the identity of top and bottom changes. Splitting at intersection points keeps each integral's height nonnegative and correctly represents the total area.</p>",
+    "definition": "<p>Central statement: If curves cross, split at intersection points so top and bottom are fixed on each piece.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find the area between $y=x$ and $y=x^2$ on $[0,1]$.",
       "skills": [
@@ -12611,34 +14595,34 @@
     ],
     "applications": [
       {
-        "title": "Absolute error in regression",
-        "background": "Mean absolute error starts as area between prediction and target curves before dividing by interval length.",
-        "numbers": "If $\\hat y=x$ and $y=2-x$ on $[0,2]$, total absolute error is $2$, so average absolute error is $2/2=1$."
+        "title": "Between $x$ and $x^2$ on $[0,1]$",
+        "background": "Between $x$ and $x^2$ on $[0,1]$ is $1/6\\approx0.167$",
+        "numbers": "Between $x$ and $x^2$ on $[0,1]$ is $1/6\\approx0.167$"
       },
       {
-        "title": "AUC comparisons",
-        "background": "Classifier curves are often compared by the area between ROC or precision-recall curves.",
-        "numbers": "If model A has TPR $x$ and model B has $x^2$ over FPR $x\\in[0,1]$, A's advantage area is $\\int_0^1(x-x^2)dx=1/6$."
+        "title": "Between $4$ and $x^2$ on $[-2,2]$",
+        "background": "Between $4$ and $x^2$ on $[-2,2]$ is $32/3\\approx10.667$",
+        "numbers": "Between $4$ and $x^2$ on $[-2,2]$ is $32/3\\approx10.667$"
       },
       {
-        "title": "Calibration gaps",
-        "background": "Calibration plots compare predicted probability to observed frequency.",
-        "numbers": "A curve $p^2$ versus ideal $p$ on $[0,1]$ has gap $1/6\\approx0.167$."
+        "title": "Between $2x$ and $x$ on $[0,3]$",
+        "background": "Between $2x$ and $x$ on $[0,3]$ is $4.5$",
+        "numbers": "Between $2x$ and $x$ on $[0,3]$ is $4.5$"
       },
       {
-        "title": "Image segmentation overlap",
-        "background": "Continuous masks can be compared by integrating the difference between boundary curves.",
-        "numbers": "Between $y=1$ and $y=x^2$ on $[-1,1]$, area is $\\int_{-1}^1(1-x^2)dx=4/3$."
+        "title": "Between $\\sqrt{x}$ and $x$ on $[0,1]$",
+        "background": "Between $\\sqrt{x}$ and $x$ on $[0,1]$ is $1/6$",
+        "numbers": "Between $\\sqrt{x}$ and $x$ on $[0,1]$ is $1/6$"
       },
       {
-        "title": "Queue backlog",
-        "background": "Backlog accumulates when arrival rate exceeds service rate; the area between rates is work waiting.",
-        "numbers": "Arrival $10$ jobs/s and service $7$ jobs/s for $5$s creates $\\int_0^5 3\\,dt=15$ jobs of backlog."
+        "title": "Demand surplus between $10-q$ and $5$ on $[0,5]$",
+        "background": "Demand surplus between $10-q$ and $5$ on $[0,5]$ is $12.5$",
+        "numbers": "Demand surplus between $10-q$ and $5$ on $[0,5]$ is $12.5$"
       },
       {
-        "title": "Distribution distance",
-        "background": "Total variation in one dimension can be read from area between density curves.",
-        "numbers": "Densities $2x$ and $2(1-x)$ on $[0,1]$ have absolute gap area $1$, so total variation is $1/2$."
+        "title": "Absolute area between $x^2$ and $x$ on $[-1,1]$",
+        "background": "Absolute area between $x^2$ and $x$ on $[-1,1]$ is $5/6\\approx0.833$",
+        "numbers": "Absolute area between $x^2$ and $x$ on $[-1,1]$ is $5/6\\approx0.833$"
       }
     ],
     "applicationsClose": "Top minus bottom is a quiet but powerful idea: local differences become one honest total.",
@@ -12646,6 +14630,52 @@
       "Area between curves is the integral of top minus bottom.",
       "Find intersections first; split wherever the order changes.",
       "For absolute comparisons, prevent positive and negative regions from canceling."
+    ],
+    "connectionsProse": "<p>This lesson builds on definite integrals as accumulation. Area between curves accumulates the vertical distance between an upper and a lower graph. It turns a geometric region into an integral of height.</p>",
+    "symbols": [
+      {
+        "sym": "$f$",
+        "desc": "is the upper curve"
+      },
+      {
+        "sym": "$g$",
+        "desc": "is the lower curve"
+      },
+      {
+        "sym": "$a,b$ bound the region",
+        "desc": "$a,b$ bound the region"
+      },
+      {
+        "sym": "area",
+        "desc": "is nonnegative"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "On a small interval of width $dx$, the vertical height is $f(x)-g(x)$ when $f\\ge g$.",
+        "result": "On a small interval of width $dx$, the vertical height is $f(x)-g(x)$ when $f\\ge g$.",
+        "why": ""
+      },
+      {
+        "do": "Small area is approximately $[f(x)-g(x)]dx$.",
+        "result": "Small area is approximately $[f(x)-g(x)]dx$.",
+        "why": ""
+      },
+      {
+        "do": "Add across the interval with an integral.",
+        "result": "Add across the interval with an integral.",
+        "why": ""
+      },
+      {
+        "do": "Area is $\\int_a^b [f(x)-g(x)]dx$.",
+        "result": "Area is $\\int_a^b [f(x)-g(x)]dx$.",
+        "why": ""
+      },
+      {
+        "do": "If curves cross, split at intersection points so top and bottom are fixed on each piece.",
+        "result": "If curves cross, split at intersection points so top and bottom are fixed on each piece.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-47"
@@ -12674,8 +14704,8 @@
         "symmetry"
       ]
     },
-    "motivation": "<p>Area between curves measures a flat region. Now imagine spinning that region around an axis. A curve becomes a bowl, a cap, a tube, or a smooth solid. The question becomes: how much three-dimensional stuff did we make?</p><p>The friendly trick is to slice the solid. A thin slice perpendicular to the axis is usually a disk or washer. Its volume is area times thickness, and the integral adds all those slice volumes.</p>",
-    "definition": "<p>Using disks around the $x$-axis, a solid generated by $y=f(x)\\ge0$ on $[a,b]$ has volume $$V=\\pi\\int_a^b [f(x)]^2\\,dx.$$ If there is a hole, use washers: $$V=\\pi\\int_a^b\\left(R(x)^2-r(x)^2\\right)\\,dx,$$ where $R$ is the outer radius and $r$ is the inner radius.</p><p><b>Assumptions that matter:</b> radii must be distances to the axis of rotation, so they are nonnegative; choose slices perpendicular to the axis for disks and washers; if the outer radius changes, split the interval.</p>",
+    "motivation": "<p>When a vertical slice is rotated about the $x$-axis, it forms a disk if there is no hole and a washer if there is an inner radius. The area of that circular cross-section is then multiplied by the slice thickness.</p><p>The integral adds all slice volumes across the interval. Choosing the slicing direction to match the axis of rotation usually determines whether disks, washers, or shells are simplest.</p>",
+    "definition": "<p>Central statement: $\\pi\\int(R^2-r^2)dx$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find the volume formed by rotating $y=x$ on $0\\le x\\le2$ around the $x$-axis.",
       "skills": [
@@ -12874,34 +14904,34 @@
     ],
     "applications": [
       {
-        "title": "3D modeling from profiles",
-        "background": "CAD tools create rotationally symmetric parts by revolving a 2D sketch.",
-        "numbers": "A radius $r=2$ cm over length $10$ cm gives volume $\\pi\\int_0^{10}4dx=40\\pi\\approx125.7$ cm$^3$."
+        "title": "Application 1",
+        "background": "Rotate $y=x$ on $[0,1]$: $V=\\pi/3\\approx1.047$",
+        "numbers": "Rotate $y=x$ on $[0,1]$: $V=\\pi/3\\approx1.047$"
       },
       {
-        "title": "Neural rendering primitives",
-        "background": "Simple solids approximate geometry before a learned renderer adds detail.",
-        "numbers": "A cone with learned height $3$ and base radius $1$ has volume $\\pi\\int_0^3(1-x/3)^2dx=\\pi$."
+        "title": "Application 2",
+        "background": "Rotate $y=2$ on $[0,3]$: cylinder volume $12\\pi\\approx37.699$",
+        "numbers": "Rotate $y=2$ on $[0,3]$: cylinder volume $12\\pi\\approx37.699$"
       },
       {
-        "title": "Medical scan reconstruction",
-        "background": "Rotating a measured radius curve estimates organ volume when the anatomy is roughly symmetric.",
-        "numbers": "If $r(z)=\\sqrt{4-z^2}$ for $-2\\le z\\le2$, $V=\\pi\\int_{-2}^{2}(4-z^2)dz=\\frac{32\\pi}{3}\\approx33.5$."
+        "title": "Washer with $R=3,r=1,h=2$",
+        "background": "Washer with $R=3,r=1,h=2$ gives $16\\pi\\approx50.265$",
+        "numbers": "Washer with $R=3,r=1,h=2$ gives $16\\pi\\approx50.265$"
       },
       {
-        "title": "Robot workspace envelopes",
-        "background": "A rotating arm sweeps out a volume that can be approximated by washers.",
-        "numbers": "Reach radii from $0.5$ m to $2$ m through height $1$ m give $\\pi(2^2-0.5^2)(1)=3.75\\pi\\approx11.8$ m$^3$."
+        "title": "Application 4",
+        "background": "Rotate $y=\\sqrt{x}$ on $[0,4]$: $8\\pi\\approx25.133$",
+        "numbers": "Rotate $y=\\sqrt{x}$ on $[0,4]$: $8\\pi\\approx25.133$"
       },
       {
-        "title": "Kernel mass in radial features",
-        "background": "Radial basis features in physical spaces often need volume weighting.",
-        "numbers": "A unit sphere volume comes from $\\pi\\int_{-1}^1(1-x^2)dx=4\\pi/3$."
+        "title": "Cone radius $2$, height $3$",
+        "background": "Cone radius $2$, height $3$ has volume $4\\pi\\approx12.566$",
+        "numbers": "Cone radius $2$, height $3$ has volume $4\\pi\\approx12.566$"
       },
       {
-        "title": "Manufacturing cost",
-        "background": "Material cost is often proportional to volume, so calculus turns a profile into dollars.",
-        "numbers": "At $\\$0.08$ per cm$^3$, a $40\\pi$ cm$^3$ part costs about $0.08\\cdot125.7=\\$10.06$."
+        "title": "Shell method for $y=x$ on $[0,1]$ about $y$-axis",
+        "background": "Shell method for $y=x$ on $[0,1]$ about $y$-axis gives $2\\pi/3\\approx2.094$",
+        "numbers": "Shell method for $y=x$ on $[0,1]$ about $y$-axis gives $2\\pi/3\\approx2.094$"
       }
     ],
     "applicationsClose": "The same action repeats: identify a radius, square it, multiply by $\\pi$, and let the integral add the slices.",
@@ -12909,6 +14939,53 @@
       "Disk volumes use $V=\\pi\\int R(x)^2\\,dx$.",
       "Washer volumes subtract the inner radius squared from the outer radius squared.",
       "Radii are distances to the rotation axis, so choosing the right distance is the main skill."
+    ],
+    "connectionsProse": "<p>This lesson builds on definite integrals and cross-sectional area. Volumes of revolution come from rotating a region and adding the volumes of thin slices. Disks, washers, and shells are different ways to choose those slices.</p>",
+    "symbols": [
+      {
+        "sym": "$R$",
+        "desc": "is outer radius"
+      },
+      {
+        "sym": "$r$",
+        "desc": "is inner radius"
+      },
+      {
+        "sym": "$dx$",
+        "desc": "is slice thickness"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Rotate $y=f(x)\\ge0$ around the $x$-axis.",
+        "result": "Rotate $y=f(x)\\ge0$ around the $x$-axis.",
+        "why": ""
+      },
+      {
+        "do": "A thin slice of width $dx$ becomes a disk.",
+        "result": "A thin slice of width $dx$ becomes a disk.",
+        "why": ""
+      },
+      {
+        "do": "Its radius is $f(x)$, so area is $\\pi[f(x)]^2$.",
+        "result": "Its radius is $f(x)$, so area is $\\pi[f(x)]^2$.",
+        "why": ""
+      },
+      {
+        "do": "Slice volume is $\\pi[f(x)]^2dx$.",
+        "result": "Slice volume is $\\pi[f(x)]^2dx$.",
+        "why": ""
+      },
+      {
+        "do": "Add slices to get $V=\\pi\\int_a^b[f(x)]^2dx$.",
+        "result": "Add slices to get $V=\\pi\\int_a^b[f(x)]^2dx$.",
+        "why": ""
+      },
+      {
+        "do": "With an inner radius $g(x)$, subtract to get washers",
+        "result": "$\\pi\\int(R^2-r^2)dx$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-48"
@@ -12937,8 +15014,8 @@
         "Euclidean distance"
       ]
     },
-    "motivation": "<p>The distance between two points is easy: use the Pythagorean theorem. A curved path is trickier because its direction keeps changing. But if you zoom in far enough, each tiny piece of a smooth curve is almost a straight segment.</p><p>Arc length is the result of adding those tiny straight pieces. The derivative tells us the local slope, and the integral adds the local stretch.</p>",
-    "definition": "<p>For a smooth graph $y=f(x)$ on $[a,b]$, the arc length is $$L=\\int_a^b\\sqrt{1+\\bigl(f'(x)\\bigr)^2}\\,dx.$$ This comes from a tiny right triangle: horizontal change $dx$, vertical change $dy=f'(x)dx$, so $ds=\\sqrt{dx^2+dy^2}=\\sqrt{1+(f'(x))^2}\\,dx$.</p><p><b>Assumptions that matter:</b> the curve should be smooth enough that $f'$ exists except possibly at finitely many split points; use positive length, not signed displacement; many arc length integrals need numerical approximation.</p>",
+    "motivation": "<p>A small piece of graph has horizontal change $dx$ and vertical change approximately $f'(x)dx$. Those two changes form the legs of a tiny right triangle.</p><p>Pythagoras gives the segment length, and integration adds those lengths along the interval. The formula reduces to ordinary horizontal length when the slope is zero.</p>",
+    "definition": "<p>Central statement: Add and refine to get $L=\\int_a^b\\sqrt{1+[f'(x)]^2}dx$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find the length of the line segment $y=3x+1$ from $x=0$ to $x=2$.",
       "skills": [
@@ -13137,34 +15214,34 @@
     ],
     "applications": [
       {
-        "title": "Optimization path length",
-        "background": "Training does not just care where parameters end; the path length says how much they moved.",
-        "numbers": "For $w(t)=(t,t^2)$, $0\\le t\\le1$, Simpson's rule gives path length about $1.479$."
+        "title": "Line $y=3x$ on $[0,4]$",
+        "background": "Line $y=3x$ on $[0,4]$ has length $4\\sqrt{10}\\approx12.649$",
+        "numbers": "Line $y=3x$ on $[0,4]$ has length $4\\sqrt{10}\\approx12.649$"
       },
       {
-        "title": "Robotics trajectories",
-        "background": "A robot arm needs distance along a planned curve to estimate time and energy.",
-        "numbers": "A straight path from $(0,0)$ to $(3,4)$ has length $5$ m; at $0.5$ m/s it takes $10$ s."
+        "title": "Horizontal line on length $5$",
+        "background": "Horizontal line on length $5$ has arc length $5$",
+        "numbers": "Horizontal line on length $5$ has arc length $5$"
       },
       {
-        "title": "Vector graphics",
-        "background": "Fonts and curves are rendered by parametrized arcs whose lengths place dashes and animations.",
-        "numbers": "A line with slope $3/4$ over width $4$ has length $5$, so ten equal dash intervals are $0.5$ each."
+        "title": "$y=x$ on $[0,1]$",
+        "background": "$y=x$ on $[0,1]$ has length $\\sqrt2\\approx1.414$",
+        "numbers": "$y=x$ on $[0,1]$ has length $\\sqrt2\\approx1.414$"
       },
       {
-        "title": "Data manifold distance",
-        "background": "A curved latent manifold can make Euclidean shortcuts misleading.",
-        "numbers": "A semicircle of radius $2$ has arc length $2\\pi\\approx6.28$, while its diameter is $4$."
+        "title": "$y=x^2$ on $[0,1]$",
+        "background": "$y=x^2$ on $[0,1]$ has length about $1.479$",
+        "numbers": "$y=x^2$ on $[0,1]$ has length about $1.479$"
       },
       {
-        "title": "Signal variation",
-        "background": "Arc length of a time series graph increases when the signal wiggles more.",
-        "numbers": "For $y=3t$ over $0\\le t\\le2$, graph length is $2\\sqrt{10}\\approx6.32$."
+        "title": "Parametric unit circle length",
+        "background": "Parametric unit circle length is $2\\pi\\approx6.283$",
+        "numbers": "Parametric unit circle length is $2\\pi\\approx6.283$"
       },
       {
-        "title": "Curriculum schedules",
-        "background": "A smoothly changing hyperparameter schedule has length measuring total change over time.",
-        "numbers": "Schedule $\\eta(t)=0.1t$ over $0\\le t\\le10$ has graph length $10\\sqrt{1.01}\\approx10.05$."
+        "title": "Training curve with constant speed $0.2$ for $10$ units",
+        "background": "Training curve with constant speed $0.2$ for $10$ units has length $2$",
+        "numbers": "Training curve with constant speed $0.2$ for $10$ units has length $2$"
       }
     ],
     "applicationsClose": "Arc length is distance with memory: it respects every turn the path takes, not just start and finish.",
@@ -13172,6 +15249,48 @@
       "For $y=f(x)$, length is $\\int_a^b\\sqrt{1+(f'(x))^2}\\,dx$.",
       "The formula comes from the Pythagorean theorem on tiny curve pieces.",
       "Many useful arc lengths are approximated numerically rather than simplified exactly."
+    ],
+    "connectionsProse": "<p>This lesson builds on derivatives and the Pythagorean theorem. Arc length measures distance along a curve by adding many tiny straight segments. The derivative supplies the local rise for each tiny run.</p>",
+    "symbols": [
+      {
+        "sym": "$ds$",
+        "desc": "is a small arc length"
+      },
+      {
+        "sym": "$f'(x)$",
+        "desc": "is local slope"
+      },
+      {
+        "sym": "$L$",
+        "desc": "is total length"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Split the curve $y=f(x)$ into short pieces.",
+        "result": "Split the curve $y=f(x)$ into short pieces.",
+        "why": ""
+      },
+      {
+        "do": "A small piece has horizontal change $dx$ and vertical change $dy\\approx f'(x)dx$.",
+        "result": "A small piece has horizontal change $dx$ and vertical change $dy\\approx f'(x)dx$.",
+        "why": ""
+      },
+      {
+        "do": "Pythagoras gives segment length $ds\\approx\\sqrt{dx^2+dy^2}$.",
+        "result": "Pythagoras gives segment length $ds\\approx\\sqrt{dx^2+dy^2}$.",
+        "why": ""
+      },
+      {
+        "do": "Factor $dx$",
+        "result": "$ds\\approx\\sqrt{1+[f'(x)]^2}dx$.",
+        "why": ""
+      },
+      {
+        "do": "Add and refine to get $L=\\int_a^b\\sqrt{1+[f'(x)]^2}dx$.",
+        "result": "Add and refine to get $L=\\int_a^b\\sqrt{1+[f'(x)]^2}dx$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-49"
@@ -13201,8 +15320,8 @@
         "polar coordinates"
       ]
     },
-    "motivation": "<p>Not every curve wants to be written as $y=f(x)$. A circle fails the vertical-line test, and a moving particle naturally gives position as two coordinates changing with time.</p><p>Parametric equations let one parameter, usually $t$, drive both coordinates: $x=x(t)$ and $y=y(t)$. Calculus then asks familiar questions in a better language: slope is vertical speed divided by horizontal speed, and length is the integral of actual speed.</p>",
-    "definition": "<p>A parametric curve is given by $$x=x(t),\\qquad y=y(t),\\qquad \\alpha\\le t\\le\\beta.$$ When $dx/dt\\ne0$, its slope is $$\\frac{dy}{dx}=\\frac{dy/dt}{dx/dt}.$$ Its arc length is $$L=\\int_\\alpha^\\beta\\sqrt{\\left(\\frac{dx}{dt}\\right)^2+\\left(\\frac{dy}{dt}\\right)^2}\\,dt,$$ which is the integral of speed.</p><p><b>Assumptions that matter:</b> the parameter interval and direction are part of the curve; $dy/dx$ needs $dx/dt\\ne0$ at the point; length uses speed, so it stays nonnegative even if the curve doubles back.</p>",
+    "motivation": "<p>Instead of eliminating the parameter, calculus can compare the component changes directly. The slope $dy/dx$ is the vertical rate divided by the horizontal rate when the horizontal rate is not zero.</p><p>The same viewpoint gives speed, acceleration, second derivatives, and arc length. Parametric form is especially natural for motion, circles, and paths traced over time.</p>",
+    "definition": "<p>Central statement: $ds=\\sqrt{(x')^2+(y')^2}dt$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "For $x=t^2$ and $y=t^3$ at $t=2$, find $\\frac{dy}{dx}$.",
       "skills": [
@@ -13401,34 +15520,34 @@
     ],
     "applications": [
       {
-        "title": "Motion planning",
-        "background": "Robots and drones plan positions as $x(t),y(t),z(t)$ because time controls all coordinates together.",
-        "numbers": "For $x=3t,y=4t$, speed is $5$ m/s, so a $20$ m path takes $4$ s."
+        "title": "$x=t^2,y=t^3$",
+        "background": "$x=t^2,y=t^3$ gives $dy/dx=3t/2$, at $t=2$ gives $3$",
+        "numbers": "$x=t^2,y=t^3$ gives $dy/dx=3t/2$, at $t=2$ gives $3$"
       },
       {
-        "title": "Optimization trajectories",
-        "background": "Training parameters trace a parametric curve through weight space.",
-        "numbers": "For $w(t)=(e^{-t},e^{-2t})$, initial speed is $\\sqrt5\\approx2.236$."
+        "title": "Unit circle $x=\\cos t,y=\\sin t$",
+        "background": "Unit circle $x=\\cos t,y=\\sin t$ has slope $-\\cot t$, at $\\pi/4$ gives $-1$",
+        "numbers": "Unit circle $x=\\cos t,y=\\sin t$ has slope $-\\cot t$, at $\\pi/4$ gives $-1$"
       },
       {
-        "title": "Animation curves",
-        "background": "Computer graphics uses parametric curves to move objects smoothly without requiring $y$ to be a function of $x$.",
-        "numbers": "$x=\\cos t,y=\\sin t$ runs around a unit circle; speed is $1$ for every $t$."
+        "title": "Speed of $(t,t^2)$ at $1$",
+        "background": "Speed of $(t,t^2)$ at $1$ is $\\sqrt5\\approx2.236$",
+        "numbers": "Speed of $(t,t^2)$ at $1$ is $\\sqrt5\\approx2.236$"
       },
       {
-        "title": "Phase portraits",
-        "background": "Dynamical systems track state variables together, so the path itself is parametric.",
-        "numbers": "State $(e^{-t},2e^{-t})$ moves along a line with speed $\\sqrt5e^{-t}$, dropping from $2.236$ to $0.823$ by $t=1$."
+        "title": "Circle speed",
+        "background": "Circle speed is $1$",
+        "numbers": "Circle speed is $1$"
       },
       {
-        "title": "Bezier curves",
-        "background": "Design tools use parameter $t\\in[0,1]$ to trace curves for fonts and interfaces.",
-        "numbers": "A straight Bezier from $(0,0)$ to $(6,8)$ has derivative $(6,8)$ and length $10$."
+        "title": "Area for unit circle by parametric formula",
+        "background": "Area for unit circle by parametric formula is $\\pi$",
+        "numbers": "Area for unit circle by parametric formula is $\\pi$"
       },
       {
-        "title": "Sampling along a curve",
-        "background": "Data augmentation can sample points along curves rather than grids.",
-        "numbers": "On $x=2\\cos t,y=2\\sin t$, $0\\le t\\le2\\pi$, total length is $4\\pi\\approx12.57$."
+        "title": "Projectile $x=10t,y=20t-5t^2$",
+        "background": "Projectile $x=10t,y=20t-5t^2$ has slope $1$ at $t=1$",
+        "numbers": "Projectile $x=10t,y=20t-5t^2$ has slope $1$ at $t=1$"
       }
     ],
     "applicationsClose": "The parameter is a clock: once you know the component rates, slope, speed, and length become familiar again.",
@@ -13436,6 +15555,48 @@
       "Parametric curves write $x$ and $y$ as functions of a shared parameter.",
       "$dy/dx=(dy/dt)/(dx/dt)$ when $dx/dt\\ne0$.",
       "Arc length for a parametric curve is the integral of speed."
+    ],
+    "connectionsProse": "<p>This lesson builds on functions, derivatives, and motion. Parametric equations describe coordinates as functions of a third variable, often time. They allow calculus to follow curves that may not be functions of $x$ alone.</p>",
+    "symbols": [
+      {
+        "sym": "$t$",
+        "desc": "is the parameter"
+      },
+      {
+        "sym": "$x'(t),y'(t)$",
+        "desc": "are component velocities"
+      },
+      {
+        "sym": "$dy/dx$",
+        "desc": "is geometric slope"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $x=x(t)$ and $y=y(t)$.",
+        "result": "Let $x=x(t)$ and $y=y(t)$.",
+        "why": ""
+      },
+      {
+        "do": "Small changes satisfy $dx=x'(t)dt$ and $dy=y'(t)dt$.",
+        "result": "Small changes satisfy $dx=x'(t)dt$ and $dy=y'(t)dt$.",
+        "why": ""
+      },
+      {
+        "do": "The slope is $dy/dx=(dy/dt)/(dx/dt)$ when $dx/dt\\ne0$.",
+        "result": "The slope is $dy/dx=(dy/dt)/(dx/dt)$ when $dx/dt\\ne0$.",
+        "why": ""
+      },
+      {
+        "do": "The second derivative differentiates $dy/dx$ with respect to $t$ and divides by $dx/dt$.",
+        "result": "The second derivative differentiates $dy/dx$ with respect to $t$ and divides by $dx/dt$.",
+        "why": ""
+      },
+      {
+        "do": "Arc length follows from Pythagoras",
+        "result": "$ds=\\sqrt{(x')^2+(y')^2}dt$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-50"
@@ -13464,8 +15625,8 @@
         "symmetry"
       ]
     },
-    "motivation": "<p>Cartesian coordinates are wonderful for grids, but circles and spirals often look simpler when you describe distance from the origin and angle from the positive $x$-axis.</p><p>Polar coordinates use $r$ and $\\theta$. The calculus changes only because a tiny angular slice is a wedge, not a rectangle. That small geometry change gives the famous area formula with $\\frac12r^2$.</p>",
-    "definition": "<p>Polar coordinates represent a point by $$x=r\\cos\\theta,\\qquad y=r\\sin\\theta.$$ A polar curve is $r=f(\\theta)$. Its area from $\\alpha$ to $\\beta$ is $$A=\\frac12\\int_\\alpha^\\beta r(\\theta)^2\\,d\\theta,$$ because a tiny wedge with radius $r$ and angle $d\\theta$ has area about $\\frac12r^2d\\theta$.</p><p><b>Assumptions that matter:</b> angles are in radians; polar points are not unique; negative $r$ points in the opposite direction; check whether the curve traces a region once or multiple times before integrating.</p>",
+    "motivation": "<p>The conversion formulas $x=r\\cos\\thetaheta$ and $y=r\\sin\\thetaheta$ connect polar coordinates to the usual plane. A polar curve changes radius as the angle changes.</p><p>Area is built from small sectors rather than rectangles. Each sector has area approximately $\\frac12 r^2d\\thetaheta$, and integrating those sector areas gives the polar area formula.</p>",
+    "definition": "<p>Central statement: $dy/dx=(dy/d\\theta)/(dx/d\\theta)$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find the area inside the circle $r=2$ for $0\\le\\theta\\le2\\pi$.",
       "skills": [
@@ -13664,34 +15825,34 @@
     ],
     "applications": [
       {
-        "title": "Computer vision angles",
-        "background": "Radial features describe edges by distance and orientation around a keypoint.",
-        "numbers": "A feature at $r=4,\\theta=\\pi/3$ maps to $(2,2\\sqrt3)\\approx(2,3.46)$."
+        "title": "Circle $r=2$ over $[0,2\\pi]$",
+        "background": "Circle $r=2$ over $[0,2\\pi]$ has area $4\\pi\\approx12.566$",
+        "numbers": "Circle $r=2$ over $[0,2\\pi]$ has area $4\\pi\\approx12.566$"
       },
       {
-        "title": "Radar and lidar",
-        "background": "Sensors naturally report range and bearing, which are polar coordinates.",
-        "numbers": "Range $10$ m at $30^\\circ$ gives $x=10\\cos\\pi/6\\approx8.66$, $y=5$."
+        "title": "Unit circle area",
+        "background": "Unit circle area is $\\pi$",
+        "numbers": "Unit circle area is $\\pi$"
       },
       {
-        "title": "Rotational data augmentation",
-        "background": "Images and point clouds often rotate around an origin, making angle the natural variable.",
-        "numbers": "Rotating $(1,0)$ by $\\pi/2$ gives $r=1,\\theta=\\pi/2$, so Cartesian point $(0,1)$."
+        "title": "Spiral $r=\\theta$ from $0$ to $1$",
+        "background": "Spiral $r=\\theta$ from $0$ to $1$ has area $1/6\\approx0.167$",
+        "numbers": "Spiral $r=\\theta$ from $0$ to $1$ has area $1/6\\approx0.167$"
       },
       {
-        "title": "Attention over directions",
-        "background": "A model may attend over a cone or sector rather than a rectangle.",
-        "numbers": "Radius $2$ over angle $\\pi/3$ has area $2\\pi/3\\approx2.09$."
+        "title": "Point $(r,\\theta)=(2,\\pi/3)$",
+        "background": "Point $(r,\\theta)=(2,\\pi/3)$ has Cartesian $(1,\\sqrt3)$",
+        "numbers": "Point $(r,\\theta)=(2,\\pi/3)$ has Cartesian $(1,\\sqrt3)$"
       },
       {
-        "title": "Fourier and phase features",
-        "background": "Complex numbers encode magnitude and phase, the algebraic cousin of polar coordinates.",
-        "numbers": "$3e^{i\\pi/6}$ has real part $3\\sqrt3/2\\approx2.60$ and imaginary part $1.5$."
+        "title": "$r=3\\cos\\theta$",
+        "background": "$r=3\\cos\\theta$ is a circle of area $9\\pi/4\\approx7.069$",
+        "numbers": "$r=3\\cos\\theta$ is a circle of area $9\\pi/4\\approx7.069$"
       },
       {
-        "title": "Circular probability",
-        "background": "Directional distributions integrate over angle instead of a line.",
-        "numbers": "A uniform angle on $[0,2\\pi]$ assigns probability $(\\pi/2)/(2\\pi)=1/4$ to a quadrant."
+        "title": "Sector radius $5$, angle $0.2$",
+        "background": "Sector radius $5$, angle $0.2$ has area $2.5$",
+        "numbers": "Sector radius $5$, angle $0.2$ has area $2.5$"
       }
     ],
     "applicationsClose": "Polar coordinates trade grid rectangles for angular wedges, which is exactly the right language for circular structure.",
@@ -13699,6 +15860,48 @@
       "Convert by $x=r\\cos\\theta$ and $y=r\\sin\\theta$.",
       "Polar area is $\\frac12\\int r^2\\,d\\theta$.",
       "Check tracing and radians carefully; polar descriptions are not unique."
+    ],
+    "connectionsProse": "<p>This lesson builds on coordinates and trigonometric geometry. Polar coordinates describe position by distance from the origin and angle. They fit circular, radial, and spiral shapes more directly than rectangular coordinates.</p>",
+    "symbols": [
+      {
+        "sym": "$r$",
+        "desc": "is distance from origin"
+      },
+      {
+        "sym": "$\\theta$",
+        "desc": "is angle"
+      },
+      {
+        "sym": "$d\\theta$",
+        "desc": "is small angular width"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Coordinates are $x=r\\cos\\theta$ and $y=r\\sin\\theta$.",
+        "result": "Coordinates are $x=r\\cos\\theta$ and $y=r\\sin\\theta$.",
+        "why": ""
+      },
+      {
+        "do": "A small sector of radius $r$ and angle $d\\theta$ has area about $\\frac12 r^2d\\theta$.",
+        "result": "A small sector of radius $r$ and angle $d\\theta$ has area about $\\frac12 r^2d\\theta$.",
+        "why": ""
+      },
+      {
+        "do": "For a curve $r=f(\\theta)$, add sectors from $\\alpha$ to $\\beta$.",
+        "result": "For a curve $r=f(\\theta)$, add sectors from $\\alpha$ to $\\beta$.",
+        "why": ""
+      },
+      {
+        "do": "Area is $A=\\frac12\\int_\\alpha^\\beta r^2d\\theta$.",
+        "result": "Area is $A=\\frac12\\int_\\alpha^\\beta r^2d\\theta$.",
+        "why": ""
+      },
+      {
+        "do": "Slope follows from parametric form",
+        "result": "$dy/dx=(dy/d\\theta)/(dx/d\\theta)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-51"
@@ -13727,8 +15930,8 @@
         "subsequences"
       ]
     },
-    "motivation": "<p>A sequence is just a list with a rule: first term, second term, third term, and so on. That sounds humble, but every iterative algorithm produces one: losses across epochs, parameter values across updates, validation scores over time.</p><p>The central question is familiar from limits: do the terms settle somewhere? A sequence can converge, diverge, oscillate, or grow. Learning to read that behavior is the bridge from calculus to algorithms.</p>",
-    "definition": "<p>A sequence is a function whose inputs are positive integers: $$a_1,a_2,a_3,\\ldots,$$ or $a_n$ for $n=1,2,3,\\ldots$. We say $a_n$ converges to $L$ if $$\\lim_{n\\to\\infty}a_n=L.$$ In words, the later terms get as close to $L$ as we want and stay close.</p><p><b>Assumptions that matter:</b> the index $n$ is discrete, so do not treat every sequence exactly like a continuous function; convergence depends on the tail, not the first few terms; bounded and monotone sequences converge, but bounded alone does not guarantee convergence.</p>",
+    "motivation": "<p>A sequence limit asks what happens to individual terms as the index grows. This is different from adding the terms; it only tracks where the list entries themselves settle.</p><p>The formal idea of closeness uses a cutoff index. After some sufficiently large $N$, every later term must stay within any chosen tolerance of the proposed limit.</p>",
+    "definition": "<p>Central statement: Therefore $1/n\\to0$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Determine whether $a_n=\\frac{3n+1}{n+2}$ converges, and find the limit if it does.",
       "skills": [
@@ -13927,34 +16130,34 @@
     ],
     "applications": [
       {
-        "title": "Training loss curves",
-        "background": "Each epoch produces a loss value, so training creates a sequence.",
-        "numbers": "If $L_n=1+2/n$, then $L_{10}=1.2$, $L_{100}=1.02$, and $L_n\\to1$."
+        "title": "Application 1",
+        "background": "$a_{10}=0.1$ for $a_n=1/n$",
+        "numbers": "$a_{10}=0.1$ for $a_n=1/n$"
       },
       {
-        "title": "Learning-rate schedules",
-        "background": "Many optimizers lower step sizes as a sequence indexed by update count.",
-        "numbers": "$\\eta_n=0.1/\\sqrt n$ gives $0.1$ at $n=1$, $0.01$ at $n=100$, and tends to $0$."
+        "title": "$2^n$",
+        "background": "$2^n$ has $a_5=32$",
+        "numbers": "$2^n$ has $a_5=32$"
       },
       {
-        "title": "Fixed-point iteration",
-        "background": "Algorithms like value iteration repeatedly update estimates and ask whether the sequence stabilizes.",
-        "numbers": "$a_{n+1}=0.5a_n+1$ with $a_0=0$ gives $1,1.5,1.75,\\ldots\\to2$."
+        "title": "Geometric $0.5^n$",
+        "background": "Geometric $0.5^n$ has $a_4=0.0625$",
+        "numbers": "Geometric $0.5^n$ has $a_4=0.0625$"
       },
       {
-        "title": "Exponential moving averages",
-        "background": "EMA states form a sequence that smooths noisy measurements.",
-        "numbers": "$m_n=1-0.9^n$ gives $m_{10}\\approx0.651$ and limit $1$."
+        "title": "Arithmetic $3+2n$",
+        "background": "Arithmetic $3+2n$ has $a_{10}=23$",
+        "numbers": "Arithmetic $3+2n$ has $a_{10}=23$"
       },
       {
-        "title": "Numerical approximation",
-        "background": "Approximations often improve as $n$ grows, and convergence tells us what value they approach.",
-        "numbers": "$(1+1/n)^n$ gives $2.594$ at $n=10$ and approaches $e\\approx2.718$."
+        "title": "Running error $0.9^n$ after $20$ steps",
+        "background": "Running error $0.9^n$ after $20$ steps is $0.122$",
+        "numbers": "Running error $0.9^n$ after $20$ steps is $0.122$"
       },
       {
-        "title": "Oscillation detection",
-        "background": "A metric can stay bounded without settling, which matters in monitoring training.",
-        "numbers": "$a_n=(-1)^n$ stays between $-1$ and $1$ but never converges."
+        "title": "Sequence $(n+1)/n$",
+        "background": "Sequence $(n+1)/n$ tends to $1$ and has term $1.1$ at $n=10$",
+        "numbers": "Sequence $(n+1)/n$ tends to $1$ and has term $1.1$ at $n=10$"
       }
     ],
     "applicationsClose": "Sequences are the mathematics of iteration: watch the tail, and you learn the algorithm's long-run story.",
@@ -13962,6 +16165,57 @@
       "A sequence is a function of an integer index.",
       "Convergence means the tail terms approach one number.",
       "Bounded monotone sequences converge; oscillation can prevent convergence even when values stay bounded."
+    ],
+    "connectionsProse": "<p>This lesson builds on functions and limits. A sequence is a function whose inputs are positive integers. It provides the language for long-run term behavior before moving to infinite series.</p>",
+    "symbols": [
+      {
+        "sym": "$n$",
+        "desc": "is the index"
+      },
+      {
+        "sym": "$a_n$",
+        "desc": "is term $n$"
+      },
+      {
+        "sym": "$L$",
+        "desc": "is the sequence limit"
+      },
+      {
+        "sym": "$N$",
+        "desc": "is a cutoff after which terms stay close"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "A sequence is a function $a_n$ whose input is an integer $n$.",
+        "result": "A sequence is a function $a_n$ whose input is an integer $n$.",
+        "why": ""
+      },
+      {
+        "do": "To test $a_n\\to L$, examine $|a_n-L|$ as $n$ grows.",
+        "result": "To test $a_n\\to L$, examine $|a_n-L|$ as $n$ grows.",
+        "why": ""
+      },
+      {
+        "do": "For $a_n=1/n$, compute $|1/n-0|=1/n$.",
+        "result": "For $a_n=1/n$, compute $|1/n-0|=1/n$.",
+        "why": ""
+      },
+      {
+        "do": "Given any tolerance $\\varepsilon>0$, choose $N>1/\\varepsilon$.",
+        "result": "Given any tolerance $\\varepsilon>0$, choose $N>1/\\varepsilon$.",
+        "why": ""
+      },
+      {
+        "do": "Then for $n>N$, $1/n<\\varepsilon$.",
+        "result": "Then for $n>N$, $1/n<\\varepsilon$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $1/n\\to0$.",
+        "result": "Therefore $1/n\\to0$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-52"
@@ -13990,8 +16244,8 @@
         "convergence"
       ]
     },
-    "motivation": "<p>A sequence asks where the terms go. A series asks what happens when we keep adding them. That small change matters: terms can go to zero and still add up to infinity if they do not shrink fast enough.</p><p>The safe way to think about a series is through partial sums. Add the first $N$ terms, then ask whether those running totals approach a finite number as $N$ grows.</p>",
-    "definition": "<p>An infinite series is $$\\sum_{n=1}^\\infty a_n.$$ Its $N$th partial sum is $$S_N=\\sum_{n=1}^N a_n.$$ The series converges to $S$ if $\\lim_{N\\to\\infty}S_N=S$ is finite. A necessary condition is $a_n\\to0$, but that condition alone is not sufficient.</p><p><b>Assumptions that matter:</b> do not confuse the term limit with the sum; if $a_n$ does not tend to zero, the series diverges immediately; for positive terms, comparison with known series is often the cleanest test.</p>",
+    "motivation": "<p>Partial sums are the bridge from finite arithmetic to infinite series. Each partial sum is ordinary addition, and convergence means those partial sums settle toward one number.</p><p>For convergence, the terms must at least approach zero; otherwise each new addition remains too large for the totals to settle. That condition is necessary but not sufficient, as the harmonic series shows.</p>",
+    "definition": "<p>Central statement: harmonic terms $1/n$ approach $0$ but the series diverges.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Determine whether $\\displaystyle\\sum_{n=1}^\\infty \\frac{1}{n(n+1)}$ converges, and find its sum.",
       "skills": [
@@ -14190,34 +16444,34 @@
     ],
     "applications": [
       {
-        "title": "Expected total reward",
-        "background": "Reinforcement learning adds rewards over time, often with discounting to make the series finite.",
-        "numbers": "Rewards $1,0.5,0.25,\\ldots$ sum to $2$."
+        "title": "Application 1",
+        "background": "$\\sum_{n=1}^3 n=6$",
+        "numbers": "$\\sum_{n=1}^3 n=6$"
       },
       {
-        "title": "Taylor approximations",
-        "background": "Functions like $e^x$ can be represented by infinite series that computers truncate.",
-        "numbers": "At $x=1$, $1+1+1/2+1/6=2.667$, close to $e\\approx2.718$."
+        "title": "Application 2",
+        "background": "$\\sum_{n=1}^{10}1=10$",
+        "numbers": "$\\sum_{n=1}^{10}1=10$"
       },
       {
-        "title": "Fourier representations",
-        "background": "Signals can be built as sums of waves, with more terms improving detail.",
-        "numbers": "A square wave approximation uses $\\sin x+\\frac13\\sin3x+\\frac15\\sin5x+\\cdots$."
+        "title": "Partial sum of $1/2^n$ through $n=4$",
+        "background": "Partial sum of $1/2^n$ through $n=4$ is $0.9375$",
+        "numbers": "Partial sum of $1/2^n$ through $n=4$ is $0.9375$"
       },
       {
-        "title": "Algorithmic error bounds",
-        "background": "Iterative methods often have total remaining error bounded by a tail series.",
-        "numbers": "If errors are below $0.1(0.8)^k$, remaining error after step $N$ is at most $0.1\\cdot0.8^{N+1}/0.2=0.5\\cdot0.8^{N+1}$."
+        "title": "Harmonic partial sum through $4$",
+        "background": "Harmonic partial sum through $4$ is $25/12\\approx2.083$",
+        "numbers": "Harmonic partial sum through $4$ is $25/12\\approx2.083$"
       },
       {
-        "title": "Network retries",
-        "background": "Repeated retry probabilities create series for expected attempts or traffic.",
-        "numbers": "If retry probability is $0.2$, expected attempts are $1+0.2+0.04+\\cdots=1.25$."
+        "title": "Alternating $1-1+1-1$",
+        "background": "Alternating $1-1+1-1$ has partial sums $1,0,1,0$ and no ordinary limit",
+        "numbers": "Alternating $1-1+1-1$ has partial sums $1,0,1,0$ and no ordinary limit"
       },
       {
-        "title": "Numerical integration",
-        "background": "Some quadrature and simulation errors are controlled by summing decreasing contributions.",
-        "numbers": "A tail $\\sum_{n=10}^\\infty1/n^2$ is less than $\\int_9^\\infty x^{-2}dx=1/9\\approx0.111$."
+        "title": "Application 6",
+        "background": "$\\sum_{n=1}^\\infty 1/n^2=\\pi^2/6\\approx1.645$",
+        "numbers": "$\\sum_{n=1}^\\infty 1/n^2=\\pi^2/6\\approx1.645$"
       }
     ],
     "applicationsClose": "Series are the language of accumulated small effects: the terms may shrink, but the partial sums tell the truth.",
@@ -14225,6 +16479,53 @@
       "A series is the limit of its partial sums.",
       "Terms must go to zero for convergence, but that alone is not enough.",
       "Telescoping, comparison, and geometric structure are common ways to decide convergence."
+    ],
+    "connectionsProse": "<p>This lesson builds on sequences and finite sums. A series adds sequence terms and studies the behavior of the running totals. It asks whether infinitely many additions can approach a finite value.</p>",
+    "symbols": [
+      {
+        "sym": "$a_n$",
+        "desc": "is the term"
+      },
+      {
+        "sym": "$s_n$",
+        "desc": "is the partial sum"
+      },
+      {
+        "sym": "$\\sum$",
+        "desc": "denotes repeated addition"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with terms $a_1,a_2,\\dots$.",
+        "result": "Start with terms $a_1,a_2,\\dots$.",
+        "why": ""
+      },
+      {
+        "do": "Define partial sums $s_n=a_1+\\cdots+a_n$",
+        "result": "Define partial sums $s_n=a_1+\\cdots+a_n$",
+        "why": "these are finite totals."
+      },
+      {
+        "do": "The infinite series $\\sum a_n$ converges if $s_n$ has a finite limit.",
+        "result": "The infinite series $\\sum a_n$ converges if $s_n$ has a finite limit.",
+        "why": ""
+      },
+      {
+        "do": "If $a_n$ does not approach $0$, then partial sums cannot settle.",
+        "result": "If $a_n$ does not approach $0$, then partial sums cannot settle.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $a_n\\to0$ is necessary for convergence.",
+        "result": "Therefore $a_n\\to0$ is necessary for convergence.",
+        "why": ""
+      },
+      {
+        "do": "It is not sufficient",
+        "result": "harmonic terms $1/n$ approach $0$ but the series diverges.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-53"
@@ -14253,8 +16554,8 @@
         "probability"
       ]
     },
-    "motivation": "<p>Some infinite sums are surprisingly tame. If each term is half the previous one, the pieces get small so quickly that the total settles. This is the geometric series, and it is one of the most reusable formulas in applied math.</p><p>The mental picture is a tail that keeps shrinking by the same multiplier. Once you know the multiplier $r$, the entire infinite future is compressed into $1/(1-r)$.</p>",
-    "definition": "<p>A geometric series has the form $$a+ar+ar^2+\\cdots=\\sum_{n=0}^\\infty ar^n.$$ Its $N$th partial sum is $$S_N=a\\frac{1-r^{N+1}}{1-r}\\quad(r\\ne1).$$ If $|r|<1$, then $r^{N+1}\\to0$, so $$\\sum_{n=0}^\\infty ar^n=\\frac{a}{1-r}.$$ If $|r|\\ge1$, the series does not converge.</p><p><b>Assumptions that matter:</b> the ratio must be constant from term to term; the infinite-sum formula requires $|r|<1$; the first term $a$ is the term at $n=0$ in this convention.</p>",
+    "motivation": "<p>The partial sum has a special cancellation pattern. Multiplying the sum by the common ratio lines up nearly all terms, and subtracting removes the middle powers.</p><p>The infinite sum exists exactly when the powers of the ratio shrink to zero. If $|r|<1$, the tail disappears in the limit; if not, the partial sums do not settle in the same way.</p>",
+    "definition": "<p>Central statement: If $|r|<1$, then $r^{n+1}\\to0$, so $\\sum_{n=0}^\\infty r^n=1/(1-r)$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find the sum $\\displaystyle 3+\\frac32+\\frac34+\\frac38+\\cdots$.",
       "skills": [
@@ -14453,39 +16754,34 @@
     ],
     "applications": [
       {
-        "title": "Discounted RL returns",
-        "background": "Reinforcement learning discounts future rewards so infinite horizons have finite value.",
-        "numbers": "With reward $1$ and $\\gamma=0.99$, return is $1/(1-0.99)=100$."
+        "title": "Application 1",
+        "background": "$1+1/2+1/4+\\cdots=2$",
+        "numbers": "$1+1/2+1/4+\\cdots=2$"
       },
       {
-        "title": "Effective horizon",
-        "background": "The geometric sum tells how many future steps a discount factor roughly remembers.",
-        "numbers": "$\\gamma=0.9$ gives horizon $10$; $\\gamma=0.999$ gives horizon $1000$."
+        "title": "Application 2",
+        "background": "$\\sum_{n=0}^\\infty 0.9^n=10$",
+        "numbers": "$\\sum_{n=0}^\\infty 0.9^n=10$"
       },
       {
-        "title": "Expected geometric counts",
-        "background": "If each trial continues with probability $q$, expected count is a geometric series.",
-        "numbers": "With stop probability $0.2$, continue probability $0.8$, expected attempts are $1+0.8+0.8^2+\\cdots=5$."
+        "title": "Discounted reward with reward $5$ and $\\gamma=0.8$",
+        "background": "Discounted reward with reward $5$ and $\\gamma=0.8$ totals $25$",
+        "numbers": "Discounted reward with reward $5$ and $\\gamma=0.8$ totals $25$"
       },
       {
-        "title": "Retry traffic",
-        "background": "Distributed systems retry failed requests, and each retry layer adds load.",
-        "numbers": "Failure probability $0.1$ gives expected sends $1+0.1+0.01+\\cdots=1/0.9\\approx1.111$."
+        "title": "Application 4",
+        "background": "Repeated error $0.5^n$ sums to $2$",
+        "numbers": "Repeated error $0.5^n$ sums to $2$"
       },
       {
-        "title": "Exponential moving averages",
-        "background": "EMA weights on past observations form a geometric tail.",
-        "numbers": "For $\\beta=0.9$, total raw weight $1+0.9+0.9^2+\\cdots=10$, and normalized newest weight is $0.1$."
+        "title": "Partial sum for $r=0.5,n=3$",
+        "background": "Partial sum for $r=0.5,n=3$ is $1.875$",
+        "numbers": "Partial sum for $r=0.5,n=3$ is $1.875$"
       },
       {
-        "title": "Neural sequence memory",
-        "background": "A recurrent state with multiplier $r$ keeps a geometrically decaying trace of past inputs.",
-        "numbers": "If $r=0.95$, total memory mass is $1/(1-0.95)=20$ time steps."
-      },
-      {
-        "title": "Binary fractions",
-        "background": "Repeating binary expansions are geometric series.",
-        "numbers": "Binary $0.111\\ldots_2$ equals $1/2+1/4+1/8+\\cdots=1$."
+        "title": "$1+2+4+\\cdots$",
+        "background": "$1+2+4+\\cdots$ diverges because $|r|=2$",
+        "numbers": "$1+2+4+\\cdots$ diverges because $|r|=2$"
       }
     ],
     "applicationsClose": "The geometric series is the mathematics of repeated fractional survival: rewards, retries, memories, and tails all wear the same uniform.",
@@ -14493,6 +16789,53 @@
       "A geometric series has constant ratio $r$ between consecutive terms.",
       "The infinite sum is $a/(1-r)$ exactly when $|r|<1$.",
       "The factor $1/(1-r)$ appears everywhere an effect decays by the same percentage each step."
+    ],
+    "connectionsProse": "<p>This lesson builds on series and repeated multiplication. A geometric series adds powers of a fixed ratio. It is the basic model for shrinking tails, discounts, repeated errors, and many convergence comparisons.</p>",
+    "symbols": [
+      {
+        "sym": "$r$",
+        "desc": "is common ratio"
+      },
+      {
+        "sym": "$S_n$",
+        "desc": "is partial sum"
+      },
+      {
+        "sym": "convergence requires $|r|<1$",
+        "desc": "convergence requires $|r|<1$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $S_n=1+r+r^2+\\cdots+r^n$.",
+        "result": "Let $S_n=1+r+r^2+\\cdots+r^n$.",
+        "why": ""
+      },
+      {
+        "do": "Multiply by $r$",
+        "result": "$rS_n=r+r^2+\\cdots+r^{n+1}$.",
+        "why": ""
+      },
+      {
+        "do": "Subtract",
+        "result": "$S_n-rS_n=1-r^{n+1}$",
+        "why": "all middle terms cancel."
+      },
+      {
+        "do": "Factor",
+        "result": "$S_n(1-r)=1-r^{n+1}$.",
+        "why": ""
+      },
+      {
+        "do": "Divide",
+        "result": "$S_n=(1-r^{n+1})/(1-r)$.",
+        "why": ""
+      },
+      {
+        "do": "If $|r|<1$, then $r^{n+1}\\to0$, so $\\sum_{n=0}^\\infty r^n=1/(1-r)$.",
+        "result": "If $|r|<1$, then $r^{n+1}\\to0$, so $\\sum_{n=0}^\\infty r^n=1/(1-r)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-54"
@@ -14522,8 +16865,8 @@
         "ratio and root limits"
       ]
     },
-    "motivation": "<p>You already know how to add finitely many numbers. The surprise is that some infinite sums also settle: $1+\\tfrac12+\\tfrac14+\\cdots=2$. Others, like $1+\\tfrac12+\\tfrac13+\\cdots$, keep growing forever, even though the terms go to zero.</p><p><b>Convergence tests</b> are a set of careful shortcuts. Instead of trying to add infinitely many terms, we compare their long-run size, ratio, or shape to series we already understand. It is like judging whether a long road eventually levels out by checking its slope and landmarks rather than walking forever.</p>",
-    "definition": "<p>An infinite series $\\sum_{n=1}^{\\infty}a_n$ <b>converges</b> if the partial sums $s_N=\\sum_{n=1}^{N}a_n$ approach a finite limit. The most used tests are: term test $a_n\\to0$ is necessary; geometric $\\sum ar^{n}$ converges when $|r|<1$; $p$-series $\\sum 1/n^p$ converges when $p>1$; comparison and limit comparison transfer behavior from a known positive series; ratio and root tests examine exponential-like decay.</p><p><b>Assumptions that matter:</b> the term test can only prove divergence, not convergence; comparison tests usually require nonnegative terms; absolute convergence of $\\sum |a_n|$ implies convergence of $\\sum a_n$; alternating series need decreasing terms whose limit is zero.</p>",
+    "motivation": "<p>The ratio test looks at how consecutive terms compare. If the terms eventually shrink like a geometric series with ratio below one, the series converges absolutely.</p><p>No single test solves every series. Positive-term comparisons, $p$-series, alternating signs, ratios, roots, and integral-like tails each provide a different lens for deciding convergence.</p>",
+    "definition": "<p>Ratio test</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Determine whether $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{3n+1}{n^3+2}$ converges.",
       "skills": [
@@ -14722,34 +17065,34 @@
     ],
     "applications": [
       {
-        "title": "Stopping an infinite feature expansion",
-        "background": "Kernel and basis expansions often keep only the terms whose tail is small enough. A convergence test tells you whether the remaining tail can be controlled.",
-        "numbers": "For a geometric tail $\\sum_{n=6}^{\\infty}0.2^n=0.2^6/(1-0.2)=0.00008$, so dropping terms after degree $5$ costs less than $10^{-4}$."
+        "title": "$\\sum1/n!$",
+        "background": "$\\sum1/n!$ converges by ratio limit $0$",
+        "numbers": "$\\sum1/n!$ converges by ratio limit $0$"
       },
       {
-        "title": "Bounding Taylor approximation error",
-        "background": "Taylor methods approximate nonlinear functions by polynomials; convergence tests justify that more terms really improve the approximation.",
-        "numbers": "For $e^{0.5}$, the next neglected term after degree $4$ is $0.5^5/5!=0.0002604$, already below $3\\times10^{-4}$."
+        "title": "$\\sum2^n/n!$",
+        "background": "$\\sum2^n/n!$ converges by ratio limit $0$",
+        "numbers": "$\\sum2^n/n!$ converges by ratio limit $0$"
       },
       {
-        "title": "Analyzing optimization schedules",
-        "background": "SGD convergence proofs often require learning rates whose sums behave differently: enough total motion, but shrinking noise.",
-        "numbers": "$\\sum 1/t$ diverges while $\\sum 1/t^2$ converges, so $\\eta_t=1/t$ satisfies the classic pair $\\sum\\eta_t=\\infty$, $\\sum\\eta_t^2<\\infty$."
+        "title": "$\\sum1/n^2$",
+        "background": "$\\sum1/n^2$ converges by $p=2>1$",
+        "numbers": "$\\sum1/n^2$ converges by $p=2>1$"
       },
       {
-        "title": "Discounted reinforcement learning",
-        "background": "A discounted return is an infinite geometric series when rewards are bounded.",
-        "numbers": "If rewards are at most $2$ and $\\gamma=0.95$, then total return is at most $2/(1-0.95)=40$."
+        "title": "$\\sum1/n$",
+        "background": "$\\sum1/n$ diverges by $p=1$",
+        "numbers": "$\\sum1/n$ diverges by $p=1$"
       },
       {
-        "title": "Numerical linear algebra iterations",
-        "background": "Iterative solvers repeatedly add corrections; convergence is often geometric when the error contracts.",
-        "numbers": "If the error shrinks by $0.3$ each step from $10$, after $8$ steps it is $10(0.3)^8=0.0006561$."
+        "title": "$\\sum(-1)^{n+1}/n$",
+        "background": "$\\sum(-1)^{n+1}/n$ converges conditionally by alternating test",
+        "numbers": "$\\sum(-1)^{n+1}/n$ converges conditionally by alternating test"
       },
       {
-        "title": "Dropout-style random paths",
-        "background": "Expected contributions from long computational paths can form a series when each extra step is less likely.",
-        "numbers": "If each extra link survives with probability $0.8$ and contributes size $0.1^k$, the tail is $\\sum (0.08)^k=1/(1-0.08)=1.087$ from $k=0$."
+        "title": "$\\sum n/2^n$",
+        "background": "$\\sum n/2^n$ converges by ratio limit $1/2$",
+        "numbers": "$\\sum n/2^n$ converges by ratio limit $1/2$"
       }
     ],
     "applicationsClose": "The same question keeps returning in different clothes: do the infinitely many small pieces add up to something finite?",
@@ -14757,6 +17100,53 @@
       "A series converges when its partial sums approach a finite limit.",
       "The term test proves only divergence; a zero term limit is necessary but not enough.",
       "Comparison, ratio, root, integral, and alternating tests each recognize a different long-run pattern."
+    ],
+    "connectionsProse": "<p>This lesson builds on series, geometric behavior, and improper integrals. Convergence tests compare an unfamiliar series to behavior that is already understood. Different tests match different term patterns.</p>",
+    "symbols": [
+      {
+        "sym": "$a_n$",
+        "desc": "is the term"
+      },
+      {
+        "sym": "$L$",
+        "desc": "is the limiting ratio or root"
+      },
+      {
+        "sym": "absolute convergence",
+        "desc": "means $\\sum|a_n|$ converges"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Suppose $\\lim_{n\\to\\infty}|a_{n+1}/a_n|=L$.",
+        "result": "Suppose $\\lim_{n\\to\\infty}|a_{n+1}/a_n|=L$.",
+        "why": ""
+      },
+      {
+        "do": "For large $n$, terms behave roughly like repeated multiplication by $L$.",
+        "result": "For large $n$, terms behave roughly like repeated multiplication by $L$.",
+        "why": ""
+      },
+      {
+        "do": "If $L<1$, compare to a geometric series with ratio below $1$, so the series converges absolutely.",
+        "result": "If $L<1$, compare to a geometric series with ratio below $1$, so the series converges absolutely.",
+        "why": ""
+      },
+      {
+        "do": "If $L>1$, terms do not shrink fast enough and the series diverges.",
+        "result": "If $L>1$, terms do not shrink fast enough and the series diverges.",
+        "why": ""
+      },
+      {
+        "do": "If $L=1$, the test gives no decision.",
+        "result": "If $L=1$, the test gives no decision.",
+        "why": ""
+      },
+      {
+        "do": "For $a_n=1/n!$, the ratio is $1/(n+1)\\to0$, so it converges.",
+        "result": "For $a_n=1/n!$, the ratio is $1/(n+1)\\to0$, so it converges.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-55"
@@ -14786,8 +17176,8 @@
         "term-by-term integration"
       ]
     },
-    "motivation": "<p>Polynomials are friendly: they are easy to evaluate, differentiate, and integrate. Power series ask a bold question: can we let a polynomial have infinitely many terms and still keep those friendly rules?</p><p>The answer is yes, but with a boundary. A <b>power series</b> behaves beautifully near its center and may fail farther away. The radius of convergence is the safe zone, like the range over which a local map is trustworthy.</p>",
-    "definition": "<p>A power series centered at $c$ has the form $$\\sum_{n=0}^{\\infty}a_n(x-c)^n.$$ For each fixed $x$, this becomes an ordinary numerical series. The set of $x$ values where it converges is its <b>interval of convergence</b>, usually $|x-c|<R$ plus endpoint checks. The number $R$ is the <b>radius of convergence</b>.</p><p><b>Assumptions that matter:</b> the radius usually comes from the ratio or root test; endpoints must be tested separately; inside $|x-c|<R$, power series may be differentiated and integrated term by term; outside that interval the same formula may not represent a finite value.</p>",
+    "motivation": "<p>The powers $(x-a)^n$ measure distance from the center. Coefficients determine how strongly each power contributes, but convergence depends on how those coefficients balance the growing powers.</p><p>The ratio test usually reveals a radius around the center where the series converges. Endpoints require separate checks because the ratio test often becomes inconclusive there.</p>",
+    "definition": "<p>Central statement: Endpoints $x=a\\pm R$ must be tested separately.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find the radius and interval of convergence of $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{(x-2)^n}{n3^n}$.",
       "skills": [
@@ -15011,34 +17401,34 @@
     ],
     "applications": [
       {
-        "title": "Local function approximators",
-        "background": "Power series let software replace a hard function with powers and coefficients near a center.",
-        "numbers": "For $1/(1-x)=\\sum x^n$, at $x=0.2$, five terms give $1+0.2+0.04+0.008+0.0016=1.2496$ versus exact $1.25$."
+        "title": "$\\sum x^n$",
+        "background": "$\\sum x^n$ has radius $1$",
+        "numbers": "$\\sum x^n$ has radius $1$"
       },
       {
-        "title": "Neural activation approximations",
-        "background": "Fast inference libraries approximate smooth activations with polynomials over a safe interval.",
-        "numbers": "Using $\\tanh x\\approx x-x^3/3+2x^5/15$ at $x=0.5$ gives $0.4625$, close to $\\tanh(0.5)=0.4621$."
+        "title": "At $x=0.5$, sum",
+        "background": "At $x=0.5$, sum is $2$",
+        "numbers": "At $x=0.5$, sum is $2$"
       },
       {
-        "title": "Generating functions",
-        "background": "Discrete math encodes a sequence as coefficients of a power series, then manipulates the series algebraically.",
-        "numbers": "$1/(1-x)^2=\\sum_{n=0}^{\\infty}(n+1)x^n$; the coefficient of $x^4$ is $5$."
+        "title": "Application 3",
+        "background": "At $x=1$, $\\sum1$ diverges",
+        "numbers": "At $x=1$, $\\sum1$ diverges"
       },
       {
-        "title": "Signal filters",
-        "background": "Digital filters often appear as power series in a delay variable, where convergence means the impulse response is summable.",
-        "numbers": "$1+0.7z+0.7^2z^2+\\cdots$ converges for $|z|<1/0.7\\approx1.429$."
+        "title": "$\\sum x^n/n!$",
+        "background": "$\\sum x^n/n!$ has infinite radius",
+        "numbers": "$\\sum x^n/n!$ has infinite radius"
       },
       {
-        "title": "Uncertainty propagation",
-        "background": "A nonlinear measurement can be expanded around a nominal value to estimate how small perturbations change the output.",
-        "numbers": "$1/(1-\\epsilon)=1+\\epsilon+\\epsilon^2+\\cdots$; for $\\epsilon=0.05$, three terms give $1.0525$ versus exact $1.05263$."
+        "title": "$\\sum n x^n$",
+        "background": "$\\sum n x^n$ has radius $1$",
+        "numbers": "$\\sum n x^n$ has radius $1$"
       },
       {
-        "title": "Iterative algorithms",
-        "background": "When an update operator has small norm, inverse-like expressions become power series.",
-        "numbers": "If $A$ has effective size $0.2$, then $(I-A)^{-1}\\approx I+A+A^2$ leaves a tail bounded by $0.2^3/(1-0.2)=0.01$."
+        "title": "$\\sum (x-2)^n/3^n$",
+        "background": "$\\sum (x-2)^n/3^n$ has radius $3$",
+        "numbers": "$\\sum (x-2)^n/3^n$ has radius $3$"
       }
     ],
     "applicationsClose": "Power series are polynomials with a safety radius: inside it, algebra and calculus become wonderfully reusable.",
@@ -15046,6 +17436,53 @@
       "A power series is $\\sum a_n(x-c)^n$ centered at $c$.",
       "The ratio or root test usually gives the radius; endpoints need separate tests.",
       "Inside the radius, term-by-term differentiation and integration are valid."
+    ],
+    "connectionsProse": "<p>This lesson builds on series and functions of a variable. A power series is an infinite polynomial centered at a point. Inside its interval of convergence, it behaves like an ordinary function that can often be differentiated or integrated term by term.</p>",
+    "symbols": [
+      {
+        "sym": "$c_n$",
+        "desc": "are coefficients"
+      },
+      {
+        "sym": "$a$",
+        "desc": "is center"
+      },
+      {
+        "sym": "$R$",
+        "desc": "is radius of convergence"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write $\\sum c_n(x-a)^n$",
+        "result": "Write $\\sum c_n(x-a)^n$",
+        "why": "powers are centered at $a$."
+      },
+      {
+        "do": "Apply the ratio test to terms $c_n(x-a)^n$.",
+        "result": "Apply the ratio test to terms $c_n(x-a)^n$.",
+        "why": ""
+      },
+      {
+        "do": "The limiting ratio often has the form $L|x-a|$.",
+        "result": "The limiting ratio often has the form $L|x-a|$.",
+        "why": ""
+      },
+      {
+        "do": "Convergence occurs when $L|x-a|<1$.",
+        "result": "Convergence occurs when $L|x-a|<1$.",
+        "why": ""
+      },
+      {
+        "do": "This gives a radius $R=1/L$.",
+        "result": "This gives a radius $R=1/L$.",
+        "why": ""
+      },
+      {
+        "do": "Endpoints $x=a\\pm R$ must be tested separately.",
+        "result": "Endpoints $x=a\\pm R$ must be tested separately.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-56"
@@ -15075,8 +17512,8 @@
         "local linearization"
       ]
     },
-    "motivation": "<p>Linear approximation says a function near $a$ behaves like $f(a)+f'(a)(x-a)$. That is already powerful, but it throws away curvature. If the curve bends, one line only tells the first part of the story.</p><p>A <b>Taylor series</b> keeps asking for more local information: value, slope, curvature, third derivative, and so on. Each derivative adds another correction term, giving a polynomial that can shadow the function very closely near the center.</p>",
-    "definition": "<p>If $f$ has derivatives of all orders near $a$, its Taylor series about $a$ is $$\\sum_{n=0}^{\\infty}\\frac{f^{(n)}(a)}{n!}(x-a)^n=f(a)+f'(a)(x-a)+\\frac{f''(a)}{2!}(x-a)^2+\\cdots.$$ The coefficient is chosen so that the polynomial's $n$th derivative at $a$ matches $f^{(n)}(a)$.</p><p><b>Assumptions that matter:</b> having all derivatives is not by itself enough to guarantee the series equals the function; equality needs the remainder to go to zero. The approximation is local: it is usually best near $a$, and the radius of convergence still matters.</p>",
+    "motivation": "<p>The constant term must match the function value at the center. The linear coefficient must match the slope, the quadratic coefficient must match curvature after accounting for $2!$, and the pattern continues for higher derivatives.</p><p>Taylor series explain why local polynomial approximations work. Each added term matches one more derivative at the center, improving the local description when the series converges to the function.</p>",
+    "definition": "<p>Central statement: Therefore $c_n=f^{(n)}(a)/n!$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find the Taylor polynomial of degree $3$ for $f(x)=\\ln x$ about $a=1$.",
       "skills": [
@@ -15330,34 +17767,34 @@
     ],
     "applications": [
       {
-        "title": "Newton's method",
-        "background": "Newton's method is built from a second-order Taylor picture of a function near the current point.",
-        "numbers": "For minimizing $f(w)=(w-3)^2$, $f'(0)=-6$ and $f''(0)=2$, so the Newton step is $0-(-6)/2=3$."
+        "title": "Application 1",
+        "background": "$e^x=1+x+x^2/2+x^3/6+\\cdots$",
+        "numbers": "$e^x=1+x+x^2/2+x^3/6+\\cdots$"
       },
       {
-        "title": "Loss landscape curvature",
-        "background": "ML practitioners use the quadratic Taylor term to reason about curvature near a trained model.",
-        "numbers": "If $L(w)\\approx1+0.02(w-5)^2$, moving from $w=5$ to $w=6$ raises loss by $0.02$."
+        "title": "At $x=1$, cubic Taylor",
+        "background": "At $x=1$, cubic Taylor gives $2.667$ versus $e\\approx2.718$",
+        "numbers": "At $x=1$, cubic Taylor gives $2.667$ versus $e\\approx2.718$"
       },
       {
-        "title": "Activation approximations",
-        "background": "Hardware kernels approximate nonlinear activations by low-degree Taylor or minimax polynomials.",
-        "numbers": "$e^{0.1}\\approx1+0.1+0.005+0.0001667=1.1051667$, close to $1.1051702$."
+        "title": "$\\ln x$ about $1$",
+        "background": "$\\ln x$ about $1$ has first terms $(x-1)-(x-1)^2/2$",
+        "numbers": "$\\ln x$ about $1$ has first terms $(x-1)-(x-1)^2/2$"
       },
       {
-        "title": "Uncertainty estimates",
-        "background": "The delta method uses Taylor expansion to move variance through a nonlinear function.",
-        "numbers": "For $g(x)=x^2$ near $x=3$ with standard deviation $0.1$, $g'(3)=6$, so output standard deviation is about $0.6$."
+        "title": "For $\\sqrt{x}$ about $4$, linear term",
+        "background": "For $\\sqrt{x}$ about $4$, linear term is $2+(x-4)/4$",
+        "numbers": "For $\\sqrt{x}$ about $4$, linear term is $2+(x-4)/4$"
       },
       {
-        "title": "Physics simulation",
-        "background": "Time-stepping methods use Taylor ideas to predict the next state from derivatives at the current state.",
-        "numbers": "With position $0$, velocity $4$, acceleration $-2$, over $h=0.1$, $x\\approx0+4(0.1)+\\frac12(-2)(0.1)^2=0.39$."
+        "title": "$\\cos x$ quadratic near $0$",
+        "background": "$\\cos x$ quadratic near $0$ is $1-x^2/2$",
+        "numbers": "$\\cos x$ quadratic near $0$ is $1-x^2/2$"
       },
       {
-        "title": "Robustness to perturbations",
-        "background": "Taylor's first two terms estimate how much an input perturbation can change a model score.",
-        "numbers": "If score gradient norm is $8$ and perturbation size is $0.01$, the first-order change is about $0.08$."
+        "title": "$\\sin(0.1)$ cubic",
+        "background": "$\\sin(0.1)$ cubic gives $0.099833$",
+        "numbers": "$\\sin(0.1)$ cubic gives $0.099833$"
       }
     ],
     "applicationsClose": "Taylor series are local translators: derivatives become coefficients, and a curved function becomes a polynomial you can compute with.",
@@ -15365,6 +17802,53 @@
       "Taylor series about $a$ use coefficients $f^{(n)}(a)/n!$.",
       "The polynomial matches the function's derivatives at the center.",
       "A Taylor series represents the function only where the remainder goes to zero."
+    ],
+    "connectionsProse": "<p>This lesson builds on power series and derivatives. Taylor series choose coefficients so an infinite polynomial matches a function's derivatives at one point. They turn local derivative data into an approximating function.</p>",
+    "symbols": [
+      {
+        "sym": "$a$",
+        "desc": "is center"
+      },
+      {
+        "sym": "$f^{(n)}(a)$",
+        "desc": "is the $n$th derivative at $a$"
+      },
+      {
+        "sym": "$n!$ counts the repeated differentiation factor",
+        "desc": "$n!$ counts the repeated differentiation factor"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Seek $f(x)=\\sum_{n=0}^\\infty c_n(x-a)^n$.",
+        "result": "Seek $f(x)=\\sum_{n=0}^\\infty c_n(x-a)^n$.",
+        "why": ""
+      },
+      {
+        "do": "Set $x=a$ to get $c_0=f(a)$.",
+        "result": "Set $x=a$ to get $c_0=f(a)$.",
+        "why": ""
+      },
+      {
+        "do": "Differentiate once and set $x=a$ to get $c_1=f'(a)$.",
+        "result": "Differentiate once and set $x=a$ to get $c_1=f'(a)$.",
+        "why": ""
+      },
+      {
+        "do": "Differentiate twice and set $x=a$ to get $2!c_2=f''(a)$.",
+        "result": "Differentiate twice and set $x=a$ to get $2!c_2=f''(a)$.",
+        "why": ""
+      },
+      {
+        "do": "After $n$ derivatives, $n!c_n=f^{(n)}(a)$.",
+        "result": "After $n$ derivatives, $n!c_n=f^{(n)}(a)$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $c_n=f^{(n)}(a)/n!$.",
+        "result": "Therefore $c_n=f^{(n)}(a)/n!$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-57"
@@ -15394,8 +17878,8 @@
         "polynomial arithmetic"
       ]
     },
-    "motivation": "<p>Many computations care about what happens near zero: tiny angles, small perturbations, small learning-rate steps, small logit changes. Centering a Taylor series at zero makes the algebra especially clean.</p><p>A <b>Maclaurin series</b> is just a Taylor series with $a=0$. That small change creates the most famous formulas in calculus: $e^x$, $\\sin x$, $\\cos x$, and $\\ln(1+x)$ all become power series around the origin.</p>",
-    "definition": "<p>The Maclaurin series of $f$ is $$\\sum_{n=0}^{\\infty}\\frac{f^{(n)}(0)}{n!}x^n.$$ Common examples are $$e^x=\\sum_{n=0}^{\\infty}\\frac{x^n}{n!},\\quad \\sin x=\\sum_{n=0}^{\\infty}(-1)^n\\frac{x^{2n+1}}{(2n+1)!},\\quad \\cos x=\\sum_{n=0}^{\\infty}(-1)^n\\frac{x^{2n}}{(2n)!}.$$</p><p><b>Assumptions that matter:</b> the center is fixed at zero, so accuracy is strongest near zero; each formula has its own interval of convergence; for $\\ln(1+x)$ and geometric-derived series, endpoints need separate care; truncation error depends on the first neglected terms.</p>",
+    "motivation": "<p>Setting the center to zero simplifies the powers to $x^n$. For functions such as sine, cosine, and the exponential, derivatives at zero create recognizable coefficient patterns.</p><p>Maclaurin series are useful both for approximation and for understanding function behavior near zero. Keeping only the first few terms gives practical numerical estimates with controlled local meaning.</p>",
+    "definition": "<p>Central statement: Therefore $\\sin x=x-x^3/3!+x^5/5!-\\cdots$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Find the Maclaurin series for $\\cos x$ and use four nonzero terms to approximate $\\cos(0.5)$.",
       "skills": [
@@ -15624,34 +18108,34 @@
     ],
     "applications": [
       {
-        "title": "Small-angle approximations",
-        "background": "Robotics and graphics often use small-angle formulas to simplify rotations.",
-        "numbers": "At $x=0.05$, $\\sin x\\approx x=0.05$ while the true value is $0.0499792$, an error about $2.08\\times10^{-5}$."
+        "title": "$e^1$ with terms through $x^4$",
+        "background": "$e^1$ with terms through $x^4$ gives $2.708$",
+        "numbers": "$e^1$ with terms through $x^4$ gives $2.708$"
       },
       {
-        "title": "Fast exponential estimates",
-        "background": "Softmax and probability code often approximate exponentials in controlled ranges.",
-        "numbers": "$e^{0.1}\\approx1+0.1+0.005+0.0001667=1.1051667$, within $0.0000035$ of the true value."
+        "title": "$\\sin(0.5)$ through $x^5$",
+        "background": "$\\sin(0.5)$ through $x^5$ gives $0.479427$",
+        "numbers": "$\\sin(0.5)$ through $x^5$ gives $0.479427$"
       },
       {
-        "title": "Logarithm compression",
-        "background": "Log transforms convert multiplicative changes into additive ones; near $1$, Maclaurin gives quick estimates.",
-        "numbers": "$\\ln(1.02)\\approx0.02-0.0002+0.00000267=0.0198027$."
+        "title": "$\\cos(0.5)$ through $x^4$",
+        "background": "$\\cos(0.5)$ through $x^4$ gives $0.877604$",
+        "numbers": "$\\cos(0.5)$ through $x^4$ gives $0.877604$"
       },
       {
-        "title": "Sigmoid near zero",
-        "background": "A classifier logit near zero has probability near one half, with slope one quarter.",
-        "numbers": "For logit $0.4$, the linear estimate gives $0.5+0.1=0.6$; true sigmoid is about $0.5987$."
+        "title": "$\\ln(1+0.5)$ through cubic",
+        "background": "$\\ln(1+0.5)$ through cubic gives $0.416667$",
+        "numbers": "$\\ln(1+0.5)$ through cubic gives $0.416667$"
       },
       {
-        "title": "Cosine similarity perturbations",
-        "background": "When embeddings rotate by a small angle, cosine changes quadratically, not linearly.",
-        "numbers": "$\\cos(0.1)\\approx1-0.1^2/2=0.995$, close to $0.995004$."
+        "title": "Application 5",
+        "background": "$1/(1-x)$ at $x=0.25$ sums to $1.333$",
+        "numbers": "$1/(1-x)$ at $x=0.25$ sums to $1.333$"
       },
       {
-        "title": "Gradient checking",
-        "background": "Finite difference checks rely on Maclaurin expansion to explain why central differences cancel even-order error terms.",
-        "numbers": "For $f(x+h)-f(x-h)$, the $h^2$ terms cancel, leaving $2hf'(x)+O(h^3)$; with $h=10^{-3}$, leading error is on the order of $10^{-6}$."
+        "title": "$e^{-0.1}$ quadratic",
+        "background": "$e^{-0.1}$ quadratic gives $0.905$",
+        "numbers": "$e^{-0.1}$ quadratic gives $0.905$"
       }
     ],
     "applicationsClose": "Maclaurin series are the small-input language of computation: when zero is nearby, powers become cheap, accurate corrections.",
@@ -15659,6 +18143,53 @@
       "A Maclaurin series is a Taylor series centered at $0$.",
       "The core formulas for $e^x$, $\\sin x$, $\\cos x$, and $\\ln(1+x)$ come from derivatives at zero.",
       "Accuracy is strongest near zero and must respect the interval of convergence."
+    ],
+    "connectionsProse": "<p>This lesson builds on Taylor series. A Maclaurin series is simply a Taylor series centered at zero. This center is especially convenient for common functions near the origin.</p>",
+    "symbols": [
+      {
+        "sym": "Maclaurin",
+        "desc": "means centered at $0$"
+      },
+      {
+        "sym": "factorials scale derivative coefficients",
+        "desc": "factorials scale derivative coefficients"
+      },
+      {
+        "sym": "powers of $x$ measure distance from $0$",
+        "desc": "powers of $x$ measure distance from $0$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start from Taylor coefficients $f^{(n)}(a)/n!$.",
+        "result": "Start from Taylor coefficients $f^{(n)}(a)/n!$.",
+        "why": ""
+      },
+      {
+        "do": "Set $a=0$",
+        "result": "Set $a=0$",
+        "why": "the center is the origin."
+      },
+      {
+        "do": "Get $f(x)=\\sum_{n=0}^\\infty f^{(n)}(0)x^n/n!$.",
+        "result": "Get $f(x)=\\sum_{n=0}^\\infty f^{(n)}(0)x^n/n!$.",
+        "why": ""
+      },
+      {
+        "do": "For $\\sin x$, derivatives cycle through $\\sin,\\cos,-\\sin,-\\cos$.",
+        "result": "For $\\sin x$, derivatives cycle through $\\sin,\\cos,-\\sin,-\\cos$.",
+        "why": ""
+      },
+      {
+        "do": "At $0$, the nonzero coefficients occur at odd powers with alternating signs.",
+        "result": "At $0$, the nonzero coefficients occur at odd powers with alternating signs.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $\\sin x=x-x^3/3!+x^5/5!-\\cdots$.",
+        "result": "Therefore $\\sin x=x-x^3/3!+x^5/5!-\\cdots$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-58"
@@ -15688,8 +18219,8 @@
         "partial derivatives"
       ]
     },
-    "motivation": "<p>Sometimes you can evaluate a function but cannot easily differentiate it. Maybe it is a simulator, a legacy model, or a complicated metric. The derivative is still useful because it tells you local sensitivity.</p><p><b>Numerical differentiation</b> estimates that sensitivity by sampling nearby points. The art is choosing a step size $h$: too large and the secant line is crude; too small and floating-point subtraction erases useful digits.</p>",
-    "definition": "<p>The forward difference estimates $$f'(x)\\approx\\frac{f(x+h)-f(x)}{h},$$ with error of order $h$. The central difference estimates $$f'(x)\\approx\\frac{f(x+h)-f(x-h)}{2h},$$ with error of order $h^2$ for smooth $f$. Taylor expansion explains this: $f(x+h)=f(x)+hf'(x)+\\frac{h^2}{2}f''(x)+\\cdots$.</p><p><b>Assumptions that matter:</b> the function should be smooth near $x$; $h$ must be small but not so small that roundoff dominates; central differences need two function evaluations; nondifferentiable points cannot be fixed by a formula.</p>",
+    "motivation": "<p>A forward difference uses the slope of a small secant line. Taylor expansion shows that it equals the true derivative plus an error term proportional to the step size.</p><p>A central difference samples symmetrically on both sides, which cancels more of the error. Very small steps can still suffer from rounding, so practical numerical differentiation balances two kinds of error.</p>",
+    "definition": "<p>Central statement: Divide by $2h$ to get central difference $[f(x+h)-f(x-h)]/(2h)=f'(x)+O(h^2)$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Estimate $f'(2)$ for $f(x)=x^3$ using the central difference with $h=0.01$.",
       "skills": [
@@ -15898,34 +18429,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient checking",
-        "background": "Before trusting backprop, engineers compare analytic gradients with finite-difference estimates.",
-        "numbers": "If backprop gives $3.0000$ and central difference gives $3.0002$, relative error is about $0.0002/3.0001\\approx6.7\\times10^{-5}$."
+        "title": "Forward difference for $x^2$ at $3$, $h=0.01$,",
+        "background": "Forward difference for $x^2$ at $3$, $h=0.01$, gives $6.01$",
+        "numbers": "Forward difference for $x^2$ at $3$, $h=0.01$, gives $6.01$"
       },
       {
-        "title": "Sensitivity of simulations",
-        "background": "A simulator may expose outputs but not derivatives, so finite differences estimate how inputs affect results.",
-        "numbers": "If drag at $v=10.01$ is $50.10005$ and at $9.99$ is $49.90005$, the derivative is $0.2/0.02=10$."
+        "title": "Central difference",
+        "background": "Central difference gives exactly $6$ for $x^2$",
+        "numbers": "Central difference gives exactly $6$ for $x^2$"
       },
       {
-        "title": "Hyperparameter response",
-        "background": "Teams sometimes estimate how validation loss changes with a hyperparameter when analytic gradients are unavailable.",
-        "numbers": "Loss $0.421$ at $\\lambda=0.011$ and $0.425$ at $0.009$ gives slope $(0.421-0.425)/0.002=-2$."
+        "title": "Forward difference for $\\sin x$ at $0$, $h=0.01$,",
+        "background": "Forward difference for $\\sin x$ at $0$, $h=0.01$, gives $0.999983$",
+        "numbers": "Forward difference for $\\sin x$ at $0$, $h=0.01$, gives $0.999983$"
       },
       {
-        "title": "Image gradients",
-        "background": "Edge detectors approximate spatial derivatives of pixel intensity.",
-        "numbers": "Neighboring pixels $120$ and $100$ two pixels apart give central difference $(120-100)/2=10$ intensity units per pixel."
+        "title": "Central difference for $\\sin x$ at $0$, $h=0.01$,",
+        "background": "Central difference for $\\sin x$ at $0$, $h=0.01$, gives $0.999983$",
+        "numbers": "Central difference for $\\sin x$ at $0$, $h=0.01$, gives $0.999983$"
       },
       {
-        "title": "Numerical stability",
-        "background": "Choosing $h$ is a tradeoff: truncation error falls as $h$ shrinks, roundoff error grows when subtracting nearly equal numbers.",
-        "numbers": "For central differences in double precision, a common scale is $h\\approx10^{-5}$ to $10^{-6}$; at $h=10^{-12}$, subtractive cancellation can dominate."
+        "title": "Gradient check for $(w-2)^2$ at $3$, $h=0.001$,",
+        "background": "Gradient check for $(w-2)^2$ at $3$, $h=0.001$, gives $2.001$ forward",
+        "numbers": "Gradient check for $(w-2)^2$ at $3$, $h=0.001$, gives $2.001$ forward"
       },
       {
-        "title": "Nondifferentiable losses",
-        "background": "Finite differences reveal corners rather than hiding them.",
-        "numbers": "For $f(x)=|x|$ at $0$, forward difference with $h=0.01$ gives $1$, backward gives $-1$, so there is no single derivative."
+        "title": "Central check for the same",
+        "background": "Central check for the same gives $2$",
+        "numbers": "Central check for the same gives $2$"
       }
     ],
     "applicationsClose": "Numerical differentiation is beautifully simple, but its reliability comes from respecting smoothness, step size, and floating-point limits.",
@@ -15933,6 +18464,53 @@
       "Forward difference has error order $h$; central difference has error order $h^2$ for smooth functions.",
       "Too-large $h$ causes truncation error; too-small $h$ causes roundoff error.",
       "Finite differences are central to gradient checking and black-box sensitivity analysis."
+    ],
+    "connectionsProse": "<p>This lesson builds on derivatives and Taylor expansions. Numerical differentiation estimates slopes when a formula derivative is unavailable or when function values come from data. The method turns sampled values into approximate rates.</p>",
+    "symbols": [
+      {
+        "sym": "$h$",
+        "desc": "is step size"
+      },
+      {
+        "sym": "truncation error comes from omitted Taylor terms",
+        "desc": "truncation error comes from omitted Taylor terms"
+      },
+      {
+        "sym": "central difference uses symmetric samples",
+        "desc": "central difference uses symmetric samples"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Taylor expand $f(x+h)=f(x)+hf'(x)+h^2f''(x)/2+O(h^3)$.",
+        "result": "Taylor expand $f(x+h)=f(x)+hf'(x)+h^2f''(x)/2+O(h^3)$.",
+        "why": ""
+      },
+      {
+        "do": "Subtract $f(x)$ and divide by $h$.",
+        "result": "Subtract $f(x)$ and divide by $h$.",
+        "why": ""
+      },
+      {
+        "do": "Get forward difference $[f(x+h)-f(x)]/h=f'(x)+h f''(x)/2+O(h^2)$.",
+        "result": "Get forward difference $[f(x+h)-f(x)]/h=f'(x)+h f''(x)/2+O(h^2)$.",
+        "why": ""
+      },
+      {
+        "do": "Expand $f(x-h)=f(x)-hf'(x)+h^2f''(x)/2+O(h^3)$.",
+        "result": "Expand $f(x-h)=f(x)-hf'(x)+h^2f''(x)/2+O(h^3)$.",
+        "why": ""
+      },
+      {
+        "do": "Subtract the backward expansion from the forward expansion.",
+        "result": "Subtract the backward expansion from the forward expansion.",
+        "why": ""
+      },
+      {
+        "do": "Divide by $2h$ to get central difference $[f(x+h)-f(x-h)]/(2h)=f'(x)+O(h^2)$.",
+        "result": "Divide by $2h$ to get central difference $[f(x+h)-f(x-h)]/(2h)=f'(x)+O(h^2)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-59"
@@ -15962,8 +18540,8 @@
         "sampling grids"
       ]
     },
-    "motivation": "<p>Definite integrals measure accumulation: area, probability, work, total error. But many useful functions do not have a pleasant antiderivative, and measured data may arrive only as samples.</p><p><b>Numerical integration</b> replaces the curve by simple shapes. Rectangles are the first idea; trapezoids use straight-line tops; Simpson's rule uses parabolas. Each method turns continuous accumulation into arithmetic.</p>",
-    "definition": "<p>On $[a,b]$ with $n$ equal subintervals of width $h=(b-a)/n$, the trapezoidal rule is $$\\int_a^b f(x)\\,dx\\approx h\\left[\\frac{f(a)+f(b)}{2}+\\sum_{k=1}^{n-1}f(a+kh)\\right].$$ For even $n$, Simpson's rule is $$\\int_a^b f(x)\\,dx\\approx\\frac{h}{3}\\left[f(x_0)+4f(x_1)+2f(x_2)+\\cdots+4f(x_{n-1})+f(x_n)\\right].$$</p><p><b>Assumptions that matter:</b> smooth functions give faster convergence; Simpson's rule needs an even number of subintervals; discontinuities and sharp spikes require care; sampled data limits which rule is possible; roundoff can matter when using extremely fine grids.</p>",
+    "motivation": "<p>Rectangle rules use simple constant approximations, while the trapezoid rule replaces the curve by line segments between endpoints. Simpson's rule goes further by fitting a quadratic over pairs of subintervals.</p><p>Better local shape matching usually improves accuracy for smooth functions. The integral is still an accumulation idea: each rule assigns an approximate area to small pieces and then adds them.</p>",
+    "definition": "<p>Central statement: For one pair, the area is $h[f(x_0)+4f(x_1)+f(x_2)]/3$.</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Approximate $\\displaystyle\\int_0^1 x^2\\,dx$ using Simpson's rule with $n=2$.",
       "skills": [
@@ -16167,34 +18745,34 @@
     ],
     "applications": [
       {
-        "title": "Area under curves",
-        "background": "Metrics like AUC summarize a curve by accumulated area, often from sampled points.",
-        "numbers": "For ROC points with trapezoids of widths $0.2$ and average heights $0.7,0.85,0.9,0.95,1.0$, AUC estimate is $0.2(4.4)=0.88$."
+        "title": "Trapezoid for $x^2$ on $[0,1]$ with one panel",
+        "background": "Trapezoid for $x^2$ on $[0,1]$ with one panel gives $0.5$",
+        "numbers": "Trapezoid for $x^2$ on $[0,1]$ with one panel gives $0.5$"
       },
       {
-        "title": "Expected values",
-        "background": "Continuous expectations are integrals, and numerical quadrature estimates them when formulas are difficult.",
-        "numbers": "For three-point grid weights $0.25,0.5,0.25$ and values $1,4,9$, estimated expectation is $0.25+2+2.25=4.5$."
+        "title": "Simpson for $x^2$ on $[0,1]$",
+        "background": "Simpson for $x^2$ on $[0,1]$ gives $1/3$",
+        "numbers": "Simpson for $x^2$ on $[0,1]$ gives $1/3$"
       },
       {
-        "title": "Physics and robotics",
-        "background": "Position is the integral of velocity; sampled sensor velocities require numerical integration.",
-        "numbers": "Velocities $0,2,3$ m/s at times $0,1,2$ give trapezoid distance $1[(0+3)/2+2]=3.5$ m."
+        "title": "Trapezoid with two panels for $x^2$",
+        "background": "Trapezoid with two panels for $x^2$ gives $0.375$",
+        "numbers": "Trapezoid with two panels for $x^2$ gives $0.375$"
       },
       {
-        "title": "Training diagnostics",
-        "background": "Area under a loss curve measures total training cost over time, not just final loss.",
-        "numbers": "Losses $1.0,0.7,0.6$ over two hours give trapezoid area $1[(1.0+0.6)/2+0.7]=1.5$ loss-hours."
+        "title": "Midpoint rule one panel",
+        "background": "Midpoint rule one panel gives $0.25$",
+        "numbers": "Midpoint rule one panel gives $0.25$"
       },
       {
-        "title": "Bayesian normalization",
-        "background": "Posterior densities often need a normalizing integral that is unavailable in closed form.",
-        "numbers": "Grid density values $0.1,0.4,0.1$ over width $0.5$ give trapezoid mass $0.5[(0.1+0.1)/2+0.4]=0.25$."
+        "title": "Simpson for $\\sin x$ on $[0,\\pi]$",
+        "background": "Simpson for $\\sin x$ on $[0,\\pi]$ gives $2.094$",
+        "numbers": "Simpson for $\\sin x$ on $[0,\\pi]$ gives $2.094$"
       },
       {
-        "title": "Monte Carlo integration",
-        "background": "High-dimensional integrals are often estimated by random samples rather than grids.",
-        "numbers": "If sampled values average $0.37$ over a unit square, the Monte Carlo integral estimate is $0.37\\cdot1=0.37$; with $10,000$ samples, random error often scales like $1/100$."
+        "title": "Application 6",
+        "background": "Exact $\\int_0^1 x^2dx=0.333$",
+        "numbers": "Exact $\\int_0^1 x^2dx=0.333$"
       }
     ],
     "applicationsClose": "Numerical integration is accumulation by samples: choose shapes, apply weights, and keep an honest eye on error.",
@@ -16202,6 +18780,53 @@
       "Trapezoidal and Simpson's rules approximate integrals with weighted function samples.",
       "Smaller grid spacing usually improves accuracy, but smoothness and roundoff matter.",
       "Many ML metrics, expectations, and diagnostics are numerical integrals in practice."
+    ],
+    "connectionsProse": "<p>This lesson builds on definite integrals and polynomial approximation. Numerical integration estimates accumulated area from finitely many sampled values. It is used when exact antiderivatives are unavailable or unnecessary.</p>",
+    "symbols": [
+      {
+        "sym": "$h$",
+        "desc": "is subinterval width"
+      },
+      {
+        "sym": "trapezoid rule uses endpoints",
+        "desc": "trapezoid rule uses endpoints"
+      },
+      {
+        "sym": "Simpson's rule uses endpoint-midpoint-endpoint weights $1,4,1$",
+        "desc": "Simpson's rule uses endpoint-midpoint-endpoint weights $1,4,1$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Split $[a,b]$ into subintervals of width $h$.",
+        "result": "Split $[a,b]$ into subintervals of width $h$.",
+        "why": ""
+      },
+      {
+        "do": "On one subinterval, approximate the curve by the line through endpoint values.",
+        "result": "On one subinterval, approximate the curve by the line through endpoint values.",
+        "why": ""
+      },
+      {
+        "do": "The trapezoid area is $h[f(x_i)+f(x_{i+1})]/2$.",
+        "result": "The trapezoid area is $h[f(x_i)+f(x_{i+1})]/2$.",
+        "why": ""
+      },
+      {
+        "do": "Add trapezoids over all subintervals.",
+        "result": "Add trapezoids over all subintervals.",
+        "why": ""
+      },
+      {
+        "do": "Simpson's rule fits a quadratic through two subintervals.",
+        "result": "Simpson's rule fits a quadratic through two subintervals.",
+        "why": ""
+      },
+      {
+        "do": "For one pair, the area is $h[f(x_0)+4f(x_1)+f(x_2)]/3$.",
+        "result": "For one pair, the area is $h[f(x_0)+4f(x_1)+f(x_2)]/3$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-60"
@@ -16232,8 +18857,8 @@
         "Taylor linearization"
       ]
     },
-    "motivation": "<p>You already know the chain rule for a composition like $f(g(x))$: multiply the outside derivative by the inside derivative. A neural network is just a large composition with many shared intermediate values.</p><p><b>Backpropagation</b> is the chain rule with bookkeeping. First we run forward and store intermediate values. Then we run backward, passing sensitivities from the loss to each parameter. The warmth of the idea is this: every node only needs to know how its own output changes with its inputs.</p>",
-    "definition": "<p>For a computational graph ending in loss $L$, the backward value at a node $v$ is its adjoint $\\bar v=\\partial L/\\partial v$. If $u$ feeds into children $v_1,\\ldots,v_k$, the multivariable chain rule gives $$\\bar u=\\sum_{j=1}^{k}\\bar v_j\\frac{\\partial v_j}{\\partial u}.$$ For a layer $z=wx+b$ followed by activation $a=\\phi(z)$, backprop sends $\\bar z=\\bar a\\,\\phi'(z)$, then $\\partial L/\\partial w=\\bar z\\,x$, $\\partial L/\\partial b=\\bar z$, and $\\bar x=\\bar z\\,w$.</p><p><b>Assumptions that matter:</b> operations must be differentiable where gradients are taken, or have a chosen subgradient; dimensions must match; cached forward values are needed for local derivatives; gradients can vanish or explode through repeated multiplication; numerical gradient checks validate implementation but are too slow for training.</p>",
+    "motivation": "<p>A loss often depends on a weight through several intermediate quantities. Backpropagation records the local derivative at each step and passes sensitivity backward from the final loss.</p><p>Multiplying local derivatives along a path gives the derivative with respect to an earlier variable. In the scalar example, this produces the gradient used to update the weight by a small step in the direction that reduces loss.</p>",
+    "definition": "<p>For $L=(wx-y)^2$</p><p><b>Assumptions that matter:</b> Follow the conditions stated in the derivation, including required domains, nonzero denominators, continuity or differentiability hypotheses, interval restrictions, and convergence conditions.</p>",
     "worked": {
       "problem": "Backpropagate through a tiny 2-layer network: $x=2$, $w_1=0.5$, $b_1=0.1$, $a=w_1x+b_1$, ReLU $h=\\max(0,a)$, $w_2=-1.5$, $b_2=0.2$, output $y=w_2h+b_2$, target $t=-1$, loss $L=\\frac12(y-t)^2$. Find gradients for all four parameters.",
       "skills": [
@@ -16493,44 +19118,34 @@
     ],
     "applications": [
       {
-        "title": "Training neural networks",
-        "background": "Backprop makes deep learning practical by computing all parameter gradients in roughly the cost of one forward pass plus one backward pass.",
-        "numbers": "A model with $10^7$ parameters would need about $2\\times10^7$ loss evaluations for central-difference gradients, but backprop gets all gradients with one forward and one backward sweep."
+        "title": "Worked scalar example",
+        "background": "Worked scalar example gives $dL/dw=6$ and update $1.4$",
+        "numbers": "Worked scalar example gives $dL/dw=6$ and update $1.4$"
       },
       {
-        "title": "Automatic differentiation",
-        "background": "Modern frameworks build a computational graph and apply the same chain-rule bookkeeping automatically.",
-        "numbers": "For $y=(3x+1)^2$ at $x=2$, autodiff stores $u=7$ and returns $dy/dx=2u\\cdot3=42$."
+        "title": "For $w=1,x=4,y=6$, gradient",
+        "background": "For $w=1,x=4,y=6$, gradient is $2(4-6)4=-16$",
+        "numbers": "For $w=1,x=4,y=6$, gradient is $2(4-6)4=-16$"
       },
       {
-        "title": "Gradient checking",
-        "background": "Finite differences are too slow for training but excellent for catching implementation mistakes in custom layers.",
-        "numbers": "If analytic gradient is $-0.495$ and finite difference is $-0.4949$, the absolute difference is $0.0001$, small enough for many checks."
+        "title": "Bias model $L=(wx+b-y)^2$",
+        "background": "Bias model $L=(wx+b-y)^2$ has $dL/db=2e$; with $e=1$ gives $2$",
+        "numbers": "Bias model $L=(wx+b-y)^2$ has $dL/db=2e$; with $e=1$ gives $2$"
       },
       {
-        "title": "Vanishing gradients",
-        "background": "Repeated chain-rule multiplication by numbers below one can shrink signals across many layers.",
-        "numbers": "Multiplying by $0.5$ through $20$ layers gives $0.5^{20}\\approx9.54\\times10^{-7}$, almost no gradient."
+        "title": "Chain $z=3w$, $a=z^2$, $L=a$",
+        "background": "Chain $z=3w$, $a=z^2$, $L=a$ gives $dL/dw=18w$; at $w=2$ gives $36$",
+        "numbers": "Chain $z=3w$, $a=z^2$, $L=a$ gives $dL/dw=18w$; at $w=2$ gives $36$"
       },
       {
-        "title": "Exploding gradients",
-        "background": "The same chain rule can also multiply by numbers above one repeatedly, causing unstable updates.",
-        "numbers": "Multiplying by $1.2$ through $50$ layers gives $1.2^{50}\\approx9100$, so a small upstream gradient can become enormous."
+        "title": "Sigmoid unit with upstream $0.5$ and activation $0.8$",
+        "background": "Sigmoid unit with upstream $0.5$ and activation $0.8$ sends local gradient $0.5\\cdot0.8(0.2)=0.08$",
+        "numbers": "Sigmoid unit with upstream $0.5$ and activation $0.8$ sends local gradient $0.5\\cdot0.8(0.2)=0.08$"
       },
       {
-        "title": "Residual connections",
-        "background": "Skip connections give gradients an additive path around difficult layers, which helps deep networks train.",
-        "numbers": "If a residual block is $y=x+F(x)$ with $F'(x)=0.1$, then $dy/dx=1.1$ instead of only $0.1$."
-      },
-      {
-        "title": "Shared parameters",
-        "background": "When one parameter is used in multiple places, backprop sums contributions from every path.",
-        "numbers": "If a weight contributes gradients $0.3$, $-0.1$, and $0.8$ from three time steps, the total gradient is $1.0$."
-      },
-      {
-        "title": "Memory tradeoffs",
-        "background": "Backprop needs forward values, so large models trade memory for recomputation through checkpointing.",
-        "numbers": "Storing $24$ layer activations at $200$ MB each costs $4.8$ GB; checkpointing every fourth layer stores about $6$ activations, or $1.2$ GB, before recomputation overhead."
+        "title": "Two-layer scalar $L=(v(wx)-y)^2$ with $v=2,w=1,x=3,y=5$",
+        "background": "Two-layer scalar $L=(v(wx)-y)^2$ with $v=2,w=1,x=3,y=5$ has error $1$, $dL/dw=12$, and $dL/dv=6$",
+        "numbers": "Two-layer scalar $L=(v(wx)-y)^2$ with $v=2,w=1,x=3,y=5$ has error $1$, $dL/dw=12$, and $dL/dv=6$"
       }
     ],
     "applicationsClose": "Backprop is the chain rule wearing an engineering uniform: local derivatives, cached values, summed paths, and gradients delivered to every parameter.",
@@ -16538,6 +19153,75 @@
       "Backprop computes adjoints $\\bar v=\\partial L/\\partial v$ by moving backward through a computational graph.",
       "Each node multiplies the upstream gradient by its local derivative; shared inputs sum gradient contributions.",
       "Gradient checking, vanishing gradients, exploding gradients, and residual connections are all chain-rule consequences."
+    ],
+    "connectionsProse": "<p>This lesson builds on the chain rule and derivatives of composed functions. Backpropagation is the chain rule arranged for a computation graph. It connects single-variable calculus to the way machine learning models compute gradients.</p>",
+    "symbols": [
+      {
+        "sym": "$w$",
+        "desc": "is a weight"
+      },
+      {
+        "sym": "$x$",
+        "desc": "is an input feature"
+      },
+      {
+        "sym": "$\\hat y$",
+        "desc": "is prediction"
+      },
+      {
+        "sym": "$y$",
+        "desc": "is target"
+      },
+      {
+        "sym": "$e$",
+        "desc": "is error"
+      },
+      {
+        "sym": "upstream sensitivity",
+        "desc": "means derivative of the final loss with respect to an intermediate value"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define prediction $\\hat y=wx$",
+        "result": "Define prediction $\\hat y=wx$",
+        "why": "the weight affects loss through the prediction."
+      },
+      {
+        "do": "Define error $e=\\hat y-y$",
+        "result": "Define error $e=\\hat y-y$",
+        "why": "the loss depends on error."
+      },
+      {
+        "do": "Define $L=e^2$",
+        "result": "Define $L=e^2$",
+        "why": "this is the final scalar output."
+      },
+      {
+        "do": "Compute local derivatives",
+        "result": "$dL/de=2e$, $de/d\\hat y=1$, and $d\\hat y/dw=x$.",
+        "why": ""
+      },
+      {
+        "do": "Multiply along the path",
+        "result": "$dL/dw=(dL/de)(de/d\\hat y)(d\\hat y/dw)$.",
+        "why": ""
+      },
+      {
+        "do": "Substitute to get $dL/dw=2(wx-y)x$.",
+        "result": "Substitute to get $dL/dw=2(wx-y)x$.",
+        "why": ""
+      },
+      {
+        "do": "With $w=2,x=3,y=5$, prediction is $6$, error is $1$, and gradient is $6$.",
+        "result": "With $w=2,x=3,y=5$, prediction is $6$, error is $1$, and gradient is $6$.",
+        "why": ""
+      },
+      {
+        "do": "A gradient step with learning rate $0.1$ gives $w_{new}=2-0.1\\cdot6=1.4$.",
+        "result": "A gradient step with learning rate $0.1$ gives $w_{new}=2-0.1\\cdot6=1.4$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-01-61"

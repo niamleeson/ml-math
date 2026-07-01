@@ -28,8 +28,8 @@
         "matrices"
       ]
     },
-    "motivation": "<p>You already know how to locate a point with two coordinates, such as $(3,2)$. The move to $\\mathbb R^n$ keeps that same friendly idea and simply allows more coordinates.</p><p>That matters because ML examples are usually lists of numbers. A row of features, a pixel color, an embedding, and a parameter setting can all be read as vectors.</p>",
-    "definition": "<p>A <b>point</b> in $\\mathbb R^n$ is an ordered list $p=(p_1,\\ldots,p_n)$ of real coordinates. A <b>vector</b> $v=\\langle v_1,\\ldots,v_n\\rangle$ can describe displacement or features. Addition and scalar multiplication are coordinatewise.</p><p>The displacement from $P$ to $Q$ is $Q-P$ because $P+(Q-P)=Q$. The length is $\\|v\\|=\\sqrt{v_1^2+\\cdots+v_n^2}$, a repeated Pythagorean theorem.</p><p><b>Assumptions that matter:</b> coordinate order matters; vectors being added must have the same dimension; and points name positions while vectors often name changes or feature lists.</p>",
+    "motivation": "<p>When there are only two coordinates, it is natural to draw a point on graph paper and measure how far it is from the origin. The Pythagorean theorem gives that distance by squaring the horizontal and vertical changes, adding them, and taking a square root. In higher-dimensional data there may be hundreds or thousands of coordinates, but the same measurement still works because each coordinate axis is treated as perpendicular to the others.</p><p>This is why vectors are so useful for machine learning. A word embedding, an image, or a feature row can all be placed in a coordinate space, and then comparisons become geometric. Length tells you scale, distance tells you separation, and later the dot product will tell you alignment. The formulas look simple, but they are the entry point for treating data as geometry.</p>",
+    "definition": "<p>Length from Pythagoras, generalized: $\\lVert v\\rVert=\\sqrt{v_1^2+\\dots+v_n^2}$ — build it in 2-D, then note the same sum works in $n$-D because each new axis is perpendicular to the rest.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Let $P=(2,-1,4)$ and $Q=(5,3,-2)$. Find $\\overrightarrow{PQ}$ and its length.",
       "skills": [
@@ -228,34 +228,34 @@
     ],
     "applications": [
       {
-        "title": "Feature vectors",
-        "background": "ML tables store examples as rows of numbers, and geometry lets those rows have distances and directions.",
-        "numbers": "For $x=\\langle1200,3,10\\rangle$ and $\\mu=\\langle1000,2,8\\rangle$, $x-\\mu=\\langle200,1,2\\rangle$."
+        "title": "A 768-d embedding is a",
+        "background": "A 768-d embedding is a point in $\\mathbb R^{768}$",
+        "numbers": "A 768-d embedding is a point in $\\mathbb R^{768}$"
       },
       {
-        "title": "Pixel color",
-        "background": "Computer vision often reads RGB color as a three-dimensional vector.",
-        "numbers": "Color $\\langle200,120,40\\rangle$ has channel average $(200+120+40)/3=120$."
+        "title": "Euclidean distance",
+        "background": "Euclidean distance $\\lVert a-b\\rVert$ as similarity: $a=(1,2,2),b=(3,0,4)\\Rightarrow\\sqrt{4+4+4}=3.46$",
+        "numbers": "Euclidean distance $\\lVert a-b\\rVert$ as similarity: $a=(1,2,2),b=(3,0,4)\\Rightarrow\\sqrt{4+4+4}=3.46$"
       },
       {
-        "title": "Recommendation embeddings",
-        "background": "Users and items can be points in an embedding space where nearby points tend to match.",
-        "numbers": "From $u=\\langle1,2\\rangle$ to $i=\\langle4,6\\rangle$ the displacement is $\\langle3,4\\rangle$ with length $5$."
+        "title": "One-hot vector",
+        "background": "One-hot vector = a corner of the unit cube",
+        "numbers": "One-hot vector = a corner of the unit cube"
       },
       {
-        "title": "Robot motion",
-        "background": "Robot positions update by adding displacement vectors.",
-        "numbers": "Starting at $(2,5)$ and moving $\\langle3,-1\\rangle$ lands at $(5,4)$."
+        "title": "Feature scaling changes",
+        "background": "Feature scaling changes $\\lVert v\\rVert$",
+        "numbers": "Feature scaling changes $\\lVert v\\rVert$"
       },
       {
-        "title": "Parameter updates",
-        "background": "Training changes a parameter vector by adding an update vector.",
-        "numbers": "Weights $\\langle0.5,-1.0\\rangle$ plus $\\langle0.1,0.3\\rangle$ become $\\langle0.6,-0.7\\rangle$."
+        "title": "Bias trick",
+        "background": "append a 1 to $x$",
+        "numbers": "Bias trick: append a 1 to $x$"
       },
       {
-        "title": "Nearest-neighbor distance",
-        "background": "Simple search methods compare examples by Euclidean distance.",
-        "numbers": "Distance from $(1,2)$ to $(4,6)$ is $\\sqrt{3^2+4^2}=5$."
+        "title": "Grayscale image as a point",
+        "background": "Grayscale image as a point in $\\mathbb R^{H\\cdot W}$",
+        "numbers": "Grayscale image as a point in $\\mathbb R^{H\\cdot W}$"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -264,6 +264,33 @@
       "Vector arithmetic is coordinatewise.",
       "The norm measures vector length.",
       "The displacement from $P$ to $Q$ is $Q-P$."
+    ],
+    "connectionsProse": "<p>This lesson starts with the coordinate language you already use whenever you read a table of numbers. A single row of features can be treated as a point, and the same row can also be treated as a vector from the origin to that point. That small shift lets algebraic data inherit geometric ideas such as distance, length, and direction. Those ideas support the dot product, projections, embeddings, and many of the optimization pictures that come later.</p>",
+    "symbols": [
+      {
+        "sym": "$v=\\langle v_1,\\dots,v_n\\rangle$",
+        "desc": "components"
+      },
+      {
+        "sym": "$\\lVert v\\rVert$",
+        "desc": "length"
+      },
+      {
+        "sym": "$\\mathbf 0$",
+        "desc": "origin"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Length from Pythagoras, generalized",
+        "result": "$\\lVert v\\rVert=\\sqrt{v_1^2+\\dots+v_n^2}$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "build it in 2-D, then note the same sum works in $n$-D because each new axis is perpendicular to the rest",
+        "result": "build it in 2-D, then note the same sum works in $n$-D because each new axis is perpendicular to the rest",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ]
   });
 
@@ -289,8 +316,8 @@
         "normal vectors"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read dot product as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>The <b>dot product</b> of $u=\\langle u_1,\\ldots,u_n\\rangle$ and $v=\\langle v_1,\\ldots,v_n\\rangle$ is $u\\cdot v=u_1v_1+\\cdots+u_nv_n$. It also satisfies $u\\cdot v=\\|u\\|\\|v\\|\\cos\\theta$ for nonzero vectors.</p><p>This second formula comes from expanding $\\|u-v\\|^2$ and comparing it with the law of cosines. The arithmetic sum is secretly an angle measurement.</p><p><b>Assumptions that matter:</b> vectors must have the same dimension; the angle formula needs nonzero vectors; and zero dot product means orthogonality.</p>",
+    "motivation": "<p>A vector has both size and direction, so multiplying two vectors should say something about how their directions relate. The dot product does this by multiplying matching coordinates and adding the results. If two vectors point mostly the same way, the result is positive and large; if they point against each other, it is negative; if they are perpendicular, it is zero.</p><p>The geometric formula explains why this coordinate sum is meaningful. The dot product equals the product of the two lengths times the cosine of the angle between them. That makes it a similarity measure, a projection tool, and the basic computation behind a neuron pre-activation. A linear model is therefore not just algebra; it is repeatedly measuring alignment between weights and inputs.</p>",
+    "definition": "<p>From the law of cosines on the triangle with sides $a,b,a-b$: 1. $\\lVert a-b\\rVert^2=\\lVert a\\rVert^2+\\lVert b\\rVert^2-2\\,a\\!\\cdot\\!b$ (expand $ (a-b)\\!\\cdot\\!(a-b)$). 2. Law of cosines: $\\lVert a-b\\rVert^2=\\lVert a\\rVert^2+\\lVert b\\rVert^2-2\\lVert a\\rVert\\lVert b\\rVert\\cos\\theta$. 3. Match the two right-hand sides ⇒ $a\\!\\cdot\\!b=\\lVert a\\rVert\\lVert b\\rVert\\cos\\theta$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "For $u=\\langle2,-1,3\\rangle$ and $v=\\langle4,0,-2\\rangle$, compute $u\\cdot v$ and interpret the sign.",
       "skills": [
@@ -469,34 +496,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Dot Product appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "Neuron pre-activation $w^\\top x+b$",
+        "background": "$w=(0.5,1),x=(2,3),b=-1\\Rightarrow 0.5\\cdot2+1\\cdot3-1=3$",
+        "numbers": "Neuron pre-activation $w^\\top x+b$: $w=(0.5,1),x=(2,3),b=-1\\Rightarrow 0.5\\cdot2+1\\cdot3-1=3$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses dot product ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Cosine similarity (retrieval)",
+        "background": "$a\\!\\cdot\\!b=11,\\ \\cos=\\tfrac{11}{3\\cdot5}=0.733$",
+        "numbers": "Cosine similarity (retrieval): $a\\!\\cdot\\!b=11,\\ \\cos=\\tfrac{11}{3\\cdot5}=0.733$"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use dot product calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "Scalar projection of $a$ onto $b$",
+        "background": "$\\tfrac{a\\cdot b}{\\lVert b\\rVert}=\\tfrac{11}{5}=2.2$",
+        "numbers": "Scalar projection of $a$ onto $b$: $\\tfrac{a\\cdot b}{\\lVert b\\rVert}=\\tfrac{11}{5}=2.2$"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on dot product structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "Orthogonal features",
+        "background": "$(1,2)\\!\\cdot\\!(2,-1)=0$ ⇒ decorrelated",
+        "numbers": "Orthogonal features: $(1,2)\\!\\cdot\\!(2,-1)=0$ ⇒ decorrelated"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use dot product to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Attention score (pre-softmax) $q^\\top k$",
+        "background": "$q=(1,0,1),k=(2,1,2)\\Rightarrow 4$",
+        "numbers": "Attention score (pre-softmax) $q^\\top k$: $q=(1,0,1),k=(2,1,2)\\Rightarrow 4$"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and dot product gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "Work $F\\!\\cdot\\!d$",
+        "background": "$F=(3,4),d=(2,0)\\Rightarrow 6$",
+        "numbers": "Work $F\\!\\cdot\\!d$: $F=(3,4),d=(2,0)\\Rightarrow 6$"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -505,6 +532,38 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson builds on vectors and length, then adds the first way to compare two directions with one number. You already know how to multiply ordinary numbers; the dot product is the vector version that returns a scalar rather than another vector. It connects directly to angles, projections, similarity scores, and linear model computations. Later lessons use it inside directional derivatives, gradients, and matrix calculus.</p>",
+    "symbols": [
+      {
+        "sym": "$a\\!\\cdot\\!b=\\sum_i a_ib_i$",
+        "desc": "as named in the plan"
+      },
+      {
+        "sym": "$\\theta$",
+        "desc": "the angle"
+      },
+      {
+        "sym": "$\\lVert a\\rVert$",
+        "desc": "length"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "$\\lVert a-b\\rVert^2=\\lVert a\\rVert^2+\\lVert b\\rVert^2-2\\,a\\!\\cdot\\!b$ (expand $ (a-b)\\!\\cdot\\!(a-b)$)",
+        "result": "$\\lVert a-b\\rVert^2=\\lVert a\\rVert^2+\\lVert b\\rVert^2-2\\,a\\!\\cdot\\!b$ (expand $ (a-b)\\!\\cdot\\!(a-b)$)",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Law of cosines",
+        "result": "$\\lVert a-b\\rVert^2=\\lVert a\\rVert^2+\\lVert b\\rVert^2-2\\lVert a\\rVert\\lVert b\\rVert\\cos\\theta$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "Match the two right-hand sides",
+        "result": "$a\\!\\cdot\\!b=\\lVert a\\rVert\\lVert b\\rVert\\cos\\theta$",
+        "why": "this is the next consequence in the plan's argument"
+      }
     ],
     "prereqs": [
       "math-02-01"
@@ -533,8 +592,8 @@
         "normal vectors"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read cross product as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>For $u=\\langle u_1,u_2,u_3\\rangle$ and $v=\\langle v_1,v_2,v_3\\rangle$, $u\\times v=\\langle u_2v_3-u_3v_2, u_3v_1-u_1v_3, u_1v_2-u_2v_1\\rangle$.</p><p>The result is perpendicular to both inputs, and its length is $\\|u\\|\\|v\\|\\sin\\theta$, the area of the parallelogram they span.</p><p><b>Assumptions that matter:</b> this standard operation is for $\\mathbb R^3$; order matters; and parallel inputs give the zero vector.</p>",
+    "motivation": "<p>In three-dimensional space, two nonparallel directions determine a plane. Many geometric tasks then need a direction that is not in that plane at all, but normal to it. The cross product produces that normal direction, with a sign chosen by the right-hand rule.</p><p>Its length has an equally important meaning. The magnitude of the cross product is the area of the parallelogram spanned by the two input vectors, so half of it gives the area of the corresponding triangle. This is why the same operation appears in mesh geometry, shading, torque, and angular motion. It packages perpendicular direction and area scale into one vector.</p>",
+    "definition": "<p>(1) Set up the determinant $a\\times b=\\det\\begin{bmatrix}\\mathbf i&\\mathbf j&\\mathbf k\\a_1&a_2&a_3\\b_1&b_2&b_3\\end{bmatrix}$. (2) Expand along row 1 ⇒ $\\langle a_2b_3-a_3b_2,\\ a_3b_1-a_1b_3,\\ a_1b_2-a_2b_1\\rangle$. (3) Magnitude via the Lagrange identity $\\lVert a\\times b\\rVert^2=\\lVert a\\rVert^2\\lVert b\\rVert^2-(a\\!\\cdot\\!b)^2=\\lVert a\\rVert^2\\lVert b\\rVert^2\\sin^2\\theta$ ⇒ $\\lVert a\\times b\\rVert=\\lVert a\\rVert\\lVert b\\rVert\\sin\\theta$ = area of the parallelogram.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Compute $\\langle1,2,3\\rangle\\times\\langle4,0,-1\\rangle$.",
       "skills": [
@@ -708,34 +767,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Cross Product appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "Surface normal (3-D vision/shading)",
+        "background": "$a=(1,2,2),b=(3,0,4)\\Rightarrow a\\times b=(8,2,-6)$",
+        "numbers": "Surface normal (3-D vision/shading): $a=(1,2,2),b=(3,0,4)\\Rightarrow a\\times b=(8,2,-6)$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses cross product ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Triangle/mesh area",
+        "background": "$\\tfrac12\\lVert a\\times b\\rVert=\\tfrac12(10.198)=5.099$",
+        "numbers": "Triangle/mesh area: $\\tfrac12\\lVert a\\times b\\rVert=\\tfrac12(10.198)=5.099$"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use cross product calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "Plane through 3 points",
+        "background": "normal $=(P_2-P_1)\\times(P_3-P_1)$",
+        "numbers": "Plane through 3 points: normal $=(P_2-P_1)\\times(P_3-P_1)$"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on cross product structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "Polygon winding / orientation",
+        "background": "sign of the $z$-cross says CCW vs CW",
+        "numbers": "Polygon winding / orientation: sign of the $z$-cross says CCW vs CW"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use cross product to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Torque",
+        "background": "Torque $\\tau=r\\times F$",
+        "numbers": "Torque $\\tau=r\\times F$"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and cross product gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "Angular velocity",
+        "background": "Angular velocity $v=\\omega\\times r$",
+        "numbers": "Angular velocity $v=\\omega\\times r$"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -744,6 +803,38 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson follows the dot product by studying the other basic product available in three dimensions. The dot product returns a number that measures alignment, while the cross product returns a vector that stands perpendicular to two given vectors. That perpendicular direction is exactly what surfaces, rotations, torques, and 3-D geometry need. It also prepares the ground for surface normals, curl, and Stokes' theorem later in the section.</p>",
+    "symbols": [
+      {
+        "sym": "$a\\times b$",
+        "desc": "perpendicular vector"
+      },
+      {
+        "sym": "$\\mathbf i,\\mathbf j,\\mathbf k$",
+        "desc": "axes"
+      },
+      {
+        "sym": "right-hand",
+        "desc": "rule for sign"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Set up the determinant $a\\times b=\\det\\begin{bmatrix}\\mathbf i&\\mathbf j&\\mathbf k\\a_1&a_2&a_3\\b_1&b_2&b_3\\end{bmatrix}$",
+        "result": "Set up the determinant $a\\times b=\\det\\begin{bmatrix}\\mathbf i&\\mathbf j&\\mathbf k\\a_1&a_2&a_3\\b_1&b_2&b_3\\end{bmatrix}$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Expand along row 1",
+        "result": "$\\langle a_2b_3-a_3b_2,\\ a_3b_1-a_1b_3,\\ a_1b_2-a_2b_1\\rangle$",
+        "why": "this is the next consequence in the plan's argument"
+      },
+      {
+        "do": "Magnitude via the Lagrange identity $\\lVert a\\times b\\rVert^2=\\lVert a\\rVert^2\\lVert b\\rVert^2-(a\\!\\cdot\\!b)^2=\\lVert a\\rVert^2\\lVert b\\rVert^2\\sin^2\\theta$",
+        "result": "$\\lVert a\\times b\\rVert=\\lVert a\\rVert\\lVert b\\rVert\\sin\\theta$ = area of the parallelogram",
+        "why": "this is the next consequence in the plan's argument"
+      }
     ],
     "prereqs": [
       "math-02-02"
@@ -772,8 +863,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read line as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>A line through $P=(x_0,y_0,z_0)$ with nonzero direction $v=\\langle a,b,c\\rangle$ is $r(t)=P+tv=\\langle x_0+at,y_0+bt,z_0+ct\\rangle$.</p><p>The formula works because every point on the line differs from $P$ by some scalar multiple of the same direction. The parameter $t$ tells how many direction-vector steps to take.</p><p><b>Assumptions that matter:</b> the direction must be nonzero; many parameterizations can describe the same line; and one value of $t$ must satisfy all coordinates.</p>",
+    "motivation": "<p>A line in space is easiest to understand as motion from an anchor point. Start at one known point on the line, then move any real amount in a fixed direction. The parameter records how far along that direction you have traveled, so positive, negative, and zero values cover the whole line.</p><p>This point-and-direction form also makes distance questions manageable. To measure how far a point is from the line, form the parallelogram between the offset vector and the line direction. Its area is base times height, and dividing by the base length leaves the perpendicular distance. The formula is a direct use of the cross product's area meaning.</p>",
+    "definition": "<p>Parametric $r(t)=r_0+t\\,v$; distance from point $P$ to the line $=\\dfrac{\\lVert (P-r_0)\\times v\\rVert}{\\lVert v\\rVert}$ (the cross-product area ÷ base).</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Find a line through $(1,2,3)$ in direction $\\langle2,-1,4\\rangle$ and the point at $t=3$.",
       "skills": [
@@ -957,34 +1048,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Line appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "Ray in ray-tracing",
+        "background": "Ray in ray-tracing $r_0+t d$",
+        "numbers": "Ray in ray-tracing $r_0+t d$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses line ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Embedding interpolation",
+        "background": "Embedding interpolation $r(t)=(1-t)a+tb$",
+        "numbers": "Embedding interpolation $r(t)=(1-t)a+tb$"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use line calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "Nearest point on a line",
+        "background": "Nearest point on a line (projection)",
+        "numbers": "Nearest point on a line (projection)"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on line structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "RANSAC residual = point-to-line distance",
+        "background": "$P=(3,0,0)$ to the $z$-axis $\\Rightarrow 3$",
+        "numbers": "RANSAC residual = point-to-line distance: $P=(3,0,0)$ to the $z$-axis $\\Rightarrow 3$"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use line to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Robot linear path",
+        "background": "Robot linear path",
+        "numbers": "Robot linear path"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and line gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "GD trajectory as a ray",
+        "background": "GD trajectory as a ray in weight space",
+        "numbers": "GD trajectory as a ray in weight space"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -993,6 +1084,33 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson uses the vector language from the opening lessons to describe straight paths in space. In two dimensions a slope-intercept equation can describe many lines, but in three dimensions a single slope is no longer enough. A point plus a direction vector gives a more flexible description. This parametric view will reappear in curves, line integrals, ray tracing, and optimizer trajectories.</p>",
+    "symbols": [
+      {
+        "sym": "$r_0$",
+        "desc": "anchor point"
+      },
+      {
+        "sym": "$v$",
+        "desc": "direction"
+      },
+      {
+        "sym": "$t$",
+        "desc": "parameter"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Parametric $r(t)=r_0+t\\,v$",
+        "result": "Parametric $r(t)=r_0+t\\,v$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "distance from point $P$ to the line $=\\dfrac{\\lVert (P-r_0)\\times v\\rVert}{\\lVert v\\rVert}$ (the cross-product area ÷ base)",
+        "result": "distance from point $P$ to the line $=\\dfrac{\\lVert (P-r_0)\\times v\\rVert}{\\lVert v\\rVert}$ (the cross-product area ÷ base)",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-03"
@@ -1021,8 +1139,8 @@
         "linear equations"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read plane as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>A plane through $P_0=(x_0,y_0,z_0)$ with nonzero normal $n=\\langle a,b,c\\rangle$ is $n\\cdot\\langle x-x_0,y-y_0,z-z_0\\rangle=0$.</p><p>Expanding gives $a(x-x_0)+b(y-y_0)+c(z-z_0)=0$, or $ax+by+cz=d$. The dot product is zero because in-plane displacement is perpendicular to the normal.</p><p><b>Assumptions that matter:</b> the normal must be nonzero; proportional normals give parallel planes; and the equation describes a flat two-dimensional set in $\\mathbb R^3$.</p>",
+    "motivation": "<p>A plane can be described by saying which directions are allowed along the surface and which direction points straight out of it. The normal vector gives that straight-out direction. Any vector that lies inside the plane must be perpendicular to the normal, so its dot product with the normal is zero.</p><p>This same normal vector also gives distance from a point to the plane. The offset from the plane to the point may point partly along the plane and partly perpendicular to it. Projecting that offset onto the unit normal keeps only the perpendicular part, which is the shortest distance. This is why plane equations are so useful in classification and geometry.</p>",
+    "definition": "<p>$n\\!\\cdot\\!(r-r_0)=0\\Rightarrow ax+by+cz=d$; distance $=\\dfrac{|n\\!\\cdot\\!P-d|}{\\lVert n\\rVert}$ (project the offset onto the unit normal).</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Find the plane through $(1,2,3)$ with normal $\\langle2,-1,4\\rangle$.",
       "skills": [
@@ -1201,34 +1319,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Plane appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "SVM/logistic boundary",
+        "background": "SVM/logistic boundary $w^\\top x+b=0$",
+        "numbers": "SVM/logistic boundary $w^\\top x+b=0$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses plane ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Point-to-plane ICP residual",
+        "background": "Point-to-plane ICP residual (3-D registration)",
+        "numbers": "Point-to-plane ICP residual (3-D registration)"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use plane calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "PCA hyperplane",
+        "background": "PCA hyperplane (best-fit plane)",
+        "numbers": "PCA hyperplane (best-fit plane)"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on plane structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "Half-space constraint in LP",
+        "background": "Half-space constraint in LP",
+        "numbers": "Half-space constraint in LP"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use plane to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Clipping plane in graphics",
+        "background": "Clipping plane in graphics",
+        "numbers": "Clipping plane in graphics"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and plane gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "Distance of $(3,0,0)$ to $2x+2y+z=1$",
+        "background": "$\\tfrac{|6-1|}{3}=1.667$",
+        "numbers": "Distance of $(3,0,0)$ to $2x+2y+z=1$: $\\tfrac{|6-1|}{3}=1.667$"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -1237,6 +1355,33 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson extends the idea of a line to the flat surfaces used throughout multivariable geometry. You already have the dot product as a way to test perpendicularity, and that is enough to write the equation of a plane. A plane is determined by a point on it and a normal vector to it. This becomes the geometry behind linear decision boundaries, tangent planes, and half-space constraints.</p>",
+    "symbols": [
+      {
+        "sym": "$n=(a,b,c)$",
+        "desc": "normal"
+      },
+      {
+        "sym": "$d$",
+        "desc": "offset"
+      },
+      {
+        "sym": "$r_0$",
+        "desc": "a point on the plane"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "$n\\!\\cdot\\!(r-r_0)=0\\Rightarrow ax+by+cz=d$",
+        "result": "$n\\!\\cdot\\!(r-r_0)=0\\Rightarrow ax+by+cz=d$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "distance $=\\dfrac{|n\\!\\cdot\\!P-d|}{\\lVert n\\rVert}$ (project the offset onto the unit normal)",
+        "result": "distance $=\\dfrac{|n\\!\\cdot\\!P-d|}{\\lVert n\\rVert}$ (project the offset onto the unit normal)",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-04"
@@ -1265,8 +1410,8 @@
         "coordinate functions"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read vector-valued function as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>A <b>vector-valued function</b> has form $r(t)=\\langle f(t),g(t),h(t)\\rangle$. Its derivative is componentwise: $r'(t)=\\langle f'(t),g'(t),h'(t)\\rangle$.</p><p>When $t$ is time, $r(t)$ is position, $r'(t)$ is velocity, and $\\|r'(t)\\|$ is speed. The coordinates change separately but describe one motion together.</p><p><b>Assumptions that matter:</b> each component must be defined; differentiability requires differentiable components; and the parameter need not be time unless the model says so.</p>",
+    "motivation": "<p>A scalar-valued function gives one number for each input. A vector-valued function gives several numbers at once, such as the $x$, $y$, and $z$ coordinates of a moving point. As the parameter changes, those coordinates trace a curve through space.</p><p>Differentiation works one coordinate at a time. The difference quotient compares two nearby positions, divides by the change in the parameter, and then takes a limit. The result is a velocity vector, and its length is the speed along the path. This makes curves analyzable with the same derivative ideas you already know.</p>",
+    "definition": "<p>(1) $r(t)=\\langle x(t),y(t),z(t)\\rangle$. (2) Difference quotient $\\tfrac{r(t+h)-r(t)}{h}$ acts componentwise. (3) Limit ⇒ $r'(t)=\\langle x',y',z'\\rangle$; speed $=\\lVert r'\\rVert$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "For $r(t)=\\langle t^2,2t,3-t\\rangle$, find $r(2)$ and $r'(2)$.",
       "skills": [
@@ -1445,34 +1590,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Vector-Valued Function appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "Latent-space interpolation path",
+        "background": "Latent-space interpolation path $r(t)$",
+        "numbers": "Latent-space interpolation path $r(t)$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses vector-valued function ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Optimizer trajectory",
+        "background": "Optimizer trajectory $\\theta(t)$ with speed $\\lVert\\theta'\\rVert$",
+        "numbers": "Optimizer trajectory $\\theta(t)$ with speed $\\lVert\\theta'\\rVert$"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use vector-valued function calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "Learning-rate schedule as a curve",
+        "background": "Learning-rate schedule as a curve",
+        "numbers": "Learning-rate schedule as a curve"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on vector-valued function structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "Bézier/animation curves",
+        "background": "Bézier/animation curves",
+        "numbers": "Bézier/animation curves"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use vector-valued function to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Particle/physics trajectory",
+        "background": "Particle/physics trajectory",
+        "numbers": "Particle/physics trajectory"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and vector-valued function gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "Parametric data augmentation path",
+        "background": "Parametric data augmentation path",
+        "numbers": "Parametric data augmentation path"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -1481,6 +1626,38 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson takes the single-variable function idea and lets the output be a whole vector. Instead of returning one height, the function returns a position with several coordinates. That makes it a natural language for paths through space, parameter trajectories, and animations. The derivative then becomes velocity, which leads into speed and arc length.</p>",
+    "symbols": [
+      {
+        "sym": "$r(t)$",
+        "desc": "position"
+      },
+      {
+        "sym": "$r'(t)$",
+        "desc": "velocity"
+      },
+      {
+        "sym": "$\\lVert r'\\rVert$",
+        "desc": "speed"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "$r(t)=\\langle x(t),y(t),z(t)\\rangle$",
+        "result": "$r(t)=\\langle x(t),y(t),z(t)\\rangle$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Difference quotient $\\tfrac{r(t+h)-r(t)}{h}$ acts componentwise",
+        "result": "Difference quotient $\\tfrac{r(t+h)-r(t)}{h}$ acts componentwise",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Limit",
+        "result": "$r'(t)=\\langle x',y',z'\\rangle$; speed $=\\lVert r'\\rVert$",
+        "why": "this is the next consequence in the plan's argument"
+      }
     ],
     "prereqs": [
       "math-02-05"
@@ -1509,8 +1686,8 @@
         "coordinate functions"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read space curve as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>A <b>space curve</b> is the set of points traced by $r(t)=\\langle x(t),y(t),z(t)\\rangle$. The tangent vector is $r'(t)$, and the speed is $\\|r'(t)\\|$.</p><p>The helix $\\langle\\cos t,\\sin t,t\\rangle$ is a good mental model: circular motion in two coordinates while the third coordinate rises.</p><p><b>Assumptions that matter:</b> the parameter interval matters; a nonzero derivative gives a tangent direction; and different parameterizations can trace the same curve at different speeds.</p>",
+    "motivation": "<p>A curved path cannot be measured accurately by one straight segment unless the curve itself is almost straight. The standard method is to chop the parameter interval into many small pieces, measure each small chord, and add the chord lengths. As the pieces get smaller, the chords follow the curve more closely.</p><p>The derivative tells you the length of each tiny segment. Over a short time interval, the displacement is approximately velocity times the time step, so its length is speed times the time step. Adding those speeds and passing to the limit gives the integral of speed. Arc length is therefore accumulated motion along the curve.</p>",
+    "definition": "<p>(1) Chop $[a,b]$; each hop $\\lVert\\Delta r\\rVert\\approx\\lVert r'(t)\\rVert\\Delta t$. (2) Sum → integral: arc length $=\\int_a^b\\lVert r'(t)\\rVert\\,dt$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "For $r(t)=\\langle\\cos t,\\sin t,t\\rangle$, find the speed at $t=0$.",
       "skills": [
@@ -1689,34 +1866,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Space Curve appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "Helix $r=(\\cos t,\\sin t,t)$",
+        "background": "$\\lVert r'\\rVert=\\sqrt2$, length over $[0,2\\pi]=2\\sqrt2\\pi\\approx8.886$",
+        "numbers": "Helix $r=(\\cos t,\\sin t,t)$: $\\lVert r'\\rVert=\\sqrt2$, length over $[0,2\\pi]=2\\sqrt2\\pi\\approx8.886$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses space curve ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Path length in robotics",
+        "background": "Path length in robotics",
+        "numbers": "Path length in robotics"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use space curve calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "Training-trajectory length",
+        "background": "Training-trajectory length (a diagnostic)",
+        "numbers": "Training-trajectory length (a diagnostic)"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on space curve structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "Road/cable length",
+        "background": "Road/cable length",
+        "numbers": "Road/cable length"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use space curve to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Tangent direction for Frenet frames",
+        "background": "Tangent direction for Frenet frames",
+        "numbers": "Tangent direction for Frenet frames"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and space curve gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "Speed profile",
+        "background": "Speed profile $\\lVert r'\\rVert$ over time",
+        "numbers": "Speed profile $\\lVert r'\\rVert$ over time"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -1725,6 +1902,33 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson builds on vector-valued functions by asking for the length of the path they trace. You already know how to measure straight-line distance between two points. For a curve, the strategy is to approximate it by many tiny straight segments. That limiting process becomes the arc-length integral, which later supports line integrals and path-based diagnostics.</p>",
+    "symbols": [
+      {
+        "sym": "$s$",
+        "desc": "arc length"
+      },
+      {
+        "sym": "$r'(t)$",
+        "desc": "velocity"
+      },
+      {
+        "sym": "unit",
+        "desc": "tangent $T=r'/\\lVert r'\\rVert$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Chop $[a,b]$; each hop $\\lVert\\Delta r\\rVert\\approx\\lVert r'(t)\\rVert\\Delta t$",
+        "result": "Chop $[a,b]$; each hop $\\lVert\\Delta r\\rVert\\approx\\lVert r'(t)\\rVert\\Delta t$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Sum → integral",
+        "result": "arc length $=\\int_a^b\\lVert r'(t)\\rVert\\,dt$",
+        "why": "this names the corresponding formula or conclusion"
+      }
     ],
     "prereqs": [
       "math-02-06"
@@ -1753,8 +1957,8 @@
         "paths"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read multivariable function as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>A <b>function of several variables</b> assigns one scalar output to each allowed input tuple, such as $z=f(x,y)$ or $f(x_1,\\ldots,x_n)$.</p><p>For two inputs, the graph is a surface. The domain is a region of input space, and restrictions come from denominators, roots, logarithms, or the model context.</p><p><b>Assumptions that matter:</b> the input tuple must be in the domain; output here is scalar; and order of variables matters.</p>",
+    "motivation": "<p>Many important quantities depend on more than one variable at a time. A model loss depends on all the weights, an image intensity depends on two pixel coordinates, and a revenue function may depend on price and spend. The function takes a point in a multidimensional domain and assigns a scalar value to it.</p><p>There are two common ways to visualize this information. The graph adds one output coordinate above the input space, while level sets mark all input points with the same output value. The graph and its contours are two views of the same function. Learning both views makes later ideas like gradients and constrained optimization easier to interpret.</p>",
+    "definition": "<p>Graph = $\\{(x,f(x))\\}$; a level set $f=c$ is the map's contour line — derive that the graph in $\\mathbb R^{n+1}$ and the contours in $\\mathbb R^n$ carry the same information.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "For $f(x,y)=x^2+3xy-y^2$, compute $f(2,-1)$.",
       "skills": [
@@ -1928,34 +2132,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Multivariable Function appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "Loss",
+        "background": "Loss $L(w)$",
+        "numbers": "Loss $L(w)$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses multivariable function ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Image",
+        "background": "Image $I(x,y)$ = intensity",
+        "numbers": "Image $I(x,y)$ = intensity"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use multivariable function calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "RBF kernel",
+        "background": "RBF kernel $k(x)=e^{-\\lVert x\\rVert^2}$",
+        "numbers": "RBF kernel $k(x)=e^{-\\lVert x\\rVert^2}$"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on multivariable function structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "Revenue",
+        "background": "Revenue $f(\\text{price},\\text{spend})$",
+        "numbers": "Revenue $f(\\text{price},\\text{spend})$"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use multivariable function to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "2-feature model score",
+        "background": "2-feature model score",
+        "numbers": "2-feature model score"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and multivariable function gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "Gaussian bump density",
+        "background": "Gaussian bump density",
+        "numbers": "Gaussian bump density"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -1964,6 +2168,38 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson moves from curves to scalar functions with several inputs. You already know functions that take one input and return one output; now the input can be a vector of coordinates or parameters. The output is still a single number, such as a loss, intensity, density, or score. This is the main object studied by partial derivatives, gradients, level sets, and optimization.</p>",
+    "symbols": [
+      {
+        "sym": "$f(x_1,\\dots,x_n)$",
+        "desc": "as named in the plan"
+      },
+      {
+        "sym": "domain",
+        "desc": "$\\subseteq\\mathbb R^n$"
+      },
+      {
+        "sym": "output",
+        "desc": "a scalar"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Graph = $\\{(x,f(x))\\}$",
+        "result": "Graph = $\\{(x,f(x))\\}$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "a level set $f=c$ is the map's contour line",
+        "result": "a level set $f=c$ is the map's contour line",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "derive that the graph in $\\mathbb R^{n+1}$ and the contours in $\\mathbb R^n$ carry the same information",
+        "result": "derive that the graph in $\\mathbb R^{n+1}$ and the contours in $\\mathbb R^n$ carry the same information",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-07"
@@ -1992,8 +2228,8 @@
         "paths"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read level set as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>A <b>level set</b> of $f$ at value $c$ is the set of inputs satisfying $f(x,y)=c$. For two-input functions, level sets are contour curves in the input plane.</p><p>Contours are a top-down view of a surface: instead of drawing height directly, they connect points of equal height.</p><p><b>Assumptions that matter:</b> the level value must be attainable; contours live in input space; and close contours signal rapid change.</p>",
+    "motivation": "<p>A level set collects all points where a function has one fixed value. For a height map, this gives contour lines; for a model score, it can give a decision boundary; for a loss, it gives the curves an optimizer crosses. The level set removes the output axis and shows where the same output occurs in input space.</p><p>The key geometric fact is that the gradient is perpendicular to a level set. If you move along the set, the function value does not change, so the directional derivative in that tangent direction is zero. Since directional derivatives are dot products with the gradient, tangent directions must be perpendicular to the gradient. This is why gradients point across contours rather than along them.</p>",
+    "definition": "<p>Contour $=f^{-1}(c)$; the gradient is perpendicular to it — moving along a contour keeps $f$ fixed, so the directional derivative is $0$, i.e. $\\nabla f\\!\\cdot\\!u=0$ (full argument in `02-13`).</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Describe the level set $x^2+y^2=25$ and find two points on it.",
       "skills": [
@@ -2172,34 +2408,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Level Set appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "Loss contours in an optimizer",
+        "background": "Loss contours in an optimizer viz",
+        "numbers": "Loss contours in an optimizer viz"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses level set ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Decision boundary",
+        "background": "Decision boundary = level set of the score at 0",
+        "numbers": "Decision boundary = level set of the score at 0"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use level set calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "Gaussian confidence ellipses",
+        "background": "Gaussian confidence ellipses = level sets of the quadratic form",
+        "numbers": "Gaussian confidence ellipses = level sets of the quadratic form"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on level set structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "Indifference curves",
+        "background": "Indifference curves (econ)",
+        "numbers": "Indifference curves (econ)"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use level set to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Isolines",
+        "background": "Isolines $f=x^2+y^2=25$ through $(3,4)$ and $(5,0)$",
+        "numbers": "Isolines $f=x^2+y^2=25$ through $(3,4)$ and $(5,0)$"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and level set gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "Equipotential lines of a field",
+        "background": "Equipotential lines of a field",
+        "numbers": "Equipotential lines of a field"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -2208,6 +2444,38 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson uses functions of several variables and turns their equal-output points into geometry. You have seen contour lines on maps; level sets are the same idea for any scalar function. They let a high-dimensional function be studied through slices where the value stays constant. Gradients, decision boundaries, and optimizer visualizations all rely on this picture.</p>",
+    "symbols": [
+      {
+        "sym": "$f=c$",
+        "desc": "level set"
+      },
+      {
+        "sym": "$c$",
+        "desc": "the level"
+      },
+      {
+        "sym": "$\\nabla f$",
+        "desc": "normal to it"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Contour $=f^{-1}(c)$",
+        "result": "Contour $=f^{-1}(c)$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "the gradient is perpendicular to it",
+        "result": "the gradient is perpendicular to it",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "moving along a contour keeps $f$ fixed, so the directional derivative is $0$, i.e. $\\nabla f\\!\\cdot\\!u=0$ (full argument in `02-13`)",
+        "result": "moving along a contour keeps $f$ fixed, so the directional derivative is $0$, i.e. $\\nabla f\\!\\cdot\\!u=0$ (full argument in `02-13`)",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-08"
@@ -2236,8 +2504,8 @@
         "paths"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read multivariable limit as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>The statement $\\lim_{(x,y)\\to(a,b)}f(x,y)=L$ means $f(x,y)$ approaches $L$ as the input point approaches $(a,b)$ from every path in the domain.</p><p>One path can suggest an answer, but it cannot prove the limit. Two paths with different values prove the limit does not exist.</p><p><b>Assumptions that matter:</b> the value at the point itself is irrelevant; all paths must agree; and bounds or polar coordinates are often needed to prove existence.</p>",
+    "motivation": "<p>A limit describes the value a function approaches near a point, not necessarily at the point itself. With several input variables, nearby points can approach along lines, curves, or more complicated paths. For the limit to exist, all of those approaches must settle on the same value.</p><p>This path agreement is the main new issue. To disprove a limit, it is enough to find two paths that produce different limiting values. To prove one, you need an argument that controls all paths at once. This distinction matters in numerical work because formulas that look harmless along one slice may behave differently along another.</p>",
+    "definition": "<p>Show $f(x,y)=\\dfrac{xy}{x^2+y^2}$ has no limit at $0$: (1) along the $x$-axis ($y=0$) $f=0$; (2) along $y=x$, $f=\\dfrac{x^2}{2x^2}=\\tfrac12$. Different path values ⇒ limit fails.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Show that $\\lim_{(x,y)\\to(0,0)}\\frac{xy}{x^2+y^2}$ does not exist.",
       "skills": [
@@ -2411,34 +2679,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Multivariable Limit appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "0/0 in softmax near equal",
+        "background": "0/0 in softmax near equal logits",
+        "numbers": "0/0 in softmax near equal logits"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses multivariable limit ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Gradient blow-up detection",
+        "background": "Gradient blow-up detection",
+        "numbers": "Gradient blow-up detection"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use multivariable limit calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "ReLU kink behavior at 0",
+        "background": "ReLU kink behavior at 0",
+        "numbers": "ReLU kink behavior at 0"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on multivariable limit structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "Numerical stability of a custom",
+        "background": "Numerical stability of a custom op near a singularity",
+        "numbers": "Numerical stability of a custom op near a singularity"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use multivariable limit to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Loss continuity checks",
+        "background": "Loss continuity checks",
+        "numbers": "Loss continuity checks"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and multivariable limit gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "Batchnorm as variance→0",
+        "background": "Batchnorm as variance→0 (limit sensitivity)",
+        "numbers": "Batchnorm as variance→0 (limit sensitivity)"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -2447,6 +2715,33 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson extends the limit idea from single-variable calculus to inputs with several coordinates. In one dimension, approaching a point means coming from the left or right. In several variables, there are many possible paths into the same point. That extra freedom makes multivariable limits more delicate and important for continuity and differentiability.</p>",
+    "symbols": [
+      {
+        "sym": "$\\lim_{(x,y)\\to(a,b)}$",
+        "desc": "as named in the plan"
+      },
+      {
+        "sym": "\"along",
+        "desc": "a path\""
+      },
+      {
+        "sym": "agreement",
+        "desc": "across all paths"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "along the $x$-axis ($y=0$) $f=0$",
+        "result": "along the $x$-axis ($y=0$) $f=0$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "along $y=x$, $f=\\dfrac{x^2}{2x^2}=\\tfrac12$. Different path values",
+        "result": "limit fails",
+        "why": "this is the next consequence in the plan's argument"
+      }
     ],
     "prereqs": [
       "math-02-09"
@@ -2475,8 +2770,8 @@
         "paths"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read multivariable continuity as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>A function $f(x,y)$ is <b>continuous at</b> $(a,b)$ if $f(a,b)$ is defined and $\\lim_{(x,y)\\to(a,b)}f(x,y)=f(a,b)$.</p><p>Polynomials are continuous everywhere. Quotients are continuous where their denominators are nonzero, and compositions are continuous where every piece is allowed.</p><p><b>Assumptions that matter:</b> continuity is relative to the domain; illegal operations must be excluded; and all approach paths must agree.</p>",
+    "motivation": "<p>A continuous function is one where small input changes produce small output changes. The formal test says that the limit at a point must equal the function's actual value there. In several variables, that limit is only valid when all paths into the point agree.</p><p>Continuity is weaker than differentiability but still very useful. A function can be continuous at a corner or kink even when no unique tangent plane exists there. Many machine learning functions are built from continuous pieces, which helps small parameter updates lead to controlled changes in the loss. The lesson also clarifies why continuity alone does not guarantee a gradient.</p>",
+    "definition": "<p>$f$ continuous at $a$ iff $\\lim_{x\\to a}f(x)=f(a)$; contrast with `02-10`'s path-broken example.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Decide where $f(x,y)=\\frac{x+y}{x^2+y^2-1}$ is continuous.",
       "skills": [
@@ -2650,34 +2945,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Multivariable Continuity appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "Continuous loss ⇒ stable GD",
+        "background": "Continuous loss ⇒ stable GD",
+        "numbers": "Continuous loss ⇒ stable GD"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses multivariable continuity ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "ReLU continuous but not differentiable",
+        "background": "ReLU continuous but not differentiable at 0",
+        "numbers": "ReLU continuous but not differentiable at 0"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use multivariable continuity calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "Bilinear image interpolation continuity",
+        "background": "Bilinear image interpolation continuity",
+        "numbers": "Bilinear image interpolation continuity"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on multivariable continuity structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "Kernel continuity",
+        "background": "Kernel continuity",
+        "numbers": "Kernel continuity"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use multivariable continuity to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Price elasticity smoothness",
+        "background": "Price elasticity smoothness",
+        "numbers": "Price elasticity smoothness"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and multivariable continuity gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "Application 6",
+        "background": "$f=x^2+xy+2y^2$ continuous everywhere; $f(1,2)=11$ equals its limit",
+        "numbers": "$f=x^2+xy+2y^2$ continuous everywhere; $f(1,2)=11$ equals its limit"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -2686,6 +2981,33 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson follows multivariable limits by naming the functions whose nearby behavior matches their value. You already know that continuity means no sudden break in one-variable calculus. In several variables, the same idea applies, but the limit must agree from every direction. Continuity then supports stable optimization, interpolation, and modeling assumptions.</p>",
+    "symbols": [
+      {
+        "sym": "limit",
+        "desc": "= value"
+      },
+      {
+        "sym": "neighborhood",
+        "desc": "as named in the plan"
+      },
+      {
+        "sym": "jump",
+        "desc": "as named in the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "$f$ continuous at $a$ iff $\\lim_{x\\to a}f(x)=f(a)$",
+        "result": "$f$ continuous at $a$ iff $\\lim_{x\\to a}f(x)=f(a)$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "contrast with `02-10`'s path-broken example",
+        "result": "contrast with `02-10`'s path-broken example",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-10"
@@ -2714,8 +3036,8 @@
         "unit vectors"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read partial derivative as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>The <b>partial derivative</b> $f_x(a,b)$ differentiates with respect to $x$ while holding $y$ fixed. The partial $f_y(a,b)$ holds $x$ fixed.</p><p>This is a coordinate slice of the surface. Along that slice, ordinary one-variable derivative rules apply.</p><p><b>Assumptions that matter:</b> hold every other variable constant; partials may exist even when full differentiability fails; and units are output units per chosen input unit.</p>",
+    "motivation": "<p>When a function has many inputs, it is often useful to isolate one input's effect. A partial derivative does exactly that: change one variable by a tiny amount while holding the others fixed. The result answers a local sensitivity question for that one coordinate.</p><p>This is the basic operation behind training many-parameter models. Each weight has a partial derivative that tells how the loss changes if that weight alone is nudged. Collecting all those partials gives a vector of sensitivities, but the partial derivative itself remains a one-variable derivative taken along an axis. That makes the concept familiar even in high dimensions.</p>",
+    "definition": "<p>$\\dfrac{\\partial f}{\\partial x}=\\lim_{h\\to0}\\dfrac{f(x+h,y)-f(x,y)}{h}$; for $f=x^2+xy+2y^2$: expand $f(x+h,y)-f(x,y)=2xh+h^2+yh$, divide by $h$, let $h\\to0$ ⇒ $f_x=2x+y$. Likewise $f_y=x+4y$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "For $f(x,y)=x^2y+3y^2$, compute $f_x(2,1)$ and $f_y(2,1)$.",
       "skills": [
@@ -2894,34 +3216,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Partial Derivative appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "One weight's effect on loss",
+        "background": "One weight's effect on loss $\\partial L/\\partial w_i$",
+        "numbers": "One weight's effect on loss $\\partial L/\\partial w_i$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses partial derivative ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Backprop local derivative",
+        "background": "Backprop local derivative",
+        "numbers": "Backprop local derivative"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use partial derivative calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "Finite-difference gradient check",
+        "background": "$[f(2.001)-f",
+        "numbers": "Finite-difference gradient check: $[f(2.001)-f"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on partial derivative structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "]/0.001",
+        "background": "]/0.001$",
+        "numbers": "]/0.001$"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use partial derivative to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Image gradient",
+        "background": "Image gradient $\\partial I/\\partial x$ = vertical edges",
+        "numbers": "Image gradient $\\partial I/\\partial x$ = vertical edges"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and partial derivative gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "Sensitivity of price",
+        "background": "Sensitivity of price",
+        "numbers": "Sensitivity of price"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -2930,6 +3252,34 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson takes the derivative idea and applies it one coordinate at a time. You already know how a derivative measures change along a line. For a function with several inputs, a partial derivative freezes all but one variable and measures the slope along that coordinate axis. These coordinate slopes are the pieces that form the gradient.</p>",
+    "symbols": [
+      {
+        "sym": "$\\partial$",
+        "desc": "(round-d) = \"holding the others fixed\""
+      },
+      {
+        "sym": "$f_x$",
+        "desc": "shorthand"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "$\\dfrac{\\partial f}{\\partial x}=\\lim_{h\\to0}\\dfrac{f(x+h,y)-f(x,y)}{h}$",
+        "result": "$\\dfrac{\\partial f}{\\partial x}=\\lim_{h\\to0}\\dfrac{f(x+h,y)-f(x,y)}{h}$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "for $f=x^2+xy+2y^2$",
+        "result": "expand $f(x+h,y)-f(x,y)=2xh+h^2+yh$, divide by $h$, let $h\\to0$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "$f_x=2x+y$. Likewise $f_y=x+4y$",
+        "result": "$f_x=2x+y$. Likewise $f_y=x+4y$",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-11"
@@ -2958,8 +3308,8 @@
         "unit vectors"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read gradient as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>For $f(x,y)$, the <b>gradient</b> is $\\nabla f=\\langle f_x,f_y\\rangle$. In more variables, it lists all partial derivatives.</p><p>Because $D_u f=\\nabla f\\cdot u$, the gradient gives the largest directional derivative when $u$ points the same way. It is also perpendicular to level sets.</p><p><b>Assumptions that matter:</b> partial derivatives should exist; steepest direction uses unit directions; and negative gradient points toward steepest local decrease.</p>",
+    "motivation": "<p>A partial derivative answers a narrow question: if you change one variable and hold the others fixed, how fast does $f$ change? That is useful, but a function of several variables can change in any direction, not just along the axes. We need a single object that captures how $f$ changes in every direction at once.</p><p>The gradient is that object. Consider a surface $z=f(x,y)$. The partial derivative $f_x$ is the slope in the $x$-direction, and $f_y$ is the slope in the $y$-direction. Collect them into one vector, $\\nabla f=\\langle f_x, f_y\\rangle$. This vector points in the direction of steepest increase of $f$, and its length $\\lVert\\nabla f\\rVert$ is that steepest rate. The opposite direction, $-\\nabla f$, is the direction of steepest decrease.</p><p>That last fact is why the gradient matters so much in machine learning. Training a model means reducing a loss function, and $-\\nabla f$ tells you the most direct way to reduce it. So although the gradient is defined simply, by collecting partial derivatives, it gives an optimizer the information it needs at every step.</p>",
+    "definition": "<p>Display the formula $\\nabla f=\\big\\langle \\tfrac{\\partial f}{\\partial x}, \\tfrac{\\partial f}{\\partial y}\\big\\rangle$, then the complete 8-step derivation of $D_uf=\\nabla f\\cdot u$, steepest-ascent, and ⊥-level-sets — written out in master E-1 (reuse verbatim).</p><p><b>Assumptions that matter:</b> partials exist; $u$ is unit; $-\\nabla f$ is the steepest *local* decrease (not global).</p>",
     "worked": {
       "problem": "For $f(x,y)=x^2+xy+2y^2$, find $\\nabla f(1,2)$.",
       "skills": [
@@ -3138,34 +3488,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Gradient appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "Application 1",
+        "background": "$\\nabla f(1,2)=\\langle4,9\\rangle$",
+        "numbers": "$\\nabla f(1,2)=\\langle4,9\\rangle$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses gradient ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "GD step",
+        "background": "GD step $(1,2)-0.1\\langle4,9\\rangle=(0.6,1.1)$",
+        "numbers": "GD step $(1,2)-0.1\\langle4,9\\rangle=(0.6,1.1)$"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use gradient calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "Application 3",
+        "background": "$\\nabla f\\perp$ contour",
+        "numbers": "$\\nabla f\\perp$ contour"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on gradient structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "backprop",
+        "background": "backprop $\\nabla_wL=X^\\top(Xw-y)$",
+        "numbers": "backprop $\\nabla_wL=X^\\top(Xw-y)$"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use gradient to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "directional rates",
+        "background": "directional rates $4$ and $9$",
+        "numbers": "directional rates $4$ and $9$"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and gradient gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "saddle when",
+        "background": "saddle when $\\lVert\\nabla f\\rVert\\approx0$",
+        "numbers": "saddle when $\\lVert\\nabla f\\rVert\\approx0$"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -3174,6 +3524,37 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson builds directly on two things you have already seen: partial derivatives, and the dot product. A partial derivative measures the slope of $f$ along one axis; the gradient simply collects those slopes into a single vector. The dot product then does the rest of the work, because the rate of change in any direction turns out to be a dot product with the gradient.</p><p>It is worth knowing where this leads, because the gradient reappears constantly. Directional derivatives, tangent planes, and the Hessian are all built on it. In later topics it becomes the basis of gradient descent and backpropagation, and it is the central object in Lagrange multipliers.</p>",
+    "symbols": [
+      {
+        "sym": "$f_x=\\partial f/\\partial x$",
+        "desc": "is the slope with $y$ held fixed"
+      },
+      {
+        "sym": "$\\nabla f$",
+        "desc": "stacks the partials"
+      },
+      {
+        "sym": "$u$",
+        "desc": "is a *unit* direction so directions compare fairly"
+      },
+      {
+        "sym": "$\\theta$",
+        "desc": "is the angle between $u$ and $\\nabla f$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Display the formula $\\nabla f=\\big\\langle \\tfrac{\\partial f}{\\partial x}, \\tfrac{\\partial f}{\\partial y}\\big\\rangle$, then the complete 8-step derivation of $D_uf=\\nabla f\\cdot u$, steepest-ascent, and ⊥-level-sets",
+        "result": "Display the formula $\\nabla f=\\big\\langle \\tfrac{\\partial f}{\\partial x}, \\tfrac{\\partial f}{\\partial y}\\big\\rangle$, then the complete 8-step derivation of $D_uf=\\nabla f\\cdot u$, steepest-ascent, and ⊥-level-sets",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "written out in master E-1 (reuse verbatim)",
+        "result": "written out in master E-1 (reuse verbatim)",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-12"
@@ -3202,8 +3583,8 @@
         "unit vectors"
       ]
     },
-    "motivation": "<p>You already have the coordinate tools from the previous lessons. Now we use them to read directional derivative as something concrete rather than as a symbol to memorize.</p><p>The goal is steady and practical: compute carefully, then ask what the result says about direction, shape, rate, or data.</p>",
-    "definition": "<p>The <b>directional derivative</b> of $f$ at a point in unit direction $u$ is $D_u f=\\nabla f\\cdot u$.</p><p>The unit-vector condition matters because direction should not include step length. Only the component of the gradient aligned with $u$ contributes.</p><p><b>Assumptions that matter:</b> $u$ must have length $1$; the gradient should exist; the largest directional derivative is $\\|\\nabla f\\|$ and the smallest is $-\\|\\nabla f\\|$.</p>",
+    "motivation": "<p>A partial derivative measures change along a coordinate axis, and the gradient collects all coordinate rates. Sometimes the direction of interest is not an axis. It might be an optimizer step, a feasible motion under constraints, or a direction in image space.</p><p>The directional derivative uses the gradient to answer that more specific question. Taking the dot product with a unit direction keeps the component of the gradient along that direction. If the direction aligns with the gradient, the rate is largest; if it points opposite, the rate is most negative; if it is perpendicular, the rate is zero. The unit-length assumption matters because it makes different directions comparable.</p>",
+    "definition": "<p>$D_uf=\\nabla f\\!\\cdot\\!u$ (Move 1 of `02-13`); maximal when $u\\parallel\\nabla f$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "For $f(x,y)=x^2+3y$ at $(2,1)$ in direction $\\langle3,4\\rangle$, compute the directional derivative.",
       "skills": [
@@ -3382,34 +3763,34 @@
     ],
     "applications": [
       {
-        "title": "Machine learning model geometry",
-        "background": "Directional Derivative appears when feature vectors, parameters, or losses need a geometric reading.",
-        "numbers": "For features $\\langle2,3\\rangle$ and weights $\\langle0.5,1\\rangle$, the score is $4$."
+        "title": "Line-search slope",
+        "background": "Line-search slope $g^\\top p$",
+        "numbers": "Line-search slope $g^\\top p$"
       },
       {
-        "title": "Computer graphics",
-        "background": "Graphics uses directional derivative ideas to place objects, trace rays, or measure surfaces.",
-        "numbers": "A point $(1,2,3)$ shifted by $\\langle4,0,-1\\rangle$ becomes $(5,2,2)$."
+        "title": "Projected-gradient rate along a feasible",
+        "background": "Projected-gradient rate along a feasible direction",
+        "numbers": "Projected-gradient rate along a feasible direction"
       },
       {
-        "title": "Robotics",
-        "background": "Robots use directional derivative calculations to update position, direction, and local motion.",
-        "numbers": "Velocity $\\langle3,4\\rangle$ has speed $5$ per second."
+        "title": "Directional finite difference",
+        "background": "Directional finite difference",
+        "numbers": "Directional finite difference"
       },
       {
-        "title": "Optimization",
-        "background": "Training algorithms rely on directional derivative structure to decide how parameters should move.",
-        "numbers": "With learning rate $0.1$ and gradient $\\langle4,-2\\rangle$, the update is $\\langle-0.4,0.2\\rangle$."
+        "title": "Feature-combo sensitivity",
+        "background": "Feature-combo sensitivity",
+        "numbers": "Feature-combo sensitivity"
       },
       {
-        "title": "Data visualization",
-        "background": "Plots and maps use directional derivative to turn tables of numbers into shapes a person can read.",
-        "numbers": "A contour value $10$ for $x+y$ includes $(4,6)$ and $(7,3)$."
+        "title": "Edge response along an orientation",
+        "background": "Edge response along an orientation",
+        "numbers": "Edge response along an orientation"
       },
       {
-        "title": "Similarity search",
-        "background": "Search systems compare numerical objects, and directional derivative gives one of the basic comparison languages.",
-        "numbers": "Distance from $(0,0)$ to $(6,8)$ is $10$."
+        "title": "At $(1,2)$",
+        "background": "toward $(1,0)\\Rightarrow4$, $(0,1)\\Rightarrow9$, $(0.6,0.8)\\Rightarrow9.6$",
+        "numbers": "At $(1,2)$: toward $(1,0)\\Rightarrow4$, $(0,1)\\Rightarrow9$, $(0.6,0.8)\\Rightarrow9.6$"
       }
     ],
     "applicationsClose": "The same idea keeps changing clothes: geometry, data, and optimization all use this structure once the numbers are in place.",
@@ -3418,6 +3799,29 @@
       "The geometric interpretation is as important as the arithmetic.",
       "Small numerical examples are the safest way to build intuition.",
       "The same concept reappears in optimization, graphics, and ML data."
+    ],
+    "connectionsProse": "<p>This lesson uses the gradient from the model entry and asks for change in a chosen direction. You already know the gradient points toward steepest increase, but applications often care about a particular step direction. The directional derivative measures the rate along that direction. It is the bridge from gradients to line search, projections, and local sensitivity along feature combinations.</p>",
+    "symbols": [
+      {
+        "sym": "$u$",
+        "desc": "*unit* direction"
+      },
+      {
+        "sym": "$D_uf$",
+        "desc": "rate along $u$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "$D_uf=\\nabla f\\!\\cdot\\!u$ (Move 1 of `02-13`)",
+        "result": "$D_uf=\\nabla f\\!\\cdot\\!u$ (Move 1 of `02-13`)",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "maximal when $u\\parallel\\nabla f$",
+        "result": "maximal when $u\\parallel\\nabla f$",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-13"
@@ -3445,8 +3849,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Tangent planes brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>If $f$ is differentiable near $(a,b)$, the tangent plane to $z=f(x,y)$ is $$z=f(a,b)+f_x(a,b)(x-a)+f_y(a,b)(y-b).$$ It comes from the first-order change $\\Delta z\\approx f_x\\Delta x+f_y\\Delta y$.</p><p><b>Assumptions that matter:</b> differentiability is required; continuous first partial derivatives nearby are a standard sufficient condition.</p>",
+    "motivation": "<p>A smooth surface may curve globally, but near one point it can be approximated by a flat plane. The partial derivatives give the slopes of that plane in the coordinate directions. Together with the surface point itself, those slopes determine the tangent plane.</p><p>The tangent plane is useful because it replaces a curved function with a simple linear expression nearby. This is the first-order view used whenever a model predicts how a small parameter change will affect a loss. The normal vector to the plane also connects the surface picture back to plane geometry and shading normals.</p>",
+    "definition": "<p>$z=f(a,b)+f_x(a,b)(x-a)+f_y(a,b)(y-b)$ — the plane through $(a,b,f(a,b))$ with the two partial slopes.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Find the tangent plane to $f=x^2+3xy$ at $(1,2)$.",
       "skills": [
@@ -3625,34 +4029,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
+        "title": "First-order Taylor for optimization",
+        "background": "First-order Taylor for optimization",
+        "numbers": "First-order Taylor for optimization"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "title": "Shading normal",
+        "background": "Shading normal $(-f_x,-f_y,1)$",
+        "numbers": "Shading normal $(-f_x,-f_y,1)$"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "Local linear surrogate",
+        "background": "Local linear surrogate (LIME-style)",
+        "numbers": "Local linear surrogate (LIME-style)"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "Newton step setup",
+        "background": "Newton step setup",
+        "numbers": "Newton step setup"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "Linearized dynamics",
+        "background": "Linearized dynamics",
+        "numbers": "Linearized dynamics"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "$f=x^2+xy+2y^2$ at $(1,2)$",
+        "background": "$z=11+4(x-1)+9(y-2)$",
+        "numbers": "$f=x^2+xy+2y^2$ at $(1,2)$: $z=11+4(x-1)+9(y-2)$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -3660,6 +4064,29 @@
       "A tangent plane matches height and first partial derivatives.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson turns partial derivatives into the local flat model of a surface. You already know that a tangent line approximates a one-variable curve near a point. For a surface, the corresponding object is a tangent plane. It leads directly to linear approximation, Taylor expansion, and first-order optimization methods.</p>",
+    "symbols": [
+      {
+        "sym": "tangent",
+        "desc": "plane"
+      },
+      {
+        "sym": "surface",
+        "desc": "normal $n=(-f_x,-f_y,1)$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "$z=f(a,b)+f_x(a,b)(x-a)+f_y(a,b)(y-b)$",
+        "result": "$z=f(a,b)+f_x(a,b)(x-a)+f_y(a,b)(y-b)$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "the plane through $(a,b,f(a,b))$ with the two partial slopes",
+        "result": "the plane through $(a,b,f(a,b))$ with the two partial slopes",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-14"
@@ -3687,8 +4114,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Linear approximation in several variables brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>For differentiable $f$, $$f(a+\\Delta x,b+\\Delta y)\\approx f(a,b)+f_x(a,b)\\Delta x+f_y(a,b)\\Delta y.$$ This is the tangent plane written with displacements.</p><p><b>Assumptions that matter:</b> the move should be small, and differentiability must hold near the base point.</p>",
+    "motivation": "<p>Evaluating a complicated function exactly can be expensive, but near a known point the function often behaves almost linearly. The tangent plane gives that local linear model. Instead of recomputing the full function, you use the current value plus the gradient's predicted change.</p><p>The approximation is most reliable for small steps because the terms it ignores are second order in the step size. That means halving the step tends to shrink the neglected error much faster than the step itself. This is why linear approximation is useful for local reasoning but must be treated carefully far from the base point.</p>",
+    "definition": "<p>From the tangent plane: $f(a+\\Delta)\\approx f(a)+\\nabla f(a)\\!\\cdot\\!\\Delta$; the error is $O(\\lVert\\Delta\\rVert^2)$ (the leftover second-order Taylor term).</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Estimate $f(2.02,2.97)$ for $f=x^2+y^2$ from base $(2,3)$.",
       "skills": [
@@ -3862,34 +4289,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
+        "title": "First-order loss change under a",
+        "background": "First-order loss change under a weight step",
+        "numbers": "First-order loss change under a weight step"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "title": "Error propagation / delta method",
+        "background": "Error propagation / delta method",
+        "numbers": "Error propagation / delta method"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "Trust-region model",
+        "background": "Trust-region model",
+        "numbers": "Trust-region model"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "Fast surrogate of expensive",
+        "background": "Fast surrogate of expensive $f$",
+        "numbers": "Fast surrogate of expensive $f$"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "Sensitivity budget",
+        "background": "Sensitivity budget",
+        "numbers": "Sensitivity budget"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "Application 6",
+        "background": "$f(1.1,2.1)\\approx11+4(0.1)+9(0.1)=12.30$ vs true $12.34$",
+        "numbers": "$f(1.1,2.1)\\approx11+4(0.1)+9(0.1)=12.30$ vs true $12.34$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -3897,6 +4324,29 @@
       "Linear approximation is local.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson continues the tangent-plane idea and writes it as a practical approximation formula. You already have the gradient as a vector of local slopes. Multiplying it by a small input change predicts the corresponding output change. This first-order approximation becomes a standard tool for sensitivity analysis, trust regions, and error estimates.</p>",
+    "symbols": [
+      {
+        "sym": "$\\Delta$",
+        "desc": "small step"
+      },
+      {
+        "sym": "$\\nabla f\\!\\cdot\\!\\Delta$",
+        "desc": "predicted change"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "From the tangent plane",
+        "result": "$f(a+\\Delta)\\approx f(a)+\\nabla f(a)\\!\\cdot\\!\\Delta$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "the error is $O(\\lVert\\Delta\\rVert^2)$ (the leftover second-order Taylor term)",
+        "result": "the error is $O(\\lVert\\Delta\\rVert^2)$ (the leftover second-order Taylor term)",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-15"
@@ -3924,8 +4374,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. The multivariable chain rule brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>If $z=f(x,y)$ with $x=x(t)$ and $y=y(t)$, then $$\\frac{dz}{dt}=f_x\\frac{dx}{dt}+f_y\\frac{dy}{dt}.$$ In matrix form, derivatives of composed maps multiply as Jacobians.</p><p><b>Assumptions that matter:</b> every component must be differentiable and every dependency path must be included.</p>",
+    "motivation": "<p>A composed function often has an outside function depending on intermediate quantities, and those intermediate quantities depend on an earlier variable. When the earlier variable changes, each intermediate changes, and each of those changes affects the final output. The total derivative must collect every route by which the change travels.</p><p>The multivariable chain rule expresses this as a weighted sum. Each partial derivative of the outside function measures sensitivity to one intermediate, and each derivative of the intermediate measures how the upstream variable affects it. In vector form this becomes a dot product or a Jacobian multiplication. Autodiff systems are built around applying this rule repeatedly.</p>",
+    "definition": "<p>For $z=f(x(t),y(t))$: (1) total change $dz=f_x\\,dx+f_y\\,dy$; (2) divide by $dt$ ⇒ $\\dfrac{dz}{dt}=f_x\\dfrac{dx}{dt}+f_y\\dfrac{dy}{dt}$; (3) vector form $\\dfrac{dz}{dt}=\\nabla f\\!\\cdot\\!\\dfrac{dr}{dt}$; many inputs ⇒ multiply by the Jacobian.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Let $z=x^2y$, $x=t+1$, $y=t^2$. Find $dz/dt$ at $t=2$.",
       "skills": [
@@ -4099,34 +4549,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
-      },
-      {
         "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "background": "Backpropagation (the whole algorithm)",
+        "numbers": "Backpropagation (the whole algorithm)"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "Reparameterization gradient",
+        "background": "Reparameterization gradient (VAE)",
+        "numbers": "Reparameterization gradient (VAE)"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "JVP/VJP in autodiff",
+        "background": "JVP/VJP in autodiff",
+        "numbers": "JVP/VJP in autodiff"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "Backprop-through-time",
+        "background": "Backprop-through-time (RNN)",
+        "numbers": "Backprop-through-time (RNN)"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "Change-of-variable density",
+        "background": "Change-of-variable density",
+        "numbers": "Change-of-variable density"
+      },
+      {
+        "title": "$z=x^2+y^2$, $x=t,y=t^2$",
+        "background": "$\\tfrac{dz}{dt}=2t+4t^3$; at $t=1\\Rightarrow6$",
+        "numbers": "$z=x^2+y^2$, $x=t,y=t^2$: $\\tfrac{dz}{dt}=2t+4t^3$; at $t=1\\Rightarrow6$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -4134,6 +4584,38 @@
       "The chain rule sums all paths of dependence.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson extends the chain rule to functions with several intermediate variables. You already know that derivatives multiply through a one-variable composition. In multivariable settings, one upstream change can reach the output through several paths. Adding those path contributions is the core mechanism behind backpropagation.</p>",
+    "symbols": [
+      {
+        "sym": "intermediate",
+        "desc": "$x,y$"
+      },
+      {
+        "sym": "upstream",
+        "desc": "$t$"
+      },
+      {
+        "sym": "sum",
+        "desc": "over paths"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "total change $dz=f_x\\,dx+f_y\\,dy$",
+        "result": "total change $dz=f_x\\,dx+f_y\\,dy$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "divide by $dt$",
+        "result": "$\\dfrac{dz}{dt}=f_x\\dfrac{dx}{dt}+f_y\\dfrac{dy}{dt}$",
+        "why": "this is the next consequence in the plan's argument"
+      },
+      {
+        "do": "vector form $\\dfrac{dz}{dt}=\\nabla f\\!\\cdot\\!\\dfrac{dr}{dt}$; many inputs",
+        "result": "multiply by the Jacobian",
+        "why": "this is the next consequence in the plan's argument"
+      }
     ],
     "prereqs": [
       "math-02-16"
@@ -4161,8 +4643,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. The Jacobian matrix brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>For $F:\\mathbb{R}^n\\to\\mathbb{R}^m$, $$J_F(x)=\\left[\\frac{\\partial F_i}{\\partial x_j}\\right].$$ It gives the local linear approximation $F(x+h)\\approx F(x)+J_F(x)h$.</p><p><b>Assumptions that matter:</b> partial derivatives should exist, and differentiability makes the matrix a true local linear map.</p>",
+    "motivation": "<p>When a function returns several outputs, a single gradient is not enough. Each output can respond differently to each input variable. The Jacobian records all of those partial derivatives in a rectangular matrix, with rows corresponding to outputs and columns to inputs.</p><p>Near a point, the Jacobian acts like the best linear approximation to the function. A small input displacement is multiplied by the Jacobian to predict the output displacement. This is why Jacobians appear in forward kinematics and in neural network layers. They are the multivariable derivative written in the language of linear maps.</p>",
+    "definition": "<p>Stack the partials: $J_{ij}=\\dfrac{\\partial F_i}{\\partial x_j}$; then $F(a+\\Delta)\\approx F(a)+J\\Delta$ is the best local linear map (each row is one output's gradient).</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Find $J_F(2,3)$ for $F(x,y)=(x^2+y,xy)$.",
       "skills": [
@@ -4336,34 +4818,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
+        "title": "Layer local linearization in backprop",
+        "background": "Layer local linearization in backprop",
+        "numbers": "Layer local linearization in backprop"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "title": "VJP/JVP primitives",
+        "background": "VJP/JVP primitives",
+        "numbers": "VJP/JVP primitives"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "Change of variables (needs",
+        "background": "Change of variables (needs $\\det J$)",
+        "numbers": "Change of variables (needs $\\det J$)"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "Forward kinematics",
+        "background": "Forward kinematics (robotics)",
+        "numbers": "Forward kinematics (robotics)"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "Normalizing-flow Jacobian",
+        "background": "Normalizing-flow Jacobian",
+        "numbers": "Normalizing-flow Jacobian"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "$F=(x^2y,\\,x+y)$",
+        "background": "$J(1,2)=\\begin{bmatrix}4&1\\1&1\\end{bmatrix}$, $\\det=3$",
+        "numbers": "$F=(x^2y,\\,x+y)$: $J(1,2)=\\begin{bmatrix}4&1\\1&1\\end{bmatrix}$, $\\det=3$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -4371,6 +4853,29 @@
       "Rows are output sensitivities; columns are input sensitivities.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson generalizes the derivative to vector-output functions. You already know the gradient for a scalar output; a vector output has one scalar component for each row. The Jacobian stacks the gradients of all components into a matrix. This is the local linear map used in coordinate changes, robotics, normalizing flows, and autodiff.</p>",
+    "symbols": [
+      {
+        "sym": "$J\\in\\mathbb R^{m\\times n}$",
+        "desc": "as named in the plan"
+      },
+      {
+        "sym": "rows",
+        "desc": "= output gradients"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Stack the partials",
+        "result": "$J_{ij}=\\dfrac{\\partial F_i}{\\partial x_j}$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "then $F(a+\\Delta)\\approx F(a)+J\\Delta$ is the best local linear map (each row is one output's gradient)",
+        "result": "then $F(a+\\Delta)\\approx F(a)+J\\Delta$ is the best local linear map (each row is one output's gradient)",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-17"
@@ -4398,8 +4903,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Higher-order partial derivatives brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>Second partials include $f_{xx}$, $f_{yy}$, $f_{xy}$, and $f_{yx}$. If second partials are continuous near the point, Clairaut's theorem gives $f_{xy}=f_{yx}$.</p><p><b>Assumptions that matter:</b> equality of mixed partials needs smoothness; otherwise order can matter.</p>",
+    "motivation": "<p>A first partial derivative measures slope in one coordinate direction. Taking another partial derivative measures how that slope changes as another coordinate moves. When the two coordinates are different, the result is a mixed partial derivative.</p><p>For sufficiently smooth functions, differentiating first in one variable and then the other gives the same answer as doing the order in reverse. This is Clairaut's theorem. The result is not just a computational shortcut; it explains the symmetry of the Hessian and simplifies curvature analysis. Most smooth losses used in calculus-based optimization are designed to live in this setting.</p>",
+    "definition": "<p>Clairaut's theorem: if $f_{xy},f_{yx}$ are continuous then $f_{xy}=f_{yx}$; verify on $f=x^2+xy+2y^2$: $f_{xy}=\\partial_y(2x+y)=1=\\partial_x(x+4y)=f_{yx}$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Find the second partials of $f=x^3y+2xy^2$.",
       "skills": [
@@ -4573,34 +5078,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
+        "title": "Symmetric Hessian",
+        "background": "Symmetric Hessian",
+        "numbers": "Symmetric Hessian"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "title": "Curvature of a surface",
+        "background": "Curvature of a surface",
+        "numbers": "Curvature of a surface"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "PDE stencils",
+        "background": "PDE stencils (2nd-order)",
+        "numbers": "PDE stencils (2nd-order)"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "Second-order optimization",
+        "background": "Second-order optimization",
+        "numbers": "Second-order optimization"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "Mixed sensitivity",
+        "background": "Mixed sensitivity $\\partial^2L/\\partial w_i\\partial w_j$",
+        "numbers": "Mixed sensitivity $\\partial^2L/\\partial w_i\\partial w_j$"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "Gaussian-curvature setup",
+        "background": "Gaussian-curvature setup (`02` → diff-geo)",
+        "numbers": "Gaussian-curvature setup (`02` → diff-geo)"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -4608,6 +5113,29 @@
       "Second derivatives describe curvature and interaction.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson studies what happens after taking partial derivatives more than once. You already know second derivatives measure how slopes change. In several variables, there are pure second partials and mixed second partials. The equality of mixed partials under mild smoothness conditions is what makes Hessian matrices symmetric.</p>",
+    "symbols": [
+      {
+        "sym": "$f_{xy}=\\partial^2 f/\\partial y\\partial x$",
+        "desc": "as named in the plan"
+      },
+      {
+        "sym": "mixed",
+        "desc": "partial"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Clairaut's theorem",
+        "result": "if $f_{xy},f_{yx}$ are continuous then $f_{xy}=f_{yx}$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "verify on $f=x^2+xy+2y^2$",
+        "result": "$f_{xy}=\\partial_y(2x+y)=1=\\partial_x(x+4y)=f_{yx}$",
+        "why": "this names the corresponding formula or conclusion"
+      }
     ],
     "prereqs": [
       "math-02-18"
@@ -4635,8 +5163,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. The Hessian matrix brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>For $f:\\mathbb{R}^n\\to\\mathbb{R}$, $$H_f=\\left[\\frac{\\partial^2 f}{\\partial x_i\\partial x_j}\\right].$$ In two variables it is $\\begin{bmatrix}f_{xx}&f_{xy}\\f_{yx}&f_{yy}\\end{bmatrix}$.</p><p><b>Assumptions that matter:</b> second derivatives must exist; continuous second partials make the Hessian symmetric.</p>",
+    "motivation": "<p>The gradient tells the direction of first-order change, but it does not say whether the surface is bending upward, downward, or differently in different directions. The Hessian supplies that second-order information. Each entry tells how one component of the gradient changes as one input coordinate changes.</p><p>The quadratic form built from the Hessian measures curvature along a displacement. If it is positive in every direction, the surface bends like a bowl; if negative in every direction, like a dome; if mixed, like a saddle. Eigenvalues make this directional behavior precise. This is why curvature, conditioning, and second-order optimization all use the Hessian.</p>",
+    "definition": "<p>(1) Collect second partials $H_{ij}=\\partial^2f/\\partial x_i\\partial x_j$ (symmetric by `02-19`). (2) Second-order model $f(a+\\Delta)\\approx f(a)+g^\\top\\Delta+\\tfrac12\\Delta^\\top H\\Delta$. (3) The sign of $\\Delta^\\top H\\Delta$ (eigenvalues of $H$) decides min/max/saddle.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Find the Hessian of $f=x^2+3xy+4y^2$.",
       "skills": [
@@ -4810,34 +5338,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
+        "title": "Newton step",
+        "background": "Newton step $-H^{-1}g$",
+        "numbers": "Newton step $-H^{-1}g$"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "title": "Convexity test",
+        "background": "Convexity test $H\\succeq0$",
+        "numbers": "Convexity test $H\\succeq0$"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "Condition number",
+        "background": "Condition number $\\lambda_{\\max}/\\lambda_{\\min}$ sets GD speed",
+        "numbers": "Condition number $\\lambda_{\\max}/\\lambda_{\\min}$ sets GD speed"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "Saddle detection",
+        "background": "Saddle detection (indefinite)",
+        "numbers": "Saddle detection (indefinite)"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "Sharpness of a minimum",
+        "background": "Sharpness of a minimum (generalization)",
+        "numbers": "Sharpness of a minimum (generalization)"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "$f=x^2+xy+2y^2$",
+        "background": "$H=\\begin{bmatrix}2&1\\1&4\\end{bmatrix}$, eigenvalues $3\\pm\\sqrt2\\approx1.586,\\,4.414>0$ ⇒ convex bowl",
+        "numbers": "$f=x^2+xy+2y^2$: $H=\\begin{bmatrix}2&1\\1&4\\end{bmatrix}$, eigenvalues $3\\pm\\sqrt2\\approx1.586,\\,4.414>0$ ⇒ convex bowl"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -4845,6 +5373,38 @@
       "The Hessian is central to curvature-aware optimization.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson collects second partial derivatives into the matrix that describes local curvature. You already have the gradient for local slope and higher-order partials for how those slopes change. The Hessian organizes those curvature measurements in one object. It leads to Newton's method, convexity tests, and saddle-point classification.</p>",
+    "symbols": [
+      {
+        "sym": "$H=\\nabla^2f$",
+        "desc": "as named in the plan"
+      },
+      {
+        "sym": "eigenvalues",
+        "desc": "$\\lambda_i$"
+      },
+      {
+        "sym": "quadratic",
+        "desc": "form $\\Delta^\\top H\\Delta$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Collect second partials $H_{ij}=\\partial^2f/\\partial x_i\\partial x_j$ (symmetric by `02-19`)",
+        "result": "Collect second partials $H_{ij}=\\partial^2f/\\partial x_i\\partial x_j$ (symmetric by `02-19`)",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Second-order model $f(a+\\Delta)\\approx f(a)+g^\\top\\Delta+\\tfrac12\\Delta^\\top H\\Delta$",
+        "result": "Second-order model $f(a+\\Delta)\\approx f(a)+g^\\top\\Delta+\\tfrac12\\Delta^\\top H\\Delta$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "The sign of $\\Delta^\\top H\\Delta$ (eigenvalues of $H$) decides min/max/saddle",
+        "result": "The sign of $\\Delta^\\top H\\Delta$ (eigenvalues of $H$) decides min/max/saddle",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-19"
@@ -4872,8 +5432,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Multivariable Taylor expansion brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>For a small vector $h$, $$f(a+h)\\approx f(a)+\\nabla f(a)^T h+\\frac12 h^T H_f(a)h.$$ The gradient gives first-order change; the Hessian gives the quadratic correction.</p><p><b>Assumptions that matter:</b> the approximation is local and needs smooth derivatives near the base point.</p>",
+    "motivation": "<p>A complicated smooth function can often be understood locally by keeping only its most important terms near a base point. The constant term gives the value at the base point. The gradient term predicts linear change, and the Hessian term adds the leading curvature correction.</p><p>One clean way to derive the formula is to restrict the function to a line through the base point. Along that line, ordinary one-variable Taylor expansion applies. Translating the derivatives of that line function back into multivariable notation gives the gradient dot product and the Hessian quadratic form. The result is a compact local model for many algorithms.</p>",
+    "definition": "<p>Apply the 1-D Taylor of $g(s)=f(a+s\\Delta)$ at $s=0$: $g(0)+g'(0)+\\tfrac12g''(0)$ with $g'(0)=\\nabla f\\!\\cdot\\!\\Delta$, $g''(0)=\\Delta^\\top H\\Delta$ ⇒ $f(a+\\Delta)\\approx f(a)+\\nabla f^\\top\\Delta+\\tfrac12\\Delta^\\top H\\Delta$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Approximate $e^{x+y}$ near $(0,0)$ at $(0.1,-0.2)$ to second order.",
       "skills": [
@@ -5047,34 +5607,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
+        "title": "Newton / second-order optimization",
+        "background": "Newton / second-order optimization",
+        "numbers": "Newton / second-order optimization"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "title": "Laplace approximation of a posterior",
+        "background": "Laplace approximation of a posterior",
+        "numbers": "Laplace approximation of a posterior"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "Trust-region subproblem",
+        "background": "Trust-region subproblem",
+        "numbers": "Trust-region subproblem"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "Gauss–Newton / LM",
+        "background": "Gauss–Newton / LM",
+        "numbers": "Gauss–Newton / LM"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "Uncertainty via curvature",
+        "background": "Uncertainty via curvature",
+        "numbers": "Uncertainty via curvature"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "For a quadratic it's *exact*",
+        "background": "$f(1+\\Delta)=11+(4,9)\\Delta+\\tfrac12\\Delta^\\top\\begin{bmatrix}2&1\\1&4\\end{bmatrix}\\Delta$",
+        "numbers": "For a quadratic it's *exact*: $f(1+\\Delta)=11+(4,9)\\Delta+\\tfrac12\\Delta^\\top\\begin{bmatrix}2&1\\1&4\\end{bmatrix}\\Delta$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -5082,6 +5642,29 @@
       "Taylor expansion adds curvature to linear approximation.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson combines the gradient and Hessian into a local polynomial model. You already know one-variable Taylor expansion as a way to approximate a function near a point. In several variables, the step direction is a vector, so the first-order term uses the gradient and the second-order term uses the Hessian. This quadratic model underlies Newton methods, trust regions, and curvature-based uncertainty.</p>",
+    "symbols": [
+      {
+        "sym": "first-order",
+        "desc": "term $\\nabla f^\\top\\Delta$"
+      },
+      {
+        "sym": "second-order",
+        "desc": "$\\tfrac12\\Delta^\\top H\\Delta$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Apply the 1-D Taylor of $g(s)=f(a+s\\Delta)$ at $s=0$",
+        "result": "$g(0)+g'(0)+\\tfrac12g''(0)$ with $g'(0)=\\nabla f\\!\\cdot\\!\\Delta$, $g''(0)=\\Delta^\\top H\\Delta$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "$f(a+\\Delta)\\approx f(a)+\\nabla f^\\top\\Delta+\\tfrac12\\Delta^\\top H\\Delta$",
+        "result": "$f(a+\\Delta)\\approx f(a)+\\nabla f^\\top\\Delta+\\tfrac12\\Delta^\\top H\\Delta$",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-20"
@@ -5109,8 +5692,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Unconstrained optimization and critical points brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>A <b>critical point</b> of differentiable $f$ satisfies $\\nabla f=0$. At an interior smooth local optimum, any nonzero gradient would give a descent or ascent direction.</p><p><b>Assumptions that matter:</b> zero gradient is necessary for smooth interior optima, but not sufficient for a minimum or maximum.</p>",
+    "motivation": "<p>At a local minimum, there should be no small direction in which moving decreases the function. If one direction had a negative directional derivative, a small step that way would lower the value. The opposite direction rules out positive directional derivatives as well, so all local directional rates must be zero.</p><p>Since directional derivatives are dot products with the gradient, the only vector perpendicular to every direction is the zero vector. Thus interior smooth optima must be critical points. That condition is necessary, not sufficient: saddles and maxima can also have zero gradient. The Hessian supplies the next layer of information needed for classification.</p>",
+    "definition": "<p>At a local min every directional derivative is $\\ge0$ and its negative also $\\ge0$ ⇒ $D_uf=\\nabla f\\!\\cdot\\!u=0$ for all $u$ ⇒ $\\nabla f=0$; then classify with $H$ (`02-24`).</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Find the critical point of $f=(x-2)^2+(y+1)^2+3$.",
       "skills": [
@@ -5284,34 +5867,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
+        "title": "Training stationarity (convergence check",
+        "background": "Training stationarity (convergence check $\\lVert\\nabla f\\rVert<\\varepsilon$)",
+        "numbers": "Training stationarity (convergence check $\\lVert\\nabla f\\rVert<\\varepsilon$)"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "title": "Normal equations",
+        "background": "$\\nabla\\lVert Xw-y\\rVert^2=0\\Rightarrow X^\\top Xw=X^\\top y$",
+        "numbers": "Normal equations: $\\nabla\\lVert Xw-y\\rVert^2=0\\Rightarrow X^\\top Xw=X^\\top y$"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "MLE score",
+        "background": "MLE score $=0$",
+        "numbers": "MLE score $=0$"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "Saddle-heavy DL landscapes",
+        "background": "Saddle-heavy DL landscapes",
+        "numbers": "Saddle-heavy DL landscapes"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "Ridge stationary point",
+        "background": "Ridge stationary point",
+        "numbers": "Ridge stationary point"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "$f=x^2+xy+2y^2$",
+        "background": "$\\nabla f=0\\Rightarrow(0,0)$, $H\\succ0$ ⇒ min, $f=0$",
+        "numbers": "$f=x^2+xy+2y^2$: $\\nabla f=0\\Rightarrow(0,0)$, $H\\succ0$ ⇒ min, $f=0$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -5319,6 +5902,39 @@
       "Critical points have zero gradient but still need classification.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson applies gradients and Hessians to the basic problem of finding optima without constraints. You already know a one-variable minimum has derivative zero when it occurs at an interior smooth point. In several variables, every directional derivative must vanish, which means the gradient is zero. The Hessian then helps classify what kind of critical point was found.</p>",
+    "symbols": [
+      {
+        "sym": "critical",
+        "desc": "point $\\nabla f=0$"
+      },
+      {
+        "sym": "classification",
+        "desc": "via $H$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "At a local min every directional derivative is $\\ge0$ and its negative also $\\ge0$",
+        "result": "At a local min every directional derivative is $\\ge0$ and its negative also $\\ge0$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "$D_uf=\\nabla f\\!\\cdot\\!u=0$ for all $u$",
+        "result": "$D_uf=\\nabla f\\!\\cdot\\!u=0$ for all $u$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "$\\nabla f=0$",
+        "result": "$\\nabla f=0$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "then classify with $H$ (`02-24`)",
+        "result": "then classify with $H$ (`02-24`)",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-21"
@@ -5346,8 +5962,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Saddle points brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>A <b>saddle point</b> is a critical point where nearby directions disagree: some go up and some go down. The model example is $f(x,y)=x^2-y^2$ at $(0,0)$.</p><p><b>Assumptions that matter:</b> zero gradient does not classify a point; directional behavior or the Hessian is needed.</p>",
+    "motivation": "<p>A zero gradient can make a point look stationary, but stationary does not mean optimal. At a saddle, first-order change vanishes, yet nearby directions behave differently. Moving one way increases the function while moving another way decreases it.</p><p>The Hessian detects this through mixed-sign eigenvalues. Along an eigenvector with positive eigenvalue, the quadratic model bends upward; along one with negative eigenvalue, it bends downward. That combination prevents the point from being a local minimum or maximum. In optimization, negative-curvature directions can provide escape routes from such points.</p>",
+    "definition": "<p>With $\\nabla f=0$, look at $\\Delta^\\top H\\Delta$: if $H$ has mixed-sign eigenvalues it's positive along one eigenvector and negative along another ⇒ saddle. Example $f=x^2-y^2$: $H=\\mathrm{diag}(2,-2)$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Show $f=x^2-y^2$ has a saddle at $(0,0)$.",
       "skills": [
@@ -5521,34 +6137,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
+        "title": "DL loss saddles",
+        "background": "DL loss saddles",
+        "numbers": "DL loss saddles"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "title": "SGD noise escapes saddles",
+        "background": "SGD noise escapes saddles",
+        "numbers": "SGD noise escapes saddles"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "GAN saddle equilibria",
+        "background": "GAN saddle equilibria",
+        "numbers": "GAN saddle equilibria"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "PCA as a saddle problem",
+        "background": "PCA as a saddle problem on the sphere",
+        "numbers": "PCA as a saddle problem on the sphere"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "Minimax saddle",
+        "background": "Minimax saddle",
+        "numbers": "Minimax saddle"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "$f=x^2-y^2$",
+        "background": "eigenvalues $2,-2$ ⇒ saddle at $0$",
+        "numbers": "$f=x^2-y^2$: eigenvalues $2,-2$ ⇒ saddle at $0$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -5556,6 +6172,29 @@
       "Saddles have up and down directions in every small neighborhood.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson focuses on critical points that are not minima or maxima. You already know the Hessian records curvature in different directions. A saddle point has upward curvature in some directions and downward curvature in others. This distinction is especially important in high-dimensional optimization landscapes.</p>",
+    "symbols": [
+      {
+        "sym": "indefinite",
+        "desc": "$H$"
+      },
+      {
+        "sym": "escape",
+        "desc": "direction = negative-eigenvalue eigenvector"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "With $\\nabla f=0$, look at $\\Delta^\\top H\\Delta$",
+        "result": "if $H$ has mixed-sign eigenvalues it's positive along one eigenvector and negative along another",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "saddle. Example $f=x^2-y^2$",
+        "result": "$H=\\mathrm{diag}(2,-2)$",
+        "why": "this names the corresponding formula or conclusion"
+      }
     ],
     "prereqs": [
       "math-02-22"
@@ -5583,8 +6222,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Definiteness and the second-derivative test brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>For a symmetric Hessian $H$, positive definite means $v^T H v>0$ for all nonzero $v$, negative definite means $v^T H v<0$, and indefinite means both signs occur. For $2\\times2$ Hessian $\\begin{bmatrix}A&B\\B&C\\end{bmatrix}$, $D=AC-B^2$ classifies many cases.</p><p><b>Assumptions that matter:</b> apply the test at a critical point with continuous second partials; $D=0$ is inconclusive.</p>",
+    "motivation": "<p>At a critical point, the linear term in Taylor's expansion disappears, so the second-order term becomes the leading local behavior. That term is the Hessian quadratic form. Its sign across all nonzero directions determines the shape near the point.</p><p>If the quadratic form is always positive, the surface rises in every small direction and the point is a local minimum. If it is always negative, the surface falls in every small direction and the point is a local maximum. If it has both signs, the point is a saddle. Eigenvalues make this test practical because diagonalizing the Hessian separates the independent curvature directions.</p>",
+    "definition": "<p>$\\Delta^\\top H\\Delta=\\sum_i\\lambda_i(\\,q_i^\\top\\Delta)^2$ (diagonalize $H$): all $\\lambda_i>0$ ⇒ positive for every $\\Delta$ ⇒ min; all $<0$ ⇒ max; mixed ⇒ saddle.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Classify $f=x^2+2xy+3y^2$ at $(0,0)$.",
       "skills": [
@@ -5758,34 +6397,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
+        "title": "Convexity certificate",
+        "background": "Convexity certificate",
+        "numbers": "Convexity certificate"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "title": "Newton safeguarding (fix non-PD",
+        "background": "Newton safeguarding (fix non-PD $H$)",
+        "numbers": "Newton safeguarding (fix non-PD $H$)"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "Covariance PSD check",
+        "background": "Covariance PSD check",
+        "numbers": "Covariance PSD check"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "Kernel/Gram matrix PD",
+        "background": "Kernel/Gram matrix PD (valid kernel)",
+        "numbers": "Kernel/Gram matrix PD (valid kernel)"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "GP validity",
+        "background": "GP validity",
+        "numbers": "GP validity"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "Application 6",
+        "background": "$\\mathrm{diag}(2,200)\\succ0$ ⇒ min; $\\mathrm{diag}(2,-2)$ indefinite ⇒ saddle",
+        "numbers": "$\\mathrm{diag}(2,200)\\succ0$ ⇒ min; $\\mathrm{diag}(2,-2)$ indefinite ⇒ saddle"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -5793,6 +6432,39 @@
       "Positive definite gives min, negative definite gives max, indefinite gives saddle.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson turns Hessian eigenvalues into a classification rule for critical points. You already know the one-variable second-derivative test. The multivariable version checks curvature in every direction, not just along one axis. Definiteness is the language for making that all-directions statement precise.</p>",
+    "symbols": [
+      {
+        "sym": "positive-definite",
+        "desc": "$H\\succ0$"
+      },
+      {
+        "sym": "eigenvalues",
+        "desc": "$\\lambda_i$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "$\\Delta^\\top H\\Delta=\\sum_i\\lambda_i(\\,q_i^\\top\\Delta)^2$ (diagonalize $H$)",
+        "result": "all $\\lambda_i>0$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "positive for every $\\Delta$",
+        "result": "positive for every $\\Delta$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "min",
+        "result": "min",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "all $<0$",
+        "result": "all $<0$",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-23"
@@ -5820,8 +6492,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Lagrange multipliers brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>To optimize $f(x,y)$ subject to $g(x,y)=c$, solve $$\\nabla f=\\lambda\\nabla g,\\qquad g(x,y)=c.$$ At the constrained optimum, objective and constraint gradients are parallel.</p><p><b>Assumptions that matter:</b> require $\\nabla g\\ne0$ near the constraint and compare candidates when needed.</p>",
+    "motivation": "<p>A constrained optimum must lie on the constraint surface. At that point, you cannot move in every direction; you can only move along directions that keep the constraint satisfied to first order. These feasible directions are tangent to the constraint surface and perpendicular to the constraint gradient.</p><p>If the objective could increase or decrease along one of those tangent directions, the point would not be optimal under the constraint. Therefore the objective gradient must have no tangential component. The only remaining direction is normal to the constraint surface, so the objective gradient must be parallel to the constraint gradient. The scalar of proportionality is the Lagrange multiplier.</p>",
+    "definition": "<p>On $g=0$, feasible moves are tangent ($\\nabla g\\!\\cdot\\!u=0$). At an optimum no feasible move improves $f$ ⇒ $\\nabla f\\!\\cdot\\!u=0$ for all such $u$ ⇒ $\\nabla f$ has no tangential part ⇒ $\\nabla f=\\lambda\\nabla g$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Maximize $f=xy$ subject to $x+y=10$.",
       "skills": [
@@ -5995,34 +6667,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent",
-        "background": "Modern training uses derivatives to choose parameter updates instead of trying random moves.",
-        "numbers": "With gradient $(3,-4)$ and learning rate $0.1$, the update is $(-0.3,0.4)$."
+        "title": "SVM dual",
+        "background": "SVM dual (max margin under constraints)",
+        "numbers": "SVM dual (max margin under constraints)"
       },
       {
-        "title": "Backpropagation",
-        "background": "Backprop is organized calculus on a computation graph, passing local sensitivities backward.",
-        "numbers": "An upstream gradient $5$ through a local derivative $2.4$ becomes $12$."
+        "title": "Max-entropy ⇒ softmax",
+        "background": "Max-entropy ⇒ softmax",
+        "numbers": "Max-entropy ⇒ softmax"
       },
       {
-        "title": "Gradient checking",
-        "background": "Engineers compare analytic derivatives with finite differences to find implementation bugs.",
-        "numbers": "If $f(2.001)-f(2)=0.004002$, the finite-difference slope is $4.002$."
+        "title": "Constrained MLE",
+        "background": "Constrained MLE",
+        "numbers": "Constrained MLE"
       },
       {
-        "title": "Feature scaling",
-        "background": "Derivative magnitudes reveal whether one input dominates another numerically.",
-        "numbers": "Slopes $80$ and $0.2$ mean a $0.01$ move in the first feature changes output $0.8$, four times a $1$ move in the second."
+        "title": "Portfolio with a budget line",
+        "background": "Portfolio with a budget line",
+        "numbers": "Portfolio with a budget line"
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Teams estimate metric changes from small controllable moves.",
-        "numbers": "Slopes $(120,-30)$ and move $(0.5,1)$ predict $120(0.5)-30=30$ extra units."
+        "title": "Equality-constrained least squares",
+        "background": "Equality-constrained least squares",
+        "numbers": "Equality-constrained least squares"
       },
       {
-        "title": "Optimization diagnostics",
-        "background": "Large local factors can create unstable training dynamics.",
-        "numbers": "A factor $20$ repeated through $4$ layers can magnify gradients by $20^4=160000$."
+        "title": "$\\max xy$ s.t. $x+y=10$",
+        "background": "$(y,x)=\\lambda(1,1)\\Rightarrow x=y=5,\\ \\lambda=5,\\ f=25$",
+        "numbers": "$\\max xy$ s.t. $x+y=10$: $(y,x)=\\lambda(1,1)\\Rightarrow x=y=5,\\ \\lambda=5,\\ f=25$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -6030,6 +6702,43 @@
       "Lagrange multipliers replace free gradient zero with parallel gradients.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson adds equality constraints to optimization. You already know that an unconstrained optimum has zero gradient because all directions are available. With a constraint, only tangent directions along the constraint are allowed. Lagrange multipliers express the condition that the objective has no improving component along those feasible directions.</p>",
+    "symbols": [
+      {
+        "sym": "multiplier",
+        "desc": "$\\lambda$"
+      },
+      {
+        "sym": "constraint",
+        "desc": "$g=0$"
+      },
+      {
+        "sym": "parallel",
+        "desc": "gradients"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "On $g=0$, feasible moves are tangent ($\\nabla g\\!\\cdot\\!u=0$). At an optimum no feasible move improves $f$",
+        "result": "On $g=0$, feasible moves are tangent ($\\nabla g\\!\\cdot\\!u=0$). At an optimum no feasible move improves $f$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "$\\nabla f\\!\\cdot\\!u=0$ for all such $u$",
+        "result": "$\\nabla f\\!\\cdot\\!u=0$ for all such $u$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "$\\nabla f$ has no tangential part",
+        "result": "$\\nabla f$ has no tangential part",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "$\\nabla f=\\lambda\\nabla g$",
+        "result": "$\\nabla f=\\lambda\\nabla g$",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-24"
@@ -6057,8 +6766,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Double integrals brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>The double integral $$\\iint_R f(x,y)\\,dA$$ is the limit of sums over tiny area tiles. On rectangles, it can be computed as an iterated integral.</p><p><b>Assumptions that matter:</b> bounds must describe the region, and $dA$ represents an area element.</p>",
+    "motivation": "<p>To integrate over a region in the plane, divide the region into small rectangles or other tiny patches. On each patch, the function is nearly constant, so its contribution is approximately value times area. Adding all contributions and refining the grid gives the double integral.</p><p>Fubini's theorem makes many double integrals practical. Under suitable conditions, the two-dimensional accumulation can be computed as two ordinary one-dimensional integrals, one inside the other. This turns area-based accumulation into repeated familiar calculus. The region and the order of integration carry the geometry of the problem.</p>",
+    "definition": "<p>Grid the region, sum $f(x_i,y_j)\\,\\Delta A$, refine ⇒ $\\iint_R f\\,dA$; Fubini lets you do it as two 1-D integrals.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Compute $\\int_0^2\\int_0^1(x+y)\\,dy\\,dx$",
       "skills": [
@@ -6232,34 +6941,34 @@
     ],
     "applications": [
       {
-        "title": "Probability over regions",
-        "background": "Continuous probability models integrate density over a region to get probability.",
-        "numbers": "Uniform density $1/6$ on a $2\\times3$ rectangle integrates to $(1/6)6=1$."
+        "title": "2-D probability",
+        "background": "2-D probability $P((X,Y)\\in R)=\\iint p$",
+        "numbers": "2-D probability $P((X,Y)\\in R)=\\iint p$"
       },
       {
-        "title": "Computer vision regions",
-        "background": "Vision systems sum or average intensity over image patches and volumes.",
-        "numbers": "A patch with total integral $3000$ over area $20$ has average intensity $150$."
+        "title": "Expected value",
+        "background": "Expected value $\\iint xy\\,p$",
+        "numbers": "Expected value $\\iint xy\\,p$"
       },
       {
-        "title": "Mass from density",
-        "background": "Physics computes mass by accumulating density over area or volume.",
-        "numbers": "Density $4$ kg/m$^3$ over volume $6$ m$^3$ gives mass $24$ kg."
+        "title": "Marginalization",
+        "background": "Marginalization $\\int p(x,y)\\,dy$",
+        "numbers": "Marginalization $\\int p(x,y)\\,dy$"
       },
       {
-        "title": "Expected values",
-        "background": "Statistics integrates value times density to compute averages.",
-        "numbers": "For uniform $x$ on $[0,2]$, $\\int_0^2 x(1/2)\\,dx=1$."
+        "title": "Image average intensity over a",
+        "background": "Image average intensity over a patch",
+        "numbers": "Image average intensity over a patch"
       },
       {
-        "title": "Rendering",
-        "background": "Graphics integrates light over pixels, surfaces, or volumes.",
-        "numbers": "Constant radiance $0.8$ over area $0.25$ contributes $0.2$."
+        "title": "Centroid/area",
+        "background": "Centroid/area",
+        "numbers": "Centroid/area"
       },
       {
-        "title": "Density transformations",
-        "background": "Change of variables preserves total probability after stretching coordinates.",
-        "numbers": "If a map doubles area, density is multiplied by $1/2$ so mass stays $1$."
+        "title": "Application 6",
+        "background": "$\\iint_{[0,1]^2}(x+y)\\,dA=1$; $\\iint xy=\\tfrac14$",
+        "numbers": "$\\iint_{[0,1]^2}(x+y)\\,dA=1$; $\\iint xy=\\tfrac14$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -6267,6 +6976,38 @@
       "Double integrals add density over area.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson extends the definite integral from intervals to regions in the plane. You already know a one-variable integral accumulates area under a curve. A double integral accumulates values over many tiny area patches. It is the basic tool for 2-D probability, image averages, centroids, and planar mass.</p>",
+    "symbols": [
+      {
+        "sym": "$dA=dx\\,dy$",
+        "desc": "as named in the plan"
+      },
+      {
+        "sym": "iterated",
+        "desc": "integral"
+      },
+      {
+        "sym": "region",
+        "desc": "$R$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Grid the region, sum $f(x_i,y_j)\\,\\Delta A$, refine",
+        "result": "Grid the region, sum $f(x_i,y_j)\\,\\Delta A$, refine",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "$\\iint_R f\\,dA$",
+        "result": "$\\iint_R f\\,dA$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Fubini lets you do it as two 1-D integrals",
+        "result": "Fubini lets you do it as two 1-D integrals",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-25"
@@ -6294,8 +7035,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Triple integrals brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>The triple integral $$\\iiint_E f(x,y,z)\\,dV$$ sums values over tiny volume boxes. On a rectangular box, compute it with three nested one-variable integrals.</p><p><b>Assumptions that matter:</b> bounds must describe the solid exactly, and $dV$ is a volume element.</p>",
+    "motivation": "<p>A triple integral divides a solid into many tiny boxes. The function's value on each box is multiplied by the box's volume, and those contributions are summed. As the boxes shrink, the sum approaches the total accumulation over the solid.</p><p>The computation is often written as three iterated one-variable integrals. Each limit describes how the solid is swept out in one coordinate direction. This keeps the idea close to the double integral while adding one more dimension. The main new work is describing the region accurately.</p>",
+    "definition": "<p>Refine a 3-D grid: $\\iiint_V f\\,dV$, iterated as three 1-D integrals.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Compute $\\int_0^1\\int_0^2\\int_0^3(x+y+z)\\,dz\\,dy\\,dx$",
       "skills": [
@@ -6469,34 +7210,34 @@
     ],
     "applications": [
       {
-        "title": "Probability over regions",
-        "background": "Continuous probability models integrate density over a region to get probability.",
-        "numbers": "Uniform density $1/6$ on a $2\\times3$ rectangle integrates to $(1/6)6=1$."
+        "title": "3-D probability over a region",
+        "background": "3-D probability over a region",
+        "numbers": "3-D probability over a region"
       },
       {
-        "title": "Computer vision regions",
-        "background": "Vision systems sum or average intensity over image patches and volumes.",
-        "numbers": "A patch with total integral $3000$ over area $20$ has average intensity $150$."
+        "title": "Voxel/3-D conv aggregation",
+        "background": "Voxel/3-D conv aggregation",
+        "numbers": "Voxel/3-D conv aggregation"
       },
       {
-        "title": "Mass from density",
-        "background": "Physics computes mass by accumulating density over area or volume.",
-        "numbers": "Density $4$ kg/m$^3$ over volume $6$ m$^3$ gives mass $24$ kg."
+        "title": "Mass/charge",
+        "background": "Mass/charge",
+        "numbers": "Mass/charge"
       },
       {
-        "title": "Expected values",
-        "background": "Statistics integrates value times density to compute averages.",
-        "numbers": "For uniform $x$ on $[0,2]$, $\\int_0^2 x(1/2)\\,dx=1$."
+        "title": "Moment of inertia",
+        "background": "Moment of inertia",
+        "numbers": "Moment of inertia"
       },
       {
-        "title": "Rendering",
-        "background": "Graphics integrates light over pixels, surfaces, or volumes.",
-        "numbers": "Constant radiance $0.8$ over area $0.25$ contributes $0.2$."
+        "title": "Normalizing a 3-D density",
+        "background": "Normalizing a 3-D density",
+        "numbers": "Normalizing a 3-D density"
       },
       {
-        "title": "Density transformations",
-        "background": "Change of variables preserves total probability after stretching coordinates.",
-        "numbers": "If a map doubles area, density is multiplied by $1/2$ so mass stays $1$."
+        "title": "Application 6",
+        "background": "$\\iiint_{[0,1]^3}xyz\\,dV=\\tfrac18$; $\\iiint 1=1$",
+        "numbers": "$\\iiint_{[0,1]^3}xyz\\,dV=\\tfrac18$; $\\iiint 1=1$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -6504,6 +7245,24 @@
       "Triple integrals add density over volume.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson takes the same accumulation idea into three-dimensional solids. You already know double integrals over planar regions. Triple integrals add values over small volume elements instead. They are used for densities, voxel data, mass, charge, and normalization over solid regions.</p>",
+    "symbols": [
+      {
+        "sym": "$dV=dx\\,dy\\,dz$",
+        "desc": "as named in the plan"
+      },
+      {
+        "sym": "solid",
+        "desc": "$V$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Refine a 3-D grid",
+        "result": "$\\iiint_V f\\,dV$, iterated as three 1-D integrals",
+        "why": "this names the corresponding formula or conclusion"
+      }
     ],
     "prereqs": [
       "math-02-26"
@@ -6531,8 +7290,8 @@
         "quadratic forms"
       ]
     },
-    "motivation": "<p>You already know how one-variable calculus studies a curve by zooming in, measuring slope, or adding small pieces. Change of variables brings that same habit into several variables.</p><p>The reward is practical: surfaces, vector maps, losses, and densities become computable with local slopes, curvature, constraints, or accumulated totals.</p>",
-    "definition": "<p>For $(x,y)=T(u,v)$, $$\\iint_R f(x,y)\\,dA=\\iint_S f(T(u,v))\\left|\\det J_T(u,v)\\right|\\,du\\,dv.$$ The determinant is the local area scale factor.</p><p><b>Assumptions that matter:</b> the map should be differentiable and one-to-one except possibly on boundaries; the absolute determinant is required.</p>",
+    "motivation": "<p>Changing coordinates can make a region or integrand much simpler. Polar coordinates, for example, describe disks more naturally than rectangular coordinates. But a small rectangle in the new coordinates may not have the same area after it is mapped into the original coordinates.</p><p>The Jacobian determinant supplies the correction factor. Its absolute value measures how much tiny area or volume is scaled by the transformation. Multiplying by that factor ensures the integral accumulates the right amount in the original space. This same idea is central in normalizing flows, where density changes are tracked through invertible maps.</p>",
+    "definition": "<p>A tiny box $dx\\,dy$ maps to a parallelogram of area $|\\det J|\\,du\\,dv$ (the Jacobian columns are its edges) ⇒ $\\iint f\\,dA=\\iint (f\\circ g)\\,|\\det J|\\,du\\,dv$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Use polar coordinates to compute the area of a disk of radius $3$.",
       "skills": [
@@ -6706,34 +7465,34 @@
     ],
     "applications": [
       {
-        "title": "Probability over regions",
-        "background": "Continuous probability models integrate density over a region to get probability.",
-        "numbers": "Uniform density $1/6$ on a $2\\times3$ rectangle integrates to $(1/6)6=1$."
+        "title": "Normalizing flows",
+        "background": "$p_x(x)=p_z(z)\\,|\\det \\partial z/\\partial x|$",
+        "numbers": "Normalizing flows: $p_x(x)=p_z(z)\\,|\\det \\partial z/\\partial x|$"
       },
       {
-        "title": "Computer vision regions",
-        "background": "Vision systems sum or average intensity over image patches and volumes.",
-        "numbers": "A patch with total integral $3000$ over area $20$ has average intensity $150$."
+        "title": "Polar/spherical integration",
+        "background": "Polar/spherical integration",
+        "numbers": "Polar/spherical integration"
       },
       {
-        "title": "Mass from density",
-        "background": "Physics computes mass by accumulating density over area or volume.",
-        "numbers": "Density $4$ kg/m$^3$ over volume $6$ m$^3$ gives mass $24$ kg."
+        "title": "Reparameterization",
+        "background": "Reparameterization $z=\\mu+\\sigma\\epsilon$",
+        "numbers": "Reparameterization $z=\\mu+\\sigma\\epsilon$"
       },
       {
-        "title": "Expected values",
-        "background": "Statistics integrates value times density to compute averages.",
-        "numbers": "For uniform $x$ on $[0,2]$, $\\int_0^2 x(1/2)\\,dx=1$."
+        "title": "Gaussian integral via polar",
+        "background": "Gaussian integral via polar",
+        "numbers": "Gaussian integral via polar"
       },
       {
-        "title": "Rendering",
-        "background": "Graphics integrates light over pixels, surfaces, or volumes.",
-        "numbers": "Constant radiance $0.8$ over area $0.25$ contributes $0.2$."
+        "title": "Whitening transform",
+        "background": "Whitening transform",
+        "numbers": "Whitening transform"
       },
       {
-        "title": "Density transformations",
-        "background": "Change of variables preserves total probability after stretching coordinates.",
-        "numbers": "If a map doubles area, density is multiplied by $1/2$ so mass stays $1$."
+        "title": "Polar Jacobian",
+        "background": "Polar Jacobian $=r$; area of unit disk $=\\int_0^{2\\pi}\\!\\!\\int_0^1 r\\,dr\\,d\\theta=\\pi$",
+        "numbers": "Polar Jacobian $=r$; area of unit disk $=\\int_0^{2\\pi}\\!\\!\\int_0^1 r\\,dr\\,d\\theta=\\pi$"
       }
     ],
     "applicationsClose": "The same pattern appears under many names: local change, curvature, constrained motion, and accumulated mass are all ways to turn geometry into numbers.",
@@ -6741,6 +7500,29 @@
       "Always include the Jacobian scale factor.",
       "Work one derivative, matrix entry, equation, or bound at a time.",
       "Check every numerical result with signs and units."
+    ],
+    "connectionsProse": "<p>This lesson connects integration with coordinate transformations. You already have the Jacobian as the local linear map of a transformation. When coordinates change, small areas or volumes are stretched by the determinant of that map. The change-of-variables formula accounts for that stretch so integrals keep the same total meaning.</p>",
+    "symbols": [
+      {
+        "sym": "$J=\\partial(x,y)/\\partial(u,v)$",
+        "desc": "as named in the plan"
+      },
+      {
+        "sym": "$|\\det J|$",
+        "desc": "area scale"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "A tiny box $dx\\,dy$ maps to a parallelogram of area $|\\det J|\\,du\\,dv$ (the Jacobian columns are its edges)",
+        "result": "A tiny box $dx\\,dy$ maps to a parallelogram of area $|\\det J|\\,du\\,dv$ (the Jacobian columns are its edges)",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "$\\iint f\\,dA=\\iint (f\\circ g)\\,|\\det J|\\,du\\,dv$",
+        "result": "$\\iint f\\,dA=\\iint (f\\circ g)\\,|\\det J|\\,du\\,dv$",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-27"
@@ -6769,8 +7551,8 @@
         "multivariable integration"
       ]
     },
-    "motivation": "<p>You already know that the determinant of a matrix measures how a linear map scales area. A smooth nonlinear map is not linear everywhere, but if you zoom in near one point, it looks almost linear.</p><p>The <b>Jacobian determinant</b> is the determinant of that local linear map. It is the conversion factor that keeps area and volume honest when coordinates are renamed.</p>",
-    "definition": "<p>For a map $T(u,v)=(x(u,v),y(u,v))$, the <b>Jacobian matrix</b> is $$J_T=\\begin{bmatrix}\\dfrac{\\partial x}{\\partial u}&\\dfrac{\\partial x}{\\partial v}\\\\\\dfrac{\\partial y}{\\partial u}&\\dfrac{\\partial y}{\\partial v}\\end{bmatrix}.$$ Its determinant $$\\dfrac{\\partial(x,y)}{\\partial(u,v)}=\\det J_T=x_u y_v-x_v y_u$$ is the signed local area scale. The derivation is the determinant idea applied to the two tiny displacement vectors $T_u\\,du$ and $T_v\\,dv$ that span the image of a tiny coordinate rectangle.</p><p><b>Assumptions that matter:</b> the coordinate map should be differentiable, the determinant should not vanish on the region except possibly boundaries, and integrals use $|\\det J_T|$ because area and volume are nonnegative.</p>",
+    "motivation": "<p>Near a point, a smooth transformation behaves almost like its Jacobian matrix. The columns of that matrix show where the coordinate basis directions are sent. In two dimensions, those image vectors span a small parallelogram; in three dimensions, they span a small parallelepiped.</p><p>The determinant measures the signed area or volume scale of that linear image. Its absolute value tells how much size changes, while its sign records whether orientation is preserved or flipped. If the determinant is zero, the transformation collapses local area or volume, so it cannot be locally invertible in the usual smooth way. This is why the determinant carries both geometric and analytic information.</p>",
+    "definition": "<p>1. Near a point, a map $F$ acts like its Jacobian $J$ (from `02-18`). 2. $J$ sends the unit square's edge vectors to the columns of $J$. 3. The area of the parallelogram they span is $|\\det J|$ — the geometric meaning of a $2\\times2$ determinant. 4. So a small region of area $dA$ maps to one of area $|\\det J|\\,dA$. 5. The sign of $\\det J$ is positive if the edge vectors keep their orientation and negative if they flip.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Find the Jacobian determinant for $x=2u+v$, $y=u-3v$, and compute the area of the image of a $4$ by $5$ rectangle in the $uv$-plane.",
       "skills": [
@@ -7004,34 +7786,34 @@
     ],
     "applications": [
       {
-        "title": "Changing variables in a double integral",
-        "background": "Coordinate changes turn awkward regions into simple rectangles, but the area element must be rescaled.",
-        "numbers": "For $x=2u$, $y=3v$, $|\\det J|=6$, so a $1$ by $4$ rectangle in $uv$ has image area $6\\cdot4=24$."
+        "title": "Change-of-variables area factor",
+        "background": "Change-of-variables area factor (used in `02-28`)",
+        "numbers": "Change-of-variables area factor (used in `02-28`)"
       },
       {
-        "title": "Polar area elements",
-        "background": "Polar coordinates spread points farther apart as radius grows, which is why rings have more area than tiny central wedges.",
-        "numbers": "At $r=5$, a small box $dr=0.2$, $d\\theta=0.1$ has area about $5\\cdot0.2\\cdot0.1=0.1$."
+        "title": "Normalizing-flow log-density adds",
+        "background": "Normalizing-flow log-density adds $\\log|\\det J|$",
+        "numbers": "Normalizing-flow log-density adds $\\log|\\det J|$"
       },
       {
-        "title": "Normalizing flows",
-        "background": "Flow models learn invertible maps and adjust density by local volume expansion.",
-        "numbers": "If $|\\det J|=0.25$ and base density is $0.08$, transformed density is $0.08/0.25=0.32$."
+        "title": "Invertibility of a layer requires",
+        "background": "Invertibility of a layer requires $\\det J\\neq0$",
+        "numbers": "Invertibility of a layer requires $\\det J\\neq0$"
       },
       {
-        "title": "Image warping",
-        "background": "Computer vision warps images for alignment; the Jacobian says whether pixels are magnified or compressed.",
-        "numbers": "A local matrix $\\begin{bmatrix}2&0\\\\0&0.5\\end{bmatrix}$ has determinant $1$, so a $10$ pixel patch keeps area $10$."
+        "title": "For",
+        "background": "For $F=(x^2y,x+y)$, $\\det J(1,2)=3$ so areas triple near $(1,2)$",
+        "numbers": "For $F=(x^2y,x+y)$, $\\det J(1,2)=3$ so areas triple near $(1,2)$"
       },
       {
-        "title": "Robotics workspace maps",
-        "background": "Joint angles map to end-effector positions; the Jacobian determinant measures local reachability.",
-        "numbers": "A local determinant $0.03$ means a joint-space area $0.2$ maps to about $0.006$ square meters of workspace area."
+        "title": "A rotation has",
+        "background": "A rotation has $\\det J=1$ (area-preserving)",
+        "numbers": "A rotation has $\\det J=1$ (area-preserving)"
       },
       {
-        "title": "Uncertainty propagation",
-        "background": "Small covariance ellipses transform through nonlinear maps using the local Jacobian.",
-        "numbers": "If a two-dimensional uncertainty area is $0.04$ and $|\\det J|=3$, the image area is about $0.12$."
+        "title": "A reflection has",
+        "background": "A reflection has $\\det J=-1$ (orientation flipped)",
+        "numbers": "A reflection has $\\det J=-1$ (orientation flipped)"
       }
     ],
     "applicationsClose": "The same determinant idea keeps appearing: zoom in, read the local linear stretch, and scale area or density accordingly.",
@@ -7039,6 +7821,48 @@
       "The Jacobian matrix collects first partial derivatives of a coordinate map.",
       "Its determinant is signed local area or volume scale.",
       "Change-of-variable integrals use the absolute value of the determinant."
+    ],
+    "connectionsProse": "<p>This lesson isolates the area-scaling part of the change-of-variables formula. You already know the Jacobian matrix gives the local linear approximation to a transformation. The determinant of that matrix tells how the local grid cell changes in size and orientation. This makes it essential for invertibility, coordinate changes, and density transformations.</p>",
+    "symbols": [
+      {
+        "sym": "$J=\\partial(x,y)/\\partial(u,v)$",
+        "desc": "Jacobian matrix"
+      },
+      {
+        "sym": "$\\det J$",
+        "desc": "its determinant"
+      },
+      {
+        "sym": "$|\\det J|$",
+        "desc": "area/volume scale"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Near a point, a map $F$ acts like its Jacobian $J$ (from `02-18`)",
+        "result": "Near a point, a map $F$ acts like its Jacobian $J$ (from `02-18`)",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "$J$ sends the unit square's edge vectors to the columns of $J$",
+        "result": "$J$ sends the unit square's edge vectors to the columns of $J$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "The area of the parallelogram they span is $|\\det J|$ — the geometric meaning of a $2\\times2$ determinant",
+        "result": "The area of the parallelogram they span is $|\\det J|$ — the geometric meaning of a $2\\times2$ determinant",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "So a small region of area $dA$ maps to one of area $|\\det J|\\,dA$",
+        "result": "So a small region of area $dA$ maps to one of area $|\\det J|\\,dA$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "The sign of $\\det J$ is positive if the edge vectors keep their orientation and negative if they flip",
+        "result": "The sign of $\\det J$ is positive if the edge vectors keep their orientation and negative if they flip",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-28"
@@ -7067,8 +7891,8 @@
         "triple integrals"
       ]
     },
-    "motivation": "<p>You already know how polar coordinates describe a point in a flat disk using radius and angle. If the object also has height, keep the same radius and angle and simply add $z$.</p><p>That is cylindrical coordinates. They make cans, pipes, circular sensors, and axis-symmetric fields feel natural instead of algebraically heavy.</p>",
-    "definition": "<p><b>Cylindrical coordinates</b> write a point as $(r,\\theta,z)$ with $$x=r\\cos\\theta,\\qquad y=r\\sin\\theta,\\qquad z=z.$$ Here $r\\ge0$ is distance from the $z$-axis, $\\theta$ is angle in the $xy$-plane, and $z$ is ordinary height. The volume element is $$dV=r\\,dr\\,d\\theta\\,dz$$ because the $xy$ part has polar Jacobian $r$ and the height direction has scale $1$.</p><p><b>Assumptions that matter:</b> describe angles consistently, include the factor $r$ in every integral, and choose cylindrical coordinates mainly when the region or integrand has circular symmetry around an axis.</p>",
+    "motivation": "<p>A point in cylindrical coordinates is described by a radius from the central axis, an angle around that axis, and a height. This matches cylinders, pipes, rotating flows, and many axially symmetric regions. Instead of describing a round object with awkward rectangular bounds, the coordinate system follows the shape.</p><p>The volume element includes the same radius factor that appears in polar area. As the radius grows, a small change in angle sweeps a longer arc, so the corresponding patch has larger area. Multiplying the polar area element by height thickness gives the cylindrical volume element. That factor is the main adjustment needed when integrating.</p>",
+    "definition": "<p>1. Use polar coordinates in the plane: $x=r\\cos\\theta$, $y=r\\sin\\theta$, and keep $z$. 2. The planar area element is $r\\,dr\\,d\\theta$ (the polar Jacobian). 3. Multiplying by $dz$ gives the volume element $dV=r\\,dr\\,d\\theta\\,dz$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Find the volume of a cylinder of radius $3$ and height $5$ using cylindrical coordinates.",
       "skills": [
@@ -7277,34 +8101,34 @@
     ],
     "applications": [
       {
-        "title": "Pipe and tank volumes",
-        "background": "Engineering designs cylindrical containers because circular cross-sections distribute stress well.",
-        "numbers": "A tank with radius $2$ m and height $6$ m has volume $\\pi\\cdot2^2\\cdot6=24\\pi\\approx75.4$ m$^3$."
+        "title": "A cylinder of radius",
+        "background": "A cylinder of radius $1$, height $2$ has volume $\\int_0^2\\!\\int_0^{2\\pi}\\!\\int_0^1 r\\,dr\\,d\\theta\\,dz=2\\pi$",
+        "numbers": "A cylinder of radius $1$, height $2$ has volume $\\int_0^2\\!\\int_0^{2\\pi}\\!\\int_0^1 r\\,dr\\,d\\theta\\,dz=2\\pi$"
       },
       {
-        "title": "LiDAR point bins",
-        "background": "Autonomous systems often bin points by range, angle, and height around the sensor.",
-        "numbers": "A bin near $r=10$ with $\\Delta r=0.5$, $\\Delta\\theta=0.1$, $\\Delta z=2$ has volume about $10\\cdot0.5\\cdot0.1\\cdot2=1$."
+        "title": "Axially-symmetric density integration",
+        "background": "Axially-symmetric density integration",
+        "numbers": "Axially-symmetric density integration"
       },
       {
-        "title": "Rotationally symmetric densities",
-        "background": "Some probability models depend only on distance from an axis, so cylindrical coordinates remove angular clutter.",
-        "numbers": "For density $0.01$ in a cylinder radius $5$, height $4$, mass is $0.01\\pi25\\cdot4=\\pi\\approx3.14$."
+        "title": "3-D histogram bins around an",
+        "background": "3-D histogram bins around an axis",
+        "numbers": "3-D histogram bins around an axis"
       },
       {
-        "title": "Graphics and game worlds",
-        "background": "Cylindrical coordinates make orbiting cameras and radial effects easy to parameterize.",
-        "numbers": "At radius $8$, changing angle by $0.05$ rad moves about $8\\cdot0.05=0.4$ units along the arc."
+        "title": "CT/MRI reconstruction geometry",
+        "background": "CT/MRI reconstruction geometry",
+        "numbers": "CT/MRI reconstruction geometry"
       },
       {
-        "title": "Magnetic fields around wires",
-        "background": "Fields around a long straight wire are naturally described by radius from the wire and angle around it.",
-        "numbers": "A field proportional to $1/r$ has strength $10$ at $r=0.2$ if the constant is $2$, since $2/0.2=10$."
+        "title": "Rotational-flow fields",
+        "background": "Rotational-flow fields",
+        "numbers": "Rotational-flow fields"
       },
       {
-        "title": "Convolution kernels with radial symmetry",
-        "background": "Vision filters sometimes depend on radial distance from a center pixel rather than separate $x$ and $y$.",
-        "numbers": "A ring from $r=2$ to $r=3$ has area $\\pi(9-4)=5\\pi\\approx15.7$ pixels squared."
+        "title": "Pipe/annulus volumes",
+        "background": "Pipe/annulus volumes",
+        "numbers": "Pipe/annulus volumes"
       }
     ],
     "applicationsClose": "Whenever a problem is built around an axis, cylindrical coordinates trade awkward rectangles for radius, angle, and height.",
@@ -7312,6 +8136,42 @@
       "Cylindrical coordinates are $(r,\\theta,z)$ with $x=r\\cos\\theta$ and $y=r\\sin\\theta$.",
       "The volume element is $r\\,dr\\,d\\theta\\,dz$.",
       "Use them for circular or axis-symmetric regions in three dimensions."
+    ],
+    "connectionsProse": "<p>This lesson introduces coordinates adapted to an axis. You already know polar coordinates for the plane. Cylindrical coordinates keep that polar description in the horizontal plane and add an ordinary height coordinate. They are useful whenever the geometry repeats around an axis.</p>",
+    "symbols": [
+      {
+        "sym": "$r$",
+        "desc": "radius from the axis"
+      },
+      {
+        "sym": "$\\theta$",
+        "desc": "angle"
+      },
+      {
+        "sym": "$z$",
+        "desc": "height"
+      },
+      {
+        "sym": "$dV$",
+        "desc": "volume element"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Use polar coordinates in the plane",
+        "result": "$x=r\\cos\\theta$, $y=r\\sin\\theta$, and keep $z$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "The planar area element is $r\\,dr\\,d\\theta$ (the polar Jacobian)",
+        "result": "The planar area element is $r\\,dr\\,d\\theta$ (the polar Jacobian)",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Multiplying by $dz$ gives the volume element $dV=r\\,dr\\,d\\theta\\,dz$",
+        "result": "Multiplying by $dz$ gives the volume element $dV=r\\,dr\\,d\\theta\\,dz$",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-29"
@@ -7340,8 +8200,8 @@
         "solid angle"
       ]
     },
-    "motivation": "<p>You already know that a point in space has a distance from the origin. For a ball, shell, cone, or radiation pattern, that distance is often the main character.</p><p><b>Spherical coordinates</b> make the radius explicit. The two angles say where on the sphere you are looking, and the Jacobian accounts for the fact that larger spheres have larger shells.</p>",
-    "definition": "<p>Use $(\\rho,\\phi,\\theta)$ with $$x=\\rho\\sin\\phi\\cos\\theta,\\qquad y=\\rho\\sin\\phi\\sin\\theta,\\qquad z=\\rho\\cos\\phi.$$ Here $\\rho\\ge0$ is distance from the origin, $0\\le\\phi\\le\\pi$ is angle down from the positive $z$-axis, and $0\\le\\theta<2\\pi$ is the usual angle in the $xy$-plane. The volume element is $$dV=\\rho^2\\sin\\phi\\,d\\rho\\,d\\phi\\,d\\theta.$$ One factor $\\rho$ comes from arc length in the $\\phi$ direction, another $\\rho\\sin\\phi$ from arc length around the horizontal circle.</p><p><b>Assumptions that matter:</b> different fields use different angle conventions, so define $\\phi$ and $\\theta$ before computing; include $\\rho^2\\sin\\phi$; and use spherical coordinates when radial distance or spherical boundaries simplify the region.</p>",
+    "motivation": "<p>A point in spherical coordinates is located by first choosing a radius, then choosing a direction using two angles. This is natural for problems where distance from the origin matters more than separate $x$, $y$, and $z$ coordinates. Balls and isotropic distributions become much easier to describe.</p><p>The volume element has two geometric factors. The $r^2$ factor reflects that spherical shells have area growing like radius squared. The $\\sin\\phi$ factor reflects that circles of constant polar angle are smaller near the poles. Together these factors make sure integration in spherical coordinates counts actual volume correctly.</p>",
+    "definition": "<p>1. Write $x=r\\sin\\phi\\cos\\theta$, $y=r\\sin\\phi\\sin\\theta$, $z=r\\cos\\phi$. 2. Compute the Jacobian determinant of this map. 3. It equals $r^2\\sin\\phi$, so $dV=r^2\\sin\\phi\\,dr\\,d\\phi\\,d\\theta$; the $r^2$ is why volume grows fast with radius and $\\sin\\phi$ accounts for shrinking longitude circles near the poles.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Use spherical coordinates to find the volume of a ball of radius $2$.",
       "skills": [
@@ -7555,34 +8415,34 @@
     ],
     "applications": [
       {
-        "title": "Volume of balls and shells",
-        "background": "Physics and geometry use spherical shells because radius is the natural variable around a center.",
-        "numbers": "A shell from $\\rho=4$ to $\\rho=5$ has volume $\\frac{4\\pi}{3}(125-64)=\\frac{244\\pi}{3}\\approx255.5$."
+        "title": "Unit-ball volume",
+        "background": "Unit-ball volume $\\int_0^{2\\pi}\\!\\int_0^{\\pi}\\!\\int_0^1 r^2\\sin\\phi\\,dr\\,d\\phi\\,d\\theta=\\tfrac43\\pi\\approx4.19$",
+        "numbers": "Unit-ball volume $\\int_0^{2\\pi}\\!\\int_0^{\\pi}\\!\\int_0^1 r^2\\sin\\phi\\,dr\\,d\\phi\\,d\\theta=\\tfrac43\\pi\\approx4.19$"
       },
       {
-        "title": "Radial probability densities",
-        "background": "Isotropic models assign equal behavior in all directions, so only radius matters after integrating angles.",
-        "numbers": "A constant density $0.01$ inside radius $2$ has total mass $0.01\\cdot32\\pi/3\\approx0.335$."
+        "title": "Normalizing a 3-D isotropic Gaussian",
+        "background": "Normalizing a 3-D isotropic Gaussian",
+        "numbers": "Normalizing a 3-D isotropic Gaussian"
       },
       {
-        "title": "3-D vision range bins",
-        "background": "Depth sensors often organize returns by range and viewing angles.",
-        "numbers": "At $\\rho=20$ and $\\phi=\\pi/2$, a bin with widths $0.5$, $0.02$, $0.03$ has volume about $400\\cdot1\\cdot0.5\\cdot0.02\\cdot0.03=0.12$."
+        "title": "Solid-angle integrals",
+        "background": "Solid-angle integrals",
+        "numbers": "Solid-angle integrals"
       },
       {
-        "title": "Radiation falloff",
-        "background": "Energy from a point source spreads over spherical area, explaining inverse-square laws.",
-        "numbers": "A sphere of radius $10$ has area $4\\pi100=400\\pi$, so power $1000$ spreads to intensity $1000/(400\\pi)\\approx0.796$."
+        "title": "Direction embeddings on the sphere",
+        "background": "Direction embeddings on the sphere $S^2$",
+        "numbers": "Direction embeddings on the sphere $S^2$"
       },
       {
-        "title": "Spherical embeddings",
-        "background": "Some ML embeddings normalize vectors to a sphere so direction matters more than length.",
-        "numbers": "Vector $(3,4,0)$ normalizes to $(0.6,0.8,0)$ because its radius is $5$."
+        "title": "Radial basis functions",
+        "background": "Radial basis functions",
+        "numbers": "Radial basis functions"
       },
       {
-        "title": "Volumetric rendering",
-        "background": "Rendering rays sample density through spherical or radial volumes when scenes are centered around cameras or objects.",
-        "numbers": "A radial density $0.2$ over shell volume $12$ contributes mass $0.2\\cdot12=2.4$."
+        "title": "Gravitational/Coulomb potentials",
+        "background": "Gravitational/Coulomb potentials",
+        "numbers": "Gravitational/Coulomb potentials"
       }
     ],
     "applicationsClose": "Spherical coordinates turn center-out geometry into direct radius and angle accounting.",
@@ -7590,6 +8450,42 @@
       "Spherical coordinates use radius $\\rho$, polar angle $\\phi$, and azimuth $\\theta$.",
       "The volume element is $\\rho^2\\sin\\phi\\,d\\rho\\,d\\phi\\,d\\theta$.",
       "They shine for balls, shells, cones, and radially symmetric functions."
+    ],
+    "connectionsProse": "<p>This lesson introduces coordinates adapted to a center. You already know cylindrical coordinates for axis symmetry. Spherical coordinates describe position by distance from the origin and two angles, which fits balls, shells, radial densities, and directions on a sphere. The volume element records how shells grow with radius and how latitude circles shrink near the poles.</p>",
+    "symbols": [
+      {
+        "sym": "$r$",
+        "desc": "radius"
+      },
+      {
+        "sym": "$\\phi$",
+        "desc": "polar angle from the $z$-axis"
+      },
+      {
+        "sym": "$\\theta$",
+        "desc": "azimuth"
+      },
+      {
+        "sym": "$dV$",
+        "desc": "volume element"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write $x=r\\sin\\phi\\cos\\theta$, $y=r\\sin\\phi\\sin\\theta$, $z=r\\cos\\phi$",
+        "result": "Write $x=r\\sin\\phi\\cos\\theta$, $y=r\\sin\\phi\\sin\\theta$, $z=r\\cos\\phi$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Compute the Jacobian determinant of this map",
+        "result": "Compute the Jacobian determinant of this map",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "It equals $r^2\\sin\\phi$, so $dV=r^2\\sin\\phi\\,dr\\,d\\phi\\,d\\theta$; the $r^2$ is why volume grows fast with radius and $\\sin\\phi$ accounts for shrinking longitude circles near the poles",
+        "result": "It equals $r^2\\sin\\phi$, so $dV=r^2\\sin\\phi\\,dr\\,d\\phi\\,d\\theta$; the $r^2$ is why volume grows fast with radius and $\\sin\\phi$ accounts for shrinking longitude circles near the poles",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-30"
@@ -7619,8 +8515,8 @@
         "differential operators"
       ]
     },
-    "motivation": "<p>You already use single vectors to describe a push, velocity, or step. But wind, fluid flow, and gradients change from place to place.</p><p>A <b>vector field</b> is the moving map: at each point, it tells which way something points and how strongly. Once you can read the field, divergence, curl, line integrals, and flux become natural measurements of it.</p>",
-    "definition": "<p>A vector field in the plane is a function $$\\mathbf F(x,y)=\\langle P(x,y),Q(x,y)\\rangle,$$ where $P$ is the horizontal component and $Q$ is the vertical component. In space, $$\\mathbf F(x,y,z)=\\langle P,Q,R\\rangle.$$ A gradient field has the special form $\\nabla f=\\langle f_x,f_y\\rangle$ or $\\langle f_x,f_y,f_z\\rangle$, so its vectors point in the direction of fastest increase of $f$.</p><p><b>Assumptions that matter:</b> know the domain where the field is defined, track component order, and remember that vectors are attached to points even when the same arrow shape appears elsewhere.</p>",
+    "motivation": "<p>A vector field can be pictured as an arrow attached to every point in a region. The arrow might show velocity in a fluid, force on a particle, or the direction a loss decreases most rapidly. The important feature is that the vector changes with position.</p><p>There is no theorem to prove in this lesson because the goal is to name and understand the object. Once a field is defined, later operations ask different questions about it: divergence measures spreading, curl measures rotation, and line or surface integrals measure accumulation along paths or across surfaces. The field is the common input to all of those ideas.</p>",
+    "definition": "<p>explain-only — this introduces an object, not a theorem.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "For $\\mathbf F(x,y)=\\langle y,2x\\rangle$, compute the vectors at $(1,3)$ and $(-2,4)$ and their magnitudes.",
       "skills": [
@@ -7824,34 +8720,34 @@
     ],
     "applications": [
       {
-        "title": "Gradient descent fields",
-        "background": "Optimization views every parameter setting as having a direction of steepest loss change.",
-        "numbers": "For $L(w,b)=w^2+2b^2$, $\\nabla L(3,-1)=\\langle6,-4\\rangle$, so descent direction is $\\langle-6,4\\rangle$."
+        "title": "The negative-gradient field",
+        "background": "The negative-gradient field $-\\nabla L$ that gradient descent follows",
+        "numbers": "The negative-gradient field $-\\nabla L$ that gradient descent follows"
       },
       {
-        "title": "Optical flow",
-        "background": "Computer vision estimates a velocity vector at each pixel to describe motion between frames.",
-        "numbers": "A pixel moving $3$ right and $-1$ down has flow vector $\\langle3,-1\\rangle$ and speed $\\sqrt{10}\\approx3.16$."
+        "title": "Fluid velocity fields",
+        "background": "Fluid velocity fields",
+        "numbers": "Fluid velocity fields"
       },
       {
-        "title": "Wind maps",
-        "background": "Weather maps attach wind velocity to each location, exactly the vector-field idea.",
-        "numbers": "A wind vector $\\langle6,8\\rangle$ m/s has speed $10$ m/s."
+        "title": "Electric/force fields",
+        "background": "Electric/force fields",
+        "numbers": "Electric/force fields"
       },
       {
-        "title": "Robotics force fields",
-        "background": "Potential-field planners push robots away from obstacles and toward goals.",
-        "numbers": "At a point, attraction $\\langle4,0\\rangle$ plus repulsion $\\langle-1,2\\rangle$ gives net field $\\langle3,2\\rangle$."
+        "title": "Image gradient fields in vision",
+        "background": "Image gradient fields in vision",
+        "numbers": "Image gradient fields in vision"
       },
       {
-        "title": "Recommendation embedding directions",
-        "background": "A model can assign a vector direction showing how a user embedding should move to reduce loss.",
-        "numbers": "If the update is $\\langle0.03,-0.04\\rangle$, its size is $0.05$, since $0.03^2+0.04^2=0.0025$."
+        "title": "Wind/flow visualization",
+        "background": "Wind/flow visualization",
+        "numbers": "Wind/flow visualization"
       },
       {
-        "title": "Fluid velocity simulation",
-        "background": "Simulators store velocity at grid points and update particles by following those arrows.",
-        "numbers": "Velocity $\\langle2,-0.5\\rangle$ for $0.1$ s moves a particle by $\\langle0.2,-0.05\\rangle$."
+        "title": "The score",
+        "background": "The score $\\nabla_x\\log p(x)$ field in diffusion models",
+        "numbers": "The score $\\nabla_x\\log p(x)$ field in diffusion models"
       }
     ],
     "applicationsClose": "A vector field is the common language for motion, force, gradients, and local directions in data space.",
@@ -7859,6 +8755,17 @@
       "A vector field assigns a vector to each point in a domain.",
       "Components are ordinary scalar functions evaluated at the point.",
       "Gradient fields are vector fields built from partial derivatives of a scalar function."
+    ],
+    "connectionsProse": "<p>This lesson introduces the object that divergence, curl, and line integrals act on. You already know scalar functions assign one number to each point. A vector field assigns a whole vector to each point instead. That lets calculus describe flows, forces, gradients, and directions that vary across space.</p>",
+    "symbols": [
+      {
+        "sym": "$F(x,y)=\\langle P,Q\\rangle$",
+        "desc": "or $F(x,y,z)=\\langle P,Q,R\\rangle$"
+      },
+      {
+        "sym": "each",
+        "desc": "component is a scalar function of position"
+      }
     ],
     "prereqs": [
       "math-02-31"
@@ -7887,8 +8794,8 @@
         "flow fields"
       ]
     },
-    "motivation": "<p>Imagine tiny dust particles near a point in a flow. If they spread apart, the point acts like a source. If they squeeze together, it acts like a sink.</p><p><b>Divergence</b> turns that visual instinct into a number: positive means net outward expansion, negative means net inward compression, and zero means locally volume-preserving.</p>",
-    "definition": "<p>For a three-dimensional vector field $\\mathbf F=\\langle P,Q,R\\rangle$, the <b>divergence</b> is $$\\nabla\\cdot\\mathbf F=\\dfrac{\\partial P}{\\partial x}+\\dfrac{\\partial Q}{\\partial y}+\\dfrac{\\partial R}{\\partial z}.$$ In two dimensions, use $P_x+Q_y$. The formula comes from measuring net outward flow through the sides of a tiny box; the right face minus left face contributes $P_x\\,\\Delta x\\Delta y\\Delta z$, and the other directions add the matching partial derivatives.</p><p><b>Assumptions that matter:</b> components should have the needed partial derivatives near the point, and divergence is local; it describes infinitesimal source strength, not the full global flow by itself.</p>",
+    "motivation": "<p>Imagine a tiny box around a point in a vector field. If more flow leaves the box than enters it, the point behaves like a source. If more enters than leaves, it behaves like a sink. Divergence measures that net outward flow per unit volume.</p><p>The formula adds the coordinate-wise rates at which each field component expands in its own direction. Positive divergence indicates local spreading; negative divergence indicates local compression; zero divergence indicates incompressible behavior at that point. This local quantity becomes global through the divergence theorem and appears throughout PDEs and flow models.</p>",
+    "definition": "<p>1. Consider flux out of a tiny box around a point. 2. The net outflow in the $x$-direction is $\\partial P/\\partial x$ times the box volume, and similarly for $y,z$. 3. Summing and dividing by the volume gives $\\nabla\\!\\cdot\\!F=\\partial P/\\partial x+\\partial Q/\\partial y+\\partial R/\\partial z$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Compute the divergence of $\\mathbf F(x,y,z)=\\langle x^2y,3yz,z^2\\rangle$ at $(2,1,3)$.",
       "skills": [
@@ -8097,34 +9004,34 @@
     ],
     "applications": [
       {
-        "title": "Fluid source detection",
-        "background": "Engineers use divergence to locate where fluid is being added or removed from a flow.",
-        "numbers": "For $\\mathbf v=\\langle0.2x,0.1y,0.3z\\rangle$, divergence is $0.6$, so a $2$ m$^3$ small volume expands at about $1.2$ m$^3$/s."
+        "title": "Fokker–Planck probability-flow term",
+        "background": "Fokker–Planck probability-flow term",
+        "numbers": "Fokker–Planck probability-flow term"
       },
       {
-        "title": "Incompressible simulation",
-        "background": "Many graphics solvers enforce nearly zero divergence so water does not visibly gain or lose volume.",
-        "numbers": "If grid derivatives are $0.7$, $-0.4$, and $-0.3$, their sum is $0$, so the cell is locally incompressible."
+        "title": "Continuity equation",
+        "background": "Continuity equation (mass conservation)",
+        "numbers": "Continuity equation (mass conservation)"
       },
       {
-        "title": "Probability flow models",
-        "background": "Continuous normalizing flows track density changes through the divergence of a velocity field.",
-        "numbers": "If divergence is $-0.5$ for $2$ seconds, log density changes by about $-\\int \\nabla\\cdot v\\,dt=1.0$."
+        "title": "Application 3",
+        "background": "$\\nabla\\!\\cdot\\!\\nabla f=\\Delta f$ the Laplacian",
+        "numbers": "$\\nabla\\!\\cdot\\!\\nabla f=\\Delta f$ the Laplacian"
       },
       {
-        "title": "Crowd motion",
-        "background": "Crowd analytics can use divergence to tell whether people are dispersing or bottlenecking.",
-        "numbers": "A local field with $P_x=-0.2$ and $Q_y=-0.4$ has divergence $-0.6$, indicating compression."
+        "title": "For",
+        "background": "For $F=(x^2,xy,z)$, $\\nabla\\!\\cdot\\!F=3x+1$, at $(1,1,1)$ equals $4$",
+        "numbers": "For $F=(x^2,xy,z)$, $\\nabla\\!\\cdot\\!F=3x+1$, at $(1,1,1)$ equals $4$"
       },
       {
-        "title": "Heat and diffusion intuition",
-        "background": "The Laplacian is divergence of the gradient, measuring net outflow of a gradient field.",
-        "numbers": "For $f=x^2+y^2$, $\\nabla f=\\langle2x,2y\\rangle$ and $\\nabla\\cdot\\nabla f=4$."
+        "title": "Source/sink detection in flows",
+        "background": "Source/sink detection in flows",
+        "numbers": "Source/sink detection in flows"
       },
       {
-        "title": "Robotics formation control",
-        "background": "A vector field can spread robots out or bring them together; divergence quantifies that tendency.",
-        "numbers": "Field $\\langle-x,-y\\rangle$ has divergence $-2$, so nearby agents are pulled inward."
+        "title": "Incompressible fields have",
+        "background": "Incompressible fields have $\\nabla\\!\\cdot\\!F=0$",
+        "numbers": "Incompressible fields have $\\nabla\\!\\cdot\\!F=0$"
       }
     ],
     "applicationsClose": "Divergence is a small local sum with a big interpretation: expansion, compression, or conservation.",
@@ -8132,6 +9039,34 @@
       "Divergence sums the matching partial derivatives of a vector field.",
       "Positive divergence means local source-like expansion; negative means sink-like compression.",
       "Zero divergence often signals volume-preserving or incompressible flow."
+    ],
+    "connectionsProse": "<p>This lesson studies one of the two basic local measurements of a vector field. You already know a vector field assigns a vector to each point. Divergence asks whether the field is locally flowing outward, inward, or neither. It connects vector calculus to conservation laws, probability flow, and the Laplacian.</p>",
+    "symbols": [
+      {
+        "sym": "$\\nabla\\!\\cdot\\!F$",
+        "desc": "divergence (a scalar)"
+      },
+      {
+        "sym": "$P,Q,R$",
+        "desc": "field components"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Consider flux out of a tiny box around a point",
+        "result": "Consider flux out of a tiny box around a point",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "The net outflow in the $x$-direction is $\\partial P/\\partial x$ times the box volume, and similarly for $y,z$",
+        "result": "The net outflow in the $x$-direction is $\\partial P/\\partial x$ times the box volume, and similarly for $y,z$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Summing and dividing by the volume gives $\\nabla\\!\\cdot\\!F=\\partial P/\\partial x+\\partial Q/\\partial y+\\partial R/\\partial z$",
+        "result": "Summing and dividing by the volume gives $\\nabla\\!\\cdot\\!F=\\partial P/\\partial x+\\partial Q/\\partial y+\\partial R/\\partial z$",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-32"
@@ -8160,8 +9095,8 @@
         "rotational flow"
       ]
     },
-    "motivation": "<p>Divergence asks whether flow spreads out. Another question is just as natural: does the flow make a tiny paddle wheel spin?</p><p><b>Curl</b> measures local rotation. In the plane it gives a single signed number; in space it gives a vector whose direction is the rotation axis and whose magnitude measures spin strength.</p>",
-    "definition": "<p>For $\\mathbf F=\\langle P,Q,R\\rangle$, the <b>curl</b> is $$\\nabla\\times\\mathbf F=\\left\\langle R_y-Q_z,\\;P_z-R_x,\\;Q_x-P_y\\right\\rangle.$$ In two dimensions, the scalar curl is $Q_x-P_y$, the $z$-component of the three-dimensional curl of $\\langle P,Q,0\\rangle$. The formula comes from comparing circulation around the tiny coordinate rectangles perpendicular to each axis.</p><p><b>Assumptions that matter:</b> the relevant partial derivatives should exist and be continuous nearby; the sign depends on orientation; and zero curl on a simply connected region is the test that often leads to a potential function.</p>",
+    "motivation": "<p>A vector field can move around a point in a way that tends to spin a tiny paddle wheel. Curl measures that local spinning tendency. In three dimensions, rotation can happen around different axes, so curl is itself a vector whose direction gives the axis of rotation.</p><p>The components of curl come from circulation in the coordinate planes. Each component compares how one field component changes across the perpendicular coordinate with how the other component changes back. When these imbalances are nonzero, the field has local rotational structure. When curl vanishes on a suitable region, the field may come from a potential function.</p>",
+    "definition": "<p>1. Measure circulation around a tiny loop in each coordinate plane. 2. Circulation per unit area in the $xy$-plane is $\\partial Q/\\partial x-\\partial P/\\partial y$. 3. Stacking the three plane components gives $\\nabla\\times F=\\langle R_y-Q_z,\\,P_z-R_x,\\,Q_x-P_y\\rangle$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Compute the curl of $\\mathbf F(x,y,z)=\\langle yz,xz,xy\\rangle$.",
       "skills": [
@@ -8380,34 +9315,34 @@
     ],
     "applications": [
       {
+        "title": "Conservative-field test",
+        "background": "$\\nabla\\times F=0$ means a potential exists",
+        "numbers": "Conservative-field test: $\\nabla\\times F=0$ means a potential exists"
+      },
+      {
         "title": "Vorticity in fluids",
-        "background": "Fluid mechanics calls curl of velocity vorticity, a key diagnostic for swirling flow.",
-        "numbers": "For $\\mathbf v=\\langle-2y,2x\\rangle$, scalar curl is $2-(-2)=4$."
+        "background": "Vorticity in fluids",
+        "numbers": "Vorticity in fluids"
       },
       {
-        "title": "Detecting rotation in optical flow",
-        "background": "Video analysis can distinguish expansion from swirl by computing divergence and curl of motion vectors.",
-        "numbers": "If $Q_x=0.7$ and $P_y=-0.4$, curl is $1.1$, a strong counterclockwise signal."
+        "title": "Helmholtz decomposition",
+        "background": "Helmholtz decomposition",
+        "numbers": "Helmholtz decomposition"
       },
       {
-        "title": "Electromagnetism",
-        "background": "Maxwell's equations use curl to relate rotating electric and magnetic fields.",
-        "numbers": "If a magnetic field has $R_y=5$ and $Q_z=2$ in one component, that curl component is $3$."
+        "title": "For",
+        "background": "For $F=(-y,x,0)$, $\\nabla\\times F=(0,0,2)$ — uniform rotation",
+        "numbers": "For $F=(-y,x,0)$, $\\nabla\\times F=(0,0,2)$ — uniform rotation"
       },
       {
-        "title": "Conservative-force checks",
-        "background": "A force field with zero curl on a simple region often comes from potential energy.",
-        "numbers": "For $\\mathbf F=\\langle2x,2y\\rangle$, $Q_x-P_y=0-0=0$, so it is compatible with potential $x^2+y^2$."
+        "title": "Maxwell's equations",
+        "background": "Maxwell's equations",
+        "numbers": "Maxwell's equations"
       },
       {
-        "title": "Robotics navigation",
-        "background": "Curl helps detect circulating vector fields that could make agents orbit instead of reaching a goal.",
-        "numbers": "Field $\\langle-y,x\\rangle$ has curl $2$, so a robot may circle the origin."
-      },
-      {
-        "title": "Weather rotation",
-        "background": "Meteorologists use curl-like vorticity to analyze rotating storms and shear.",
-        "numbers": "Wind derivatives $\\partial v/\\partial x=0.004$ s$^{-1}$ and $\\partial u/\\partial y=-0.001$ s$^{-1}$ give vorticity $0.005$ s$^{-1}$."
+        "title": "Detecting rotational structure in flow",
+        "background": "Detecting rotational structure in flow data",
+        "numbers": "Detecting rotational structure in flow data"
       }
     ],
     "applicationsClose": "Curl is the mathematical paddle wheel: it turns local rotational tendency into components you can compute.",
@@ -8415,6 +9350,34 @@
       "Curl measures local rotation of a vector field.",
       "In two dimensions the scalar curl is $Q_x-P_y$.",
       "Zero curl is a key signal for conservative fields on simple domains."
+    ],
+    "connectionsProse": "<p>This lesson gives the other basic local measurement of a vector field. You already know divergence measures spreading out or compressing in. Curl measures local rotation. It prepares the way for conservative fields, vorticity, Maxwell-type equations, and Stokes' theorem.</p>",
+    "symbols": [
+      {
+        "sym": "$\\nabla\\times F$",
+        "desc": "curl (a vector)"
+      },
+      {
+        "sym": "subscripts",
+        "desc": "denote partial derivatives"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Measure circulation around a tiny loop in each coordinate plane",
+        "result": "Measure circulation around a tiny loop in each coordinate plane",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Circulation per unit area in the $xy$-plane is $\\partial Q/\\partial x-\\partial P/\\partial y$",
+        "result": "Circulation per unit area in the $xy$-plane is $\\partial Q/\\partial x-\\partial P/\\partial y$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Stacking the three plane components gives $\\nabla\\times F=\\langle R_y-Q_z,\\,P_z-R_x,\\,Q_x-P_y\\rangle$",
+        "result": "Stacking the three plane components gives $\\nabla\\times F=\\langle R_y-Q_z,\\,P_z-R_x,\\,Q_x-P_y\\rangle$",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-33"
@@ -8443,8 +9406,8 @@
         "conservative fields"
       ]
     },
-    "motivation": "<p>You already know how to integrate over an interval. But sometimes the path bends through the plane or space, and the quantity you add depends on where the path goes.</p><p>A <b>line integral</b> lets an integral follow a curve. For scalar fields it accumulates weighted length; for vector fields it accumulates work or circulation along the direction of travel.</p>",
-    "definition": "<p>For a scalar field $f$ along a curve $\\mathbf r(t)$, $a\\le t\\le b$, $$\\int_C f\\,ds=\\int_a^b f(\\mathbf r(t))\\,|\\mathbf r'(t)|\\,dt.$$ For a vector field $\\mathbf F$, $$\\int_C \\mathbf F\\cdot d\\mathbf r=\\int_a^b \\mathbf F(\\mathbf r(t))\\cdot\\mathbf r'(t)\\,dt.$$ The factor $|\\mathbf r'(t)|$ converts parameter change into length, while $\\mathbf F\\cdot\\mathbf r'$ keeps only the component of the field along the motion.</p><p><b>Assumptions that matter:</b> the curve should be piecewise smooth, orientation matters for vector line integrals, and the field must be defined on the path.</p>",
+    "motivation": "<p>As a particle moves along a curve, a vector field may help, oppose, or be perpendicular to the motion at each point. The dot product with the small displacement keeps only the component of the field along the path. Adding those components over the whole path gives the line integral.</p><p>Parametrization turns the geometric path into an ordinary integral in one variable. The velocity vector supplies the small displacement direction and scale. For conservative fields, the integral depends only on endpoints; for more general fields, the path itself matters. This distinction becomes important in Green's and Stokes' theorems.</p>",
+    "definition": "<p>1. Break the path into small steps $d\\mathbf r$. 2. Work over each step is $F\\!\\cdot\\!d\\mathbf r$. 3. Parametrize by $t$: $d\\mathbf r=\\mathbf r'(t)\\,dt$. 4. Sum to an integral: $\\int_C F\\!\\cdot\\!d\\mathbf r=\\int_a^b F(\\mathbf r(t))\\!\\cdot\\!\\mathbf r'(t)\\,dt$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Compute $\\int_C \\mathbf F\\cdot d\\mathbf r$ for $\\mathbf F(x,y)=\\langle y,x\\rangle$ along $\\mathbf r(t)=\\langle t,t^2\\rangle$, $0\\le t\\le2$.",
       "skills": [
@@ -8648,34 +9611,34 @@
     ],
     "applications": [
       {
-        "title": "Mechanical work",
-        "background": "Physics defines work as force accumulated along a path, which is exactly a vector line integral.",
-        "numbers": "A constant force $\\langle5,0\\rangle$ over displacement $\\langle3,4\\rangle$ does work $5\\cdot3+0\\cdot4=15$ J."
+        "title": "Work done by a force",
+        "background": "Work done by a force along a path",
+        "numbers": "Work done by a force along a path"
       },
       {
-        "title": "Robot energy along a route",
-        "background": "A robot moving through terrain may pay energy based on location and direction.",
-        "numbers": "If resistance force along a $10$ m path averages $3$ N opposite motion, work cost is about $30$ J."
+        "title": "Path-dependent cost/energy",
+        "background": "Path-dependent cost/energy",
+        "numbers": "Path-dependent cost/energy"
       },
       {
-        "title": "Circulation around loops",
-        "background": "Fluid circulation measures how much a velocity field pushes around a closed curve.",
-        "numbers": "For $\\langle-y,x\\rangle$ around radius $2$, the integral is $2\\pi r^2=8\\pi$."
+        "title": "Circulation",
+        "background": "Circulation $\\oint F\\!\\cdot\\!d\\mathbf r$",
+        "numbers": "Circulation $\\oint F\\!\\cdot\\!d\\mathbf r$"
       },
       {
-        "title": "Path-dependent losses",
-        "background": "Optimization trajectories can accumulate gradient information along their path through parameter space.",
-        "numbers": "A constant gradient $\\langle4,-1\\rangle$ over parameter change $\\langle0.5,2\\rangle$ contributes $2-2=0$."
+        "title": "For conservative",
+        "background": "For conservative $F=(y,x)$ (potential $xy$), work from $(0,0)$ to $(2,3)$ is $6$, independent of path",
+        "numbers": "For conservative $F=(y,x)$ (potential $xy$), work from $(0,0)$ to $(2,3)$ is $6$, independent of path"
       },
       {
-        "title": "Electric potential",
-        "background": "Voltage difference is a line integral of electric field, with sign convention depending on direction.",
-        "numbers": "A field $\\langle10,0\\rangle$ V/m over $0.2$ m in $x$ gives $2$ V of field integral."
+        "title": "Recovering a potential from its",
+        "background": "Recovering a potential from its field",
+        "numbers": "Recovering a potential from its field"
       },
       {
-        "title": "Curve-weighted data summaries",
-        "background": "A scalar line integral can total a quantity sampled along a route, not over an area.",
-        "numbers": "Pollution concentration $6$ units/m along a $1.5$ km route gives total exposure $9$ unit-km."
+        "title": "Arc-length integrals as a special",
+        "background": "Arc-length integrals as a special case",
+        "numbers": "Arc-length integrals as a special case"
       }
     ],
     "applicationsClose": "Line integrals are ordinary accumulation taught to follow a curve and respect direction.",
@@ -8683,6 +9646,43 @@
       "Scalar line integrals use $f(\\mathbf r(t))|\\mathbf r'(t)|$.",
       "Vector line integrals use $\\mathbf F(\\mathbf r(t))\\cdot\\mathbf r'(t)$.",
       "Orientation matters for vector line integrals, especially around loops."
+    ],
+    "connectionsProse": "<p>This lesson combines vector fields with paths. You already know arc length adds scalar contributions along a curve. A line integral of a vector field adds the field's component in the direction of travel. This gives the mathematical form of work, circulation, and path-dependent cost.</p>",
+    "symbols": [
+      {
+        "sym": "$C$",
+        "desc": "path"
+      },
+      {
+        "sym": "$\\mathbf r(t)$",
+        "desc": "parametrization"
+      },
+      {
+        "sym": "$F\\!\\cdot\\!d\\mathbf r$",
+        "desc": "infinitesimal work"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Break the path into small steps $d\\mathbf r$",
+        "result": "Break the path into small steps $d\\mathbf r$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Work over each step is $F\\!\\cdot\\!d\\mathbf r$",
+        "result": "Work over each step is $F\\!\\cdot\\!d\\mathbf r$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Parametrize by $t$",
+        "result": "$d\\mathbf r=\\mathbf r'(t)\\,dt$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "Sum to an integral",
+        "result": "$\\int_C F\\!\\cdot\\!d\\mathbf r=\\int_a^b F(\\mathbf r(t))\\!\\cdot\\!\\mathbf r'(t)\\,dt$",
+        "why": "this names the corresponding formula or conclusion"
+      }
     ],
     "prereqs": [
       "math-02-34"
@@ -8711,8 +9711,8 @@
         "partial derivatives"
       ]
     },
-    "motivation": "<p>A line integral around a closed curve can be hard if the boundary has many pieces. But the boundary surrounds a region, and sometimes the inside tells the same story more simply.</p><p><b>Green's theorem</b> is the two-dimensional bridge: circulation on the edge equals total scalar curl over the area.</p>",
-    "definition": "<p>If $C$ is a positively oriented, piecewise smooth, simple closed curve bounding a region $D$, and $\\mathbf F=\\langle P,Q\\rangle$ has continuous partial derivatives on an open set containing $D$, then $$\\oint_C P\\,dx+Q\\,dy=\\iint_D\\left(\\dfrac{\\partial Q}{\\partial x}-\\dfrac{\\partial P}{\\partial y}\\right)dA.$$ The right side adds the tiny rotations inside $D$; neighboring interior edges cancel, leaving only the outer boundary circulation.</p><p><b>Assumptions that matter:</b> use counterclockwise orientation for the positive sign, split regions with holes carefully, and ensure the field is smooth throughout the region.</p>",
+    "motivation": "<p>A vector field can circulate around the boundary of a region because of rotational behavior inside the region. Green's theorem makes this precise by converting the boundary circulation into an area integral of a curl-like scalar. It lets you compute a boundary quantity from interior information, or the other way around.</p><p>The theorem also explains several practical area formulas. With a carefully chosen field, the line integral around a curve returns the area inside it. More broadly, it shows how local rotation accumulates into total circulation around the boundary. This boundary-interior relationship is one of the central themes of vector calculus.</p>",
+    "definition": "<p>1. State $\\oint_{\\partial R}(P\\,dx+Q\\,dy)=\\iint_R\\big(\\tfrac{\\partial Q}{\\partial x}-\\tfrac{\\partial P}{\\partial y}\\big)\\,dA$. 2. For a vertically simple region, integrate $-\\partial P/\\partial y$ over $y$ and apply the fundamental theorem of calculus to recover the top/bottom boundary pieces of $\\oint P\\,dx$. 3. Do the symmetric argument for $Q$ over $x$. 4. Add the two results to get the full identity.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Use Green's theorem to compute $\\oint_C -y\\,dx+x\\,dy$ where $C$ is the unit circle counterclockwise.",
       "skills": [
@@ -8921,34 +9921,34 @@
     ],
     "applications": [
       {
-        "title": "Fast circulation from vorticity",
-        "background": "Fluid analysts often know curl over a region more easily than velocity on every boundary point.",
-        "numbers": "Constant curl $4$ over area $3$ gives circulation $12$."
+        "title": "Area from boundary",
+        "background": "$\\tfrac12\\oint(x\\,dy-y\\,dx)=\\mathrm{Area}$",
+        "numbers": "Area from boundary: $\\tfrac12\\oint(x\\,dy-y\\,dx)=\\mathrm{Area}$"
       },
       {
-        "title": "Area from boundary samples",
-        "background": "Computational geometry can estimate polygon area by a boundary integral, a Green's theorem idea.",
-        "numbers": "A rectangle traced counterclockwise with sides $5$ and $2$ has area $10$, matching $\\frac12\\oint x\\,dy-y\\,dx$."
+        "title": "For",
+        "background": "For $\\oint(-y\\,dx+x\\,dy)$ on the unit disk the value is $2\\,\\mathrm{Area}=2\\pi$",
+        "numbers": "For $\\oint(-y\\,dx+x\\,dy)$ on the unit disk the value is $2\\,\\mathrm{Area}=2\\pi$"
       },
       {
-        "title": "Checking vector-field simulations",
-        "background": "A numerical flow should have boundary circulation consistent with integrated curl over grid cells.",
-        "numbers": "Four cells each area $0.25$ with curl values $1,2,3,4$ give circulation about $0.25(10)=2.5$."
+        "title": "Planimeter instruments",
+        "background": "Planimeter instruments",
+        "numbers": "Planimeter instruments"
       },
       {
-        "title": "Planar electromagnetism",
-        "background": "Two-dimensional versions of Maxwell-style relationships connect circulation to accumulated source terms.",
-        "numbers": "Curl density $0.02$ over area $150$ gives boundary integral $3$."
+        "title": "2-D circulation",
+        "background": "2-D circulation = integral of curl",
+        "numbers": "2-D circulation = integral of curl"
       },
       {
-        "title": "Image contour moments",
-        "background": "Shape features can be computed from closed contours instead of filling every pixel.",
-        "numbers": "A circular boundary radius $10$ encloses area $100\\pi\\approx314.2$ pixels squared."
+        "title": "Image moments from contours",
+        "background": "Image moments from contours",
+        "numbers": "Image moments from contours"
       },
       {
-        "title": "Robotics coverage loops",
-        "background": "A robot circling a region can infer interior swirl by measuring work around the route.",
-        "numbers": "Measured circulation $6$ around area $20$ implies average scalar curl $6/20=0.3$."
+        "title": "Shoelace polygon-area formula as the",
+        "background": "Shoelace polygon-area formula as the discrete case",
+        "numbers": "Shoelace polygon-area formula as the discrete case"
       }
     ],
     "applicationsClose": "Green's theorem says the edge and the interior are two honest views of the same planar circulation.",
@@ -8956,6 +9956,43 @@
       "Green's theorem relates a counterclockwise boundary line integral to a double integral of scalar curl.",
       "The scalar curl is $Q_x-P_y$.",
       "Orientation, smoothness, and a well-behaved enclosed region matter."
+    ],
+    "connectionsProse": "<p>This lesson relates a closed curve in the plane to the region it encloses. You already know line integrals measure circulation along a path, and double integrals accumulate values over a region. Green's theorem says these two views are connected. It is the planar prototype for Stokes' theorem.</p>",
+    "symbols": [
+      {
+        "sym": "$\\partial R$",
+        "desc": "boundary curve (counterclockwise)"
+      },
+      {
+        "sym": "$P,Q$",
+        "desc": "field components"
+      },
+      {
+        "sym": "$dA$",
+        "desc": "area element"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "State $\\oint_{\\partial R}(P\\,dx+Q\\,dy)=\\iint_R\\big(\\tfrac{\\partial Q}{\\partial x}-\\tfrac{\\partial P}{\\partial y}\\big)\\,dA$",
+        "result": "State $\\oint_{\\partial R}(P\\,dx+Q\\,dy)=\\iint_R\\big(\\tfrac{\\partial Q}{\\partial x}-\\tfrac{\\partial P}{\\partial y}\\big)\\,dA$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "For a vertically simple region, integrate $-\\partial P/\\partial y$ over $y$ and apply the fundamental theorem of calculus to recover the top/bottom boundary pieces of $\\oint P\\,dx$",
+        "result": "For a vertically simple region, integrate $-\\partial P/\\partial y$ over $y$ and apply the fundamental theorem of calculus to recover the top/bottom boundary pieces of $\\oint P\\,dx$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Do the symmetric argument for $Q$ over $x$",
+        "result": "Do the symmetric argument for $Q$ over $x$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Add the two results to get the full identity",
+        "result": "Add the two results to get the full identity",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-35"
@@ -8984,8 +10021,8 @@
         "Jacobian scale factors"
       ]
     },
-    "motivation": "<p>You already know how a double integral adds over a flat region. A curved surface needs the same idea, but each little parameter rectangle may stretch when it lands on the surface.</p><p>A <b>surface integral</b> uses a local area scale to add density, temperature, mass, or any scalar quantity across a curved sheet.</p>",
-    "definition": "<p>If a surface is parameterized by $\\mathbf r(u,v)$ over a domain $D$, then $$\\iint_S f\\,dS=\\iint_D f(\\mathbf r(u,v))\\,|\\mathbf r_u\\times\\mathbf r_v|\\,du\\,dv.$$ The cross product gives a normal vector whose length is the area scale from the $uv$ parameter patch to the surface patch. For a graph $z=g(x,y)$, this becomes $$dS=\\sqrt{1+g_x^2+g_y^2}\\,dA.$$</p><p><b>Assumptions that matter:</b> the surface should be smooth or piecewise smooth, the parameterization should not fold over itself except on boundaries, and scalar surface area uses the magnitude of the cross product.</p>",
+    "motivation": "<p>To integrate over a curved surface, describe the surface with two parameters. Small changes in those parameters create two tangent vectors on the surface. Their cross product gives the area of the tiny parallelogram patch they span.</p><p>The surface integral multiplies the scalar value on each patch by that patch's area and adds over the whole surface. The formula looks like a double integral because the parameter domain is two-dimensional, but the area factor corrects for stretching and bending in space. This is the surface analogue of the Jacobian correction in coordinate changes.</p>",
+    "definition": "<p>1. Parametrize the surface by two parameters $\\mathbf r(u,v)$. 2. A small patch has area $\\lVert \\mathbf r_u\\times\\mathbf r_v\\rVert\\,du\\,dv$ (the cross product gives the patch's area). 3. Integrate: $\\iint_S f\\,dS=\\iint f(\\mathbf r(u,v))\\lVert \\mathbf r_u\\times\\mathbf r_v\\rVert\\,du\\,dv$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Find the surface area of the plane patch $\\mathbf r(u,v)=\\langle u,v,2u\\rangle$ over $0\\le u\\le3$, $0\\le v\\le4$.",
       "skills": [
@@ -9189,34 +10226,34 @@
     ],
     "applications": [
       {
-        "title": "Mass of a thin shell",
-        "background": "A shell with varying density needs a surface integral rather than volume integration.",
-        "numbers": "Density $3$ kg/m$^2$ on area $12$ m$^2$ gives mass $36$ kg."
+        "title": "Total radiance/irradiance over a surface",
+        "background": "Total radiance/irradiance over a surface",
+        "numbers": "Total radiance/irradiance over a surface"
       },
       {
-        "title": "Texture and lighting in graphics",
-        "background": "Rendering integrates light over visible surfaces, often using surface-area factors.",
-        "numbers": "Radiance $0.8$ over surface area $2.5$ contributes $2.0$ radiance-area units before angular factors."
+        "title": "Surface area of a sphere",
+        "background": "Surface area of a sphere of radius $2$ is $4\\pi",
+        "numbers": "Surface area of a sphere of radius $2$ is $4\\pi"
       },
       {
-        "title": "Sensor coverage on curved devices",
-        "background": "Wearables and cameras have curved surfaces where flat area estimates undercount coverage.",
-        "numbers": "A patch with shadow area $10$ cm$^2$ and slope factor $1.2$ has surface area $12$ cm$^2$."
+        "title": "^2\\approx50.27",
+        "background": "^2\\approx50.27$",
+        "numbers": "^2\\approx50.27$"
       },
       {
-        "title": "Surface loss on meshes",
-        "background": "Geometric ML may penalize errors over a mesh surface, weighting by triangle areas.",
-        "numbers": "Three triangles with areas $0.4,0.5,0.6$ and error $2$ give integrated error $2(1.5)=3$."
+        "title": "Mass of a curved sheet",
+        "background": "Mass of a curved sheet",
+        "numbers": "Mass of a curved sheet"
       },
       {
-        "title": "Heat on a plate",
-        "background": "Thermal energy on a thin curved plate is density integrated over surface area.",
-        "numbers": "Heat density $50$ J/m$^2$ over $0.3$ m$^2$ gives $15$ J."
+        "title": "Setting up flux",
+        "background": "Setting up flux (next lesson)",
+        "numbers": "Setting up flux (next lesson)"
       },
       {
-        "title": "Earth surface approximations",
-        "background": "Geographic quantities such as rainfall totals are surface integrals over curved regions.",
-        "numbers": "Rain depth $0.01$ m over $2,000,000$ m$^2$ gives water volume $20,000$ m$^3$."
+        "title": "Rendering integrals in graphics",
+        "background": "Rendering integrals in graphics",
+        "numbers": "Rendering integrals in graphics"
       }
     ],
     "applicationsClose": "Surface integrals keep the familiar idea of accumulation while respecting the true curved area being covered.",
@@ -9224,6 +10261,38 @@
       "A scalar surface integral is a double integral over a parameter domain with area scale $|\\mathbf r_u\\times\\mathbf r_v|$.",
       "For graphs, $dS=\\sqrt{1+g_x^2+g_y^2}\\,dA$.",
       "Use surface integrals for area, mass, heat, signal, or loss spread over a curved sheet."
+    ],
+    "connectionsProse": "<p>This lesson extends integration from curves and flat regions to curved surfaces. You already know a double integral adds values over a planar region. A surface integral adds values over a two-dimensional surface that may bend in space. It prepares the surface-area element needed for flux and the divergence theorem.</p>",
+    "symbols": [
+      {
+        "sym": "$S$",
+        "desc": "surface"
+      },
+      {
+        "sym": "$dS$",
+        "desc": "surface-area element"
+      },
+      {
+        "sym": "$\\mathbf r_u,\\mathbf r_v$",
+        "desc": "tangent vectors"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Parametrize the surface by two parameters $\\mathbf r(u,v)$",
+        "result": "Parametrize the surface by two parameters $\\mathbf r(u,v)$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "A small patch has area $\\lVert \\mathbf r_u\\times\\mathbf r_v\\rVert\\,du\\,dv$ (the cross product gives the patch's area)",
+        "result": "A small patch has area $\\lVert \\mathbf r_u\\times\\mathbf r_v\\rVert\\,du\\,dv$ (the cross product gives the patch's area)",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Integrate",
+        "result": "$\\iint_S f\\,dS=\\iint f(\\mathbf r(u,v))\\lVert \\mathbf r_u\\times\\mathbf r_v\\rVert\\,du\\,dv$",
+        "why": "this names the corresponding formula or conclusion"
+      }
     ],
     "prereqs": [
       "math-02-36"
@@ -9252,8 +10321,8 @@
         "parametric surfaces"
       ]
     },
-    "motivation": "<p>A surface may sit in a moving flow: air through a window, water through a net, probability through a boundary. The important part is not the flow sliding along the surface, but the part piercing through it.</p><p><b>Flux</b> measures that through-surface amount using a dot product with the surface normal.</p>",
-    "definition": "<p>For an oriented surface $S$ with unit normal $\\mathbf n$, the flux of $\\mathbf F$ through $S$ is $$\\iint_S \\mathbf F\\cdot\\mathbf n\\,dS.$$ With a parameterization $\\mathbf r(u,v)$, the vector area element is $\\mathbf r_u\\times\\mathbf r_v\\,du\\,dv$, so $$\\iint_S\\mathbf F\\cdot\\mathbf n\\,dS=\\iint_D\\mathbf F(\\mathbf r(u,v))\\cdot(\\mathbf r_u\\times\\mathbf r_v)\\,du\\,dv,$$ with the cross-product order chosen for the desired orientation.</p><p><b>Assumptions that matter:</b> orientation must be specified, tangential flow contributes zero to flux, and reversing the normal reverses the sign.</p>",
+    "motivation": "<p>A field may pass through a surface, slide along it, or point partly through and partly along. Only the normal component contributes to throughput across the surface. The dot product with the unit normal extracts that component.</p><p>Multiplying the normal component by a small area patch gives the amount of flow through that patch. Integrating over the surface gives total flux. The sign depends on the chosen normal direction, so orientation matters. This idea is the surface counterpart of work along a path, where the dot product keeps the component along motion.</p>",
+    "definition": "<p>1. Take the field's component along the surface normal, $F\\!\\cdot\\!\\mathbf n$. 2. Multiply by patch area $dS$ to get flow through the patch. 3. Integrate: flux $=\\iint_S F\\!\\cdot\\!\\mathbf n\\,dS$.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Compute the upward flux of $\\mathbf F=\\langle0,0,5\\rangle$ through the rectangle $0\\le x\\le3$, $0\\le y\\le2$, $z=1$.",
       "skills": [
@@ -9452,34 +10521,34 @@
     ],
     "applications": [
       {
-        "title": "Air through a vent",
-        "background": "HVAC calculations need volume per time passing through openings, a direct flux computation.",
-        "numbers": "Speed $2.5$ m/s normal to area $0.8$ m$^2$ gives flow rate $2.0$ m$^3$/s."
+        "title": "Probability flux across a boundary",
+        "background": "Probability flux across a boundary",
+        "numbers": "Probability flux across a boundary"
       },
       {
-        "title": "Fluid through a membrane",
-        "background": "Filters and biological membranes are modeled by through-surface flow.",
-        "numbers": "Flux density $0.03$ L/(s m$^2$) over $12$ m$^2$ gives $0.36$ L/s."
+        "title": "Heat flux through a wall",
+        "background": "Heat flux through a wall",
+        "numbers": "Heat flux through a wall"
       },
       {
         "title": "Electric flux",
-        "background": "Gauss's law uses electric flux through closed surfaces to connect fields with enclosed charge.",
-        "numbers": "Uniform field $5$ N/C through area $4$ m$^2$ aligned with the normal gives flux $20$ N m$^2$/C."
+        "background": "Electric flux (Gauss's law)",
+        "numbers": "Electric flux (Gauss's law)"
       },
       {
-        "title": "Probability current",
-        "background": "In stochastic systems, flux across a boundary measures probability mass leaving a region.",
-        "numbers": "Probability current $0.02$ per second per unit boundary over length $15$ gives outflow $0.3$ per second."
+        "title": "A uniform field",
+        "background": "A uniform field $F=(0,0,1)$ through a unit disk in the plane $z=1$ (normal $\\mathbf k$) has flux $=$ area $=\\pi$",
+        "numbers": "A uniform field $F=(0,0,1)$ through a unit disk in the plane $z=1$ (normal $\\mathbf k$) has flux $=$ area $=\\pi$"
       },
       {
-        "title": "Neural rendering rays",
-        "background": "Rendering integrates light crossing image-plane pixels, a flux-like through-surface measurement.",
-        "numbers": "Radiance-through-pixel value $0.7$ over pixel area $0.01$ contributes $0.007$."
+        "title": "Mass flow rate through a",
+        "background": "Mass flow rate through a pipe cross-section",
+        "numbers": "Mass flow rate through a pipe cross-section"
       },
       {
-        "title": "Robotics safety boundaries",
-        "background": "Flux through a virtual boundary estimates how many agents or particles enter a protected region.",
-        "numbers": "Density $0.4$ agents/m$^2$ and normal speed $1.5$ m/s across $6$ m gives $0.4\\cdot1.5\\cdot6=3.6$ agents/s."
+        "title": "Radiative flux in rendering",
+        "background": "Radiative flux in rendering",
+        "numbers": "Radiative flux in rendering"
       }
     ],
     "applicationsClose": "Flux is the dot product idea made global: only the normal component counts as crossing.",
@@ -9487,6 +10556,38 @@
       "Flux is $\\iint_S\\mathbf F\\cdot\\mathbf n\\,dS$.",
       "Tangential field components contribute zero flux.",
       "Changing orientation changes the sign but not the physical magnitude crossing the surface."
+    ],
+    "connectionsProse": "<p>This lesson uses surface integrals to measure how a vector field crosses a surface. You already know a vector field has direction and magnitude at each point, and a surface has a normal direction. Flux keeps the field's component normal to the surface. It is the language of flow through boundaries, heat transfer, and Gauss-type laws.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mathbf n$",
+        "desc": "unit normal"
+      },
+      {
+        "sym": "$F\\!\\cdot\\!\\mathbf n$",
+        "desc": "normal component"
+      },
+      {
+        "sym": "flux",
+        "desc": "is a scalar"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Take the field's component along the surface normal, $F\\!\\cdot\\!\\mathbf n$",
+        "result": "Take the field's component along the surface normal, $F\\!\\cdot\\!\\mathbf n$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Multiply by patch area $dS$ to get flow through the patch",
+        "result": "Multiply by patch area $dS$ to get flow through the patch",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Integrate",
+        "result": "flux $=\\iint_S F\\!\\cdot\\!\\mathbf n\\,dS$",
+        "why": "this names the corresponding formula or conclusion"
+      }
     ],
     "prereqs": [
       "math-02-37"
@@ -9516,8 +10617,8 @@
         "circulation"
       ]
     },
-    "motivation": "<p>Green's theorem works for flat regions in the plane. But many boundaries live in space: a wire loop, a tilted ring, or the rim of a curved surface.</p><p><b>Stokes' theorem</b> says the same principle survives: circulation around the boundary equals total curl through a surface spanning that boundary.</p>",
-    "definition": "<p>If $S$ is an oriented smooth surface with positively oriented boundary $\\partial S$, and $\\mathbf F$ has continuous partial derivatives nearby, then $$\\oint_{\\partial S}\\mathbf F\\cdot d\\mathbf r=\\iint_S(\\nabla\\times\\mathbf F)\\cdot\\mathbf n\\,dS.$$ The orientation is linked by the right-hand rule: your thumb points along $\\mathbf n$, and your fingers curl in the positive boundary direction. The theorem follows from adding tiny Green's-theorem patches; interior boundary pieces cancel, leaving only the outer curve.</p><p><b>Assumptions that matter:</b> the surface must have the stated boundary, the field must be smooth on and near it, and orientation must be consistent between surface normal and boundary direction.</p>",
+    "motivation": "<p>A vector field may circulate around the edge of a surface because of curl distributed across the surface. Stokes' theorem adds the normal component of curl over the surface and shows that this equals the circulation around the boundary. The exact shape of the spanning surface does not matter when the boundary and orientation are fixed under the theorem's assumptions.</p><p>The cancellation idea is central. If the surface is divided into many small patches, neighboring patches traverse their shared edges in opposite directions, so those interior contributions cancel. Only the outer boundary remains. This is the same boundary-interior pattern seen in Green's theorem, now in three-dimensional geometry.</p>",
+    "definition": "<p>1. State $\\oint_{\\partial S}F\\!\\cdot\\!d\\mathbf r=\\iint_S(\\nabla\\times F)\\!\\cdot\\!\\mathbf n\\,dS$. 2. Tile $S$ with tiny patches; on each, Green's theorem (in the tangent plane) equates the patch's boundary circulation to $(\\nabla\\times F)\\!\\cdot\\!\\mathbf n$ times its area. 3. Sum over patches: interior edges are traversed twice in opposite directions and cancel. 4. Only the outer boundary $\\partial S$ survives, giving the identity.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Use Stokes' theorem to compute $\\oint_C \\langle-y,x,0\\rangle\\cdot d\\mathbf r$ where $C$ is the unit circle in the $xy$-plane, counterclockwise viewed from above.",
       "skills": [
@@ -9716,34 +10817,34 @@
     ],
     "applications": [
       {
-        "title": "Electromagnetic induction",
-        "background": "Faraday's law is a Stokes-type statement connecting circulation of electric field to changing magnetic flux.",
-        "numbers": "A changing magnetic flux of $-0.12$ Wb/s gives electric circulation $0.12$ V under the usual sign convention."
+        "title": "Circulation equals vorticity flux in",
+        "background": "Circulation equals vorticity flux in fluids",
+        "numbers": "Circulation equals vorticity flux in fluids"
       },
       {
-        "title": "Fluid circulation over flexible surfaces",
-        "background": "A loop in a fluid can span many surfaces; Stokes says the curl flux through any one gives the same boundary circulation.",
-        "numbers": "Normal vorticity $2$ over area $0.5$ gives circulation $1$."
+        "title": "Ampère's law in electromagnetism",
+        "background": "Ampère's law in electromagnetism",
+        "numbers": "Ampère's law in electromagnetism"
       },
       {
-        "title": "Mesh verification",
-        "background": "Simulation codes check boundary integrals against curl flux through triangulated surfaces.",
-        "numbers": "Triangles with curl fluxes $0.2$, $0.4$, and $0.1$ sum to boundary circulation $0.7$."
+        "title": "Conservative fields (",
+        "background": "Conservative fields ($\\nabla\\times F=0$) have zero circulation on every loop",
+        "numbers": "Conservative fields ($\\nabla\\times F=0$) have zero circulation on every loop"
       },
       {
-        "title": "Robotics loop sensing",
-        "background": "A robot following a loop can infer average rotational field inside the loop.",
-        "numbers": "Measured circulation $15$ around a loop spanning $30$ m$^2$ implies average normal curl $0.5$."
+        "title": "Reduces to Green's theorem for",
+        "background": "Reduces to Green's theorem for a flat surface",
+        "numbers": "Reduces to Green's theorem for a flat surface"
       },
       {
-        "title": "Computer graphics vector textures",
-        "background": "Artists and engineers use curl fields for swirling textures and incompressible motion.",
-        "numbers": "If average normal curl is $3$ on a patch of area $2$, expected boundary swirl is $6$."
+        "title": "Wing lift from circulation",
+        "background": "Wing lift from circulation",
+        "numbers": "Wing lift from circulation"
       },
       {
-        "title": "Geophysical flows",
-        "background": "Circulation around atmospheric loops relates to vorticity passing through the enclosed surface.",
-        "numbers": "Average vorticity $10^{-4}$ s$^{-1}$ over $10^8$ m$^2$ gives circulation $10^4$ m$^2$/s."
+        "title": "Consistency checks for learned vector",
+        "background": "Consistency checks for learned vector fields",
+        "numbers": "Consistency checks for learned vector fields"
       }
     ],
     "applicationsClose": "Stokes' theorem lets you choose the easier side: boundary circulation or curl through a spanning surface.",
@@ -9751,6 +10852,43 @@
       "Stokes' theorem states $\\oint_{\\partial S}\\mathbf F\\cdot d\\mathbf r=\\iint_S(\\nabla\\times\\mathbf F)\\cdot\\mathbf n\\,dS$.",
       "The boundary orientation and surface normal are tied by the right-hand rule.",
       "Green's theorem is the flat-plane special case."
+    ],
+    "connectionsProse": "<p>This lesson lifts Green's theorem from flat regions to surfaces in space. You already know curl measures local rotation and line integrals measure circulation around a path. Stokes' theorem says boundary circulation equals total curl passing through any surface with that boundary. It ties local rotational behavior to a global loop integral.</p>",
+    "symbols": [
+      {
+        "sym": "$\\partial S$",
+        "desc": "boundary curve"
+      },
+      {
+        "sym": "$\\nabla\\times F$",
+        "desc": "curl"
+      },
+      {
+        "sym": "$\\mathbf n$",
+        "desc": "surface normal"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "State $\\oint_{\\partial S}F\\!\\cdot\\!d\\mathbf r=\\iint_S(\\nabla\\times F)\\!\\cdot\\!\\mathbf n\\,dS$",
+        "result": "State $\\oint_{\\partial S}F\\!\\cdot\\!d\\mathbf r=\\iint_S(\\nabla\\times F)\\!\\cdot\\!\\mathbf n\\,dS$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Tile $S$ with tiny patches; on each, Green's theorem (in the tangent plane) equates the patch's boundary circulation to $(\\nabla\\times F)\\!\\cdot\\!\\mathbf n$ times its area",
+        "result": "Tile $S$ with tiny patches; on each, Green's theorem (in the tangent plane) equates the patch's boundary circulation to $(\\nabla\\times F)\\!\\cdot\\!\\mathbf n$ times its area",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Sum over patches",
+        "result": "interior edges are traversed twice in opposite directions and cancel",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "Only the outer boundary $\\partial S$ survives, giving the identity",
+        "result": "Only the outer boundary $\\partial S$ survives, giving the identity",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-38"
@@ -9780,8 +10918,8 @@
         "source terms"
       ]
     },
-    "motivation": "<p>Flux tells how much field crosses a surface. Divergence tells how strongly the field is born or absorbed at a point. For a closed surface, these should be two views of one story.</p><p>The <b>divergence theorem</b> says total outward flux equals total divergence inside. It is the bookkeeping law behind conservation of mass, charge, heat, and probability.</p>",
-    "definition": "<p>If $E$ is a solid region with closed, outward-oriented boundary surface $\\partial E$, and $\\mathbf F$ has continuous partial derivatives nearby, then $$\\iint_{\\partial E}\\mathbf F\\cdot\\mathbf n\\,dS=\\iiint_E \\nabla\\cdot\\mathbf F\\,dV.$$ Tiny internal fluxes cancel face by face when small boxes are added together; only flux through the outside boundary remains.</p><p><b>Assumptions that matter:</b> the surface must be closed and outward oriented, the field must be smooth on the region, and holes or piecewise surfaces require including every boundary component.</p>",
+    "motivation": "<p>Divergence is a local measurement: it tells how much a field spreads out from a tiny box around a point. Flux through a closed surface is global: it measures how much field leaves the whole region. The divergence theorem states that adding all the local divergence inside exactly accounts for the boundary flux.</p><p>The proof idea is a cancellation argument. Split the region into many small boxes. Flux through shared interior faces cancels because the neighboring boxes use opposite outward normals. Only the flux through the outside boundary remains. This is why the theorem is so useful for deriving conservation laws and checking flow calculations.</p>",
+    "definition": "<p>1. State $\\iiint_V\\nabla\\!\\cdot\\!F\\,dV=\\oiint_{\\partial V}F\\!\\cdot\\!\\mathbf n\\,dS$. 2. Divide $V$ into tiny boxes; for each, divergence times volume equals net flux out of that box (the definition of divergence). 3. Sum over boxes: shared interior faces cancel because their outward normals are opposite. 4. Only the outer surface $\\partial V$ remains.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Use the divergence theorem to find outward flux of $\\mathbf F=\\langle x,y,z\\rangle$ through the sphere of radius $2$ centered at the origin.",
       "skills": [
@@ -9990,34 +11128,34 @@
     ],
     "applications": [
       {
-        "title": "Mass conservation",
-        "background": "Continuity equations say changes inside a region are controlled by flux through the boundary.",
-        "numbers": "If divergence is $-0.2$ kg/(m$^3$s) over volume $5$ m$^3$, net outward mass flux is $-1$ kg/s."
+        "title": "Conservation of probability mass",
+        "background": "Conservation of probability mass",
+        "numbers": "Conservation of probability mass"
       },
       {
-        "title": "Finite-volume simulation",
-        "background": "Numerical PDE solvers update cell averages by balancing fluxes through cell faces.",
-        "numbers": "Divergence $3$ over cell volume $0.1$ predicts net outward flux $0.3$."
+        "title": "Gauss's law relating charge to",
+        "background": "Gauss's law relating charge to flux",
+        "numbers": "Gauss's law relating charge to flux"
       },
       {
-        "title": "Gauss's law",
-        "background": "Electric flux through a closed surface is proportional to enclosed charge.",
-        "numbers": "If enclosed charge over $\\epsilon_0$ equals $12$, outward electric flux is $12$."
+        "title": "Continuity equations",
+        "background": "Continuity equations",
+        "numbers": "Continuity equations"
       },
       {
-        "title": "Checking fluid incompressibility",
-        "background": "For incompressible flow, total flux through any closed surface should be near zero.",
-        "numbers": "Average divergence $0.002$ over volume $100$ gives flux $0.2$, small but not zero."
+        "title": "Flux of",
+        "background": "Flux of $F=(x,y,z)$ (divergence $3$) out of the unit ball is $3\\cdot\\tfrac43\\pi=4\\pi\\approx12.57$",
+        "numbers": "Flux of $F=(x,y,z)$ (divergence $3$) out of the unit ball is $3\\cdot\\tfrac43\\pi=4\\pi\\approx12.57$"
       },
       {
-        "title": "Probability conservation in ML dynamics",
-        "background": "Continuous generative models track how probability mass moves through regions.",
-        "numbers": "Divergence $0.5$ over volume $0.8$ gives outward flux $0.4$ probability units per time."
+        "title": "Heat balance in a region",
+        "background": "Heat balance in a region",
+        "numbers": "Heat balance in a region"
       },
       {
-        "title": "Heat sources",
-        "background": "Heat flow out of a closed surface equals total internal heat generation at steady state.",
-        "numbers": "A source density $15$ W/m$^3$ in volume $2$ m$^3$ gives outward heat flux $30$ W."
+        "title": "Deriving PDEs from conservation laws",
+        "background": "Deriving PDEs from conservation laws",
+        "numbers": "Deriving PDEs from conservation laws"
       }
     ],
     "applicationsClose": "The divergence theorem is conservation in one line: what is created inside must show up as net outward flow.",
@@ -10025,6 +11163,43 @@
       "The divergence theorem relates outward flux through a closed surface to a volume integral of divergence.",
       "The boundary must be closed and outward oriented.",
       "It is the mathematical backbone of conservation laws and finite-volume methods."
+    ],
+    "connectionsProse": "<p>This lesson gives the three-dimensional counterpart to Green's theorem for outflow. You already know divergence measures local source strength and flux measures flow through a surface. The divergence theorem says total source strength inside a region equals total flux out through its boundary. It is a central mathematical form of conservation.</p>",
+    "symbols": [
+      {
+        "sym": "$V$",
+        "desc": "solid region"
+      },
+      {
+        "sym": "$\\partial V$",
+        "desc": "its closed boundary surface"
+      },
+      {
+        "sym": "$\\mathbf n$",
+        "desc": "outward normal"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "State $\\iiint_V\\nabla\\!\\cdot\\!F\\,dV=\\oiint_{\\partial V}F\\!\\cdot\\!\\mathbf n\\,dS$",
+        "result": "State $\\iiint_V\\nabla\\!\\cdot\\!F\\,dV=\\oiint_{\\partial V}F\\!\\cdot\\!\\mathbf n\\,dS$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Divide $V$ into tiny boxes; for each, divergence times volume equals net flux out of that box (the definition of divergence)",
+        "result": "Divide $V$ into tiny boxes; for each, divergence times volume equals net flux out of that box (the definition of divergence)",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Sum over boxes",
+        "result": "shared interior faces cancel because their outward normals are opposite",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "Only the outer surface $\\partial V$ remains",
+        "result": "Only the outer surface $\\partial V$ remains",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-39"
@@ -10054,8 +11229,8 @@
         "Jacobian-vector products"
       ]
     },
-    "motivation": "<p>You already know how to differentiate a one-variable loss and how a gradient points in the direction of steepest increase. Machine-learning models simply have many parameters at once: weights in a vector, rows in a matrix, layers in a chain.</p><p><b>Matrix calculus</b> keeps the bookkeeping clean. It tells you the shape of each derivative, how errors flow backward, and how to compute gradients with real arrays instead of one parameter at a time.</p>",
-    "definition": "<p>For a scalar loss $L$ and vector $w\\in\\mathbb R^n$, the gradient $\\nabla_w L$ is the vector of partial derivatives. For $y=Wx$, where $W\\in\\mathbb R^{m\\times n}$ and $x\\in\\mathbb R^n$, each output is $y_i=\\sum_j W_{ij}x_j$. If $L$ depends on $y$ and $g=\\nabla_y L$, then the chain rule gives $$\\nabla_W L=gx^T,\\qquad \\nabla_x L=W^Tg.$$ These formulas come from $dL=g^Tdy=g^T(dW)x+g^TW\\,dx$, then matching coefficients of $dW$ and $dx$.</p><p><b>Assumptions that matter:</b> track shapes before multiplying, use column-vector convention consistently, distinguish elementwise products from matrix products, and remember that backprop is repeated chain rule from the scalar loss backward through each operation.</p>",
+    "motivation": "<p>Machine learning losses are usually scalar functions of many parameters. Writing one partial derivative at a time is possible but quickly becomes unreadable. Matrix calculus keeps the whole gradient in one expression, using transposes and matrix products to show how residuals flow back to parameters.</p><p>The squared-error example is the standard model. Expanding the loss reveals a quadratic form in the weight vector, and differentiating that quadratic gives the gradient used in least squares and gradient descent. The same rules extend to linear layers, ridge penalties, Mahalanobis distances, and Gauss-Newton approximations. The notation is compact because it matches the linear algebra of the computation itself.</p>",
+    "definition": "<p>1. Expand the squared error $\\lVert Xw-y\\rVert^2=(Xw-y)^\\top(Xw-y)$. 2. Multiply out: $w^\\top X^\\top Xw-2y^\\top Xw+y^\\top y$. 3. Differentiate term by term with respect to $w$: $\\nabla(w^\\top X^\\top Xw)=2X^\\top Xw$ and $\\nabla(-2y^\\top Xw)=-2X^\\top y$. 4. Combine: $\\nabla_w\\lVert Xw-y\\rVert^2=2X^\\top(Xw-y)$. 5. Separately, for a quadratic form, $\\nabla_x\\,x^\\top Ax=(A+A^\\top)x$, which is $2Ax$ when $A$ is symmetric.</p><p><b>Assumptions that matter:</b> use the stated smoothness, dimensional, unit-direction, orientation, or region conditions from the plan when applying the formula.</p>",
     "worked": {
       "problem": "Let $W=\\begin{bmatrix}1&2\\\\-1&3\\end{bmatrix}$, $x=\\begin{bmatrix}4\\\\1\\end{bmatrix}$, target $t=\\begin{bmatrix}5\\\\0\\end{bmatrix}$, $y=Wx$, and $L=\\dfrac12\\|y-t\\|^2$. Compute $\\nabla_W L$ and $\\nabla_x L$.",
       "skills": [
@@ -10269,44 +11444,34 @@
     ],
     "applications": [
       {
-        "title": "Backprop through a dense layer",
-        "background": "Every neural-network library computes dense-layer gradients using outer products from matrix calculus.",
-        "numbers": "With upstream $g=[2,-3]^T$ and input $x=[5,1,-2]^T$, $gx^T=\\begin{bmatrix}10&2&-4\\\\-15&-3&6\\end{bmatrix}$."
+        "title": "Normal equations",
+        "background": "set $\\nabla=0\\Rightarrow X^\\top Xw=X^\\top y$",
+        "numbers": "Normal equations: set $\\nabla=0\\Rightarrow X^\\top Xw=X^\\top y$"
       },
       {
-        "title": "Least-squares regression",
-        "background": "Linear regression training is built on the gradient $X^T(Xw-y)$.",
-        "numbers": "If $X^Tr=[-4,-2]^T$ and learning rate $0.1$, the update is $w\\leftarrow w-[ -0.4,-0.2]^T$, so $w$ increases by $[0.4,0.2]^T$."
+        "title": "For",
+        "background": "For $X=\\begin{bmatrix}1&0\\1&1\\0&1\\end{bmatrix}$, $w=(1,1)$, $y=(1,2,2)$: residual $Xw-y=(0,0,-1)$, gradient $2X^\\top(Xw-y)=(0,-2)$",
+        "numbers": "For $X=\\begin{bmatrix}1&0\\1&1\\0&1\\end{bmatrix}$, $w=(1,1)$, $y=(1,2,2)$: residual $Xw-y=(0,0,-1)$, gradient $2X^\\top(Xw-y)=(0,-2)$"
       },
       {
-        "title": "Mini-batch gradients",
-        "background": "Batches average many outer products so updates are less noisy.",
-        "numbers": "Two sample gradients $[4,1]$ and $[2,5]$ average to $[3,3]$."
+        "title": "Ridge regression gradient",
+        "background": "Ridge regression gradient $2X^\\top(Xw-y)+2\\lambda w$",
+        "numbers": "Ridge regression gradient $2X^\\top(Xw-y)+2\\lambda w$"
       },
       {
-        "title": "Softmax classifier logits",
-        "background": "For cross-entropy after softmax, the gradient with respect to logits is probabilities minus one-hot target.",
-        "numbers": "If $p=[0.7,0.2,0.1]$ and target class $2$ is $[0,1,0]$, then $g=[0.7,-0.8,0.1]$."
+        "title": "Backprop of a linear layer",
+        "background": "Backprop of a linear layer uses $\\partial L/\\partial W=\\delta\\,x^\\top$",
+        "numbers": "Backprop of a linear layer uses $\\partial L/\\partial W=\\delta\\,x^\\top$"
       },
       {
-        "title": "Jacobian-vector products",
-        "background": "Modern autodiff often avoids forming full Jacobians by multiplying them by vectors during forward or reverse mode.",
-        "numbers": "For $y=Wx$ with $W=\\begin{bmatrix}1&2\\\\3&4\\end{bmatrix}$ and vector $v=[5,6]^T$, $Jv=Wv=[17,39]^T$."
+        "title": "Mahalanobis distance gradient",
+        "background": "Mahalanobis distance gradient $\\nabla_x\\,x^\\top A x=2Ax$ for symmetric $A$",
+        "numbers": "Mahalanobis distance gradient $\\nabla_x\\,x^\\top A x=2Ax$ for symmetric $A$"
       },
       {
-        "title": "Gradient clipping",
-        "background": "Training large models clips gradient vectors when their norm is too large for stable updates.",
-        "numbers": "Gradient $[6,8]$ has norm $10$; clipping to norm $5$ scales it by $0.5$ to $[3,4]$."
-      },
-      {
-        "title": "Attention score gradients",
-        "background": "Transformer attention scores are dot products, so their gradients follow simple vector calculus rules.",
-        "numbers": "For score $s=q^Tk$, if upstream $\\partial L/\\partial s=0.2$ and $k=[3,-1]^T$, then $\\nabla_qL=0.2k=[0.6,-0.2]^T$."
-      },
-      {
-        "title": "Weight decay",
-        "background": "Regularization adds a simple matrix-calculus gradient that pulls weights toward zero.",
-        "numbers": "For penalty $0.5\\lambda\\|W\\|_F^2$ with $\\lambda=0.1$ and $W_{12}=3$, the penalty gradient entry is $0.3$."
+        "title": "Gauss–Newton uses",
+        "background": "Gauss–Newton uses $X^\\top X$ as the curvature",
+        "numbers": "Gauss–Newton uses $X^\\top X$ as the curvature"
       }
     ],
     "applicationsClose": "Matrix calculus is the shape-aware chain rule that makes backpropagation concrete, efficient, and checkable with numbers.",
@@ -10315,6 +11480,56 @@
       "For least squares, $\\nabla_w\\frac12\\|Aw-b\\|^2=A^T(Aw-b)$.",
       "Always track shapes; most matrix-calculus mistakes are shape mistakes.",
       "Backprop is repeated matrix chain rule from a scalar loss backward through each operation."
+    ],
+    "connectionsProse": "<p>This capstone lesson translates the vector-calculus derivative ideas into the notation used for machine learning models. You already know gradients of scalar functions and Jacobians of vector-valued maps. Matrix calculus writes those derivatives compactly when parameters, data, and residuals are stored in vectors and matrices. It connects this section directly to regression, backpropagation, and second-order methods.</p>",
+    "symbols": [
+      {
+        "sym": "$X$",
+        "desc": "data matrix"
+      },
+      {
+        "sym": "$w$",
+        "desc": "weight vector"
+      },
+      {
+        "sym": "$y$",
+        "desc": "targets"
+      },
+      {
+        "sym": "$X^\\top(Xw-y)$",
+        "desc": "residual projected onto features"
+      },
+      {
+        "sym": "$A$",
+        "desc": "a square matrix"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Expand the squared error $\\lVert Xw-y\\rVert^2=(Xw-y)^\\top(Xw-y)$",
+        "result": "Expand the squared error $\\lVert Xw-y\\rVert^2=(Xw-y)^\\top(Xw-y)$",
+        "why": "this is the stated step in the plan's derivation"
+      },
+      {
+        "do": "Multiply out",
+        "result": "$w^\\top X^\\top Xw-2y^\\top Xw+y^\\top y$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "Differentiate term by term with respect to $w$",
+        "result": "$\\nabla(w^\\top X^\\top Xw)=2X^\\top Xw$ and $\\nabla(-2y^\\top Xw)=-2X^\\top y$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "Combine",
+        "result": "$\\nabla_w\\lVert Xw-y\\rVert^2=2X^\\top(Xw-y)$",
+        "why": "this names the corresponding formula or conclusion"
+      },
+      {
+        "do": "Separately, for a quadratic form, $\\nabla_x\\,x^\\top Ax=(A+A^\\top)x$, which is $2Ax$ when $A$ is symmetric",
+        "result": "Separately, for a quadratic form, $\\nabla_x\\,x^\\top Ax=(A+A^\\top)x$, which is $2Ax$ when $A$ is symmetric",
+        "why": "this is the stated step in the plan's derivation"
+      }
     ],
     "prereqs": [
       "math-02-40"

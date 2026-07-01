@@ -185,11 +185,14 @@ B({
   title: "The Laplace transform",
   tagline: "One-line hook.",
   prereqs: ["math-03-06"],     // optional; auto-chained to previous lesson if omitted
-  connections: {               // §1
+  connections: {               // §1 (legacy bullet form)
     buildsOn: ["…"], leadsTo: ["…"], usedWith: ["…"]
   },
+  connectionsProse: "…",       // §1 preferred: warm plain-prose paragraph; overrides the bullets when present
   motivation: "…",             // §2  (HTML with $LaTeX$)
-  definition: "…",             // §3
+  definition: "…",             // §3  statement + assumptions (HTML; display formula in $$…$$)
+  symbols: [{ sym: "$x$", desc: "…" }],           // §3 "Every symbol, in plain English" table
+  derivation: [{ do: "…", result: "…", why: "…" }],// §3 "Why it's true" step-by-step (OMIT for explain-only lessons)
   worked: {                    // §4  (renderer lays out the guided-walkthrough)
     problem: "…", skills: ["…"], strategy: "…",
     steps: [{ do: "…", result: "…", why: "…" }],   // one operation per step
@@ -203,6 +206,9 @@ B({
   takeaways: ["…"]
 });
 // B sets { module, template:"math", superGroup:"Math", book } automatically.
+// `connectionsProse`, `symbols`, and `derivation` render additively in renderMath (only when present).
+// Content applied from the per-section plans lands via field-level overrides in tools/authored/zz-*.js
+// (merged by tools/math-authored.js, which preserves each lesson's existing worked/practice).
 ```
 
 `module` (the topic) is the nav section; `book` is the breadcrumb (`"Mathematics · <Category>"`);

@@ -29,8 +29,8 @@
         "convex sets"
       ]
     },
-    "motivation": "<p>You already make constrained choices: spend a budget, fit work into a day, or choose the shortest route with deadlines. The hard part is not that any one calculation is scary; it is that many small rules compete at once.</p><p><b>Operations research</b> gives those choices a clean mathematical shape. We name the decisions, write the limits they must obey, and choose an objective that says what better means. The model is a careful translation before it is a computation.</p>",
-    "definition": "<p>An operations research model has <b>decision variables</b> such as $x_1,x_2$, an <b>objective function</b> such as profit $P=40x_1+30x_2$, and <b>constraints</b> such as $2x_1+x_2\\le100$. A feasible solution is any variable choice satisfying every constraint. An optimal solution is a feasible solution with the best objective value.</p><p>The model comes from conservation and accounting. If one unit of product 1 uses 2 labor hours and one unit of product 2 uses 1 labor hour, then producing $x_1$ and $x_2$ units uses $2x_1+x_2$ hours. A 100-hour limit becomes $2x_1+x_2\\le100$.</p><p><b>Assumptions that matter:</b> variables must match real decisions; units must be consistent; constraints should include every binding rule; and the objective must represent the actual goal, not merely what is easy to measure.</p>",
+    "motivation": "<p>A real planning problem often arrives as a story. A bakery has flour and oven time, a cloud team has CPU and GPU capacity, or a hospital has staff and patients. Before solving anything, the modeler must decide what the controllable choices are and how each choice consumes or produces measurable quantities.</p><p>The main skill is faithful translation. Every symbol should correspond to a real choice, resource, requirement, or cost, and every coefficient should carry units from the story. When the translation is careful, the model is not just algebra; it is a compact record of the operational tradeoffs in the original problem.</p>",
+    "definition": "<p><b>Modeling in operations research</b> translates a practical decision into variables, constraints, and an objective with units tied to the original story.</p><p><b>Assumptions that matter:</b> Every symbol should correspond to a real choice, resource, requirement, or cost; coefficients carry units; inequalities encode limits or requirements.</p>",
     "worked": {
       "problem": "A bakery makes loaves and cakes. A loaf uses 2 kg flour and 1 hour; a cake uses 1 kg flour and 3 hours. There are 40 kg flour and 45 hours. Profit is $4$ per loaf and $7$ per cake. Build the OR model.",
       "skills": [
@@ -294,34 +294,34 @@
     ],
     "applications": [
       {
-        "title": "Factory product mix",
-        "background": "Industrial OR grew from wartime logistics and factory planning. A plant chooses quantities while respecting limited machines and labor.",
-        "numbers": "If product A uses 3 machine hours and product B uses 2, making 10 and 15 uses $3*10+2*15=60$ hours."
+        "title": "Factory mix",
+        "background": "This setting applies the lesson model.",
+        "numbers": "10 units using 3 hours and 15 using 2 hours consume $60$ hours."
       },
       {
-        "title": "Cloud capacity planning",
-        "background": "Engineering teams model servers as resources with cost and throughput. The same accounting keeps budgets visible.",
-        "numbers": "With 8 CPU nodes at $40$ jobs/hour and 3 GPU nodes at $120$ jobs/hour, capacity is $8*40+3*120=680$ jobs/hour."
+        "title": "Cloud capacity",
+        "background": "This setting applies the lesson model.",
+        "numbers": "8 CPU nodes at 40 jobs/hour and 3 GPU nodes at 120 jobs/hour give $680$ jobs/hour."
       },
       {
-        "title": "Ad budget allocation",
-        "background": "Marketing teams split spend across channels while meeting reach or frequency targets. OR makes tradeoffs explicit.",
-        "numbers": "Spending $4000$ at $0.50$ per click and $2000$ at $1.00$ per click buys $8000+2000=10000$ clicks."
+        "title": "Ad spend",
+        "background": "This setting applies the lesson model.",
+        "numbers": "$4000$ at $0.50$ per click and $2000$ at $1.00$ per click buys $10000$ clicks."
       },
       {
         "title": "Hospital staffing",
-        "background": "Hospitals schedule people under coverage and rest rules. A model separates needs from preferences.",
-        "numbers": "If one nurse covers 5 patients, then 18 nurses cover $18*5=90$ patients, leaving 10 uncovered for a 100-patient target."
+        "background": "This setting applies the lesson model.",
+        "numbers": "18 nurses at 5 patients each cover $90$ of 100 patients."
       },
       {
         "title": "Dataset labeling",
-        "background": "ML teams buy labels under time, cost, and quality constraints. A model helps choose labeler types.",
-        "numbers": "If expert labels cost $2$ and crowd labels cost $0.30$, then 500 expert and 3000 crowd labels cost $500*2+3000*0.30=1900$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "500 expert labels at $2$ and 3000 crowd labels at $0.30$ cost $1900$."
       },
       {
-        "title": "Routing and logistics",
-        "background": "Delivery companies began using OR to reduce fuel and late arrivals. Even simple route choices are constrained decisions.",
-        "numbers": "A route of 12 km plus 18 km plus 9 km totals 39 km; at $0.20$ per km, fuel cost is $7.80$."
+        "title": "Routing",
+        "background": "This setting applies the lesson model.",
+        "numbers": "12 km + 18 km + 9 km costs $39(0.20)=7.80$ dollars."
       }
     ],
     "applicationsClose": "Across factories, clouds, ads, hospitals, labels, and routes, modeling is the art of making choices countable without forgetting the story.",
@@ -330,6 +330,29 @@
       "Constraints come from resource accounting, requirements, and physical limits.",
       "Units are a built-in error check for every equation and inequality.",
       "The model is not the answer; it is the precise question an optimizer can answer."
+    ],
+    "connectionsProse": "<p>This lesson begins with the basic act that makes operations research useful: turning a practical decision into a mathematical object. The reader already knows how quantities, inequalities, and objectives describe real situations. Operations research adds discipline to that translation, so choices become variables, limitations become constraints, and preferences become an objective. This modeling habit supports every later lesson in the section, from linear programming to queues and ML resource allocation.</p>",
+    "symbols": [
+      {
+        "sym": "$x,y$",
+        "desc": "decision quantities"
+      },
+      {
+        "sym": "$P$",
+        "desc": "profit"
+      },
+      {
+        "sym": "$C$",
+        "desc": "cost"
+      },
+      {
+        "sym": "$2$ or $7$",
+        "desc": "coefficients carrying units from the story"
+      },
+      {
+        "sym": "$\\le$ and $\\ge$",
+        "desc": "upper limits and minimum requirements"
+      }
     ]
   });
 
@@ -355,8 +378,8 @@
         "half-spaces"
       ]
     },
-    "motivation": "<p>You have just seen how a story becomes variables and limits. Linear programming asks for a special, powerful kind of story: every cost, profit, and resource changes in a straight-line way.</p><p>That restriction is not small; it is useful. Straight-line constraints create a polygon or polyhedron of feasible choices, and the best linear objective can be found at an edge or corner. This is why large planning problems can be solved reliably.</p>",
-    "definition": "<p>A <b>linear program</b> in standard maximization form is $\\max c^T x$ subject to $Ax\\le b$ and $x\\ge0$. Here $x$ is the vector of decision variables, $c$ contains objective coefficients, $A$ contains resource coefficients, and $b$ contains resource limits.</p><p>Linearity means proportionality and additivity. If one unit of activity $j$ uses $a_{ij}$ units of resource $i$, then $x_j$ units use $a_{ij}x_j$, and all activities together use $a_{i1}x_1+\\cdots+a_{in}x_n$. That sum is one row of $Ax\\le b$.</p><p><b>Assumptions that matter:</b> variables are continuous unless declared integer; coefficients are known and fixed; effects add without discounts, thresholds, or interactions; and every constraint direction must match the story, especially for at-least requirements.</p>",
+    "motivation": "<p>A linear program is the right first model when contributions add cleanly. If one activity uses a certain amount of a resource, then twice as much activity uses twice as much resource. If two activities are both chosen, their resource uses and values simply add together.</p><p>This straight-line structure is restrictive, but it is also powerful. It makes the feasible region a polyhedron and turns the objective into a direction through that region. The formulation step is therefore about naming the activities, collecting their coefficients, and writing all limits in one consistent matrix notation.</p>",
+    "definition": "<p>A <b>linear program</b> optimizes a linear objective over linear constraints: $$\\max c^Tx \\text{ subject to } Ax\\le b,\\; x\\ge0.$$</p><p><b>Assumptions that matter:</b> Contributions add linearly, resource limits are linear, and activity levels are nonnegative.</p>",
     "worked": {
       "problem": "Formulate the bakery problem from lesson 1 as $\\max c^T x$ subject to $Ax\\le b$, using $x=(x_1,x_2)^T$ for loaves and cakes.",
       "skills": [
@@ -580,34 +603,34 @@
     ],
     "applications": [
       {
-        "title": "Production blending",
-        "background": "Linear programs became a standard tool for blending fuels, foods, and materials because recipes add by weight.",
-        "numbers": "If blend A has 8 units protein and blend B has 3, then 4 scoops of A and 5 of B give $4*8+5*3=47$ units."
+        "title": "Bakery LP",
+        "background": "This setting applies the lesson model.",
+        "numbers": "$A=\\begin{bmatrix}2&1\\1&3\\end{bmatrix}$, $b=(40,45)^T$, $c=(4,7)^T$; optimum is $(15,10)$ with value $130$."
       },
       {
-        "title": "Portfolio allocation",
-        "background": "Basic portfolio models use linear budget and exposure constraints before adding risk terms.",
-        "numbers": "Putting $3000$ in asset A and $7000$ in B uses $3000+7000=10000$ dollars of a $10000$ budget."
+        "title": "Portfolio",
+        "background": "This setting applies the lesson model.",
+        "numbers": "$0.6x+0.2y\\le0.4$ caps risk exposure at 40%."
       },
       {
         "title": "Ad impressions",
-        "background": "Campaign planning often assumes impressions from channels add over short ranges, making LP a useful first model.",
-        "numbers": "Channel A gives 2000 impressions per $100$ and B gives 1500; buying 3 and 4 blocks gives $6000+6000=12000$ impressions."
+        "background": "This setting applies the lesson model.",
+        "numbers": "$1000s+2500v\\ge50000$ requires enough impressions."
       },
       {
         "title": "Energy dispatch",
-        "background": "Power grids dispatch generators to meet demand while respecting capacities and costs. Linear approximations are common in planning.",
-        "numbers": "A 40 MW unit and a 70 MW unit running together supply $110$ MW toward a $100$ MW load, leaving 10 MW reserve."
+        "background": "This setting applies the lesson model.",
+        "numbers": "$3g+5c$ MW from gas and coal gives 160 MW at $(20,20)$."
       },
       {
         "title": "Data-center scheduling",
-        "background": "Batch jobs compete for CPU, memory, and accelerator time. Linear constraints help decide what can run together.",
-        "numbers": "Jobs using 12, 20, and 30 GB consume $62$ GB on a $64$ GB machine, leaving $2$ GB."
+        "background": "This setting applies the lesson model.",
+        "numbers": "$800g+300c\\ge5000$ examples and $4g+c\\le25$ energy units defines feasibility."
       },
       {
-        "title": "Fair resource allocation",
-        "background": "LPs can encode service guarantees as linear lower bounds while optimizing cost or throughput.",
-        "numbers": "If group A must receive at least 35 percent of 200 slots, its constraint is $x_A\\ge70$."
+        "title": "Fair allocation",
+        "background": "This setting applies the lesson model.",
+        "numbers": "$x_1+x_2+x_3=90$ shares exactly 90 GPU-hours."
       }
     ],
     "applicationsClose": "A linear program is powerful because it keeps the bookkeeping honest while allowing algorithms to search many feasible choices quickly.",
@@ -616,6 +639,71 @@
       "Matrix form $Ax\\le b$ records one constraint per row.",
       "At-least constraints can be converted to $\\le$ form by multiplying by $-1$.",
       "Continuous variables and linear additivity are assumptions, not automatic truths."
+    ],
+    "connectionsProse": "<p>This lesson takes the modeling language from the previous lesson and gives it a standard linear form. The reader has already seen variables, objectives, and constraints as separate pieces. Linear programming organizes those pieces into vectors and matrices so many activities and many resource limits can be handled at once. This form is the base language for simplex, duality, sensitivity analysis, and many allocation models later in the section.</p>",
+    "symbols": [
+      {
+        "sym": "$x$",
+        "desc": "decision vector"
+      },
+      {
+        "sym": "$c$",
+        "desc": "objective coefficients"
+      },
+      {
+        "sym": "$A$",
+        "desc": "constraint matrix"
+      },
+      {
+        "sym": "$a_{ij}$",
+        "desc": "resource used by one unit of activity $j$ in constraint $i$"
+      },
+      {
+        "sym": "$b$",
+        "desc": "right-hand-side limits"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Name the decision vector $x=(x_1,\\ldots,x_n)^T$.",
+        "result": "$x=(x_1,\\ldots,x_n)^T$",
+        "why": "This collects all activity levels in one object."
+      },
+      {
+        "do": "Put objective coefficients in $c=(c_1,\\ldots,c_n)^T$.",
+        "result": "$c=(c_1,\\ldots,c_n)^T$",
+        "why": "This records value per unit of each activity."
+      },
+      {
+        "do": "Multiply and add to get $c^Tx=\\sum_j c_jx_j$.",
+        "result": "$c^Tx=\\sum_j c_jx_j$",
+        "why": "This gives total value by additivity."
+      },
+      {
+        "do": "For resource $i$, write use $a_{i1}x_1+\\cdots+a_{in}x_n$.",
+        "result": "$a_{i1}x_1+\\cdots+a_{in}x_n$",
+        "why": "This accounts for all activities consuming the same resource."
+      },
+      {
+        "do": "Bound that use by $b_i$, giving $\\sum_j a_{ij}x_j\\le b_i$.",
+        "result": "$\\sum_j a_{ij}x_j\\le b_i$",
+        "why": "This encodes the resource limit."
+      },
+      {
+        "do": "Stack all resource rows into $Ax\\le b$.",
+        "result": "$Ax\\le b$",
+        "why": "This is the matrix form of all constraints."
+      },
+      {
+        "do": "Add $x\\ge0$.",
+        "result": "$x\\ge0$",
+        "why": "This prevents negative activity levels."
+      },
+      {
+        "do": "State standard form: maximize $c^Tx$ subject to $Ax\\le b$, $x\\ge0$.",
+        "result": "$x\\ge0$",
+        "why": "This records the corresponding modeling or optimality step."
+      }
     ],
     "prereqs": [
       "math-23-01"
@@ -643,8 +731,8 @@
         "convex polyhedra"
       ]
     },
-    "motivation": "<p>A two-variable LP can be solved by drawing a polygon and checking corners. Real LPs may have thousands of variables, so drawing is gone, but the corner idea survives.</p><p>The <b>simplex method</b> is a disciplined corner-walk. It starts at one feasible corner, asks which variable would improve the objective, moves until a constraint becomes tight, and repeats. The magic is not guessing; it is organized algebra.</p>",
-    "definition": "<p>For a maximization LP with $Ax\\le b$ and $x\\ge0$, add slack variables $s\\ge0$ so $Ax+s=b$. A <b>basic feasible solution</b> sets enough variables to zero to solve the remaining square system. Simplex pivots by bringing an improving nonbasic variable into the basis and sending one limiting basic variable out.</p><p>The entering variable is chosen from a positive reduced profit in the objective row. The leaving variable is chosen by the minimum positive ratio $b_i/a_{ij}$ among rows where the entering column coefficient is positive. That ratio is the farthest we can increase before some basic variable hits zero.</p><p><b>Assumptions that matter:</b> the starting basis must be feasible; the LP must be bounded for simplex to stop with a finite optimum; degeneracy can cause zero-length moves; and pivot rules are used to avoid cycling in rare cases.</p>",
+    "motivation": "<p>A linear objective over a polyhedron reaches its optimum at a corner when an optimum exists. Checking every corner directly can be far too expensive, because a model with many constraints can have a huge number of corners. The simplex method improves this by moving only from one feasible corner to a neighboring corner that can improve the objective.</p><p>Slack variables make the corners algebraic. A basis names which variables are currently solved for, and the nonbasic variables are set to zero. Reduced costs tell which currently zero variable would improve the objective if it entered the basis, while the ratio test keeps the move inside the feasible region.</p>",
+    "definition": "<p>The <b>simplex method</b> solves a linear program by adding slacks and moving between adjacent basic feasible solutions: $$Ax+s=b,\\quad s\\ge0.$$</p><p><b>Assumptions that matter:</b> The LP is in inequality form, a feasible starting basis is available or constructed, and pivots preserve feasibility while improving the objective.</p>",
     "worked": {
       "problem": "Solve $\\max z=3x+2y$ subject to $x+y\\le4$, $x\\le2$, $y\\le3$, $x,y\\ge0$ by checking simplex-style corner moves.",
       "skills": [
@@ -873,34 +961,34 @@
     ],
     "applications": [
       {
-        "title": "Refinery planning",
-        "background": "Simplex became famous because large industrial LPs could be solved far faster than brute force. Refineries use it for blending and capacity choices.",
-        "numbers": "If a pivot raises profit from $12000$ to $12850$, the improvement is $850$, so the move is worthwhile."
+        "title": "Toy LP",
+        "background": "This setting applies the lesson model.",
+        "numbers": "for $\\max 3x+2y$ with $x+y\\le4$, $x\\le2$, $y\\le3$, corner values are $0,6,10,9,6$; simplex reaches $(2,2)$ with value $10$."
       },
       {
-        "title": "Airline scheduling",
-        "background": "Airlines solve huge linear relaxations before adding integer restrictions. Simplex-like pivots explore feasible schedule corners.",
-        "numbers": "A relaxed schedule assigning 42.5 crew-days and 60.0 aircraft-hours still respects a 65-hour aircraft limit."
+        "title": "Refinery blend",
+        "background": "This setting applies the lesson model.",
+        "numbers": "entering a crude with reduced profit $5$ raises profit until a sulfur slack hits zero."
       },
       {
         "title": "Advertising allocation",
-        "background": "Budget LPs often have many channel and audience constraints. Simplex moves budget toward better marginal return until a limit binds.",
-        "numbers": "Moving $1000$ from a $3$ CPM channel to a $2$ CPM channel buys $1000/2*1000 - 1000/3*1000 = 166667$ more impressions."
+        "background": "This setting applies the lesson model.",
+        "numbers": "a channel with reduced profit $0.40$ per unit enters before one with $0.10$."
       },
       {
-        "title": "Diet and blending problems",
-        "background": "Classic diet problems minimized food cost while meeting nutrients. Simplex identifies which nutrient constraints are tight.",
-        "numbers": "If protein is exactly 60 g and the requirement is 60 g, its slack is $0$; if fiber is 35 g with requirement 30 g, slack is $5$ g."
+        "title": "Diet problem",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a nutrient constraint with ratio $30/6=5$ leaves before one with $50/5=10$."
       },
       {
-        "title": "ML infrastructure planning",
-        "background": "Large training platforms allocate GPUs, CPUs, and memory with linear relaxations. Corners represent saturated resource mixes.",
-        "numbers": "If one plan uses all 100 GPU-hours and only 70 of 80 CPU-hours, GPU slack is $0$ and CPU slack is $10$."
+        "title": "ML infrastructure",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a GPU-batch variable enters if it reduces runtime by 8 minutes per unit."
       },
       {
-        "title": "Supply chain optimization",
-        "background": "Warehouses and factories use LP solvers daily. Simplex remains valuable because many real LPs are sparse and warm-started.",
-        "numbers": "If today changes one demand from 500 to 520 units, a warm start may pivot from yesterday's basis instead of solving from scratch."
+        "title": "Supply chain",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a lane with zero reduced cost has an alternate optimum of the same cost."
       }
     ],
     "applicationsClose": "Simplex teaches a durable geometric lesson: in a linear world, optimality hides at corners, and algebra can walk there.",
@@ -909,6 +997,67 @@
       "A basic feasible solution is an algebraic version of a feasible corner.",
       "The entering variable improves the objective; the leaving variable is chosen by the ratio test.",
       "Simplex stops when no adjacent pivot can improve the objective."
+    ],
+    "connectionsProse": "<p>This lesson follows naturally from linear programming formulation. Once an LP has been written, the feasible region has corners, edges, and faces, and the linear objective improves in a consistent direction. The simplex method uses that geometry without needing to draw it. It also prepares the reader for dual prices and sensitivity, because the same tableau information reveals both an optimal plan and local economic meaning.</p>",
+    "symbols": [
+      {
+        "sym": "$s$",
+        "desc": "slack variables"
+      },
+      {
+        "sym": "basis",
+        "desc": "currently solved variables"
+      },
+      {
+        "sym": "reduced cost",
+        "desc": "objective improvement per unit of entering variable"
+      },
+      {
+        "sym": "pivot",
+        "desc": "row operation swapping variables"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $Ax\\le b$, $x\\ge0$.",
+        "result": "$x\\ge0$",
+        "why": "This is the LP feasible region."
+      },
+      {
+        "do": "Add slack variables $s\\ge0$ to write $Ax+s=b$.",
+        "result": "$Ax+s=b$",
+        "why": "This turns unused resource into variables."
+      },
+      {
+        "do": "Choose a basis of variables and set nonbasic variables to zero.",
+        "result": "the stated relationship",
+        "why": "This gives one corner solution."
+      },
+      {
+        "do": "Compute reduced costs in the objective row. A positive reduced cost in a maximization problem shows a nonbasic variable that can increase the objective.",
+        "result": "the stated relationship",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Select an entering variable with positive reduced cost.",
+        "result": "the stated relationship",
+        "why": "This chooses the edge to move along."
+      },
+      {
+        "do": "Use the ratio test $b_i/a_{ij}$ over positive pivot-column entries.",
+        "result": "$b_i/a_{ij}$",
+        "why": "This finds which basic variable reaches zero first and keeps feasibility."
+      },
+      {
+        "do": "Pivot to swap entering and leaving variables.",
+        "result": "the stated relationship",
+        "why": "This moves to the adjacent corner."
+      },
+      {
+        "do": "Repeat until no positive reduced cost remains. Then no neighboring corner improves the objective, and LP optimality follows.",
+        "result": "the stated relationship",
+        "why": "This records the corresponding modeling or optimality step."
+      }
     ],
     "prereqs": [
       "math-23-02"
@@ -937,8 +1086,8 @@
         "complementary slackness"
       ]
     },
-    "motivation": "<p>A primal LP asks, how much value can I create with these resources? The dual asks, what prices on the resources would make that created value impossible to exceed?</p><p>This is a beautiful shift. Instead of building the best plan directly, the dual builds the tightest upper bound on any plan. When the best plan and the best bound meet, you know you are done.</p>",
-    "definition": "<p>For the primal $\\max c^T x$ subject to $Ax\\le b$, $x\\ge0$, the dual is $\\min b^T y$ subject to $A^T y\\ge c$, $y\\ge0$. The dual variables $y$ are shadow prices for the primal constraints.</p><p>Weak duality follows by multiplying inequalities. If $Ax\\le b$ and $y\\ge0$, then $y^T Ax\\le y^T b$. If $A^T y\\ge c$ and $x\\ge0$, then $x^T A^T y\\ge c^T x$. Since $y^T Ax=x^T A^T y$, every dual feasible value bounds every primal feasible value.</p><p><b>Assumptions that matter:</b> primal and dual forms depend on max versus min and inequality directions; shadow prices are meaningful near the current optimum; and strong duality requires the LP to be feasible with a finite optimum.</p>",
+    "motivation": "<p>A production plan earns value by consuming limited resources. If each resource is assigned a nonnegative price, then every feasible plan has a priced resource cost. When those prices are high enough to cover the profit of every activity, the priced total resource supply becomes an upper bound on any primal objective value.</p><p>Duality turns this certificate into its own optimization problem. Instead of only searching for a good plan, we also search for the tightest valid upper bound on all plans. When the primal value and dual value meet, the plan is optimal and the prices explain which constraints are truly scarce.</p>",
+    "definition": "<p><b>LP duality</b> pairs the primal maximization problem with a pricing minimization problem: $$\\min b^Ty \\text{ subject to } A^Ty\\ge c,\\; y\\ge0.$$</p><p><b>Assumptions that matter:</b> Constraint prices are nonnegative, resource prices cover each activity profit, and complementary slackness identifies active scarcity at optimality.</p>",
     "worked": {
       "problem": "Write the dual of $\\max 4x+7y$ subject to $2x+y\\le40$, $x+3y\\le45$, $x,y\\ge0$.",
       "skills": [
@@ -1162,34 +1311,34 @@
     ],
     "applications": [
       {
-        "title": "Shadow prices in manufacturing",
-        "background": "Managers use dual variables to ask how much one extra unit of a scarce resource is worth near the optimum.",
-        "numbers": "If labor's shadow price is $12$ per hour, 5 extra hours are worth about $5*12=60$ dollars while the basis stays valid."
+        "title": "Bakery dual",
+        "background": "This setting applies the lesson model.",
+        "numbers": "$2u+v\\ge4$, $u+3v\\ge7$, minimizing $40u+45v$ gives $(u,v)=(1,2)$ and value $130$."
       },
       {
-        "title": "Network flow cuts",
-        "background": "Max-flow min-cut is a famous duality story: sending flow and blocking flow meet at the same value.",
-        "numbers": "If a cut has capacities 4, 7, and 3, its capacity is $14$, so no flow can exceed $14$ through that cut."
+        "title": "Certificate",
+        "background": "This setting applies the lesson model.",
+        "numbers": "primal value $130$ and dual value $130$ prove optimality."
       },
       {
-        "title": "Support vector machines",
-        "background": "SVM training is often solved through a dual problem where data points receive weights. The dual exposes support vectors.",
-        "numbers": "If only three points have nonzero weights $0.2$, $0.5$, and $0.3$, their total dual weight is $1.0$."
+        "title": "Shadow price",
+        "background": "This setting applies the lesson model.",
+        "numbers": "one extra hour with $v=2$ raises value by about $2$ while the basis holds."
       },
       {
-        "title": "Economic interpretation",
-        "background": "Duality connects optimization with prices. A feasible price system proves no production plan can beat its resource valuation.",
-        "numbers": "If a product uses 2 units of resource priced $3$ and 1 unit priced $4$, its priced input cost is $10$; profit above $10$ would violate dual feasibility."
+        "title": "SVM",
+        "background": "This setting applies the lesson model.",
+        "numbers": "support vectors satisfy complementary slackness with positive multipliers."
       },
       {
-        "title": "Certificate of optimality",
-        "background": "Solvers often return both primal and dual solutions because matching values are a compact proof.",
-        "numbers": "A primal value $245.00$ and dual value $245.01$ have a gap of $0.01$, about $0.004\\%$ of $245$."
+        "title": "Network cuts",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a cut capacity $5$ upper-bounds any $s$-$t$ flow by $5$."
       },
       {
-        "title": "Regularization and Lagrange multipliers",
-        "background": "Many ML constraints are handled by multiplier ideas related to duality. A penalty price says how expensive a violation is.",
-        "numbers": "If a constraint violation is $0.03$ and multiplier is $50$, the penalty contribution is $1.5$."
+        "title": "Regularization",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a dual constraint with slack $0.3$ means the corresponding primal coefficient stays zero."
       }
     ],
     "applicationsClose": "Duality is the same optimum viewed as action and as explanation: one plan uses resources, the other prices them.",
@@ -1198,6 +1347,72 @@
       "Weak duality says every dual feasible value bounds every primal feasible value.",
       "Matching primal and dual feasible values certify optimality.",
       "Dual variables are shadow prices for scarce constraints."
+    ],
+    "connectionsProse": "<p>This lesson builds on the LP formulation and the simplex view of active constraints. A primal LP asks for the best feasible plan. The dual LP asks for prices on the same constraints that certify how good any plan could be. That pricing view connects optimization to resource economics, network cuts, support vectors, and regularized machine learning models.</p>",
+    "symbols": [
+      {
+        "sym": "$y$",
+        "desc": "dual variables or shadow prices"
+      },
+      {
+        "sym": "$A_i$",
+        "desc": "a constraint row"
+      },
+      {
+        "sym": "$b_i-A_ix$",
+        "desc": "slack"
+      },
+      {
+        "sym": "$(A^Ty)_j-c_j$",
+        "desc": "dual slack for activity $j$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with the primal $\\max c^Tx$ subject to $Ax\\le b$, $x\\ge0$.",
+        "result": "$x\\ge0$",
+        "why": "This is the plan-value problem."
+      },
+      {
+        "do": "Choose nonnegative prices $y\\ge0$ for the constraints. Nonnegative prices preserve inequality direction.",
+        "result": "$y\\ge0$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Multiply $Ax\\le b$ by $y^T$ to get $y^TAx\\le y^Tb$.",
+        "result": "$y^TAx\\le y^Tb$",
+        "why": "This prices total resource use by total available resources."
+      },
+      {
+        "do": "Require $A^Ty\\ge c$.",
+        "result": "$A^Ty\\ge c$",
+        "why": "This says resource prices cover each activity's profit."
+      },
+      {
+        "do": "Multiply by $x\\ge0$ to get $x^TA^Ty\\ge c^Tx$.",
+        "result": "$x^TA^Ty\\ge c^Tx$",
+        "why": "This transfers the activity-wise price bound to the whole plan."
+      },
+      {
+        "do": "Use $y^TAx=x^TA^Ty$.",
+        "result": "$y^TAx=x^TA^Ty$",
+        "why": "This is the same scalar written two ways."
+      },
+      {
+        "do": "Chain the inequalities: $c^Tx\\le x^TA^Ty=y^TAx\\le y^Tb$.",
+        "result": "$c^Tx\\le x^TA^Ty=y^TAx\\le y^Tb$",
+        "why": "This proves weak duality."
+      },
+      {
+        "do": "Define the dual as minimizing the tightest such upper bound: $\\min b^Ty$ subject to $A^Ty\\ge c$, $y\\ge0$.",
+        "result": "$y\\ge0$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Add complementary slackness: $y_i(b_i-A_ix)=0$ and $x_j((A^Ty)_j-c_j)=0$.",
+        "result": "$x_j((A^Ty)_j-c_j)=0$",
+        "why": "This states that unused resources have zero price and unprofitable-at-price activities are zero."
+      }
     ],
     "prereqs": [
       "math-23-03"
@@ -1225,8 +1440,8 @@
         "perturbation analysis"
       ]
     },
-    "motivation": "<p>An optimizer gives a crisp answer, but real inputs are rarely crisp. Demand estimates move, costs change, and a resource that was 40 units yesterday may be 43 units tomorrow.</p><p><b>Sensitivity analysis</b> keeps the model honest after the first solve. It tells you which numbers matter, which constraints are scarce, and when a small change is safe enough to update without rebuilding the whole decision.</p>",
-    "definition": "<p>In linear programming, sensitivity analysis studies how the optimal solution and optimal value respond to changes in objective coefficients $c$, right-hand sides $b$, or constraint coefficients $A$. A shadow price gives the rate of change of the optimal value with respect to a right-hand side while the current basis remains optimal.</p><p>If the shadow price of flour is $1$, then increasing the flour limit from 40 to 41 raises the objective by about $1$, provided the same constraints remain active. This is a local, basis-dependent statement, not a promise for every possible change.</p><p><b>Assumptions that matter:</b> reported allowable ranges come from the current optimal basis; shadow prices apply only inside those ranges; degeneracy can make rates less intuitive; and changing several coefficients at once can leave the simple one-at-a-time report.</p>",
+    "motivation": "<p>An optimal LP solution is not just a single point. It comes with active constraints, unused resources, and dual prices that describe the current corner. Small changes to a right-hand side or objective coefficient may leave that same corner structure in control, even though the numerical value changes.</p><p>Sensitivity analysis focuses on this local region of stability. A shadow price estimates how much the objective changes when one resource limit is adjusted slightly. The estimate is useful precisely because it is local: once the active set changes, a different basis and different prices may apply.</p>",
+    "definition": "<p><b>Sensitivity analysis</b> uses the current optimal basis and its dual prices to estimate local value changes: $$\\Delta z\\approx y_i^\\ast\\Delta.$$</p><p><b>Assumptions that matter:</b> The basis must remain optimal and the right-hand-side change must stay within the allowable range.</p>",
     "worked": {
       "problem": "The bakery optimum has value $130$ and shadow prices $u=1$ for flour and $v=2$ for time. Estimate the value if flour increases from 40 to 43 kg and time decreases from 45 to 44 hours, assuming the basis remains valid.",
       "skills": [
@@ -1430,34 +1645,34 @@
     ],
     "applications": [
       {
+        "title": "Bakery flour",
+        "background": "This setting applies the lesson model.",
+        "numbers": "with shadow price $1$, 3 extra kg flour predicts $3$ more dollars."
+      },
+      {
+        "title": "Bakery time",
+        "background": "This setting applies the lesson model.",
+        "numbers": "with shadow price $2$, 4 extra hours predicts $8$ more dollars."
+      },
+      {
         "title": "Capacity expansion",
-        "background": "Managers rarely ask only for today's optimum; they ask whether buying more capacity is worth it. Shadow prices answer the first marginal question.",
-        "numbers": "If a machine-hour shadow price is $25$ and rental cost is $18$ per hour, the first extra hour has net value $7$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "a GPU-hour shadow price of $12$ makes 10 hours worth about $120$."
       },
       {
         "title": "Budget planning",
-        "background": "Ad and cloud budgets change frequently. Sensitivity reports show whether more budget helps or another constraint is already binding.",
-        "numbers": "A budget shadow price of $0.12$ means $1000$ more budget predicts $120$ more objective units."
+        "background": "This setting applies the lesson model.",
+        "numbers": "a nonbinding budget has shadow price $0$, so adding $500$ changes value by $0$ locally."
       },
       {
-        "title": "Robust reporting",
-        "background": "Operations teams use allowable ranges to avoid overreacting to tiny estimate changes.",
-        "numbers": "If demand can move from 950 to 1040 without changing the plan, a new forecast of 1010 does not require a new schedule."
+        "title": "SLA bottleneck",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a latency constraint price of $30$ per ms means relaxing by 2 ms lowers penalty by $60$."
       },
       {
-        "title": "Supply shortage response",
-        "background": "When a resource shrinks, shadow prices estimate the damage and help prioritize substitutions.",
-        "numbers": "Losing 6 units of a resource priced $9$ lowers value by about $54$ while the basis is valid."
-      },
-      {
-        "title": "ML cluster bottlenecks",
-        "background": "Training platforms need to know whether GPUs, network, or storage is limiting throughput. Sensitivity turns utilization into marginal value.",
-        "numbers": "If storage shadow price is $0$ but GPU shadow price is $30$, adding 2 GPUs predicts $60$ more value while adding storage predicts none."
-      },
-      {
-        "title": "Service-level agreements",
-        "background": "Customer support and reliability teams test what happens when required coverage increases. Sensitivity helps price stricter promises.",
-        "numbers": "If raising minimum coverage by 1 percent costs $400$, then moving from 95 percent to 98 percent estimates $1200$ added cost locally."
+        "title": "Data labeling",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a review-hour price of $4$ means 25 extra hours are worth about $100$."
       }
     ],
     "applicationsClose": "Sensitivity analysis keeps optimization connected to reality: answers are useful, but knowing how fragile they are is wiser.",
@@ -1466,6 +1681,56 @@
       "Positive slack usually means zero shadow price for a nonbinding constraint.",
       "Allowable ranges say when the current basis remains valid.",
       "Large or simultaneous changes can require resolving the model."
+    ],
+    "connectionsProse": "<p>This lesson uses the shadow prices introduced by LP duality. After an LP has been solved, the next practical question is often how stable the answer is. Sensitivity analysis reads local information from the current optimal basis and turns it into a report about bottlenecks, safe changes, and approximate value changes. That makes it a bridge between solving a model and using the solution in planning.</p>",
+    "symbols": [
+      {
+        "sym": "$b_i$",
+        "desc": "right-hand side"
+      },
+      {
+        "sym": "$\\Delta$",
+        "desc": "small change"
+      },
+      {
+        "sym": "$y_i^\\ast$",
+        "desc": "shadow price"
+      },
+      {
+        "sym": "basis",
+        "desc": "active corner structure"
+      },
+      {
+        "sym": "allowable range",
+        "desc": "changes that keep that basis optimal"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Solve an LP and keep its optimal dual prices $y^\\ast$. These prices describe the current basis.",
+        "result": "$y^\\ast$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Increase one right-hand side from $b_i$ to $b_i+\\Delta$.",
+        "result": "$b_i+\\Delta$",
+        "why": "This adds resource $i$."
+      },
+      {
+        "do": "The dual objective changes from $b^Ty^\\ast$ to $b^Ty^\\ast+y_i^\\ast\\Delta$.",
+        "result": "$b^Ty^\\ast+y_i^\\ast\\Delta$",
+        "why": "This is one multiplication by the changed right-hand side."
+      },
+      {
+        "do": "By strong duality, the primal optimal value changes at the same rate while the basis remains optimal.",
+        "result": "the stated relationship",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Therefore the shadow-price estimate is $\\Delta z\\approx y_i^\\ast\\Delta$.",
+        "result": "$\\Delta z\\approx y_i^\\ast\\Delta$",
+        "why": "This is local, not global."
+      }
     ],
     "prereqs": [
       "math-23-04"
@@ -1494,8 +1759,8 @@
         "graph theory"
       ]
     },
-    "motivation": "<p>Linear programming lets variables be fractional, which is perfect for flows, blends, and budgets. But many choices are indivisible. You open a warehouse or you do not. You assign a worker to a job or you do not.</p><p><b>Integer programming</b> adds the simple-looking requirement that some variables must be whole numbers. That tiny sentence changes the problem deeply: geometry still helps, but the best fractional corner may no longer be allowed.</p>",
-    "definition": "<p>An <b>integer program</b> is an optimization problem with a linear objective and linear constraints, plus restrictions such as $x_j\\in\\{0,1\\}$ or $x_j$ integer. A mixed-integer linear program has some integer variables and some continuous variables.</p><p>The LP relaxation removes integrality and allows fractional values. For a maximization problem, the relaxation gives an upper bound because it optimizes over a larger feasible set. For a minimization problem, it gives a lower bound. The integer optimum must be searched among feasible whole-number points.</p><p><b>Assumptions that matter:</b> integer variables should represent truly indivisible decisions; binary variables encode yes/no choices; big-M constraints must use valid, not absurdly huge, constants; and integer programs can be much harder than their LP relaxations.</p>",
+    "motivation": "<p>Linear programming allows fractional activity levels, which is appropriate for divisible quantities such as hours, flow, or budget. Some choices cannot be divided in that way. A plan with $4.3$ replicas or $0.6$ of a warehouse may be useful as a bound, but it is not a deployable decision.</p><p>Integer programming handles this by restricting variables to integers or to binary values. Dropping that restriction gives the LP relaxation, which is easier to solve and contains all integer-feasible plans. Because the relaxation has a larger feasible set, its objective value gives a bound on the true integer optimum.</p>",
+    "definition": "<p><b>Integer programming</b> adds whole-number restrictions and compares the integer feasible set with its relaxation: $$F_I\\subseteq F_R,\\quad z_R\\ge z_I \\text{ for maximization}.$$</p><p><b>Assumptions that matter:</b> Integer or binary variables represent indivisible choices; the LP relaxation gives a bound, not necessarily a deployable solution.</p>",
     "worked": {
       "problem": "A project can choose feature A and feature B. A gives value 9 and costs 6 days; B gives value 7 and costs 5 days. There are 8 days. Formulate and solve the binary integer program.",
       "skills": [
@@ -1725,33 +1990,33 @@
     "applications": [
       {
         "title": "Facility location",
-        "background": "Companies choose which warehouses or data centers to open. Each site is a yes/no decision with fixed costs.",
-        "numbers": "Opening sites costing 4M, 6M, and 5M under a 10M budget allows pairs $(4,6)$ and $(4,5)$ but not $(6,5)$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "3 open warehouses at $2000$ each cost $6000$."
       },
       {
         "title": "Feature selection",
-        "background": "ML pipelines sometimes choose a subset of features under latency or privacy limits. Binary variables encode inclusion.",
-        "numbers": "Features with latencies 2, 3, and 5 ms under a 6 ms limit allow the first two together at $5$ ms, but all three require $10$ ms."
+        "background": "This setting applies the lesson model.",
+        "numbers": "choosing 12 binary features from 200 is an integer restriction."
+      },
+      {
+        "title": "Knapsack",
+        "background": "This setting applies the lesson model.",
+        "numbers": "relaxation value $14.5$ bounds integer value $14$ for weights $(5,4,3)$ and values $(10,6,4)$."
       },
       {
         "title": "Crew scheduling",
-        "background": "Airlines and hospitals assign whole people to shifts. Fractional workers are not usable in the final schedule.",
-        "numbers": "A 7-person requirement cannot be met by 6.4 people; the integer schedule needs at least 7."
+        "background": "This setting applies the lesson model.",
+        "numbers": "7 whole shifts cover $7(8)=56$ staff-hours."
       },
       {
-        "title": "Knapsack planning",
-        "background": "The knapsack problem is a classic integer program: choose items with values and weights under capacity.",
-        "numbers": "Items worth 9 and 7 with weights 6 and 5 cannot both fit in capacity 8, so value 9 is better than 7."
+        "title": "A/B portfolio",
+        "background": "This setting applies the lesson model.",
+        "numbers": "binary choices with costs 3, 4, 5 fit a budget 7 by choosing costs 3 and 4."
       },
       {
-        "title": "A/B test portfolio",
-        "background": "Experiment platforms must choose whole experiments to run under traffic and analyst constraints.",
-        "numbers": "If tests use 20 percent, 30 percent, and 60 percent traffic, the first two fit exactly at 50 percent but the third cannot join them under a 100 percent cap with holdout."
-      },
-      {
-        "title": "Compiler and serving optimizations",
-        "background": "Deployment choices such as caching, batching, and quantization are often discrete switches.",
-        "numbers": "If caching saves 12 ms and quantization saves 18 ms, turning both on saves $30$ ms, provided their combined memory cost fits."
+        "title": "Serving optimization",
+        "background": "This setting applies the lesson model.",
+        "numbers": "5 replicas are allowed, while $4.3$ replicas are not a deployable count."
       }
     ],
     "applicationsClose": "Integer programming is where linear modeling meets indivisible reality: decisions become cleaner, and the search becomes harder.",
@@ -1760,6 +2025,57 @@
       "The LP relaxation gives a bound because it allows more solutions than the integer problem.",
       "Binary variables model yes/no decisions and can link to continuous variables.",
       "Small integer programs can be enumerated; large ones need smarter search."
+    ],
+    "connectionsProse": "<p>This lesson begins with the same variables and constraints as linear programming, then adds the requirement that some choices must be whole numbers. Many operational decisions are indivisible: a warehouse is opened or not, a feature is selected or not, and a serving system runs an integer number of replicas. Integer programming keeps those decisions faithful to deployment while still using LP relaxations for bounds and guidance.</p>",
+    "symbols": [
+      {
+        "sym": "$F_I$",
+        "desc": "integer feasible set"
+      },
+      {
+        "sym": "$F_R$",
+        "desc": "relaxation feasible set"
+      },
+      {
+        "sym": "$x_j\\in\\{0,1\\}$",
+        "desc": "binary variable"
+      },
+      {
+        "sym": "$z_I$ and $z_R$",
+        "desc": "integer and relaxation objective values"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with integer feasible set $F_I=\\{x:Ax\\le b, x\\in\\mathbb Z^n\\}$.",
+        "result": "$F_I=\\{x:Ax\\le b, x\\in\\mathbb Z^n\\}$",
+        "why": "This is the true set of allowed plans."
+      },
+      {
+        "do": "Drop integrality to get $F_R=\\{x:Ax\\le b, x\\in\\mathbb R^n\\}$.",
+        "result": "$F_R=\\{x:Ax\\le b, x\\in\\mathbb R^n\\}$",
+        "why": "This is the relaxation."
+      },
+      {
+        "do": "Observe $F_I\\subseteq F_R$. Every integer-feasible point is also relaxation-feasible.",
+        "result": "$F_I\\subseteq F_R$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "For maximization, maximizing over the larger set cannot produce a smaller value. Thus $z_R\\ge z_I$.",
+        "result": "$z_R\\ge z_I$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "For minimization, minimizing over the larger set cannot produce a larger value. Thus $z_R\\le z_I$.",
+        "result": "$z_R\\le z_I$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Use the relaxation value as a bound, not necessarily as a feasible integer solution.",
+        "result": "the stated relationship",
+        "why": "This records the corresponding modeling or optimality step."
+      }
     ],
     "prereqs": [
       "math-23-05"
@@ -1788,8 +2104,8 @@
         "combinatorics"
       ]
     },
-    "motivation": "<p>Integer programs are hard because the LP answer may say $x=2.6$ when the real choice must be $2$ or $3$. Rounding can break constraints or miss the best answer.</p><p><b>Branch and bound</b> is patient and clever. It solves an easier relaxation, branches on a fractional variable, and uses bounds to discard whole regions that cannot improve the best integer solution found so far.</p>",
-    "definition": "<p>Branch and bound keeps a search tree of subproblems. At each node, it solves a relaxation. For maximization, the relaxation value is an upper bound on any integer solution in that node. If the bound is no better than the incumbent integer value, the node is pruned.</p><p>If a relaxation gives $x_1=2.4$, branching creates two child nodes: $x_1\\le2$ and $x_1\\ge3$. Together they cover every integer possibility and exclude the fractional value. The process continues until all nodes are solved, infeasible, integer, or pruned by bound.</p><p><b>Assumptions that matter:</b> relaxations must give valid bounds; branching must preserve all integer possibilities; incumbents must be feasible integer solutions; and performance depends heavily on formulation strength and branching choices.</p>",
+    "motivation": "<p>Integer programs are hard because the feasible set is broken into discrete points. Trying every combination is usually impossible. Branch and bound organizes the combinations into subproblems, each with extra restrictions, so the search can reason about whole groups of possibilities at once.</p><p>The bound is what makes the search efficient. If a node's LP relaxation is infeasible, the node has no integer solutions. If its optimistic objective cannot beat the incumbent, it is safe to prune the node without exploring its descendants. Fractional relaxation solutions are handled by branching into integer cases that cover all possibilities.</p>",
+    "definition": "<p><b>Branch and bound</b> solves integer programs by branching on fractional relaxation solutions and pruning nodes whose bounds cannot improve the incumbent.</p><p><b>Assumptions that matter:</b> Each node is bounded by an LP relaxation; infeasible, integral, or noncompetitive nodes can be discarded safely.</p>",
     "worked": {
       "problem": "A maximization integer program has current incumbent value $30$. Three open nodes have LP relaxation bounds $42$, $29$, and $35$. The node with bound $42$ solves to fractional $x=3.6$. What happens next?",
       "skills": [
@@ -1993,34 +2309,34 @@
     ],
     "applications": [
       {
-        "title": "Mixed-integer solvers",
-        "background": "Commercial and open-source solvers use branch and bound with many enhancements. It is the backbone of practical discrete optimization.",
-        "numbers": "If a solver closes 980 nodes and leaves 20 open, it has processed $980/(980+20)=98\\%$ of the explored tree count."
+        "title": "Binary knapsack",
+        "background": "This setting applies the lesson model.",
+        "numbers": "relaxation $x=(1,0.75,0)$ has bound $14.5$; incumbent $(1,0,1)$ has value $14$."
       },
       {
-        "title": "Feature subset selection",
-        "background": "Selecting features under a cardinality cap is combinatorial. Relaxation bounds help avoid checking every subset.",
-        "numbers": "With 30 features, brute force has $2^{30}=1,073,741,824$ subsets; pruning even 99.9 percent still matters."
+        "title": "Feature subset",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a node bound of $0.842$ AUC cannot beat incumbent $0.851$, so prune it."
       },
       {
-        "title": "Scheduling jobs",
-        "background": "Machine schedules use integer start orders and assignment decisions. Branching splits alternative orders.",
-        "numbers": "Three jobs have $3!=6$ possible orders; ten jobs have $10!=3,628,800$ orders."
+        "title": "GPU scheduling",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a fractional start-time relaxation at 7.5 hours branches to before/after a job order."
       },
       {
         "title": "Warehouse location",
-        "background": "Opening facilities is binary. Bounds prove that some combinations cannot beat the current network design.",
-        "numbers": "If incumbent cost is $1.2M$ and a node's lower bound is $1.25M$, that entire branch can be discarded in minimization."
+        "background": "This setting applies the lesson model.",
+        "numbers": "if opening warehouse 2 has $x_2=0.6$, branch to closed $0$ or open $1$."
       },
       {
         "title": "Neural architecture search",
-        "background": "Some architecture choices are discrete: layer count, operator type, or quantization mode. Branch-and-bound ideas can control search.",
-        "numbers": "Choosing among 4 operators in 6 layers gives $4^6=4096$ architectures before pruning."
+        "background": "This setting applies the lesson model.",
+        "numbers": "a branch with validation bound $91.2$ cannot beat incumbent $91.7$."
       },
       {
-        "title": "Routing with integer decisions",
-        "background": "Vehicle routing decides whether an arc is used. Branching on an arc variable splits routes that include or exclude it.",
-        "numbers": "If arc variable $x_{ij}=0.6$ in a relaxation, branches $x_{ij}=0$ and $x_{ij}=1$ cover binary route choices."
+        "title": "Routing",
+        "background": "This setting applies the lesson model.",
+        "numbers": "if a relaxed route uses edge $e$ at $0.5$, branch on excluding or including that edge."
       }
     ],
     "applicationsClose": "Branch and bound is a practical compromise: it respects discrete choices while using continuous relaxations to avoid blind enumeration.",
@@ -2029,6 +2345,61 @@
       "An incumbent is the best feasible integer solution found so far.",
       "Branching on a fractional variable splits the search without losing integer solutions.",
       "Nodes are pruned when infeasible, integral and solved, or unable to beat the incumbent."
+    ],
+    "connectionsProse": "<p>This lesson follows integer programming and explains how LP relaxations become a search method. The reader has seen that a relaxation gives an optimistic bound, not necessarily an integer solution. Branch and bound uses that bound inside a decision tree, splitting fractional cases and discarding cases that cannot improve the best known integer answer. It is a practical foundation for many mixed-integer solvers.</p>",
+    "symbols": [
+      {
+        "sym": "node",
+        "desc": "subproblem"
+      },
+      {
+        "sym": "relaxation bound",
+        "desc": "optimistic objective"
+      },
+      {
+        "sym": "incumbent",
+        "desc": "best integer solution known"
+      },
+      {
+        "sym": "branch",
+        "desc": "added integer restriction"
+      },
+      {
+        "sym": "prune",
+        "desc": "discard a node safely"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Solve the LP relaxation at a node.",
+        "result": "the stated relationship",
+        "why": "This gives an optimistic bound for that node."
+      },
+      {
+        "do": "If the relaxation is infeasible, prune the node. No integer solution can live inside an empty relaxation.",
+        "result": "the stated relationship",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "If the relaxation solution is integer, compare it to the incumbent. It is a valid candidate solution.",
+        "result": "the stated relationship",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "If the relaxation bound is no better than the incumbent, prune. Even the optimistic value cannot improve the best known answer.",
+        "result": "the stated relationship",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "If some variable has fractional value $x_j=2.4$, branch into $x_j\\le2$ and $x_j\\ge3$. These two cases cover all integer possibilities for $x_j$.",
+        "result": "$x_j$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Repeat on open nodes until none remain. The incumbent is then optimal.",
+        "result": "the stated relationship",
+        "why": "This records the corresponding modeling or optimality step."
+      }
     ],
     "prereqs": [
       "math-23-06"
@@ -2057,8 +2428,8 @@
         "dual potentials"
       ]
     },
-    "motivation": "<p>Imagine two warehouses and three stores. Each warehouse has limited supply, each store has demand, and each route has a shipping cost. The question is not one route; it is the whole grid at once.</p><p>The <b>transportation problem</b> is a beautifully structured LP. Variables live in a table, row sums use supplies, column sums meet demands, and the objective adds cost per shipped unit.</p>",
-    "definition": "<p>Let $x_{ij}\\ge0$ be the amount shipped from source $i$ to destination $j$, with cost $c_{ij}$. The balanced transportation problem minimizes $\\sum_i\\sum_j c_{ij}x_{ij}$ subject to row sums $\\sum_j x_{ij}=s_i$ for each supply $s_i$ and column sums $\\sum_i x_{ij}=d_j$ for each demand $d_j$.</p><p>Balance means total supply equals total demand. If supply exceeds demand, add a dummy destination with zero or disposal cost. If demand exceeds supply, add a dummy source with shortage cost. The table structure makes the LP sparse and interpretable.</p><p><b>Assumptions that matter:</b> shipment amounts are divisible unless integrality is added; costs are linear per unit; all supply and demand must be accounted for in the balanced form; and route capacities require extra constraints beyond the basic model.</p>",
+    "motivation": "<p>Many allocation problems are about moving quantity from where it is available to where it is needed. The source supplies must be used, the destination demands must be met, and every route has a unit cost. The grid layout keeps these three pieces visible at the same time.</p><p>The model is linear because total cost is the sum of route cost times shipped amount. Balance matters: if total supply and total demand match, every row and column can be written as an equality. If they do not match, a dummy source or destination represents surplus or unmet demand in a controlled way.</p>",
+    "definition": "<p>The <b>transportation problem</b> minimizes shipping cost on a balanced source-destination grid: $$\\min\\sum_i\\sum_j c_{ij}x_{ij} \\text{ subject to } \\sum_j x_{ij}=s_i,\\; \\sum_i x_{ij}=d_j,\\; x_{ij}\\ge0.$$</p><p><b>Assumptions that matter:</b> Total supply equals total demand, route costs are linear, and dummy rows or columns handle imbalance.</p>",
     "worked": {
       "problem": "Two warehouses have supplies 20 and 30. Stores A, B, C demand 10, 25, 15. Costs are W1 to A,B,C: 2,4,5; W2 to A,B,C: 3,1,2. Give a low-cost feasible plan and its cost.",
       "skills": [
@@ -2277,34 +2648,34 @@
     ],
     "applications": [
       {
-        "title": "Freight shipping",
-        "background": "The classic use is moving goods from plants to markets. The table makes each origin-destination lane visible.",
-        "numbers": "Shipping 40 units at $3$ and 25 units at $5$ costs $120+125=245$."
+        "title": "Freight",
+        "background": "This setting applies the lesson model.",
+        "numbers": "supplies $(20,30)$, demands $(10,25,15)$, costs $\\begin{bmatrix}2&4&5\\3&1&7\\end{bmatrix}$ have optimum cost $125$."
       },
       {
-        "title": "Cloud data transfer",
-        "background": "Data engineering teams move datasets between regions and clusters under bandwidth costs. Transportation models capture source storage and destination demand.",
-        "numbers": "Moving 70 GB at $0.02$ per GB and 30 GB at $0.05$ costs $1.40+1.50=2.90$ dollars$."
+        "title": "Cloud transfer",
+        "background": "This setting applies the lesson model.",
+        "numbers": "70 GB at $0.02$ and 30 GB at $0.05$ costs $2.90$ dollars; this is the LaTeX-fix app."
       },
       {
         "title": "Inventory rebalancing",
-        "background": "Retailers move inventory from stores with surplus to stores with shortages. Each transfer lane has a cost and capacity.",
-        "numbers": "If store X sends 12 jackets to Y at $4$ each, the lane cost is $48$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "moving 12 units at $4$ and 8 at $6$ costs $96$."
       },
       {
-        "title": "Training data sharding",
-        "background": "ML platforms place shards across workers. Source shards and worker demand can be modeled like supply and demand.",
-        "numbers": "Four workers needing 25 GB each create total demand $100$ GB; two sources with 60 and 40 GB exactly balance."
+        "title": "Training sharding",
+        "background": "This setting applies the lesson model.",
+        "numbers": "600 examples to GPU A and 400 to GPU B assign all 1000 examples."
       },
       {
         "title": "Humanitarian logistics",
-        "background": "Relief operations route supplies from depots to affected areas with urgent demand. The model clarifies shortages and costs.",
-        "numbers": "Depots with 80 and 120 kits can meet towns demanding 50, 70, and 80 kits because both totals are $200$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "supply 80 and demand 50+30 balances exactly."
       },
       {
         "title": "Minibatch distribution",
-        "background": "Distributed training assigns data chunks to machines. Shipping cost may mean transfer time rather than money.",
-        "numbers": "Sending 10 chunks over a 2-second link and 15 chunks over a 1-second link costs $20+15=35$ chunk-seconds."
+        "background": "This setting applies the lesson model.",
+        "numbers": "sending 256, 256, and 512 samples fills a 1024-sample batch."
       }
     ],
     "applicationsClose": "Transportation problems remind us that many allocation questions are just flow conservation arranged in a table.",
@@ -2313,6 +2684,61 @@
       "Row sums match supplies; column sums match demands.",
       "The objective adds cost per unit over all routes.",
       "Dummy sources or destinations balance unequal total supply and demand."
+    ],
+    "connectionsProse": "<p>This lesson specializes linear programming to a grid of sources and destinations. The reader already knows how constraints can limit resources and require demand to be met. The transportation problem gives those constraints a particularly clear structure: each row is a source, each column is a destination, and each cell is a possible shipment route. This structure also points toward network flow and assignment models.</p>",
+    "symbols": [
+      {
+        "sym": "$x_{ij}$",
+        "desc": "shipment"
+      },
+      {
+        "sym": "$c_{ij}$",
+        "desc": "unit cost"
+      },
+      {
+        "sym": "$s_i$",
+        "desc": "supply"
+      },
+      {
+        "sym": "$d_j$",
+        "desc": "demand"
+      },
+      {
+        "sym": "$u_i,v_j$",
+        "desc": "row and column dual potentials"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define $x_{ij}\\ge0$ as the amount shipped from source $i$ to destination $j$.",
+        "result": "$j$",
+        "why": "This names one route per cell."
+      },
+      {
+        "do": "Multiply by route costs and sum: $\\sum_i\\sum_j c_{ij}x_{ij}$.",
+        "result": "$\\sum_i\\sum_j c_{ij}x_{ij}$",
+        "why": "This is total shipping cost."
+      },
+      {
+        "do": "For source $i$, add across destinations: $\\sum_j x_{ij}=s_i$.",
+        "result": "$\\sum_j x_{ij}=s_i$",
+        "why": "This uses all supply from row $i$."
+      },
+      {
+        "do": "For destination $j$, add across sources: $\\sum_i x_{ij}=d_j$.",
+        "result": "$\\sum_i x_{ij}=d_j$",
+        "why": "This meets demand in column $j$."
+      },
+      {
+        "do": "Require $\\sum_i s_i=\\sum_j d_j$.",
+        "result": "$\\sum_i s_i=\\sum_j d_j$",
+        "why": "This is balance; otherwise add a dummy source or destination."
+      },
+      {
+        "do": "Check optimality with potentials $u_i,v_j$: occupied cells satisfy $u_i+v_j=c_{ij}$, and empty cells must satisfy $u_i+v_j\\le c_{ij}$ for minimization.",
+        "result": "$u_i+v_j\\le c_{ij}$",
+        "why": "This is dual feasibility for the transportation LP."
+      }
     ],
     "prereqs": [
       "math-23-07"
@@ -2341,8 +2767,8 @@
         "duality"
       ]
     },
-    "motivation": "<p>Some transportation tables have a special discipline: each worker gets exactly one job, and each job gets exactly one worker. The shipments are no longer divisible quantities; they are yes/no matches.</p><p>The <b>assignment problem</b> is this one-to-one matching model. It appears in scheduling, labeling, recommendation, and evaluation whenever choosing the best pairing matters.</p>",
-    "definition": "<p>Let $x_{ij}\\in\\{0,1\\}$ equal 1 if agent $i$ is assigned to task $j$ and 0 otherwise. A square minimization assignment problem is $\\min\\sum_i\\sum_j c_{ij}x_{ij}$ subject to $\\sum_j x_{ij}=1$ for every agent $i$ and $\\sum_i x_{ij}=1$ for every task $j$.</p><p>This is a special transportation problem where every supply and demand equals 1. Although the variables are binary, the LP relaxation has integer extreme points for the balanced assignment matrix, which is why specialized algorithms can solve large instances efficiently.</p><p><b>Assumptions that matter:</b> the basic model enforces one agent per task and one task per agent; rectangular problems need dummy rows or columns; costs must represent the same objective across all pairings; and extra rules such as skills or fairness require additional constraints.</p>",
+    "motivation": "<p>Assignment problems appear whenever every item on one side must be matched exactly once to an item on the other side. A cost or score is attached to each possible match. The model selects a set of cells in the cost matrix so that every row and every column is used exactly once.</p><p>Although the variables are naturally binary, the assignment constraint matrix has a special integrality property. That means the LP relaxation has integer extreme points. The model therefore keeps the clarity of a binary matching problem while benefiting from linear programming structure and dual certificates.</p>",
+    "definition": "<p>The <b>assignment problem</b> matches agents to tasks one-to-one: $$\\min\\sum_i\\sum_j c_{ij}x_{ij} \\text{ subject to } \\sum_j x_{ij}=1,\\; \\sum_i x_{ij}=1.$$</p><p><b>Assumptions that matter:</b> Each agent and each task is used exactly once; the special constraint matrix makes LP extreme points integral.</p>",
     "worked": {
       "problem": "Assign workers A, B, C to jobs 1, 2, 3 with costs A: 8, 4, 7; B: 6, 5, 9; C: 7, 8, 3. Find the minimum-cost assignment by checking all permutations.",
       "skills": [
@@ -2561,34 +2987,34 @@
     ],
     "applications": [
       {
-        "title": "Worker-task scheduling",
-        "background": "The classic assignment problem matches people to jobs while minimizing time or cost.",
-        "numbers": "If Alice-job1 costs 4 hours and Bob-job2 costs 3 hours, that pairing costs $7$ hours."
+        "title": "Worker-task",
+        "background": "This setting applies the lesson model.",
+        "numbers": "costs $\\begin{bmatrix}9&2&7\\6&4&3\\5&8&1\\end{bmatrix}$ have optimum assignment $(1\\to2,2\\to1,3\\to3)$ with cost $9$."
       },
       {
-        "title": "Cluster label matching",
-        "background": "Unsupervised clusters have arbitrary names. Evaluation often assigns clusters to true labels to maximize agreement.",
-        "numbers": "Counts 30, 25, and 20 on a chosen diagonal give $75$ correct out of 100, or $75\\%$."
+        "title": "Cluster labels",
+        "background": "This setting applies the lesson model.",
+        "numbers": "matching 3 predicted clusters to 3 true labels can maximize 87 correct labels."
       },
       {
         "title": "Object tracking",
-        "background": "Video systems match detections from one frame to tracks from the previous frame. Costs often measure distance.",
-        "numbers": "Distances 2.1, 0.8, and 1.5 pixels in selected matches total $4.4$ pixels."
+        "background": "This setting applies the lesson model.",
+        "numbers": "track-to-detection costs 2, 6, and 1 sum to 9."
       },
       {
         "title": "Recommendation slots",
-        "background": "A recommender may assign items to page slots with position-dependent value while avoiding duplicates.",
-        "numbers": "Item A in slot 1 scores 9 and item B in slot 2 scores 6, so the assignment value is $15$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "4 slots filled by 4 items require exactly 4 ones in $x$."
       },
       {
-        "title": "Reviewer-paper matching",
-        "background": "Conferences assign reviewers to papers using expertise scores and conflict constraints. The one-to-one version is the clean core.",
-        "numbers": "Three assignments with expertise scores 4, 5, and 3 sum to $12$ expertise points."
+        "title": "Reviewer matching",
+        "background": "This setting applies the lesson model.",
+        "numbers": "20 papers and 20 reviewers make 20 assignments."
       },
       {
-        "title": "GPU job placement",
-        "background": "Schedulers can match jobs to machines based on expected runtime or data locality. Each job should land on one machine.",
-        "numbers": "If chosen runtimes are 12, 9, and 15 minutes, total completion-time cost is $36$ minutes in the assignment objective."
+        "title": "GPU placement",
+        "background": "This setting applies the lesson model.",
+        "numbers": "assigning 3 jobs to 3 GPUs with costs 4, 7, and 2 gives total cost 13."
       }
     ],
     "applicationsClose": "The assignment problem is matching with discipline: every row chooses once, every column is chosen once, and the total score tells the story.",
@@ -2597,6 +3023,66 @@
       "Row sums force each agent to get one task; column sums force each task to get one agent.",
       "Rectangular problems can be balanced with dummy rows or columns.",
       "Assignment is a special transportation problem with unit supplies and demands."
+    ],
+    "connectionsProse": "<p>This lesson narrows the transportation problem to one-to-one matching. Instead of shipping arbitrary amounts, each agent supplies one unit and each task demands one unit. The same row-and-column idea remains, but the result is a clean model for pairing workers, labels, reviewers, jobs, or slots. It also connects linear programming to matching problems in graphs.</p>",
+    "symbols": [
+      {
+        "sym": "$x_{ij}$",
+        "desc": "binary assignment"
+      },
+      {
+        "sym": "$c_{ij}$",
+        "desc": "match cost"
+      },
+      {
+        "sym": "row constraint",
+        "desc": "one task per agent"
+      },
+      {
+        "sym": "column constraint",
+        "desc": "one agent per task"
+      },
+      {
+        "sym": "potentials",
+        "desc": "certificates of optimality"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define $x_{ij}=1$ if agent $i$ takes task $j$, and $0$ otherwise.",
+        "result": "$0$",
+        "why": "This records a match."
+      },
+      {
+        "do": "Add row constraints $\\sum_j x_{ij}=1$.",
+        "result": "$\\sum_j x_{ij}=1$",
+        "why": "This assigns every agent exactly once."
+      },
+      {
+        "do": "Add column constraints $\\sum_i x_{ij}=1$.",
+        "result": "$\\sum_i x_{ij}=1$",
+        "why": "This fills every task exactly once."
+      },
+      {
+        "do": "Minimize $\\sum_i\\sum_j c_{ij}x_{ij}$.",
+        "result": "$\\sum_i\\sum_j c_{ij}x_{ij}$",
+        "why": "This selects the least-cost set of matches."
+      },
+      {
+        "do": "View it as transportation with all supplies and demands equal to 1.",
+        "result": "the stated relationship",
+        "why": "This explains the structure."
+      },
+      {
+        "do": "Use the integrality property of this constraint matrix. The LP relaxation has integer extreme points, so the binary solution can be found through the LP.",
+        "result": "the stated relationship",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Check optimality with row and column potentials $u_i+v_j\\le c_{ij}$ and equality on chosen matches.",
+        "result": "$u_i+v_j\\le c_{ij}$",
+        "why": "This records the corresponding modeling or optimality step."
+      }
     ],
     "prereqs": [
       "math-23-08"
@@ -2625,8 +3111,8 @@
         "graph algorithms"
       ]
     },
-    "motivation": "<p>You already know how to balance a simple budget: what comes in, what goes out, and what remains. A network flow model uses the same instinct on a graph of roads, links, jobs, or data paths.</p><p>The warm surprise is that many practical routing questions become linear constraints. If every arc has a capacity and every node conserves flow, then the model can find the largest shipment, cheapest route plan, or safest bottleneck without guessing paths one by one.</p>",
-    "definition": "<p>A <b>network flow model</b> has directed arcs $(i,j)$ with flow variables $x_{ij}\\ge0$ and capacities $u_{ij}$. In a max-flow problem, a source $s$ sends value $v$ to a sink $t$. Capacity constraints say $0\\le x_{ij}\\le u_{ij}$. Conservation says that for every intermediate node $k$, $$\\sum_i x_{ik}=\\sum_j x_{kj},$$ so inflow equals outflow.</p><p>The max-flow value can be written by adding source outflow, $v=\\sum_j x_{sj}-\\sum_i x_{is}$. The famous cut idea explains why bottlenecks matter: any cut separating $s$ from $t$ can carry at most the sum of capacities crossing the cut, so every feasible flow is bounded by every cut capacity.</p><p><b>Assumptions that matter:</b> flows are nonnegative; capacities are fixed upper bounds; intermediate nodes do not create or destroy flow unless explicitly given supply or demand; and the graph direction matters unless both directions are modeled as separate arcs.</p>",
+    "motivation": "<p>A flow model tracks movement through a network. Arcs have capacities, sources inject flow, sinks receive it, and intermediate nodes simply pass along what they receive. The conservation equations are the core bookkeeping rule: except at sources and sinks, inflow must equal outflow.</p><p>The objective depends on the task. In a max-flow problem, the goal is to deliver as much as possible from source to sink subject to arc capacities. The same variables and conservation constraints can also support minimum-cost flow, circulation, and matching formulations.</p>",
+    "definition": "<p><b>Network flow</b> puts capacity-limited variables on directed arcs and conserves flow at intermediate nodes: $$0\\le x_{ij}\\le u_{ij},\\quad \\sum_i x_{ik}=\\sum_j x_{kj}.$$</p><p><b>Assumptions that matter:</b> Arcs have capacities, sources inject flow, sinks receive flow, and transshipment nodes pass along what they receive.</p>",
     "worked": {
       "problem": "Find the maximum $s$-$t$ flow in a network with arcs $s\\to a$ capacity $4$, $s\\to b$ capacity $3$, $a\\to t$ capacity $2$, $b\\to t$ capacity $5$, and $a\\to b$ capacity $1$.",
       "skills": [
@@ -2875,34 +3361,34 @@
     ],
     "applications": [
       {
-        "title": "Internet routing and link capacity",
-        "background": "Network operators model traffic moving through routers as flow on a graph. The model makes congestion visible before links saturate.",
-        "numbers": "If two links into a data center carry $40$ and $60$ Gb/s, then no routing plan can deliver more than $100$ Gb/s through those entrances."
+        "title": "Internet routing",
+        "background": "This setting applies the lesson model.",
+        "numbers": "capacities $s\\to a=3$, $s\\to b=2$, $a\\to t=2$, $b\\to t=3$ allow max flow $5$."
       },
       {
-        "title": "Supply chains",
-        "background": "Factories, warehouses, and stores form a natural flow network. Conservation means products cannot appear at a warehouse unless they were shipped there.",
-        "numbers": "If a warehouse receives $120$ pallets and keeps inventory unchanged, outgoing shipments across stores must total $120$ pallets."
+        "title": "Supply chain",
+        "background": "This setting applies the lesson model.",
+        "numbers": "sending 40 through plant A and 60 through plant B delivers 100 units."
       },
       {
-        "title": "Assignment as matching",
-        "background": "Bipartite matching is a classic network-flow use: workers connect to jobs they can do, and unit capacities enforce one assignment each.",
-        "numbers": "With $10$ workers and $8$ jobs, the max matching is at most $8$ because only $8$ unit-capacity arcs enter the sink."
+        "title": "Bipartite matching",
+        "background": "This setting applies the lesson model.",
+        "numbers": "5 unit flows correspond to 5 matches."
       },
       {
-        "title": "Image segmentation cuts",
-        "background": "Graph cuts became important in vision because separating foreground from background can be framed as cutting a weighted graph.",
-        "numbers": "If a cut crosses edges of weights $2.1$, $0.7$, and $1.4$, its cost is $4.2$; a lower cut is preferred."
+        "title": "Image segmentation",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a cut with capacities 3, 4, and 2 has cut cost 9."
       },
       {
-        "title": "Data ingestion bottlenecks",
-        "background": "ML systems often move examples through storage, preprocessing, and training. Flow models identify the limiting stage.",
-        "numbers": "If preprocessors output $18$k examples/s but GPU input links accept $15$k examples/s, throughput is capped at $15$k examples/s."
+        "title": "Data ingestion",
+        "background": "This setting applies the lesson model.",
+        "numbers": "links 80 MB/s and 120 MB/s give a 200 MB/s upstream cap."
       },
       {
-        "title": "Evacuation planning",
-        "background": "Operations researchers use flows to reason about people moving through exits and corridors under capacity limits.",
-        "numbers": "Three exits with capacities $80$, $120$, and $100$ people per minute can clear at most $300$ people per minute."
+        "title": "Evacuation",
+        "background": "This setting applies the lesson model.",
+        "numbers": "roads carrying 30, 50, and 20 people/minute can move 100 people/minute before downstream limits."
       }
     ],
     "applicationsClose": "From packets to pallets to training examples, network flow asks every node to keep honest books about what can pass through.",
@@ -2911,6 +3397,70 @@
       "Intermediate nodes conserve flow: total inflow equals total outflow.",
       "A cut gives an upper bound on any feasible $s$-$t$ flow.",
       "Matching, routing, segmentation, and ML data movement all fit the same graph accounting pattern."
+    ],
+    "connectionsProse": "<p>This lesson moves from source-destination grids to directed graphs. The reader has already seen conservation in transportation rows and columns. Network flow uses the same idea on nodes and arcs, where quantity moves through intermediate points before reaching a sink. This language supports routing, matching, image segmentation, data ingestion, and many capacity-planning models.</p>",
+    "symbols": [
+      {
+        "sym": "$x_{ij}$",
+        "desc": "flow"
+      },
+      {
+        "sym": "$u_{ij}$",
+        "desc": "capacity"
+      },
+      {
+        "sym": "$s$",
+        "desc": "source"
+      },
+      {
+        "sym": "$t$",
+        "desc": "sink"
+      },
+      {
+        "sym": "$v$",
+        "desc": "flow value"
+      },
+      {
+        "sym": "conservation",
+        "desc": "inflow equals outflow at transshipment nodes"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Put a nonnegative flow variable $x_{ij}$ on each directed arc $(i,j)$.",
+        "result": "$(i,j)$",
+        "why": "This measures movement along that arc."
+      },
+      {
+        "do": "Add capacity bounds $0\\le x_{ij}\\le u_{ij}$.",
+        "result": "$0\\le x_{ij}\\le u_{ij}$",
+        "why": "This prevents using more than the arc can carry."
+      },
+      {
+        "do": "For an intermediate node $k$, sum inflow $\\sum_i x_{ik}$.",
+        "result": "$\\sum_i x_{ik}$",
+        "why": "This measures what arrives."
+      },
+      {
+        "do": "Sum outflow $\\sum_j x_{kj}$.",
+        "result": "$\\sum_j x_{kj}$",
+        "why": "This measures what departs."
+      },
+      {
+        "do": "Set inflow equal to outflow.",
+        "result": "the stated relationship",
+        "why": "This conserves flow at node $k$."
+      },
+      {
+        "do": "Define value $v$ as total flow leaving source or entering sink.",
+        "result": "$v$",
+        "why": "This is the amount delivered."
+      },
+      {
+        "do": "Maximize $v$ subject to capacities and conservation.",
+        "result": "$v$",
+        "why": "This gives the max-flow LP."
+      }
     ],
     "prereqs": [
       "math-23-09"
@@ -2939,8 +3489,8 @@
         "integer programming"
       ]
     },
-    "motivation": "<p>You already solve some problems by working backward: if the final bill is known, ask what must have happened just before it. Dynamic programming gives that backward thinking a disciplined memory.</p><p>Instead of exploring every possible plan separately, we define a state, write the best value from that state, and reuse it. The reward is enormous: repeated subproblems become table entries rather than repeated labor.</p>",
-    "definition": "<p><b>Dynamic programming</b> solves an optimization problem by defining states and a value function. A typical finite-horizon recurrence is $$V_t(s)=\\max_{a\\in A(s)}\\{r_t(s,a)+V_{t+1}(T(s,a))\\},$$ where $s$ is the current state, $a$ is an action, $r_t$ is immediate reward, $T$ is the next-state rule, and $V_t(s)$ is the best total value from time $t$ onward.</p><p>The recurrence follows from the principle of optimality: after the first decision, the remaining decisions must form an optimal plan for the state that decision creates. If not, replacing the tail with a better tail would improve the original plan.</p><p><b>Assumptions that matter:</b> the state must contain all information needed for future decisions; subproblems must overlap or have reusable structure; boundary values must be specified; and the recurrence must avoid circular dependence unless a valid fixed-point or graph-order method is used.</p>",
+    "motivation": "<p>Dynamic programming is for decisions that unfold in stages. A greedy method looks only at the immediate gain; exhaustive search tries every complete plan. Dynamic programming sits between those extremes. It keeps the future in view, but it avoids repeating the same future calculation again and again.</p><p>The key idea is the principle of optimality. Once a first action has been chosen and the system has moved to a new state, the remaining actions must form an optimal plan for that new state. If they did not, replacing the tail with a better tail would improve the whole plan. That observation lets us write the value of a state in terms of the values of its next states.</p><p>For a finite-horizon problem, let $V_t(s)$ mean the best total reward available from time $t$ onward when the current state is $s$. At time $t$, choose an action $a$, earn immediate reward $r_t(s,a)$, and move to $T(s,a)$. The best choice is the action with the largest immediate reward plus best future value.</p>",
+    "definition": "<p><b>Dynamic programming</b> writes the value of a state as the best immediate reward plus best future value: $$V_t(s)=\\max_{a\\in A(s)}\\{r_t(s,a)+V_{t+1}(T(s,a))\\}.$$</p><p><b>Assumptions that matter:</b> The future can be summarized by the next state, feasible actions are known from each state, and a terminal condition starts the backward recursion.</p>",
     "worked": {
       "problem": "A small project has two stages left. At stage 2, state $s$ has choices with rewards $5$ or $7$, then ends. At stage 1, action $A$ gives reward $3$ and moves to stage 2; action $B$ gives reward $6$ and ends. Find the optimal value at stage 1.",
       "skills": [
@@ -3185,33 +3735,33 @@
     "applications": [
       {
         "title": "Shortest paths",
-        "background": "Bellman's dynamic programming view of shortest paths says the best route from a node is one edge plus the best route after that edge.",
-        "numbers": "If $A\\to B$ costs $3$ and $d(B)=7$, that option costs $10$; if $A\\to C$ costs $5$ and $d(C)=4$, choose cost $9$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "If distances from the next city to the goal are $V(B)=5$ and $V(C)=3$, and edges from $A$ cost $2$ and $6$, then $V(A)=\\min\\{2+5,6+3\\}=7$."
       },
       {
         "title": "Inventory planning",
-        "background": "Operations researchers use DP when today's order affects tomorrow's stock. The state is inventory level.",
-        "numbers": "With holding cost $1$ per unit, ending with $4$ units adds $4$ cost to the next state's value."
+        "background": "This setting applies the lesson model.",
+        "numbers": "With 2 units left, ordering 0 gives shortage cost $8$, while ordering 1 gives setup plus holding cost $3+1=4$; DP selects cost $4$."
       },
       {
         "title": "Sequence alignment",
-        "background": "Bioinformatics and text comparison align sequences by solving smaller prefix-alignment problems.",
-        "numbers": "If match is $+2$, gap is $-1$, and diagonal prefix score is $5$, a match option scores $7$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "A cell with diagonal $6$, up $3$, and left $4$ under scores $+2,-1,-1$ gives $\\max\\{8,2,3\\}=8$."
       },
       {
         "title": "Viterbi decoding",
-        "background": "Hidden Markov models and structured prediction use DP to find the best hidden state sequence without enumerating all sequences.",
-        "numbers": "For $3$ labels and length $10$, brute force has $3^{10}=59049$ paths; Viterbi stores only $10\\cdot3=30$ state scores plus transitions."
+        "background": "This setting applies the lesson model.",
+        "numbers": "If a tag path to `NOUN` has previous scores $5$ and $3$, transition scores $2$ and $4$, and emission score $1$, the new score is $\\max\\{5+2+1,3+4+1\\}=8$."
       },
       {
         "title": "Reinforcement learning",
-        "background": "Value iteration is dynamic programming for decision processes when transitions and rewards are known or estimated.",
-        "numbers": "With reward $2$, discount $0.9$, and next value $10$, an action has value $2+0.9\\cdot10=11$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "With discount $\\gamma=0.9$, rewards $2$ and $1$, and next values $10$ and $12$, the Bellman backup chooses $\\max\\{2+0.9(10),1+0.9(12)\\}=11.8$."
       },
       {
         "title": "Compiler optimization",
-        "background": "Some compilers choose efficient instruction sequences by reusing optimal costs for smaller expression trees.",
-        "numbers": "If computing subexpression $u$ costs $4$ cycles and combining costs $2$, that branch contributes $6$ cycles."
+        "background": "This setting applies the lesson model.",
+        "numbers": "If two code-generation choices cost $3+V=3+7=10$ and $5+4=9$, the DP table stores cost $9$ for that subexpression."
       }
     ],
     "applicationsClose": "Dynamic programming is the art of turning a long decision into trusted smaller decisions whose answers are saved and reused.",
@@ -3220,6 +3770,79 @@
       "The value recurrence compares immediate reward or cost plus optimal continuation.",
       "Boundary values start the table or recursion.",
       "DP powers shortest paths, knapsack, sequence decoding, inventory, and reinforcement learning."
+    ],
+    "connectionsProse": "<p>This lesson builds on optimization, recursion, and graph thinking. In earlier lessons, an LP or flow model solved one large set of constraints at once. Dynamic programming takes a different route: it breaks a decision process into states, solves the smaller future problem from each state, and then uses those saved values to choose the current action.</p><p>The same pattern appears across machine learning systems. Viterbi decoding stores the best score for each tag at each token. Reinforcement learning stores the value of a state before choosing an action. Resource planners can store the best value for a remaining budget, remaining time, or remaining GPU capacity. The method is useful when the future can be summarized by a state rather than by the whole path that led there.</p>",
+    "symbols": [
+      {
+        "sym": "$t$",
+        "desc": "stage"
+      },
+      {
+        "sym": "$s$",
+        "desc": "state"
+      },
+      {
+        "sym": "$A(s)$",
+        "desc": "feasible-action set"
+      },
+      {
+        "sym": "$a$",
+        "desc": "one action"
+      },
+      {
+        "sym": "$r_t(s,a)$",
+        "desc": "immediate reward"
+      },
+      {
+        "sym": "$T(s,a)$",
+        "desc": "next-state rule"
+      },
+      {
+        "sym": "$V_t(s)$",
+        "desc": "optimal future value from $(t,s)$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a fixed state and time, written as $(t,s)$.",
+        "result": "$(t,s)$",
+        "why": "This pins down the subproblem whose value is being computed."
+      },
+      {
+        "do": "List the feasible actions $a\\in A(s)$.",
+        "result": "$a\\in A(s)$",
+        "why": "This restricts the decision to actions allowed from state $s$."
+      },
+      {
+        "do": "For one chosen action $a$, add the immediate reward $r_t(s,a)$.",
+        "result": "$r_t(s,a)$",
+        "why": "This accounts for the payoff earned now."
+      },
+      {
+        "do": "Apply the transition rule $T(s,a)$ to get the next state.",
+        "result": "$T(s,a)$",
+        "why": "This summarizes everything the future needs to know after taking $a$."
+      },
+      {
+        "do": "By the principle of optimality, the remaining value is $V_{t+1}(T(s,a))$.",
+        "result": "$V_{t+1}(T(s,a))$",
+        "why": "This replaces the entire future tail with the best value for the next subproblem."
+      },
+      {
+        "do": "Add present and future values to get $r_t(s,a)+V_{t+1}(T(s,a))$.",
+        "result": "$r_t(s,a)+V_{t+1}(T(s,a))$",
+        "why": "This is the value of plans whose first action is $a$."
+      },
+      {
+        "do": "Maximize over feasible actions.",
+        "result": "the stated relationship",
+        "why": "This chooses the best first action and gives the recurrence above."
+      },
+      {
+        "do": "Set a terminal condition such as $V_{T+1}(s)=0$.",
+        "result": "$V_{T+1}(s)=0$",
+        "why": "This gives the backward recursion a place to start."
+      }
     ],
     "prereqs": [
       "math-23-10"
@@ -3248,8 +3871,8 @@
         "optimization"
       ]
     },
-    "motivation": "<p>You have felt a queue change character. A coffee line with one customer ahead is fine; the same line near closing time can grow faster than it clears. The math is not just about lines of people. It also describes requests, jobs, packets, and training tasks.</p><p>Queueing theory gives a few clear quantities to watch: arrivals, service, utilization, waiting time, and the number in system. The lesson is gentle but important: small increases in utilization can cause large increases in waiting.</p>",
-    "definition": "<p>In a basic $M/M/1$ queue, arrivals follow a Poisson process with rate $\\lambda$, service times are exponential with rate $\\mu$, and there is one server. The <b>utilization</b> is $\\rho=\\lambda/\\mu$. The stable case requires $\\rho<1$.</p><p>For a stable $M/M/1$ queue, the expected number in the system is $L=\\dfrac{\\rho}{1-\\rho}$, the expected time in the system is $W=\\dfrac{1}{\\mu-\\lambda}$, and Little's law says $L=\\lambda W$. The waiting part before service is $W_q=\\dfrac{\\lambda}{\\mu(\\mu-\\lambda)}$.</p><p><b>Assumptions that matter:</b> $M/M/1$ formulas assume memoryless arrivals and service, a single server, first-come first-served discipline, long-run steady state, and $\\lambda<\\mu$. If arrivals are bursty or service times are heavy-tailed, the formulas become approximations or need a different model.</p>",
+    "motivation": "<p>A service system can look healthy when average capacity exceeds average demand, but the amount of spare capacity matters greatly. Random arrivals bunch together, service times vary, and a temporary backlog can form even when the long-run service rate is larger than the arrival rate.</p><p>The $M/M/1$ queue is the clean baseline for this effect. It assumes one server, Poisson arrivals, and exponential service times. The utilization $\\rho$ controls the steady-state distribution, and as arrivals approach service capacity, expected system size and waiting time rise sharply.</p>",
+    "definition": "<p>The steady-state <b>$M/M/1$ queue</b> has utilization $\\rho=\\lambda/\\mu$ and expected system size $$L=\\frac{\\lambda}{\\mu-\\lambda},\\quad W=\\frac{1}{\\mu-\\lambda}.$$</p><p><b>Assumptions that matter:</b> Arrivals are Poisson, service times are exponential, there is one server, and stability requires $\\lambda<\\mu$.</p>",
     "worked": {
       "problem": "A single API worker receives $\\lambda=8$ requests per second and serves $\\mu=10$ requests per second. For an $M/M/1$ approximation, find utilization, expected number in system, and expected time in system.",
       "skills": [
@@ -3453,34 +4076,34 @@
     ],
     "applications": [
       {
-        "title": "Web request latency",
-        "background": "Backend services receive random request streams. Queueing models help engineers see why latency rises sharply as workers approach full utilization.",
-        "numbers": "With $\\lambda=90$/s and $\\mu=100$/s, $W=1/(100-90)=0.1$ s; at $\\lambda=95$/s, $W=0.2$ s."
+        "title": "Web requests",
+        "background": "This setting applies the lesson model.",
+        "numbers": "$\\lambda=8$/hour and $\\mu=10$/hour give $L=4$ and $W=0.5$ hours."
       },
       {
-        "title": "GPU training clusters",
-        "background": "Shared GPU clusters queue jobs from many teams. Little's law connects dashboard counts to user-visible waiting.",
-        "numbers": "If $L=40$ jobs and arrivals are $2$ jobs/hour, average time in system is $W=40/2=20$ hours."
+        "title": "GPU cluster",
+        "background": "This setting applies the lesson model.",
+        "numbers": "utilization $0.8$ gives queue length $L_q=\\rho^2/(1-\\rho)=3.2$."
       },
       {
-        "title": "Call centers",
-        "background": "Queueing theory grew through telephone traffic engineering, where staffing must balance cost and waiting.",
-        "numbers": "A representative serving $12$ calls/hour with arrivals $9$ calls/hour has utilization $9/12=0.75$."
+        "title": "Call center",
+        "background": "This setting applies the lesson model.",
+        "numbers": "$\\lambda=18$ and $\\mu=24$ calls/hour gives $W=1/6$ hour, or 10 minutes."
       },
       {
-        "title": "Disk and database queues",
-        "background": "Storage devices serialize many reads and writes. Queueing estimates help predict when adding workload hurts tail latency.",
-        "numbers": "If mean service is $2$ ms, then $\\mu=500$/s; with $\\lambda=400$/s, $\\rho=0.8$."
+        "title": "Disk queue",
+        "background": "This setting applies the lesson model.",
+        "numbers": "$\\lambda=90$, $\\mu=100$ ops/s gives $L=9$."
       },
       {
-        "title": "Network packet buffers",
-        "background": "Routers buffer packets when bursts exceed outgoing link capacity. Persistent overload grows queues and drops packets.",
-        "numbers": "If packets arrive at $1.2$ million/s but a link serves $1.0$ million/s, $\\lambda>\\mu$ and a stable $M/M/1$ steady state does not exist."
+        "title": "Packet buffer",
+        "background": "This setting applies the lesson model.",
+        "numbers": "$\\rho=0.5$ gives $L=1$."
       },
       {
         "title": "Batch inference",
-        "background": "ML inference systems often batch requests for efficiency, trading service speed against waiting for a batch to fill.",
-        "numbers": "If a batch of $8$ takes $40$ ms, average service capacity is $8/0.04=200$ requests/s before batching overheads."
+        "background": "This setting applies the lesson model.",
+        "numbers": "$\\lambda=40$, $\\mu=50$ batches/hour gives $W=0.1$ hours, or 6 minutes."
       }
     ],
     "applicationsClose": "Queueing theory teaches one practical kindness: leave spare capacity if you care about waiting time.",
@@ -3489,6 +4112,70 @@
       "The stable $M/M/1$ model requires $\\lambda<\\mu$.",
       "Little's law $L=\\lambda W$ connects average count, arrival rate, and time in system.",
       "Waiting grows quickly as utilization approaches one."
+    ],
+    "connectionsProse": "<p>This lesson shifts from deterministic allocation to systems with random arrivals and service times. The reader has already seen capacity constraints in LPs, flows, and schedules. Queueing theory explains what happens when demand arrives over time and competes for limited service capacity. The same ideas are useful for web requests, GPU clusters, call centers, disk queues, and inference services.</p>",
+    "symbols": [
+      {
+        "sym": "$\\lambda$",
+        "desc": "arrival rate"
+      },
+      {
+        "sym": "$\\mu$",
+        "desc": "service rate"
+      },
+      {
+        "sym": "$\\rho$",
+        "desc": "utilization"
+      },
+      {
+        "sym": "$L$",
+        "desc": "expected number in system"
+      },
+      {
+        "sym": "$W$",
+        "desc": "expected time in system"
+      },
+      {
+        "sym": "$\\lambda<\\mu$",
+        "desc": "stability condition"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let arrivals occur at rate $\\lambda$ and service completions at rate $\\mu$.",
+        "result": "$\\mu$",
+        "why": "This defines the birth-death process."
+      },
+      {
+        "do": "In steady state, flow into state $n+1$ equals flow out: $\\pi_n\\lambda=\\pi_{n+1}\\mu$.",
+        "result": "$\\pi_n\\lambda=\\pi_{n+1}\\mu$",
+        "why": "This balances adjacent states."
+      },
+      {
+        "do": "Rearrange to $\\pi_{n+1}=\\rho\\pi_n$ with $\\rho=\\lambda/\\mu$.",
+        "result": "$\\rho=\\lambda/\\mu$",
+        "why": "This gives the geometric pattern."
+      },
+      {
+        "do": "Repeat to get $\\pi_n=(1-\\rho)\\rho^n$ after normalization.",
+        "result": "$\\pi_n=(1-\\rho)\\rho^n$",
+        "why": "This requires $\\rho<1$."
+      },
+      {
+        "do": "Compute expected system size $L=\\sum_{n\\ge0}n(1-\\rho)\\rho^n=\\rho/(1-\\rho)$.",
+        "result": "$L=\\sum_{n\\ge0}n(1-\\rho)\\rho^n=\\rho/(1-\\rho)$",
+        "why": "This is the geometric mean."
+      },
+      {
+        "do": "Substitute $\\rho=\\lambda/\\mu$ to get $L=\\lambda/(\\mu-\\lambda)$.",
+        "result": "$L=\\lambda/(\\mu-\\lambda)$",
+        "why": "This is the displayed queue formula."
+      },
+      {
+        "do": "Apply Little's law $L=\\lambda W$ to get $W=1/(\\mu-\\lambda)$.",
+        "result": "$W=1/(\\mu-\\lambda)$",
+        "why": "This records the corresponding modeling or optimality step."
+      }
     ],
     "prereqs": [
       "math-23-11"
@@ -3517,8 +4204,8 @@
         "probability distributions"
       ]
     },
-    "motivation": "<p>You already know the everyday tradeoff: buying too little means running out; buying too much means storage, waste, or money tied up. Inventory models give that tradeoff numbers.</p><p>In operations research, inventory can mean spare parts, products, compute buffers, cached features, or prepared training data. The model asks when to order, how much to order, and how much uncertainty to protect against.</p>",
-    "definition": "<p>The classic <b>economic order quantity</b> model assumes constant demand rate $D$, fixed ordering cost $K$ per order, and holding cost $h$ per unit per time. If each order has size $Q$, annual cost is $$C(Q)=\\dfrac{KD}{Q}+\\dfrac{hQ}{2}.$$ The first term is ordering cost, and the second is holding cost from average inventory $Q/2$.</p><p>Minimizing gives $Q^\\ast=\\sqrt{\\dfrac{2KD}{h}}$. This comes from setting ordering cost and holding cost in balance at the optimum: $KD/Q=hQ/2$, so $Q^2=2KD/h$.</p><p><b>Assumptions that matter:</b> EOQ assumes known steady demand, instant replenishment, no stockouts, fixed setup cost, and linear holding cost. Safety-stock and newsvendor models relax certainty by using demand distributions and service targets.</p>",
+    "motivation": "<p>Inventory is useful because it separates supply timing from demand timing. Keeping more inventory reduces the need to place orders frequently, but it also ties up space, money, and handling effort. Keeping less inventory saves holding cost, but forces more frequent replenishment.</p><p>The economic order quantity model isolates this balance in the simplest steady case. Demand is constant, every order has a fixed setup cost, and inventory depletes linearly between orders. The optimal order size is where the marginal pressure from ordering cost and holding cost balances.</p>",
+    "definition": "<p>The <b>economic order quantity</b> model balances setup and holding costs: $$C(Q)=\\frac{KD}{Q}+\\frac{hQ}{2},\\quad Q^\\ast=\\sqrt{\\frac{2KD}{h}}.$$</p><p><b>Assumptions that matter:</b> Demand is steady, every order has fixed setup cost, and inventory depletes linearly between orders.</p>",
     "worked": {
       "problem": "A team uses $D=1200$ units per year. Each order costs $K=50$ dollars and holding costs $h=2$ dollars per unit per year. Find the EOQ and the annual ordering plus holding cost at that quantity.",
       "skills": [
@@ -3727,34 +4414,34 @@
     ],
     "applications": [
       {
-        "title": "Retail replenishment",
-        "background": "Inventory theory was shaped by retail and manufacturing, where ordering too often and storing too much both cost money.",
-        "numbers": "With $D=5000$, $K=40$, $h=2$, EOQ is $\\sqrt{2\\cdot40\\cdot5000/2}=447.2$ units."
+        "title": "Retail",
+        "background": "This setting applies the lesson model.",
+        "numbers": "$D=12000$, $K=50$, $h=2$ gives $Q^\\ast\\approx774.6$."
       },
       {
         "title": "Spare parts",
-        "background": "Factories keep spare parts because downtime is expensive, but rarely used parts tie up capital.",
-        "numbers": "If lead-time demand is $3$ parts and safety stock is $2$, reorder point is $5$ parts."
+        "background": "This setting applies the lesson model.",
+        "numbers": "$D=900$, $K=40$, $h=10$ gives $Q^\\ast\\approx84.9$."
       },
       {
-        "title": "Cloud capacity buffers",
-        "background": "Compute platforms keep spare instances or warm containers to absorb demand spikes. The buffer is inventory in compute form.",
-        "numbers": "If expected startup demand during a 5-minute lead time is $12$ instances and safety stock is $4$, keep $16$ warm slots."
+        "title": "Cloud buffers",
+        "background": "This setting applies the lesson model.",
+        "numbers": "ordering 200 units with average inventory 100 and holding cost $0.05$ costs $5$ per period."
       },
       {
-        "title": "Feature caches",
-        "background": "ML systems cache features to reduce repeated computation. Larger caches save reload cost but risk staleness or memory pressure.",
-        "numbers": "If cache miss cost is $30$ ms and $1000$ misses are avoided, saved time is $30{,}000$ ms or $30$ seconds."
+        "title": "Feature cache",
+        "background": "This setting applies the lesson model.",
+        "numbers": "demand 10000, setup 20, holding 1 gives $Q^\\ast\\approx632.5$."
       },
       {
-        "title": "Newsvendor for one-day inventory",
-        "background": "The newsvendor model was named for newspapers: unsold copies lose value after the day ends. The same idea applies to perishables and short-lived compute reservations.",
-        "numbers": "If underage cost is $8$ and overage cost is $2$, target demand quantile is $8/(8+2)=0.8$."
+        "title": "Newsvendor",
+        "background": "This setting applies the lesson model.",
+        "numbers": "ordering 100 for demand 80 leaves 20 excess units."
       },
       {
-        "title": "Training data staging",
-        "background": "Large training jobs often stage data shards near accelerators. Too few shards stall GPUs; too many consume expensive local storage.",
-        "numbers": "If a GPU job consumes $50$ GB/hour and refill lead time is $0.5$ hour, expected lead-time demand is $25$ GB before safety stock."
+        "title": "Data staging",
+        "background": "This setting applies the lesson model.",
+        "numbers": "10 loads per month at $30$ setup cost cost $300$ in setup."
       }
     ],
     "applicationsClose": "Inventory thinking is buffer thinking: order, store, cache, or stage just enough for the uncertainty and cost you face.",
@@ -3763,6 +4450,71 @@
       "The EOQ formula is $Q^\\ast=\\sqrt{2KD/h}$ under steady deterministic assumptions.",
       "Reorder points cover lead-time demand plus safety stock.",
       "Newsvendor models choose a demand quantile by comparing underage and overage costs."
+    ],
+    "connectionsProse": "<p>This lesson applies optimization to stock, replenishment, and buffers. The reader has already seen how constraints and costs describe operational tradeoffs. Inventory models focus on a recurring tradeoff: ordering too often creates setup cost, while ordering too much creates holding cost. The EOQ formula gives a transparent baseline before uncertainty, shortages, or richer supply-chain constraints are added.</p>",
+    "symbols": [
+      {
+        "sym": "$D$",
+        "desc": "demand per time"
+      },
+      {
+        "sym": "$K$",
+        "desc": "fixed order cost"
+      },
+      {
+        "sym": "$h$",
+        "desc": "holding cost per unit per time"
+      },
+      {
+        "sym": "$Q$",
+        "desc": "order quantity"
+      },
+      {
+        "sym": "$Q^\\ast$",
+        "desc": "economic order quantity"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let annual demand be $D$ and order size be $Q$.",
+        "result": "$Q$",
+        "why": "This means the number of orders per year is $D/Q$."
+      },
+      {
+        "do": "Multiply by setup cost $K$ to get annual ordering cost $KD/Q$.",
+        "result": "$KD/Q$",
+        "why": "This charges each order once."
+      },
+      {
+        "do": "Under steady depletion, average inventory is $Q/2$.",
+        "result": "$Q/2$",
+        "why": "This is the midpoint of a sawtooth from $Q$ to $0$."
+      },
+      {
+        "do": "Multiply by holding cost $h$ to get annual holding cost $hQ/2$.",
+        "result": "$hQ/2$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Add costs: $C(Q)=KD/Q+hQ/2$.",
+        "result": "$C(Q)=KD/Q+hQ/2$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Differentiate: $C'(Q)=-KD/Q^2+h/2$.",
+        "result": "$C'(Q)=-KD/Q^2+h/2$",
+        "why": "This finds the cost slope."
+      },
+      {
+        "do": "Set $C'(Q)=0$ and solve $h/2=KD/Q^2$.",
+        "result": "$h/2=KD/Q^2$",
+        "why": "This balances marginal ordering and holding costs."
+      },
+      {
+        "do": "Get $Q^\\ast=\\sqrt{2KD/h}$.",
+        "result": "$Q^\\ast=\\sqrt{2KD/h}$",
+        "why": "This records the corresponding modeling or optimality step."
+      }
     ],
     "prereqs": [
       "math-23-12"
@@ -3791,8 +4543,8 @@
         "queueing theory"
       ]
     },
-    "motivation": "<p>You already schedule small things by instinct: do the urgent task first, wait for prerequisites, avoid double-booking yourself. Operations research asks how to do that when there are many jobs, machines, due dates, and costs.</p><p>A scheduling model makes time explicit. It can minimize completion time, lateness, weighted delay, or resource conflicts. The core habit is to translate the calendar into variables and constraints.</p>",
-    "definition": "<p>A <b>scheduling model</b> assigns jobs to time and resources. In a single-machine problem, job $j$ has processing time $p_j$, completion time $C_j$, due date $d_j$, and lateness $L_j=C_j-d_j$. A common objective is to minimize makespan $C_{\\max}=\\max_j C_j$ or total weighted completion $\\sum_j w_j C_j$.</p><p>Precedence constraints say one job must finish before another starts, for example $S_b\\ge S_a+p_a$. Non-overlap constraints say two jobs on the same machine cannot run at the same time; integer or disjunctive variables often choose which one goes first.</p><p><b>Assumptions that matter:</b> processing times may be deterministic or uncertain; machines may be identical, unrelated, or specialized; preemption may or may not be allowed; and setup times, release dates, and due dates must be included if they affect feasibility.</p>",
+    "motivation": "<p>A schedule is more than a list of jobs. It must say when each job starts, when it finishes, and which jobs cannot overlap on the same resource. If one task must finish before another begins, that relationship must also appear as a constraint.</p><p>The formulas are simple time bookkeeping, but they carry the structure of the whole problem. Completion time is start time plus processing time. Non-overlap constraints prevent two jobs from using one machine at once. Objectives such as makespan or weighted completion time choose which notion of a good schedule matters.</p>",
+    "definition": "<p><b>Scheduling models</b> use start times, processing times, completion times, precedence, and objectives such as makespan: $$C_j=S_j+p_j,\\quad C_{\\max}\\ge C_j.$$</p><p><b>Assumptions that matter:</b> Jobs have processing times, shared resources cannot overlap, precedence must be respected, and the objective states what schedule quality means.</p>",
     "worked": {
       "problem": "Three jobs run on one machine. Processing times are $p_A=3$, $p_B=2$, $p_C=4$. Due dates are $d_A=5$, $d_B=4$, $d_C=9$. Schedule by earliest due date and compute completion times and maximum lateness.",
       "skills": [
@@ -4011,34 +4763,34 @@
     ],
     "applications": [
       {
-        "title": "Manufacturing jobs",
-        "background": "Scheduling theory grew from factories where machines, setup times, and due dates determine delivery performance.",
-        "numbers": "If jobs take $2$, $5$, and $1$ hours with no idle time, any one-machine sequence has makespan $8$ hours."
+        "title": "Single-machine SPT",
+        "background": "This setting applies the lesson model.",
+        "numbers": "jobs C,A,B with times 1,2,5 have completions 1,3,8 and total 12."
       },
       {
-        "title": "Operating systems",
-        "background": "CPU schedulers decide which process runs next. Short jobs first can reduce average completion time when job lengths are known.",
-        "numbers": "For jobs $1$ and $9$, order $1,9$ gives average completion $(1+10)/2=5.5$; order $9,1$ gives $(9+10)/2=9.5$."
+        "title": "Naive order",
+        "background": "This setting applies the lesson model.",
+        "numbers": "A,B,C gives completions 2,7,8 and total 17."
       },
       {
-        "title": "Project management",
-        "background": "Critical path scheduling models dependencies in construction, launches, and engineering projects.",
-        "numbers": "If path A takes $3+4=7$ days and path B takes $2+6=8$ days, the project cannot finish before $8$ days."
+        "title": "Project precedence",
+        "background": "This setting applies the lesson model.",
+        "numbers": "if A starts at 0 and $p_A=4$, B must satisfy $S_B\\ge4$."
       },
       {
         "title": "Cloud batch jobs",
-        "background": "Data platforms schedule ETL and training jobs onto shared workers with memory and time constraints.",
-        "numbers": "Two jobs needing $6$ GB and $10$ GB cannot share a $12$ GB machine, but jobs needing $6$ GB and $4$ GB can."
+        "background": "This setting applies the lesson model.",
+        "numbers": "two jobs of 3 and 5 hours on one GPU have makespan 8 if run serially."
       },
       {
-        "title": "Model evaluation queues",
-        "background": "ML teams often run many evaluations after training. Scheduling determines how quickly metrics arrive.",
-        "numbers": "If three evals take $8$, $3$, and $5$ minutes on one runner, shortest-processing-time order gives completion times $3$, $8$, and $16$."
+        "title": "Model evaluation",
+        "background": "This setting applies the lesson model.",
+        "numbers": "lateness with $C=14$, $d=10$ is $L=4$."
       },
       {
-        "title": "Real-time systems",
-        "background": "Robotics and embedded systems schedule tasks with deadlines. Missing a deadline can mean unsafe or stale control.",
-        "numbers": "A sensor task taking $4$ ms every $20$ ms uses utilization $4/20=0.2$ of one CPU core."
+        "title": "Realtime system",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a job taking 7 ms meets a 10 ms deadline with 3 ms slack."
       }
     ],
     "applicationsClose": "Scheduling is time accounting with consequences: the same constraints shape factories, CPUs, projects, and ML pipelines.",
@@ -4047,6 +4799,65 @@
       "Precedence constraints enforce required order between tasks.",
       "Objectives include makespan, lateness, and weighted completion time.",
       "Resource limits turn scheduling into a constrained optimization problem."
+    ],
+    "connectionsProse": "<p>This lesson returns to time as the scarce resource. The reader has already seen capacity limits and integer choices; scheduling adds start times, completion times, deadlines, and precedence. These variables make conflicts on shared machines explicit. The same modeling language supports factory jobs, project plans, GPU batches, model evaluations, and realtime systems.</p>",
+    "symbols": [
+      {
+        "sym": "$S_j$",
+        "desc": "start time"
+      },
+      {
+        "sym": "$p_j$",
+        "desc": "processing time"
+      },
+      {
+        "sym": "$C_j$",
+        "desc": "completion time"
+      },
+      {
+        "sym": "$d_j$",
+        "desc": "due date"
+      },
+      {
+        "sym": "$L_j=C_j-d_j$",
+        "desc": "lateness"
+      },
+      {
+        "sym": "$C_{\\max}$",
+        "desc": "makespan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define start time $S_j$ and processing time $p_j$ for job $j$.",
+        "result": "$j$",
+        "why": "This names the time decision and duration."
+      },
+      {
+        "do": "Compute completion time $C_j=S_j+p_j$.",
+        "result": "$C_j=S_j+p_j$",
+        "why": "This adds duration to start."
+      },
+      {
+        "do": "For precedence $a$ before $b$, require $S_b\\ge S_a+p_a$.",
+        "result": "$S_b\\ge S_a+p_a$",
+        "why": "This prevents $b$ from starting before $a$ ends."
+      },
+      {
+        "do": "For two jobs on one machine, impose either $S_i+p_i\\le S_j$ or $S_j+p_j\\le S_i$.",
+        "result": "$S_j+p_j\\le S_i$",
+        "why": "This avoids overlap."
+      },
+      {
+        "do": "Define makespan $C_{\\max}\\ge C_j$ for every job.",
+        "result": "$C_{\\max}\\ge C_j$",
+        "why": "This makes $C_{\\max}$ at least the last completion time."
+      },
+      {
+        "do": "Minimize $C_{\\max}$ or $\\sum_j w_jC_j$ depending on the scheduling goal.",
+        "result": "$\\sum_j w_jC_j$",
+        "why": "This records the corresponding modeling or optimality step."
+      }
     ],
     "prereqs": [
       "math-23-13"
@@ -4074,8 +4885,8 @@
         "Monte Carlo methods"
       ]
     },
-    "motivation": "<p>You often make decisions before the world finishes telling you the facts: order inventory before demand arrives, reserve compute before traffic spikes, choose a route before travel time is known. Stochastic optimization is the mathematics of that honest uncertainty.</p><p>The central move is to optimize an expectation, a risk measure, or a scenario average. Instead of pretending the future is one number, we let several futures speak and choose a decision that behaves well across them.</p>",
-    "definition": "<p>A <b>stochastic optimization</b> problem chooses decision $x$ when some data $\\xi$ is random. A simple form is $$\\min_{x\\in X}\\; \\mathbb{E}_{\\xi}[f(x,\\xi)],$$ where $X$ is the feasible set and $f(x,\\xi)$ is the cost after uncertainty $\\xi$ is realized.</p><p>With sampled scenarios $\\xi_1,\\ldots,\\xi_N$, the sample-average approximation is $$\\min_{x\\in X}\\; \\dfrac1N\\sum_{i=1}^N f(x,\\xi_i).$$ This replaces the expectation by an average of observed or simulated futures.</p><p><b>Assumptions that matter:</b> the probability model or scenarios should represent future uncertainty; averages need enough samples to be stable; decisions may be one-stage or have recourse after uncertainty; and optimizing expected cost can hide tail risk unless risk terms are included.</p>",
+    "motivation": "<p>Many decisions must be made before demand, traffic, runtime, or price is fully known. A deterministic model can use a single forecast, but that may hide the range of possible outcomes. Stochastic optimization instead scores a decision by averaging its realized cost or reward over a probability model.</p><p>In practice, the expectation is often approximated with scenarios. Each scenario represents one possible future, and the sample average replaces the exact expected value. The solution is therefore tied to both the optimization model and the quality of the uncertainty model or sample.</p>",
+    "definition": "<p><b>Stochastic optimization</b> chooses a feasible decision by minimizing expected realized cost: $$\\min_{x\\in X}\\mathbb E[f(x,\\xi)]\\approx \\min_{x\\in X}\\frac1N\\sum_{i=1}^N f(x,\\xi_i).$$</p><p><b>Assumptions that matter:</b> The decision is chosen before random data is known, scenarios represent possible futures, and sampling error is separate from optimization error.</p>",
     "worked": {
       "problem": "Choose capacity $x$ for a service. Capacity costs $2x$. Demand scenarios are $6$, $10$, and $14$, equally likely. Unserved demand costs $5$ per unit, so scenario cost is $2x+5\\max(0,D-x)$. Compare $x=8$ and $x=12$.",
       "skills": [
@@ -4294,34 +5105,34 @@
     ],
     "applications": [
       {
-        "title": "Capacity planning under demand uncertainty",
-        "background": "Services reserve capacity before the next traffic spike is known. Stochastic optimization uses demand scenarios instead of one forecast.",
-        "numbers": "For demand costs $20$, $30$, and $70$ with probabilities $0.5$, $0.3$, $0.2$, expected cost is $10+9+14=33$."
+        "title": "Capacity planning",
+        "background": "This setting applies the lesson model.",
+        "numbers": "scenario costs $10,20,40$ have expected cost $70/3\\approx23.3$."
       },
       {
-        "title": "Newsvendor inventory",
-        "background": "The newsvendor model is a one-stage stochastic optimization problem: order before demand, then pay for leftovers or shortages.",
-        "numbers": "If demand scenarios $80$ and $120$ are equally likely and order $100$, expected leftover/shortage magnitude is $(20+20)/2=20$."
+        "title": "Newsvendor",
+        "background": "This setting applies the lesson model.",
+        "numbers": "with demands 4,6,9 and shortage/holding costs 4/1, order $q=9$ has average cost $2.67$ among $q=4\\ldots9$."
       },
       {
-        "title": "Portfolio optimization",
-        "background": "Finance uses stochastic models because returns are uncertain. Decisions trade expected return against risk.",
-        "numbers": "A portfolio returning $5\\%$ with probability $0.7$ and $-4\\%$ with probability $0.3$ has expected return $0.7\\cdot5-0.3\\cdot4=2.3\\%$."
+        "title": "Portfolio",
+        "background": "This setting applies the lesson model.",
+        "numbers": "returns 3%, -1%, and 5% average to $2.33\\%$."
       },
       {
-        "title": "Stochastic gradient descent",
-        "background": "Modern ML training uses random mini-batches to approximate the full expected loss gradient cheaply.",
-        "numbers": "Gradients $1.2$, $0.8$, and $1.0$ average to $1.0$, so with learning rate $0.05$ the parameter step is $0.05$."
+        "title": "SGD",
+        "background": "This setting applies the lesson model.",
+        "numbers": "a minibatch of losses 0.8, 1.1, 0.9 has sample loss $0.933$."
       },
       {
-        "title": "A/B experiment allocation",
-        "background": "Traffic allocation decisions are uncertain because measured conversion rates vary. Scenario averages help compare policies.",
-        "numbers": "If revenue lift is $1000$, $2000$, or $-500$ dollars equally likely, expected lift is $(1000+2000-500)/3=833.33$."
+        "title": "A/B allocation",
+        "background": "This setting applies the lesson model.",
+        "numbers": "conversion counts 40 and 55 in 1000 impressions give rates 4% and 5.5%."
       },
       {
         "title": "Energy scheduling",
-        "background": "Power systems schedule generation before exact renewable output is known, then adjust with recourse.",
-        "numbers": "If shortfall is $0$, $5$, or $10$ MWh with equal probability and penalty $30$/MWh, expected penalty is $30\\cdot5=150$ dollars."
+        "background": "This setting applies the lesson model.",
+        "numbers": "wind scenarios 20, 30, 50 MW average to 33.3 MW."
       }
     ],
     "applicationsClose": "Stochastic optimization is how we make one decision while respectfully listening to many possible futures.",
@@ -4330,6 +5141,70 @@
       "Scenario averages approximate expectations with samples.",
       "Recourse decisions happen after uncertainty is observed.",
       "Expected value is useful, but tail risk may need its own constraint or penalty."
+    ],
+    "connectionsProse": "<p>This lesson adds uncertainty to the optimization models from earlier in the section. The reader has already seen decisions made under fixed coefficients, capacities, costs, and processing times. Stochastic optimization keeps the decision structure but treats some data as random. It is especially useful in capacity planning, portfolio choice, energy scheduling, newsvendor models, and sampled machine learning objectives.</p>",
+    "symbols": [
+      {
+        "sym": "$x$",
+        "desc": "decision"
+      },
+      {
+        "sym": "$X$",
+        "desc": "feasible set"
+      },
+      {
+        "sym": "$\\xi$",
+        "desc": "random scenario"
+      },
+      {
+        "sym": "$f(x,\\xi)$",
+        "desc": "realized cost"
+      },
+      {
+        "sym": "$N$",
+        "desc": "number of scenarios"
+      },
+      {
+        "sym": "SAA",
+        "desc": "sample-average approximation"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $x\\in X$ be the decision made now.",
+        "result": "$x\\in X$",
+        "why": "This separates the choice from uncertainty."
+      },
+      {
+        "do": "Let $\\xi$ be random data revealed later.",
+        "result": "$\\xi$",
+        "why": "This represents demand, traffic, price, or runtime."
+      },
+      {
+        "do": "Write realized cost $f(x,\\xi)$.",
+        "result": "$f(x,\\xi)$",
+        "why": "This scores a decision after uncertainty is known."
+      },
+      {
+        "do": "Take expectation to get $\\mathbb E_\\xi[f(x,\\xi)]$.",
+        "result": "$\\mathbb E_\\xi[f(x,\\xi)]$",
+        "why": "This averages costs under the uncertainty model."
+      },
+      {
+        "do": "Minimize over feasible decisions: $\\min_{x\\in X}\\mathbb E[f(x,\\xi)]$.",
+        "result": "$\\min_{x\\in X}\\mathbb E[f(x,\\xi)]$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "With scenarios $\\xi_1,\\ldots,\\xi_N$, replace the expectation by $N^{-1}\\sum_i f(x,\\xi_i)$.",
+        "result": "$N^{-1}\\sum_i f(x,\\xi_i)$",
+        "why": "This is sample-average approximation."
+      },
+      {
+        "do": "Solve the sampled problem and report sampling error separately. The sample is an approximation to the true expectation.",
+        "result": "the stated relationship",
+        "why": "This records the corresponding modeling or optimality step."
+      }
     ],
     "prereqs": [
       "math-23-14"
@@ -4358,8 +5233,8 @@
         "duality"
       ]
     },
-    "motivation": "<p>Sometimes an average is not enough. If a bridge, service-level objective, or safety-critical model fails in a bad scenario, the fact that it performed well on average may not comfort anyone.</p><p>Robust optimization asks for decisions that stay feasible or good across a specified uncertainty set. It is a cautious cousin of stochastic optimization: instead of probabilities, it focuses on what could happen within declared bounds.</p>",
-    "definition": "<p>A <b>robust optimization</b> problem chooses $x$ to perform well for all uncertain parameters $u$ in an uncertainty set $\\mathcal{U}$. A common form is $$\\min_{x\\in X}\\; \\max_{u\\in\\mathcal{U}} f(x,u),$$ or a robust constraint $g(x,u)\\le0$ for every $u\\in\\mathcal{U}$.</p><p>For a linear constraint with uncertain coefficient $a\\in[\\bar a-\\delta,\\bar a+\\delta]$ and nonnegative $x$, requiring $ax\\le b$ for all $a$ means $(\\bar a+\\delta)x\\le b$. The worst allowed coefficient is the one that makes the constraint hardest to satisfy.</p><p><b>Assumptions that matter:</b> the uncertainty set must be credible; robust protection can be conservative; constraints must hold for every allowed uncertainty value; and correlations or budgets of uncertainty should be modeled when not all worst cases can happen together.</p>",
+    "motivation": "<p>Sometimes a decision must remain safe even when the input data is wrong within a known range. A capacity plan may need to handle peak traffic, a schedule may need buffers, or a model may need protection against bounded input perturbations. In these cases, optimizing only the average case can leave the system exposed.</p><p>Robust optimization makes the uncertainty set explicit. A decision is feasible only if it satisfies the relevant constraint for every parameter value in that set. For simple intervals this often means replacing the uncertain coefficient by its worst-case value; more generally, the model minimizes the worst-case cost over the uncertainty set.</p>",
+    "definition": "<p><b>Robust optimization</b> requires feasibility for every parameter in an uncertainty set and can minimize worst-case cost: $$\\min_x\\max_{u\\in\\mathcal U} f(x,u).$$</p><p><b>Assumptions that matter:</b> The uncertainty set is chosen in advance, constraints must hold for all cases in it, and simple interval uncertainty uses the worst-case coefficient.</p>",
     "worked": {
       "problem": "A service chooses load $x\\ge0$. Actual CPU per request is uncertain in $[1.8,2.2]$ ms, and total CPU budget is $110$ ms. Find the largest robustly feasible $x$ satisfying $a x\\le110$ for all $a\\in[1.8,2.2]$.",
       "skills": [
@@ -4558,34 +5433,34 @@
     ],
     "applications": [
       {
-        "title": "Service-level protection",
-        "background": "Online systems often need guarantees even when latency estimates are imperfect. Robust constraints reserve capacity for high-load cases.",
-        "numbers": "If load estimate is $900\\pm100$ requests/s, a robust plan for all cases must handle $1000$ requests/s."
+        "title": "Service level",
+        "background": "This setting applies the lesson model.",
+        "numbers": "if latency load coefficient lies in $[4,6]$ and budget is 54, robust capacity requires $x\\le9$ instead of nominal $10.8$."
       },
       {
         "title": "Supply uncertainty",
-        "background": "Manufacturing plans can fail if supplier quantities are lower than promised. Robust optimization protects against bounded shortfalls.",
-        "numbers": "If supply is $500\\pm40$, guaranteed supply is $460$ units, not the nominal $500$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "demand in $[80,100]$ needs inventory at least 100."
       },
       {
         "title": "Adversarial ML",
-        "background": "Robust ML asks models to perform under bounded input perturbations, a cousin of robust optimization.",
-        "numbers": "For pixel perturbation $\\|\\delta\\|_\\infty\\le0.03$, each normalized pixel may shift by at most $0.03$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "an $\\ell_\\infty$ perturbation radius $0.03$ defines the protected input set."
       },
       {
-        "title": "Portfolio worst-case risk",
-        "background": "Investors may protect against return uncertainty without trusting a full probability distribution.",
-        "numbers": "If return lies in $[-5\\%,4\\%]$, a $10000$ dollar investment has worst-case change $-500$ dollars."
+        "title": "Portfolio risk",
+        "background": "This setting applies the lesson model.",
+        "numbers": "losses 2%, 5%, 9% have worst case 9%."
       },
       {
         "title": "Robust regression",
-        "background": "Regression with uncertainty or outlier protection often minimizes a worst-case residual or a loss less sensitive to extremes.",
-        "numbers": "If prediction error is $2\\pm0.5$, worst absolute error over the interval is $2.5$."
+        "background": "This setting applies the lesson model.",
+        "numbers": "clipping residuals at 3 makes a residual 8 contribute 3 to the capped loss."
       },
       {
         "title": "Robust scheduling",
-        "background": "Task durations are rarely exact. Robust schedules include buffers so dependencies remain feasible when jobs run long.",
-        "numbers": "If a task is estimated at $10\\pm2$ minutes, scheduling its successor at minute $12$ protects the whole interval."
+        "background": "This setting applies the lesson model.",
+        "numbers": "a task with nominal 10 min and 2 min buffer reserves 12 min."
       }
     ],
     "applicationsClose": "Robust optimization is a disciplined way to ask, before choosing, whether the plan still works when the allowed facts turn against it.",
@@ -4594,6 +5469,61 @@
       "Worst-case constraints often replace uncertain quantities by the endpoint that makes feasibility hardest.",
       "Robustness can be conservative when the uncertainty set is too large.",
       "Service levels, safety, adversarial ML, and buffered schedules all use robust thinking."
+    ],
+    "connectionsProse": "<p>This lesson offers a different response to uncertainty than stochastic optimization. Instead of averaging over scenarios, robust optimization protects against every parameter value in a chosen uncertainty set. The reader can connect this to constraints, worst-case bounds, and safety margins. It is useful when feasibility in bad cases is more important than average performance.</p>",
+    "symbols": [
+      {
+        "sym": "$u$",
+        "desc": "uncertain parameter"
+      },
+      {
+        "sym": "$\\mathcal U$",
+        "desc": "uncertainty set"
+      },
+      {
+        "sym": "$\\bar a$",
+        "desc": "nominal coefficient"
+      },
+      {
+        "sym": "$\\delta$",
+        "desc": "uncertainty radius"
+      },
+      {
+        "sym": "robust counterpart",
+        "desc": "deterministic constraint that enforces all cases"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with an uncertain constraint $a x\\le b$.",
+        "result": "$a x\\le b$",
+        "why": "This is a limit whose coefficient may move."
+      },
+      {
+        "do": "Put uncertainty in a set, for example $a\\in[\\bar a-\\delta,\\bar a+\\delta]$.",
+        "result": "$a\\in[\\bar a-\\delta,\\bar a+\\delta]$",
+        "why": "This says which cases to protect against."
+      },
+      {
+        "do": "Require $a x\\le b$ for every $a$ in the set.",
+        "result": "$a$",
+        "why": "This is robust feasibility."
+      },
+      {
+        "do": "If $x\\ge0$, the worst case is the largest coefficient $a=\\bar a+\\delta$.",
+        "result": "$a=\\bar a+\\delta$",
+        "why": "This maximizes left-hand use."
+      },
+      {
+        "do": "Replace the uncertain constraint by $(\\bar a+\\delta)x\\le b$.",
+        "result": "$(\\bar a+\\delta)x\\le b$",
+        "why": "This is the robust counterpart."
+      },
+      {
+        "do": "More generally, minimize $\\max_{u\\in\\mathcal U}f(x,u)$.",
+        "result": "$\\max_{u\\in\\mathcal U}f(x,u)$",
+        "why": "This chooses the decision with best worst-case cost."
+      }
     ],
     "prereqs": [
       "math-23-15"
@@ -4624,8 +5554,8 @@
         "convex optimization"
       ]
     },
-    "motivation": "<p>You have now seen flows, queues, inventory buffers, schedules, and uncertainty. An ML platform uses all of them at once. Training jobs need GPUs; inference requests need latency; feature pipelines need freshness; data loaders must not starve accelerators.</p><p>The capstone idea is to stop treating these as separate fires. Resource allocation and scheduling models let us make tradeoffs explicit: which jobs run now, how many GPUs they receive, what throughput is feasible, and how much buffer protects the service-level target.</p>",
-    "definition": "<p>An ML resource allocation model chooses variables such as GPU assignment $g_j$, start time $S_j$, throughput $x_e$ on data edges, and replicas $r_k$ for services. Objectives might minimize makespan, cost, lateness, or expected penalty: $$\\min\\; \\sum_j c_j g_j + \\sum_j w_j T_j + \\sum_k p_k\\max(0,\\ell_k-\\ell_k^{\\max}).$$</p><p>The constraints combine earlier lessons: capacity constraints limit GPUs or network flow; precedence constraints enforce pipeline order; queueing constraints keep utilization below a target; stochastic or robust terms protect against uncertain traffic and job durations.</p><p><b>Assumptions that matter:</b> resource units must match reality; speedups may not be linear in GPUs; queueing approximations need stable arrivals and service; priorities must be encoded deliberately; and robust or stochastic buffers should reflect measured variability rather than wishful thinking.</p>",
+    "motivation": "<p>ML systems rarely have only one bottleneck. A training job needs GPUs and data movement, an inference service needs enough replicas for traffic, and experiment queues must meet deadlines without wasting capacity. Optimizing each piece separately can miss the tradeoffs between cost, latency, and completion time.</p><p>A capstone model treats these choices together. Assignment variables decide where jobs run, flow variables limit data movement, replica counts control serving capacity, and scheduling variables determine completion times. The objective combines resource cost, weighted completion, and latency penalties so the planner can compare tradeoffs in a single model.</p>",
+    "definition": "<p>An <b>ML systems resource model</b> combines placement, flow, scheduling, queue stability, and deployability constraints with a joint objective: $$\\min\\sum_{j,k}c_{jk}g_{jk}+\\sum_j w_jC_j+\\sum_m p_m\\max(0,\\ell_m-\\ell_m^{\\max}).$$</p><p><b>Assumptions that matter:</b> Assignments and replicas are deployable choices, flows obey capacity, schedules avoid conflicts, and serving queues must remain stable.</p>",
     "worked": {
       "problem": "Two ML training jobs share $8$ GPUs for one hour. Job A gains $120$ training examples per second per GPU up to $4$ GPUs. Job B gains $90$ examples per second per GPU up to $6$ GPUs. Each job must get at least $2$ GPUs. Allocate integer GPUs to maximize total throughput.",
       "skills": [
@@ -4850,38 +5780,33 @@
     "applications": [
       {
         "title": "GPU cluster scheduling",
-        "background": "Training platforms allocate scarce accelerators among many jobs. Schedulers balance throughput, fairness, priority, and deadlines.",
-        "numbers": "If job A gains $100$ samples/s per GPU and job B gains $60$, two extra GPUs add $200$ samples/s to A or $120$ to B before fairness constraints."
+        "background": "This setting applies the lesson model.",
+        "numbers": "assigning two 4-hour jobs to two GPUs gives makespan 4 instead of 8."
       },
       {
         "title": "Inference autoscaling",
-        "background": "Online inference must keep latency low under changing traffic. Queueing targets often determine replica counts.",
-        "numbers": "With $\\lambda=300$/s, $\\mu=80$/s per replica, and target $\\rho\\le0.75$, need $r\\ge300/(80\\cdot0.75)=5$ replicas."
+        "background": "This setting applies the lesson model.",
+        "numbers": "with $\\lambda=180$ req/s and each replica serving $60$ req/s, at least 4 replicas keep utilization below 0.75."
       },
       {
-        "title": "Data pipeline bottlenecks",
-        "background": "Accelerators are wasted when input pipelines cannot feed them. Flow thinking locates the limiting edge or stage.",
-        "numbers": "Rates $1.2$, $0.9$, and $1.5$ GB/s imply end-to-end throughput $0.9$ GB/s."
+        "title": "Data pipeline bottleneck",
+        "background": "This setting applies the lesson model.",
+        "numbers": "edges 80 and 120 MB/s in series have throughput 80 MB/s."
       },
       {
         "title": "Experiment queues",
-        "background": "Research platforms schedule many experiments with different priorities. Shortest-job and weighted rules reduce waiting for some objectives.",
-        "numbers": "Jobs of $2$, $8$, and $10$ hours have average completion $8.67$ hours in SPT order but $14$ hours in reverse order."
+        "background": "This setting applies the lesson model.",
+        "numbers": "12 jobs at 30 minutes each require 360 GPU-minutes."
       },
       {
         "title": "Feature freshness",
-        "background": "Feature stores must refresh data often enough for models while not overwhelming compute. Inventory-style reorder points become refresh triggers.",
-        "numbers": "If staleness grows $3$ minutes per hour and the limit is $15$ minutes, refresh at least every $15/3=5$ hours."
+        "background": "This setting applies the lesson model.",
+        "numbers": "a 15-minute pipeline with a 20-minute SLA has 5 minutes slack."
       },
       {
-        "title": "Robust capacity for traffic spikes",
-        "background": "Production ML services face forecast error. Robust allocation reserves enough capacity for bounded spikes rather than just mean traffic.",
-        "numbers": "Forecast $1000\\pm150$ requests/s means robust planning should handle $1150$ requests/s."
-      },
-      {
-        "title": "Spot instance risk",
-        "background": "Cheap preemptible compute reduces cost but adds uncertainty. Stochastic optimization compares savings against interruption penalties.",
-        "numbers": "If interruption costs $50$ with probability $0.2$, expected penalty is $10$; a $15$ discount still has expected net gain $5$."
+        "title": "Traffic spike robustness",
+        "background": "This setting applies the lesson model.",
+        "numbers": "if peak traffic is 1.4 times baseline 1000 req/s, capacity must cover 1400 req/s."
       }
     ],
     "applicationsClose": "In ML systems, operations research is not abstract machinery; it is how we keep expensive accelerators busy, users served, and uncertainty bounded.",
@@ -4890,6 +5815,79 @@
       "Marginal throughput helps decide where the next GPU, replica, or worker should go.",
       "Bottlenecks cap end-to-end performance even when other stages have spare capacity.",
       "Robust and stochastic buffers protect production systems from variable jobs and traffic."
+    ],
+    "connectionsProse": "<p>This lesson brings together the operations research tools from the whole section. Linear constraints describe shared resources, integer variables describe deployable choices, flows describe data movement, queues describe serving stability, and schedules describe time. The setting is an ML platform, where GPU placement, data pipelines, replicas, and deadlines interact. The lesson is a capstone because it uses several earlier models as parts of one system design problem.</p>",
+    "symbols": [
+      {
+        "sym": "$g_{jk}$",
+        "desc": "assignment"
+      },
+      {
+        "sym": "$G_k$",
+        "desc": "GPU capacity"
+      },
+      {
+        "sym": "$S_j,C_j$",
+        "desc": "start and completion"
+      },
+      {
+        "sym": "$x_e,u_e$",
+        "desc": "data flow and capacity"
+      },
+      {
+        "sym": "$r_m$",
+        "desc": "replicas"
+      },
+      {
+        "sym": "$\\lambda_m,\\mu_m$",
+        "desc": "arrival and service rates"
+      },
+      {
+        "sym": "$\\ell_m$",
+        "desc": "latency"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define assignment variables $g_{jk}$ for job $j$ on GPU type $k$.",
+        "result": "$k$",
+        "why": "This records placement."
+      },
+      {
+        "do": "Define start and completion times $S_j,C_j$.",
+        "result": "$S_j,C_j$",
+        "why": "This records scheduling."
+      },
+      {
+        "do": "Define flow variables $x_e$ on data edges and replica counts $r_m$.",
+        "result": "$r_m$",
+        "why": "This records data and serving capacity."
+      },
+      {
+        "do": "Write capacity constraints such as $\\sum_j g_{jk}\\le G_k$ and $0\\le x_e\\le u_e$. These limit shared resources.",
+        "result": "$0\\le x_e\\le u_e$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Write scheduling constraints $C_j=S_j+p_{jk}$ when job $j$ uses type $k$, and non-overlap constraints on each GPU.",
+        "result": "$k$",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Write queue constraints with $\\lambda_m<\\mu_m r_m$.",
+        "result": "$\\lambda_m<\\mu_m r_m$",
+        "why": "This keeps serving stable."
+      },
+      {
+        "do": "Combine costs in an objective such as $$ \\min\\sum_{j,k}c_{jk}g_{jk}+\\sum_j w_jC_j+\\sum_m p_m\\max(0,\\ell_m-\\ell_m^{\\max}). $$ This trades off cost, completion, and latency penalties.",
+        "result": "$ \\min\\sum_{j,k}c_{jk}g_{jk}+\\sum_j w_jC_j+\\sum_m p_m\\max(0,\\ell_m-\\ell_m^{\\max}). $",
+        "why": "This records the corresponding modeling or optimality step."
+      },
+      {
+        "do": "Add integrality for assignments and replicas.",
+        "result": "the stated relationship",
+        "why": "This makes the plan deployable."
+      }
     ],
     "prereqs": [
       "math-23-16"

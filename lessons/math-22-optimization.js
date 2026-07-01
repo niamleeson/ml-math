@@ -29,8 +29,8 @@
         "constraints"
       ]
     },
-    "motivation": "<p>You already optimize informally. You choose a route that is short, a model that predicts well, or a budget that stays under a limit. The hard part is not always solving the problem; often it is writing the problem so the mathematics can see it.</p><p>An <b>optimization formulation</b> separates choices from goals and constraints. In ML, training is exactly this: choose parameters so a loss is small, while sometimes respecting limits such as nonnegative weights, fairness targets, or model size.</p>",
-    "definition": "<p>A standard optimization problem is written $\\min_{x\\in S} f(x)$ or $\\max_{x\\in S} f(x)$. The vector $x$ contains the <b>decision variables</b>, $f(x)$ is the <b>objective</b>, and $S$ is the <b>feasible set</b> of allowed choices. With constraints, one common form is $\\min_x f(x)$ subject to $g_i(x)\\le 0$ and $h_j(x)=0$.</p><p>Why this notation is useful: every feasible candidate $x$ receives a number $f(x)$. Minimizing means comparing those numbers only among candidates that obey the constraints. A point $x^\\ast$ is a global minimizer when $x^\\ast\\in S$ and $f(x^\\ast)\\le f(x)$ for every feasible $x$.</p><p><b>Assumptions that matter:</b> the variables, objective, and constraints must be defined on compatible domains; minimizers may fail to exist if the feasible set is open or unbounded; and changing the objective scale or constraint set can change the optimizer even when the story sounds similar.</p>",
+    "motivation": "<p>Many practical problems begin as sentences: choose a model, allocate a budget, fit data, or satisfy a policy. An optimization formulation translates that sentence into mathematical parts. The decision variables are the quantities allowed to move. The objective measures what counts as better. The constraints describe what choices are allowed.</p><p>This separation prevents several common mistakes. A quantity that is fixed data should not be optimized, and a requirement that must always hold should not be treated as a preference unless the model really allows tradeoffs. The feasible set collects all choices that obey the constraints, and an optimum is the feasible choice with the best objective value. This lesson is explain-only because the main skill is careful construction rather than proving a single formula.</p>",
+    "definition": "<p><b>Statement.</b> this is a modeling concept rather than a theorem. Author the transformation from a sentence to a mathematical program as a careful construction: choose variables, write the objective, write constraints, and state the feasible set.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "A one-parameter model has loss $L(w)=(w-3)^2+2$ and the rule $w\\ge1$. Formulate the problem and find the optimizer.",
       "skills": [
@@ -234,34 +234,34 @@
     ],
     "applications": [
       {
-        "title": "Supervised learning",
-        "background": "Modern ML usually starts by writing training as an optimization problem over parameters. This tradition runs from least squares to deep networks.",
-        "numbers": "For errors $1,-2,0.5$, squared loss is $1^2+(-2)^2+0.5^2=5.25$, the objective value to reduce."
+        "title": "Ridge regression formulation",
+        "background": "choose $w$, minimize $\\tfrac12\\Vert Xw-y\\Vert^2+\\tfrac\\lambda2\\Vert w\\Vert^2$; with residual norm $3$ and $\\Vert w\\Vert=2$, $\\lambda=0.5$ gives objective $4.5+1=5.5$.",
+        "numbers": "choose $w$, minimize $\\tfrac12\\Vert Xw-y\\Vert^2+\\tfrac\\lambda2\\Vert w\\Vert^2$; with residual norm $3$ and $\\Vert w\\Vert=2$, $\\lambda=0.5$ gives objective $4.5+1=5.5$."
       },
       {
-        "title": "Regularization",
-        "background": "Regularization adds a preference for simpler parameters, helping models generalize rather than merely memorize.",
-        "numbers": "If data loss is $12$ and $||w||_2^2=9$ with $\\lambda=0.1$, total objective is $12+0.1\\cdot9=12.9$."
+        "title": "Budgeted ads allocation",
+        "background": "choose spends $x_1,x_2$, maximize $4x_1+5x_2$ with $x_1+x_2\\le10$; spending all on channel 2 gives value $50$.",
+        "numbers": "choose spends $x_1,x_2$, maximize $4x_1+5x_2$ with $x_1+x_2\\le10$; spending all on channel 2 gives value $50$."
       },
       {
-        "title": "Constrained resource allocation",
-        "background": "Operations research has long optimized decisions under budgets, capacities, and schedules.",
-        "numbers": "Choosing ads with values $5,8$ and costs $2,4$ under budget $4$ makes the second ad feasible with value $8$, while both cost $6$ and are infeasible."
+        "title": "SVM margin problem",
+        "background": "minimize $\\tfrac12\\Vert w\\Vert^2$ subject to $y_i(w^Tx_i+b)\\ge1$; if $\\Vert w\\Vert=2$, margin is $1/2$.",
+        "numbers": "minimize $\\tfrac12\\Vert w\\Vert^2$ subject to $y_i(w^Tx_i+b)\\ge1$; if $\\Vert w\\Vert=2$, margin is $1/2$."
       },
       {
-        "title": "Hyperparameter tuning",
-        "background": "Validation-based tuning treats each hyperparameter setting as a candidate and chooses the best measured score.",
-        "numbers": "Losses $0.42,0.35,0.39$ for learning rates $0.001,0.01,0.1$ select $0.01$ because $0.35$ is smallest."
+        "title": "Constrained calibration",
+        "background": "choose probabilities $p_i$ with $\\sum p_i=1$; $(0.2,0.3,0.5)$ is feasible and sums to $1$.",
+        "numbers": "choose probabilities $p_i$ with $\\sum p_i=1$; $(0.2,0.3,0.5)$ is feasible and sums to $1$."
       },
       {
-        "title": "Maximum likelihood",
-        "background": "Statistics often chooses parameters that make observed data most probable; ML commonly minimizes negative log-likelihood.",
-        "numbers": "Probabilities $0.8$ and $0.5$ give loss $-\\ln0.8-\\ln0.5\\approx0.223+0.693=0.916$."
+        "title": "Portfolio objective",
+        "background": "minimize risk $x^T\\Sigma x$ with expected return at least $r_0$; for $x=(0.4,0.6)$ and returns $(0.05,0.10)$, return is $0.08$.",
+        "numbers": "minimize risk $x^T\\Sigma x$ with expected return at least $r_0$; for $x=(0.4,0.6)$ and returns $(0.05,0.10)$, return is $0.08$."
       },
       {
-        "title": "Fairness constraints",
-        "background": "Some training problems include explicit limits on metric gaps across groups. This changes the feasible set rather than only the loss.",
-        "numbers": "If group rates are $0.72$ and $0.68$, the gap is $0.04$, feasible under a $0.05$ limit but infeasible under $0.02$."
+        "title": "Neural-network training",
+        "background": "choose all weights $\\theta$, minimize average loss $\\tfrac1n\\sum_i \\ell_i(\\theta)$; losses $(0.8,0.4,0.2)$ average to $0.467$.",
+        "numbers": "choose all weights $\\theta$, minimize average loss $\\tfrac1n\\sum_i \\ell_i(\\theta)$; losses $(0.8,0.4,0.2)$ average to $0.467$."
       }
     ],
     "applicationsClose": "The shared move is simple and powerful: make the choices, goal, and rules visible before trying to solve anything.",
@@ -270,6 +270,29 @@
       "A global minimizer beats every feasible candidate, not every imaginable point.",
       "Maximization can be rewritten as minimization by negating the objective.",
       "Training an ML model is an optimization formulation over parameters."
+    ],
+    "connectionsProse": "<p>This lesson starts the section by turning ordinary decision problems into optimization problems. Earlier algebra and modeling work already gave names to variables and equations; here those pieces are organized into variables, an objective, and constraints. That separation matters because every optimizer in the rest of the section assumes the problem has already been written in a form it can act on. Once the formulation is clear, methods such as gradient descent, KKT conditions, linear programming, and quadratic programming have a common language.</p>",
+    "symbols": [
+      {
+        "sym": "$x$",
+        "desc": "the decision variable"
+      },
+      {
+        "sym": "$f(x)$",
+        "desc": "the objective"
+      },
+      {
+        "sym": "$g_i(x)\\le0$ and $h_j(x)=0$",
+        "desc": "inequality and equality constraints"
+      },
+      {
+        "sym": "$\\mathcal F$",
+        "desc": "the feasible set"
+      },
+      {
+        "sym": "$x^*$",
+        "desc": "an optimal feasible point"
+      }
     ]
   });
 
@@ -296,8 +319,8 @@
         "linear algebra"
       ]
     },
-    "motivation": "<p>If two choices are both allowed, it is comforting when every blend between them is allowed too. That is the geometric promise of convexity.</p><p>Convex feasible sets make optimization kinder. A straight move from one feasible point to another never leaves the allowed region, so local reasoning is much less likely to be fooled by disconnected islands.</p>",
-    "definition": "<p>A set $C$ is <b>convex</b> if for every $x,y\\in C$ and every $t\\in[0,1]$, the point $tx+(1-t)y$ is also in $C$. The point $tx+(1-t)y$ is a weighted average on the line segment joining $x$ and $y$.</p><p>The definition comes directly from the geometry of a segment. When $t=1$, the point is $x$; when $t=0$, it is $y$; and intermediate $t$ values trace the straight path between them. Convexity says the whole path stays inside.</p><p><b>Assumptions that matter:</b> the set lives in a vector space where addition and scalar multiplication make sense; the weights must satisfy $0\\le t\\le1$; intersections of convex sets stay convex; unions of convex sets usually do not.</p>",
+    "motivation": "<p>In optimization, constraints describe the choices an algorithm is allowed to make. If the feasible set is convex, moving partway from one feasible point to another cannot leave the allowed region. This matters because many algorithms take steps, averages, or mixtures of current candidate solutions.</p><p>Convexity is especially useful when several constraints are imposed at once. Each constraint may define its own feasible set, and the final feasible region is their intersection. The derivation below shows that if every individual set has the line-segment property, then satisfying all of them preserves that property too.</p>",
+    "definition": "<p><b>Statement.</b> Convexity of an intersection.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Show that the interval $C=[2,6]$ is convex.",
       "skills": [
@@ -501,34 +524,34 @@
     ],
     "applications": [
       {
-        "title": "Probability simplices",
-        "background": "Classification probabilities live in a simplex: nonnegative entries that add to one. Mixtures of distributions should still be distributions.",
-        "numbers": "Averaging $[1,0]$ and $[0.2,0.8]$ gives $[0.6,0.4]$, nonnegative with sum $1$."
+        "title": "Box constraints",
+        "background": "$x=(0,2)$ and $y=(4,0)$ lie in $[0,4]^2$; the midpoint $(2,1)$ is feasible.",
+        "numbers": "$x=(0,2)$ and $y=(4,0)$ lie in $[0,4]^2$; the midpoint $(2,1)$ is feasible."
       },
       {
-        "title": "Linear constraints in optimization",
-        "background": "Many engineering constraints are halfspaces, and halfspaces are convex. This is why linear programming is so useful.",
-        "numbers": "If $2x+y\\le10$ holds with values $8$ and $6$ at two points, their midpoint has value $(8+6)/2=7\\le10$."
+        "title": "Probability simplex",
+        "background": "averaging $p=(1,0,0)$ and $q=(0,1,0)$ with $t=0.3$ gives $(0.3,0.7,0)$, still sums to $1$.",
+        "numbers": "averaging $p=(1,0,0)$ and $q=(0,1,0)$ with $t=0.3$ gives $(0.3,0.7,0)$, still sums to $1$."
       },
       {
-        "title": "Norm balls for regularization",
-        "background": "Constraints such as $||w||_2\\le r$ limit parameter size. The filled ball is convex even though the boundary alone is not.",
-        "numbers": "Vectors with norms $2$ and $4$ inside radius $5$ have midpoint norm at most $(2+4)/2=3\\le5$."
+        "title": "Budget set",
+        "background": "spends $(10,0)$ and $(0,10)$ both satisfy $x_1+x_2\\le10$; their average $(5,5)$ also spends $10$.",
+        "numbers": "spends $(10,0)$ and $(0,10)$ both satisfy $x_1+x_2\\le10$; their average $(5,5)$ also spends $10$."
       },
       {
-        "title": "Portfolio weights",
-        "background": "Classical portfolio optimization chooses asset weights that are nonnegative and sum to one. Blending two portfolios remains a portfolio.",
-        "numbers": "$0.3[1,0]+0.7[0.4,0.6]=[0.58,0.42]$, and the entries sum to $1$."
+        "title": "Half-space feasibility",
+        "background": "if $a^Tx\\le3$ and $a^Ty\\le3$, then $a^T(0.25x+0.75y)\\le3$; the inequality stays feasible.",
+        "numbers": "if $a^Tx\\le3$ and $a^Ty\\le3$, then $a^T(0.25x+0.75y)\\le3$; the inequality stays feasible."
       },
       {
-        "title": "Fairness feasible regions",
-        "background": "When constraints are linearized, allowed model settings can form convex regions, making tradeoffs easier to search.",
-        "numbers": "If two models have gaps $0.02$ and $0.04$, their equal blend has gap at most $0.03$ under linear metrics."
+        "title": "Fairness constraint",
+        "background": "two models with violation rates $0.02$ and $0.04$ average to $0.03$, meeting a $0.05$ cap.",
+        "numbers": "two models with violation rates $0.02$ and $0.04$ average to $0.03$, meeting a $0.05$ cap."
       },
       {
-        "title": "Image interpolation",
-        "background": "Pixel intensities in a bounded range form a convex box. Averaging images stays in the valid range.",
-        "numbers": "Pixels $40$ and $200$ averaged with weight $0.25$ give $0.25\\cdot40+0.75\\cdot200=160$, still between $0$ and $255$."
+        "title": "Embedding interpolation",
+        "background": "two normalized mixture weights average to a valid mixture, e.g. $(0.6,0.4)$ and $(0.2,0.8)$ give $(0.4,0.6)$.",
+        "numbers": "two normalized mixture weights average to a valid mixture, e.g. $(0.6,0.4)$ and $(0.2,0.8)$ give $(0.4,0.6)$."
       }
     ],
     "applicationsClose": "Convex sets are the geometry of safe blending: averages of allowed choices remain allowed.",
@@ -537,6 +560,52 @@
       "Intervals, halfspaces, boxes, norm balls, and simplices are convex.",
       "Boundaries and unions often fail convexity because midpoints can leave the set.",
       "Convex feasible sets make constrained optimization more predictable."
+    ],
+    "connectionsProse": "<p>This lesson builds on vectors, line segments, and weighted averages. A convex set is a feasible region that does not develop holes or bends inward between feasible points. That simple geometric idea will support later results about convex functions, optimality conditions, and constrained optimization. When a feasible region is convex, averaging two allowed decisions remains safe.</p>",
+    "symbols": [
+      {
+        "sym": "$C$",
+        "desc": "a set of feasible points"
+      },
+      {
+        "sym": "$x,y$",
+        "desc": "points"
+      },
+      {
+        "sym": "$t$",
+        "desc": "a mixing weight"
+      },
+      {
+        "sym": "$tx+(1-t)y$",
+        "desc": "a point on the segment"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $C=\\cap_i C_i$",
+        "result": "Let $C=\\cap_i C_i$",
+        "why": "a point is in $C$ only if it is in every $C_i$."
+      },
+      {
+        "do": "Choose $x,y\\in C$",
+        "result": "Choose $x,y\\in C$",
+        "why": "both points are feasible for every set in the intersection."
+      },
+      {
+        "do": "Fix $t\\in[0,1]$",
+        "result": "Fix $t\\in[0,1]$",
+        "why": "this is the weight in a line segment."
+      },
+      {
+        "do": "Since $x,y\\in C_i$ and each $C_i$ is convex, $tx+(1-t)y\\in C_i$ for every $i$.",
+        "result": "Since $x,y\\in C_i$ and each $C_i$ is convex, $tx+(1-t)y\\in C_i$ for every $i$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $tx+(1-t)y\\in\\cap_i C_i=C$",
+        "result": "Therefore $tx+(1-t)y\\in\\cap_i C_i=C$",
+        "why": "membership in all sets gives membership in the intersection."
+      }
     ],
     "prereqs": [
       "math-22-01"
@@ -566,8 +635,8 @@
         "tangent lines"
       ]
     },
-    "motivation": "<p>Optimization becomes much friendlier when the landscape is shaped like a bowl instead of a mountain range. A bowl may be steep or shallow, but it has no hidden lower valley elsewhere.</p><p>Convex functions capture that bowl idea precisely. For ML, convex losses like least squares and logistic loss teach us what reliable training looks like, even when deep networks later become nonconvex.</p>",
-    "definition": "<p>A function $f:C\\to R$ on a convex set $C$ is <b>convex</b> if $f(tx+(1-t)y)\\le t f(x)+(1-t)f(y)$ for all $x,y\\in C$ and $t\\in[0,1]$. The left side is the function at the blended input; the right side is the blended output.</p><p>For twice-differentiable one-dimensional functions, $f''(x)\\ge0$ on an interval implies convexity. In many dimensions, $\\nabla^2 f(x)$ being positive semidefinite plays the same role. The key consequence is powerful: every local minimum of a convex function on a convex set is global.</p><p><b>Assumptions that matter:</b> the domain must be convex; differentiability is helpful but not required; strict convexity can give a unique minimizer, while ordinary convexity may have a flat set of minimizers.</p>",
+    "motivation": "<p>A convex function lies below the chord joining any two points on its graph. For optimization, that means there are no hidden lower valleys between points that the function averages over. If a method finds a point where the slope vanishes, convexity can turn that local condition into a global optimality certificate.</p><p>The most useful analytic form is the first-order lower bound. At any point $x$, the tangent plane supports the function from below. The derivation restricts the function to the line from $x$ to $y$, applies the one-dimensional convex tangent inequality, and then translates the result back to the original variables.</p>",
+    "definition": "<p><b>Statement.</b> First-order lower bound for differentiable convex $f$.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Show that $f(x)=x^2$ satisfies the convexity inequality for $x=0$, $y=4$, and $t=0.25$.",
       "skills": [
@@ -766,34 +835,34 @@
     ],
     "applications": [
       {
-        "title": "Least-squares regression",
-        "background": "Gauss and Legendre popularized least squares for fitting observations. The squared-error objective is convex in linear-model weights.",
-        "numbers": "For one point with feature $2$ and label $6$, loss $(2w-6)^2$ has curvature $8$ and minimum at $w=3$."
+        "title": "Quadratic lower bound",
+        "background": "for $f(w)=(w-4)^2$, at $x=1$ and $y=3$, $f(3)=1\\ge9-6(2)=-3$.",
+        "numbers": "for $f(w)=(w-4)^2$, at $x=1$ and $y=3$, $f(3)=1\\ge9-6(2)=-3$."
       },
       {
-        "title": "Logistic regression",
-        "background": "Before deep learning, logistic regression was a central convex classifier. Its loss is convex for linear scores.",
-        "numbers": "If true label is $1$ and predicted probability is $0.8$, loss $-\\ln0.8\\approx0.223$; at $0.4$, loss $0.916$, larger as confidence worsens."
+        "title": "Global certificate",
+        "background": "if $\\nabla f(x)=0$ for convex $f$, then $f(y)\\ge f(x)$ for every $y$; stationarity is enough.",
+        "numbers": "if $\\nabla f(x)=0$ for convex $f$, then $f(y)\\ge f(x)$ for every $y$; stationarity is enough."
       },
       {
-        "title": "Jensen's inequality",
-        "background": "Jensen's inequality is the algebraic voice of convexity and appears throughout probability and information theory.",
-        "numbers": "For $f(x)=x^2$, average inputs $1$ and $3$ give $f(2)=4$, while average outputs give $(1+9)/2=5$."
+        "title": "Jensen loss mix",
+        "background": "$f(w)=w^2$, $w_1=1,w_2=3$, $t=0.5$ gives $f(2)=4\\le(1+9)/2=5$.",
+        "numbers": "$f(w)=w^2$, $w_1=1,w_2=3$, $t=0.5$ gives $f(2)=4\\le(1+9)/2=5$."
       },
       {
-        "title": "Regularization penalties",
-        "background": "Convex penalties such as $||w||_2^2$ and $||w||_1$ discourage large weights while preserving tractable optimization.",
-        "numbers": "For $w=[3,4]$, $||w||_2^2=25$ and $||w||_1=7$; both add predictable penalty as weights grow."
+        "title": "Logistic-loss safety",
+        "background": "averaging two parameter vectors cannot make a convex regularized objective exceed the averaged objective.",
+        "numbers": "averaging two parameter vectors cannot make a convex regularized objective exceed the averaged objective."
       },
       {
-        "title": "Global guarantees",
-        "background": "Convexity is prized because any local minimum is global. This gives algorithms a target they can trust.",
-        "numbers": "If a convex loss has stationary points at $w=2$ and no lower value elsewhere, checking $L(2)=0.3$ certifies the global minimum."
+        "title": "Epigraph check",
+        "background": "$f(2)=4$ and $f(4)=16$ imply midpoint chord value $10$, while $f(3)=9\\le10$.",
+        "numbers": "$f(2)=4$ and $f(4)=16$ imply midpoint chord value $10$, while $f(3)=9\\le10$."
       },
       {
-        "title": "Calibration and proper losses",
-        "background": "Many scoring rules in statistics are convex so expected loss rewards honest probabilities.",
-        "numbers": "For true event probability $0.7$, squared loss risk at prediction $0.7$ is lower than at $0.5$ by $(0.7-0.5)^2=0.04$ in the deterministic target picture."
+        "title": "No spurious local minima",
+        "background": "if a point is locally minimal for convex $f$, the tangent lower-bound argument makes it globally minimal.",
+        "numbers": "if a point is locally minimal for convex $f$, the tangent lower-bound argument makes it globally minimal."
       }
     ],
     "applicationsClose": "Convex functions are the bowl-shaped objectives where optimization can make promises instead of guesses.",
@@ -802,6 +871,56 @@
       "For twice-differentiable one-dimensional functions, $f''\\ge0$ implies convexity.",
       "Convex functions have no nonglobal local minima on convex domains.",
       "Many foundational ML objectives are convex even when modern models are not."
+    ],
+    "connectionsProse": "<p>This lesson moves from convex feasible sets to convex objectives. Earlier lessons described lines and gradients; now those tools describe a function whose graph bends upward in a controlled way. Convex functions are the main reason many optimization problems can be solved reliably. They connect local slope information to global statements about the whole objective.</p>",
+    "symbols": [
+      {
+        "sym": "$f$",
+        "desc": "the objective"
+      },
+      {
+        "sym": "$x,y$",
+        "desc": "points"
+      },
+      {
+        "sym": "$t$",
+        "desc": "a line parameter"
+      },
+      {
+        "sym": "$\\nabla f(x)$",
+        "desc": "the gradient"
+      },
+      {
+        "sym": "$\\phi$",
+        "desc": "the one-dimensional slice"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define $\\phi(t)=f(x+t(y-x))$ for $t\\in[0,1]$",
+        "result": "Define $\\phi(t)=f(x+t(y-x))$ for $t\\in[0,1]$",
+        "why": "restrict $f$ to the line from $x$ to $y$."
+      },
+      {
+        "do": "Convexity of $f$ makes $\\phi$ convex",
+        "result": "Convexity of $f$ makes $\\phi$ convex",
+        "why": "a convex function stays convex on a line."
+      },
+      {
+        "do": "For a one-dimensional convex differentiable function, $\\phi(1)\\ge\\phi(0)+\\phi'(0)$",
+        "result": "For a one-dimensional convex differentiable function, $\\phi(1)\\ge\\phi(0)+\\phi'(0)$",
+        "why": "the tangent is a global lower bound."
+      },
+      {
+        "do": "Compute $\\phi'(0)=\\nabla f(x)^T(y-x)$",
+        "result": "Compute $\\phi'(0)=\\nabla f(x)^T(y-x)$",
+        "why": "chain rule along the line."
+      },
+      {
+        "do": "Substitute",
+        "result": "$f(y)\\ge f(x)+\\nabla f(x)^T(y-x)$",
+        "why": "the tangent plane sits below the graph."
+      }
     ],
     "prereqs": [
       "math-22-02"
@@ -831,8 +950,8 @@
         "quadratics"
       ]
     },
-    "motivation": "<p>When you stand at the bottom of a smooth bowl, every tiny direction feels flat to first order. If one direction still slopes down, you are not at the bottom.</p><p>Optimality conditions turn that physical feeling into tests. They tell us what a candidate minimizer must satisfy, and for convex problems they can certify that training has reached the best possible point.</p>",
-    "definition": "<p>For a differentiable unconstrained function $f:R^n\\to R$, a local minimizer $x^\\ast$ must satisfy $\\nabla f(x^\\ast)=0$. If $f$ is twice differentiable, a second-order necessary condition is $\\nabla^2 f(x^\\ast)$ positive semidefinite. If $f$ is convex, $\\nabla f(x^\\ast)=0$ is also sufficient for global optimality.</p><p>The gradient condition comes from directional derivatives. If $\\nabla f(x^\\ast)\\ne0$, moving a tiny amount in direction $-\\nabla f(x^\\ast)$ changes the function by approximately $-\\alpha ||\\nabla f(x^\\ast)||^2$, which is negative for small $\\alpha>0$. So a smooth local minimum cannot have nonzero gradient.</p><p><b>Assumptions that matter:</b> these are unconstrained conditions; constraints can allow nonzero gradients at boundaries; differentiability is required for the gradient test; and nonzero curvature signs classify only local behavior unless convexity supplies global structure.</p>",
+    "motivation": "<p>Gradient descent tries to reduce a loss by following a direction where the gradient points downhill. At a smooth unconstrained minimum, that downhill direction cannot exist. If the gradient were nonzero, moving a little in the negative-gradient direction would lower the objective, contradicting the claim that the point is locally minimal.</p><p>Vanishing gradient alone is not enough. A saddle can also have zero gradient, but it bends upward in some directions and downward in others. The second-order condition captures this by checking the Hessian along every direction. At a local minimum, every one-dimensional slice through the point must have nonnegative second derivative.</p>",
+    "definition": "<p><b>Statement.</b> First- and second-order conditions.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Find and classify the stationary point of $f(x)=x^2-6x+10$.",
       "skills": [
@@ -1036,34 +1155,34 @@
     ],
     "applications": [
       {
-        "title": "Normal equations",
-        "background": "Least-squares regression sets the gradient of squared error to zero, producing equations for the best linear fit.",
-        "numbers": "For $L(w)=(2w-6)^2$, $L'(w)=8w-24=0$ gives $w=3$."
+        "title": "Quadratic minimizer",
+        "background": "$f(w)=(w-4)^2$ has gradient $2(w-4)=0$, so $w^*=4$.",
+        "numbers": "$f(w)=(w-4)^2$ has gradient $2(w-4)=0$, so $w^*=4$."
       },
       {
-        "title": "Checking convergence",
-        "background": "Optimization software often reports gradient norms because a small gradient suggests first-order stationarity.",
-        "numbers": "If $||\\nabla L||=0.002$, a step of size $0.1$ in steepest descent predicts a loss drop about $0.1(0.002)^2=0.0000004$."
+        "title": "Saddle diagnosis",
+        "background": "$f(x,y)=x^2-y^2$ has gradient $0$ at $(0,0)$ but Hessian diag$(2,-2)$, so it is not a minimum.",
+        "numbers": "$f(x,y)=x^2-y^2$ has gradient $0$ at $(0,0)$ but Hessian diag$(2,-2)$, so it is not a minimum."
       },
       {
-        "title": "Saddle points in deep learning",
-        "background": "High-dimensional nonconvex losses can have many stationary points that are not minima. Saddles slow training.",
-        "numbers": "$f(x,y)=x^2-y^2$ has gradient zero at $(0,0)$, but values $0.01$ and $-0.01$ nearby."
+        "title": "Least squares normal equation",
+        "background": "$\\nabla \\tfrac12\\Vert Xw-y\\Vert^2=X^T(Xw-y)=0$.",
+        "numbers": "$\\nabla \\tfrac12\\Vert Xw-y\\Vert^2=X^T(Xw-y)=0$."
       },
       {
-        "title": "Convex certification",
-        "background": "For convex differentiable objectives, zero gradient is not just necessary; it certifies global optimality.",
-        "numbers": "If convex $L$ has $L(2)=1.7$ and $\\nabla L(2)=0$, then no other point has loss below $1.7$."
+        "title": "Ridge solution",
+        "background": "if $X^TX=3$ and $\\lambda=1$, $X^Ty=8$, then $(3+1)w=8$ gives $w=2$.",
+        "numbers": "if $X^TX=3$ and $\\lambda=1$, $X^Ty=8$, then $(3+1)w=8$ gives $w=2$."
       },
       {
-        "title": "Second-order methods",
-        "background": "Newton-style methods use Hessian curvature to scale steps. Positive curvature means a local quadratic model has a bottom.",
-        "numbers": "For $f(x)=5x^2$, gradient $10x$ and Hessian $10$ give Newton step $-10x/10=-x$, reaching zero in one ideal step."
+        "title": "Flat direction",
+        "background": "Hessian diag$(2,0)$ means no curvature in one direction, so the condition is inconclusive.",
+        "numbers": "Hessian diag$(2,0)$ means no curvature in one direction, so the condition is inconclusive."
       },
       {
-        "title": "Boundary caution",
-        "background": "Unconstrained conditions fail at constrained boundaries. A minimum can occur with nonzero gradient if movement outside is forbidden.",
-        "numbers": "Minimize $f(x)=x$ over $x\\ge0$: optimum is $0$, but $f'(0)=1$, not zero."
+        "title": "Logistic optimum check",
+        "background": "if a reported model has gradient norm $10^{-5}$, it is nearly stationary.",
+        "numbers": "if a reported model has gradient norm $10^{-5}$, it is nearly stationary."
       }
     ],
     "applicationsClose": "Optimality conditions are diagnostic tools: first ask whether slope remains, then ask what the curvature allows.",
@@ -1072,6 +1191,62 @@
       "Positive second derivative or positive semidefinite Hessian supports a local minimum test.",
       "For convex differentiable functions, zero gradient is sufficient for global optimality.",
       "Stationary points can be minima, maxima, or saddles when convexity is absent."
+    ],
+    "connectionsProse": "<p>This lesson uses gradients, Hessians, and one-dimensional calculus to describe what must happen at a smooth unconstrained minimum. The key point is local: if a point is truly a minimum, then no tiny movement in any direction should reduce the objective. That condition forces the gradient to vanish. The Hessian then describes whether the surface bends upward around the stationary point.</p>",
+    "symbols": [
+      {
+        "sym": "$x^*$",
+        "desc": "a candidate optimum"
+      },
+      {
+        "sym": "$u$",
+        "desc": "any direction"
+      },
+      {
+        "sym": "$\\nabla f$",
+        "desc": "the gradient"
+      },
+      {
+        "sym": "$\\nabla^2 f$ or $H$",
+        "desc": "the Hessian"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Suppose $x^*$ is a local minimizer",
+        "result": "Suppose $x^*$ is a local minimizer",
+        "why": "nearby points have no smaller value."
+      },
+      {
+        "do": "For any direction $u$, define $\\phi(t)=f(x^*+tu)$",
+        "result": "For any direction $u$, define $\\phi(t)=f(x^*+tu)$",
+        "why": "inspect a line through the point."
+      },
+      {
+        "do": "Since $t=0$ minimizes $\\phi$ locally, $\\phi'(0)=0$",
+        "result": "Since $t=0$ minimizes $\\phi$ locally, $\\phi'(0)=0$",
+        "why": "one-dimensional calculus."
+      },
+      {
+        "do": "Compute $\\phi'(0)=\\nabla f(x^*)^Tu$",
+        "result": "Compute $\\phi'(0)=\\nabla f(x^*)^Tu$",
+        "why": "chain rule."
+      },
+      {
+        "do": "Because this equals $0$ for every $u$, choose $u=\\nabla f(x^*)$",
+        "result": "$\\Vert\\nabla f(x^*)\\Vert^2=0$",
+        "why": "hence $\\nabla f(x^*)=0$."
+      },
+      {
+        "do": "Also $\\phi''(0)=u^T\\nabla^2f(x^*)u\\ge0$",
+        "result": "Also $\\phi''(0)=u^T\\nabla^2f(x^*)u\\ge0$",
+        "why": "a one-dimensional local minimum has nonnegative second derivative."
+      },
+      {
+        "do": "Therefore the Hessian is positive semidefinite at a smooth local minimizer.",
+        "result": "Therefore the Hessian is positive semidefinite at a smooth local minimizer.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-03"
@@ -1101,8 +1276,8 @@
         "iterations"
       ]
     },
-    "motivation": "<p>Once a loss is written down, we still need a way to move the parameters. The gradient tells us the direction of steepest increase, so the negative gradient gives the most direct local downhill direction.</p><p>Gradient descent is the basic training loop hiding under much of ML: compute a gradient, choose a learning rate, update parameters, repeat. The method is simple, but the choice of step size carries real wisdom.</p>",
-    "definition": "<p>For differentiable $f$, <b>gradient descent</b> updates $$x_{k+1}=x_k-\\alpha_k \\nabla f(x_k),$$ where $x_k$ is the current iterate, $\\alpha_k>0$ is the learning rate, and $\\nabla f(x_k)$ points uphill. The minus sign moves downhill.</p><p>The update follows from the first-order approximation $f(x+s)\\approx f(x)+\\nabla f(x)^T s$. Among small steps of fixed length, choosing $s$ opposite the gradient gives the largest predicted decrease. A step that is too large can overshoot; a step that is too small can crawl.</p><p><b>Assumptions that matter:</b> gradients must exist or be replaced by subgradients; the learning rate affects stability; convex smooth objectives give stronger guarantees; and nonconvex objectives may converge only to stationary points.</p>",
+    "motivation": "<p>Training a model means choosing parameters that make a loss small. At a current parameter value $w$, the optimizer usually does not know the whole loss surface. It only has local information: the value of the loss and its gradient. Gradient descent uses that local information in the most direct way. If $\\nabla f(w)$ points uphill, then $-\\nabla f(w)$ points downhill, so a small step in that direction should reduce the loss.</p><p>The learning rate $\\rho$ controls how much trust the optimizer puts in this local picture. A tiny $\\rho$ is cautious and may require many steps. A very large $\\rho$ can jump past the low point and increase the loss. On the simple loss $f(w)=(w-4)^2$, starting from $w_0=0$ with $\\rho=0.25$ gives $w_1=2$, $w_2=3$, and $w_3=3.5$. The iterates move halfway from the current value to the minimizer each time, so the loss drops from $16$ to $4$ to $1$ to $0.25$.</p>",
+    "definition": "<p><b>Statement.</b> Gradient descent updates parameters by stepping against the current gradient.</p><p>$$w_{k+1}=w_k-\\rho \\nabla f(w_k).$$</p><p><b>Assumptions that matter:</b> Assume $f$ is differentiable near $w_k$ and $\\rho$ is small enough that the local model is useful.</p>",
     "worked": {
       "problem": "Run three steps of gradient descent on $f(w)=(w-4)^2$ from $w_0=0$ with learning rate $\\alpha=0.25$.",
       "skills": [
@@ -1306,34 +1481,34 @@
     ],
     "applications": [
       {
-        "title": "Training neural networks",
-        "background": "Backpropagation computes gradients, and gradient-based optimizers update millions or billions of parameters.",
-        "numbers": "If a weight has gradient $0.03$ and learning rate $0.001$, the update is $-0.00003$."
+        "title": "Quadratic training step",
+        "background": "for $f(w)=(w-4)^2$, $w_0=0$, and $\\rho=0.25$, the gradient is $-8$, so $w_1=2$ and the loss drops from $16$ to $4$.",
+        "numbers": "for $f(w)=(w-4)^2$, $w_0=0$, and $\\rho=0.25$, the gradient is $-8$, so $w_1=2$ and the loss drops from $16$ to $4$."
       },
       {
-        "title": "Linear regression by iteration",
-        "background": "Even though least squares has a closed form, iterative gradient descent scales naturally to large datasets.",
-        "numbers": "For gradient $-12$ at $w=0$ with $\\alpha=0.05$, the next weight is $0.6$."
+        "title": "Three-step loss check",
+        "background": "the same run gives $w_2=3$, $w_3=3.5$, and $f(w_3)=0.25$, showing the half-distance pattern.",
+        "numbers": "the same run gives $w_2=3$, $w_3=3.5$, and $f(w_3)=0.25$, showing the half-distance pattern."
       },
       {
-        "title": "Learning-rate sensitivity",
-        "background": "The same gradient can be helpful or harmful depending on step size. Large steps may overshoot a narrow bowl.",
-        "numbers": "For $f(w)=w^2$ at $w=10$, $\\alpha=0.1$ gives $w=8$, while $\\alpha=1.1$ gives $w=-12$, farther in loss."
+        "title": "Too-large learning rate",
+        "background": "with $\\rho=1.1$, $w_1=8.8$ and $f(w_1)=23.04$, so the loss increases from $16$; the update rule exposes overshoot.",
+        "numbers": "with $\\rho=1.1$, $w_1=8.8$ and $f(w_1)=23.04$, so the loss increases from $16$; the update rule exposes overshoot."
       },
       {
-        "title": "Feature scaling",
-        "background": "Badly scaled features stretch the loss landscape, making one learning rate too small in one direction and too large in another.",
-        "numbers": "$f(x,y)=x^2+100y^2$ has gradients $(2x,200y)$, so at $(1,1)$ the $y$ gradient is $100$ times the $x$ gradient."
+        "title": "Linear-regression gradient",
+        "background": "for $L(w)=\\tfrac12(2w-6)^2$, $\\nabla L=2(2w-6)$. At $w=0$ and $\\rho=0.1$, $w^+=1.2$.",
+        "numbers": "for $L(w)=\\tfrac12(2w-6)^2$, $\\nabla L=2(2w-6)$. At $w=0$ and $\\rho=0.1$, $w^+=1.2$."
       },
       {
-        "title": "Differentiable programming",
-        "background": "Modern software frameworks build computations so gradients can be calculated automatically through many operations.",
-        "numbers": "If $z=3w$ and $L=z^2$, then $dL/dw=6z$; at $w=2$, $z=6$ and gradient is $36$."
+        "title": "Vector weight update",
+        "background": "for $g=(3,-4)$ and $\\rho=0.05$, the update is $w^+=w-(0.15,-0.20)$; the step length is $0.05\\cdot5=0.25$.",
+        "numbers": "for $g=(3,-4)$ and $\\rho=0.05$, the update is $w^+=w-(0.15,-0.20)$; the step length is $0.05\\cdot5=0.25$."
       },
       {
-        "title": "Fine-tuning",
-        "background": "Fine-tuning pretrained models uses small gradient steps so existing knowledge is adjusted rather than erased.",
-        "numbers": "A parameter $1.2000$ with gradient $5$ and learning rate $0.0001$ updates to $1.1995$."
+        "title": "Fine-tuning scale",
+        "background": "if an adapter gradient norm is $0.8$ and $\\rho=2\\times10^{-4}$, the parameter step norm is $1.6\\times10^{-4}$.",
+        "numbers": "if an adapter gradient norm is $0.8$ and $\\rho=2\\times10^{-4}$, the parameter step norm is $1.6\\times10^{-4}$."
       }
     ],
     "applicationsClose": "Gradient descent is the repeated act of asking the loss which way is uphill, then taking a measured step the other way.",
@@ -1342,6 +1517,89 @@
       "The negative gradient is the steepest local downhill direction.",
       "Learning rate controls the tradeoff between progress and stability.",
       "Gradient descent is the core training loop behind much of ML."
+    ],
+    "connectionsProse": "<p>This lesson builds on the gradient and on the first-order Taylor approximation. The gradient tells the local direction in which a loss increases fastest. Taylor's formula tells how a small step changes the loss to first order. Put those together, and the update rule for gradient descent becomes a direct consequence rather than a rule to memorize.</p><p>This is also the central optimizer pattern for the rest of the section. Momentum changes how steps are accumulated, SGD changes how the gradient is estimated, adaptive methods rescale the step coordinate by coordinate, and Newton-type methods replace the first-order local model with a second-order one. The plain gradient descent step is the baseline those refinements modify.</p>",
+    "symbols": [
+      {
+        "sym": "$w_k$",
+        "desc": "the parameter vector after $k$ updates"
+      },
+      {
+        "sym": "$f$",
+        "desc": "the objective or loss"
+      },
+      {
+        "sym": "$\\nabla f(w_k)$",
+        "desc": "the gradient at the current parameters"
+      },
+      {
+        "sym": "$\\rho>0$",
+        "desc": "the learning rate"
+      },
+      {
+        "sym": "$s$",
+        "desc": "the proposed step"
+      },
+      {
+        "sym": "$u$",
+        "desc": "a unit direction"
+      },
+      {
+        "sym": "$\\Vert\\nabla f(w_k)\\Vert$",
+        "desc": "the local steepness"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with the first-order Taylor approximation $f(w+s)\\approx f(w)+\\nabla f(w)^\\top s$",
+        "result": "Start with the first-order Taylor approximation $f(w+s)\\approx f(w)+\\nabla f(w)^\\top s$",
+        "why": "for a small step $s$, the gradient gives the linear change in loss."
+      },
+      {
+        "do": "Restrict to steps with fixed length $\\Vert s\\Vert=\\rho$",
+        "result": "Restrict to steps with fixed length $\\Vert s\\Vert=\\rho$",
+        "why": "otherwise the linear model would prefer an infinitely long downhill step."
+      },
+      {
+        "do": "Write $s=\\rho u$ with $\\Vert u\\Vert=1$",
+        "result": "Write $s=\\rho u$ with $\\Vert u\\Vert=1$",
+        "why": "this separates step size from direction."
+      },
+      {
+        "do": "Substitute",
+        "result": "$f(w+\\rho u)\\approx f(w)+\\rho \\nabla f(w)^\\top u$",
+        "why": "only the dot product depends on direction."
+      },
+      {
+        "do": "Use Cauchy--Schwarz",
+        "result": "$\\nabla f(w)^\\top u\\ge -\\Vert\\nabla f(w)\\Vert$",
+        "why": "the smallest possible dot product occurs when $u$ points opposite the gradient."
+      },
+      {
+        "do": "The minimizing unit direction is $u=-\\nabla f(w)/\\Vert\\nabla f(w)\\Vert$",
+        "result": "The minimizing unit direction is $u=-\\nabla f(w)/\\Vert\\nabla f(w)\\Vert$",
+        "why": "this is the steepest local decrease direction."
+      },
+      {
+        "do": "Absorb the gradient length into the step coefficient by choosing $s=-\\rho\\nabla f(w)$",
+        "result": "Absorb the gradient length into the step coefficient by choosing $s=-\\rho\\nabla f(w)$",
+        "why": "practical gradient descent uses a learning rate multiplying the whole gradient."
+      },
+      {
+        "do": "Add the step to the current point",
+        "result": "$w_{k+1}=w_k+s=w_k-\\rho\\nabla f(w_k)$",
+        "why": "this is the update rule."
+      },
+      {
+        "do": "For $f(w)=(w-4)^2$, compute $\\nabla f(w)=2(w-4)$",
+        "result": "For $f(w)=(w-4)^2$, compute $\\nabla f(w)=2(w-4)$",
+        "why": "differentiate the scalar quadratic."
+      },
+      {
+        "do": "With $w_0=0$ and $\\rho=0.25$,",
+        "result": "$w_1=0-0.25(-8)=2$",
+        "why": "one explicit step verifies the rule."
+      }
     ],
     "prereqs": [
       "math-22-04"
@@ -1371,8 +1629,8 @@
         "geometric sequences"
       ]
     },
-    "motivation": "<p>Two training runs can both improve, yet one becomes useful in minutes while the other crawls for days. Convergence rates give language to that difference.</p><p>Instead of only asking where the algorithm goes, we ask how the error $E_k$ behaves after $k$ iterations. Does it shrink like $1/k$, like $1/k^2$, or by a fixed percentage each step? That speed matters in real training budgets.</p>",
-    "definition": "<p>If $E_k=f(x_k)-f(x^\\ast)$ is the optimization error, a <b>sublinear</b> rate might satisfy $E_k\\le C/k$, while a <b>linear</b> rate satisfies $E_k\\le C\\rho^k$ for some $0<\\rho<1$. Linear here means geometric decay, not a straight line in $k$.</p><p>For smooth convex gradient descent, a common guarantee is $E_k=O(1/k)$. With strong convexity and a good fixed step size, the error can decay linearly. The difference is dramatic: $1/k$ halves slowly, while $0.9^k$ eventually falls by a fixed percent every step.</p><p><b>Assumptions that matter:</b> rates depend on smoothness, convexity, strong convexity, step size, and condition number; a theoretical upper bound can be pessimistic; and stochastic gradients add noise that changes the rate story.</p>",
+    "motivation": "<p>Optimization is not only about choosing a direction. It is also about understanding how much improvement to expect after many repeated updates. A convergence rate turns the repeated update into a bound on the remaining error. In the simplest quadratic case, the whole story is visible from one scalar recurrence.</p><p>Strong convexity supplies enough upward curvature to pull the iterate toward a unique minimum, while smoothness limits how abruptly the gradient can change. When the step size is chosen from the smoothness scale, the error is multiplied by a factor less than one. A smaller factor means faster convergence; a poor condition number makes the factor close to one and progress slow.</p>",
+    "definition": "<p><b>Statement.</b> Scalar strongly convex quadratic $f(w)=\\tfrac12 a(w-w^*)^2$.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Compare errors $E_k=10/k$ and $F_k=10(0.8)^k$ at $k=5$ and $k=20$.",
       "skills": [
@@ -1576,34 +1834,34 @@
     ],
     "applications": [
       {
-        "title": "Training budgets",
-        "background": "Teams choose optimizers partly by how many steps are needed to reach a useful loss. Rates translate math into compute cost.",
-        "numbers": "If each step costs $0.2$ seconds, $10,000$ steps cost $2,000$ seconds, about $33.3$ minutes."
+        "title": "Exact scalar rate",
+        "background": "for $a=2$ and $\\rho=0.25$, the error factor is $0.5$ per step.",
+        "numbers": "for $a=2$ and $\\rho=0.25$, the error factor is $0.5$ per step."
       },
       {
-        "title": "Condition numbers",
-        "background": "Ill-conditioned quadratics converge slowly because some directions are much flatter than others.",
-        "numbers": "For condition number $100$, a simple contraction estimate $(99/101)\\approx0.9802$ keeps about $0.9802^{100}\\approx0.136$ after 100 steps."
+        "title": "Six-step bound",
+        "background": "from initial loss $16$, the factor $0.5^6$ gives loss bound $0.25$.",
+        "numbers": "from initial loss $16$, the factor $0.5^6$ gives loss bound $0.25$."
       },
       {
-        "title": "Accelerated methods",
-        "background": "Nesterov acceleration improves a classic convex rate from $1/k$ to $1/k^2$ under smooth convex assumptions.",
-        "numbers": "At $k=50$, $1/k=0.02$ while $1/k^2=0.0004$."
+        "title": "Condition number effect",
+        "background": "$\\mu=1,L=10$ gives factor $0.9$ with $\\rho=0.1$.",
+        "numbers": "$\\mu=1,L=10$ gives factor $0.9$ with $\\rho=0.1$."
       },
       {
-        "title": "Early stopping",
-        "background": "Validation curves often improve quickly then flatten. Rate thinking helps decide when additional compute gives little return.",
-        "numbers": "If loss gains shrink as $1/k$, moving from $100$ to $200$ steps changes the bound from $0.01$ to $0.005$."
+        "title": "Iteration planning",
+        "background": "$0.9^{44}\\approx0.0097$, so about $44$ steps reduce error below $1\\%$.",
+        "numbers": "$0.9^{44}\\approx0.0097$, so about $44$ steps reduce error below $1\\%$."
       },
       {
-        "title": "Stochastic optimization",
-        "background": "Noisy gradients often have slower asymptotic rates, so averaging and learning-rate decay matter.",
-        "numbers": "A noisy $1/\\sqrt{k}$ term is $0.1$ at $k=100$ and $0.01$ only at $k=10,000$."
+        "title": "Better conditioning",
+        "background": "if scaling improves $L/\\mu$ from $100$ to $10$, the factor improves from $0.99$ to $0.9$.",
+        "numbers": "if scaling improves $L/\\mu$ from $100$ to $10$, the factor improves from $0.99$ to $0.9$."
       },
       {
-        "title": "Benchmark comparisons",
-        "background": "Optimizer papers compare curves by iteration and wall-clock time because rate constants and per-step costs both matter.",
-        "numbers": "Method A needs $500$ steps at $4$ ms, total $2$ s; Method B needs $300$ steps at $10$ ms, total $3$ s."
+        "title": "Early-stopping readout",
+        "background": "loss ratio $0.25$ after two steps matches a per-step error factor $0.5$ and loss factor $0.25$ on the quadratic.",
+        "numbers": "loss ratio $0.25$ after two steps matches a per-step error factor $0.5$ and loss factor $0.25$ on the quadratic."
       }
     ],
     "applicationsClose": "Convergence rates put a clock on optimization: they connect mathematical progress to compute, time, and patience.",
@@ -1612,6 +1870,61 @@
       "Linear convergence means geometric decay $C\\rho^k$ with $0<\\rho<1$.",
       "Smoothness, strong convexity, conditioning, and step size control rates.",
       "A faster iteration bound is useful only alongside the cost of each iteration."
+    ],
+    "connectionsProse": "<p>This lesson follows directly from gradient descent. The update rule tells where the next iterate goes; a convergence rate tells how quickly the iterates approach the optimum. For smooth strongly convex losses, the distance to the optimum can shrink by a fixed factor at each step. That makes progress measurable before running an optimizer indefinitely.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mu$",
+        "desc": "strong convexity"
+      },
+      {
+        "sym": "$L$",
+        "desc": "gradient Lipschitz smoothness"
+      },
+      {
+        "sym": "$\\kappa=L/\\mu$",
+        "desc": "condition number"
+      },
+      {
+        "sym": "$w^*$",
+        "desc": "the optimum"
+      },
+      {
+        "sym": "$k$",
+        "desc": "iteration count"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Compute the gradient $\\nabla f(w)=a(w-w^*)$",
+        "result": "Compute the gradient $\\nabla f(w)=a(w-w^*)$",
+        "why": "differentiate the quadratic."
+      },
+      {
+        "do": "Apply gradient descent $w_{k+1}=w_k-\\rho a(w_k-w^*)$",
+        "result": "Apply gradient descent $w_{k+1}=w_k-\\rho a(w_k-w^*)$",
+        "why": "substitute the gradient."
+      },
+      {
+        "do": "Subtract $w^*$",
+        "result": "$w_{k+1}-w^*=(1-\\rho a)(w_k-w^*)$",
+        "why": "isolate the error."
+      },
+      {
+        "do": "Take absolute values",
+        "result": "$|w_{k+1}-w^*|=|1-\\rho a| |w_k-w^*|$",
+        "why": "one step multiplies error."
+      },
+      {
+        "do": "Iterate the recurrence",
+        "result": "$|w_k-w^*|=|1-\\rho a|^k |w_0-w^*|$",
+        "why": "repeated multiplication."
+      },
+      {
+        "do": "For a general $\\mu$-strongly convex, $L$-smooth objective with $\\rho=1/L$, the analogous factor is at most $1-\\mu/L$.",
+        "result": "For a general $\\mu$-strongly convex, $L$-smooth objective with $\\rho=1/L$, the analogous factor is at most $1-\\mu/L$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-05"
@@ -1641,8 +1954,8 @@
         "one-dimensional minimization"
       ]
     },
-    "motivation": "<p>Gradient descent needs a learning rate, and a fixed learning rate can feel like wearing one shoe size on every trail. Sometimes the terrain is gentle; sometimes it is steep.</p><p>A <b>line search</b> keeps the direction but chooses the step length using the objective itself. It is a practical compromise: use gradient information for direction, then test how far to move.</p>",
-    "definition": "<p>Given a current point $x_k$ and descent direction $p_k$, a line search chooses $\\alpha_k>0$ for $x_{k+1}=x_k+\\alpha_k p_k$. For steepest descent, $p_k=-\\nabla f(x_k)$. An exact line search minimizes $\\phi(\\alpha)=f(x_k+\\alpha p_k)$ over $\\alpha\\ge0$.</p><p>Backtracking line search starts with a trial step and shrinks it, often by a factor $\\beta\\in(0,1)$, until a sufficient decrease condition holds, such as $f(x_k+\\alpha p_k)\\le f(x_k)+c\\alpha\\nabla f(x_k)^T p_k$ with $0<c<1$.</p><p><b>Assumptions that matter:</b> $p_k$ should be a descent direction, meaning $\\nabla f(x_k)^T p_k<0$; objective evaluations must be affordable; exact line search can be expensive; and noisy minibatch losses can make acceptance tests unreliable.</p>",
+    "motivation": "<p>A direction can be good while a step length is poor. Moving too little wastes progress, while moving too far can pass the valley and increase the loss. Line search separates those two decisions: first choose a direction $p$, then choose a scalar $\\alpha$ that says how far to travel along that direction.</p><p>For a quadratic objective, exact line search can be derived by substituting $x+\\alpha p$ into the objective and minimizing the resulting one-variable quadratic. In more general training loops, exact minimization may be too expensive, so backtracking and Armijo checks look for enough decrease rather than the perfect line minimum.</p>",
+    "definition": "<p><b>Statement.</b> Exact line search for a quadratic $f(x)=\\tfrac12x^TAx-b^Tx$ along direction $p$.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "For $f(x)=(x-3)^2$, current $x_0=0$, direction $p=6$, find the exact line-search step $\\alpha\\ge0$.",
       "skills": [
@@ -1846,34 +2159,34 @@
     ],
     "applications": [
       {
-        "title": "Classical numerical optimization",
-        "background": "Line search is a core ingredient in steepest descent, Newton, and quasi-Newton methods from numerical analysis.",
-        "numbers": "If backtracking tests $1,0.5,0.25$ and accepts $0.25$, it used three objective evaluations for the step."
+        "title": "Steepest descent line step",
+        "background": "for $f(w)=(w-4)^2$, $w=0$, $p=8$, exact $\\alpha=0.5$ reaches $w=4$.",
+        "numbers": "for $f(w)=(w-4)^2$, $w=0$, $p=8$, exact $\\alpha=0.5$ reaches $w=4$."
       },
       {
-        "title": "Stable large-batch training",
-        "background": "When full-batch gradients are available, checking actual loss decrease can prevent unstable steps.",
-        "numbers": "A proposed step lowering loss from $2.40$ to $2.31$ gives decrease $0.09$; one raising it to $2.55$ is rejected."
+        "title": "Quadratic matrix case",
+        "background": "$g=(-2,-4)$, $p=(2,4)$, $A=I$ gives $\\alpha=20/20=1$.",
+        "numbers": "$g=(-2,-4)$, $p=(2,4)$, $A=I$ gives $\\alpha=20/20=1$."
       },
       {
-        "title": "Newton methods",
-        "background": "Newton directions can be excellent but sometimes too aggressive far from the solution. Line search damps them.",
-        "numbers": "A Newton direction $p=-5$ from $x=10$ with accepted $\\alpha=0.2$ moves only $1$ unit to $x=9$."
+        "title": "Backtracking",
+        "background": "with $f(0)=16$, $g=-8$, $p=8$, $\\alpha=1$ gives $f(8)=16$ not enough decrease; $\\alpha=0.5$ gives $0$.",
+        "numbers": "with $f(0)=16$, $g=-8$, $p=8$, $\\alpha=1$ gives $f(8)=16$ not enough decrease; $\\alpha=0.5$ gives $0$."
       },
       {
-        "title": "Logistic regression solvers",
-        "background": "Convex logistic regression packages often use line search inside quasi-Newton routines to get reliable monotone progress.",
-        "numbers": "If loss values along trials are $0.70,0.62,0.61$, the best of those trials is $0.61$."
+        "title": "Armijo threshold",
+        "background": "if $c=10^{-4}$, $\\alpha=0.25$, and $g^Tp=-64$, required decrease is at least $0.0016$.",
+        "numbers": "if $c=10^{-4}$, $\\alpha=0.25$, and $g^Tp=-64$, required decrease is at least $0.0016$."
       },
       {
-        "title": "Engineering safety checks",
-        "background": "Objective evaluations can catch bad scaling, coding errors, or directions that are not truly descent directions.",
-        "numbers": "If $\\nabla f^Tp=3>0$, then small positive $\\alpha$ predicts an increase of about $3\\alpha$, so the direction is suspect."
+        "title": "Training-loop tuning",
+        "background": "a line search choosing $\\alpha=0.05$ along a gradient norm $10$ takes step norm $0.5$.",
+        "numbers": "a line search choosing $\\alpha=0.05$ along a gradient norm $10$ takes step norm $0.5$."
       },
       {
-        "title": "Hyperparameter-free step choice",
-        "background": "Line search reduces dependence on a manually tuned learning rate, though it pays with extra function evaluations.",
-        "numbers": "A fixed step uses one gradient evaluation; a backtracking step with four trials uses one gradient plus four loss evaluations."
+        "title": "Newton line search",
+        "background": "if full Newton increases validation loss, halving $\\alpha$ changes step $(-2,1)$ into $(-1,0.5)$.",
+        "numbers": "if full Newton increases validation loss, halving $\\alpha$ changes step $(-2,1)$ into $(-1,0.5)$."
       }
     ],
     "applicationsClose": "Line search is the optimizer's careful footstep: choose a direction, then let the function say how far is safe.",
@@ -1882,6 +2195,57 @@
       "A descent direction satisfies $\\nabla f(x_k)^Tp_k<0$.",
       "Exact line search minimizes along one line; backtracking shrinks until decrease is sufficient.",
       "Line search trades extra objective evaluations for safer step sizes."
+    ],
+    "connectionsProse": "<p>This lesson keeps the descent direction from gradient-based methods but changes how the step length is chosen. Instead of fixing one learning rate ahead of time, line search studies the objective along a single line. That turns a multivariable choice into a one-dimensional problem. Later damped Newton and quasi-Newton methods use the same idea to make large steps safer.</p>",
+    "symbols": [
+      {
+        "sym": "$\\alpha$",
+        "desc": "the line-search step"
+      },
+      {
+        "sym": "$p$",
+        "desc": "the search direction"
+      },
+      {
+        "sym": "$g$",
+        "desc": "the current gradient"
+      },
+      {
+        "sym": "$A$",
+        "desc": "the quadratic curvature matrix"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define $\\phi(\\alpha)=f(x+\\alpha p)$",
+        "result": "Define $\\phi(\\alpha)=f(x+\\alpha p)$",
+        "why": "restrict the objective to the line."
+      },
+      {
+        "do": "Expand $\\phi(\\alpha)=\\tfrac12(x+\\alpha p)^TA(x+\\alpha p)-b^T(x+\\alpha p)$",
+        "result": "Expand $\\phi(\\alpha)=\\tfrac12(x+\\alpha p)^TA(x+\\alpha p)-b^T(x+\\alpha p)$",
+        "why": "substitute the line."
+      },
+      {
+        "do": "Differentiate",
+        "result": "$\\phi'(\\alpha)=p^T(Ax-b)+\\alpha p^TAp$",
+        "why": "collect the linear terms in $\\alpha$."
+      },
+      {
+        "do": "Recognize $g=Ax-b$",
+        "result": "Recognize $g=Ax-b$",
+        "why": "this is the gradient at $x$."
+      },
+      {
+        "do": "Set $\\phi'(\\alpha)=0$ for the line minimum",
+        "result": "Set $\\phi'(\\alpha)=0$ for the line minimum",
+        "why": "one-dimensional optimality."
+      },
+      {
+        "do": "Solve $\\alpha^*=-p^Tg/(p^TAp)$",
+        "result": "Solve $\\alpha^*=-p^Tg/(p^TAp)$",
+        "why": "isolate the step length."
+      }
     ],
     "prereqs": [
       "math-22-06"
@@ -1911,8 +2275,8 @@
         "condition numbers"
       ]
     },
-    "motivation": "<p>Plain gradient descent can zigzag in a narrow valley: one step bounces left, the next bounces right, and progress down the valley is slow.</p><p><b>Momentum</b> adds memory. Instead of trusting only today's gradient, it carries a velocity built from recent gradients, smoothing noisy directions and accelerating repeated agreement.</p>",
-    "definition": "<p>A common momentum update is $v_{k+1}=\\mu v_k-\\alpha \\nabla f(x_k)$ and $x_{k+1}=x_k+v_{k+1}$, where $v_k$ is velocity, $0\\le\\mu<1$ is the momentum coefficient, and $\\alpha$ is the learning rate. Some libraries write equivalent forms with gradients averaged first.</p><p>The velocity is an exponentially weighted memory. Expanding the recurrence shows recent gradients receive weights involving $1,\\mu,\\mu^2$, and so on. Consistent gradients accumulate; alternating gradients partially cancel.</p><p><b>Assumptions that matter:</b> too much momentum can overshoot; the learning rate and momentum must be tuned together; momentum changes the state of the optimizer, so $x_k$ alone no longer tells the whole story.</p>",
+    "motivation": "<p>Loss surfaces often have narrow valleys. In such regions, gradients can alternate across the valley while still pointing consistently along the valley floor. Plain gradient descent may zig-zag because each step responds to the newest gradient without remembering that some directions keep reversing.</p><p>Momentum stores a velocity that blends past gradients with the current one. Directions that agree over several steps accumulate, while directions that flip sign partly cancel. The parameter update then moves against this accumulated velocity, so the method can be smoother than using the latest gradient alone.</p>",
+    "definition": "<p><b>Statement.</b> Heavy-ball update.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Use momentum with $v_0=0$, $x_0=0$, gradients $g_0=-4$, $g_1=-2$, learning rate $\\alpha=0.1$, and $\\mu=0.9$. Compute $x_2$.",
       "skills": [
@@ -2116,34 +2480,34 @@
     ],
     "applications": [
       {
-        "title": "Deep learning optimizers",
-        "background": "Momentum became a default tool because neural-network losses are noisy and poorly conditioned.",
-        "numbers": "With gradient $0.02$, $\\alpha=0.1$, and previous velocity $-0.01$, $v_{new}=0.9(-0.01)-0.1(0.02)=-0.011$."
+        "title": "First momentum step",
+        "background": "for $f(w)=(w-4)^2$, $w_0=0$, $\\beta=0.9$, $\\rho=0.1$, $v_1=-8$, so $w_1=0.8$.",
+        "numbers": "for $f(w)=(w-4)^2$, $w_0=0$, $\\beta=0.9$, $\\rho=0.1$, $v_1=-8$, so $w_1=0.8$."
       },
       {
-        "title": "Narrow valleys",
-        "background": "In elongated quadratics, momentum damps zigzags across the steep direction while building speed along the shallow direction.",
-        "numbers": "Alternating gradients $4,-4$ produce plain steps $-0.4,0.4$, but momentum example above gives velocities $-0.4,0.04$."
+        "title": "Second step",
+        "background": "gradient at $0.8$ is $-6.4$, so $v_2=-13.6$ and $w_2=2.16$.",
+        "numbers": "gradient at $0.8$ is $-6.4$, so $v_2=-13.6$ and $w_2=2.16$."
       },
       {
-        "title": "Exponential moving averages",
-        "background": "Momentum is a close cousin of signal smoothing, where recent observations matter most.",
-        "numbers": "Weights with $\\mu=0.9$ after four lags are $1,0.9,0.81,0.729$."
+        "title": "Third step",
+        "background": "gradient at $2.16$ is $-3.68$, so $v_3=-15.92$ and $w_3=3.752$.",
+        "numbers": "gradient at $2.16$ is $-3.68$, so $v_3=-15.92$ and $w_3=3.752$."
       },
       {
-        "title": "Escaping plateaus",
-        "background": "When gradients are small but consistent, accumulated velocity can move farther than a single tiny gradient step.",
-        "numbers": "Ten gradients of $-0.01$ with $\\alpha=0.1$ and no momentum give total push $0.01$; momentum can make later steps larger through memory."
+        "title": "Zig-zag damping",
+        "background": "gradients $(5,-5)$ with $\\beta=0.9$ give $v_2=-0.5$, much smaller than $5$.",
+        "numbers": "gradients $(5,-5)$ with $\\beta=0.9$ give $v_2=-0.5$, much smaller than $5$."
       },
       {
-        "title": "Optimizer state memory",
-        "background": "Checkpoints for momentum optimizers must save velocity as well as weights, or resumed training changes behavior.",
-        "numbers": "If $w=5$ and $v=-0.2$, the next position before new effects differs by $0.2$ from restarting with $v=0$."
+        "title": "Memory weight",
+        "background": "a gradient from three steps ago has weight $\\beta^3=0.729$ when $\\beta=0.9$.",
+        "numbers": "a gradient from three steps ago has weight $\\beta^3=0.729$ when $\\beta=0.9$."
       },
       {
-        "title": "Tuning risk",
-        "background": "High momentum with high learning rate can overshoot, especially near sharp minima.",
-        "numbers": "If $v=1.5$ near an optimum only $0.2$ away, the next raw velocity move can cross far past it."
+        "title": "Step norm",
+        "background": "if $\\Vert v\\Vert=12$ and $\\rho=0.01$, the update length is $0.12$.",
+        "numbers": "if $\\Vert v\\Vert=12$ and $\\rho=0.01$, the update length is $0.12$."
       }
     ],
     "applicationsClose": "Momentum gives optimization a memory of direction, useful when repeated evidence should carry more force than a single noisy gradient.",
@@ -2152,6 +2516,52 @@
       "Consistent gradients accumulate; alternating gradients cancel partly.",
       "The momentum coefficient controls how quickly old gradients fade.",
       "Learning rate and momentum must be tuned together for stability."
+    ],
+    "connectionsProse": "<p>This lesson modifies the gradient descent baseline by adding memory. Plain gradient descent reacts only to the current gradient, while momentum also remembers recent directions. That makes the update less sensitive to one noisy or alternating slope. The idea prepares the way for Nesterov acceleration and for adaptive optimizers that also keep running averages.</p>",
+    "symbols": [
+      {
+        "sym": "$v_k$",
+        "desc": "velocity"
+      },
+      {
+        "sym": "$\\beta\\in[0,1)$",
+        "desc": "momentum"
+      },
+      {
+        "sym": "$\\rho$",
+        "desc": "learning rate"
+      },
+      {
+        "sym": "$w_k$",
+        "desc": "the parameter vector"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Store a velocity $v_k$",
+        "result": "Store a velocity $v_k$",
+        "why": "this variable remembers past gradient directions."
+      },
+      {
+        "do": "Blend old velocity and current gradient",
+        "result": "$v_{k+1}=\\beta v_k+\\nabla f(w_k)$",
+        "why": "$\\beta$ controls memory."
+      },
+      {
+        "do": "Move against the velocity",
+        "result": "$w_{k+1}=w_k-\\rho v_{k+1}$",
+        "why": "the accumulated direction becomes the step."
+      },
+      {
+        "do": "Unroll once",
+        "result": "$v_{k+1}=\\nabla f(w_k)+\\beta\\nabla f(w_{k-1})+\\beta^2v_{k-1}$",
+        "why": "recent gradients get geometrically decaying weights."
+      },
+      {
+        "do": "If gradients keep the same sign, the velocity magnitude grows; if they alternate, the blend cancels part of the motion.",
+        "result": "If gradients keep the same sign, the velocity magnitude grows; if they alternate, the blend cancels part of the motion.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-07"
@@ -2181,8 +2591,8 @@
         "estimate sequences"
       ]
     },
-    "motivation": "<p>Momentum is like rolling downhill with memory. But if you only look at the slope under your current feet, you may react late when the valley turns.</p><p>Nesterov's idea is beautifully practical: first look where momentum is about to take you, then measure the gradient there. That small change can improve theoretical rates and often gives better control in practice.</p>",
-    "definition": "<p>One common Nesterov-style update is $y_k=x_k+\\mu v_k$, $v_{k+1}=\\mu v_k-\\alpha\\nabla f(y_k)$, and $x_{k+1}=x_k+v_{k+1}$. The point $y_k$ is the <b>lookahead</b> point.</p><p>For smooth convex objectives, accelerated gradient methods achieve an $O(1/k^2)$ function-error rate, improving the basic $O(1/k)$ rate of ordinary gradient descent. The update can be understood as momentum corrected by gradient information at the anticipated position.</p><p><b>Assumptions that matter:</b> exact rate statements require smooth convex structure and carefully chosen parameters; practical deep-learning versions are related but not identical to the clean theorem; and too much lookahead can still overshoot.</p>",
+    "motivation": "<p>Momentum can move quickly when gradients agree, but near a valley it may keep pushing in a direction that is about to become too large. Nesterov's method addresses this by computing the gradient at the anticipated next location rather than at the current one. The optimizer uses information from where the momentum is taking it.</p><p>The update still has a velocity and a learning rate, so it remains close to ordinary momentum. The important change is the lookahead point $y_k$. If the slope at that future point has already weakened or changed sign, the velocity is corrected earlier, which can reduce overshoot around curved valleys.</p>",
+    "definition": "<p><b>Statement.</b> Lookahead update in velocity form.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Let $f(w)=(w-5)^2$, $x_0=0$, $v_0=2$, $\\mu=0.5$, and $\\alpha=0.1$. Compute one Nesterov update.",
       "skills": [
@@ -2386,34 +2796,34 @@
     ],
     "applications": [
       {
-        "title": "Accelerated convex optimization",
-        "background": "Nesterov's 1980s acceleration result is a landmark because it improves worst-case smooth convex rates.",
-        "numbers": "At $k=100$, $1/k=0.01$ while $1/k^2=0.0001$, a 100-fold difference in the ideal bound."
+        "title": "First Nesterov step",
+        "background": "from $w_0=0,v_0=0$, $f(w)=(w-4)^2$, $\\beta=0.9$, $\\rho=0.1$, gradient $-8$ gives $v_1=-0.8$ and $w_1=0.8$.",
+        "numbers": "from $w_0=0,v_0=0$, $f(w)=(w-4)^2$, $\\beta=0.9$, $\\rho=0.1$, gradient $-8$ gives $v_1=-0.8$ and $w_1=0.8$."
       },
       {
-        "title": "Deep learning momentum variants",
-        "background": "Many optimizers include Nesterov momentum as an option because lookahead gradients can reduce overshoot.",
-        "numbers": "If lookahead gradient is $4$ and $\\alpha=0.01$, the correction term is $-0.04$."
+        "title": "Lookahead second step",
+        "background": "$y_1=0.8-0.9(-0.8)=1.52$, gradient $-4.96$, $v_2=-1.216$, and $w_2=2.016$.",
+        "numbers": "$y_1=0.8-0.9(-0.8)=1.52$, gradient $-4.96$, $v_2=-1.216$, and $w_2=2.016$."
       },
       {
-        "title": "Learning-rate schedules",
-        "background": "Accelerated methods are sensitive to parameter choices, so schedules often pair with momentum.",
-        "numbers": "Reducing $\\alpha$ from $0.1$ to $0.01$ makes a gradient $3$ correction shrink from $0.3$ to $0.03$."
+        "title": "Correction size",
+        "background": "heavy-ball used gradient $-6.4$ at $0.8$; Nesterov uses $-4.96$, a smaller correction by $1.44$.",
+        "numbers": "heavy-ball used gradient $-6.4$ at $0.8$; Nesterov uses $-4.96$, a smaller correction by $1.44$."
       },
       {
-        "title": "Quadratic valleys",
-        "background": "Lookahead helps detect that momentum is about to climb a wall in a narrow valley.",
-        "numbers": "For $f(w)=w^2$, current $0$ has gradient $0$, but lookahead $2$ has gradient $4$, warning against continuing right."
+        "title": "Lookahead distance",
+        "background": "if $\\Vert v\\Vert=0.5$ and $\\beta=0.9$, the lookahead is $0.45$ units away.",
+        "numbers": "if $\\Vert v\\Vert=0.5$ and $\\beta=0.9$, the lookahead is $0.45$ units away."
       },
       {
-        "title": "Optimizer libraries",
-        "background": "Frameworks implement Nesterov variants with slightly different algebra but the same core idea: evaluate using anticipated motion.",
-        "numbers": "With $v=0.2$ and $\\mu=0.9$, lookahead displacement is $0.18$."
+        "title": "Learning-rate step",
+        "background": "with gradient norm $4.96$ and $\\rho=0.1$, the fresh gradient contribution has norm $0.496$.",
+        "numbers": "with gradient norm $4.96$ and $\\rho=0.1$, the fresh gradient contribution has norm $0.496$."
       },
       {
-        "title": "Theory versus practice",
-        "background": "The clean $O(1/k^2)$ theorem is for smooth convex objectives; deep learning uses the intuition in nonconvex terrain.",
-        "numbers": "A validation loss dropping from $1.0$ to $0.8$ in 10 epochs is empirical progress, not proof of the convex rate."
+        "title": "Valley braking",
+        "background": "if the lookahead gradient flips from $-3$ to $+1$, the velocity update is reduced by $0.1$ in the forward direction.",
+        "numbers": "if the lookahead gradient flips from $-3$ to $+1$, the velocity update is reduced by $0.1$ in the forward direction."
       }
     ],
     "applicationsClose": "Nesterov acceleration teaches a durable optimization lesson: momentum is stronger when it also checks where it is going.",
@@ -2422,6 +2832,61 @@
       "The classic smooth convex rate improves from $O(1/k)$ to $O(1/k^2)$.",
       "Lookahead can correct momentum before it overshoots too far.",
       "The practical deep-learning version borrows the idea, while theorem assumptions remain important."
+    ],
+    "connectionsProse": "<p>This lesson follows momentum by changing where the gradient is evaluated. Heavy-ball momentum uses the slope at the current point and then moves with accumulated velocity. Nesterov acceleration first looks ahead in the direction the velocity is already carrying the parameters. This connects naturally to the idea of correcting a step before it overshoots.</p>",
+    "symbols": [
+      {
+        "sym": "$w_k$",
+        "desc": "the current point"
+      },
+      {
+        "sym": "$y_k$",
+        "desc": "the lookahead point"
+      },
+      {
+        "sym": "$v_k$",
+        "desc": "velocity"
+      },
+      {
+        "sym": "$\\beta$",
+        "desc": "momentum"
+      },
+      {
+        "sym": "$\\rho$",
+        "desc": "learning rate"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Keep a velocity $v_k$",
+        "result": "Keep a velocity $v_k$",
+        "why": "it stores the current motion."
+      },
+      {
+        "do": "Form the lookahead point $y_k=w_k-\\beta v_k$",
+        "result": "Form the lookahead point $y_k=w_k-\\beta v_k$",
+        "why": "this is where momentum alone would move next."
+      },
+      {
+        "do": "Evaluate the gradient $\\nabla f(y_k)$",
+        "result": "Evaluate the gradient $\\nabla f(y_k)$",
+        "why": "use the slope at the anticipated point."
+      },
+      {
+        "do": "Update velocity $v_{k+1}=\\beta v_k+\\rho\\nabla f(y_k)$",
+        "result": "Update velocity $v_{k+1}=\\beta v_k+\\rho\\nabla f(y_k)$",
+        "why": "combine memory and lookahead gradient."
+      },
+      {
+        "do": "Move $w_{k+1}=w_k-v_{k+1}$",
+        "result": "Move $w_{k+1}=w_k-v_{k+1}$",
+        "why": "subtract the corrected velocity."
+      },
+      {
+        "do": "Compared with heavy-ball momentum, the gradient location changes from $w_k$ to $y_k$, giving earlier correction near a valley.",
+        "result": "Compared with heavy-ball momentum, the gradient location changes from $w_k$ to $y_k$, giving earlier correction near a valley.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-08"
@@ -2451,8 +2916,8 @@
         "convex analysis"
       ]
     },
-    "motivation": "<p>Some useful functions have corners. The absolute value $|x|$ is the friendliest example: it is perfectly convex, but at $0$ there is no single ordinary derivative.</p><p>Subgradients keep optimization alive at corners. Instead of one tangent slope, a convex corner may have a whole interval of slopes that support the graph from below.</p>",
-    "definition": "<p>For a convex function $f$, a vector $g$ is a <b>subgradient</b> at $x$ if $f(y)\\ge f(x)+g^T(y-x)$ for every $y$ in the domain. The set of all such $g$ is the <b>subdifferential</b>, written $\\partial f(x)$.</p><p>If $f$ is differentiable at $x$, then $\\partial f(x)=\\{\\nabla f(x)\\}$. For $f(x)=|x|$, the subdifferential is $\\partial f(0)=[-1,1]$, because any slope between $-1$ and $1$ gives a line through the origin that stays below the V-shaped graph.</p><p><b>Assumptions that matter:</b> the clean subgradient inequality is for convex functions; subgradients need not be unique; and the optimality condition for unconstrained convex nonsmooth minimization is $0\\in\\partial f(x^\\ast)$.</p>",
+    "motivation": "<p>At a smooth point, the tangent line gives the local slope. At a corner, there may be many supporting lines rather than one tangent. A subgradient is any slope that stays below the convex function everywhere when anchored at the point of interest.</p><p>The absolute value function at zero is the cleanest example. Its left derivative is $-1$ and its right derivative is $1$, and every slope between them supports the V-shaped graph from below. This interval of valid slopes becomes the subdifferential, which can be used in optimality certificates and subgradient steps.</p>",
+    "definition": "<p><b>Statement.</b> Subdifferential of $f(x)=|x|$ at $0$.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Find $\\partial |x|$ at $x=0$ and decide whether $0$ minimizes $|x|$.",
       "skills": [
@@ -2656,34 +3121,34 @@
     ],
     "applications": [
       {
-        "title": "L1 regularization",
-        "background": "Lasso and sparse models use $||w||_1$, which has corners at zero. Subgradients explain why exact zeros can be optimal.",
-        "numbers": "For one weight, $\\partial |0|=[-1,1]$; if the data gradient is $0.3$ and penalty $\\lambda=0.5$, zero can balance it because $-0.3/0.5=-0.6$."
+        "title": "L1 penalty at zero",
+        "background": "$\\partial |0|=[-1,1]$, so gradient $0.3$ from the smooth loss can be canceled by L1 with $\\lambda=0.5$ because $-0.6\\in[-1,1]$.",
+        "numbers": "$\\partial |0|=[-1,1]$, so gradient $0.3$ from the smooth loss can be canceled by L1 with $\\lambda=0.5$ because $-0.6\\in[-1,1]$."
       },
       {
-        "title": "ReLU networks",
-        "background": "ReLU is not differentiable at zero, but training frameworks choose a valid convention such as subgradient $0$ or $1$.",
-        "numbers": "For $r(x)=\\max(0,x)$, slopes are $0$ left, $1$ right, and $\\partial r(0)=[0,1]$."
+        "title": "L1 away from zero",
+        "background": "at $x=3$, the subgradient of $|x|$ is $1$.",
+        "numbers": "at $x=3$, the subgradient of $|x|$ is $1$."
       },
       {
         "title": "Hinge loss",
-        "background": "Support vector machines use hinge loss, a convex loss with a kink at the margin.",
-        "numbers": "$L(m)=\\max(0,1-m)$ has slope $-1$ when $m<1$, slope $0$ when $m>1$, and subgradients $[-1,0]$ at $m=1$."
+        "background": "for $\\max(0,1-yw^Tx)$ at margin $0.7$, subgradient is $-yx$; at margin $1.2$, it is $0$.",
+        "numbers": "for $\\max(0,1-yw^Tx)$ at margin $0.7$, subgradient is $-yx$; at margin $1.2$, it is $0$."
       },
       {
-        "title": "Quantile regression",
-        "background": "Quantile loss uses asymmetric absolute-value-like penalties, so subgradients handle the kink at zero residual.",
-        "numbers": "For median loss $|r|$, residual $r=0$ has subgradient interval $[-1,1]$."
+        "title": "ReLU corner",
+        "background": "at input $0$, any slope in $[0,1]$ is a valid subgradient choice.",
+        "numbers": "at input $0$, any slope in $[0,1]$ is a valid subgradient choice."
       },
       {
-        "title": "Robust optimization",
-        "background": "Absolute deviations are less sensitive to outliers than squared errors, but they require nonsmooth calculus.",
-        "numbers": "Errors $1,-1,10$ give absolute loss $12$ and squared loss $102$, showing why robust losses matter."
+        "title": "Subgradient step",
+        "background": "for $|x|$ at $x=2$, step $\\rho=0.4$ gives $x^+=1.6$.",
+        "numbers": "for $|x|$ at $x=2$, step $\\rho=0.4$ gives $x^+=1.6$."
       },
       {
-        "title": "Optimality certificates",
-        "background": "For convex nonsmooth objectives, checking $0\\in\\partial f(x)$ certifies a global minimum.",
-        "numbers": "If $\\partial f(2)=[-0.1,0.3]$, then $0$ lies inside, so $2$ is optimal for convex $f$."
+        "title": "Optimality certificate",
+        "background": "$0\\in\\partial |0|$, so $x=0$ minimizes $|x|$.",
+        "numbers": "$0\\in\\partial |0|$, so $x=0$ minimizes $|x|$."
       }
     ],
     "applicationsClose": "Subgradients let corners participate in optimization without pretending the corner has only one slope.",
@@ -2692,6 +3157,53 @@
       "At smooth points, the subdifferential contains only the ordinary gradient.",
       "At convex corners, there may be an interval or set of subgradients.",
       "For unconstrained convex nonsmooth minimization, $0\\in\\partial f(x^\\ast)$ is the optimality condition."
+    ],
+    "connectionsProse": "<p>This lesson extends the gradient idea to convex functions with corners. Earlier optimality conditions used ordinary derivatives, but losses and penalties such as absolute value, hinge loss, and ReLU are not smooth everywhere. A subgradient keeps the first-order lower-bound idea alive at those nonsmooth points. That makes nonsmooth optimization possible without pretending every objective has a classical derivative.</p>",
+    "symbols": [
+      {
+        "sym": "$\\partial f(x)$",
+        "desc": "the set of subgradients"
+      },
+      {
+        "sym": "$g$",
+        "desc": "one subgradient"
+      },
+      {
+        "sym": "$y$",
+        "desc": "a comparison point"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "A number $g$ is a subgradient at $0$ if $|y|\\ge |0|+g(y-0)$ for every $y$.",
+        "result": "A number $g$ is a subgradient at $0$ if $|y|\\ge |0|+g(y-0)$ for every $y$.",
+        "why": ""
+      },
+      {
+        "do": "Simplify to $|y|\\ge gy$",
+        "result": "Simplify to $|y|\\ge gy$",
+        "why": "$|0|=0$."
+      },
+      {
+        "do": "For $y>0$, divide by $y$",
+        "result": "$1\\ge g$",
+        "why": "positive directions bound $g$ above."
+      },
+      {
+        "do": "For $y<0$, divide by the negative number $y$ and reverse the inequality",
+        "result": "$-1\\le g$.",
+        "why": ""
+      },
+      {
+        "do": "Combine the bounds",
+        "result": "$g\\in[-1,1]$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $\\partial |0|=[-1,1]$",
+        "result": "Therefore $\\partial |0|=[-1,1]$",
+        "why": "every slope between the left and right derivatives supports the corner."
+      }
     ],
     "prereqs": [
       "math-22-09"
@@ -2721,8 +3233,8 @@
         "step-size schedules"
       ]
     },
-    "motivation": "<p>Many useful losses are not smooth. Absolute error has a corner at zero, hinge loss has a corner at the margin, and L1 regularization has corners whenever a weight is zero.</p><p>Nonsmooth optimization accepts that reality. It uses subgradients, proximal steps, or smoothing to make progress even when the ordinary derivative is missing at important points.</p>",
-    "definition": "<p>A basic subgradient method for convex nonsmooth $f$ uses $x_{k+1}=x_k-\\alpha_k g_k$ with $g_k\\in\\partial f(x_k)$. Unlike smooth gradient descent, a subgradient need not point in the steepest descent direction, and objective values may not decrease every step.</p><p>Convergence often requires diminishing step sizes such as $\\alpha_k=a/\\sqrt{k}$. The method is robust and simple, but slower than smooth gradient descent. This is why proximal methods are often preferred when the nonsmooth part has useful structure.</p><p><b>Assumptions that matter:</b> convex guarantees require convex objectives and bounded subgradients; constant step sizes may leave a neighborhood rather than converge exactly; and nonconvex nonsmooth problems need more careful stationarity notions.</p>",
+    "motivation": "<p>A max objective changes behavior depending on which piece is largest. Away from a tie, the active piece supplies the slope. At a tie, several pieces are active, and the set of valid first-order signals can include combinations of their gradients.</p><p>The main idea is still the convex lower-bound property. If an active component supports itself from below, and the maximum is at least that component everywhere, then the active gradient supports the maximum. This gives an optimization method a principled slope-like object even when the ordinary gradient is not unique.</p>",
+    "definition": "<p><b>Statement.</b> Subgradient of a maximum $f(x)=\\max_i f_i(x)$.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Run two subgradient steps on $f(x)=|x|$ from $x_0=2$ using $\\alpha_1=1$ and $\\alpha_2=0.5$.",
       "skills": [
@@ -2921,34 +3433,34 @@
     ],
     "applications": [
       {
-        "title": "Support vector machines",
-        "background": "Classic SVM training uses hinge loss, which is convex and nonsmooth at the margin.",
-        "numbers": "For margin $m=0.3$, hinge loss is $1-0.3=0.7$ and subgradient with respect to $m$ is $-1$."
+        "title": "Max loss",
+        "background": "$f(x)=\\max(x,2x-1)$ at $x=1$ has both pieces active and subgradients in $[1,2]$.",
+        "numbers": "$f(x)=\\max(x,2x-1)$ at $x=1$ has both pieces active and subgradients in $[1,2]$."
       },
       {
-        "title": "Sparse learning",
-        "background": "L1 penalties encourage exact zeros, but the objective is nonsmooth at zero, requiring subgradient or proximal ideas.",
-        "numbers": "Penalty $0.05|w|$ contributes subgradient in $[-0.05,0.05]$ at $w=0$."
+        "title": "Hinge objective",
+        "background": "if margin is $0.4$, the active hinge piece gives subgradient $-yx$.",
+        "numbers": "if margin is $0.4$, the active hinge piece gives subgradient $-yx$."
       },
       {
-        "title": "Robust absolute loss",
-        "background": "Least absolute deviations reduce outlier influence compared with squared loss.",
-        "numbers": "Residuals $1,1,20$ give absolute loss $22$ but squared loss $402$, so the outlier dominates less with absolute loss."
+        "title": "Worst-case robust loss",
+        "background": "losses $(0.8,1.2,0.9)$ activate the second example only.",
+        "numbers": "losses $(0.8,1.2,0.9)$ activate the second example only."
       },
       {
-        "title": "Quantile forecasting",
-        "background": "Pinball loss trains conditional quantiles and is nonsmooth at zero residual.",
-        "numbers": "For quantile $0.9$ and residual $2$, loss is $0.9\\cdot2=1.8$; for residual $-2$, loss is $0.1\\cdot2=0.2$."
+        "title": "Minibatch max",
+        "background": "two active examples with gradients $(1,0)$ and $(0,3)$ allow average subgradient $(0.5,1.5)$.",
+        "numbers": "two active examples with gradients $(1,0)$ and $(0,3)$ allow average subgradient $(0.5,1.5)$."
       },
       {
-        "title": "Max losses",
-        "background": "Objectives that take a maximum over cases are often nonsmooth where two cases tie.",
-        "numbers": "For $f(x)=\\max(x,2-x)$, the branches tie at $x=1$, with value $1$ and subgradients between $-1$ and $1$."
+        "title": "Absolute value as max",
+        "background": "$|x|=\\max(x,-x)$; at $0$, active slopes $1$ and $-1$ give interval $[-1,1]$.",
+        "numbers": "$|x|=\\max(x,-x)$; at $0$, active slopes $1$ and $-1$ give interval $[-1,1]$."
       },
       {
-        "title": "Step-size decay",
-        "background": "Subgradient methods often need diminishing steps because directions can be less informative than smooth gradients.",
-        "numbers": "The schedule $1/\\sqrt{k}$ moves from $1$ at $k=1$ to $0.1$ at $k=100$."
+        "title": "Step with active gradient",
+        "background": "for $f(x)=\\max(x,2x-1)$ at $x=2$, active slope $2$ and $\\rho=0.1$ give $x^+=1.8$.",
+        "numbers": "for $f(x)=\\max(x,2x-1)$ at $x=2$, active slope $2$ and $\\rho=0.1$ give $x^+=1.8$."
       }
     ],
     "applicationsClose": "Nonsmooth optimization is the craft of making reliable progress when useful objectives have corners.",
@@ -2957,6 +3469,48 @@
       "Nonsmooth objective values may not decrease every iteration.",
       "Diminishing step sizes are common for convergence guarantees.",
       "Hinge loss, absolute loss, max losses, and L1 penalties are central nonsmooth examples."
+    ],
+    "connectionsProse": "<p>This lesson builds on subgradients and applies them to objectives made from corners, maxima, and piecewise formulas. Many machine-learning losses are smooth only in pieces. Nonsmooth optimization keeps a usable descent signal by choosing from active gradients or their convex combinations. The lesson also prepares for proximal methods, which handle some nonsmooth terms by solving a small exact subproblem.</p>",
+    "symbols": [
+      {
+        "sym": "$f_i$",
+        "desc": "smooth component functions"
+      },
+      {
+        "sym": "$A(x)$",
+        "desc": "the active set"
+      },
+      {
+        "sym": "$\\partial f(x)$",
+        "desc": "the subdifferential"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $A(x)=\\{i:f_i(x)=f(x)\\}$",
+        "result": "Let $A(x)=\\{i:f_i(x)=f(x)\\}$",
+        "why": "active indices attain the maximum."
+      },
+      {
+        "do": "For any active $i$, convexity",
+        "result": "$f_i(y)\\ge f_i(x)+\\nabla f_i(x)^T(y-x)$",
+        "why": "tangent lower bound for that piece."
+      },
+      {
+        "do": "Since $f(y)=\\max_j f_j(y)\\ge f_i(y)$",
+        "result": "Since $f(y)=\\max_j f_j(y)\\ge f_i(y)$",
+        "why": "the maximum is at least any piece."
+      },
+      {
+        "do": "Combine",
+        "result": "$f(y)\\ge f(x)+\\nabla f_i(x)^T(y-x)$",
+        "why": "an active gradient supports the max."
+      },
+      {
+        "do": "Therefore every active gradient is a subgradient; convex combinations of active gradients are also subgradients because the inequality is preserved by averaging.",
+        "result": "Therefore every active gradient is a subgradient; convex combinations of active gradients are also subgradients because the inequality is preserved by averaging.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-10"
@@ -2986,8 +3540,8 @@
         "composite objectives"
       ]
     },
-    "motivation": "<p>Subgradient steps work, but for structured nonsmooth terms they can feel blunt. L1 regularization, for example, has a special ability to set weights exactly to zero.</p><p>Proximal methods use that structure directly. They take a gradient step on the smooth part, then apply a proximal operator that knows how to handle the nonsmooth part cleanly.</p>",
-    "definition": "<p>For a function $h$, the <b>proximal operator</b> is $\\operatorname{prox}_{\\alpha h}(z)=\\arg\\min_x \\left(h(x)+\\dfrac{1}{2\\alpha}||x-z||^2\\right)$. It balances making $h(x)$ small with staying near $z$.</p><p>For a composite objective $F(x)=g(x)+h(x)$ with smooth $g$ and possibly nonsmooth $h$, proximal gradient uses $z_k=x_k-\\alpha\\nabla g(x_k)$ and $x_{k+1}=\\operatorname{prox}_{\\alpha h}(z_k)$. For $h(x)=\\lambda |x|$, the prox is soft thresholding: $\\operatorname{sign}(z)\\max(|z|-\\alpha\\lambda,0)$.</p><p><b>Assumptions that matter:</b> prox steps are useful when the proximal operator is easy to compute; convergence guarantees often need convexity and smoothness of $g$; and projections are prox operators of constraint indicators.</p>",
+    "motivation": "<p>In a regularized problem, the smooth loss may suggest a gradient step to a point $v$, while the nonsmooth penalty may prefer shrinking or zeroing coordinates. A proximal step balances those two forces. It stays near $v$ but pays the penalty cost exactly in the local subproblem.</p><p>For the L1 penalty, this balance has a simple form. Large positive values are pulled down by $\\lambda$, large negative values are pulled up by $\\lambda$, and small values are set exactly to zero. The derivation checks the positive, negative, and zero cases separately, which is why soft-thresholding naturally appears.</p>",
+    "definition": "<p><b>Statement.</b> Proximal operator of $\\lambda |x|$.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Compute the proximal step for $h(w)=0.5|w|$, $z=3$, and $\\alpha=1$.",
       "skills": [
@@ -3186,34 +3740,34 @@
     ],
     "applications": [
       {
-        "title": "Sparse linear models",
-        "background": "Proximal gradient is a natural solver for Lasso because the L1 prox is soft thresholding.",
-        "numbers": "With $z=[0.1,0.8]$ and threshold $0.3$, the prox gives $[0,0.5]$, creating one exact zero."
+        "title": "Soft threshold large weight",
+        "background": "$v=3$, $\\lambda=0.4$ gives $2.6$.",
+        "numbers": "$v=3$, $\\lambda=0.4$ gives $2.6$."
       },
       {
-        "title": "Projected gradient descent",
-        "background": "Projection is a proximal operator for constraints, so constrained optimization fits the same template.",
-        "numbers": "A probability $1.2$ projected onto $[0,1]$ becomes $1$, while $0.7$ stays $0.7$."
+        "title": "Soft threshold small weight",
+        "background": "$v=0.2$, $\\lambda=0.4$ gives $0$.",
+        "numbers": "$v=0.2$, $\\lambda=0.4$ gives $0$."
       },
       {
-        "title": "Image denoising",
-        "background": "Proximal operators can be viewed as denoisers balancing fidelity to an input and preference for structure.",
-        "numbers": "If a pixel-like coefficient $0.12$ is below threshold $0.2$, soft thresholding sets it to $0$."
+        "title": "Sparse vector",
+        "background": "applying $\\lambda=0.5$ to $(1.2,-0.3,0.7)$ gives $(0.7,0,0.2)$.",
+        "numbers": "applying $\\lambda=0.5$ to $(1.2,-0.3,0.7)$ gives $(0.7,0,0.2)$."
       },
       {
-        "title": "Composite objectives",
-        "background": "Many objectives split into smooth data fit plus nonsmooth regularizer. Proximal gradient handles each part with the right tool.",
-        "numbers": "If smooth step gives $z=4$ and L1 threshold is $0.6$, the next coefficient is $3.4$."
+        "title": "ISTA step",
+        "background": "if smooth gradient step gives $v=1.1$ and $\\lambda\\rho=0.2$, the L1 prox gives $0.9$.",
+        "numbers": "if smooth gradient step gives $v=1.1$ and $\\lambda\\rho=0.2$, the L1 prox gives $0.9$."
       },
       {
-        "title": "Neural network pruning",
-        "background": "Sparsity-inducing penalties can push small weights exactly to zero, supporting compression.",
-        "numbers": "Weights $[0.02,0.5]$ with threshold $0.05$ become $[0,0.45]$."
+        "title": "Denoising coefficient",
+        "background": "wavelet coefficient $-0.9$ with threshold $0.25$ becomes $-0.65$.",
+        "numbers": "wavelet coefficient $-0.9$ with threshold $0.25$ becomes $-0.65$."
       },
       {
-        "title": "Constraints as penalties",
-        "background": "The indicator of a feasible set is zero inside and infinite outside; its prox is projection onto that set.",
-        "numbers": "Projecting $[-0.2,0.6,1.4]$ onto the box $[0,1]^3$ gives $[0,0.6,1]$."
+        "title": "Group shrink analogy",
+        "background": "vector norm $5$ with threshold $1$ scales by $1-1/5=0.8$.",
+        "numbers": "vector norm $5$ with threshold $1$ scales by $1-1/5=0.8$."
       }
     ],
     "applicationsClose": "Proximal methods succeed by respecting structure: smooth parts get gradients, nonsmooth parts get their own exact little solver.",
@@ -3222,6 +3776,63 @@
       "Proximal gradient handles $g+h$ by a gradient step on $g$ followed by a prox for $h$.",
       "L1 prox is soft thresholding, which can create exact zeros.",
       "Projection is the prox operator for a constraint indicator."
+    ],
+    "connectionsProse": "<p>This lesson follows nonsmooth optimization by showing a different way to handle a nonsmooth term. Instead of taking an arbitrary subgradient step, a proximal method solves a small local problem exactly. The method is especially useful for penalties such as L1 regularization. It connects optimization updates to sparsity through the soft-thresholding operator.</p>",
+    "symbols": [
+      {
+        "sym": "$v$",
+        "desc": "the point after the smooth gradient step"
+      },
+      {
+        "sym": "$\\lambda$",
+        "desc": "penalty strength"
+      },
+      {
+        "sym": "$\\operatorname{prox}$",
+        "desc": "the proximal operator"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define $\\operatorname{prox}_{\\lambda|\\cdot|}(v)=\\arg\\min_x \\tfrac12(x-v)^2+\\lambda|x|$",
+        "result": "Define $\\operatorname{prox}_{\\lambda|\\cdot|}(v)=\\arg\\min_x \\tfrac12(x-v)^2+\\lambda|x|$",
+        "why": "stay near $v$ while paying L1 cost."
+      },
+      {
+        "do": "For $x>0$, derivative is $x-v+\\lambda$",
+        "result": "For $x>0$, derivative is $x-v+\\lambda$",
+        "why": "$|x|=x$."
+      },
+      {
+        "do": "Set derivative $0$",
+        "result": "$x=v-\\lambda$",
+        "why": "valid only when $v>\\lambda$."
+      },
+      {
+        "do": "For $x<0$, derivative is $x-v-\\lambda$",
+        "result": "For $x<0$, derivative is $x-v-\\lambda$",
+        "why": "$|x|=-x$."
+      },
+      {
+        "do": "Set derivative $0$",
+        "result": "$x=v+\\lambda$",
+        "why": "valid only when $v<-\\lambda$."
+      },
+      {
+        "do": "For $x=0$, optimality requires $0\\in -v+\\lambda[-1,1]$",
+        "result": "For $x=0$, optimality requires $0\\in -v+\\lambda[-1,1]$",
+        "why": "the subgradient at the kink must contain zero."
+      },
+      {
+        "do": "This holds when $|v|\\le\\lambda$.",
+        "result": "This holds when $|v|\\le\\lambda$.",
+        "why": ""
+      },
+      {
+        "do": "Combine cases",
+        "result": "$\\operatorname{prox}_{\\lambda|\\cdot|}(v)=\\operatorname{sign}(v)\\max(|v|-\\lambda,0)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-11"
@@ -3251,8 +3862,8 @@
         "variance"
       ]
     },
-    "motivation": "<p>Full gradient descent asks every training example for its opinion before taking one step. That is careful, but with millions of examples it can be painfully expensive.</p><p><b>Stochastic gradient descent</b> uses one example or a small mini-batch to estimate the full gradient. The estimate is noisy, but it is cheap enough to take many steps, which is why SGD became a foundation of modern ML training.</p>",
-    "definition": "<p>If the empirical loss is $F(w)=\\dfrac1n\\sum_{i=1}^n \\ell_i(w)$, the full gradient is $\\nabla F(w)=\\dfrac1n\\sum_i \\nabla \\ell_i(w)$. SGD samples an index or mini-batch $B_k$ and updates $w_{k+1}=w_k-\\alpha_k \\dfrac1{|B_k|}\\sum_{i\\in B_k}\\nabla \\ell_i(w_k)$.</p><p>When the batch is sampled uniformly, the mini-batch gradient is an unbiased estimate of the full gradient. Larger batches reduce variance but cost more per step. Learning-rate schedules are important because persistent noise can keep the iterates bouncing around an optimum.</p><p><b>Assumptions that matter:</b> unbiasedness depends on sampling; data order and replacement choices matter in practice; stochastic convergence usually needs step-size control; and the noisy path can help exploration but also destabilize training.</p>",
+    "motivation": "<p>When a dataset is large, computing the full gradient can be expensive. SGD replaces that full average with a randomly sampled example or minibatch. The step may not point exactly in the full-gradient direction, but it can be computed quickly and repeated many times.</p><p>The key mathematical comfort is unbiasedness. If the example is sampled uniformly, the expected sampled gradient equals the full empirical gradient. The noise can make individual steps move in imperfect directions, but over repeated fair samples the update is centered on the same direction as full gradient descent.</p>",
+    "definition": "<p><b>Statement.</b> Unbiased minibatch gradient.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "A dataset has per-example gradients $g_1=2$, $g_2=4$, $g_3=-1$, $g_4=3$ at the current weight. Compute the full gradient and one mini-batch gradient using examples $2$ and $4$.",
       "skills": [
@@ -3451,34 +4062,34 @@
     ],
     "applications": [
       {
-        "title": "Large-scale neural network training",
-        "background": "SGD and its variants made it practical to train on datasets too large for full gradients at every step.",
-        "numbers": "With $1,000,000$ examples and batch size $100$, one step reads $0.01%$ of the data."
+        "title": "Unbiased scalar sample",
+        "background": "gradients $-6$ and $-10$ average to $-8$, matching the full gradient.",
+        "numbers": "gradients $-6$ and $-10$ average to $-8$, matching the full gradient."
       },
       {
-        "title": "Mini-batch parallelism",
-        "background": "GPUs process batches efficiently, so mini-batch SGD balances statistical noise and hardware throughput.",
-        "numbers": "Batch size $256$ with per-example gradient vectors of length $1000$ averages $256,000$ gradient components per step."
+        "title": "One SGD step",
+        "background": "from $w=0$, sample gradient $-6$ and $\\eta=0.1$ gives $w^+=0.6$.",
+        "numbers": "from $w=0$, sample gradient $-6$ and $\\eta=0.1$ gives $w^+=0.6$."
       },
       {
-        "title": "Noise and generalization",
-        "background": "SGD noise can bias training toward flatter regions, which is one reason practitioners study batch size and learning rate together.",
-        "numbers": "A gradient estimate fluctuating between $0.8$ and $1.2$ has mean about $1.0$ but injects step noise of size $0.2\\alpha$."
+        "title": "Minibatch average",
+        "background": "gradients $(-6,-10,-8,-4)$ average to $-7$.",
+        "numbers": "gradients $(-6,-10,-8,-4)$ average to $-7$."
       },
       {
-        "title": "Online learning",
-        "background": "In streaming settings, examples arrive one at a time, so stochastic updates are natural.",
-        "numbers": "If a new example gives gradient $-0.7$ and $\\alpha=0.05$, the immediate update is $+0.035$."
+        "title": "Variance reduction by batch",
+        "background": "if single-gradient variance is $16$, batch size $4$ reduces variance to $4$.",
+        "numbers": "if single-gradient variance is $16$, batch size $4$ reduces variance to $4$."
       },
       {
         "title": "Epoch accounting",
-        "background": "Training progress is often measured in epochs, meaning passes through the dataset, because SGD uses partial data per step.",
-        "numbers": "With $50,000$ examples and batch size $100$, one epoch contains $500$ mini-batch steps."
+        "background": "$1000$ examples with batch size $50$ gives $20$ updates per epoch.",
+        "numbers": "$1000$ examples with batch size $50$ gives $20$ updates per epoch."
       },
       {
-        "title": "Learning-rate warmup and decay",
-        "background": "Noisy stochastic training often starts cautiously, then decays the learning rate to settle.",
-        "numbers": "A schedule from $0.001$ to $0.01$ over $1000$ steps increases by about $0.000009$ per step if linear."
+        "title": "Noisy direction",
+        "background": "if full gradient is $-8$ but one sample gives $+2$, the step can briefly move uphill while remaining unbiased over samples.",
+        "numbers": "if full gradient is $-8$ but one sample gives $+2$, the step can briefly move uphill while remaining unbiased over samples."
       }
     ],
     "applicationsClose": "SGD is optimization scaled to data: each noisy step is imperfect, but many cheap steps can train enormous models.",
@@ -3487,6 +4098,61 @@
       "Uniform mini-batch gradients can be unbiased estimates of the empirical gradient.",
       "Larger batches reduce variance but cost more per step.",
       "Learning-rate schedules are central because stochastic noise persists near optima."
+    ],
+    "connectionsProse": "<p>This lesson returns to gradient descent and changes how the gradient is obtained. Full-batch gradient descent uses every example before taking one step. SGD uses one example or a minibatch, making each update cheaper and noisier. That tradeoff is central to large-scale machine learning and leads naturally to variance reduction and adaptive optimizers.</p>",
+    "symbols": [
+      {
+        "sym": "$F$",
+        "desc": "full empirical loss"
+      },
+      {
+        "sym": "$f_i$",
+        "desc": "one-example loss"
+      },
+      {
+        "sym": "$I$",
+        "desc": "a random index"
+      },
+      {
+        "sym": "$B$",
+        "desc": "a minibatch"
+      },
+      {
+        "sym": "$\\eta$",
+        "desc": "the SGD learning rate"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the empirical loss $F(w)=\\tfrac1n\\sum_{i=1}^n f_i(w)$",
+        "result": "Write the empirical loss $F(w)=\\tfrac1n\\sum_{i=1}^n f_i(w)$",
+        "why": "average over examples."
+      },
+      {
+        "do": "Differentiate",
+        "result": "$\\nabla F(w)=\\tfrac1n\\sum_i \\nabla f_i(w)$",
+        "why": "gradient of an average is the average gradient."
+      },
+      {
+        "do": "Sample index $I$ uniformly from $\\{1,\\dots,n\\}$",
+        "result": "Sample index $I$ uniformly from $\\{1,\\dots,n\\}$",
+        "why": "each example has probability $1/n$."
+      },
+      {
+        "do": "Take expectation",
+        "result": "$\\mathbb E[\\nabla f_I(w)]=\\sum_i (1/n)\\nabla f_i(w)$",
+        "why": "definition of expectation."
+      },
+      {
+        "do": "Therefore $\\mathbb E[\\nabla f_I(w)]=\\nabla F(w)$",
+        "result": "Therefore $\\mathbb E[\\nabla f_I(w)]=\\nabla F(w)$",
+        "why": "the single-example gradient is unbiased."
+      },
+      {
+        "do": "For minibatch $B$, averaging sampled gradients keeps the same expectation and reduces variance.",
+        "result": "For minibatch $B$, averaging sampled gradients keeps the same expectation and reduces variance.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-12"
@@ -3515,8 +4181,8 @@
         "convexity"
       ]
     },
-    "motivation": "<p>You already know the bargain in SGD: one example gives a cheap gradient, but it is noisy. Early in training that noise can be useful; near a good solution it can make the parameters wobble.</p><p><b>Variance reduction</b> keeps the cheap per-example flavor while subtracting a carefully chosen control value. The beautiful idea is humble: if two noisy quantities move together, their difference is often much quieter.</p>",
-    "definition": "<p>For a finite-sum objective $f(w)=\\dfrac1n\\sum_{i=1}^n f_i(w)$, the full gradient is $\\nabla f(w)=\\dfrac1n\\sum_i \\nabla f_i(w)$. In SVRG, choose a snapshot $\\tilde w$ and compute $\\mu=\\nabla f(\\tilde w)$. A stochastic update uses $$g_i(w)=\\nabla f_i(w)-\\nabla f_i(\\tilde w)+\\mu.$$</p><p>The estimator is unbiased because $\\mathbb E_i[g_i(w)]=\\nabla f(w)-\\nabla f(\\tilde w)+\\nabla f(\\tilde w)=\\nabla f(w)$. SAG instead stores past gradients and averages the table, trading a small bias at first for low-variance updates after the table is refreshed.</p><p><b>Assumptions that matter:</b> the objective is a finite sum; the index $i$ is sampled uniformly unless corrected by weights; SVRG needs occasional full-gradient snapshots; SAG needs memory for one stored gradient per example; and variance reduction helps most when individual gradients are correlated across nearby parameter values.</p>",
+    "motivation": "<p>A stochastic gradient can be far from the full gradient for a particular sampled example. SVRG corrects this by comparing the sampled gradient at the current point with the same sampled gradient at a snapshot point. It then adds back the exact full gradient at the snapshot.</p><p>This construction keeps the estimator centered on the true gradient at the current point. Near the snapshot, the difference term can be small, so the variance is reduced. SAG uses stored gradients differently, but the shared goal is the same: avoid paying for a full gradient at every step while making the stochastic direction less noisy.</p>",
+    "definition": "<p><b>Statement.</b> SVRG estimator.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "For two examples, let $\\nabla f_1(w)=6$, $\\nabla f_2(w)=2$, $\\nabla f_1(\\tilde w)=5$, and $\\nabla f_2(\\tilde w)=3$. Compute the SVRG estimator values and show their average equals the full gradient at $w$.",
       "skills": [
@@ -3695,34 +4361,34 @@
     ],
     "applications": [
       {
-        "title": "SVRG for finite datasets",
-        "background": "Variance reduction was designed for empirical risk objectives where the training loss is an average over examples. It lets a run revisit examples without accepting full SGD noise forever.",
-        "numbers": "With $n=10000$ examples and one snapshot every $2n$ inner steps, a cycle costs $10000+20000=30000$ component gradients; full gradient descent for $20000$ steps would cost $200000000$ component gradients."
+        "title": "SVRG scalar check",
+        "background": "at $w$, sample gradient $-5$; at snapshot, same sample gradient $-7$; full snapshot gradient $-8$ gives estimator $-6$.",
+        "numbers": "at $w$, sample gradient $-5$; at snapshot, same sample gradient $-7$; full snapshot gradient $-8$ gives estimator $-6$."
       },
       {
-        "title": "SAG in logistic regression",
-        "background": "SAG became attractive for convex models such as logistic regression because stored gradients become a memory of the whole dataset.",
-        "numbers": "For $n=50000$ examples and $d=20$ features, storing one gradient vector per example stores $1000000$ numbers; at 8 bytes each, that is about $8$ MB."
+        "title": "Unbiased average",
+        "background": "sample pairs $(-5,-7)$ and $(-11,-9)$ with $\\mu=-8$ give estimators $-6$ and $-10$, average $-8$.",
+        "numbers": "sample pairs $(-5,-7)$ and $(-11,-9)$ with $\\mu=-8$ give estimators $-6$ and $-10$, average $-8$."
       },
       {
-        "title": "Mini-batch noise control",
-        "background": "The same variance idea explains why larger batches are steadier. Averaging independent noisy gradients lowers variance by the batch size.",
-        "numbers": "If one gradient coordinate has variance $9$, a batch of $16$ independent examples has coordinate variance $9/16=0.5625$."
+        "title": "Step from estimator",
+        "background": "with $\\eta=0.1$ and $g=-6$, $w^+=w+0.6$.",
+        "numbers": "with $\\eta=0.1$ and $g=-6$, $w^+=w+0.6$."
       },
       {
-        "title": "Control variates in reinforcement learning",
-        "background": "Policy-gradient methods use baselines as control variates because returns are noisy. Subtracting a baseline can reduce variance without changing the expected gradient.",
-        "numbers": "If returns $[12,8]$ have mean $10$, subtracting baseline $10$ gives advantages $[2,-2]$; the policy direction is weighted by smaller centered numbers."
+        "title": "SAG memory average",
+        "background": "stored gradients $(-6,-10,-8,-4)$ average to $-7$.",
+        "numbers": "stored gradients $(-6,-10,-8,-4)$ average to $-7$."
       },
       {
-        "title": "Training near a minimum",
-        "background": "Near a minimum, the true gradient may be tiny while individual example gradients remain nonzero. Variance reduction helps the optimizer hear the small signal.",
-        "numbers": "If the full gradient is $0.02$ but raw samples have standard deviation $1.0$, reducing standard deviation to $0.1$ improves signal-to-noise from $0.02$ to $0.2$."
+        "title": "Updating one memory slot",
+        "background": "replacing $-4$ by $-12$ changes the average from $-7$ to $-9$.",
+        "numbers": "replacing $-4$ by $-12$ changes the average from $-7$ to $-9$."
       },
       {
-        "title": "Distributed optimization",
-        "background": "In distributed training, stale or partial gradients introduce noise. Variance-reduced estimators give a mathematical template for correcting local updates with a shared reference.",
-        "numbers": "If a worker gradient is $1.8$, its snapshot value was $2.1$, and the global snapshot average is $2.0$, the corrected estimate is $1.8-2.1+2.0=1.7$."
+        "title": "Near-snapshot variance",
+        "background": "if $\\nabla f_i(w)-\\nabla f_i(\\tilde w)=0.2$ and $\\mu=-1$, estimator is $-0.8$.",
+        "numbers": "if $\\nabla f_i(w)-\\nabla f_i(\\tilde w)=0.2$ and $\\mu=-1$, estimator is $-0.8$."
       }
     ],
     "applicationsClose": "The shared thread is control: keep the economy of sampling, but remove the part of the randomness you can predict.",
@@ -3731,6 +4397,53 @@
       "SAG lowers variance by averaging a stored table of past component gradients.",
       "Variance reduction is most useful for finite-sum objectives and late-stage training.",
       "The price is extra computation, memory, or both."
+    ],
+    "connectionsProse": "<p>This lesson follows SGD by reducing one of its main costs: gradient noise. SGD is cheap because it samples, but that sampling creates variance. Variance-reduced methods keep stochastic updates while adding stored or reference information. The result is a gradient estimate that remains inexpensive but becomes more stable near the optimum.</p>",
+    "symbols": [
+      {
+        "sym": "$\\tilde w$",
+        "desc": "the snapshot"
+      },
+      {
+        "sym": "$\\mu$",
+        "desc": "the full gradient at the snapshot"
+      },
+      {
+        "sym": "$g_i(w)$",
+        "desc": "the corrected stochastic gradient"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Choose a snapshot point $\\tilde w$",
+        "result": "Choose a snapshot point $\\tilde w$",
+        "why": "this is where the full gradient will be computed."
+      },
+      {
+        "do": "Compute $\\mu=\\nabla F(\\tilde w)=\\tfrac1n\\sum_i \\nabla f_i(\\tilde w)$",
+        "result": "Compute $\\mu=\\nabla F(\\tilde w)=\\tfrac1n\\sum_i \\nabla f_i(\\tilde w)$",
+        "why": "exact reference gradient."
+      },
+      {
+        "do": "At current $w$, sample $i$ and form $g_i(w)=\\nabla f_i(w)-\\nabla f_i(\\tilde w)+\\mu$",
+        "result": "At current $w$, sample $i$ and form $g_i(w)=\\nabla f_i(w)-\\nabla f_i(\\tilde w)+\\mu$",
+        "why": "replace the old sample gradient with its change plus the full reference."
+      },
+      {
+        "do": "Take expectation over $i$",
+        "result": "$\\mathbb E[g_i(w)]=\\tfrac1n\\sum_i\\nabla f_i(w)-\\tfrac1n\\sum_i\\nabla f_i(\\tilde w)+\\mu$.",
+        "why": ""
+      },
+      {
+        "do": "Substitute $\\mu=\\tfrac1n\\sum_i\\nabla f_i(\\tilde w)$",
+        "result": "Substitute $\\mu=\\tfrac1n\\sum_i\\nabla f_i(\\tilde w)$",
+        "why": "reference terms cancel."
+      },
+      {
+        "do": "Therefore $\\mathbb E[g_i(w)]=\\nabla F(w)$",
+        "result": "Therefore $\\mathbb E[g_i(w)]=\\nabla F(w)$",
+        "why": "the estimator is unbiased."
+      }
     ],
     "prereqs": [
       "math-22-13"
@@ -3759,8 +4472,8 @@
         "feature scaling"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>AdaGrad</b> gives a particular tool for that difficulty. Its central move is squared-gradient accumulator: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is $G_t=G_{t-1}+g_t^2$ and $w_{t+1}=w_t-\\eta g_t/(\\sqrt{G_t}+\\epsilon)$. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle adaptive coordinate steps.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>In high-dimensional models, not every parameter behaves the same way. Some coordinates receive frequent large gradients, while sparse features may be updated only occasionally. A single global learning rate can be too large for one coordinate and too small for another.</p><p>AdaGrad stores the coordinatewise sum of squared gradients. Dividing by the square root of that history normalizes future steps by past activity. The price is that the accumulated sum only grows, so effective learning rates can become very small after many updates.</p>",
+    "definition": "<p><b>Statement.</b> Coordinate update.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Use AdaGrad with $w_0=1$, $\\eta=1$, $\\epsilon=0$, and gradients $g_1=2$, $g_2=4$. Compute $w_2$.",
       "skills": [
@@ -3944,34 +4657,34 @@
     ],
     "applications": [
       {
-        "title": "Sparse text models",
-        "background": "AdaGrad became popular for NLP because rare words should not be drowned out by common words.",
-        "numbers": "If word A appears $1000$ times and has $G=1000$, while word B appears once with $G=1$, equal gradients get steps in ratio $1/\\sqrt1$ versus $1/\\sqrt{1000}\\approx0.032$."
+        "title": "First scalar step",
+        "background": "$g_1=-8$, $G_1=64$, $\\eta=1$ gives step $-1$, so $w_1=1$.",
+        "numbers": "$g_1=-8$, $G_1=64$, $\\eta=1$ gives step $-1$, so $w_1=1$."
       },
       {
-        "title": "Online advertising models",
-        "background": "Click prediction receives streams of sparse categorical features. AdaGrad adapts each weight as evidence arrives.",
-        "numbers": "With $\\eta=0.2$, gradient $0.5$, and $G=25$, the step is $0.2\\cdot0.5/5=0.02$."
+        "title": "Second scalar step",
+        "background": "$g_2=-4$, $G_2=80$, step $-4/\\sqrt{80}=-0.447$, so $w_2=1.447$.",
+        "numbers": "$g_2=-4$, $G_2=80$, step $-4/\\sqrt{80}=-0.447$, so $w_2=1.447$."
       },
       {
-        "title": "Feature scaling relief",
-        "background": "Poorly scaled coordinates can destabilize ordinary SGD. AdaGrad automatically divides by observed gradient magnitude.",
-        "numbers": "Gradients $[100,1]$ with $G=[10000,1]$ become scaled direction $[1,1]$."
+        "title": "Sparse feature",
+        "background": "coordinate with $G=1$ and $g=1$ steps by $1$, while coordinate with $G=100$ steps by $0.1$.",
+        "numbers": "coordinate with $G=1$ and $g=1$ steps by $1$, while coordinate with $G=100$ steps by $0.1$."
       },
       {
-        "title": "Convex online learning",
-        "background": "AdaGrad has regret guarantees in online convex optimization, where examples arrive one at a time.",
-        "numbers": "For $T=10000$, a $1/\\sqrt T$ scale is $0.01$, matching the way cumulative uncertainty shrinks."
+        "title": "Embedding update",
+        "background": "rare token gradient norm $0.5$ with history $0.25$ gets normalized step $1.0\\eta$.",
+        "numbers": "rare token gradient norm $0.5$ with history $0.25$ gets normalized step $1.0\\eta$."
       },
       {
-        "title": "Embedding tables",
-        "background": "Large embedding models have many rows updated rarely. AdaGrad gives newly touched rows relatively large movement.",
-        "numbers": "If a row's accumulator is $0.25$ and gradient norm is $0.1$, the scaled norm is $0.1/0.5=0.2$."
+        "title": "Learning-rate decay",
+        "background": "repeated gradient $2$ for $4$ steps gives $G=16$ and effective scale $1/4$.",
+        "numbers": "repeated gradient $2$ for $4$ steps gives $G=16$ and effective scale $1/4$."
       },
       {
-        "title": "Why steps can vanish",
-        "background": "Because $G_t$ only grows, AdaGrad may become too cautious during long nonstationary training.",
-        "numbers": "Ten thousand gradients of size $1$ give $G=10000$ and denominator $100$, so $\\eta=0.1$ gives effective step $0.001$."
+        "title": "Zero-gradient coordinate",
+        "background": "$g=0$ gives zero parameter change no matter how small $G$ is.",
+        "numbers": "$g=0$ gives zero parameter change no matter how small $G$ is."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -3980,6 +4693,56 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson begins the adaptive optimizer family. Gradient descent and SGD use one learning-rate scale for all coordinates. AdaGrad changes that by tracking how much gradient each coordinate has accumulated. Coordinates with large historical gradients receive smaller future steps, while rarely active coordinates can keep larger effective steps.</p>",
+    "symbols": [
+      {
+        "sym": "$g_k$",
+        "desc": "the current gradient"
+      },
+      {
+        "sym": "$G_k$",
+        "desc": "the coordinatewise sum of squared gradients"
+      },
+      {
+        "sym": "$\\odot$",
+        "desc": "elementwise multiplication"
+      },
+      {
+        "sym": "$\\eta$",
+        "desc": "the base learning rate"
+      },
+      {
+        "sym": "$\\epsilon$",
+        "desc": "a small stabilizer"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Observe gradient $g_k$",
+        "result": "Observe gradient $g_k$",
+        "why": "this may have one component per parameter."
+      },
+      {
+        "do": "Accumulate squared gradients $G_k=G_{k-1}+g_k\\odot g_k$",
+        "result": "Accumulate squared gradients $G_k=G_{k-1}+g_k\\odot g_k$",
+        "why": "each coordinate stores total past squared slope."
+      },
+      {
+        "do": "Take square roots $\\sqrt{G_k+\\epsilon}$",
+        "result": "Take square roots $\\sqrt{G_k+\\epsilon}$",
+        "why": "this converts accumulated squared units back to gradient scale and avoids division by zero."
+      },
+      {
+        "do": "Rescale the gradient coordinatewise",
+        "result": "$g_k/(\\sqrt{G_k}+\\epsilon)$",
+        "why": "frequently large coordinates are damped."
+      },
+      {
+        "do": "Update $w_{k+1}=w_k-\\eta g_k/(\\sqrt{G_k}+\\epsilon)$",
+        "result": "Update $w_{k+1}=w_k-\\eta g_k/(\\sqrt{G_k}+\\epsilon)$",
+        "why": "apply the adaptive step."
+      }
     ],
     "prereqs": [
       "math-22-14"
@@ -4008,8 +4771,8 @@
         "feature scaling"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>RMSProp</b> gives a particular tool for that difficulty. Its central move is exponential moving average: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is $v_t=\\rho v_{t-1}+(1-\\rho)g_t^2$ and $w_{t+1}=w_t-\\eta g_t/(\\sqrt{v_t}+\\epsilon)$. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle nonstationary gradient scale.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>The useful part of AdaGrad is coordinatewise normalization: large-gradient coordinates should often take smaller steps. The difficult part is permanent accumulation. A coordinate that had large gradients early may continue to be damped long after the loss surface has changed.</p><p>RMSProp solves this by giving recent squared gradients more weight and older squared gradients geometrically less weight. The denominator estimates recent root-mean-square gradient size. Dividing by that estimate makes steps smaller in recently steep coordinates while allowing old history to fade.</p>",
+    "definition": "<p><b>Statement.</b> RMSProp update.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Use RMSProp with $v_0=0$, $\\rho=0.9$, $g_1=4$, $g_2=2$, $\\eta=0.1$, and $\\epsilon=0$. Compute the second update scale $\\eta g_2/\\sqrt{v_2}$.",
       "skills": [
@@ -4183,34 +4946,34 @@
     ],
     "applications": [
       {
-        "title": "Nonstationary training",
-        "background": "Neural-network gradient scales change during training. RMSProp can recover from early large gradients because old squares fade.",
-        "numbers": "If $v=100$ and ten zero-gradient-like steps use $\\rho=0.9$, then $v$ becomes $100(0.9)^{10}\\approx34.9$."
+        "title": "First RMSProp scale",
+        "background": "with $g_1=-8$, $\\rho=0.9$, $r_1=6.4$.",
+        "numbers": "with $g_1=-8$, $\\rho=0.9$, $r_1=6.4$."
       },
       {
-        "title": "Recurrent neural networks",
-        "background": "RMSProp was widely used for RNNs, where exploding or uneven gradients made plain SGD hard to tune.",
-        "numbers": "A coordinate with $v=400$ and gradient $5$ gets scaled gradient $5/20=0.25$."
+        "title": "First step",
+        "background": "with $\\eta=0.1$, step is $0.1(-8)/\\sqrt{6.4}=-0.316$, so subtracting it moves $w$ by $+0.316$.",
+        "numbers": "with $\\eta=0.1$, step is $0.1(-8)/\\sqrt{6.4}=-0.316$, so subtracting it moves $w$ by $+0.316$."
       },
       {
-        "title": "Mini-batch deep learning",
-        "background": "Batch gradients are noisy but have persistent coordinate scale. RMSProp smooths the squared noise before dividing by it.",
-        "numbers": "For squared gradients $9$ then $1$ with $\\rho=0.9$, $v_2=0.9(0.9)+0.1(1)=0.91$."
+        "title": "Second scale",
+        "background": "$g_2=-4$ gives $r_2=0.9(6.4)+0.1(16)=7.36$.",
+        "numbers": "$g_2=-4$ gives $r_2=0.9(6.4)+0.1(16)=7.36$."
       },
       {
-        "title": "Learning-rate robustness",
-        "background": "RMSProp often tolerates a larger global $\\eta$ because each coordinate has its own denominator.",
-        "numbers": "With $\\eta=0.01$, $g=100$, and $v=10000$, the step is $0.01\\cdot100/100=0.01$."
+        "title": "Second step",
+        "background": "$0.1(-4)/\\sqrt{7.36}=-0.147$.",
+        "numbers": "$0.1(-4)/\\sqrt{7.36}=-0.147$."
       },
       {
-        "title": "Signal-processing intuition",
-        "background": "The moving average is the same low-pass-filter idea used to smooth signals.",
-        "numbers": "For $v_{t-1}=4$, new square $16$, and $\\rho=0.75$, $v_t=3+4=7$."
+        "title": "Forgetting",
+        "background": "a squared gradient's weight after $5$ steps is $0.1(0.9)^5\\approx0.059$.",
+        "numbers": "a squared gradient's weight after $5$ steps is $0.1(0.9)^5\\approx0.059$."
       },
       {
-        "title": "Difference from AdaGrad",
-        "background": "RMSProp does not let one ancient burst suppress a coordinate forever.",
-        "numbers": "A past $G=10000$ in AdaGrad gives denominator $100$ forever; RMSProp with $\\rho=0.9$ decays it to about $0.27$ after $100$ zero-square steps."
+        "title": "Coordinate damping",
+        "background": "if $r_1=100$ and $r_2=1$ for equal gradients $1$, the first coordinate step is one tenth the second.",
+        "numbers": "if $r_1=100$ and $r_2=1$ for equal gradients $1$, the first coordinate step is one tenth the second."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -4219,6 +4982,52 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson continues adaptive optimization after AdaGrad. AdaGrad's accumulated squared-gradient history never forgets, which can make learning rates shrink too much. RMSProp keeps the coordinatewise scaling idea but replaces the total history with an exponential moving average. That lets the optimizer respond to recent gradient scale.</p>",
+    "symbols": [
+      {
+        "sym": "$r_k$",
+        "desc": "the moving average of squared gradients"
+      },
+      {
+        "sym": "$\\rho$",
+        "desc": "the decay rate"
+      },
+      {
+        "sym": "$\\eta$",
+        "desc": "base learning rate"
+      },
+      {
+        "sym": "$\\epsilon$ prevents division by zero",
+        "desc": "as defined in the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Observe gradient $g_k$",
+        "result": "Observe gradient $g_k$",
+        "why": "current stochastic slope."
+      },
+      {
+        "do": "Update the second-moment average $r_k=\\rho r_{k-1}+(1-\\rho)g_k\\odot g_k$",
+        "result": "Update the second-moment average $r_k=\\rho r_{k-1}+(1-\\rho)g_k\\odot g_k$",
+        "why": "blend old squared scale with current squared gradient."
+      },
+      {
+        "do": "Divide by $\\sqrt{r_k+\\epsilon}$",
+        "result": "Divide by $\\sqrt{r_k+\\epsilon}$",
+        "why": "coordinates with large recent RMS gradients get smaller steps."
+      },
+      {
+        "do": "Update $w_{k+1}=w_k-\\eta g_k/\\sqrt{r_k+\\epsilon}$",
+        "result": "Update $w_{k+1}=w_k-\\eta g_k/\\sqrt{r_k+\\epsilon}$",
+        "why": "use the rescaled gradient."
+      },
+      {
+        "do": "Since weights decay geometrically, a squared gradient from $m$ steps ago has weight $(1-\\rho)\\rho^m$.",
+        "result": "Since weights decay geometrically, a squared gradient from $m$ steps ago has weight $(1-\\rho)\\rho^m$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-15"
@@ -4247,8 +5056,8 @@
         "learning rates"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>Adam</b> gives a particular tool for that difficulty. Its central move is bias-corrected moments: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is $m_t=\\beta_1m_{t-1}+(1-\\beta_1)g_t$, $v_t=\\beta_2v_{t-1}+(1-\\beta_2)g_t^2$, with bias corrections $\\hat m_t=m_t/(1-\\beta_1^t)$ and $\\hat v_t=v_t/(1-\\beta_2^t)$. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle momentum plus scaling.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>The first moment in Adam behaves like momentum: it smooths the direction of travel by averaging gradients. The second moment behaves like RMSProp: it estimates the recent squared scale of each coordinate. The update divides the smoothed direction by the root of the smoothed squared scale.</p><p>Because both moving averages start at zero, their early values are too small in magnitude. Bias correction divides by the accumulated weight so that the first few estimates are on the right scale. Without that correction, the initial steps would not represent the intended moving averages.</p>",
+    "definition": "<p><b>Statement.</b> Adam update.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Use Adam with $m_0=v_0=0$, $g_1=4$, $\\beta_1=0.9$, $\\beta_2=0.99$, $\\eta=0.1$, and $\\epsilon=0$. Compute the first update.",
       "skills": [
@@ -4422,34 +5231,34 @@
     ],
     "applications": [
       {
-        "title": "Transformer training",
-        "background": "Adam and AdamW became default choices for transformers because sparse, noisy, high-dimensional gradients benefit from both momentum and scaling.",
-        "numbers": "If $\\eta=0.0003$, $\\hat m=0.02$, and $\\hat v=0.0004$, the step is $0.0003\\cdot0.02/0.02=0.0003$."
+        "title": "First Adam moment",
+        "background": "with $g_1=-8$, $\\beta_1=0.9$, $m_1=-0.8$ and $\\hat m_1=-8$.",
+        "numbers": "with $g_1=-8$, $\\beta_1=0.9$, $m_1=-0.8$ and $\\hat m_1=-8$."
       },
       {
-        "title": "Bias correction early in training",
-        "background": "Zero initialization makes raw moving averages too small at the start. Adam's correction prevents tiny first steps.",
-        "numbers": "With $\\beta_1=0.9$ and $g_1=10$, raw $m_1=1$, but $\\hat m_1=10$."
+        "title": "First second moment",
+        "background": "with $\\beta_2=0.999$, $v_1=0.064$ and $\\hat v_1=64$.",
+        "numbers": "with $\\beta_2=0.999$, $v_1=0.064$ and $\\hat v_1=64$."
       },
       {
-        "title": "AdamW weight decay",
-        "background": "Modern practice often decouples weight decay from Adam's gradient scaling, which is called AdamW.",
-        "numbers": "With weight $2$, decay rate $0.01$, and $\\eta=0.1$, decoupled decay subtracts $0.1\\cdot0.01\\cdot2=0.002$."
+        "title": "First step",
+        "background": "$\\eta=0.1$ gives update $-0.1(-8)/8=+0.1$, so $w_1=0.1$.",
+        "numbers": "$\\eta=0.1$ gives update $-0.1(-8)/8=+0.1$, so $w_1=0.1$."
       },
       {
-        "title": "Noisy objectives",
-        "background": "Adam smooths sign-changing mini-batch gradients through $m_t$.",
-        "numbers": "Gradients $4$ then $-2$ with $\\beta_1=0.9$ give $m_2=0.9(0.4)+0.1(-2)=0.16$, still positive but smaller."
+        "title": "Second moment estimates",
+        "background": "with $g_2=-4$, $\\hat m_2\\approx-5.895$ and $\\hat v_2\\approx39.988$.",
+        "numbers": "with $g_2=-4$, $\\hat m_2\\approx-5.895$ and $\\hat v_2\\approx39.988$."
       },
       {
-        "title": "Coordinate imbalance",
-        "background": "Adam's $v_t$ prevents a coordinate with huge gradients from dominating updates.",
-        "numbers": "If two coordinates have $\\hat m=[10,1]$ and $\\hat v=[100,1]$, normalized values are $[1,1]$."
+        "title": "Second step",
+        "background": "Adam step is about $+0.0932$, so $w_2\\approx0.1932$.",
+        "numbers": "Adam step is about $+0.0932$, so $w_2\\approx0.1932$."
       },
       {
-        "title": "Tuning defaults",
-        "background": "Common defaults $\\beta_1=0.9$, $\\beta_2=0.999$ mean direction changes faster than scale.",
-        "numbers": "A first gradient's weight in $m$ is $0.1$, while its weight in $v$ is $0.001$ before bias correction."
+        "title": "Coordinate scaling",
+        "background": "if $\\hat m=(1,1)$ and $\\hat v=(100,1)$, equal learning rate gives coordinate steps $(0.1\\eta,1\\eta)$.",
+        "numbers": "if $\\hat m=(1,1)$ and $\\hat v=(100,1)$, equal learning rate gives coordinate steps $(0.1\\eta,1\\eta)$."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -4458,6 +5267,61 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson combines the two running-average ideas already introduced. Momentum tracks an average of gradients, and RMSProp tracks an average of squared gradients. Adam uses both, then corrects the early-time bias caused by starting those averages at zero. It is one of the most common optimizer updates in modern neural-network training.</p>",
+    "symbols": [
+      {
+        "sym": "$m_t$",
+        "desc": "first moment"
+      },
+      {
+        "sym": "$v_t$",
+        "desc": "second moment"
+      },
+      {
+        "sym": "$\\beta_1,\\beta_2$",
+        "desc": "decay rates"
+      },
+      {
+        "sym": "$\\hat m_t,\\hat v_t$",
+        "desc": "bias-corrected estimates"
+      },
+      {
+        "sym": "$\\eta$",
+        "desc": "learning rate"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Update first moment $m_t=\\beta_1m_{t-1}+(1-\\beta_1)g_t$",
+        "result": "Update first moment $m_t=\\beta_1m_{t-1}+(1-\\beta_1)g_t$",
+        "why": "exponential average of gradients."
+      },
+      {
+        "do": "Update second moment $v_t=\\beta_2v_{t-1}+(1-\\beta_2)g_t^2$",
+        "result": "Update second moment $v_t=\\beta_2v_{t-1}+(1-\\beta_2)g_t^2$",
+        "why": "exponential average of squared gradients."
+      },
+      {
+        "do": "Because $m_0=v_0=0$, early averages are biased toward zero.",
+        "result": "Because $m_0=v_0=0$, early averages are biased toward zero.",
+        "why": ""
+      },
+      {
+        "do": "Correct first moment",
+        "result": "$\\hat m_t=m_t/(1-\\beta_1^t)$",
+        "why": "divide by the total accumulated weight."
+      },
+      {
+        "do": "Correct second moment",
+        "result": "$\\hat v_t=v_t/(1-\\beta_2^t)$",
+        "why": "same correction for squared gradients."
+      },
+      {
+        "do": "Update $w_{t+1}=w_t-\\eta \\hat m_t/(\\sqrt{\\hat v_t}+\\epsilon)$",
+        "result": "Update $w_{t+1}=w_t-\\eta \\hat m_t/(\\sqrt{\\hat v_t}+\\epsilon)$",
+        "why": "momentum direction scaled by RMS magnitude."
+      }
     ],
     "prereqs": [
       "math-22-16"
@@ -4486,8 +5350,8 @@
         "linear algebra"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>Coordinate descent</b> gives a particular tool for that difficulty. Its central move is one-coordinate minimization: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is choose coordinate $j$ and update $x_j$ while holding the other coordinates fixed. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle separable structure.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>Some objectives are large, sparse, or structured so that updating every parameter at every step is unnecessary. Coordinate descent exploits that structure by reducing the problem to a sequence of simpler one-coordinate minimizations. Each subproblem is easier because all other variables are treated as constants.</p><p>A sweep through coordinates resembles Gauss-Seidel iteration for linear systems. The method can be slow if coordinates are strongly coupled, but it can be very efficient when updates are sparse or separable. The derivation below shows the basic pattern on a two-variable quadratic.</p>",
+    "definition": "<p><b>Statement.</b> One coordinate update for a quadratic.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Minimize $f(x,y)=(x-3)^2+(y+1)^2$ by exact coordinate descent starting from $(0,0)$: update $x$ first, then $y$.",
       "skills": [
@@ -4671,34 +5535,34 @@
     ],
     "applications": [
       {
-        "title": "Lasso regression",
-        "background": "Coordinate descent is a standard lasso solver because each coefficient has a simple soft-threshold update.",
-        "numbers": "If $z=-1.2$ and $\\lambda=0.5$, soft-thresholding gives $-(1.2-0.5)=-0.7$."
+        "title": "First $x$ update",
+        "background": "from $(0,0)$, $x=(6-0)/2=3$.",
+        "numbers": "from $(0,0)$, $x=(6-0)/2=3$."
       },
       {
-        "title": "Matrix factorization",
-        "background": "Recommendation models can alternate between user factors and item factors, a block-coordinate idea.",
-        "numbers": "Holding item vector $v=[2,1]$ fixed, target rating $5$, and user scalar $u$ in prediction $u(2^2+1^2)$ leads to $u=5/5=1$."
+        "title": "First $y$ update",
+        "background": "with $x=3$, $y=(2-3)/4=-0.25$.",
+        "numbers": "with $x=3$, $y=(2-3)/4=-0.25$."
       },
       {
-        "title": "Feature-wise optimization",
-        "background": "High-dimensional sparse models often update one active feature at a time to avoid touching millions of zeros.",
-        "numbers": "If an example has 12 nonzero features out of 1000000, a sparse coordinate update touches 12 weights, not all weights."
+        "title": "Lasso coordinate soft threshold",
+        "background": "if unregularized coordinate value is $1.2$ and threshold $0.5$, update is $0.7$.",
+        "numbers": "if unregularized coordinate value is $1.2$ and threshold $0.5$, update is $0.7$."
       },
       {
-        "title": "Gauss-Seidel solvers",
-        "background": "Classical linear-system solvers update one variable using the newest values of the others. Coordinate descent has the same flavor.",
-        "numbers": "For $2x+y=5$ with $y=1$, the coordinate solve gives $x=2$."
+        "title": "Gauss-Seidel linear solve",
+        "background": "equations $2x+y=6$, $x+4y=2$ from $(0,0)$ give $(3,-0.25)$ after one sweep.",
+        "numbers": "equations $2x+y=6$, $x+4y=2$ from $(0,0)$ give $(3,-0.25)$ after one sweep."
       },
       {
-        "title": "Hyperparameter grids",
-        "background": "Optimizing one tuning knob at a time is coordinate descent in experimental form, though without convex guarantees.",
-        "numbers": "If learning rate choices are $[0.001,0.01,0.1]$ and best is $0.01$, then batch size can be searched next while holding it fixed."
+        "title": "Sparse update savings",
+        "background": "updating $10$ active features out of $10{,}000$ touches $0.1\\%$ of coordinates.",
+        "numbers": "updating $10$ active features out of $10{,}000$ touches $0.1\\%$ of coordinates."
       },
       {
-        "title": "Separable regularizers",
-        "background": "Coordinate descent shines when nonsmooth penalties separate by coordinate.",
-        "numbers": "For $\\lambda(|w_1|+|w_2|)$ with $\\lambda=0.2$ and $w=[3,-4]$, the penalty is $0.2(7)=1.4$."
+        "title": "Block coordinate",
+        "background": "updating an embedding vector of dimension $64$ instead of all $1{,}000{,}000$ parameters changes $0.0064\\%$ of weights.",
+        "numbers": "updating an embedding vector of dimension $64$ instead of all $1{,}000{,}000$ parameters changes $0.0064\\%$ of weights."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -4707,6 +5571,57 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson changes the update unit from a full vector step to a one-coordinate step. Instead of moving all variables at once, coordinate descent optimizes one variable while holding the rest fixed. That idea uses ordinary one-dimensional calculus inside a multivariable problem. It is especially useful when each coordinate update is cheap or has a closed form.</p>",
+    "symbols": [
+      {
+        "sym": "$x_j$",
+        "desc": "the active coordinate"
+      },
+      {
+        "sym": "all other coordinates",
+        "desc": "held fixed"
+      },
+      {
+        "sym": "$f$",
+        "desc": "the objective"
+      },
+      {
+        "sym": "a sweep updates every coordinate once",
+        "desc": "as defined in the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write $f(x,y)=(x-3)^2+2(y+1)^2+xy$",
+        "result": "Write $f(x,y)=(x-3)^2+2(y+1)^2+xy$",
+        "why": "a two-variable objective."
+      },
+      {
+        "do": "Hold $y$ fixed and differentiate with respect to $x$",
+        "result": "$\\partial f/\\partial x=2(x-3)+y$.",
+        "why": ""
+      },
+      {
+        "do": "Set this derivative to zero",
+        "result": "$2x-6+y=0$",
+        "why": "one-dimensional optimality along the $x$ coordinate."
+      },
+      {
+        "do": "Solve $x=(6-y)/2$",
+        "result": "Solve $x=(6-y)/2$",
+        "why": "coordinate minimizer."
+      },
+      {
+        "do": "Hold the new $x$ fixed and differentiate with respect to $y$",
+        "result": "$\\partial f/\\partial y=4(y+1)+x$.",
+        "why": ""
+      },
+      {
+        "do": "Set to zero and",
+        "result": "$y=(2-x)/4$",
+        "why": "the $y$ coordinate minimizer."
+      }
     ],
     "prereqs": [
       "math-22-17"
@@ -4735,8 +5650,8 @@
         "Taylor series"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>Newton's method</b> gives a particular tool for that difficulty. Its central move is second-order Taylor model: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is $x_{t+1}=x_t-[\\nabla^2 f(x_t)]^{-1}\\nabla f(x_t)$ for optimization. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle curvature-corrected steps.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>The gradient tells which direction is downhill, but it does not say how quickly the slope itself is changing. Curvature information helps scale the step. In a direction with high curvature, the method should be more cautious; in a flatter direction, it can move farther.</p><p>Newton's method builds a quadratic model around the current point and minimizes that model exactly. The resulting linear system $Hp=-g$ balances gradient against curvature. This can be powerful, but it depends on the Hessian being useful and often needs damping or line search in non-quadratic problems.</p>",
+    "definition": "<p><b>Statement.</b> Multivariate Newton step.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Apply one Newton step to minimize $f(x)=x^2-6x+10$ from $x_0=0$.",
       "skills": [
@@ -4915,34 +5830,34 @@
     ],
     "applications": [
       {
-        "title": "Logistic-regression solvers",
-        "background": "Classical convex ML uses Newton or damped Newton because curvature gives fast convergence near the optimum.",
-        "numbers": "If gradient norm drops from $0.1$ to $0.001$ after a Newton step, that is a 100-fold reduction."
+        "title": "Scalar quadratic",
+        "background": "for $f(w)=(w-4)^2$ at $w=1$, $g=-6$, $H=2$, so $p=3$ and $w^+=4$.",
+        "numbers": "for $f(w)=(w-4)^2$ at $w=1$, $g=-6$, $H=2$, so $p=3$ and $w^+=4$."
       },
       {
-        "title": "Second-order calibration",
-        "background": "A one-dimensional calibration parameter can be tuned by Newton using slope and curvature.",
-        "numbers": "With loss derivative $-0.6$ and second derivative $3$, the Newton change is $-(-0.6)/3=0.2$."
+        "title": "Logistic one-parameter step",
+        "background": "if $g=0.6$ and $H=3$, $p=-0.2$.",
+        "numbers": "if $g=0.6$ and $H=3$, $p=-0.2$."
       },
       {
-        "title": "Least squares",
-        "background": "For quadratic least squares, Newton solves the normal equations in one step when feasible.",
-        "numbers": "If Hessian $X^TX=25$ and gradient is $-10$, the step is $10/25=0.4$."
+        "title": "Two-dimensional diagonal Hessian",
+        "background": "$g=(-2,8)$, $H=\\operatorname{diag}(2,4)$ gives $p=(1,-2)$.",
+        "numbers": "$g=(-2,8)$, $H=\\operatorname{diag}(2,4)$ gives $p=(1,-2)$."
       },
       {
-        "title": "Why damping is needed",
-        "background": "If curvature is small or negative, a raw Newton step can be huge or uphill. Line search tempers it.",
-        "numbers": "Gradient $1$ with curvature $0.01$ gives raw step $-100$; damping by $0.1$ gives $-10$."
+        "title": "Damped Newton",
+        "background": "with $p=(1,-2)$ and line-search $\\alpha=0.5$, the applied step is $(0.5,-1)$.",
+        "numbers": "with $p=(1,-2)$ and line-search $\\alpha=0.5$, the applied step is $(0.5,-1)$."
       },
       {
-        "title": "Trust-region methods",
-        "background": "Second-order methods often restrict step length when the quadratic model is reliable only locally.",
-        "numbers": "If Newton step norm is $5$ but trust radius is $1$, the accepted step is scaled to length $1$."
+        "title": "Ill-conditioning warning",
+        "background": "Hessian eigenvalues $1$ and $1000$ give condition number $1000$.",
+        "numbers": "Hessian eigenvalues $1$ and $1000$ give condition number $1000$."
       },
       {
-        "title": "Deep nets and Hessian-vector products",
-        "background": "Full Hessians are too large, but products $Hv$ can be estimated for curvature-aware methods.",
-        "numbers": "A model with $10^8$ parameters has a Hessian with $10^{16}$ entries, impossible to store directly at 8 bytes each."
+        "title": "Second-order optimum",
+        "background": "for $f=\\tfrac12x^THx-b^Tx$, Newton reaches $H^{-1}b$ in one step when $H$ is positive definite.",
+        "numbers": "for $f=\\tfrac12x^THx-b^Tx$, Newton reaches $H^{-1}b$ in one step when $H$ is positive definite."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -4951,6 +5866,57 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson extends the local model behind gradient descent. Gradient descent uses a first-order linear approximation and steps downhill. Newton's method uses a second-order quadratic approximation, so it also uses curvature. When that quadratic model is accurate and well behaved, the Newton step can move directly to the model's minimizer.</p>",
+    "symbols": [
+      {
+        "sym": "$g=\\nabla f(x)$",
+        "desc": "the gradient"
+      },
+      {
+        "sym": "$H=\\nabla^2f(x)$",
+        "desc": "the Hessian"
+      },
+      {
+        "sym": "$p$",
+        "desc": "the Newton step"
+      },
+      {
+        "sym": "$x^+$",
+        "desc": "the next iterate"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start from the second-order Taylor model $m(p)=f(x)+g^Tp+\\tfrac12p^THp$",
+        "result": "Start from the second-order Taylor model $m(p)=f(x)+g^Tp+\\tfrac12p^THp$",
+        "why": "approximate the loss after step $p$."
+      },
+      {
+        "do": "Differentiate the model with respect to $p$",
+        "result": "$\\nabla_p m=g+Hp$",
+        "why": "gradient of a quadratic."
+      },
+      {
+        "do": "Set $\\nabla_p m=0$",
+        "result": "Set $\\nabla_p m=0$",
+        "why": "minimize the local quadratic."
+      },
+      {
+        "do": "Solve $Hp=-g$",
+        "result": "Solve $Hp=-g$",
+        "why": "isolate the Newton equation."
+      },
+      {
+        "do": "If $H$ is invertible, $p=-H^{-1}g$",
+        "result": "If $H$ is invertible, $p=-H^{-1}g$",
+        "why": "explicit step direction."
+      },
+      {
+        "do": "Update $x^+=x+p=x-H^{-1}g$",
+        "result": "Update $x^+=x+p=x-H^{-1}g$",
+        "why": "move to the quadratic model's minimizer."
+      }
     ],
     "prereqs": [
       "math-22-18"
@@ -4979,8 +5945,8 @@
         "convexity"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>Quasi-Newton methods (BFGS, L-BFGS)</b> gives a particular tool for that difficulty. Its central move is secant equation: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is $B_{k+1}=B_k+\\dfrac{y_ky_k^T}{y_k^Ts_k}-\\dfrac{B_ks_ks_k^TB_k}{s_k^TB_ks_k}$ with $s_k=x_{k+1}-x_k$ and $y_k=\\nabla f_{k+1}-\\nabla f_k$. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle curvature approximation.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>Full Hessians can be expensive to compute, store, and invert. Still, each step of an optimization run reveals some curvature information: the parameters changed by $s_k$, and the gradient changed by $y_k$. A quadratic objective would connect those through the Hessian.</p><p>Quasi-Newton methods use that observed relation as a constraint on the next curvature approximation. In one dimension, the inverse curvature estimate is simply displacement divided by gradient change. In many dimensions, BFGS updates a matrix while preserving symmetry and positive definiteness when the curvature condition is satisfied.</p>",
+    "definition": "<p><b>Statement.</b> Secant condition and scalar BFGS intuition.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "In one dimension, $x_0=0$, $x_1=2$, $f'(x_0)=-4$, and $f'(x_1)=0$. Compute the secant curvature estimate used by quasi-Newton methods.",
       "skills": [
@@ -5154,34 +6120,34 @@
     ],
     "applications": [
       {
-        "title": "L-BFGS for large smooth models",
-        "background": "L-BFGS was a workhorse for maximum-entropy and logistic models before deep learning standardized Adam-like optimizers.",
-        "numbers": "With $d=100000$ and $m=20$, pair storage is $2md=4000000$ numbers, about $32$ MB."
+        "title": "Scalar inverse curvature",
+        "background": "if $s=2$ and $y=4$, then $H=0.5$.",
+        "numbers": "if $s=2$ and $y=4$, then $H=0.5$."
       },
       {
-        "title": "Curvature without Hessians",
-        "background": "BFGS avoids forming $d\\times d$ Hessians by learning from gradient differences.",
-        "numbers": "For $d=10000$, a dense Hessian has $100000000$ entries; at 8 bytes, about $800$ MB."
+        "title": "Quasi-Newton step",
+        "background": "with approximate inverse $H=0.5$ and gradient $g=-6$, step $p=-Hg=3$.",
+        "numbers": "with approximate inverse $H=0.5$ and gradient $g=-6$, step $p=-Hg=3$."
       },
       {
-        "title": "Line-search stability",
-        "background": "Quasi-Newton methods are often paired with line search to ensure the learned direction actually lowers the objective.",
-        "numbers": "If $f(x)=10$ and a full step gives $12$ but half step gives $7$, line search accepts the half step."
+        "title": "Curvature condition",
+        "background": "$s^Ty=8>0$ keeps the BFGS update positive definite.",
+        "numbers": "$s^Ty=8>0$ keeps the BFGS update positive definite."
       },
       {
-        "title": "Scientific computing",
-        "background": "Smooth parameter estimation in physics and statistics often uses BFGS when gradients are available but Hessians are expensive.",
-        "numbers": "A 50-parameter model has a full Hessian with $2500$ entries, but BFGS updates it from two 50-vectors."
+        "title": "L-BFGS memory",
+        "background": "storing $10$ pairs for $1{,}000{,}000$ parameters stores $20{,}000{,}000$ floats, not a $10^{12}$-entry Hessian.",
+        "numbers": "storing $10$ pairs for $1{,}000{,}000$ parameters stores $20{,}000{,}000$ floats, not a $10^{12}$-entry Hessian."
       },
       {
-        "title": "Fine-tuning small neural nets",
-        "background": "For smaller networks or final-layer training, L-BFGS can converge in fewer iterations than first-order methods.",
-        "numbers": "If Adam needs 5000 mini-batch steps and L-BFGS needs 80 full-batch steps, the tradeoff depends on batch cost."
+        "title": "Bad curvature skip",
+        "background": "if $s^Ty=-0.1$, skip or damp the update because curvature is not positive.",
+        "numbers": "if $s^Ty=-0.1$, skip or damp the update because curvature is not positive."
       },
       {
-        "title": "Curvature condition diagnostics",
-        "background": "The quantity $y^Ts$ checks whether gradients changed consistently with positive curvature.",
-        "numbers": "If $y^Ts=0.02$ and $s^Ts=1$, estimated curvature along $s$ is $0.02$, very flat."
+        "title": "Line-search pair",
+        "background": "step norm $0.2$ and gradient-change norm $1.0$ imply rough inverse scale $0.2$ along that direction.",
+        "numbers": "step norm $0.2$ and gradient-change norm $1.0$ imply rough inverse scale $0.2$ along that direction."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -5190,6 +6156,61 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson follows Newton's method by keeping the benefit of curvature scaling while avoiding the full Hessian. Quasi-Newton methods infer curvature from changes in gradients across steps. BFGS maintains an approximation to the inverse Hessian, and L-BFGS stores only recent step-gradient pairs. These methods sit between first-order updates and full second-order Newton steps.</p>",
+    "symbols": [
+      {
+        "sym": "$s_k$",
+        "desc": "parameter displacement"
+      },
+      {
+        "sym": "$y_k$",
+        "desc": "gradient displacement"
+      },
+      {
+        "sym": "$B_k$ approximates Hessian",
+        "desc": "as defined in the plan"
+      },
+      {
+        "sym": "$H_k$ approximates inverse Hessian",
+        "desc": "as defined in the plan"
+      },
+      {
+        "sym": "L-BFGS stores only recent $(s,y)$ pairs",
+        "desc": "as defined in the plan"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $s_k=x_{k+1}-x_k$",
+        "result": "Let $s_k=x_{k+1}-x_k$",
+        "why": "the step taken."
+      },
+      {
+        "do": "Let $y_k=g_{k+1}-g_k$",
+        "result": "Let $y_k=g_{k+1}-g_k$",
+        "why": "the observed gradient change."
+      },
+      {
+        "do": "For a true Hessian $B$, a quadratic has $y_k=Bs_k$",
+        "result": "For a true Hessian $B$, a quadratic has $y_k=Bs_k$",
+        "why": "gradient change equals curvature times displacement."
+      },
+      {
+        "do": "For an inverse-Hessian approximation $H_k$, require $H_{k+1}y_k=s_k$",
+        "result": "For an inverse-Hessian approximation $H_k$, require $H_{k+1}y_k=s_k$",
+        "why": "this is the inverse secant condition."
+      },
+      {
+        "do": "In one dimension,",
+        "result": "$H_{k+1}=s_k/y_k$",
+        "why": "divide the observed step by observed gradient change."
+      },
+      {
+        "do": "In many dimensions, BFGS chooses a symmetric positive-definite update satisfying the same secant condition when $s_k^Ty_k>0$.",
+        "result": "In many dimensions, BFGS chooses a symmetric positive-definite update satisfying the same secant condition when $s_k^Ty_k>0$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-19"
@@ -5218,8 +6239,8 @@
         "optimization bounds"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>Lagrangian duality</b> gives a particular tool for that difficulty. Its central move is constraint prices: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is $L(x,\\lambda,\\nu)=f(x)+\\sum_i\\lambda_i g_i(x)+\\sum_j\\nu_j h_j(x)$ with $\\lambda_i\\ge0$. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle lower bounds.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>A constrained minimization problem only allows feasible points. The Lagrangian attaches a multiplier to each inequality constraint, so violations and feasibility affect the objective-like expression. For feasible points and nonnegative multipliers, the constraint terms are nonpositive when written as $g_i(x)\\le0$.</p><p>Because of that sign, minimizing the Lagrangian over all $x$ gives a value no larger than any feasible objective value. This is weak duality: every valid multiplier vector produces a lower bound on the primal optimum. The best such lower bound becomes the dual objective.</p>",
+    "definition": "<p><b>Statement.</b> Weak duality for inequalities $g_i(x)\\le0$.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Minimize $f(x)=x^2$ subject to $x\\ge2$. Write it as $g(x)=2-x\\le0$, form the Lagrangian, and find the dual lower bound $q(\\lambda)$ for $\\lambda\\ge0$.",
       "skills": [
@@ -5403,34 +6424,34 @@
     ],
     "applications": [
       {
-        "title": "Support vector machines",
-        "background": "SVMs use Lagrange multipliers to price margin constraints, leading to a dual problem in example weights.",
-        "numbers": "If two support vectors have multipliers $0.3$ and $0.7$, their total active weight is $1.0$."
+        "title": "Simple constrained quadratic",
+        "background": "minimize $(x-2)^2$ subject to $x\\le1$; with $L=(x-2)^2+\\lambda(x-1)$, minimizing gives $q(\\lambda)=\\lambda-\\lambda^2/4$.",
+        "numbers": "minimize $(x-2)^2$ subject to $x\\le1$; with $L=(x-2)^2+\\lambda(x-1)$, minimizing gives $q(\\lambda)=\\lambda-\\lambda^2/4$."
       },
       {
-        "title": "Resource pricing",
-        "background": "Dual variables act like shadow prices in allocation problems.",
-        "numbers": "If one GPU-hour constraint has multiplier $5$, relaxing the budget by $2$ hours can improve the objective bound by about $10$."
+        "title": "Best bound",
+        "background": "$q(2)=1$, matching the primal value at $x=1$.",
+        "numbers": "$q(2)=1$, matching the primal value at $x=1$."
       },
       {
-        "title": "Regularized ML constraints",
-        "background": "A norm constraint can be priced instead of handled directly.",
-        "numbers": "Constraint $||w||_2^2\\le9$ becomes $g(w)=||w||_2^2-9\\le0$ and contributes $\\lambda(||w||_2^2-9)$."
+        "title": "Weak bound",
+        "background": "$q(1)=0.75$, a valid lower bound below $1$.",
+        "numbers": "$q(1)=0.75$, a valid lower bound below $1$."
       },
       {
-        "title": "Lower-bound certificates",
-        "background": "Duality gives certificates that an algorithm cannot beat a certain value.",
-        "numbers": "If a feasible model has loss $1.25$ and a dual lower bound is $1.20$, the optimality gap is at most $0.05$."
+        "title": "Multiplier sign",
+        "background": "$\\lambda=-1$ is invalid for an inequality multiplier because it would reward violation.",
+        "numbers": "$\\lambda=-1$ is invalid for an inequality multiplier because it would reward violation."
       },
       {
-        "title": "Constrained inference",
-        "background": "Probabilistic inference relaxations use multipliers to enforce consistency constraints.",
-        "numbers": "If a marginal sum should equal $1$ but is $0.97$, an equality residual is $-0.03$ and gets priced by $\\nu$."
+        "title": "Regularized ERM constraint",
+        "background": "$\\Vert w\\Vert^2\\le4$ gets multiplier $\\lambda(\\Vert w\\Vert^2-4)$ with $\\lambda\\ge0$.",
+        "numbers": "$\\Vert w\\Vert^2\\le4$ gets multiplier $\\lambda(\\Vert w\\Vert^2-4)$ with $\\lambda\\ge0$."
       },
       {
-        "title": "Fairness constraints",
-        "background": "Training with fairness constraints can attach multipliers to rate differences.",
-        "numbers": "If false-positive-rate gap constraint is $g=0.04-0.02=0.02$ and $\\lambda=10$, the Lagrangian penalty is $0.2$."
+        "title": "Duality gap",
+        "background": "primal value $1.05$ and dual bound $1.00$ give gap $0.05$.",
+        "numbers": "primal value $1.05$ and dual bound $1.00$ give gap $0.05$."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -5439,6 +6460,61 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson begins the constrained optimization block. Earlier lessons described objectives and feasible sets; Lagrangian duality shows how constraints can be folded into an objective using multipliers. The result is not just a new formula, but a way to create lower bounds for constrained minimization problems. Those bounds lead directly to KKT conditions and the dual problem.</p>",
+    "symbols": [
+      {
+        "sym": "$L$",
+        "desc": "the Lagrangian"
+      },
+      {
+        "sym": "$\\lambda$",
+        "desc": "inequality multipliers"
+      },
+      {
+        "sym": "$q(\\lambda)$",
+        "desc": "the dual function"
+      },
+      {
+        "sym": "$p^*$",
+        "desc": "the primal optimum"
+      },
+      {
+        "sym": "$d^*$",
+        "desc": "the best dual lower bound"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with primal problem $\\min f(x)$ subject to $g_i(x)\\le0$",
+        "result": "Start with primal problem $\\min f(x)$ subject to $g_i(x)\\le0$",
+        "why": "feasible points obey all constraints."
+      },
+      {
+        "do": "Define $L(x,\\lambda)=f(x)+\\sum_i\\lambda_i g_i(x)$ with $\\lambda_i\\ge0$",
+        "result": "Define $L(x,\\lambda)=f(x)+\\sum_i\\lambda_i g_i(x)$ with $\\lambda_i\\ge0$",
+        "why": "nonnegative multipliers penalize violations."
+      },
+      {
+        "do": "For any feasible $x$, each $g_i(x)\\le0$, so $\\lambda_i g_i(x)\\le0$",
+        "result": "For any feasible $x$, each $g_i(x)\\le0$, so $\\lambda_i g_i(x)\\le0$",
+        "why": "nonnegative times nonpositive is nonpositive."
+      },
+      {
+        "do": "Therefore $L(x,\\lambda)\\le f(x)$ for feasible $x$",
+        "result": "Therefore $L(x,\\lambda)\\le f(x)$ for feasible $x$",
+        "why": "the Lagrangian is a lower value at feasible points."
+      },
+      {
+        "do": "Define $q(\\lambda)=\\inf_x L(x,\\lambda)$",
+        "result": "Define $q(\\lambda)=\\inf_x L(x,\\lambda)$",
+        "why": "the best value of the Lagrangian over all $x$."
+      },
+      {
+        "do": "Since $q(\\lambda)\\le L(x,\\lambda)\\le f(x)$ for every feasible $x$, $q(\\lambda)$ is a lower bound on the primal optimum.",
+        "result": "Since $q(\\lambda)\\le L(x,\\lambda)\\le f(x)$ for every feasible $x$, $q(\\lambda)$ is a lower bound on the primal optimum.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-20"
@@ -5467,8 +6543,8 @@
         "inequalities"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>The KKT conditions</b> gives a particular tool for that difficulty. Its central move is active constraints: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is stationarity, primal feasibility, dual feasibility, and complementary slackness $\\lambda_i g_i(x)=0$. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle optimality certificate.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>At an unconstrained optimum, the gradient must vanish because no direction should reduce the objective. With constraints, some directions are not allowed, so the objective gradient can be balanced by constraint gradients. The Lagrangian expresses that balance through multipliers.</p><p>Feasibility keeps the primal point legal. Nonnegative multipliers preserve the lower-bound logic for inequality constraints. Complementary slackness says that an inactive inequality has no price: if the constraint is loose, its multiplier must be zero. Active constraints may carry nonzero multipliers because they shape the optimum.</p>",
+    "definition": "<p><b>Statement.</b> KKT from Lagrangian logic.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Minimize $x^2$ subject to $x\\ge2$ using KKT with $g(x)=2-x\\le0$.",
       "skills": [
@@ -5652,34 +6728,34 @@
     ],
     "applications": [
       {
-        "title": "SVM margins",
-        "background": "The SVM solution satisfies KKT: support vectors have active margin constraints and positive multipliers.",
-        "numbers": "If $y_i(w^Tx_i+b)=1$, the margin constraint is active; if its multiplier is $0.4$, it contributes to $w$."
+        "title": "Bounded quadratic",
+        "background": "minimize $(x-2)^2$ subject to $x\\le1$; stationarity $2(x-2)+\\lambda=0$ at $x=1$ gives $\\lambda=2$.",
+        "numbers": "minimize $(x-2)^2$ subject to $x\\le1$; stationarity $2(x-2)+\\lambda=0$ at $x=1$ gives $\\lambda=2$."
       },
       {
-        "title": "Constrained model training",
-        "background": "KKT helps diagnose whether a fairness or resource constraint is actually controlling the solution.",
-        "numbers": "If fairness gap is below its limit by $0.03$, complementary slackness predicts multiplier $0$."
+        "title": "Complementary slackness",
+        "background": "the active constraint has $x-1=0$, so $\\lambda(x-1)=0$.",
+        "numbers": "the active constraint has $x-1=0$, so $\\lambda(x-1)=0$."
       },
       {
-        "title": "Portfolio optimization",
-        "background": "Mean-variance portfolios use equality and inequality KKT systems for budget and no-short constraints.",
-        "numbers": "A weight $w_j=0$ can have positive no-short multiplier; a weight $w_j=0.2$ must have no-short multiplier $0$."
+        "title": "Inactive constraint",
+        "background": "for minimize $(x-2)^2$ subject to $x\\le3$, optimum $x=2$ has multiplier $0$.",
+        "numbers": "for minimize $(x-2)^2$ subject to $x\\le3$, optimum $x=2$ has multiplier $0$."
       },
       {
-        "title": "Projection onto a box",
-        "background": "Clipping a parameter to bounds is a simple KKT story: active bounds push back.",
-        "numbers": "Projecting $3$ onto $[0,2]$ gives $2$; the upper bound is active."
+        "title": "SVM support vector",
+        "background": "margin constraint active when $y_i(w^Tx_i+b)=1$, allowing $\\alpha_i>0$.",
+        "numbers": "margin constraint active when $y_i(w^Tx_i+b)=1$, allowing $\\alpha_i>0$."
       },
       {
-        "title": "Neural network constrained layers",
-        "background": "Some layers constrain weights to be nonnegative or sum to one. KKT describes the optimum of the constrained subproblem.",
-        "numbers": "For probabilities $p_1+p_2=1$ and $p=[0.7,0.3]$, equality feasibility is exact."
+        "title": "Probability simplex",
+        "background": "equality $\\sum p_i=1$ uses multiplier $\\nu$ with no nonnegativity sign restriction.",
+        "numbers": "equality $\\sum p_i=1$ uses multiplier $\\nu$ with no nonnegativity sign restriction."
       },
       {
-        "title": "Optimality gaps",
-        "background": "When KKT residuals are small, solvers report near-optimality.",
-        "numbers": "A stationarity residual norm $0.0008$ and feasibility violation $0.0003$ indicate a much better certificate than residuals $0.1$ and $0.05$."
+        "title": "Certificate check",
+        "background": "primal value $1$, dual multiplier $2$, and zero gap certify the $x\\le1$ solution.",
+        "numbers": "primal value $1$, dual multiplier $2$, and zero gap certify the $x\\le1$ solution."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -5688,6 +6764,57 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson builds on the Lagrangian by collecting the conditions that characterize constrained optima. The KKT conditions combine stationarity, feasibility, multiplier signs, and complementary slackness. For convex problems with standard regularity assumptions, satisfying these conditions certifies optimality. They are the constrained analogue of setting the gradient to zero.</p>",
+    "symbols": [
+      {
+        "sym": "$\\lambda_i$",
+        "desc": "inequality multipliers"
+      },
+      {
+        "sym": "$\\nu_j$",
+        "desc": "equality multipliers"
+      },
+      {
+        "sym": "$g_i$ and $h_j$",
+        "desc": "constraints"
+      },
+      {
+        "sym": "stationarity",
+        "desc": "gradient with respect to $x$ is zero"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the constrained problem $\\min f(x)$ subject to $g_i(x)\\le0$ and $h_j(x)=0$.",
+        "result": "Write the constrained problem $\\min f(x)$ subject to $g_i(x)\\le0$ and $h_j(x)=0$.",
+        "why": ""
+      },
+      {
+        "do": "Form $L=f+\\sum_i\\lambda_i g_i+\\sum_j\\nu_jh_j$",
+        "result": "Form $L=f+\\sum_i\\lambda_i g_i+\\sum_j\\nu_jh_j$",
+        "why": "attach multipliers to constraints."
+      },
+      {
+        "do": "At an optimum, local movement in $x$ should not reduce the Lagrangian, so $\\nabla_xL(x^*,\\lambda^*,\\nu^*)=0$",
+        "result": "At an optimum, local movement in $x$ should not reduce the Lagrangian, so $\\nabla_xL(x^*,\\lambda^*,\\nu^*)=0$",
+        "why": "stationarity."
+      },
+      {
+        "do": "The primal point must satisfy $g_i(x^*)\\le0$ and $h_j(x^*)=0$",
+        "result": "The primal point must satisfy $g_i(x^*)\\le0$ and $h_j(x^*)=0$",
+        "why": "primal feasibility."
+      },
+      {
+        "do": "Inequality multipliers must satisfy $\\lambda_i^*\\ge0$",
+        "result": "Inequality multipliers must satisfy $\\lambda_i^*\\ge0$",
+        "why": "required for lower-bound logic."
+      },
+      {
+        "do": "If a constraint is inactive, $g_i(x^*)<0$, it should have zero price; write $\\lambda_i^*g_i(x^*)=0$",
+        "result": "If a constraint is inactive, $g_i(x^*)<0$, it should have zero price; write $\\lambda_i^*g_i(x^*)=0$",
+        "why": "complementary slackness."
+      }
     ],
     "prereqs": [
       "math-22-21"
@@ -5716,8 +6843,8 @@
         "saddle points"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>The dual problem</b> gives a particular tool for that difficulty. Its central move is dual function: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is maximize $q(\\lambda,\\nu)=\\inf_x L(x,\\lambda,\\nu)$ subject to $\\lambda\\ge0$. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle weak and strong duality.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>The Lagrangian dual function $q(\\lambda)$ is built by minimizing over the primal variable while holding multipliers fixed. Weak duality says each value of $q$ is a lower bound on the primal optimum for a minimization problem. The dual problem maximizes that lower bound over valid multipliers.</p><p>In favorable convex problems, the best dual bound equals the primal optimum. Even when the primal variable is simple, working through the dual shows the logic clearly: form the Lagrangian, minimize over $x$, then choose the multiplier that makes the resulting bound as large as possible.</p>",
+    "definition": "<p><b>Statement.</b> Dual of the simple quadratic with $x\\le1$.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "For the primal minimize $x^2$ subject to $x\\ge2$, use $q(\\lambda)=2\\lambda-\\lambda^2/4$ to solve the dual problem.",
       "skills": [
@@ -5901,34 +7028,34 @@
     ],
     "applications": [
       {
-        "title": "SVM dual training",
-        "background": "The SVM dual depends on example-example dot products, revealing support vectors through nonzero dual variables.",
-        "numbers": "With labels $[1,-1]$ and kernel value $0.2$, one dual interaction includes $y_1y_2K_{12}=-0.2$."
+        "title": "Dual optimum",
+        "background": "for the worked problem, $\\lambda^*=2$ and dual value $1$.",
+        "numbers": "for the worked problem, $\\lambda^*=2$ and dual value $1$."
       },
       {
-        "title": "Optimality certificates",
-        "background": "Solvers use primal-dual gaps to decide when to stop.",
-        "numbers": "If primal objective is $100.4$ and dual bound is $100.1$, the gap is $0.3$, or about $0.3\\%$ of 100."
+        "title": "Lower bound at $\\lambda=1$",
+        "background": "$q(1)=0.75$.",
+        "numbers": "$q(1)=0.75$."
       },
       {
-        "title": "Relaxations in combinatorial optimization",
-        "background": "Dual bounds help when exact discrete optimization is hard.",
-        "numbers": "If an integer solution costs $42$ and an LP dual bound is $39$, the best possible improvement is at most $3$."
+        "title": "Bad multiplier",
+        "background": "$\\lambda=4$ gives $q(4)=0$, still a lower bound but not best.",
+        "numbers": "$\\lambda=4$ gives $q(4)=0$, still a lower bound but not best."
       },
       {
-        "title": "Regularization paths",
-        "background": "Dual variables can reveal how constraints trade off with loss.",
-        "numbers": "A norm constraint multiplier $0.8$ means relaxing the constraint by $0.1$ predicts about $0.08$ objective improvement."
+        "title": "Constraint price",
+        "background": "multiplier $2$ means tightening the boundary by $0.1$ changes optimum value by about $0.2$.",
+        "numbers": "multiplier $2$ means tightening the boundary by $0.1$ changes optimum value by about $0.2$."
       },
       {
-        "title": "Distributed optimization",
-        "background": "Dual decomposition splits large problems by pricing shared constraints.",
-        "numbers": "If two workers exceed a shared budget by $3$ and $2$, the total residual priced by $\\lambda=0.5$ is $2.5$."
+        "title": "SVM dual size",
+        "background": "$n=1000$ examples gives $1000$ dual variables $\\alpha_i$.",
+        "numbers": "$n=1000$ examples gives $1000$ dual variables $\\alpha_i$."
       },
       {
-        "title": "Fair ML constraints",
-        "background": "Dual methods tune penalties for constraints such as demographic rate gaps.",
-        "numbers": "A gap violation $0.01$ with multiplier $20$ contributes $0.2$ to the Lagrangian."
+        "title": "Gap stopping",
+        "background": "if primal objective is $1.02$ and dual objective is $1.00$, relative gap is about $1.96\\%$.",
+        "numbers": "if primal objective is $1.02$ and dual objective is $1.00$, relative gap is about $1.96\\%$."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -5937,6 +7064,62 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson continues from Lagrangian duality and KKT conditions. Once each multiplier gives a lower bound, the dual problem asks for the best lower bound. That turns constrained optimization into a related problem over multiplier variables. The dual variables often also explain the sensitivity or price of constraints.</p>",
+    "symbols": [
+      {
+        "sym": "$q$",
+        "desc": "the dual function"
+      },
+      {
+        "sym": "$\\lambda$",
+        "desc": "the dual variable"
+      },
+      {
+        "sym": "$d^*$",
+        "desc": "the dual optimum"
+      },
+      {
+        "sym": "strong duality",
+        "desc": "$d^*=p^*$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $\\min (x-2)^2$ subject to $x-1\\le0$",
+        "result": "Start with $\\min (x-2)^2$ subject to $x-1\\le0$",
+        "why": "the constraint forces $x$ left of $1$."
+      },
+      {
+        "do": "Form $L(x,\\lambda)=(x-2)^2+\\lambda(x-1)$ with $\\lambda\\ge0$.",
+        "result": "Form $L(x,\\lambda)=(x-2)^2+\\lambda(x-1)$ with $\\lambda\\ge0$.",
+        "why": ""
+      },
+      {
+        "do": "Minimize over $x$",
+        "result": "derivative $2(x-2)+\\lambda=0$.",
+        "why": ""
+      },
+      {
+        "do": "Solve $x=2-\\lambda/2$",
+        "result": "Solve $x=2-\\lambda/2$",
+        "why": "the Lagrangian minimizer for fixed $\\lambda$."
+      },
+      {
+        "do": "Substitute into $L$",
+        "result": "$q(\\lambda)=\\lambda-\\lambda^2/4$",
+        "why": "the dual function."
+      },
+      {
+        "do": "Maximize $q$",
+        "result": "$q'(\\lambda)=1-\\lambda/2=0$, so $\\lambda^*=2$.",
+        "why": ""
+      },
+      {
+        "do": "The dual value is $q(2)=1$",
+        "result": "The dual value is $q(2)=1$",
+        "why": "equal to the constrained primal optimum at $x=1$."
+      }
     ],
     "prereqs": [
       "math-22-22"
@@ -5965,8 +7148,8 @@
         "geometry"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>Linear programming</b> gives a particular tool for that difficulty. Its central move is polyhedra: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is minimize $c^Tx$ subject to $Ax\\le b$ and optional equalities. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle corner solutions.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>In a linear program, objective level sets are parallel lines or hyperplanes. Improving the objective slides that level set across the feasible polyhedron. If a finite optimum is attained, the last contact happens at a face, and at least one optimum occurs at a vertex.</p><p>This does not mean every vertex is good; it means checking vertices is enough in the small two-dimensional example. The derivation lists the polygon's candidate corners, evaluates the objective, and selects the largest value. Higher-dimensional algorithms use the same geometry more systematically.</p>",
+    "definition": "<p><b>Statement.</b> Vertex check in two variables.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Maximize $3x+2y$ subject to $x+y\\le4$, $x\\le2$, $y\\le3$, $x,y\\ge0$ by checking corners.",
       "skills": [
@@ -6150,34 +7333,34 @@
     ],
     "applications": [
       {
-        "title": "Resource allocation",
-        "background": "LPs model limited resources with linear returns and budgets.",
-        "numbers": "If product A earns $3$ per unit and B earns $2$, making $(2,2)$ units earns $10$ under the worked constraints."
+        "title": "Production mix",
+        "background": "the worked LP chooses $(1,3)$ and value $11$.",
+        "numbers": "the worked LP chooses $(1,3)$ and value $11$."
       },
       {
-        "title": "Network flow",
-        "background": "Many routing and flow problems are LPs because conservation and capacity are linear.",
-        "numbers": "If an edge capacity is $7$ and flows are $3$ and $4$, the capacity constraint is tight: $3+4=7$."
+        "title": "Active constraints",
+        "background": "at $(1,3)$, $x+y=4$ and $y=3$ are active.",
+        "numbers": "at $(1,3)$, $x+y=4$ and $y=3$ are active."
       },
       {
-        "title": "Diet and blending problems",
-        "background": "Classic LP history includes choosing foods or materials to meet requirements at minimum cost.",
-        "numbers": "If food costs are $2$ and $5$ dollars with quantities $3$ and $1$, total cost is $11$."
+        "title": "Slack",
+        "background": "constraint $x\\le2$ has slack $1$ at $(1,3)$.",
+        "numbers": "constraint $x\\le2$ has slack $1$ at $(1,3)$."
       },
       {
-        "title": "Fair threshold mixtures",
-        "background": "Randomizing between classifiers can make rates linear in mixture weights.",
-        "numbers": "Mixing classifier A with rate $0.8$ at weight $0.25$ and B with rate $0.4$ at weight $0.75$ gives $0.5$."
+        "title": "Ad allocation",
+        "background": "objective $2x+3y$ means the $y$ channel has higher value per unit, but the $y\\le3$ cap limits it.",
+        "numbers": "objective $2x+3y$ means the $y$ channel has higher value per unit, but the $y\\le3$ cap limits it."
       },
       {
-        "title": "Production planning",
-        "background": "Factories use LPs when each unit consumes fixed amounts of resources.",
-        "numbers": "If one item uses 2 CPU-hours and another uses 3, plan $(4,5)$ uses $8+15=23$ CPU-hours."
+        "title": "Relaxed classification",
+        "background": "LP feasibility with $100$ constraints and $20$ variables still uses the same half-space geometry.",
+        "numbers": "LP feasibility with $100$ constraints and $20$ variables still uses the same half-space geometry."
       },
       {
-        "title": "LP relaxations for hard problems",
-        "background": "Discrete choices can be relaxed to continuous variables to get bounds.",
-        "numbers": "A binary variable relaxed to $0\\le x\\le1$ may take $x=0.6$, giving a bound even if the final integer solution needs $0$ or $1$."
+        "title": "Sensitivity",
+        "background": "increasing the $y$ cap from $3$ to $3.5$ would allow $(0.5,3.5)$ with value $11.5$ if other constraints stay the same.",
+        "numbers": "increasing the $y$ cap from $3$ to $3.5$ would allow $(0.5,3.5)$ with value $11.5$ if other constraints stay the same."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -6186,6 +7369,62 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson applies constrained optimization to linear objectives and linear inequalities. A linear program has a flat objective and a feasible region made from half-spaces. The geometry is simple enough to see in two variables and powerful enough to support large practical allocation and feasibility problems. It also sets up quadratic programming, where the constraints stay linear but the objective gains curvature.</p>",
+    "symbols": [
+      {
+        "sym": "$x,y$",
+        "desc": "decision variables"
+      },
+      {
+        "sym": "$c^Tx$",
+        "desc": "the linear objective"
+      },
+      {
+        "sym": "$Ax\\le b$",
+        "desc": "linear constraints"
+      },
+      {
+        "sym": "a vertex",
+        "desc": "a corner formed by active constraints"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the LP maximize $2x+3y$ subject to $x+y\\le4$, $x\\le2$, $y\\le3$, $x,y\\ge0$.",
+        "result": "Write the LP maximize $2x+3y$ subject to $x+y\\le4$, $x\\le2$, $y\\le3$, $x,y\\ge0$.",
+        "why": ""
+      },
+      {
+        "do": "The feasible set is an intersection of half-spaces",
+        "result": "The feasible set is an intersection of half-spaces",
+        "why": "each linear inequality keeps one side of a line."
+      },
+      {
+        "do": "A linear objective has level sets $2x+3y=c$",
+        "result": "A linear objective has level sets $2x+3y=c$",
+        "why": "parallel lines."
+      },
+      {
+        "do": "Sliding the level line upward until it last touches the polygon makes contact at an edge or vertex.",
+        "result": "Sliding the level line upward until it last touches the polygon makes contact at an edge or vertex.",
+        "why": ""
+      },
+      {
+        "do": "List candidate vertices",
+        "result": "$(0,0)$, $(2,0)$, $(2,2)$, $(1,3)$, $(0,3)$.",
+        "why": ""
+      },
+      {
+        "do": "Evaluate objective values",
+        "result": "$0$, $4$, $10$, $11$, $9$.",
+        "why": ""
+      },
+      {
+        "do": "Choose $(1,3)$ with value $11$",
+        "result": "Choose $(1,3)$ with value $11$",
+        "why": "the largest vertex value solves this LP."
+      }
     ],
     "prereqs": [
       "math-22-23"
@@ -6214,8 +7453,8 @@
         "duality"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>Quadratic programming</b> gives a particular tool for that difficulty. Its central move is positive semidefinite curvature: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is minimize $\\dfrac12x^TQx+c^Tx$ subject to linear constraints, usually with $Q\\succeq0$. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle linear constraints.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>A convex quadratic objective has a bowl-shaped surface. Without constraints, the minimizer is found by setting the gradient to zero, which produces a linear system. With constraints, the same stationarity idea is combined with KKT conditions for the active constraints.</p><p>Positive definiteness of $Q$ matters because it makes the quadratic curve upward in every direction. Then a stationary feasible point is not just locally good; it is globally minimizing for the convex QP. The derivation begins with the unconstrained case so the role of $Qx=c$ is clear before constraints are added.</p>",
+    "definition": "<p><b>Statement.</b> Equality-free convex QP stationarity.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "Project point $z=3$ onto the interval $[0,2]$ by solving $\\min_x \\tfrac12(x-3)^2$ subject to $0\\le x\\le2$.",
       "skills": [
@@ -6394,34 +7633,34 @@
     ],
     "applications": [
       {
-        "title": "Support vector machines",
-        "background": "The hard- and soft-margin SVM primal is a quadratic program: minimize norm while satisfying margin constraints.",
-        "numbers": "For $w=[3,4]$, margin regularizer $\\tfrac12||w||^2=\\tfrac12(25)=12.5$."
+        "title": "Unconstrained QP",
+        "background": "$Q=\\operatorname{diag}(2,4)$ and $c=(2,8)$ give $x=(1,2)$.",
+        "numbers": "$Q=\\operatorname{diag}(2,4)$ and $c=(2,8)$ give $x=(1,2)$."
       },
       {
-        "title": "Portfolio optimization",
-        "background": "Mean-variance investing balances linear return with quadratic risk.",
-        "numbers": "If variance matrix is identity and weights are $[0.6,0.4]$, risk term $\\tfrac12||w||^2=0.26$."
+        "title": "Objective value",
+        "background": "at $(1,2)$, $\\tfrac12(2+16)-(2+16)=-9$.",
+        "numbers": "at $(1,2)$, $\\tfrac12(2+16)-(2+16)=-9$."
       },
       {
-        "title": "Projection layers",
-        "background": "Projected gradient methods solve small QPs when parameters must satisfy bounds or simplex constraints.",
-        "numbers": "Projecting $[1.2,-0.1,0.4]$ onto nonnegative entries starts by clipping to $[1.2,0,0.4]$ before any sum constraint."
+        "title": "Box-constrained coordinate",
+        "background": "if the unconstrained solution has $x_1=1.4$ but constraint $x_1\\le1$, the active value is $x_1=1$.",
+        "numbers": "if the unconstrained solution has $x_1=1.4$ but constraint $x_1\\le1$, the active value is $x_1=1$."
       },
       {
-        "title": "Model predictive control",
-        "background": "Control systems often solve a QP at each time step because dynamics are linearized and costs are quadratic.",
-        "numbers": "A control effort $u=[2,-1]$ with cost $\\tfrac12||u||^2$ has cost $2.5$."
+        "title": "SVM primal form",
+        "background": "$\\tfrac12\\Vert w\\Vert^2+C\\sum \\xi_i$ with linear margin constraints is a QP.",
+        "numbers": "$\\tfrac12\\Vert w\\Vert^2+C\\sum \\xi_i$ with linear margin constraints is a QP."
       },
       {
-        "title": "Constrained least squares",
-        "background": "Least squares with nonnegativity constraints is a QP.",
-        "numbers": "Residual norm $||Ax-b||=3$ gives quadratic loss $\\tfrac12\\cdot9=4.5$."
+        "title": "Portfolio variance",
+        "background": "$Q=\\operatorname{diag}(0.04,0.09)$ and weights $(0.5,0.5)$ give variance $0.0325$.",
+        "numbers": "$Q=\\operatorname{diag}(0.04,0.09)$ and weights $(0.5,0.5)$ give variance $0.0325$."
       },
       {
-        "title": "Trust-region subproblems",
-        "background": "Second-order methods minimize a quadratic model inside a step-size ball.",
-        "numbers": "If proposed step norm is $5$ and radius is $2$, the constraint $||s||\\le2$ is active."
+        "title": "Trust-region local model",
+        "background": "$g=(2,0)$, $Q=I$, unconstrained step $-g=(-2,0)$ is clipped to radius $1$ as $(-1,0)$.",
+        "numbers": "$g=(2,0)$, $Q=I$, unconstrained step $-g=(-2,0)$ is clipped to radius $1$ as $(-1,0)$."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -6430,6 +7669,57 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson extends linear programming by allowing a quadratic objective while keeping linear constraints. Quadratic programming is the natural form for constrained least squares, support vector machines, portfolio variance, and trust-region models. The curvature matrix $Q$ supplies the second-order shape. The linear constraints determine which stationary point is feasible.</p>",
+    "symbols": [
+      {
+        "sym": "$Q$",
+        "desc": "the curvature matrix"
+      },
+      {
+        "sym": "$c$",
+        "desc": "the linear objective vector"
+      },
+      {
+        "sym": "$x$",
+        "desc": "the decision variable"
+      },
+      {
+        "sym": "active constraints",
+        "desc": "constraints holding with equality at the solution"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the unconstrained QP $\\min \\tfrac12x^TQx-c^Tx$ with $Q$ positive definite",
+        "result": "Write the unconstrained QP $\\min \\tfrac12x^TQx-c^Tx$ with $Q$ positive definite",
+        "why": "convex quadratic objective."
+      },
+      {
+        "do": "Differentiate",
+        "result": "$\\nabla f(x)=Qx-c$",
+        "why": "gradient of the quadratic term is $Qx$ when $Q$ is symmetric."
+      },
+      {
+        "do": "Set stationarity $Qx-c=0$",
+        "result": "Set stationarity $Qx-c=0$",
+        "why": "unconstrained optimum has zero gradient."
+      },
+      {
+        "do": "Solve $Qx=c$",
+        "result": "Solve $Qx=c$",
+        "why": "linear system for the minimizer."
+      },
+      {
+        "do": "If linear constraints are present, add KKT conditions with multipliers for active constraints.",
+        "result": "If linear constraints are present, add KKT conditions with multipliers for active constraints.",
+        "why": ""
+      },
+      {
+        "do": "The positive-definite $Q$ makes the stationary feasible point the global minimizer.",
+        "result": "The positive-definite $Q$ makes the stationary feasible point the global minimizer.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-22-24"
@@ -6459,8 +7749,8 @@
         "matrix calculus"
       ]
     },
-    "motivation": "<p>You already know that training means changing parameters to reduce a loss. The hard part is that different coordinates, constraints, and curvatures do not all behave the same way.</p><p><b>Nonconvex optimization & the DL landscape</b> gives a particular tool for that difficulty. Its central move is local minima: a way to make optimization less like blind walking and more like reading the local terrain.</p>",
-    "definition": "<p>The core formula is nonconvex means $f(\\alpha x+(1-\\alpha)y)\\le\\alpha f(x)+(1-\\alpha)f(y)$ can fail; training seeks useful low loss, not a certified global minimum. Here the symbols name the current parameter or variable, the gradient information, and any memory or constraints used by the method. The method is built to handle saddles and flat directions.</p><p>The reason this helps is that the raw gradient is not always the best step by itself. Scaling, pricing, coordinate choices, or curvature can turn the same local information into a safer or more informative move.</p><p><b>Assumptions that matter:</b> check differentiability when gradients or Hessians are used; check convexity before claiming global optimality; keep learning rates, decay constants, and multiplier signs in their required ranges; and remember that numerical solvers certify different things depending on the problem class.</p>",
+    "motivation": "<p>In a convex problem, stationarity and curvature conditions can often certify global optimality. In a nonconvex problem, the same local signals are harder to interpret. A zero gradient may indicate a local minimum, a saddle, or a flat region, and the Hessian may reveal mixed curvature.</p><p>Deep-learning models are usually overparameterized, which can create many low-loss parameter settings rather than a single isolated solution. Stochasticity from minibatches can help the optimizer move through flat or saddle-like regions. This lesson is explain-only because the main point is landscape behavior: stationary points need not be global, and low training loss must be considered together with generalization.</p>",
+    "definition": "<p><b>Statement.</b> this is a landscape concept, not one formula. contrasting convex guarantees with nonconvex behavior: stationary points need not be global, saddles can have zero gradient, stochasticity can help escape, and overparameterization can create many connected low-loss solutions.</p><p><b>Assumptions that matter:</b> Use the stated variables and the regularity conditions in the plan.</p>",
     "worked": {
       "problem": "A tiny nonconvex loss is $L(w)=(w^2-1)^2+0.1w$. Evaluate the two wells at $w=-1$ and $w=1$, then take one gradient step from $w=0.2$ with $\\eta=0.1$.",
       "skills": [
@@ -6649,34 +7939,34 @@
     ],
     "applications": [
       {
-        "title": "Deep neural networks",
-        "background": "Deep losses are nonconvex because layers multiply parameters and activations. Training still works by finding low-loss basins that generalize.",
-        "numbers": "If train loss falls from $2.3$ to $0.4$ and validation loss from $2.4$ to $0.6$, the gap is $0.2$."
+        "title": "Saddle example",
+        "background": "$L(x,y)=x^2-y^2$ has $\\nabla L(0,0)=0$ but Hessian eigenvalues $2$ and $-2$, so it is not a minimum.",
+        "numbers": "$L(x,y)=x^2-y^2$ has $\\nabla L(0,0)=0$ but Hessian eigenvalues $2$ and $-2$, so it is not a minimum."
       },
       {
-        "title": "Saddles in high dimension",
-        "background": "In many dimensions, saddle points are more common than isolated bad local minima. Negative curvature directions allow escape.",
-        "numbers": "If one Hessian eigenvalue is $-0.5$, a step of length $0.1$ along that eigenvector changes the quadratic model by about $0.5(-0.5)(0.1)^2=-0.0025$."
+        "title": "Local minimum example",
+        "background": "$L(x)=x^4-x^2$ has stationary points $0$ and $\\pm1/\\sqrt2$; the latter have value $-0.25$.",
+        "numbers": "$L(x)=x^4-x^2$ has stationary points $0$ and $\\pm1/\\sqrt2$; the latter have value $-0.25$."
       },
       {
-        "title": "Flat minima and generalization",
-        "background": "Flat regions are studied because parameters can move without sharply increasing loss, which may correlate with robustness.",
-        "numbers": "If moving weight noise of norm $0.1$ raises loss from $0.50$ to $0.505$, the increase is only $0.005$."
+        "title": "Flat direction",
+        "background": "$L(x,y)=x^2$ has zero curvature in $y$, so all $(0,y)$ minimize training loss equally.",
+        "numbers": "$L(x,y)=x^2$ has zero curvature in $y$, so all $(0,y)$ minimize training loss equally."
       },
       {
-        "title": "Initialization matters",
-        "background": "Different random seeds can land in different basins, especially for small or brittle models.",
-        "numbers": "Three seeds with validation accuracies $0.82$, $0.85$, and $0.83$ have mean $0.833$ and range $0.03$."
+        "title": "Sharpness number",
+        "background": "Hessian eigenvalue $100$ means a step of $0.01$ in that eigen-direction raises the quadratic model by about $0.5\\cdot100\\cdot0.01^2=0.005$.",
+        "numbers": "Hessian eigenvalue $100$ means a step of $0.01$ in that eigen-direction raises the quadratic model by about $0.5\\cdot100\\cdot0.01^2=0.005$."
       },
       {
-        "title": "Learning-rate schedules",
-        "background": "Large steps can explore and escape shallow traps; smaller steps later settle into a basin.",
-        "numbers": "Cosine or step decay from $0.1$ to $0.001$ reduces step scale by a factor of $100$."
+        "title": "SGD noise scale",
+        "background": "minibatch gradient standard deviation $0.2$ with learning rate $0.01$ gives update noise scale $0.002$.",
+        "numbers": "minibatch gradient standard deviation $0.2$ with learning rate $0.01$ gives update noise scale $0.002$."
       },
       {
-        "title": "Batch noise as exploration",
-        "background": "Mini-batch noise can jostle training out of sharp or saddle regions.",
-        "numbers": "If full gradient is $[0.01,0]$ but mini-batch noise standard deviation is $0.05$, the noise is five times the signal in that coordinate."
+        "title": "Generalization gap",
+        "background": "training loss $0.05$ and validation loss $0.08$ give gap $0.03$, so low training loss alone is not the full optimization story.",
+        "numbers": "training loss $0.05$ and validation loss $0.08$ give gap $0.03$, so low training loss alone is not the full optimization story."
       }
     ],
     "applicationsClose": "Across theory and training practice, the method is one more way to make the optimization landscape legible through numbers you can compute.",
@@ -6685,6 +7975,33 @@
       "The arithmetic of each update matters: scale, sign, and feasibility change the result.",
       "Convex settings give stronger certificates than nonconvex settings.",
       "In ML, these methods are useful because training is optimization under noise, scale, and constraints."
+    ],
+    "connectionsProse": "<p>This lesson closes the section by contrasting convex guarantees with the landscapes common in deep learning. Earlier convex lessons gave clean global certificates; nonconvex objectives can have saddles, flat directions, local minima, and sharp valleys. The optimizer tools still matter, but their guarantees are more limited. The focus shifts from proving a unique global optimum to finding low-loss solutions that also generalize.</p>",
+    "symbols": [
+      {
+        "sym": "$\\theta$",
+        "desc": "the full parameter vector"
+      },
+      {
+        "sym": "$L(\\theta)$",
+        "desc": "training loss"
+      },
+      {
+        "sym": "$\\nabla L$",
+        "desc": "the gradient"
+      },
+      {
+        "sym": "$\\nabla^2L$",
+        "desc": "the Hessian"
+      },
+      {
+        "sym": "a saddle has mixed Hessian curvature",
+        "desc": "as defined in the plan"
+      },
+      {
+        "sym": "a basin",
+        "desc": "a region whose local descent paths lead to similar low loss"
+      }
     ],
     "prereqs": [
       "math-22-25"

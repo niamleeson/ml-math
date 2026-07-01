@@ -29,8 +29,8 @@
         "residuals"
       ]
     },
-    "motivation": "<p>You already solve word problems by translating them into equations. Scientific computing is the same habit at a larger scale: start with a real question, choose a mathematical model, compute carefully, and check whether the answer deserves trust.</p><p>The workflow matters because computers are fast, not automatically wise. A simulation can look polished while hiding a bad model, a coarse grid, or a numerically fragile calculation. The calm habit is to ask at every stage: what problem am I solving, what approximation did I introduce, and how do I know the answer is reasonable?</p>",
-    "definition": "<p>A <b>scientific computing workflow</b> is the chain $$\\text{question}\\to\\text{model}\\to\\text{discretization}\\to\\text{algorithm}\\to\\text{implementation}\\to\\text{verification}\\to\\text{interpretation}.$$ The question is the real-world target, the model is the mathematical description, the discretization turns continuous objects into finite arrays, the algorithm computes, and verification checks whether the computation solved the intended numerical problem.</p><p>The central split is between <b>modeling error</b>, <b>discretization error</b>, <b>roundoff error</b>, and <b>iteration error</b>. A useful error budget is $|\\text{truth}-\\text{computed}|\\le |\\text{truth}-\\text{model}|+|\\text{model}-\\text{discrete}|+|\\text{discrete}-\\text{algorithm}|+|\\text{algorithm}-\\text{computed}|$. This is just the triangle inequality, but it gives the workflow its discipline.</p><p><b>Assumptions that matter:</b> the mathematical model must match the question closely enough; units and scales must be consistent; finite arrays only approximate continuous quantities; and a small residual proves the equations were nearly solved, not that the original model was perfect.</p>",
+    "motivation": "<p>Scientific computing turns a real question into a trustworthy numerical answer by moving through a reproducible chain: model the problem, discretize or approximate it, compute, check error, and report limits. The important word is trustworthy. A numerical answer can be wrong because the model is wrong, because the approximation is too coarse, because the solver has not converged, because the code has a bug, or because the result is interpreted more precisely than the computation allows.</p><p>The workflow separates those risks. The model stage asks whether the mathematical description matches the question. The discretization or approximation stage decides what finite problem the computer will actually solve. The compute stage produces a numerical answer, while residuals, grid refinement, repeated runs, and unit checks test whether the answer is stable. The final reporting stage records both the answer and the limits of confidence around it.</p>",
+    "definition": "<p>The <b>scientific computing workflow</b> is a five-stage loop: state the real question, build a mathematical model, discretize or approximate it, compute, check error, and report the result with its limits.</p><p><b>Assumptions that matter:</b> each stage catches a different failure mode: wrong model, unstable discretization, solver error, implementation bug, or overconfident interpretation.</p>",
     "worked": {
       "problem": "A temperature simulation has modeling error about $0.8^\\circ$C, grid error $0.3^\\circ$C, solver tolerance $0.05^\\circ$C, and roundoff below $0.01^\\circ$C. Bound the total error and identify the dominant source.",
       "skills": [
@@ -229,34 +229,34 @@
     ],
     "applications": [
       {
-        "title": "Weather and climate models",
-        "background": "Forecasting turns physics into finite computations on a grid. The workflow separates model assumptions, grid spacing, time stepping, and solver checks.",
-        "numbers": "If a regional model has $1.5^\\circ$C model error and $0.4^\\circ$C grid error, the safe budget is at least $1.9^\\circ$C before roundoff or solver error."
+        "title": "Residual check",
+        "background": "if a linear solve returns $\\|Ax-b\\|=10^{-6}$ and $\\|b\\|=10$, the relative residual is $10^{-7}$.",
+        "numbers": "if a linear solve returns $\\|Ax-b\\|=10^{-6}$ and $\\|b\\|=10$, the relative residual is $10^{-7}$."
       },
       {
-        "title": "Computational fluid dynamics",
-        "background": "Aircraft and vehicle design use simulations because physical prototypes are expensive. Engineers refine grids and compare residuals before trusting lift or drag numbers.",
-        "numbers": "If drag changes from $0.312$ to $0.318$ when the grid doubles, the grid-change estimate is $0.006$, about $1.9\\%$ of $0.318$."
+        "title": "Grid refinement",
+        "background": "halving $h$ from $0.1$ to $0.05$ should cut a first-order error from $0.02$ to about $0.01$.",
+        "numbers": "halving $h$ from $0.1$ to $0.05$ should cut a first-order error from $0.02$ to about $0.01$."
       },
       {
-        "title": "Training data generated by simulators",
-        "background": "ML models sometimes learn from synthetic data produced by physics engines. The simulator's numerical errors become part of the training data quality.",
-        "numbers": "If simulator labels have error bound $0.05$ and model training loss is $0.02$, reducing loss below $0.05$ may not improve label truth much."
+        "title": "Runtime budget",
+        "background": "a workflow with 3 model candidates and 4 grid sizes creates $12$ runs before solver sweeps.",
+        "numbers": "a workflow with 3 model candidates and 4 grid sizes creates $12$ runs before solver sweeps."
       },
       {
-        "title": "Reproducible experiments",
-        "background": "Scientific computing values logs, seeds, versions, and unit tests because tiny implementation changes can alter numerical results.",
-        "numbers": "If two runs report objective values $1.2341$ and $1.2344$, their absolute difference is $0.0003$, which is below a tolerance of $10^{-3}$."
+        "title": "Reproducibility",
+        "background": "five repeated Monte Carlo runs with standard deviation $0.04$ have standard error $0.04/\\sqrt5\\approx0.0179$.",
+        "numbers": "five repeated Monte Carlo runs with standard deviation $0.04$ have standard error $0.04/\\sqrt5\\approx0.0179$."
       },
       {
-        "title": "Mesh refinement studies",
-        "background": "A standard verification move is to solve the same problem on several grid sizes and look for predictable convergence.",
-        "numbers": "For second-order behavior, errors $0.08$, $0.02$, and $0.005$ after halving $h$ twice show factors near $4$ each time."
+        "title": "Unit consistency",
+        "background": "a velocity of $30$ m/s over $2$ s predicts $60$ m; a solver returning $60$ km is a modeling-unit failure.",
+        "numbers": "a velocity of $30$ m/s over $2$ s predicts $60$ m; a solver returning $60$ km is a modeling-unit failure."
       },
       {
-        "title": "Scientific ML pipelines",
-        "background": "Hybrid systems combine numerical solvers with learned components. The workflow clarifies whether a failure comes from data, equations, optimization, or floating-point arithmetic.",
-        "numbers": "If total error is $0.31$ and the learned surrogate contributes $0.22$, then the surrogate accounts for $0.22/0.31\\approx71\\%$ of the budget."
+        "title": "Stopping rule",
+        "background": "if the validation metric changes by $0.002$ while the numerical tolerance is $0.01$, the computation cannot justify reporting the smaller change.",
+        "numbers": "if the validation metric changes by $0.002$ while the numerical tolerance is $0.01$, the computation cannot justify reporting the smaller change."
       }
     ],
     "applicationsClose": "The same workflow wears many uniforms: model, discretize, compute, verify, and only then interpret the answer.",
@@ -265,6 +265,33 @@
       "Error budgets separate modeling, discretization, iteration, and roundoff effects.",
       "Residuals check numerical equations; they do not by themselves validate the real-world model.",
       "Scaling estimates help you predict whether a computation will remain practical."
+    ],
+    "connectionsProse": "<p>This lesson gathers ideas that appeared throughout the applied mathematics track: modeling, approximation, computation, and error checking. Earlier lessons often focused on one formula or method at a time. Scientific computing asks how those pieces become a reliable answer to a real question. The workflow also prepares the reader for the rest of this section. Vectorization, floating-point arithmetic, linear solvers, ODE methods, Monte Carlo estimates, and GPU execution all fit into the same loop: state the model, compute carefully, and check what the answer can honestly support.</p>",
+    "symbols": [
+      {
+        "sym": "$q$",
+        "desc": "the real question"
+      },
+      {
+        "sym": "$m$",
+        "desc": "the mathematical model"
+      },
+      {
+        "sym": "$h$",
+        "desc": "a discretization or approximation scale"
+      },
+      {
+        "sym": "$\\hat",
+        "desc": "y$ the computed answer"
+      },
+      {
+        "sym": "$e$",
+        "desc": "an error estimate"
+      },
+      {
+        "sym": "$r$",
+        "desc": "a residual used to check whether the computed answer satisfies the model"
+      }
     ]
   });
 
@@ -291,8 +318,8 @@
         "array shapes"
       ]
     },
-    "motivation": "<p>You already know how to add two lists entry by entry. A loop says that instruction many times; vectorization says the whole operation in one mathematical sentence, such as $y=3x+2$ for every entry of $x$.</p><p>The point is not just shorter code. Modern numerical libraries hand vector and matrix operations to carefully tuned kernels that use cache, SIMD instructions, and sometimes GPUs. Vectorization is how your code speaks the language those machines are built to accelerate.</p>",
-    "definition": "<p><b>Vectorization</b> means expressing repeated scalar operations as operations on whole arrays. If $x\\in\\mathbb{R}^n$, then $y=2x+1$ means $y_i=2x_i+1$ for each index $i$. If $X\\in\\mathbb{R}^{m\\times d}$ and $w\\in\\mathbb{R}^d$, then $Xw\\in\\mathbb{R}^m$ collects all $m$ dot products at once.</p><p>The key identity is that a batch of linear predictions is a matrix-vector product: row $i$ of $Xw$ equals $\\sum_{j=1}^d X_{ij}w_j$. That is exactly the loop over features, but the matrix notation exposes the whole computation to optimized linear algebra.</p><p><b>Assumptions that matter:</b> array shapes must agree; broadcasting must mean what you intend; vectorized code still performs the same arithmetic up to possible ordering changes; and memory layout can matter as much as the number of arithmetic operations.</p>",
+    "motivation": "<p>Vectorization replaces many scalar operations with one array operation that a numerical library can run in optimized kernels. Instead of asking an interpreter to perform one row prediction, then another, then another, the program hands the whole batch to a compiled routine. The mathematical operation is the same collection of multiply-adds, but the organization of the work is different.</p><p>This matters because modern CPUs, GPUs, and BLAS libraries are built to move and multiply blocks of data, not one Python loop iteration at a time. A vectorized call can reuse optimized memory access, SIMD instructions, cache behavior, and parallel execution. The speedup is not a new formula for $Xw$; it is the benefit of giving the same formula to the layer of software and hardware designed to execute it efficiently.</p>",
+    "definition": "<p><b>Vectorization</b> computes a batch of scalar dot products as one array operation. For a batch matrix-vector product, $$y=Xw.$$</p><p><b>Assumptions that matter:</b> $X$ has $n$ rows and $d$ features, all rows use the same weight vector $w$, and the vectorized call performs the same arithmetic as the scalar loop while reducing interpreter overhead.</p>",
     "worked": {
       "problem": "For $X=\\begin{bmatrix}1&2\\3&4\\5&6\\end{bmatrix}$ and $w=\\begin{bmatrix}0.5\\-1\\end{bmatrix}$, compute the vectorized predictions $Xw$.",
       "skills": [
@@ -496,34 +523,34 @@
     ],
     "applications": [
       {
-        "title": "Batch prediction",
-        "background": "Linear and neural models usually score many examples at once. Vectorization collects the examples into a matrix so a single kernel does the work.",
-        "numbers": "If $X$ has shape $1000\\times20$ and $w$ has length $20$, then $Xw$ produces $1000$ predictions."
+        "title": "Batch inference",
+        "background": "for $X=\\begin{bmatrix}1&2\\3&4\\5&6\\end{bmatrix}$ and $w=(0.5,-1)$, vectorization gives $Xw=(-1.5,-2.5,-3.5)$.",
+        "numbers": "for $X=\\begin{bmatrix}1&2\\3&4\\5&6\\end{bmatrix}$ and $w=(0.5,-1)$, vectorization gives $Xw=(-1.5,-2.5,-3.5)$."
       },
       {
-        "title": "Image processing",
-        "background": "Images are arrays, and filters often apply the same arithmetic to millions of pixels. Vectorized operations avoid slow Python-level pixel loops.",
-        "numbers": "Increasing brightness by $15$ sends pixel values $[20,100,240]$ to $[35,115,255]$ after clipping at $255$."
+        "title": "Transformer projection",
+        "background": "a batch with $4096$ tokens and width $768$ performs $4096\\cdot768=3{,}145{,}728$ multiply-add pairs for one vector projection.",
+        "numbers": "a batch with $4096$ tokens and width $768$ performs $4096\\cdot768=3{,}145{,}728$ multiply-add pairs for one vector projection."
       },
       {
-        "title": "Distance computations in clustering",
-        "background": "K-means repeatedly computes distances from many points to a few centers. Broadcasting makes the point-center differences explicit as arrays.",
-        "numbers": "For point $(2,5)$ and center $(4,1)$, squared distance is $(2-4)^2+(5-1)^2=20$."
+        "title": "Measured kernel speedup",
+        "background": "$120$ ms loop versus $6$ ms vectorized call gives a $20\\times$ speedup.",
+        "numbers": "$120$ ms loop versus $6$ ms vectorized call gives a $20\\times$ speedup."
       },
       {
-        "title": "Gradient updates",
-        "background": "Optimizers update every parameter with the same rule. A vectorized update is both clearer and faster.",
-        "numbers": "With $w=[1,-2]$, gradient $g=[0.3,-0.5]$, and $\\eta=0.1$, the update gives $w-\\eta g=[0.97,-1.95]$."
+        "title": "Memory-transfer bound",
+        "background": "moving $100$ MB at $800$ GB/s takes $100\\times10^6/(800\\times10^9)=0.125$ ms before arithmetic is counted.",
+        "numbers": "moving $100$ MB at $800$ GB/s takes $100\\times10^6/(800\\times10^9)=0.125$ ms before arithmetic is counted."
       },
       {
-        "title": "GPU acceleration",
-        "background": "GPUs are designed for many similar operations in parallel. Matrix operations expose enough regular work to keep them busy.",
-        "numbers": "A batch matrix multiply of shapes $64\\times128$ and $128\\times256$ produces $64\\times256=16384$ outputs."
+        "title": "Broadcast normalization",
+        "background": "subtracting a length-$768$ mean vector from $4096$ rows applies $3{,}145{,}728$ scalar subtractions.",
+        "numbers": "subtracting a length-$768$ mean vector from $4096$ rows applies $3{,}145{,}728$ scalar subtractions."
       },
       {
-        "title": "Simulation state updates",
-        "background": "Particle simulations store positions and velocities in arrays. One vectorized formula advances every particle.",
-        "numbers": "With positions $[0,2,5]$, velocities $[1,-1,0.5]$, and $\\Delta t=0.1$, new positions are $[0.1,1.9,5.05]$."
+        "title": "Mini-batch loss",
+        "background": "computing $Xw-y$ for $8192$ examples produces $8192$ residuals in one array operation.",
+        "numbers": "computing $Xw-y$ for $8192$ examples produces $8192$ residuals in one array operation."
       }
     ],
     "applicationsClose": "Vectorization is the habit of matching your code to the mathematical array operation and the hardware that already knows how to run it well.",
@@ -532,6 +559,57 @@
       "Shape checking is part of the mathematics, not a coding afterthought.",
       "Matrix products collect many dot products into one operation.",
       "Broadcasting is powerful only when the repeated dimension is intentional."
+    ],
+    "connectionsProse": "<p>This lesson connects matrix multiplication with the way numerical programs actually run on modern hardware. Earlier linear algebra lessons treated $Xw$ as a compact notation for many dot products. Vectorization keeps that mathematical meaning but changes how the work is expressed to the computer. The lesson leads directly into scientific Python, array programming, GPU kernels, and batched machine-learning inference. It also sets up a recurring theme in this section: the arithmetic count is only part of performance, because overhead and data movement also matter.</p>",
+    "symbols": [
+      {
+        "sym": "$X\\in\\mathbb R^{n\\times d}$",
+        "desc": "a batch of $n$ examples and $d$ features"
+      },
+      {
+        "sym": "$w\\in\\mathbb R^d$",
+        "desc": "the weight vector"
+      },
+      {
+        "sym": "$y\\in\\mathbb R^n$",
+        "desc": "the prediction vector"
+      },
+      {
+        "sym": "$n d$",
+        "desc": "scalar feature-weight products"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the $i$th scalar prediction as $y_i=\\sum_{j=1}^d X_{ij}w_j$",
+        "result": "Write the $i$th scalar prediction as $y_i=\\sum_{j=1}^d X_{ij}w_j$",
+        "why": "row $i$ combines all $d$ features."
+      },
+      {
+        "do": "Stack all $n$ scalar equations vertically",
+        "result": "Stack all $n$ scalar equations vertically",
+        "why": "every row uses the same weights."
+      },
+      {
+        "do": "The stacked equations equal $y=Xw$ by the definition of matrix multiplication.",
+        "result": "The stacked equations equal $y=Xw$ by the definition of matrix multiplication.",
+        "why": ""
+      },
+      {
+        "do": "The scalar loop performs $nd$ multiply-add pairs",
+        "result": "The scalar loop performs $nd$ multiply-add pairs",
+        "why": "it repeats the dot product for each of $n$ rows."
+      },
+      {
+        "do": "The vectorized call performs the same arithmetic but hands it to a compiled kernel, so overhead is paid once instead of $n$ times.",
+        "result": "overhead is paid once instead of $n$ times.",
+        "why": ""
+      },
+      {
+        "do": "If the loop takes $120$ ms and the vectorized kernel takes $6$ ms, the measured speedup is $120/6=20$.",
+        "result": "$120/6=20$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-01"
@@ -561,8 +639,8 @@
         "machine epsilon"
       ]
     },
-    "motivation": "<p>You already round numbers in daily life. Saying a bill is about $20$ dollars instead of $19.97 is harmless because the scale of the task allows it. Computers do a disciplined version of that rounding at enormous speed.</p><p>The danger is that some formulas magnify small rounding errors. Subtracting nearly equal numbers, summing a long list in an unlucky order, or solving an ill-conditioned system can turn harmless-looking roundoff into a visible mistake. Floating-point wisdom is learning which computations are sensitive.</p>",
-    "definition": "<p>A floating-point number stores a sign, a significand, and an exponent, so most real numbers are rounded to nearby representable numbers. The common model is $\\operatorname{fl}(x\\circ y)=(x\\circ y)(1+\\delta)$ with $|\\delta|\\le u$, where $\\circ$ is one arithmetic operation and $u$ is the unit roundoff.</p><p><b>Absolute error</b> is $|\\hat x-x|$, and <b>relative error</b> is $|\\hat x-x|/|x|$ when $x\\ne0$. Relative error explains why $0.001$ error is large for $0.002$ but tiny for $1000$. Cancellation matters because subtracting close numbers shrinks the true result while previous absolute errors remain.</p><p><b>Assumptions that matter:</b> the simple one-step model assumes no overflow, underflow, or invalid operations; relative error is meaningful only away from zero; and stable algorithms control error growth rather than eliminating rounding entirely.</p>",
+    "motivation": "<p>Floating-point arithmetic stores a rounded version of real arithmetic. Most roundoff is tiny because each operation is close to the corresponding real-number operation. The difficulty is that programs usually perform many operations, and the small errors can accumulate or be magnified by the structure of the computation.</p><p>Some computations are much more sensitive than others. Long sums collect many rounded operations. Subtracting nearly equal numbers can erase leading digits and leave mostly roundoff behind. Ill-conditioned solves can turn a small data or arithmetic perturbation into a large change in the answer. The purpose of the standard floating-point model is to give a compact way to estimate these effects before trusting extra digits.</p>",
+    "definition": "<p><b>Floating-point error</b> is modeled by treating each rounded operation as the exact operation multiplied by a small relative perturbation: $$\\operatorname{fl}(a\\circ b)=(a\\circ b)(1+\\delta).$$</p><p><b>Assumptions that matter:</b> one rounding obeys $|\\delta|\\le u$, accumulated bounds use $\\gamma_n=nu/(1-nu)$, and the bound requires $nu<1$.</p>",
     "worked": {
       "problem": "A computation returns $\\hat x=1.0004$ for a true value $x=1.0000$, and returns $\\hat y=0.0004$ for a true value $y=0.0001$. Compare the relative errors.",
       "skills": [
@@ -766,34 +844,34 @@
     ],
     "applications": [
       {
-        "title": "Stable softmax",
-        "background": "Classification code subtracts the maximum logit before exponentiating to avoid overflow while preserving probabilities.",
-        "numbers": "Logits $[1000,1001]$ become $[-1,0]$, giving weights $[0.368,1]$ instead of impossible values like $e^{1001}$."
+        "title": "FP32 accumulation bound",
+        "background": "$1000$ operations give $\\gamma_{1000}\\approx5.96\\times10^{-5}$.",
+        "numbers": "$1000$ operations give $\\gamma_{1000}\\approx5.96\\times10^{-5}$."
       },
       {
-        "title": "Summing gradients",
-        "background": "Training often sums many small gradient contributions. Summation order affects roundoff, especially in low precision.",
-        "numbers": "Adding $10^6$ copies of $10^{-6}$ should give $1$; an error of $10^{-8}$ per addition could accumulate to about $0.01$."
+        "title": "Cancellation audit",
+        "background": "in FP32, $1.000001-1.000000$ rounds to about $9.5367\\times10^{-7}$, a $-4.63\\%$ relative error from $10^{-6}$.",
+        "numbers": "in FP32, $1.000001-1.000000$ rounds to about $9.5367\\times10^{-7}$, a $-4.63\\%$ relative error from $10^{-6}$."
       },
       {
-        "title": "Mixed-precision training",
-        "background": "Modern accelerators use lower precision for speed and memory, then protect sensitive accumulations in higher precision.",
-        "numbers": "A batch of $1024$ products around $10^{-3}$ sums to about $1.024$; accumulating in too few bits can lose small product differences."
+        "title": "Dot-product budget",
+        "background": "a 768-term dot product has roundoff scale roughly $768u\\approx4.58\\times10^{-5}$ before conditioning effects.",
+        "numbers": "a 768-term dot product has roundoff scale roughly $768u\\approx4.58\\times10^{-5}$ before conditioning effects."
       },
       {
-        "title": "Ill-conditioned linear systems",
-        "background": "A matrix can make tiny data errors produce large solution errors. The condition number measures that sensitivity.",
-        "numbers": "If $\\kappa(A)=10^6$ and data relative error is $10^{-8}$, solution relative error can be around $10^{-2}$."
+        "title": "Loss logging",
+        "background": "reporting a validation loss change of $10^{-7}$ from FP32 arithmetic is suspicious because it is near single-operation roundoff.",
+        "numbers": "reporting a validation loss change of $10^{-7}$ from FP32 arithmetic is suspicious because it is near single-operation roundoff."
       },
       {
-        "title": "Finite-difference derivatives",
-        "background": "Approximating derivatives by subtracting nearby function values balances truncation error against cancellation.",
-        "numbers": "For $f(x)=x^2$ at $x=1$ and $h=10^{-4}$, $(f(1+h)-f(1))/h=2.0001$, close to $2$."
+        "title": "Stable summation",
+        "background": "pairwise summation reduces the effective depth from $n$ to about $\\log_2 n$; for $1024$ terms that is $10$ levels.",
+        "numbers": "pairwise summation reduces the effective depth from $n$ to about $\\log_2 n$; for $1024$ terms that is $10$ levels."
       },
       {
-        "title": "Probability products",
-        "background": "Multiplying many probabilities can underflow. Logs keep the same information on a safer scale.",
-        "numbers": "One hundred factors of $0.01$ give $10^{-200}$, while the log sum is $100\\ln0.01\\approx-460.5$."
+        "title": "Mixed-precision warning",
+        "background": "FP16 unit roundoff $2^{-11}\\approx4.88\\times10^{-4}$ makes a $0.1\\%$ metric change only about two units of roundoff.",
+        "numbers": "FP16 unit roundoff $2^{-11}\\approx4.88\\times10^{-4}$ makes a $0.1\\%$ metric change only about two units of roundoff."
       }
     ],
     "applicationsClose": "Floating-point arithmetic is not broken; it is a precise finite system that rewards formulas designed with scale and sensitivity in mind.",
@@ -802,6 +880,57 @@
       "Cancellation can turn small absolute input errors into large relative output errors.",
       "Conditioning describes problem sensitivity; stability describes algorithm behavior.",
       "Stable formulas often compute the same mathematical quantity in a numerically safer way."
+    ],
+    "connectionsProse": "<p>This lesson builds on real-number arithmetic, logarithmic scale, and the error estimates used in earlier numerical examples. In exact algebra, $20$ dollars and $19.97$ dollars differ by exactly $0.03$ dollars, and a long sum has the value dictated by the usual field rules. Floating-point arithmetic keeps the same intended operations but stores rounded representatives of real numbers. The lesson prepares the reader to judge when a computed result is numerically meaningful. It also connects to direct solvers, iterative methods, mixed precision, and machine-learning loss curves, where small reported changes can be below the precision that the computation can support.</p>",
+    "symbols": [
+      {
+        "sym": "$\\operatorname{fl}$",
+        "desc": "the floating-point result"
+      },
+      {
+        "sym": "$u$",
+        "desc": "unit roundoff"
+      },
+      {
+        "sym": "$\\delta$",
+        "desc": "one operation's relative rounding error"
+      },
+      {
+        "sym": "$\\gamma_n$",
+        "desc": "a compact bound for $n$ accumulated roundings"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $\\circ$ be one operation and $\\operatorname{fl}$ be the rounded result",
+        "result": "Let $\\circ$ be one operation and $\\operatorname{fl}$ be the rounded result",
+        "why": "computers store finite precision."
+      },
+      {
+        "do": "Bound one rounding by $|\\delta|\\le u$, where $u$ is the unit roundoff.",
+        "result": "the unit roundoff.",
+        "why": ""
+      },
+      {
+        "do": "For a chain of $n$ rounded operations, multiply the factors $(1+\\delta_1)\\cdots(1+\\delta_n)$.",
+        "result": "For a chain of $n$ rounded operations, multiply the factors $(1+\\delta_1)\\cdots(1+\\delta_n)$.",
+        "why": ""
+      },
+      {
+        "do": "Bound the accumulated relative error by $\\gamma_n=nu/(1-nu)$ when $nu<1$.",
+        "result": "Bound the accumulated relative error by $\\gamma_n=nu/(1-nu)$ when $nu<1$.",
+        "why": ""
+      },
+      {
+        "do": "For FP32, $u=2^{-24}\\approx5.96\\times10^{-8}$.",
+        "result": "For FP32, $u=2^{-24}\\approx5.96\\times10^{-8}$.",
+        "why": ""
+      },
+      {
+        "do": "With $n=1000$, $\\gamma_{1000}\\approx5.96\\times10^{-5}$, so a stable sum's relative roundoff should be about six parts in $10^5$ or less.",
+        "result": "a stable sum's relative roundoff should be about six parts in $10^5$ or less.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-02"
@@ -831,8 +960,8 @@
         "residuals"
       ]
     },
-    "motivation": "<p>You already know elimination from small systems: use one equation to remove a variable from another, then back-substitute. Direct linear solvers are that same idea organized for large matrices.</p><p>In practice, the question is not just whether a solver returns numbers. We ask whether pivoting was needed, whether the matrix was nearly singular, how large the residual is, and whether the computed answer is accurate enough for the surrounding model.</p>",
-    "definition": "<p>A <b>direct linear solver</b> computes a solution of $Ax=b$ in a finite planned sequence, commonly by factoring $A$ as $PA=LU$. Here $P$ is a permutation matrix for pivoting, $L$ is lower triangular, and $U$ is upper triangular. The solve becomes $Ly=Pb$ followed by $Ux=y$.</p><p>The reason this helps is that triangular systems are easy: the first equation gives one unknown, then each following equation gives the next. Gaussian elimination constructs $L$ and $U$ by subtracting multiples of pivot rows. Pivoting swaps rows so pivots are not dangerously small.</p><p><b>Assumptions that matter:</b> $A$ should be square and nonsingular for a unique solution; small pivots can magnify roundoff; a small residual $r=b-A\\hat x$ is strongest when $A$ is well-conditioned; and dense LU costs about $O(n^3)$ operations and $O(n^2)$ memory.</p>",
+    "motivation": "<p>A direct solver uses elimination or factorization to solve $Ax=b$ in a predictable number of algebraic steps. For moderate dense systems, this predictability is valuable: the method does not depend on gradually improving a guess, and the same factorization can often be reused for many right-hand sides.</p><p>The practical habit is to solve and then check. The computed vector should be substituted back into the original system by forming the residual $r=b-Ax$. A small residual does not answer every conditioning question, but it is the first test that the algebraic problem has been solved as stated. That same residual language will carry into iterative solvers, where stopping depends on whether the remaining equation error is small enough.</p>",
+    "definition": "<p>A <b>direct linear solver</b> solves $Ax=b$ through a finite elimination or factorization process and then checks the answer with the residual $$r=b-Ax.$$</p><p><b>Assumptions that matter:</b> the pivot used for elimination is nonzero, arithmetic is exact except for floating-point roundoff, and a small residual is a first check of the stated algebraic system.</p>",
     "worked": {
       "problem": "Solve $\\begin{bmatrix}2&1\\4&3\\end{bmatrix}x=\\begin{bmatrix}5\\11\\end{bmatrix}$ by elimination and compute the residual.",
       "skills": [
@@ -1041,34 +1170,34 @@
     ],
     "applications": [
       {
-        "title": "Least-squares normal equations",
-        "background": "Some regression pipelines solve linear systems as part of fitting. Direct solvers are reliable for moderate dense problems when conditioning is acceptable.",
-        "numbers": "A $100\\times20$ design matrix leads to a $20\\times20$ normal-equation matrix, small enough for dense factorization."
+        "title": "Dense calibration solve",
+        "background": "the example system gives $x=(2,1)$ with zero residual.",
+        "numbers": "the example system gives $x=(2,1)$ with zero residual."
       },
       {
-        "title": "Circuit simulation",
-        "background": "Modified nodal analysis produces sparse linear systems for voltages and currents. Direct sparse solvers are valued for robustness.",
-        "numbers": "A circuit with $5000$ unknown node voltages may have only about $30000$ nonzero matrix entries, far less than $25$ million dense entries."
+        "title": "Residual QA",
+        "background": "if $\\|r\\|=10^{-8}$ and $\\|b\\|=4$, the relative residual is $2.5\\times10^{-9}$.",
+        "numbers": "if $\\|r\\|=10^{-8}$ and $\\|b\\|=4$, the relative residual is $2.5\\times10^{-9}$."
       },
       {
-        "title": "Kalman filtering",
-        "background": "State estimation often solves covariance-related linear systems. Factorizations help maintain numerical reliability.",
-        "numbers": "Solving a $6\\times6$ system costs on the order of $6^3=216$ basic cubic units, tiny compared with image-scale matrices."
+        "title": "Factorization cost",
+        "background": "dense LU for $n=3000$ costs about $(2/3)n^3=18$ billion flops.",
+        "numbers": "dense LU for $n=3000$ costs about $(2/3)n^3=18$ billion flops."
       },
       {
-        "title": "Finite-element analysis",
-        "background": "Engineering meshes produce linear systems from local stiffness relationships. Direct solvers are common for smaller or especially delicate models.",
-        "numbers": "If a mesh has $20000$ degrees of freedom with about $10$ nonzeros per row, sparse storage holds about $200000$ entries."
+        "title": "Many right-hand sides",
+        "background": "after one LU factorization, solving $20$ right-hand sides reuses the factors instead of repeating elimination $20$ times.",
+        "numbers": "after one LU factorization, solving $20$ right-hand sides reuses the factors instead of repeating elimination $20$ times."
       },
       {
-        "title": "Implicit time stepping",
-        "background": "Stiff differential equations often require solving a linear system each time step. Direct solvers can reuse a factorization when the matrix stays fixed.",
-        "numbers": "If one factorization costs $8$ seconds and each triangular solve costs $0.02$ seconds, $100$ steps cost about $8+2=10$ seconds."
+        "title": "Normal-equation caution",
+        "background": "solving $(X^TX)w=X^Ty$ squares the condition number; $\\kappa(X)=100$ becomes $\\kappa(X^TX)=10{,}000$.",
+        "numbers": "solving $(X^TX)w=X^Ty$ squares the condition number; $\\kappa(X)=100$ becomes $\\kappa(X^TX)=10{,}000$."
       },
       {
-        "title": "Residual checks in production",
-        "background": "Numerical services often log residual norms to catch solver failures before results reach downstream models.",
-        "numbers": "If $\\|b\\|=50$ and $\\|r\\|=5\\cdot10^{-7}$, the relative residual is $10^{-8}$."
+        "title": "Small Newton system",
+        "background": "a $50\\times50$ dense Hessian solve costs about $(2/3)50^3\\approx83{,}333$ flops, small compared with a large model forward pass.",
+        "numbers": "a $50\\times50$ dense Hessian solve costs about $(2/3)50^3\\approx83{,}333$ flops, small compared with a large model forward pass."
       }
     ],
     "applicationsClose": "Direct solvers are the dependable workhorses of numerical linear algebra, especially when you pair the answer with pivoting, residuals, and conditioning.",
@@ -1077,6 +1206,61 @@
       "Pivoting protects elimination from dangerously small pivots.",
       "Residuals measure equation satisfaction; conditioning connects residual to solution accuracy.",
       "Dense direct solvers scale roughly like $O(n^3)$, so size matters quickly."
+    ],
+    "connectionsProse": "<p>This lesson continues the study of linear systems from earlier algebra lessons, now with attention to how the system is solved on a computer. The equation $Ax=b$ still means that a matrix transforms an unknown vector into a known right-hand side. A direct solver provides a finite sequence of algebraic operations that produces the unknown vector, up to floating-point error. Direct solvers are the reference point for several later lessons. Residuals from this lesson are used to check CG and GMRES, and factorization cost explains why sparse and iterative methods become necessary for very large systems.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "the coefficient matrix"
+      },
+      {
+        "sym": "$x$",
+        "desc": "the unknown vector"
+      },
+      {
+        "sym": "$b$",
+        "desc": "the right-hand side"
+      },
+      {
+        "sym": "$r=b-Ax$",
+        "desc": "the residual"
+      },
+      {
+        "sym": "LU",
+        "desc": "factorization writes $A=LU$ to reuse elimination for many $b$ values"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Use row 1 as the pivot",
+        "result": "Use row 1 as the pivot",
+        "why": "its first entry is nonzero."
+      },
+      {
+        "do": "Subtract $2$ times row 1 from row 2 to eliminate the lower-left entry: row 2 becomes $[0,1\\mid1]$.",
+        "result": "row 2 becomes $[0,1\\mid1]$.",
+        "why": ""
+      },
+      {
+        "do": "Read $x_2=1$ from the second row.",
+        "result": "Read $x_2=1$ from the second row.",
+        "why": ""
+      },
+      {
+        "do": "Substitute into row 1: $2x_1+1=5$.",
+        "result": "$2x_1+1=5$.",
+        "why": ""
+      },
+      {
+        "do": "Solve $2x_1=4$, so $x_1=2$.",
+        "result": "$x_1=2$.",
+        "why": ""
+      },
+      {
+        "do": "Check $Ax=(5,11)^T$, so the residual $r=b-Ax$ is $(0,0)^T$.",
+        "result": "the residual $r=b-Ax$ is $(0,0)^T$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-03"
@@ -1106,8 +1290,8 @@
         "energy norms"
       ]
     },
-    "motivation": "<p>You already know steepest descent: move opposite the gradient to reduce a bowl-shaped loss. For solving $Ax=b$ with a symmetric positive definite matrix, the same problem is minimizing a quadratic bowl.</p><p>CG improves on plain steepest descent by remembering directions in a special way. Each new direction is chosen so it does not undo progress made along earlier directions, measured in the geometry of $A$.</p>",
-    "definition": "<p><b>Conjugate gradient</b> solves $Ax=b$ when $A$ is symmetric positive definite. It minimizes $\\phi(x)=\\tfrac12 x^T A x-b^T x$ over growing Krylov subspaces. The residual is $r_k=b-Ax_k$, and the search directions satisfy $p_i^T A p_j=0$ for $i\\ne j$.</p><p>The step length comes from minimizing along $x_k+\\u0007lpha p_k$. Setting the derivative of $\\phi(x_k+\\u0007lpha p_k)$ to zero gives $\\u0007lpha_k=(r_k^T r_k)/(p_k^T A p_k)$ for the standard CG recurrence. This is why each step is a one-dimensional exact minimization inside a smarter sequence of directions.</p><p><b>Assumptions that matter:</b> $A$ must be symmetric positive definite; convergence depends strongly on the condition number; exact arithmetic would finish in at most $n$ steps, while floating-point arithmetic usually stops by tolerance; and matrix-vector products are the main cost.</p>",
+    "motivation": "<p>Conjugate gradient solves symmetric positive definite systems by choosing search directions that do not undo previous progress. Ordinary steepest descent can zigzag because each new step may partially disturb progress made by earlier steps. CG instead chooses directions that are independent in the geometry created by the matrix $A$.</p><p>The geometry is not ordinary perpendicularity; it is $A$-orthogonality, which matches the quadratic energy being minimized. Once the method has minimized along one direction, later $A$-conjugate directions preserve that minimization in exact arithmetic. This is why CG can reach the exact solution in at most the dimension of the system in exact arithmetic, while in practice it is valued because good approximations often arrive much sooner.</p>",
+    "definition": "<p><b>Conjugate gradient</b> solves symmetric positive definite systems by minimizing the quadratic energy $$\\phi(x)=\\tfrac12x^TAx-b^Tx.$$</p><p><b>Assumptions that matter:</b> $A$ is symmetric positive definite, residuals are negative gradients of the quadratic, and search directions are kept $A$-orthogonal.</p>",
     "worked": {
       "problem": "Run one CG step for $A=\\begin{bmatrix}4&1\\1&3\\end{bmatrix}$, $b=\\begin{bmatrix}1\\2\\end{bmatrix}$, and $x_0=\\begin{bmatrix}0\\0\\end{bmatrix}$.",
       "skills": [
@@ -1316,34 +1500,34 @@
     ],
     "applications": [
       {
-        "title": "Poisson equations",
-        "background": "Discretized diffusion and pressure problems often create sparse SPD systems, a natural home for CG.",
-        "numbers": "A $1000\\times1000$ grid has $10^6$ unknowns; with about $5$ nonzeros per row, one matvec uses about $5\\cdot10^6$ multiplies."
+        "title": "One CG step",
+        "background": "for $A=\\begin{bmatrix}4&1\\1&3\\end{bmatrix}$, $b=(1,2)$, $x_0=0$, $\\alpha_0=5/20=0.25$ and $x_1=(0.25,0.5)$.",
+        "numbers": "for $A=\\begin{bmatrix}4&1\\1&3\\end{bmatrix}$, $b=(1,2)$, $x_0=0$, $\\alpha_0=5/20=0.25$ and $x_1=(0.25,0.5)$."
       },
       {
-        "title": "Kernel methods",
-        "background": "Some kernel ridge regression systems are symmetric positive definite after regularization. CG can avoid forming expensive factorizations.",
-        "numbers": "Adding $\\lambda I$ with $\\lambda=0.1$ shifts eigenvalues from $[0.01,5]$ to $[0.11,5.1]$, improving conditioning."
+        "title": "Residual update",
+        "background": "the same step gives $r_1=(-0.5,0.25)$ and $\\|r_1\\|\\approx0.559$.",
+        "numbers": "the same step gives $r_1=(-0.5,0.25)$ and $\\|r_1\\|\\approx0.559$."
       },
       {
-        "title": "Graph Laplacian solves",
-        "background": "Graph-based learning and ranking use Laplacian systems, often symmetric and positive semidefinite until anchored or regularized.",
-        "numbers": "A graph with $2$ million edges gives roughly $4$ million off-diagonal nonzeros plus diagonals in a sparse Laplacian."
+        "title": "Direction mixing",
+        "background": "$\\beta_0=(0.3125)/5=0.0625$, so $p_1=(-0.4375,0.375)$.",
+        "numbers": "$\\beta_0=(0.3125)/5=0.0625$, so $p_1=(-0.4375,0.375)$."
       },
       {
-        "title": "Implicit diffusion steps",
-        "background": "Heat and smoothing equations can require solving SPD systems at each time step. CG uses only matrix-vector products.",
-        "numbers": "If each CG solve takes $25$ iterations and each matvec is $0.004$ seconds, matvec time is about $0.1$ seconds per step."
+        "title": "A-orthogonality check",
+        "background": "$p_0^TAp_1=0$, so the second direction does not spoil the first minimization.",
+        "numbers": "$p_0^TAp_1=0$, so the second direction does not spoil the first minimization."
       },
       {
-        "title": "Large least-squares subproblems",
-        "background": "Optimization methods sometimes solve normal-equation-like SPD systems approximately. CG is useful when exact solves are unnecessary.",
-        "numbers": "If tolerance $10^{-4}$ needs $30$ iterations but $10^{-8}$ needs $90$, the looser solve saves two thirds of iterations."
+        "title": "Two-step exactness in 2-D",
+        "background": "the next step has $\\alpha_1\\approx0.3636$ and reaches $x=(0.0909,0.6364)$, the exact solution.",
+        "numbers": "the next step has $\\alpha_1\\approx0.3636$ and reaches $x=(0.0909,0.6364)$, the exact solution."
       },
       {
-        "title": "Preconditioned training objectives",
-        "background": "Second-order ML methods may use CG to compute approximate Newton steps without forming a dense Hessian.",
-        "numbers": "A Hessian-vector product for $10^7$ parameters can be used inside CG without storing a $10^7\\times10^7$ matrix."
+        "title": "Condition-number estimate",
+        "background": "with $\\kappa=10$, the textbook CG error bound needs about $23$ iterations to push the relative factor below $10^{-6}$.",
+        "numbers": "with $\\kappa=10$, the textbook CG error bound needs about $23$ iterations to push the relative factor below $10^{-6}$."
       }
     ],
     "applicationsClose": "CG is powerful because it asks for matrix-vector products, not dense factorizations, while still using the geometry of a positive definite system.",
@@ -1352,6 +1536,75 @@
       "Each step minimizes the quadratic along an $A$-conjugate direction.",
       "The residual $r=b-Ax$ drives the iteration and stopping rule.",
       "Conditioning and preconditioning often decide whether CG is fast in practice."
+    ],
+    "connectionsProse": "<p>This lesson builds on quadratic functions, gradients, and linear systems. For a symmetric positive definite matrix, solving $Ax=b$ is the same as minimizing a convex quadratic energy. That connection lets an algebra problem become an optimization problem with carefully chosen search directions. Conjugate gradient is the first Krylov method in this section. It prepares the reader for GMRES, preconditioning, and large sparse systems, where forming a dense factorization would be too expensive but matrix-vector products are still available.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "symmetric positive definite"
+      },
+      {
+        "sym": "$r_k$",
+        "desc": "the residual"
+      },
+      {
+        "sym": "$p_k$",
+        "desc": "the search direction"
+      },
+      {
+        "sym": "$\\alpha_k$",
+        "desc": "the step length"
+      },
+      {
+        "sym": "$\\beta_k$",
+        "desc": "mixes in the previous direction"
+      },
+      {
+        "sym": "$p_i^TAp_j=0$",
+        "desc": "$A$-orthogonality"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Compute the residual $r_k=b-Ax_k$",
+        "result": "Compute the residual $r_k=b-Ax_k$",
+        "why": "$-\\nabla\\phi(x_k)=r_k$."
+      },
+      {
+        "do": "Search along $p_k$ by writing $x_{k+1}=x_k+\\alpha_kp_k$.",
+        "result": "Search along $p_k$ by writing $x_{k+1}=x_k+\\alpha_kp_k$.",
+        "why": ""
+      },
+      {
+        "do": "Minimize $\\phi(x_k+\\alpha p_k)$ in $\\alpha$ by setting the derivative to zero.",
+        "result": "Minimize $\\phi(x_k+\\alpha p_k)$ in $\\alpha$ by setting the derivative to zero.",
+        "why": ""
+      },
+      {
+        "do": "The derivative is $p_k^T(Ax_k-b)+\\alpha p_k^TAp_k=-p_k^Tr_k+\\alpha p_k^TAp_k$.",
+        "result": "$p_k^T(Ax_k-b)+\\alpha p_k^TAp_k=-p_k^Tr_k+\\alpha p_k^TAp_k$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore $\\alpha_k=(r_k^Tr_k)/(p_k^TAp_k)$ for the standard CG recurrence.",
+        "result": "Therefore $\\alpha_k=(r_k^Tr_k)/(p_k^TAp_k)$ for the standard CG recurrence.",
+        "why": ""
+      },
+      {
+        "do": "Update $r_{k+1}=r_k-\\alpha_kAp_k$",
+        "result": "Update $r_{k+1}=r_k-\\alpha_kAp_k$",
+        "why": "$A(x_k+\\alpha_kp_k)=Ax_k+\\alpha_kAp_k$."
+      },
+      {
+        "do": "Choose $p_{k+1}=r_{k+1}+\\beta_kp_k$ and require $p_k^TAp_{k+1}=0$.",
+        "result": "Choose $p_{k+1}=r_{k+1}+\\beta_kp_k$ and require $p_k^TAp_{k+1}=0$.",
+        "why": ""
+      },
+      {
+        "do": "This gives $\\beta_k=(r_{k+1}^Tr_{k+1})/(r_k^Tr_k)$ in exact arithmetic, preserving $A$-conjugacy.",
+        "result": "$\\beta_k=(r_{k+1}^Tr_{k+1})/(r_k^Tr_k)$ in exact arithmetic, preserving $A$-conjugacy.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-04"
@@ -1381,8 +1634,8 @@
         "orthogonality"
       ]
     },
-    "motivation": "<p>CG is wonderfully efficient when the matrix is symmetric positive definite. But many real systems from transport, circuits, and linearized dynamics are nonsymmetric. The old assumptions no longer fit.</p><p>GMRES keeps the Krylov spirit: build approximations from $r_0, Ar_0, A^2r_0,\\ldots$. Its promise is simple to state and very practical: among the candidates in the current Krylov subspace, choose the one with the smallest residual norm.</p>",
-    "definition": "<p><b>GMRES</b>, the generalized minimal residual method, solves $Ax=b$ by searching $x_k=x_0+q$ with $q\\in\\mathcal{K}_k(A,r_0)=\\operatorname{span}\\{r_0,Ar_0,\\ldots,A^{k-1}r_0\\}$ and minimizing $\\|b-Ax_k\\|_2$.</p><p>Arnoldi iteration builds an orthonormal basis $V_k$ for the Krylov subspace and a small Hessenberg matrix $H_k$ satisfying approximately $AV_k=V_{k+1}H_k$. Then the large residual minimization becomes a small least-squares problem in $k$ variables.</p><p><b>Assumptions that matter:</b> GMRES can handle nonsymmetric matrices, but storage and orthogonalization costs grow with iteration count; restarted GMRES limits memory but may slow convergence; and preconditioning is often essential for hard systems.</p>",
+    "motivation": "<p>GMRES solves nonsymmetric linear systems by searching a growing Krylov subspace and choosing the vector with the smallest residual. The subspace is built from the initial residual and repeated multiplication by $A$, so it contains directions that are directly tied to how the current error behaves under the system matrix.</p><p>The method does not require the same energy-minimization geometry as CG. Instead, it asks for the approximate solution whose residual norm is smallest among all candidates in the current Krylov subspace. Arnoldi orthogonalization turns that large residual minimization into a small least-squares problem, which is the computational core of the method.</p>",
+    "definition": "<p><b>GMRES</b> solves nonsymmetric systems by choosing the approximate solution with minimum residual over a Krylov subspace: $$\\mathcal K_m(A,r_0)=\\operatorname{span}\\{r_0,Ar_0,\\dots,A^{m-1}r_0\\}.$$</p><p><b>Assumptions that matter:</b> the Arnoldi basis is orthonormal, the update has the form $x_m=x_0+V_my$, and residual minimization reduces to a small least-squares problem.</p>",
     "worked": {
       "problem": "With $x_0=0$, $b=[1,0]^T$, and $A=\\begin{bmatrix}1&2\\0&3\\end{bmatrix}$, find the first Krylov vector direction and the one-dimensional residual-minimizing step $x_1=\\u0007lpha b$.",
       "skills": [
@@ -1591,34 +1844,34 @@
     ],
     "applications": [
       {
-        "title": "Advection-diffusion equations",
-        "background": "Transport terms make discretized PDE matrices nonsymmetric. GMRES is a standard Krylov method for these systems.",
-        "numbers": "If a matrix has $2\\cdot10^6$ nonzeros, each GMRES matvec uses about $2\\cdot10^6$ multiplications."
+        "title": "One-dimensional GMRES",
+        "background": "for $A=\\begin{bmatrix}2&1\\0&1\\end{bmatrix}$, $b=(1,1)$, $x_0=0$, searching $x=\\alpha b$ gives $\\alpha=0.4$.",
+        "numbers": "for $A=\\begin{bmatrix}2&1\\0&1\\end{bmatrix}$, $b=(1,1)$, $x_0=0$, searching $x=\\alpha b$ gives $\\alpha=0.4$."
       },
       {
-        "title": "Circuit and device simulation",
-        "background": "Linearized circuit equations can be nonsymmetric and sparse. GMRES works with matrix-vector products and preconditioners.",
-        "numbers": "A residual drop from $10^{-2}$ to $10^{-8}$ is a factor of $10^6$, often a practical convergence target."
+        "title": "Residual norm",
+        "background": "that step has residual $(-0.2,0.6)$ with norm $0.6325$.",
+        "numbers": "that step has residual $(-0.2,0.6)$ with norm $0.6325$."
       },
       {
-        "title": "Implicit neural differential equations",
-        "background": "Solving implicit layers can require nonsymmetric linear solves inside Newton or fixed-point methods.",
-        "numbers": "If each solve uses $15$ GMRES iterations and each Jacobian-vector product takes $4$ ms, matvec time is $60$ ms."
+        "title": "Restart memory",
+        "background": "GMRES(50) stores $50$ basis vectors; for $10^6$ unknowns in FP32 that is $50\\cdot10^6\\cdot4=200$ MB.",
+        "numbers": "GMRES(50) stores $50$ basis vectors; for $10^6$ unknowns in FP32 that is $50\\cdot10^6\\cdot4=200$ MB."
       },
       {
-        "title": "Restart tradeoffs",
-        "background": "Full GMRES stores every basis vector, so restarted GMRES limits memory. The tradeoff is that old search information is discarded.",
-        "numbers": "With $n=10^6$ and restart $m=50$, the basis holds $5\\cdot10^7$ numbers."
+        "title": "Nonsymmetric PDE solve",
+        "background": "advection creates nonsymmetric matrices, so CG is invalid while GMRES can still minimize residuals.",
+        "numbers": "advection creates nonsymmetric matrices, so CG is invalid while GMRES can still minimize residuals."
       },
       {
-        "title": "Least-squares viewpoint",
-        "background": "GMRES reduces a large linear solve to a small least-squares problem at each iteration. That is why residual minimization is explicit.",
-        "numbers": "At iteration $k=20$, the small problem has about $21$ rows and $20$ columns."
+        "title": "Stopping rule",
+        "background": "if $\\|r_m\\|/\\|b\\|=8\\times10^{-7}$ and tolerance is $10^{-6}$, GMRES stops.",
+        "numbers": "if $\\|r_m\\|/\\|b\\|=8\\times10^{-7}$ and tolerance is $10^{-6}$, GMRES stops."
       },
       {
-        "title": "Preconditioned solvers",
-        "background": "Production GMRES is commonly paired with a preconditioner that makes the transformed system easier.",
-        "numbers": "If preconditioning cuts iterations from $200$ to $40$ while doubling per-iteration cost, the rough work becomes $80/200=40\\%$ of the original."
+        "title": "Least-squares size",
+        "background": "at iteration $m=30$, the inner problem has only $31$ rows and $30$ columns, much smaller than the original system.",
+        "numbers": "at iteration $m=30$, the inner problem has only $31$ rows and $30$ columns, much smaller than the original system."
       }
     ],
     "applicationsClose": "GMRES is the nonsymmetric Krylov workhorse: build a good subspace, solve a small least-squares problem, and keep the residual in view.",
@@ -1627,6 +1880,57 @@
       "Arnoldi iteration builds the orthonormal basis used by GMRES.",
       "Storage grows with iteration count, motivating restarted GMRES.",
       "Preconditioning often determines whether GMRES is practical."
+    ],
+    "connectionsProse": "<p>This lesson follows naturally after CG and keeps the focus on solving large linear systems by using matrix-vector products. CG depends on symmetry and positive definiteness. Many systems from transport, advection, optimization, and engineering do not have those properties. GMRES is the corresponding Krylov idea for nonsymmetric systems. It also introduces a pattern that appears throughout numerical linear algebra: build a small problem inside a carefully chosen subspace, solve that small problem accurately, and use it to update the large solution.</p>",
+    "symbols": [
+      {
+        "sym": "$\\mathcal K_m$",
+        "desc": "the Krylov subspace"
+      },
+      {
+        "sym": "$V_m$",
+        "desc": "its orthonormal basis"
+      },
+      {
+        "sym": "$\\bar H_m$",
+        "desc": "the small Hessenberg matrix from Arnoldi"
+      },
+      {
+        "sym": "$y$",
+        "desc": "the coordinate vector chosen by least squares"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Form the Krylov subspace $\\mathcal K_m(A,r_0)=\\operatorname{span}\\{r_0,Ar_0,\\dots,A^{m-1}r_0\\}$",
+        "result": "Form the Krylov subspace $\\mathcal K_m(A,r_0)=\\operatorname{span}\\{r_0,Ar_0,\\dots,A^{m-1}r_0\\}$",
+        "why": "repeated multiplication by $A$ reveals directions connected to the residual."
+      },
+      {
+        "do": "Write $x_m=x_0+V_my$ where columns of $V_m$ are an orthonormal basis for that subspace.",
+        "result": "Write $x_m=x_0+V_my$ where columns of $V_m$ are an orthonormal basis for that subspace.",
+        "why": ""
+      },
+      {
+        "do": "The residual is $r_m=b-Ax_m=r_0-AV_my$.",
+        "result": "$r_m=b-Ax_m=r_0-AV_my$.",
+        "why": ""
+      },
+      {
+        "do": "Arnoldi gives $AV_m=V_{m+1}\\bar H_m$, so the residual becomes $V_{m+1}(\\|r_0\\|e_1-\\bar H_my)$.",
+        "result": "$AV_m=V_{m+1}\\bar H_m$, so the residual becomes $V_{m+1}(\\|r_0\\|e_1-\\bar H_my)$.",
+        "why": ""
+      },
+      {
+        "do": "Orthogonality of $V_{m+1}$ preserves norms, so minimizing $\\|r_m\\|$ is the small least-squares problem $\\min_y\\|\\|r_0\\|e_1-\\bar H_my\\|$.",
+        "result": "minimizing $\\|r_m\\|$ is the small least-squares problem $\\min_y\\|\\|r_0\\|e_1-\\bar H_my\\|$.",
+        "why": ""
+      },
+      {
+        "do": "That small least-squares solve is the GMRES update.",
+        "result": "the GMRES update.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-05"
@@ -1656,8 +1960,8 @@
         "scaling"
       ]
     },
-    "motivation": "<p>You already know that the same path can feel steep or gentle depending on the coordinate scale of the map. Linear systems behave similarly: a solver may struggle not because the answer is strange, but because the coordinates make the problem lopsided.</p><p>A preconditioner is a helpful change of viewpoint. It does not change the true solution of $Ax=b$; it changes the system an iterative method works with so residuals shrink faster.</p>",
-    "definition": "<p>A <b>preconditioner</b> is a matrix $M$ chosen so $M^{-1}A$ or $AM^{-1}$ is easier for an iterative method than $A$, while applying $M^{-1}$ is cheap. Left preconditioning solves $M^{-1}Ax=M^{-1}b$; right preconditioning solves $AM^{-1}y=b$ and then $x=M^{-1}y$.</p><p>The goal is usually to cluster eigenvalues or reduce the condition number. For SPD systems, CG convergence improves when $\\kappa(M^{-1}A)$ is much smaller than $\\kappa(A)$. A diagonal preconditioner uses $M=\\operatorname{diag}(A)$, which is simple but sometimes surprisingly helpful.</p><p><b>Assumptions that matter:</b> applying the preconditioner must be cheaper than the iterations it saves; the preconditioned system should preserve the solver's required structure; and a preconditioner can improve convergence while slightly increasing per-iteration cost.</p>",
+    "motivation": "<p>Preconditioning changes the linear system into an equivalent one that is easier for an iterative solver. The goal is not to change the answer. The goal is to change the operator seen by the iteration so that the residual can be reduced in fewer steps.</p><p>A useful preconditioner resembles the original matrix enough to improve the spectrum, but is much cheaper to apply than solving the original system exactly. In practice, applying $M^{-1}$ usually means solving a simpler system $Mz=v$. The benefit must be measured as a tradeoff: fewer Krylov iterations are valuable only if each preconditioned iteration is not too expensive.</p>",
+    "definition": "<p><b>Preconditioning</b> replaces $Ax=b$ by an equivalent system whose operator is easier for an iterative method: $$M^{-1}Ax=M^{-1}b.$$</p><p><b>Assumptions that matter:</b> $M$ is invertible, applying $M^{-1}$ means solving a simpler system, and the solution $x$ is unchanged.</p>",
     "worked": {
       "problem": "For $A=\\begin{bmatrix}100&0\\0&1\\end{bmatrix}$, use the diagonal preconditioner $M=\\operatorname{diag}(A)$. Compute $M^{-1}A$ and compare condition numbers.",
       "skills": [
@@ -1861,34 +2165,34 @@
     ],
     "applications": [
       {
-        "title": "Diagonal feature scaling",
-        "background": "Standardizing ML features is a preconditioning idea in optimization clothing: make coordinates have comparable scale.",
-        "numbers": "Features with standard deviations $100$ and $2$ become unit-scale after dividing by $100$ and $2$."
+        "title": "Perfect diagonal case",
+        "background": "for $A=\\operatorname{diag}(100,1)$ and $M=A$, $M^{-1}A=I$, so $\\kappa$ drops from $100$ to $1$.",
+        "numbers": "for $A=\\operatorname{diag}(100,1)$ and $M=A$, $M^{-1}A=I$, so $\\kappa$ drops from $100$ to $1$."
       },
       {
-        "title": "Jacobi preconditioning",
-        "background": "The simplest linear-system preconditioner rescales equations by diagonal entries. It is cheap and often a useful baseline.",
-        "numbers": "A diagonal entry $50$ turns equation residual $5$ into scaled residual $0.1$ after multiplying by $1/50$."
+        "title": "Jacobi preconditioner",
+        "background": "for $A=\\begin{bmatrix}4&1\\1&3\\end{bmatrix}$, symmetric diagonal scaling has eigenvalues about $0.7113$ and $1.2887$, so $\\kappa\\approx1.812$.",
+        "numbers": "for $A=\\begin{bmatrix}4&1\\1&3\\end{bmatrix}$, symmetric diagonal scaling has eigenvalues about $0.7113$ and $1.2887$, so $\\kappa\\approx1.812$."
       },
       {
-        "title": "Incomplete LU",
-        "background": "Sparse direct factorization can be approximated to form a preconditioner. The incomplete factors are cheaper than exact LU.",
-        "numbers": "If ILU has $4\\cdot10^6$ stored entries instead of $40\\cdot10^6$ for full fill-in, memory drops by a factor of $10$."
+        "title": "CG acceleration",
+        "background": "lowering $\\kappa$ from $100$ to $4$ changes the CG convergence factor from $(10-1)/(10+1)=0.818$ to $(2-1)/(2+1)=0.333$.",
+        "numbers": "lowering $\\kappa$ from $100$ to $4$ changes the CG convergence factor from $(10-1)/(10+1)=0.818$ to $(2-1)/(2+1)=0.333$."
       },
       {
-        "title": "Multigrid as preconditioning",
-        "background": "PDE solvers use coarse grids to remove low-frequency error that simple smoothers handle poorly. As a preconditioner, multigrid can make iteration counts nearly size-independent.",
-        "numbers": "If grids of $10^5$ and $10^6$ unknowns both need about $12$ iterations, scaling is close to linear in unknowns."
+        "title": "Feature scaling analogy",
+        "background": "standardizing a feature from variance $100$ to variance $1$ is diagonal preconditioning for gradient methods.",
+        "numbers": "standardizing a feature from variance $100$ to variance $1$ is diagonal preconditioning for gradient methods."
       },
       {
-        "title": "Natural gradient methods",
-        "background": "Some ML optimizers precondition gradients with curvature information so steps are measured in a better geometry.",
-        "numbers": "For gradient $[10,1]$ and diagonal preconditioner $[0.1,1]$, the scaled step becomes $[1,1]$."
+        "title": "Incomplete factorization budget",
+        "background": "if an ILU apply costs $5$ sparse matvecs but cuts iterations from $200$ to $30$, the effective cost drops from $200$ to about $150$ matvec equivalents.",
+        "numbers": "if an ILU apply costs $5$ sparse matvecs but cuts iterations from $200$ to $30$, the effective cost drops from $200$ to about $150$ matvec equivalents."
       },
       {
-        "title": "Whitening in statistics",
-        "background": "Whitening transforms correlated variables so covariance becomes closer to identity, a statistical form of preconditioning.",
-        "numbers": "A variance $25$ coordinate divided by standard deviation $5$ becomes variance $1$."
+        "title": "Solver design check",
+        "background": "a preconditioner that takes $20$ ms and saves only one $5$ ms iteration is a net loss for that solve.",
+        "numbers": "a preconditioner that takes $20$ ms and saves only one $5$ ms iteration is a net loss for that solve."
       }
     ],
     "applicationsClose": "Preconditioning is the practical art of making the same solution easier for an algorithm to reach.",
@@ -1897,6 +2201,57 @@
       "Good preconditioners reduce condition numbers or cluster eigenvalues.",
       "The setup and application cost must be worth the iterations saved.",
       "Scaling, whitening, and curvature adjustment are preconditioning ideas across ML and scientific computing."
+    ],
+    "connectionsProse": "<p>This lesson connects linear solves with the condition-number ideas that appeared earlier in numerical analysis. CG and GMRES choose better approximations inside Krylov subspaces, but their speed still depends strongly on the matrix they see. A difficult matrix can make a good iterative method look slow. Preconditioning is the practical response. It also connects linear algebra with feature scaling in machine learning: changing the coordinates or operator can make the same underlying problem easier for an algorithm to navigate.</p>",
+    "symbols": [
+      {
+        "sym": "$M$",
+        "desc": "the preconditioner"
+      },
+      {
+        "sym": "$M^{-1}A$",
+        "desc": "the preconditioned operator"
+      },
+      {
+        "sym": "$\\kappa$",
+        "desc": "the condition number"
+      },
+      {
+        "sym": "“applying $M^{-1}$”",
+        "desc": "solving $Mz=v$, not explicitly forming an inverse"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with $Ax=b$.",
+        "result": "Start with $Ax=b$.",
+        "why": ""
+      },
+      {
+        "do": "Choose an invertible matrix $M$ that approximates $A$ but is easier to solve with.",
+        "result": "easier to solve with.",
+        "why": ""
+      },
+      {
+        "do": "Multiply both sides by $M^{-1}$ to get $M^{-1}Ax=M^{-1}b$.",
+        "result": "$M^{-1}Ax=M^{-1}b$.",
+        "why": ""
+      },
+      {
+        "do": "The solution $x$ is unchanged",
+        "result": "unchanged",
+        "why": "multiplying by an invertible matrix preserves equality."
+      },
+      {
+        "do": "Iterative convergence depends on the spectrum of the operator; the new operator is $M^{-1}A$.",
+        "result": "$M^{-1}A$.",
+        "why": ""
+      },
+      {
+        "do": "If $M^{-1}A$ has a smaller condition number or clustered eigenvalues, fewer Krylov iterations are needed.",
+        "result": "If $M^{-1}A$ has a smaller condition number or clustered eigenvalues, fewer Krylov iterations are needed.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-06"
@@ -1926,8 +2281,8 @@
         "Rayleigh quotient"
       ]
     },
-    "motivation": "<p>You already know that repeatedly multiplying by $2$ eventually dominates repeatedly multiplying by $0.5$. Power iteration applies that idea to matrices: components in the strongest eigenvector direction grow fastest.</p><p>The method is almost humbly simple. Multiply by the matrix, rescale to avoid overflow, and repeat. When one eigenvalue is clearly largest in magnitude, the direction left standing points to its eigenvector.</p>",
-    "definition": "<p><b>Power iteration</b> starts with a nonzero vector $v_0$ and repeats $w_{k+1}=Av_k$, $v_{k+1}=w_{k+1}/\\|w_{k+1}\\|$. If $A$ has a dominant eigenvalue $|\\lambda_1|>|\\lambda_2|\\ge\\cdots$ and $v_0$ has some component in the dominant eigenvector direction, then $v_k$ approaches that eigenvector direction.</p><p>The reason is eigenvector expansion. If $v_0=c_1q_1+c_2q_2+\\cdots$, then $A^kv_0=c_1\\lambda_1^kq_1+c_2\\lambda_2^kq_2+\\cdots$. Dividing by $\\lambda_1^k$ leaves the other terms scaled by $(\\lambda_i/\\lambda_1)^k$, which shrink when $|\\lambda_i|<|\\lambda_1|$.</p><p><b>Assumptions that matter:</b> there should be a unique dominant eigenvalue in magnitude; the start vector must not be orthogonal to the dominant direction; convergence speed depends on $|\\lambda_2/\\lambda_1|$; and normalization changes length, not direction.</p>",
+    "motivation": "<p>Power iteration finds the dominant eigenvector by repeatedly multiplying by a matrix. If the starting vector has any component in the dominant eigenvector direction, each multiplication scales that component by the largest eigenvalue. Components in other eigendirections are scaled by smaller eigenvalues in magnitude.</p><p>After several multiplications, the relative contribution of the non-dominant components shrinks according to ratios such as $|\\lambda_2/\\lambda_1|^k$. Normalization keeps the vector from overflowing or underflowing while preserving the direction. The method is simple, but its speed depends on the spectral gap: close eigenvalues produce slow separation.</p>",
+    "definition": "<p><b>Power iteration</b> repeatedly multiplies by a matrix so the dominant eigenvector component separates from the others: $$A^kv_0=\\lambda_1^k(c_1q_1+c_2(\\lambda_2/\\lambda_1)^kq_2+\\cdots).$$</p><p><b>Assumptions that matter:</b> the starting vector has a nonzero dominant component and $|\\lambda_1|>|\\lambda_2|\\ge\\cdots$.</p>",
     "worked": {
       "problem": "Apply two normalized power-iteration steps to $A=\\begin{bmatrix}2&0\\0&1\\end{bmatrix}$ starting from $v_0=\\begin{bmatrix}1\\1\\end{bmatrix}$ using max-entry normalization.",
       "skills": [
@@ -2131,34 +2486,34 @@
     ],
     "applications": [
       {
-        "title": "PageRank",
-        "background": "The original web-ranking idea repeatedly applied a link matrix until the dominant stationary direction emerged.",
-        "numbers": "If rank mass vector sums to $1$, a page with score $0.02$ has about twice the mass of a page with score $0.01$."
+        "title": "Dominant direction",
+        "background": "for $A=\\operatorname{diag}(3,1)$ and $v_0=(1,1)$, after $5$ powers the component ratio is $(1/3)^5\\approx0.004115$.",
+        "numbers": "for $A=\\operatorname{diag}(3,1)$ and $v_0=(1,1)$, after $5$ powers the component ratio is $(1/3)^5\\approx0.004115$."
       },
       {
-        "title": "Principal components",
-        "background": "The top principal component is the dominant eigenvector of a covariance matrix. Power iteration can estimate it without full decomposition.",
-        "numbers": "For variances $9$ and $1$, the top direction explains $9/(9+1)=90\\%$ of variance."
+        "title": "Rayleigh quotient",
+        "background": "the normalized fifth iterate gives eigenvalue estimate $2.99997$.",
+        "numbers": "the normalized fifth iterate gives eigenvalue estimate $2.99997$."
       },
       {
-        "title": "Spectral norm estimates",
-        "background": "Optimization and generalization checks sometimes need the largest singular value. Power iteration on $A^TA$ estimates it.",
-        "numbers": "If the dominant eigenvalue of $A^TA$ is $25$, the spectral norm of $A$ is $\\sqrt{25}=5$."
+        "title": "Iteration count",
+        "background": "to make the ratio below $10^{-3}$ when $|\\lambda_2/\\lambda_1|=1/3$, need $7$ iterations.",
+        "numbers": "to make the ratio below $10^{-3}$ when $|\\lambda_2/\\lambda_1|=1/3$, need $7$ iterations."
       },
       {
-        "title": "Graph centrality",
-        "background": "Eigenvector centrality scores nodes highly when they connect to other high-scoring nodes. Power iteration computes the fixed direction.",
-        "numbers": "In a tiny star graph, the center receives contributions from all $4$ leaves, while each leaf receives only the center's contribution."
+        "title": "PCA warmup",
+        "background": "if singular values are $10$ and $8$, the power ratio is $0.8$ and convergence is much slower.",
+        "numbers": "if singular values are $10$ and $8$, the power ratio is $0.8$ and convergence is much slower."
       },
       {
-        "title": "Neural-network diagnostics",
-        "background": "Largest eigenvalue estimates of Hessians or Jacobians help diagnose sharpness and stability.",
-        "numbers": "If power iteration estimates Hessian top eigenvalue $120$, a gradient step size above about $2/120\\approx0.0167$ may be unstable for a quadratic."
+        "title": "PageRank-style stationary vector",
+        "background": "repeated transition-matrix multiplication is power iteration on an eigenvalue-$1$ operator.",
+        "numbers": "repeated transition-matrix multiplication is power iteration on an eigenvalue-$1$ operator."
       },
       {
-        "title": "Markov chains",
-        "background": "Repeated transition-matrix multiplication approaches a stationary distribution when the chain mixes well.",
-        "numbers": "For state vector $[1,0]$ and transition matrix with first row $[0.8,0.2]$, one step gives $[0.8,0.2]$."
+        "title": "Spectral normalization",
+        "background": "estimating the top singular value by power iteration lets a layer rescale weights using one or two matrix multiplies per training step.",
+        "numbers": "estimating the top singular value by power iteration lets a layer rescale weights using one or two matrix multiplies per training step."
       }
     ],
     "applicationsClose": "Power iteration is repeated amplification with normalization: simple enough to trust, useful enough to appear everywhere.",
@@ -2167,6 +2522,57 @@
       "Convergence depends on the spectral gap $|\\lambda_2/\\lambda_1|$.",
       "Normalization prevents overflow and keeps the direction visible.",
       "Rayleigh quotients turn approximate eigenvectors into approximate eigenvalues."
+    ],
+    "connectionsProse": "<p>This lesson returns to eigenvalues and eigenvectors from linear algebra, now with a computational question in mind. Instead of diagonalizing a whole matrix, power iteration asks for the dominant direction using only repeated matrix-vector multiplication. That makes it useful when a matrix is large but multiplying by it is still feasible. The same idea supports PCA approximations, PageRank-style stationary distributions, spectral normalization, and several randomized algorithms. It also prepares the reader for QR and Lanczos, which compute spectral information in more refined ways.</p>",
+    "symbols": [
+      {
+        "sym": "$\\lambda_i$",
+        "desc": "eigenvalues"
+      },
+      {
+        "sym": "$q_i$",
+        "desc": "eigenvectors"
+      },
+      {
+        "sym": "$c_i$",
+        "desc": "starting-vector components"
+      },
+      {
+        "sym": "$|\\lambda_2/\\lambda_1|$",
+        "desc": "the convergence ratio"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Write the starting vector as $v_0=c_1q_1+c_2q_2+\\cdots$",
+        "result": "Write the starting vector as $v_0=c_1q_1+c_2q_2+\\cdots$",
+        "why": "the eigenvectors form a basis for the example setting."
+      },
+      {
+        "do": "Multiply once: $Av_0=c_1\\lambda_1q_1+c_2\\lambda_2q_2+\\cdots$.",
+        "result": "$Av_0=c_1\\lambda_1q_1+c_2\\lambda_2q_2+\\cdots$.",
+        "why": ""
+      },
+      {
+        "do": "After $k$ multiplications, $A^kv_0=c_1\\lambda_1^kq_1+c_2\\lambda_2^kq_2+\\cdots$.",
+        "result": "After $k$ multiplications, $A^kv_0=c_1\\lambda_1^kq_1+c_2\\lambda_2^kq_2+\\cdots$.",
+        "why": ""
+      },
+      {
+        "do": "Factor out $\\lambda_1^k$: $A^kv_0=\\lambda_1^k(c_1q_1+c_2(\\lambda_2/\\lambda_1)^kq_2+\\cdots)$.",
+        "result": "$A^kv_0=\\lambda_1^k(c_1q_1+c_2(\\lambda_2/\\lambda_1)^kq_2+\\cdots)$.",
+        "why": ""
+      },
+      {
+        "do": "The non-dominant ratios shrink like $|\\lambda_i/\\lambda_1|^k$.",
+        "result": "The non-dominant ratios shrink like $|\\lambda_i/\\lambda_1|^k$.",
+        "why": ""
+      },
+      {
+        "do": "Normalizing each step prevents overflow while keeping the direction.",
+        "result": "Normalizing each step prevents overflow while keeping the direction.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-07"
@@ -2196,8 +2602,8 @@
         "triangular matrices"
       ]
     },
-    "motivation": "<p>You have seen that power iteration can find one dominant eigenvector. But scientific computing often needs many eigenvalues, not just the biggest one. The QR algorithm is the classic stable route from one-at-a-time thinking to a whole spectrum.</p><p>Its rhythm is elegant: factor $A_k=Q_kR_k$, then reverse the factors to get $A_{k+1}=R_kQ_k$. The matrices remain similar, so the eigenvalues stay the same, while the entries often move toward triangular form where eigenvalues are easy to read.</p>",
-    "definition": "<p>A <b>QR factorization</b> writes $A=QR$, where $Q^TQ=I$ and $R$ is upper triangular. The basic QR eigenvalue iteration forms $A_k=Q_kR_k$ and then $A_{k+1}=R_kQ_k=Q_k^TA_kQ_k$.</p><p>The equality $A_{k+1}=Q_k^TA_kQ_k$ shows this is a similarity transform by an orthogonal matrix, so eigenvalues are preserved. For many matrices, repeated shifted QR steps drive $A_k$ toward nearly upper triangular form; the diagonal entries then reveal eigenvalues.</p><p><b>Assumptions that matter:</b> practical QR algorithms use shifts and first reduce to Hessenberg or tridiagonal form; orthogonality of $Q$ protects numerical stability; convergence can be slow without shifts; and real matrices with complex eigenvalues appear as $2\\times2$ blocks in real Schur form.</p>",
+    "motivation": "<p>The QR algorithm computes eigenvalues by repeatedly factoring a matrix into an orthogonal part and an upper-triangular part, then reversing the factors. The reversed product is not the same matrix, but it is orthogonally similar to the original matrix at that step. Similarity keeps the eigenvalues unchanged.</p><p>For symmetric matrices, the repeated process tends to move the matrix toward diagonal form under favorable conditions. As the off-diagonal entries shrink, the diagonal entries approach the eigenvalues. Practical eigensolvers add shifts and reductions to make this efficient, but the unshifted step shows the central invariant: the eigenvalues are preserved while the matrix becomes easier to read.</p>",
+    "definition": "<p>The <b>QR algorithm</b> factors $A_k=Q_kR_k$ and reverses the factors to form an orthogonally similar matrix: $$A_{k+1}=R_kQ_k=Q_k^TA_kQ_k.$$</p><p><b>Assumptions that matter:</b> $Q_k$ is orthogonal, similarity preserves eigenvalues, and favorable symmetric cases tend toward diagonal form.</p>",
     "worked": {
       "problem": "For $A=\\begin{bmatrix}2&0\\0&1\\end{bmatrix}$, perform one QR eigenvalue iteration.",
       "skills": [
@@ -2396,34 +2802,34 @@
     ],
     "applications": [
       {
-        "title": "Dense eigenvalue computations",
-        "background": "Scientific packages use QR-family algorithms to compute all eigenvalues of moderate dense matrices.",
-        "numbers": "A $500\\times500$ matrix has $250000$ entries, so dense eigensolvers are reasonable on modern machines."
+        "title": "One QR step",
+        "background": "for $A=\\begin{bmatrix}2&1\\1&2\\end{bmatrix}$, one step gives approximately $\\begin{bmatrix}2.8&-0.6\\-0.6&1.2\\end{bmatrix}$.",
+        "numbers": "for $A=\\begin{bmatrix}2&1\\1&2\\end{bmatrix}$, one step gives approximately $\\begin{bmatrix}2.8&-0.6\\-0.6&1.2\\end{bmatrix}$."
       },
       {
-        "title": "Principal component analysis",
-        "background": "PCA can be computed from eigenvalues of a covariance matrix. QR methods are part of the dense linear algebra toolkit behind such decompositions.",
-        "numbers": "If covariance eigenvalues are $9$, $4$, and $1$, the first two components explain $(9+4)/(9+4+1)=92.9\\%$ of variance."
+        "title": "Eigenvalue preservation",
+        "background": "the original and updated matrices both have eigenvalues $3$ and $1$.",
+        "numbers": "the original and updated matrices both have eigenvalues $3$ and $1$."
       },
       {
-        "title": "Stability of dynamical systems",
-        "background": "Eigenvalues determine whether linear dynamics grow or decay. QR algorithms help reveal those eigenvalues.",
-        "numbers": "For eigenvalues $0.8$ and $1.2$, the $1.2$ mode grows by $1.2^{10}\\approx6.19$ after $10$ steps."
+        "title": "Off-diagonal shrinkage",
+        "background": "after five unshifted steps on that matrix, the off-diagonal magnitude is about $0.00823$.",
+        "numbers": "after five unshifted steps on that matrix, the off-diagonal magnitude is about $0.00823$."
       },
       {
-        "title": "Vibration analysis",
-        "background": "Mechanical systems use eigenvalues to find natural frequencies. Dense subproblems often rely on QR-like routines.",
-        "numbers": "An eigenvalue $\\lambda=400$ in a stiffness-mass model corresponds to angular frequency $\\sqrt{400}=20$ rad/s."
+        "title": "Symmetric eigensolver",
+        "background": "covariance PCA can use QR after reducing the matrix to tridiagonal form.",
+        "numbers": "covariance PCA can use QR after reducing the matrix to tridiagonal form."
       },
       {
-        "title": "Schur decompositions",
-        "background": "Modern QR algorithms usually deliver Schur form, a stable triangular or block-triangular representation.",
-        "numbers": "A real $2\\times2$ block can encode complex conjugate eigenvalues while keeping all matrix entries real."
+        "title": "Convergence diagnosis",
+        "background": "when the subdiagonal falls below $10^{-10}$, the lower block can be deflated.",
+        "numbers": "when the subdiagonal falls below $10^{-10}$, the lower block can be deflated."
       },
       {
-        "title": "Small Hessian diagnostics",
-        "background": "Optimization diagnostics sometimes compute eigenvalues of a smaller projected Hessian to understand curvature.",
-        "numbers": "If projected Hessian diagonal Schur values include $-0.5$, the point has a negative-curvature direction."
+        "title": "Small Hessian analysis",
+        "background": "a $2\\times2$ Hessian with eigenvalues $3$ and $1$ has condition number $3$.",
+        "numbers": "a $2\\times2$ Hessian with eigenvalues $3$ and $1$ has condition number $3$."
       }
     ],
     "applicationsClose": "The QR algorithm is a masterclass in numerical design: preserve eigenvalues exactly in theory while moving the matrix toward a form where they are easy to read.",
@@ -2432,6 +2838,57 @@
       "QR eigenvalue iteration uses $A_{k+1}=R_kQ_k$, an orthogonal similarity transform.",
       "Triangular and Schur forms expose eigenvalues on diagonals or small blocks.",
       "Practical QR uses shifts and structure reduction for speed and convergence."
+    ],
+    "connectionsProse": "<p>This lesson builds on orthogonal matrices, triangular factors, and eigenvalue preservation under similarity transforms. Earlier lessons treated QR factorization as a stable way to decompose a matrix. The QR algorithm uses that factorization repeatedly to reveal eigenvalues. The method sits between elementary eigenvalue theory and production eigensolvers. It explains why orthogonal transformations are so valuable in numerical linear algebra: they change the representation of a matrix while preserving its spectrum and controlling numerical growth.</p>",
+    "symbols": [
+      {
+        "sym": "$Q_k$",
+        "desc": "orthogonal"
+      },
+      {
+        "sym": "$R_k$",
+        "desc": "upper triangular"
+      },
+      {
+        "sym": "$A_{k+1}$",
+        "desc": "similar to $A_k$"
+      },
+      {
+        "sym": "similarity",
+        "desc": "preserves eigenvalues"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Factor $A_k=Q_kR_k$ where $Q_k^TQ_k=I$ and $R_k$ is upper triangular.",
+        "result": "upper triangular.",
+        "why": ""
+      },
+      {
+        "do": "Define $A_{k+1}=R_kQ_k$ by reversing the factors.",
+        "result": "Define $A_{k+1}=R_kQ_k$ by reversing the factors.",
+        "why": ""
+      },
+      {
+        "do": "Substitute $R_k=Q_k^TA_k$ from the factorization.",
+        "result": "Substitute $R_k=Q_k^TA_k$ from the factorization.",
+        "why": ""
+      },
+      {
+        "do": "Then $A_{k+1}=Q_k^TA_kQ_k$.",
+        "result": "Then $A_{k+1}=Q_k^TA_kQ_k$.",
+        "why": ""
+      },
+      {
+        "do": "This is an orthogonal similarity transform, so $A_{k+1}$ has the same eigenvalues as $A_k$.",
+        "result": "$A_{k+1}$ has the same eigenvalues as $A_k$.",
+        "why": ""
+      },
+      {
+        "do": "Repeating the step drives a symmetric matrix toward diagonal form under favorable conditions, leaving eigenvalues on the diagonal.",
+        "result": "Repeating the step drives a symmetric matrix toward diagonal form under favorable conditions, leaving eigenvalues on the diagonal.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-08"
@@ -2461,8 +2918,8 @@
         "orthogonality"
       ]
     },
-    "motivation": "<p>Power iteration finds one dominant direction. But many large symmetric problems need several leading eigenvalues or a compact picture of the spectrum. Full QR may be too expensive when the matrix has millions of rows.</p><p>Lanczos iteration builds a carefully chosen orthonormal basis for a Krylov subspace. In that basis, the large symmetric matrix looks like a small tridiagonal matrix, which is much easier to analyze.</p>",
-    "definition": "<p><b>Lanczos iteration</b> applies to symmetric matrices. Starting with unit vector $q_1$, it builds orthonormal vectors $q_1,\\ldots,q_k$ and a tridiagonal matrix $T_k$ such that $Q_k^TAQ_k=T_k$, where $Q_k$ has the $q_i$ as columns.</p><p>The three-term recurrence is $\\beta_{j+1}q_{j+1}=Aq_j-\\u0007lpha_jq_j-\\beta_jq_{j-1}$, with $\\u0007lpha_j=q_j^TAq_j$. Symmetry is what keeps only the previous direction, current direction, and next direction coupled, producing the tridiagonal structure.</p><p><b>Assumptions that matter:</b> $A$ should be symmetric for the three-term recurrence; finite precision can erode orthogonality and create repeated ghost eigenvalues; reorthogonalization may be needed; and the useful output is often Ritz values, the eigenvalues of $T_k$.</p>",
+    "motivation": "<p>Lanczos is a Krylov method specialized to symmetric matrices. Starting from one unit vector, it repeatedly applies $A$ and removes components in directions already represented. Symmetry makes the recurrence short: each new vector only needs nearby correction terms, producing a tridiagonal projected matrix.</p><p>The small tridiagonal matrix is useful because its eigenvalues approximate eigenvalues of the original large matrix. This is a controlled compression of spectral information. The large matrix is still present through matrix-vector products, but the expensive eigenvalue calculation happens on the small matrix $T_k$.</p>",
+    "definition": "<p><b>Lanczos iteration</b> builds an orthonormal Krylov basis for a symmetric matrix and represents the large operator by a small tridiagonal projection: $$AQ_k=Q_kT_k+\\beta_kq_{k+1}e_k^T.$$</p><p><b>Assumptions that matter:</b> $A$ is symmetric, the Lanczos vectors are orthonormal, and the recurrence produces diagonal coefficients $\\alpha_i$ and off-diagonal coefficients $\\beta_i$.</p>",
     "worked": {
       "problem": "Run the first Lanczos step for $A=\\begin{bmatrix}2&1\\1&2\\end{bmatrix}$ starting with $q_1=\\begin{bmatrix}1\\0\\end{bmatrix}$.",
       "skills": [
@@ -2666,34 +3123,34 @@
     ],
     "applications": [
       {
-        "title": "Large sparse eigenproblems",
-        "background": "Physics, graphs, and PDEs often need a few extreme eigenvalues of enormous symmetric matrices. Lanczos targets those without dense factorization.",
-        "numbers": "For $n=10^7$ and $50$ Lanczos vectors, basis storage is $5\\cdot10^8$ numbers, large but far below dense matrix storage."
+        "title": "First step",
+        "background": "for $A=\\begin{bmatrix}2&1\\1&2\\end{bmatrix}$ and $q_1=(1,0)$, $\\alpha_1=2$, $w=(0,1)$, and $\\beta_1=1$.",
+        "numbers": "for $A=\\begin{bmatrix}2&1\\1&2\\end{bmatrix}$ and $q_1=(1,0)$, $\\alpha_1=2$, $w=(0,1)$, and $\\beta_1=1$."
       },
       {
-        "title": "Spectral graph partitioning",
-        "background": "Graph cuts use eigenvectors of Laplacian matrices. Lanczos can estimate the relevant low eigenvectors for large sparse graphs.",
-        "numbers": "A graph with $1$ million nodes and $5$ million edges gives a Laplacian with roughly $11$ million nonzeros including diagonals."
+        "title": "Second basis vector",
+        "background": "the same step gives $q_2=(0,1)$.",
+        "numbers": "the same step gives $q_2=(0,1)$."
       },
       {
-        "title": "Kernel PCA approximations",
-        "background": "Kernel methods can form huge symmetric matrices. Lanczos approximates leading eigenspaces for dimensionality reduction.",
-        "numbers": "Keeping $20$ Ritz vectors from $10000$ samples stores $200000$ vector entries instead of a full $10000^2=10^8$ kernel entries."
+        "title": "Projected matrix",
+        "background": "after two steps, $T=\\begin{bmatrix}2&1\\1&2\\end{bmatrix}$ with eigenvalues $1$ and $3$.",
+        "numbers": "after two steps, $T=\\begin{bmatrix}2&1\\1&2\\end{bmatrix}$ with eigenvalues $1$ and $3$."
       },
       {
-        "title": "Gaussian process log determinants",
-        "background": "Stochastic Lanczos quadrature estimates traces and log determinants using Lanczos tridiagonal matrices.",
-        "numbers": "If $10$ probe vectors each run $30$ Lanczos steps, the method uses $300$ matrix-vector products."
+        "title": "Top Hessian eigenvalue",
+        "background": "Lanczos can estimate curvature using Hessian-vector products without forming a dense Hessian.",
+        "numbers": "Lanczos can estimate curvature using Hessian-vector products without forming a dense Hessian."
       },
       {
-        "title": "Hessian spectrum in deep learning",
-        "background": "Researchers estimate top Hessian eigenvalues to understand sharpness. Lanczos uses Hessian-vector products rather than storing the Hessian.",
-        "numbers": "For $10^8$ parameters, storing a dense Hessian would require $10^{16}$ entries, impossible in ordinary memory."
+        "title": "Embedding spectra",
+        "background": "a sparse graph Laplacian with $10^6$ nodes can be probed with $50$ Lanczos vectors instead of a full eigendecomposition.",
+        "numbers": "a sparse graph Laplacian with $10^6$ nodes can be probed with $50$ Lanczos vectors instead of a full eigendecomposition."
       },
       {
-        "title": "Connection to CG",
-        "background": "CG and Lanczos are deeply linked for SPD systems: CG residual behavior can be explained through Lanczos tridiagonalization.",
-        "numbers": "After $k=25$ CG steps, the related Krylov subspace has dimension at most $25$, represented by a $25\\times25$ tridiagonal matrix."
+        "title": "Memory budget",
+        "background": "storing $50$ FP32 vectors of length $10^6$ costs $50\\cdot10^6\\cdot4=200$ MB.",
+        "numbers": "storing $50$ FP32 vectors of length $10^6$ costs $50\\cdot10^6\\cdot4=200$ MB."
       }
     ],
     "applicationsClose": "Lanczos is how large symmetric matrices whisper their spectra through a much smaller tridiagonal representative.",
@@ -2702,6 +3159,57 @@
       "The projected matrix $T_k=Q_k^TAQ_k$ is tridiagonal because of symmetry.",
       "Ritz values from $T_k$ approximate eigenvalues of the large matrix.",
       "Finite precision can damage orthogonality, so reorthogonalization may be needed."
+    ],
+    "connectionsProse": "<p>This lesson follows power iteration and QR by focusing on spectral information for large symmetric matrices. A full eigendecomposition may be impossible when the matrix has millions of rows, but matrix-vector products may still be affordable. Lanczos uses those products to build a much smaller matrix that captures important eigenvalue information. The method also connects Krylov subspaces with optimization diagnostics and graph computations. It is one reason large systems can estimate top curvature, embedding spectra, or kernel behavior without ever forming all dense matrix entries.</p>",
+    "symbols": [
+      {
+        "sym": "$q_i$",
+        "desc": "orthonormal Lanczos vectors"
+      },
+      {
+        "sym": "$\\alpha_i$",
+        "desc": "diagonal entries of $T_k$"
+      },
+      {
+        "sym": "$\\beta_i$",
+        "desc": "off-diagonal entries"
+      },
+      {
+        "sym": "$T_k$",
+        "desc": "the small tridiagonal projection of $A$"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start with a unit vector $q_1$.",
+        "result": "Start with a unit vector $q_1$.",
+        "why": ""
+      },
+      {
+        "do": "Compute $w=Aq_1$",
+        "result": "Compute $w=Aq_1$",
+        "why": "the Krylov space begins by applying $A$."
+      },
+      {
+        "do": "Set $\\alpha_1=q_1^Tw$ to capture the component of $w$ along $q_1$.",
+        "result": "Set $\\alpha_1=q_1^Tw$ to capture the component of $w$ along $q_1$.",
+        "why": ""
+      },
+      {
+        "do": "Subtract it: $w\\leftarrow w-\\alpha_1q_1$ so the remaining vector is orthogonal to $q_1$.",
+        "result": "$w\\leftarrow w-\\alpha_1q_1$ so the remaining vector is orthogonal to $q_1$.",
+        "why": ""
+      },
+      {
+        "do": "Set $\\beta_1=\\|w\\|$ and $q_2=w/\\beta_1$ if $\\beta_1\\ne0$.",
+        "result": "Set $\\beta_1=\\|w\\|$ and $q_2=w/\\beta_1$ if $\\beta_1\\ne0$.",
+        "why": ""
+      },
+      {
+        "do": "Repeating this process gives $AQ_k=Q_kT_k+\\beta_kq_{k+1}e_k^T$, where $T_k$ is tridiagonal.",
+        "result": "$AQ_k=Q_kT_k+\\beta_kq_{k+1}e_k^T$, where $T_k$ is tridiagonal.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-09"
@@ -2731,8 +3239,8 @@
         "finite differences"
       ]
     },
-    "motivation": "<p>You already know how to multiply a matrix by a vector. If the matrix is full, every entry asks for attention. But many scientific and ML matrices are mostly zeros: a web graph, a finite-difference grid, or a bag-of-words table only connects nearby or observed things.</p><p>A <b>sparse matrix</b> is the practical promise that zeros should not cost the same as information. We store only nonzeros, count work by the number of nonzeros, and suddenly matrices with millions of rows become usable on ordinary machines.</p>",
-    "definition": "<p>A matrix $A\\in\\mathbb{R}^{m\\times n}$ is called <b>sparse</b> when its number of nonzero entries, written $\\operatorname{nnz}(A)$, is much smaller than $mn$. Sparse matrix-vector multiplication computes $y=Ax$ using only nonzeros: for every stored entry $a_{ij}$, add $a_{ij}x_j$ to $y_i$.</p><p>The work is therefore $O(\\operatorname{nnz}(A))$, not $O(mn)$. Compressed sparse row storage keeps three arrays: nonzero values, their column indices, and row pointers. The row pointers say where each row starts and stops in the values array.</p><p><b>Assumptions that matter:</b> sparse methods help when zeros are true zeros and the access pattern is compatible with the storage format; inserting new nonzeros can be expensive in compressed formats; and algorithms may create fill-in, where operations on a sparse matrix produce a less sparse one.</p>",
+    "motivation": "<p>Sparse matrices store only the nonzero entries. This is not just a memory trick. It changes which algorithms are practical because matrix-vector products scale with the number of nonzeros rather than the number of possible entries.</p><p>The storage format must match the operation. Compressed sparse row storage is organized row by row because a matrix-vector product computes one output row at a time. Each nonzero contributes one multiplication with the matching entry of $x$ and one addition into the row sum. The savings become large when the number of nonzeros is tiny compared with the dense matrix size.</p>",
+    "definition": "<p>A <b>sparse matrix</b> stores only nonzero entries. In compressed sparse row form, row $i$ uses the slice from `row_ptr[i]` to `row_ptr[i+1]` to compute $$(Ax)_i=\\sum_k \\text{values}[k]x_{\\text{col\\_idx}[k]}.$$</p><p><b>Assumptions that matter:</b> CSR is organized row by row, each nonzero contributes one multiply and one add, and work scales with $\\operatorname{nnz}$ rather than dense size.</p>",
     "worked": {
       "problem": "Store $A=\\begin{bmatrix}0&5&0&0\\\\2&0&0&3\\\\0&0&4&0\\end{bmatrix}$ in compressed sparse row form and compute $Ax$ for $x=[1,2,3,4]^T$.",
       "skills": [
@@ -2946,34 +3454,34 @@
     ],
     "applications": [
       {
-        "title": "Web graphs and PageRank",
-        "background": "Search engines popularized sparse graph matrices because each page links to only a tiny fraction of the web. PageRank repeatedly multiplies by a sparse transition matrix.",
-        "numbers": "If $10^9$ pages average $20$ links, $\\operatorname{nnz}\\approx2\\cdot10^{10}$, far below $10^{18}$ possible entries."
+        "title": "CSR example",
+        "background": "for $A=\\begin{bmatrix}0&5&0&0\\2&0&0&3\\0&0&4&0\\end{bmatrix}$ and $x=(1,2,3,4)$, $Ax=(10,14,12)$.",
+        "numbers": "for $A=\\begin{bmatrix}0&5&0&0\\2&0&0&3\\0&0&4&0\\end{bmatrix}$ and $x=(1,2,3,4)$, $Ax=(10,14,12)$."
       },
       {
-        "title": "Recommender systems",
-        "background": "User-item matrices are sparse because each user rates or clicks only a few items. Collaborative filtering depends on not storing missing interactions as real zeros.",
-        "numbers": "$5$ million users and $100,000$ items give $5\\cdot10^{11}$ possible entries; $200$ million clicks mean density $0.04\\%$."
+        "title": "Storage comparison",
+        "background": "that $3\\times4$ example has $12$ dense entries and $4$ nonzeros; CSR also needs row pointers, so tiny matrices may not save space.",
+        "numbers": "that $3\\times4$ example has $12$ dense entries and $4$ nonzeros; CSR also needs row pointers, so tiny matrices may not save space."
       },
       {
-        "title": "Finite-difference PDEs",
-        "background": "Discretized physical equations connect each grid point only to nearby neighbors. This creates sparse matrices with predictable bands.",
-        "numbers": "A $100\\times100$ grid has $10,000$ unknowns; about $5$ nonzeros per row gives roughly $50,000$ nonzeros, not $100,000,000$."
+        "title": "Large sparse win",
+        "background": "a $10{,}000\\times10{,}000$ matrix at $0.1\\%$ density has $100{,}000$ nonzeros instead of $100{,}000{,}000$ dense entries.",
+        "numbers": "a $10{,}000\\times10{,}000$ matrix at $0.1\\%$ density has $100{,}000$ nonzeros instead of $100{,}000{,}000$ dense entries."
       },
       {
-        "title": "Bag-of-words features",
-        "background": "Text classifiers use vocabularies with many words, but each document contains only a small subset. Sparse rows keep NLP features manageable.",
-        "numbers": "A document with $120$ distinct words in a $50,000$ word vocabulary has row density $120/50,000=0.24\\%$."
+        "title": "CSR array count",
+        "background": "that large matrix uses about $2\\cdot100{,}000+10{,}001=210{,}001$ stored numbers/indices.",
+        "numbers": "that large matrix uses about $2\\cdot100{,}000+10{,}001=210{,}001$ stored numbers/indices."
       },
       {
-        "title": "Graph neural networks",
-        "background": "GNN layers aggregate messages along edges, which is sparse matrix multiplication in graph clothing. The edge list is the computation plan.",
-        "numbers": "With $1,000,000$ nodes, $8,000,000$ directed edges, and $64$ features, aggregation costs about $8,000,000\\cdot64=512$ million multiply-adds."
+        "title": "Sparse matvec flops",
+        "background": "$100{,}000$ nonzeros cost about $200{,}000$ multiply-add operations.",
+        "numbers": "$100{,}000$ nonzeros cost about $200{,}000$ multiply-add operations."
       },
       {
-        "title": "Sparse regularization",
-        "background": "Lasso and pruning encourage parameters or activations to become zero, reducing storage and sometimes inference cost.",
-        "numbers": "A weight vector of length $1,000,000$ with $95\\%$ zeros stores $50,000$ values; at $8$ bytes each that is $0.4$ MB before indices."
+        "title": "Graph ML",
+        "background": "a graph with $1{,}000{,}000$ edges stores about $2{,}000{,}000$ adjacency nonzeros when edges are symmetrized.",
+        "numbers": "a graph with $1{,}000{,}000$ edges stores about $2{,}000{,}000$ adjacency nonzeros when edges are symmetrized."
       }
     ],
     "applicationsClose": "Sparse thinking is a simple kindness to computation: do not pay for zeros when structure lets you skip them.",
@@ -2982,6 +3490,57 @@
       "Sparse matrix-vector multiplication costs $O(\\operatorname{nnz}(A))$ rather than $O(mn)$.",
       "CSR stores values, column indices, and row pointers for fast row-wise operations.",
       "Graphs, PDE grids, text data, and recommender systems are naturally sparse."
+    ],
+    "connectionsProse": "<p>This lesson builds on matrices and matrix-vector multiplication, but changes the storage model. A dense matrix records every possible entry, including zeros. Many scientific and graph problems have matrices where most entries are zero, so dense storage wastes both memory and arithmetic. Sparse matrices connect directly to CG, GMRES, Lanczos, PDE grids, and graph machine learning. In all of those settings, the core operation is often not forming a matrix inverse, but multiplying a sparse matrix by a vector many times.</p>",
+    "symbols": [
+      {
+        "sym": "$\\operatorname{nnz}$",
+        "desc": "the number of nonzero entries"
+      },
+      {
+        "sym": "CSR",
+        "desc": "compressed sparse row"
+      },
+      {
+        "sym": "`row_ptr`, `col_idx`, and `values`",
+        "desc": "the three arrays"
+      },
+      {
+        "sym": "$Ax$",
+        "desc": "a sparse matrix-vector product"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Scan row by row",
+        "result": "Scan row by row",
+        "why": "matrix-vector multiplication also consumes rows."
+      },
+      {
+        "do": "Store each nonzero value in `values`.",
+        "result": "Store each nonzero value in `values`.",
+        "why": ""
+      },
+      {
+        "do": "Store its column index in `col_idx` so the matching entry of $x$ can be found.",
+        "result": "the matching entry of $x$ can be found.",
+        "why": ""
+      },
+      {
+        "do": "Store row start positions in `row_ptr` so row $i$ is the slice from `row_ptr[i]` to `row_ptr[i+1]`.",
+        "result": "row $i$ is the slice from `row_ptr[i]` to `row_ptr[i+1]`.",
+        "why": ""
+      },
+      {
+        "do": "Compute $(Ax)_i$ by summing `values[k] * x[col_idx[k]]` over that slice.",
+        "result": "Compute $(Ax)_i$ by summing `values[k] * x[col_idx[k]]` over that slice.",
+        "why": ""
+      },
+      {
+        "do": "The work is about $2\\operatorname{nnz}$ floating-point operations",
+        "result": "about $2\\operatorname{nnz}$ floating-point operations",
+        "why": "each nonzero contributes one multiply and one add."
+      }
     ],
     "prereqs": [
       "math-27-10"
@@ -3011,8 +3570,8 @@
         "eigenvalues"
       ]
     },
-    "motivation": "<p>You already know the gradient points uphill. Training a model asks for the opposite: move downhill in parameter space until the loss is small. The hard part is not the slogan; it is choosing the step.</p><p><b>Numerical optimization</b> is the craft of making those downhill moves reliable. It balances local information, step size, curvature, noise, and stopping rules so an algorithm improves for real numbers on a real machine.</p>",
-    "definition": "<p>For a differentiable loss $f(\\theta)$, basic gradient descent updates $\\theta_{k+1}=\\theta_k-\\alpha_k\\nabla f(\\theta_k)$, where $\\alpha_k>0$ is the learning rate. Newton's method uses curvature: $\\theta_{k+1}=\\theta_k-H_k^{-1}\\nabla f(\\theta_k)$, where $H_k$ is the Hessian matrix.</p><p>The descent idea comes from the first-order approximation $f(\\theta+s)\\approx f(\\theta)+\\nabla f(\\theta)^Ts$. Choosing $s=-\\alpha\\nabla f(\\theta)$ gives predicted change $-\\alpha\\|\\nabla f(\\theta)\\|^2$, which is negative when the gradient is nonzero.</p><p><b>Assumptions that matter:</b> a step that is too large can increase the loss; ill-conditioned curvature makes some directions much slower than others; stochastic gradients add noise; and nonconvex losses can have saddles and local minima rather than one guaranteed global answer.</p>",
+    "motivation": "<p>Numerical optimization is the engineering layer around gradients: choose a step, scale it, test whether it helped, and stop when further work is not justified. The mathematics is local because a gradient describes the function near the current point. A step that is sensible locally can still fail if it is too large or if the function curves sharply.</p><p>That is why optimization practice includes line searches, learning-rate schedules, clipping, validation checks, and stopping criteria. These tools do not replace the gradient; they make the gradient usable in finite-precision computation. The goal is to make steady progress without interpreting noise, roundoff, or validation fluctuation as meaningful improvement.</p>",
+    "definition": "<p><b>Numerical optimization</b> turns local gradient information into stable computed steps. A steepest-descent step uses $$f(x-\\alpha g)\\approx f(x)-\\alpha g^Tg.$$</p><p><b>Assumptions that matter:</b> $g=\\nabla f(x)$, small positive $\\alpha$ predicts decrease, and line searches or schedules control steps when the first-order approximation is unreliable.</p>",
     "worked": {
       "problem": "Minimize $f(w)=(w-3)^2+1$ from $w_0=0$ using gradient descent with learning rate $\\alpha=0.25$ for three steps.",
       "skills": [
@@ -3226,34 +3785,34 @@
     ],
     "applications": [
       {
-        "title": "Training linear regression",
-        "background": "Least squares can be solved exactly, but gradient methods scale naturally to large data and streaming updates.",
-        "numbers": "If gradient is $[-4,2]$ and $\\alpha=0.05$, weights change by $-[0.05][-4,2]=[0.2,-0.1]$."
+        "title": "Quadratic step",
+        "background": "for $f(x)=(x-3)^2$, $x_0=0$, and $\\alpha=0.1$, the update is $x_1=0.6$ and $f(x_1)=5.76$.",
+        "numbers": "for $f(x)=(x-3)^2$, $x_0=0$, and $\\alpha=0.1$, the update is $x_1=0.6$ and $f(x_1)=5.76$."
       },
       {
-        "title": "Deep learning with SGD",
-        "background": "Neural networks use noisy mini-batch gradients because full gradients over huge datasets are expensive.",
-        "numbers": "With $1,000,000$ examples and batch size $500$, one epoch has $2000$ parameter updates."
+        "title": "Gradient clipping",
+        "background": "clipping $g=(3,4)$ to norm $2$ returns $(1.2,1.6)$.",
+        "numbers": "clipping $g=(3,4)$ to norm $2$ returns $(1.2,1.6)$."
       },
       {
-        "title": "Line search in scientific codes",
-        "background": "Classical optimization often tests candidate step sizes until the objective decreases enough.",
-        "numbers": "If $f=10$ and predicted decrease is $2$, an Armijo fraction $0.1$ asks for new loss at most $10-0.2=9.8$."
+        "title": "Loss decrease check",
+        "background": "for the Part 02 quadratic at $(1,2)$, step $0.1(4,9)$ gives new value $2.78$, down from $11$.",
+        "numbers": "for the Part 02 quadratic at $(1,2)$, step $0.1(4,9)$ gives new value $2.78$, down from $11$."
       },
       {
-        "title": "Ill-conditioning",
-        "background": "A narrow valley makes descent slow because one direction is steep and another is flat. Feature scaling is a practical cure.",
-        "numbers": "A quadratic with curvatures $1$ and $1000$ has condition number $1000/1=1000$."
+        "title": "Learning-rate sweep",
+        "background": "testing $5$ learning rates across $3$ seeds gives $15$ training runs.",
+        "numbers": "testing $5$ learning rates across $3$ seeds gives $15$ training runs."
       },
       {
-        "title": "Momentum",
-        "background": "Momentum smooths updates by remembering past descent directions, which helps cross shallow noisy regions.",
-        "numbers": "If $v_{old}=3$, gradient $g=2$, and momentum $0.9$, then $v=0.9\\cdot3+2=4.7$."
+        "title": "Stopping by gradient norm",
+        "background": "if $\\|g\\|=8\\times10^{-4}$ and tolerance is $10^{-3}$, the first-order stopping test passes.",
+        "numbers": "if $\\|g\\|=8\\times10^{-4}$ and tolerance is $10^{-3}$, the first-order stopping test passes."
       },
       {
-        "title": "Hyperparameter tuning",
-        "background": "The learning rate is often the most important optimization hyperparameter because it controls stability and speed.",
-        "numbers": "A log grid $10^{-4},10^{-3},10^{-2},10^{-1}$ tests four rates separated by factors of $10$."
+        "title": "Weight decay update",
+        "background": "with gradient $0.6$, weight $2$, decay $0.01$, and step $0.1$, the update uses $0.6+0.02=0.62$ and moves the weight by $0.062$.",
+        "numbers": "with gradient $0.6$, weight $2$, decay $0.01$, and step $0.1$, the update uses $0.6+0.02=0.62$ and moves the weight by $0.062$."
       }
     ],
     "applicationsClose": "Optimization practice is the art of respecting local math while listening carefully to numerical behavior.",
@@ -3262,6 +3821,61 @@
       "The first-order Taylor approximation explains why the negative gradient is a descent direction.",
       "Learning rate, conditioning, noise, and stopping rules decide practical success.",
       "Newton's method can be fast when curvature is trustworthy but expensive or unstable when it is not."
+    ],
+    "connectionsProse": "<p>This lesson builds on gradients, Taylor approximation, and the optimization ideas used throughout machine learning. Earlier calculus lessons explain why a gradient points toward local increase. Numerical optimization asks how to turn that local information into a stable sequence of computed steps. The lesson also prepares the reader for automatic differentiation and training stability. Gradients are only useful when the surrounding workflow chooses step sizes, scales updates, checks progress, and stops at a level of precision the computation can justify.</p>",
+    "symbols": [
+      {
+        "sym": "$g$",
+        "desc": "the gradient"
+      },
+      {
+        "sym": "$s$",
+        "desc": "the proposed step"
+      },
+      {
+        "sym": "$\\alpha$",
+        "desc": "the learning rate or step size"
+      },
+      {
+        "sym": "$\\|g\\|$",
+        "desc": "first-order stationarity"
+      },
+      {
+        "sym": "a line search",
+        "desc": "tests actual decrease"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Use the first-order Taylor approximation $f(x+s)\\approx f(x)+\\nabla f(x)^Ts$.",
+        "result": "Use the first-order Taylor approximation $f(x+s)\\approx f(x)+\\nabla f(x)^Ts$.",
+        "why": ""
+      },
+      {
+        "do": "Choose steepest-descent step $s=-\\alpha g$ with $g=\\nabla f(x)$.",
+        "result": "Choose steepest-descent step $s=-\\alpha g$ with $g=\\nabla f(x)$.",
+        "why": ""
+      },
+      {
+        "do": "Substitute to get $f(x-\\alpha g)\\approx f(x)-\\alpha g^Tg$.",
+        "result": "$f(x-\\alpha g)\\approx f(x)-\\alpha g^Tg$.",
+        "why": ""
+      },
+      {
+        "do": "Since $g^Tg=\\|g\\|^2\\ge0$, small positive $\\alpha$ predicts a decrease.",
+        "result": "Since $g^Tg=\\|g\\|^2\\ge0$, small positive $\\alpha$ predicts a decrease.",
+        "why": ""
+      },
+      {
+        "do": "A line search or schedule controls $\\alpha$",
+        "result": "A line search or schedule controls $\\alpha$",
+        "why": "the first-order approximation can fail for large steps."
+      },
+      {
+        "do": "Stopping criteria compare gradient norm, step size, validation change, and numerical tolerance.",
+        "result": "Stopping criteria compare gradient norm, step size, validation change, and numerical tolerance.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-11"
@@ -3291,8 +3905,8 @@
         "Taylor approximation"
       ]
     },
-    "motivation": "<p>You already know how to differentiate a formula by hand. But a modern model is not one neat formula on a page; it is a long program with matrix multiplies, activations, reshapes, losses, and branches.</p><p><b>Automatic differentiation</b> keeps the derivative exact by applying the chain rule to the actual computation. It is not finite differences, and it is not symbolic algebra. It is careful local bookkeeping through the program you ran.</p>",
-    "definition": "<p>Automatic differentiation represents a computation as intermediate variables. If $v=g(u)$, then a local derivative $\\partial v/\\partial u$ is recorded. In <b>forward mode</b>, tangents move from inputs to outputs. In <b>reverse mode</b>, adjoints move from outputs back to inputs.</p><p>Reverse mode is efficient for scalar losses with many parameters. If $L$ is scalar and $v$ feeds into $L$, the adjoint $\\bar v=\\partial L/\\partial v$ propagates by $\\bar u\\mathrel{+}=\\bar v\\,\\partial v/\\partial u$. This is the chain rule written as an accumulation rule.</p><p><b>Assumptions that matter:</b> AD differentiates the executed operations; nondifferentiable points need chosen subgradient conventions or special handling; reverse mode stores or recomputes intermediate values; and numerical floating-point errors can still affect the primal and derivative values.</p>",
+    "motivation": "<p>A derivative through a long computation is difficult because every intermediate value can affect later values. The safe way to handle that dependency is to name the intermediate values and keep local derivative rules for each operation. If $u=3x$, then the local rule is $du/dx=3$. If $v=u^2$, then the local rule is $dv/du=2u$. The whole derivative is built by chaining these local rules together.</p><p>Reverse mode starts from a scalar output, usually a loss, and walks backward. It attaches to each intermediate value an adjoint, written $\\bar v$, meaning “how much the final loss changes when this value changes.” When one value feeds several later operations, reverse mode adds all contributions into the same adjoint. That accumulation is the practical heart of backpropagation: every parameter receives the total effect of all paths by which it influences the loss.</p><p>The important point is that automatic differentiation computes derivatives of the executed numerical program. It does not remove floating-point roundoff, and it still needs conventions at nondifferentiable points, but it gives exact chain-rule derivatives for the operations that were actually run.</p>",
+    "definition": "<p><b>Reverse-mode automatic differentiation</b> walks backward through an executed computation and accumulates adjoints using $$\\bar u \\mathrel{+}= \\bar v\\,{\\partial v \\over \\partial u}.$$</p><p><b>Assumptions that matter:</b> intermediate values from the forward pass are available, the output is scalar, and contributions from multiple downstream paths add into the same adjoint.</p>",
     "worked": {
       "problem": "Use reverse-mode automatic differentiation for $x=2$, $u=3x$, $v=u^2$, $L=v+5u$. Find $\\dfrac{dL}{dx}$.",
       "skills": [
@@ -3511,34 +4125,34 @@
     ],
     "applications": [
       {
-        "title": "Backpropagation",
-        "background": "Deep learning made reverse-mode AD famous because a scalar loss depends on millions or billions of parameters.",
-        "numbers": "A network with $10^7$ parameters gets one full gradient with cost on the order of a few forward passes, not $10^7$ separate finite differences."
+        "title": "Backpropagation at scale",
+        "background": "reverse-mode AD computes one gradient of a scalar loss with cost on the order of a few forward passes; a model with $10^7$ parameters avoids $10^7$ finite-difference reruns.",
+        "numbers": "reverse-mode AD computes one gradient of a scalar loss with cost on the order of a few forward passes; a model with $10^7$ parameters avoids $10^7$ finite-difference reruns."
       },
       {
-        "title": "Physics-informed neural networks",
-        "background": "Scientific ML often needs derivatives of a neural network with respect to space and time. AD supplies those derivatives inside the loss.",
-        "numbers": "For a residual $u_t-0.1u_{xx}$ at $1000$ collocation points, AD can compute both derivative terms at all points."
+        "title": "Worked graph audit",
+        "background": "for $x=2,u=3x,v=u^2,L=v+5u$, the adjoint check returns $dL/dx=51$, so a framework trace can be tested against a hand calculation.",
+        "numbers": "for $x=2,u=3x,v=u^2,L=v+5u$, the adjoint check returns $dL/dx=51$, so a framework trace can be tested against a hand calculation."
       },
       {
-        "title": "Hyperparameter gradients",
-        "background": "Differentiable programming treats parts of algorithms as differentiable computations, allowing gradients through optimization loops.",
-        "numbers": "If validation loss changes by adjoint $0.8$ through a learning-rate node and local derivative is $-0.03$, the hypergradient contribution is $-0.024$."
+        "title": "Custom layer backward rule",
+        "background": "if a scale layer outputs $y=3x$ and receives incoming adjoint $0.7$, it returns $0.7\\cdot3=2.1$.",
+        "numbers": "if a scale layer outputs $y=3x$ and receives incoming adjoint $0.7$, it returns $0.7\\cdot3=2.1$."
       },
       {
-        "title": "Sensitivity analysis",
-        "background": "Engineers ask how outputs change when inputs or constants change. Forward mode is efficient when the number of inputs of interest is small.",
-        "numbers": "For $f(a,b)=ab^2$ at $(3,2)$, sensitivities are $\\partial f/\\partial a=4$ and $\\partial f/\\partial b=12$."
+        "title": "Hypergradient contribution",
+        "background": "if a validation-loss adjoint through a learning-rate node is $0.8$ and the local derivative is $-0.03$, the contribution is $0.8(-0.03)=-0.024$.",
+        "numbers": "if a validation-loss adjoint through a learning-rate node is $0.8$ and the local derivative is $-0.03$, the contribution is $0.8(-0.03)=-0.024$."
       },
       {
-        "title": "Probabilistic programming",
-        "background": "Hamiltonian Monte Carlo needs gradients of log densities. AD lets model builders write probability programs without hand-coding every derivative.",
-        "numbers": "For log density $-x^2/2$ at $x=1.5$, AD returns gradient $-1.5$."
+        "title": "Forward-mode sensitivity",
+        "background": "for $f(a,b)=ab^2$ at $(3,2)$, local differentiation gives $\\partial f/\\partial a=4$ and $\\partial f/\\partial b=12$.",
+        "numbers": "for $f(a,b)=ab^2$ at $(3,2)$, local differentiation gives $\\partial f/\\partial a=4$ and $\\partial f/\\partial b=12$."
       },
       {
-        "title": "Neural architecture components",
-        "background": "Modern frameworks define layers as code. AD makes custom operations trainable as long as their local derivative rule is available.",
-        "numbers": "If a custom scale layer outputs $3x$, the backward pass multiplies incoming gradient $0.7$ by $3$ to return $2.1$."
+        "title": "HMC log-density gradient",
+        "background": "for log density $\\ell(x)=-x^2/2$ at $x=1.5$, AD returns $\\ell'(x)=-1.5$, the number a Hamiltonian Monte Carlo step needs.",
+        "numbers": "for log density $\\ell(x)=-x^2/2$ at $x=1.5$, AD returns $\\ell'(x)=-1.5$, the number a Hamiltonian Monte Carlo step needs."
       }
     ],
     "applicationsClose": "Automatic differentiation is the chain rule made executable, which is why modern optimization can follow gradients through real programs.",
@@ -3547,6 +4161,81 @@
       "Forward mode pushes tangents from inputs to outputs; reverse mode pulls adjoints from outputs to inputs.",
       "Reverse mode is ideal for scalar losses with many parameters.",
       "AD gives exact derivatives of the floating-point computation, though the computation itself is still numerical."
+    ],
+    "connectionsProse": "<p>This lesson builds on the chain rule and on the idea of a computation as a sequence of intermediate values. In earlier calculus lessons, derivatives were usually taken from a formula written on one line. In real machine-learning code, the loss is produced by a program: matrix multiplications, nonlinearities, reshapes, normalizations, and reductions all happen before the final scalar appears. Automatic differentiation is the bridge between those two views. It applies the chain rule to the actual operations the program executed. That makes it different from finite differences, which estimate a slope by rerunning the program, and different from symbolic algebra, which tries to rewrite a formula. Reverse-mode automatic differentiation is the engine behind backpropagation, so this lesson is the numerical-methods version of how gradients are computed in modern training systems.</p>",
+    "symbols": [
+      {
+        "sym": "$x$",
+        "desc": "the input"
+      },
+      {
+        "sym": "$u,v$",
+        "desc": "intermediate values stored from the forward pass"
+      },
+      {
+        "sym": "$L$",
+        "desc": "the scalar loss"
+      },
+      {
+        "sym": "$\\bar v=\\partial L/\\partial v$",
+        "desc": "the adjoint of $v$"
+      },
+      {
+        "sym": "$\\mathrel{+}=$",
+        "desc": "“accumulate into the existing adjoint,” which matters when several paths meet"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Forward pass: $u=3\\cdot2=6$",
+        "result": "$u=3\\cdot2=6$",
+        "why": "$u$ is three times the input."
+      },
+      {
+        "do": "Forward pass: $v=6^2=36$",
+        "result": "$v=6^2=36$",
+        "why": "$v$ squares the intermediate $u$."
+      },
+      {
+        "do": "Forward pass: $L=36+5\\cdot6=66$",
+        "result": "$L=36+5\\cdot6=66$",
+        "why": "the loss adds $v$ and $5u$."
+      },
+      {
+        "do": "Seed the backward pass with $\\bar L=1$",
+        "result": "Seed the backward pass with $\\bar L=1$",
+        "why": "$\\partial L/\\partial L=1$."
+      },
+      {
+        "do": "From $L=v+5u$, add $\\bar v=1$",
+        "result": "From $L=v+5u$, add $\\bar v=1$",
+        "why": "$\\partial L/\\partial v=1$."
+      },
+      {
+        "do": "From the same line, add $5$ to $\\bar u$",
+        "result": "From the same line, add $5$ to $\\bar u$",
+        "why": "$\\partial L/\\partial u=5$ through the direct $5u$ path."
+      },
+      {
+        "do": "From $v=u^2$, add $\\bar v(2u)=1\\cdot12=12$ to $\\bar u$",
+        "result": "From $v=u^2$, add $\\bar v(2u)=1\\cdot12=12$ to $\\bar u$",
+        "why": "the square path also changes the loss."
+      },
+      {
+        "do": "Combine the two paths: $\\bar u=5+12=17$",
+        "result": "$\\bar u=5+12=17$",
+        "why": "adjoints add contributions from all downstream uses."
+      },
+      {
+        "do": "From $u=3x$, compute $\\bar x=\\bar u\\cdot3=17\\cdot3=51$",
+        "result": "From $u=3x$, compute $\\bar x=\\bar u\\cdot3=17\\cdot3=51$",
+        "why": "$\\partial u/\\partial x=3$."
+      },
+      {
+        "do": "Therefore $dL/dx=51$.",
+        "result": "Therefore $dL/dx=51$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-12"
@@ -3576,8 +4265,8 @@
         "adaptive step size"
       ]
     },
-    "motivation": "<p>You already know a derivative gives an instantaneous rate of change. An ordinary differential equation turns that around: it tells you the rate, and asks you to recover the evolving state.</p><p>Most useful ODEs do not have a convenient closed form. A solver makes a sequence of small, honest predictions: look at the slope, step forward, estimate the error, and choose whether the next step should be smaller or larger.</p>",
-    "definition": "<p>An <b>initial value problem</b> has the form $y'(t)=f(t,y(t))$ with $y(t_0)=y_0$. Euler's method uses $y_{n+1}=y_n+h f(t_n,y_n)$. The classical fourth-order Runge-Kutta method samples several slopes inside the step and combines them.</p><p>Euler's update comes from Taylor's formula: $y(t+h)=y(t)+hy'(t)+O(h^2)$. Replacing $y'(t)$ by $f(t,y)$ gives the numerical step. Smaller $h$ usually reduces local error, but uses more steps.</p><p><b>Assumptions that matter:</b> the function $f$ should be regular enough for existence and uniqueness; explicit methods can be unstable on stiff equations; local error and accumulated global error are different; and adaptive solvers need a tolerance that matches the scale of the problem.</p>",
+    "motivation": "<p>An ODE solver advances a state through time by replacing an exact trajectory with carefully chosen discrete steps. The derivative $f(t,y)$ tells the local direction of motion. Euler's method uses that local direction as if it stayed constant over a short interval of length $h$.</p><p>The central questions are accuracy, stability, and cost per step. Smaller steps usually reduce approximation error, but they require more steps. Higher-order methods use more information per step to reduce error faster. Stability adds a separate restriction: even a formula that is locally consistent can behave badly if the step size is too large for the dynamics.</p>",
+    "definition": "<p>An <b>ODE solver</b> replaces a continuous trajectory by discrete updates. Forward Euler uses $$y_{n+1}=y_n+hf(t_n,y_n).$$</p><p><b>Assumptions that matter:</b> the exact solution satisfies $y'=f(t,y)$, Taylor's formula justifies the local step, local truncation error is $O(h^2)$, and global error is $O(h)$ on a fixed interval.</p>",
     "worked": {
       "problem": "Use Euler's method with step $h=0.5$ for $y'=-2y$, $y(0)=3$, up to $t=1$.",
       "skills": [
@@ -3786,34 +4475,34 @@
     ],
     "applications": [
       {
-        "title": "Neural ODEs",
-        "background": "Neural ODEs model hidden states as continuous-time dynamics and use ODE solvers inside learning.",
-        "numbers": "If a solver takes $40$ function evaluations per example for a batch of $128$, it evaluates the neural dynamics $5120$ times."
+        "title": "Euler decay step",
+        "background": "for $y'=-2y$, $y_0=1$, $h=0.1$, Euler gives $0.8$ while exact is $e^{-0.2}\\approx0.81873$, error $0.01873$.",
+        "numbers": "for $y'=-2y$, $y_0=1$, $h=0.1$, Euler gives $0.8$ while exact is $e^{-0.2}\\approx0.81873$, error $0.01873$."
       },
       {
-        "title": "Epidemic models",
-        "background": "SIR models are classic ODE systems for disease spread, dating back to early mathematical epidemiology.",
-        "numbers": "With $S=990$, $I=10$, $\\beta=0.0003$, new infection rate is $\\beta SI=2.97$ people per day."
+        "title": "RK4 comparison",
+        "background": "RK4 on the same step gives about $0.818733$, error $2.58\\times10^{-6}$.",
+        "numbers": "RK4 on the same step gives about $0.818733$, error $2.58\\times10^{-6}$."
       },
       {
-        "title": "Optimizer dynamics",
-        "background": "Gradient descent can be viewed as a time discretization of continuous gradient flow $\\dot w=-\\nabla L(w)$.",
-        "numbers": "For $L(w)=w^2$, gradient flow has $\\dot w=-2w$; at $w=3$, the instantaneous velocity is $-6$."
+        "title": "Order check",
+        "background": "halving $h$ should reduce Euler global error by about $2$ and RK4 error by about $16$.",
+        "numbers": "halving $h$ should reduce Euler global error by about $2$ and RK4 error by about $16$."
       },
       {
-        "title": "Control and robotics",
-        "background": "Robots integrate equations of motion to predict position and velocity under applied controls.",
-        "numbers": "At velocity $2$ m/s with acceleration $0.5$ m/s$^2$, Euler with $h=0.1$ updates velocity to $2.05$ m/s."
+        "title": "Stability bound",
+        "background": "for $y'=-10y$, Euler needs $h<2/10=0.2$ for the linear stability interval.",
+        "numbers": "for $y'=-10y$, Euler needs $h<2/10=0.2$ for the linear stability interval."
       },
       {
-        "title": "Pharmacokinetics",
-        "background": "Drug concentration models use ODEs for absorption and clearance, often solved numerically for dosing schedules.",
-        "numbers": "For $C'=-0.2C$ and $C=50$, the clearance rate is $-10$ units per hour."
+        "title": "Neural ODE cost",
+        "background": "an adaptive solve using $64$ function evaluations costs about $64$ network evaluations per forward pass.",
+        "numbers": "an adaptive solve using $64$ function evaluations costs about $64$ network evaluations per forward pass."
       },
       {
-        "title": "Rendering and animation",
-        "background": "Physical animation integrates springs, fluids, and rigid-body motion one frame at a time.",
-        "numbers": "A $60$ FPS simulation uses $h=1/60\\approx0.0167$ seconds per frame."
+        "title": "Simulation budget",
+        "background": "integrating $10$ seconds with $h=0.01$ uses $1000$ steps.",
+        "numbers": "integrating $10$ seconds with $h=0.01$ uses $1000$ steps."
       }
     ],
     "applicationsClose": "ODE solvers turn local rates into global motion, provided the steps respect accuracy and stability.",
@@ -3822,6 +4511,65 @@
       "Euler's method comes directly from the first Taylor approximation.",
       "Smaller steps usually improve accuracy but increase cost.",
       "Stiffness and instability are practical reasons to choose better methods or adaptive steps."
+    ],
+    "connectionsProse": "<p>This lesson connects differential equations from calculus with the discrete updates used by a computer. An exact solution $y(t)$ describes a continuous trajectory. A numerical solver stores only selected time points and uses the differential equation to move from one point to the next. ODE solvers also connect to simulations, control systems, neural ODEs, and time-dependent physical models. The same questions appear repeatedly: how accurate is each step, how stable is the update, and how many function evaluations are needed.</p>",
+    "symbols": [
+      {
+        "sym": "$y(t)$",
+        "desc": "the exact state"
+      },
+      {
+        "sym": "$y_n$",
+        "desc": "the numerical state"
+      },
+      {
+        "sym": "$h$",
+        "desc": "the step size"
+      },
+      {
+        "sym": "$f$",
+        "desc": "the time derivative"
+      },
+      {
+        "sym": "local error",
+        "desc": "one-step error"
+      },
+      {
+        "sym": "global error",
+        "desc": "accumulated error"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Start from Taylor's formula $y(t+h)=y(t)+hy'(t)+O(h^2)$.",
+        "result": "Start from Taylor's formula $y(t+h)=y(t)+hy'(t)+O(h^2)$.",
+        "why": ""
+      },
+      {
+        "do": "Substitute the ODE $y'(t)=f(t,y(t))$.",
+        "result": "Substitute the ODE $y'(t)=f(t,y(t))$.",
+        "why": ""
+      },
+      {
+        "do": "Drop the $O(h^2)$ term to get $y(t+h)\\approx y(t)+hf(t,y(t))$.",
+        "result": "$y(t+h)\\approx y(t)+hf(t,y(t))$.",
+        "why": ""
+      },
+      {
+        "do": "Define the numerical update $y_{n+1}=y_n+hf(t_n,y_n)$.",
+        "result": "Define the numerical update $y_{n+1}=y_n+hf(t_n,y_n)$.",
+        "why": ""
+      },
+      {
+        "do": "The local truncation error is $O(h^2)$",
+        "result": "$O(h^2)$",
+        "why": "that is the first omitted term."
+      },
+      {
+        "do": "Over about $1/h$ steps on a fixed interval, global error is $O(h)$ for Euler.",
+        "result": "$O(h)$ for Euler.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-13"
@@ -3851,8 +4599,8 @@
         "Fourier analysis"
       ]
     },
-    "motivation": "<p>You already know an ODE tracks one evolving state. A partial differential equation tracks a whole field: temperature along a rod, pressure in air, probability density in space, or an image being smoothed.</p><p>The practical trick is discretization. Replace a continuum by grid values, replace derivatives by differences or basis functions, and solve the resulting algebra carefully. The PDE becomes a computational object.</p>",
-    "definition": "<p>A <b>PDE solver</b> approximates equations involving partial derivatives, such as the heat equation $u_t=\\kappa u_{xx}$. On a grid with spacing $\\Delta x$ and time step $\\Delta t$, one explicit finite-difference update is $u_i^{n+1}=u_i^n+r(u_{i-1}^n-2u_i^n+u_{i+1}^n)$, where $r=\\kappa\\Delta t/\\Delta x^2$.</p><p>The second-difference formula comes from Taylor expansion: $u(x+\\Delta x)-2u(x)+u(x-\\Delta x)\\approx\\Delta x^2u_{xx}(x)$. That turns curvature into neighbor arithmetic.</p><p><b>Assumptions that matter:</b> boundary conditions are part of the problem, not decoration; grid resolution controls discretization error; explicit schemes have stability limits; and many multidimensional PDE discretizations produce large sparse linear systems.</p>",
+    "motivation": "<p>PDE solvers turn fields over space and time into values on a grid or mesh. A derivative becomes a stencil: a weighted pattern of neighboring grid values that approximates the local derivative. The centered second derivative is one of the basic examples because adding values on both sides cancels the first-derivative terms.</p><p>The method is only useful if the discretization is consistent with the derivatives and stable under the chosen time step. Refining the grid usually improves spatial accuracy, but it also increases the number of unknowns and can force smaller time steps. A PDE solver is therefore a balance among accuracy, stability, memory, and runtime.</p>",
+    "definition": "<p>A <b>PDE finite-difference solver</b> approximates derivatives with stencils on a grid. The centered second derivative is $$u''(x)\\approx\\{u(x-h)-2u(x)+u(x+h)\\}/h^2.$$</p><p><b>Assumptions that matter:</b> Taylor expansions are valid near $x$, grid spacing is $h$, and stability restrictions may constrain the time step.</p>",
     "worked": {
       "problem": "For the heat equation with $\\kappa=1$, $\\Delta x=0.5$, $\\Delta t=0.1$, and interior values $[u_1,u_2,u_3]=[0,10,0]$ with boundary values $0$, compute one explicit step.",
       "skills": [
@@ -4056,34 +4804,34 @@
     ],
     "applications": [
       {
-        "title": "Heat diffusion in chips",
-        "background": "Thermal simulation helps engineers prevent processors and accelerators from overheating. Heat equations model how temperature spreads.",
-        "numbers": "With $r=0.25$ and local values $60,80,70$, the next center is $80+0.25(60-160+70)=72.5$."
+        "title": "Second derivative",
+        "background": "for values $(1,2,4)$ with $h=0.5$, the stencil gives $(1-4+4)/0.25=4$.",
+        "numbers": "for values $(1,2,4)$ with $h=0.5$, the stencil gives $(1-4+4)/0.25=4$."
       },
       {
-        "title": "Computational fluid dynamics",
-        "background": "CFD solves PDEs for airflow, weather, and fluids. Discretization converts conservation laws into large numerical systems.",
-        "numbers": "A $200\\times200\\times50$ grid has $2,000,000$ cells before even storing velocity components."
+        "title": "Heat stability",
+        "background": "with $\\alpha=1$ and $\\Delta x=0.1$, explicit heat stepping needs $\\Delta t\\le0.005$.",
+        "numbers": "with $\\alpha=1$ and $\\Delta x=0.1$, explicit heat stepping needs $\\Delta t\\le0.005$."
       },
       {
-        "title": "Image denoising",
-        "background": "Diffusion PDEs smooth images by letting pixel values spread to neighbors, while variants preserve edges.",
-        "numbers": "A pixel $100$ with neighbors $80,90,110,120$ has Laplacian $80+90+110+120-4\\cdot100=0$."
+        "title": "Grid unknowns",
+        "background": "a $100\\times100$ image-like grid has $10{,}000$ scalar unknowns per field.",
+        "numbers": "a $100\\times100$ image-like grid has $10{,}000$ scalar unknowns per field."
       },
       {
-        "title": "Option pricing",
-        "background": "The Black-Scholes PDE from mathematical finance can be solved on grids when closed forms are unavailable or contracts are complex.",
-        "numbers": "A grid of $500$ stock prices and $1000$ time levels tracks $500,000$ state values."
+        "title": "2-D Laplacian cost",
+        "background": "the five-point stencil uses about $5$ neighboring coefficients per interior grid point.",
+        "numbers": "the five-point stencil uses about $5$ neighboring coefficients per interior grid point."
       },
       {
-        "title": "Scientific ML surrogates",
-        "background": "Neural networks are often trained to approximate expensive PDE solvers, but the solver data still comes from discretized equations.",
-        "numbers": "If one PDE solve takes $30$ seconds, generating $10,000$ training samples costs about $300,000$ seconds, or $83.3$ hours."
+        "title": "Physics-informed residual",
+        "background": "if $u_t=0.3$ and $0.1u_{xx}=0.25$, the heat residual is $0.05$.",
+        "numbers": "if $u_t=0.3$ and $0.1u_{xx}=0.25$, the heat residual is $0.05$."
       },
       {
-        "title": "Electrostatics and Poisson equations",
-        "background": "Fields from charges, potentials in devices, and pressure corrections in fluids often reduce to Poisson-like sparse systems.",
-        "numbers": "A million-unknown five-point system has about $5$ million nonzeros, feasible sparsely but impossible as a dense trillion-entry matrix."
+        "title": "Mesh refinement",
+        "background": "halving $\\Delta x$ in a 2-D grid increases cell count by about $4\\times$.",
+        "numbers": "halving $\\Delta x$ in a 2-D grid increases cell count by about $4\\times$."
       }
     ],
     "applicationsClose": "PDE solvers are where calculus, grids, sparsity, and stability meet to make fields computable.",
@@ -4092,6 +4840,61 @@
       "Boundary conditions are part of the mathematical problem and the numerical system.",
       "Explicit schemes are simple but often constrained by stability limits.",
       "Sparse matrices are central because local stencils connect only nearby unknowns."
+    ],
+    "connectionsProse": "<p>This lesson extends the ODE idea from time-dependent states to fields over space and time. A PDE describes how nearby values of a field relate through spatial and temporal derivatives. A computer cannot store a full continuum, so the field must be represented on a grid or mesh. PDE discretization connects Taylor expansions, sparse matrices, stability conditions, and simulation workflows. It also explains why many large scientific systems lead naturally to sparse linear algebra.</p>",
+    "symbols": [
+      {
+        "sym": "$u(x)$",
+        "desc": "a field"
+      },
+      {
+        "sym": "$h$ or $\\Delta x$",
+        "desc": "grid spacing"
+      },
+      {
+        "sym": "a stencil",
+        "desc": "the weighted pattern of neighboring grid values"
+      },
+      {
+        "sym": "$\\Delta t$",
+        "desc": "the time step"
+      },
+      {
+        "sym": "$r=\\alpha\\Delta t/\\Delta x^2$",
+        "desc": "the heat-equation stability ratio"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Expand $u(x+h)=u(x)+hu'(x)+\\tfrac12h^2u''(x)+O(h^3)$.",
+        "result": "Expand $u(x+h)=u(x)+hu'(x)+\\tfrac12h^2u''(x)+O(h^3)$.",
+        "why": ""
+      },
+      {
+        "do": "Expand $u(x-h)=u(x)-hu'(x)+\\tfrac12h^2u''(x)+O(h^3)$.",
+        "result": "Expand $u(x-h)=u(x)-hu'(x)+\\tfrac12h^2u''(x)+O(h^3)$.",
+        "why": ""
+      },
+      {
+        "do": "Add the expansions so the first-derivative terms cancel.",
+        "result": "the first-derivative terms cancel.",
+        "why": ""
+      },
+      {
+        "do": "The sum is $u(x+h)+u(x-h)=2u(x)+h^2u''(x)+O(h^4)$.",
+        "result": "$u(x+h)+u(x-h)=2u(x)+h^2u''(x)+O(h^4)$.",
+        "why": ""
+      },
+      {
+        "do": "Rearrange to get $u''(x)\\approx\\{u(x-h)-2u(x)+u(x+h)\\}/h^2$.",
+        "result": "$u''(x)\\approx\\{u(x-h)-2u(x)+u(x+h)\\}/h^2$.",
+        "why": ""
+      },
+      {
+        "do": "This stencil is the core of many finite-difference diffusion and Poisson solvers.",
+        "result": "the core of many finite-difference diffusion and Poisson solvers.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-14"
@@ -4121,8 +4924,8 @@
         "numerical integration"
       ]
     },
-    "motivation": "<p>You already trust averages. Flip a fair coin many times and the fraction of heads settles near one half. Monte Carlo methods turn that settling behavior into a numerical tool.</p><p>When a sum, integral, or probability is too complicated to compute directly, we sample. Each sample is noisy, but the average has a direction: error usually shrinks like $1/\\sqrt{N}$, which is slow but wonderfully dimension-independent.</p>",
-    "definition": "<p>A <b>Monte Carlo estimator</b> writes a target quantity as an expectation $\\mu=\\mathbb{E}[X]$ and approximates it with $\\hat\\mu_N=\\frac1N\\sum_{i=1}^N X_i$, where $X_i$ are sampled values. If the samples are independent with variance $\\sigma^2$, then $\\operatorname{Var}(\\hat\\mu_N)=\\sigma^2/N$.</p><p>The variance formula comes from independence: the variance of a sum is the sum of variances, so $\\operatorname{Var}(\\sum X_i/N)=N\\sigma^2/N^2=\\sigma^2/N$. The standard error is therefore $\\sigma/\\sqrt{N}$.</p><p><b>Assumptions that matter:</b> samples must represent the target distribution; dependence changes the variance calculation; rare events can require many samples; and random error should be reported with uncertainty, not only a point estimate.</p>",
+    "motivation": "<p>Monte Carlo methods replace an exact integral or expectation with an average of random samples. Each sample is noisy, but the average is stable because independent positive and negative deviations tend to cancel. The estimator is useful when drawing samples is easier than evaluating the target quantity analytically.</p><p>The signature fact is slow but dimension-friendly error: the standard error falls like $1/\\sqrt N$. This means that a tenfold reduction in error requires one hundred times as many samples. The method is therefore easy to parallelize and broadly applicable, but accuracy must be reported with uncertainty rather than as if the random average were exact.</p>",
+    "definition": "<p>A <b>Monte Carlo estimator</b> replaces an exact expectation with a sample average: $$\\hat\\mu=N^{-1}\\sum_{i=1}^N X_i.$$</p><p><b>Assumptions that matter:</b> samples are independent with mean $\\mu$ and variance $\\sigma^2$, so the estimator is unbiased and its standard error is $\\sigma/\\sqrt N$.</p>",
     "worked": {
       "problem": "Estimate $\\int_0^1 x^2\\,dx$ from samples $x=[0.1,0.4,0.8,0.9]$ drawn uniformly on $[0,1]$.",
       "skills": [
@@ -4331,34 +5134,34 @@
     ],
     "applications": [
       {
-        "title": "Bayesian posterior estimation",
-        "background": "Bayesian statistics often needs integrals over complicated posterior distributions. Monte Carlo samples approximate posterior means and intervals.",
-        "numbers": "If posterior samples of a parameter average $2.4$ with standard deviation $0.5$ over $2500$ samples, SE is $0.5/50=0.01$."
+        "title": "Pi estimate uncertainty",
+        "background": "with hit probability $\\pi/4$ and $N=10{,}000$, the standard error of $4\\hat p$ is about $0.0164$.",
+        "numbers": "with hit probability $\\pi/4$ and $N=10{,}000$, the standard error of $4\\hat p$ is about $0.0164$."
       },
       {
-        "title": "Dropout in neural networks",
-        "background": "Dropout randomly removes units during training, effectively sampling subnetworks to regularize the model.",
-        "numbers": "With keep probability $0.9$ and $4096$ activations, expected kept activations are $3686.4$."
+        "title": "Sample-size planning",
+        "background": "if $\\sigma=2$ and desired standard error is $0.01$, need $(2/0.01)^2=40{,}000$ samples.",
+        "numbers": "if $\\sigma=2$ and desired standard error is $0.01$, need $(2/0.01)^2=40{,}000$ samples."
       },
       {
-        "title": "Policy evaluation in reinforcement learning",
-        "background": "RL estimates expected returns by simulating episodes because exact environment sums are usually unavailable.",
-        "numbers": "Returns $[10,6,14,8,12]$ average to $50/5=10$."
+        "title": "Error reduction",
+        "background": "increasing samples from $100$ to $10{,}000$ reduces standard error by $10\\times$.",
+        "numbers": "increasing samples from $100$ to $10{,}000$ reduces standard error by $10\\times$."
       },
       {
-        "title": "Uncertainty in A/B testing",
-        "background": "Simulation can approximate uncertainty for conversion rates and lift when formulas become awkward.",
-        "numbers": "If simulated lift samples have mean $0.03$ and SD $0.02$ over $10,000$ runs, SE is $0.0002$."
+        "title": "Dropout prediction averaging",
+        "background": "averaging $25$ stochastic forward passes cuts standard deviation by $5\\times$.",
+        "numbers": "averaging $25$ stochastic forward passes cuts standard deviation by $5\\times$."
       },
       {
-        "title": "Rendering",
-        "background": "Physically based graphics estimates light transport integrals by tracing random rays. More rays reduce grainy noise.",
-        "numbers": "Increasing samples per pixel from $64$ to $256$ halves noise scale because $\\sqrt{256/64}=2$."
+        "title": "Policy evaluation",
+        "background": "if return standard deviation is $50$ and $N=2500$, the standard error is $1$.",
+        "numbers": "if return standard deviation is $50$ and $N=2500$, the standard error is $1$."
       },
       {
-        "title": "High-dimensional integration",
-        "background": "Grid quadrature explodes with dimension, while Monte Carlo error depends mainly on sample count, not dimension directly.",
-        "numbers": "A grid with $10$ points in each of $20$ dimensions has $10^{20}$ points; Monte Carlo might use $10^6$ samples."
+        "title": "A/B simulation",
+        "background": "two independent estimates with standard errors $0.03$ and $0.04$ have difference standard error $\\sqrt{0.03^2+0.04^2}=0.05$.",
+        "numbers": "two independent estimates with standard errors $0.03$ and $0.04$ have difference standard error $\\sqrt{0.03^2+0.04^2}=0.05$."
       }
     ],
     "applicationsClose": "Monte Carlo is patient arithmetic: random samples are noisy alone, but averages reveal stable structure.",
@@ -4367,6 +5170,61 @@
       "Independent-sample standard error shrinks like $1/\\sqrt{N}$.",
       "The method is broadly useful but can be slow for rare events or high variance quantities.",
       "Good reporting includes uncertainty, not just the estimate."
+    ],
+    "connectionsProse": "<p>This lesson builds on expectation, variance, and sample averages from probability. Many quantities in scientific computing can be written as integrals or expected values, but exact evaluation may be unavailable. Monte Carlo replaces exact calculation with repeated random sampling. The method connects numerical analysis with uncertainty quantification, simulation, Bayesian computation, and machine-learning evaluation. Its error law is simple and important: the dimension of the problem may be large, but the sampling error still falls only as the square root of the number of samples.</p>",
+    "symbols": [
+      {
+        "sym": "$X_i$",
+        "desc": "random samples"
+      },
+      {
+        "sym": "$\\mu$",
+        "desc": "the target expectation"
+      },
+      {
+        "sym": "$\\hat\\mu$",
+        "desc": "the Monte Carlo estimate"
+      },
+      {
+        "sym": "$N$",
+        "desc": "sample count"
+      },
+      {
+        "sym": "$\\sigma/\\sqrt N$",
+        "desc": "standard error"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Define the estimator $\\hat\\mu=N^{-1}\\sum_{i=1}^N X_i$.",
+        "result": "Define the estimator $\\hat\\mu=N^{-1}\\sum_{i=1}^N X_i$.",
+        "why": ""
+      },
+      {
+        "do": "Take expectation: $E[\\hat\\mu]=N^{-1}\\sum E[X_i]=\\mu$, so the estimator is unbiased.",
+        "result": "$E[\\hat\\mu]=N^{-1}\\sum E[X_i]=\\mu$, so the estimator is unbiased.",
+        "why": ""
+      },
+      {
+        "do": "Use independence: $\\operatorname{Var}(\\sum X_i)=\\sum\\operatorname{Var}(X_i)=N\\sigma^2$.",
+        "result": "$\\operatorname{Var}(\\sum X_i)=\\sum\\operatorname{Var}(X_i)=N\\sigma^2$.",
+        "why": ""
+      },
+      {
+        "do": "Scale by $1/N^2$ to get $\\operatorname{Var}(\\hat\\mu)=\\sigma^2/N$.",
+        "result": "$\\operatorname{Var}(\\hat\\mu)=\\sigma^2/N$.",
+        "why": ""
+      },
+      {
+        "do": "Take the square root to get standard error $\\sigma/\\sqrt N$.",
+        "result": "standard error $\\sigma/\\sqrt N$.",
+        "why": ""
+      },
+      {
+        "do": "Therefore reducing error by $10\\times$ needs $100\\times$ more samples.",
+        "result": "Therefore reducing error by $10\\times$ needs $100\\times$ more samples.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-15"
@@ -4396,8 +5254,8 @@
         "concentration inequalities"
       ]
     },
-    "motivation": "<p>You already know matrices can be decomposed to reveal directions, ranks, and least-squares solutions. The obstacle is scale: a data matrix may have millions of rows and thousands of columns.</p><p><b>Randomized numerical linear algebra</b> asks a friendly question: can a small random sketch preserve enough geometry to solve the problem faster? Often yes. Randomness becomes a measuring tool, not a lack of rigor.</p>",
-    "definition": "<p>A <b>sketch</b> multiplies a large matrix or vector by a random matrix $S$ to form a smaller object, such as $SA$ or $A\\Omega$. Randomized range finding for a rank-$k$ approximation samples $Y=A\\Omega$, builds an orthonormal basis $Q$ for the columns of $Y$, then approximates $A\\approx QQ^TA$.</p><p>The intuition is that random test vectors are unlikely to miss a large direction. If $A$ has most of its action in a $k$-dimensional subspace, then a few extra random probes often capture that subspace well.</p><p><b>Assumptions that matter:</b> randomized algorithms return high-probability guarantees, not deterministic certainty; oversampling improves reliability; power iterations help when singular values decay slowly; and sketches must preserve the geometry relevant to the task.</p>",
+    "motivation": "<p>Randomized linear algebra uses random projections to find the important subspace of a large matrix before doing expensive deterministic work. Random directions are unlikely to miss a dominant low-rank structure completely, especially when a few oversampling directions are included. Multiplying $A$ by those directions produces sample columns that live in the column space of $A$.</p><p>Once those sample columns are orthonormalized, the large matrix can be projected onto their span. The expensive work is then performed on a compressed matrix with only $\\ell$ rows. Power iterations can sharpen the separation when singular values decay slowly, but the main idea remains the same: use randomness to find a good working subspace cheaply.</p>",
+    "definition": "<p><b>Randomized numerical linear algebra</b> uses random test directions to find an approximate range for a large matrix: $$A\\approx QQ^TA.$$</p><p><b>Assumptions that matter:</b> $\\Omega\\in\\mathbb R^{n\\times \\ell}$ is random, $Y=A\\Omega$ samples the column space, and $Q$ is an orthonormal basis for the sampled range.</p>",
     "worked": {
       "problem": "Use a random projection vector $\\omega=[1,-1]^T$ with $A=\\begin{bmatrix}3&0\\\\0&1\\\\0&0\\end{bmatrix}$. Compute $y=A\\omega$ and the unit basis vector $q=y/\\|y\\|$.",
       "skills": [
@@ -4601,34 +5459,34 @@
     ],
     "applications": [
       {
-        "title": "Large-scale PCA",
-        "background": "PCA uses singular vectors to find dominant directions. Randomized SVD makes PCA feasible when the data matrix is too large for exact decomposition.",
-        "numbers": "For $1,000,000\\times1000$ data and target rank $50$, a $60$-vector sketch uses $60$ passes of matrix-vector style work instead of full SVD."
+        "title": "Projection example",
+        "background": "with $A=\\begin{bmatrix}3&0\\0&1\\0&0\\end{bmatrix}$ and $\\omega=(1,-1)$, $y=A\\omega=(3,-1,0)$.",
+        "numbers": "with $A=\\begin{bmatrix}3&0\\0&1\\0&0\\end{bmatrix}$ and $\\omega=(1,-1)$, $y=A\\omega=(3,-1,0)$."
       },
       {
-        "title": "Least-squares sketching",
-        "background": "Overdetermined regression can be sped up by sketching rows while approximately preserving the geometry of residuals.",
-        "numbers": "A problem with $10,000,000$ rows and $100$ features might be sketched to $20,000$ rows, a $500$ times row reduction."
+        "title": "Basis vector",
+        "background": "$q=y/\\|y\\|=(0.9487,-0.3162,0)$.",
+        "numbers": "$q=y/\\|y\\|=(0.9487,-0.3162,0)$."
       },
       {
-        "title": "Embedding compression",
-        "background": "Random projections can reduce embedding dimension while roughly preserving pairwise distances.",
-        "numbers": "Compressing $768$ dimensions to $128$ dimensions reduces storage for $1$ million vectors from $768$ million to $128$ million numbers."
+        "title": "Compressed row",
+        "background": "$q^TA=(2.8460,-0.3162)$.",
+        "numbers": "$q^TA=(2.8460,-0.3162)$."
       },
       {
-        "title": "Leverage score sampling",
-        "background": "Important rows in least squares can be sampled more often using leverage scores, which measure geometric influence.",
-        "numbers": "If a row has leverage $0.02$ and total rank is $100$, its normalized sampling weight is $0.02/100=0.0002$ before scaling by sample count."
+        "title": "Projection error",
+        "background": "the Frobenius norm drops from $\\sqrt{10}$ to captured norm $2.8636$, leaving residual about $1.3416$.",
+        "numbers": "the Frobenius norm drops from $\\sqrt{10}$ to captured norm $2.8636$, leaving residual about $1.3416$."
       },
       {
-        "title": "Fast kernel approximations",
-        "background": "Random features approximate kernel methods by replacing infinite or large feature maps with sampled features.",
-        "numbers": "Using $2000$ random Fourier features turns kernel evaluation into a $2000$-dimensional dot product."
+        "title": "Power iteration sharpening",
+        "background": "if $\\sigma_2/\\sigma_1=0.5$ and $q=1$ power step is used, the unwanted ratio scales like $0.5^3=0.125$.",
+        "numbers": "if $\\sigma_2/\\sigma_1=0.5$ and $q=1$ power step is used, the unwanted ratio scales like $0.5^3=0.125$."
       },
       {
-        "title": "Streaming data summaries",
-        "background": "Sketches summarize streams without storing every item. They are useful when data arrives faster than it can be kept.",
-        "numbers": "A stream of $10^9$ events summarized into $10^6$ counters uses about $0.1\\%$ as many stored counts."
+        "title": "Memory budget",
+        "background": "storing $\\ell=60$ FP32 sketch vectors of length $10^6$ costs $240$ MB.",
+        "numbers": "storing $\\ell=60$ FP32 sketch vectors of length $10^6$ costs $240$ MB."
       }
     ],
     "applicationsClose": "Randomized linear algebra works because large geometry can often be sensed accurately through a surprisingly small number of random measurements.",
@@ -4637,6 +5495,65 @@
       "Randomized range finding approximates $A$ by capturing its dominant column space.",
       "Oversampling and power iterations improve reliability.",
       "The guarantees are probabilistic, so error and failure probability matter."
+    ],
+    "connectionsProse": "<p>This lesson connects linear algebra, probability, and large-scale computation. Earlier lessons computed subspaces using deterministic factorizations or iterations. Randomized numerical linear algebra uses random test directions to discover the part of a large matrix that matters most. The method leads naturally from power iteration and SVD ideas into modern large-data workflows. It is especially useful when the matrix is too large to decompose directly but multiplying it by a block of vectors is affordable.</p>",
+    "symbols": [
+      {
+        "sym": "$A$",
+        "desc": "the large matrix"
+      },
+      {
+        "sym": "$\\Omega$",
+        "desc": "a random test matrix"
+      },
+      {
+        "sym": "$\\ell=k+p$",
+        "desc": "target rank plus oversampling"
+      },
+      {
+        "sym": "$Y$",
+        "desc": "the sample matrix"
+      },
+      {
+        "sym": "$Q$",
+        "desc": "an orthonormal basis"
+      },
+      {
+        "sym": "$B$",
+        "desc": "the compressed matrix"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Draw a random test matrix $\\Omega\\in\\mathbb R^{n\\times \\ell}$",
+        "result": "Draw a random test matrix $\\Omega\\in\\mathbb R^{n\\times \\ell}$",
+        "why": "random directions usually touch the dominant right-singular subspace."
+      },
+      {
+        "do": "Form $Y=A\\Omega$ so the columns of $Y$ live in the column space of $A$.",
+        "result": "the columns of $Y$ live in the column space of $A$.",
+        "why": ""
+      },
+      {
+        "do": "Orthonormalize $Y$ to get $Q$ with $Q^TQ=I$.",
+        "result": "$Q$ with $Q^TQ=I$.",
+        "why": ""
+      },
+      {
+        "do": "Approximate $A$ by projecting onto that range: $A\\approx QQ^TA$.",
+        "result": "$A\\approx QQ^TA$.",
+        "why": ""
+      },
+      {
+        "do": "Compress to $B=Q^TA$, which has only $\\ell$ rows.",
+        "result": "Compress to $B=Q^TA$, which has only $\\ell$ rows.",
+        "why": ""
+      },
+      {
+        "do": "Compute an SVD of $B$ and lift left singular vectors back with $Q$.",
+        "result": "Compute an SVD of $B$ and lift left singular vectors back with $Q$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-16"
@@ -4666,8 +5583,8 @@
         "conditioning"
       ]
     },
-    "motivation": "<p>You already know a matrix multiply contains many repeated arithmetic operations. A CPU can do them quickly, but a GPU is built to do many of them at once, as long as the work is regular and data arrives fast enough.</p><p>The practical lesson is that speed is not only about counting operations. It is about parallelism, memory bandwidth, data movement, occupancy, and using well-tuned kernels. The fastest computation is often the one that keeps data close and workers full.</p>",
-    "definition": "<p><b>Parallel computing</b> splits work across processing units. If a serial job takes time $T_1$ and a parallel job on $p$ workers takes $T_p$, the speedup is $S=T_1/T_p$ and efficiency is $E=S/p$. GPUs use thousands of lightweight threads organized around high-throughput linear algebra.</p><p>Amdahl's law explains the limit: if fraction $s$ of a program is serial, then ideal speedup on $p$ workers is $1/(s+(1-s)/p)$. Even infinite parallel workers cannot beat $1/s$ because the serial part remains.</p><p><b>Assumptions that matter:</b> parallel speedups require enough independent work; memory transfers can dominate arithmetic; reductions and synchronization add overhead; and numerical results may differ slightly because floating-point addition is not associative.</p>",
+    "motivation": "<p>Parallel computing makes a numerical method fast only when enough work can run at the same time and data movement does not dominate. Some operations, such as large matrix multiplication, contain enough repeated arithmetic to use many GPU cores efficiently. Other operations move so much data relative to their arithmetic that memory bandwidth sets the limit.</p><p>The useful speedup calculation always includes serial work, memory bandwidth, and communication. Amdahl's law gives the simplest warning: even a small serial fraction can cap the benefit of adding more workers. In distributed training, communication can become the new bottleneck after computation is parallelized.</p>",
+    "definition": "<p><b>Amdahl's law</b> estimates the speedup from parallel computing when only a fraction of work can be parallelized: $$S_N=1/((1-p)+p/N).$$</p><p><b>Assumptions that matter:</b> $p$ is perfectly parallelizable, $1-p$ remains serial, and ideal scaling ignores bandwidth and communication costs unless they are added separately.</p>",
     "worked": {
       "problem": "A training step takes $120$ ms on one CPU core. On a GPU it spends $20$ ms transferring data, $15$ ms launching and synchronizing kernels, and $25$ ms doing computation. Compute speedup and efficiency relative to $1000$ GPU cores.",
       "skills": [
@@ -4871,34 +5788,34 @@
     ],
     "applications": [
       {
-        "title": "Deep learning matrix multiplies",
-        "background": "Dense neural network layers and attention blocks are dominated by matrix multiplies, which GPUs execute efficiently through tiled kernels.",
-        "numbers": "Multiplying $1024\\times1024$ by $1024\\times1024$ costs about $2\\cdot1024^3\\approx2.15$ billion FLOP."
+        "title": "Amdahl limit",
+        "background": "with $p=0.95$ and $N=100$, speedup is $1/(0.05+0.95/100)\\approx16.81$, not $100$.",
+        "numbers": "with $p=0.95$ and $N=100$, speedup is $1/(0.05+0.95/100)\\approx16.81$, not $100$."
       },
       {
-        "title": "Mini-batch parallelism",
-        "background": "Examples in a mini-batch often share the same model but independent data, making them natural parallel work.",
-        "numbers": "A batch of $256$ images split across $8$ devices gives $32$ images per device."
+        "title": "Matrix multiply ideal time",
+        "background": "a $1024^3$ GEMM needs about $2.147\\times10^9$ flops, so at $10$ TFLOP/s the ideal compute time is $0.215$ ms.",
+        "numbers": "a $1024^3$ GEMM needs about $2.147\\times10^9$ flops, so at $10$ TFLOP/s the ideal compute time is $0.215$ ms."
       },
       {
-        "title": "Data transfer bottlenecks",
-        "background": "Moving data between host memory and GPU memory can erase compute gains if done too often.",
-        "numbers": "At $25$ GB/s PCIe bandwidth, transferring $5$ GB takes at least $0.2$ seconds."
+        "title": "All-reduce cost",
+        "background": "communicating $100$ MB over $25$ GB/s takes about $4$ ms before latency.",
+        "numbers": "communicating $100$ MB over $25$ GB/s takes about $4$ ms before latency."
       },
       {
-        "title": "Parallel reductions in loss computation",
-        "background": "Losses and gradients often sum contributions across examples or parameters. Reductions need synchronization.",
-        "numbers": "Summing $2^{16}=65,536$ values can have reduction depth $16$ with enough parallel workers."
+        "title": "Memory-bound vector add",
+        "background": "reading and writing $1.2$ GB at $900$ GB/s takes about $1.33$ ms, often larger than arithmetic time.",
+        "numbers": "reading and writing $1.2$ GB at $900$ GB/s takes about $1.33$ ms, often larger than arithmetic time."
       },
       {
-        "title": "Sparse GPU workloads",
-        "background": "Sparse operations save arithmetic but can be harder for GPUs because memory access is irregular.",
-        "numbers": "A sparse matrix with $10$ million nonzeros and $64$ features performs about $640$ million feature multiplications per aggregation."
+        "title": "Batch scaling",
+        "background": "doubling batch size from $512$ to $1024$ doubles data-parallel examples per step if memory fits.",
+        "numbers": "doubling batch size from $512$ to $1024$ doubles data-parallel examples per step if memory fits."
       },
       {
-        "title": "Distributed training",
-        "background": "Large models may use many GPUs and communicate gradients between them. Communication can become the limiting serial-like part.",
-        "numbers": "A $4$ GB gradient all-reduced over a $100$ GB/s link has a raw bandwidth time of at least $0.04$ seconds."
+        "title": "Kernel launch overhead",
+        "background": "fusing ten $20\\,\\mu$s elementwise kernels can save roughly $9$ launches, or about $180\\,\\mu$s, before arithmetic changes.",
+        "numbers": "fusing ten $20\\,\\mu$s elementwise kernels can save roughly $9$ launches, or about $180\\,\\mu$s, before arithmetic changes."
       }
     ],
     "applicationsClose": "GPU computing rewards the same habits as good numerical thinking: count the real bottleneck, not only the beautiful formula.",
@@ -4907,6 +5824,61 @@
       "Amdahl's law shows how serial work limits total speedup.",
       "Memory movement, synchronization, and kernel overhead can dominate arithmetic.",
       "Floating-point reductions may give slightly different answers when the order changes."
+    ],
+    "connectionsProse": "<p>This lesson connects numerical methods with the hardware that executes them. Vectorization showed how to hand many operations to optimized kernels. GPU and parallel computing ask how much speed is actually possible when work is divided across many workers. The lesson also prepares the reader to interpret performance claims in machine learning systems. Arithmetic throughput, memory bandwidth, communication, kernel launches, and serial fractions all affect the observed runtime.</p>",
+    "symbols": [
+      {
+        "sym": "$p$",
+        "desc": "the parallel fraction"
+      },
+      {
+        "sym": "$N$",
+        "desc": "number of workers"
+      },
+      {
+        "sym": "$S_N$",
+        "desc": "speedup"
+      },
+      {
+        "sym": "bandwidth",
+        "desc": "bytes per second"
+      },
+      {
+        "sym": "FLOP/s",
+        "desc": "arithmetic throughput"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Normalize single-worker runtime to $1$.",
+        "result": "Normalize single-worker runtime to $1$.",
+        "why": ""
+      },
+      {
+        "do": "Let fraction $p$ be perfectly parallelizable and fraction $1-p$ be serial.",
+        "result": "Let fraction $p$ be perfectly parallelizable and fraction $1-p$ be serial.",
+        "why": ""
+      },
+      {
+        "do": "On $N$ workers, the serial part still costs $1-p$.",
+        "result": "On $N$ workers, the serial part still costs $1-p$.",
+        "why": ""
+      },
+      {
+        "do": "The parallel part costs $p/N$ under ideal scaling.",
+        "result": "The parallel part costs $p/N$ under ideal scaling.",
+        "why": ""
+      },
+      {
+        "do": "Total time is $(1-p)+p/N$.",
+        "result": "$(1-p)+p/N$.",
+        "why": ""
+      },
+      {
+        "do": "Speedup is the reciprocal: $S_N=1/((1-p)+p/N)$.",
+        "result": "$S_N=1/((1-p)+p/N)$.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-17"
@@ -4936,8 +5908,8 @@
         "stochastic gradients"
       ]
     },
-    "motivation": "<p>You have now seen the whole practical chain: matrices, solvers, randomness, optimization, automatic differentiation, and parallel hardware. Modern ML training uses all of them at once. Mixed precision sits at the final handoff between math and machine.</p><p>Lower precision can make training dramatically faster and smaller, especially on GPUs. But float16 has a narrow numerical range. The wise move is not simply to use fewer bits; it is to know which quantities can be low precision, which must stay high precision, and when loss scaling protects gradients.</p>",
-    "definition": "<p><b>Mixed precision training</b> uses low-precision formats such as float16 or bfloat16 for many matrix operations while keeping sensitive quantities, often master weights and some reductions, in float32. Float16 has maximum finite value about $65504$ and smallest positive normal value about $6.10\\cdot10^{-5}$; bfloat16 has fewer mantissa bits but a wider exponent range like float32.</p><p><b>Loss scaling</b> multiplies the loss by a scale $S$ before backpropagation. Gradients are then multiplied by $S$, helping tiny float16 gradients avoid underflow. Before the optimizer update, gradients are divided by $S$ so the mathematical update is unchanged, unless overflow is detected.</p><p><b>Assumptions that matter:</b> low precision changes rounding error; reductions can accumulate error if not done carefully; overflow creates infinities and NaNs; underflow turns small values into zero; and stable training usually keeps master weights, optimizer states, and some normalization statistics in higher precision.</p>",
+    "motivation": "<p>Mixed-precision training uses low-precision arithmetic for speed while keeping selected accumulations and master weights in higher precision for stability. Low precision can be safe for many matrix multiplications because the operations are regular and hardware support is strong. It can be unsafe for tiny gradients, long accumulations, or small parameter updates near values where the format has coarse spacing.</p><p>The capstone idea is controlled compromise: use faster formats where their error is safe, and protect the parts of training that are numerically fragile. Loss scaling protects small gradients from underflow by temporarily enlarging them during backpropagation. FP32 accumulators or master weights protect repeated small updates from being rounded away.</p>",
+    "definition": "<p><b>Mixed-precision training</b> uses low precision where it is fast while protecting fragile quantities with scaling and higher-precision state. Loss scaling uses $$Sg\\mapsto g\\quad\\text{after dividing by }S.$$</p><p><b>Assumptions that matter:</b> differentiation is linear in the loss scale, scaled gradients must avoid FP16 overflow, and accumulators or master weights stay in FP32.</p>",
     "worked": {
       "problem": "A float16 training step has gradient $g=2.0\\cdot10^{-7}$, weight $w=1.0000$, learning rate $\\alpha=10^{-3}$, and loss scale $S=1024$. Show how scaling preserves the gradient and compute the float32 master-weight update.",
       "skills": [
@@ -5147,39 +6119,34 @@
     ],
     "applications": [
       {
-        "title": "Transformer training throughput",
-        "background": "Large transformers are dominated by matrix multiplications. Tensor cores can run float16 or bfloat16 matrix multiplies much faster than float32 on supported GPUs.",
-        "numbers": "If a step falls from $800$ ms in float32 to $320$ ms mixed precision, speedup is $800/320=2.5$ times."
+        "title": "Loss scaling",
+        "background": "a gradient $g=2\\times10^{-8}$ scaled by $S=4096$ becomes $8.192\\times10^{-5}$, then unscales back to $2\\times10^{-8}$.",
+        "numbers": "a gradient $g=2\\times10^{-8}$ scaled by $S=4096$ becomes $8.192\\times10^{-5}$, then unscales back to $2\\times10^{-8}$."
       },
       {
-        "title": "Memory capacity for larger batches",
-        "background": "Lower-precision activations and gradients reduce memory use, letting practitioners use larger batches or longer sequences.",
-        "numbers": "A tensor with $1$ billion values uses about $4$ GB in float32 and $2$ GB in float16, saving $2$ GB."
+        "title": "Overflow guard",
+        "background": "if the largest gradient magnitude is $20$, the scale must satisfy $S\\le65504/20\\approx3275.2$.",
+        "numbers": "if the largest gradient magnitude is $20$, the scale must satisfy $S\\le65504/20\\approx3275.2$."
       },
       {
-        "title": "Loss scaling for tiny gradients",
-        "background": "Backpropagation can produce gradients far below float16's normal range. Loss scaling lifts them during backward without changing the final update.",
-        "numbers": "A gradient $5\\cdot10^{-8}$ scaled by $4096$ becomes $2.048\\cdot10^{-4}$, then unscales back to $5\\cdot10^{-8}$."
+        "title": "Accumulation error",
+        "background": "summing $1024$ products has FP16 bound $\\gamma_{1024}\\approx1.0$, while FP32 gives $\\gamma_{1024}\\approx6.10\\times10^{-5}$.",
+        "numbers": "summing $1024$ products has FP16 bound $\\gamma_{1024}\\approx1.0$, while FP32 gives $\\gamma_{1024}\\approx6.10\\times10^{-5}$."
       },
       {
-        "title": "Overflow detection",
-        "background": "Mixed precision training loops commonly check gradients for infinity or NaN before applying an optimizer step.",
-        "numbers": "If scale $8192$ makes a maximum gradient $100,000$, halving to $4096$ would make the same value about $50,000$, below $65,504$."
+        "title": "Throughput tradeoff",
+        "background": "a step that falls from $80$ ms in FP32 to $35$ ms in mixed precision is a $2.29\\times$ speedup.",
+        "numbers": "a step that falls from $80$ ms in FP32 to $35$ ms in mixed precision is a $2.29\\times$ speedup."
       },
       {
-        "title": "Float32 master weights",
-        "background": "Very small learning-rate updates may not change a float16-stored weight near $1$. Master weights preserve small accumulated changes.",
-        "numbers": "An update of $2\\cdot10^{-5}$ is far below float16 spacing near $1$ of roughly $9.77\\cdot10^{-4}$, but float32 can represent its effect."
+        "title": "Master-weight update",
+        "background": "if a weight is $1.0$ and the update is $10^{-5}$, FP32 can track the change while FP16's coarse spacing near $1$ may lose it.",
+        "numbers": "if a weight is $1.0$ and the update is $10^{-5}$, FP32 can track the change while FP16's coarse spacing near $1$ may lose it."
       },
       {
-        "title": "bfloat16 range advantage",
-        "background": "bfloat16 keeps an 8-bit exponent like float32, so it is less prone to overflow than float16 but has fewer mantissa bits.",
-        "numbers": "A value $10^{20}$ is impossible in float16 but within bfloat16's broad exponent range, though with coarse relative precision."
-      },
-      {
-        "title": "Stable softmax and normalization",
-        "background": "Even in mixed precision, numerically stable formulas remain essential. Subtracting the maximum logit protects exponentials.",
-        "numbers": "Logits $[1000,999]$ become $[0,-1]$ after subtracting $1000$, so softmax uses $e^0=1$ and $e^{-1}\\approx0.368$ instead of overflowing."
+        "title": "Softmax stability",
+        "background": "subtracting the max logit changes logits $(1000,999)$ to $(0,-1)$, preventing overflow while preserving probabilities.",
+        "numbers": "subtracting the max logit changes logits $(1000,999)$ to $(0,-1)$, preventing overflow while preserving probabilities."
       }
     ],
     "applicationsClose": "The capstone habit is clear: use faster arithmetic where structure allows it, and protect the quantities that carry training stability.",
@@ -5188,6 +6155,61 @@
       "Loss scaling helps tiny gradients avoid float16 underflow and must be undone before the optimizer update.",
       "Overflow, underflow, accumulation error, and optimizer-state precision are the main stability risks.",
       "A strong ML training system combines numerical methods, automatic differentiation, parallel hardware, and careful floating-point judgment."
+    ],
+    "connectionsProse": "<p>This lesson brings together floating-point error, vectorized hardware, automatic differentiation, and optimization practice. Modern training systems often use low-precision formats because they are faster and use less memory. The numerical question is how to gain that speed without losing the small updates and accumulated sums that make training stable. Mixed precision is the capstone for the section because it is both mathematical and systems-oriented. It depends on unit roundoff, representable ranges, gradient scaling, optimizer state, and hardware throughput all at once.</p>",
+    "symbols": [
+      {
+        "sym": "$g$",
+        "desc": "a gradient"
+      },
+      {
+        "sym": "$S$",
+        "desc": "the loss scale"
+      },
+      {
+        "sym": "FP16 maximum finite value",
+        "desc": "about $65504$"
+      },
+      {
+        "sym": "unit roundoff",
+        "desc": "about $2^{-11}$ for FP16 and $2^{-24}$ for FP32"
+      },
+      {
+        "sym": "an accumulator",
+        "desc": "the variable that stores sums or optimizer state"
+      }
+    ],
+    "derivation": [
+      {
+        "do": "Let $g$ be a small gradient that may underflow in low precision.",
+        "result": "Let $g$ be a small gradient that may underflow in low precision.",
+        "why": ""
+      },
+      {
+        "do": "Multiply the loss by a scale $S$, so backpropagation produces scaled gradient $Sg$ by linearity of differentiation.",
+        "result": "backpropagation produces scaled gradient $Sg$ by linearity of differentiation.",
+        "why": ""
+      },
+      {
+        "do": "Choose $S$ so $Sg$ lies in the representable FP16 range.",
+        "result": "$Sg$ lies in the representable FP16 range.",
+        "why": ""
+      },
+      {
+        "do": "Before applying the optimizer update, divide the gradient by $S$ to recover $g$.",
+        "result": "Before applying the optimizer update, divide the gradient by $S$ to recover $g$.",
+        "why": ""
+      },
+      {
+        "do": "If the largest scaled gradient would exceed the FP16 maximum, reduce $S$ to avoid overflow.",
+        "result": "If the largest scaled gradient would exceed the FP16 maximum, reduce $S$ to avoid overflow.",
+        "why": ""
+      },
+      {
+        "do": "Keep accumulators or master weights in FP32 so repeated small updates are not rounded away.",
+        "result": "repeated small updates are not rounded away.",
+        "why": ""
+      }
     ],
     "prereqs": [
       "math-27-18"
