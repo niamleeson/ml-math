@@ -9,136 +9,573 @@
   B({
     "id": "math-01-01",
     "title": "Functions and their graphs",
-    "tagline": "A function is a reliable machine: one input in, exactly one output out.",
+    "tagline": "A function is a dependable rule: one allowed input goes in, exactly one output comes out.",
     "connections": {
       "buildsOn": [
-        "variables, numbers, and the coordinate plane"
+        "variables",
+        "ordered pairs",
+        "the coordinate plane"
       ],
       "leadsTo": [
         "Function transformations",
-        "limits",
-        "the derivative"
+        "Limits: definition and computation",
+        "Continuity"
       ],
       "usedWith": [
-        "every model in ML — a model is a function from inputs to a prediction"
+        "equations",
+        "tables of values",
+        "graphs",
+        "composition of functions"
       ]
     },
-    "motivation": "<p>Think of a function as a dependable machine: one input in, exactly one output out — the same output every time for the same input. A vending machine that always returns a soda for button B3 is a function; one that sometimes returns chips is not.</p><p>That one rule — one input, one output — is the whole idea, and it is what lets us reason about change later.</p>",
-    "definition": "<p>A <b>function</b> $f$ from a set $X$ (the <b>domain</b>) to a set $Y$ assigns to each $x \\in X$ exactly one value $f(x)$. The outputs actually reached form the <b>range</b>. We write $f: X \\to Y$.</p><p><b>The rule that must hold:</b> each input maps to a single output — on a graph, the vertical line test. Inputs must come from the domain (no dividing by zero, no $\\sqrt{-1}$ over the reals).</p>",
+    "motivation": "<p>You already know how to follow a rule. If a parking garage charges $5 plus $2 per hour, then 3 hours costs $5+2\\cdot3=11$. Give the rule an input, and it gives back an output.</p><p>A <b>function</b> names that reliable behavior. The graph is not a separate mystery; it is the picture of all input-output pairs the rule produces. Once you can move between formula, table, and graph, calculus has a place to stand.</p>",
+    "definition": "<p>A <b>function</b> $f$ from a <b>domain</b> $D$ to a set of possible outputs $Y$ assigns each input $x$ in $D$ exactly one output, written $f(x)$. The <b>range</b> is the set of outputs that actually occur. The graph of $f$ is the set of points $(x,f(x))$ in the coordinate plane.</p><p>The vertical-line test follows from the definition: if a vertical line at $x=a$ hit the graph twice, then the same input $a$ would have two outputs, which is not a function. To find the natural real domain of a formula, exclude inputs that make the formula illegal, such as division by zero or an even root of a negative number.</p><p><b>Assumptions that matter:</b> we are working with real-valued functions unless stated otherwise; $x$ means an allowed input from the domain; $f(x)$ means the output assigned to that input; and every input in the domain must have one and only one output.</p>",
     "worked": {
-      "problem": "Take $f(x) = x^2$.",
+      "problem": "For $f(x)=\\dfrac{x+2}{x-3}$, find $f(1)$, the natural real domain, and two points on the graph.",
       "skills": [
-        "evaluating",
-        "domain & range"
+        "evaluating functions",
+        "domain restrictions",
+        "graph points"
       ],
+      "strategy": "The denominator can break the rule — evaluate allowed inputs and exclude the input that divides by zero.",
       "steps": [
         {
-          "do": "Evaluate",
-          "result": "$f(3)=9$, $f(-2)=4$, $f(0)=0$",
-          "why": "substitute each input"
+          "do": "Substitute $x=1$",
+          "result": "$f(1)=\\dfrac{1+2}{1-3}$",
+          "why": "replace every $x$ by 1"
         },
         {
-          "do": "Domain",
-          "result": "$\\mathbb{R}$",
-          "why": "every real number can be squared"
+          "do": "Simplify the fraction",
+          "result": "$f(1)=-\\dfrac32$",
+          "why": "$3/(-2)=-3/2$"
         },
         {
-          "do": "Range",
-          "result": "$[0,\\infty)$",
-          "why": "a square is never negative"
+          "do": "Set the denominator equal to zero",
+          "result": "$x-3=0$",
+          "why": "division by zero is not allowed"
+        },
+        {
+          "do": "Solve for the excluded input",
+          "result": "$x=3$",
+          "why": "add 3 to both sides"
+        },
+        {
+          "do": "State the domain",
+          "result": "$(-\\infty,3)\\cup(3,\\infty)$",
+          "why": "all real inputs except 3 are allowed"
+        },
+        {
+          "do": "Evaluate another easy input",
+          "result": "$f(2)=\\dfrac{4}{-1}=-4$",
+          "why": "two graph points help locate the curve"
+        },
+        {
+          "do": "Write the graph points",
+          "result": "$(1,-\\tfrac32)$ and $(2,-4)$",
+          "why": "a graph point has the form $(x,f(x))$"
         }
       ],
-      "answer": "domain $\\mathbb{R}$, range $[0,\\infty)$"
+      "verify": "The input $x=3$ would give denominator $0$, so excluding it keeps the function well-defined; the listed points use allowed inputs.",
+      "answer": "$f(1)=-\\dfrac32$; domain $(-\\infty,3)\\cup(3,\\infty)$; two graph points are $(1,-\\tfrac32)$ and $(2,-4)$.",
+      "connects": "A graph is the visible record of the function's allowed input-output pairs."
     },
     "practice": [
       {
-        "problem": "$f(x)=1/(x-1)$: find $f(3)$ and the domain",
-        "answer": "$f(3)=\\tfrac12$; domain all $x \\ne 1$"
+        "problem": "For $g(x)=x^2-4x+1$, compute $g(-1)$ and $g(3)$, then decide whether $(3,-2)$ is on the graph.",
+        "steps": [
+          {
+            "do": "Substitute $x=-1$",
+            "result": "$g(-1)=(-1)^2-4(-1)+1$",
+            "why": "evaluate the rule at the first input"
+          },
+          {
+            "do": "Simplify $g(-1)$",
+            "result": "$g(-1)=6$",
+            "why": "$1+4+1=6$"
+          },
+          {
+            "do": "Substitute $x=3$",
+            "result": "$g(3)=3^2-4\\cdot3+1$",
+            "why": "evaluate the rule at the second input"
+          },
+          {
+            "do": "Simplify $g(3)$",
+            "result": "$g(3)=-2$",
+            "why": "$9-12+1=-2$"
+          },
+          {
+            "do": "Compare with the point",
+            "result": "$(3,-2)$ is on the graph",
+            "why": "its $y$-value equals $g(3)$"
+          }
+        ],
+        "answer": "$g(-1)=6$, $g(3)=-2$, and $(3,-2)$ is on the graph."
+      },
+      {
+        "problem": "Find the natural real domain of $h(x)=\\dfrac{\\sqrt{x-2}}{x+5}$.",
+        "steps": [
+          {
+            "do": "Require the square-root input to be nonnegative",
+            "result": "$x-2\\ge0$",
+            "why": "even roots need nonnegative inputs over the reals"
+          },
+          {
+            "do": "Solve the root condition",
+            "result": "$x\\ge2$",
+            "why": "add 2 to both sides"
+          },
+          {
+            "do": "Require the denominator to be nonzero",
+            "result": "$x+5\\ne0$",
+            "why": "division by zero is not allowed"
+          },
+          {
+            "do": "Solve the denominator condition",
+            "result": "$x\\ne-5$",
+            "why": "subtract 5 from both sides"
+          },
+          {
+            "do": "Combine the conditions",
+            "result": "$[2,\\infty)$",
+            "why": "$x\\ge2$ already excludes $-5$"
+          }
+        ],
+        "answer": "The natural real domain is $[2,\\infty)$."
+      },
+      {
+        "problem": "Let $p(t)=40+8t$ give speed in miles per hour after $t$ seconds. Find $p(0)$, $p(5)$, and the meaning of the slope.",
+        "steps": [
+          {
+            "do": "Evaluate at $t=0$",
+            "result": "$p(0)=40+8\\cdot0=40$",
+            "why": "the starting speed is the output at time 0"
+          },
+          {
+            "do": "Evaluate at $t=5$",
+            "result": "$p(5)=40+8\\cdot5$",
+            "why": "substitute 5 seconds"
+          },
+          {
+            "do": "Simplify",
+            "result": "$p(5)=80$",
+            "why": "$40+40=80$"
+          },
+          {
+            "do": "Read the coefficient of $t$",
+            "result": "$8$",
+            "why": "a linear function changes by its slope per unit input"
+          },
+          {
+            "do": "Attach units",
+            "result": "$8$ miles per hour per second",
+            "why": "speed changes by 8 mph for each additional second"
+          }
+        ],
+        "answer": "$p(0)=40$, $p(5)=80$, and the slope means the speed increases by $8$ mph each second."
+      },
+      {
+        "problem": "A relation contains points $(-1,2)$, $(0,4)$, $(2,4)$, and $(2,7)$. Is it a function?",
+        "steps": [
+          {
+            "do": "List the inputs",
+            "result": "$-1,0,2,2$",
+            "why": "function status depends on repeated inputs"
+          },
+          {
+            "do": "Find the repeated input",
+            "result": "$x=2$",
+            "why": "the same input appears twice"
+          },
+          {
+            "do": "List its outputs",
+            "result": "$4$ and $7$",
+            "why": "compare what the rule assigns to that input"
+          },
+          {
+            "do": "Apply the function rule",
+            "result": "not a function",
+            "why": "one input has two different outputs"
+          },
+          {
+            "do": "Connect to the graph",
+            "result": "a vertical line at $x=2$ hits two points",
+            "why": "this fails the vertical-line test"
+          }
+        ],
+        "answer": "It is not a function because input $2$ has outputs $4$ and $7$."
+      },
+      {
+        "problem": "A one-feature predictor is $\\hat y=f(x)=0.8x+1.5$. Compute predictions for $x=2$ and $x=7$, then find the input that gives prediction $5.5$.",
+        "steps": [
+          {
+            "do": "Substitute $x=2$",
+            "result": "$f(2)=0.8\\cdot2+1.5$",
+            "why": "evaluate the predictor"
+          },
+          {
+            "do": "Simplify $f(2)$",
+            "result": "$f(2)=3.1$",
+            "why": "$1.6+1.5=3.1$"
+          },
+          {
+            "do": "Substitute $x=7$",
+            "result": "$f(7)=0.8\\cdot7+1.5$",
+            "why": "evaluate the second input"
+          },
+          {
+            "do": "Simplify $f(7)$",
+            "result": "$f(7)=7.1$",
+            "why": "$5.6+1.5=7.1$"
+          },
+          {
+            "do": "Set the prediction equal to $5.5$",
+            "result": "$0.8x+1.5=5.5$",
+            "why": "solve for the input that would produce that output"
+          },
+          {
+            "do": "Subtract $1.5$",
+            "result": "$0.8x=4$",
+            "why": "isolate the term with $x$"
+          },
+          {
+            "do": "Divide by $0.8$",
+            "result": "$x=5$",
+            "why": "$4/0.8=5$"
+          }
+        ],
+        "answer": "The predictions are $3.1$ and $7.1$; prediction $5.5$ occurs at $x=5$."
       }
     ],
     "applications": [
       {
-        "title": "A model is a function",
-        "background": "A linear model maps a feature to a prediction.",
-        "numbers": "$f(x)=2x+1$ gives $f(4)=9$."
+        "title": "A machine-learning model is a function",
+        "background": "Supervised learning formalizes prediction as a rule from features to an output. Linear regression is the oldest friendly example: a line maps one measured feature to one prediction.",
+        "numbers": "For $f(x)=2.3x+4.1$, a house-size feature $x=10$ gives $f(10)=27.1$. The graph point is $(10,27.1)$."
       },
       {
-        "title": "Activations are functions",
-        "background": "ReLU is the most common one in deep nets; every layer composes functions.",
-        "numbers": "$f(x)=\\max(0,x)$: $f(-3)=0$, $f(5)=5$."
+        "title": "Activation functions in neural networks",
+        "background": "Modern neural networks stack simple functions. ReLU became popular because it is cheap and keeps positive signals from saturating.",
+        "numbers": "For $r(x)=\\max(0,x)$, $r(-3)=0$ and $r(2.5)=2.5$. One rule, two graph points."
+      },
+      {
+        "title": "Hash tables as finite functions",
+        "background": "Computer science often uses functions on finite sets. A hash function maps keys to bucket numbers so data can be found quickly.",
+        "numbers": "If $h(k)=k\\bmod 10$, then $h(37)=7$ and $h(42)=2$; both are allowed outputs in buckets $0$ through $9$."
+      },
+      {
+        "title": "Image coordinates and pixel intensity",
+        "background": "An image can be viewed as a function from pixel coordinates to brightness or color. This viewpoint is basic in computer vision.",
+        "numbers": "A grayscale image might have $I(20,15)=180$ on a $0$ to $255$ scale, meaning coordinate $(20,15)$ has brightness $180$."
+      },
+      {
+        "title": "Loss as a function of a parameter",
+        "background": "Training adjusts parameters because the loss changes when the parameters change. Even a tiny model has a loss function you can graph.",
+        "numbers": "For $L(w)=(w-3)^2+2$, $L(1)=6$, $L(3)=2$, and $L(5)=6$, so the lowest plotted point is at $w=3$."
+      },
+      {
+        "title": "Database lookups are functions when keys are unique",
+        "background": "A primary key in a database is designed to choose exactly one row. That is the function rule in engineering clothing.",
+        "numbers": "If user id $104$ maps to score $87$, then lookup $s(104)=87$. If id $104$ returned both $87$ and $91$, the key rule would be broken."
       }
     ],
+    "applicationsClose": "Across graphs, models, images, tables, and code, the same promise holds: each allowed input has one output you can reason about.",
     "takeaways": [
-      "A function gives each input exactly one output; $f:X\\to Y$.",
-      "Domain = inputs, range = outputs reached; the vertical line test enforces the rule.",
-      "In ML a model is a function from features to predictions."
+      "A function assigns every input in its domain exactly one output.",
+      "The graph is the set of points $(x,f(x))$; the vertical-line test checks the one-output rule.",
+      "Natural domains exclude illegal inputs such as zero denominators and negative radicands under even roots.",
+      "ML models, losses, activations, and many data lookups are functions in practical form."
     ]
   });
 
   B({
     "id": "math-01-02",
     "title": "Function transformations",
-    "tagline": "Shift, stretch, and flip a graph you already know — without re-deriving anything.",
+    "tagline": "Once you know one graph, shifts, stretches, and reflections give you a whole family.",
     "connections": {
       "buildsOn": [
-        "Functions and their graphs"
+        "Functions and their graphs",
+        "coordinate-plane reading",
+        "basic algebra"
       ],
       "leadsTo": [
-        "reading exponentials, logs, and trig as shifted/scaled base curves"
+        "Exponential functions",
+        "Logarithmic functions",
+        "graphing derivatives"
       ],
       "usedWith": [
-        "feature standardization",
-        "the bias & scale inside every neural-network layer"
+        "composition",
+        "inverse functions",
+        "symmetry",
+        "piecewise functions"
       ]
     },
-    "motivation": "<p>Once you know one graph, you get a whole family for free. Sliding, stretching, or flipping a curve does not change what kind of curve it is — only where it sits and how tall it stands.</p>",
-    "definition": "<p>Starting from $y=f(x)$: $f(x)+c$ shifts up by $c$; $f(x-c)$ shifts right by $c$; $a\\,f(x)$ stretches vertically by $a$; $f(-x)$ reflects across the $y$-axis. Watch the counter-intuitive one: inside the function, $x-c$ moves the graph right, not left.</p>",
+    "motivation": "<p>You already recognize the shape of $y=x^2$: a calm U-shaped parabola. Now suppose you see $g(x)=3(x-2)^2+1$. It would be a shame to rebuild the whole graph from scratch.</p><p>Transformations let you read the new graph as a changed version of an old friend. Shift it, stretch it, or flip it; the basic shape remains visible. This is also the language behind centering data, scaling features, and adding biases.</p>",
+    "definition": "<p>Start with a base function $f(x)$. The graph of $f(x)+k$ shifts up by $k$; $f(x-h)$ shifts right by $h$; $a f(x)$ stretches vertically by factor $|a|$ and reflects across the $x$-axis if $a<0$; $f(bx)$ changes horizontal scale by factor $1/|b|$ and reflects across the $y$-axis if $b<0$.</p><p>Why the inside shift moves right: a point $(u,f(u))$ on the original graph appears on $g(x)=f(x-h)$ when $x-h=u$, so $x=u+h$. Every old input moves to the right by $h$. That one equation explains the counterintuitive part.</p><p><b>Assumptions that matter:</b> transformations preserve the base shape only where the transformed inputs remain in the domain; vertical changes affect outputs, horizontal changes affect inputs; and order matters when several transformations are combined.</p>",
     "worked": {
-      "problem": "Turn $f(x)=x^2$ into $g(x)=(x-2)^2+1$.",
+      "problem": "Describe how $g(x)=-2\\sqrt{x-3}+4$ is obtained from $f(x)=\\sqrt{x}$, and give the new starting point.",
       "skills": [
-        "shifts"
+        "horizontal shifts",
+        "vertical stretches",
+        "reflections",
+        "domain reading"
       ],
+      "strategy": "The expression changes both input and output — read inside changes first, then outside changes.",
       "steps": [
         {
-          "do": "Shift right by 2",
-          "result": "$(x-2)^2$",
-          "why": "the $x-2$ inside the function"
+          "do": "Identify the inside change",
+          "result": "$x\\mapsto x-3$",
+          "why": "the input to $\\sqrt{\\ }$ is $x-3$"
         },
         {
-          "do": "Shift up by 1",
-          "result": "$(x-2)^2+1$",
-          "why": "the $+1$ outside"
+          "do": "Translate the inside change",
+          "result": "shift right by $3$",
+          "why": "$f(x-h)$ moves right by $h$"
         },
         {
-          "do": "Read the vertex",
-          "result": "$(2,1)$",
-          "why": "check $g(2)=1$"
+          "do": "Identify the vertical multiplier",
+          "result": "$-2$",
+          "why": "the whole square root is multiplied"
+        },
+        {
+          "do": "Translate the multiplier",
+          "result": "reflect across the $x$-axis and stretch by $2$",
+          "why": "negative flips; absolute value gives stretch"
+        },
+        {
+          "do": "Identify the outside addition",
+          "result": "$+4$",
+          "why": "it is added after the square root"
+        },
+        {
+          "do": "Translate the outside addition",
+          "result": "shift up by $4$",
+          "why": "adding to outputs moves the graph vertically"
+        },
+        {
+          "do": "Transform the base starting point $(0,0)$",
+          "result": "$(3,4)$",
+          "why": "right 3 and up 4; multiplying zero still gives zero"
         }
       ],
-      "answer": "vertex at $(2,1)$"
+      "verify": "At $x=3$, $g(3)=-2\\sqrt0+4=4$, so the graph really starts at $(3,4)$.",
+      "answer": "Shift $\\sqrt{x}$ right 3, reflect over the $x$-axis, stretch vertically by 2, then shift up 4; the starting point is $(3,4)$.",
+      "connects": "Transformations turn graphing into tracking how inputs and outputs are renamed."
     },
     "practice": [
       {
-        "problem": "Where is the vertex of $-(x+3)^2$?",
-        "answer": "$(-3,0)$, opening downward"
+        "problem": "From $f(x)=x^2$, describe $g(x)=(x+4)^2-7$ and give the vertex.",
+        "steps": [
+          {
+            "do": "Identify the inside expression",
+            "result": "$x+4=x-(-4)$",
+            "why": "write it in shift form"
+          },
+          {
+            "do": "Translate the horizontal shift",
+            "result": "left $4$",
+            "why": "$f(x-h)$ shifts right by $h$, so $h=-4$ shifts left"
+          },
+          {
+            "do": "Identify the outside change",
+            "result": "$-7$",
+            "why": "the subtraction is outside the square"
+          },
+          {
+            "do": "Translate the vertical shift",
+            "result": "down $7$",
+            "why": "subtracting from outputs moves the graph down"
+          },
+          {
+            "do": "Move the base vertex $(0,0)$",
+            "result": "$(-4,-7)$",
+            "why": "left 4 and down 7"
+          }
+        ],
+        "answer": "The graph shifts left $4$ and down $7$; the vertex is $(-4,-7)$."
+      },
+      {
+        "problem": "For $g(x)=\\dfrac12|x-6|+3$, describe the transformations from $f(x)=|x|$ and find the vertex.",
+        "steps": [
+          {
+            "do": "Read the inside change",
+            "result": "$x-6$",
+            "why": "it appears inside the absolute value"
+          },
+          {
+            "do": "Translate the inside change",
+            "result": "right $6$",
+            "why": "$f(x-6)$ shifts right"
+          },
+          {
+            "do": "Read the vertical multiplier",
+            "result": "$\\dfrac12$",
+            "why": "the absolute value is multiplied by one half"
+          },
+          {
+            "do": "Translate the multiplier",
+            "result": "vertical compression by $\\dfrac12$",
+            "why": "outputs are half as far from the axis"
+          },
+          {
+            "do": "Read the outside addition",
+            "result": "$+3$",
+            "why": "it changes every output"
+          },
+          {
+            "do": "Move the base vertex",
+            "result": "$(6,3)$",
+            "why": "right 6 and up 3"
+          }
+        ],
+        "answer": "Shift right $6$, compress vertically by $\\tfrac12$, shift up $3$; vertex $(6,3)$."
+      },
+      {
+        "problem": "If $f(2)=5$ and $f(7)=-1$, find two points on $g(x)=f(x-3)+4$.",
+        "steps": [
+          {
+            "do": "Use the old input $2$",
+            "result": "$x-3=2$",
+            "why": "match the input inside $f$"
+          },
+          {
+            "do": "Solve for the new input",
+            "result": "$x=5$",
+            "why": "add 3"
+          },
+          {
+            "do": "Transform the old output $5$",
+            "result": "$5+4=9$",
+            "why": "the outside $+4$ raises outputs"
+          },
+          {
+            "do": "Use the old input $7$",
+            "result": "$x-3=7$",
+            "why": "match the second known input"
+          },
+          {
+            "do": "Solve for the new input",
+            "result": "$x=10$",
+            "why": "add 3"
+          },
+          {
+            "do": "Transform the old output $-1$",
+            "result": "$-1+4=3$",
+            "why": "raise the output by 4"
+          }
+        ],
+        "answer": "Two points on $g$ are $(5,9)$ and $(10,3)$."
+      },
+      {
+        "problem": "Describe $q(x)=2f(-x)-1$ using the graph of $f$.",
+        "steps": [
+          {
+            "do": "Read the inside multiplier",
+            "result": "$-x$",
+            "why": "the input is negated before $f$ sees it"
+          },
+          {
+            "do": "Translate the inside multiplier",
+            "result": "reflect across the $y$-axis",
+            "why": "$f(-x)$ mirrors left and right"
+          },
+          {
+            "do": "Read the outside multiplier",
+            "result": "$2$",
+            "why": "the output of $f$ is doubled"
+          },
+          {
+            "do": "Translate the outside multiplier",
+            "result": "vertical stretch by $2$",
+            "why": "outputs move twice as far from the $x$-axis"
+          },
+          {
+            "do": "Read the outside subtraction",
+            "result": "$-1$",
+            "why": "it is applied after the stretch"
+          },
+          {
+            "do": "Translate the outside subtraction",
+            "result": "shift down $1$",
+            "why": "subtracting lowers all outputs"
+          }
+        ],
+        "answer": "Reflect $f$ across the $y$-axis, stretch vertically by $2$, then shift down $1$."
+      },
+      {
+        "problem": "A feature is standardized by $z=(x-50)/10$. Find the transformed values for $x=30,50,80$, and identify the shift and scale.",
+        "steps": [
+          {
+            "do": "Substitute $x=30$",
+            "result": "$z=(30-50)/10$",
+            "why": "evaluate the transformed input"
+          },
+          {
+            "do": "Simplify the first value",
+            "result": "$z=-2$",
+            "why": "$-20/10=-2$"
+          },
+          {
+            "do": "Substitute $x=50$",
+            "result": "$z=(50-50)/10=0$",
+            "why": "the center maps to zero"
+          },
+          {
+            "do": "Substitute $x=80$",
+            "result": "$z=(80-50)/10$",
+            "why": "evaluate the third input"
+          },
+          {
+            "do": "Simplify the third value",
+            "result": "$z=3$",
+            "why": "$30/10=3$"
+          },
+          {
+            "do": "Name the transformation",
+            "result": "shift by $50$, then scale by $10$",
+            "why": "subtract the center and divide by the spread"
+          }
+        ],
+        "answer": "$30\\mapsto-2$, $50\\mapsto0$, $80\\mapsto3$; subtract $50$ and divide by $10$."
       }
     ],
     "applications": [
       {
-        "title": "Standardization",
-        "background": "A shift then a scale centers and rescales a feature.",
-        "numbers": "$z=(x-\\mu)/\\sigma$ with $\\mu=10,\\sigma=2,x=14$ gives $z=2$."
+        "title": "Feature standardization",
+        "background": "Statistics and ML often center and scale features so optimization is less lopsided. This is a transformation of the input axis.",
+        "numbers": "With mean $100$ and standard deviation $15$, $x=130$ becomes $z=(130-100)/15=2$."
       },
       {
-        "title": "Weights & biases",
-        "background": "A neuron computes a scale then a shift before its activation.",
-        "numbers": "$a x + b$ is exactly $a\\,f(x)$ then $+b$."
+        "title": "Bias terms in linear models",
+        "background": "A bias shifts a graph vertically. It lets a model fit data that does not pass through the origin.",
+        "numbers": "The line $y=3x$ gives $12$ at $x=4$; adding bias $-5$ gives $y=3x-5=7$."
+      },
+      {
+        "title": "Data augmentation for images",
+        "background": "Computer vision training often shifts or flips images so a model learns the object rather than its exact location.",
+        "numbers": "A pixel at coordinate $(12,8)$ shifted right by $5$ appears at $(17,8)$; a horizontal flip in a width-$100$ image sends $x=12$ to $x=87$."
+      },
+      {
+        "title": "Normalizing loss curves",
+        "background": "Researchers rescale loss curves to compare training runs with different starting values. The shape is easier to compare after a vertical transformation.",
+        "numbers": "If loss drops from $2.4$ to $0.6$, normalized loss $(L-0.6)/(2.4-0.6)$ sends $2.4\\mapsto1$ and $0.6\\mapsto0$."
+      },
+      {
+        "title": "Audio amplitude scaling",
+        "background": "Digital audio changes loudness by multiplying the waveform. A negative multiplier flips the wave phase.",
+        "numbers": "Samples $[0.2,-0.5,0.4]$ scaled by $0.5$ become $[0.1,-0.25,0.2]$."
+      },
+      {
+        "title": "Coordinate transforms in graphics",
+        "background": "Computer graphics builds scenes by translating, scaling, and reflecting shapes. The same transformations you read on graphs move objects on screen.",
+        "numbers": "A point $(2,3)$ scaled by $4$ then shifted by $(10,-1)$ becomes $(18,11)$."
       }
     ],
+    "applicationsClose": "Whether the object is a parabola, a feature, an image, or a sound wave, transformations tell you what changed without losing the original shape.",
     "takeaways": [
-      "$+c$ up, $f(x-c)$ right, $a f(x)$ stretch, $f(-x)$ reflect.",
-      "Inside-the-function shifts go the opposite way you expect.",
-      "Standardization and a neuron's $ax+b$ are shift-and-scale."
+      "Outside changes move or scale outputs; inside changes move or scale inputs.",
+      "$f(x-h)$ shifts right by $h$ because $x-h$ must equal the old input.",
+      "Negative outside multipliers reflect across the $x$-axis; negative inside multipliers reflect across the $y$-axis.",
+      "Standardization, biases, augmentation, and graphics all use transformation thinking."
     ],
     "prereqs": [
       "math-01-01"
@@ -148,70 +585,261 @@
   B({
     "id": "math-01-03",
     "title": "Exponential functions",
-    "tagline": "Repeated multiplication: the growth that outruns every polynomial.",
+    "tagline": "Exponential change is repeated multiplication, the quiet pattern behind growth, decay, and softmax.",
     "connections": {
       "buildsOn": [
-        "functions and powers"
+        "Functions and their graphs",
+        "exponent rules",
+        "Function transformations"
       ],
       "leadsTo": [
-        "logarithms (its inverse)",
-        "the derivative of $e^x$"
+        "Logarithmic functions",
+        "limits involving $e$",
+        "derivatives of exponentials"
       ],
       "usedWith": [
-        "the softmax",
-        "learning-rate decay",
-        "anything growing by a constant factor"
+        "geometric sequences",
+        "inverse functions",
+        "series",
+        "differential equations"
       ]
     },
-    "motivation": "<p>Adding the same amount repeatedly gives a line. Multiplying by the same factor repeatedly gives an exponential — and it explodes. That runaway growth, and its mirror image (decay toward zero), is why exponentials are everywhere.</p>",
-    "definition": "<p>An <b>exponential</b> is $f(x)=a^x$ with base $a>0$; the natural base $e\\approx 2.718$ gives $e^x$. Its defining property turns sums into products: $e^{x+y}=e^x e^y$. Note $a^0=1$, and $a>0$ keeps the output positive and real.</p>",
+    "motivation": "<p>You already know the difference between adding and multiplying. Add 3 every step and you walk: $3,6,9,12$. Multiply by 3 every step and the numbers run away: $3,9,27,81$.</p><p>An <b>exponential function</b> captures that constant-factor change. It can model doubling, radioactive decay, compound interest, probability weights, and the natural growth curve whose slope equals its height. The graph is steep because multiplication stacks on itself.</p>",
+    "definition": "<p>An exponential function has the form $f(x)=C a^x$, where $C$ is the starting scale, $a$ is the base, and $a>0$ with $a\\ne1$. If $a>1$, the function grows; if $0<a<1$, it decays. The natural exponential is $e^x$, where $e\\approx2.71828$.</p><p>The key law is $a^{x+y}=a^x a^y$. It comes from counting factors for whole-number exponents: $a^{m+n}$ has $m+n$ copies of $a$, which split into $m$ copies times $n$ copies. The real-exponent version is defined so this law remains true continuously.</p><p><b>Assumptions that matter:</b> the base is positive so real-valued powers are well-defined for all real $x$; $a=1$ is excluded because it gives the constant function; and exponential models assume a constant multiplicative factor per equal input step.</p>",
     "worked": {
-      "problem": "Read off values of $2^x$ and $e^x$.",
+      "problem": "A quantity starts at $12$ and grows by $25\\%$ each day. Write the exponential model and find the amount after $6$ days.",
       "skills": [
-        "powers",
-        "decay"
+        "growth factors",
+        "exponential models",
+        "numerical evaluation"
       ],
+      "strategy": "Percent growth is the obstacle — turn it into a multiplicative factor, then raise that factor to the number of steps.",
       "steps": [
         {
-          "do": "Growth",
-          "result": "$2^{10}=1024$",
-          "why": "ten doublings pass a thousand"
+          "do": "Convert $25\\%$ growth to a factor",
+          "result": "$1+0.25=1.25$",
+          "why": "growth adds the percent to the original 100 percent"
         },
         {
-          "do": "Natural base",
-          "result": "$e^0=1,\\ e^1\\approx2.718,\\ e^2\\approx7.389$",
-          "why": "powers of $e$"
+          "do": "Write the model",
+          "result": "$A(t)=12(1.25)^t$",
+          "why": "start at 12 and multiply by 1.25 each day"
         },
         {
-          "do": "Decay",
-          "result": "$e^{-1}\\approx0.368$",
-          "why": "a negative exponent shrinks it"
+          "do": "Substitute $t=6$",
+          "result": "$A(6)=12(1.25)^6$",
+          "why": "six days means six growth factors"
+        },
+        {
+          "do": "Compute the power",
+          "result": "$(1.25)^6\\approx3.8147$",
+          "why": "multiply the factor by itself six times"
+        },
+        {
+          "do": "Multiply by the start",
+          "result": "$A(6)\\approx45.78$",
+          "why": "$12\\cdot3.8147\\approx45.78$"
         }
       ],
-      "answer": "exponentials grow (or decay) by a constant factor per step"
+      "verify": "The amount should be bigger than $12$ because the factor $1.25$ is greater than $1$; $45.78$ is plausible after repeated growth.",
+      "answer": "$A(t)=12(1.25)^t$, so $A(6)\\approx45.78$.",
+      "connects": "An exponential records equal input steps as equal multiplicative changes."
     },
     "practice": [
       {
-        "problem": "A quantity doubles each step from 3; value after 4 steps?",
-        "answer": "$3\\cdot 2^4 = 48$"
+        "problem": "A value starts at $80$ and decays by $10\\%$ each hour. Write the model and find the value after $4$ hours.",
+        "steps": [
+          {
+            "do": "Convert $10\\%$ decay to a factor",
+            "result": "$1-0.10=0.90$",
+            "why": "decay keeps 90 percent each hour"
+          },
+          {
+            "do": "Write the model",
+            "result": "$V(t)=80(0.90)^t$",
+            "why": "start at 80 and multiply by 0.90 each hour"
+          },
+          {
+            "do": "Substitute $t=4$",
+            "result": "$V(4)=80(0.90)^4$",
+            "why": "four hours means four factors"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$(0.90)^4=0.6561$",
+            "why": "$0.9$ multiplied four times"
+          },
+          {
+            "do": "Multiply by $80$",
+            "result": "$52.488$",
+            "why": "$80\\cdot0.6561=52.488$"
+          }
+        ],
+        "answer": "$V(t)=80(0.90)^t$ and $V(4)=52.488$."
+      },
+      {
+        "problem": "Solve $3\\cdot2^x=96$ by rewriting both sides.",
+        "steps": [
+          {
+            "do": "Divide by $3$",
+            "result": "$2^x=32$",
+            "why": "isolate the exponential"
+          },
+          {
+            "do": "Rewrite $32$ as a power of $2$",
+            "result": "$32=2^5$",
+            "why": "use a matching base"
+          },
+          {
+            "do": "Set the powers equal",
+            "result": "$2^x=2^5$",
+            "why": "both sides now have the same base"
+          },
+          {
+            "do": "Equate exponents",
+            "result": "$x=5$",
+            "why": "$2^x$ is one-to-one"
+          },
+          {
+            "do": "Check in the original",
+            "result": "$3\\cdot2^5=96$",
+            "why": "$3\\cdot32=96$"
+          }
+        ],
+        "answer": "$x=5$."
+      },
+      {
+        "problem": "Compute $e^{\\ln 7}$ and $\\ln(e^{-2})$.",
+        "steps": [
+          {
+            "do": "Identify inverse functions",
+            "result": "$e^x$ and $\\ln x$ undo each other",
+            "why": "logarithms reverse exponentials"
+          },
+          {
+            "do": "Apply the inverse rule to $e^{\\ln 7}$",
+            "result": "$7$",
+            "why": "$\\ln 7$ is the exponent that produces $7$"
+          },
+          {
+            "do": "Apply the inverse rule to $\\ln(e^{-2})$",
+            "result": "$-2$",
+            "why": "the natural log returns the exponent on $e$"
+          },
+          {
+            "do": "Check the domain",
+            "result": "$e^{-2}>0$",
+            "why": "the logarithm input must be positive"
+          },
+          {
+            "do": "State both values",
+            "result": "$7$ and $-2$",
+            "why": "both simplifications are valid"
+          }
+        ],
+        "answer": "$e^{\\ln 7}=7$ and $\\ln(e^{-2})=-2$."
+      },
+      {
+        "problem": "A half-life model starts at $160$ grams and halves every $3$ days. Find the amount after $12$ days.",
+        "steps": [
+          {
+            "do": "Count half-lives",
+            "result": "$12/3=4$",
+            "why": "one half-life takes 3 days"
+          },
+          {
+            "do": "Write the half-life model",
+            "result": "$A=160(\\tfrac12)^4$",
+            "why": "four halvings occur"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$(\\tfrac12)^4=\\tfrac1{16}$",
+            "why": "halve four times"
+          },
+          {
+            "do": "Multiply by the start",
+            "result": "$160\\cdot\\tfrac1{16}=10$",
+            "why": "divide 160 by 16"
+          },
+          {
+            "do": "Attach units",
+            "result": "$10$ grams",
+            "why": "the modeled quantity is mass"
+          }
+        ],
+        "answer": "$10$ grams remain after $12$ days."
+      },
+      {
+        "problem": "Softmax uses exponentials. For logits $[0,1,2]$, compute the probability of the largest logit using $e^0=1$, $e^1\\approx2.718$, $e^2\\approx7.389$.",
+        "steps": [
+          {
+            "do": "Exponentiate the logits",
+            "result": "$[1,2.718,7.389]$",
+            "why": "softmax turns scores into positive weights"
+          },
+          {
+            "do": "Add the weights",
+            "result": "$1+2.718+7.389=11.107$",
+            "why": "probabilities divide by the total weight"
+          },
+          {
+            "do": "Select the largest weight",
+            "result": "$7.389$",
+            "why": "the largest logit is 2"
+          },
+          {
+            "do": "Divide by the total",
+            "result": "$7.389/11.107\\approx0.665$",
+            "why": "normalize the weight"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$66.5\\%$",
+            "why": "$0.665$ is about two thirds"
+          }
+        ],
+        "answer": "The largest-logit softmax probability is approximately $0.665$."
       }
     ],
     "applications": [
       {
-        "title": "Softmax",
-        "background": "Turns scores into probabilities with exponentials.",
-        "numbers": "Logits $[2,1,0]\\to e^2=7.39,\\ e^1=2.72,\\ e^0=1$, sum $11.11$, probs $[0.665,0.245,0.090]$."
+        "title": "Compound interest",
+        "background": "Banks and finance made exponentials familiar long before ML. Reinvested interest earns interest on interest, so growth is multiplicative.",
+        "numbers": "$1000$ at $5\\%$ yearly for $10$ years becomes $1000(1.05)^{10}\\approx1628.89$."
       },
       {
-        "title": "Learning-rate decay",
-        "background": "Multiplies the step size by a constant each epoch.",
-        "numbers": "$\\eta_t=\\eta_0 e^{-0.1t}$ from $0.1$: $0.090$ after 1 epoch, $0.037$ after 10."
+        "title": "Population growth and decay",
+        "background": "Early mathematical biology used exponentials for populations with roughly constant percentage growth, and for substances with constant percentage decay.",
+        "numbers": "A culture of $500$ cells doubling every hour has $500\\cdot2^6=32000$ cells after $6$ hours."
+      },
+      {
+        "title": "Learning-rate schedules",
+        "background": "Optimization often lowers the learning rate smoothly so early steps explore and later steps settle.",
+        "numbers": "With $\\eta_t=0.1e^{-0.2t}$, $\\eta_5=0.1e^{-1}\\approx0.0368$."
+      },
+      {
+        "title": "Softmax probabilities",
+        "background": "Classification models use exponentials to turn arbitrary scores into positive weights that can be normalized.",
+        "numbers": "Logits $[2,0]$ give weights $[7.389,1]$, so the first probability is $7.389/(8.389)\\approx0.881$."
+      },
+      {
+        "title": "Exponential moving averages",
+        "background": "Signal processing and optimizers like Adam smooth noisy measurements with exponentially fading memory.",
+        "numbers": "With $m_t=0.9m_{t-1}+0.1x_t$, a value from $5$ steps ago has weight $0.1(0.9)^5\\approx0.059$."
+      },
+      {
+        "title": "Runtime blowup",
+        "background": "Computer science uses exponentials to describe algorithms whose work doubles with each added item, a warning sign for scale.",
+        "numbers": "A brute-force subset search over $n=30$ items checks $2^{30}=1,073,741,824$ subsets."
       }
     ],
+    "applicationsClose": "The shared pattern is constant-factor change: money, cells, probabilities, memories, and runtimes all multiply as the input moves.",
     "takeaways": [
-      "$a^x$ is repeated multiplication; natural base $e\\approx2.718$.",
-      "$e^{x+y}=e^x e^y$; $a^0=1$; negative exponents give decay.",
-      "Exponentials power the softmax and learning-rate decay."
+      "$C a^x$ starts at scale $C$ and multiplies by $a$ for each unit increase in $x$.",
+      "$a>1$ gives growth; $0<a<1$ gives decay; $e\\approx2.71828$ is the natural base.",
+      "The law $a^{x+y}=a^x a^y$ is the engine behind exponential modeling.",
+      "Softmax, learning-rate decay, moving averages, and runtime analysis all use exponential change."
     ],
     "prereqs": [
       "math-01-02"
@@ -221,70 +849,266 @@
   B({
     "id": "math-01-04",
     "title": "Logarithmic functions",
-    "tagline": "The inverse of exponentials — and the trick that turns products into sums.",
+    "tagline": "A logarithm asks for the exponent, turning multiplicative stories into additive ones.",
     "connections": {
       "buildsOn": [
-        "Exponential functions (the log undoes them)"
+        "Exponential functions",
+        "inverse functions",
+        "exponent rules"
       ],
       "leadsTo": [
-        "logarithmic differentiation",
-        "log-likelihood in statistics"
+        "limits involving logarithms",
+        "derivatives of logarithms",
+        "log-likelihood"
       ],
       "usedWith": [
-        "cross-entropy loss",
-        "numerical stability",
-        "log-scale hyperparameter search"
+        "inverse functions",
+        "change of base",
+        "concavity",
+        "orders of growth"
       ]
     },
-    "motivation": "<p>A logarithm answers one question: to what power must I raise the base to get this number? It is the exponential run backwards, and its superpower is turning multiplication into addition — exactly what you want when a product of many small numbers would underflow to zero.</p>",
-    "definition": "<p>$\\log_b y = x \\iff b^x = y$; the natural log is $\\ln = \\log_e$. Its defining identity is $\\log(xy)=\\log x+\\log y$. The input must be positive — $\\log$ of zero or a negative number is undefined over the reals.</p>",
+    "motivation": "<p>You already know that $2^5=32$. A logarithm asks the same fact from the other side: what exponent on $2$ gives $32$? The answer is $5$.</p><p>This reversal is more than notation. Logs compress huge ranges and turn products into sums. That is why they are so useful when probabilities get tiny, when algorithms span many input sizes, and when a graph needs to show both $1$ and $1,000,000$ clearly.</p>",
+    "definition": "<p>For base $b>0$ with $b\\ne1$, $\\log_b(y)=x$ means exactly $b^x=y$. The natural logarithm is $\\ln y=\\log_e y$. The input $y$ must be positive over the real numbers, because $b^x$ is always positive.</p><p>The product rule comes from exponent laws. If $u=b^m$ and $v=b^n$, then $uv=b^{m+n}$. Taking $\\log_b$ gives $\\log_b(uv)=m+n=\\log_b u+\\log_b v$. So a product becomes a sum because multiplying powers adds exponents.</p><p><b>Assumptions that matter:</b> the base must be positive and not equal to $1$; log inputs must be positive; log rules such as $\\log(uv)=\\log u+\\log v$ require $u>0$ and $v>0$; and $\\ln$ means base $e$.</p>",
     "worked": {
-      "problem": "Evaluate a few logarithms.",
+      "problem": "Solve $\\ln(x-1)=2$ and state the domain condition.",
       "skills": [
-        "inverse of exp",
-        "log rules"
+        "inverse functions",
+        "domain restrictions",
+        "natural logarithms"
       ],
+      "strategy": "The logarithm hides the input — exponentiate both sides, but keep the positivity condition.",
       "steps": [
         {
-          "do": "Power of 2",
-          "result": "$\\log_2 1024 = 10$",
-          "why": "$2^{10}=1024$"
+          "do": "Require the log input to be positive",
+          "result": "$x-1>0$",
+          "why": "real logarithms need positive inputs"
         },
         {
-          "do": "Undo an exponential",
-          "result": "$\\ln e^3 = 3$",
-          "why": "the log inverts the exponential"
+          "do": "Solve the domain condition",
+          "result": "$x>1$",
+          "why": "add 1 to both sides"
         },
         {
-          "do": "Small number",
-          "result": "$\\log_{10} 0.001 = -3$",
-          "why": "$10^{-3}=0.001$"
+          "do": "Exponentiate both sides",
+          "result": "$e^{\\ln(x-1)}=e^2$",
+          "why": "$e^x$ undoes $\\ln x$"
+        },
+        {
+          "do": "Simplify the left side",
+          "result": "$x-1=e^2$",
+          "why": "inverse functions cancel on positive inputs"
+        },
+        {
+          "do": "Add 1",
+          "result": "$x=1+e^2$",
+          "why": "isolate $x$"
+        },
+        {
+          "do": "Approximate",
+          "result": "$x\\approx8.389$",
+          "why": "$e^2\\approx7.389$"
         }
       ],
-      "answer": "logs invert exponentials and turn products into sums"
+      "verify": "$x\\approx8.389$ is greater than $1$, so the log input is positive; $\\ln(e^2)=2$.",
+      "answer": "$x=1+e^2\\approx8.389$, with required domain $x>1$.",
+      "connects": "Logarithms undo exponentials, but only after the domain has been respected."
     },
     "practice": [
       {
-        "problem": "Simplify $\\ln(e^2\\cdot e^5)$",
-        "answer": "$7$ (product rule: $2+5$)"
+        "problem": "Evaluate $\\log_2 64$, $\\log_{10}(0.01)$, and $\\ln 1$.",
+        "steps": [
+          {
+            "do": "Rewrite $64$ as a power of $2$",
+            "result": "$64=2^6$",
+            "why": "log base 2 asks for an exponent on 2"
+          },
+          {
+            "do": "Evaluate the first log",
+            "result": "$\\log_2 64=6$",
+            "why": "$2^6=64$"
+          },
+          {
+            "do": "Rewrite $0.01$ as a power of $10$",
+            "result": "$0.01=10^{-2}$",
+            "why": "one hundredth is $10^{-2}$"
+          },
+          {
+            "do": "Evaluate the second log",
+            "result": "$\\log_{10}(0.01)=-2$",
+            "why": "$10^{-2}=0.01$"
+          },
+          {
+            "do": "Use $e^0=1$",
+            "result": "$\\ln1=0$",
+            "why": "the exponent on $e$ that gives 1 is 0"
+          }
+        ],
+        "answer": "$6$, $-2$, and $0$."
+      },
+      {
+        "problem": "Simplify $\\ln(3e^5)-\\ln 3$.",
+        "steps": [
+          {
+            "do": "Use the product rule",
+            "result": "$\\ln(3e^5)=\\ln3+\\ln(e^5)$",
+            "why": "log of a product becomes a sum"
+          },
+          {
+            "do": "Substitute into the expression",
+            "result": "$(\\ln3+\\ln(e^5))-\\ln3$",
+            "why": "replace the first term"
+          },
+          {
+            "do": "Cancel $\\ln3$",
+            "result": "$\\ln(e^5)$",
+            "why": "opposite terms add to zero"
+          },
+          {
+            "do": "Use inverse functions",
+            "result": "$5$",
+            "why": "$\\ln(e^5)=5$"
+          },
+          {
+            "do": "Check positivity",
+            "result": "$3e^5>0$ and $3>0$",
+            "why": "the log rules were legal"
+          }
+        ],
+        "answer": "$5$."
+      },
+      {
+        "problem": "Solve $\\log_3(x+2)=4$.",
+        "steps": [
+          {
+            "do": "Require a positive log input",
+            "result": "$x+2>0$",
+            "why": "the logarithm needs a positive argument"
+          },
+          {
+            "do": "Convert to exponential form",
+            "result": "$x+2=3^4$",
+            "why": "$\\log_3(y)=4$ means $y=3^4$"
+          },
+          {
+            "do": "Compute $3^4$",
+            "result": "$81$",
+            "why": "$3\\cdot3\\cdot3\\cdot3=81$"
+          },
+          {
+            "do": "Subtract $2$",
+            "result": "$x=79$",
+            "why": "isolate $x$"
+          },
+          {
+            "do": "Check the domain",
+            "result": "$79+2=81>0$",
+            "why": "the log input is valid"
+          }
+        ],
+        "answer": "$x=79$."
+      },
+      {
+        "problem": "Use change of base to approximate $\\log_2 10$ given $\\ln10\\approx2.303$ and $\\ln2\\approx0.693$.",
+        "steps": [
+          {
+            "do": "Write the change-of-base formula",
+            "result": "$\\log_2 10=\\dfrac{\\ln10}{\\ln2}$",
+            "why": "any log base can be expressed with natural logs"
+          },
+          {
+            "do": "Substitute the approximations",
+            "result": "$\\dfrac{2.303}{0.693}$",
+            "why": "use the given numbers"
+          },
+          {
+            "do": "Divide",
+            "result": "$3.323$",
+            "why": "$2.303/0.693\\approx3.323$"
+          },
+          {
+            "do": "Compare powers",
+            "result": "$2^3=8$ and $2^4=16$",
+            "why": "10 should have a log between 3 and 4"
+          },
+          {
+            "do": "Confirm the estimate",
+            "result": "$3.323$ is between $3$ and $4$",
+            "why": "the approximation is reasonable"
+          }
+        ],
+        "answer": "$\\log_2 10\\approx3.323$."
+      },
+      {
+        "problem": "A model assigns probabilities $0.8$, $0.5$, and $0.25$ to three correct labels. Compute the log-likelihood and negative log-likelihood using natural logs: $\\ln0.8\\approx-0.223$, $\\ln0.5\\approx-0.693$, $\\ln0.25\\approx-1.386$.",
+        "steps": [
+          {
+            "do": "Write the product likelihood",
+            "result": "$0.8\\cdot0.5\\cdot0.25$",
+            "why": "independent correct-label probabilities multiply"
+          },
+          {
+            "do": "Convert product to log sum",
+            "result": "$\\ln0.8+\\ln0.5+\\ln0.25$",
+            "why": "log of a product is a sum"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$-0.223-0.693-1.386$",
+            "why": "use the provided natural logs"
+          },
+          {
+            "do": "Add the logs",
+            "result": "$-2.302$",
+            "why": "sum the three terms"
+          },
+          {
+            "do": "Negate for loss",
+            "result": "$2.302$",
+            "why": "negative log-likelihood is the negative of log-likelihood"
+          }
+        ],
+        "answer": "Log-likelihood $\\approx-2.302$; negative log-likelihood $\\approx2.302$."
       }
     ],
     "applications": [
       {
-        "title": "Log-likelihood beats underflow",
-        "background": "A product of many probabilities underflows; logs turn it into a sum.",
-        "numbers": "$100$ probs of $0.1$ = $10^{-100}$; but $100\\ln(0.1)=-230.3$, an ordinary number."
+        "title": "Log-likelihood",
+        "background": "Statistics uses likelihood to measure how well parameters explain data. Logs make products of probabilities computable and easier to optimize.",
+        "numbers": "For probabilities $0.9$, $0.8$, and $0.5$, log-likelihood is $\\ln0.9+\\ln0.8+\\ln0.5\\approx-0.105-0.223-0.693=-1.021$."
       },
       {
-        "title": "Cross-entropy",
-        "background": "Uses $-\\log p$ as the loss for the true class.",
-        "numbers": "$p=0.9$ costs $0.105$; a wrong $p=0.1$ costs $2.303$."
+        "title": "Cross-entropy loss",
+        "background": "Classification models are often trained by penalizing low probability on the true class. The penalty is a negative log.",
+        "numbers": "If the true-class probability is $0.95$, loss is $-\\ln0.95\\approx0.051$; if it is $0.05$, loss is $-\\ln0.05\\approx2.996$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Products of many small probabilities can underflow to zero in floating-point arithmetic. Summing logs avoids that collapse.",
+        "numbers": "The product of $100$ probabilities each equal to $0.01$ is $10^{-200}$, while the log is $100\\ln0.01\\approx-460.5$."
+      },
+      {
+        "title": "Information in bits",
+        "background": "Information theory measures surprise with a logarithm. Rare events carry more bits because their probabilities require larger negative logs.",
+        "numbers": "An event with probability $1/8$ has $-\\log_2(1/8)=3$ bits of surprise."
+      },
+      {
+        "title": "Algorithm analysis",
+        "background": "Binary search is fast because each comparison halves the search space. Logs count how many halvings are needed.",
+        "numbers": "Searching $1,048,576=2^{20}$ sorted items takes at most about $20$ halvings."
+      },
+      {
+        "title": "Log-scale hyperparameter search",
+        "background": "Learning rates often matter by multiplicative factors, so engineers search evenly in log space rather than ordinary space.",
+        "numbers": "The values $10^{-4}$, $10^{-3}$, $10^{-2}$, $10^{-1}$ are equally spaced by $1$ on a base-10 log scale."
       }
     ],
+    "applicationsClose": "Logs keep the exponent in view: they compress scale, tame products, and turn multiplicative structure into additive arithmetic.",
     "takeaways": [
-      "$\\log_b y=x \\iff b^x=y$; the log inverts the exponential.",
-      "$\\log(xy)=\\log x+\\log y$ turns products into sums (kills underflow).",
-      "Log-likelihood and cross-entropy ($-\\log p$) are built on this."
+      "$\\log_b(y)=x$ means $b^x=y$; the log asks for an exponent.",
+      "The input to a real logarithm must be positive, and the base must be positive and not $1$.",
+      "$\\log(uv)=\\log u+\\log v$ because multiplying powers adds exponents.",
+      "Log-likelihood, cross-entropy, binary search, and log-scale tuning all rely on the same exponent-counting idea."
     ],
     "prereqs": [
       "math-01-03"
@@ -294,70 +1118,272 @@
   B({
     "id": "math-01-05",
     "title": "Trigonometric functions",
-    "tagline": "The mathematics of anything that repeats: circles, waves, and oscillations.",
+    "tagline": "Sine and cosine are coordinates on a circle, which is why they describe waves so naturally.",
     "connections": {
       "buildsOn": [
-        "the unit circle and angles"
+        "Functions and their graphs",
+        "angles",
+        "right triangles",
+        "the unit circle"
       ],
       "leadsTo": [
-        "derivatives of trig functions",
-        "Fourier analysis"
+        "Inverse trigonometric functions",
+        "limits of trigonometric functions",
+        "derivatives of sine and cosine"
       ],
       "usedWith": [
-        "positional encodings in Transformers",
-        "signal processing",
-        "rotations"
+        "periodic functions",
+        "vectors",
+        "rotations",
+        "Fourier series"
       ]
     },
-    "motivation": "<p>Wrap a number line around a circle and you get sine and cosine — your height and sideways position as you walk around. Because a circle closes on itself, they repeat forever, which makes them the natural language for anything periodic, from sound waves to token positions.</p>",
-    "definition": "<p>On the unit circle, $\\cos\\theta$ is the $x$-coordinate and $\\sin\\theta$ the $y$-coordinate at angle $\\theta$. Both are <b>periodic</b> with period $2\\pi$. The identity that ties them together: $\\sin^2\\theta+\\cos^2\\theta=1$. Use radians in calculus ($\\pi$ rad $=180^\\circ$).</p>",
+    "motivation": "<p>You already know a repeating pattern when you see one: daylight, seasons, a swing, a sound wave. Trigonometric functions are the calm mathematical way to describe that repetition.</p><p>The beautiful shortcut is the unit circle. As a point travels around a circle of radius $1$, its horizontal coordinate is $\\cos\\theta$ and its vertical coordinate is $\\sin\\theta$. A wave is what you see when you watch one coordinate over time.</p>",
+    "definition": "<p>On the unit circle, an angle $\\theta$ in radians determines a point $(\\cos\\theta,\\sin\\theta)$. The functions repeat with period $2\\pi$: $\\sin(\\theta+2\\pi)=\\sin\\theta$ and $\\cos(\\theta+2\\pi)=\\cos\\theta$. The tangent is $\\tan\\theta=\\sin\\theta/\\cos\\theta$ where $\\cos\\theta\\ne0$.</p><p>The identity $\\sin^2\\theta+\\cos^2\\theta=1$ comes directly from the unit circle: every point on radius $1$ satisfies $x^2+y^2=1$, and here $x=\\cos\\theta$, $y=\\sin\\theta$. This is Pythagoras written in circular coordinates.</p><p><b>Assumptions that matter:</b> calculus uses radians, not degrees; tangent is undefined where $\\cos\\theta=0$; and periodicity means many different angles can have the same sine or cosine value.</p>",
     "worked": {
-      "problem": "Evaluate sine and cosine at key angles.",
+      "problem": "Evaluate $\\sin\\left(\\dfrac{5\\pi}{6}\\right)$, $\\cos\\left(\\dfrac{5\\pi}{6}\\right)$, and $\\tan\\left(\\dfrac{5\\pi}{6}\\right)$.",
       "skills": [
         "unit circle",
-        "periodicity"
+        "reference angles",
+        "tangent as a ratio"
       ],
+      "strategy": "The angle is in quadrant II — use the reference angle and the signs of the coordinates.",
       "steps": [
         {
-          "do": "Sine",
-          "result": "$\\sin 0=0,\\ \\sin(\\pi/2)=1,\\ \\sin\\pi=0$",
-          "why": "the $y$-coordinate around the circle"
+          "do": "Find the reference angle",
+          "result": "$\\pi-\\dfrac{5\\pi}{6}=\\dfrac{\\pi}{6}$",
+          "why": "quadrant II angles are measured back to $\\pi$"
         },
         {
-          "do": "Cosine",
-          "result": "$\\cos 0=1,\\ \\cos\\pi=-1$",
-          "why": "the $x$-coordinate"
+          "do": "Recall sine of the reference angle",
+          "result": "$\\sin(\\pi/6)=\\dfrac12$",
+          "why": "standard unit-circle value"
         },
         {
-          "do": "Check the identity",
-          "result": "at $\\pi/2$: $1^2+0^2=1$",
-          "why": "Pythagoras on the unit circle"
+          "do": "Apply the quadrant II sign for sine",
+          "result": "$\\sin(5\\pi/6)=\\dfrac12$",
+          "why": "the $y$-coordinate is positive in quadrant II"
+        },
+        {
+          "do": "Recall cosine of the reference angle",
+          "result": "$\\cos(\\pi/6)=\\dfrac{\\sqrt3}{2}$",
+          "why": "standard unit-circle value"
+        },
+        {
+          "do": "Apply the quadrant II sign for cosine",
+          "result": "$\\cos(5\\pi/6)=-\\dfrac{\\sqrt3}{2}$",
+          "why": "the $x$-coordinate is negative in quadrant II"
+        },
+        {
+          "do": "Compute tangent",
+          "result": "$\\tan(5\\pi/6)=\\dfrac{1/2}{-\\sqrt3/2}$",
+          "why": "tangent is sine divided by cosine"
+        },
+        {
+          "do": "Simplify tangent",
+          "result": "$-\\dfrac{1}{\\sqrt3}=-\\dfrac{\\sqrt3}{3}$",
+          "why": "divide the fractions and rationalize"
         }
       ],
-      "answer": "sine and cosine oscillate between $-1$ and $1$ with period $2\\pi$"
+      "verify": "Quadrant II has positive sine and negative cosine, so the negative tangent is expected.",
+      "answer": "$\\sin(5\\pi/6)=\\dfrac12$, $\\cos(5\\pi/6)=-\\dfrac{\\sqrt3}{2}$, and $\\tan(5\\pi/6)=-\\dfrac{\\sqrt3}{3}$.",
+      "connects": "Trig values are just signed coordinates on the unit circle."
     },
     "practice": [
       {
-        "problem": "$\\sin(2\\pi+\\pi/2)$?",
-        "answer": "$1$, by periodicity"
+        "problem": "Evaluate $\\sin(7\\pi/4)$ and $\\cos(7\\pi/4)$.",
+        "steps": [
+          {
+            "do": "Locate the quadrant",
+            "result": "$7\\pi/4$ is in quadrant IV",
+            "why": "it lies between $3\\pi/2$ and $2\\pi$"
+          },
+          {
+            "do": "Find the reference angle",
+            "result": "$2\\pi-7\\pi/4=\\pi/4$",
+            "why": "measure back to the positive $x$-axis"
+          },
+          {
+            "do": "Recall the reference values",
+            "result": "$\\sin(\\pi/4)=\\cos(\\pi/4)=\\dfrac{\\sqrt2}{2}$",
+            "why": "standard $45^\\circ$ values"
+          },
+          {
+            "do": "Apply the sine sign",
+            "result": "$\\sin(7\\pi/4)=-\\dfrac{\\sqrt2}{2}$",
+            "why": "the $y$-coordinate is negative in quadrant IV"
+          },
+          {
+            "do": "Apply the cosine sign",
+            "result": "$\\cos(7\\pi/4)=\\dfrac{\\sqrt2}{2}$",
+            "why": "the $x$-coordinate is positive in quadrant IV"
+          }
+        ],
+        "answer": "$\\sin(7\\pi/4)=-\\dfrac{\\sqrt2}{2}$ and $\\cos(7\\pi/4)=\\dfrac{\\sqrt2}{2}$."
+      },
+      {
+        "problem": "Find the exact value of $\\tan(2\\pi/3)$.",
+        "steps": [
+          {
+            "do": "Locate the quadrant",
+            "result": "$2\\pi/3$ is in quadrant II",
+            "why": "it lies between $\\pi/2$ and $\\pi$"
+          },
+          {
+            "do": "Find the reference angle",
+            "result": "$\\pi-2\\pi/3=\\pi/3$",
+            "why": "measure back to $\\pi$"
+          },
+          {
+            "do": "Recall sine and cosine",
+            "result": "$\\sin(\\pi/3)=\\dfrac{\\sqrt3}{2}$, $\\cos(\\pi/3)=\\dfrac12$",
+            "why": "standard values"
+          },
+          {
+            "do": "Apply quadrant II signs",
+            "result": "$\\sin(2\\pi/3)=\\dfrac{\\sqrt3}{2}$, $\\cos(2\\pi/3)=-\\dfrac12$",
+            "why": "sine positive, cosine negative"
+          },
+          {
+            "do": "Divide sine by cosine",
+            "result": "$\\tan(2\\pi/3)=-\\sqrt3$",
+            "why": "$(\\sqrt3/2)/(-1/2)=-\\sqrt3$"
+          }
+        ],
+        "answer": "$-\\sqrt3$."
+      },
+      {
+        "problem": "Use periodicity to simplify $\\sin(17\\pi/6)$.",
+        "steps": [
+          {
+            "do": "Subtract one full period",
+            "result": "$17\\pi/6-12\\pi/6=5\\pi/6$",
+            "why": "$2\\pi=12\\pi/6$"
+          },
+          {
+            "do": "Use periodicity",
+            "result": "$\\sin(17\\pi/6)=\\sin(5\\pi/6)$",
+            "why": "sine repeats every $2\\pi$"
+          },
+          {
+            "do": "Find the reference angle",
+            "result": "$\\pi-5\\pi/6=\\pi/6$",
+            "why": "$5\\pi/6$ is in quadrant II"
+          },
+          {
+            "do": "Recall the reference sine",
+            "result": "$\\sin(\\pi/6)=\\dfrac12$",
+            "why": "standard value"
+          },
+          {
+            "do": "Apply the quadrant sign",
+            "result": "$\\dfrac12$",
+            "why": "sine is positive in quadrant II"
+          }
+        ],
+        "answer": "$\\sin(17\\pi/6)=\\dfrac12$."
+      },
+      {
+        "problem": "If $\\sin\\theta=3/5$ and $\\theta$ is in quadrant II, find $\\cos\\theta$ and $\\tan\\theta$.",
+        "steps": [
+          {
+            "do": "Use the Pythagorean identity",
+            "result": "$(3/5)^2+\\cos^2\\theta=1$",
+            "why": "$\\sin^2\\theta+\\cos^2\\theta=1$"
+          },
+          {
+            "do": "Square the sine",
+            "result": "$9/25+\\cos^2\\theta=1$",
+            "why": "$(3/5)^2=9/25$"
+          },
+          {
+            "do": "Subtract $9/25$",
+            "result": "$\\cos^2\\theta=16/25$",
+            "why": "$1=25/25$"
+          },
+          {
+            "do": "Take the square root with quadrant sign",
+            "result": "$\\cos\\theta=-4/5$",
+            "why": "cosine is negative in quadrant II"
+          },
+          {
+            "do": "Compute tangent",
+            "result": "$\\tan\\theta=(3/5)/(-4/5)=-3/4$",
+            "why": "tangent is sine over cosine"
+          }
+        ],
+        "answer": "$\\cos\\theta=-4/5$ and $\\tan\\theta=-3/4$."
+      },
+      {
+        "problem": "A positional encoding uses $s(p)=\\sin(p\\pi/2)$. Compute $s(0)$, $s(1)$, $s(2)$, and $s(3)$.",
+        "steps": [
+          {
+            "do": "Substitute $p=0$",
+            "result": "$s(0)=\\sin0=0$",
+            "why": "the angle is $0$"
+          },
+          {
+            "do": "Substitute $p=1$",
+            "result": "$s(1)=\\sin(\\pi/2)=1$",
+            "why": "the top of the unit circle"
+          },
+          {
+            "do": "Substitute $p=2$",
+            "result": "$s(2)=\\sin\\pi=0$",
+            "why": "the point is on the negative $x$-axis"
+          },
+          {
+            "do": "Substitute $p=3$",
+            "result": "$s(3)=\\sin(3\\pi/2)=-1$",
+            "why": "the bottom of the unit circle"
+          },
+          {
+            "do": "List the pattern",
+            "result": "$0,1,0,-1$",
+            "why": "sine samples a repeating wave"
+          }
+        ],
+        "answer": "The values are $0,1,0,-1$."
       }
     ],
     "applications": [
       {
         "title": "Positional encodings",
-        "background": "Transformers encode token position with sines and cosines at many frequencies.",
-        "numbers": "$\\text{PE}(pos,2i)=\\sin(pos/10000^{2i/d})$ lets the model tell position 5 from 50."
+        "background": "Transformers need a way to represent order. Sinusoidal encodings, introduced in the original Transformer, use many sine and cosine waves at different frequencies.",
+        "numbers": "For a simple channel $\\sin(p\\pi/2)$, positions $0,1,2,3$ map to $0,1,0,-1$."
       },
       {
-        "title": "Signals & rotations",
-        "background": "Oscillations decompose into sines (Fourier); a 2-D rotation is built from $\\cos\\theta,\\sin\\theta$.",
-        "numbers": "Rotating by $\\theta$ uses $\\left[\\begin{smallmatrix}\\cos\\theta&-\\sin\\theta\\\\\\sin\\theta&\\cos\\theta\\end{smallmatrix}\\right]$."
+        "title": "Fourier analysis",
+        "background": "Fourier's nineteenth-century insight was that complicated periodic signals can be decomposed into sines and cosines. This powers audio, images, and PDE solvers.",
+        "numbers": "The signal $3\\sin(2t)+0.5\\cos(10t)$ has a low-frequency amplitude $3$ and high-frequency amplitude $0.5$."
+      },
+      {
+        "title": "Rotations in graphics",
+        "background": "Rotating a 2-D point uses cosine and sine because rotation preserves distance around a circle.",
+        "numbers": "Rotating $(1,0)$ by $\\pi/2$ gives $(\\cos\\pi/2,\\sin\\pi/2)=(0,1)$."
+      },
+      {
+        "title": "Seasonal features",
+        "background": "Calendar variables wrap around: December and January are close. Sine and cosine encode that circular structure for models.",
+        "numbers": "Day $91$ of a $365$-day year has angle $2\\pi(91/365)\\approx1.57$, so $\\sin\\theta\\approx1$ and $\\cos\\theta\\approx0$."
+      },
+      {
+        "title": "Signal sampling",
+        "background": "Digital signal processing tracks waves by sampling trig functions at discrete times.",
+        "numbers": "A $2$ Hz sine sampled at $t=0.125$ seconds has value $\\sin(2\\pi\\cdot2\\cdot0.125)=\\sin(\\pi/2)=1$."
+      },
+      {
+        "title": "Cosine similarity geometry",
+        "background": "Vector similarity is named after cosine because dot products encode angles between directions.",
+        "numbers": "For unit vectors at $60^\\circ$, similarity is $\\cos(\\pi/3)=0.5$."
       }
     ],
+    "applicationsClose": "The unit circle gives one language for waves, rotations, seasons, signals, and vector angles.",
     "takeaways": [
-      "$\\cos\\theta,\\sin\\theta$ are unit-circle coordinates; period $2\\pi$.",
-      "Core identity $\\sin^2\\theta+\\cos^2\\theta=1$; use radians in calculus.",
-      "They drive positional encodings, Fourier analysis, and rotations."
+      "$\\cos\\theta$ and $\\sin\\theta$ are the $x$- and $y$-coordinates on the unit circle.",
+      "They repeat every $2\\pi$, and calculus expects angles in radians.",
+      "$\\sin^2\\theta+\\cos^2\\theta=1$ comes from the unit circle equation.",
+      "Trig functions model periodic behavior in signals, encodings, rotations, and geometry."
     ],
     "prereqs": [
       "math-01-04"
@@ -367,67 +1393,266 @@
   B({
     "id": "math-01-06",
     "title": "Inverse trigonometric functions",
-    "tagline": "Going backwards from a ratio to the angle that produced it.",
+    "tagline": "Inverse trig recovers a chosen angle from a ratio, carefully avoiding the many-answers trap.",
     "connections": {
       "buildsOn": [
-        "Trigonometric functions"
+        "Trigonometric functions",
+        "inverse functions",
+        "unit-circle signs"
       ],
       "leadsTo": [
-        "their derivatives and integrals"
+        "derivatives of inverse trig functions",
+        "trig substitution",
+        "geometry of gradients"
       ],
       "usedWith": [
-        "recovering angles from dot products",
-        "smooth squashing functions"
+        "right triangles",
+        "vectors",
+        "restricted domains",
+        "coordinate geometry"
       ]
     },
-    "motivation": "<p>Sine takes an angle and gives a ratio; sometimes you have the ratio and want the angle back. That is the inverse. Since sine repeats, infinitely many angles share a value, so we restrict the domain to pick one canonical answer.</p>",
-    "definition": "<p>$\\arcsin,\\arccos,\\arctan$ invert $\\sin,\\cos,\\tan$ on restricted ranges so each output is unique: $\\arcsin,\\arctan\\in[-\\tfrac\\pi2,\\tfrac\\pi2]$ and $\\arccos\\in[0,\\pi]$. So $\\arcsin(\\sin\\theta)=\\theta$ only when $\\theta$ lies in that range.</p>",
+    "motivation": "<p>Sometimes you know the ratio before you know the angle. A ramp rises $3$ meters over a $4$ meter run; a pair of vectors has cosine similarity $0.8$; a robot sees movement $(2,5)$. In each case, you want an angle back.</p><p>The only catch is that trig functions repeat. Many angles have the same sine, cosine, or tangent. Inverse trig functions solve this by returning one agreed-upon principal angle, like choosing one clean representative from a repeating family.</p>",
+    "definition": "<p>The functions $\\arcsin x$, $\\arccos x$, and $\\arctan x$ return principal angles. Specifically, $\\arcsin x\\in[-\\pi/2,\\pi/2]$ with input $x\\in[-1,1]$; $\\arccos x\\in[0,\\pi]$ with input $x\\in[-1,1]$; and $\\arctan x\\in(-\\pi/2,\\pi/2)$ with any real input.</p><p>The restriction is necessary. Since $\\sin(\\pi/6)=\\sin(5\\pi/6)=1/2$, sine cannot have a true inverse on all real angles. By restricting sine to $[-\\pi/2,\\pi/2]$, each output in $[-1,1]$ comes from exactly one angle, so $\\arcsin$ is well-defined.</p><p><b>Assumptions that matter:</b> inverse trig outputs are angles in radians unless stated otherwise; $\\arcsin$ and $\\arccos$ accept only inputs from $[-1,1]$; and $\\arctan(y/x)$ alone does not always identify the correct quadrant, which is why many systems use $\\operatorname{atan2}(y,x)$.</p>",
     "worked": {
-      "problem": "Evaluate some inverse-trig values.",
+      "problem": "Evaluate $\\arcsin\\left(-\\dfrac12\\right)$, $\\arccos\\left(-\\dfrac12\\right)$, and $\\arctan(\\sqrt3)$.",
       "skills": [
-        "restricted ranges"
+        "principal ranges",
+        "unit-circle values",
+        "radians"
       ],
+      "strategy": "The ratios are familiar — choose the angle that lies in each inverse function's principal range.",
       "steps": [
         {
-          "do": "Arctangent",
-          "result": "$\\arctan(1)=\\pi/4\\approx0.785$",
-          "why": "the angle whose tangent is 1"
+          "do": "Recall where sine is $-1/2$",
+          "result": "$\\theta=-\\pi/6$ or $7\\pi/6$ among many choices",
+          "why": "sine repeats"
         },
         {
-          "do": "Arcsine",
-          "result": "$\\arcsin(1)=\\pi/2$",
-          "why": "sine is 1 at $\\pi/2$"
+          "do": "Apply the arcsine range",
+          "result": "$\\arcsin(-1/2)=-\\pi/6$",
+          "why": "arcsine returns an angle in $[-\\pi/2,\\pi/2]$"
         },
         {
-          "do": "Arccosine",
-          "result": "$\\arccos(0)=\\pi/2$",
-          "why": "cosine is 0 at $\\pi/2$"
+          "do": "Recall where cosine is $-1/2$",
+          "result": "$\\theta=2\\pi/3$ or $4\\pi/3$ among many choices",
+          "why": "cosine repeats"
+        },
+        {
+          "do": "Apply the arccosine range",
+          "result": "$\\arccos(-1/2)=2\\pi/3$",
+          "why": "arccosine returns an angle in $[0,\\pi]$"
+        },
+        {
+          "do": "Recall where tangent is $\\sqrt3$",
+          "result": "$\\theta=\\pi/3$ plus repeats",
+          "why": "$\\tan(\\pi/3)=\\sqrt3$"
+        },
+        {
+          "do": "Apply the arctangent range",
+          "result": "$\\arctan(\\sqrt3)=\\pi/3$",
+          "why": "arctangent returns an angle in $(-\\pi/2,\\pi/2)$"
         }
       ],
-      "answer": "each returns the unique angle in its restricted range"
+      "verify": "Each answer lies in its required principal range and gives back the requested trig value.",
+      "answer": "$\\arcsin(-\\tfrac12)=-\\dfrac\\pi6$, $\\arccos(-\\tfrac12)=\\dfrac{2\\pi}{3}$, and $\\arctan(\\sqrt3)=\\dfrac\\pi3$.",
+      "connects": "Inverse trig is ordinary inverse-function thinking, with domain restrictions doing the quiet essential work."
     },
     "practice": [
       {
-        "problem": "$\\arctan(0)$?",
-        "answer": "$0$"
+        "problem": "Evaluate $\\arcsin(\\sqrt2/2)$ and $\\arccos(\\sqrt2/2)$.",
+        "steps": [
+          {
+            "do": "Recall the sine value",
+            "result": "$\\sin(\\pi/4)=\\sqrt2/2$",
+            "why": "standard unit-circle value"
+          },
+          {
+            "do": "Check the arcsine range",
+            "result": "$\\pi/4\\in[-\\pi/2,\\pi/2]$",
+            "why": "principal range is required"
+          },
+          {
+            "do": "Evaluate arcsine",
+            "result": "$\\arcsin(\\sqrt2/2)=\\pi/4$",
+            "why": "the angle is allowed"
+          },
+          {
+            "do": "Recall the cosine value",
+            "result": "$\\cos(\\pi/4)=\\sqrt2/2$",
+            "why": "same reference angle"
+          },
+          {
+            "do": "Check the arccosine range",
+            "result": "$\\pi/4\\in[0,\\pi]$",
+            "why": "principal range is required"
+          }
+        ],
+        "answer": "$\\arcsin(\\sqrt2/2)=\\pi/4$ and $\\arccos(\\sqrt2/2)=\\pi/4$."
+      },
+      {
+        "problem": "Evaluate $\\arccos(0)$ and $\\arctan(-1)$.",
+        "steps": [
+          {
+            "do": "Recall where cosine is zero",
+            "result": "$\\theta=\\pi/2$ and $3\\pi/2$ among repeats",
+            "why": "cosine is the $x$-coordinate"
+          },
+          {
+            "do": "Apply the arccosine range",
+            "result": "$\\arccos(0)=\\pi/2$",
+            "why": "$\\pi/2$ lies in $[0,\\pi]$"
+          },
+          {
+            "do": "Recall where tangent is $-1$",
+            "result": "$\\theta=-\\pi/4$ plus repeats",
+            "why": "tangent is negative in quadrant IV within the principal range"
+          },
+          {
+            "do": "Apply the arctangent range",
+            "result": "$\\arctan(-1)=-\\pi/4$",
+            "why": "arctangent returns angles in $(-\\pi/2,\\pi/2)$"
+          },
+          {
+            "do": "Check both values",
+            "result": "$\\cos(\\pi/2)=0$ and $\\tan(-\\pi/4)=-1$",
+            "why": "substitution verifies the inverses"
+          }
+        ],
+        "answer": "$\\arccos(0)=\\pi/2$ and $\\arctan(-1)=-\\pi/4$."
+      },
+      {
+        "problem": "Solve $\\sin\\theta=\\dfrac12$ for the principal arcsine answer, then list the two solutions in $[0,2\\pi)$.",
+        "steps": [
+          {
+            "do": "Take the principal inverse",
+            "result": "$\\arcsin(1/2)=\\pi/6$",
+            "why": "$\\pi/6$ lies in the arcsine range"
+          },
+          {
+            "do": "Find the second quadrant angle",
+            "result": "$\\pi-\\pi/6=5\\pi/6$",
+            "why": "sine is also positive in quadrant II"
+          },
+          {
+            "do": "List angles in one full turn",
+            "result": "$\\pi/6$ and $5\\pi/6$",
+            "why": "both lie in $[0,2\\pi)$"
+          },
+          {
+            "do": "Check the first",
+            "result": "$\\sin(\\pi/6)=1/2$",
+            "why": "standard value"
+          },
+          {
+            "do": "Check the second",
+            "result": "$\\sin(5\\pi/6)=1/2$",
+            "why": "same reference angle in quadrant II"
+          }
+        ],
+        "answer": "Principal arcsine answer $\\pi/6$; solutions in $[0,2\\pi)$ are $\\pi/6$ and $5\\pi/6$."
+      },
+      {
+        "problem": "A right triangle has opposite side $5$ and adjacent side $12$. Find the angle $\\theta$ using arctangent and approximate it in degrees.",
+        "steps": [
+          {
+            "do": "Write the tangent ratio",
+            "result": "$\\tan\\theta=5/12$",
+            "why": "tangent is opposite over adjacent"
+          },
+          {
+            "do": "Apply arctangent",
+            "result": "$\\theta=\\arctan(5/12)$",
+            "why": "arctangent recovers the angle from the ratio"
+          },
+          {
+            "do": "Approximate in radians",
+            "result": "$\\theta\\approx0.395$",
+            "why": "calculator value"
+          },
+          {
+            "do": "Convert to degrees",
+            "result": "$0.395\\cdot180/\\pi\\approx22.6^\\circ$",
+            "why": "multiply radians by $180/\\pi$"
+          },
+          {
+            "do": "Check the size",
+            "result": "less than $45^\\circ$",
+            "why": "$5/12<1$, so the angle should be below $\\arctan(1)$"
+          }
+        ],
+        "answer": "$\\theta=\\arctan(5/12)\\approx0.395$ radians, about $22.6^\\circ$."
+      },
+      {
+        "problem": "Two unit embedding vectors have cosine similarity $0.8$. Find the angle between them in radians and degrees using $\\arccos(0.8)\\approx0.644$.",
+        "steps": [
+          {
+            "do": "Use the cosine-angle relation",
+            "result": "$\\cos\\theta=0.8$",
+            "why": "unit-vector dot product equals cosine similarity"
+          },
+          {
+            "do": "Apply arccosine",
+            "result": "$\\theta=\\arccos(0.8)$",
+            "why": "recover the angle from its cosine"
+          },
+          {
+            "do": "Use the given approximation",
+            "result": "$\\theta\\approx0.644$ radians",
+            "why": "calculator value"
+          },
+          {
+            "do": "Convert to degrees",
+            "result": "$0.644\\cdot180/\\pi\\approx36.9^\\circ$",
+            "why": "radian-to-degree conversion"
+          },
+          {
+            "do": "Interpret the result",
+            "result": "the vectors are fairly close",
+            "why": "an angle under $45^\\circ$ means high similarity"
+          }
+        ],
+        "answer": "The angle is about $0.644$ radians, or $36.9^\\circ$."
       }
     ],
     "applications": [
       {
-        "title": "Angle from similarity",
-        "background": "The angle between two unit vectors comes from their cosine similarity.",
-        "numbers": "$\\theta=\\arccos(\\text{sim})$; a similarity of $0.5$ means $60^\\circ$ apart in embedding space."
+        "title": "Angles from cosine similarity",
+        "background": "Embedding models compare vectors by cosine similarity. Inverse cosine converts that similarity into a geometric angle.",
+        "numbers": "Similarity $0.5$ gives $\\theta=\\arccos(0.5)=\\pi/3\\approx60^\\circ$."
       },
       {
-        "title": "Orientation",
-        "background": "Robotics and graphics turn a coordinate pair into a heading with atan2.",
-        "numbers": "$\\operatorname{atan2}(1,1)=\\pi/4$."
+        "title": "Robot heading with atan2",
+        "background": "Robots and games need a direction from horizontal and vertical movement. $\\operatorname{atan2}$ handles quadrants that plain arctangent can miss.",
+        "numbers": "For movement $(x,y)=(-3,3)$, $\\operatorname{atan2}(3,-3)=3\\pi/4\\approx135^\\circ$."
+      },
+      {
+        "title": "Camera field of view",
+        "background": "Computer graphics and vision use inverse tangent to convert sensor geometry into angular field of view.",
+        "numbers": "A sensor half-width $18$ mm with focal length $24$ mm gives half-angle $\\arctan(18/24)\\approx36.9^\\circ$, so full FOV is $73.8^\\circ$."
+      },
+      {
+        "title": "Gradient direction in two dimensions",
+        "background": "Optimization often cares about direction as well as size. An arctangent turns a gradient vector into a heading.",
+        "numbers": "For gradient $(4,3)$, the uphill angle is $\\arctan(3/4)\\approx0.644$ radians, about $36.9^\\circ$."
+      },
+      {
+        "title": "Slope angle of a ramp",
+        "background": "Civil engineering and robotics both convert rise-over-run ratios into angles to assess steepness.",
+        "numbers": "Rise $2$ over run $10$ gives angle $\\arctan(0.2)\\approx11.3^\\circ$."
+      },
+      {
+        "title": "Phase recovery in signals",
+        "background": "Signals often store sine and cosine components separately. Inverse tangent recovers the phase angle from those components.",
+        "numbers": "If cosine component is $0$ and sine component is $1$, phase is $\\operatorname{atan2}(1,0)=\\pi/2$."
       }
     ],
+    "applicationsClose": "Inverse trig is the bridge back from ratios and similarities to angles you can picture.",
     "takeaways": [
-      "$\\arcsin,\\arccos,\\arctan$ recover an angle from a ratio, on restricted ranges.",
-      "Restriction avoids multivalued inverses.",
-      "Used to get angles from cosine similarity ($\\arccos$) and headings ($\\operatorname{atan2}$)."
+      "$\\arcsin$, $\\arccos$, and $\\arctan$ return principal angles, not every possible angle.",
+      "Restrictions make the inverse functions single-valued: arcsine and arctangent use central ranges; arccosine uses $[0,\\pi]$.",
+      "$\\arcsin$ and $\\arccos$ require inputs in $[-1,1]$; $\\arctan$ accepts all real inputs.",
+      "Angles from embeddings, headings, gradients, cameras, and signals all use inverse trig."
     ],
     "prereqs": [
       "math-01-05"
@@ -681,19 +1906,277 @@
   B({
     "id": "math-01-08",
     "title": "One-sided limits",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: one-sided limits.",
+    "tagline": "A one-sided limit asks what the function approaches when you walk in from only one direction.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Limits: definition and computation</i>"
+        "Limits: definition and computation",
+        "Functions and their graphs",
+        "piecewise functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Continuity</i>"
+        "Continuity",
+        "The Intermediate Value Theorem",
+        "derivatives at corners"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "piecewise functions",
+        "absolute value",
+        "step functions",
+        "domain endpoints"
       ]
     },
+    "motivation": "<p>You already know that a two-sided limit asks where a function is heading as $x$ gets close to a point. But sometimes the road looks different depending on which side you approach from.</p><p>One-sided limits let us slow down and ask each direction separately. From the left, what value is the graph approaching? From the right, what value is it approaching? This is exactly what you need at jumps, corners, and endpoints.</p>",
+    "definition": "<p>The notation $\\lim_{x\\to a^-}f(x)=L$ means $f(x)$ approaches $L$ as $x$ approaches $a$ using values less than $a$. The notation $\\lim_{x\\to a^+}f(x)=R$ means $f(x)$ approaches $R$ using values greater than $a$.</p><p>The ordinary two-sided limit exists precisely when the two one-sided limits both exist and agree: $$\\lim_{x\\to a}f(x)=L \\quad\\text{if and only if}\\quad \\lim_{x\\to a^-}f(x)=L \\text{ and } \\lim_{x\\to a^+}f(x)=L.$$ This is not a new trick; it is the two-sided approach split into its two directions.</p><p><b>Assumptions that matter:</b> left-hand limits require domain points to the left of $a$; right-hand limits require domain points to the right of $a$; the value $f(a)$ itself does not decide either one-sided limit; and unequal one-sided limits make the two-sided limit fail to exist.</p>",
+    "worked": {
+      "problem": "For $f(x)=\\begin{cases}2x+1,&x<1\\\\5,&x=1\\\\x^2+1,&x>1\\end{cases}$, find the left-hand limit, right-hand limit, and two-sided limit at $x=1$.",
+      "skills": [
+        "piecewise functions",
+        "left-hand limits",
+        "right-hand limits"
+      ],
+      "strategy": "The formula changes at $1$ — use the branch that matches each direction, then compare the results.",
+      "steps": [
+        {
+          "do": "Choose the left branch",
+          "result": "$2x+1$",
+          "why": "values with $x<1$ approach from the left"
+        },
+        {
+          "do": "Substitute $x=1$ into the left branch",
+          "result": "$2(1)+1=3$",
+          "why": "the branch is continuous near the approach"
+        },
+        {
+          "do": "State the left-hand limit",
+          "result": "$\\lim_{x\\to1^-}f(x)=3$",
+          "why": "left-side outputs approach 3"
+        },
+        {
+          "do": "Choose the right branch",
+          "result": "$x^2+1$",
+          "why": "values with $x>1$ approach from the right"
+        },
+        {
+          "do": "Substitute $x=1$ into the right branch",
+          "result": "$1^2+1=2$",
+          "why": "the right branch is continuous near the approach"
+        },
+        {
+          "do": "State the right-hand limit",
+          "result": "$\\lim_{x\\to1^+}f(x)=2$",
+          "why": "right-side outputs approach 2"
+        },
+        {
+          "do": "Compare the one-sided limits",
+          "result": "$3\\ne2$",
+          "why": "two-sided limits require agreement"
+        }
+      ],
+      "verify": "The actual value $f(1)=5$ is separate; neither side approaches 5, and the two sides do not approach each other.",
+      "answer": "$\\lim_{x\\to1^-}f(x)=3$, $\\lim_{x\\to1^+}f(x)=2$, so $\\lim_{x\\to1}f(x)$ does not exist.",
+      "connects": "One-sided limits diagnose jumps by asking each direction to speak for itself."
+    },
+    "practice": [
+      {
+        "problem": "Let $g(x)=\\begin{cases}x+4,&x<2\\\\7-x,&x\\ge2\\end{cases}$. Find $\\lim_{x\\to2^-}g(x)$, $\\lim_{x\\to2^+}g(x)$, and $\\lim_{x\\to2}g(x)$.",
+        "steps": [
+          {
+            "do": "Choose the left branch",
+            "result": "$x+4$",
+            "why": "approaching from the left means $x<2$"
+          },
+          {
+            "do": "Substitute $x=2$ into the left branch",
+            "result": "$6$",
+            "why": "$2+4=6$"
+          },
+          {
+            "do": "Choose the right branch",
+            "result": "$7-x$",
+            "why": "approaching from the right uses $x>2$, which is included in $x\\ge2$"
+          },
+          {
+            "do": "Substitute $x=2$ into the right branch",
+            "result": "$5$",
+            "why": "$7-2=5$"
+          },
+          {
+            "do": "Compare",
+            "result": "$6\\ne5$",
+            "why": "the two-sided limit needs equal one-sided limits"
+          }
+        ],
+        "answer": "Left-hand limit $6$, right-hand limit $5$, two-sided limit does not exist."
+      },
+      {
+        "problem": "Find $\\lim_{x\\to0^-}\\dfrac{|x|}{x}$ and $\\lim_{x\\to0^+}\\dfrac{|x|}{x}$.",
+        "steps": [
+          {
+            "do": "Use the left-side absolute value rule",
+            "result": "$|x|=-x$ for $x<0$",
+            "why": "negative inputs become positive by negation"
+          },
+          {
+            "do": "Simplify the left expression",
+            "result": "$\\dfrac{|x|}{x}=\\dfrac{-x}{x}=-1$",
+            "why": "cancel $x$ for $x\\ne0$"
+          },
+          {
+            "do": "State the left-hand limit",
+            "result": "$-1$",
+            "why": "the expression is constantly $-1$ on the left"
+          },
+          {
+            "do": "Use the right-side absolute value rule",
+            "result": "$|x|=x$ for $x>0$",
+            "why": "positive inputs stay positive"
+          },
+          {
+            "do": "Simplify the right expression",
+            "result": "$\\dfrac{|x|}{x}=1$",
+            "why": "cancel $x$ for $x\\ne0$"
+          },
+          {
+            "do": "State the right-hand limit",
+            "result": "$1$",
+            "why": "the expression is constantly $1$ on the right"
+          }
+        ],
+        "answer": "$\\lim_{x\\to0^-}|x|/x=-1$ and $\\lim_{x\\to0^+}|x|/x=1$."
+      },
+      {
+        "problem": "Find the one-sided limits of $h(x)=\\dfrac{1}{x-3}$ at $x=3$.",
+        "steps": [
+          {
+            "do": "Look at the denominator from the left",
+            "result": "$x-3<0$ and close to $0$",
+            "why": "left of 3 means $x$ is slightly smaller than 3"
+          },
+          {
+            "do": "Evaluate the left behavior",
+            "result": "$\\dfrac{1}{x-3}\\to-\\infty$",
+            "why": "a positive numerator over a tiny negative denominator decreases without bound"
+          },
+          {
+            "do": "Look at the denominator from the right",
+            "result": "$x-3>0$ and close to $0$",
+            "why": "right of 3 means $x$ is slightly larger than 3"
+          },
+          {
+            "do": "Evaluate the right behavior",
+            "result": "$\\dfrac{1}{x-3}\\to\\infty$",
+            "why": "a positive numerator over a tiny positive denominator grows without bound"
+          },
+          {
+            "do": "Compare behaviors",
+            "result": "opposite infinite directions",
+            "why": "the vertical asymptote has different one-sided behavior"
+          }
+        ],
+        "answer": "$\\lim_{x\\to3^-}h(x)=-\\infty$ and $\\lim_{x\\to3^+}h(x)=\\infty$."
+      },
+      {
+        "problem": "For $p(x)=\\begin{cases}ax+1,&x<4\\\\9,&x\\ge4\\end{cases}$, choose $a$ so the two-sided limit at $4$ exists.",
+        "steps": [
+          {
+            "do": "Compute the left-hand limit",
+            "result": "$\\lim_{x\\to4^-}p(x)=4a+1$",
+            "why": "use the left branch"
+          },
+          {
+            "do": "Compute the right-hand limit",
+            "result": "$\\lim_{x\\to4^+}p(x)=9$",
+            "why": "the right branch is constant near 4"
+          },
+          {
+            "do": "Set one-sided limits equal",
+            "result": "$4a+1=9$",
+            "why": "two-sided existence requires agreement"
+          },
+          {
+            "do": "Subtract $1$",
+            "result": "$4a=8$",
+            "why": "isolate the term with $a$"
+          },
+          {
+            "do": "Divide by $4$",
+            "result": "$a=2$",
+            "why": "solve for the parameter"
+          }
+        ],
+        "answer": "$a=2$."
+      },
+      {
+        "problem": "A threshold classifier uses $s(x)=0$ for $x<0.7$ and $s(x)=1$ for $x\\ge0.7$. Find the left- and right-hand limits at $0.7$ and interpret the jump.",
+        "steps": [
+          {
+            "do": "Use the left branch",
+            "result": "$s(x)=0$",
+            "why": "approaching from below means $x<0.7$"
+          },
+          {
+            "do": "State the left-hand limit",
+            "result": "$\\lim_{x\\to0.7^-}s(x)=0$",
+            "why": "the output stays 0 on the left"
+          },
+          {
+            "do": "Use the right branch",
+            "result": "$s(x)=1$",
+            "why": "approaching from above means $x>0.7$"
+          },
+          {
+            "do": "State the right-hand limit",
+            "result": "$\\lim_{x\\to0.7^+}s(x)=1$",
+            "why": "the output stays 1 on the right"
+          },
+          {
+            "do": "Compare the limits",
+            "result": "$0\\ne1$",
+            "why": "the score jumps at the threshold"
+          }
+        ],
+        "answer": "The left-hand limit is $0$, the right-hand limit is $1$, and the classifier jumps from reject to accept at $0.7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Threshold classifiers",
+        "background": "Many systems turn a score into a class by crossing a threshold. One-sided limits show what happens just below and just above the cutoff.",
+        "numbers": "For threshold $0.8$, scores $0.799$ and $0.801$ can output $0$ and $1$, so the one-sided limits are $0$ and $1$."
+      },
+      {
+        "title": "ReLU at zero",
+        "background": "ReLU became a standard neural-network activation because it is simple and avoids some saturation. Its slope changes abruptly at zero.",
+        "numbers": "For $r(x)=\\max(0,x)$, values from the left approach $0$ and values from the right also approach $0$, even though the slopes are $0$ and $1$."
+      },
+      {
+        "title": "Quantization boundaries",
+        "background": "Digital systems round continuous values into bins. At bin boundaries, the output can jump.",
+        "numbers": "If $q(x)=0$ for $x<0.5$ and $q(x)=1$ for $x\\ge0.5$, then the left limit at $0.5$ is $0$ and the right limit is $1$."
+      },
+      {
+        "title": "Database pagination cutoffs",
+        "background": "Ranking systems often show items above a cutoff. A tiny score change around the cutoff can alter visibility.",
+        "numbers": "If rank score $s=10.00$ is required, $9.999$ is excluded and $10.001$ is included, a one-sided jump in displayed status."
+      },
+      {
+        "title": "Loss functions with margins",
+        "background": "Hinge-style losses use a piecewise formula: no penalty beyond the margin, linear penalty inside it. One-sided analysis checks behavior at the margin.",
+        "numbers": "For $L(m)=\\max(0,1-m)$, as $m\\to1^-$, $L\\to0$; as $m\\to1^+$, $L\\to0$, so the value is continuous there."
+      },
+      {
+        "title": "Control systems with switches",
+        "background": "Thermostats and rule-based controllers switch actions at thresholds. One-sided limits separate behavior before and after switching.",
+        "numbers": "If heat turns on below $19^\\circ$C and off at or above $19^\\circ$C, the action limit from below is on and from above is off."
+      }
+    ],
+    "applicationsClose": "One-sided limits are how we read behavior at thresholds: not just where the graph is, but how it arrives from each side.",
+    "takeaways": [
+      "$\\lim_{x\\to a^-}$ approaches from inputs less than $a$; $\\lim_{x\\to a^+}$ approaches from inputs greater than $a$.",
+      "A two-sided limit exists exactly when the left- and right-hand limits agree.",
+      "The actual value $f(a)$ does not determine either one-sided limit.",
+      "Jumps, thresholds, endpoints, and piecewise definitions are natural homes for one-sided limits."
+    ],
     "prereqs": [
       "math-01-07"
     ]
@@ -702,19 +2185,262 @@
   B({
     "id": "math-01-09",
     "title": "Continuity",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: continuity.",
+    "tagline": "A continuous function has no surprise at the point: the value equals the destination.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>One-sided limits</i>"
+        "Limits: definition and computation",
+        "One-sided limits",
+        "Functions and their graphs"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Intermediate Value Theorem</i>"
+        "The Intermediate Value Theorem",
+        "the derivative",
+        "optimization on intervals"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "piecewise functions",
+        "polynomials",
+        "rational functions",
+        "composition"
       ]
     },
+    "motivation": "<p>You can often see continuity before you name it: a graph you can trace through a point without lifting your pencil feels continuous there. A hole, jump, or vertical blow-up feels different.</p><p>The precise idea is gentle: as the input approaches $a$, the output should approach the function's actual value at $a$. No mismatch between destination and arrival. This simple agreement is what lets calculus make reliable promises.</p>",
+    "definition": "<p>A function $f$ is <b>continuous at</b> $x=a$ if three conditions hold: $f(a)$ is defined, $\\lim_{x\\to a}f(x)$ exists, and $\\lim_{x\\to a}f(x)=f(a)$. It is continuous on an interval if it is continuous at every point of that interval, using one-sided continuity at endpoints.</p><p>The three conditions come from the idea of no surprise. You need an actual value to arrive at; nearby values must approach one destination; and that destination must equal the actual value. Polynomials are continuous everywhere because sums and products of continuous functions stay continuous. Rational functions are continuous wherever their denominators are not zero.</p><p><b>Assumptions that matter:</b> continuity is checked relative to the domain; endpoints use one-sided limits; changing a function at a single point can break or repair continuity there; and functions built by sums, products, quotients with nonzero denominators, and composition inherit continuity from their parts.</p>",
+    "worked": {
+      "problem": "Choose $c$ so $f(x)=\\begin{cases}x^2+1,&x<2\\\\c,&x=2\\\\3x-1,&x>2\\end{cases}$ is continuous at $x=2$, if possible.",
+      "skills": [
+        "continuity conditions",
+        "one-sided limits",
+        "piecewise functions"
+      ],
+      "strategy": "Continuity needs both sides to approach the same value — compare the side limits before choosing $c$.",
+      "steps": [
+        {
+          "do": "Compute the left-hand limit",
+          "result": "$\\lim_{x\\to2^-}(x^2+1)=5$",
+          "why": "$2^2+1=5$"
+        },
+        {
+          "do": "Compute the right-hand limit",
+          "result": "$\\lim_{x\\to2^+}(3x-1)=5$",
+          "why": "$3\\cdot2-1=5$"
+        },
+        {
+          "do": "Compare the side limits",
+          "result": "$5=5$",
+          "why": "the two-sided limit exists"
+        },
+        {
+          "do": "State the two-sided limit",
+          "result": "$\\lim_{x\\to2}f(x)=5$",
+          "why": "matching one-sided limits give the limit"
+        },
+        {
+          "do": "Set the function value equal to the limit",
+          "result": "$c=5$",
+          "why": "continuity requires $f(2)=\\lim_{x\\to2}f(x)$"
+        }
+      ],
+      "verify": "With $c=5$, the left branch, right branch, and actual value all meet at height $5$.",
+      "answer": "$c=5$ makes $f$ continuous at $x=2$.",
+      "connects": "Continuity is the agreement between the limiting destination and the assigned function value."
+    },
+    "practice": [
+      {
+        "problem": "Is $f(x)=\\dfrac{x^2-9}{x-3}$ continuous at $x=3$?",
+        "steps": [
+          {
+            "do": "Check the function value",
+            "result": "$f(3)$ is undefined",
+            "why": "the denominator is $3-3=0$"
+          },
+          {
+            "do": "Factor the numerator",
+            "result": "$\\dfrac{(x-3)(x+3)}{x-3}$",
+            "why": "difference of squares"
+          },
+          {
+            "do": "Cancel for $x\\ne3$",
+            "result": "$x+3$",
+            "why": "the limit can ignore the single point"
+          },
+          {
+            "do": "Compute the limit",
+            "result": "$\\lim_{x\\to3}f(x)=6$",
+            "why": "substitute into the simplified expression"
+          },
+          {
+            "do": "Apply the continuity test",
+            "result": "not continuous at $3$",
+            "why": "$f(3)$ is not defined"
+          }
+        ],
+        "answer": "No. The limit is $6$, but $f(3)$ is undefined, so the function is not continuous at $3$."
+      },
+      {
+        "problem": "Define $f(3)$ to repair the hole in $f(x)=\\dfrac{x^2-9}{x-3}$ for $x\\ne3$.",
+        "steps": [
+          {
+            "do": "Factor the numerator",
+            "result": "$\\dfrac{(x-3)(x+3)}{x-3}$",
+            "why": "rewrite the expression near the hole"
+          },
+          {
+            "do": "Cancel the common factor",
+            "result": "$x+3$",
+            "why": "valid for $x\\ne3$"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$\\lim_{x\\to3}f(x)=6$",
+            "why": "$3+3=6$"
+          },
+          {
+            "do": "Set the missing value",
+            "result": "$f(3)=6$",
+            "why": "continuity needs value equal to limit"
+          },
+          {
+            "do": "Name the repaired function",
+            "result": "continuous at $3$",
+            "why": "all three continuity conditions now hold"
+          }
+        ],
+        "answer": "Define $f(3)=6$."
+      },
+      {
+        "problem": "For $g(x)=\\begin{cases}2x+k,&x<1\\\\x^2+4,&x\\ge1\\end{cases}$, find $k$ so $g$ is continuous at $1$.",
+        "steps": [
+          {
+            "do": "Compute the left-hand limit",
+            "result": "$\\lim_{x\\to1^-}g(x)=2+k$",
+            "why": "use the left branch"
+          },
+          {
+            "do": "Compute the right-hand value",
+            "result": "$g(1)=1^2+4=5$",
+            "why": "the right branch includes $x=1$"
+          },
+          {
+            "do": "Compute the right-hand limit",
+            "result": "$\\lim_{x\\to1^+}g(x)=5$",
+            "why": "the right branch is continuous"
+          },
+          {
+            "do": "Set the side limits equal",
+            "result": "$2+k=5$",
+            "why": "continuity requires matching sides"
+          },
+          {
+            "do": "Solve for $k$",
+            "result": "$k=3$",
+            "why": "subtract 2"
+          }
+        ],
+        "answer": "$k=3$."
+      },
+      {
+        "problem": "Where is $h(x)=\\dfrac{x+1}{x^2-4}$ continuous?",
+        "steps": [
+          {
+            "do": "Identify the function type",
+            "result": "rational function",
+            "why": "a quotient of polynomials"
+          },
+          {
+            "do": "Set the denominator equal to zero",
+            "result": "$x^2-4=0$",
+            "why": "rational functions fail where the denominator is zero"
+          },
+          {
+            "do": "Factor the denominator",
+            "result": "$(x-2)(x+2)=0$",
+            "why": "difference of squares"
+          },
+          {
+            "do": "Solve for excluded points",
+            "result": "$x=2$ or $x=-2$",
+            "why": "zero-product property"
+          },
+          {
+            "do": "State continuity set",
+            "result": "$(-\\infty,-2)\\cup(-2,2)\\cup(2,\\infty)$",
+            "why": "continuous everywhere else"
+          }
+        ],
+        "answer": "$h$ is continuous for all real $x$ except $x=-2$ and $x=2$."
+      },
+      {
+        "problem": "The smooth loss $L(w)=(w-2)^2+1$ is continuous. If $w$ moves from $1$ to $3$, what loss values are guaranteed between $L(1)$ and $L(3)$?",
+        "steps": [
+          {
+            "do": "Evaluate $L(1)$",
+            "result": "$(1-2)^2+1=2$",
+            "why": "substitute the first parameter"
+          },
+          {
+            "do": "Evaluate $L(3)$",
+            "result": "$(3-2)^2+1=2$",
+            "why": "substitute the second parameter"
+          },
+          {
+            "do": "Evaluate the middle",
+            "result": "$L(2)=1$",
+            "why": "the vertex is at $w=2$"
+          },
+          {
+            "do": "Identify the range on the interval",
+            "result": "$1\\le L(w)\\le2$",
+            "why": "the parabola decreases then increases on $[1,3]$"
+          },
+          {
+            "do": "Connect to continuity",
+            "result": "every value from $1$ to $2$ occurs",
+            "why": "a continuous curve cannot skip heights between its low and high values"
+          }
+        ],
+        "answer": "On $[1,3]$, the loss takes every value in $[1,2]$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Smooth loss landscapes",
+        "background": "Gradient-based optimization relies on losses that change predictably under small parameter changes. Continuity is the first layer of that predictability.",
+        "numbers": "For $L(w)=(w-4)^2$, moving from $w=4.00$ to $w=4.01$ changes loss from $0$ to $0.0001$."
+      },
+      {
+        "title": "ReLU is continuous but kinked",
+        "background": "ReLU is popular in neural networks. It has no jump at zero, even though its derivative changes there.",
+        "numbers": "$\\lim_{x\\to0^-}\\max(0,x)=0$, $\\lim_{x\\to0^+}\\max(0,x)=0$, and $r(0)=0$."
+      },
+      {
+        "title": "Step functions are discontinuous",
+        "background": "Hard thresholds are easy to implement but can be hard to optimize because tiny input changes can flip the output.",
+        "numbers": "For $s(x)=0$ below $0.5$ and $1$ at or above $0.5$, the left limit is $0$ and the right limit is $1$."
+      },
+      {
+        "title": "Sensor calibration",
+        "background": "Physical sensors are usually expected to change continuously with the measured quantity. Sudden jumps often mean a switch or fault.",
+        "numbers": "A temperature sensor modeled by $v(T)=0.02T+0.5$ changes from $1.000$ V at $25^\\circ$C to $1.002$ V at $25.1^\\circ$C."
+      },
+      {
+        "title": "Interpolation",
+        "background": "Graphics, animation, and data preprocessing often fill values between samples. Continuity keeps the filled curve from jumping.",
+        "numbers": "Linear interpolation from $(0,10)$ to $(4,18)$ gives value $14$ at $x=2$, halfway between the endpoints."
+      },
+      {
+        "title": "Probability calibration curves",
+        "background": "Calibration plots compare predicted probability to observed frequency. A continuous curve means small probability changes lead to small expected frequency changes.",
+        "numbers": "If observed rate is modeled by $c(p)=0.9p+0.05$, then $c(0.70)=0.68$ and $c(0.71)=0.689$."
+      }
+    ],
+    "applicationsClose": "Continuity is the no-surprise condition that lets models, sensors, curves, and proofs behave reliably under small changes.",
+    "takeaways": [
+      "Continuity at $a$ requires $f(a)$ defined, $\\lim_{x\\to a}f(x)$ existing, and the two being equal.",
+      "Polynomials are continuous everywhere; rational functions are continuous where denominators are nonzero.",
+      "A removable hole can be repaired by defining the missing value to equal the limit.",
+      "Continuous functions can bend and kink, but they do not jump or tear at the point."
+    ],
     "prereqs": [
       "math-01-08"
     ]
@@ -723,19 +2449,267 @@
   B({
     "id": "math-01-10",
     "title": "The Intermediate Value Theorem",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the intermediate value theorem.",
+    "tagline": "A continuous path from one height to another must pass through every height in between.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Continuity</i>"
+        "Continuity",
+        "One-sided limits",
+        "Functions and their graphs"
       ],
       "leadsTo": [
-        "the next lesson, <i>Limits at infinity</i>"
+        "root-finding",
+        "the derivative",
+        "optimization on intervals"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "closed intervals",
+        "zeros of functions",
+        "bisection",
+        "existence proofs"
       ]
     },
+    "motivation": "<p>Imagine walking up a hill on a continuous trail. If you start at elevation $100$ meters and end at elevation $180$ meters, then at some moment you must have been at $150$ meters. You may not know when, but you know it happened.</p><p>The <b>Intermediate Value Theorem</b> turns that common-sense picture into a precise guarantee. It is one of the first times calculus says, with confidence, that a solution exists even before we know how to compute it.</p>",
+    "definition": "<p>If $f$ is continuous on the closed interval $[a,b]$ and $N$ is any number between $f(a)$ and $f(b)$, then there exists at least one $c$ in $[a,b]$ such that $f(c)=N$. For root-finding, the common special case is: if $f(a)$ and $f(b)$ have opposite signs, then some $c$ in $(a,b)$ satisfies $f(c)=0$.</p><p>Why it is true in the graph picture: a continuous graph cannot jump over a horizontal line. Starting below height $N$ and ending above height $N$ forces the curve to cross the line $y=N$ somewhere between the endpoints. The theorem gives existence, not necessarily uniqueness.</p><p><b>Assumptions that matter:</b> $f$ must be continuous on the whole closed interval $[a,b]$; the target value $N$ must lie between endpoint values; the theorem guarantees at least one point, not exactly one; and a discontinuous function can jump over the target without ever taking it.</p>",
+    "worked": {
+      "problem": "Show that $f(x)=x^3-x-1$ has a root in $(1,2)$.",
+      "skills": [
+        "continuity",
+        "sign changes",
+        "existence proofs"
+      ],
+      "strategy": "We do not need the exact root — show continuity and opposite signs at the endpoints.",
+      "steps": [
+        {
+          "do": "Identify the function type",
+          "result": "polynomial",
+          "why": "sums and powers of $x$ form a polynomial"
+        },
+        {
+          "do": "State continuity",
+          "result": "$f$ is continuous on $[1,2]$",
+          "why": "polynomials are continuous everywhere"
+        },
+        {
+          "do": "Evaluate the left endpoint",
+          "result": "$f(1)=1^3-1-1=-1$",
+          "why": "substitute $x=1$"
+        },
+        {
+          "do": "Evaluate the right endpoint",
+          "result": "$f(2)=2^3-2-1=5$",
+          "why": "substitute $x=2$"
+        },
+        {
+          "do": "Compare signs",
+          "result": "$f(1)<0$ and $f(2)>0$",
+          "why": "the endpoint values are on opposite sides of zero"
+        },
+        {
+          "do": "Apply the Intermediate Value Theorem",
+          "result": "some $c\\in(1,2)$ has $f(c)=0$",
+          "why": "a continuous function crossing from negative to positive must hit zero"
+        }
+      ],
+      "verify": "The theorem guarantees existence only; it does not claim the root is exactly halfway or that there is only one root.",
+      "answer": "There is at least one root $c$ in $(1,2)$.",
+      "connects": "The IVT converts continuity plus endpoint information into a guaranteed in-between value."
+    },
+    "practice": [
+      {
+        "problem": "Show that $f(x)=x^2-2$ has a zero in $(1,2)$.",
+        "steps": [
+          {
+            "do": "Identify continuity",
+            "result": "$f$ is continuous on $[1,2]$",
+            "why": "polynomials are continuous"
+          },
+          {
+            "do": "Evaluate $f(1)$",
+            "result": "$1^2-2=-1$",
+            "why": "substitute the left endpoint"
+          },
+          {
+            "do": "Evaluate $f(2)$",
+            "result": "$2^2-2=2$",
+            "why": "substitute the right endpoint"
+          },
+          {
+            "do": "Compare signs",
+            "result": "$-1<0<2$",
+            "why": "zero lies between the endpoint values"
+          },
+          {
+            "do": "Apply IVT",
+            "result": "some $c\\in(1,2)$ satisfies $c^2-2=0$",
+            "why": "continuous functions hit intermediate values"
+          }
+        ],
+        "answer": "A zero exists in $(1,2)$; it is $\\sqrt2$, though IVT only needed to prove existence."
+      },
+      {
+        "problem": "Show that $g(x)=\\cos x-x$ has a root in $(0,1)$ using $\\cos1\\approx0.540$.",
+        "steps": [
+          {
+            "do": "State continuity",
+            "result": "$g$ is continuous on $[0,1]$",
+            "why": "cosine and $x$ are continuous, and differences preserve continuity"
+          },
+          {
+            "do": "Evaluate $g(0)$",
+            "result": "$\\cos0-0=1$",
+            "why": "$\\cos0=1$"
+          },
+          {
+            "do": "Evaluate $g(1)$",
+            "result": "$\\cos1-1\\approx0.540-1=-0.460$",
+            "why": "use the given approximation"
+          },
+          {
+            "do": "Compare signs",
+            "result": "$g(0)>0$ and $g(1)<0$",
+            "why": "the function crosses from positive to negative"
+          },
+          {
+            "do": "Apply IVT",
+            "result": "some $c\\in(0,1)$ satisfies $\\cos c-c=0$",
+            "why": "zero is between the endpoint values"
+          }
+        ],
+        "answer": "A root exists in $(0,1)$."
+      },
+      {
+        "problem": "A continuous temperature function has $T(8)=12^\\circ$C and $T(14)=21^\\circ$C. Prove it reached $18^\\circ$C sometime between 8:00 and 14:00.",
+        "steps": [
+          {
+            "do": "State the interval",
+            "result": "$[8,14]$",
+            "why": "the times run from 8:00 to 14:00"
+          },
+          {
+            "do": "State continuity",
+            "result": "$T$ is continuous on $[8,14]$",
+            "why": "the problem says the temperature function is continuous"
+          },
+          {
+            "do": "Compare the target to endpoint values",
+            "result": "$12<18<21$",
+            "why": "$18^\\circ$C lies between the measured values"
+          },
+          {
+            "do": "Apply IVT",
+            "result": "there is some $c\\in[8,14]$ with $T(c)=18$",
+            "why": "continuous functions take intermediate values"
+          },
+          {
+            "do": "Interpret $c$",
+            "result": "a time between 8:00 and 14:00",
+            "why": "$c$ belongs to the time interval"
+          }
+        ],
+        "answer": "Yes. At some time between 8:00 and 14:00, the temperature was $18^\\circ$C."
+      },
+      {
+        "problem": "Explain why IVT does not apply to $f(x)=\\dfrac{1}{x}$ on $[-1,1]$, even though $f(-1)=-1$ and $f(1)=1$.",
+        "steps": [
+          {
+            "do": "Check the endpoint signs",
+            "result": "$f(-1)=-1$ and $f(1)=1$",
+            "why": "the endpoints do straddle zero"
+          },
+          {
+            "do": "Check the formula at $0$",
+            "result": "$f(0)$ is undefined",
+            "why": "division by zero is not allowed"
+          },
+          {
+            "do": "Assess continuity on the interval",
+            "result": "not continuous on $[-1,1]$",
+            "why": "the function breaks at $0$"
+          },
+          {
+            "do": "Compare with IVT assumptions",
+            "result": "assumption fails",
+            "why": "IVT requires continuity on the whole closed interval"
+          },
+          {
+            "do": "State what happens",
+            "result": "no zero occurs",
+            "why": "$1/x$ is never equal to $0$"
+          }
+        ],
+        "answer": "IVT does not apply because $1/x$ is not continuous on $[-1,1]$; the function jumps through a vertical asymptote and never equals $0$."
+      },
+      {
+        "problem": "A validation metric is modeled continuously by $M(\\lambda)$ for regularization $\\lambda\\in[0.01,1]$. If $M(0.01)=0.72$ and $M(1)=0.81$, show that some setting has metric $0.78$.",
+        "steps": [
+          {
+            "do": "State continuity",
+            "result": "$M$ is continuous on $[0.01,1]$",
+            "why": "the model assumption says it changes continuously"
+          },
+          {
+            "do": "List endpoint values",
+            "result": "$M(0.01)=0.72$ and $M(1)=0.81$",
+            "why": "given data"
+          },
+          {
+            "do": "Compare the target",
+            "result": "$0.72<0.78<0.81$",
+            "why": "the target metric lies between endpoints"
+          },
+          {
+            "do": "Apply IVT",
+            "result": "there is some $\\lambda^\\ast\\in[0.01,1]$ with $M(\\lambda^\\ast)=0.78$",
+            "why": "continuous functions hit intermediate values"
+          },
+          {
+            "do": "Interpret the result",
+            "result": "at least one regularization setting reaches $0.78$",
+            "why": "the theorem guarantees existence, not a specific value"
+          }
+        ],
+        "answer": "Some $\\lambda^\\ast\\in[0.01,1]$ has $M(\\lambda^\\ast)=0.78$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Bisection root-finding",
+        "background": "Bisection is an old and reliable numerical method. It repeatedly halves an interval where a continuous function changes sign.",
+        "numbers": "If $f(1)=-1$ and $f(2)=5$, the first midpoint is $1.5$; if $f(1.5)=-0.125$, the root remains in $[1.5,2]$."
+      },
+      {
+        "title": "Hyperparameter existence arguments",
+        "background": "When a validation metric changes continuously with a tuning parameter, IVT can guarantee that a target metric is reached somewhere in a range.",
+        "numbers": "Accuracy $0.70$ at $\\lambda=0.001$ and $0.82$ at $\\lambda=0.1$ guarantees some setting with accuracy $0.75$, if continuity holds."
+      },
+      {
+        "title": "Calibration thresholds",
+        "background": "A calibrated score curve can be used to find a threshold for a desired positive rate. Continuity turns endpoint rates into a guarantee.",
+        "numbers": "If threshold $0.2$ gives positive rate $0.90$ and threshold $0.8$ gives $0.10$, then some threshold gives rate $0.50$."
+      },
+      {
+        "title": "Physical simulation",
+        "background": "Continuous motion cannot teleport across a wall or target height. IVT formalizes crossing events in simulation and robotics.",
+        "numbers": "If a robot's $x$-position is $-2$ meters at $t=0$ and $3$ meters at $t=5$, continuous motion implies some time has $x=0$."
+      },
+      {
+        "title": "Computer graphics intersections",
+        "background": "Ray and curve intersection algorithms often bracket sign changes, then refine. The IVT is the existence guarantee behind the bracket.",
+        "numbers": "If a signed distance is $-0.4$ at one sample and $0.2$ at the next, a continuous surface crossing lies between them."
+      },
+      {
+        "title": "Fairness and operating points",
+        "background": "Changing a classification threshold can trade off rates. If rates vary continuously, intermediate operating points are guaranteed.",
+        "numbers": "If false positive rate changes from $0.30$ to $0.05$ as threshold rises, then a target FPR $0.10$ occurs at some threshold, assuming continuity."
+      }
+    ],
+    "applicationsClose": "The IVT is a promise of passage: with continuity and endpoint bounds, some in-between input reaches the in-between value.",
+    "takeaways": [
+      "If $f$ is continuous on $[a,b]$, it takes every value between $f(a)$ and $f(b)$.",
+      "Opposite signs at the endpoints guarantee at least one zero inside the interval.",
+      "The theorem proves existence, not uniqueness or an exact formula for the solution.",
+      "Continuity on the whole closed interval is essential; jumps and asymptotes can break the conclusion."
+    ],
     "prereqs": [
       "math-01-09"
     ]
@@ -744,19 +2718,240 @@
   B({
     "id": "math-01-11",
     "title": "Limits at infinity",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: limits at infinity.",
+    "tagline": "When the input grows without bound, a limit asks what long-run value the function settles toward.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Intermediate Value Theorem</i>"
+        "Limits: definition and computation",
+        "rational functions",
+        "dominant terms"
       ],
       "leadsTo": [
-        "the next lesson, <i>Asymptotes</i>"
+        "asymptotes",
+        "end behavior",
+        "improper integrals"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "polynomial growth",
+        "rational simplification",
+        "sequences and convergence"
       ]
     },
+    "motivation": "<p>You already know how to ask what happens near one input, like $x\\to2$. Now stretch the question: what happens when $x$ keeps going, past $10$, past $10^6$, with no final stopping point?</p><p>A <b>limit at infinity</b> gives language for long-run behavior. It is the math behind saying a curve levels off, a ratio settles, or one term eventually overwhelms another. The mental picture is a road that never ends, but whose elevation may approach a steady height.</p>",
+    "definition": "<p>$\\lim_{x\\to\\infty} f(x)=L$ means $f(x)$ can be made as close to $L$ as we like by taking $x$ sufficiently large. The negative-infinity version, $\\lim_{x\\to-\\infty}f(x)=L$, looks far to the left. For rational functions, divide numerator and denominator by the highest power of $x$ that appears in the denominator, then use terms like $1/x\\to0$.</p><p><b>Assumptions that matter:</b> $x\\to\\infty$ is not a number to substitute. We study eventual behavior. If the numerator degree is smaller than the denominator degree, the limit is $0$; equal degrees give the ratio of leading coefficients; larger numerator degree usually grows without bound or has no finite limit.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\lim_{x\\to\\infty}\\frac{3x^2-5x+1}{2x^2+7}$.",
+      "skills": [
+        "dominant terms",
+        "rational limits",
+        "division by powers of $x$"
+      ],
+      "strategy": "Both top and bottom grow like $x^2$. Divide by $x^2$ so the lower-order terms vanish.",
+      "steps": [
+        {
+          "do": "Identify the highest denominator power",
+          "result": "$x^2$",
+          "why": "the denominator's leading term is $2x^2$"
+        },
+        {
+          "do": "Divide every term by $x^2$",
+          "result": "$\\dfrac{3-5/x+1/x^2}{2+7/x^2}$",
+          "why": "this exposes the long-run constants"
+        },
+        {
+          "do": "Take $x\\to\\infty$ in $5/x$",
+          "result": "$0$",
+          "why": "a fixed number divided by a huge number shrinks to zero"
+        },
+        {
+          "do": "Take $x\\to\\infty$ in $1/x^2$ and $7/x^2$",
+          "result": "$0$ and $0$",
+          "why": "higher powers in the denominator shrink even faster"
+        },
+        {
+          "do": "Evaluate the remaining fraction",
+          "result": "$\\dfrac32$",
+          "why": "only the leading coefficients remain"
+        }
+      ],
+      "verify": "At $x=100$, the fraction is $29401/20007\\approx1.4695$; at $x=1000$, it is $2995001/2000007\\approx1.4975$, moving toward $1.5$.",
+      "answer": "$\\displaystyle\\lim_{x\\to\\infty}\\frac{3x^2-5x+1}{2x^2+7}=\\frac32$",
+      "connects": "asymptotes — a finite limit at infinity becomes a horizontal line the graph approaches."
+    },
+    "practice": [
+      {
+        "problem": "$\\lim_{x\\to\\infty}\\dfrac{5x+2}{2x-7}$",
+        "steps": [
+          {
+            "do": "Identify the highest denominator power",
+            "result": "$x$",
+            "why": "the denominator is linear"
+          },
+          {
+            "do": "Divide every term by $x$",
+            "result": "$\\dfrac{5+2/x}{2-7/x}$",
+            "why": "this isolates the leading coefficients"
+          },
+          {
+            "do": "Take $x\\to\\infty$",
+            "result": "$\\dfrac{5+0}{2-0}$",
+            "why": "$2/x\\to0$ and $7/x\\to0$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\dfrac52$",
+            "why": "the long-run ratio is the leading coefficient ratio"
+          }
+        ],
+        "answer": "$\\frac52$"
+      },
+      {
+        "problem": "$\\lim_{x\\to\\infty}\\dfrac{4x-9}{x^2+1}$",
+        "steps": [
+          {
+            "do": "Identify the highest denominator power",
+            "result": "$x^2$",
+            "why": "the denominator is quadratic"
+          },
+          {
+            "do": "Divide every term by $x^2$",
+            "result": "$\\dfrac{4/x-9/x^2}{1+1/x^2}$",
+            "why": "compare all terms to $x^2$"
+          },
+          {
+            "do": "Take the limit of the numerator",
+            "result": "$0-0=0$",
+            "why": "linear and constant terms are small compared with $x^2$"
+          },
+          {
+            "do": "Take the limit of the denominator",
+            "result": "$1+0=1$",
+            "why": "the leading denominator term remains"
+          },
+          {
+            "do": "Divide",
+            "result": "$0$",
+            "why": "$0/1=0$"
+          }
+        ],
+        "answer": "$0$"
+      },
+      {
+        "problem": "$\\lim_{x\\to\\infty}\\dfrac{2x^3+x}{5x^2-1}$",
+        "steps": [
+          {
+            "do": "Identify dominant terms",
+            "result": "$2x^3$ over $5x^2$",
+            "why": "highest powers control end behavior"
+          },
+          {
+            "do": "Form the dominant ratio",
+            "result": "$\\dfrac{2x^3}{5x^2}=\\dfrac25x$",
+            "why": "lower-order terms do not change unbounded growth"
+          },
+          {
+            "do": "Let $x\\to\\infty$",
+            "result": "$\\dfrac25x\\to\\infty$",
+            "why": "a positive linear term grows without bound"
+          },
+          {
+            "do": "State the behavior",
+            "result": "$\\infty$",
+            "why": "there is no finite settling value"
+          }
+        ],
+        "answer": "The expression grows to $\\infty$; no finite limit."
+      },
+      {
+        "problem": "$\\lim_{x\\to-\\infty}\\dfrac{3x^3-x}{x^3+4}$",
+        "steps": [
+          {
+            "do": "Identify the highest denominator power",
+            "result": "$x^3$",
+            "why": "both numerator and denominator are cubic"
+          },
+          {
+            "do": "Divide every term by $x^3$",
+            "result": "$\\dfrac{3-1/x^2}{1+4/x^3}$",
+            "why": "this works for negative large $x$ too"
+          },
+          {
+            "do": "Take $x\\to-\\infty$",
+            "result": "$\\dfrac{3-0}{1+0}$",
+            "why": "$1/x^2\\to0$ and $4/x^3\\to0$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$3$",
+            "why": "leading coefficients dominate"
+          }
+        ],
+        "answer": "$3$"
+      },
+      {
+        "problem": "$\\lim_{n\\to\\infty}\\dfrac{100n\\log n}{n^2}$ for $n>1$",
+        "steps": [
+          {
+            "do": "Cancel one factor of $n$",
+            "result": "$\\dfrac{100\\log n}{n}$",
+            "why": "this compares logarithmic growth to linear growth"
+          },
+          {
+            "do": "Recall the growth fact",
+            "result": "$\\dfrac{\\log n}{n}\\to0$",
+            "why": "linear growth eventually beats logarithmic growth"
+          },
+          {
+            "do": "Multiply by $100$",
+            "result": "$100\\cdot0=0$",
+            "why": "constant factors do not change a zero limit"
+          },
+          {
+            "do": "Interpret the result",
+            "result": "$0$",
+            "why": "the $n^2$ algorithm eventually dominates the $n\\log n$ term"
+          }
+        ],
+        "answer": "$0$ — useful when comparing long-run algorithm terms."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Algorithm growth",
+        "background": "Asymptotic analysis was built to compare programs when inputs become large, not just at one benchmark size.",
+        "numbers": "For costs $3n^2+20n$ and $n^2$, $\\lim_{n\\to\\infty}\\frac{3n^2+20n}{n^2}=3$, so the first is about $3$ times the second for huge $n$."
+      },
+      {
+        "title": "Learning-rate schedules",
+        "background": "Optimization often uses a step size that fades so training can settle instead of bouncing forever.",
+        "numbers": "If $\\eta_t=0.1/(1+0.01t)$, then $\\eta_{100}=0.05$, $\\eta_{900}=0.01$, and $\\lim_{t\\to\\infty}\\eta_t=0$."
+      },
+      {
+        "title": "Sigmoid saturation",
+        "background": "The logistic function became common because it smoothly maps scores to probabilities.",
+        "numbers": "$\\sigma(8)=1/(1+e^{-8})\\approx0.9997$ and $\\lim_{x\\to\\infty}\\sigma(x)=1$."
+      },
+      {
+        "title": "Regularization strength over data size",
+        "background": "Some estimators reduce penalty weight as the sample size grows so data can speak more loudly.",
+        "numbers": "With $\\lambda_n=10/\\sqrt n$, $\\lambda_{100}=1$, $\\lambda_{10000}=0.1$, and $\\lambda_n\\to0$."
+      },
+      {
+        "title": "Average of a long stream",
+        "background": "Running averages stabilize because the effect of one fixed early value fades.",
+        "numbers": "The contribution of the first example to the mean after $n$ points is $1/n$; at $n=1000$ it is $0.001$, and the limit is $0$."
+      },
+      {
+        "title": "Cache hit-rate ceilings",
+        "background": "Systems curves often level off: adding memory helps, but only up to a workload's reuse limit.",
+        "numbers": "A model $h(m)=0.95-10/(m+20)$ gives $h(80)=0.85$, $h(980)\\approx0.94$, and $\\lim_{m\\to\\infty}h(m)=0.95$."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same question keeps returning: after the early details fade, what value or growth pattern remains?",
+    "takeaways": [
+      "A limit at infinity studies long-run behavior, not substitution at a special number.",
+      "For rational functions, compare highest powers and leading coefficients.",
+      "Finite limits at infinity become horizontal asymptotes; infinite behavior means no finite settling value."
+    ],
     "prereqs": [
       "math-01-10"
     ]
@@ -765,19 +2960,240 @@
   B({
     "id": "math-01-12",
     "title": "Asymptotes",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: asymptotes.",
+    "tagline": "An asymptote is a simple line that tells the truth about a curve near an edge or far away.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Limits at infinity</i>"
+        "Limits",
+        "limits at infinity",
+        "rational functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>The derivative — definition and meaning</i>"
+        "derivative-based graphing",
+        "optimization",
+        "model behavior near constraints"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "continuity",
+        "domain restrictions",
+        "polynomial division"
       ]
     },
+    "motivation": "<p>Some graphs are busy up close but simple from far away. Others shoot upward near a forbidden input, like a wall the curve cannot cross. Asymptotes let you mark those big features before worrying about small details.</p><p>Think of an asymptote as a guide rail. A horizontal one says where the curve settles, a vertical one says where the function blows up, and a slant one says which tilted line the curve eventually shadows.</p>",
+    "definition": "<p>A <b>horizontal asymptote</b> $y=L$ occurs when $\\lim_{x\\to\\infty}f(x)=L$ or $\\lim_{x\\to-\\infty}f(x)=L$. A <b>vertical asymptote</b> $x=a$ occurs when $f(x)\\to\\infty$ or $f(x)\\to-\\infty$ as $x\\to a$ from at least one side. A <b>slant asymptote</b> $y=mx+b$ occurs when $f(x)-(mx+b)\\to0$ as $x\\to\\infty$ or $x\\to-\\infty$.</p><p><b>Assumptions that matter:</b> a zero denominator only gives a vertical asymptote if the factor does not cancel. A graph may cross a horizontal or slant asymptote at finite $x$; asymptotes describe approach behavior, not an uncrossable fence.</p>",
+    "worked": {
+      "problem": "Find the vertical and slant asymptotes of $f(x)=\\dfrac{x^2+1}{x-2}$.",
+      "skills": [
+        "domain restrictions",
+        "polynomial division",
+        "end behavior"
+      ],
+      "strategy": "The denominator gives the possible vertical asymptote. Division gives the line followed far away.",
+      "steps": [
+        {
+          "do": "Set the denominator equal to zero",
+          "result": "$x-2=0$",
+          "why": "vertical asymptotes can occur where the denominator vanishes"
+        },
+        {
+          "do": "Solve for $x$",
+          "result": "$x=2$",
+          "why": "that input is not in the domain"
+        },
+        {
+          "do": "Check for cancellation",
+          "result": "no factor $x-2$ cancels",
+          "why": "$x^2+1$ is not zero at $x=2$"
+        },
+        {
+          "do": "Divide $x^2+1$ by $x-2$",
+          "result": "$x+2+\\dfrac{5}{x-2}$",
+          "why": "polynomial division separates line plus leftover"
+        },
+        {
+          "do": "Take the leftover limit",
+          "result": "$\\dfrac{5}{x-2}\\to0$",
+          "why": "the leftover vanishes far from the origin"
+        }
+      ],
+      "verify": "At $x=102$, $f(x)=104.09$ while the line $y=x+2$ gives $104$; near $x=2$, the denominator is tiny and the function becomes huge.",
+      "answer": "Vertical asymptote $x=2$; slant asymptote $y=x+2$.",
+      "connects": "limits at infinity explain the slant line, while one-sided limits explain the vertical wall."
+    },
+    "practice": [
+      {
+        "problem": "Find the horizontal and vertical asymptotes of $f(x)=\\dfrac{2x+1}{x-3}$.",
+        "steps": [
+          {
+            "do": "Set the denominator to zero",
+            "result": "$x=3$",
+            "why": "possible vertical asymptote"
+          },
+          {
+            "do": "Check cancellation",
+            "result": "none",
+            "why": "$2x+1$ does not contain $x-3$"
+          },
+          {
+            "do": "Compare degrees",
+            "result": "degree $1$ over degree $1$",
+            "why": "equal degrees give a horizontal asymptote"
+          },
+          {
+            "do": "Take the leading coefficient ratio",
+            "result": "$2/1=2$",
+            "why": "dominant terms are $2x$ and $x$"
+          }
+        ],
+        "answer": "$x=3$ and $y=2$"
+      },
+      {
+        "problem": "Find the asymptotes of $g(x)=\\dfrac{x^2-1}{x-1}$.",
+        "steps": [
+          {
+            "do": "Factor the numerator",
+            "result": "$\\dfrac{(x-1)(x+1)}{x-1}$",
+            "why": "difference of squares"
+          },
+          {
+            "do": "Cancel the common factor",
+            "result": "$x+1$ for $x\\ne1$",
+            "why": "the factor creates a hole, not a vertical wall"
+          },
+          {
+            "do": "Identify vertical asymptotes",
+            "result": "none",
+            "why": "the only zero denominator factor canceled"
+          },
+          {
+            "do": "Read the line followed",
+            "result": "$y=x+1$",
+            "why": "the function equals that line except at the hole"
+          }
+        ],
+        "answer": "No vertical asymptote; slant line $y=x+1$ with a hole at $x=1$."
+      },
+      {
+        "problem": "Find the horizontal and vertical asymptotes of $h(x)=\\dfrac{3x^2}{x^2-4}$.",
+        "steps": [
+          {
+            "do": "Factor the denominator",
+            "result": "$(x-2)(x+2)$",
+            "why": "zeros locate possible vertical asymptotes"
+          },
+          {
+            "do": "Set each factor to zero",
+            "result": "$x=2$ and $x=-2$",
+            "why": "the denominator vanishes there"
+          },
+          {
+            "do": "Check cancellation",
+            "result": "none",
+            "why": "the numerator $3x^2$ has no $(x-2)$ or $(x+2)$ factor"
+          },
+          {
+            "do": "Compare degrees",
+            "result": "degree $2$ over degree $2$",
+            "why": "equal degrees give a horizontal asymptote"
+          },
+          {
+            "do": "Take leading coefficient ratio",
+            "result": "$3/1=3$",
+            "why": "dominant terms are $3x^2$ and $x^2$"
+          }
+        ],
+        "answer": "Vertical asymptotes $x=2,-2$; horizontal asymptote $y=3$."
+      },
+      {
+        "problem": "Find the slant asymptote of $p(x)=\\dfrac{x^2+3x+2}{x+1}$.",
+        "steps": [
+          {
+            "do": "Factor the numerator",
+            "result": "$\\dfrac{(x+1)(x+2)}{x+1}$",
+            "why": "this checks for cancellation first"
+          },
+          {
+            "do": "Cancel $x+1$",
+            "result": "$x+2$ for $x\\ne-1$",
+            "why": "the denominator factor cancels"
+          },
+          {
+            "do": "Identify vertical asymptotes",
+            "result": "none",
+            "why": "the zero denominator became a hole"
+          },
+          {
+            "do": "Read the slant line",
+            "result": "$y=x+2$",
+            "why": "the function follows this line exactly away from the hole"
+          }
+        ],
+        "answer": "Slant line $y=x+2$; no vertical asymptote; hole at $x=-1$."
+      },
+      {
+        "problem": "A loss model is $L(t)=0.2+\\dfrac{5}{t+10}$ for epochs $t\\ge0$. Find its asymptote and estimate $L(90)$.",
+        "steps": [
+          {
+            "do": "Take $t\\to\\infty$",
+            "result": "$\\dfrac{5}{t+10}\\to0$",
+            "why": "the denominator grows without bound"
+          },
+          {
+            "do": "Find the horizontal asymptote",
+            "result": "$L=0.2$",
+            "why": "only the constant remains"
+          },
+          {
+            "do": "Substitute $t=90$",
+            "result": "$0.2+\\dfrac{5}{100}$",
+            "why": "the denominator is $90+10$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.25$",
+            "why": "$5/100=0.05$"
+          }
+        ],
+        "answer": "Horizontal asymptote $L=0.2$; $L(90)=0.25$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Training-loss floors",
+        "background": "Empirical learning curves often flatten because noise, model capacity, or irreducible error prevents zero loss.",
+        "numbers": "For $L(t)=0.12+3/(t+20)$, $L(80)=0.15$ and the horizontal asymptote is $0.12$."
+      },
+      {
+        "title": "Numerical singularities",
+        "background": "Division by a nearly zero quantity can create huge values, so software libraries guard denominators.",
+        "numbers": "$1/(x-2)$ at $x=2.001$ is $1000$; at $x=1.999$ it is $-1000$, showing the vertical asymptote $x=2$."
+      },
+      {
+        "title": "Throughput saturation",
+        "background": "Queueing systems slow dramatically as utilization approaches one, a classic operations result.",
+        "numbers": "For delay $W=1/(10-\\lambda)$, $\\lambda=9.5$ gives $W=2$, while $\\lambda=9.9$ gives $W=10$; vertical asymptote at $\\lambda=10$."
+      },
+      {
+        "title": "Model-size scaling laws",
+        "background": "Scaling-law curves often use simple asymptotic forms to estimate a performance floor.",
+        "numbers": "If error $E(N)=0.08+2/N^{0.5}$, then $E(10000)=0.10$ and the asymptote is $0.08$."
+      },
+      {
+        "title": "Memory overhead",
+        "background": "Amortized data-structure costs separate a steady per-item cost from fixed overhead.",
+        "numbers": "Cost per item $C(n)=4+128/n$ gives $C(32)=8$ bytes and approaches $4$ bytes as $n\\to\\infty$."
+      },
+      {
+        "title": "Feature transforms",
+        "background": "Functions like $\\log(1+x)$ grow forever but more slowly than any line, shaping plots with no horizontal asymptote.",
+        "numbers": "$\\log(101)\\approx4.62$ and $\\log(10001)\\approx9.21$; it keeps rising, though slowly."
+      }
+    ],
+    "applicationsClose": "Asymptotes are a graph's big promises: where it settles, where it blows up, and which simple line it eventually imitates.",
+    "takeaways": [
+      "Horizontal asymptotes come from limits at infinity.",
+      "Vertical asymptotes require non-canceled denominator zeros and one-sided blow-up.",
+      "Slant asymptotes appear when a function approaches a line rather than a constant."
+    ],
     "prereqs": [
       "math-01-11"
     ]
@@ -786,19 +3202,260 @@
   B({
     "id": "math-01-13",
     "title": "The derivative — definition and meaning",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the derivative — definition and meaning.",
+    "tagline": "A derivative is the exact instantaneous rate you get by zooming a secant slope all the way in.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Asymptotes</i>"
+        "Limits",
+        "average rate of change",
+        "function notation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Differentiability vs continuity</i>"
+        "differentiability",
+        "derivative rules",
+        "gradients and optimization"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "tangent lines",
+        "linear approximation",
+        "continuity"
       ]
     },
+    "motivation": "<p>You can already find an average speed: distance divided by time. But if a car's position is $s(t)=t^2$, what is its speed at exactly $t=3$? A zero-length time interval gives $0/0$, so we need a sharper idea.</p><p>The <b>derivative</b> is that idea. It starts with slopes over small intervals and asks for the limit as the interval shrinks to zero. In ML language, it is the local signal that says which way a loss changes if a parameter moves a tiny bit.</p>",
+    "definition": "<p>The derivative of $f$ at $a$ is $$ f'(a)=\\lim_{h\\to0}\\frac{f(a+h)-f(a)}{h}, $$ when this limit exists. The numerator is the output change, $h$ is the input change, the fraction is a secant slope, and the limit is the tangent slope. For a derivative function, $$ f'(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}. $$</p><p><b>Assumptions that matter:</b> the two-sided limit must exist and be finite. A corner, cusp, vertical tangent, or jump can stop differentiability. Units matter: if $f$ is loss and $x$ is weight, $f'(x)$ is loss change per unit weight.</p>",
+    "worked": {
+      "problem": "Use the definition to find the derivative of $f(x)=x^2$.",
+      "skills": [
+        "difference quotient",
+        "expansion",
+        "limits"
+      ],
+      "strategy": "Write the difference quotient, simplify until the $h$ cancels, then let $h\\to0$.",
+      "steps": [
+        {
+          "do": "Write the definition",
+          "result": "$f'(x)=\\lim_{h\\to0}\\dfrac{(x+h)^2-x^2}{h}$",
+          "why": "replace $f(x+h)$ and $f(x)$"
+        },
+        {
+          "do": "Expand $(x+h)^2$",
+          "result": "$x^2+2xh+h^2$",
+          "why": "make cancellation visible"
+        },
+        {
+          "do": "Subtract $x^2$",
+          "result": "$\\lim_{h\\to0}\\dfrac{2xh+h^2}{h}$",
+          "why": "the original $x^2$ terms cancel"
+        },
+        {
+          "do": "Factor $h$ in the numerator",
+          "result": "$\\lim_{h\\to0}\\dfrac{h(2x+h)}{h}$",
+          "why": "the quotient is indeterminate before cancellation"
+        },
+        {
+          "do": "Cancel $h$",
+          "result": "$\\lim_{h\\to0}(2x+h)$",
+          "why": "limits allow $h\\ne0$ while approaching $0$"
+        },
+        {
+          "do": "Let $h\\to0$",
+          "result": "$2x$",
+          "why": "the remaining expression is continuous"
+        }
+      ],
+      "verify": "At $x=3$, a finite difference with $h=0.001$ gives $((3.001)^2-9)/0.001=6.001$, close to $6$.",
+      "answer": "$\\dfrac{d}{dx}x^2=2x$",
+      "connects": "gradients — backprop computes derivatives like this efficiently across many connected functions."
+    },
+    "practice": [
+      {
+        "problem": "Use the definition to find $f'(x)$ for $f(x)=3x+4$.",
+        "steps": [
+          {
+            "do": "Write the difference quotient",
+            "result": "$\\lim_{h\\to0}\\dfrac{3(x+h)+4-(3x+4)}{h}$",
+            "why": "substitute into the definition"
+          },
+          {
+            "do": "Distribute $3$",
+            "result": "$\\lim_{h\\to0}\\dfrac{3x+3h+4-3x-4}{h}$",
+            "why": "prepare to combine like terms"
+          },
+          {
+            "do": "Cancel constant terms",
+            "result": "$\\lim_{h\\to0}\\dfrac{3h}{h}$",
+            "why": "$3x$ cancels and $4$ cancels"
+          },
+          {
+            "do": "Cancel $h$",
+            "result": "$\\lim_{h\\to0}3$",
+            "why": "valid for $h\\ne0$"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$3$",
+            "why": "a constant stays itself"
+          }
+        ],
+        "answer": "$f'(x)=3$"
+      },
+      {
+        "problem": "Use the definition to find $f'(x)$ for $f(x)=x^2+1$.",
+        "steps": [
+          {
+            "do": "Write the difference quotient",
+            "result": "$\\lim_{h\\to0}\\dfrac{(x+h)^2+1-(x^2+1)}{h}$",
+            "why": "substitute $f(x+h)$ and $f(x)$"
+          },
+          {
+            "do": "Expand",
+            "result": "$\\lim_{h\\to0}\\dfrac{x^2+2xh+h^2+1-x^2-1}{h}$",
+            "why": "make cancellation visible"
+          },
+          {
+            "do": "Cancel matching terms",
+            "result": "$\\lim_{h\\to0}\\dfrac{2xh+h^2}{h}$",
+            "why": "$x^2$ and $1$ cancel"
+          },
+          {
+            "do": "Factor and cancel $h$",
+            "result": "$\\lim_{h\\to0}(2x+h)$",
+            "why": "remove the indeterminate factor"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$2x$",
+            "why": "$h\\to0$"
+          }
+        ],
+        "answer": "$f'(x)=2x$"
+      },
+      {
+        "problem": "Find the instantaneous velocity for $s(t)=t^2+2t$ at $t=4$.",
+        "steps": [
+          {
+            "do": "Write the derivative from the pattern",
+            "result": "$s'(t)=2t+2$",
+            "why": "$t^2$ contributes $2t$ and $2t$ contributes $2$"
+          },
+          {
+            "do": "Substitute $t=4$",
+            "result": "$s'(4)=2(4)+2$",
+            "why": "instantaneous velocity is derivative at that time"
+          },
+          {
+            "do": "Multiply",
+            "result": "$8+2$",
+            "why": "$2\\cdot4=8$"
+          },
+          {
+            "do": "Add",
+            "result": "$10$",
+            "why": "combine the terms"
+          }
+        ],
+        "answer": "$10$ units per time"
+      },
+      {
+        "problem": "Estimate $f'(2)$ for $f(x)=x^3$ using $h=0.01$, then compare to the exact value.",
+        "steps": [
+          {
+            "do": "Compute $f(2.01)$",
+            "result": "$2.01^3=8.120601$",
+            "why": "this is $f(2+h)$"
+          },
+          {
+            "do": "Compute $f(2)$",
+            "result": "$8$",
+            "why": "this is the base value"
+          },
+          {
+            "do": "Form the finite difference",
+            "result": "$\\dfrac{8.120601-8}{0.01}=12.0601$",
+            "why": "average slope over a small interval"
+          },
+          {
+            "do": "Use the exact derivative",
+            "result": "$3x^2$",
+            "why": "the derivative of $x^3$ is $3x^2$"
+          },
+          {
+            "do": "Evaluate at $x=2$",
+            "result": "$12$",
+            "why": "$3\\cdot4=12$"
+          }
+        ],
+        "answer": "Finite difference $12.0601$; exact derivative $12$."
+      },
+      {
+        "problem": "For loss $L(w)=(w-3)^2$, find $L'(1)$ and the direction that decreases loss.",
+        "steps": [
+          {
+            "do": "Differentiate the square",
+            "result": "$L'(w)=2(w-3)$",
+            "why": "the slope of a shifted square is twice the shift"
+          },
+          {
+            "do": "Substitute $w=1$",
+            "result": "$L'(1)=2(1-3)$",
+            "why": "we need the local slope at the current weight"
+          },
+          {
+            "do": "Simplify",
+            "result": "$-4$",
+            "why": "$1-3=-2$"
+          },
+          {
+            "do": "Choose the descent direction",
+            "result": "increase $w$",
+            "why": "gradient descent moves opposite the derivative, so $-L'(1)=4$"
+          },
+          {
+            "do": "Check with a small step $0.1$",
+            "result": "$L(1.1)=3.61<L(1)=4$",
+            "why": "moving right lowers the loss"
+          }
+        ],
+        "answer": "$L'(1)=-4$; increasing $w$ decreases the loss."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Gradient descent",
+        "background": "Modern ML training updates parameters using derivatives of a loss, a direct descendant of steepest-descent methods from numerical analysis.",
+        "numbers": "For $L(w)=(w-3)^2$ at $w=1$, $L'=-4$; with learning rate $0.1$, $w_{new}=1-0.1(-4)=1.4$."
+      },
+      {
+        "title": "Backpropagation",
+        "background": "Backprop computes many derivatives efficiently by reusing local slope information through a computation graph.",
+        "numbers": "If $z=wx$, $L=z^2$, with $w=2,x=3$, then $z=6$ and $\\partial L/\\partial w=2z\\cdot x=36$."
+      },
+      {
+        "title": "Gradient checking",
+        "background": "Before trusting a custom layer, engineers compare analytic derivatives to finite differences.",
+        "numbers": "For $f(x)=x^2$ at $x=2$, $h=0.001$ gives $4.001$, while the derivative is $4$; error is $0.001$."
+      },
+      {
+        "title": "Sensitivity analysis",
+        "background": "Derivatives quantify how much an output changes when one input is nudged, useful in science and product metrics.",
+        "numbers": "If revenue $R(p)=100p-2p^2$, then $R'(20)=100-80=20$, about $20$ extra units per price dollar near $p=20$."
+      },
+      {
+        "title": "Tangent-line approximation",
+        "background": "Calculus turns a curved function into a local line for quick estimates.",
+        "numbers": "For $\\sqrt{x}$ near $x=4$, derivative $1/4$ gives $\\sqrt{4.4}\\approx2+0.25(0.4)=2.1$; actual is about $2.098$."
+      },
+      {
+        "title": "Physics engines",
+        "background": "Velocity is the derivative of position, so simulation systems update motion by local rates.",
+        "numbers": "If $s(t)=5t^2$, then $s'(3)=30$ meters per second."
+      }
+    ],
+    "applicationsClose": "The derivative is one local question with many uniforms: slope, speed, sensitivity, and gradient are all the same idea in context.",
+    "takeaways": [
+      "A derivative is the limit of a difference quotient.",
+      "It measures instantaneous rate of change and tangent slope.",
+      "In ML, derivatives are the local signals used to update parameters."
+    ],
     "prereqs": [
       "math-01-12"
     ]
@@ -807,19 +3464,265 @@
   B({
     "id": "math-01-14",
     "title": "Differentiability vs continuity",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: differentiability vs continuity.",
+    "tagline": "Continuity means no break; differentiability means the curve also has a well-defined local slope.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The derivative — definition and meaning</i>"
+        "Continuity",
+        "limits",
+        "the derivative definition"
       ],
       "leadsTo": [
-        "the next lesson, <i>The power rule</i>"
+        "derivative rules",
+        "nondifferentiable optimization",
+        "piecewise modeling"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "one-sided limits",
+        "absolute value",
+        "piecewise functions"
       ]
     },
+    "motivation": "<p>A graph can be connected and still have a sharp corner. You can trace $|x|$ without lifting your pencil, but at $0$ the left slope is $-1$ and the right slope is $1$.</p><p>This distinction matters because calculus needs more than connectedness when it asks for a slope. Continuity says the point is attached to the curve; differentiability says the curve looks like one line when you zoom in.</p>",
+    "definition": "<p>A function is <b>continuous</b> at $a$ when $\\lim_{x\\to a}f(x)=f(a)$. It is <b>differentiable</b> at $a$ when $f'(a)=\\lim_{h\\to0}\\frac{f(a+h)-f(a)}{h}$ exists as a finite two-sided limit. Differentiability implies continuity: if $f'(a)$ exists, then $f(a+h)-f(a)=h\\cdot\\frac{f(a+h)-f(a)}{h}\\to0\\cdot f'(a)=0$, so $f(a+h)\\to f(a)$.</p><p><b>Assumptions that matter:</b> the converse is false. Corners, cusps, vertical tangents, jumps, and holes can break differentiability; jumps and holes also break continuity. Piecewise functions must pass both a value test and a slope test at the join.</p>",
+    "worked": {
+      "problem": "Decide whether $f(x)=|x|$ is continuous and differentiable at $x=0$.",
+      "skills": [
+        "one-sided limits",
+        "difference quotients",
+        "corners"
+      ],
+      "strategy": "Check the value first for continuity, then compare left and right slopes for differentiability.",
+      "steps": [
+        {
+          "do": "Compute the function value",
+          "result": "$f(0)=0$",
+          "why": "absolute value of zero is zero"
+        },
+        {
+          "do": "Take the left limit",
+          "result": "$\\lim_{x\\to0^-}|x|=0$",
+          "why": "negative inputs approach zero in magnitude"
+        },
+        {
+          "do": "Take the right limit",
+          "result": "$\\lim_{x\\to0^+}|x|=0$",
+          "why": "positive inputs approach zero"
+        },
+        {
+          "do": "Compare with $f(0)$",
+          "result": "continuous",
+          "why": "both one-sided limits equal the function value"
+        },
+        {
+          "do": "Compute the right derivative",
+          "result": "$\\lim_{h\\to0^+}\\dfrac{|h|-0}{h}=1$",
+          "why": "for $h>0$, $|h|=h$"
+        },
+        {
+          "do": "Compute the left derivative",
+          "result": "$\\lim_{h\\to0^-}\\dfrac{|h|-0}{h}=-1$",
+          "why": "for $h<0$, $|h|=-h$"
+        }
+      ],
+      "verify": "Near zero, secant slopes from the right are $1$ and from the left are $-1$, so no single tangent slope exists.",
+      "answer": "$|x|$ is continuous at $0$ but not differentiable at $0$.",
+      "connects": "nondifferentiable points can still be usable, but derivative-based methods need special care there."
+    },
+    "practice": [
+      {
+        "problem": "Is $f(x)=x^2$ continuous and differentiable at $x=1$?",
+        "steps": [
+          {
+            "do": "Evaluate the function",
+            "result": "$f(1)=1$",
+            "why": "substitute $1$"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$\\lim_{x\\to1}x^2=1$",
+            "why": "polynomials are continuous"
+          },
+          {
+            "do": "Conclude continuity",
+            "result": "continuous",
+            "why": "limit equals value"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=2x$",
+            "why": "a polynomial has a derivative everywhere"
+          },
+          {
+            "do": "Evaluate the derivative",
+            "result": "$f'(1)=2$",
+            "why": "finite slope exists"
+          }
+        ],
+        "answer": "Continuous and differentiable at $1$."
+      },
+      {
+        "problem": "Is $g(x)=\\sqrt{x}$ differentiable at $x=0$ on its domain $x\\ge0$?",
+        "steps": [
+          {
+            "do": "Evaluate the value",
+            "result": "$g(0)=0$",
+            "why": "square root of zero is zero"
+          },
+          {
+            "do": "Take the right limit",
+            "result": "$\\lim_{x\\to0^+}\\sqrt{x}=0$",
+            "why": "domain approaches from the right"
+          },
+          {
+            "do": "Conclude continuity on the domain",
+            "result": "continuous from the right",
+            "why": "the domain has no left side at $0$"
+          },
+          {
+            "do": "Form the right difference quotient",
+            "result": "$\\dfrac{\\sqrt{h}-0}{h}=\\dfrac{1}{\\sqrt h}$",
+            "why": "simplify $\\sqrt h/h$"
+          },
+          {
+            "do": "Let $h\\to0^+$",
+            "result": "$\\infty$",
+            "why": "the slope becomes unbounded"
+          }
+        ],
+        "answer": "Continuous on its domain at $0$, but not differentiable there as a finite slope."
+      },
+      {
+        "problem": "For $f(x)=\\begin{cases}x+1,&x<1\\3,&x=1\\x^2+1,&x>1\\end{cases}$, is $f$ continuous at $1$?",
+        "steps": [
+          {
+            "do": "Find the left limit",
+            "result": "$\\lim_{x\\to1^-}(x+1)=2$",
+            "why": "use the left branch"
+          },
+          {
+            "do": "Find the right limit",
+            "result": "$\\lim_{x\\to1^+}(x^2+1)=2$",
+            "why": "use the right branch"
+          },
+          {
+            "do": "Find the two-sided limit",
+            "result": "$2$",
+            "why": "left and right limits agree"
+          },
+          {
+            "do": "Evaluate the function",
+            "result": "$f(1)=3$",
+            "why": "the middle definition gives the value"
+          },
+          {
+            "do": "Compare limit and value",
+            "result": "not continuous",
+            "why": "$2\\ne3$"
+          }
+        ],
+        "answer": "Not continuous at $1$, so not differentiable there."
+      },
+      {
+        "problem": "For $f(x)=\\begin{cases}x^2,&x\\le1\\2x-1,&x>1\\end{cases}$, test differentiability at $1$.",
+        "steps": [
+          {
+            "do": "Check the left value",
+            "result": "$1^2=1$",
+            "why": "use the first branch"
+          },
+          {
+            "do": "Check the right limit",
+            "result": "$2(1)-1=1$",
+            "why": "use the second branch"
+          },
+          {
+            "do": "Conclude continuity",
+            "result": "continuous",
+            "why": "both sides meet at $1$"
+          },
+          {
+            "do": "Compute left slope",
+            "result": "$2x\\to2$",
+            "why": "derivative of $x^2$ at $1$"
+          },
+          {
+            "do": "Compute right slope",
+            "result": "$2$",
+            "why": "derivative of $2x-1$"
+          }
+        ],
+        "answer": "Differentiable at $1$ with derivative $2$."
+      },
+      {
+        "problem": "The ReLU $r(x)=\\max(0,x)$ is used in neural nets. Is it differentiable at $0$?",
+        "steps": [
+          {
+            "do": "Find the value",
+            "result": "$r(0)=0$",
+            "why": "both pieces meet at zero"
+          },
+          {
+            "do": "Take the left limit",
+            "result": "$0$",
+            "why": "for $x<0$, ReLU outputs $0$"
+          },
+          {
+            "do": "Take the right limit",
+            "result": "$0$",
+            "why": "for $x>0$, ReLU outputs $x\\to0$"
+          },
+          {
+            "do": "Compute left slope",
+            "result": "$0$",
+            "why": "the left branch is flat"
+          },
+          {
+            "do": "Compute right slope",
+            "result": "$1$",
+            "why": "the right branch is $x$"
+          }
+        ],
+        "answer": "Continuous at $0$, not differentiable at $0$; implementations choose a subgradient such as $0$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "ReLU activations",
+        "background": "ReLU became popular because it is simple and avoids some sigmoid saturation, even with a corner at zero.",
+        "numbers": "At $x=-0.1$, slope is $0$; at $x=0.1$, slope is $1$; the derivative at $0$ is not unique."
+      },
+      {
+        "title": "L1 regularization",
+        "background": "The absolute value penalty encourages sparsity, which is useful for feature selection.",
+        "numbers": "For $\\lambda|w|$ with $\\lambda=0.2$, slopes are $-0.2$ for $w<0$ and $0.2$ for $w>0$, with a corner at $0$."
+      },
+      {
+        "title": "Hinge loss",
+        "background": "Support vector machines use a piecewise linear loss with a kink at the margin.",
+        "numbers": "$\\max(0,1-yz)$ has slope $-y$ when $yz<1$ and $0$ when $yz>1$; at $yz=1$ it is nondifferentiable."
+      },
+      {
+        "title": "Clipping in systems",
+        "background": "Clipping protects values from exceeding a safe range but creates corners at the thresholds.",
+        "numbers": "For $c(x)=\\min(1,\\max(0,x))$, slopes are $0$ below $0$, $1$ between $0$ and $1$, and $0$ above $1$."
+      },
+      {
+        "title": "Piecewise pricing",
+        "background": "Tiered pricing can be continuous while marginal price jumps at tier boundaries.",
+        "numbers": "If cost is $0.10q$ up to $1000$ and $100+0.06(q-1000)$ after, cost is continuous at $1000$ but slope changes from $0.10$ to $0.06$."
+      },
+      {
+        "title": "Numerical optimizers",
+        "background": "Smooth optimizers expect reliable local slopes; nonsmooth points may require subgradients or smoothing.",
+        "numbers": "Replacing $|x|$ with $\\sqrt{x^2+0.01}$ gives derivative $x/\\sqrt{x^2+0.01}$, so at $x=0$ the slope is $0$ instead of undefined."
+      }
+    ],
+    "applicationsClose": "Continuity keeps the curve attached; differentiability gives it one clear local direction. Both are useful, and they are not the same promise.",
+    "takeaways": [
+      "Differentiability implies continuity, but continuity does not imply differentiability.",
+      "Corners, cusps, vertical tangents, jumps, and holes are the usual suspects.",
+      "Many ML losses are intentionally continuous but nonsmooth, so optimizers use subgradients or conventions."
+    ],
     "prereqs": [
       "math-01-13"
     ]
@@ -828,19 +3731,235 @@
   B({
     "id": "math-01-15",
     "title": "The power rule",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the power rule.",
+    "tagline": "The power rule turns powers into slopes with one beautifully reusable pattern.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Differentiability vs continuity</i>"
+        "The derivative definition",
+        "exponents",
+        "polynomials"
       ],
       "leadsTo": [
-        "the next lesson, <i>The sum and difference rule</i>"
+        "sum and difference rule",
+        "polynomial optimization",
+        "gradient descent"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "constant multiples",
+        "tangent lines",
+        "linear approximation"
       ]
     },
+    "motivation": "<p>Using the derivative definition for $x^2$ was worth doing once. But doing that expansion for every power would become tiring fast, and calculus is kind enough to give us a pattern.</p><p>The <b>power rule</b> says a power's exponent drops down as a coefficient, then decreases by one. This is one of the main workhorses behind gradients for polynomial losses and simple model terms.</p>",
+    "definition": "<p>For any real exponent $n$ where the expression is defined, $$\\frac{d}{dx}x^n=nx^{n-1}.$$ For positive integers, the reason comes from expanding $(x+h)^n$: after subtracting $x^n$, the first surviving term is $nx^{n-1}h$, and every remaining term contains higher powers of $h$ that vanish after dividing by $h$ and taking $h\\to0$.</p><p><b>Assumptions that matter:</b> the derivative must be taken where $x^n$ is defined and differentiable. Negative powers exclude $x=0$. Fractional powers may have domain restrictions or fail to have finite derivative at endpoints such as $\\sqrt{x}$ at $0$.</p>",
+    "worked": {
+      "problem": "Differentiate $f(x)=7x^5$.",
+      "skills": [
+        "power rule",
+        "constant multiple",
+        "exponent arithmetic"
+      ],
+      "strategy": "Keep the constant, bring down the exponent, and reduce the exponent by one.",
+      "steps": [
+        {
+          "do": "Identify the power",
+          "result": "$x^5$",
+          "why": "the exponent is $5$"
+        },
+        {
+          "do": "Bring down the exponent",
+          "result": "$5x^{5-1}$",
+          "why": "the power rule says $x^n\\mapsto nx^{n-1}$"
+        },
+        {
+          "do": "Simplify the exponent",
+          "result": "$5x^4$",
+          "why": "$5-1=4$"
+        },
+        {
+          "do": "Multiply by the constant $7$",
+          "result": "$35x^4$",
+          "why": "constant multiples pass through differentiation"
+        }
+      ],
+      "verify": "At $x=2$, the derivative predicts $35\\cdot16=560$; the finite difference with $h=0.001$ is about $560.56$, close because $h$ is small.",
+      "answer": "$f'(x)=35x^4$",
+      "connects": "gradients — polynomial terms in losses differentiate by this same pattern before an optimizer takes a step."
+    },
+    "practice": [
+      {
+        "problem": "Differentiate $f(x)=x^8$.",
+        "steps": [
+          {
+            "do": "Identify the exponent",
+            "result": "$8$",
+            "why": "the function is a pure power"
+          },
+          {
+            "do": "Bring down the exponent",
+            "result": "$8x^{8-1}$",
+            "why": "apply the power rule"
+          },
+          {
+            "do": "Simplify the exponent",
+            "result": "$8x^7$",
+            "why": "$8-1=7$"
+          },
+          {
+            "do": "State the derivative",
+            "result": "$f'(x)=8x^7$",
+            "why": "no other terms are present"
+          }
+        ],
+        "answer": "$8x^7$"
+      },
+      {
+        "problem": "Differentiate $g(x)=4x^3$.",
+        "steps": [
+          {
+            "do": "Keep the constant",
+            "result": "$4\\dfrac{d}{dx}x^3$",
+            "why": "constant multiples pass through"
+          },
+          {
+            "do": "Apply the power rule",
+            "result": "$4(3x^2)$",
+            "why": "$x^3\\mapsto3x^2$"
+          },
+          {
+            "do": "Multiply constants",
+            "result": "$12x^2$",
+            "why": "$4\\cdot3=12$"
+          },
+          {
+            "do": "State the derivative",
+            "result": "$g'(x)=12x^2$",
+            "why": "the expression is simplified"
+          }
+        ],
+        "answer": "$12x^2$"
+      },
+      {
+        "problem": "Differentiate $h(x)=\\dfrac{5}{x^2}$.",
+        "steps": [
+          {
+            "do": "Rewrite with a negative exponent",
+            "result": "$5x^{-2}$",
+            "why": "$1/x^2=x^{-2}$"
+          },
+          {
+            "do": "Apply the power rule",
+            "result": "$5(-2)x^{-3}$",
+            "why": "bring down $-2$ and subtract $1$"
+          },
+          {
+            "do": "Multiply constants",
+            "result": "$-10x^{-3}$",
+            "why": "$5\\cdot(-2)=-10$"
+          },
+          {
+            "do": "Rewrite if desired",
+            "result": "$-\\dfrac{10}{x^3}$",
+            "why": "$x^{-3}=1/x^3$"
+          }
+        ],
+        "answer": "$-10/x^3$ for $x\\ne0$"
+      },
+      {
+        "problem": "Differentiate $p(x)=\\sqrt{x}$ for $x>0$.",
+        "steps": [
+          {
+            "do": "Rewrite the root",
+            "result": "$x^{1/2}$",
+            "why": "square root is a fractional power"
+          },
+          {
+            "do": "Apply the power rule",
+            "result": "$\\dfrac12x^{-1/2}$",
+            "why": "bring down $1/2$ and subtract $1$"
+          },
+          {
+            "do": "Rewrite the negative exponent",
+            "result": "$\\dfrac{1}{2\\sqrt{x}}$",
+            "why": "$x^{-1/2}=1/\\sqrt{x}$"
+          },
+          {
+            "do": "Name the domain",
+            "result": "$x>0$",
+            "why": "the derivative is finite only away from $0$"
+          }
+        ],
+        "answer": "$1/(2\\sqrt{x})$ for $x>0$"
+      },
+      {
+        "problem": "For loss $L(w)=0.5w^2$, find $L'(w)$ and the update from $w=4$ with learning rate $0.1$.",
+        "steps": [
+          {
+            "do": "Differentiate $w^2$",
+            "result": "$2w$",
+            "why": "power rule"
+          },
+          {
+            "do": "Multiply by $0.5$",
+            "result": "$L'(w)=w$",
+            "why": "$0.5\\cdot2=1$"
+          },
+          {
+            "do": "Evaluate at $w=4$",
+            "result": "$L'(4)=4$",
+            "why": "substitute the current weight"
+          },
+          {
+            "do": "Apply gradient descent",
+            "result": "$w_{new}=4-0.1(4)$",
+            "why": "move opposite the gradient"
+          },
+          {
+            "do": "Simplify",
+            "result": "$3.6$",
+            "why": "$4-0.4=3.6$"
+          }
+        ],
+        "answer": "$L'(w)=w$ and the updated weight is $3.6$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Squared-error gradients",
+        "background": "Least squares became central because squaring errors gives smooth derivatives and strong geometric structure.",
+        "numbers": "For $L(w)=(w-5)^2$, $L'(2)=2(2-5)=-6$, so a $0.1$ step sends $w$ to $2.6$."
+      },
+      {
+        "title": "Weight decay",
+        "background": "L2 regularization penalizes large weights with a square, making the gradient proportional to the weight.",
+        "numbers": "For penalty $0.01w^2$, derivative is $0.02w$; at $w=10$, the penalty gradient is $0.2$."
+      },
+      {
+        "title": "Polynomial regression",
+        "background": "Polynomial features let linear models bend, and training needs derivatives of powers.",
+        "numbers": "If prediction includes $a x^3$ and loss gradient with respect to prediction is $2$, then contribution to $\\partial L/\\partial a$ at $x=4$ is $2\\cdot4^3=128$."
+      },
+      {
+        "title": "Backprop through powers",
+        "background": "Neural-network libraries store local derivative rules for operations such as square and cube.",
+        "numbers": "For $y=x^4$ at $x=2$, local derivative is $4x^3=32$; an upstream gradient $0.5$ becomes $16$."
+      },
+      {
+        "title": "Physics-inspired losses",
+        "background": "Many models include energy terms like $kx^2/2$, inherited from springs and quadratic approximations.",
+        "numbers": "If $E=3x^2/2$, then $E'=3x$; at $x=0.4$, force magnitude is $1.2$."
+      },
+      {
+        "title": "Feature scaling effects",
+        "background": "High powers magnify large inputs, so derivatives can become large quickly.",
+        "numbers": "For $x^6$, derivative at $x=2$ is $6\\cdot32=192$, but at $x=0.5$ it is $6/32=0.1875$."
+      }
+    ],
+    "applicationsClose": "The power rule is small, but it is everywhere: every square penalty, polynomial feature, and local backprop rule leans on it.",
+    "takeaways": [
+      "$\\frac{d}{dx}x^n=nx^{n-1}$ where the derivative is defined.",
+      "Constants stay in front of derivatives.",
+      "Power-rule gradients drive many polynomial and squared-loss calculations in ML."
+    ],
     "prereqs": [
       "math-01-14"
     ]
@@ -849,19 +3968,245 @@
   B({
     "id": "math-01-16",
     "title": "The sum and difference rule",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the sum and difference rule.",
+    "tagline": "Differentiate a sum by differentiating each piece, then putting the pieces back together.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The power rule</i>"
+        "The derivative",
+        "the power rule",
+        "linearity"
       ],
       "leadsTo": [
-        "the next lesson, <i>The product rule</i>"
+        "product rule",
+        "polynomial derivatives",
+        "optimization"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "constant multiple rule",
+        "polynomials",
+        "linear combinations"
       ]
     },
+    "motivation": "<p>Real functions are rarely a single term. They are built from pieces: $3x^4$, $-2x$, $7$, and so on. The friendly news is that derivatives respect addition and subtraction.</p><p>The sum and difference rule is the first big modularity rule. It says you can handle one term at a time, which is exactly how larger models are built from smaller components.</p>",
+    "definition": "<p>If $f$ and $g$ are differentiable at $x$, then $$\\frac{d}{dx}[f(x)+g(x)]=f'(x)+g'(x),\\qquad \\frac{d}{dx}[f(x)-g(x)]=f'(x)-g'(x).$$ This follows directly from the difference quotient because $[f(x+h)+g(x+h)]-[f(x)+g(x)]$ splits into the change in $f$ plus the change in $g$.</p><p><b>Assumptions that matter:</b> each piece must be differentiable at the point. If one term has a corner or discontinuity there, the whole sum may fail to be differentiable even if the other terms are smooth.</p>",
+    "worked": {
+      "problem": "Differentiate $p(x)=4x^5-3x^2+7x-9$.",
+      "skills": [
+        "sum rule",
+        "difference rule",
+        "power rule"
+      ],
+      "strategy": "Work term by term. Constants differentiate to zero.",
+      "steps": [
+        {
+          "do": "Differentiate $4x^5$",
+          "result": "$20x^4$",
+          "why": "power rule with constant multiple"
+        },
+        {
+          "do": "Differentiate $-3x^2$",
+          "result": "$-6x$",
+          "why": "keep the minus sign"
+        },
+        {
+          "do": "Differentiate $7x$",
+          "result": "$7$",
+          "why": "a line $7x$ has slope $7$"
+        },
+        {
+          "do": "Differentiate $-9$",
+          "result": "$0$",
+          "why": "constants do not change"
+        },
+        {
+          "do": "Combine the pieces",
+          "result": "$20x^4-6x+7$",
+          "why": "sum and difference rules preserve signs"
+        }
+      ],
+      "verify": "At $x=1$, the derivative is $20-6+7=21$; a small finite difference gives about $21$.",
+      "answer": "$p'(x)=20x^4-6x+7$",
+      "connects": "polynomial optimization starts by turning a whole polynomial into a sum of term-wise slopes."
+    },
+    "practice": [
+      {
+        "problem": "Differentiate $f(x)=x^4+x^3+x^2$.",
+        "steps": [
+          {
+            "do": "Differentiate $x^4$",
+            "result": "$4x^3$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate $x^3$",
+            "result": "$3x^2$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate $x^2$",
+            "result": "$2x$",
+            "why": "power rule"
+          },
+          {
+            "do": "Add the derivatives",
+            "result": "$4x^3+3x^2+2x$",
+            "why": "sum rule"
+          }
+        ],
+        "answer": "$4x^3+3x^2+2x$"
+      },
+      {
+        "problem": "Differentiate $g(x)=6x^2-5x+8$.",
+        "steps": [
+          {
+            "do": "Differentiate $6x^2$",
+            "result": "$12x$",
+            "why": "power rule and constant multiple"
+          },
+          {
+            "do": "Differentiate $-5x$",
+            "result": "$-5$",
+            "why": "the slope of $-5x$ is $-5$"
+          },
+          {
+            "do": "Differentiate $8$",
+            "result": "$0$",
+            "why": "constant term"
+          },
+          {
+            "do": "Combine",
+            "result": "$12x-5$",
+            "why": "preserve the subtraction sign"
+          }
+        ],
+        "answer": "$12x-5$"
+      },
+      {
+        "problem": "Differentiate $h(x)=\\sqrt{x}+\\dfrac{3}{x}$ for $x>0$.",
+        "steps": [
+          {
+            "do": "Rewrite powers",
+            "result": "$x^{1/2}+3x^{-1}$",
+            "why": "prepare for the power rule"
+          },
+          {
+            "do": "Differentiate $x^{1/2}$",
+            "result": "$\\dfrac12x^{-1/2}$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate $3x^{-1}$",
+            "result": "$-3x^{-2}$",
+            "why": "bring down $-1$"
+          },
+          {
+            "do": "Combine",
+            "result": "$\\dfrac{1}{2\\sqrt{x}}-\\dfrac{3}{x^2}$",
+            "why": "rewrite negative exponents"
+          }
+        ],
+        "answer": "$1/(2\\sqrt{x})-3/x^2$"
+      },
+      {
+        "problem": "Find $p'(2)$ for $p(x)=2x^3-4x^2+x-1$.",
+        "steps": [
+          {
+            "do": "Differentiate $2x^3$",
+            "result": "$6x^2$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate $-4x^2$",
+            "result": "$-8x$",
+            "why": "keep the minus sign"
+          },
+          {
+            "do": "Differentiate $x$",
+            "result": "$1$",
+            "why": "slope of $x$"
+          },
+          {
+            "do": "Form $p'(x)$",
+            "result": "$6x^2-8x+1$",
+            "why": "constant derivative is zero"
+          },
+          {
+            "do": "Substitute $x=2$",
+            "result": "$24-16+1=9$",
+            "why": "evaluate the slope at the point"
+          }
+        ],
+        "answer": "$p'(2)=9$"
+      },
+      {
+        "problem": "For $L(w)=0.1w^4+0.5w^2-3w$, compute $L'(2)$.",
+        "steps": [
+          {
+            "do": "Differentiate $0.1w^4$",
+            "result": "$0.4w^3$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate $0.5w^2$",
+            "result": "$w$",
+            "why": "$0.5\\cdot2=1$"
+          },
+          {
+            "do": "Differentiate $-3w$",
+            "result": "$-3$",
+            "why": "linear term"
+          },
+          {
+            "do": "Form $L'(w)$",
+            "result": "$0.4w^3+w-3$",
+            "why": "sum and difference rules"
+          },
+          {
+            "do": "Substitute $w=2$",
+            "result": "$0.4(8)+2-3=2.2$",
+            "why": "$3.2+2-3=2.2$"
+          }
+        ],
+        "answer": "$L'(2)=2.2$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Polynomial models",
+        "background": "Polynomial regression combines feature powers, and each coefficient contributes its own derivative term.",
+        "numbers": "For $y=2x^3-5x+1$, $dy/dx=6x^2-5$; at $x=2$, slope is $19$."
+      },
+      {
+        "title": "Additive losses",
+        "background": "Training objectives often add data loss and regularization, so their gradients add too.",
+        "numbers": "If data gradient is $-6$ and L2 gradient is $0.4$, total gradient is $-5.6$."
+      },
+      {
+        "title": "Ensembles",
+        "background": "Averaged model outputs have derivatives that average the model derivatives.",
+        "numbers": "If two predictors have local slopes $3$ and $5$, their average has slope $(3+5)/2=4$."
+      },
+      {
+        "title": "Taylor approximations",
+        "background": "Local polynomial approximations rely on differentiating sums of powers term by term.",
+        "numbers": "For $1+x+x^2/2$, derivative is $1+x$; at $x=0.2$, the local slope is $1.2$."
+      },
+      {
+        "title": "Cost functions in operations",
+        "background": "Total cost often combines fixed, linear, and quadratic terms.",
+        "numbers": "If $C(q)=100+4q+0.02q^2$, then $C'(50)=4+2=6$ dollars per unit."
+      },
+      {
+        "title": "Feature attribution for linear scores",
+        "background": "Linear scoring models add feature contributions, making sensitivity easy to read.",
+        "numbers": "For $s=2x_1-3x_2+5$, $\\partial s/\\partial x_1=2$ and $\\partial s/\\partial x_2=-3$."
+      }
+    ],
+    "applicationsClose": "The rule's message is modular: if a function is assembled by adding pieces, its derivative is assembled the same way.",
+    "takeaways": [
+      "Derivatives distribute over sums and differences.",
+      "Differentiate polynomials term by term, preserving signs.",
+      "Additive objectives have additive gradients."
+    ],
     "prereqs": [
       "math-01-15"
     ]
@@ -870,19 +4215,265 @@
   B({
     "id": "math-01-17",
     "title": "The product rule",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the product rule.",
+    "tagline": "When two changing factors multiply, the derivative must count both ways the product can change.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The sum and difference rule</i>"
+        "The derivative",
+        "sum rule",
+        "limits"
       ],
       "leadsTo": [
-        "the next lesson, <i>The quotient rule</i>"
+        "quotient rule",
+        "chain rule",
+        "logarithmic differentiation"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "polynomials",
+        "exponential functions",
+        "trigonometric functions"
       ]
     },
+    "motivation": "<p>It is tempting to think the derivative of $f(x)g(x)$ is just $f'(x)g'(x)$. But if width and height both change, area changes because width changes while height is present, and because height changes while width is present.</p><p>The product rule keeps both contributions. It is one of those rules that feels fussy at first, then becomes a trusted rhythm.</p>",
+    "definition": "<p>If $f$ and $g$ are differentiable, then $$\\frac{d}{dx}[f(x)g(x)]=f'(x)g(x)+f(x)g'(x).$$ From the difference quotient, add and subtract $f(x+h)g(x)$ in the numerator. The change splits into $f(x+h)[g(x+h)-g(x)]$ plus $g(x)[f(x+h)-f(x)]$, which tends to $f(x)g'(x)+g(x)f'(x)$.</p><p><b>Assumptions that matter:</b> both factors must be differentiable at the point. The rule is symmetric; either order gives the same result. Do not multiply the derivatives only — that misses the product's two change channels.</p>",
+    "worked": {
+      "problem": "Differentiate $y=(x^2+1)(3x-4)$.",
+      "skills": [
+        "product rule",
+        "sum rule",
+        "simplification"
+      ],
+      "strategy": "Name the two factors, differentiate each, then assemble $f'g+fg'$.",
+      "steps": [
+        {
+          "do": "Set $f=x^2+1$",
+          "result": "$f'=2x$",
+          "why": "differentiate the first factor"
+        },
+        {
+          "do": "Set $g=3x-4$",
+          "result": "$g'=3$",
+          "why": "differentiate the second factor"
+        },
+        {
+          "do": "Apply the product rule",
+          "result": "$y'=2x(3x-4)+(x^2+1)3$",
+          "why": "use $f'g+fg'$"
+        },
+        {
+          "do": "Expand the first product",
+          "result": "$6x^2-8x+3(x^2+1)$",
+          "why": "multiply $2x$ through"
+        },
+        {
+          "do": "Expand the second product",
+          "result": "$6x^2-8x+3x^2+3$",
+          "why": "multiply by $3$"
+        },
+        {
+          "do": "Combine like terms",
+          "result": "$9x^2-8x+3$",
+          "why": "collect powers of $x$"
+        }
+      ],
+      "verify": "Expanding first gives $3x^3-4x^2+3x-4$, whose derivative is $9x^2-8x+3$, the same result.",
+      "answer": "$y'=9x^2-8x+3$",
+      "connects": "the product rule is the local version of tracking two interacting factors at once."
+    },
+    "practice": [
+      {
+        "problem": "Differentiate $y=x^2(x+5)$ using the product rule.",
+        "steps": [
+          {
+            "do": "Set $f=x^2$",
+            "result": "$f'=2x$",
+            "why": "first factor derivative"
+          },
+          {
+            "do": "Set $g=x+5$",
+            "result": "$g'=1$",
+            "why": "second factor derivative"
+          },
+          {
+            "do": "Apply the rule",
+            "result": "$y'=2x(x+5)+x^2(1)$",
+            "why": "use $f'g+fg'$"
+          },
+          {
+            "do": "Expand",
+            "result": "$2x^2+10x+x^2$",
+            "why": "multiply out"
+          },
+          {
+            "do": "Combine",
+            "result": "$3x^2+10x$",
+            "why": "like terms add"
+          }
+        ],
+        "answer": "$3x^2+10x$"
+      },
+      {
+        "problem": "Differentiate $y=(2x-1)(x^2+4)$.",
+        "steps": [
+          {
+            "do": "Differentiate the first factor",
+            "result": "$2$",
+            "why": "slope of $2x-1$"
+          },
+          {
+            "do": "Differentiate the second factor",
+            "result": "$2x$",
+            "why": "power rule"
+          },
+          {
+            "do": "Apply the product rule",
+            "result": "$2(x^2+4)+(2x-1)(2x)$",
+            "why": "use both change channels"
+          },
+          {
+            "do": "Expand",
+            "result": "$2x^2+8+4x^2-2x$",
+            "why": "multiply terms"
+          },
+          {
+            "do": "Combine",
+            "result": "$6x^2-2x+8$",
+            "why": "collect like terms"
+          }
+        ],
+        "answer": "$6x^2-2x+8$"
+      },
+      {
+        "problem": "Differentiate $y=x^3\\sqrt{x}$ for $x>0$.",
+        "steps": [
+          {
+            "do": "Rewrite the root",
+            "result": "$y=x^3x^{1/2}$",
+            "why": "use powers"
+          },
+          {
+            "do": "Set $f=x^3$ and $g=x^{1/2}$",
+            "result": "$f'=3x^2$, $g'=\\frac12x^{-1/2}$",
+            "why": "differentiate both factors"
+          },
+          {
+            "do": "Apply the product rule",
+            "result": "$3x^2x^{1/2}+x^3\\left(\\frac12x^{-1/2}\\right)$",
+            "why": "use $f'g+fg'$"
+          },
+          {
+            "do": "Combine exponents",
+            "result": "$3x^{5/2}+\\frac12x^{5/2}$",
+            "why": "$x^2x^{1/2}=x^{5/2}$ and $x^3x^{-1/2}=x^{5/2}$"
+          },
+          {
+            "do": "Add coefficients",
+            "result": "$\\frac72x^{5/2}$",
+            "why": "$3+1/2=7/2$"
+          }
+        ],
+        "answer": "$\\frac72x^{5/2}$"
+      },
+      {
+        "problem": "Differentiate $y=(x^2+1)(x^2-1)$ and simplify.",
+        "steps": [
+          {
+            "do": "Differentiate each factor",
+            "result": "$2x$ and $2x$",
+            "why": "both are quadratic plus or minus a constant"
+          },
+          {
+            "do": "Apply the product rule",
+            "result": "$2x(x^2-1)+(x^2+1)2x$",
+            "why": "use $f'g+fg'$"
+          },
+          {
+            "do": "Factor $2x$",
+            "result": "$2x[(x^2-1)+(x^2+1)]$",
+            "why": "common factor makes simplification clearer"
+          },
+          {
+            "do": "Simplify inside brackets",
+            "result": "$2x(2x^2)$",
+            "why": "the constants cancel"
+          },
+          {
+            "do": "Multiply",
+            "result": "$4x^3$",
+            "why": "$2x\\cdot2x^2=4x^3$"
+          }
+        ],
+        "answer": "$4x^3$"
+      },
+      {
+        "problem": "A model output is $s(w)=w^2(w+1)$. Find $s'(2)$ for a local gradient.",
+        "steps": [
+          {
+            "do": "Set $f=w^2$",
+            "result": "$f'=2w$",
+            "why": "first factor"
+          },
+          {
+            "do": "Set $g=w+1$",
+            "result": "$g'=1$",
+            "why": "second factor"
+          },
+          {
+            "do": "Apply the product rule",
+            "result": "$s'(w)=2w(w+1)+w^2$",
+            "why": "use both terms"
+          },
+          {
+            "do": "Substitute $w=2$",
+            "result": "$2(2)(3)+4$",
+            "why": "evaluate the gradient at the current weight"
+          },
+          {
+            "do": "Simplify",
+            "result": "$16$",
+            "why": "$12+4=16$"
+          }
+        ],
+        "answer": "$s'(2)=16$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Gated neural units",
+        "background": "Gates multiply an activation by a learned value, so gradients must flow through both the gate and the activation.",
+        "numbers": "If output $y=ga$, upstream gradient is $5$, $g=0.2$, $a=3$, then $\\partial L/\\partial g=15$ and $\\partial L/\\partial a=1$."
+      },
+      {
+        "title": "Attention weights times values",
+        "background": "Attention forms weighted sums, and each term is a product of a weight and a value vector component.",
+        "numbers": "For one scalar term $av$, with upstream gradient $2$, $a=0.25$, $v=8$, gradients are $16$ for $a$ and $0.5$ for $v$."
+      },
+      {
+        "title": "Revenue models",
+        "background": "Revenue is price times quantity, both of which may vary with price.",
+        "numbers": "If $R(p)=p(100-2p)$, then $R'=1(100-2p)+p(-2)=100-4p$; at $p=20$, slope is $20$."
+      },
+      {
+        "title": "Area growth",
+        "background": "The product rule was historically tied to geometry: changing area has width and height contributions.",
+        "numbers": "If width $w=t^2$ and height $h=3t$, area rate is $2t(3t)+t^2(3)=9t^2$; at $t=2$, rate is $36$."
+      },
+      {
+        "title": "Probability factorizations",
+        "background": "Likelihoods often multiply factors; derivatives of products motivate log-likelihoods.",
+        "numbers": "For $p(\\theta)=\\theta(1-\\theta)$, $p'=1(1-\\theta)+\\theta(-1)=1-2\\theta$; at $0.3$, slope is $0.4$."
+      },
+      {
+        "title": "Feature interactions",
+        "background": "Models sometimes include interaction terms where two features multiply.",
+        "numbers": "For score $s=x_1x_2$, if $x_1=4,x_2=7$, then $\\partial s/\\partial x_1=7$ and $\\partial s/\\partial x_2=4$."
+      }
+    ],
+    "applicationsClose": "Whenever a quantity is built by multiplying changing parts, the product rule reminds us to credit each part's change while the other part is present.",
+    "takeaways": [
+      "$\\frac{d}{dx}[fg]=f'g+fg'$.",
+      "Do not multiply derivatives only; that misses two separate contributions.",
+      "Products appear in gates, attention, probabilities, revenue, and feature interactions."
+    ],
     "prereqs": [
       "math-01-16"
     ]
@@ -891,19 +4482,265 @@
   B({
     "id": "math-01-18",
     "title": "The quotient rule",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the quotient rule.",
+    "tagline": "A quotient changes because the numerator moves and because the denominator rescales everything.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The product rule</i>"
+        "Product rule",
+        "power rule",
+        "rational functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>The chain rule</i>"
+        "chain rule",
+        "log derivatives",
+        "optimization with ratios"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "asymptotes",
+        "rates",
+        "normalization"
       ]
     },
+    "motivation": "<p>Ratios are everywhere: error per example, revenue per user, signal-to-noise. When the top and bottom both change, the slope of the ratio is not just top slope divided by bottom slope.</p><p>The <b>quotient rule</b> is the careful bookkeeping rule for ratios. It rewards a steady order: bottom times derivative of top, minus top times derivative of bottom, all over bottom squared.</p>",
+    "definition": "<p>If $f$ and $g$ are differentiable and $g(x)\\ne0$, then $$\\frac{d}{dx}\\left[\\frac{f(x)}{g(x)}\\right]=\\frac{g(x)f'(x)-f(x)g'(x)}{[g(x)]^2}.$$ One way to derive it is to write $f/g=f\\cdot g^{-1}$, use the product rule, and differentiate $g^{-1}$ as $-g'/g^2$.</p><p><b>Assumptions that matter:</b> the denominator cannot be zero at the point. Order matters in the numerator: denominator times top derivative minus numerator times bottom derivative. The squared denominator is always nonnegative, but the numerator controls the sign.</p>",
+    "worked": {
+      "problem": "Differentiate $y=\\dfrac{x^2+1}{x-3}$.",
+      "skills": [
+        "quotient rule",
+        "power rule",
+        "simplification"
+      ],
+      "strategy": "Name numerator and denominator, compute their derivatives, then use $gf'-fg'$ over $g^2$.",
+      "steps": [
+        {
+          "do": "Set $f=x^2+1$",
+          "result": "$f'=2x$",
+          "why": "differentiate the numerator"
+        },
+        {
+          "do": "Set $g=x-3$",
+          "result": "$g'=1$",
+          "why": "differentiate the denominator"
+        },
+        {
+          "do": "Apply the quotient rule",
+          "result": "$y'=\\dfrac{(x-3)(2x)-(x^2+1)(1)}{(x-3)^2}$",
+          "why": "use $gf'-fg'$ over $g^2$"
+        },
+        {
+          "do": "Expand the first product",
+          "result": "$\\dfrac{2x^2-6x-(x^2+1)}{(x-3)^2}$",
+          "why": "multiply $2x$ by $x-3$"
+        },
+        {
+          "do": "Distribute the minus sign",
+          "result": "$\\dfrac{2x^2-6x-x^2-1}{(x-3)^2}$",
+          "why": "subtract the whole numerator"
+        },
+        {
+          "do": "Combine like terms",
+          "result": "$\\dfrac{x^2-6x-1}{(x-3)^2}$",
+          "why": "simplify the numerator"
+        }
+      ],
+      "verify": "At $x=4$, the derivative is $(16-24-1)/1=-9$; nearby values $f(4)=17$ and $f(4.01)\\approx16.911$ show a steep negative slope.",
+      "answer": "$y'=\\dfrac{x^2-6x-1}{(x-3)^2}$ for $x\\ne3$",
+      "connects": "ratios often combine growth in the numerator with normalization from the denominator."
+    },
+    "practice": [
+      {
+        "problem": "Differentiate $y=\\dfrac{x+1}{x-1}$.",
+        "steps": [
+          {
+            "do": "Set $f=x+1$",
+            "result": "$f'=1$",
+            "why": "numerator derivative"
+          },
+          {
+            "do": "Set $g=x-1$",
+            "result": "$g'=1$",
+            "why": "denominator derivative"
+          },
+          {
+            "do": "Apply the quotient rule",
+            "result": "$\\dfrac{(x-1)(1)-(x+1)(1)}{(x-1)^2}$",
+            "why": "use $gf'-fg'$"
+          },
+          {
+            "do": "Simplify the numerator",
+            "result": "$x-1-x-1=-2$",
+            "why": "combine terms carefully"
+          },
+          {
+            "do": "Write the derivative",
+            "result": "$-\\dfrac{2}{(x-1)^2}$",
+            "why": "keep the squared denominator"
+          }
+        ],
+        "answer": "$-2/(x-1)^2$"
+      },
+      {
+        "problem": "Differentiate $y=\\dfrac{x^2}{x+2}$.",
+        "steps": [
+          {
+            "do": "Set $f=x^2$",
+            "result": "$f'=2x$",
+            "why": "numerator derivative"
+          },
+          {
+            "do": "Set $g=x+2$",
+            "result": "$g'=1$",
+            "why": "denominator derivative"
+          },
+          {
+            "do": "Apply the rule",
+            "result": "$\\dfrac{(x+2)(2x)-x^2}{(x+2)^2}$",
+            "why": "use $gf'-fg'$"
+          },
+          {
+            "do": "Expand",
+            "result": "$\\dfrac{2x^2+4x-x^2}{(x+2)^2}$",
+            "why": "multiply the first term"
+          },
+          {
+            "do": "Combine",
+            "result": "$\\dfrac{x^2+4x}{(x+2)^2}$",
+            "why": "simplify numerator"
+          }
+        ],
+        "answer": "$\\dfrac{x^2+4x}{(x+2)^2}$"
+      },
+      {
+        "problem": "Differentiate $y=\\dfrac{3x-5}{x^2+1}$.",
+        "steps": [
+          {
+            "do": "Set $f=3x-5$",
+            "result": "$f'=3$",
+            "why": "numerator derivative"
+          },
+          {
+            "do": "Set $g=x^2+1$",
+            "result": "$g'=2x$",
+            "why": "denominator derivative"
+          },
+          {
+            "do": "Apply the quotient rule",
+            "result": "$\\dfrac{(x^2+1)3-(3x-5)2x}{(x^2+1)^2}$",
+            "why": "use the correct order"
+          },
+          {
+            "do": "Expand the numerator",
+            "result": "$3x^2+3-(6x^2-10x)$",
+            "why": "multiply each part"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\dfrac{-3x^2+10x+3}{(x^2+1)^2}$",
+            "why": "distribute the minus and combine"
+          }
+        ],
+        "answer": "$\\dfrac{-3x^2+10x+3}{(x^2+1)^2}$"
+      },
+      {
+        "problem": "Differentiate $y=\\dfrac{1}{x^2+4}$.",
+        "steps": [
+          {
+            "do": "Set $f=1$",
+            "result": "$f'=0$",
+            "why": "constant numerator"
+          },
+          {
+            "do": "Set $g=x^2+4$",
+            "result": "$g'=2x$",
+            "why": "denominator derivative"
+          },
+          {
+            "do": "Apply the quotient rule",
+            "result": "$\\dfrac{(x^2+4)0-1(2x)}{(x^2+4)^2}$",
+            "why": "use $gf'-fg'$"
+          },
+          {
+            "do": "Simplify the numerator",
+            "result": "$-2x$",
+            "why": "the first term is zero"
+          },
+          {
+            "do": "Write the derivative",
+            "result": "$-\\dfrac{2x}{(x^2+4)^2}$",
+            "why": "denominator is squared"
+          }
+        ],
+        "answer": "$-2x/(x^2+4)^2$"
+      },
+      {
+        "problem": "For metric $A(t)=\\dfrac{80t}{t+20}$, find $A'(20)$.",
+        "steps": [
+          {
+            "do": "Set $f=80t$",
+            "result": "$f'=80$",
+            "why": "numerator derivative"
+          },
+          {
+            "do": "Set $g=t+20$",
+            "result": "$g'=1$",
+            "why": "denominator derivative"
+          },
+          {
+            "do": "Apply the quotient rule",
+            "result": "$A'(t)=\\dfrac{(t+20)80-80t}{(t+20)^2}$",
+            "why": "use $gf'-fg'$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\dfrac{1600}{(t+20)^2}$",
+            "why": "$80t$ cancels"
+          },
+          {
+            "do": "Substitute $t=20$",
+            "result": "$\\dfrac{1600}{40^2}=1$",
+            "why": "$40^2=1600$"
+          }
+        ],
+        "answer": "$A'(20)=1$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Rates per user",
+        "background": "Product metrics often divide an aggregate by active users, so both numerator and denominator can move.",
+        "numbers": "If clicks $C=10t$ and users $U=t+100$, then $(C/U)'=1000/(t+100)^2$; at $t=100$, slope is $0.025$."
+      },
+      {
+        "title": "Signal-to-noise ratios",
+        "background": "Engineering systems compare signal power to noise power, and tuning can change both.",
+        "numbers": "For $S(x)=x^2/(x+1)$, $S'(2)=(4+4)/9=8/9$."
+      },
+      {
+        "title": "Precision metrics",
+        "background": "Precision is true positives divided by predicted positives, a ratio that changes with thresholds.",
+        "numbers": "If $TP=80-2t$ and $P=100-t$, then precision derivative is $[(100-t)(-2)-(80-2t)(-1)]/(100-t)^2$; at $t=20$, it is $-60/6400=-0.009375$."
+      },
+      {
+        "title": "Normalized features",
+        "background": "Normalization divides by a scale term to make features comparable.",
+        "numbers": "For $z=x/(x+10)$, $z'=10/(x+10)^2$; at $x=10$, slope is $0.025$."
+      },
+      {
+        "title": "A/B test lift",
+        "background": "Lift is often a ratio of treatment to control, so uncertainty and sensitivity follow quotient structure.",
+        "numbers": "If lift $r=a/b$ with $a=0.12,b=0.10$, then changing $a$ by $0.001$ changes $r$ by about $0.001/0.10=0.01$."
+      },
+      {
+        "title": "Average cost",
+        "background": "Average cost divides total cost by units, and its derivative shows whether scale is helping.",
+        "numbers": "For $C(q)=100+5q$, average $A=100/q+5$, so $A'=-100/q^2$; at $q=50$, slope is $-0.04$."
+      }
+    ],
+    "applicationsClose": "Ratios are careful objects: the top's change helps, the bottom's change can dilute, and the quotient rule keeps the signs straight.",
+    "takeaways": [
+      "$\\frac{d}{dx}(f/g)=\\frac{gf'-fg'}{g^2}$ when $g\\ne0$.",
+      "The order $gf'-fg'$ matters.",
+      "Quotient derivatives appear in normalized metrics, rates, ratios, and average costs."
+    ],
     "prereqs": [
       "math-01-17"
     ]
@@ -912,19 +4749,265 @@
   B({
     "id": "math-01-19",
     "title": "The chain rule",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the chain rule.",
+    "tagline": "The chain rule follows change through layers, multiplying local rates into one total rate.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The quotient rule</i>"
+        "The derivative",
+        "power rule",
+        "product and quotient rules"
       ],
       "leadsTo": [
-        "the next lesson, <i>Derivative of exponential functions</i>"
+        "implicit differentiation",
+        "optimization",
+        "backpropagation"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "composite functions",
+        "linear approximation",
+        "partial derivatives"
       ]
     },
+    "motivation": "<p>Many functions are nested: $\\sqrt{1+x^2}$, $(3x-1)^5$, or a neural network layer inside a loss. The outside changes when the inside changes, and the inside changes when $x$ changes.</p><p>The <b>chain rule</b> is the language for that relay. It says total change equals outside sensitivity times inside sensitivity. If you understand this lesson, backprop becomes much less mysterious.</p>",
+    "definition": "<p>If $y=f(u)$ and $u=g(x)$ are differentiable, then $$\\frac{dy}{dx}=\\frac{dy}{du}\\cdot\\frac{du}{dx},$$ or equivalently $$(f\\circ g)'(x)=f'(g(x))g'(x).$$ The reason is that a small change $\\Delta x$ causes $\\Delta u\\approx g'(x)\\Delta x$, and that causes $\\Delta y\\approx f'(u)\\Delta u$, so $\\Delta y\\approx f'(g(x))g'(x)\\Delta x$.</p><p><b>Assumptions that matter:</b> the inner function must be differentiable at $x$, and the outer function must be differentiable at the inner value $g(x)$. Always identify the inner function before differentiating; missing the inner derivative is the classic error.</p>",
+    "worked": {
+      "problem": "Differentiate $y=(3x^2-1)^4$.",
+      "skills": [
+        "chain rule",
+        "power rule",
+        "inner derivative"
+      ],
+      "strategy": "Treat the outside as a fourth power and the inside as $3x^2-1$.",
+      "steps": [
+        {
+          "do": "Name the inner function",
+          "result": "$u=3x^2-1$",
+          "why": "the fourth power is applied to this whole expression"
+        },
+        {
+          "do": "Differentiate the outside",
+          "result": "$\\dfrac{d}{du}u^4=4u^3$",
+          "why": "power rule in the variable $u$"
+        },
+        {
+          "do": "Differentiate the inside",
+          "result": "$\\dfrac{du}{dx}=6x$",
+          "why": "power rule for $3x^2-1$"
+        },
+        {
+          "do": "Multiply outside by inside derivative",
+          "result": "$4u^3\\cdot6x$",
+          "why": "chain rule"
+        },
+        {
+          "do": "Substitute back $u=3x^2-1$",
+          "result": "$24x(3x^2-1)^3$",
+          "why": "write the derivative in terms of $x$"
+        }
+      ],
+      "verify": "At $x=1$, the derivative is $24(1)(2)^3=192$; a small finite difference gives a value close to $192$.",
+      "answer": "$y'=24x(3x^2-1)^3$",
+      "connects": "backpropagation is the chain rule repeated through many layers, multiplying local derivatives from output back to parameters."
+    },
+    "practice": [
+      {
+        "problem": "Differentiate $y=(5x-2)^3$.",
+        "steps": [
+          {
+            "do": "Name the inner function",
+            "result": "$u=5x-2$",
+            "why": "the cube is outside"
+          },
+          {
+            "do": "Differentiate the outside",
+            "result": "$3u^2$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate the inside",
+            "result": "$5$",
+            "why": "slope of $5x-2$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$15u^2$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Substitute back",
+            "result": "$15(5x-2)^2$",
+            "why": "return to $x$"
+          }
+        ],
+        "answer": "$15(5x-2)^2$"
+      },
+      {
+        "problem": "Differentiate $y=\\sqrt{x^2+9}$ for all $x$.",
+        "steps": [
+          {
+            "do": "Rewrite the root",
+            "result": "$(x^2+9)^{1/2}$",
+            "why": "use a power outside"
+          },
+          {
+            "do": "Name the inner function",
+            "result": "$u=x^2+9$",
+            "why": "the root acts on this expression"
+          },
+          {
+            "do": "Differentiate the outside",
+            "result": "$\\frac12u^{-1/2}$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate the inside",
+            "result": "$2x$",
+            "why": "derivative of $x^2+9$"
+          },
+          {
+            "do": "Multiply and simplify",
+            "result": "$\\dfrac{x}{\\sqrt{x^2+9}}$",
+            "why": "$\\frac12\\cdot2x=x$ and $u^{-1/2}=1/\\sqrt u$"
+          }
+        ],
+        "answer": "$x/\\sqrt{x^2+9}$"
+      },
+      {
+        "problem": "Differentiate $y=(x^3-4x)^2$.",
+        "steps": [
+          {
+            "do": "Name the inner function",
+            "result": "$u=x^3-4x$",
+            "why": "the square wraps the polynomial"
+          },
+          {
+            "do": "Differentiate the outside",
+            "result": "$2u$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate the inside",
+            "result": "$3x^2-4$",
+            "why": "sum and difference rules"
+          },
+          {
+            "do": "Multiply",
+            "result": "$2u(3x^2-4)$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Substitute back",
+            "result": "$2(x^3-4x)(3x^2-4)$",
+            "why": "write in terms of $x$"
+          }
+        ],
+        "answer": "$2(x^3-4x)(3x^2-4)$"
+      },
+      {
+        "problem": "Differentiate $y=\\dfrac{1}{(2x+1)^2}$.",
+        "steps": [
+          {
+            "do": "Rewrite with a negative power",
+            "result": "$(2x+1)^{-2}$",
+            "why": "quotient becomes a power"
+          },
+          {
+            "do": "Name the inner function",
+            "result": "$u=2x+1$",
+            "why": "the negative power acts on $u$"
+          },
+          {
+            "do": "Differentiate the outside",
+            "result": "$-2u^{-3}$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate the inside",
+            "result": "$2$",
+            "why": "slope of $2x+1$"
+          },
+          {
+            "do": "Multiply and rewrite",
+            "result": "$-4(2x+1)^{-3}=-\\dfrac{4}{(2x+1)^3}$",
+            "why": "chain rule and negative exponent notation"
+          }
+        ],
+        "answer": "$-4/(2x+1)^3$"
+      },
+      {
+        "problem": "For a one-neuron loss $L(w)=(2w-6)^2$, compute $dL/dw$ at $w=1$ and one update with learning rate $0.05$.",
+        "steps": [
+          {
+            "do": "Name the inner function",
+            "result": "$u=2w-6$",
+            "why": "the square wraps the prediction error"
+          },
+          {
+            "do": "Differentiate the outside",
+            "result": "$2u$",
+            "why": "power rule for squared loss"
+          },
+          {
+            "do": "Differentiate the inside",
+            "result": "$2$",
+            "why": "prediction changes twice as fast as $w$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$dL/dw=4(2w-6)$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Evaluate at $w=1$",
+            "result": "$4(-4)=-16$",
+            "why": "$2(1)-6=-4$"
+          },
+          {
+            "do": "Apply the update",
+            "result": "$w_{new}=1-0.05(-16)=1.8$",
+            "why": "gradient descent moves opposite the gradient"
+          }
+        ],
+        "answer": "$dL/dw=-16$ at $w=1$; the updated weight is $1.8$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Backpropagation",
+        "background": "Backprop is the chain rule organized so each layer passes an upstream gradient to the layer before it.",
+        "numbers": "If $z=wx$, $a=z^2$, $L=3a$, with $w=2,x=4$, then $z=8$ and $dL/dw=3\\cdot2z\\cdot x=192$."
+      },
+      {
+        "title": "Squared loss with a linear model",
+        "background": "Least-squares training composes prediction, error, and square, so the chain rule gives the parameter gradient.",
+        "numbers": "For $L=(wx-y)^2$, $w=1,x=3,y=5$, error $=-2$, so $dL/dw=2(-2)\\cdot3=-12$."
+      },
+      {
+        "title": "Activation derivatives",
+        "background": "A neuron's activation is an outer nonlinear function applied to an inner affine score.",
+        "numbers": "For $a=(2x+1)^3$ at $x=1$, derivative is $3(3)^2\\cdot2=54$."
+      },
+      {
+        "title": "Feature standardization",
+        "background": "Preprocessing maps raw values into standardized values before a model uses them.",
+        "numbers": "If $z=(x-10)/2$ and loss $L=z^2$, then $dL/dx=2z\\cdot(1/2)=z$; at $x=14$, $z=2$, gradient is $2$."
+      },
+      {
+        "title": "Learning-rate schedules inside objectives",
+        "background": "Nested schedules occur when a parameter controls another quantity used by the loss.",
+        "numbers": "If $L(\\eta)=(1-5\\eta)^2$, then $L'=2(1-5\\eta)(-5)$; at $\\eta=0.1$, $L'=-5$."
+      },
+      {
+        "title": "Computer graphics transforms",
+        "background": "Composed transformations change coordinates layer by layer, and sensitivities multiply backward.",
+        "numbers": "If screen coordinate $s=3(2x+1)$, then $ds/dx=3\\cdot2=6$; a $0.1$ move in $x$ moves screen position by $0.6$."
+      }
+    ],
+    "applicationsClose": "The chain rule is the bridge from one local derivative to a whole pipeline: each layer tells how it changes, and multiplication carries the message through.",
+    "takeaways": [
+      "For $y=f(g(x))$, the derivative is $f'(g(x))g'(x)$.",
+      "Always multiply by the inner derivative.",
+      "Backpropagation is the chain rule applied repeatedly through a computation graph."
+    ],
     "prereqs": [
       "math-01-18"
     ]
@@ -933,19 +5016,230 @@
   B({
     "id": "math-01-20",
     "title": "Derivative of exponential functions",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: derivative of exponential functions.",
+    "tagline": "Exponential growth keeps its own shape; the derivative only changes the scale.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The chain rule</i>"
+        "Exponential functions",
+        "Limits: definition and computation",
+        "The chain rule"
       ],
       "leadsTo": [
-        "the next lesson, <i>Derivative of logarithmic functions</i>"
+        "Derivative of logarithmic functions",
+        "growth models",
+        "gradients through softmax"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "The chain rule",
+        "Logarithmic functions",
+        "Linear approximation"
       ]
     },
+    "motivation": "<p>You already know that $e^x$ grows fast. The lovely surprise is that its slope grows in exactly the same way: wherever the graph is tall, it is also steep by the same amount.</p><p>That self-copying behavior is why exponentials are the natural language of compounding, decay, softmax probabilities, and continuous-time dynamics. Once you know the small rule, the chain rule lets you differentiate a whole family of growth curves.</p>",
+    "definition": "<p>The central rule is $$\\dfrac{d}{dx}e^x=e^x.$$ More generally, if $u=u(x)$ is differentiable, then $$\\dfrac{d}{dx}e^{u(x)}=e^{u(x)}u'(x),$$ by the chain rule. For another positive base $a$, write $a^x=e^{x\\ln a}$, so $$\\dfrac{d}{dx}a^x=a^x\\ln a.$$ This derivation is the reason $e$ is special: it is the base whose multiplier $\\ln e$ is $1$.</p><p><b>Assumptions that matter:</b> the base must satisfy $a>0$ for real-valued $a^x$ on all real $x$; the exponent $u(x)$ must be differentiable where you want the derivative; and the chain-rule factor $u'(x)$ is part of the derivative, not an optional decoration.</p>",
+    "worked": {
+      "problem": "Differentiate $f(x)=3e^{2x}-5e^{-x}+4^x$.",
+      "skills": [
+        "exponential derivative",
+        "chain rule",
+        "constant multiple rule"
+      ],
+      "strategy": "Each term is an exponential. Keep the same exponential shape, then multiply by the exponent's derivative or by $\\ln a$.",
+      "steps": [
+        {
+          "do": "Differentiate $3e^{2x}$",
+          "result": "$6e^{2x}$",
+          "why": "$\\dfrac{d}{dx}e^{2x}=2e^{2x}$"
+        },
+        {
+          "do": "Differentiate $-5e^{-x}$",
+          "result": "$5e^{-x}$",
+          "why": "the derivative of $-x$ is $-1$, so the two negatives multiply"
+        },
+        {
+          "do": "Differentiate $4^x$",
+          "result": "$4^x\\ln4$",
+          "why": "$\\dfrac{d}{dx}a^x=a^x\\ln a$"
+        },
+        {
+          "do": "Combine the term derivatives",
+          "result": "$f'(x)=6e^{2x}+5e^{-x}+4^x\\ln4$",
+          "why": "the derivative is linear over sums"
+        }
+      ],
+      "verify": "At $x=0$, the formula gives $6+5+\\ln4\\approx12.386$. A small finite difference with $h=0.001$ gives about $12.399$, close because the curve is smooth and $h$ is small.",
+      "answer": "$f'(x)=6e^{2x}+5e^{-x}+4^x\\ln4$",
+      "connects": "the exponential is its own slope shape; the exponent and the base only scale that shape."
+    },
+    "practice": [
+      {
+        "problem": "Differentiate $y=7e^x-2e^{-3x}$.",
+        "steps": [
+          {
+            "do": "Differentiate $7e^x$",
+            "result": "$7e^x$",
+            "why": "$e^x$ is its own derivative"
+          },
+          {
+            "do": "Differentiate $e^{-3x}$",
+            "result": "$-3e^{-3x}$",
+            "why": "chain rule on the exponent $-3x$"
+          },
+          {
+            "do": "Multiply by $-2$",
+            "result": "$6e^{-3x}$",
+            "why": "constant multiples stay outside"
+          },
+          {
+            "do": "Add the derivatives",
+            "result": "$y'=7e^x+6e^{-3x}$",
+            "why": "differentiate term by term"
+          }
+        ],
+        "answer": "$y'=7e^x+6e^{-3x}$"
+      },
+      {
+        "problem": "Differentiate $y=e^{x^2+1}$.",
+        "steps": [
+          {
+            "do": "Name the exponent",
+            "result": "$u=x^2+1$",
+            "why": "this sets up the chain rule"
+          },
+          {
+            "do": "Differentiate the exponent",
+            "result": "$u'=2x$",
+            "why": "power rule"
+          },
+          {
+            "do": "Apply the exponential chain rule",
+            "result": "$y'=e^{x^2+1}(2x)$",
+            "why": "$\\dfrac{d}{dx}e^u=e^u u'$"
+          },
+          {
+            "do": "Write neatly",
+            "result": "$y'=2xe^{x^2+1}$",
+            "why": "put the scalar factor first"
+          }
+        ],
+        "answer": "$2xe^{x^2+1}$"
+      },
+      {
+        "problem": "Differentiate $y=5^{3x-2}$.",
+        "steps": [
+          {
+            "do": "Use the general base rule",
+            "result": "$\\dfrac{d}{dx}5^{3x-2}=5^{3x-2}\\ln5\\cdot\\dfrac{d}{dx}(3x-2)$",
+            "why": "$a^u=e^{u\\ln a}$"
+          },
+          {
+            "do": "Differentiate the exponent",
+            "result": "$3$",
+            "why": "the slope of $3x-2$ is $3$"
+          },
+          {
+            "do": "Multiply the factors",
+            "result": "$3\\ln5\\,5^{3x-2}$",
+            "why": "chain rule supplies the $3$"
+          },
+          {
+            "do": "Check the sign",
+            "result": "positive",
+            "why": "base $5$ and exponent slope $3$ both increase the function"
+          }
+        ],
+        "answer": "$3\\ln5\\,5^{3x-2}$"
+      },
+      {
+        "problem": "Find the slope of $g(t)=100e^{-0.2t}$ at $t=5$.",
+        "steps": [
+          {
+            "do": "Differentiate the model",
+            "result": "$g'(t)=-20e^{-0.2t}$",
+            "why": "chain rule multiplies by $-0.2$"
+          },
+          {
+            "do": "Substitute $t=5$",
+            "result": "$g'(5)=-20e^{-1}$",
+            "why": "$-0.2\\cdot5=-1$"
+          },
+          {
+            "do": "Approximate $e^{-1}$",
+            "result": "$0.3679$",
+            "why": "standard exponential value"
+          },
+          {
+            "do": "Multiply",
+            "result": "$g'(5)\\approx-7.36$",
+            "why": "$-20\\cdot0.3679=-7.358$"
+          }
+        ],
+        "answer": "The slope is $-20e^{-1}\\approx-7.36$ units per time step."
+      },
+      {
+        "problem": "For softmax scores $z=[1,2]$, compute $\\dfrac{d}{dz_1}e^{z_1}$ at $z_1=1$ and use it in the denominator derivative of $S=e^{z_1}+e^{z_2}$.",
+        "steps": [
+          {
+            "do": "Differentiate $e^{z_1}$ with respect to $z_1$",
+            "result": "$e^{z_1}$",
+            "why": "the exponential keeps its shape"
+          },
+          {
+            "do": "Evaluate at $z_1=1$",
+            "result": "$e\\approx2.718$",
+            "why": "substitute the score"
+          },
+          {
+            "do": "Differentiate $e^{z_2}$ with respect to $z_1$",
+            "result": "$0$",
+            "why": "$z_2$ is held constant"
+          },
+          {
+            "do": "Add the denominator derivatives",
+            "result": "$\\dfrac{dS}{dz_1}=e^{z_1}\\approx2.718$",
+            "why": "only the first score changes"
+          }
+        ],
+        "answer": "$\\dfrac{d}{dz_1}e^{z_1}=e\\approx2.718$ and $\\dfrac{dS}{dz_1}=e\\approx2.718$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Softmax gradients",
+        "background": "Classification models turn scores into probabilities with exponentials; training needs the slope of each exponential score.",
+        "numbers": "For logits $[2,1]$, $e^2=7.389$, $e^1=2.718$, sum $10.107$, so the first probability is $0.731$ and the derivative of $e^{z_1}$ is $7.389$."
+      },
+      {
+        "title": "Continuous growth",
+        "background": "Population, interest, and viral spread models use $N(t)=N_0e^{rt}$ when the instantaneous rate is proportional to the current amount.",
+        "numbers": "$N_0=1000$, $r=0.03$ gives $N'(10)=0.03\\cdot1000e^{0.3}\\approx40.5$ people per year."
+      },
+      {
+        "title": "Exponential decay in regularization schedules",
+        "background": "A learning rate schedule may shrink by an exponential curve so early steps are large and later steps are gentle.",
+        "numbers": "$\\eta(t)=0.1e^{-0.05t}$ has $\\eta'(20)=-0.005e^{-1}\\approx-0.00184$ per epoch."
+      },
+      {
+        "title": "Neural ODE modes",
+        "background": "A linear mode $x'=\\lambda x$ has solution $x(t)=x_0e^{\\lambda t}$, so the derivative reveals whether the mode grows or decays.",
+        "numbers": "With $x_0=2$ and $\\lambda=-4$, $x'(0)=-8$ and $x(1)=2e^{-4}\\approx0.0366$."
+      },
+      {
+        "title": "Half-life models",
+        "background": "Radioactive decay and cached signal freshness often use an exponential curve with negative rate.",
+        "numbers": "For half-life $7$ days, $k=\\ln2/7\\approx0.099$, so $A'(14)=-0.099A_0e^{-1.386}\\approx-0.0248A_0$ per day."
+      },
+      {
+        "title": "Loss curvature intuition",
+        "background": "Exponential losses penalize wrong margins sharply, and the derivative shows how quickly pressure increases.",
+        "numbers": "For $L(m)=e^{-m}$, $L'(m)=-e^{-m}$; at margin $m=-2$, $L'= -e^2\\approx-7.389$, a strong push to improve the margin."
+      }
+    ],
+    "applicationsClose": "The same rule appears in every uniform: an exponential slope is the exponential again, scaled by the rate sitting in the exponent.",
+    "takeaways": [
+      "$\\dfrac{d}{dx}e^x=e^x$ is the special self-copying derivative.",
+      "$\\dfrac{d}{dx}e^{u(x)}=e^{u(x)}u'(x)$, so the chain-rule factor matters.",
+      "$\\dfrac{d}{dx}a^x=a^x\\ln a$ for $a>0$; exponentials power growth, decay, and softmax gradients."
+    ],
     "prereqs": [
       "math-01-19"
     ]
@@ -954,19 +5248,230 @@
   B({
     "id": "math-01-21",
     "title": "Derivative of logarithmic functions",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: derivative of logarithmic functions.",
+    "tagline": "Logs grow slowly, and their slope is the reciprocal hiding inside them.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Derivative of exponential functions</i>"
+        "Logarithmic functions",
+        "Derivative of exponential functions",
+        "The chain rule"
       ],
       "leadsTo": [
-        "the next lesson, <i>Derivatives of trigonometric functions</i>"
+        "Logarithmic differentiation",
+        "L'Hôpital's rule",
+        "log-likelihood gradients"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "Implicit differentiation",
+        "Derivative of exponential functions",
+        "The quotient rule"
       ]
     },
+    "motivation": "<p>A logarithm asks how many powers you need. As the input gets bigger, one extra unit matters less and less, so the graph keeps rising but its slope fades.</p><p>The derivative makes that intuition precise: the slope of $\\ln x$ is $1/x$. That tiny formula is the backbone of log-likelihood, cross-entropy, entropy, and numerical stability tricks.</p>",
+    "definition": "<p>The basic rule is $$\\dfrac{d}{dx}\\ln x=\\dfrac1x,$$ for $x>0$. One clean derivation uses inverse functions: if $y=\\ln x$, then $x=e^y$. Differentiate both sides with respect to $x$: $1=e^y\\dfrac{dy}{dx}=x\\dfrac{dy}{dx}$, so $\\dfrac{dy}{dx}=1/x$. With a differentiable inside function $u(x)>0$, $$\\dfrac{d}{dx}\\ln(u(x))=\\dfrac{u'(x)}{u(x)}.$$ For base $a$, $$\\dfrac{d}{dx}\\log_a x=\\dfrac{1}{x\\ln a}.$$</p><p><b>Assumptions that matter:</b> the log input must be positive; the inside function must be differentiable; and for $\\ln|u|$ the rule $u'/u$ is valid where $u\\ne0$ because the absolute value protects the domain on each side of zero.</p>",
+    "worked": {
+      "problem": "Differentiate $f(x)=\\ln(x^2+1)-3\\log_2 x$.",
+      "skills": [
+        "log derivative",
+        "chain rule",
+        "change of base"
+      ],
+      "strategy": "Natural logs give $u'/u$; other bases add the fixed scale $1/\\ln a$.",
+      "steps": [
+        {
+          "do": "Differentiate $\\ln(x^2+1)$",
+          "result": "$\\dfrac{2x}{x^2+1}$",
+          "why": "the inside derivative is $2x$"
+        },
+        {
+          "do": "Rewrite the base-2 derivative rule",
+          "result": "$\\dfrac{d}{dx}\\log_2x=\\dfrac{1}{x\\ln2}$",
+          "why": "change of base"
+        },
+        {
+          "do": "Multiply by $-3$",
+          "result": "$-\\dfrac{3}{x\\ln2}$",
+          "why": "constant multiple rule"
+        },
+        {
+          "do": "Combine the pieces",
+          "result": "$f'(x)=\\dfrac{2x}{x^2+1}-\\dfrac{3}{x\\ln2}$",
+          "why": "differentiate the difference term by term"
+        }
+      ],
+      "verify": "The formula is defined for $x>0$, matching the $\\log_2x$ domain. At $x=1$, $f'(1)=1-3/\\ln2\\approx-3.328$, so the base-2 log term is pulling downward strongly.",
+      "answer": "$f'(x)=\\dfrac{2x}{x^2+1}-\\dfrac{3}{x\\ln2}$",
+      "connects": "the derivative reads a log as relative change: inside slope divided by inside size."
+    },
+    "practice": [
+      {
+        "problem": "Differentiate $y=\\ln(5x)$.",
+        "steps": [
+          {
+            "do": "Name the inside",
+            "result": "$u=5x$",
+            "why": "logs use $u'/u$"
+          },
+          {
+            "do": "Differentiate the inside",
+            "result": "$u'=5$",
+            "why": "constant multiple rule"
+          },
+          {
+            "do": "Apply the log rule",
+            "result": "$y'=\\dfrac{5}{5x}$",
+            "why": "$\\dfrac{d}{dx}\\ln u=u'/u$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$y'=\\dfrac1x$",
+            "why": "the constant inside the log only shifts the graph"
+          }
+        ],
+        "answer": "$y'=1/x$"
+      },
+      {
+        "problem": "Differentiate $y=\\ln(x^3-4x)$.",
+        "steps": [
+          {
+            "do": "Name the inside",
+            "result": "$u=x^3-4x$",
+            "why": "prepare for $u'/u$"
+          },
+          {
+            "do": "Differentiate the inside",
+            "result": "$u'=3x^2-4$",
+            "why": "power rule"
+          },
+          {
+            "do": "Apply the log derivative",
+            "result": "$y'=\\dfrac{3x^2-4}{x^3-4x}$",
+            "why": "inside slope over inside value"
+          },
+          {
+            "do": "State the domain condition",
+            "result": "$x^3-4x>0$",
+            "why": "the original natural log needs a positive input"
+          }
+        ],
+        "answer": "$y'=\\dfrac{3x^2-4}{x^3-4x}$ where $x^3-4x>0$."
+      },
+      {
+        "problem": "Differentiate $y=\\log_{10}(x^2+9)$.",
+        "steps": [
+          {
+            "do": "Use the base-10 rule",
+            "result": "$y'=\\dfrac{1}{\\ln10}\\cdot\\dfrac{d}{dx}\\ln(x^2+9)$",
+            "why": "change of base"
+          },
+          {
+            "do": "Differentiate the inside",
+            "result": "$2x$",
+            "why": "power rule"
+          },
+          {
+            "do": "Apply $u'/u$",
+            "result": "$\\dfrac{1}{\\ln10}\\cdot\\dfrac{2x}{x^2+9}$",
+            "why": "natural log derivative"
+          },
+          {
+            "do": "Combine factors",
+            "result": "$\\dfrac{2x}{(x^2+9)\\ln10}$",
+            "why": "write as one fraction"
+          }
+        ],
+        "answer": "$\\dfrac{2x}{(x^2+9)\\ln10}$"
+      },
+      {
+        "problem": "Find the slope of $L(p)=-\\ln p$ at $p=0.25$.",
+        "steps": [
+          {
+            "do": "Differentiate the loss",
+            "result": "$L'(p)=-\\dfrac1p$",
+            "why": "negative log rule"
+          },
+          {
+            "do": "Substitute $p=0.25$",
+            "result": "$L'(0.25)=-\\dfrac{1}{0.25}$",
+            "why": "evaluate at the given probability"
+          },
+          {
+            "do": "Divide",
+            "result": "$-4$",
+            "why": "$1/0.25=4$"
+          },
+          {
+            "do": "Interpret the sign",
+            "result": "increasing $p$ lowers the loss",
+            "why": "the slope is negative"
+          }
+        ],
+        "answer": "$L'(0.25)=-4$."
+      },
+      {
+        "problem": "For $J(w)=\\ln(1+e^w)$, compute $J'(w)$.",
+        "steps": [
+          {
+            "do": "Name the inside",
+            "result": "$u=1+e^w$",
+            "why": "the outside function is a log"
+          },
+          {
+            "do": "Differentiate the inside",
+            "result": "$u'=e^w$",
+            "why": "the derivative of $e^w$ is itself"
+          },
+          {
+            "do": "Apply $u'/u$",
+            "result": "$J'(w)=\\dfrac{e^w}{1+e^w}$",
+            "why": "log derivative"
+          },
+          {
+            "do": "Rewrite if desired",
+            "result": "$J'(w)=\\dfrac{1}{1+e^{-w}}$",
+            "why": "divide top and bottom by $e^w$"
+          }
+        ],
+        "answer": "$J'(w)=\\dfrac{e^w}{1+e^w}=\\dfrac{1}{1+e^{-w}}$, the sigmoid."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Cross-entropy",
+        "background": "For a true class probability $p$, cross-entropy uses $-\\ln p$ so confident correct predictions are cheap and bad predictions are expensive.",
+        "numbers": "At $p=0.9$, loss $0.105$ and slope $-1.111$; at $p=0.1$, loss $2.303$ and slope $-10$."
+      },
+      {
+        "title": "Maximum likelihood",
+        "background": "Products of probabilities become sums of logs, and optimization follows the derivative of the log-likelihood.",
+        "numbers": "For Bernoulli success rate $p$ with $7$ successes in $10$ trials, $\\ell(p)=7\\ln p+3\\ln(1-p)$ and $\\ell'(p)=7/p-3/(1-p)$, which is zero at $p=0.7$."
+      },
+      {
+        "title": "Log-sum-exp",
+        "background": "Numerically stable probability code uses logs to avoid overflow while preserving derivatives.",
+        "numbers": "For $x=[1000,999]$, $\\ln(e^{1000}+e^{999})=1000+\\ln(1+e^{-1})\\approx1000.313$ instead of overflowing."
+      },
+      {
+        "title": "Information gain",
+        "background": "Entropy measures surprise with logarithms; derivatives show how entropy changes as probabilities move.",
+        "numbers": "For binary $H(p)=-p\\ln p-(1-p)\\ln(1-p)$, $H'(0.8)=\\ln(0.2/0.8)=\\ln0.25\\approx-1.386$."
+      },
+      {
+        "title": "Feature scaling on log axes",
+        "background": "Heavy-tailed counts are often transformed with $\\ln(1+x)$ so large changes are compressed.",
+        "numbers": "The derivative is $1/(1+x)$; at $x=9$ the slope is $0.1$, while at $x=99$ it is $0.01$."
+      },
+      {
+        "title": "Power-law estimation",
+        "background": "Log transforms turn $y=Cx^a$ into a line, and log derivatives identify the exponent as relative growth.",
+        "numbers": "If $y=x^{1.5}$, then $\\ln y=1.5\\ln x$ and $d\\ln y/d\\ln x=1.5$."
+      }
+    ],
+    "applicationsClose": "A log derivative keeps asking one gentle question: how large is the change compared with the current size?",
+    "takeaways": [
+      "$\\dfrac{d}{dx}\\ln x=1/x$ for $x>0$.",
+      "$\\dfrac{d}{dx}\\ln u=u'/u$; it measures relative change.",
+      "Base-$a$ logs add the scale $1/\\ln a$, and log derivatives drive likelihood and cross-entropy."
+    ],
     "prereqs": [
       "math-01-20"
     ]
@@ -975,19 +5480,230 @@
   B({
     "id": "math-01-22",
     "title": "Derivatives of trigonometric functions",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: derivatives of trigonometric functions.",
+    "tagline": "Sine and cosine trade places as slopes, turning waves into calculus you can read.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Derivative of logarithmic functions</i>"
+        "Trigonometric functions",
+        "Limits: definition and computation",
+        "The chain rule"
       ],
       "leadsTo": [
-        "the next lesson, <i>Implicit differentiation</i>"
+        "Implicit differentiation",
+        "oscillation models",
+        "Fourier analysis"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "The chain rule",
+        "Linear approximation",
+        "Differential equations"
       ]
     },
+    "motivation": "<p>Sine and cosine are the curves of repeating motion. If position follows a sine wave, its slope is not random; it is another wave, shifted in phase.</p><p>This is why trig derivatives feel like a small table but act like a powerful language. They let you compute velocities, optimize periodic signals, and backpropagate through rotations and positional encodings.</p>",
+    "definition": "<p>The core rules are $$\\dfrac{d}{dx}\\sin x=\\cos x,\\qquad \\dfrac{d}{dx}\\cos x=-\\sin x.$$ From these and the quotient rule, $$\\dfrac{d}{dx}\\tan x=\\sec^2x.$$ With an inside function $u(x)$, the chain rule gives $\\dfrac{d}{dx}\\sin u=\\cos(u)u'$, $\\dfrac{d}{dx}\\cos u=-\\sin(u)u'$, and $\\dfrac{d}{dx}\\tan u=\\sec^2(u)u'$. The limit behind the first rule is $\\lim_{h\\to0}\\sin h/h=1$ when angles are in radians.</p><p><b>Assumptions that matter:</b> angles must be measured in radians for these derivative constants to be exactly right; tangent is differentiable only where $\\cos x\\ne0$; and every scaled or shifted angle needs the chain-rule multiplier.</p>",
+    "worked": {
+      "problem": "Differentiate $f(x)=2\\sin(3x)-4\\cos x+\\tan(x^2)$.",
+      "skills": [
+        "trig derivative table",
+        "chain rule",
+        "sum rule"
+      ],
+      "strategy": "Use the table one term at a time, and pay attention to the angle inside each trig function.",
+      "steps": [
+        {
+          "do": "Differentiate $2\\sin(3x)$",
+          "result": "$6\\cos(3x)$",
+          "why": "the inside derivative is $3$"
+        },
+        {
+          "do": "Differentiate $-4\\cos x$",
+          "result": "$4\\sin x$",
+          "why": "the derivative of cosine is negative sine"
+        },
+        {
+          "do": "Differentiate $\\tan(x^2)$",
+          "result": "$2x\\sec^2(x^2)$",
+          "why": "chain rule with inside derivative $2x$"
+        },
+        {
+          "do": "Combine the terms",
+          "result": "$f'(x)=6\\cos(3x)+4\\sin x+2x\\sec^2(x^2)$",
+          "why": "the derivative of a sum is the sum of derivatives"
+        }
+      ],
+      "verify": "At $x=0$, the formula gives $6+0+0=6$. Near zero, $2\\sin(3x)\\approx6x$, while the cosine and tangent terms have zero first-order slope, so the check agrees.",
+      "answer": "$f'(x)=6\\cos(3x)+4\\sin x+2x\\sec^2(x^2)$",
+      "connects": "trig derivatives turn one wave into a shifted wave, with the chain rule setting the frequency scale."
+    },
+    "practice": [
+      {
+        "problem": "Differentiate $y=\\sin x+\\cos x$.",
+        "steps": [
+          {
+            "do": "Differentiate $\\sin x$",
+            "result": "$\\cos x$",
+            "why": "basic sine rule"
+          },
+          {
+            "do": "Differentiate $\\cos x$",
+            "result": "$-\\sin x$",
+            "why": "basic cosine rule"
+          },
+          {
+            "do": "Add the derivatives",
+            "result": "$y'=\\cos x-\\sin x$",
+            "why": "sum rule"
+          },
+          {
+            "do": "Check at $x=0$",
+            "result": "$y'(0)=1$",
+            "why": "the graph starts increasing from $1$"
+          }
+        ],
+        "answer": "$y'=\\cos x-\\sin x$"
+      },
+      {
+        "problem": "Differentiate $y=\\sin(5x)$.",
+        "steps": [
+          {
+            "do": "Name the inside",
+            "result": "$u=5x$",
+            "why": "the angle is not just $x$"
+          },
+          {
+            "do": "Differentiate the inside",
+            "result": "$u'=5$",
+            "why": "constant multiple rule"
+          },
+          {
+            "do": "Apply the sine chain rule",
+            "result": "$y'=\\cos(5x)\\cdot5$",
+            "why": "$\\dfrac{d}{dx}\\sin u=\\cos(u)u'$"
+          },
+          {
+            "do": "Write neatly",
+            "result": "$y'=5\\cos(5x)$",
+            "why": "put the frequency multiplier first"
+          }
+        ],
+        "answer": "$5\\cos(5x)$"
+      },
+      {
+        "problem": "Differentiate $y=x^2\\cos x$.",
+        "steps": [
+          {
+            "do": "Choose the product rule",
+            "result": "$y'=(x^2)'\\cos x+x^2(\\cos x)'$",
+            "why": "two factors depend on $x$"
+          },
+          {
+            "do": "Differentiate $x^2$",
+            "result": "$2x$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate $\\cos x$",
+            "result": "$-\\sin x$",
+            "why": "trig derivative table"
+          },
+          {
+            "do": "Substitute into the product rule",
+            "result": "$y'=2x\\cos x-x^2\\sin x$",
+            "why": "combine the two product pieces"
+          }
+        ],
+        "answer": "$2x\\cos x-x^2\\sin x$"
+      },
+      {
+        "problem": "Find the slope of $s(t)=3\\cos(2t)$ at $t=\\pi/4$.",
+        "steps": [
+          {
+            "do": "Differentiate the position",
+            "result": "$s'(t)=-6\\sin(2t)$",
+            "why": "cosine derivative plus chain rule"
+          },
+          {
+            "do": "Substitute $t=\\pi/4$",
+            "result": "$s'(\\pi/4)=-6\\sin(\\pi/2)$",
+            "why": "$2\\cdot\\pi/4=\\pi/2$"
+          },
+          {
+            "do": "Evaluate the sine",
+            "result": "$\\sin(\\pi/2)=1$",
+            "why": "unit circle value"
+          },
+          {
+            "do": "Multiply",
+            "result": "$-6$",
+            "why": "the object is moving downward fastest there"
+          }
+        ],
+        "answer": "The slope is $-6$."
+      },
+      {
+        "problem": "For a positional encoding component $p(x)=\\sin(x/100)$, compute $p'(50)$.",
+        "steps": [
+          {
+            "do": "Differentiate the inside",
+            "result": "$\\dfrac{d}{dx}(x/100)=1/100$",
+            "why": "constant scale"
+          },
+          {
+            "do": "Apply the sine chain rule",
+            "result": "$p'(x)=\\dfrac{1}{100}\\cos(x/100)$",
+            "why": "frequency controls slope size"
+          },
+          {
+            "do": "Substitute $x=50$",
+            "result": "$p'(50)=0.01\\cos(0.5)$",
+            "why": "$50/100=0.5$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$p'(50)\\approx0.00878$",
+            "why": "$\\cos(0.5)\\approx0.8776$"
+          }
+        ],
+        "answer": "$p'(50)=0.01\\cos(0.5)\\approx0.00878$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Velocity from periodic position",
+        "background": "Physics and animation often store position as a sine or cosine wave; the derivative gives velocity.",
+        "numbers": "If $s(t)=4\\sin(3t)$, then $v(t)=12\\cos(3t)$, so the maximum speed is $12$."
+      },
+      {
+        "title": "Fourier features",
+        "background": "Fourier feature maps feed sine and cosine waves into models so high-frequency patterns become learnable.",
+        "numbers": "For $\\phi(x)=\\sin(20x)$, $\\phi'(x)=20\\cos(20x)$; the frequency $20$ makes gradients twenty times larger than $\\sin x$."
+      },
+      {
+        "title": "Transformer positional encodings",
+        "background": "Sinusoidal encodings let attention compare positions through phase differences.",
+        "numbers": "A component $\\sin(pos/10000^{2i/d})$ has derivative $\\cos(pos/c)/c$; if $c=1000$, the slope magnitude is at most $0.001$."
+      },
+      {
+        "title": "Rotations in graphics",
+        "background": "A 2-D rotation matrix uses sine and cosine, and gradients with respect to the angle support fitting and calibration.",
+        "numbers": "For $x'=x\\cos\\theta-y\\sin\\theta$, $dx'/d\\theta=-x\\sin\\theta-y\\cos\\theta$; with $(x,y)=(2,1)$ and $\\theta=0$, this is $-1$."
+      },
+      {
+        "title": "Signal phase alignment",
+        "background": "To align two waves, optimization follows derivatives of trigonometric phase errors.",
+        "numbers": "For error $E(\\phi)=(\\sin\\phi-0.5)^2$, $E'(\\phi)=2(\\sin\\phi-0.5)\\cos\\phi$; at $\\phi=0$, $E'=-1$."
+      },
+      {
+        "title": "Oscillating learning schedules",
+        "background": "Cosine decay schedules use smooth periodic pieces to reduce learning rates without sharp corners.",
+        "numbers": "$\\eta(t)=0.1(1+\\cos(\\pi t/100))/2$ has $\\eta'(50)=-0.05(\\pi/100)\\sin(\\pi/2)\\approx-0.00157$."
+      }
+    ],
+    "applicationsClose": "Sine and cosine keep passing the slope back and forth; the frequency tells you how fast that handoff happens.",
+    "takeaways": [
+      "$\\dfrac{d}{dx}\\sin x=\\cos x$ and $\\dfrac{d}{dx}\\cos x=-\\sin x$ in radians.",
+      "$\\dfrac{d}{dx}\\tan x=\\sec^2x$ where $\\cos x\\ne0$.",
+      "For $\\sin u$, $\\cos u$, and $\\tan u$, multiply by $u'$ through the chain rule."
+    ],
     "prereqs": [
       "math-01-21"
     ]
@@ -996,19 +5712,240 @@
   B({
     "id": "math-01-23",
     "title": "Implicit differentiation",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: implicit differentiation.",
+    "tagline": "When $y$ will not stand alone, differentiate the relationship it already satisfies.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Derivatives of trigonometric functions</i>"
+        "Derivatives of trigonometric functions",
+        "The chain rule",
+        "The product rule"
       ],
       "leadsTo": [
-        "the next lesson, <i>Logarithmic differentiation</i>"
+        "Logarithmic differentiation",
+        "Related rates",
+        "gradients of constrained equations"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "The chain rule",
+        "Inverse trigonometric functions",
+        "Related rates"
       ]
     },
+    "motivation": "<p>Not every curve is kind enough to be written as $y=f(x)$. A circle, for example, is naturally $x^2+y^2=25$, and solving for $y$ splits it into two halves.</p><p>Implicit differentiation says: keep the relationship whole. Treat $y$ as a function of $x$, differentiate both sides, and every time you differentiate a $y$ expression, attach $dy/dx$ by the chain rule.</p>",
+    "definition": "<p>An equation $F(x,y)=0$ defines $y$ <b>implicitly</b> as a function of $x$ near points where the curve passes the vertical-line test locally. Differentiate both sides with respect to $x$ while remembering that $y=y(x)$. For example, $$\\dfrac{d}{dx}(y^2)=2y\\dfrac{dy}{dx}.$$ After differentiating, solve algebraically for $dy/dx$.</p><p><b>Assumptions that matter:</b> $y$ must be differentiable as a local function of $x$; if the coefficient of $dy/dx$ becomes zero, the tangent may be vertical or the local function description may fail; and every occurrence of $y$ needs the chain-rule factor.</p>",
+    "worked": {
+      "problem": "Find $dy/dx$ for $x^2+xy+y^2=7$.",
+      "skills": [
+        "implicit differentiation",
+        "product rule",
+        "solving for a derivative"
+      ],
+      "strategy": "Differentiate the relationship as written. The mixed term $xy$ needs the product rule, and every derivative of $y$ brings a $dy/dx$.",
+      "steps": [
+        {
+          "do": "Differentiate $x^2$",
+          "result": "$2x$",
+          "why": "power rule"
+        },
+        {
+          "do": "Differentiate $xy$",
+          "result": "$x\\dfrac{dy}{dx}+y$",
+          "why": "product rule with $y=y(x)$"
+        },
+        {
+          "do": "Differentiate $y^2$",
+          "result": "$2y\\dfrac{dy}{dx}$",
+          "why": "chain rule"
+        },
+        {
+          "do": "Differentiate the constant",
+          "result": "$0$",
+          "why": "the derivative of $7$ is zero"
+        },
+        {
+          "do": "Collect derivative terms",
+          "result": "$(x+2y)\\dfrac{dy}{dx}+2x+y=0$",
+          "why": "group the terms containing $dy/dx$"
+        },
+        {
+          "do": "Solve for $dy/dx$",
+          "result": "$\\dfrac{dy}{dx}=-\\dfrac{2x+y}{x+2y}$",
+          "why": "move the non-derivative terms and divide"
+        }
+      ],
+      "verify": "At $(1,2)$, the original equation gives $1+2+4=7$, and the slope is $-(2+2)/(1+4)=-4/5$. A tangent with negative slope fits the upper-right part of the oval.",
+      "answer": "$\\dfrac{dy}{dx}=-\\dfrac{2x+y}{x+2y}$",
+      "connects": "implicit differentiation turns a constraint into a slope formula without splitting the curve into branches."
+    },
+    "practice": [
+      {
+        "problem": "For $x^2+y^2=25$, find $dy/dx$.",
+        "steps": [
+          {
+            "do": "Differentiate $x^2$",
+            "result": "$2x$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate $y^2$",
+            "result": "$2y\\dfrac{dy}{dx}$",
+            "why": "chain rule because $y$ depends on $x$"
+          },
+          {
+            "do": "Differentiate $25$",
+            "result": "$0$",
+            "why": "constant"
+          },
+          {
+            "do": "Solve $2x+2y\\dfrac{dy}{dx}=0$",
+            "result": "$\\dfrac{dy}{dx}=-\\dfrac{x}{y}$",
+            "why": "isolate the derivative"
+          }
+        ],
+        "answer": "$dy/dx=-x/y$"
+      },
+      {
+        "problem": "For $y^3+x=10$, find $dy/dx$.",
+        "steps": [
+          {
+            "do": "Differentiate $y^3$",
+            "result": "$3y^2\\dfrac{dy}{dx}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Differentiate $x$",
+            "result": "$1$",
+            "why": "basic derivative"
+          },
+          {
+            "do": "Differentiate $10$",
+            "result": "$0$",
+            "why": "constant"
+          },
+          {
+            "do": "Solve $3y^2\\dfrac{dy}{dx}+1=0$",
+            "result": "$\\dfrac{dy}{dx}=-\\dfrac{1}{3y^2}$",
+            "why": "move $1$ and divide"
+          }
+        ],
+        "answer": "$dy/dx=-1/(3y^2)$"
+      },
+      {
+        "problem": "For $\\sin y+x^2=1$, find $dy/dx$.",
+        "steps": [
+          {
+            "do": "Differentiate $\\sin y$",
+            "result": "$\\cos y\\dfrac{dy}{dx}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Differentiate $x^2$",
+            "result": "$2x$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate $1$",
+            "result": "$0$",
+            "why": "constant"
+          },
+          {
+            "do": "Solve $\\cos y\\dfrac{dy}{dx}+2x=0$",
+            "result": "$\\dfrac{dy}{dx}=-\\dfrac{2x}{\\cos y}$",
+            "why": "divide by $\\cos y$ where it is nonzero"
+          }
+        ],
+        "answer": "$dy/dx=-2x/\\cos y$"
+      },
+      {
+        "problem": "Find the slope of $x^2+xy+y^2=3$ at $(1,1)$.",
+        "steps": [
+          {
+            "do": "Use the known derivative formula",
+            "result": "$\\dfrac{dy}{dx}=-\\dfrac{2x+y}{x+2y}$",
+            "why": "same pattern as the worked example"
+          },
+          {
+            "do": "Substitute $x=1$",
+            "result": "$-\\dfrac{2+y}{1+2y}$",
+            "why": "evaluate at the point"
+          },
+          {
+            "do": "Substitute $y=1$",
+            "result": "$-\\dfrac{3}{3}$",
+            "why": "finish the point substitution"
+          },
+          {
+            "do": "Simplify",
+            "result": "$-1$",
+            "why": "the numerator and denominator match"
+          }
+        ],
+        "answer": "The slope at $(1,1)$ is $-1$."
+      },
+      {
+        "problem": "For the level set $w^2+b^2=1$ in a two-parameter model, find $db/dw$.",
+        "steps": [
+          {
+            "do": "Treat $b$ as a function of $w$",
+            "result": "$b=b(w)$",
+            "why": "the constraint ties the parameters together"
+          },
+          {
+            "do": "Differentiate $w^2$",
+            "result": "$2w$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate $b^2$",
+            "result": "$2b\\dfrac{db}{dw}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Solve $2w+2b\\dfrac{db}{dw}=0$",
+            "result": "$\\dfrac{db}{dw}=-\\dfrac{w}{b}$",
+            "why": "isolate the allowable tradeoff"
+          }
+        ],
+        "answer": "$db/dw=-w/b$ along the constraint."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Constrained optimization",
+        "background": "Many ML problems optimize while staying on a constraint surface, such as fixed norm or probability sum.",
+        "numbers": "On $w_1^2+w_2^2=1$, the implicit slope is $dw_2/dw_1=-w_1/w_2$; at $(0.6,0.8)$ it is $-0.75$."
+      },
+      {
+        "title": "Decision boundaries",
+        "background": "A classifier boundary can be stored as $F(x,y)=0$ even when it is not easy to solve for $y$.",
+        "numbers": "If $F=x^2+y^2-4=0$, then $dy/dx=-x/y$; at $(1,\\sqrt3)$ the boundary slope is $-1/\\sqrt3\\approx-0.577$."
+      },
+      {
+        "title": "Implicit layers",
+        "background": "Deep equilibrium models define hidden states by fixed-point equations instead of explicit layer stacks.",
+        "numbers": "For $z=\\tanh(az+x)$, implicit differentiation gives $dz/dx=(1-\\tanh^2(az+x))/(1-a(1-\\tanh^2(az+x)))$. If $a=0.5$ and $z=0$, this is $1/(1-0.5)=2$."
+      },
+      {
+        "title": "Calibration curves",
+        "background": "A fitted contour of equal risk may be represented implicitly by two features.",
+        "numbers": "For $x^2+4y^2=8$, $dy/dx=-x/(4y)$; at $(2,1)$ the slope is $-0.5$."
+      },
+      {
+        "title": "Robotics constraints",
+        "background": "A robot arm endpoint often obeys geometric constraints; slopes describe how one joint must move as another changes.",
+        "numbers": "For $x^2+y^2=0.25$, at $(0.3,0.4)$ the slope is $-0.75$, so a $0.01$ increase in $x$ needs about $0.0075$ decrease in $y$."
+      },
+      {
+        "title": "Iso-loss contours",
+        "background": "Near a minimum, equal-loss curves of a quadratic model are ellipses, and implicit slopes show local tradeoffs.",
+        "numbers": "For $L=w^2+9b^2=1$, $db/dw=-w/(9b)$; at $(0.6,0.2)$ the slope is $-0.333$."
+      }
+    ],
+    "applicationsClose": "Implicit differentiation keeps the relationship intact, then reads the local tradeoff from the differentiated constraint.",
+    "takeaways": [
+      "Treat $y$ as $y(x)$ and differentiate both sides of the equation.",
+      "Every derivative of a $y$ expression gets a $dy/dx$ factor from the chain rule.",
+      "Solve the differentiated equation for $dy/dx$, while watching for vertical tangents or zero coefficients."
+    ],
     "prereqs": [
       "math-01-22"
     ]
@@ -1017,19 +5954,245 @@
   B({
     "id": "math-01-24",
     "title": "Logarithmic differentiation",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: logarithmic differentiation.",
+    "tagline": "Take logs first when powers, products, and quotients are tangled together.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Implicit differentiation</i>"
+        "Implicit differentiation",
+        "Derivative of logarithmic functions",
+        "The product rule"
       ],
       "leadsTo": [
-        "the next lesson, <i>Related rates</i>"
+        "Related rates",
+        "elasticity",
+        "gradients of products"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "Derivative of logarithmic functions",
+        "The chain rule",
+        "Implicit differentiation"
       ]
     },
+    "motivation": "<p>Some derivatives look unpleasant because the function is built from many multiplying pieces, or because the variable appears in both the base and the exponent. If you attack directly, the algebra can sprawl.</p><p>Logarithmic differentiation is a calm detour: take $\\ln$ of both sides, use log rules to unpack the expression, differentiate implicitly, then multiply back by the original function.</p>",
+    "definition": "<p>For a positive differentiable function $y=f(x)$, take logs: $\\ln y=\\ln f(x)$. Differentiate implicitly to get $$\\dfrac{y'}{y}=\\dfrac{d}{dx}\\ln f(x),$$ so $$y'=f(x)\\dfrac{d}{dx}\\ln f(x).$$ The method is especially useful for products, quotients, powers, and expressions like $x^x$.</p><p><b>Assumptions that matter:</b> the function should be positive on the interval where you take $\\ln y$; if signs vary, use $\\ln|y|$ where $y\\ne0$; and after differentiating the log equation, remember to multiply by $y$ or by the original $f(x)$.</p>",
+    "worked": {
+      "problem": "Differentiate $y=x^x$ for $x>0$.",
+      "skills": [
+        "logarithmic differentiation",
+        "implicit differentiation",
+        "log derivative"
+      ],
+      "strategy": "The variable is both base and exponent. Take logs so the exponent comes down where ordinary derivative rules can reach it.",
+      "steps": [
+        {
+          "do": "Take natural logs",
+          "result": "$\\ln y=x\\ln x$",
+          "why": "log rules bring the exponent down"
+        },
+        {
+          "do": "Differentiate the left side",
+          "result": "$\\dfrac{y'}{y}$",
+          "why": "implicit derivative of $\\ln y$"
+        },
+        {
+          "do": "Differentiate $x\\ln x$",
+          "result": "$\\ln x+1$",
+          "why": "product rule"
+        },
+        {
+          "do": "Set the derivatives equal",
+          "result": "$\\dfrac{y'}{y}=\\ln x+1$",
+          "why": "both sides came from the same equation"
+        },
+        {
+          "do": "Multiply by $y$",
+          "result": "$y'=y(\\ln x+1)$",
+          "why": "isolate $y'$"
+        },
+        {
+          "do": "Substitute $y=x^x$",
+          "result": "$y'=x^x(\\ln x+1)$",
+          "why": "return to the original variable"
+        }
+      ],
+      "verify": "At $x=1$, the formula gives $1^1(0+1)=1$. Near $x=1$, $x^x$ rises with slope about $1$, which matches the local behavior.",
+      "answer": "$\\dfrac{d}{dx}x^x=x^x(\\ln x+1)$",
+      "connects": "logs turn exponent complexity into multiplication and addition, then implicit differentiation finishes the job."
+    },
+    "practice": [
+      {
+        "problem": "Differentiate $y=(x^2+1)^5$ using logarithmic differentiation.",
+        "steps": [
+          {
+            "do": "Take logs",
+            "result": "$\\ln y=5\\ln(x^2+1)$",
+            "why": "bring down the power"
+          },
+          {
+            "do": "Differentiate the left side",
+            "result": "$y'/y$",
+            "why": "implicit log derivative"
+          },
+          {
+            "do": "Differentiate the right side",
+            "result": "$5\\cdot\\dfrac{2x}{x^2+1}$",
+            "why": "chain rule inside the log"
+          },
+          {
+            "do": "Multiply by $y$",
+            "result": "$y'=y\\dfrac{10x}{x^2+1}$",
+            "why": "isolate the derivative"
+          },
+          {
+            "do": "Substitute $y$",
+            "result": "$y'=10x(x^2+1)^4$",
+            "why": "one factor cancels with the denominator"
+          }
+        ],
+        "answer": "$10x(x^2+1)^4$"
+      },
+      {
+        "problem": "Differentiate $y=x^3\\sqrt{x+1}$ for $x>0$.",
+        "steps": [
+          {
+            "do": "Take logs",
+            "result": "$\\ln y=3\\ln x+\\tfrac12\\ln(x+1)$",
+            "why": "product becomes sum and square root becomes power $1/2$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$\\dfrac{y'}{y}=\\dfrac3x+\\dfrac{1}{2(x+1)}$",
+            "why": "log derivative of each term"
+          },
+          {
+            "do": "Multiply by $y$",
+            "result": "$y'=x^3\\sqrt{x+1}\\left(\\dfrac3x+\\dfrac{1}{2(x+1)}\\right)$",
+            "why": "return from relative change to ordinary change"
+          },
+          {
+            "do": "Leave factored",
+            "result": "$y'=x^3\\sqrt{x+1}\\left(\\dfrac3x+\\dfrac{1}{2(x+1)}\\right)$",
+            "why": "the factored form is readable and correct"
+          }
+        ],
+        "answer": "$x^3\\sqrt{x+1}\\left(\\dfrac3x+\\dfrac{1}{2(x+1)}\\right)$"
+      },
+      {
+        "problem": "Differentiate $y=\\dfrac{(x+2)^4}{(x^2+1)^3}$ where it is positive.",
+        "steps": [
+          {
+            "do": "Take logs",
+            "result": "$\\ln y=4\\ln(x+2)-3\\ln(x^2+1)$",
+            "why": "quotient becomes subtraction"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$\\dfrac{y'}{y}=\\dfrac{4}{x+2}-\\dfrac{6x}{x^2+1}$",
+            "why": "log derivative term by term"
+          },
+          {
+            "do": "Multiply by $y$",
+            "result": "$y'=\\dfrac{(x+2)^4}{(x^2+1)^3}\\left(\\dfrac{4}{x+2}-\\dfrac{6x}{x^2+1}\\right)$",
+            "why": "isolate $y'$"
+          },
+          {
+            "do": "State the interval condition",
+            "result": "$x>-2$ for the displayed positive form",
+            "why": "the fourth power is nonnegative and the log step used positivity"
+          }
+        ],
+        "answer": "$\\dfrac{(x+2)^4}{(x^2+1)^3}\\left(\\dfrac{4}{x+2}-\\dfrac{6x}{x^2+1}\\right)$"
+      },
+      {
+        "problem": "Differentiate $y=(\\sin x)^x$ for $\\sin x>0$.",
+        "steps": [
+          {
+            "do": "Take logs",
+            "result": "$\\ln y=x\\ln(\\sin x)$",
+            "why": "the exponent contains $x$"
+          },
+          {
+            "do": "Differentiate the right side",
+            "result": "$\\ln(\\sin x)+x\\dfrac{\\cos x}{\\sin x}$",
+            "why": "product rule and log chain rule"
+          },
+          {
+            "do": "Write the trig ratio",
+            "result": "$\\ln(\\sin x)+x\\cot x$",
+            "why": "$\\cos x/\\sin x=\\cot x$"
+          },
+          {
+            "do": "Multiply by $y$",
+            "result": "$y'=(\\sin x)^x(\\ln(\\sin x)+x\\cot x)$",
+            "why": "return to the original function"
+          }
+        ],
+        "answer": "$(\\sin x)^x(\\ln(\\sin x)+x\\cot x)$"
+      },
+      {
+        "problem": "For a product of probabilities $P(w)=p_1(w)p_2(w)p_3(w)$, show the derivative in log form.",
+        "steps": [
+          {
+            "do": "Take logs",
+            "result": "$\\ln P=\\ln p_1+\\ln p_2+\\ln p_3$",
+            "why": "products become sums"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$\\dfrac{P'}{P}=\\dfrac{p_1'}{p_1}+\\dfrac{p_2'}{p_2}+\\dfrac{p_3'}{p_3}$",
+            "why": "each log derivative is relative change"
+          },
+          {
+            "do": "Multiply by $P$",
+            "result": "$P'=P\\left(\\dfrac{p_1'}{p_1}+\\dfrac{p_2'}{p_2}+\\dfrac{p_3'}{p_3}\\right)$",
+            "why": "convert back to the ordinary derivative"
+          },
+          {
+            "do": "Interpret",
+            "result": "the product's relative slope is the sum of relative slopes",
+            "why": "this is why logs stabilize likelihood calculations"
+          }
+        ],
+        "answer": "$P'=P\\left(p_1'/p_1+p_2'/p_2+p_3'/p_3\\right)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Likelihood products",
+        "background": "Independent data likelihoods multiply many terms; logs turn the derivative into a manageable sum.",
+        "numbers": "If $P=p_1p_2p_3$ with relative slopes $0.2,-0.1,0.4$, then $P'/P=0.5$, so when $P=0.06$, $P'=0.03$."
+      },
+      {
+        "title": "Elasticity",
+        "background": "Economics and ML monitoring often care about percent change rather than raw change; log derivatives measure that directly.",
+        "numbers": "For demand $D(p)=100p^{-2}$, $d\\ln D/d\\ln p=-2$, so a $1\\%$ price increase predicts about a $2\\%$ demand drop."
+      },
+      {
+        "title": "Gradient of geometric means",
+        "background": "Geometric means are products under a root, common when combining multiplicative scores.",
+        "numbers": "For $G=(abc)^{1/3}$, $G'/G=(1/3)(a'/a+b'/b+c'/c)$; with relative slopes $0.3,0.0,-0.6$, $G'/G=-0.1$."
+      },
+      {
+        "title": "Variable exponent models",
+        "background": "Expressions like $x^x$ and $a(x)^{b(x)}$ appear in scaling laws and adaptive penalties.",
+        "numbers": "$d(x^x)/dx=x^x(\\ln x+1)$; at $x=2$, the slope is $4(1.693)=6.772$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Computing gradients of products directly can underflow; log differentiation keeps intermediate values ordinary.",
+        "numbers": "A product of $100$ factors of $0.9$ is $0.9^{100}=0.0000266$, but the log is $100\\ln0.9=-10.536$."
+      },
+      {
+        "title": "Multiplicative feature interactions",
+        "background": "Some models combine positive features multiplicatively, and log derivatives reveal which factor drives sensitivity.",
+        "numbers": "For score $s=x^2z^3$, $s_x/s=2/x$; at $x=4$, a one-unit increase contributes relative slope $0.5$."
+      }
+    ],
+    "applicationsClose": "When multiplication makes a derivative noisy, logs make the same structure quiet: add relative changes, then multiply back.",
+    "takeaways": [
+      "Take $\\ln$ of both sides, use log rules, differentiate implicitly, then multiply by the original function.",
+      "The method shines for products, quotients, powers, and variable exponents like $x^x$.",
+      "Log differentiation turns product sensitivity into sums of relative sensitivities."
+    ],
     "prereqs": [
       "math-01-23"
     ]
@@ -1038,19 +6201,240 @@
   B({
     "id": "math-01-25",
     "title": "Related rates",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: related rates.",
+    "tagline": "When quantities are tied together, their rates are tied together too.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Logarithmic differentiation</i>"
+        "Logarithmic differentiation",
+        "Implicit differentiation",
+        "The chain rule"
       ],
       "leadsTo": [
-        "the next lesson, <i>Linear approximation</i>"
+        "Linear approximation",
+        "optimization",
+        "dynamical systems"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "Implicit differentiation",
+        "Differentials",
+        "Linear approximation"
       ]
     },
+    "motivation": "<p>Real systems rarely change one variable at a time. A balloon's radius grows and its volume changes; a camera's distance changes and the image size changes; a training metric moves and the alert threshold moves with it.</p><p>Related rates are the chain rule with units attached. Write an equation connecting the quantities, differentiate with respect to time, and use the known rate to find the unknown rate.</p>",
+    "definition": "<p>A <b>related rates</b> problem starts with a relationship such as $V=\\frac43\\pi r^3$, where each variable depends on time $t$. Differentiate both sides with respect to $t$: $$\\dfrac{dV}{dt}=4\\pi r^2\\dfrac{dr}{dt}.$$ Then substitute the values at the instant of interest. The equation connects rates, not just values.</p><p><b>Assumptions that matter:</b> variables must be differentiable functions of time; substitute numerical values after differentiating unless the relationship is linear; units must match; and rates can be negative when a quantity is decreasing.</p>",
+    "worked": {
+      "problem": "Air enters a spherical balloon at $100\\text{ cm}^3/\\text{s}$. How fast is the radius increasing when $r=5\\text{ cm}$?",
+      "skills": [
+        "chain rule",
+        "sphere volume",
+        "unit interpretation"
+      ],
+      "strategy": "Volume and radius are linked by geometry. Differentiate the volume formula with respect to time, then plug in the instant $r=5$.",
+      "steps": [
+        {
+          "do": "Write the relationship",
+          "result": "$V=\\dfrac43\\pi r^3$",
+          "why": "volume of a sphere"
+        },
+        {
+          "do": "Differentiate with respect to time",
+          "result": "$\\dfrac{dV}{dt}=4\\pi r^2\\dfrac{dr}{dt}$",
+          "why": "chain rule on $r^3$"
+        },
+        {
+          "do": "Substitute $dV/dt=100$",
+          "result": "$100=4\\pi r^2\\dfrac{dr}{dt}$",
+          "why": "given inflow rate"
+        },
+        {
+          "do": "Substitute $r=5$",
+          "result": "$100=100\\pi\\dfrac{dr}{dt}$",
+          "why": "$4\\pi\\cdot25=100\\pi$"
+        },
+        {
+          "do": "Solve for $dr/dt$",
+          "result": "$\\dfrac{dr}{dt}=\\dfrac1\\pi$",
+          "why": "divide by $100\\pi$"
+        }
+      ],
+      "verify": "The units are $(\\text{cm}^3/\\text{s})/(\\text{cm}^2)=\\text{cm}/\\text{s}$, and the rate is positive because the balloon is expanding.",
+      "answer": "$dr/dt=1/\\pi\\approx0.318\\text{ cm/s}$",
+      "connects": "the chain rule turns a geometric relationship into a relationship between rates."
+    },
+    "practice": [
+      {
+        "problem": "A square's side grows at $2$ cm/s. How fast is its area changing when the side is $6$ cm?",
+        "steps": [
+          {
+            "do": "Write the area formula",
+            "result": "$A=s^2$",
+            "why": "area of a square"
+          },
+          {
+            "do": "Differentiate with respect to time",
+            "result": "$\\dfrac{dA}{dt}=2s\\dfrac{ds}{dt}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Substitute $s=6$",
+            "result": "$\\dfrac{dA}{dt}=12\\dfrac{ds}{dt}$",
+            "why": "evaluate at the instant"
+          },
+          {
+            "do": "Substitute $ds/dt=2$",
+            "result": "$\\dfrac{dA}{dt}=24$",
+            "why": "given side rate"
+          }
+        ],
+        "answer": "$24\\text{ cm}^2/\\text{s}$"
+      },
+      {
+        "problem": "A circle's radius decreases at $0.5$ m/s. How fast is area changing when $r=4$ m?",
+        "steps": [
+          {
+            "do": "Write the area formula",
+            "result": "$A=\\pi r^2$",
+            "why": "area of a circle"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$\\dfrac{dA}{dt}=2\\pi r\\dfrac{dr}{dt}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Substitute $r=4$",
+            "result": "$\\dfrac{dA}{dt}=8\\pi\\dfrac{dr}{dt}$",
+            "why": "instant value"
+          },
+          {
+            "do": "Substitute $dr/dt=-0.5$",
+            "result": "$\\dfrac{dA}{dt}=-4\\pi$",
+            "why": "radius is decreasing"
+          }
+        ],
+        "answer": "$-4\\pi\\text{ m}^2/\\text{s}$"
+      },
+      {
+        "problem": "A ladder $10$ ft long slides down a wall. If the bottom moves away at $3$ ft/s, how fast is the top moving when the bottom is $6$ ft from the wall?",
+        "steps": [
+          {
+            "do": "Write the constraint",
+            "result": "$x^2+y^2=100$",
+            "why": "Pythagorean theorem"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$2x\\dfrac{dx}{dt}+2y\\dfrac{dy}{dt}=0$",
+            "why": "both distances depend on time"
+          },
+          {
+            "do": "Find $y$ when $x=6$",
+            "result": "$y=8$",
+            "why": "$6^2+y^2=100$"
+          },
+          {
+            "do": "Substitute known values",
+            "result": "$2(6)(3)+2(8)\\dfrac{dy}{dt}=0$",
+            "why": "use the instant and given rate"
+          },
+          {
+            "do": "Solve",
+            "result": "$\\dfrac{dy}{dt}=-\\dfrac{36}{16}=-2.25$",
+            "why": "the top moves downward"
+          }
+        ],
+        "answer": "$dy/dt=-2.25$ ft/s."
+      },
+      {
+        "problem": "For $z=x^2y$, suppose $dx/dt=1$, $dy/dt=-2$, $x=3$, and $y=4$. Find $dz/dt$.",
+        "steps": [
+          {
+            "do": "Differentiate $z=x^2y$",
+            "result": "$\\dfrac{dz}{dt}=2x\\dfrac{dx}{dt}y+x^2\\dfrac{dy}{dt}$",
+            "why": "product rule and chain rule"
+          },
+          {
+            "do": "Substitute $x=3$",
+            "result": "$\\dfrac{dz}{dt}=6\\dfrac{dx}{dt}y+9\\dfrac{dy}{dt}$",
+            "why": "evaluate powers of $x$"
+          },
+          {
+            "do": "Substitute $y=4$",
+            "result": "$\\dfrac{dz}{dt}=24\\dfrac{dx}{dt}+9\\dfrac{dy}{dt}$",
+            "why": "use the current value"
+          },
+          {
+            "do": "Substitute the rates",
+            "result": "$24(1)+9(-2)=6$",
+            "why": "combine the two changing effects"
+          }
+        ],
+        "answer": "$dz/dt=6$"
+      },
+      {
+        "problem": "A validation loss $L(w)=w^2$ changes because $w(t)$ changes. If $w=0.8$ and $dw/dt=-0.05$ per epoch, find $dL/dt$.",
+        "steps": [
+          {
+            "do": "Write the relationship",
+            "result": "$L=w^2$",
+            "why": "loss as a function of the parameter"
+          },
+          {
+            "do": "Differentiate with respect to epoch",
+            "result": "$\\dfrac{dL}{dt}=2w\\dfrac{dw}{dt}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Substitute $w=0.8$",
+            "result": "$\\dfrac{dL}{dt}=1.6\\dfrac{dw}{dt}$",
+            "why": "current parameter value"
+          },
+          {
+            "do": "Substitute $dw/dt=-0.05$",
+            "result": "$\\dfrac{dL}{dt}=-0.08$",
+            "why": "parameter is moving downward"
+          }
+        ],
+        "answer": "$dL/dt=-0.08$ loss units per epoch."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Training dynamics",
+        "background": "A metric changes because parameters change; related rates track how parameter motion affects loss.",
+        "numbers": "If $L=w^2$ and $dw/dt=-0.01$ at $w=5$, then $dL/dt=2(5)(-0.01)=-0.1$ per step."
+      },
+      {
+        "title": "Computer vision scaling",
+        "background": "Object image area changes as camera distance changes, and the rate matters for tracking.",
+        "numbers": "If image height $h=200/d$ pixels and $dd/dt=-0.5$ m/s at $d=10$, then $dh/dt=-200d^{-2}dd/dt=1$ pixel/s."
+      },
+      {
+        "title": "Network throughput",
+        "background": "Queue delay depends on utilization, so traffic changes produce amplified delay changes near capacity.",
+        "numbers": "For $W=1/(\\mu-\\lambda)$ with $\\mu=100$ and $d\\lambda/dt=2$, at $\\lambda=90$, $dW/dt=(\\mu-\\lambda)^{-2}d\\lambda/dt=0.02$ s/s."
+      },
+      {
+        "title": "Uncertainty propagation over time",
+        "background": "Sensor error variances can depend on distance, and related rates quantify how fast uncertainty grows.",
+        "numbers": "If $\\sigma^2=0.01d^2$ and $dd/dt=3$ at $d=20$, then $d\\sigma^2/dt=0.02(20)(3)=1.2$ units per second."
+      },
+      {
+        "title": "A/B experiment monitoring",
+        "background": "A ratio metric changes because numerator and denominator both change.",
+        "numbers": "For CTR $c=C/I$, $dC/dt=30$, $dI/dt=1000$, $C=600$, $I=20000$: $dc/dt=(30I-600000)/I^2=0$, so CTR is steady."
+      },
+      {
+        "title": "Robotics geometry",
+        "background": "A robot endpoint constrained by a link length has related horizontal and vertical velocities.",
+        "numbers": "On $x^2+y^2=1$, with $x=0.6$, $y=0.8$, and $dx/dt=0.1$, $dy/dt=-(0.6/0.8)(0.1)=-0.075$."
+      }
+    ],
+    "applicationsClose": "Related rates are just the chain rule with a clock attached: values are connected, so their rates must be connected too.",
+    "takeaways": [
+      "Write an equation connecting the quantities before differentiating.",
+      "Differentiate with respect to time and attach a rate to each changing variable.",
+      "Substitute values after differentiating, keep units, and let negative signs carry direction."
+    ],
     "prereqs": [
       "math-01-24"
     ]
@@ -1059,19 +6443,265 @@
   B({
     "id": "math-01-26",
     "title": "Linear approximation",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: linear approximation.",
+    "tagline": "Zoom in far enough, and a smooth curve behaves like its tangent line.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Related rates</i>"
+        "Related rates",
+        "The derivative — definition and meaning",
+        "The point-slope form of a line"
       ],
       "leadsTo": [
-        "the next lesson, <i>Differentials</i>"
+        "Differentials",
+        "Taylor series",
+        "gradient descent intuition"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "Differentials",
+        "The derivative",
+        "Taylor series"
       ]
     },
+    "motivation": "<p>Curves can be hard, but near one point a smooth curve is almost a line. That is not a trick; it is the local meaning of the derivative.</p><p>Linear approximation lets you make quick estimates without recomputing the whole function. It is the first-order version of the idea behind Taylor series, gradient descent steps, and local model explanations.</p>",
+    "definition": "<p>If $f$ is differentiable at $a$, the <b>linear approximation</b> near $a$ is $$L(x)=f(a)+f'(a)(x-a).$$ It is the tangent line used as a local stand-in for the curve. The derivation comes from the derivative definition: for $x$ close to $a$, $\\dfrac{f(x)-f(a)}{x-a}\\approx f'(a)$, so $f(x)\\approx f(a)+f'(a)(x-a)$.</p><p><b>Assumptions that matter:</b> the function must be differentiable at the base point; the estimate is local, so it gets worse as $x$ moves away; and strong curvature means the linear estimate can drift quickly.</p>",
+    "worked": {
+      "problem": "Use linear approximation at $a=4$ to estimate $\\sqrt{4.1}$.",
+      "skills": [
+        "tangent line",
+        "derivative evaluation",
+        "approximation"
+      ],
+      "strategy": "Use the nearby easy point $4$, where the square root is exact, then move a small distance $0.1$ along the tangent line.",
+      "steps": [
+        {
+          "do": "Define the function",
+          "result": "$f(x)=\\sqrt{x}$",
+          "why": "we want a square-root estimate"
+        },
+        {
+          "do": "Evaluate at the base point",
+          "result": "$f(4)=2$",
+          "why": "$4$ has an exact square root"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$f'(x)=\\dfrac{1}{2\\sqrt{x}}$",
+          "why": "power rule for $x^{1/2}$"
+        },
+        {
+          "do": "Evaluate the slope",
+          "result": "$f'(4)=\\dfrac14$",
+          "why": "$2\\sqrt4=4$"
+        },
+        {
+          "do": "Build the tangent line",
+          "result": "$L(x)=2+\\dfrac14(x-4)$",
+          "why": "use $f(a)+f'(a)(x-a)$"
+        },
+        {
+          "do": "Substitute $x=4.1$",
+          "result": "$L(4.1)=2+0.025=2.025$",
+          "why": "the change from $4$ is $0.1$"
+        }
+      ],
+      "verify": "The true value is $\\sqrt{4.1}\\approx2.02485$, so the tangent-line estimate $2.025$ is very close because $4.1$ is near $4$.",
+      "answer": "$\\sqrt{4.1}\\approx2.025$",
+      "connects": "a derivative converts a small input change into a small output change."
+    },
+    "practice": [
+      {
+        "problem": "Estimate $\\sqrt{9.2}$ using $a=9$.",
+        "steps": [
+          {
+            "do": "Choose the function",
+            "result": "$f(x)=\\sqrt{x}$",
+            "why": "we are estimating a square root"
+          },
+          {
+            "do": "Evaluate the base value",
+            "result": "$f(9)=3$",
+            "why": "exact square root"
+          },
+          {
+            "do": "Evaluate the derivative",
+            "result": "$f'(9)=\\dfrac{1}{2\\sqrt9}=\\dfrac16$",
+            "why": "square-root derivative"
+          },
+          {
+            "do": "Compute the input change",
+            "result": "$9.2-9=0.2$",
+            "why": "distance from the base point"
+          },
+          {
+            "do": "Apply the linear approximation",
+            "result": "$3+\\dfrac16(0.2)=3.0333$",
+            "why": "base value plus slope times change"
+          }
+        ],
+        "answer": "$\\sqrt{9.2}\\approx3.0333$"
+      },
+      {
+        "problem": "Estimate $e^{0.05}$ using $a=0$.",
+        "steps": [
+          {
+            "do": "Choose the function",
+            "result": "$f(x)=e^x$",
+            "why": "we are estimating an exponential"
+          },
+          {
+            "do": "Evaluate the base value",
+            "result": "$f(0)=1$",
+            "why": "$e^0=1$"
+          },
+          {
+            "do": "Evaluate the slope",
+            "result": "$f'(0)=1$",
+            "why": "the derivative of $e^x$ is $e^x$"
+          },
+          {
+            "do": "Build $L(x)$",
+            "result": "$L(x)=1+x$",
+            "why": "tangent line at zero"
+          },
+          {
+            "do": "Substitute $x=0.05$",
+            "result": "$1.05$",
+            "why": "small positive input change"
+          }
+        ],
+        "answer": "$e^{0.05}\\approx1.05$"
+      },
+      {
+        "problem": "Estimate $\\ln(1.1)$ using $a=1$.",
+        "steps": [
+          {
+            "do": "Choose the function",
+            "result": "$f(x)=\\ln x$",
+            "why": "we need a log estimate"
+          },
+          {
+            "do": "Evaluate at $1$",
+            "result": "$f(1)=0$",
+            "why": "$\\ln1=0$"
+          },
+          {
+            "do": "Evaluate the slope",
+            "result": "$f'(1)=1$",
+            "why": "$f'(x)=1/x$"
+          },
+          {
+            "do": "Build the line",
+            "result": "$L(x)=x-1$",
+            "why": "base value $0$ plus slope $1$"
+          },
+          {
+            "do": "Substitute $1.1$",
+            "result": "$0.1$",
+            "why": "the input is $0.1$ above the base"
+          }
+        ],
+        "answer": "$\\ln(1.1)\\approx0.1$"
+      },
+      {
+        "problem": "For $f(x)=x^3$, approximate $f(2.02)$ using $a=2$.",
+        "steps": [
+          {
+            "do": "Evaluate the base value",
+            "result": "$f(2)=8$",
+            "why": "cube the base point"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=3x^2$",
+            "why": "power rule"
+          },
+          {
+            "do": "Evaluate the slope",
+            "result": "$f'(2)=12$",
+            "why": "$3\\cdot4=12$"
+          },
+          {
+            "do": "Compute the input change",
+            "result": "$2.02-2=0.02$",
+            "why": "small movement from the base"
+          },
+          {
+            "do": "Apply the tangent line",
+            "result": "$8+12(0.02)=8.24$",
+            "why": "linear approximation"
+          }
+        ],
+        "answer": "$f(2.02)\\approx8.24$"
+      },
+      {
+        "problem": "A model score is $s(w)=\\sigma(w)$ with $\\sigma(0)=0.5$ and $\\sigma'(0)=0.25$. Approximate $s(0.08)$.",
+        "steps": [
+          {
+            "do": "Identify the base point",
+            "result": "$a=0$",
+            "why": "the value and derivative are given there"
+          },
+          {
+            "do": "Write the linear approximation",
+            "result": "$L(w)=0.5+0.25(w-0)$",
+            "why": "use value plus slope times change"
+          },
+          {
+            "do": "Substitute $w=0.08$",
+            "result": "$L(0.08)=0.5+0.25(0.08)$",
+            "why": "small positive parameter move"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.25(0.08)=0.02$",
+            "why": "slope times change"
+          },
+          {
+            "do": "Add",
+            "result": "$0.52$",
+            "why": "estimated new score"
+          }
+        ],
+        "answer": "$s(0.08)\\approx0.52$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Gradient descent intuition",
+        "background": "A small parameter step changes loss approximately by slope times step.",
+        "numbers": "If $L'(w)=3$ and $\\Delta w=-0.01$, then $\\Delta L\\approx3(-0.01)=-0.03$."
+      },
+      {
+        "title": "Model explainability",
+        "background": "Local linear explanations approximate a nonlinear model near one input.",
+        "numbers": "If a feature slope is $0.8$ and the feature is $0.5$ above baseline, the local contribution is about $0.4$ score units."
+      },
+      {
+        "title": "Fast square-root estimates",
+        "background": "Numerical code often starts with a cheap local estimate before refining.",
+        "numbers": "$\\sqrt{101}$ near $100$ is $10+(1/(20))(1)=10.05$; the true value is about $10.0499$."
+      },
+      {
+        "title": "Sensor calibration",
+        "background": "Around an operating point, a nonlinear sensor curve can be treated as linear for small changes.",
+        "numbers": "If voltage slope is $0.02$ V/C at $25$ C, a $3$ C increase gives about $0.06$ V increase."
+      },
+      {
+        "title": "Probabilities near a logit",
+        "background": "The sigmoid is nonlinear, but near zero it is almost a line.",
+        "numbers": "$\\sigma(0)=0.5$, $\\sigma'(0)=0.25$, so $\\sigma(0.2)\\approx0.55$; the true value is about $0.5498$."
+      },
+      {
+        "title": "Compiler and graphics approximations",
+        "background": "Fast math libraries use polynomial and linear local approximations where exact functions are expensive.",
+        "numbers": "For $\\sin(0.03)$, the linear approximation at $0$ gives $0.03$; the true value is $0.0299955$."
+      }
+    ],
+    "applicationsClose": "Linear approximation is the derivative made practical: for a small move, slope times distance is usually the first thing worth knowing.",
+    "takeaways": [
+      "The tangent-line approximation is $L(x)=f(a)+f'(a)(x-a)$.",
+      "It works locally for differentiable functions and gets less reliable far from the base point.",
+      "First-order thinking powers gradient steps, quick estimates, and local explanations."
+    ],
     "prereqs": [
       "math-01-25"
     ]
@@ -1080,19 +6710,250 @@
   B({
     "id": "math-01-27",
     "title": "Differentials",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: differentials.",
+    "tagline": "A differential packages the tiny output change predicted by the derivative.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Linear approximation</i>"
+        "Linear approximation",
+        "The derivative — definition and meaning",
+        "Related rates"
       ],
       "leadsTo": [
-        "the next lesson, <i>Indeterminate forms</i>"
+        "Indeterminate forms",
+        "Taylor series",
+        "error propagation"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "Linear approximation",
+        "Related rates",
+        "Taylor series"
       ]
     },
+    "motivation": "<p>Linear approximation says a small input change produces an output change of about slope times input change. Differentials give that sentence a compact notation.</p><p>Write $dy=f'(x)dx$. The symbol $dx$ is a small input change, and $dy$ is the tangent-line prediction for the output change. This is the language of error propagation, sensitivity, and continuous approximations.</p>",
+    "definition": "<p>For a differentiable function $y=f(x)$, the <b>differential</b> is $$dy=f'(x)\\,dx.$$ It comes directly from $f(x+\\Delta x)\\approx f(x)+f'(x)\\Delta x$: the predicted change is $dy=f'(x)dx$. The actual change is $\\Delta y=f(x+\\Delta x)-f(x)$; for small $dx=\\Delta x$, $dy$ is a close approximation.</p><p><b>Assumptions that matter:</b> the function must be differentiable at the point; $dx$ should be small for $dy$ to approximate $\\Delta y$ well; and $dy$ is the linear prediction, not automatically the exact output change.</p>",
+    "worked": {
+      "problem": "Use differentials to approximate the change in $y=\\sqrt{x}$ when $x$ goes from $25$ to $25.4$.",
+      "skills": [
+        "differentials",
+        "square-root derivative",
+        "error estimate"
+      ],
+      "strategy": "Treat the input change as $dx=0.4$ and compute the tangent-line output change $dy=f'(25)dx$.",
+      "steps": [
+        {
+          "do": "Identify the function",
+          "result": "$y=\\sqrt{x}$",
+          "why": "we want a square-root change"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$dy=\\dfrac{1}{2\\sqrt{x}}dx$",
+          "why": "differential form of the derivative"
+        },
+        {
+          "do": "Substitute $x=25$",
+          "result": "$dy=\\dfrac{1}{10}dx$",
+          "why": "$2\\sqrt{25}=10$"
+        },
+        {
+          "do": "Substitute $dx=0.4$",
+          "result": "$dy=0.04$",
+          "why": "input increased by $0.4$"
+        },
+        {
+          "do": "Estimate the new value",
+          "result": "$\\sqrt{25.4}\\approx5+0.04=5.04$",
+          "why": "base value plus predicted change"
+        }
+      ],
+      "verify": "The true value is $\\sqrt{25.4}\\approx5.03984$, so the differential prediction is close because the input change is small relative to $25$.",
+      "answer": "The predicted change is $dy=0.04$, so $\\sqrt{25.4}\\approx5.04$.",
+      "connects": "differentials are linear approximation written as a small-change equation."
+    },
+    "practice": [
+      {
+        "problem": "For $y=x^2$, estimate $dy$ when $x=3$ and $dx=0.05$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$dy=2x\\,dx$",
+            "why": "differential form"
+          },
+          {
+            "do": "Substitute $x=3$",
+            "result": "$dy=6dx$",
+            "why": "slope at the point"
+          },
+          {
+            "do": "Substitute $dx=0.05$",
+            "result": "$dy=0.3$",
+            "why": "multiply slope by input change"
+          },
+          {
+            "do": "Interpret",
+            "result": "the output increases by about $0.3$",
+            "why": "positive slope and positive change"
+          }
+        ],
+        "answer": "$dy=0.3$"
+      },
+      {
+        "problem": "For $y=1/x$, estimate the change when $x=10$ and $dx=-0.2$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$dy=-x^{-2}dx$",
+            "why": "power rule"
+          },
+          {
+            "do": "Substitute $x=10$",
+            "result": "$dy=-\\dfrac{1}{100}dx$",
+            "why": "$10^2=100$"
+          },
+          {
+            "do": "Substitute $dx=-0.2$",
+            "result": "$dy=0.002$",
+            "why": "a negative input change raises $1/x$"
+          },
+          {
+            "do": "Estimate the new value",
+            "result": "$0.1+0.002=0.102$",
+            "why": "base value plus differential"
+          }
+        ],
+        "answer": "The estimated change is $0.002$, giving $1/9.8\\approx0.102$."
+      },
+      {
+        "problem": "Use differentials to estimate $\\ln(1.02)$.",
+        "steps": [
+          {
+            "do": "Set the base point",
+            "result": "$x=1$",
+            "why": "$\\ln1=0$ is easy"
+          },
+          {
+            "do": "Compute $dx$",
+            "result": "$dx=0.02$",
+            "why": "$1.02$ is $0.02$ above $1$"
+          },
+          {
+            "do": "Write the differential",
+            "result": "$dy=\\dfrac1x dx$",
+            "why": "derivative of $\\ln x$"
+          },
+          {
+            "do": "Substitute $x=1$",
+            "result": "$dy=0.02$",
+            "why": "slope at $1$ is $1$"
+          },
+          {
+            "do": "Add to the base value",
+            "result": "$\\ln(1.02)\\approx0+0.02$",
+            "why": "differential approximation"
+          }
+        ],
+        "answer": "$\\ln(1.02)\\approx0.02$"
+      },
+      {
+        "problem": "The radius of a sphere is measured as $10$ cm with possible error $0.1$ cm. Estimate the volume error.",
+        "steps": [
+          {
+            "do": "Write the volume",
+            "result": "$V=\\dfrac43\\pi r^3$",
+            "why": "sphere formula"
+          },
+          {
+            "do": "Write the differential",
+            "result": "$dV=4\\pi r^2dr$",
+            "why": "differentiate volume"
+          },
+          {
+            "do": "Substitute $r=10$",
+            "result": "$dV=400\\pi\\,dr$",
+            "why": "surface area factor"
+          },
+          {
+            "do": "Substitute $dr=0.1$",
+            "result": "$dV=40\\pi$",
+            "why": "measurement error"
+          },
+          {
+            "do": "Approximate",
+            "result": "$40\\pi\\approx125.7$",
+            "why": "numeric error estimate"
+          }
+        ],
+        "answer": "About $40\\pi\\approx125.7\\text{ cm}^3$ of volume error."
+      },
+      {
+        "problem": "A logit changes by $dx=0.04$ near $x=0$, where $p=\\sigma(x)$. Use $dp=\\sigma(x)(1-\\sigma(x))dx$ to estimate $dp$.",
+        "steps": [
+          {
+            "do": "Evaluate the sigmoid",
+            "result": "$\\sigma(0)=0.5$",
+            "why": "known center value"
+          },
+          {
+            "do": "Evaluate the derivative factor",
+            "result": "$0.5(1-0.5)=0.25$",
+            "why": "sigmoid slope formula"
+          },
+          {
+            "do": "Write the differential",
+            "result": "$dp=0.25dx$",
+            "why": "small probability change"
+          },
+          {
+            "do": "Substitute $dx=0.04$",
+            "result": "$dp=0.01$",
+            "why": "multiply slope by input change"
+          },
+          {
+            "do": "Estimate the probability",
+            "result": "$0.51$",
+            "why": "base probability plus differential"
+          }
+        ],
+        "answer": "$dp\\approx0.01$, so the probability is about $0.51$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Error propagation",
+        "background": "Measurements carry uncertainty, and differentials estimate how input uncertainty becomes output uncertainty.",
+        "numbers": "For $A=\\pi r^2$, $dA=2\\pi r dr$; with $r=5$ and $dr=0.02$, $dA=0.2\\pi\\approx0.628$."
+      },
+      {
+        "title": "Gradient updates",
+        "background": "A tiny parameter update changes the loss by approximately the differential.",
+        "numbers": "If $dL=\\nabla L\\cdot dw$ in one dimension with slope $-4$ and $dw=0.01$, then $dL\\approx-0.04$."
+      },
+      {
+        "title": "Quantization sensitivity",
+        "background": "Rounding a feature introduces small input error; differentials estimate output impact.",
+        "numbers": "For $f(x)=x^2$ at $x=8$, a quantization error $dx=0.005$ gives $dy=16(0.005)=0.08$."
+      },
+      {
+        "title": "Probabilistic calibration",
+        "background": "Small logit changes near a probability can be translated into probability changes.",
+        "numbers": "At sigmoid logit $2$, $p=0.881$ and slope $p(1-p)=0.105$; $dx=0.1$ gives $dp\\approx0.0105$."
+      },
+      {
+        "title": "Latency models",
+        "background": "If latency depends nonlinearly on load, differentials estimate the impact of small load changes.",
+        "numbers": "For $W=1/(1-\\rho)$ at $\\rho=0.8$, $dW=(1-\\rho)^{-2}d\\rho=25d\\rho$; $d\\rho=0.01$ gives $0.25$ extra time units."
+      },
+      {
+        "title": "Scientific computing",
+        "background": "Differentials are the first term in numerical error analysis for algorithms.",
+        "numbers": "For $f(x)=e^x$ at $x=0$, an input rounding error $dx=10^{-6}$ gives $dy\\approx10^{-6}$."
+      }
+    ],
+    "applicationsClose": "Differentials make small-change reasoning portable: slope times input error predicts output error across many systems.",
+    "takeaways": [
+      "For $y=f(x)$, the differential is $dy=f'(x)dx$.",
+      "$dy$ is the tangent-line prediction for the actual change $\\Delta y$.",
+      "Differentials are useful for estimates, uncertainty propagation, and small gradient steps."
+    ],
     "prereqs": [
       "math-01-26"
     ]
@@ -1101,19 +6962,245 @@
   B({
     "id": "math-01-28",
     "title": "Indeterminate forms",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: indeterminate forms.",
+    "tagline": "Some substitutions say 'not enough information'; the form tells you what to try next.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Differentials</i>"
+        "Differentials",
+        "Limits: definition and computation",
+        "Derivative of logarithmic functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>L'Hôpital's rule</i>"
+        "L'Hôpital's rule",
+        "Taylor series",
+        "asymptotic analysis"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "Limits: definition and computation",
+        "L'Hôpital's rule",
+        "Taylor series"
       ]
     },
+    "motivation": "<p>When a limit gives $0/0$ or $\\infty/\\infty$, it has not failed; it has only told you that the first substitution was inconclusive. The pieces are competing, and you need a better view of their relative size.</p><p>Indeterminate forms are a checklist of these competitions. Recognizing the form tells you whether to factor, rationalize, combine fractions, take logs, use a known limit, or prepare for L'Hopital's rule next.</p>",
+    "definition": "<p>An <b>indeterminate form</b> is a limiting pattern that does not determine a unique answer by arithmetic alone. The main forms are $$\\frac00,\\quad \\frac{\\infty}{\\infty},\\quad 0\\cdot\\infty,\\quad \\infty-\\infty,\\quad 0^0,\\quad 1^\\infty,\\quad \\infty^0.$$ For example, $x/x$ and $x^2/x$ both look like $0/0$ as $x\\to0$, but their limits are $1$ and $0$.</p><p><b>Assumptions that matter:</b> the form is a diagnosis, not an answer; rewrite before concluding; one-sided behavior can matter; and exponential forms are often handled by taking logs so powers become products.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\lim_{x\\to0}\\frac{e^x-1}{x}$.",
+      "skills": [
+        "indeterminate form",
+        "known exponential limit",
+        "linear approximation"
+      ],
+      "strategy": "Direct substitution gives $0/0$. Use the first-order behavior $e^x\\approx1+x$ near zero.",
+      "steps": [
+        {
+          "do": "Try direct substitution",
+          "result": "$\\frac00$",
+          "why": "both numerator and denominator go to zero"
+        },
+        {
+          "do": "Use the local expansion",
+          "result": "$e^x=1+x+\\dfrac{x^2}{2}+\\cdots$",
+          "why": "exponential is smooth near zero"
+        },
+        {
+          "do": "Subtract $1$",
+          "result": "$e^x-1=x+\\dfrac{x^2}{2}+\\cdots$",
+          "why": "constant terms cancel"
+        },
+        {
+          "do": "Divide by $x$",
+          "result": "$1+\\dfrac{x}{2}+\\cdots$",
+          "why": "the leading $x$ terms decide the limit"
+        },
+        {
+          "do": "Let $x\\to0$",
+          "result": "$1$",
+          "why": "higher-order terms vanish"
+        }
+      ],
+      "verify": "With $x=0.001$, $(e^{0.001}-1)/0.001\\approx1.0005$; with $x=-0.001$, it is about $0.9995$. Both sides close in on $1$.",
+      "answer": "$\\displaystyle\\lim_{x\\to0}\\frac{e^x-1}{x}=1$",
+      "connects": "an indeterminate form asks for the leading behavior, not ordinary substitution."
+    },
+    "practice": [
+      {
+        "problem": "$\\displaystyle\\lim_{x\\to2}\\dfrac{x^2-4}{x-2}$",
+        "steps": [
+          {
+            "do": "Substitute $x=2$",
+            "result": "$\\frac00$",
+            "why": "indeterminate form"
+          },
+          {
+            "do": "Factor the numerator",
+            "result": "$\\dfrac{(x-2)(x+2)}{x-2}$",
+            "why": "difference of squares"
+          },
+          {
+            "do": "Cancel $x-2$",
+            "result": "$x+2$",
+            "why": "valid for $x\\ne2$ near the limit point"
+          },
+          {
+            "do": "Substitute $x=2$",
+            "result": "$4$",
+            "why": "the simplified expression is continuous"
+          }
+        ],
+        "answer": "$4$"
+      },
+      {
+        "problem": "$\\displaystyle\\lim_{x\\to0}\\dfrac{\\sin x}{x}$",
+        "steps": [
+          {
+            "do": "Substitute $x=0$",
+            "result": "$\\frac00$",
+            "why": "both sine and $x$ vanish"
+          },
+          {
+            "do": "Use the standard trig limit",
+            "result": "$\\lim_{x\\to0}\\dfrac{\\sin x}{x}=1$",
+            "why": "radian measure makes sine locally match its angle"
+          },
+          {
+            "do": "Check the local approximation",
+            "result": "$\\sin x=x-\\dfrac{x^3}{6}+\\cdots$",
+            "why": "leading term is $x$"
+          },
+          {
+            "do": "Divide by $x$",
+            "result": "$1-\\dfrac{x^2}{6}+\\cdots$",
+            "why": "higher-order terms vanish"
+          }
+        ],
+        "answer": "$1$"
+      },
+      {
+        "problem": "$\\displaystyle\\lim_{x\\to\\infty}x(e^{1/x}-1)$",
+        "steps": [
+          {
+            "do": "Identify the form",
+            "result": "$\\infty\\cdot0$",
+            "why": "$x\\to\\infty$ while $e^{1/x}-1\\to0$"
+          },
+          {
+            "do": "Rewrite as a quotient",
+            "result": "$\\dfrac{e^{1/x}-1}{1/x}$",
+            "why": "turn $\\infty\\cdot0$ into $0/0$"
+          },
+          {
+            "do": "Set $u=1/x$",
+            "result": "$u\\to0$",
+            "why": "as $x\\to\\infty$, the reciprocal shrinks"
+          },
+          {
+            "do": "Use the exponential limit",
+            "result": "$\\lim_{u\\to0}\\dfrac{e^u-1}{u}=1$",
+            "why": "known leading behavior"
+          }
+        ],
+        "answer": "$1$"
+      },
+      {
+        "problem": "$\\displaystyle\\lim_{x\\to\\infty}(\\sqrt{x^2+x}-x)$",
+        "steps": [
+          {
+            "do": "Identify the form",
+            "result": "$\\infty-\\infty$",
+            "why": "both terms grow without bound"
+          },
+          {
+            "do": "Multiply by the conjugate",
+            "result": "$\\dfrac{(x^2+x)-x^2}{\\sqrt{x^2+x}+x}$",
+            "why": "convert subtraction into a quotient"
+          },
+          {
+            "do": "Simplify the numerator",
+            "result": "$\\dfrac{x}{\\sqrt{x^2+x}+x}$",
+            "why": "the $x^2$ terms cancel"
+          },
+          {
+            "do": "Divide top and bottom by $x$",
+            "result": "$\\dfrac{1}{\\sqrt{1+1/x}+1}$",
+            "why": "$x>0$ for large $x$"
+          },
+          {
+            "do": "Let $x\\to\\infty$",
+            "result": "$\\dfrac12$",
+            "why": "$1/x\\to0$"
+          }
+        ],
+        "answer": "$1/2$"
+      },
+      {
+        "problem": "$\\displaystyle\\lim_{n\\to\\infty}\\left(1+\\dfrac{2}{n}\\right)^n$",
+        "steps": [
+          {
+            "do": "Identify the form",
+            "result": "$1^\\infty$",
+            "why": "the base goes to $1$ while the exponent grows"
+          },
+          {
+            "do": "Take logs of the limit",
+            "result": "$\\ln L=\\lim_{n\\to\\infty}n\\ln(1+2/n)$",
+            "why": "powers become products"
+          },
+          {
+            "do": "Use the log approximation",
+            "result": "$\\ln(1+2/n)\\approx2/n$",
+            "why": "near zero, $\\ln(1+u)\\approx u$"
+          },
+          {
+            "do": "Multiply by $n$",
+            "result": "$\\ln L\\to2$",
+            "why": "the leading terms cancel"
+          },
+          {
+            "do": "Exponentiate",
+            "result": "$L=e^2$",
+            "why": "undo the logarithm"
+          }
+        ],
+        "answer": "$e^2$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Gradient definitions",
+        "background": "The derivative itself starts as the indeterminate form $0/0$ before simplification reveals the slope.",
+        "numbers": "For $f(x)=x^2$ at $x=3$, $((3+h)^2-9)/h=(6h+h^2)/h=6+h$, so the limit is $6$."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Expressions like $e^x-1$ lose precision near zero, so libraries use special rewrites such as expm1.",
+        "numbers": "For $x=10^{-8}$, $e^x-1\\approx10^{-8}$; subtracting two nearly equal floating-point numbers can erase useful digits."
+      },
+      {
+        "title": "Softmax overflow and ratios",
+        "background": "Large exponentials create $\\infty/\\infty$ patterns unless scores are shifted before exponentiating.",
+        "numbers": "Softmax of $[1000,999]$ equals softmax of $[0,-1]$: probabilities are $1/(1+e^{-1})=0.731$ and $0.269$."
+      },
+      {
+        "title": "Asymptotic algorithm analysis",
+        "background": "Comparing growth rates often produces $\\infty/\\infty$, then leading terms decide the limit.",
+        "numbers": "$\\lim_{n\\to\\infty}(3n^2+n)/(5n^2-7)=3/5$, so the two runtimes differ by about a constant factor $0.6$."
+      },
+      {
+        "title": "Continuous compounding",
+        "background": "The classic $1^\\infty$ form defines exponential growth from many tiny multiplicative steps.",
+        "numbers": "$(1+0.05/n)^n\\to e^{0.05}\\approx1.05127$, the continuously compounded one-year factor at $5\\%$."
+      },
+      {
+        "title": "Activation approximations",
+        "background": "Small-input behavior of activations often depends on resolving $0/0$ or cancellation patterns.",
+        "numbers": "For $\\tanh x/x$ as $x\\to0$, $\\tanh x=x-x^3/3+\\cdots$, so the ratio tends to $1$."
+      }
+    ],
+    "applicationsClose": "Indeterminate forms are not dead ends; they are signposts telling you to compare leading behavior more carefully.",
+    "takeaways": [
+      "Forms like $0/0$, $\\infty/\\infty$, $0\\cdot\\infty$, $\\infty-\\infty$, $0^0$, $1^\\infty$, and $\\infty^0$ need rewriting.",
+      "The form is not the answer; factor, rationalize, combine, substitute a new variable, or take logs.",
+      "Resolving indeterminate forms is central to derivatives, numerical stability, asymptotics, and continuous compounding."
+    ],
     "prereqs": [
       "math-01-27"
     ]
@@ -1122,19 +7209,255 @@
   B({
     "id": "math-01-29",
     "title": "L'Hôpital's rule",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: l'hôpital's rule.",
+    "tagline": "When a limit says $0/0$ or $\\infty/\\infty$, compare the rates instead of the raw values.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Indeterminate forms</i>"
+        "limits",
+        "derivatives",
+        "quotient notation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Critical points</i>"
+        "Taylor approximation",
+        "asymptotic comparison",
+        "optimization tests"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "continuity",
+        "the chain rule",
+        "exponential and logarithmic functions"
       ]
     },
+    "motivation": "<p>You already know that some limits are honest after a rewrite. But a limit like $\\lim_{x\\to0}\\frac{e^x-1-x}{x^2}$ keeps saying $\\tfrac00$ even after the easy algebra is gone.</p><p><b>L'Hôpital's rule</b> gives a calm next move: if numerator and denominator both vanish or both grow without bound, compare their derivatives. It is like asking which runner is moving faster at the finish line, not where they happened to stand before the race got close.</p>",
+    "definition": "<p>Suppose $f$ and $g$ are differentiable near $a$ (except possibly at $a$), $g'(x)\\ne0$ near $a$, and direct substitution gives $\\frac00$ or $\\frac{\\infty}{\\infty}$. If $\\lim_{x\\to a}\\frac{f'(x)}{g'(x)}=L$ exists, then $$\\lim_{x\\to a}\\frac{f(x)}{g(x)}=L.$$ The same idea works for one-sided limits and many infinite limits when the same hypotheses hold.</p><p><b>Assumptions that matter:</b> the original quotient must first be an indeterminate form of type $0/0$ or $\\infty/\\infty$; the denominator derivative must not be zero near the point; and if one round still gives $0/0$ or $\\infty/\\infty$, you may repeat the rule only after checking the form again.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\lim_{x\\to0}\\frac{e^x-1-x}{x^2}$.",
+      "skills": [
+        "indeterminate forms",
+        "derivatives",
+        "repeated L'Hôpital"
+      ],
+      "strategy": "Direct substitution gives $\\tfrac00$. Differentiate top and bottom, then check the form before deciding whether to repeat.",
+      "steps": [
+        {
+          "do": "Substitute $x=0$",
+          "result": "$\\frac{1-1-0}{0}=\\frac00$",
+          "why": "the form is indeterminate"
+        },
+        {
+          "do": "Differentiate numerator and denominator",
+          "result": "$\\dfrac{e^x-1}{2x}$",
+          "why": "L'Hôpital compares rates"
+        },
+        {
+          "do": "Substitute $x=0$ again",
+          "result": "$\\frac00$",
+          "why": "one round did not remove the indeterminate form"
+        },
+        {
+          "do": "Differentiate numerator and denominator again",
+          "result": "$\\dfrac{e^x}{2}$",
+          "why": "the hypotheses still match $0/0$"
+        },
+        {
+          "do": "Substitute $x=0$",
+          "result": "$\\frac12$",
+          "why": "the new quotient is continuous at $0$"
+        }
+      ],
+      "verify": "Using $e^x=1+x+\\frac{x^2}{2}+\\cdots$, the numerator behaves like $\\frac{x^2}{2}$, so the quotient should approach $\\frac12$.",
+      "answer": "$\\displaystyle\\lim_{x\\to0}\\frac{e^x-1-x}{x^2}=\\frac12$",
+      "connects": "Taylor approximation - repeated derivatives reveal the first nonzero term controlling the limit."
+    },
+    "practice": [
+      {
+        "problem": "$\\displaystyle\\lim_{x\\to0}\\frac{\\sin x}{x}$",
+        "steps": [
+          {
+            "do": "Substitute $x=0$",
+            "result": "$\\frac00$",
+            "why": "the quotient is indeterminate"
+          },
+          {
+            "do": "Differentiate numerator and denominator",
+            "result": "$\\dfrac{\\cos x}{1}$",
+            "why": "L'Hôpital applies to $0/0$"
+          },
+          {
+            "do": "Substitute $x=0$",
+            "result": "$1$",
+            "why": "$\\cos0=1$"
+          }
+        ],
+        "answer": "$1$"
+      },
+      {
+        "problem": "$\\displaystyle\\lim_{x\\to1}\\frac{\\ln x}{x-1}$",
+        "steps": [
+          {
+            "do": "Substitute $x=1$",
+            "result": "$\\frac00$",
+            "why": "$\\ln1=0$"
+          },
+          {
+            "do": "Differentiate numerator and denominator",
+            "result": "$\\dfrac{1/x}{1}$",
+            "why": "compare local rates"
+          },
+          {
+            "do": "Substitute $x=1$",
+            "result": "$1$",
+            "why": "$1/x$ is continuous at $1$"
+          }
+        ],
+        "answer": "$1$"
+      },
+      {
+        "problem": "$\\displaystyle\\lim_{x\\to0}\\frac{x-\\sin x}{x^3}$",
+        "steps": [
+          {
+            "do": "Substitute $x=0$",
+            "result": "$\\frac00$",
+            "why": "the form is indeterminate"
+          },
+          {
+            "do": "Differentiate once",
+            "result": "$\\dfrac{1-\\cos x}{3x^2}$",
+            "why": "L'Hôpital applies"
+          },
+          {
+            "do": "Substitute $x=0$",
+            "result": "$\\frac00$",
+            "why": "the form remains indeterminate"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$\\dfrac{\\sin x}{6x}$",
+            "why": "apply the rule again"
+          },
+          {
+            "do": "Substitute $x=0$",
+            "result": "$\\frac00$",
+            "why": "one more rate comparison is needed"
+          },
+          {
+            "do": "Differentiate three times",
+            "result": "$\\dfrac{\\cos x}{6}$",
+            "why": "the quotient is now continuous"
+          },
+          {
+            "do": "Substitute $x=0$",
+            "result": "$\\frac16$",
+            "why": "$\\cos0=1$"
+          }
+        ],
+        "answer": "$\\frac16$"
+      },
+      {
+        "problem": "$\\displaystyle\\lim_{x\\to0^+}x\\ln x$",
+        "steps": [
+          {
+            "do": "Rewrite the product",
+            "result": "$\\dfrac{\\ln x}{1/x}$",
+            "why": "L'Hôpital needs a quotient"
+          },
+          {
+            "do": "Read the form as $x\\to0^+$",
+            "result": "$\\dfrac{-\\infty}{\\infty}$",
+            "why": "this is an $\\infty/\\infty$ type after signs are allowed"
+          },
+          {
+            "do": "Differentiate numerator and denominator",
+            "result": "$\\dfrac{1/x}{-1/x^2}$",
+            "why": "compare growth rates"
+          },
+          {
+            "do": "Simplify the quotient",
+            "result": "$-x$",
+            "why": "multiply by $x^2$"
+          },
+          {
+            "do": "Take $x\\to0^+$",
+            "result": "$0$",
+            "why": "$-x$ approaches $0$"
+          }
+        ],
+        "answer": "$0$"
+      },
+      {
+        "problem": "$\\displaystyle\\lim_{t\\to\\infty}\\frac{\\ln(1+e^{-t})}{e^{-t}}$",
+        "steps": [
+          {
+            "do": "Read the form",
+            "result": "$\\frac00$",
+            "why": "both numerator and denominator approach $0$"
+          },
+          {
+            "do": "Differentiate the numerator",
+            "result": "$\\dfrac{-e^{-t}}{1+e^{-t}}$",
+            "why": "chain rule on $\\ln(1+e^{-t})$"
+          },
+          {
+            "do": "Differentiate the denominator",
+            "result": "$-e^{-t}$",
+            "why": "derivative of $e^{-t}$"
+          },
+          {
+            "do": "Form the derivative quotient",
+            "result": "$\\dfrac{-e^{-t}/(1+e^{-t})}{-e^{-t}}$",
+            "why": "L'Hôpital applies at infinity"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\dfrac{1}{1+e^{-t}}$",
+            "why": "the common factor cancels"
+          },
+          {
+            "do": "Take $t\\to\\infty$",
+            "result": "$1$",
+            "why": "$e^{-t}\\to0$"
+          }
+        ],
+        "answer": "$1$ - for very negative logits, softplus behaves like its tiny exponential input."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Gradient checks",
+        "background": "Numerical gradient checks compare a tiny finite difference with the derivative used by backprop. L'Hôpital explains why the ratio has a stable limit.",
+        "numbers": "For $f(w)=e^w$ at $w=0$, $\\frac{e^h-1}{h}\\to1$; with $h=0.001$ the value is $1.000500\\approx1$."
+      },
+      {
+        "title": "Softmax stability",
+        "background": "Log-sum-exp and softplus appear in classifiers, and their tails often reduce to small-over-small limits.",
+        "numbers": "$\\ln(1+e^{-10})/e^{-10}=0.999977\\approx1$, matching the limit from the practice problem."
+      },
+      {
+        "title": "Asymptotic feature scaling",
+        "background": "When comparing transformations, derivative ratios reveal which grows faster.",
+        "numbers": "$\\lim_{x\\to\\infty}\\frac{\\ln x}{x}=\\lim\\frac{1/x}{1}=0$, so at $x=1000$, $\\ln x/x\\approx0.0069$."
+      },
+      {
+        "title": "Vanishing activations",
+        "background": "Saturation questions ask whether a numerator shrinks faster than a denominator near an extreme value.",
+        "numbers": "For sigmoid slope $\\sigma(x)(1-\\sigma(x))$, at $x=8$ it is about $0.000335$, essentially matching $e^{-8}=0.000335$."
+      },
+      {
+        "title": "Algorithmic approximations",
+        "background": "Many running-time comparisons are limits of quotients, and L'Hôpital can simplify logarithms against powers.",
+        "numbers": "$\\lim_{n\\to\\infty}\\frac{\\ln n}{\\sqrt n}=\\lim\\frac{1/n}{1/(2\\sqrt n)}=\\lim\\frac{2}{\\sqrt n}=0$."
+      },
+      {
+        "title": "Probability near zero",
+        "background": "Densities and cumulative probabilities often create $0/0$ ratios near a boundary.",
+        "numbers": "For $P(X\\le x)=1-e^{-2x}$, $\\lim_{x\\to0^+}\\frac{1-e^{-2x}}{x}=\\lim\\frac{2e^{-2x}}{1}=2$."
+      }
+    ],
+    "applicationsClose": "The shared thread is rate comparison: when values hide the answer, derivatives reveal who is shrinking or growing faster.",
+    "takeaways": [
+      "Use L'Hôpital only after confirming $0/0$ or $\\infty/\\infty$.",
+      "Differentiate numerator and denominator separately; do not use the quotient rule.",
+      "If the new quotient is still indeterminate, check the hypotheses and repeat."
+    ],
     "prereqs": [
       "math-01-28"
     ]
@@ -1143,19 +7466,265 @@
   B({
     "id": "math-01-30",
     "title": "Critical points",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: critical points.",
+    "tagline": "The places where a function can turn, flatten, cusp, or hide an optimum.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>L'Hôpital's rule</i>"
+        "derivatives",
+        "domains of functions",
+        "solving equations"
       ],
       "leadsTo": [
-        "the next lesson, <i>The first derivative test</i>"
+        "the first derivative test",
+        "the second derivative test",
+        "applied optimization"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "continuity",
+        "absolute value functions",
+        "polynomial factoring"
       ]
     },
+    "motivation": "<p>If you are looking for the highest or lowest point on a smooth hill, you naturally look where the slope becomes flat. That instinct is excellent, but calculus asks us to be a little more inclusive.</p><p>A <b>critical point</b> is any input in the domain where the derivative is zero or where the derivative does not exist. Flat tops count, sharp corners count, and vertical tangents count. This list becomes the candidate list for optimization.</p>",
+    "definition": "<p>A number $c$ is a <b>critical number</b> of $f$ if $c$ is in the domain of $f$ and either $f'(c)=0$ or $f'(c)$ does not exist. The point $(c,f(c))$ is then a critical point on the graph. The derivative condition comes from the tangent slope: local maxima and minima inside an interval must occur where the tangent is horizontal or where no tangent slope exists.</p><p><b>Assumptions that matter:</b> $c$ must belong to the function's domain; endpoints are candidates for absolute extrema but are not usually called critical numbers; and a critical point is only a candidate, not automatically a maximum or minimum.</p>",
+    "worked": {
+      "problem": "Find the critical points of $f(x)=x^3-3x$.",
+      "skills": [
+        "derivatives",
+        "factoring",
+        "candidate lists"
+      ],
+      "strategy": "Differentiate, solve $f'(x)=0$, then report the points using the original function.",
+      "steps": [
+        {
+          "do": "Differentiate $f$",
+          "result": "$f'(x)=3x^2-3$",
+          "why": "critical numbers come from the derivative"
+        },
+        {
+          "do": "Set the derivative equal to zero",
+          "result": "$3x^2-3=0$",
+          "why": "horizontal tangents have slope $0$"
+        },
+        {
+          "do": "Divide by $3$",
+          "result": "$x^2-1=0$",
+          "why": "simplify before factoring"
+        },
+        {
+          "do": "Factor",
+          "result": "$(x-1)(x+1)=0$",
+          "why": "zero product property"
+        },
+        {
+          "do": "Solve for $x$",
+          "result": "$x=-1,1$",
+          "why": "these are the critical numbers"
+        },
+        {
+          "do": "Evaluate $f(-1)$ and $f(1)$",
+          "result": "$f(-1)=2,\\ f(1)=-2$",
+          "why": "critical points include coordinates"
+        }
+      ],
+      "verify": "$f'$ is a polynomial, so it exists everywhere; no nondifferentiable points were missed.",
+      "answer": "Critical points: $(-1,2)$ and $(1,-2)$.",
+      "connects": "The next lesson asks what happens on each side of these candidates."
+    },
+    "practice": [
+      {
+        "problem": "Find the critical points of $f(x)=x^2-4x+1$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=2x-4$",
+            "why": "critical numbers start with $f'$"
+          },
+          {
+            "do": "Set $f'(x)=0$",
+            "result": "$2x-4=0$",
+            "why": "look for horizontal tangents"
+          },
+          {
+            "do": "Add $4$",
+            "result": "$2x=4$",
+            "why": "isolate the variable"
+          },
+          {
+            "do": "Divide by $2$",
+            "result": "$x=2$",
+            "why": "solve the equation"
+          },
+          {
+            "do": "Evaluate $f(2)$",
+            "result": "$4-8+1=-3$",
+            "why": "turn the number into a point"
+          }
+        ],
+        "answer": "Critical point: $(2,-3)$."
+      },
+      {
+        "problem": "Find the critical numbers of $f(x)=x^4-8x^2$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=4x^3-16x$",
+            "why": "power rule"
+          },
+          {
+            "do": "Factor the derivative",
+            "result": "$4x(x^2-4)$",
+            "why": "common factor first"
+          },
+          {
+            "do": "Factor again",
+            "result": "$4x(x-2)(x+2)$",
+            "why": "difference of squares"
+          },
+          {
+            "do": "Set each factor to zero",
+            "result": "$x=0,2,-2$",
+            "why": "zero product property"
+          },
+          {
+            "do": "Check differentiability",
+            "result": "$f'$ exists for all $x$",
+            "why": "polynomials have no derivative gaps"
+          }
+        ],
+        "answer": "Critical numbers: $x=-2,0,2$."
+      },
+      {
+        "problem": "Find the critical numbers of $f(x)=|x-3|$.",
+        "steps": [
+          {
+            "do": "Write the derivative away from the corner",
+            "result": "$f'(x)=-1$ for $x<3$ and $f'(x)=1$ for $x>3$",
+            "why": "absolute value is linear on each side"
+          },
+          {
+            "do": "Check where $f'(x)=0$",
+            "result": "No solutions",
+            "why": "the side slopes are $-1$ and $1$"
+          },
+          {
+            "do": "Check the corner",
+            "result": "$x=3$",
+            "why": "the left and right slopes disagree"
+          },
+          {
+            "do": "Check the domain",
+            "result": "$3$ is in the domain",
+            "why": "critical numbers must be valid inputs"
+          },
+          {
+            "do": "Evaluate $f(3)$",
+            "result": "$0$",
+            "why": "optional coordinate"
+          }
+        ],
+        "answer": "Critical point: $(3,0)$; the derivative is undefined there."
+      },
+      {
+        "problem": "Find the critical numbers of $f(x)=x^{2/3}$.",
+        "steps": [
+          {
+            "do": "Differentiate for $x\\ne0$",
+            "result": "$f'(x)=\\frac{2}{3}x^{-1/3}$",
+            "why": "power rule"
+          },
+          {
+            "do": "Check where $f'(x)=0$",
+            "result": "No solutions",
+            "why": "$\\frac{2}{3}x^{-1/3}$ is never $0$"
+          },
+          {
+            "do": "Find where $f'$ is undefined",
+            "result": "$x=0$",
+            "why": "$x^{-1/3}$ divides by $\\sqrt[3]{x}$"
+          },
+          {
+            "do": "Check the original domain",
+            "result": "$0$ is in the domain of $x^{2/3}$",
+            "why": "the function value exists"
+          },
+          {
+            "do": "Evaluate $f(0)$",
+            "result": "$0$",
+            "why": "coordinate of the cusp"
+          }
+        ],
+        "answer": "Critical point: $(0,0)$."
+      },
+      {
+        "problem": "A one-parameter loss is $J(w)=(w-3)^2+2$. Find its critical point.",
+        "steps": [
+          {
+            "do": "Differentiate the loss",
+            "result": "$J'(w)=2(w-3)$",
+            "why": "chain rule for the square"
+          },
+          {
+            "do": "Set the derivative to zero",
+            "result": "$2(w-3)=0$",
+            "why": "training stops at zero gradient candidates"
+          },
+          {
+            "do": "Divide by $2$",
+            "result": "$w-3=0$",
+            "why": "simplify"
+          },
+          {
+            "do": "Solve for $w$",
+            "result": "$w=3$",
+            "why": "the candidate weight"
+          },
+          {
+            "do": "Evaluate $J(3)$",
+            "result": "$2$",
+            "why": "the minimum loss value"
+          }
+        ],
+        "answer": "Critical point: $(3,2)$ in the $(w,J)$ plane."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Loss minimization",
+        "background": "Training searches for weights where the gradient is zero or numerically tiny.",
+        "numbers": "For $J(w)=(w-3)^2+2$, $J'(w)=2w-6$, so $w=3$ gives loss $2$."
+      },
+      {
+        "title": "Regularized regression",
+        "background": "L2 regularization adds a smooth penalty, shifting the critical point toward zero.",
+        "numbers": "If $J(w)=(w-5)^2+w^2$, then $J'(w)=4w-10$, so $w=2.5$ instead of $5$."
+      },
+      {
+        "title": "Robust losses",
+        "background": "Absolute value losses have corners, so nondifferentiable critical points matter.",
+        "numbers": "For $L(w)=|w-4|$, the critical point is $w=4$ even though $L'$ is undefined there."
+      },
+      {
+        "title": "Learning-rate schedules",
+        "background": "A schedule can have turning points that mark warmup peaks.",
+        "numbers": "For $\\eta(t)=0.1t e^{-t}$, $\\eta'(t)=0.1e^{-t}(1-t)$, so the peak is at $t=1$."
+      },
+      {
+        "title": "Signal processing",
+        "background": "Peaks in a smoothed signal occur among derivative-zero candidates.",
+        "numbers": "For $s(t)=t^3-3t$, candidates $t=-1,1$ have values $2$ and $-2$."
+      },
+      {
+        "title": "Database cost tuning",
+        "background": "A simplified query cost can have a best buffer size inside the allowed range.",
+        "numbers": "If $C(b)=b+100/b$, then $C'(b)=1-100/b^2$, so $b=10$ is the interior candidate."
+      }
+    ],
+    "applicationsClose": "Critical points are not the answer by themselves; they are the honest shortlist where important behavior can happen.",
+    "takeaways": [
+      "Critical numbers occur where $f'=0$ or where $f'$ does not exist, but only inside the domain of $f$.",
+      "Always check nondifferentiable points such as corners and cusps.",
+      "Critical points are candidates that later tests classify."
+    ],
     "prereqs": [
       "math-01-29"
     ]
@@ -1164,19 +7733,290 @@
   B({
     "id": "math-01-31",
     "title": "The first derivative test",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the first derivative test.",
+    "tagline": "Use the sign of $f'$ to decide whether a critical point is a peak, a valley, or neither.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Critical points</i>"
+        "critical points",
+        "derivatives as slopes",
+        "sign charts"
       ],
       "leadsTo": [
-        "the next lesson, <i>Concavity</i>"
+        "curve sketching",
+        "optimization",
+        "the second derivative test"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "interval notation",
+        "factoring",
+        "continuity"
       ]
     },
+    "motivation": "<p>A critical point tells you where to look, but not what you found. A flat tangent can be the top of a hill, the bottom of a bowl, or just a pause on the way upward.</p><p>The <b>first derivative test</b> reads the motion around the point. If $f'$ changes from positive to negative, the graph rises then falls. If it changes from negative to positive, the graph falls then rises. The sign change tells the story.</p>",
+    "definition": "<p>Let $c$ be a critical number and suppose $f$ is continuous near $c$. Check the sign of $f'$ on intervals just to the left and right of $c$. If $f'$ changes from $+$ to $-$, $f(c)$ is a local maximum. If $f'$ changes from $-$ to $+$, $f(c)$ is a local minimum. If there is no sign change, $c$ is not a local extremum.</p><p><b>Assumptions that matter:</b> the sign chart must use intervals where $f'$ exists; continuity of $f$ at the candidate keeps the graph from jumping; and endpoints require separate absolute-extreme checks rather than the two-sided test.</p>",
+    "worked": {
+      "problem": "Classify the critical points of $f(x)=x^3-3x$ using the first derivative test.",
+      "skills": [
+        "critical points",
+        "sign charts",
+        "classification"
+      ],
+      "strategy": "Find $f'$, split the number line at the critical numbers, and test the sign on each interval.",
+      "steps": [
+        {
+          "do": "Differentiate",
+          "result": "$f'(x)=3x^2-3$",
+          "why": "the sign of $f'$ controls increase and decrease"
+        },
+        {
+          "do": "Factor",
+          "result": "$f'(x)=3(x-1)(x+1)$",
+          "why": "factored form makes signs visible"
+        },
+        {
+          "do": "Find critical numbers",
+          "result": "$x=-1,1$",
+          "why": "set the factors equal to zero"
+        },
+        {
+          "do": "Test $x=-2$",
+          "result": "$f'(-2)>0$",
+          "why": "the function increases on $(-\\infty,-1)$"
+        },
+        {
+          "do": "Test $x=0$",
+          "result": "$f'(0)<0$",
+          "why": "the function decreases on $(-1,1)$"
+        },
+        {
+          "do": "Test $x=2$",
+          "result": "$f'(2)>0$",
+          "why": "the function increases on $(1,\\infty)$"
+        },
+        {
+          "do": "Classify $x=-1$",
+          "result": "local maximum",
+          "why": "$f'$ changes from positive to negative"
+        },
+        {
+          "do": "Classify $x=1$",
+          "result": "local minimum",
+          "why": "$f'$ changes from negative to positive"
+        }
+      ],
+      "verify": "$f(-1)=2$ and nearby values are lower; $f(1)=-2$ and nearby values are higher.",
+      "answer": "Local maximum at $(-1,2)$; local minimum at $(1,-2)$.",
+      "connects": "This is the same candidate list from critical points, now classified by direction of motion."
+    },
+    "practice": [
+      {
+        "problem": "Classify the critical point of $f(x)=x^2-6x+5$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=2x-6$",
+            "why": "build the sign chart"
+          },
+          {
+            "do": "Set $f'=0$",
+            "result": "$x=3$",
+            "why": "critical number"
+          },
+          {
+            "do": "Test $x=2$",
+            "result": "$f'(2)=-2$",
+            "why": "negative means decreasing left of $3$"
+          },
+          {
+            "do": "Test $x=4$",
+            "result": "$f'(4)=2$",
+            "why": "positive means increasing right of $3$"
+          },
+          {
+            "do": "Classify",
+            "result": "local minimum",
+            "why": "$f'$ changes from negative to positive"
+          },
+          {
+            "do": "Evaluate $f(3)$",
+            "result": "$-4$",
+            "why": "give the point"
+          }
+        ],
+        "answer": "Local minimum at $(3,-4)$."
+      },
+      {
+        "problem": "Classify the critical points of $f(x)=x^4-4x^2$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=4x^3-8x$",
+            "why": "power rule"
+          },
+          {
+            "do": "Factor",
+            "result": "$4x(x^2-2)$",
+            "why": "find zeros"
+          },
+          {
+            "do": "Find critical numbers",
+            "result": "$x=-\\sqrt2,0,\\sqrt2$",
+            "why": "solve each factor"
+          },
+          {
+            "do": "Test the intervals",
+            "result": "$-,+,-,+$",
+            "why": "use sample points $-2,-1,1,2$"
+          },
+          {
+            "do": "Classify $-\\sqrt2$",
+            "result": "local minimum",
+            "why": "$f'$ changes from negative to positive"
+          },
+          {
+            "do": "Classify $0$",
+            "result": "local maximum",
+            "why": "$f'$ changes from positive to negative"
+          },
+          {
+            "do": "Classify $\\sqrt2$",
+            "result": "local minimum",
+            "why": "$f'$ changes from negative to positive"
+          }
+        ],
+        "answer": "Local minima at $x=\\pm\\sqrt2$ and a local maximum at $x=0$."
+      },
+      {
+        "problem": "Classify $x=0$ for $f(x)=x^3$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=3x^2$",
+            "why": "find the sign of the slope"
+          },
+          {
+            "do": "Set $f'=0$",
+            "result": "$x=0$",
+            "why": "critical number"
+          },
+          {
+            "do": "Test $x=-1$",
+            "result": "$f'(-1)=3>0$",
+            "why": "increasing on the left"
+          },
+          {
+            "do": "Test $x=1$",
+            "result": "$f'(1)=3>0$",
+            "why": "increasing on the right"
+          },
+          {
+            "do": "Compare signs",
+            "result": "no sign change",
+            "why": "positive to positive is neither max nor min"
+          }
+        ],
+        "answer": "$x=0$ is neither a local maximum nor a local minimum."
+      },
+      {
+        "problem": "Classify the critical point of $f(x)=|x|$.",
+        "steps": [
+          {
+            "do": "Find side slopes",
+            "result": "$f'(x)=-1$ for $x<0$, $f'(x)=1$ for $x>0$",
+            "why": "absolute value is piecewise linear"
+          },
+          {
+            "do": "Identify the critical number",
+            "result": "$x=0$",
+            "why": "the derivative is undefined at the corner"
+          },
+          {
+            "do": "Read the left sign",
+            "result": "negative",
+            "why": "the graph decreases toward $0$"
+          },
+          {
+            "do": "Read the right sign",
+            "result": "positive",
+            "why": "the graph increases after $0$"
+          },
+          {
+            "do": "Classify",
+            "result": "local minimum",
+            "why": "$f'$ changes from negative to positive"
+          }
+        ],
+        "answer": "Local minimum at $(0,0)$."
+      },
+      {
+        "problem": "For $J(w)=w^4-2w^2$, classify the stationary points relevant to a toy loss surface.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$J'(w)=4w^3-4w$",
+            "why": "stationary points have zero gradient"
+          },
+          {
+            "do": "Factor",
+            "result": "$4w(w-1)(w+1)$",
+            "why": "solve the critical equation"
+          },
+          {
+            "do": "List critical numbers",
+            "result": "$w=-1,0,1$",
+            "why": "each factor can be zero"
+          },
+          {
+            "do": "Test signs",
+            "result": "$-,+,-,+$",
+            "why": "sample $-2,-0.5,0.5,2$"
+          },
+          {
+            "do": "Classify",
+            "result": "$-1$ and $1$ are minima; $0$ is a maximum",
+            "why": "read sign changes"
+          }
+        ],
+        "answer": "Local minima at $w=\\pm1$ with $J=-1$; local maximum at $w=0$ with $J=0$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Training loss landscapes",
+        "background": "A zero gradient is ambiguous until the sign or direction changes around it are checked.",
+        "numbers": "For $J(w)=w^4-2w^2$, $w=0$ has zero gradient but is a local maximum, while $w=\\pm1$ are minima."
+      },
+      {
+        "title": "Learning-rate warmup",
+        "background": "Schedulers often increase first and decrease later, so the peak is a first-derivative-test moment.",
+        "numbers": "If $\\eta(t)=t e^{-t}$, $\\eta'(t)=e^{-t}(1-t)$ changes $+$ to $-$ at $t=1$."
+      },
+      {
+        "title": "Throughput tuning",
+        "background": "Systems teams tune batch size by locating where throughput stops rising.",
+        "numbers": "For $T(b)=100b/(b+20)-0.2b$, the derivative changes sign near $b=80$, marking a peak."
+      },
+      {
+        "title": "Robust regression",
+        "background": "Nonsmooth losses can still be classified by side slopes.",
+        "numbers": "$L(w)=|w-7|$ has slope $-1$ left of $7$ and $+1$ right of $7$, so $w=7$ is the minimum."
+      },
+      {
+        "title": "Cache sizing",
+        "background": "A cost can fall as cache grows, then rise when memory overhead dominates.",
+        "numbers": "For $C(c)=500/c+2c$, $C'(c)=-500/c^2+2$ changes from negative to positive at $c=\\sqrt{250}\\approx15.8$."
+      },
+      {
+        "title": "Model selection curves",
+        "background": "Validation error often decreases, bottoms out, and then rises from overfitting.",
+        "numbers": "A toy curve $E(d)=0.02(d-6)^2+0.1$ has $E'(d)=0.04(d-6)$, changing $-$ to $+$ at degree $6$."
+      }
+    ],
+    "applicationsClose": "The first derivative test turns a candidate into a behavior story: rising, falling, and what changes at the candidate.",
+    "takeaways": [
+      "Positive $f'$ means increasing; negative $f'$ means decreasing.",
+      "$+$ to $-$ gives a local maximum; $-$ to $+$ gives a local minimum.",
+      "No sign change means the critical point is not a local extremum."
+    ],
     "prereqs": [
       "math-01-30"
     ]
@@ -1185,19 +8025,260 @@
   B({
     "id": "math-01-32",
     "title": "Concavity",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: concavity.",
+    "tagline": "Concavity tells whether slopes are getting larger or smaller.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The first derivative test</i>"
+        "first derivatives",
+        "increasing and decreasing",
+        "second derivatives"
       ],
       "leadsTo": [
-        "the next lesson, <i>The second derivative test</i>"
+        "inflection points",
+        "the second derivative test",
+        "curve sketching"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "tangent lines",
+        "quadratic approximation",
+        "sign charts"
       ]
     },
+    "motivation": "<p>The first derivative tells whether a graph is rising or falling. But two graphs can both rise while feeling very different: one bends upward like a bowl, the other bends downward as it levels off.</p><p><b>Concavity</b> describes that bending. It is the derivative of the derivative story: are slopes increasing, or are slopes decreasing? This is why concavity becomes the doorway to curvature, acceleration, and optimization confidence.</p>",
+    "definition": "<p>A function is <b>concave up</b> on an interval when $f'$ is increasing there, usually detected by $f''(x)>0$. It is <b>concave down</b> when $f'$ is decreasing, usually detected by $f''(x)<0$. A tangent line tends to lie below a concave-up graph and above a concave-down graph locally.</p><p><b>Assumptions that matter:</b> the second derivative test for concavity works on intervals where $f''$ exists; $f''=0$ at one point does not by itself prove a change in concavity; and concavity is an interval property, not just a point label.</p>",
+    "worked": {
+      "problem": "Determine the concavity of $f(x)=\\ln x$ on its domain.",
+      "skills": [
+        "second derivatives",
+        "domains",
+        "sign analysis"
+      ],
+      "strategy": "Find $f''$ and read its sign on the whole domain $x>0$.",
+      "steps": [
+        {
+          "do": "State the domain",
+          "result": "$x>0$",
+          "why": "$\\ln x$ is defined only for positive $x$"
+        },
+        {
+          "do": "Differentiate once",
+          "result": "$f'(x)=1/x$",
+          "why": "slope of the log curve"
+        },
+        {
+          "do": "Differentiate again",
+          "result": "$f''(x)=-1/x^2$",
+          "why": "concavity comes from the change in slope"
+        },
+        {
+          "do": "Check the sign for $x>0$",
+          "result": "$f''(x)<0$",
+          "why": "$x^2$ is positive and the numerator is negative"
+        },
+        {
+          "do": "Name the concavity",
+          "result": "concave down on $(0,\\infty)$",
+          "why": "negative second derivative means slopes decrease"
+        }
+      ],
+      "verify": "At $x=1$, the slope is $1$; at $x=2$, the slope is $1/2$; at $x=4$, the slope is $1/4$. The slopes are decreasing.",
+      "answer": "$\\ln x$ is concave down on $(0,\\infty)$.",
+      "connects": "In optimization, concave down means a stationary point behaves like a local maximum for a one-dimensional objective."
+    },
+    "practice": [
+      {
+        "problem": "Determine the concavity of $f(x)=x^2+3x$.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=2x+3$",
+            "why": "prepare for the second derivative"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=2$",
+            "why": "constant curvature"
+          },
+          {
+            "do": "Check the sign",
+            "result": "$2>0$",
+            "why": "positive everywhere"
+          },
+          {
+            "do": "Name the interval",
+            "result": "$(-\\infty,\\infty)$",
+            "why": "the polynomial is defined everywhere"
+          },
+          {
+            "do": "State concavity",
+            "result": "concave up everywhere",
+            "why": "slopes are increasing"
+          }
+        ],
+        "answer": "Concave up on $(-\\infty,\\infty)$."
+      },
+      {
+        "problem": "Determine where $f(x)=x^3-6x^2$ is concave up or down.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=3x^2-12x$",
+            "why": "first derivative"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=6x-12$",
+            "why": "second derivative"
+          },
+          {
+            "do": "Set $f''=0$",
+            "result": "$x=2$",
+            "why": "possible split point"
+          },
+          {
+            "do": "Test $x=0$",
+            "result": "$f''(0)=-12$",
+            "why": "negative on the left"
+          },
+          {
+            "do": "Test $x=3$",
+            "result": "$f''(3)=6$",
+            "why": "positive on the right"
+          }
+        ],
+        "answer": "Concave down on $(-\\infty,2)$ and concave up on $(2,\\infty)$."
+      },
+      {
+        "problem": "Determine the concavity of $f(x)=e^{-x}$.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=-e^{-x}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=e^{-x}$",
+            "why": "the negative sign cancels"
+          },
+          {
+            "do": "Check the sign",
+            "result": "$e^{-x}>0$",
+            "why": "exponentials are always positive"
+          },
+          {
+            "do": "Name the domain",
+            "result": "$(-\\infty,\\infty)$",
+            "why": "the exponential is defined everywhere"
+          },
+          {
+            "do": "State concavity",
+            "result": "concave up everywhere",
+            "why": "positive second derivative"
+          }
+        ],
+        "answer": "Concave up on all real numbers."
+      },
+      {
+        "problem": "Determine where $f(x)=x^4-2x^2$ is concave up or down.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=4x^3-4x$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=12x^2-4$",
+            "why": "curvature expression"
+          },
+          {
+            "do": "Set $f''=0$",
+            "result": "$12x^2-4=0$",
+            "why": "possible concavity changes"
+          },
+          {
+            "do": "Solve for $x$",
+            "result": "$x=\\pm\\frac{1}{\\sqrt3}$",
+            "why": "$x^2=1/3$"
+          },
+          {
+            "do": "Test intervals",
+            "result": "$+,-,+$",
+            "why": "large $|x|$ makes $12x^2-4$ positive; $x=0$ gives negative"
+          }
+        ],
+        "answer": "Concave up on $(-\\infty,-1/\\sqrt3)$ and $(1/\\sqrt3,\\infty)$; concave down on $(-1/\\sqrt3,1/\\sqrt3)$."
+      },
+      {
+        "problem": "For logistic loss curvature $\\ell''(z)=\\sigma(z)(1-\\sigma(z))$, where is it positive?",
+        "steps": [
+          {
+            "do": "Recall the sigmoid range",
+            "result": "$0<\\sigma(z)<1$",
+            "why": "sigmoid outputs probabilities strictly between $0$ and $1$"
+          },
+          {
+            "do": "Check the first factor",
+            "result": "$\\sigma(z)>0$",
+            "why": "positive probability"
+          },
+          {
+            "do": "Check the second factor",
+            "result": "$1-\\sigma(z)>0$",
+            "why": "the probability is less than $1$"
+          },
+          {
+            "do": "Multiply the signs",
+            "result": "$\\ell''(z)>0$",
+            "why": "positive times positive"
+          },
+          {
+            "do": "Name the concavity",
+            "result": "concave up as a loss in $z$",
+            "why": "positive curvature means bowl-shaped"
+          }
+        ],
+        "answer": "The logistic loss is concave up in the score variable for every finite $z$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Convex losses",
+        "background": "Many optimization guarantees rely on bowl-shaped losses, which in one dimension means concave up.",
+        "numbers": "For $J(w)=(w-4)^2$, $J''(w)=2>0$, so every stationary point is globally safe."
+      },
+      {
+        "title": "Diminishing returns",
+        "background": "Logarithms model gains that continue but slow down.",
+        "numbers": "$\\ln x$ has slopes $1,0.5,0.25$ at $x=1,2,4$, so it bends downward."
+      },
+      {
+        "title": "Newton's method",
+        "background": "Curvature controls the Newton step size.",
+        "numbers": "For $f(w)=w^2$, $f'(3)=6$ and $f''(3)=2$, so Newton moves by $6/2=3$ straight to $0$."
+      },
+      {
+        "title": "Uncertainty penalties",
+        "background": "Entropy-style terms are concave, which rewards mixing rather than extremes.",
+        "numbers": "For $H(p)=-p\\ln p-(1-p)\\ln(1-p)$, $H''(p)=-1/p-1/(1-p)<0$; at $p=0.5$, $H''=-4$."
+      },
+      {
+        "title": "Queueing delay",
+        "background": "Delay often curves upward as utilization approaches capacity.",
+        "numbers": "$D(\\rho)=1/(1-\\rho)$ has $D''(\\rho)=2/(1-\\rho)^3$; at $\\rho=0.8$, $D''=250$."
+      },
+      {
+        "title": "Calibration curves",
+        "background": "Probability transforms can flatten at the ends and curve differently across ranges.",
+        "numbers": "Sigmoid slope drops from $0.25$ at $0$ to about $0.105$ at $2$, showing decreasing slope on the positive side."
+      }
+    ],
+    "applicationsClose": "Concavity is the shape behind the slope: not just whether things move, but whether that motion is speeding up or slowing down.",
+    "takeaways": [
+      "$f''>0$ means concave up; $f''<0$ means concave down.",
+      "Concavity describes intervals, not isolated points.",
+      "A zero second derivative is only a candidate for a change in concavity."
+    ],
     "prereqs": [
       "math-01-31"
     ]
@@ -1206,19 +8287,275 @@
   B({
     "id": "math-01-33",
     "title": "The second derivative test",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the second derivative test.",
+    "tagline": "Classify a stationary point by the sign of the curvature there.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Concavity</i>"
+        "critical points",
+        "concavity",
+        "second derivatives"
       ],
       "leadsTo": [
-        "the next lesson, <i>Inflection points</i>"
+        "inflection points",
+        "curve sketching",
+        "optimization"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "quadratic approximation",
+        "Taylor polynomials",
+        "sign charts"
       ]
     },
+    "motivation": "<p>The first derivative test is dependable, but it asks you to make a sign chart. Sometimes the second derivative gives a faster reading: at a flat point, is the graph shaped like a bowl or like a cap?</p><p>The <b>second derivative test</b> says positive curvature at a stationary point means a local minimum, negative curvature means a local maximum, and zero curvature means we need more information. It is a local microscope.</p>",
+    "definition": "<p>If $f'(c)=0$ and $f''$ exists near $c$, then $f''(c)>0$ implies a local minimum at $c$, while $f''(c)<0$ implies a local maximum at $c$. If $f''(c)=0$, the test is inconclusive. The reason is the quadratic approximation $$f(c+h)\\approx f(c)+\\frac12 f''(c)h^2,$$ since the linear term vanishes when $f'(c)=0$.</p><p><b>Assumptions that matter:</b> the test applies only at stationary points with $f'(c)=0$; it does not classify corners where $f'$ is undefined; and $f''(c)=0$ does not mean neither, only that this test has gone silent.</p>",
+    "worked": {
+      "problem": "Use the second derivative test to classify the critical points of $f(x)=x^4-4x^2$.",
+      "skills": [
+        "critical points",
+        "second derivatives",
+        "classification"
+      ],
+      "strategy": "Find stationary points from $f'$, then plug each one into $f''$.",
+      "steps": [
+        {
+          "do": "Differentiate once",
+          "result": "$f'(x)=4x^3-8x$",
+          "why": "stationary points satisfy $f'=0$"
+        },
+        {
+          "do": "Factor $f'$",
+          "result": "$4x(x^2-2)$",
+          "why": "solve the critical equation"
+        },
+        {
+          "do": "Solve $f'=0$",
+          "result": "$x=0,\\ \\pm\\sqrt2$",
+          "why": "these are stationary points"
+        },
+        {
+          "do": "Differentiate again",
+          "result": "$f''(x)=12x^2-8$",
+          "why": "curvature classifies them"
+        },
+        {
+          "do": "Evaluate at $x=0$",
+          "result": "$f''(0)=-8$",
+          "why": "negative curvature means local maximum"
+        },
+        {
+          "do": "Evaluate at $x=\\pm\\sqrt2$",
+          "result": "$f''(\\pm\\sqrt2)=16$",
+          "why": "positive curvature means local minima"
+        },
+        {
+          "do": "Evaluate function values",
+          "result": "$f(0)=0,\\ f(\\pm\\sqrt2)=-4$",
+          "why": "give the classified points"
+        }
+      ],
+      "verify": "The graph rises into $x=0$ then falls away, while near $\\pm\\sqrt2$ it bends upward like two bowls.",
+      "answer": "Local maximum at $(0,0)$; local minima at $(\\pm\\sqrt2,-4)$.",
+      "connects": "The sign of curvature gives the same classification as the first derivative test when the test is decisive."
+    },
+    "practice": [
+      {
+        "problem": "Classify the critical point of $f(x)=x^2+2x+5$.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=2x+2$",
+            "why": "find stationary points"
+          },
+          {
+            "do": "Set $f'=0$",
+            "result": "$x=-1$",
+            "why": "solve $2x+2=0$"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=2$",
+            "why": "curvature"
+          },
+          {
+            "do": "Evaluate $f''(-1)$",
+            "result": "$2>0$",
+            "why": "positive curvature"
+          },
+          {
+            "do": "Evaluate $f(-1)$",
+            "result": "$4$",
+            "why": "give the point"
+          }
+        ],
+        "answer": "Local minimum at $(-1,4)$."
+      },
+      {
+        "problem": "Classify the critical point of $f(x)=-3x^2+12x$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=-6x+12$",
+            "why": "critical equation"
+          },
+          {
+            "do": "Set $f'=0$",
+            "result": "$x=2$",
+            "why": "stationary point"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=-6$",
+            "why": "curvature"
+          },
+          {
+            "do": "Evaluate at $2$",
+            "result": "$-6<0$",
+            "why": "negative curvature"
+          },
+          {
+            "do": "Evaluate $f(2)$",
+            "result": "$12$",
+            "why": "height of the maximum"
+          }
+        ],
+        "answer": "Local maximum at $(2,12)$."
+      },
+      {
+        "problem": "Use the test on $f(x)=x^3$ at its critical point.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=3x^2$",
+            "why": "find critical points"
+          },
+          {
+            "do": "Set $f'=0$",
+            "result": "$x=0$",
+            "why": "stationary point"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=6x$",
+            "why": "curvature"
+          },
+          {
+            "do": "Evaluate $f''(0)$",
+            "result": "$0$",
+            "why": "the test is inconclusive"
+          },
+          {
+            "do": "Use a sign check",
+            "result": "$f'(x)>0$ on both sides",
+            "why": "the function keeps increasing"
+          }
+        ],
+        "answer": "The second derivative test is inconclusive; $x=0$ is not a local extremum."
+      },
+      {
+        "problem": "Classify the stationary points of $f(x)=x^3-6x^2+9x$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=3x^2-12x+9$",
+            "why": "stationary equation"
+          },
+          {
+            "do": "Factor",
+            "result": "$3(x-1)(x-3)$",
+            "why": "solve quickly"
+          },
+          {
+            "do": "List stationary points",
+            "result": "$x=1,3$",
+            "why": "zeros of $f'$"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=6x-12$",
+            "why": "curvature"
+          },
+          {
+            "do": "Evaluate $f''(1)$",
+            "result": "$-6$",
+            "why": "local maximum"
+          },
+          {
+            "do": "Evaluate $f''(3)$",
+            "result": "$6$",
+            "why": "local minimum"
+          }
+        ],
+        "answer": "Local maximum at $x=1$ and local minimum at $x=3$."
+      },
+      {
+        "problem": "For $J(w)=\\frac12(w-4)^2$, classify the critical point of the loss.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$J'(w)=w-4$",
+            "why": "gradient of the loss"
+          },
+          {
+            "do": "Set $J'=0$",
+            "result": "$w=4$",
+            "why": "stationary weight"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$J''(w)=1$",
+            "why": "curvature of the loss"
+          },
+          {
+            "do": "Evaluate at $w=4$",
+            "result": "$1>0$",
+            "why": "positive curvature means local minimum"
+          },
+          {
+            "do": "Evaluate $J(4)$",
+            "result": "$0$",
+            "why": "best achievable loss"
+          }
+        ],
+        "answer": "Local minimum at $w=4$ with loss $0$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Newton optimization",
+        "background": "Newton's method divides gradient by curvature, so the sign of $f''$ matters.",
+        "numbers": "For $J(w)=(w-4)^2$, at $w=1$ the step is $J'/J''=-6/2=-3$, so $w$ jumps to $4$."
+      },
+      {
+        "title": "Checking minima in ML",
+        "background": "A positive second derivative in one dimension means a stationary loss is locally bowl-shaped.",
+        "numbers": "$J(w)=0.5(w-2)^2+1$ has $J''=1>0$, so $w=2$ is a local minimum with loss $1$."
+      },
+      {
+        "title": "Rejecting maxima",
+        "background": "Gradient zero alone can fool an optimizer if the point is a peak.",
+        "numbers": "$J(w)=-w^2$ has $J'(0)=0$ and $J''(0)=-2$, so $w=0$ is a maximum, not a minimum."
+      },
+      {
+        "title": "Saddle warnings",
+        "background": "In higher dimensions, a zero or mixed curvature test warns that classification needs the Hessian.",
+        "numbers": "For $f(x)=x^3$, $f''(0)=0$; nearby values $-0.001$ and $0.001$ show no max or min."
+      },
+      {
+        "title": "Hyperparameter curves",
+        "background": "A validation curve's local best can be confirmed by upward curvature.",
+        "numbers": "If $E(\\lambda)=10(\\lambda-0.1)^2+0.2$, then $E''=20>0$ and the best is $\\lambda=0.1$."
+      },
+      {
+        "title": "Economics of compute",
+        "background": "Cost curves often have stationary points that should be minima, not maxima.",
+        "numbers": "For $C(b)=b+64/b$, $C'(b)=1-64/b^2$ gives $b=8$, and $C''(8)=128/512=0.25>0$."
+      }
+    ],
+    "applicationsClose": "Curvature is a local verdict: bowl, cap, or not enough information yet.",
+    "takeaways": [
+      "At $f'(c)=0$, $f''(c)>0$ means local minimum and $f''(c)<0$ means local maximum.",
+      "$f''(c)=0$ is inconclusive, not a classification.",
+      "The test is the quadratic approximation made practical."
+    ],
     "prereqs": [
       "math-01-32"
     ]
@@ -1227,19 +8564,275 @@
   B({
     "id": "math-01-34",
     "title": "Inflection points",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: inflection points.",
+    "tagline": "An inflection point is where the graph truly changes the way it bends.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The second derivative test</i>"
+        "concavity",
+        "second derivatives",
+        "sign charts"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Mean Value Theorem</i>"
+        "curve sketching",
+        "Taylor approximation",
+        "optimization geometry"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "critical points",
+        "the second derivative test",
+        "continuity"
       ]
     },
+    "motivation": "<p>Concavity tells whether a graph bends like a bowl or like a cap. Sometimes the graph switches from one kind of bending to the other, and that switch can mark a change in acceleration, confidence, or saturation.</p><p>An <b>inflection point</b> is not just where $f''=0$. It is where concavity actually changes. That small distinction saves a lot of mistakes.</p>",
+    "definition": "<p>A point $(c,f(c))$ is an <b>inflection point</b> if $f$ is continuous at $c$ and the concavity changes at $c$: from up to down or from down to up. Candidates occur where $f''(c)=0$ or where $f''$ is undefined, but the sign of $f''$ on both sides decides.</p><p><b>Assumptions that matter:</b> the function must be continuous at the point; $f''=0$ is only a candidate; and concavity must change across the point, not merely touch zero and keep the same sign.</p>",
+    "worked": {
+      "problem": "Find the inflection point of $f(x)=x^3-3x$.",
+      "skills": [
+        "second derivatives",
+        "sign charts",
+        "concavity change"
+      ],
+      "strategy": "Find where $f''$ is zero, then test concavity on both sides.",
+      "steps": [
+        {
+          "do": "Differentiate once",
+          "result": "$f'(x)=3x^2-3$",
+          "why": "prepare for the second derivative"
+        },
+        {
+          "do": "Differentiate again",
+          "result": "$f''(x)=6x$",
+          "why": "concavity comes from $f''$"
+        },
+        {
+          "do": "Set $f''=0$",
+          "result": "$x=0$",
+          "why": "candidate for an inflection point"
+        },
+        {
+          "do": "Test $x=-1$",
+          "result": "$f''(-1)=-6$",
+          "why": "concave down on the left"
+        },
+        {
+          "do": "Test $x=1$",
+          "result": "$f''(1)=6$",
+          "why": "concave up on the right"
+        },
+        {
+          "do": "Evaluate $f(0)$",
+          "result": "$0$",
+          "why": "give the point"
+        }
+      ],
+      "verify": "The sign of $f''$ changes from negative to positive, so this is a real concavity change, not just a zero.",
+      "answer": "Inflection point: $(0,0)$.",
+      "connects": "Inflection points become landmarks when sketching the full curve."
+    },
+    "practice": [
+      {
+        "problem": "Find the inflection point of $f(x)=x^3$.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=3x^2$",
+            "why": "first derivative"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=6x$",
+            "why": "concavity"
+          },
+          {
+            "do": "Set $f''=0$",
+            "result": "$x=0$",
+            "why": "candidate"
+          },
+          {
+            "do": "Test left and right",
+            "result": "$f''(-1)<0,\\ f''(1)>0$",
+            "why": "the sign changes"
+          },
+          {
+            "do": "Evaluate $f(0)$",
+            "result": "$0$",
+            "why": "point coordinate"
+          }
+        ],
+        "answer": "Inflection point: $(0,0)$."
+      },
+      {
+        "problem": "Does $f(x)=x^4$ have an inflection point at $0$?",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=4x^3$",
+            "why": "prepare"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=12x^2$",
+            "why": "concavity"
+          },
+          {
+            "do": "Set $f''=0$",
+            "result": "$x=0$",
+            "why": "candidate"
+          },
+          {
+            "do": "Test $x=-1$",
+            "result": "$f''(-1)=12>0$",
+            "why": "concave up on the left"
+          },
+          {
+            "do": "Test $x=1$",
+            "result": "$f''(1)=12>0$",
+            "why": "concave up on the right"
+          }
+        ],
+        "answer": "No. $f''(0)=0$, but concavity does not change."
+      },
+      {
+        "problem": "Find the inflection points of $f(x)=x^4-6x^2$.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=4x^3-12x$",
+            "why": "first derivative"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=12x^2-12$",
+            "why": "second derivative"
+          },
+          {
+            "do": "Set $f''=0$",
+            "result": "$x^2=1$",
+            "why": "solve $12x^2-12=0$"
+          },
+          {
+            "do": "List candidates",
+            "result": "$x=-1,1$",
+            "why": "possible sign changes"
+          },
+          {
+            "do": "Test intervals",
+            "result": "$+,-,+$",
+            "why": "sample $-2,0,2$"
+          },
+          {
+            "do": "Evaluate function values",
+            "result": "$f(\\pm1)=-5$",
+            "why": "coordinates"
+          }
+        ],
+        "answer": "Inflection points: $(-1,-5)$ and $(1,-5)$."
+      },
+      {
+        "problem": "Find the inflection point of $f(x)=\\ln(1+x^2)$.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=\\dfrac{2x}{1+x^2}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$f''(x)=\\dfrac{2(1-x^2)}{(1+x^2)^2}$",
+            "why": "quotient rule"
+          },
+          {
+            "do": "Set the numerator to zero",
+            "result": "$1-x^2=0$",
+            "why": "the denominator is always positive"
+          },
+          {
+            "do": "Solve",
+            "result": "$x=\\pm1$",
+            "why": "candidate points"
+          },
+          {
+            "do": "Test signs",
+            "result": "$-,+,-$",
+            "why": "$1-x^2$ controls the sign"
+          },
+          {
+            "do": "Evaluate $f(\\pm1)$",
+            "result": "$\\ln2$",
+            "why": "coordinates"
+          }
+        ],
+        "answer": "Inflection points: $(-1,\\ln2)$ and $(1,\\ln2)$."
+      },
+      {
+        "problem": "For sigmoid $\\sigma(x)=1/(1+e^{-x})$, use $\\sigma''(x)=\\sigma(x)(1-\\sigma(x))(1-2\\sigma(x))$ to find the inflection point.",
+        "steps": [
+          {
+            "do": "Set $\\sigma''(x)=0$",
+            "result": "$\\sigma(x)(1-\\sigma(x))(1-2\\sigma(x))=0$",
+            "why": "inflection candidates"
+          },
+          {
+            "do": "Use $0<\\sigma(x)<1$",
+            "result": "$\\sigma(x)\\ne0$ and $1-\\sigma(x)\\ne0$",
+            "why": "finite sigmoid outputs are strictly inside $(0,1)$"
+          },
+          {
+            "do": "Solve the remaining factor",
+            "result": "$1-2\\sigma(x)=0$",
+            "why": "only possible zero"
+          },
+          {
+            "do": "Find $\\sigma(x)$",
+            "result": "$\\sigma(x)=1/2$",
+            "why": "halfway probability"
+          },
+          {
+            "do": "Solve for $x$",
+            "result": "$x=0$",
+            "why": "sigmoid equals $1/2$ at zero logit"
+          }
+        ],
+        "answer": "Inflection point: $(0,1/2)$, where sigmoid changes from bending up to bending down."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Sigmoid classifiers",
+        "background": "The sigmoid changes from accelerating to saturating at probability $0.5$.",
+        "numbers": "$\\sigma(0)=0.5$ and $\\sigma'(0)=0.25$, the largest slope on the curve."
+      },
+      {
+        "title": "Training curves",
+        "background": "Loss often falls slowly, then rapidly, then slowly again; inflection marks the speed transition.",
+        "numbers": "A logistic decay midpoint at epoch $20$ has the steepest drop there, such as loss moving about $0.05$ per epoch."
+      },
+      {
+        "title": "Epidemic and diffusion models",
+        "background": "S-shaped adoption curves use inflection points to mark peak growth rate.",
+        "numbers": "For $N(t)=1000/(1+e^{-0.3(t-10)})$, the inflection is at $t=10$ with $N=500$."
+      },
+      {
+        "title": "Activation saturation",
+        "background": "Inflection separates the nearly linear central region from saturation behavior.",
+        "numbers": "For sigmoid, at $x=0$ slope is $0.25$; at $x=4$ slope is about $0.0177$."
+      },
+      {
+        "title": "Rendering and splines",
+        "background": "Computer graphics uses curvature changes to shape smooth curves.",
+        "numbers": "For $y=x^3-3x$, the bend changes at $x=0$, where $y=0$."
+      },
+      {
+        "title": "Model calibration",
+        "background": "Calibration curves can reveal where confidence starts becoming over- or under-responsive.",
+        "numbers": "A fitted curve $p(s)=1/(1+e^{-2(s-0.7)})$ has inflection at score $s=0.7$ and probability $0.5$."
+      }
+    ],
+    "applicationsClose": "Inflection points are bend-change landmarks: they say where the graph's local geometry changes its mind.",
+    "takeaways": [
+      "Inflection requires a change in concavity, not just $f''=0$.",
+      "Candidates come from $f''=0$ or $f''$ undefined, then a sign chart decides.",
+      "The function must be continuous at the inflection point."
+    ],
     "prereqs": [
       "math-01-33"
     ]
@@ -1248,19 +8841,285 @@
   B({
     "id": "math-01-35",
     "title": "The Mean Value Theorem",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the mean value theorem.",
+    "tagline": "Some instant has the same slope as the whole trip's average slope.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Inflection points</i>"
+        "continuity",
+        "derivatives",
+        "secant and tangent slopes"
       ],
       "leadsTo": [
-        "the next lesson, <i>Curve sketching</i>"
+        "Taylor's theorem",
+        "error bounds",
+        "optimization guarantees"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "Rolle's theorem",
+        "increasing functions",
+        "linear approximation"
       ]
     },
+    "motivation": "<p>If you drive $120$ miles in $2$ hours, your average speed is $60$ mph. Even if your speed changed the whole time, there must have been at least one instant when the speedometer read $60$.</p><p>The <b>Mean Value Theorem</b> is that everyday fact for functions. It connects a whole-interval change to an instantaneous derivative somewhere inside the interval.</p>",
+    "definition": "<p>If $f$ is continuous on $[a,b]$ and differentiable on $(a,b)$, then there is at least one $c\\in(a,b)$ such that $$f'(c)=\\frac{f(b)-f(a)}{b-a}.$$ The right side is the secant slope across the interval; the theorem guarantees a tangent slope that matches it.</p><p><b>Assumptions that matter:</b> continuity on the closed interval prevents jumps; differentiability on the open interval prevents corners or cusps; and the theorem guarantees existence of at least one $c$, not necessarily a unique one.</p>",
+    "worked": {
+      "problem": "For $f(x)=x^2$ on $[1,3]$, find a point $c$ guaranteed by the Mean Value Theorem.",
+      "skills": [
+        "average rate of change",
+        "derivatives",
+        "solving equations"
+      ],
+      "strategy": "Compute the secant slope, compute $f'$, then set them equal.",
+      "steps": [
+        {
+          "do": "Check continuity and differentiability",
+          "result": "$x^2$ is continuous and differentiable",
+          "why": "polynomials satisfy the hypotheses"
+        },
+        {
+          "do": "Compute $f(3)$",
+          "result": "$9$",
+          "why": "right endpoint value"
+        },
+        {
+          "do": "Compute $f(1)$",
+          "result": "$1$",
+          "why": "left endpoint value"
+        },
+        {
+          "do": "Compute the secant slope",
+          "result": "$\\dfrac{9-1}{3-1}=4$",
+          "why": "average rate of change"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$f'(x)=2x$",
+          "why": "instantaneous rate"
+        },
+        {
+          "do": "Set $f'(c)=4$",
+          "result": "$2c=4$",
+          "why": "MVT conclusion"
+        },
+        {
+          "do": "Solve",
+          "result": "$c=2$",
+          "why": "the point lies inside $(1,3)$"
+        }
+      ],
+      "verify": "The tangent slope at $x=2$ is $4$, exactly matching the secant slope from $(1,1)$ to $(3,9)$.",
+      "answer": "$c=2$.",
+      "connects": "MVT is the bridge from an interval guarantee to a derivative statement."
+    },
+    "practice": [
+      {
+        "problem": "Find the MVT point for $f(x)=x^2+1$ on $[0,2]$.",
+        "steps": [
+          {
+            "do": "Check hypotheses",
+            "result": "polynomial",
+            "why": "continuous and differentiable"
+          },
+          {
+            "do": "Compute endpoint values",
+            "result": "$f(2)=5,\\ f(0)=1$",
+            "why": "needed for average slope"
+          },
+          {
+            "do": "Compute secant slope",
+            "result": "$\\frac{5-1}{2-0}=2$",
+            "why": "average rate"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=2x$",
+            "why": "instantaneous slope"
+          },
+          {
+            "do": "Set equal",
+            "result": "$2c=2$",
+            "why": "MVT"
+          },
+          {
+            "do": "Solve",
+            "result": "$c=1$",
+            "why": "inside $(0,2)$"
+          }
+        ],
+        "answer": "$c=1$."
+      },
+      {
+        "problem": "Find the MVT point for $f(x)=\\sqrt{x}$ on $[1,4]$.",
+        "steps": [
+          {
+            "do": "Check hypotheses",
+            "result": "$\\sqrt{x}$ is continuous on $[1,4]$ and differentiable on $(1,4)$",
+            "why": "the interval stays positive"
+          },
+          {
+            "do": "Compute endpoint values",
+            "result": "$f(4)=2,\\ f(1)=1$",
+            "why": "secant slope"
+          },
+          {
+            "do": "Compute secant slope",
+            "result": "$\\frac{1}{3}$",
+            "why": "$(2-1)/(4-1)$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=\\frac{1}{2\\sqrt{x}}$",
+            "why": "power rule"
+          },
+          {
+            "do": "Set equal",
+            "result": "$\\frac{1}{2\\sqrt{c}}=\\frac13$",
+            "why": "MVT"
+          },
+          {
+            "do": "Solve",
+            "result": "$c=\\frac94$",
+            "why": "$2\\sqrt c=3$"
+          }
+        ],
+        "answer": "$c=9/4$."
+      },
+      {
+        "problem": "Find a point guaranteed by MVT for $f(x)=\\ln x$ on $[1,e]$.",
+        "steps": [
+          {
+            "do": "Check hypotheses",
+            "result": "$\\ln x$ is continuous and differentiable for $x>0$",
+            "why": "the interval is positive"
+          },
+          {
+            "do": "Compute endpoint values",
+            "result": "$f(e)=1,\\ f(1)=0$",
+            "why": "log facts"
+          },
+          {
+            "do": "Compute secant slope",
+            "result": "$\\frac{1}{e-1}$",
+            "why": "average rate"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=1/x$",
+            "why": "instantaneous slope"
+          },
+          {
+            "do": "Set equal",
+            "result": "$1/c=1/(e-1)$",
+            "why": "MVT"
+          },
+          {
+            "do": "Solve",
+            "result": "$c=e-1$",
+            "why": "inside $(1,e)$"
+          }
+        ],
+        "answer": "$c=e-1$."
+      },
+      {
+        "problem": "Show why MVT does not apply to $f(x)=|x|$ on $[-1,1]$.",
+        "steps": [
+          {
+            "do": "Check continuity",
+            "result": "$|x|$ is continuous on $[-1,1]$",
+            "why": "no jumps"
+          },
+          {
+            "do": "Check differentiability",
+            "result": "not differentiable at $x=0$",
+            "why": "there is a corner"
+          },
+          {
+            "do": "Compute secant slope anyway",
+            "result": "$\\frac{1-1}{2}=0$",
+            "why": "average change is zero"
+          },
+          {
+            "do": "Check side derivatives",
+            "result": "$-1$ on the left and $1$ on the right",
+            "why": "no derivative at $0$"
+          },
+          {
+            "do": "State the failure",
+            "result": "MVT hypotheses fail",
+            "why": "differentiability on the open interval is required"
+          }
+        ],
+        "answer": "MVT does not apply because $|x|$ is not differentiable at $0$."
+      },
+      {
+        "problem": "A training loss drops from $1.2$ to $0.6$ over $10$ epochs and is smooth. What derivative value is guaranteed at some epoch?",
+        "steps": [
+          {
+            "do": "Let $L(t)$ be the loss",
+            "result": "$L(0)=1.2,\\ L(10)=0.6$",
+            "why": "translate the story"
+          },
+          {
+            "do": "Assume hypotheses",
+            "result": "continuous on $[0,10]$ and differentiable on $(0,10)$",
+            "why": "the problem says smooth"
+          },
+          {
+            "do": "Compute average slope",
+            "result": "$\\frac{0.6-1.2}{10-0}$",
+            "why": "secant slope"
+          },
+          {
+            "do": "Simplify",
+            "result": "$-0.06$",
+            "why": "loss decreased by $0.6$ over $10$ epochs"
+          },
+          {
+            "do": "Apply MVT",
+            "result": "$L'(c)=-0.06$",
+            "why": "some instant matches the average rate"
+          }
+        ],
+        "answer": "At some epoch $c\\in(0,10)$, $L'(c)=-0.06$ loss units per epoch."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Speed monitoring",
+        "background": "The classic interpretation says average speed forces an instant with that speed.",
+        "numbers": "A car covering $120$ miles in $2$ hours has average speed $60$ mph, so some instant was $60$ mph."
+      },
+      {
+        "title": "Training diagnostics",
+        "background": "A smooth loss curve with known endpoints must have an instantaneous slope matching the average drop.",
+        "numbers": "Loss $1.2$ to $0.6$ over $10$ epochs guarantees $L'(c)=-0.06$ somewhere."
+      },
+      {
+        "title": "Lipschitz bounds",
+        "background": "If derivatives are bounded, MVT bounds output changes.",
+        "numbers": "If $|f'|\\le3$ and inputs differ by $0.2$, outputs differ by at most $0.6$."
+      },
+      {
+        "title": "Gradient clipping intuition",
+        "background": "Bounding gradients bounds how fast model scores can change along a line.",
+        "numbers": "With gradient norm at most $5$, a parameter move of length $0.01$ changes loss by at most about $0.05$."
+      },
+      {
+        "title": "Numerical error",
+        "background": "MVT helps turn a derivative maximum into an approximation error bound.",
+        "numbers": "For $\\sin x$, $|\\cos x|\\le1$, so changing $x$ by $0.001$ changes $\\sin x$ by at most $0.001$."
+      },
+      {
+        "title": "Database latency trends",
+        "background": "If latency changes smoothly over load, an average increase reflects some instantaneous sensitivity.",
+        "numbers": "Latency from $80$ ms to $140$ ms as QPS goes $1000$ to $2000$ gives slope $0.06$ ms per QPS somewhere."
+      }
+    ],
+    "applicationsClose": "MVT is the guarantee behind many estimates: a whole-interval change has an instantaneous witness.",
+    "takeaways": [
+      "Continuity on $[a,b]$ and differentiability on $(a,b)$ are required.",
+      "The theorem guarantees $f'(c)=\\frac{f(b)-f(a)}{b-a}$ for some interior $c$.",
+      "It proves existence, not necessarily uniqueness."
+    ],
     "prereqs": [
       "math-01-34"
     ]
@@ -1269,19 +9128,307 @@
   B({
     "id": "math-01-36",
     "title": "Curve sketching",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: curve sketching.",
+    "tagline": "Turn derivatives into a readable map of a graph.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Mean Value Theorem</i>"
+        "critical points",
+        "first derivative test",
+        "concavity",
+        "inflection points"
       ],
       "leadsTo": [
-        "the next lesson, <i>Applied optimization</i>"
+        "applied optimization",
+        "Taylor approximation",
+        "multivariable calculus"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "asymptotes",
+        "intercepts",
+        "domain analysis"
       ]
     },
+    "motivation": "<p>Graphing is not guessing. Once you can read derivatives, you can build a trustworthy sketch from a small set of landmarks: intercepts, increasing intervals, extrema, concavity, and inflection points.</p><p><b>Curve sketching</b> is the organized version of that process. It turns local calculus facts into a global picture, the same way a few map features can orient you in a whole city.</p>",
+    "definition": "<p>To sketch a differentiable function, identify the domain, intercepts, asymptotic behavior, critical points from $f'$, increasing and decreasing intervals from the sign of $f'$, concavity from $f''$, and inflection points where concavity changes. Then plot the landmarks and connect them consistently.</p><p><b>Assumptions that matter:</b> the sketch is only as good as the domain and sign charts; endpoints and asymptotes need separate attention; and a clean sketch should honor every derivative sign and concavity interval you found.</p>",
+    "worked": {
+      "problem": "Sketch the key features of $f(x)=x^3-3x^2$.",
+      "skills": [
+        "critical points",
+        "first derivative test",
+        "concavity",
+        "inflection points"
+      ],
+      "strategy": "Build the graph from derivative landmarks rather than plotting random points.",
+      "steps": [
+        {
+          "do": "State the domain",
+          "result": "$(-\\infty,\\infty)$",
+          "why": "polynomial"
+        },
+        {
+          "do": "Find intercepts",
+          "result": "$x^2(x-3)=0$, so $x=0,3$; $y=0$",
+          "why": "factor the function"
+        },
+        {
+          "do": "Differentiate once",
+          "result": "$f'(x)=3x^2-6x$",
+          "why": "increasing and decreasing"
+        },
+        {
+          "do": "Factor $f'$",
+          "result": "$3x(x-2)$",
+          "why": "critical numbers"
+        },
+        {
+          "do": "Build the $f'$ sign chart",
+          "result": "$+,-,+$ across $0$ and $2$",
+          "why": "test $-1,1,3$"
+        },
+        {
+          "do": "Classify extrema",
+          "result": "local max at $(0,0)$, local min at $(2,-4)$",
+          "why": "first derivative changes $+$ to $-$, then $-$ to $+$"
+        },
+        {
+          "do": "Differentiate twice",
+          "result": "$f''(x)=6x-6$",
+          "why": "concavity"
+        },
+        {
+          "do": "Find the inflection point",
+          "result": "$x=1$, $f(1)=-2$",
+          "why": "$f''$ changes sign there"
+        }
+      ],
+      "verify": "The graph rises to $(0,0)$, falls through the inflection point $(1,-2)$ to $(2,-4)$, then rises and crosses again at $x=3$.",
+      "answer": "Key sketch: increasing on $(-\\infty,0)$ and $(2,\\infty)$, decreasing on $(0,2)$, concave down before $1$, concave up after $1$.",
+      "connects": "Curve sketching gathers the previous lessons into one coherent graph story."
+    },
+    "practice": [
+      {
+        "problem": "Sketch the key features of $f(x)=x^2-4$.",
+        "steps": [
+          {
+            "do": "State the domain",
+            "result": "$(-\\infty,\\infty)$",
+            "why": "polynomial"
+          },
+          {
+            "do": "Find intercepts",
+            "result": "$x=\\pm2$, $y=-4$",
+            "why": "solve $x^2-4=0$ and evaluate $f(0)$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=2x$",
+            "why": "increasing and decreasing"
+          },
+          {
+            "do": "Find critical number",
+            "result": "$x=0$",
+            "why": "set $2x=0$"
+          },
+          {
+            "do": "Use signs of $f'$",
+            "result": "$-$ then $+$",
+            "why": "decreasing then increasing"
+          },
+          {
+            "do": "Compute $f''$",
+            "result": "$2>0$",
+            "why": "concave up everywhere"
+          }
+        ],
+        "answer": "Upward parabola with vertex $(0,-4)$ and intercepts $(-2,0)$ and $(2,0)$."
+      },
+      {
+        "problem": "Sketch the key features of $f(x)=x^3-3x$.",
+        "steps": [
+          {
+            "do": "Find intercepts",
+            "result": "$x(x^2-3)=0$, so $x=0,\\pm\\sqrt3$",
+            "why": "factor"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=3x^2-3$",
+            "why": "critical points"
+          },
+          {
+            "do": "Find critical numbers",
+            "result": "$x=\\pm1$",
+            "why": "solve $x^2=1$"
+          },
+          {
+            "do": "Read $f'$ signs",
+            "result": "$+,-,+$",
+            "why": "increasing, decreasing, increasing"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$f''(x)=6x$",
+            "why": "concavity"
+          },
+          {
+            "do": "Find inflection",
+            "result": "$(0,0)$",
+            "why": "$f''$ changes sign at $0$"
+          }
+        ],
+        "answer": "Local max at $(-1,2)$, local min at $(1,-2)$, inflection at $(0,0)$."
+      },
+      {
+        "problem": "Sketch the key features of $f(x)=\\frac{1}{x}$.",
+        "steps": [
+          {
+            "do": "State the domain",
+            "result": "$x\\ne0$",
+            "why": "division by zero is not allowed"
+          },
+          {
+            "do": "Identify asymptotes",
+            "result": "$x=0$ and $y=0$",
+            "why": "vertical blow-up and horizontal limit"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=-1/x^2$",
+            "why": "monotonicity"
+          },
+          {
+            "do": "Read the sign of $f'$",
+            "result": "negative on both intervals",
+            "why": "$x^2>0$"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$f''(x)=2/x^3$",
+            "why": "concavity"
+          },
+          {
+            "do": "Read concavity",
+            "result": "down on $(-\\infty,0)$, up on $(0,\\infty)$",
+            "why": "the sign of $x^3$ changes"
+          }
+        ],
+        "answer": "Two decreasing branches with asymptotes $x=0$ and $y=0$; left branch concave down, right branch concave up."
+      },
+      {
+        "problem": "Sketch the key features of $f(x)=x e^{-x}$ for $x\\ge0$.",
+        "steps": [
+          {
+            "do": "State the domain",
+            "result": "$[0,\\infty)$",
+            "why": "given restriction"
+          },
+          {
+            "do": "Find intercept",
+            "result": "$f(0)=0$",
+            "why": "endpoint value"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=e^{-x}(1-x)$",
+            "why": "product rule"
+          },
+          {
+            "do": "Find critical number",
+            "result": "$x=1$",
+            "why": "$e^{-x}$ is never zero"
+          },
+          {
+            "do": "Read signs",
+            "result": "$+$ then $-$",
+            "why": "increases before $1$, decreases after"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$f''(x)=e^{-x}(x-2)$",
+            "why": "concavity"
+          },
+          {
+            "do": "Find inflection",
+            "result": "$x=2$",
+            "why": "concavity changes there"
+          }
+        ],
+        "answer": "Starts at $0$, peaks at $(1,1/e)$, inflects at $(2,2/e^2)$, then decays toward $0$."
+      },
+      {
+        "problem": "Sketch the one-dimensional loss $J(w)=w^4-2w^2$.",
+        "steps": [
+          {
+            "do": "Find intercepts",
+            "result": "$w=0,\\ \\pm\\sqrt2$",
+            "why": "$w^2(w^2-2)=0$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$J'(w)=4w(w-1)(w+1)$",
+            "why": "critical points"
+          },
+          {
+            "do": "Read $J'$ signs",
+            "result": "$-,+,-,+$",
+            "why": "test intervals around $-1,0,1$"
+          },
+          {
+            "do": "Classify extrema",
+            "result": "minima at $\\pm1$, maximum at $0$",
+            "why": "first derivative sign changes"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$J''(w)=12w^2-4$",
+            "why": "concavity"
+          },
+          {
+            "do": "Find inflection points",
+            "result": "$w=\\pm1/\\sqrt3$",
+            "why": "solve $12w^2-4=0$"
+          }
+        ],
+        "answer": "A double-well loss: minima at $(-1,-1)$ and $(1,-1)$, central maximum at $(0,0)$, inflections at $\\pm1/\\sqrt3$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Loss landscape slices",
+        "background": "Plotting a one-dimensional slice through parameter space helps diagnose minima and saddles.",
+        "numbers": "$J(w)=w^4-2w^2$ has minima $J=-1$ at $w=\\pm1$ and a maximum $J=0$ at $w=0$."
+      },
+      {
+        "title": "Activation functions",
+        "background": "Sketching activations reveals saturation, linear regions, and curvature changes.",
+        "numbers": "Sigmoid passes through $(0,0.5)$ with slope $0.25$ and has horizontal limits $0$ and $1$."
+      },
+      {
+        "title": "Throughput curves",
+        "background": "Systems performance often rises, peaks, and falls as overhead dominates.",
+        "numbers": "$T(b)=b e^{-b/100}$ peaks at $b=100$ with value about $36.8$."
+      },
+      {
+        "title": "Regularization paths",
+        "background": "A curve of validation error against penalty strength can show the best region visually.",
+        "numbers": "$E(\\lambda)=5(\\lambda-0.2)^2+0.1$ has a minimum $0.1$ at $\\lambda=0.2$."
+      },
+      {
+        "title": "Probability densities",
+        "background": "Sketching a density checks modes, tails, and symmetry.",
+        "numbers": "For $p(x)=e^{-x^2/2}$, the maximum is at $x=0$ and $p(2)/p(0)=e^{-2}\\approx0.135$."
+      },
+      {
+        "title": "Latency under load",
+        "background": "Asymptotes warn where a service approaches capacity.",
+        "numbers": "$D(\\rho)=1/(1-\\rho)$ is $5$ at $\\rho=0.8$ and $10$ at $\\rho=0.9$, rising sharply near $1$."
+      }
+    ],
+    "applicationsClose": "A good sketch is compressed understanding: signs, bends, landmarks, and limits all in one picture.",
+    "takeaways": [
+      "Start with domain, intercepts, and asymptotic behavior.",
+      "Use $f'$ for increasing intervals and extrema; use $f''$ for concavity and inflection.",
+      "Connect landmarks in a way that respects every sign chart."
+    ],
     "prereqs": [
       "math-01-35"
     ]
@@ -1290,19 +9437,332 @@
   B({
     "id": "math-01-37",
     "title": "Applied optimization",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: applied optimization.",
+    "tagline": "Translate a real constraint into a function, then use calculus to choose the best value.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Curve sketching</i>"
+        "critical points",
+        "first derivative test",
+        "second derivative test",
+        "curve sketching"
       ],
       "leadsTo": [
-        "the next lesson, <i>Antiderivatives</i>"
+        "gradient descent",
+        "constrained optimization",
+        "multivariable optimization"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "algebraic modeling",
+        "domain constraints",
+        "convexity"
       ]
     },
+    "motivation": "<p>Optimization is where derivatives start making decisions. We are not just describing a graph; we are choosing the least cost, greatest area, fastest runtime, or smallest loss.</p><p><b>Applied optimization</b> has a rhythm: define variables, write the quantity to optimize, use constraints to get one variable, differentiate, test candidates, and interpret the answer in the original units. That rhythm is also the heartbeat of machine learning.</p>",
+    "definition": "<p>An applied optimization problem asks for the maximum or minimum of an objective function on a domain. After modeling the objective as $F(x)$, candidates come from critical points inside the domain and endpoints on the boundary. Derivatives classify interior candidates; endpoint values must be compared directly.</p><p><b>Assumptions that matter:</b> the objective must match the real quantity being optimized; the domain and units matter; constraints must be substituted correctly; and a local optimum is not automatically the absolute optimum unless the domain, endpoints, or convexity justify it.</p>",
+    "worked": {
+      "problem": "A rectangle has perimeter $40$ meters. What dimensions maximize its area?",
+      "skills": [
+        "modeling",
+        "constraints",
+        "critical points",
+        "second derivative test"
+      ],
+      "strategy": "Use the perimeter constraint to write area as a one-variable function, then maximize it.",
+      "steps": [
+        {
+          "do": "Define variables",
+          "result": "$x$ and $y$ are side lengths",
+          "why": "optimization starts with named quantities"
+        },
+        {
+          "do": "Write the constraint",
+          "result": "$2x+2y=40$",
+          "why": "perimeter is fixed"
+        },
+        {
+          "do": "Solve for $y$",
+          "result": "$y=20-x$",
+          "why": "one-variable objective"
+        },
+        {
+          "do": "Write the area",
+          "result": "$A=x(20-x)$",
+          "why": "area is length times width"
+        },
+        {
+          "do": "Expand",
+          "result": "$A(x)=20x-x^2$",
+          "why": "easier to differentiate"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$A'(x)=20-2x$",
+          "why": "critical points locate interior optima"
+        },
+        {
+          "do": "Set $A'=0$",
+          "result": "$x=10$",
+          "why": "solve $20-2x=0$"
+        },
+        {
+          "do": "Find $y$",
+          "result": "$y=10$",
+          "why": "use the constraint"
+        },
+        {
+          "do": "Check curvature",
+          "result": "$A''(x)=-2$",
+          "why": "negative means a maximum"
+        }
+      ],
+      "verify": "The domain is $0<x<20$. At the edges area approaches $0$, while $10\\times10=100$, so the interior maximum is sensible.",
+      "answer": "The maximum-area rectangle is $10$ m by $10$ m, with area $100$ m$^2$.",
+      "connects": "The same modeling pattern becomes loss minimization when the objective is prediction error."
+    },
+    "practice": [
+      {
+        "problem": "Find two positive numbers with sum $20$ whose product is as large as possible.",
+        "steps": [
+          {
+            "do": "Define one number",
+            "result": "$x$",
+            "why": "choose a variable"
+          },
+          {
+            "do": "Use the constraint",
+            "result": "the other number is $20-x$",
+            "why": "the sum is fixed"
+          },
+          {
+            "do": "Write the product",
+            "result": "$P(x)=x(20-x)$",
+            "why": "objective function"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$P'(x)=20-2x$",
+            "why": "find critical points"
+          },
+          {
+            "do": "Set $P'=0$",
+            "result": "$x=10$",
+            "why": "interior candidate"
+          },
+          {
+            "do": "Find the other number",
+            "result": "$10$",
+            "why": "$20-10=10$"
+          },
+          {
+            "do": "Check $P''$",
+            "result": "$-2<0$",
+            "why": "maximum"
+          }
+        ],
+        "answer": "The numbers are $10$ and $10$; the maximum product is $100$."
+      },
+      {
+        "problem": "A closed box with square base has volume $32$ cm$^3$. Minimize its surface area.",
+        "steps": [
+          {
+            "do": "Let base side be $x$ and height be $h$",
+            "result": "$x^2h=32$",
+            "why": "volume constraint"
+          },
+          {
+            "do": "Solve for $h$",
+            "result": "$h=32/x^2$",
+            "why": "one variable"
+          },
+          {
+            "do": "Write surface area",
+            "result": "$S=2x^2+4xh$",
+            "why": "top and bottom plus four sides"
+          },
+          {
+            "do": "Substitute $h$",
+            "result": "$S(x)=2x^2+128/x$",
+            "why": "objective in $x$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$S'(x)=4x-128/x^2$",
+            "why": "critical point"
+          },
+          {
+            "do": "Set $S'=0$",
+            "result": "$4x^3=128$",
+            "why": "multiply by $x^2$"
+          },
+          {
+            "do": "Solve for $x$",
+            "result": "$x=\\sqrt[3]{32}$",
+            "why": "$x^3=32$"
+          },
+          {
+            "do": "Find $h$",
+            "result": "$h=32/x^2=x$",
+            "why": "a cube minimizes area"
+          }
+        ],
+        "answer": "The box is a cube with side $\\sqrt[3]{32}\\approx3.17$ cm."
+      },
+      {
+        "problem": "Minimize the cost $C(q)=q+100/q$ for $q>0$.",
+        "steps": [
+          {
+            "do": "State the domain",
+            "result": "$q>0$",
+            "why": "quantity must be positive"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$C'(q)=1-100/q^2$",
+            "why": "find candidates"
+          },
+          {
+            "do": "Set $C'=0$",
+            "result": "$1=100/q^2$",
+            "why": "stationary cost"
+          },
+          {
+            "do": "Solve",
+            "result": "$q=10$",
+            "why": "positive root only"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$C''(q)=200/q^3$",
+            "why": "classification"
+          },
+          {
+            "do": "Evaluate curvature",
+            "result": "$C''(10)=0.2>0$",
+            "why": "local minimum"
+          },
+          {
+            "do": "Evaluate cost",
+            "result": "$C(10)=20$",
+            "why": "minimum value"
+          }
+        ],
+        "answer": "Minimum cost is $20$ at $q=10$."
+      },
+      {
+        "problem": "A model score is $s(w)=4w-w^2$. Choose $w$ to maximize the score.",
+        "steps": [
+          {
+            "do": "State the objective",
+            "result": "$s(w)=4w-w^2$",
+            "why": "maximize score"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$s'(w)=4-2w$",
+            "why": "stationary point"
+          },
+          {
+            "do": "Set $s'=0$",
+            "result": "$w=2$",
+            "why": "solve $4-2w=0$"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$s''(w)=-2$",
+            "why": "classification"
+          },
+          {
+            "do": "Classify",
+            "result": "maximum",
+            "why": "negative curvature"
+          },
+          {
+            "do": "Evaluate score",
+            "result": "$s(2)=4$",
+            "why": "best score value"
+          }
+        ],
+        "answer": "Choose $w=2$ for maximum score $4$."
+      },
+      {
+        "problem": "Minimize the one-weight ML loss $J(w)=(w-5)^2+0.1w^2$.",
+        "steps": [
+          {
+            "do": "Expand only the derivative mentally",
+            "result": "$J'(w)=2(w-5)+0.2w$",
+            "why": "differentiate data loss plus L2 penalty"
+          },
+          {
+            "do": "Collect terms",
+            "result": "$J'(w)=2.2w-10$",
+            "why": "combine the gradient pieces"
+          },
+          {
+            "do": "Set $J'=0$",
+            "result": "$2.2w=10$",
+            "why": "stationary point"
+          },
+          {
+            "do": "Solve for $w$",
+            "result": "$w=\\frac{50}{11}\\approx4.545$",
+            "why": "regularization pulls toward zero"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$J''(w)=2.2$",
+            "why": "curvature"
+          },
+          {
+            "do": "Classify",
+            "result": "minimum",
+            "why": "positive curvature"
+          }
+        ],
+        "answer": "The minimizing weight is $w=50/11\\approx4.545$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Machine learning loss",
+        "background": "Training is applied optimization: choose parameters that minimize prediction error plus penalties.",
+        "numbers": "For $J(w)=(w-5)^2+0.1w^2$, the minimizer is $w=50/11\\approx4.545$, not $5$, because the penalty pulls down."
+      },
+      {
+        "title": "Ridge regression intuition",
+        "background": "L2 regularization trades fit for smaller weights.",
+        "numbers": "If data wants $w=10$ and penalty is $\\lambda w^2$ with $\\lambda=1$, minimizing $(w-10)^2+w^2$ gives $w=5$."
+      },
+      {
+        "title": "Batch size tuning",
+        "background": "Throughput can improve with batch size until memory or latency costs dominate.",
+        "numbers": "For cost $C(b)=b/100+64/b$, $C'(b)=0.01-64/b^2$, so $b=80$ minimizes the toy cost."
+      },
+      {
+        "title": "Ad budget allocation",
+        "background": "A concave response curve models diminishing returns from spend.",
+        "numbers": "Revenue $R(x)=100\\ln(1+x)$ and cost $2x$ gives $R'(x)=100/(1+x)-2$, so optimal spend is $x=49$."
+      },
+      {
+        "title": "Serving latency tradeoff",
+        "background": "Caching reduces lookup time but costs memory; the best cache size balances both.",
+        "numbers": "If $C(c)=500/c+2c$, then $c=\\sqrt{250}\\approx15.8$ minimizes cost."
+      },
+      {
+        "title": "Model threshold selection",
+        "background": "A decision threshold can maximize a simplified utility from true positives minus false positives.",
+        "numbers": "If $U(t)=3t(1-t)-0.2t$, then $U'(t)=2.8-6t$, so $t\\approx0.467$ is optimal in the toy model."
+      },
+      {
+        "title": "Experiment duration",
+        "background": "Longer experiments reduce noise but cost time, so there is often a sweet spot.",
+        "numbers": "For $C(d)=d+36/d$, $C'(d)=1-36/d^2$, giving $d=6$ days as the minimum."
+      }
+    ],
+    "applicationsClose": "Applied optimization is one pattern in many uniforms: model the quantity, respect the constraint, differentiate, test, and translate back to the real decision.",
+    "takeaways": [
+      "Define variables and constraints before differentiating.",
+      "Interior candidates come from critical points; endpoints and boundaries must also be checked.",
+      "ML training is applied optimization with loss as the objective and model parameters as the variables."
+    ],
     "prereqs": [
       "math-01-36"
     ]
@@ -1311,19 +9771,260 @@
   B({
     "id": "math-01-38",
     "title": "Antiderivatives",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: antiderivatives.",
+    "tagline": "Run the derivative movie backward: recover a family of functions from its rate of change.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Applied optimization</i>"
+        "derivatives",
+        "power rule",
+        "constant multiples and sums"
       ],
       "leadsTo": [
-        "the next lesson, <i>Riemann sums</i>"
+        "Riemann sums",
+        "the definite integral",
+        "the Fundamental Theorem of Calculus"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "differential equations",
+        "area",
+        "accumulation functions"
       ]
     },
+    "motivation": "<p>You already know how to differentiate $F(x)=x^3$: the result is $F'(x)=3x^2$. Antiderivatives ask the reverse question: if the rate is $3x^2$, what original function could have produced it?</p><p>The gentle catch is that derivatives forget constants. $x^3$, $x^3+7$, and $x^3-100$ all have derivative $3x^2$. So an antiderivative is not one function but a whole family, with the missing vertical shift written as $+C$.</p>",
+    "definition": "<p>An <b>antiderivative</b> of $f$ on an interval is a function $F$ such that $F'(x)=f(x)$ for every $x$ in that interval. The <b>indefinite integral</b> records the whole family: $$\\int f(x)\\,dx=F(x)+C,$$ where $C$ is an arbitrary constant.</p><p><b>Assumptions that matter:</b> work on one interval at a time, because constants can differ across disconnected pieces. The rules reverse derivative rules: $\\int x^n\\,dx=\\frac{x^{n+1}}{n+1}+C$ for $n\\ne-1$, while $\\int \\frac1x\\,dx=\\ln|x|+C$.</p>",
+    "worked": {
+      "problem": "Find $\\displaystyle\\int (6x^2-4x+5)\\,dx$.",
+      "skills": [
+        "linearity",
+        "reverse power rule",
+        "constant of integration"
+      ],
+      "strategy": "Integrate one term at a time, then add the constant that differentiation would erase.",
+      "steps": [
+        {
+          "do": "Split the integral",
+          "result": "$\\int6x^2\\,dx-\\int4x\\,dx+\\int5\\,dx$",
+          "why": "linearity lets sums and constant multiples separate"
+        },
+        {
+          "do": "Antidifferentiate $6x^2$",
+          "result": "$2x^3$",
+          "why": "$\\frac{d}{dx}(2x^3)=6x^2$"
+        },
+        {
+          "do": "Antidifferentiate $-4x$",
+          "result": "$-2x^2$",
+          "why": "$\\frac{d}{dx}(-2x^2)=-4x$"
+        },
+        {
+          "do": "Antidifferentiate $5$",
+          "result": "$5x$",
+          "why": "the derivative of $5x$ is $5$"
+        },
+        {
+          "do": "Add the forgotten constant",
+          "result": "$2x^3-2x^2+5x+C$",
+          "why": "all constant shifts have the same derivative"
+        }
+      ],
+      "verify": "Differentiate: $6x^2-4x+5+0$, which matches the integrand exactly.",
+      "answer": "$\\displaystyle\\int (6x^2-4x+5)\\,dx=2x^3-2x^2+5x+C$",
+      "connects": "accumulation — antiderivatives are the functions whose slopes encode a changing rate."
+    },
+    "practice": [
+      {
+        "problem": "$\\displaystyle\\int (8x^3+3x^2-7)\\,dx$",
+        "steps": [
+          {
+            "do": "Split the integral",
+            "result": "$\\int8x^3\\,dx+\\int3x^2\\,dx-\\int7\\,dx$",
+            "why": "linearity"
+          },
+          {
+            "do": "Integrate $8x^3$",
+            "result": "$2x^4$",
+            "why": "raise the power to $4$ and divide by $4$"
+          },
+          {
+            "do": "Integrate $3x^2$",
+            "result": "$x^3$",
+            "why": "raise the power to $3$ and divide by $3$"
+          },
+          {
+            "do": "Integrate $-7$",
+            "result": "$-7x$",
+            "why": "a constant rate accumulates linearly"
+          },
+          {
+            "do": "Add $C$",
+            "result": "$2x^4+x^3-7x+C$",
+            "why": "indefinite integrals describe a family"
+          }
+        ],
+        "answer": "$2x^4+x^3-7x+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int \\left(\\sqrt{x}+\\frac{4}{x}\\right)\\,dx$ for $x>0$",
+        "steps": [
+          {
+            "do": "Rewrite the square root",
+            "result": "$\\int (x^{1/2}+4x^{-1})\\,dx$",
+            "why": "powers make the rules visible"
+          },
+          {
+            "do": "Integrate $x^{1/2}$",
+            "result": "$\\frac{2}{3}x^{3/2}$",
+            "why": "raise the exponent to $3/2$ and divide"
+          },
+          {
+            "do": "Integrate $4x^{-1}$",
+            "result": "$4\\ln x$",
+            "why": "the $n=-1$ case uses logarithms"
+          },
+          {
+            "do": "Combine terms",
+            "result": "$\\frac{2}{3}x^{3/2}+4\\ln x$",
+            "why": "linearity recombines the pieces"
+          },
+          {
+            "do": "Add $C$",
+            "result": "$\\frac{2}{3}x^{3/2}+4\\ln x+C$",
+            "why": "the original height is unknown"
+          }
+        ],
+        "answer": "$\\frac{2}{3}x^{3/2}+4\\ln x+C$"
+      },
+      {
+        "problem": "Find $F$ if $F'(x)=12x^2-6x+1$ and $F(0)=4$.",
+        "steps": [
+          {
+            "do": "Antidifferentiate the derivative",
+            "result": "$F(x)=4x^3-3x^2+x+C$",
+            "why": "reverse the power rule term by term"
+          },
+          {
+            "do": "Evaluate at $x=0$",
+            "result": "$F(0)=C$",
+            "why": "all powers of $0$ vanish"
+          },
+          {
+            "do": "Use $F(0)=4$",
+            "result": "$C=4$",
+            "why": "the initial value fixes the vertical shift"
+          },
+          {
+            "do": "Substitute the constant",
+            "result": "$F(x)=4x^3-3x^2+x+4$",
+            "why": "now the family becomes one function"
+          },
+          {
+            "do": "Check the derivative",
+            "result": "$F'(x)=12x^2-6x+1$",
+            "why": "the condition is satisfied"
+          }
+        ],
+        "answer": "$F(x)=4x^3-3x^2+x+4$"
+      },
+      {
+        "problem": "$\\displaystyle\\int (2\\cos x-3\\sin x+e^x)\\,dx$",
+        "steps": [
+          {
+            "do": "Split the integral",
+            "result": "$2\\int\\cos x\\,dx-3\\int\\sin x\\,dx+\\int e^x\\,dx$",
+            "why": "linearity"
+          },
+          {
+            "do": "Integrate $2\\cos x$",
+            "result": "$2\\sin x$",
+            "why": "the derivative of $\\sin x$ is $\\cos x$"
+          },
+          {
+            "do": "Integrate $-3\\sin x$",
+            "result": "$3\\cos x$",
+            "why": "the derivative of $\\cos x$ is $-\\sin x$"
+          },
+          {
+            "do": "Integrate $e^x$",
+            "result": "$e^x$",
+            "why": "the exponential is its own derivative"
+          },
+          {
+            "do": "Add $C$",
+            "result": "$2\\sin x+3\\cos x+e^x+C$",
+            "why": "constant shifts disappear under differentiation"
+          }
+        ],
+        "answer": "$2\\sin x+3\\cos x+e^x+C$"
+      },
+      {
+        "problem": "A scalar model has gradient $g(w)=0.2w-1.6$. Find a loss $L(w)$ with $L(0)=5$.",
+        "steps": [
+          {
+            "do": "Write the antiderivative",
+            "result": "$L(w)=\\int(0.2w-1.6)\\,dw$",
+            "why": "the gradient is the derivative of the loss"
+          },
+          {
+            "do": "Integrate $0.2w$",
+            "result": "$0.1w^2$",
+            "why": "divide the coefficient by $2$"
+          },
+          {
+            "do": "Integrate $-1.6$",
+            "result": "$-1.6w$",
+            "why": "constant slope accumulates linearly"
+          },
+          {
+            "do": "Add the constant",
+            "result": "$L(w)=0.1w^2-1.6w+C$",
+            "why": "many losses share the same gradient"
+          },
+          {
+            "do": "Use $L(0)=5$",
+            "result": "$C=5$",
+            "why": "the baseline loss fixes the shift"
+          }
+        ],
+        "answer": "$L(w)=0.1w^2-1.6w+5$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Recovering position from velocity",
+        "background": "Physics stores motion as rates; antiderivatives turn velocity back into position once one starting point is known.",
+        "numbers": "If $v(t)=3t^2$ meters per second and $s(0)=2$, then $s(t)=t^3+2$; at $t=4$, $s=66$ meters."
+      },
+      {
+        "title": "Loss from a one-dimensional gradient",
+        "background": "Optimization often sees derivatives first; reconstructing a loss along a line explains what the optimizer is descending.",
+        "numbers": "For $g(w)=4w-8$, $L(w)=2w^2-8w+C$ and the minimum occurs where $g=0$, at $w=2$."
+      },
+      {
+        "title": "Cumulative clicks from click rate",
+        "background": "A traffic dashboard may report clicks per hour; the antiderivative estimates total clicks.",
+        "numbers": "Rate $r(t)=20+6t$ from hour $0$ gives $C(t)=20t+3t^2$; after $5$ hours, $175$ clicks."
+      },
+      {
+        "title": "Expected utility curves",
+        "background": "Marginal utility tells the gain from one more unit; antiderivatives recover total utility up to a baseline.",
+        "numbers": "If marginal utility is $10/(x+1)$, then utility is $10\\ln(x+1)+C$; from $x=0$ to $9$ the gain is $10\\ln10\\approx23.03$."
+      },
+      {
+        "title": "Calibration from density shape",
+        "background": "A probability density is the derivative of a cumulative distribution; antiderivatives build the CDF.",
+        "numbers": "For $f(x)=2x$ on $[0,1]$, $F(x)=x^2$; $P(X\\le0.7)=0.49$."
+      },
+      {
+        "title": "Battery usage from power draw",
+        "background": "Energy is accumulated power, so an antiderivative converts watts over time into watt-hours.",
+        "numbers": "Power $P(t)=50+10t$ watts for $t$ hours gives $E(t)=50t+5t^2$ Wh; after $3$ hours, $195$ Wh."
+      }
+    ],
+    "applicationsClose": "Antiderivatives are the same quiet move everywhere: start with a rate, restore the accumulated quantity, and use one known value to place it correctly.",
+    "takeaways": [
+      "An antiderivative $F$ satisfies $F'=f$ on an interval.",
+      "Indefinite integrals include $+C$ because derivatives erase constants.",
+      "The reverse power rule works for $x^n$ when $n\\ne-1$; $1/x$ gives a logarithm."
+    ],
     "prereqs": [
       "math-01-37"
     ]
@@ -1332,19 +10033,260 @@
   B({
     "id": "math-01-39",
     "title": "Riemann sums",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: riemann sums.",
+    "tagline": "Approximate a curvy accumulation by many thin rectangles, then let the rectangles get thinner.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Antiderivatives</i>"
+        "functions",
+        "limits",
+        "area of rectangles"
       ],
       "leadsTo": [
-        "the next lesson, <i>The definite integral</i>"
+        "the definite integral",
+        "numerical integration",
+        "expectation as weighted area"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "partitions",
+        "summation notation",
+        "limits"
       ]
     },
+    "motivation": "<p>If a car moves at a constant $60$ miles per hour for $2$ hours, distance is just rectangle area: $60\\cdot2=120$ miles. But real speed changes. What do we do when the top of the rectangle is a curve?</p><p>A <b>Riemann sum</b> says: use many narrow rectangles. Each one is simple; together they approximate the curvy total. As the rectangles get thinner, the approximation becomes the definite integral.</p>",
+    "definition": "<p>Partition $[a,b]$ into $n$ subintervals of width $\\Delta x=\\frac{b-a}{n}$. Choose a sample point $x_i^*$ in each subinterval. A Riemann sum is $$\\sum_{i=1}^n f(x_i^*)\\Delta x.$$ It means height times width, added across the interval.</p><p><b>Assumptions that matter:</b> for the limiting area to be well-defined, $f$ should be Riemann integrable; continuous functions are safe. Left, right, and midpoint choices can differ for finite $n$, but they converge to the same value for nice functions as $\\Delta x\\to0$.</p>",
+    "worked": {
+      "problem": "Approximate the area under $f(x)=x^2$ on $[0,2]$ using $4$ right-endpoint rectangles.",
+      "skills": [
+        "partitioning",
+        "right endpoints",
+        "summation"
+      ],
+      "strategy": "Build the rectangles carefully: width first, sample points second, then add height times width.",
+      "steps": [
+        {
+          "do": "Compute the width",
+          "result": "$\\Delta x=\\frac{2-0}{4}=\\frac12$",
+          "why": "four equal subintervals cover length $2$"
+        },
+        {
+          "do": "List right endpoints",
+          "result": "$x_i=\\frac12,1,\\frac32,2$",
+          "why": "each rectangle uses the right edge"
+        },
+        {
+          "do": "Evaluate the heights",
+          "result": "$\\frac14,1,\\frac94,4$",
+          "why": "square each endpoint"
+        },
+        {
+          "do": "Add height times width",
+          "result": "$\\left(\\frac14+1+\\frac94+4\\right)\\frac12$",
+          "why": "area of each rectangle is height times width"
+        },
+        {
+          "do": "Simplify",
+          "result": "$\\frac{15}{4}=3.75$",
+          "why": "the height sum is $\\frac{15}{2}$"
+        }
+      ],
+      "verify": "The exact integral is $\\int_0^2x^2\\,dx=8/3\\approx2.67$; right rectangles overestimate because $x^2$ is increasing.",
+      "answer": "The right Riemann sum is $3.75$.",
+      "connects": "definite integrals — this rectangle total becomes exact in the limit."
+    },
+    "practice": [
+      {
+        "problem": "Use $4$ left rectangles for $f(x)=x+1$ on $[0,2]$.",
+        "steps": [
+          {
+            "do": "Compute the width",
+            "result": "$\\Delta x=\\frac12$",
+            "why": "length $2$ split into $4$ pieces"
+          },
+          {
+            "do": "List left endpoints",
+            "result": "$0,\\frac12,1,\\frac32$",
+            "why": "left rectangles sample the start of each subinterval"
+          },
+          {
+            "do": "Evaluate heights",
+            "result": "$1,\\frac32,2,\\frac52$",
+            "why": "use $f(x)=x+1$"
+          },
+          {
+            "do": "Add heights",
+            "result": "$7$",
+            "why": "$1+1.5+2+2.5=7$"
+          },
+          {
+            "do": "Multiply by width",
+            "result": "$\\frac72$",
+            "why": "rectangle area is total height times common width"
+          }
+        ],
+        "answer": "$\\frac72=3.5$"
+      },
+      {
+        "problem": "Use $4$ midpoint rectangles for $f(x)=x^2$ on $[0,2]$.",
+        "steps": [
+          {
+            "do": "Compute the width",
+            "result": "$\\Delta x=\\frac12$",
+            "why": "four equal pieces"
+          },
+          {
+            "do": "List midpoints",
+            "result": "$\\frac14,\\frac34,\\frac54,\\frac74$",
+            "why": "each is halfway across a subinterval"
+          },
+          {
+            "do": "Evaluate heights",
+            "result": "$\\frac{1}{16},\\frac{9}{16},\\frac{25}{16},\\frac{49}{16}$",
+            "why": "square the midpoints"
+          },
+          {
+            "do": "Add heights",
+            "result": "$\\frac{84}{16}=\\frac{21}{4}$",
+            "why": "combine fractions"
+          },
+          {
+            "do": "Multiply by width",
+            "result": "$\\frac{21}{8}=2.625$",
+            "why": "sum of rectangle areas"
+          }
+        ],
+        "answer": "$\\frac{21}{8}=2.625$"
+      },
+      {
+        "problem": "Write the right Riemann sum for $f(x)=\\sqrt{x}$ on $[1,5]$ with $n$ rectangles.",
+        "steps": [
+          {
+            "do": "Find the width",
+            "result": "$\\Delta x=\\frac{5-1}{n}=\\frac4n$",
+            "why": "divide the interval length by $n$"
+          },
+          {
+            "do": "Write the right endpoint",
+            "result": "$x_i=1+\\frac{4i}{n}$",
+            "why": "move $i$ widths from the left endpoint"
+          },
+          {
+            "do": "Evaluate the height",
+            "result": "$f(x_i)=\\sqrt{1+\\frac{4i}{n}}$",
+            "why": "substitute the endpoint"
+          },
+          {
+            "do": "Attach the width",
+            "result": "$\\sqrt{1+\\frac{4i}{n}}\\frac4n$",
+            "why": "one rectangle's area"
+          },
+          {
+            "do": "Sum over rectangles",
+            "result": "$\\sum_{i=1}^n \\sqrt{1+\\frac{4i}{n}}\\,\\frac4n$",
+            "why": "add all rectangle areas"
+          }
+        ],
+        "answer": "$\\displaystyle\\sum_{i=1}^n \\sqrt{1+\\frac{4i}{n}}\\,\\frac4n$"
+      },
+      {
+        "problem": "Estimate $\\int_0^1 e^x\\,dx$ with $4$ right rectangles, using $e^{0.25}\\approx1.284$, $e^{0.5}\\approx1.649$, $e^{0.75}\\approx2.117$, $e\\approx2.718$.",
+        "steps": [
+          {
+            "do": "Compute the width",
+            "result": "$\\Delta x=\\frac14$",
+            "why": "the interval length is $1$"
+          },
+          {
+            "do": "List right heights",
+            "result": "$1.284,1.649,2.117,2.718$",
+            "why": "sample at $0.25,0.5,0.75,1$"
+          },
+          {
+            "do": "Add heights",
+            "result": "$7.768$",
+            "why": "combine the four sampled values"
+          },
+          {
+            "do": "Multiply by the width",
+            "result": "$1.942$",
+            "why": "$7.768\\cdot0.25$"
+          },
+          {
+            "do": "Compare to exact size",
+            "result": "$e-1\\approx1.718$",
+            "why": "right rectangles overestimate increasing $e^x$"
+          }
+        ],
+        "answer": "Approximately $1.942$"
+      },
+      {
+        "problem": "A validation loss is measured at epochs $0,1,2,3$ as $0.90,0.62,0.50,0.47$. Estimate total loss exposure over $[0,3]$ using left rectangles of width $1$.",
+        "steps": [
+          {
+            "do": "Choose left samples",
+            "result": "$0.90,0.62,0.50$",
+            "why": "three intervals use epochs $0,1,2$"
+          },
+          {
+            "do": "Use the width",
+            "result": "$\\Delta t=1$ epoch",
+            "why": "measurements are one epoch apart"
+          },
+          {
+            "do": "Multiply each height by width",
+            "result": "$0.90,0.62,0.50$",
+            "why": "width is $1$"
+          },
+          {
+            "do": "Add the rectangles",
+            "result": "$2.02$",
+            "why": "sum loss exposure over intervals"
+          },
+          {
+            "do": "State units",
+            "result": "$2.02$ loss-epochs",
+            "why": "area has height times time units"
+          }
+        ],
+        "answer": "$2.02$ loss-epochs"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Numerical integration",
+        "background": "Computers rarely integrate symbolic formulas in production; they sample and add rectangles or improved rectangle-like rules.",
+        "numbers": "For $\\int_0^1x^2dx$, $10$ right rectangles give $0.385$ versus exact $0.3333$, an error of $0.0517$."
+      },
+      {
+        "title": "Expected value from sampled densities",
+        "background": "A density-weighted average is an integral; bins approximate it when only a histogram is available.",
+        "numbers": "Bins at $x=1,2,3$ with probabilities $0.2,0.5,0.3$ give $E[X]\\approx1(0.2)+2(0.5)+3(0.3)=2.1$."
+      },
+      {
+        "title": "Area under a precision-recall curve",
+        "background": "Model evaluation curves are often reported by summing sampled rectangles under a curve.",
+        "numbers": "Precisions $0.9,0.8,0.6$ over recall widths $0.2,0.3,0.5$ give area $0.18+0.24+0.30=0.72$."
+      },
+      {
+        "title": "Training compute exposure",
+        "background": "Loss over training time can be summarized as an area, not just a final value.",
+        "numbers": "Losses $1.2,0.8,0.6$ across three one-hour intervals give $2.6$ loss-hours by left rectangles."
+      },
+      {
+        "title": "Sensor energy estimation",
+        "background": "Edge devices sample power; rectangle sums estimate battery consumption between samples.",
+        "numbers": "Power readings $2.0,2.4,2.1$ W over $0.5$ h intervals give energy $(2.0+2.4+2.1)0.5=3.25$ Wh."
+      },
+      {
+        "title": "Monte Carlo as random rectangles",
+        "background": "Monte Carlo integration samples random heights instead of a fixed grid, then averages.",
+        "numbers": "If sampled values of $x^2$ on $[0,1]$ average $0.34$ over $1000$ samples, the integral estimate is $0.34\\cdot1=0.34$."
+      }
+    ],
+    "applicationsClose": "Riemann sums turn curves into honest arithmetic: choose widths, sample heights, add. The same habit powers numerical integration, metrics, and sampled expectations.",
+    "takeaways": [
+      "A Riemann sum is $\\sum f(x_i^*)\\Delta x$.",
+      "Left, right, and midpoint choices differ at finite $n$ but agree in the limit for continuous functions.",
+      "The definite integral is the limiting value of these rectangle sums."
+    ],
     "prereqs": [
       "math-01-38"
     ]
@@ -1353,19 +10295,260 @@
   B({
     "id": "math-01-40",
     "title": "The definite integral",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the definite integral.",
+    "tagline": "A definite integral is signed accumulation: infinitely many tiny products added over an interval.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Riemann sums</i>"
+        "Riemann sums",
+        "limits",
+        "antiderivatives"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Fundamental Theorem of Calculus</i>"
+        "the Fundamental Theorem of Calculus",
+        "probability densities",
+        "continuous expectations"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "area",
+        "average value",
+        "signed accumulation"
       ]
     },
+    "motivation": "<p>Riemann sums gave us a practical approximation: many rectangles under a curve. The definite integral is what those sums are aiming at when the rectangles become infinitely thin.</p><p>The word <b>area</b> is useful, but the deeper word is accumulation. Velocity accumulates into distance, density accumulates into probability, and loss over time accumulates into total training exposure.</p>",
+    "definition": "<p>The <b>definite integral</b> of $f$ from $a$ to $b$ is $$\\int_a^b f(x)\\,dx=\\lim_{n\\to\\infty}\\sum_{i=1}^n f(x_i^*)\\Delta x,$$ when this limit exists. Positive values add area above the axis; negative values subtract area below it.</p><p><b>Assumptions that matter:</b> continuous functions are integrable, and bounded functions with only finitely many jump discontinuities are safe in ordinary calculus. Orientation matters: $\\int_b^a f(x)\\,dx=-\\int_a^b f(x)\\,dx$, and units multiply, so height units times $x$-units become accumulated units.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\int_0^2 (3x^2+1)\\,dx$ using an antiderivative.",
+      "skills": [
+        "antiderivatives",
+        "endpoint evaluation",
+        "units of accumulation"
+      ],
+      "strategy": "Find a function whose derivative is the integrand, then subtract its endpoint values.",
+      "steps": [
+        {
+          "do": "Find an antiderivative",
+          "result": "$F(x)=x^3+x$",
+          "why": "$F'(x)=3x^2+1$"
+        },
+        {
+          "do": "Evaluate at the upper endpoint",
+          "result": "$F(2)=8+2=10$",
+          "why": "accumulation up to $2$"
+        },
+        {
+          "do": "Evaluate at the lower endpoint",
+          "result": "$F(0)=0$",
+          "why": "accumulation up to $0$"
+        },
+        {
+          "do": "Subtract",
+          "result": "$F(2)-F(0)=10$",
+          "why": "only the change in the antiderivative matters"
+        },
+        {
+          "do": "State the integral",
+          "result": "$\\int_0^2(3x^2+1)\\,dx=10$",
+          "why": "definite integrals return a number"
+        }
+      ],
+      "verify": "The integrand is at least $1$ and rises to $13$; an area of $10$ over width $2$ is reasonable.",
+      "answer": "$10$",
+      "connects": "Fundamental Theorem — endpoint subtraction is the bridge from area limits to antiderivatives."
+    },
+    "practice": [
+      {
+        "problem": "$\\displaystyle\\int_1^3 2x\\,dx$",
+        "steps": [
+          {
+            "do": "Find an antiderivative",
+            "result": "$F(x)=x^2$",
+            "why": "the derivative of $x^2$ is $2x$"
+          },
+          {
+            "do": "Evaluate at $3$",
+            "result": "$F(3)=9$",
+            "why": "upper endpoint"
+          },
+          {
+            "do": "Evaluate at $1$",
+            "result": "$F(1)=1$",
+            "why": "lower endpoint"
+          },
+          {
+            "do": "Subtract",
+            "result": "$9-1=8$",
+            "why": "definite integral is accumulated change"
+          },
+          {
+            "do": "Check geometry",
+            "result": "trapezoid area $\\frac{2+6}{2}\\cdot2=8$",
+            "why": "the line rises from $2$ to $6$"
+          }
+        ],
+        "answer": "$8$"
+      },
+      {
+        "problem": "$\\displaystyle\\int_0^{\\pi} \\sin x\\,dx$",
+        "steps": [
+          {
+            "do": "Find an antiderivative",
+            "result": "$F(x)=-\\cos x$",
+            "why": "the derivative of $-\\cos x$ is $\\sin x$"
+          },
+          {
+            "do": "Evaluate at $\\pi$",
+            "result": "$F(\\pi)=1$",
+            "why": "$\\cos\\pi=-1$"
+          },
+          {
+            "do": "Evaluate at $0$",
+            "result": "$F(0)=-1$",
+            "why": "$\\cos0=1$"
+          },
+          {
+            "do": "Subtract",
+            "result": "$1-(-1)=2$",
+            "why": "area under one sine hump"
+          },
+          {
+            "do": "State sign",
+            "result": "positive",
+            "why": "$\\sin x\\ge0$ on $[0,\\pi]$"
+          }
+        ],
+        "answer": "$2$"
+      },
+      {
+        "problem": "$\\displaystyle\\int_{-1}^{1} x^3\\,dx$",
+        "steps": [
+          {
+            "do": "Notice symmetry",
+            "result": "$x^3$ is odd",
+            "why": "$f(-x)=-f(x)$"
+          },
+          {
+            "do": "Pair opposite intervals",
+            "result": "left area cancels right area",
+            "why": "signed area below and above the axis match"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$F(x)=\\frac{x^4}{4}$",
+            "why": "verify by differentiating"
+          },
+          {
+            "do": "Evaluate endpoints",
+            "result": "$F(1)=\\frac14$, $F(-1)=\\frac14$",
+            "why": "fourth powers match"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0$",
+            "why": "equal signed accumulations cancel"
+          }
+        ],
+        "answer": "$0$"
+      },
+      {
+        "problem": "$\\displaystyle\\int_0^1 (4x^3-2x)\\,dx$",
+        "steps": [
+          {
+            "do": "Find an antiderivative",
+            "result": "$F(x)=x^4-x^2$",
+            "why": "reverse the power rule"
+          },
+          {
+            "do": "Evaluate at $1$",
+            "result": "$F(1)=1-1=0$",
+            "why": "upper endpoint"
+          },
+          {
+            "do": "Evaluate at $0$",
+            "result": "$F(0)=0$",
+            "why": "lower endpoint"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0$",
+            "why": "positive and negative signed areas balance"
+          },
+          {
+            "do": "Locate the sign change",
+            "result": "$4x^3-2x=2x(2x^2-1)$",
+            "why": "the cancellation is plausible"
+          }
+        ],
+        "answer": "$0$"
+      },
+      {
+        "problem": "For density $f(x)=2x$ on $[0,1]$, compute $P(0.2\\le X\\le0.8)$.",
+        "steps": [
+          {
+            "do": "Set up the probability integral",
+            "result": "$\\int_{0.2}^{0.8}2x\\,dx$",
+            "why": "probability is area under the density"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$F(x)=x^2$",
+            "why": "$F'=2x$"
+          },
+          {
+            "do": "Evaluate at $0.8$",
+            "result": "$0.64$",
+            "why": "upper cumulative probability"
+          },
+          {
+            "do": "Evaluate at $0.2$",
+            "result": "$0.04$",
+            "why": "lower cumulative probability"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.60$",
+            "why": "probability between endpoints"
+          }
+        ],
+        "answer": "$0.60$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Probability from a density",
+        "background": "Continuous random variables assign probability by integrating a density over an interval.",
+        "numbers": "For $f(x)=2x$ on $[0,1]$, $P(X>0.5)=\\int_{0.5}^1 2x\\,dx=1-0.25=0.75$."
+      },
+      {
+        "title": "Expected value",
+        "background": "The mean of a continuous distribution is a weighted integral, the continuous version of a weighted average.",
+        "numbers": "For $f(x)=2x$ on $[0,1]$, $E[X]=\\int_0^1 x\\cdot2x\\,dx=2/3\\approx0.667$."
+      },
+      {
+        "title": "Area under ROC",
+        "background": "AUC measures ranking quality by integrating true-positive rate over false-positive rate.",
+        "numbers": "If $\\operatorname{TPR}(u)=0.6+0.4u$, then AUC $=\\int_0^1(0.6+0.4u)du=0.8$."
+      },
+      {
+        "title": "Average loss over time",
+        "background": "A final loss can hide training instability; integrated loss summarizes the whole run.",
+        "numbers": "If $L(t)=e^{-t}$ over $0\\le t\\le3$, total exposure is $1-e^{-3}\\approx0.950$, average $0.317$."
+      },
+      {
+        "title": "Work from force",
+        "background": "Mechanical work accumulates force over distance; this is the original physical intuition for integrals.",
+        "numbers": "A spring with $F(x)=10x$ N stretched to $0.3$ m uses $\\int_0^{0.3}10x\\,dx=0.45$ J."
+      },
+      {
+        "title": "Image intensity over a region",
+        "background": "Computer vision often sums brightness over pixels; the continuous model is an area integral.",
+        "numbers": "If intensity along a line is $I(x)=100x$ on $[0,1]$, total brightness is $50$ intensity-units."
+      }
+    ],
+    "applicationsClose": "The definite integral is signed accumulation with units. Once you see that, probability, metrics, physics, and training curves all become the same calculation.",
+    "takeaways": [
+      "$\\int_a^b f(x)\\,dx$ is the limit of Riemann sums.",
+      "It measures signed accumulation, not just geometric area.",
+      "For antiderivative $F$, endpoint subtraction gives $F(b)-F(a)$."
+    ],
     "prereqs": [
       "math-01-39"
     ]
@@ -1374,19 +10557,260 @@
   B({
     "id": "math-01-41",
     "title": "The Fundamental Theorem of Calculus",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the fundamental theorem of calculus.",
+    "tagline": "Differentiation and integration are inverse stories about the same accumulated change.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The definite integral</i>"
+        "definite integrals",
+        "antiderivatives",
+        "derivatives"
       ],
       "leadsTo": [
-        "the next lesson, <i>Integration by substitution</i>"
+        "substitution",
+        "integration by parts",
+        "continuous probability"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "accumulation functions",
+        "chain rule",
+        "net change"
       ]
     },
+    "motivation": "<p>So far, derivatives measure instantaneous change, while integrals measure accumulated change. They may feel like separate tools. The Fundamental Theorem says they are two views of one machine.</p><p>If $A(x)$ means the area accumulated from $a$ to $x$, then increasing $x$ by a tiny amount adds a thin slice whose height is about $f(x)$. So the rate of change of accumulated area is the original function.</p>",
+    "definition": "<p>The <b>Fundamental Theorem of Calculus</b> has two parts. If $f$ is continuous, then $$A(x)=\\int_a^x f(t)\\,dt$$ is differentiable and $A'(x)=f(x)$. Also, if $F'(x)=f(x)$, then $$\\int_a^b f(x)\\,dx=F(b)-F(a).$$</p><p><b>Assumptions that matter:</b> continuity guarantees the clean derivative-of-accumulation statement. The variable inside the integral is a dummy variable, often $t$, so the upper endpoint $x$ can move. If the endpoint is $g(x)$, the chain rule gives $\\frac{d}{dx}\\int_a^{g(x)}f(t)\\,dt=f(g(x))g'(x)$.</p>",
+    "worked": {
+      "problem": "Let $A(x)=\\displaystyle\\int_1^{x^2}\\ln(1+t)\\,dt$. Find $A'(x)$.",
+      "skills": [
+        "FTC Part 1",
+        "chain rule",
+        "moving upper limit"
+      ],
+      "strategy": "The upper limit is not just $x$; use the FTC, then multiply by the derivative of the upper limit.",
+      "steps": [
+        {
+          "do": "Name the integrand",
+          "result": "$f(t)=\\ln(1+t)$",
+          "why": "FTC returns the integrand at the moving endpoint"
+        },
+        {
+          "do": "Name the upper limit",
+          "result": "$g(x)=x^2$",
+          "why": "the endpoint depends on $x$"
+        },
+        {
+          "do": "Apply FTC with chain rule",
+          "result": "$A'(x)=f(g(x))g'(x)$",
+          "why": "differentiate accumulated area with a moving boundary"
+        },
+        {
+          "do": "Substitute $g(x)=x^2$",
+          "result": "$A'(x)=\\ln(1+x^2)\\,g'(x)$",
+          "why": "evaluate the integrand at the upper endpoint"
+        },
+        {
+          "do": "Differentiate $g$",
+          "result": "$A'(x)=2x\\ln(1+x^2)$",
+          "why": "$g'(x)=2x$"
+        }
+      ],
+      "verify": "For $x>0$, increasing $x$ raises the upper limit, and the derivative is positive because both $2x$ and $\\ln(1+x^2)$ are positive.",
+      "answer": "$A'(x)=2x\\ln(1+x^2)$",
+      "connects": "substitution — moving endpoints and chain-rule factors are the same pattern seen from opposite directions."
+    },
+    "practice": [
+      {
+        "problem": "Compute $\\displaystyle\\int_2^5 (4x-3)\\,dx$ using the FTC.",
+        "steps": [
+          {
+            "do": "Find an antiderivative",
+            "result": "$F(x)=2x^2-3x$",
+            "why": "$F'=4x-3$"
+          },
+          {
+            "do": "Evaluate at $5$",
+            "result": "$F(5)=50-15=35$",
+            "why": "upper endpoint"
+          },
+          {
+            "do": "Evaluate at $2$",
+            "result": "$F(2)=8-6=2$",
+            "why": "lower endpoint"
+          },
+          {
+            "do": "Subtract",
+            "result": "$35-2=33$",
+            "why": "FTC Part 2"
+          },
+          {
+            "do": "Check sign",
+            "result": "positive",
+            "why": "the function is mostly above zero on $[2,5]$"
+          }
+        ],
+        "answer": "$33$"
+      },
+      {
+        "problem": "If $B(x)=\\displaystyle\\int_0^x \\sqrt{1+t^3}\\,dt$, find $B'(x)$.",
+        "steps": [
+          {
+            "do": "Identify the upper limit",
+            "result": "$x$",
+            "why": "the endpoint moves directly with $x$"
+          },
+          {
+            "do": "Identify the integrand",
+            "result": "$f(t)=\\sqrt{1+t^3}$",
+            "why": "this is the accumulated height"
+          },
+          {
+            "do": "Apply FTC Part 1",
+            "result": "$B'(x)=f(x)$",
+            "why": "derivative of accumulation returns the current height"
+          },
+          {
+            "do": "Substitute $x$ for $t$",
+            "result": "$B'(x)=\\sqrt{1+x^3}$",
+            "why": "evaluate at the moving endpoint"
+          },
+          {
+            "do": "Note no antiderivative was needed",
+            "result": "$\\sqrt{1+x^3}$",
+            "why": "FTC Part 1 avoids symbolic integration"
+          }
+        ],
+        "answer": "$\\sqrt{1+x^3}$"
+      },
+      {
+        "problem": "If $C(x)=\\displaystyle\\int_x^4 e^{t^2}\\,dt$, find $C'(x)$.",
+        "steps": [
+          {
+            "do": "Rewrite the orientation",
+            "result": "$C(x)=-\\int_4^x e^{t^2}\\,dt$",
+            "why": "swap limits introduces a minus sign"
+          },
+          {
+            "do": "Apply FTC Part 1",
+            "result": "$C'(x)=-e^{x^2}$",
+            "why": "differentiate the accumulation from $4$ to $x$"
+          },
+          {
+            "do": "Check the sign",
+            "result": "negative",
+            "why": "raising the lower limit removes positive area"
+          },
+          {
+            "do": "Avoid finding an antiderivative",
+            "result": "$-e^{x^2}$",
+            "why": "$e^{t^2}$ has no elementary antiderivative"
+          },
+          {
+            "do": "State the derivative",
+            "result": "$C'(x)=-e^{x^2}$",
+            "why": "the orientation is the whole trick"
+          }
+        ],
+        "answer": "$-e^{x^2}$"
+      },
+      {
+        "problem": "If $D(x)=\\displaystyle\\int_0^{\\sin x}\\frac{1}{1+t^2}\\,dt$, find $D'(x)$.",
+        "steps": [
+          {
+            "do": "Name the integrand",
+            "result": "$f(t)=\\frac{1}{1+t^2}$",
+            "why": "FTC evaluates this at the upper limit"
+          },
+          {
+            "do": "Name the upper limit",
+            "result": "$g(x)=\\sin x$",
+            "why": "the endpoint is a function of $x$"
+          },
+          {
+            "do": "Apply the chain rule form",
+            "result": "$D'(x)=f(g(x))g'(x)$",
+            "why": "moving endpoint"
+          },
+          {
+            "do": "Substitute $g(x)$",
+            "result": "$D'(x)=\\frac{1}{1+\\sin^2 x}g'(x)$",
+            "why": "replace $t$ by $\\sin x$"
+          },
+          {
+            "do": "Differentiate $g$",
+            "result": "$D'(x)=\\frac{\\cos x}{1+\\sin^2 x}$",
+            "why": "$g'(x)=\\cos x$"
+          }
+        ],
+        "answer": "$\\frac{\\cos x}{1+\\sin^2 x}$"
+      },
+      {
+        "problem": "A model's instantaneous error rate is $r(t)=0.4e^{-0.2t}$. Find total error exposure from $t=0$ to $t=5$.",
+        "steps": [
+          {
+            "do": "Set up the integral",
+            "result": "$\\int_0^5 0.4e^{-0.2t}\\,dt$",
+            "why": "total exposure is accumulated rate"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$F(t)=-2e^{-0.2t}$",
+            "why": "$-2(-0.2)=0.4$"
+          },
+          {
+            "do": "Evaluate at $5$",
+            "result": "$F(5)=-2e^{-1}$",
+            "why": "upper endpoint"
+          },
+          {
+            "do": "Evaluate at $0$",
+            "result": "$F(0)=-2$",
+            "why": "lower endpoint"
+          },
+          {
+            "do": "Subtract",
+            "result": "$2(1-e^{-1})\\approx1.264$",
+            "why": "FTC converts rate to total"
+          }
+        ],
+        "answer": "$2(1-e^{-1})\\approx1.264$ error-time units"
+      }
+    ],
+    "applications": [
+      {
+        "title": "CDF and PDF",
+        "background": "In probability, a cumulative distribution is accumulated density; the FTC says the density is its derivative.",
+        "numbers": "If $F(x)=x^2$ on $[0,1]$, then $f(x)=F'(x)=2x$, and $P(0.3<X<0.7)=0.49-0.09=0.40$."
+      },
+      {
+        "title": "Backprop through an integral layer",
+        "background": "Some models integrate a learned field; gradients with respect to endpoints use the FTC directly.",
+        "numbers": "For $A(z)=\\int_0^z(1+t^2)dt$, $A'(z)=1+z^2$; at $z=3$, the endpoint gradient is $10$."
+      },
+      {
+        "title": "Total distance from velocity",
+        "background": "Velocity is the derivative of position; the FTC turns a velocity integral into net position change.",
+        "numbers": "If $v(t)=6t$ m/s from $0$ to $4$, distance is $[3t^2]_0^4=48$ m."
+      },
+      {
+        "title": "AUC from an analytic ROC curve",
+        "background": "When a ROC curve has a formula, the FTC gives an exact metric instead of a sampled estimate.",
+        "numbers": "For $\\operatorname{TPR}(u)=\\sqrt{u}$, AUC $=\\int_0^1u^{1/2}du=2/3\\approx0.667$."
+      },
+      {
+        "title": "Normalizing constants",
+        "background": "A density must integrate to $1$; the FTC computes the required scale for simple families.",
+        "numbers": "For $f(x)=cx$ on $[0,2]$, $1=\\int_0^2cx\\,dx=2c$, so $c=0.5$."
+      },
+      {
+        "title": "Learning-rate budgets",
+        "background": "Continuous training analyses integrate learning-rate schedules to measure total update budget.",
+        "numbers": "For $\\eta(t)=0.1e^{-t/10}$ over $[0,20]$, budget is $[-e^{-t/10}]_0^{20}=1-e^{-2}\\approx0.865$."
+      }
+    ],
+    "applicationsClose": "The theorem is a bridge: accumulated quantity differentiates back to its local rate, and local rate integrates to net change. That bridge is everywhere in ML mathematics.",
+    "takeaways": [
+      "If $A(x)=\\int_a^x f(t)\\,dt$ and $f$ is continuous, then $A'(x)=f(x)$.",
+      "If $F'=f$, then $\\int_a^b f=F(b)-F(a)$.",
+      "Moving endpoints add the chain rule factor."
+    ],
     "prereqs": [
       "math-01-40"
     ]
@@ -1395,19 +10819,260 @@
   B({
     "id": "math-01-42",
     "title": "Integration by substitution",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: integration by substitution.",
+    "tagline": "Undo the chain rule by renaming the inner expression that is causing the clutter.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Fundamental Theorem of Calculus</i>"
+        "the Fundamental Theorem of Calculus",
+        "chain rule",
+        "antiderivatives"
       ],
       "leadsTo": [
-        "the next lesson, <i>Integration by parts</i>"
+        "integration by parts",
+        "trigonometric substitution",
+        "change of variables in probability"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "chain rule",
+        "definite integrals",
+        "inverse functions"
       ]
     },
+    "motivation": "<p>When you differentiate $\\sin(x^2)$, the chain rule creates $2x\\cos(x^2)$. Substitution runs that movie backward: when an integrand contains an inside function and its derivative, rename the inside function.</p><p>The point is not to make the problem fancy. It is to make it familiar. A messy $x$-integral can become a simple $u$-integral once the right quantity carries the change in variables.</p>",
+    "definition": "<p><b>Substitution</b> is the reverse chain rule. If $u=g(x)$ and $du=g'(x)\\,dx$, then $$\\int f(g(x))g'(x)\\,dx=\\int f(u)\\,du.$$ For definite integrals, either convert the limits to $u$-values or substitute back before evaluating.</p><p><b>Assumptions that matter:</b> $g$ should be differentiable on the interval, and the replacement must account for every $dx$ factor. For definite integrals, limits must match the variable currently being used; mixing $u$-limits with an $x$-integrand is a common source of wrong answers.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\int 2x\\cos(x^2)\\,dx$.",
+      "skills": [
+        "reverse chain rule",
+        "differentials",
+        "trig antiderivatives"
+      ],
+      "strategy": "The inside $x^2$ has derivative $2x$, which is sitting right beside it. Rename $x^2$.",
+      "steps": [
+        {
+          "do": "Choose the substitution",
+          "result": "$u=x^2$",
+          "why": "the cosine's inside expression is the clutter"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$du=2x\\,dx$",
+          "why": "this matches the remaining factor"
+        },
+        {
+          "do": "Rewrite the integral",
+          "result": "$\\int \\cos u\\,du$",
+          "why": "replace $x^2$ by $u$ and $2x\\,dx$ by $du$"
+        },
+        {
+          "do": "Integrate",
+          "result": "$\\sin u+C$",
+          "why": "the derivative of $\\sin u$ is $\\cos u$"
+        },
+        {
+          "do": "Substitute back",
+          "result": "$\\sin(x^2)+C$",
+          "why": "the original variable was $x$"
+        }
+      ],
+      "verify": "Differentiate $\\sin(x^2)$ to get $2x\\cos(x^2)$ by the chain rule.",
+      "answer": "$\\sin(x^2)+C$",
+      "connects": "chain rule — substitution is exactly the chain rule read backward."
+    },
+    "practice": [
+      {
+        "problem": "$\\displaystyle\\int 3(3x+1)^4\\,dx$",
+        "steps": [
+          {
+            "do": "Choose $u$",
+            "result": "$u=3x+1$",
+            "why": "the power's inside expression is linear"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$du=3\\,dx$",
+            "why": "this appears in the integral"
+          },
+          {
+            "do": "Rewrite",
+            "result": "$\\int u^4\\,du$",
+            "why": "$3\\,dx$ becomes $du$"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\frac{u^5}{5}+C$",
+            "why": "reverse power rule"
+          },
+          {
+            "do": "Substitute back",
+            "result": "$\\frac{(3x+1)^5}{5}+C$",
+            "why": "return to $x$"
+          }
+        ],
+        "answer": "$\\frac{(3x+1)^5}{5}+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int \\frac{4x}{1+2x^2}\\,dx$",
+        "steps": [
+          {
+            "do": "Choose $u$",
+            "result": "$u=1+2x^2$",
+            "why": "the denominator's derivative is nearby"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$du=4x\\,dx$",
+            "why": "exact match"
+          },
+          {
+            "do": "Rewrite",
+            "result": "$\\int \\frac{1}{u}\\,du$",
+            "why": "replace numerator times $dx$ by $du$"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\ln|u|+C$",
+            "why": "the antiderivative of $1/u$ is logarithmic"
+          },
+          {
+            "do": "Substitute back",
+            "result": "$\\ln(1+2x^2)+C$",
+            "why": "$1+2x^2$ is positive"
+          }
+        ],
+        "answer": "$\\ln(1+2x^2)+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int_0^1 6x(1+3x^2)^2\\,dx$",
+        "steps": [
+          {
+            "do": "Choose $u$",
+            "result": "$u=1+3x^2$",
+            "why": "the derivative $6x$ appears"
+          },
+          {
+            "do": "Change the lower limit",
+            "result": "$u(0)=1$",
+            "why": "definite integrals need matching limits"
+          },
+          {
+            "do": "Change the upper limit",
+            "result": "$u(1)=4$",
+            "why": "substitute $x=1$"
+          },
+          {
+            "do": "Rewrite the integral",
+            "result": "$\\int_1^4 u^2\\,du$",
+            "why": "$6x\\,dx=du$"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\left[\\frac{u^3}{3}\\right]_1^4=\\frac{63}{3}=21$",
+            "why": "FTC in the $u$ variable"
+          }
+        ],
+        "answer": "$21$"
+      },
+      {
+        "problem": "$\\displaystyle\\int e^{5x-2}\\,dx$",
+        "steps": [
+          {
+            "do": "Choose $u$",
+            "result": "$u=5x-2$",
+            "why": "the exponent is the inside expression"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$du=5\\,dx$",
+            "why": "solve for the missing $dx$ factor"
+          },
+          {
+            "do": "Replace $dx$",
+            "result": "$dx=\\frac15du$",
+            "why": "the integral lacks a factor $5$"
+          },
+          {
+            "do": "Rewrite and integrate",
+            "result": "$\\frac15\\int e^u\\,du=\\frac15e^u+C$",
+            "why": "constant factors can move outside"
+          },
+          {
+            "do": "Substitute back",
+            "result": "$\\frac15e^{5x-2}+C$",
+            "why": "return to $x$"
+          }
+        ],
+        "answer": "$\\frac15e^{5x-2}+C$"
+      },
+      {
+        "problem": "A model score $S$ has density $p(s)=\\frac{1}{10}e^{-s/10}$ for $s\\ge0$. Compute $P(0\\le S\\le20)$.",
+        "steps": [
+          {
+            "do": "Set up the integral",
+            "result": "$\\int_0^{20}\\frac{1}{10}e^{-s/10}\\,ds$",
+            "why": "probability is integrated density"
+          },
+          {
+            "do": "Choose $u$",
+            "result": "$u=-s/10$",
+            "why": "the exponent is the inside expression"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$du=-\\frac{1}{10}ds$",
+            "why": "the density has $\\frac1{10}ds$"
+          },
+          {
+            "do": "Use the antiderivative",
+            "result": "$-e^{-s/10}$",
+            "why": "substitution gives the negative exponential"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$[-e^{-s/10}]_0^{20}=1-e^{-2}\\approx0.865$",
+            "why": "subtract endpoint values"
+          }
+        ],
+        "answer": "$1-e^{-2}\\approx0.865$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Change of variables in probability",
+        "background": "Transforming random variables requires the same derivative factor that substitution teaches.",
+        "numbers": "If $u=2x$ and $x\\in[0,1]$, then $dx=du/2$ and $\\int_0^1 2x\\,dx=\\int_0^2 u/2\\,du=1$."
+      },
+      {
+        "title": "Normal CDF standardization",
+        "background": "Scores are often standardized so one table or routine handles many Gaussian distributions.",
+        "numbers": "For $X\\sim N(10,4)$, $P(X<14)=P(Z<2)\\approx0.9772$ using $z=(x-10)/2$."
+      },
+      {
+        "title": "Softplus and logistic gradients",
+        "background": "Neural-network losses use nested exponentials and logs; substitution recognizes their chain-rule structure.",
+        "numbers": "$\\int \\frac{e^x}{1+e^x}dx$ with $u=1+e^x$ gives $\\ln(1+e^x)+C$."
+      },
+      {
+        "title": "Time rescaling in dynamical systems",
+        "background": "Changing from seconds to milliseconds rescales integrals by the derivative of the time change.",
+        "numbers": "If $u=1000t$, then $dt=du/1000$; $\\int_0^1 r(1000t)dt=\\frac1{1000}\\int_0^{1000}r(u)du$."
+      },
+      {
+        "title": "Feature normalization",
+        "background": "Integrals over normalized features must carry the scale factor, just like standardized probability densities.",
+        "numbers": "For $z=(x-50)/10$, $dx=10dz$; an interval $x=40$ to $70$ becomes $z=-1$ to $2$."
+      },
+      {
+        "title": "Radial kernels",
+        "background": "Kernel methods often integrate functions of squared distance, where $u=r^2$ simplifies the expression.",
+        "numbers": "$\\int_0^1 2r e^{-r^2}dr$ with $u=r^2$ gives $1-e^{-1}\\approx0.632$."
+      }
+    ],
+    "applicationsClose": "Substitution is not a trick bag; it is the chain rule in reverse. Rename the inside, carry the derivative, and the clutter becomes a familiar integral.",
+    "takeaways": [
+      "Use $u=g(x)$ when $g'(x)\\,dx$ is also present up to a constant.",
+      "For definite integrals, change the limits or substitute back before evaluating.",
+      "Substitution is the mathematical backbone of change of variables."
+    ],
     "prereqs": [
       "math-01-41"
     ]
@@ -1416,19 +11081,260 @@
   B({
     "id": "math-01-43",
     "title": "Integration by parts",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: integration by parts.",
+    "tagline": "Undo the product rule by deciding which factor to differentiate and which to integrate.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Integration by substitution</i>"
+        "product rule",
+        "antiderivatives",
+        "the definite integral"
       ],
       "leadsTo": [
-        "the next lesson, <i>Trigonometric integrals</i>"
+        "Laplace transforms",
+        "expectations by tail integrals",
+        "Fourier analysis"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "substitution",
+        "product rule",
+        "improper integrals"
       ]
     },
+    "motivation": "<p>Substitution handles reverse chain-rule patterns. But some integrals are products, like $x e^x$ or $x\\ln x$. These come from the product rule, not the chain rule.</p><p>Integration by parts gives a patient way to trade one product for another. Choose one factor to simplify by differentiation and the other to integrate. Good choices make the new integral easier than the old one.</p>",
+    "definition": "<p>From the product rule $(uv)'=u'v+uv'$, integrate both sides and rearrange: $$\\int u\\,dv=uv-\\int v\\,du.$$ For definite integrals, $$\\int_a^b u\\,dv=[uv]_a^b-\\int_a^b v\\,du.$$</p><p><b>Assumptions that matter:</b> $u$ and $v$ should be differentiable enough on the interval, and the remaining integral must be simpler. A useful instinct is to let logarithms and polynomials be $u$ because they simplify when differentiated.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\int x e^x\\,dx$.",
+      "skills": [
+        "product rule reversal",
+        "choosing $u$",
+        "exponential antiderivatives"
+      ],
+      "strategy": "Let the polynomial simplify by differentiation and let the exponential stay easy to integrate.",
+      "steps": [
+        {
+          "do": "Choose $u$ and $dv$",
+          "result": "$u=x$, $dv=e^x\\,dx$",
+          "why": "$x$ becomes simpler when differentiated"
+        },
+        {
+          "do": "Differentiate $u$",
+          "result": "$du=dx$",
+          "why": "needed for the replacement integral"
+        },
+        {
+          "do": "Integrate $dv$",
+          "result": "$v=e^x$",
+          "why": "the exponential is its own antiderivative"
+        },
+        {
+          "do": "Apply the formula",
+          "result": "$\\int xe^x\\,dx=xe^x-\\int e^x\\,dx$",
+          "why": "$\\int u\\,dv=uv-\\int v\\,du$"
+        },
+        {
+          "do": "Finish the remaining integral",
+          "result": "$xe^x-e^x+C$",
+          "why": "the new integral is simpler"
+        }
+      ],
+      "verify": "Differentiate $xe^x-e^x$: product rule gives $e^x+xe^x-e^x=xe^x$.",
+      "answer": "$xe^x-e^x+C=e^x(x-1)+C$",
+      "connects": "product rule — integration by parts is exactly the product rule rearranged."
+    },
+    "practice": [
+      {
+        "problem": "$\\displaystyle\\int x\\cos x\\,dx$",
+        "steps": [
+          {
+            "do": "Choose $u$ and $dv$",
+            "result": "$u=x$, $dv=\\cos x\\,dx$",
+            "why": "the polynomial simplifies"
+          },
+          {
+            "do": "Compute $du$",
+            "result": "$du=dx$",
+            "why": "differentiate $x$"
+          },
+          {
+            "do": "Compute $v$",
+            "result": "$v=\\sin x$",
+            "why": "integrate cosine"
+          },
+          {
+            "do": "Apply parts",
+            "result": "$x\\sin x-\\int\\sin x\\,dx$",
+            "why": "use $uv-\\int v\\,du$"
+          },
+          {
+            "do": "Integrate the remainder",
+            "result": "$x\\sin x+\\cos x+C$",
+            "why": "$\\int\\sin x\\,dx=-\\cos x$"
+          }
+        ],
+        "answer": "$x\\sin x+\\cos x+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int \\ln x\\,dx$ for $x>0$",
+        "steps": [
+          {
+            "do": "Insert a hidden factor",
+            "result": "$\\int \\ln x\\cdot1\\,dx$",
+            "why": "parts needs two pieces"
+          },
+          {
+            "do": "Choose $u$ and $dv$",
+            "result": "$u=\\ln x$, $dv=dx$",
+            "why": "logarithms simplify when differentiated"
+          },
+          {
+            "do": "Compute $du$ and $v$",
+            "result": "$du=\\frac1x\\,dx$, $v=x$",
+            "why": "differentiate and integrate"
+          },
+          {
+            "do": "Apply parts",
+            "result": "$x\\ln x-\\int x\\frac1x\\,dx$",
+            "why": "$uv-\\int v\\,du$"
+          },
+          {
+            "do": "Simplify and integrate",
+            "result": "$x\\ln x-x+C$",
+            "why": "the remainder is $\\int1\\,dx$"
+          }
+        ],
+        "answer": "$x\\ln x-x+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int_0^1 x e^{2x}\\,dx$",
+        "steps": [
+          {
+            "do": "Choose $u$ and $dv$",
+            "result": "$u=x$, $dv=e^{2x}\\,dx$",
+            "why": "$x$ simplifies"
+          },
+          {
+            "do": "Compute $du$",
+            "result": "$du=dx$",
+            "why": "differentiate $x$"
+          },
+          {
+            "do": "Compute $v$",
+            "result": "$v=\\frac12e^{2x}$",
+            "why": "integrate $e^{2x}$"
+          },
+          {
+            "do": "Apply definite parts",
+            "result": "$\\left[\\frac{x}{2}e^{2x}\\right]_0^1-\\int_0^1\\frac12e^{2x}\\,dx$",
+            "why": "boundary term minus simpler integral"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\frac{e^2}{2}-\\left[\\frac14e^{2x}\\right]_0^1=\\frac{e^2+1}{4}$",
+            "why": "subtract endpoint values"
+          }
+        ],
+        "answer": "$\\frac{e^2+1}{4}$"
+      },
+      {
+        "problem": "$\\displaystyle\\int x^2\\sin x\\,dx$",
+        "steps": [
+          {
+            "do": "Choose $u$ and $dv$",
+            "result": "$u=x^2$, $dv=\\sin x\\,dx$",
+            "why": "the polynomial will simplify after repeated parts"
+          },
+          {
+            "do": "Compute $du$ and $v$",
+            "result": "$du=2x\\,dx$, $v=-\\cos x$",
+            "why": "differentiate and integrate"
+          },
+          {
+            "do": "Apply parts",
+            "result": "$-x^2\\cos x+\\int2x\\cos x\\,dx$",
+            "why": "the new integral has a lower-degree polynomial"
+          },
+          {
+            "do": "Apply parts again to $\\int2x\\cos x\\,dx$",
+            "result": "$2x\\sin x-\\int2\\sin x\\,dx$",
+            "why": "differentiate $2x$ and integrate cosine"
+          },
+          {
+            "do": "Finish",
+            "result": "$-x^2\\cos x+2x\\sin x+2\\cos x+C$",
+            "why": "$\\int2\\sin x\\,dx=-2\\cos x$"
+          }
+        ],
+        "answer": "$-x^2\\cos x+2x\\sin x+2\\cos x+C$"
+      },
+      {
+        "problem": "Compute $E[X]$ for an exponential variable with survival $P(X>x)=e^{-2x}$ using $E[X]=\\int_0^\\infty P(X>x)\\,dx$.",
+        "steps": [
+          {
+            "do": "Set up the tail integral",
+            "result": "$E[X]=\\int_0^\\infty e^{-2x}\\,dx$",
+            "why": "tail expectation formula"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$-\\frac12e^{-2x}$",
+            "why": "differentiate to recover $e^{-2x}$"
+          },
+          {
+            "do": "Evaluate the upper limit",
+            "result": "$0$",
+            "why": "$e^{-2x}\\to0$ as $x\\to\\infty$"
+          },
+          {
+            "do": "Evaluate the lower limit",
+            "result": "$-\\frac12$",
+            "why": "at $x=0$, $e^0=1$"
+          },
+          {
+            "do": "Subtract",
+            "result": "$\\frac12$",
+            "why": "mean waiting time for rate $2$"
+          }
+        ],
+        "answer": "$E[X]=\\frac12$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Laplace transforms",
+        "background": "The derivative rule for Laplace transforms is derived by integration by parts.",
+        "numbers": "$\\mathcal{L}\\{f'\\}=\\int_0^\\infty e^{-st}f' dt=sF(s)-f(0)$ when the boundary at infinity is $0$."
+      },
+      {
+        "title": "Expectation identities",
+        "background": "Tail-integral formulas for nonnegative random variables use integration by parts on the CDF.",
+        "numbers": "For survival $e^{-3x}$, $E[X]=\\int_0^\\infty e^{-3x}dx=1/3$."
+      },
+      {
+        "title": "Entropy calculations",
+        "background": "Information theory often integrates products like $x\\ln x$ or densities times logs.",
+        "numbers": "$\\int_0^1 x\\ln x\\,dx=-1/4$, from parts with $u=\\ln x$ and $dv=x\\,dx$."
+      },
+      {
+        "title": "Fourier coefficients",
+        "background": "Integration by parts explains how smoothness makes high-frequency coefficients decay.",
+        "numbers": "A once-differentiable signal often has coefficients shrinking like $1/k$; at $k=100$, that scale is about $0.01$."
+      },
+      {
+        "title": "Work with changing force and displacement",
+        "background": "Products of position and exponential damping appear in mechanics and signal models.",
+        "numbers": "$\\int_0^1 xe^{-x}dx=1-2/e\\approx0.264$."
+      },
+      {
+        "title": "Regularization integrals",
+        "background": "Continuous penalty models can involve products of coordinates and basis functions.",
+        "numbers": "$\\int_0^1 x\\cos(\\pi x)dx=-2/\\pi^2\\approx-0.203$ by parts."
+      }
+    ],
+    "applicationsClose": "Parts is a trade: one factor gets simpler, the other gets integrated. The same trade appears in transforms, expectations, entropy, and signal analysis.",
+    "takeaways": [
+      "Integration by parts comes from the product rule: $\\int u\\,dv=uv-\\int v\\,du$.",
+      "Choose $u$ to become simpler when differentiated.",
+      "For definite integrals, remember the boundary term $[uv]_a^b$."
+    ],
     "prereqs": [
       "math-01-42"
     ]
@@ -1437,19 +11343,265 @@
   B({
     "id": "math-01-44",
     "title": "Trigonometric integrals",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: trigonometric integrals.",
+    "tagline": "Use trig identities to turn powers of sine and cosine into integrals you already know.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Integration by parts</i>"
+        "trigonometric functions",
+        "substitution",
+        "Pythagorean identities"
       ],
       "leadsTo": [
-        "the next lesson, <i>Trigonometric substitution</i>"
+        "trigonometric substitution",
+        "Fourier analysis",
+        "periodic signal energy"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "identities",
+        "symmetry",
+        "substitution"
       ]
     },
+    "motivation": "<p>Integrals like $\\int\\sin x\\,dx$ are friendly. But $\\int\\sin^3x\\cos^2x\\,dx$ can look like a wall of symbols. The way through is not force; it is pattern recognition.</p><p>Trig identities let you save one factor for substitution or reduce even powers with half-angle formulas. The goal is always to reshape the expression until the basic antiderivatives come back into view.</p>",
+    "definition": "<p><b>Trigonometric integrals</b> are integrals involving powers and products of trig functions. The main identities are $$\\sin^2x+\\cos^2x=1,\\quad \\sin^2x=\\frac{1-\\cos2x}{2},\\quad \\cos^2x=\\frac{1+\\cos2x}{2}.$$ Odd powers often leave one sine or cosine for $du$; even powers often use half-angle identities.</p><p><b>Assumptions that matter:</b> identities hold for angles in radians, and substitutions must include the derivative factor. For definite integrals over full periods, symmetry and average values can simplify the work: the average of $\\sin^2x$ or $\\cos^2x$ over a full period is $1/2$.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\int \\sin^3x\\cos^2x\\,dx$.",
+      "skills": [
+        "odd sine power",
+        "Pythagorean identity",
+        "substitution"
+      ],
+      "strategy": "Save one $\\sin x\\,dx$ for substitution and rewrite the remaining $\\sin^2x$ using $1-\\cos^2x$.",
+      "steps": [
+        {
+          "do": "Split the odd sine power",
+          "result": "$\\int \\sin^2x\\cos^2x\\sin x\\,dx$",
+          "why": "one sine factor will pair with $du$"
+        },
+        {
+          "do": "Rewrite $\\sin^2x$",
+          "result": "$\\int (1-\\cos^2x)\\cos^2x\\sin x\\,dx$",
+          "why": "express everything else in cosine"
+        },
+        {
+          "do": "Choose substitution",
+          "result": "$u=\\cos x$",
+          "why": "the saved $\\sin x\\,dx$ is related to $du$"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$du=-\\sin x\\,dx$",
+          "why": "so $\\sin x\\,dx=-du$"
+        },
+        {
+          "do": "Rewrite and integrate",
+          "result": "$-\\int(1-u^2)u^2\\,du=-\\frac{u^3}{3}+\\frac{u^5}{5}+C$",
+          "why": "now it is a polynomial"
+        },
+        {
+          "do": "Substitute back",
+          "result": "$-\\frac{\\cos^3x}{3}+\\frac{\\cos^5x}{5}+C$",
+          "why": "return to the original angle"
+        }
+      ],
+      "verify": "Differentiating the answer gives $(\\cos^2x-\\cos^4x)\\sin x=\\sin^3x\\cos^2x$.",
+      "answer": "$-\\frac{\\cos^3x}{3}+\\frac{\\cos^5x}{5}+C$",
+      "connects": "substitution — trig identities prepare the integrand so a clean $u$ appears."
+    },
+    "practice": [
+      {
+        "problem": "$\\displaystyle\\int \\sin^2x\\,dx$",
+        "steps": [
+          {
+            "do": "Use the half-angle identity",
+            "result": "$\\sin^2x=\\frac{1-\\cos2x}{2}$",
+            "why": "even powers need reduction"
+          },
+          {
+            "do": "Rewrite the integral",
+            "result": "$\\int\\frac{1-\\cos2x}{2}\\,dx$",
+            "why": "replace the squared trig function"
+          },
+          {
+            "do": "Split terms",
+            "result": "$\\frac12\\int1\\,dx-\\frac12\\int\\cos2x\\,dx$",
+            "why": "linearity"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\frac{x}{2}-\\frac{\\sin2x}{4}+C$",
+            "why": "$\\int\\cos2x\\,dx=\\frac12\\sin2x$"
+          },
+          {
+            "do": "State the result",
+            "result": "$\\frac{x}{2}-\\frac{\\sin2x}{4}+C$",
+            "why": "no substitution back is needed"
+          }
+        ],
+        "answer": "$\\frac{x}{2}-\\frac{\\sin2x}{4}+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int \\cos^3x\\,dx$",
+        "steps": [
+          {
+            "do": "Split the odd power",
+            "result": "$\\int\\cos^2x\\cos x\\,dx$",
+            "why": "save one cosine for $du$"
+          },
+          {
+            "do": "Rewrite $\\cos^2x$",
+            "result": "$\\int(1-\\sin^2x)\\cos x\\,dx$",
+            "why": "prepare $u=\\sin x$"
+          },
+          {
+            "do": "Choose substitution",
+            "result": "$u=\\sin x$",
+            "why": "then $du=\\cos x\\,dx$"
+          },
+          {
+            "do": "Rewrite",
+            "result": "$\\int(1-u^2)\\,du$",
+            "why": "all trig is gone"
+          },
+          {
+            "do": "Integrate and substitute back",
+            "result": "$u-\\frac{u^3}{3}+C=\\sin x-\\frac{\\sin^3x}{3}+C$",
+            "why": "reverse power rule"
+          }
+        ],
+        "answer": "$\\sin x-\\frac{\\sin^3x}{3}+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int_0^{\\pi} \\sin^2x\\,dx$",
+        "steps": [
+          {
+            "do": "Use half-angle",
+            "result": "$\\sin^2x=\\frac{1-\\cos2x}{2}$",
+            "why": "reduce the even power"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$F(x)=\\frac{x}{2}-\\frac{\\sin2x}{4}$",
+            "why": "integrate term by term"
+          },
+          {
+            "do": "Evaluate at $\\pi$",
+            "result": "$F(\\pi)=\\frac{\\pi}{2}$",
+            "why": "$\\sin2\\pi=0$"
+          },
+          {
+            "do": "Evaluate at $0$",
+            "result": "$F(0)=0$",
+            "why": "$\\sin0=0$"
+          },
+          {
+            "do": "Subtract",
+            "result": "$\\frac{\\pi}{2}$",
+            "why": "average value $1/2$ over length $\\pi$"
+          }
+        ],
+        "answer": "$\\frac{\\pi}{2}$"
+      },
+      {
+        "problem": "$\\displaystyle\\int \\sin^4x\\,dx$",
+        "steps": [
+          {
+            "do": "Square the half-angle form",
+            "result": "$\\sin^4x=\\left(\\frac{1-\\cos2x}{2}\\right)^2$",
+            "why": "reduce the fourth power"
+          },
+          {
+            "do": "Expand",
+            "result": "$\\frac14(1-2\\cos2x+\\cos^22x)$",
+            "why": "algebra"
+          },
+          {
+            "do": "Reduce $\\cos^22x$",
+            "result": "$\\frac14\\left(1-2\\cos2x+\\frac{1+\\cos4x}{2}\\right)$",
+            "why": "half-angle again"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\frac38-\\frac12\\cos2x+\\frac18\\cos4x$",
+            "why": "combine constants"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\frac{3x}{8}-\\frac{\\sin2x}{4}+\\frac{\\sin4x}{32}+C$",
+            "why": "integrate each cosine with its frequency factor"
+          }
+        ],
+        "answer": "$\\frac{3x}{8}-\\frac{\\sin2x}{4}+\\frac{\\sin4x}{32}+C$"
+      },
+      {
+        "problem": "A signal is $s(t)=\\sin(2\\pi t)$. Compute its energy $\\int_0^1 s(t)^2\\,dt$.",
+        "steps": [
+          {
+            "do": "Write the integral",
+            "result": "$\\int_0^1\\sin^2(2\\pi t)\\,dt$",
+            "why": "energy is squared amplitude over time"
+          },
+          {
+            "do": "Use half-angle",
+            "result": "$\\sin^2(2\\pi t)=\\frac{1-\\cos(4\\pi t)}{2}$",
+            "why": "reduce the square"
+          },
+          {
+            "do": "Integrate the constant part",
+            "result": "$\\int_0^1\\frac12dt=\\frac12$",
+            "why": "average baseline"
+          },
+          {
+            "do": "Integrate the cosine part",
+            "result": "$\\left[-\\frac{\\sin(4\\pi t)}{8\\pi}\\right]_0^1=0$",
+            "why": "one full oscillation cancels"
+          },
+          {
+            "do": "Add the parts",
+            "result": "$\\frac12$",
+            "why": "unit-amplitude sine has average squared value $1/2$"
+          }
+        ],
+        "answer": "$\\frac12$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Signal energy",
+        "background": "Audio and sensor pipelines measure energy by integrating squared wave amplitude.",
+        "numbers": "A unit sine over one second has energy $\\int_0^1\\sin^2(2\\pi t)dt=0.5$."
+      },
+      {
+        "title": "Fourier orthogonality",
+        "background": "Fourier features work because sine and cosine products integrate to zero across full periods.",
+        "numbers": "$\\int_0^{2\\pi}\\sin x\\cos x\\,dx=0$, while $\\int_0^{2\\pi}\\sin^2x\\,dx=\\pi$."
+      },
+      {
+        "title": "Positional encodings",
+        "background": "Transformer positional encodings use sinusoids; inner products over windows depend on trig integrals.",
+        "numbers": "Over $[0,2\\pi]$, the average of $\\sin^2x$ is $\\pi/(2\\pi)=0.5$."
+      },
+      {
+        "title": "Seasonality models",
+        "background": "Demand and traffic curves often include seasonal sine terms whose accumulated effect over a period cancels.",
+        "numbers": "$\\int_0^{24}\\sin(2\\pi t/24)dt=0$, so a full-day seasonal deviation has zero net bias."
+      },
+      {
+        "title": "Robotics rotation costs",
+        "background": "Rotational motion involves sine and cosine components; squared components often simplify with identities.",
+        "numbers": "$\\sin^2\\theta+\\cos^2\\theta=1$, so integrated unit direction energy over $10$ seconds is $10$."
+      },
+      {
+        "title": "Random phase averages",
+        "background": "If a phase is uniformly random, trig integrals give expected squared projection.",
+        "numbers": "$E[\\cos^2\\Theta]=\\frac{1}{2\\pi}\\int_0^{2\\pi}\\cos^2\\theta d\\theta=0.5$."
+      }
+    ],
+    "applicationsClose": "Trig integrals reward identity work: reduce powers, use symmetry, and let substitution finish. That same pattern powers signals, Fourier features, and periodic models.",
+    "takeaways": [
+      "Odd powers usually save one sine or cosine for substitution.",
+      "Even powers usually use half-angle identities.",
+      "Over full periods, symmetry and average values often do most of the work."
+    ],
     "prereqs": [
       "math-01-43"
     ]
@@ -1458,19 +11610,265 @@
   B({
     "id": "math-01-45",
     "title": "Trigonometric substitution",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: trigonometric substitution.",
+    "tagline": "Replace square-root geometry with a triangle whose identity does the simplifying for you.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Trigonometric integrals</i>"
+        "substitution",
+        "trigonometric identities",
+        "inverse trigonometric functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Partial fraction decomposition</i>"
+        "partial fraction decomposition",
+        "multivariable change of variables",
+        "Gaussian and radial integrals"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "right triangles",
+        "Pythagorean identity",
+        "inverse trig"
       ]
     },
+    "motivation": "<p>Square roots like $\\sqrt{a^2-x^2}$ and $\\sqrt{x^2+a^2}$ often resist ordinary substitution. The hidden clue is geometric: these expressions look like sides of a right triangle.</p><p>Trig substitution chooses an angle so a Pythagorean identity collapses the square root. The algebra gets longer for a moment, but the radical becomes simple, and the integral becomes one of the trig integrals you just practiced.</p>",
+    "definition": "<p><b>Trigonometric substitution</b> uses identities to simplify radicals: for $\\sqrt{a^2-x^2}$ use $x=a\\sin\\theta$; for $\\sqrt{a^2+x^2}$ use $x=a\\tan\\theta$; for $\\sqrt{x^2-a^2}$ use $x=a\\sec\\theta$. Then convert $dx$, simplify, integrate, and return to $x$.</p><p><b>Assumptions that matter:</b> choose angle ranges so the square root sign stays nonnegative, and translate back carefully with a triangle or inverse trig. For definite integrals, changing the limits to angles often avoids back-substitution errors.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\int \\sqrt{9-x^2}\\,dx$.",
+      "skills": [
+        "trig substitution",
+        "half-angle identity",
+        "back-substitution"
+      ],
+      "strategy": "The radical has $a^2-x^2$, so use $x=3\\sin\\theta$ and let $1-\\sin^2\\theta$ simplify it.",
+      "steps": [
+        {
+          "do": "Choose substitution",
+          "result": "$x=3\\sin\\theta$",
+          "why": "matches $9-x^2$"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$dx=3\\cos\\theta\\,d\\theta$",
+          "why": "convert the differential"
+        },
+        {
+          "do": "Simplify the radical",
+          "result": "$\\sqrt{9-9\\sin^2\\theta}=3\\cos\\theta$",
+          "why": "$1-\\sin^2\\theta=\\cos^2\\theta$ and choose $\\cos\\theta\\ge0$"
+        },
+        {
+          "do": "Rewrite the integral",
+          "result": "$\\int 9\\cos^2\\theta\\,d\\theta$",
+          "why": "multiply radical and $dx$"
+        },
+        {
+          "do": "Use half-angle and integrate",
+          "result": "$\\frac{9}{2}\\theta+\\frac{9}{4}\\sin2\\theta+C$",
+          "why": "$\\cos^2\\theta=(1+\\cos2\\theta)/2$"
+        },
+        {
+          "do": "Return to $x$",
+          "result": "$\\frac{9}{2}\\arcsin\\frac{x}{3}+\\frac{x}{2}\\sqrt{9-x^2}+C$",
+          "why": "$\\sin2\\theta=2\\sin\\theta\\cos\\theta=\\frac{2x\\sqrt{9-x^2}}{9}$"
+        }
+      ],
+      "verify": "The formula is the area under a semicircle of radius $3$; differentiating returns the height $\\sqrt{9-x^2}$.",
+      "answer": "$\\frac{x}{2}\\sqrt{9-x^2}+\\frac{9}{2}\\arcsin\\frac{x}{3}+C$",
+      "connects": "geometry — the substitution works because the radical is a triangle side."
+    },
+    "practice": [
+      {
+        "problem": "$\\displaystyle\\int \\frac{dx}{\\sqrt{4-x^2}}$",
+        "steps": [
+          {
+            "do": "Choose substitution",
+            "result": "$x=2\\sin\\theta$",
+            "why": "matches $a^2-x^2$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$dx=2\\cos\\theta\\,d\\theta$",
+            "why": "convert $dx$"
+          },
+          {
+            "do": "Simplify the radical",
+            "result": "$\\sqrt{4-4\\sin^2\\theta}=2\\cos\\theta$",
+            "why": "Pythagorean identity"
+          },
+          {
+            "do": "Rewrite the integral",
+            "result": "$\\int\\frac{2\\cos\\theta}{2\\cos\\theta}\\,d\\theta$",
+            "why": "radical cancels the differential factor"
+          },
+          {
+            "do": "Integrate and return",
+            "result": "$\\theta+C=\\arcsin\\frac{x}{2}+C$",
+            "why": "$x=2\\sin\\theta$"
+          }
+        ],
+        "answer": "$\\arcsin\\frac{x}{2}+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int \\frac{dx}{x^2\\sqrt{x^2-1}}$ for $x>1$",
+        "steps": [
+          {
+            "do": "Choose substitution",
+            "result": "$x=\\sec\\theta$",
+            "why": "matches $x^2-1$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$dx=\\sec\\theta\\tan\\theta\\,d\\theta$",
+            "why": "convert $dx$"
+          },
+          {
+            "do": "Simplify the radical",
+            "result": "$\\sqrt{\\sec^2\\theta-1}=\\tan\\theta$",
+            "why": "identity $\\sec^2\\theta-1=\\tan^2\\theta$"
+          },
+          {
+            "do": "Rewrite",
+            "result": "$\\int\\frac{\\sec\\theta\\tan\\theta}{\\sec^2\\theta\\tan\\theta}\\,d\\theta=\\int\\cos\\theta\\,d\\theta$",
+            "why": "cancel common factors"
+          },
+          {
+            "do": "Integrate and return",
+            "result": "$\\sin\\theta+C=\\frac{\\sqrt{x^2-1}}{x}+C$",
+            "why": "triangle gives opposite over hypotenuse"
+          }
+        ],
+        "answer": "$\\frac{\\sqrt{x^2-1}}{x}+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int \\frac{dx}{x^2+4}$",
+        "steps": [
+          {
+            "do": "Choose substitution",
+            "result": "$x=2\\tan\\theta$",
+            "why": "matches $a^2+x^2$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$dx=2\\sec^2\\theta\\,d\\theta$",
+            "why": "convert $dx$"
+          },
+          {
+            "do": "Rewrite the denominator",
+            "result": "$x^2+4=4\\tan^2\\theta+4=4\\sec^2\\theta$",
+            "why": "$1+\\tan^2\\theta=\\sec^2\\theta$"
+          },
+          {
+            "do": "Rewrite the integral",
+            "result": "$\\int\\frac{2\\sec^2\\theta}{4\\sec^2\\theta}\\,d\\theta$",
+            "why": "substitute numerator and denominator"
+          },
+          {
+            "do": "Integrate and return",
+            "result": "$\\frac12\\theta+C=\\frac12\\arctan\\frac{x}{2}+C$",
+            "why": "$x=2\\tan\\theta$"
+          }
+        ],
+        "answer": "$\\frac12\\arctan\\frac{x}{2}+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int_0^1 \\sqrt{1-x^2}\\,dx$",
+        "steps": [
+          {
+            "do": "Choose substitution",
+            "result": "$x=\\sin\\theta$",
+            "why": "matches $1-x^2$"
+          },
+          {
+            "do": "Change limits",
+            "result": "$x=0\\to\\theta=0$, $x=1\\to\\theta=\\frac{\\pi}{2}$",
+            "why": "definite integral in angle form"
+          },
+          {
+            "do": "Convert the integrand",
+            "result": "$\\sqrt{1-x^2}\\,dx=\\cos^2\\theta\\,d\\theta$",
+            "why": "radical is $\\cos\\theta$ and $dx=\\cos\\theta d\\theta$"
+          },
+          {
+            "do": "Use half-angle",
+            "result": "$\\int_0^{\\pi/2}\\frac{1+\\cos2\\theta}{2}\\,d\\theta$",
+            "why": "integrate the even power"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\left[\\frac{\\theta}{2}+\\frac{\\sin2\\theta}{4}\\right]_0^{\\pi/2}=\\frac{\\pi}{4}$",
+            "why": "quarter of the unit circle area"
+          }
+        ],
+        "answer": "$\\frac{\\pi}{4}$"
+      },
+      {
+        "problem": "A radial kernel needs $\\int_0^1 \\frac{1}{\\sqrt{1-r^2}}\\,dr$. Compute it.",
+        "steps": [
+          {
+            "do": "Choose substitution",
+            "result": "$r=\\sin\\theta$",
+            "why": "the denominator is $\\sqrt{1-r^2}$"
+          },
+          {
+            "do": "Change limits",
+            "result": "$0\\to0$, $1\\to\\frac{\\pi}{2}$",
+            "why": "convert endpoints"
+          },
+          {
+            "do": "Convert the differential",
+            "result": "$dr=\\cos\\theta\\,d\\theta$",
+            "why": "differentiate the substitution"
+          },
+          {
+            "do": "Simplify the denominator",
+            "result": "$\\sqrt{1-r^2}=\\cos\\theta$",
+            "why": "on $[0,\\pi/2]$, cosine is nonnegative"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\int_0^{\\pi/2}1\\,d\\theta=\\frac{\\pi}{2}$",
+            "why": "the cosine factors cancel"
+          }
+        ],
+        "answer": "$\\frac{\\pi}{2}$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Circle and disk geometry",
+        "background": "The classic semicircle integral uses trig substitution to compute areas exactly.",
+        "numbers": "$\\int_{-1}^1\\sqrt{1-x^2}dx=\\pi/2$, the area of a unit semicircle."
+      },
+      {
+        "title": "Radial probability models",
+        "background": "Radial densities often include square roots from circular or spherical geometry.",
+        "numbers": "$\\int_0^1(2/\\pi)(1-r^2)^{-1/2}dr=1$, since the unscaled integral is $\\pi/2$."
+      },
+      {
+        "title": "Computer graphics",
+        "background": "Rendering circular arcs and lenses requires integrating chord lengths across pixels.",
+        "numbers": "The area under $\\sqrt{9-x^2}$ from $-3$ to $3$ is $9\\pi/2\\approx14.14$."
+      },
+      {
+        "title": "Robotics reachability",
+        "background": "A two-dimensional reach disk creates constraints of the form $x^2+y^2\\le R^2$.",
+        "numbers": "For $R=2$, vertical reach at $x=1.2$ is $\\sqrt{4-1.44}=1.6$."
+      },
+      {
+        "title": "Cauchy distribution",
+        "background": "The Cauchy density integrates through an arctangent, the same pattern as $a^2+x^2$ substitution.",
+        "numbers": "$\\int_{-1}^1\\frac{1}{\\pi(1+x^2)}dx=\\frac{1}{\\pi}(\\pi/4-(-\\pi/4))=0.5$."
+      },
+      {
+        "title": "Normalization in bounded embeddings",
+        "background": "Some bounded-coordinate models use densities with endpoint singularities that simplify by sine substitution.",
+        "numbers": "$\\int_0^1\\frac{1}{\\pi\\sqrt{x(1-x)}}dx=1$ after $x=\\sin^2\\theta$."
+      }
+    ],
+    "applicationsClose": "Trig substitution is geometry wearing algebra. Pick the triangle, let the identity simplify the radical, and translate the answer back with care.",
+    "takeaways": [
+      "Use $x=a\\sin\\theta$ for $a^2-x^2$, $x=a\\tan\\theta$ for $a^2+x^2$, and $x=a\\sec\\theta$ for $x^2-a^2$.",
+      "Convert $dx$ and, for definite integrals, convert the limits.",
+      "Back-substitution usually comes from a right triangle or an inverse trig function."
+    ],
     "prereqs": [
       "math-01-44"
     ]
@@ -1479,19 +11877,280 @@
   B({
     "id": "math-01-46",
     "title": "Partial fraction decomposition",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: partial fraction decomposition.",
+    "tagline": "Break a rational function into simple pieces whose integrals are already familiar.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Trigonometric substitution</i>"
+        "polynomials",
+        "factoring",
+        "antiderivatives"
       ],
       "leadsTo": [
-        "the next lesson, <i>Improper integrals</i>"
+        "Laplace transforms",
+        "rational generating functions",
+        "linear systems"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "logarithms",
+        "arctangent integrals",
+        "algebraic matching"
       ]
     },
+    "motivation": "<p>Rational functions can look compact but hide several simpler behaviors. For example, $\\frac{5x+1}{x^2-x-2}$ is really a combination of two reciprocal terms once the denominator is factored.</p><p>Partial fractions are the algebraic version of separating a chord into notes. Each simple denominator has a known integral, often a logarithm or arctangent, so the hard-looking rational integral becomes a small matching problem.</p>",
+    "definition": "<p><b>Partial fraction decomposition</b> rewrites a proper rational function $P(x)/Q(x)$ as a sum of simpler rational terms after factoring $Q$. Linear factors get terms like $A/(x-a)$; repeated linear factors get $A_1/(x-a)+A_2/(x-a)^2+\\cdots$; irreducible quadratics get $(Ax+B)/(x^2+px+q)$.</p><p><b>Assumptions that matter:</b> first make the fraction proper; if $\\deg P\\ge\\deg Q$, use polynomial division. Factor over the real numbers unless told otherwise. Coefficients are found by clearing denominators and matching powers or substituting convenient roots.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\int \\frac{5x+1}{x^2-x-2}\\,dx$.",
+      "skills": [
+        "factoring",
+        "partial fractions",
+        "logarithmic integrals"
+      ],
+      "strategy": "Factor the denominator, solve for simple reciprocal pieces, then integrate each logarithm.",
+      "steps": [
+        {
+          "do": "Factor the denominator",
+          "result": "$x^2-x-2=(x-2)(x+1)$",
+          "why": "partial fractions start with factors"
+        },
+        {
+          "do": "Set up the decomposition",
+          "result": "$\\frac{5x+1}{(x-2)(x+1)}=\\frac{A}{x-2}+\\frac{B}{x+1}$",
+          "why": "one constant over each linear factor"
+        },
+        {
+          "do": "Clear denominators",
+          "result": "$5x+1=A(x+1)+B(x-2)$",
+          "why": "turn the identity into polynomial algebra"
+        },
+        {
+          "do": "Use $x=2$",
+          "result": "$11=3A$, so $A=\\frac{11}{3}$",
+          "why": "the $B$ term vanishes"
+        },
+        {
+          "do": "Use $x=-1$",
+          "result": "$-4=-3B$, so $B=\\frac{4}{3}$",
+          "why": "the $A$ term vanishes"
+        },
+        {
+          "do": "Integrate the pieces",
+          "result": "$\\frac{11}{3}\\ln|x-2|+\\frac{4}{3}\\ln|x+1|+C$",
+          "why": "$\\int\\frac{1}{x-a}dx=\\ln|x-a|$"
+        }
+      ],
+      "verify": "Combining the two fractions gives $\\frac{(11/3)(x+1)+(4/3)(x-2)}{(x-2)(x+1)}=\\frac{5x+1}{x^2-x-2}$.",
+      "answer": "$\\frac{11}{3}\\ln|x-2|+\\frac{4}{3}\\ln|x+1|+C$",
+      "connects": "Laplace transforms — partial fractions split rational transforms into invertible modes."
+    },
+    "practice": [
+      {
+        "problem": "$\\displaystyle\\int \\frac{3}{x^2-1}\\,dx$",
+        "steps": [
+          {
+            "do": "Factor the denominator",
+            "result": "$x^2-1=(x-1)(x+1)$",
+            "why": "difference of squares"
+          },
+          {
+            "do": "Set up fractions",
+            "result": "$\\frac{3}{x^2-1}=\\frac{A}{x-1}+\\frac{B}{x+1}$",
+            "why": "one term per linear factor"
+          },
+          {
+            "do": "Clear denominators",
+            "result": "$3=A(x+1)+B(x-1)$",
+            "why": "match coefficients or plug roots"
+          },
+          {
+            "do": "Solve constants",
+            "result": "$A=\\frac32$, $B=-\\frac32$",
+            "why": "use $x=1$ and $x=-1$"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\frac32\\ln|x-1|-\\frac32\\ln|x+1|+C$",
+            "why": "reciprocal linear factors integrate to logs"
+          }
+        ],
+        "answer": "$\\frac32\\ln\\left|\\frac{x-1}{x+1}\\right|+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int \\frac{x+3}{x^2+5x+6}\\,dx$",
+        "steps": [
+          {
+            "do": "Factor the denominator",
+            "result": "$x^2+5x+6=(x+2)(x+3)$",
+            "why": "find linear factors"
+          },
+          {
+            "do": "Set up decomposition",
+            "result": "$\\frac{x+3}{(x+2)(x+3)}=\\frac{A}{x+2}+\\frac{B}{x+3}$",
+            "why": "proper rational function"
+          },
+          {
+            "do": "Clear denominators",
+            "result": "$x+3=A(x+3)+B(x+2)$",
+            "why": "polynomial identity"
+          },
+          {
+            "do": "Use $x=-3$",
+            "result": "$0=-B$, so $B=0$",
+            "why": "the numerator shares the factor $x+3$"
+          },
+          {
+            "do": "Use $x=-2$",
+            "result": "$1=A$, so $A=1$",
+            "why": "solve the remaining constant"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\ln|x+2|+C$",
+            "why": "the expression simplifies to $1/(x+2)$"
+          }
+        ],
+        "answer": "$\\ln|x+2|+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int \\frac{2x+1}{x^2+x}\\,dx$",
+        "steps": [
+          {
+            "do": "Factor the denominator",
+            "result": "$x^2+x=x(x+1)$",
+            "why": "split into linear factors"
+          },
+          {
+            "do": "Set up fractions",
+            "result": "$\\frac{2x+1}{x(x+1)}=\\frac{A}{x}+\\frac{B}{x+1}$",
+            "why": "one constant per factor"
+          },
+          {
+            "do": "Clear denominators",
+            "result": "$2x+1=A(x+1)+Bx$",
+            "why": "remove fractions"
+          },
+          {
+            "do": "Use $x=0$",
+            "result": "$1=A$",
+            "why": "the $B$ term vanishes"
+          },
+          {
+            "do": "Use $x=-1$",
+            "result": "$-1=-B$, so $B=1$",
+            "why": "the $A$ term vanishes"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\ln|x|+\\ln|x+1|+C$",
+            "why": "sum of logarithms"
+          }
+        ],
+        "answer": "$\\ln|x|+\\ln|x+1|+C$"
+      },
+      {
+        "problem": "$\\displaystyle\\int \\frac{1}{x(x+1)^2}\\,dx$",
+        "steps": [
+          {
+            "do": "Set up repeated-factor form",
+            "result": "$\\frac{1}{x(x+1)^2}=\\frac{A}{x}+\\frac{B}{x+1}+\\frac{C}{(x+1)^2}$",
+            "why": "repeated factors need every power"
+          },
+          {
+            "do": "Clear denominators",
+            "result": "$1=A(x+1)^2+Bx(x+1)+Cx$",
+            "why": "polynomial identity"
+          },
+          {
+            "do": "Use $x=0$",
+            "result": "$A=1$",
+            "why": "only the $A$ term remains"
+          },
+          {
+            "do": "Use $x=-1$",
+            "result": "$-C=1$, so $C=-1$",
+            "why": "only the $C$ term remains"
+          },
+          {
+            "do": "Match the $x^2$ coefficient",
+            "result": "$0=A+B$, so $B=-1$",
+            "why": "$A=1$"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\ln|x|-\\ln|x+1|+\\frac{1}{x+1}+C_0$",
+            "why": "$\\int-(x+1)^{-2}dx=1/(x+1)$"
+          }
+        ],
+        "answer": "$\\ln|x|-\\ln|x+1|+\\frac{1}{x+1}+C$"
+      },
+      {
+        "problem": "Invert the simple transform $Y(s)=\\frac{1}{s(s+2)}$ by partial fractions.",
+        "steps": [
+          {
+            "do": "Set up the decomposition",
+            "result": "$\\frac{1}{s(s+2)}=\\frac{A}{s}+\\frac{B}{s+2}$",
+            "why": "one term per linear factor"
+          },
+          {
+            "do": "Clear denominators",
+            "result": "$1=A(s+2)+Bs$",
+            "why": "solve for constants"
+          },
+          {
+            "do": "Use $s=0$",
+            "result": "$A=\\frac12$",
+            "why": "the $B$ term vanishes"
+          },
+          {
+            "do": "Use $s=-2$",
+            "result": "$B=-\\frac12$",
+            "why": "the $A$ term vanishes"
+          },
+          {
+            "do": "Invert each term",
+            "result": "$y(t)=\\frac12-\\frac12e^{-2t}$",
+            "why": "$1/s$ maps to $1$ and $1/(s+2)$ maps to $e^{-2t}$"
+          }
+        ],
+        "answer": "$y(t)=\\frac12(1-e^{-2t})$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Laplace-transform inversion",
+        "background": "Linear ODE solutions often become rational functions in $s$; partial fractions reveal the time-domain modes.",
+        "numbers": "$\\frac{2}{s(s+2)}=\\frac1s-\\frac1{s+2}$, so the response is $1-e^{-2t}$."
+      },
+      {
+        "title": "Control-system poles",
+        "background": "A rational transfer function decomposes into modal pieces whose denominators are poles.",
+        "numbers": "$1/((s+1)(s+4))=\\frac{1/3}{s+1}-\\frac{1/3}{s+4}$, modes $e^{-t}$ and $e^{-4t}$."
+      },
+      {
+        "title": "Generating functions",
+        "background": "Counting sequences in CS use rational generating functions; partial fractions produce closed forms.",
+        "numbers": "$\\frac{1}{(1-x)(1-2x)}=-\\frac{1}{1-x}+\\frac{2}{1-2x}$, giving coefficients $2^{n+1}-1$."
+      },
+      {
+        "title": "Markov-chain transients",
+        "background": "Small stochastic systems can produce rational transforms for state probabilities.",
+        "numbers": "A two-rate decay with poles $-1$ and $-3$ gives terms $Ae^{-t}+Be^{-3t}$ after decomposition."
+      },
+      {
+        "title": "Rational probability densities",
+        "background": "Some densities normalize or integrate through decomposed rational terms.",
+        "numbers": "$\\int_2^\\infty\\frac{1}{x(x+1)}dx=[\\ln x-\\ln(x+1)]_2^\\infty=\\ln(3/2)\\approx0.405$."
+      },
+      {
+        "title": "Filter design",
+        "background": "Digital and analog filters are often analyzed through rational transfer functions split into simple sections.",
+        "numbers": "A denominator $(s+10)(s+100)$ corresponds to time constants $0.1$ s and $0.01$ s."
+      }
+    ],
+    "applicationsClose": "Partial fractions turn one rational expression into separate simple stories: logs for integrals, exponentials for transforms, and poles for systems.",
+    "takeaways": [
+      "Make the rational function proper before decomposing.",
+      "Linear factors get constants; repeated factors need every power.",
+      "After decomposition, integration usually reduces to logarithms or arctangents."
+    ],
     "prereqs": [
       "math-01-45"
     ]
@@ -1500,19 +12159,231 @@
   B({
     "id": "math-01-47",
     "title": "Improper integrals",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: improper integrals.",
+    "tagline": "Measure a total amount over an infinite interval, or near a point where the function blows up.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Partial fraction decomposition</i>"
+        "definite integrals",
+        "limits",
+        "antiderivatives"
       ],
       "leadsTo": [
-        "the next lesson, <i>Area between curves</i>"
+        "convergence tests for series",
+        "Laplace transforms",
+        "probability densities on unbounded domains"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "area under curves",
+        "comparison tests",
+        "exponential decay",
+        "infinite limits"
       ]
     },
+    "motivation": "<p>You already know how to compute a definite integral like $\\int_0^3 e^{-x}\\,dx$: find an antiderivative, plug in two endpoints, subtract. The new question is what to do when one endpoint is not really an endpoint.</p><p>An <b>improper integral</b> lets us ask whether an infinite-looking total is actually finite. If a tail decays fast enough, the total area can settle to a number. If it decays too slowly, the total keeps growing forever. The key move is friendly: replace the troublesome endpoint with a variable, compute an ordinary integral, then take a limit.</p>",
+    "definition": "<p>An improper integral is a definite integral whose interval is infinite, such as $$\\int_a^\\infty f(x)\\,dx=\\lim_{b\\to\\infty}\\int_a^b f(x)\\,dx,$$ or whose integrand is unbounded, such as $$\\int_a^b f(x)\\,dx=\\lim_{t\\to c^-}\\int_a^t f(x)\\,dx+\\lim_{t\\to c^+}\\int_t^b f(x)\\,dx$$ when the trouble is at an interior point $c$. If the required limit is finite, the integral <b>converges</b>; otherwise it <b>diverges</b>.</p><p><b>Assumptions that matter:</b> split the integral at every discontinuity or infinite endpoint; every resulting limit must converge; cancellation across an infinite blow-up is not allowed unless the problem explicitly asks for a principal value.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\int_1^\\infty \\frac{1}{x^2}\\,dx$.",
+      "skills": [
+        "improper integrals",
+        "limits at infinity",
+        "power rule"
+      ],
+      "strategy": "The endpoint $\\infty$ is the obstacle. Replace it by $b$, integrate on $[1,b]$, then let $b\\to\\infty$.",
+      "steps": [
+        {
+          "do": "Replace $\\infty$ by $b$",
+          "result": "$\\lim_{b\\to\\infty}\\int_1^b x^{-2}\\,dx$",
+          "why": "this turns the problem into ordinary definite integrals"
+        },
+        {
+          "do": "Find an antiderivative",
+          "result": "$\\int x^{-2}\\,dx=-x^{-1}$",
+          "why": "the power rule gives $x^{-1}/(-1)$"
+        },
+        {
+          "do": "Evaluate from $1$ to $b$",
+          "result": "$\\left[-\\frac1x\\right]_1^b=-\\frac1b+1$",
+          "why": "upper value minus lower value"
+        },
+        {
+          "do": "Take the limit",
+          "result": "$\\lim_{b\\to\\infty}\\left(1-\\frac1b\\right)=1$",
+          "why": "$1/b\\to0$"
+        }
+      ],
+      "verify": "The rectangle estimate over $[1,b]$ keeps increasing but never passes $1$ by much; a fast $1/x^2$ tail has finite total area.",
+      "answer": "$\\displaystyle\\int_1^\\infty \\frac{1}{x^2}\\,dx=1$",
+      "connects": "convergence versus divergence — the tail is infinite in length, but the accumulated area settles to a finite limit."
+    },
+    "practice": [
+      {
+        "problem": "$\\displaystyle\\int_0^\\infty e^{-3x}\\,dx$",
+        "steps": [
+          {
+            "do": "Replace $\\infty$ by $b$",
+            "result": "$\\lim_{b\\to\\infty}\\int_0^b e^{-3x}\\,dx$",
+            "why": "the interval is infinite"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$-\\frac13 e^{-3x}$",
+            "why": "differentiate it to recover $e^{-3x}$"
+          },
+          {
+            "do": "Evaluate from $0$ to $b$",
+            "result": "$-\\frac13e^{-3b}+\\frac13$",
+            "why": "subtract the lower value $-1/3$"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$\\frac13$",
+            "why": "$e^{-3b}\\to0$"
+          }
+        ],
+        "answer": "$\\frac13$"
+      },
+      {
+        "problem": "$\\displaystyle\\int_1^\\infty \\frac{1}{x}\\,dx$",
+        "steps": [
+          {
+            "do": "Replace $\\infty$ by $b$",
+            "result": "$\\lim_{b\\to\\infty}\\int_1^b \\frac1x\\,dx$",
+            "why": "use the definition"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$\\ln x$",
+            "why": "the logarithm grows from integrating $1/x$"
+          },
+          {
+            "do": "Evaluate from $1$ to $b$",
+            "result": "$\\ln b-\\ln1=\\ln b$",
+            "why": "$\\ln1=0$"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$\\infty$",
+            "why": "$\\ln b$ grows without bound"
+          }
+        ],
+        "answer": "Diverges."
+      },
+      {
+        "problem": "$\\displaystyle\\int_0^1 \\frac{1}{\\sqrt{x}}\\,dx$",
+        "steps": [
+          {
+            "do": "Replace the troublesome endpoint by $a$",
+            "result": "$\\lim_{a\\to0^+}\\int_a^1 x^{-1/2}\\,dx$",
+            "why": "$x^{-1/2}$ blows up at $0$"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$2\\sqrt{x}$",
+            "why": "the power rule adds $1$ to the exponent"
+          },
+          {
+            "do": "Evaluate from $a$ to $1$",
+            "result": "$2-2\\sqrt{a}$",
+            "why": "upper value minus lower value"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$2$",
+            "why": "$\\sqrt{a}\\to0$"
+          }
+        ],
+        "answer": "$2$"
+      },
+      {
+        "problem": "$\\displaystyle\\int_0^1 \\frac{1}{x^2}\\,dx$",
+        "steps": [
+          {
+            "do": "Replace the troublesome endpoint by $a$",
+            "result": "$\\lim_{a\\to0^+}\\int_a^1 x^{-2}\\,dx$",
+            "why": "the integrand is unbounded at $0$"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$-x^{-1}$",
+            "why": "the power rule gives exponent $-1$"
+          },
+          {
+            "do": "Evaluate from $a$ to $1$",
+            "result": "$-1+\\frac1a$",
+            "why": "subtracting $-1/a$ adds $1/a$"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$\\infty$",
+            "why": "$1/a\\to\\infty$ as $a\\to0^+$"
+          }
+        ],
+        "answer": "Diverges."
+      },
+      {
+        "problem": "A waiting-time density is $f(t)=0.2e^{-0.2t}$ for $t\\ge0$. Compute $\\displaystyle\\int_0^\\infty f(t)\\,dt$.",
+        "steps": [
+          {
+            "do": "Set up the improper integral",
+            "result": "$\\lim_{b\\to\\infty}\\int_0^b 0.2e^{-0.2t}\\,dt$",
+            "why": "time has no fixed upper bound"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$-e^{-0.2t}$",
+            "why": "the factor $0.2$ cancels the derivative of $-0.2t$"
+          },
+          {
+            "do": "Evaluate from $0$ to $b$",
+            "result": "$-e^{-0.2b}+1$",
+            "why": "the lower value is $-1$"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$1$",
+            "why": "$e^{-0.2b}\\to0$"
+          }
+        ],
+        "answer": "$1$, so the density has total probability $1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Probability densities",
+        "background": "Continuous distributions on unbounded ranges need improper integrals so their total probability can still be $1$.",
+        "numbers": "For $f(t)=0.5e^{-0.5t}$, $\\int_0^\\infty0.5e^{-0.5t}\\,dt=1$, so it is a valid waiting-time density."
+      },
+      {
+        "title": "Expected lifetime",
+        "background": "Reliability models often use tails to summarize how long hardware or requests survive.",
+        "numbers": "If survival is $S(t)=e^{-t/2000}$ hours, mean lifetime is $\\int_0^\\infty S(t)\\,dt=2000$ hours."
+      },
+      {
+        "title": "Normalization in ML",
+        "background": "A model density must integrate to one before it can score likelihoods.",
+        "numbers": "$\\int_{-\\infty}^{\\infty}e^{-|x|}\\,dx=2$, so $\\frac12e^{-|x|}$ is normalized."
+      },
+      {
+        "title": "Loss tails",
+        "background": "Heavy-tailed errors can make averages unstable because expected values are improper integrals.",
+        "numbers": "A Pareto tail with density $2/x^3$ on $x\\ge1$ has mean $\\int_1^\\infty x\\cdot2/x^3\\,dx=2$; with density $1/x^2$, the mean diverges."
+      },
+      {
+        "title": "Laplace transforms",
+        "background": "Transforms summarize time signals by integrating them against decaying exponentials.",
+        "numbers": "$\\int_0^\\infty e^{-st}\\,dt=1/s$ for $s>0$; at $s=2$ the value is $0.5$."
+      },
+      {
+        "title": "Continuous attention kernels",
+        "background": "Some sequence models use decaying kernels whose total mass controls memory.",
+        "numbers": "$\\int_0^\\infty e^{-t/20}\\,dt=20$, so the kernel's total weight equals a 20-step time scale."
+      }
+    ],
+    "applicationsClose": "The shared thread is tail behavior: replace the impossible endpoint by a limit, then ask whether the total settles.",
+    "takeaways": [
+      "An improper integral is a definite integral completed by a limit.",
+      "Every infinite endpoint or blow-up point must be handled separately.",
+      "Fast decay can give finite area; slow decay can diverge even over a simple positive function."
+    ],
     "prereqs": [
       "math-01-46"
     ]
@@ -1521,19 +12392,261 @@
   B({
     "id": "math-01-48",
     "title": "Area between curves",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: area between curves.",
+    "tagline": "Turn the vertical gap between two graphs into accumulated area.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Improper integrals</i>"
+        "definite integrals",
+        "graphing functions",
+        "intersection points"
       ],
       "leadsTo": [
-        "the next lesson, <i>Volumes of revolution</i>"
+        "volumes of revolution",
+        "probability as area",
+        "integral-based error measures"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "systems of equations",
+        "signed area",
+        "absolute value",
+        "Riemann sums"
       ]
     },
+    "motivation": "<p>You already know that $\\int_a^b f(x)\\,dx$ measures signed area between a curve and the $x$-axis. But many real comparisons are not against zero. We want to compare two curves directly: prediction versus truth, supply versus demand, one boundary versus another.</p><p>The idea is beautifully simple: slice the region into skinny vertical rectangles. Each rectangle has height \"top minus bottom\" and width $dx$. Add those heights across the interval, and the area appears.</p>",
+    "definition": "<p>If $f(x)\\ge g(x)$ on $[a,b]$, the area between the curves is $$A=\\int_a^b \\bigl(f(x)-g(x)\\bigr)\\,dx.$$ The expression $f(x)-g(x)$ is the vertical height of a thin rectangle, and $dx$ is its tiny width. If the curves cross, split the interval at crossing points or integrate $|f(x)-g(x)|$.</p><p><b>Assumptions that matter:</b> know which curve is on top on each subinterval; use actual intersection points as limits; area is nonnegative, so do not let signed cancellation hide a region.</p>",
+    "worked": {
+      "problem": "Find the area between $y=x$ and $y=x^2$ on $[0,1]$.",
+      "skills": [
+        "top minus bottom",
+        "polynomial integration",
+        "area interpretation"
+      ],
+      "strategy": "First decide which graph is higher, then integrate the vertical gap.",
+      "steps": [
+        {
+          "do": "Compare the functions on $[0,1]$",
+          "result": "$x\\ge x^2$",
+          "why": "numbers between $0$ and $1$ shrink when squared"
+        },
+        {
+          "do": "Write top minus bottom",
+          "result": "$x-x^2$",
+          "why": "vertical rectangle height"
+        },
+        {
+          "do": "Set up the integral",
+          "result": "$A=\\int_0^1 (x-x^2)\\,dx$",
+          "why": "add the heights from $0$ to $1$"
+        },
+        {
+          "do": "Integrate",
+          "result": "$\\left[\\frac{x^2}{2}-\\frac{x^3}{3}\\right]_0^1$",
+          "why": "use the power rule"
+        },
+        {
+          "do": "Evaluate",
+          "result": "$\\frac12-\\frac13=\\frac16$",
+          "why": "the lower endpoint contributes $0$"
+        }
+      ],
+      "verify": "The gap is never bigger than about $0.25$ across a width of $1$, so an area of $1/6\\approx0.167$ is reasonable.",
+      "answer": "$A=\\frac16$ square unit",
+      "connects": "area is accumulated difference — the integral converts many local gaps into one total comparison."
+    },
+    "practice": [
+      {
+        "problem": "Find the area between $y=2x$ and $y=x$ on $[0,3]$.",
+        "steps": [
+          {
+            "do": "Identify the top curve",
+            "result": "$2x\\ge x$ on $[0,3]$",
+            "why": "$x$ is nonnegative"
+          },
+          {
+            "do": "Write the gap",
+            "result": "$2x-x=x$",
+            "why": "top minus bottom"
+          },
+          {
+            "do": "Set up the integral",
+            "result": "$\\int_0^3 x\\,dx$",
+            "why": "add vertical gaps"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\left[\\frac{x^2}{2}\\right]_0^3$",
+            "why": "power rule"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\frac92$",
+            "why": "$9/2-0=9/2$"
+          }
+        ],
+        "answer": "$\\frac92$"
+      },
+      {
+        "problem": "Find the area between $y=4$ and $y=x^2$.",
+        "steps": [
+          {
+            "do": "Find intersections",
+            "result": "$x^2=4$ gives $x=-2,2$",
+            "why": "these are the region boundaries"
+          },
+          {
+            "do": "Identify the top curve",
+            "result": "$4\\ge x^2$ on $[-2,2]$",
+            "why": "the parabola sits below the line there"
+          },
+          {
+            "do": "Set up the integral",
+            "result": "$\\int_{-2}^{2}(4-x^2)\\,dx$",
+            "why": "top minus bottom"
+          },
+          {
+            "do": "Use symmetry",
+            "result": "$2\\int_0^2(4-x^2)\\,dx$",
+            "why": "the integrand is even"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$2\\left[4x-\\frac{x^3}{3}\\right]_0^2=\\frac{32}{3}$",
+            "why": "$8-8/3=16/3$ before doubling"
+          }
+        ],
+        "answer": "$\\frac{32}{3}$"
+      },
+      {
+        "problem": "Find the area between $y=x^2$ and $y=x+2$.",
+        "steps": [
+          {
+            "do": "Find intersections",
+            "result": "$x^2=x+2$",
+            "why": "boundaries occur where curves meet"
+          },
+          {
+            "do": "Factor",
+            "result": "$(x-2)(x+1)=0$",
+            "why": "move all terms to one side"
+          },
+          {
+            "do": "Record the limits",
+            "result": "$x=-1$ and $x=2$",
+            "why": "these enclose the region"
+          },
+          {
+            "do": "Identify the top curve",
+            "result": "$x+2\\ge x^2$ on $[-1,2]$",
+            "why": "test $x=0$: $2\\ge0$"
+          },
+          {
+            "do": "Integrate the gap",
+            "result": "$\\int_{-1}^{2}(x+2-x^2)\\,dx=\\left[\\frac{x^2}{2}+2x-\\frac{x^3}{3}\\right]_{-1}^{2}=\\frac92$",
+            "why": "evaluate the antiderivative at both intersections"
+          }
+        ],
+        "answer": "$\\frac92$"
+      },
+      {
+        "problem": "Find the area between $y=\\sin x$ and the $x$-axis on $[0,\\pi]$.",
+        "steps": [
+          {
+            "do": "Identify the top curve",
+            "result": "$\\sin x\\ge0$ on $[0,\\pi]$",
+            "why": "sine is nonnegative in the upper half of the unit circle"
+          },
+          {
+            "do": "Write the gap",
+            "result": "$\\sin x-0=\\sin x$",
+            "why": "the bottom curve is the axis"
+          },
+          {
+            "do": "Set up the integral",
+            "result": "$\\int_0^\\pi \\sin x\\,dx$",
+            "why": "area under a nonnegative curve"
+          },
+          {
+            "do": "Integrate",
+            "result": "$[-\\cos x]_0^\\pi$",
+            "why": "the derivative of $-\\cos x$ is $\\sin x$"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$1-(-1)=2$",
+            "why": "$-\\cos\\pi=1$ and $-\\cos0=-1$"
+          }
+        ],
+        "answer": "$2$"
+      },
+      {
+        "problem": "For model error $e(x)=|x-(2-x)|$ on $[0,2]$, compute total absolute error.",
+        "steps": [
+          {
+            "do": "Find where the expressions cross",
+            "result": "$x=2-x$ gives $x=1$",
+            "why": "the absolute value changes form there"
+          },
+          {
+            "do": "Write the left gap",
+            "result": "$(2-x)-x=2-2x$ on $[0,1]$",
+            "why": "the prediction $2-x$ is larger there"
+          },
+          {
+            "do": "Write the right gap",
+            "result": "$x-(2-x)=2x-2$ on $[1,2]$",
+            "why": "$x$ is larger there"
+          },
+          {
+            "do": "Set up the split integral",
+            "result": "$\\int_0^1(2-2x)\\,dx+\\int_1^2(2x-2)\\,dx$",
+            "why": "absolute area cannot cancel"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$1+1=2$",
+            "why": "each triangle has area $1$"
+          }
+        ],
+        "answer": "$2$ total error units"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Absolute error in regression",
+        "background": "Mean absolute error starts as area between prediction and target curves before dividing by interval length.",
+        "numbers": "If $\\hat y=x$ and $y=2-x$ on $[0,2]$, total absolute error is $2$, so average absolute error is $2/2=1$."
+      },
+      {
+        "title": "AUC comparisons",
+        "background": "Classifier curves are often compared by the area between ROC or precision-recall curves.",
+        "numbers": "If model A has TPR $x$ and model B has $x^2$ over FPR $x\\in[0,1]$, A's advantage area is $\\int_0^1(x-x^2)dx=1/6$."
+      },
+      {
+        "title": "Calibration gaps",
+        "background": "Calibration plots compare predicted probability to observed frequency.",
+        "numbers": "A curve $p^2$ versus ideal $p$ on $[0,1]$ has gap $1/6\\approx0.167$."
+      },
+      {
+        "title": "Image segmentation overlap",
+        "background": "Continuous masks can be compared by integrating the difference between boundary curves.",
+        "numbers": "Between $y=1$ and $y=x^2$ on $[-1,1]$, area is $\\int_{-1}^1(1-x^2)dx=4/3$."
+      },
+      {
+        "title": "Queue backlog",
+        "background": "Backlog accumulates when arrival rate exceeds service rate; the area between rates is work waiting.",
+        "numbers": "Arrival $10$ jobs/s and service $7$ jobs/s for $5$s creates $\\int_0^5 3\\,dt=15$ jobs of backlog."
+      },
+      {
+        "title": "Distribution distance",
+        "background": "Total variation in one dimension can be read from area between density curves.",
+        "numbers": "Densities $2x$ and $2(1-x)$ on $[0,1]$ have absolute gap area $1$, so total variation is $1/2$."
+      }
+    ],
+    "applicationsClose": "Top minus bottom is a quiet but powerful idea: local differences become one honest total.",
+    "takeaways": [
+      "Area between curves is the integral of top minus bottom.",
+      "Find intersections first; split wherever the order changes.",
+      "For absolute comparisons, prevent positive and negative regions from canceling."
+    ],
     "prereqs": [
       "math-01-47"
     ]
@@ -1542,19 +12655,261 @@
   B({
     "id": "math-01-49",
     "title": "Volumes of revolution",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: volumes of revolution.",
+    "tagline": "Spin a flat region around an axis and add up the tiny circular slices.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Area between curves</i>"
+        "definite integrals",
+        "area between curves",
+        "basic geometry of circles"
       ],
       "leadsTo": [
-        "the next lesson, <i>Arc length</i>"
+        "surface area",
+        "multivariable integration",
+        "geometric probability"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "cross sections",
+        "shell method",
+        "disk method",
+        "symmetry"
       ]
     },
+    "motivation": "<p>Area between curves measures a flat region. Now imagine spinning that region around an axis. A curve becomes a bowl, a cap, a tube, or a smooth solid. The question becomes: how much three-dimensional stuff did we make?</p><p>The friendly trick is to slice the solid. A thin slice perpendicular to the axis is usually a disk or washer. Its volume is area times thickness, and the integral adds all those slice volumes.</p>",
+    "definition": "<p>Using disks around the $x$-axis, a solid generated by $y=f(x)\\ge0$ on $[a,b]$ has volume $$V=\\pi\\int_a^b [f(x)]^2\\,dx.$$ If there is a hole, use washers: $$V=\\pi\\int_a^b\\left(R(x)^2-r(x)^2\\right)\\,dx,$$ where $R$ is the outer radius and $r$ is the inner radius.</p><p><b>Assumptions that matter:</b> radii must be distances to the axis of rotation, so they are nonnegative; choose slices perpendicular to the axis for disks and washers; if the outer radius changes, split the interval.</p>",
+    "worked": {
+      "problem": "Find the volume formed by rotating $y=x$ on $0\\le x\\le2$ around the $x$-axis.",
+      "skills": [
+        "disk method",
+        "polynomial integration",
+        "geometry of rotation"
+      ],
+      "strategy": "A vertical slice becomes a disk with radius $x$. Integrate $\\pi r^2$ along the interval.",
+      "steps": [
+        {
+          "do": "Identify the radius",
+          "result": "$r(x)=x$",
+          "why": "distance from $y=0$ to $y=x$"
+        },
+        {
+          "do": "Write the disk area",
+          "result": "$A(x)=\\pi x^2$",
+          "why": "area of a circle is $\\pi r^2$"
+        },
+        {
+          "do": "Set up the volume integral",
+          "result": "$V=\\pi\\int_0^2 x^2\\,dx$",
+          "why": "add disk volumes $A(x)dx$"
+        },
+        {
+          "do": "Integrate",
+          "result": "$\\pi\\left[\\frac{x^3}{3}\\right]_0^2$",
+          "why": "power rule"
+        },
+        {
+          "do": "Evaluate",
+          "result": "$\\frac{8\\pi}{3}$",
+          "why": "$2^3/3=8/3$"
+        }
+      ],
+      "verify": "The shape is a cone with radius $2$ and height $2$, so $\\frac13\\pi r^2h=\\frac13\\pi\\cdot4\\cdot2=\\frac{8\\pi}{3}$.",
+      "answer": "$V=\\frac{8\\pi}{3}$ cubic units",
+      "connects": "volumes of revolution convert a changing radius into an integral of circular cross-sectional area."
+    },
+    "practice": [
+      {
+        "problem": "Rotate $y=3$ on $0\\le x\\le4$ around the $x$-axis. Find the volume.",
+        "steps": [
+          {
+            "do": "Identify the radius",
+            "result": "$r=3$",
+            "why": "the line is 3 units above the axis"
+          },
+          {
+            "do": "Write the disk area",
+            "result": "$A=\\pi(3)^2=9\\pi$",
+            "why": "each slice is the same circle"
+          },
+          {
+            "do": "Set up the integral",
+            "result": "$V=\\int_0^4 9\\pi\\,dx$",
+            "why": "add constant cross sections"
+          },
+          {
+            "do": "Integrate",
+            "result": "$9\\pi[x]_0^4$",
+            "why": "antiderivative of $1$ is $x$"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$36\\pi$",
+            "why": "a cylinder has base area $9\\pi$ and height $4$"
+          }
+        ],
+        "answer": "$36\\pi$"
+      },
+      {
+        "problem": "Rotate $y=\\sqrt{x}$ on $0\\le x\\le4$ around the $x$-axis. Find the volume.",
+        "steps": [
+          {
+            "do": "Identify the radius",
+            "result": "$r(x)=\\sqrt{x}$",
+            "why": "distance to the $x$-axis"
+          },
+          {
+            "do": "Square the radius",
+            "result": "$r(x)^2=x$",
+            "why": "disk area uses $r^2$"
+          },
+          {
+            "do": "Set up the integral",
+            "result": "$V=\\pi\\int_0^4 x\\,dx$",
+            "why": "add disk areas"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\pi\\left[\\frac{x^2}{2}\\right]_0^4$",
+            "why": "power rule"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$8\\pi$",
+            "why": "$16/2=8$"
+          }
+        ],
+        "answer": "$8\\pi$"
+      },
+      {
+        "problem": "Rotate the region between $y=2$ and $y=1$ on $0\\le x\\le5$ around the $x$-axis.",
+        "steps": [
+          {
+            "do": "Identify the outer radius",
+            "result": "$R=2$",
+            "why": "farther distance from the axis"
+          },
+          {
+            "do": "Identify the inner radius",
+            "result": "$r=1$",
+            "why": "the hole has radius $1$"
+          },
+          {
+            "do": "Write the washer area",
+            "result": "$\\pi(R^2-r^2)=\\pi(4-1)=3\\pi$",
+            "why": "subtract the hole"
+          },
+          {
+            "do": "Set up the integral",
+            "result": "$V=\\int_0^5 3\\pi\\,dx$",
+            "why": "cross section is constant"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$15\\pi$",
+            "why": "area times length"
+          }
+        ],
+        "answer": "$15\\pi$"
+      },
+      {
+        "problem": "Rotate the region under $y=2-x$ on $0\\le x\\le2$ around the $x$-axis.",
+        "steps": [
+          {
+            "do": "Identify the radius",
+            "result": "$r(x)=2-x$",
+            "why": "height above the axis"
+          },
+          {
+            "do": "Write the disk area",
+            "result": "$\\pi(2-x)^2$",
+            "why": "square the radius"
+          },
+          {
+            "do": "Set up the integral",
+            "result": "$V=\\pi\\int_0^2(2-x)^2\\,dx$",
+            "why": "add disk slices"
+          },
+          {
+            "do": "Substitute $u=2-x$",
+            "result": "$\\pi\\int_0^2u^2\\,du$",
+            "why": "the same bounds appear after reversing the endpoints"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\frac{8\\pi}{3}$",
+            "why": "$\\int_0^2u^2du=8/3$"
+          }
+        ],
+        "answer": "$\\frac{8\\pi}{3}$"
+      },
+      {
+        "problem": "A radial density profile has radius $r(t)=e^{-t}$ for $0\\le t\\le\\ln 2$. Rotate around the $t$-axis and compute volume.",
+        "steps": [
+          {
+            "do": "Write the radius",
+            "result": "$r(t)=e^{-t}$",
+            "why": "the curve gives distance to the axis"
+          },
+          {
+            "do": "Square the radius",
+            "result": "$r(t)^2=e^{-2t}$",
+            "why": "disk area uses radius squared"
+          },
+          {
+            "do": "Set up the integral",
+            "result": "$V=\\pi\\int_0^{\\ln2}e^{-2t}\\,dt$",
+            "why": "add circular slices"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\pi\\left[-\\frac12e^{-2t}\\right]_0^{\\ln2}$",
+            "why": "chain rule in reverse"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\frac{3\\pi}{8}$",
+            "why": "$e^{-2\\ln2}=1/4$"
+          }
+        ],
+        "answer": "$\\frac{3\\pi}{8}$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "3D modeling from profiles",
+        "background": "CAD tools create rotationally symmetric parts by revolving a 2D sketch.",
+        "numbers": "A radius $r=2$ cm over length $10$ cm gives volume $\\pi\\int_0^{10}4dx=40\\pi\\approx125.7$ cm$^3$."
+      },
+      {
+        "title": "Neural rendering primitives",
+        "background": "Simple solids approximate geometry before a learned renderer adds detail.",
+        "numbers": "A cone with learned height $3$ and base radius $1$ has volume $\\pi\\int_0^3(1-x/3)^2dx=\\pi$."
+      },
+      {
+        "title": "Medical scan reconstruction",
+        "background": "Rotating a measured radius curve estimates organ volume when the anatomy is roughly symmetric.",
+        "numbers": "If $r(z)=\\sqrt{4-z^2}$ for $-2\\le z\\le2$, $V=\\pi\\int_{-2}^{2}(4-z^2)dz=\\frac{32\\pi}{3}\\approx33.5$."
+      },
+      {
+        "title": "Robot workspace envelopes",
+        "background": "A rotating arm sweeps out a volume that can be approximated by washers.",
+        "numbers": "Reach radii from $0.5$ m to $2$ m through height $1$ m give $\\pi(2^2-0.5^2)(1)=3.75\\pi\\approx11.8$ m$^3$."
+      },
+      {
+        "title": "Kernel mass in radial features",
+        "background": "Radial basis features in physical spaces often need volume weighting.",
+        "numbers": "A unit sphere volume comes from $\\pi\\int_{-1}^1(1-x^2)dx=4\\pi/3$."
+      },
+      {
+        "title": "Manufacturing cost",
+        "background": "Material cost is often proportional to volume, so calculus turns a profile into dollars.",
+        "numbers": "At $\\$0.08$ per cm$^3$, a $40\\pi$ cm$^3$ part costs about $0.08\\cdot125.7=\\$10.06$."
+      }
+    ],
+    "applicationsClose": "The same action repeats: identify a radius, square it, multiply by $\\pi$, and let the integral add the slices.",
+    "takeaways": [
+      "Disk volumes use $V=\\pi\\int R(x)^2\\,dx$.",
+      "Washer volumes subtract the inner radius squared from the outer radius squared.",
+      "Radii are distances to the rotation axis, so choosing the right distance is the main skill."
+    ],
     "prereqs": [
       "math-01-48"
     ]
@@ -1563,19 +12918,261 @@
   B({
     "id": "math-01-50",
     "title": "Arc length",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: arc length.",
+    "tagline": "Measure the length of a curve by adding many tiny straight-line steps.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Volumes of revolution</i>"
+        "derivatives",
+        "definite integrals",
+        "Pythagorean theorem"
       ],
       "leadsTo": [
-        "the next lesson, <i>Parametric equations and calculus</i>"
+        "curvature",
+        "line integrals",
+        "gradient path length"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "parametric equations",
+        "polar coordinates",
+        "speed",
+        "Euclidean distance"
       ]
     },
+    "motivation": "<p>The distance between two points is easy: use the Pythagorean theorem. A curved path is trickier because its direction keeps changing. But if you zoom in far enough, each tiny piece of a smooth curve is almost a straight segment.</p><p>Arc length is the result of adding those tiny straight pieces. The derivative tells us the local slope, and the integral adds the local stretch.</p>",
+    "definition": "<p>For a smooth graph $y=f(x)$ on $[a,b]$, the arc length is $$L=\\int_a^b\\sqrt{1+\\bigl(f'(x)\\bigr)^2}\\,dx.$$ This comes from a tiny right triangle: horizontal change $dx$, vertical change $dy=f'(x)dx$, so $ds=\\sqrt{dx^2+dy^2}=\\sqrt{1+(f'(x))^2}\\,dx$.</p><p><b>Assumptions that matter:</b> the curve should be smooth enough that $f'$ exists except possibly at finitely many split points; use positive length, not signed displacement; many arc length integrals need numerical approximation.</p>",
+    "worked": {
+      "problem": "Find the length of the line segment $y=3x+1$ from $x=0$ to $x=2$.",
+      "skills": [
+        "arc length formula",
+        "constant derivative",
+        "geometry check"
+      ],
+      "strategy": "Use the arc length formula; because the slope is constant, the integrand is constant too.",
+      "steps": [
+        {
+          "do": "Differentiate",
+          "result": "$f'(x)=3$",
+          "why": "the slope of the line is constant"
+        },
+        {
+          "do": "Substitute into the formula",
+          "result": "$L=\\int_0^2\\sqrt{1+3^2}\\,dx$",
+          "why": "arc length uses $\\sqrt{1+(f')^2}$"
+        },
+        {
+          "do": "Simplify the integrand",
+          "result": "$L=\\int_0^2\\sqrt{10}\\,dx$",
+          "why": "$1+9=10$"
+        },
+        {
+          "do": "Integrate",
+          "result": "$\\sqrt{10}[x]_0^2$",
+          "why": "the integrand is constant"
+        },
+        {
+          "do": "Evaluate",
+          "result": "$2\\sqrt{10}$",
+          "why": "the interval length is $2$"
+        }
+      ],
+      "verify": "The endpoints are $(0,1)$ and $(2,7)$; their distance is $\\sqrt{2^2+6^2}=\\sqrt{40}=2\\sqrt{10}$.",
+      "answer": "$L=2\\sqrt{10}$",
+      "connects": "arc length is just the Pythagorean theorem applied continuously along a curve."
+    },
+    "practice": [
+      {
+        "problem": "Find the length of $y=0$ from $x=-2$ to $x=5$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=0$",
+            "why": "a horizontal line has slope zero"
+          },
+          {
+            "do": "Substitute into the formula",
+            "result": "$L=\\int_{-2}^{5}\\sqrt{1+0^2}\\,dx$",
+            "why": "arc length formula"
+          },
+          {
+            "do": "Simplify the integrand",
+            "result": "$L=\\int_{-2}^{5}1\\,dx$",
+            "why": "$\\sqrt1=1$"
+          },
+          {
+            "do": "Integrate",
+            "result": "$[x]_{-2}^{5}$",
+            "why": "constant speed one"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$7$",
+            "why": "$5-(-2)=7$"
+          }
+        ],
+        "answer": "$7$"
+      },
+      {
+        "problem": "Find the length of $y=\\frac34x$ from $x=0$ to $x=4$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=\\frac34$",
+            "why": "constant slope"
+          },
+          {
+            "do": "Substitute into the formula",
+            "result": "$L=\\int_0^4\\sqrt{1+(3/4)^2}\\,dx$",
+            "why": "local stretch factor"
+          },
+          {
+            "do": "Simplify inside the root",
+            "result": "$1+9/16=25/16$",
+            "why": "common denominator"
+          },
+          {
+            "do": "Simplify the integrand",
+            "result": "$\\sqrt{25/16}=5/4$",
+            "why": "positive square root"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\int_0^4\\frac54dx=5$",
+            "why": "multiply by the interval length"
+          }
+        ],
+        "answer": "$5$"
+      },
+      {
+        "problem": "Find the length of $y=\\frac23x^{3/2}$ on $0\\le x\\le1$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=\\sqrt{x}$",
+            "why": "the constants are chosen to simplify"
+          },
+          {
+            "do": "Substitute into the formula",
+            "result": "$L=\\int_0^1\\sqrt{1+x}\\,dx$",
+            "why": "$(f')^2=x$"
+          },
+          {
+            "do": "Rewrite as a power",
+            "result": "$\\int_0^1(1+x)^{1/2}\\,dx$",
+            "why": "prepare to integrate"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\left[\\frac{2}{3}(1+x)^{3/2}\\right]_0^1$",
+            "why": "reverse the power rule"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\frac23(2\\sqrt2-1)$",
+            "why": "plug in $1$ and $0$"
+          }
+        ],
+        "answer": "$\\frac23(2\\sqrt2-1)$"
+      },
+      {
+        "problem": "Approximate the length of $y=x^2$ on $0\\le x\\le1$ using Simpson's rule with $h=0.5$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=2x$",
+            "why": "arc length needs the slope"
+          },
+          {
+            "do": "Write the integrand",
+            "result": "$g(x)=\\sqrt{1+4x^2}$",
+            "why": "substitute into $\\sqrt{1+(f')^2}$"
+          },
+          {
+            "do": "Evaluate sample values",
+            "result": "$g(0)=1,\\ g(0.5)=\\sqrt2,\\ g(1)=\\sqrt5$",
+            "why": "Simpson's rule uses endpoints and midpoint"
+          },
+          {
+            "do": "Apply Simpson's rule",
+            "result": "$L\\approx\\frac{0.5}{3}(1+4\\sqrt2+\\sqrt5)$",
+            "why": "weights are $1,4,1$"
+          },
+          {
+            "do": "Compute the decimal",
+            "result": "$L\\approx1.479$",
+            "why": "this is close to the exact value"
+          }
+        ],
+        "answer": "Approximately $1.479$."
+      },
+      {
+        "problem": "A training path is $w(t)=(t,t^2)$ for $0\\le t\\le1$. Compute its path length.",
+        "steps": [
+          {
+            "do": "Differentiate the components",
+            "result": "$w'(t)=(1,2t)$",
+            "why": "speed is the norm of velocity"
+          },
+          {
+            "do": "Compute speed",
+            "result": "$\\|w'(t)\\|=\\sqrt{1+4t^2}$",
+            "why": "Euclidean norm"
+          },
+          {
+            "do": "Set up the length integral",
+            "result": "$L=\\int_0^1\\sqrt{1+4t^2}\\,dt$",
+            "why": "add tiny parameter-space steps"
+          },
+          {
+            "do": "Use Simpson's rule",
+            "result": "$L\\approx\\frac{0.5}{3}(1+4\\sqrt2+\\sqrt5)$",
+            "why": "sample at $0,0.5,1$"
+          },
+          {
+            "do": "Compute the decimal",
+            "result": "$L\\approx1.479$",
+            "why": "same geometry as $y=x^2$"
+          }
+        ],
+        "answer": "Approximately $1.479$ parameter units."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Optimization path length",
+        "background": "Training does not just care where parameters end; the path length says how much they moved.",
+        "numbers": "For $w(t)=(t,t^2)$, $0\\le t\\le1$, Simpson's rule gives path length about $1.479$."
+      },
+      {
+        "title": "Robotics trajectories",
+        "background": "A robot arm needs distance along a planned curve to estimate time and energy.",
+        "numbers": "A straight path from $(0,0)$ to $(3,4)$ has length $5$ m; at $0.5$ m/s it takes $10$ s."
+      },
+      {
+        "title": "Vector graphics",
+        "background": "Fonts and curves are rendered by parametrized arcs whose lengths place dashes and animations.",
+        "numbers": "A line with slope $3/4$ over width $4$ has length $5$, so ten equal dash intervals are $0.5$ each."
+      },
+      {
+        "title": "Data manifold distance",
+        "background": "A curved latent manifold can make Euclidean shortcuts misleading.",
+        "numbers": "A semicircle of radius $2$ has arc length $2\\pi\\approx6.28$, while its diameter is $4$."
+      },
+      {
+        "title": "Signal variation",
+        "background": "Arc length of a time series graph increases when the signal wiggles more.",
+        "numbers": "For $y=3t$ over $0\\le t\\le2$, graph length is $2\\sqrt{10}\\approx6.32$."
+      },
+      {
+        "title": "Curriculum schedules",
+        "background": "A smoothly changing hyperparameter schedule has length measuring total change over time.",
+        "numbers": "Schedule $\\eta(t)=0.1t$ over $0\\le t\\le10$ has graph length $10\\sqrt{1.01}\\approx10.05$."
+      }
+    ],
+    "applicationsClose": "Arc length is distance with memory: it respects every turn the path takes, not just start and finish.",
+    "takeaways": [
+      "For $y=f(x)$, length is $\\int_a^b\\sqrt{1+(f'(x))^2}\\,dx$.",
+      "The formula comes from the Pythagorean theorem on tiny curve pieces.",
+      "Many useful arc lengths are approximated numerically rather than simplified exactly."
+    ],
     "prereqs": [
       "math-01-49"
     ]
@@ -1584,19 +13181,262 @@
   B({
     "id": "math-01-51",
     "title": "Parametric equations and calculus",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: parametric equations and calculus.",
+    "tagline": "Describe motion with a parameter, then read slope, speed, and area from the components.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Arc length</i>"
+        "functions",
+        "derivatives",
+        "arc length"
       ],
       "leadsTo": [
-        "the next lesson, <i>Polar coordinates and calculus</i>"
+        "vector calculus",
+        "dynamical systems",
+        "curves in higher dimensions"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "vectors",
+        "chain rule",
+        "speed",
+        "arc length",
+        "polar coordinates"
       ]
     },
+    "motivation": "<p>Not every curve wants to be written as $y=f(x)$. A circle fails the vertical-line test, and a moving particle naturally gives position as two coordinates changing with time.</p><p>Parametric equations let one parameter, usually $t$, drive both coordinates: $x=x(t)$ and $y=y(t)$. Calculus then asks familiar questions in a better language: slope is vertical speed divided by horizontal speed, and length is the integral of actual speed.</p>",
+    "definition": "<p>A parametric curve is given by $$x=x(t),\\qquad y=y(t),\\qquad \\alpha\\le t\\le\\beta.$$ When $dx/dt\\ne0$, its slope is $$\\frac{dy}{dx}=\\frac{dy/dt}{dx/dt}.$$ Its arc length is $$L=\\int_\\alpha^\\beta\\sqrt{\\left(\\frac{dx}{dt}\\right)^2+\\left(\\frac{dy}{dt}\\right)^2}\\,dt,$$ which is the integral of speed.</p><p><b>Assumptions that matter:</b> the parameter interval and direction are part of the curve; $dy/dx$ needs $dx/dt\\ne0$ at the point; length uses speed, so it stays nonnegative even if the curve doubles back.</p>",
+    "worked": {
+      "problem": "For $x=t^2$ and $y=t^3$ at $t=2$, find $\\frac{dy}{dx}$.",
+      "skills": [
+        "parametric derivative",
+        "chain rule",
+        "slope interpretation"
+      ],
+      "strategy": "Differentiate both coordinates with respect to $t$, then divide vertical velocity by horizontal velocity.",
+      "steps": [
+        {
+          "do": "Differentiate $x(t)$",
+          "result": "$\\frac{dx}{dt}=2t$",
+          "why": "power rule"
+        },
+        {
+          "do": "Differentiate $y(t)$",
+          "result": "$\\frac{dy}{dt}=3t^2$",
+          "why": "power rule"
+        },
+        {
+          "do": "Form the slope ratio",
+          "result": "$\\frac{dy}{dx}=\\frac{3t^2}{2t}$",
+          "why": "slope is vertical change per horizontal change"
+        },
+        {
+          "do": "Simplify",
+          "result": "$\\frac{dy}{dx}=\\frac{3t}{2}$",
+          "why": "cancel one factor of $t$ when $t\\ne0$"
+        },
+        {
+          "do": "Substitute $t=2$",
+          "result": "$3$",
+          "why": "the requested point occurs at that parameter"
+        }
+      ],
+      "verify": "At $t=2$, velocity is $(4,12)$, so the curve rises $12$ units for $4$ horizontal units: slope $3$.",
+      "answer": "$\\frac{dy}{dx}=3$ at $t=2$",
+      "connects": "parametric calculus turns a moving point into familiar slope by comparing component rates."
+    },
+    "practice": [
+      {
+        "problem": "For $x=t+1$, $y=t^2$, find $\\frac{dy}{dx}$ at $t=3$.",
+        "steps": [
+          {
+            "do": "Differentiate $x$",
+            "result": "$dx/dt=1$",
+            "why": "linear function"
+          },
+          {
+            "do": "Differentiate $y$",
+            "result": "$dy/dt=2t$",
+            "why": "power rule"
+          },
+          {
+            "do": "Form the ratio",
+            "result": "$dy/dx=2t/1$",
+            "why": "divide vertical rate by horizontal rate"
+          },
+          {
+            "do": "Substitute $t=3$",
+            "result": "$6$",
+            "why": "evaluate at the requested parameter"
+          },
+          {
+            "do": "State the point",
+            "result": "$(4,9)$",
+            "why": "it helps connect the slope to the curve"
+          }
+        ],
+        "answer": "$6$ at $(4,9)$."
+      },
+      {
+        "problem": "For $x=\\cos t$, $y=\\sin t$, find $\\frac{dy}{dx}$ at $t=\\pi/4$.",
+        "steps": [
+          {
+            "do": "Differentiate $x$",
+            "result": "$dx/dt=-\\sin t$",
+            "why": "derivative of cosine"
+          },
+          {
+            "do": "Differentiate $y$",
+            "result": "$dy/dt=\\cos t$",
+            "why": "derivative of sine"
+          },
+          {
+            "do": "Form the ratio",
+            "result": "$dy/dx=\\frac{\\cos t}{-\\sin t}$",
+            "why": "parametric slope formula"
+          },
+          {
+            "do": "Substitute $t=\\pi/4$",
+            "result": "$\\frac{\\sqrt2/2}{-\\sqrt2/2}$",
+            "why": "unit circle values"
+          },
+          {
+            "do": "Simplify",
+            "result": "$-1$",
+            "why": "the numerator and denominator have equal magnitude"
+          }
+        ],
+        "answer": "$-1$"
+      },
+      {
+        "problem": "Find the speed for $x=3t$, $y=4t$.",
+        "steps": [
+          {
+            "do": "Differentiate $x$",
+            "result": "$dx/dt=3$",
+            "why": "constant horizontal velocity"
+          },
+          {
+            "do": "Differentiate $y$",
+            "result": "$dy/dt=4$",
+            "why": "constant vertical velocity"
+          },
+          {
+            "do": "Write the speed",
+            "result": "$\\sqrt{3^2+4^2}$",
+            "why": "speed is velocity magnitude"
+          },
+          {
+            "do": "Simplify inside the root",
+            "result": "$\\sqrt{25}$",
+            "why": "$9+16=25$"
+          },
+          {
+            "do": "Take the positive root",
+            "result": "$5$",
+            "why": "speed is nonnegative"
+          }
+        ],
+        "answer": "$5$"
+      },
+      {
+        "problem": "Find the length of $x=3\\cos t$, $y=3\\sin t$ for $0\\le t\\le\\pi$.",
+        "steps": [
+          {
+            "do": "Differentiate $x$",
+            "result": "$dx/dt=-3\\sin t$",
+            "why": "chain rule is simple here"
+          },
+          {
+            "do": "Differentiate $y$",
+            "result": "$dy/dt=3\\cos t$",
+            "why": "derivative of sine"
+          },
+          {
+            "do": "Compute speed",
+            "result": "$\\sqrt{9\\sin^2t+9\\cos^2t}=3$",
+            "why": "$\\sin^2t+\\cos^2t=1$"
+          },
+          {
+            "do": "Set up length",
+            "result": "$L=\\int_0^\\pi3\\,dt$",
+            "why": "integrate speed"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$3\\pi$",
+            "why": "half the circumference of radius $3$"
+          }
+        ],
+        "answer": "$3\\pi$"
+      },
+      {
+        "problem": "An optimizer follows $w(t)=(e^{-t},e^{-2t})$. Find its speed at $t=0$.",
+        "steps": [
+          {
+            "do": "Differentiate the first coordinate",
+            "result": "$-e^{-t}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Differentiate the second coordinate",
+            "result": "$-2e^{-2t}$",
+            "why": "chain rule with factor $-2$"
+          },
+          {
+            "do": "Substitute $t=0$",
+            "result": "$w'(0)=(-1,-2)$",
+            "why": "both exponentials equal $1$"
+          },
+          {
+            "do": "Compute the norm",
+            "result": "$\\sqrt{(-1)^2+(-2)^2}$",
+            "why": "speed is magnitude"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\sqrt5$",
+            "why": "$1+4=5$"
+          }
+        ],
+        "answer": "$\\sqrt5$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Motion planning",
+        "background": "Robots and drones plan positions as $x(t),y(t),z(t)$ because time controls all coordinates together.",
+        "numbers": "For $x=3t,y=4t$, speed is $5$ m/s, so a $20$ m path takes $4$ s."
+      },
+      {
+        "title": "Optimization trajectories",
+        "background": "Training parameters trace a parametric curve through weight space.",
+        "numbers": "For $w(t)=(e^{-t},e^{-2t})$, initial speed is $\\sqrt5\\approx2.236$."
+      },
+      {
+        "title": "Animation curves",
+        "background": "Computer graphics uses parametric curves to move objects smoothly without requiring $y$ to be a function of $x$.",
+        "numbers": "$x=\\cos t,y=\\sin t$ runs around a unit circle; speed is $1$ for every $t$."
+      },
+      {
+        "title": "Phase portraits",
+        "background": "Dynamical systems track state variables together, so the path itself is parametric.",
+        "numbers": "State $(e^{-t},2e^{-t})$ moves along a line with speed $\\sqrt5e^{-t}$, dropping from $2.236$ to $0.823$ by $t=1$."
+      },
+      {
+        "title": "Bezier curves",
+        "background": "Design tools use parameter $t\\in[0,1]$ to trace curves for fonts and interfaces.",
+        "numbers": "A straight Bezier from $(0,0)$ to $(6,8)$ has derivative $(6,8)$ and length $10$."
+      },
+      {
+        "title": "Sampling along a curve",
+        "background": "Data augmentation can sample points along curves rather than grids.",
+        "numbers": "On $x=2\\cos t,y=2\\sin t$, $0\\le t\\le2\\pi$, total length is $4\\pi\\approx12.57$."
+      }
+    ],
+    "applicationsClose": "The parameter is a clock: once you know the component rates, slope, speed, and length become familiar again.",
+    "takeaways": [
+      "Parametric curves write $x$ and $y$ as functions of a shared parameter.",
+      "$dy/dx=(dy/dt)/(dx/dt)$ when $dx/dt\\ne0$.",
+      "Arc length for a parametric curve is the integral of speed."
+    ],
     "prereqs": [
       "math-01-50"
     ]
@@ -1605,19 +13445,261 @@
   B({
     "id": "math-01-52",
     "title": "Polar coordinates and calculus",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: polar coordinates and calculus.",
+    "tagline": "Describe a point by distance and angle, then integrate with the geometry of wedges.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Parametric equations and calculus</i>"
+        "trigonometry",
+        "parametric equations",
+        "definite integrals"
       ],
       "leadsTo": [
-        "the next lesson, <i>Sequences</i>"
+        "complex numbers",
+        "multivariable polar integrals",
+        "Fourier features"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "unit circle",
+        "arc length",
+        "area",
+        "symmetry"
       ]
     },
+    "motivation": "<p>Cartesian coordinates are wonderful for grids, but circles and spirals often look simpler when you describe distance from the origin and angle from the positive $x$-axis.</p><p>Polar coordinates use $r$ and $\\theta$. The calculus changes only because a tiny angular slice is a wedge, not a rectangle. That small geometry change gives the famous area formula with $\\frac12r^2$.</p>",
+    "definition": "<p>Polar coordinates represent a point by $$x=r\\cos\\theta,\\qquad y=r\\sin\\theta.$$ A polar curve is $r=f(\\theta)$. Its area from $\\alpha$ to $\\beta$ is $$A=\\frac12\\int_\\alpha^\\beta r(\\theta)^2\\,d\\theta,$$ because a tiny wedge with radius $r$ and angle $d\\theta$ has area about $\\frac12r^2d\\theta$.</p><p><b>Assumptions that matter:</b> angles are in radians; polar points are not unique; negative $r$ points in the opposite direction; check whether the curve traces a region once or multiple times before integrating.</p>",
+    "worked": {
+      "problem": "Find the area inside the circle $r=2$ for $0\\le\\theta\\le2\\pi$.",
+      "skills": [
+        "polar area",
+        "constant radius",
+        "radian measure"
+      ],
+      "strategy": "Use the polar area formula; the radius is constant, so this should match $\\pi r^2$.",
+      "steps": [
+        {
+          "do": "Write the area formula",
+          "result": "$A=\\frac12\\int_0^{2\\pi}r^2\\,d\\theta$",
+          "why": "polar area adds wedge areas"
+        },
+        {
+          "do": "Substitute $r=2$",
+          "result": "$A=\\frac12\\int_0^{2\\pi}4\\,d\\theta$",
+          "why": "the radius is constant"
+        },
+        {
+          "do": "Simplify the constant",
+          "result": "$A=2\\int_0^{2\\pi}1\\,d\\theta$",
+          "why": "$\\frac12\\cdot4=2$"
+        },
+        {
+          "do": "Integrate",
+          "result": "$2[\\theta]_0^{2\\pi}$",
+          "why": "integrate with respect to angle"
+        },
+        {
+          "do": "Evaluate",
+          "result": "$4\\pi$",
+          "why": "the angular width is $2\\pi$"
+        }
+      ],
+      "verify": "A circle of radius $2$ has area $\\pi(2)^2=4\\pi$, so the polar formula agrees with geometry.",
+      "answer": "$A=4\\pi$",
+      "connects": "polar area is ordinary accumulation, but the tiny pieces are wedges instead of rectangles."
+    },
+    "practice": [
+      {
+        "problem": "Convert $(r,\\theta)=(4,\\pi/3)$ to Cartesian coordinates.",
+        "steps": [
+          {
+            "do": "Write the conversion",
+            "result": "$x=r\\cos\\theta,\\ y=r\\sin\\theta$",
+            "why": "polar coordinates project onto axes"
+          },
+          {
+            "do": "Substitute $r=4$ and $\\theta=\\pi/3$",
+            "result": "$x=4\\cos\\pi/3,\\ y=4\\sin\\pi/3$",
+            "why": "use unit circle values"
+          },
+          {
+            "do": "Evaluate cosine",
+            "result": "$x=4\\cdot\\frac12=2$",
+            "why": "$\\cos\\pi/3=1/2$"
+          },
+          {
+            "do": "Evaluate sine",
+            "result": "$y=4\\cdot\\frac{\\sqrt3}{2}=2\\sqrt3$",
+            "why": "$\\sin\\pi/3=\\sqrt3/2$"
+          },
+          {
+            "do": "State the point",
+            "result": "$(2,2\\sqrt3)$",
+            "why": "Cartesian coordinates use ordered pairs"
+          }
+        ],
+        "answer": "$(2,2\\sqrt3)$"
+      },
+      {
+        "problem": "Find the area of one sector of $r=3$ from $\\theta=0$ to $\\theta=\\pi/2$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$A=\\frac12\\int_0^{\\pi/2}r^2\\,d\\theta$",
+            "why": "area of polar wedges"
+          },
+          {
+            "do": "Substitute $r=3$",
+            "result": "$A=\\frac12\\int_0^{\\pi/2}9\\,d\\theta$",
+            "why": "constant radius"
+          },
+          {
+            "do": "Simplify",
+            "result": "$A=\\frac92\\int_0^{\\pi/2}1\\,d\\theta$",
+            "why": "combine constants"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\frac92[\\theta]_0^{\\pi/2}$",
+            "why": "angle is the variable"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\frac{9\\pi}{4}$",
+            "why": "quarter of a radius-3 circle"
+          }
+        ],
+        "answer": "$\\frac{9\\pi}{4}$"
+      },
+      {
+        "problem": "Find the area inside one loop of $r=2\\sin\\theta$ for $0\\le\\theta\\le\\pi$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$A=\\frac12\\int_0^\\pi(2\\sin\\theta)^2\\,d\\theta$",
+            "why": "the loop is traced once on this interval"
+          },
+          {
+            "do": "Simplify the square",
+            "result": "$A=2\\int_0^\\pi\\sin^2\\theta\\,d\\theta$",
+            "why": "$\\frac12\\cdot4=2$"
+          },
+          {
+            "do": "Use the identity",
+            "result": "$\\sin^2\\theta=\\frac{1-\\cos2\\theta}{2}$",
+            "why": "this makes the integral direct"
+          },
+          {
+            "do": "Substitute the identity",
+            "result": "$A=\\int_0^\\pi(1-\\cos2\\theta)\\,d\\theta$",
+            "why": "the factor $2$ cancels the denominator"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$[\\theta-\\frac12\\sin2\\theta]_0^\\pi=\\pi$",
+            "why": "the sine terms vanish"
+          }
+        ],
+        "answer": "$\\pi$"
+      },
+      {
+        "problem": "For $r=1+\\cos\\theta$, find the area from $0$ to $\\pi$.",
+        "steps": [
+          {
+            "do": "Write the area integral",
+            "result": "$A=\\frac12\\int_0^\\pi(1+\\cos\\theta)^2\\,d\\theta$",
+            "why": "polar area formula"
+          },
+          {
+            "do": "Expand the square",
+            "result": "$1+2\\cos\\theta+\\cos^2\\theta$",
+            "why": "prepare to integrate term by term"
+          },
+          {
+            "do": "Use the identity",
+            "result": "$\\cos^2\\theta=\\frac{1+\\cos2\\theta}{2}$",
+            "why": "integrate the squared cosine"
+          },
+          {
+            "do": "Integrate inside",
+            "result": "$\\int_0^\\pi\\left(\\frac32+2\\cos\\theta+\\frac12\\cos2\\theta\\right)d\\theta=\\frac{3\\pi}{2}$",
+            "why": "both sine endpoint terms are zero"
+          },
+          {
+            "do": "Multiply by $1/2$",
+            "result": "$\\frac{3\\pi}{4}$",
+            "why": "the area formula has the leading half"
+          }
+        ],
+        "answer": "$\\frac{3\\pi}{4}$"
+      },
+      {
+        "problem": "A radial attention window has $r(\\theta)=2$ for $0\\le\\theta\\le\\pi/3$. Compute its area.",
+        "steps": [
+          {
+            "do": "Write the polar area formula",
+            "result": "$A=\\frac12\\int_0^{\\pi/3}r^2\\,d\\theta$",
+            "why": "the window is angular"
+          },
+          {
+            "do": "Substitute $r=2$",
+            "result": "$A=\\frac12\\int_0^{\\pi/3}4\\,d\\theta$",
+            "why": "constant reach"
+          },
+          {
+            "do": "Simplify",
+            "result": "$A=2\\int_0^{\\pi/3}1\\,d\\theta$",
+            "why": "combine constants"
+          },
+          {
+            "do": "Integrate",
+            "result": "$2[\\theta]_0^{\\pi/3}$",
+            "why": "sum wedge area"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\frac{2\\pi}{3}$",
+            "why": "a sixth of a radius-2 circle"
+          }
+        ],
+        "answer": "$\\frac{2\\pi}{3}$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Computer vision angles",
+        "background": "Radial features describe edges by distance and orientation around a keypoint.",
+        "numbers": "A feature at $r=4,\\theta=\\pi/3$ maps to $(2,2\\sqrt3)\\approx(2,3.46)$."
+      },
+      {
+        "title": "Radar and lidar",
+        "background": "Sensors naturally report range and bearing, which are polar coordinates.",
+        "numbers": "Range $10$ m at $30^\\circ$ gives $x=10\\cos\\pi/6\\approx8.66$, $y=5$."
+      },
+      {
+        "title": "Rotational data augmentation",
+        "background": "Images and point clouds often rotate around an origin, making angle the natural variable.",
+        "numbers": "Rotating $(1,0)$ by $\\pi/2$ gives $r=1,\\theta=\\pi/2$, so Cartesian point $(0,1)$."
+      },
+      {
+        "title": "Attention over directions",
+        "background": "A model may attend over a cone or sector rather than a rectangle.",
+        "numbers": "Radius $2$ over angle $\\pi/3$ has area $2\\pi/3\\approx2.09$."
+      },
+      {
+        "title": "Fourier and phase features",
+        "background": "Complex numbers encode magnitude and phase, the algebraic cousin of polar coordinates.",
+        "numbers": "$3e^{i\\pi/6}$ has real part $3\\sqrt3/2\\approx2.60$ and imaginary part $1.5$."
+      },
+      {
+        "title": "Circular probability",
+        "background": "Directional distributions integrate over angle instead of a line.",
+        "numbers": "A uniform angle on $[0,2\\pi]$ assigns probability $(\\pi/2)/(2\\pi)=1/4$ to a quadrant."
+      }
+    ],
+    "applicationsClose": "Polar coordinates trade grid rectangles for angular wedges, which is exactly the right language for circular structure.",
+    "takeaways": [
+      "Convert by $x=r\\cos\\theta$ and $y=r\\sin\\theta$.",
+      "Polar area is $\\frac12\\int r^2\\,d\\theta$.",
+      "Check tracing and radians carefully; polar descriptions are not unique."
+    ],
     "prereqs": [
       "math-01-51"
     ]
@@ -1626,19 +13708,261 @@
   B({
     "id": "math-01-53",
     "title": "Sequences",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: sequences.",
+    "tagline": "Study ordered lists of numbers and ask where their long-run behavior is heading.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Polar coordinates and calculus</i>"
+        "functions",
+        "limits",
+        "exponents"
       ],
       "leadsTo": [
-        "the next lesson, <i>Series</i>"
+        "series",
+        "convergence tests",
+        "iterative algorithms"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "recursion",
+        "monotonicity",
+        "boundedness",
+        "subsequences"
       ]
     },
+    "motivation": "<p>A sequence is just a list with a rule: first term, second term, third term, and so on. That sounds humble, but every iterative algorithm produces one: losses across epochs, parameter values across updates, validation scores over time.</p><p>The central question is familiar from limits: do the terms settle somewhere? A sequence can converge, diverge, oscillate, or grow. Learning to read that behavior is the bridge from calculus to algorithms.</p>",
+    "definition": "<p>A sequence is a function whose inputs are positive integers: $$a_1,a_2,a_3,\\ldots,$$ or $a_n$ for $n=1,2,3,\\ldots$. We say $a_n$ converges to $L$ if $$\\lim_{n\\to\\infty}a_n=L.$$ In words, the later terms get as close to $L$ as we want and stay close.</p><p><b>Assumptions that matter:</b> the index $n$ is discrete, so do not treat every sequence exactly like a continuous function; convergence depends on the tail, not the first few terms; bounded and monotone sequences converge, but bounded alone does not guarantee convergence.</p>",
+    "worked": {
+      "problem": "Determine whether $a_n=\\frac{3n+1}{n+2}$ converges, and find the limit if it does.",
+      "skills": [
+        "sequence limits",
+        "dominant terms",
+        "algebraic simplification"
+      ],
+      "strategy": "For rational expressions in $n$, divide top and bottom by the highest power of $n$.",
+      "steps": [
+        {
+          "do": "Identify the highest power",
+          "result": "$n$",
+          "why": "both numerator and denominator are linear"
+        },
+        {
+          "do": "Divide numerator and denominator by $n$",
+          "result": "$\\frac{3+1/n}{1+2/n}$",
+          "why": "this exposes the terms that vanish"
+        },
+        {
+          "do": "Take the limit of $1/n$",
+          "result": "$1/n\\to0$",
+          "why": "reciprocals shrink to zero"
+        },
+        {
+          "do": "Take the limit of $2/n$",
+          "result": "$2/n\\to0$",
+          "why": "constant multiples also shrink to zero"
+        },
+        {
+          "do": "Compute the final limit",
+          "result": "$\\frac{3+0}{1+0}=3$",
+          "why": "the denominator limit is not zero"
+        }
+      ],
+      "verify": "$a_{100}=301/102\\approx2.951$ and $a_{1000}=3001/1002\\approx2.995$, moving toward $3$.",
+      "answer": "The sequence converges to $3$.",
+      "connects": "a sequence limit is the long-run value of an iterative list."
+    },
+    "practice": [
+      {
+        "problem": "Find $\\lim_{n\\to\\infty}\\frac{5}{n}$.",
+        "steps": [
+          {
+            "do": "Recognize the form",
+            "result": "$5\\cdot\\frac1n$",
+            "why": "separate the constant"
+          },
+          {
+            "do": "Use the reciprocal limit",
+            "result": "$1/n\\to0$",
+            "why": "denominators grow without bound"
+          },
+          {
+            "do": "Multiply by the constant",
+            "result": "$5\\cdot0=0$",
+            "why": "limits respect constant multiples"
+          },
+          {
+            "do": "Check a late term",
+            "result": "$5/1000=0.005$",
+            "why": "late terms are close to zero"
+          },
+          {
+            "do": "State convergence",
+            "result": "converges",
+            "why": "the limit is finite"
+          }
+        ],
+        "answer": "$0$"
+      },
+      {
+        "problem": "Find $\\lim_{n\\to\\infty}\\frac{2n^2+1}{n^2+4n}$.",
+        "steps": [
+          {
+            "do": "Identify the highest power",
+            "result": "$n^2$",
+            "why": "quadratic terms dominate"
+          },
+          {
+            "do": "Divide by $n^2$",
+            "result": "$\\frac{2+1/n^2}{1+4/n}$",
+            "why": "make the tail behavior visible"
+          },
+          {
+            "do": "Take vanishing limits",
+            "result": "$1/n^2\\to0$ and $4/n\\to0$",
+            "why": "reciprocal powers shrink"
+          },
+          {
+            "do": "Substitute the limits",
+            "result": "$\\frac{2+0}{1+0}$",
+            "why": "the denominator tends to $1$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$2$",
+            "why": "ratio of leading coefficients"
+          }
+        ],
+        "answer": "$2$"
+      },
+      {
+        "problem": "Does $a_n=(-1)^n$ converge?",
+        "steps": [
+          {
+            "do": "List several terms",
+            "result": "$-1,1,-1,1,\\ldots$",
+            "why": "the parity of $n$ controls the sign"
+          },
+          {
+            "do": "Inspect even indices",
+            "result": "$a_{2k}=1$",
+            "why": "even powers give positive one"
+          },
+          {
+            "do": "Inspect odd indices",
+            "result": "$a_{2k-1}=-1$",
+            "why": "odd powers give negative one"
+          },
+          {
+            "do": "Compare subsequence limits",
+            "result": "$1\\ne-1$",
+            "why": "a convergent sequence cannot have two different subsequential limits"
+          },
+          {
+            "do": "Conclude",
+            "result": "does not converge",
+            "why": "the terms keep oscillating"
+          }
+        ],
+        "answer": "Diverges by oscillation."
+      },
+      {
+        "problem": "Show that $a_n=1-\\frac1n$ is increasing and bounded above by $1$.",
+        "steps": [
+          {
+            "do": "Compute the next term",
+            "result": "$a_{n+1}=1-\\frac{1}{n+1}$",
+            "why": "compare consecutive terms"
+          },
+          {
+            "do": "Subtract",
+            "result": "$a_{n+1}-a_n=\\frac1n-\\frac{1}{n+1}$",
+            "why": "positive difference means increasing"
+          },
+          {
+            "do": "Combine fractions",
+            "result": "$\\frac{1}{n(n+1)}$",
+            "why": "common denominator"
+          },
+          {
+            "do": "Read the sign",
+            "result": "$\\frac{1}{n(n+1)}>0$",
+            "why": "$n$ is positive"
+          },
+          {
+            "do": "Check the upper bound",
+            "result": "$1-\\frac1n<1$",
+            "why": "subtract a positive number from $1$"
+          }
+        ],
+        "answer": "It is increasing and bounded above by $1$, so it converges to $1$."
+      },
+      {
+        "problem": "A learning rate is $\\eta_n=0.1/\\sqrt{n}$. Find its limit.",
+        "steps": [
+          {
+            "do": "Write the sequence",
+            "result": "$\\eta_n=0.1n^{-1/2}$",
+            "why": "use exponent notation"
+          },
+          {
+            "do": "Find the denominator behavior",
+            "result": "$\\sqrt n\\to\\infty$",
+            "why": "the index grows without bound"
+          },
+          {
+            "do": "Take the reciprocal limit",
+            "result": "$1/\\sqrt n\\to0$",
+            "why": "reciprocal of a growing quantity shrinks"
+          },
+          {
+            "do": "Multiply by $0.1$",
+            "result": "$0.1\\cdot0=0$",
+            "why": "constant multiples preserve limits"
+          },
+          {
+            "do": "Interpret",
+            "result": "updates shrink over time",
+            "why": "the learning rate tends to zero"
+          }
+        ],
+        "answer": "$0$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Training loss curves",
+        "background": "Each epoch produces a loss value, so training creates a sequence.",
+        "numbers": "If $L_n=1+2/n$, then $L_{10}=1.2$, $L_{100}=1.02$, and $L_n\\to1$."
+      },
+      {
+        "title": "Learning-rate schedules",
+        "background": "Many optimizers lower step sizes as a sequence indexed by update count.",
+        "numbers": "$\\eta_n=0.1/\\sqrt n$ gives $0.1$ at $n=1$, $0.01$ at $n=100$, and tends to $0$."
+      },
+      {
+        "title": "Fixed-point iteration",
+        "background": "Algorithms like value iteration repeatedly update estimates and ask whether the sequence stabilizes.",
+        "numbers": "$a_{n+1}=0.5a_n+1$ with $a_0=0$ gives $1,1.5,1.75,\\ldots\\to2$."
+      },
+      {
+        "title": "Exponential moving averages",
+        "background": "EMA states form a sequence that smooths noisy measurements.",
+        "numbers": "$m_n=1-0.9^n$ gives $m_{10}\\approx0.651$ and limit $1$."
+      },
+      {
+        "title": "Numerical approximation",
+        "background": "Approximations often improve as $n$ grows, and convergence tells us what value they approach.",
+        "numbers": "$(1+1/n)^n$ gives $2.594$ at $n=10$ and approaches $e\\approx2.718$."
+      },
+      {
+        "title": "Oscillation detection",
+        "background": "A metric can stay bounded without settling, which matters in monitoring training.",
+        "numbers": "$a_n=(-1)^n$ stays between $-1$ and $1$ but never converges."
+      }
+    ],
+    "applicationsClose": "Sequences are the mathematics of iteration: watch the tail, and you learn the algorithm's long-run story.",
+    "takeaways": [
+      "A sequence is a function of an integer index.",
+      "Convergence means the tail terms approach one number.",
+      "Bounded monotone sequences converge; oscillation can prevent convergence even when values stay bounded."
+    ],
     "prereqs": [
       "math-01-52"
     ]
@@ -1647,19 +13971,261 @@
   B({
     "id": "math-01-54",
     "title": "Series",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: series.",
+    "tagline": "Add the terms of a sequence and ask whether the running totals settle.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Sequences</i>"
+        "sequences",
+        "limits",
+        "improper integrals"
       ],
       "leadsTo": [
-        "the next lesson, <i>The geometric series</i>"
+        "geometric series",
+        "Taylor series",
+        "Fourier series"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "partial sums",
+        "comparison tests",
+        "p-series",
+        "convergence"
       ]
     },
+    "motivation": "<p>A sequence asks where the terms go. A series asks what happens when we keep adding them. That small change matters: terms can go to zero and still add up to infinity if they do not shrink fast enough.</p><p>The safe way to think about a series is through partial sums. Add the first $N$ terms, then ask whether those running totals approach a finite number as $N$ grows.</p>",
+    "definition": "<p>An infinite series is $$\\sum_{n=1}^\\infty a_n.$$ Its $N$th partial sum is $$S_N=\\sum_{n=1}^N a_n.$$ The series converges to $S$ if $\\lim_{N\\to\\infty}S_N=S$ is finite. A necessary condition is $a_n\\to0$, but that condition alone is not sufficient.</p><p><b>Assumptions that matter:</b> do not confuse the term limit with the sum; if $a_n$ does not tend to zero, the series diverges immediately; for positive terms, comparison with known series is often the cleanest test.</p>",
+    "worked": {
+      "problem": "Determine whether $\\displaystyle\\sum_{n=1}^\\infty \\frac{1}{n(n+1)}$ converges, and find its sum.",
+      "skills": [
+        "partial fractions",
+        "telescoping series",
+        "partial sums"
+      ],
+      "strategy": "Rewrite the term so neighboring pieces cancel in the partial sums.",
+      "steps": [
+        {
+          "do": "Decompose the term",
+          "result": "$\\frac{1}{n(n+1)}=\\frac1n-\\frac{1}{n+1}$",
+          "why": "partial fractions reveal cancellation"
+        },
+        {
+          "do": "Write the partial sum",
+          "result": "$S_N=\\sum_{n=1}^N\\left(\\frac1n-\\frac{1}{n+1}\\right)$",
+          "why": "series convergence is about partial sums"
+        },
+        {
+          "do": "Expand several terms",
+          "result": "$S_N=(1-\\frac12)+(\\frac12-\\frac13)+\\cdots+(\\frac1N-\\frac{1}{N+1})$",
+          "why": "show the cancellation pattern"
+        },
+        {
+          "do": "Cancel neighboring terms",
+          "result": "$S_N=1-\\frac{1}{N+1}$",
+          "why": "all middle fractions cancel"
+        },
+        {
+          "do": "Take the limit",
+          "result": "$\\lim_{N\\to\\infty}S_N=1$",
+          "why": "$1/(N+1)\\to0$"
+        }
+      ],
+      "verify": "The first four terms sum to $1/2+1/6+1/12+1/20=0.8$, and the formula gives $1-1/5=0.8$.",
+      "answer": "The series converges, and its sum is $1$.",
+      "connects": "a series converges when its partial sums, not just its individual terms, settle."
+    },
+    "practice": [
+      {
+        "problem": "Does $\\displaystyle\\sum_{n=1}^\\infty 3$ converge?",
+        "steps": [
+          {
+            "do": "Identify the term",
+            "result": "$a_n=3$",
+            "why": "each term is constant"
+          },
+          {
+            "do": "Take the term limit",
+            "result": "$\\lim_{n\\to\\infty}a_n=3$",
+            "why": "constant sequences keep the same value"
+          },
+          {
+            "do": "Apply the term test",
+            "result": "$3\\ne0$",
+            "why": "a convergent series must have terms tending to zero"
+          },
+          {
+            "do": "Conclude divergence",
+            "result": "diverges",
+            "why": "the necessary condition fails"
+          },
+          {
+            "do": "Check partial sums",
+            "result": "$S_N=3N\\to\\infty$",
+            "why": "the running total grows without bound"
+          }
+        ],
+        "answer": "Diverges."
+      },
+      {
+        "problem": "Find the sum of $\\displaystyle\\sum_{n=1}^\\infty\\left(\\frac1n-\\frac{1}{n+1}\\right)$.",
+        "steps": [
+          {
+            "do": "Write the partial sum",
+            "result": "$S_N=\\sum_{n=1}^N\\left(\\frac1n-\\frac{1}{n+1}\\right)$",
+            "why": "work with finite sums first"
+          },
+          {
+            "do": "Expand",
+            "result": "$(1-\\frac12)+(\\frac12-\\frac13)+\\cdots+(\\frac1N-\\frac{1}{N+1})$",
+            "why": "make cancellation visible"
+          },
+          {
+            "do": "Cancel middle terms",
+            "result": "$S_N=1-\\frac{1}{N+1}$",
+            "why": "each interior fraction appears once positive and once negative"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$\\lim_{N\\to\\infty}(1-\\frac{1}{N+1})=1$",
+            "why": "the final fraction vanishes"
+          },
+          {
+            "do": "State convergence",
+            "result": "converges to $1$",
+            "why": "partial sums settle"
+          }
+        ],
+        "answer": "$1$"
+      },
+      {
+        "problem": "Does $\\displaystyle\\sum_{n=1}^\\infty \\frac1{n^2}$ converge? Use comparison with $1/(n(n-1))$ for $n\\ge2$.",
+        "steps": [
+          {
+            "do": "Start at $n=2$",
+            "result": "$\\sum_{n=2}^\\infty\\frac1{n^2}$",
+            "why": "one finite term cannot decide convergence"
+          },
+          {
+            "do": "Compare denominators",
+            "result": "$n^2\\ge n(n-1)$",
+            "why": "$n^2-n$ is smaller than $n^2$"
+          },
+          {
+            "do": "Invert positive quantities",
+            "result": "$\\frac1{n^2}\\le\\frac1{n(n-1)}$",
+            "why": "larger denominator gives smaller fraction"
+          },
+          {
+            "do": "Recognize the comparison series",
+            "result": "$\\sum_{n=2}^\\infty\\frac1{n(n-1)}=1$",
+            "why": "it telescopes"
+          },
+          {
+            "do": "Apply comparison",
+            "result": "converges",
+            "why": "a positive series below a convergent positive series converges"
+          }
+        ],
+        "answer": "Converges."
+      },
+      {
+        "problem": "Does the harmonic series $\\displaystyle\\sum_{n=1}^\\infty\\frac1n$ converge?",
+        "steps": [
+          {
+            "do": "Group terms",
+            "result": "$1+\\frac12+(\\frac13+\\frac14)+(\\frac15+\\cdots+\\frac18)+\\cdots$",
+            "why": "powers of two make lower bounds visible"
+          },
+          {
+            "do": "Bound the third group",
+            "result": "$\\frac13+\\frac14\\ge\\frac14+\\frac14=\\frac12$",
+            "why": "each term in the group is at least the last one"
+          },
+          {
+            "do": "Bound the next group",
+            "result": "$\\frac15+\\cdots+\\frac18\\ge4\\cdot\\frac18=\\frac12$",
+            "why": "four terms each at least $1/8$"
+          },
+          {
+            "do": "Repeat the pattern",
+            "result": "each dyadic group contributes at least $\\frac12$",
+            "why": "the number of terms doubles while the smallest term halves"
+          },
+          {
+            "do": "Conclude",
+            "result": "partial sums grow without bound",
+            "why": "adding infinitely many halves diverges"
+          }
+        ],
+        "answer": "Diverges."
+      },
+      {
+        "problem": "A discounted reward stream is $1+0.5+0.25+0.125+\\cdots$. Find the total.",
+        "steps": [
+          {
+            "do": "Identify the first term",
+            "result": "$a=1$",
+            "why": "the stream starts with reward $1$"
+          },
+          {
+            "do": "Identify the ratio",
+            "result": "$r=0.5$",
+            "why": "each term is half the previous one"
+          },
+          {
+            "do": "Write the partial sum",
+            "result": "$S_N=\\frac{1-r^N}{1-r}$",
+            "why": "geometric partial sums have a closed form"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$r^N\\to0$",
+            "why": "$|0.5|<1$"
+          },
+          {
+            "do": "Compute the sum",
+            "result": "$\\frac1{1-0.5}=2$",
+            "why": "the discounted tail is finite"
+          }
+        ],
+        "answer": "$2$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Expected total reward",
+        "background": "Reinforcement learning adds rewards over time, often with discounting to make the series finite.",
+        "numbers": "Rewards $1,0.5,0.25,\\ldots$ sum to $2$."
+      },
+      {
+        "title": "Taylor approximations",
+        "background": "Functions like $e^x$ can be represented by infinite series that computers truncate.",
+        "numbers": "At $x=1$, $1+1+1/2+1/6=2.667$, close to $e\\approx2.718$."
+      },
+      {
+        "title": "Fourier representations",
+        "background": "Signals can be built as sums of waves, with more terms improving detail.",
+        "numbers": "A square wave approximation uses $\\sin x+\\frac13\\sin3x+\\frac15\\sin5x+\\cdots$."
+      },
+      {
+        "title": "Algorithmic error bounds",
+        "background": "Iterative methods often have total remaining error bounded by a tail series.",
+        "numbers": "If errors are below $0.1(0.8)^k$, remaining error after step $N$ is at most $0.1\\cdot0.8^{N+1}/0.2=0.5\\cdot0.8^{N+1}$."
+      },
+      {
+        "title": "Network retries",
+        "background": "Repeated retry probabilities create series for expected attempts or traffic.",
+        "numbers": "If retry probability is $0.2$, expected attempts are $1+0.2+0.04+\\cdots=1.25$."
+      },
+      {
+        "title": "Numerical integration",
+        "background": "Some quadrature and simulation errors are controlled by summing decreasing contributions.",
+        "numbers": "A tail $\\sum_{n=10}^\\infty1/n^2$ is less than $\\int_9^\\infty x^{-2}dx=1/9\\approx0.111$."
+      }
+    ],
+    "applicationsClose": "Series are the language of accumulated small effects: the terms may shrink, but the partial sums tell the truth.",
+    "takeaways": [
+      "A series is the limit of its partial sums.",
+      "Terms must go to zero for convergence, but that alone is not enough.",
+      "Telescoping, comparison, and geometric structure are common ways to decide convergence."
+    ],
     "prereqs": [
       "math-01-53"
     ]
@@ -1668,19 +14234,266 @@
   B({
     "id": "math-01-55",
     "title": "The geometric series",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: the geometric series.",
+    "tagline": "When each term is a fixed fraction of the last, the whole infinite tail has a simple sum.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Series</i>"
+        "sequences",
+        "series",
+        "exponents"
       ],
       "leadsTo": [
-        "the next lesson, <i>Convergence tests</i>"
+        "Taylor series",
+        "discounted reinforcement learning",
+        "Markov chains"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "partial sums",
+        "exponential decay",
+        "recurrence relations",
+        "probability"
       ]
     },
+    "motivation": "<p>Some infinite sums are surprisingly tame. If each term is half the previous one, the pieces get small so quickly that the total settles. This is the geometric series, and it is one of the most reusable formulas in applied math.</p><p>The mental picture is a tail that keeps shrinking by the same multiplier. Once you know the multiplier $r$, the entire infinite future is compressed into $1/(1-r)$.</p>",
+    "definition": "<p>A geometric series has the form $$a+ar+ar^2+\\cdots=\\sum_{n=0}^\\infty ar^n.$$ Its $N$th partial sum is $$S_N=a\\frac{1-r^{N+1}}{1-r}\\quad(r\\ne1).$$ If $|r|<1$, then $r^{N+1}\\to0$, so $$\\sum_{n=0}^\\infty ar^n=\\frac{a}{1-r}.$$ If $|r|\\ge1$, the series does not converge.</p><p><b>Assumptions that matter:</b> the ratio must be constant from term to term; the infinite-sum formula requires $|r|<1$; the first term $a$ is the term at $n=0$ in this convention.</p>",
+    "worked": {
+      "problem": "Find the sum $\\displaystyle 3+\\frac32+\\frac34+\\frac38+\\cdots$.",
+      "skills": [
+        "geometric ratio",
+        "infinite series",
+        "partial sum limit"
+      ],
+      "strategy": "Identify the first term and common ratio, check $|r|<1$, then use $a/(1-r)$.",
+      "steps": [
+        {
+          "do": "Identify the first term",
+          "result": "$a=3$",
+          "why": "the series starts with $3$"
+        },
+        {
+          "do": "Find the common ratio",
+          "result": "$r=\\frac{(3/2)}{3}=\\frac12$",
+          "why": "divide a term by the previous term"
+        },
+        {
+          "do": "Check convergence",
+          "result": "$|r|=\\frac12<1$",
+          "why": "geometric series converge only when the ratio's magnitude is below $1$"
+        },
+        {
+          "do": "Apply the formula",
+          "result": "$S=\\frac{a}{1-r}=\\frac{3}{1-1/2}$",
+          "why": "the tail term $r^{N+1}$ vanishes"
+        },
+        {
+          "do": "Simplify",
+          "result": "$6$",
+          "why": "$3/(1/2)=6$"
+        }
+      ],
+      "verify": "The first four terms sum to $5.625$, already close to $6$, and the remaining tail is $0.375+0.1875+\\cdots$.",
+      "answer": "$6$",
+      "connects": "the geometric series turns repeated fixed-percentage decay into one closed-form total."
+    },
+    "practice": [
+      {
+        "problem": "Find $\\displaystyle\\sum_{n=0}^\\infty \\left(\\frac13\\right)^n$.",
+        "steps": [
+          {
+            "do": "Identify the first term",
+            "result": "$a=1$",
+            "why": "when $n=0$, the term is $1$"
+          },
+          {
+            "do": "Identify the ratio",
+            "result": "$r=\\frac13$",
+            "why": "each term is one third of the last"
+          },
+          {
+            "do": "Check convergence",
+            "result": "$|r|<1$",
+            "why": "the powers shrink to zero"
+          },
+          {
+            "do": "Apply the formula",
+            "result": "$S=\\frac{1}{1-1/3}$",
+            "why": "use $a/(1-r)$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\frac32$",
+            "why": "$1/(2/3)=3/2$"
+          }
+        ],
+        "answer": "$\\frac32$"
+      },
+      {
+        "problem": "Find $\\displaystyle\\sum_{n=0}^\\infty 5(0.2)^n$.",
+        "steps": [
+          {
+            "do": "Identify the first term",
+            "result": "$a=5$",
+            "why": "the coefficient is the $n=0$ term"
+          },
+          {
+            "do": "Identify the ratio",
+            "result": "$r=0.2$",
+            "why": "each power multiplies by $0.2$"
+          },
+          {
+            "do": "Check convergence",
+            "result": "$0.2<1$",
+            "why": "the ratio's magnitude is below one"
+          },
+          {
+            "do": "Apply the formula",
+            "result": "$S=\\frac{5}{1-0.2}$",
+            "why": "infinite geometric sum"
+          },
+          {
+            "do": "Simplify",
+            "result": "$6.25$",
+            "why": "$5/0.8=6.25$"
+          }
+        ],
+        "answer": "$6.25$"
+      },
+      {
+        "problem": "Does $\\displaystyle\\sum_{n=0}^\\infty 2^n$ converge?",
+        "steps": [
+          {
+            "do": "Identify the first term",
+            "result": "$a=1$",
+            "why": "$2^0=1$"
+          },
+          {
+            "do": "Identify the ratio",
+            "result": "$r=2$",
+            "why": "each term doubles"
+          },
+          {
+            "do": "Check the ratio",
+            "result": "$|r|=2$",
+            "why": "geometric convergence needs $|r|<1$"
+          },
+          {
+            "do": "Inspect term behavior",
+            "result": "$2^n\\to\\infty$",
+            "why": "the terms do not even go to zero"
+          },
+          {
+            "do": "Conclude",
+            "result": "diverges",
+            "why": "partial sums grow without bound"
+          }
+        ],
+        "answer": "Diverges."
+      },
+      {
+        "problem": "Find the finite sum $\\displaystyle\\sum_{n=0}^{4}3(\\frac12)^n$.",
+        "steps": [
+          {
+            "do": "Identify values",
+            "result": "$a=3,\\ r=\\frac12,\\ N=4$",
+            "why": "there are five terms from $0$ through $4$"
+          },
+          {
+            "do": "Write the finite formula",
+            "result": "$S_4=3\\frac{1-(1/2)^5}{1-1/2}$",
+            "why": "finite geometric partial sum"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$(1/2)^5=1/32$",
+            "why": "five halvings"
+          },
+          {
+            "do": "Simplify the numerator",
+            "result": "$1-1/32=31/32$",
+            "why": "subtract the remaining tail factor"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$3\\cdot\\frac{31/32}{1/2}=\\frac{93}{16}$",
+            "why": "dividing by $1/2$ doubles"
+          }
+        ],
+        "answer": "$\\frac{93}{16}=5.8125$"
+      },
+      {
+        "problem": "In discounted RL, rewards are $1$ every step with discount $\\gamma=0.9$. Find the return $G=\\sum_{t=0}^\\infty0.9^t$.",
+        "steps": [
+          {
+            "do": "Identify the first term",
+            "result": "$a=1$",
+            "why": "the immediate reward is $1$"
+          },
+          {
+            "do": "Identify the ratio",
+            "result": "$r=0.9$",
+            "why": "each future reward is discounted by another $0.9$"
+          },
+          {
+            "do": "Check convergence",
+            "result": "$0.9<1$",
+            "why": "discounting makes the infinite future finite"
+          },
+          {
+            "do": "Apply the formula",
+            "result": "$G=\\frac{1}{1-0.9}$",
+            "why": "geometric return"
+          },
+          {
+            "do": "Simplify",
+            "result": "$10$",
+            "why": "the effective horizon is $1/(1-\\gamma)$"
+          }
+        ],
+        "answer": "$10$"
+      }
+    ],
+    "applications": [
+      {
+        "title": "Discounted RL returns",
+        "background": "Reinforcement learning discounts future rewards so infinite horizons have finite value.",
+        "numbers": "With reward $1$ and $\\gamma=0.99$, return is $1/(1-0.99)=100$."
+      },
+      {
+        "title": "Effective horizon",
+        "background": "The geometric sum tells how many future steps a discount factor roughly remembers.",
+        "numbers": "$\\gamma=0.9$ gives horizon $10$; $\\gamma=0.999$ gives horizon $1000$."
+      },
+      {
+        "title": "Expected geometric counts",
+        "background": "If each trial continues with probability $q$, expected count is a geometric series.",
+        "numbers": "With stop probability $0.2$, continue probability $0.8$, expected attempts are $1+0.8+0.8^2+\\cdots=5$."
+      },
+      {
+        "title": "Retry traffic",
+        "background": "Distributed systems retry failed requests, and each retry layer adds load.",
+        "numbers": "Failure probability $0.1$ gives expected sends $1+0.1+0.01+\\cdots=1/0.9\\approx1.111$."
+      },
+      {
+        "title": "Exponential moving averages",
+        "background": "EMA weights on past observations form a geometric tail.",
+        "numbers": "For $\\beta=0.9$, total raw weight $1+0.9+0.9^2+\\cdots=10$, and normalized newest weight is $0.1$."
+      },
+      {
+        "title": "Neural sequence memory",
+        "background": "A recurrent state with multiplier $r$ keeps a geometrically decaying trace of past inputs.",
+        "numbers": "If $r=0.95$, total memory mass is $1/(1-0.95)=20$ time steps."
+      },
+      {
+        "title": "Binary fractions",
+        "background": "Repeating binary expansions are geometric series.",
+        "numbers": "Binary $0.111\\ldots_2$ equals $1/2+1/4+1/8+\\cdots=1$."
+      }
+    ],
+    "applicationsClose": "The geometric series is the mathematics of repeated fractional survival: rewards, retries, memories, and tails all wear the same uniform.",
+    "takeaways": [
+      "A geometric series has constant ratio $r$ between consecutive terms.",
+      "The infinite sum is $a/(1-r)$ exactly when $|r|<1$.",
+      "The factor $1/(1-r)$ appears everywhere an effect decays by the same percentage each step."
+    ],
     "prereqs": [
       "math-01-54"
     ]
@@ -1689,19 +14502,262 @@
   B({
     "id": "math-01-56",
     "title": "Convergence tests",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: convergence tests.",
+    "tagline": "When an infinite sum has no last term, tests tell us whether it still lands somewhere finite.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The geometric series</i>"
+        "sequences",
+        "series",
+        "the geometric series",
+        "limits at infinity"
       ],
       "leadsTo": [
-        "the next lesson, <i>Power series</i>"
+        "power series",
+        "Taylor series",
+        "error bounds for approximations"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "improper integrals",
+        "comparison",
+        "absolute convergence",
+        "ratio and root limits"
       ]
     },
+    "motivation": "<p>You already know how to add finitely many numbers. The surprise is that some infinite sums also settle: $1+\\tfrac12+\\tfrac14+\\cdots=2$. Others, like $1+\\tfrac12+\\tfrac13+\\cdots$, keep growing forever, even though the terms go to zero.</p><p><b>Convergence tests</b> are a set of careful shortcuts. Instead of trying to add infinitely many terms, we compare their long-run size, ratio, or shape to series we already understand. It is like judging whether a long road eventually levels out by checking its slope and landmarks rather than walking forever.</p>",
+    "definition": "<p>An infinite series $\\sum_{n=1}^{\\infty}a_n$ <b>converges</b> if the partial sums $s_N=\\sum_{n=1}^{N}a_n$ approach a finite limit. The most used tests are: term test $a_n\\to0$ is necessary; geometric $\\sum ar^{n}$ converges when $|r|<1$; $p$-series $\\sum 1/n^p$ converges when $p>1$; comparison and limit comparison transfer behavior from a known positive series; ratio and root tests examine exponential-like decay.</p><p><b>Assumptions that matter:</b> the term test can only prove divergence, not convergence; comparison tests usually require nonnegative terms; absolute convergence of $\\sum |a_n|$ implies convergence of $\\sum a_n$; alternating series need decreasing terms whose limit is zero.</p>",
+    "worked": {
+      "problem": "Determine whether $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{3n+1}{n^3+2}$ converges.",
+      "skills": [
+        "limit comparison",
+        "$p$-series",
+        "asymptotic size"
+      ],
+      "strategy": "The numerator behaves like $n$ and the denominator like $n^3$, so compare with $1/n^2$.",
+      "steps": [
+        {
+          "do": "Choose a comparison series",
+          "result": "$b_n=\\dfrac{1}{n^2}$",
+          "why": "$\\frac{3n+1}{n^3+2}$ has leading size $3n/n^3=3/n^2$"
+        },
+        {
+          "do": "Form the limit comparison ratio",
+          "result": "$\\dfrac{a_n}{b_n}=\\dfrac{3n+1}{n^3+2}\\cdot n^2$",
+          "why": "limit comparison checks whether the two series have the same long-run scale"
+        },
+        {
+          "do": "Multiply the factors",
+          "result": "$\\dfrac{3n^3+n^2}{n^3+2}$",
+          "why": "one fraction is easier to limit"
+        },
+        {
+          "do": "Divide top and bottom by $n^3$",
+          "result": "$\\dfrac{3+1/n}{1+2/n^3}$",
+          "why": "this exposes the terms that vanish"
+        },
+        {
+          "do": "Take the limit",
+          "result": "$3$",
+          "why": "$1/n\\to0$ and $2/n^3\\to0$"
+        },
+        {
+          "do": "Use the known comparison",
+          "result": "$\\sum 1/n^2$ converges",
+          "why": "a $p$-series converges when $p=2>1"
+        }
+      ],
+      "verify": "The comparison limit is finite and positive, so both positive series share behavior; since $\\sum 1/n^2$ converges, the given series converges.",
+      "answer": "$\\displaystyle\\sum_{n=1}^{\\infty}\\frac{3n+1}{n^3+2}$ converges.",
+      "connects": "Convergence tests turn an infinite task into a finite diagnosis: identify the long-run shape and borrow a known result."
+    },
+    "practice": [
+      {
+        "problem": "Test $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{5}{2^n}$.",
+        "steps": [
+          {
+            "do": "Identify the form",
+            "result": "$\\sum_{n=1}^{\\infty}5(1/2)^n$",
+            "why": "the ratio between consecutive terms is constant"
+          },
+          {
+            "do": "Name the ratio",
+            "result": "$r=\\frac12$",
+            "why": "geometric series depend on $|r|$"
+          },
+          {
+            "do": "Check the convergence condition",
+            "result": "$|r|=\\frac12<1$",
+            "why": "geometric series converge exactly in this case"
+          },
+          {
+            "do": "Compute the sum",
+            "result": "$5\\cdot\\dfrac{1/2}{1-1/2}=5$",
+            "why": "the first displayed term is $5/2$"
+          }
+        ],
+        "answer": "Converges, with sum $5$."
+      },
+      {
+        "problem": "Test $\\displaystyle\\sum_{n=2}^{\\infty}\\frac{1}{n\\ln n}$.",
+        "steps": [
+          {
+            "do": "Choose the integral test",
+            "result": "$f(x)=\\dfrac{1}{x\\ln x}$",
+            "why": "the terms are positive and decreasing for $x>1$"
+          },
+          {
+            "do": "Set up the improper integral",
+            "result": "$\\int_2^{\\infty}\\dfrac{dx}{x\\ln x}$",
+            "why": "integral behavior matches the series behavior"
+          },
+          {
+            "do": "Substitute $u=\\ln x$",
+            "result": "$du=dx/x$",
+            "why": "this removes the $x$ in the denominator"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\int_{\\ln 2}^{\\infty}\\dfrac{du}{u}=\\lim_{B\\to\\infty}(\\ln B-\\ln(\\ln2))$",
+            "why": "the antiderivative is $\\ln u$"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$\\infty$",
+            "why": "$\\ln B$ grows without bound"
+          }
+        ],
+        "answer": "Diverges by the integral test."
+      },
+      {
+        "problem": "Test $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{(-1)^{n+1}}{\\sqrt n}$.",
+        "steps": [
+          {
+            "do": "Separate the magnitudes",
+            "result": "$b_n=1/\\sqrt n$",
+            "why": "alternating convergence looks at the positive sizes"
+          },
+          {
+            "do": "Check the limit of magnitudes",
+            "result": "$\\lim_{n\\to\\infty}b_n=0$",
+            "why": "terms must shrink to zero"
+          },
+          {
+            "do": "Check monotonicity",
+            "result": "$b_{n+1}<b_n$",
+            "why": "square roots increase, so reciprocals decrease"
+          },
+          {
+            "do": "Apply the alternating series test",
+            "result": "the series converges",
+            "why": "decreasing magnitudes with limit zero are enough"
+          },
+          {
+            "do": "Check absolute convergence",
+            "result": "$\\sum 1/\\sqrt n=\\sum 1/n^{1/2}$ diverges",
+            "why": "a $p$-series with $p=1/2\\le1$ diverges"
+          }
+        ],
+        "answer": "Converges conditionally, not absolutely."
+      },
+      {
+        "problem": "Test $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{n!}{4^n}$.",
+        "steps": [
+          {
+            "do": "Choose the ratio test",
+            "result": "$a_n=\\dfrac{n!}{4^n}$",
+            "why": "factorials are built for ratios"
+          },
+          {
+            "do": "Form the next-term ratio",
+            "result": "$\\dfrac{a_{n+1}}{a_n}=\\dfrac{(n+1)!}{4^{n+1}}\\cdot\\dfrac{4^n}{n!}$",
+            "why": "the ratio test asks how a term changes from one step to the next"
+          },
+          {
+            "do": "Cancel common factors",
+            "result": "$\\dfrac{n+1}{4}$",
+            "why": "$n!$ and $4^n$ cancel"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$\\infty$",
+            "why": "$(n+1)/4$ grows without bound"
+          },
+          {
+            "do": "Apply the ratio test",
+            "result": "diverges",
+            "why": "ratio limit greater than $1$ means terms do not shrink fast enough"
+          }
+        ],
+        "answer": "Diverges by the ratio test."
+      },
+      {
+        "problem": "Test $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{(0.01n)^n}{n!}$, a toy bound that appears in approximation error estimates.",
+        "steps": [
+          {
+            "do": "Choose the root test",
+            "result": "$a_n=\\dfrac{(0.01n)^n}{n!}$",
+            "why": "the $n$th power suggests roots"
+          },
+          {
+            "do": "Take the $n$th root",
+            "result": "$\\sqrt[n]{a_n}=\\dfrac{0.01n}{\\sqrt[n]{n!}}$",
+            "why": "roots undo the outside power"
+          },
+          {
+            "do": "Use Stirling's scale",
+            "result": "$\\sqrt[n]{n!}\\sim n/e$",
+            "why": "factorials grow like $(n/e)^n$ at root scale"
+          },
+          {
+            "do": "Compute the limiting root",
+            "result": "$0.01e\\approx0.0272$",
+            "why": "the $n$ factors cancel in the approximation"
+          },
+          {
+            "do": "Apply the root test",
+            "result": "converges absolutely",
+            "why": "the limiting root is less than $1$"
+          }
+        ],
+        "answer": "Converges absolutely; the terms decay very fast."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Stopping an infinite feature expansion",
+        "background": "Kernel and basis expansions often keep only the terms whose tail is small enough. A convergence test tells you whether the remaining tail can be controlled.",
+        "numbers": "For a geometric tail $\\sum_{n=6}^{\\infty}0.2^n=0.2^6/(1-0.2)=0.00008$, so dropping terms after degree $5$ costs less than $10^{-4}$."
+      },
+      {
+        "title": "Bounding Taylor approximation error",
+        "background": "Taylor methods approximate nonlinear functions by polynomials; convergence tests justify that more terms really improve the approximation.",
+        "numbers": "For $e^{0.5}$, the next neglected term after degree $4$ is $0.5^5/5!=0.0002604$, already below $3\\times10^{-4}$."
+      },
+      {
+        "title": "Analyzing optimization schedules",
+        "background": "SGD convergence proofs often require learning rates whose sums behave differently: enough total motion, but shrinking noise.",
+        "numbers": "$\\sum 1/t$ diverges while $\\sum 1/t^2$ converges, so $\\eta_t=1/t$ satisfies the classic pair $\\sum\\eta_t=\\infty$, $\\sum\\eta_t^2<\\infty$."
+      },
+      {
+        "title": "Discounted reinforcement learning",
+        "background": "A discounted return is an infinite geometric series when rewards are bounded.",
+        "numbers": "If rewards are at most $2$ and $\\gamma=0.95$, then total return is at most $2/(1-0.95)=40$."
+      },
+      {
+        "title": "Numerical linear algebra iterations",
+        "background": "Iterative solvers repeatedly add corrections; convergence is often geometric when the error contracts.",
+        "numbers": "If the error shrinks by $0.3$ each step from $10$, after $8$ steps it is $10(0.3)^8=0.0006561$."
+      },
+      {
+        "title": "Dropout-style random paths",
+        "background": "Expected contributions from long computational paths can form a series when each extra step is less likely.",
+        "numbers": "If each extra link survives with probability $0.8$ and contributes size $0.1^k$, the tail is $\\sum (0.08)^k=1/(1-0.08)=1.087$ from $k=0$."
+      }
+    ],
+    "applicationsClose": "The same question keeps returning in different clothes: do the infinitely many small pieces add up to something finite?",
+    "takeaways": [
+      "A series converges when its partial sums approach a finite limit.",
+      "The term test proves only divergence; a zero term limit is necessary but not enough.",
+      "Comparison, ratio, root, integral, and alternating tests each recognize a different long-run pattern."
+    ],
     "prereqs": [
       "math-01-55"
     ]
@@ -1710,19 +14766,287 @@
   B({
     "id": "math-01-57",
     "title": "Power series",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: power series.",
+    "tagline": "A function can be built from infinitely many powers, but only inside the interval where the powers behave.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Convergence tests</i>"
+        "series",
+        "convergence tests",
+        "polynomials",
+        "limits"
       ],
       "leadsTo": [
-        "the next lesson, <i>Taylor series</i>"
+        "Taylor series",
+        "Maclaurin series",
+        "series solutions of differential equations"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "ratio test",
+        "intervals of convergence",
+        "term-by-term differentiation",
+        "term-by-term integration"
       ]
     },
+    "motivation": "<p>Polynomials are friendly: they are easy to evaluate, differentiate, and integrate. Power series ask a bold question: can we let a polynomial have infinitely many terms and still keep those friendly rules?</p><p>The answer is yes, but with a boundary. A <b>power series</b> behaves beautifully near its center and may fail farther away. The radius of convergence is the safe zone, like the range over which a local map is trustworthy.</p>",
+    "definition": "<p>A power series centered at $c$ has the form $$\\sum_{n=0}^{\\infty}a_n(x-c)^n.$$ For each fixed $x$, this becomes an ordinary numerical series. The set of $x$ values where it converges is its <b>interval of convergence</b>, usually $|x-c|<R$ plus endpoint checks. The number $R$ is the <b>radius of convergence</b>.</p><p><b>Assumptions that matter:</b> the radius usually comes from the ratio or root test; endpoints must be tested separately; inside $|x-c|<R$, power series may be differentiated and integrated term by term; outside that interval the same formula may not represent a finite value.</p>",
+    "worked": {
+      "problem": "Find the radius and interval of convergence of $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{(x-2)^n}{n3^n}$.",
+      "skills": [
+        "ratio test",
+        "endpoint checks",
+        "alternating series"
+      ],
+      "strategy": "Use the ratio test for the open interval, then test the two endpoints one at a time.",
+      "steps": [
+        {
+          "do": "Name the term",
+          "result": "$a_n=\\dfrac{(x-2)^n}{n3^n}$",
+          "why": "the ratio test needs consecutive terms"
+        },
+        {
+          "do": "Form the ratio",
+          "result": "$\\left|\\dfrac{a_{n+1}}{a_n}\\right|=\\left|\\dfrac{(x-2)^{n+1}}{(n+1)3^{n+1}}\\cdot\\dfrac{n3^n}{(x-2)^n}\\right|$",
+          "why": "compare term $n+1$ to term $n$"
+        },
+        {
+          "do": "Cancel common factors",
+          "result": "$\\dfrac{|x-2|}{3}\\cdot\\dfrac{n}{n+1}$",
+          "why": "powers and $3^n$ simplify"
+        },
+        {
+          "do": "Take the limit",
+          "result": "$\\dfrac{|x-2|}{3}$",
+          "why": "$n/(n+1)\\to1$"
+        },
+        {
+          "do": "Impose ratio less than $1$",
+          "result": "$|x-2|<3$",
+          "why": "the ratio test gives convergence inside"
+        },
+        {
+          "do": "Convert to an open interval",
+          "result": "$-1<x<5$",
+          "why": "subtract and add $3$ around center $2$"
+        },
+        {
+          "do": "Test $x=-1$",
+          "result": "$\\sum\\dfrac{(-3)^n}{n3^n}=\\sum\\dfrac{(-1)^n}{n}$",
+          "why": "left endpoint becomes alternating harmonic"
+        },
+        {
+          "do": "Classify $x=-1$",
+          "result": "converges",
+          "why": "alternating harmonic converges"
+        },
+        {
+          "do": "Test $x=5$",
+          "result": "$\\sum\\dfrac{3^n}{n3^n}=\\sum\\dfrac1n$",
+          "why": "right endpoint becomes harmonic"
+        },
+        {
+          "do": "Classify $x=5$",
+          "result": "diverges",
+          "why": "the harmonic series diverges"
+        }
+      ],
+      "verify": "A point like $x=2$ gives the zero series after the first powers, safely convergent; a far point like $x=8$ has ratio $2>1$, so it cannot converge.",
+      "answer": "Radius $R=3$; interval of convergence $[-1,5)$.",
+      "connects": "The open interval comes from exponential-size behavior; the endpoints require the older convergence tests."
+    },
+    "practice": [
+      {
+        "problem": "Find the interval of convergence of $\\displaystyle\\sum_{n=0}^{\\infty}(x+1)^n$.",
+        "steps": [
+          {
+            "do": "Recognize the geometric form",
+            "result": "$\\sum ((x+1))^n$",
+            "why": "the ratio is $x+1$"
+          },
+          {
+            "do": "Apply the geometric condition",
+            "result": "$|x+1|<1$",
+            "why": "geometric series converge when the absolute ratio is less than $1$"
+          },
+          {
+            "do": "Solve the inequality",
+            "result": "$-2<x<0$",
+            "why": "subtract $1$ from all parts"
+          },
+          {
+            "do": "Test $x=-2$",
+            "result": "$\\sum (-1)^n$",
+            "why": "terms do not approach zero"
+          },
+          {
+            "do": "Test $x=0$",
+            "result": "$\\sum 1$",
+            "why": "terms do not approach zero"
+          }
+        ],
+        "answer": "Interval $(-2,0)$; radius $1$."
+      },
+      {
+        "problem": "Find the interval of convergence of $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{x^n}{n}$.",
+        "steps": [
+          {
+            "do": "Use the ratio test",
+            "result": "$\\left|\\dfrac{x^{n+1}}{n+1}\\cdot\\dfrac{n}{x^n}\\right|=|x|\\dfrac{n}{n+1}$",
+            "why": "consecutive terms simplify"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$|x|$",
+            "why": "$n/(n+1)\\to1$"
+          },
+          {
+            "do": "Find the open interval",
+            "result": "$|x|<1$",
+            "why": "ratio less than $1$ gives convergence"
+          },
+          {
+            "do": "Test $x=1$",
+            "result": "$\\sum 1/n$ diverges",
+            "why": "harmonic series"
+          },
+          {
+            "do": "Test $x=-1$",
+            "result": "$\\sum (-1)^n/n$ converges",
+            "why": "alternating harmonic series"
+          }
+        ],
+        "answer": "Interval $[-1,1)$; radius $1$."
+      },
+      {
+        "problem": "Find the interval of convergence of $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{n(x-4)^n}{5^n}$.",
+        "steps": [
+          {
+            "do": "Form the ratio",
+            "result": "$\\left|\\dfrac{(n+1)(x-4)^{n+1}}{5^{n+1}}\\cdot\\dfrac{5^n}{n(x-4)^n}\\right|$",
+            "why": "ratio test handles the $n$ factor"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\dfrac{|x-4|}{5}\\cdot\\dfrac{n+1}{n}$",
+            "why": "cancel common powers"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$\\dfrac{|x-4|}{5}$",
+            "why": "$(n+1)/n\\to1$"
+          },
+          {
+            "do": "Solve the open interval",
+            "result": "$-1<x<9$",
+            "why": "$|x-4|<5$"
+          },
+          {
+            "do": "Test both endpoints",
+            "result": "$x=-1$ gives $\\sum n(-1)^n$ and $x=9$ gives $\\sum n$",
+            "why": "in both cases terms do not approach zero"
+          }
+        ],
+        "answer": "Interval $(-1,9)$; radius $5$."
+      },
+      {
+        "problem": "Differentiate $\\displaystyle f(x)=\\sum_{n=0}^{\\infty}\\frac{x^{n+1}}{n+1}$ for $|x|<1$.",
+        "steps": [
+          {
+            "do": "Differentiate one term",
+            "result": "$\\dfrac{d}{dx}\\left(\\dfrac{x^{n+1}}{n+1}\\right)=x^n$",
+            "why": "the power rule cancels $n+1$"
+          },
+          {
+            "do": "Differentiate the series",
+            "result": "$f'(x)=\\sum_{n=0}^{\\infty}x^n$",
+            "why": "term-by-term differentiation is valid inside the radius"
+          },
+          {
+            "do": "Recognize the geometric series",
+            "result": "$\\sum_{n=0}^{\\infty}x^n$",
+            "why": "ratio $x$"
+          },
+          {
+            "do": "Sum it",
+            "result": "$\\dfrac{1}{1-x}$",
+            "why": "valid for $|x|<1$"
+          },
+          {
+            "do": "State the domain",
+            "result": "$|x|<1$",
+            "why": "differentiation preserves the same radius"
+          }
+        ],
+        "answer": "$f'(x)=1/(1-x)$ for $|x|<1$."
+      },
+      {
+        "problem": "A model uses $\\sum_{n=0}^{\\infty}(0.8x)^n$ as a response curve. For what $x$ does the formula converge, and what is its value at $x=1$?",
+        "steps": [
+          {
+            "do": "Identify the ratio",
+            "result": "$r=0.8x$",
+            "why": "the series is geometric"
+          },
+          {
+            "do": "Apply the convergence condition",
+            "result": "$|0.8x|<1$",
+            "why": "geometric convergence requires absolute ratio below $1$"
+          },
+          {
+            "do": "Solve for $x$",
+            "result": "$|x|<1.25$",
+            "why": "divide by $0.8$"
+          },
+          {
+            "do": "Substitute $x=1$",
+            "result": "$r=0.8$",
+            "why": "the input is inside the interval"
+          },
+          {
+            "do": "Compute the sum",
+            "result": "$\\dfrac{1}{1-0.8}=5$",
+            "why": "geometric sum formula"
+          }
+        ],
+        "answer": "Converges for $-1.25<x<1.25$; at $x=1$ the value is $5$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Local function approximators",
+        "background": "Power series let software replace a hard function with powers and coefficients near a center.",
+        "numbers": "For $1/(1-x)=\\sum x^n$, at $x=0.2$, five terms give $1+0.2+0.04+0.008+0.0016=1.2496$ versus exact $1.25$."
+      },
+      {
+        "title": "Neural activation approximations",
+        "background": "Fast inference libraries approximate smooth activations with polynomials over a safe interval.",
+        "numbers": "Using $\\tanh x\\approx x-x^3/3+2x^5/15$ at $x=0.5$ gives $0.4625$, close to $\\tanh(0.5)=0.4621$."
+      },
+      {
+        "title": "Generating functions",
+        "background": "Discrete math encodes a sequence as coefficients of a power series, then manipulates the series algebraically.",
+        "numbers": "$1/(1-x)^2=\\sum_{n=0}^{\\infty}(n+1)x^n$; the coefficient of $x^4$ is $5$."
+      },
+      {
+        "title": "Signal filters",
+        "background": "Digital filters often appear as power series in a delay variable, where convergence means the impulse response is summable.",
+        "numbers": "$1+0.7z+0.7^2z^2+\\cdots$ converges for $|z|<1/0.7\\approx1.429$."
+      },
+      {
+        "title": "Uncertainty propagation",
+        "background": "A nonlinear measurement can be expanded around a nominal value to estimate how small perturbations change the output.",
+        "numbers": "$1/(1-\\epsilon)=1+\\epsilon+\\epsilon^2+\\cdots$; for $\\epsilon=0.05$, three terms give $1.0525$ versus exact $1.05263$."
+      },
+      {
+        "title": "Iterative algorithms",
+        "background": "When an update operator has small norm, inverse-like expressions become power series.",
+        "numbers": "If $A$ has effective size $0.2$, then $(I-A)^{-1}\\approx I+A+A^2$ leaves a tail bounded by $0.2^3/(1-0.2)=0.01$."
+      }
+    ],
+    "applicationsClose": "Power series are polynomials with a safety radius: inside it, algebra and calculus become wonderfully reusable.",
+    "takeaways": [
+      "A power series is $\\sum a_n(x-c)^n$ centered at $c$.",
+      "The ratio or root test usually gives the radius; endpoints need separate tests.",
+      "Inside the radius, term-by-term differentiation and integration are valid."
+    ],
     "prereqs": [
       "math-01-56"
     ]
@@ -1731,19 +15055,317 @@
   B({
     "id": "math-01-58",
     "title": "Taylor series",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: taylor series.",
+    "tagline": "A smooth function can be rebuilt near a point from its value, slope, curvature, and higher derivatives.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Power series</i>"
+        "derivatives",
+        "power series",
+        "factorials",
+        "linear approximation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Maclaurin series</i>"
+        "Maclaurin series",
+        "Taylor's theorem with remainder",
+        "optimization approximations"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "higher-order derivatives",
+        "error bounds",
+        "polynomial approximation",
+        "local linearization"
       ]
     },
+    "motivation": "<p>Linear approximation says a function near $a$ behaves like $f(a)+f'(a)(x-a)$. That is already powerful, but it throws away curvature. If the curve bends, one line only tells the first part of the story.</p><p>A <b>Taylor series</b> keeps asking for more local information: value, slope, curvature, third derivative, and so on. Each derivative adds another correction term, giving a polynomial that can shadow the function very closely near the center.</p>",
+    "definition": "<p>If $f$ has derivatives of all orders near $a$, its Taylor series about $a$ is $$\\sum_{n=0}^{\\infty}\\frac{f^{(n)}(a)}{n!}(x-a)^n=f(a)+f'(a)(x-a)+\\frac{f''(a)}{2!}(x-a)^2+\\cdots.$$ The coefficient is chosen so that the polynomial's $n$th derivative at $a$ matches $f^{(n)}(a)$.</p><p><b>Assumptions that matter:</b> having all derivatives is not by itself enough to guarantee the series equals the function; equality needs the remainder to go to zero. The approximation is local: it is usually best near $a$, and the radius of convergence still matters.</p>",
+    "worked": {
+      "problem": "Find the Taylor polynomial of degree $3$ for $f(x)=\\ln x$ about $a=1$.",
+      "skills": [
+        "derivatives",
+        "Taylor coefficients",
+        "local approximation"
+      ],
+      "strategy": "Compute derivatives at the center, then place them into the Taylor formula one coefficient at a time.",
+      "steps": [
+        {
+          "do": "Evaluate the function",
+          "result": "$f(1)=\\ln 1=0$",
+          "why": "this is the constant term"
+        },
+        {
+          "do": "Differentiate once",
+          "result": "$f'(x)=1/x$",
+          "why": "slope gives the linear coefficient"
+        },
+        {
+          "do": "Evaluate the first derivative",
+          "result": "$f'(1)=1$",
+          "why": "substitute the center"
+        },
+        {
+          "do": "Differentiate twice",
+          "result": "$f''(x)=-1/x^2$",
+          "why": "curvature gives the quadratic coefficient"
+        },
+        {
+          "do": "Evaluate the second derivative",
+          "result": "$f''(1)=-1$",
+          "why": "substitute the center"
+        },
+        {
+          "do": "Differentiate three times",
+          "result": "$f'''(x)=2/x^3$",
+          "why": "third-order change gives the cubic coefficient"
+        },
+        {
+          "do": "Evaluate the third derivative",
+          "result": "$f'''(1)=2$",
+          "why": "substitute the center"
+        },
+        {
+          "do": "Insert into Taylor's formula",
+          "result": "$0+1(x-1)-\\dfrac{(x-1)^2}{2}+\\dfrac{2(x-1)^3}{6}$",
+          "why": "each derivative is divided by its factorial"
+        },
+        {
+          "do": "Simplify",
+          "result": "$(x-1)-\\dfrac{(x-1)^2}{2}+\\dfrac{(x-1)^3}{3}$",
+          "why": "$2/6=1/3$"
+        }
+      ],
+      "verify": "At $x=1.1$, the polynomial gives $0.1-0.005+0.000333=0.095333$, close to $\\ln(1.1)=0.095310$.",
+      "answer": "$T_3(x)=(x-1)-\\dfrac{(x-1)^2}{2}+\\dfrac{(x-1)^3}{3}$.",
+      "connects": "Taylor approximation turns local derivative information into a usable polynomial model."
+    },
+    "practice": [
+      {
+        "problem": "Find the degree $2$ Taylor polynomial for $f(x)=e^x$ about $a=1$.",
+        "steps": [
+          {
+            "do": "Evaluate the function",
+            "result": "$f(1)=e$",
+            "why": "constant term"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=e^x$",
+            "why": "the exponential is its own derivative"
+          },
+          {
+            "do": "Evaluate the first derivative",
+            "result": "$f'(1)=e$",
+            "why": "linear coefficient numerator"
+          },
+          {
+            "do": "Evaluate the second derivative",
+            "result": "$f''(1)=e$",
+            "why": "quadratic coefficient numerator"
+          },
+          {
+            "do": "Assemble the polynomial",
+            "result": "$e+e(x-1)+\\dfrac{e}{2}(x-1)^2$",
+            "why": "divide the second derivative by $2!$"
+          }
+        ],
+        "answer": "$T_2(x)=e+e(x-1)+\\frac{e}{2}(x-1)^2$."
+      },
+      {
+        "problem": "Find the degree $3$ Taylor polynomial for $f(x)=\\sqrt{x}$ about $a=4$.",
+        "steps": [
+          {
+            "do": "Evaluate the function",
+            "result": "$f(4)=2$",
+            "why": "constant term"
+          },
+          {
+            "do": "Compute the first derivative",
+            "result": "$f'(x)=\\dfrac{1}{2\\sqrt{x}}$",
+            "why": "power rule"
+          },
+          {
+            "do": "Evaluate the first derivative",
+            "result": "$f'(4)=\\frac14$",
+            "why": "$\\sqrt4=2$"
+          },
+          {
+            "do": "Compute the second derivative",
+            "result": "$f''(x)=-\\dfrac{1}{4x^{3/2}}$",
+            "why": "differentiate $\\frac12x^{-1/2}$"
+          },
+          {
+            "do": "Evaluate the second derivative",
+            "result": "$f''(4)=-\\frac{1}{32}$",
+            "why": "$4^{3/2}=8$"
+          },
+          {
+            "do": "Compute the third derivative",
+            "result": "$f'''(x)=\\dfrac{3}{8x^{5/2}}$",
+            "why": "differentiate $-\\frac14x^{-3/2}$"
+          },
+          {
+            "do": "Evaluate the third derivative",
+            "result": "$f'''(4)=\\frac{3}{256}$",
+            "why": "$4^{5/2}=32$"
+          },
+          {
+            "do": "Assemble the polynomial",
+            "result": "$2+\\frac14(x-4)-\\frac{1}{64}(x-4)^2+\\frac{1}{512}(x-4)^3$",
+            "why": "divide by $2!$ and $3!$"
+          }
+        ],
+        "answer": "$T_3(x)=2+\\frac14(x-4)-\\frac{1}{64}(x-4)^2+\\frac{1}{512}(x-4)^3$."
+      },
+      {
+        "problem": "Use the degree $2$ Taylor polynomial for $\\ln x$ about $1$ to approximate $\\ln(1.2)$.",
+        "steps": [
+          {
+            "do": "Recall the polynomial",
+            "result": "$T_2(x)=(x-1)-\\dfrac{(x-1)^2}{2}$",
+            "why": "from the Taylor pattern for $\\ln x$ at $1$"
+          },
+          {
+            "do": "Compute the displacement",
+            "result": "$x-1=0.2$",
+            "why": "distance from the center"
+          },
+          {
+            "do": "Substitute",
+            "result": "$T_2(1.2)=0.2-\\dfrac{0.2^2}{2}$",
+            "why": "use the polynomial instead of the log"
+          },
+          {
+            "do": "Square",
+            "result": "$0.2^2=0.04$",
+            "why": "quadratic correction"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$0.2-0.02=0.18$",
+            "why": "combine terms"
+          }
+        ],
+        "answer": "$\\ln(1.2)\\approx0.18$; the true value is about $0.1823$."
+      },
+      {
+        "problem": "Find the degree $3$ Taylor polynomial for $f(x)=1/x$ about $a=2$.",
+        "steps": [
+          {
+            "do": "Evaluate",
+            "result": "$f(2)=1/2$",
+            "why": "constant term"
+          },
+          {
+            "do": "Differentiate once",
+            "result": "$f'(x)=-x^{-2}$",
+            "why": "power rule"
+          },
+          {
+            "do": "Evaluate once",
+            "result": "$f'(2)=-1/4$",
+            "why": "linear coefficient numerator"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$f''(x)=2x^{-3}$",
+            "why": "power rule"
+          },
+          {
+            "do": "Evaluate twice",
+            "result": "$f''(2)=1/4$",
+            "why": "since $2/8=1/4$"
+          },
+          {
+            "do": "Differentiate three times",
+            "result": "$f'''(x)=-6x^{-4}$",
+            "why": "power rule"
+          },
+          {
+            "do": "Evaluate three times",
+            "result": "$f'''(2)=-3/8$",
+            "why": "since $-6/16=-3/8$"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\frac12-\\frac14(x-2)+\\frac18(x-2)^2-\\frac{1}{16}(x-2)^3$",
+            "why": "divide by $2!$ and $3!$"
+          }
+        ],
+        "answer": "$T_3(x)=\\frac12-\\frac14(x-2)+\\frac18(x-2)^2-\\frac{1}{16}(x-2)^3$."
+      },
+      {
+        "problem": "Near a minimum, approximate $L(w)=\\ln(1+e^w)$ about $w=0$ to degree $2$.",
+        "steps": [
+          {
+            "do": "Evaluate the loss",
+            "result": "$L(0)=\\ln2$",
+            "why": "constant term"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$L'(w)=\\dfrac{e^w}{1+e^w}$",
+            "why": "chain rule on $\\ln(1+e^w)$"
+          },
+          {
+            "do": "Evaluate the first derivative",
+            "result": "$L'(0)=\\frac12$",
+            "why": "$e^0=1$"
+          },
+          {
+            "do": "Differentiate again",
+            "result": "$L''(w)=\\dfrac{e^w}{(1+e^w)^2}$",
+            "why": "quotient simplification"
+          },
+          {
+            "do": "Evaluate the second derivative",
+            "result": "$L''(0)=\\frac14$",
+            "why": "$1/(1+1)^2=1/4$"
+          },
+          {
+            "do": "Assemble",
+            "result": "$\\ln2+\\frac12w+\\frac18w^2$",
+            "why": "the quadratic coefficient is $L''(0)/2!$"
+          }
+        ],
+        "answer": "$L(w)\\approx\\ln2+\\frac12w+\\frac18w^2$ near $w=0$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Newton's method",
+        "background": "Newton's method is built from a second-order Taylor picture of a function near the current point.",
+        "numbers": "For minimizing $f(w)=(w-3)^2$, $f'(0)=-6$ and $f''(0)=2$, so the Newton step is $0-(-6)/2=3$."
+      },
+      {
+        "title": "Loss landscape curvature",
+        "background": "ML practitioners use the quadratic Taylor term to reason about curvature near a trained model.",
+        "numbers": "If $L(w)\\approx1+0.02(w-5)^2$, moving from $w=5$ to $w=6$ raises loss by $0.02$."
+      },
+      {
+        "title": "Activation approximations",
+        "background": "Hardware kernels approximate nonlinear activations by low-degree Taylor or minimax polynomials.",
+        "numbers": "$e^{0.1}\\approx1+0.1+0.005+0.0001667=1.1051667$, close to $1.1051702$."
+      },
+      {
+        "title": "Uncertainty estimates",
+        "background": "The delta method uses Taylor expansion to move variance through a nonlinear function.",
+        "numbers": "For $g(x)=x^2$ near $x=3$ with standard deviation $0.1$, $g'(3)=6$, so output standard deviation is about $0.6$."
+      },
+      {
+        "title": "Physics simulation",
+        "background": "Time-stepping methods use Taylor ideas to predict the next state from derivatives at the current state.",
+        "numbers": "With position $0$, velocity $4$, acceleration $-2$, over $h=0.1$, $x\\approx0+4(0.1)+\\frac12(-2)(0.1)^2=0.39$."
+      },
+      {
+        "title": "Robustness to perturbations",
+        "background": "Taylor's first two terms estimate how much an input perturbation can change a model score.",
+        "numbers": "If score gradient norm is $8$ and perturbation size is $0.01$, the first-order change is about $0.08$."
+      }
+    ],
+    "applicationsClose": "Taylor series are local translators: derivatives become coefficients, and a curved function becomes a polynomial you can compute with.",
+    "takeaways": [
+      "Taylor series about $a$ use coefficients $f^{(n)}(a)/n!$.",
+      "The polynomial matches the function's derivatives at the center.",
+      "A Taylor series represents the function only where the remainder goes to zero."
+    ],
     "prereqs": [
       "math-01-57"
     ]
@@ -1752,19 +15374,292 @@
   B({
     "id": "math-01-59",
     "title": "Maclaurin series",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: maclaurin series.",
+    "tagline": "Taylor series centered at zero give the familiar small-input formulas used everywhere in computing.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Taylor series</i>"
+        "Taylor series",
+        "power series",
+        "derivatives at zero",
+        "factorials"
       ],
       "leadsTo": [
-        "the next lesson, <i>Numerical differentiation</i>"
+        "small-angle approximations",
+        "special function approximations",
+        "automatic differentiation checks"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "radius of convergence",
+        "remainder estimates",
+        "even and odd functions",
+        "polynomial arithmetic"
       ]
     },
+    "motivation": "<p>Many computations care about what happens near zero: tiny angles, small perturbations, small learning-rate steps, small logit changes. Centering a Taylor series at zero makes the algebra especially clean.</p><p>A <b>Maclaurin series</b> is just a Taylor series with $a=0$. That small change creates the most famous formulas in calculus: $e^x$, $\\sin x$, $\\cos x$, and $\\ln(1+x)$ all become power series around the origin.</p>",
+    "definition": "<p>The Maclaurin series of $f$ is $$\\sum_{n=0}^{\\infty}\\frac{f^{(n)}(0)}{n!}x^n.$$ Common examples are $$e^x=\\sum_{n=0}^{\\infty}\\frac{x^n}{n!},\\quad \\sin x=\\sum_{n=0}^{\\infty}(-1)^n\\frac{x^{2n+1}}{(2n+1)!},\\quad \\cos x=\\sum_{n=0}^{\\infty}(-1)^n\\frac{x^{2n}}{(2n)!}.$$</p><p><b>Assumptions that matter:</b> the center is fixed at zero, so accuracy is strongest near zero; each formula has its own interval of convergence; for $\\ln(1+x)$ and geometric-derived series, endpoints need separate care; truncation error depends on the first neglected terms.</p>",
+    "worked": {
+      "problem": "Find the Maclaurin series for $\\cos x$ and use four nonzero terms to approximate $\\cos(0.5)$.",
+      "skills": [
+        "derivative pattern",
+        "factorials",
+        "truncation"
+      ],
+      "strategy": "Track the derivatives at zero until the pattern repeats, then substitute $x=0.5$.",
+      "steps": [
+        {
+          "do": "Evaluate $f(0)$",
+          "result": "$\\cos0=1$",
+          "why": "constant term"
+        },
+        {
+          "do": "Differentiate once",
+          "result": "$f'(x)=-\\sin x$",
+          "why": "first derivative"
+        },
+        {
+          "do": "Evaluate once",
+          "result": "$f'(0)=0$",
+          "why": "$\\sin0=0$"
+        },
+        {
+          "do": "Differentiate twice",
+          "result": "$f''(x)=-\\cos x$",
+          "why": "second derivative"
+        },
+        {
+          "do": "Evaluate twice",
+          "result": "$f''(0)=-1$",
+          "why": "$\\cos0=1$"
+        },
+        {
+          "do": "Differentiate three times",
+          "result": "$f'''(x)=\\sin x$",
+          "why": "third derivative"
+        },
+        {
+          "do": "Evaluate three times",
+          "result": "$f'''(0)=0$",
+          "why": "$\\sin0=0$"
+        },
+        {
+          "do": "Continue the pattern",
+          "result": "$1,0,-1,0,1,\\ldots$",
+          "why": "only even powers survive"
+        },
+        {
+          "do": "Write the series",
+          "result": "$\\cos x=1-\\dfrac{x^2}{2!}+\\dfrac{x^4}{4!}-\\dfrac{x^6}{6!}+\\cdots$",
+          "why": "coefficients are derivatives divided by factorials"
+        },
+        {
+          "do": "Substitute $x=0.5$",
+          "result": "$1-\\dfrac{0.25}{2}+\\dfrac{0.0625}{24}-\\dfrac{0.015625}{720}$",
+          "why": "four nonzero terms"
+        },
+        {
+          "do": "Evaluate",
+          "result": "$0.8775825$",
+          "why": "combine the decimal terms"
+        }
+      ],
+      "verify": "A calculator gives $\\cos(0.5)\\approx0.8775826$, so four terms are already accurate to about seven decimal places.",
+      "answer": "$\\cos x=\\sum_{n=0}^{\\infty}(-1)^n\\dfrac{x^{2n}}{(2n)!}$, and $\\cos(0.5)\\approx0.8775825$.",
+      "connects": "Maclaurin series make small-input computation cheap because powers of small numbers shrink quickly."
+    },
+    "practice": [
+      {
+        "problem": "Write the first four nonzero terms of the Maclaurin series for $e^x$.",
+        "steps": [
+          {
+            "do": "Recall the derivative pattern",
+            "result": "$f^{(n)}(x)=e^x$",
+            "why": "the exponential is unchanged by differentiation"
+          },
+          {
+            "do": "Evaluate at zero",
+            "result": "$f^{(n)}(0)=1$",
+            "why": "$e^0=1$ for every order"
+          },
+          {
+            "do": "Place into Maclaurin's formula",
+            "result": "$\\sum_{n=0}^{\\infty}\\dfrac{x^n}{n!}$",
+            "why": "each coefficient is $1/n!$"
+          },
+          {
+            "do": "List terms",
+            "result": "$1+x+\\dfrac{x^2}{2!}+\\dfrac{x^3}{3!}$",
+            "why": "first four nonzero powers"
+          },
+          {
+            "do": "Simplify factorials",
+            "result": "$1+x+\\dfrac{x^2}{2}+\\dfrac{x^3}{6}$",
+            "why": "$2!=2$ and $3!=6$"
+          }
+        ],
+        "answer": "$1+x+\\frac{x^2}{2}+\\frac{x^3}{6}+\\cdots$."
+      },
+      {
+        "problem": "Use $\\sin x\\approx x-x^3/6+x^5/120$ to approximate $\\sin(0.2)$.",
+        "steps": [
+          {
+            "do": "Substitute $x=0.2$",
+            "result": "$0.2-\\dfrac{0.2^3}{6}+\\dfrac{0.2^5}{120}$",
+            "why": "use the three-term Maclaurin polynomial"
+          },
+          {
+            "do": "Cube",
+            "result": "$0.2^3=0.008$",
+            "why": "cubic correction"
+          },
+          {
+            "do": "Fifth power",
+            "result": "$0.2^5=0.00032$",
+            "why": "fifth-order correction"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.008/6=0.0013333$ and $0.00032/120=0.000002667$",
+            "why": "compute coefficients"
+          },
+          {
+            "do": "Combine",
+            "result": "$0.1986694$",
+            "why": "add and subtract the corrections"
+          }
+        ],
+        "answer": "$\\sin(0.2)\\approx0.1986694$."
+      },
+      {
+        "problem": "Find the Maclaurin series for $\\dfrac{1}{1+x}$.",
+        "steps": [
+          {
+            "do": "Start from the geometric series",
+            "result": "$\\dfrac{1}{1-r}=\\sum_{n=0}^{\\infty}r^n$",
+            "why": "valid when $|r|<1$"
+          },
+          {
+            "do": "Match the denominator",
+            "result": "$1+x=1-(-x)$",
+            "why": "rewrite as $1-r$"
+          },
+          {
+            "do": "Substitute $r=-x$",
+            "result": "$\\dfrac{1}{1+x}=\\sum_{n=0}^{\\infty}(-x)^n$",
+            "why": "geometric substitution"
+          },
+          {
+            "do": "Expand terms",
+            "result": "$1-x+x^2-x^3+\\cdots$",
+            "why": "powers of $-x$ alternate"
+          },
+          {
+            "do": "State the condition",
+            "result": "$|x|<1$",
+            "why": "inherited from $|r|<1$"
+          }
+        ],
+        "answer": "$1-x+x^2-x^3+\\cdots$ for $|x|<1$."
+      },
+      {
+        "problem": "Use a Maclaurin series to approximate $\\ln(1.1)$ with three nonzero terms.",
+        "steps": [
+          {
+            "do": "Recall the series",
+            "result": "$\\ln(1+x)=x-\\dfrac{x^2}{2}+\\dfrac{x^3}{3}-\\cdots$",
+            "why": "from integrating the geometric series"
+          },
+          {
+            "do": "Set $x=0.1$",
+            "result": "$\\ln(1.1)=0.1-\\dfrac{0.1^2}{2}+\\dfrac{0.1^3}{3}-\\cdots$",
+            "why": "the input is near zero"
+          },
+          {
+            "do": "Compute powers",
+            "result": "$0.1^2=0.01$ and $0.1^3=0.001$",
+            "why": "needed terms"
+          },
+          {
+            "do": "Apply coefficients",
+            "result": "$0.1-0.005+0.0003333$",
+            "why": "divide by $2$ and $3$"
+          },
+          {
+            "do": "Combine",
+            "result": "$0.0953333$",
+            "why": "three nonzero terms"
+          }
+        ],
+        "answer": "$\\ln(1.1)\\approx0.0953333$."
+      },
+      {
+        "problem": "For small logits, approximate $\\sigma(z)=1/(1+e^{-z})$ near $z=0$ using $\\sigma(0)$ and $\\sigma'(0)$.",
+        "steps": [
+          {
+            "do": "Evaluate the sigmoid",
+            "result": "$\\sigma(0)=\\dfrac{1}{1+1}=\\frac12$",
+            "why": "constant term"
+          },
+          {
+            "do": "Use the derivative formula",
+            "result": "$\\sigma'(z)=\\sigma(z)(1-\\sigma(z))$",
+            "why": "standard sigmoid derivative"
+          },
+          {
+            "do": "Evaluate the derivative",
+            "result": "$\\sigma'(0)=\\frac12(1-\\frac12)=\\frac14$",
+            "why": "substitute $\\sigma(0)=1/2$"
+          },
+          {
+            "do": "Write the linear Maclaurin approximation",
+            "result": "$\\sigma(z)\\approx\\frac12+\\frac14z$",
+            "why": "keep terms through degree $1$"
+          },
+          {
+            "do": "Test at $z=0.2$",
+            "result": "$0.5+0.25(0.2)=0.55$",
+            "why": "small-logit estimate"
+          }
+        ],
+        "answer": "$\\sigma(z)\\approx\\frac12+\\frac14z$ near zero; at $0.2$ this gives $0.55$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Small-angle approximations",
+        "background": "Robotics and graphics often use small-angle formulas to simplify rotations.",
+        "numbers": "At $x=0.05$, $\\sin x\\approx x=0.05$ while the true value is $0.0499792$, an error about $2.08\\times10^{-5}$."
+      },
+      {
+        "title": "Fast exponential estimates",
+        "background": "Softmax and probability code often approximate exponentials in controlled ranges.",
+        "numbers": "$e^{0.1}\\approx1+0.1+0.005+0.0001667=1.1051667$, within $0.0000035$ of the true value."
+      },
+      {
+        "title": "Logarithm compression",
+        "background": "Log transforms convert multiplicative changes into additive ones; near $1$, Maclaurin gives quick estimates.",
+        "numbers": "$\\ln(1.02)\\approx0.02-0.0002+0.00000267=0.0198027$."
+      },
+      {
+        "title": "Sigmoid near zero",
+        "background": "A classifier logit near zero has probability near one half, with slope one quarter.",
+        "numbers": "For logit $0.4$, the linear estimate gives $0.5+0.1=0.6$; true sigmoid is about $0.5987$."
+      },
+      {
+        "title": "Cosine similarity perturbations",
+        "background": "When embeddings rotate by a small angle, cosine changes quadratically, not linearly.",
+        "numbers": "$\\cos(0.1)\\approx1-0.1^2/2=0.995$, close to $0.995004$."
+      },
+      {
+        "title": "Gradient checking",
+        "background": "Finite difference checks rely on Maclaurin expansion to explain why central differences cancel even-order error terms.",
+        "numbers": "For $f(x+h)-f(x-h)$, the $h^2$ terms cancel, leaving $2hf'(x)+O(h^3)$; with $h=10^{-3}$, leading error is on the order of $10^{-6}$."
+      }
+    ],
+    "applicationsClose": "Maclaurin series are the small-input language of computation: when zero is nearby, powers become cheap, accurate corrections.",
+    "takeaways": [
+      "A Maclaurin series is a Taylor series centered at $0$.",
+      "The core formulas for $e^x$, $\\sin x$, $\\cos x$, and $\\ln(1+x)$ come from derivatives at zero.",
+      "Accuracy is strongest near zero and must respect the interval of convergence."
+    ],
     "prereqs": [
       "math-01-58"
     ]
@@ -1773,19 +15668,272 @@
   B({
     "id": "math-01-60",
     "title": "Numerical differentiation",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: numerical differentiation.",
+    "tagline": "Estimate a derivative from nearby function values, while balancing truncation error against roundoff error.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Maclaurin series</i>"
+        "derivative as a limit",
+        "Taylor series",
+        "limits",
+        "function evaluation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Numerical integration</i>"
+        "numerical integration",
+        "gradient checking",
+        "automatic differentiation"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "finite differences",
+        "Taylor error terms",
+        "floating-point arithmetic",
+        "partial derivatives"
       ]
     },
+    "motivation": "<p>Sometimes you can evaluate a function but cannot easily differentiate it. Maybe it is a simulator, a legacy model, or a complicated metric. The derivative is still useful because it tells you local sensitivity.</p><p><b>Numerical differentiation</b> estimates that sensitivity by sampling nearby points. The art is choosing a step size $h$: too large and the secant line is crude; too small and floating-point subtraction erases useful digits.</p>",
+    "definition": "<p>The forward difference estimates $$f'(x)\\approx\\frac{f(x+h)-f(x)}{h},$$ with error of order $h$. The central difference estimates $$f'(x)\\approx\\frac{f(x+h)-f(x-h)}{2h},$$ with error of order $h^2$ for smooth $f$. Taylor expansion explains this: $f(x+h)=f(x)+hf'(x)+\\frac{h^2}{2}f''(x)+\\cdots$.</p><p><b>Assumptions that matter:</b> the function should be smooth near $x$; $h$ must be small but not so small that roundoff dominates; central differences need two function evaluations; nondifferentiable points cannot be fixed by a formula.</p>",
+    "worked": {
+      "problem": "Estimate $f'(2)$ for $f(x)=x^3$ using the central difference with $h=0.01$.",
+      "skills": [
+        "central difference",
+        "function evaluation",
+        "error awareness"
+      ],
+      "strategy": "Evaluate the function once to the right and once to the left, then divide the symmetric change by $2h$.",
+      "steps": [
+        {
+          "do": "Compute the right input",
+          "result": "$2+h=2.01$",
+          "why": "central difference samples to the right"
+        },
+        {
+          "do": "Evaluate the right value",
+          "result": "$f(2.01)=2.01^3=8.120601$",
+          "why": "cube the right input"
+        },
+        {
+          "do": "Compute the left input",
+          "result": "$2-h=1.99$",
+          "why": "central difference samples to the left"
+        },
+        {
+          "do": "Evaluate the left value",
+          "result": "$f(1.99)=1.99^3=7.880599$",
+          "why": "cube the left input"
+        },
+        {
+          "do": "Subtract the values",
+          "result": "$8.120601-7.880599=0.240002$",
+          "why": "symmetric change in output"
+        },
+        {
+          "do": "Compute the denominator",
+          "result": "$2h=0.02$",
+          "why": "central difference spans width $2h$"
+        },
+        {
+          "do": "Divide",
+          "result": "$0.240002/0.02=12.0001$",
+          "why": "slope estimate"
+        }
+      ],
+      "verify": "The exact derivative is $f'(x)=3x^2$, so $f'(2)=12$. The estimate $12.0001$ is off by $0.0001$.",
+      "answer": "$f'(2)\\approx12.0001$ using central difference with $h=0.01$.",
+      "connects": "Finite differences are derivatives with a finite step; Taylor series explains the error."
+    },
+    "practice": [
+      {
+        "problem": "Estimate $f'(1)$ for $f(x)=x^2$ using forward difference with $h=0.1$.",
+        "steps": [
+          {
+            "do": "Compute the right input",
+            "result": "$1+h=1.1$",
+            "why": "forward difference looks ahead"
+          },
+          {
+            "do": "Evaluate the right value",
+            "result": "$f(1.1)=1.21$",
+            "why": "square $1.1$"
+          },
+          {
+            "do": "Evaluate the base value",
+            "result": "$f(1)=1$",
+            "why": "starting value"
+          },
+          {
+            "do": "Subtract",
+            "result": "$1.21-1=0.21$",
+            "why": "change in output"
+          },
+          {
+            "do": "Divide by $h$",
+            "result": "$0.21/0.1=2.1$",
+            "why": "slope estimate"
+          }
+        ],
+        "answer": "$f'(1)\\approx2.1$; the exact value is $2$."
+      },
+      {
+        "problem": "Estimate $\\frac{d}{dx}\\sin x$ at $x=0$ using central difference with $h=0.01$.",
+        "steps": [
+          {
+            "do": "Write the central formula",
+            "result": "$\\dfrac{\\sin(0.01)-\\sin(-0.01)}{0.02}$",
+            "why": "use $2h=0.02$"
+          },
+          {
+            "do": "Use odd symmetry",
+            "result": "$\\sin(-0.01)=-\\sin(0.01)$",
+            "why": "sine is odd"
+          },
+          {
+            "do": "Simplify the numerator",
+            "result": "$2\\sin(0.01)$",
+            "why": "subtracting the negative doubles it"
+          },
+          {
+            "do": "Approximate $\\sin(0.01)$",
+            "result": "$0.0099998333$",
+            "why": "small-angle value"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.0199996666/0.02=0.99998333$",
+            "why": "central estimate"
+          }
+        ],
+        "answer": "Approximately $0.99998333$, close to the exact derivative $1$."
+      },
+      {
+        "problem": "Use $f(x)=e^x$, $x=0$, and forward difference with $h=0.001$.",
+        "steps": [
+          {
+            "do": "Write the estimate",
+            "result": "$\\dfrac{e^{0.001}-e^0}{0.001}$",
+            "why": "forward difference formula"
+          },
+          {
+            "do": "Evaluate $e^0$",
+            "result": "$1$",
+            "why": "base value"
+          },
+          {
+            "do": "Approximate $e^{0.001}$",
+            "result": "$1.0010005001667$",
+            "why": "small exponential expansion"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.0010005001667$",
+            "why": "change in output"
+          },
+          {
+            "do": "Divide",
+            "result": "$1.0005001667$",
+            "why": "slope estimate"
+          }
+        ],
+        "answer": "$e'(0)\\approx1.0005001667$; exact is $1$."
+      },
+      {
+        "problem": "Estimate $f'(3)$ for $f(x)=\\ln x$ using central difference with $h=0.1$.",
+        "steps": [
+          {
+            "do": "Compute the sampled inputs",
+            "result": "$3.1$ and $2.9$",
+            "why": "move right and left by $0.1$"
+          },
+          {
+            "do": "Evaluate the logs",
+            "result": "$\\ln(3.1)\\approx1.131402$ and $\\ln(2.9)\\approx1.064711$",
+            "why": "function values"
+          },
+          {
+            "do": "Subtract",
+            "result": "$1.131402-1.064711=0.066691$",
+            "why": "symmetric output change"
+          },
+          {
+            "do": "Compute the denominator",
+            "result": "$2h=0.2$",
+            "why": "central span"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.066691/0.2=0.333455$",
+            "why": "slope estimate"
+          }
+        ],
+        "answer": "$f'(3)\\approx0.333455$, close to exact $1/3$."
+      },
+      {
+        "problem": "A scalar loss has $L(1.001)=2.006003$, $L(0.999)=1.994003$. Estimate $L'(1)$ by central difference with $h=0.001$.",
+        "steps": [
+          {
+            "do": "Write the formula",
+            "result": "$\\dfrac{L(1.001)-L(0.999)}{2(0.001)}$",
+            "why": "central difference around $1$"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$\\dfrac{2.006003-1.994003}{0.002}$",
+            "why": "use the measured losses"
+          },
+          {
+            "do": "Subtract",
+            "result": "$0.012000$",
+            "why": "change in loss"
+          },
+          {
+            "do": "Divide",
+            "result": "$0.012/0.002=6$",
+            "why": "gradient estimate"
+          },
+          {
+            "do": "Interpret",
+            "result": "a unit increase in the parameter raises loss by about $6$ locally",
+            "why": "the derivative is local sensitivity"
+          }
+        ],
+        "answer": "$L'(1)\\approx6$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Gradient checking",
+        "background": "Before trusting backprop, engineers compare analytic gradients with finite-difference estimates.",
+        "numbers": "If backprop gives $3.0000$ and central difference gives $3.0002$, relative error is about $0.0002/3.0001\\approx6.7\\times10^{-5}$."
+      },
+      {
+        "title": "Sensitivity of simulations",
+        "background": "A simulator may expose outputs but not derivatives, so finite differences estimate how inputs affect results.",
+        "numbers": "If drag at $v=10.01$ is $50.10005$ and at $9.99$ is $49.90005$, the derivative is $0.2/0.02=10$."
+      },
+      {
+        "title": "Hyperparameter response",
+        "background": "Teams sometimes estimate how validation loss changes with a hyperparameter when analytic gradients are unavailable.",
+        "numbers": "Loss $0.421$ at $\\lambda=0.011$ and $0.425$ at $0.009$ gives slope $(0.421-0.425)/0.002=-2$."
+      },
+      {
+        "title": "Image gradients",
+        "background": "Edge detectors approximate spatial derivatives of pixel intensity.",
+        "numbers": "Neighboring pixels $120$ and $100$ two pixels apart give central difference $(120-100)/2=10$ intensity units per pixel."
+      },
+      {
+        "title": "Numerical stability",
+        "background": "Choosing $h$ is a tradeoff: truncation error falls as $h$ shrinks, roundoff error grows when subtracting nearly equal numbers.",
+        "numbers": "For central differences in double precision, a common scale is $h\\approx10^{-5}$ to $10^{-6}$; at $h=10^{-12}$, subtractive cancellation can dominate."
+      },
+      {
+        "title": "Nondifferentiable losses",
+        "background": "Finite differences reveal corners rather than hiding them.",
+        "numbers": "For $f(x)=|x|$ at $0$, forward difference with $h=0.01$ gives $1$, backward gives $-1$, so there is no single derivative."
+      }
+    ],
+    "applicationsClose": "Numerical differentiation is beautifully simple, but its reliability comes from respecting smoothness, step size, and floating-point limits.",
+    "takeaways": [
+      "Forward difference has error order $h$; central difference has error order $h^2$ for smooth functions.",
+      "Too-large $h$ causes truncation error; too-small $h$ causes roundoff error.",
+      "Finite differences are central to gradient checking and black-box sensitivity analysis."
+    ],
     "prereqs": [
       "math-01-59"
     ]
@@ -1794,19 +15942,267 @@
   B({
     "id": "math-01-61",
     "title": "Numerical integration",
-    "tier": "🟢",
-    "tagline": "One concept from Single-variable calculus: numerical integration.",
+    "tagline": "Approximate accumulated area from function samples when an exact antiderivative is unavailable or unnecessary.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Numerical differentiation</i>"
+        "definite integrals",
+        "Riemann sums",
+        "Taylor series",
+        "numerical differentiation"
       ],
       "leadsTo": [
-        "the next lesson, <i>Backpropagation as the chain rule</i>"
+        "quadrature",
+        "Monte Carlo integration",
+        "differential equation solvers"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "trapezoidal rule",
+        "Simpson's rule",
+        "error estimates",
+        "sampling grids"
       ]
     },
+    "motivation": "<p>Definite integrals measure accumulation: area, probability, work, total error. But many useful functions do not have a pleasant antiderivative, and measured data may arrive only as samples.</p><p><b>Numerical integration</b> replaces the curve by simple shapes. Rectangles are the first idea; trapezoids use straight-line tops; Simpson's rule uses parabolas. Each method turns continuous accumulation into arithmetic.</p>",
+    "definition": "<p>On $[a,b]$ with $n$ equal subintervals of width $h=(b-a)/n$, the trapezoidal rule is $$\\int_a^b f(x)\\,dx\\approx h\\left[\\frac{f(a)+f(b)}{2}+\\sum_{k=1}^{n-1}f(a+kh)\\right].$$ For even $n$, Simpson's rule is $$\\int_a^b f(x)\\,dx\\approx\\frac{h}{3}\\left[f(x_0)+4f(x_1)+2f(x_2)+\\cdots+4f(x_{n-1})+f(x_n)\\right].$$</p><p><b>Assumptions that matter:</b> smooth functions give faster convergence; Simpson's rule needs an even number of subintervals; discontinuities and sharp spikes require care; sampled data limits which rule is possible; roundoff can matter when using extremely fine grids.</p>",
+    "worked": {
+      "problem": "Approximate $\\displaystyle\\int_0^1 x^2\\,dx$ using Simpson's rule with $n=2$.",
+      "skills": [
+        "Simpson's rule",
+        "function sampling",
+        "weighted sums"
+      ],
+      "strategy": "Use three points, weight the middle by $4$, and multiply by $h/3$.",
+      "steps": [
+        {
+          "do": "Compute the step width",
+          "result": "$h=(1-0)/2=0.5$",
+          "why": "two equal subintervals"
+        },
+        {
+          "do": "List the nodes",
+          "result": "$x_0=0,\\ x_1=0.5,\\ x_2=1$",
+          "why": "Simpson's rule uses endpoints and midpoint"
+        },
+        {
+          "do": "Evaluate the function",
+          "result": "$f(0)=0,\\ f(0.5)=0.25,\\ f(1)=1$",
+          "why": "square each node"
+        },
+        {
+          "do": "Apply Simpson weights",
+          "result": "$0+4(0.25)+1$",
+          "why": "middle point has weight $4$"
+        },
+        {
+          "do": "Sum the bracket",
+          "result": "$2$",
+          "why": "$4(0.25)=1$"
+        },
+        {
+          "do": "Multiply by $h/3$",
+          "result": "$\\dfrac{0.5}{3}\\cdot2=\\frac13$",
+          "why": "final Simpson scaling"
+        }
+      ],
+      "verify": "The exact integral is $x^3/3$ from $0$ to $1$, which is $1/3$. Simpson's rule is exact here because $x^2$ is a polynomial of degree $2$.",
+      "answer": "$\\displaystyle\\int_0^1x^2\\,dx\\approx\\frac13$.",
+      "connects": "Numerical integration converts area into sampled values plus weights."
+    },
+    "practice": [
+      {
+        "problem": "Approximate $\\int_0^1 x\\,dx$ using the trapezoidal rule with $n=1$.",
+        "steps": [
+          {
+            "do": "Compute the width",
+            "result": "$h=1$",
+            "why": "one interval from $0$ to $1$"
+          },
+          {
+            "do": "Evaluate endpoints",
+            "result": "$f(0)=0$ and $f(1)=1$",
+            "why": "endpoint samples"
+          },
+          {
+            "do": "Average endpoint heights",
+            "result": "$(0+1)/2=0.5$",
+            "why": "a trapezoid uses the average height"
+          },
+          {
+            "do": "Multiply by width",
+            "result": "$1\\cdot0.5=0.5$",
+            "why": "area of the trapezoid"
+          },
+          {
+            "do": "Compare to exact shape",
+            "result": "a triangle of base $1$ and height $1$",
+            "why": "area is also $1/2$"
+          }
+        ],
+        "answer": "$0.5$."
+      },
+      {
+        "problem": "Approximate $\\int_0^2 x^2\\,dx$ using the trapezoidal rule with $n=2$.",
+        "steps": [
+          {
+            "do": "Compute the width",
+            "result": "$h=(2-0)/2=1$",
+            "why": "two subintervals"
+          },
+          {
+            "do": "List nodes",
+            "result": "$0,1,2$",
+            "why": "equally spaced grid"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$f(0)=0,\\ f(1)=1,\\ f(2)=4$",
+            "why": "square each node"
+          },
+          {
+            "do": "Apply trapezoidal rule",
+            "result": "$1\\left[\\frac{0+4}{2}+1\\right]$",
+            "why": "endpoints half weight, interior full weight"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$3$",
+            "why": "$2+1=3$"
+          }
+        ],
+        "answer": "The trapezoidal estimate is $3$; exact value is $8/3$."
+      },
+      {
+        "problem": "Approximate $\\int_0^{\\pi}\\sin x\\,dx$ using Simpson's rule with $n=2$.",
+        "steps": [
+          {
+            "do": "Compute the width",
+            "result": "$h=\\pi/2$",
+            "why": "two equal subintervals"
+          },
+          {
+            "do": "List nodes",
+            "result": "$0,\\ \\pi/2,\\ \\pi$",
+            "why": "endpoints and midpoint"
+          },
+          {
+            "do": "Evaluate sine",
+            "result": "$0,\\ 1,\\ 0$",
+            "why": "standard sine values"
+          },
+          {
+            "do": "Apply Simpson weights",
+            "result": "$\\frac{\\pi/2}{3}[0+4(1)+0]$",
+            "why": "middle point weight $4$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\frac{2\\pi}{3}\\approx2.094$",
+            "why": "multiply the constants"
+          }
+        ],
+        "answer": "Simpson estimate $2\\pi/3\\approx2.094$; exact value is $2$."
+      },
+      {
+        "problem": "Use the midpoint rule with four rectangles to approximate $\\int_0^1 e^x\\,dx$.",
+        "steps": [
+          {
+            "do": "Compute the width",
+            "result": "$h=1/4=0.25$",
+            "why": "four equal rectangles"
+          },
+          {
+            "do": "List midpoints",
+            "result": "$0.125,0.375,0.625,0.875$",
+            "why": "middle of each subinterval"
+          },
+          {
+            "do": "Evaluate approximately",
+            "result": "$1.1331,1.4550,1.8682,2.3989$",
+            "why": "values of $e^x$ at the midpoints"
+          },
+          {
+            "do": "Sum values",
+            "result": "$6.8552$",
+            "why": "total sampled height"
+          },
+          {
+            "do": "Multiply by width",
+            "result": "$0.25(6.8552)=1.7138$",
+            "why": "midpoint estimate"
+          }
+        ],
+        "answer": "Approximately $1.7138$; exact $e-1\\approx1.7183$."
+      },
+      {
+        "problem": "A validation curve has losses $0.80,0.62,0.55,0.53,0.52$ at epochs $0,1,2,3,4$. Approximate area under loss by the trapezoidal rule.",
+        "steps": [
+          {
+            "do": "Set the width",
+            "result": "$h=1$ epoch",
+            "why": "samples are one epoch apart"
+          },
+          {
+            "do": "Half-weight endpoints",
+            "result": "$(0.80+0.52)/2=0.66$",
+            "why": "trapezoidal endpoints count half"
+          },
+          {
+            "do": "Sum interior values",
+            "result": "$0.62+0.55+0.53=1.70$",
+            "why": "middle samples count fully"
+          },
+          {
+            "do": "Add bracket terms",
+            "result": "$0.66+1.70=2.36$",
+            "why": "total weighted height"
+          },
+          {
+            "do": "Multiply by width",
+            "result": "$1\\cdot2.36=2.36$",
+            "why": "area in loss-epochs"
+          }
+        ],
+        "answer": "Approximate area under the loss curve is $2.36$ loss-epochs."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Area under curves",
+        "background": "Metrics like AUC summarize a curve by accumulated area, often from sampled points.",
+        "numbers": "For ROC points with trapezoids of widths $0.2$ and average heights $0.7,0.85,0.9,0.95,1.0$, AUC estimate is $0.2(4.4)=0.88$."
+      },
+      {
+        "title": "Expected values",
+        "background": "Continuous expectations are integrals, and numerical quadrature estimates them when formulas are difficult.",
+        "numbers": "For three-point grid weights $0.25,0.5,0.25$ and values $1,4,9$, estimated expectation is $0.25+2+2.25=4.5$."
+      },
+      {
+        "title": "Physics and robotics",
+        "background": "Position is the integral of velocity; sampled sensor velocities require numerical integration.",
+        "numbers": "Velocities $0,2,3$ m/s at times $0,1,2$ give trapezoid distance $1[(0+3)/2+2]=3.5$ m."
+      },
+      {
+        "title": "Training diagnostics",
+        "background": "Area under a loss curve measures total training cost over time, not just final loss.",
+        "numbers": "Losses $1.0,0.7,0.6$ over two hours give trapezoid area $1[(1.0+0.6)/2+0.7]=1.5$ loss-hours."
+      },
+      {
+        "title": "Bayesian normalization",
+        "background": "Posterior densities often need a normalizing integral that is unavailable in closed form.",
+        "numbers": "Grid density values $0.1,0.4,0.1$ over width $0.5$ give trapezoid mass $0.5[(0.1+0.1)/2+0.4]=0.25$."
+      },
+      {
+        "title": "Monte Carlo integration",
+        "background": "High-dimensional integrals are often estimated by random samples rather than grids.",
+        "numbers": "If sampled values average $0.37$ over a unit square, the Monte Carlo integral estimate is $0.37\\cdot1=0.37$; with $10,000$ samples, random error often scales like $1/100$."
+      }
+    ],
+    "applicationsClose": "Numerical integration is accumulation by samples: choose shapes, apply weights, and keep an honest eye on error.",
+    "takeaways": [
+      "Trapezoidal and Simpson's rules approximate integrals with weighted function samples.",
+      "Smaller grid spacing usually improves accuracy, but smoothness and roundoff matter.",
+      "Many ML metrics, expectations, and diagnostics are numerical integrals in practice."
+    ],
     "prereqs": [
       "math-01-60"
     ]
@@ -1815,19 +16211,334 @@
   B({
     "id": "math-01-62",
     "title": "Backpropagation as the chain rule",
-    "tier": "🟢",
-    "tagline": "Capstone — how single-variable calculus shows up directly in CS & ML.",
+    "tagline": "Backprop is not magic; it is the chain rule organized so every intermediate value shares its gradient once.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Numerical integration</i>"
+        "the chain rule",
+        "derivatives",
+        "partial derivatives",
+        "numerical differentiation"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "gradient descent",
+        "automatic differentiation",
+        "deep neural networks",
+        "optimization in ML"
       ],
       "usedWith": [
-        "the other concepts in Single-variable calculus and its capstone"
+        "computational graphs",
+        "Jacobians",
+        "matrix multiplication",
+        "Taylor linearization"
       ]
     },
+    "motivation": "<p>You already know the chain rule for a composition like $f(g(x))$: multiply the outside derivative by the inside derivative. A neural network is just a large composition with many shared intermediate values.</p><p><b>Backpropagation</b> is the chain rule with bookkeeping. First we run forward and store intermediate values. Then we run backward, passing sensitivities from the loss to each parameter. The warmth of the idea is this: every node only needs to know how its own output changes with its inputs.</p>",
+    "definition": "<p>For a computational graph ending in loss $L$, the backward value at a node $v$ is its adjoint $\\bar v=\\partial L/\\partial v$. If $u$ feeds into children $v_1,\\ldots,v_k$, the multivariable chain rule gives $$\\bar u=\\sum_{j=1}^{k}\\bar v_j\\frac{\\partial v_j}{\\partial u}.$$ For a layer $z=wx+b$ followed by activation $a=\\phi(z)$, backprop sends $\\bar z=\\bar a\\,\\phi'(z)$, then $\\partial L/\\partial w=\\bar z\\,x$, $\\partial L/\\partial b=\\bar z$, and $\\bar x=\\bar z\\,w$.</p><p><b>Assumptions that matter:</b> operations must be differentiable where gradients are taken, or have a chosen subgradient; dimensions must match; cached forward values are needed for local derivatives; gradients can vanish or explode through repeated multiplication; numerical gradient checks validate implementation but are too slow for training.</p>",
+    "worked": {
+      "problem": "Backpropagate through a tiny 2-layer network: $x=2$, $w_1=0.5$, $b_1=0.1$, $a=w_1x+b_1$, ReLU $h=\\max(0,a)$, $w_2=-1.5$, $b_2=0.2$, output $y=w_2h+b_2$, target $t=-1$, loss $L=\\frac12(y-t)^2$. Find gradients for all four parameters.",
+      "skills": [
+        "computational graph",
+        "chain rule",
+        "ReLU derivative",
+        "parameter gradients"
+      ],
+      "strategy": "Do one clean forward pass, then move backward from $L$ to $y$ to the second layer to ReLU to the first layer.",
+      "steps": [
+        {
+          "do": "Compute first pre-activation",
+          "result": "$a=0.5(2)+0.1=1.1$",
+          "why": "linear layer uses $w_1x+b_1$"
+        },
+        {
+          "do": "Apply ReLU",
+          "result": "$h=\\max(0,1.1)=1.1$",
+          "why": "positive inputs pass through unchanged"
+        },
+        {
+          "do": "Compute output",
+          "result": "$y=-1.5(1.1)+0.2=-1.45$",
+          "why": "second linear layer"
+        },
+        {
+          "do": "Compute prediction error",
+          "result": "$y-t=-1.45-(-1)=-0.45$",
+          "why": "squared loss depends on this residual"
+        },
+        {
+          "do": "Compute loss",
+          "result": "$L=\\frac12(-0.45)^2=0.10125$",
+          "why": "half squared error"
+        },
+        {
+          "do": "Start backward at the loss",
+          "result": "$\\bar y=\\partial L/\\partial y=y-t=-0.45$",
+          "why": "derivative of $\\frac12(y-t)^2$"
+        },
+        {
+          "do": "Differentiate with respect to $w_2$",
+          "result": "$\\partial L/\\partial w_2=\\bar y\\,h=(-0.45)(1.1)=-0.495$",
+          "why": "local derivative of $y$ with respect to $w_2$ is $h$"
+        },
+        {
+          "do": "Differentiate with respect to $b_2$",
+          "result": "$\\partial L/\\partial b_2=\\bar y=-0.45$",
+          "why": "local derivative of $y$ with respect to $b_2$ is $1$"
+        },
+        {
+          "do": "Pass gradient to $h$",
+          "result": "$\\bar h=\\bar y\\,w_2=(-0.45)(-1.5)=0.675$",
+          "why": "local derivative of $y$ with respect to $h$ is $w_2$"
+        },
+        {
+          "do": "Differentiate ReLU",
+          "result": "$\\partial h/\\partial a=1$",
+          "why": "$a=1.1>0$"
+        },
+        {
+          "do": "Pass gradient to $a$",
+          "result": "$\\bar a=\\bar h\\cdot1=0.675$",
+          "why": "chain through the activation"
+        },
+        {
+          "do": "Differentiate with respect to $w_1$",
+          "result": "$\\partial L/\\partial w_1=\\bar a\\,x=0.675(2)=1.35$",
+          "why": "local derivative of $a$ with respect to $w_1$ is $x$"
+        },
+        {
+          "do": "Differentiate with respect to $b_1$",
+          "result": "$\\partial L/\\partial b_1=\\bar a=0.675$",
+          "why": "local derivative of $a$ with respect to $b_1$ is $1$"
+        }
+      ],
+      "verify": "A small gradient-descent step with learning rate $0.1$ gives $w_2=-1.4505$, $b_2=0.245$, $w_1=0.365$, $b_1=0.0325$. The output moves from $-1.45$ to about $-1.355$, closer to target $-1$ and with lower loss.",
+      "answer": "$\nabla L=(\\partial L/\\partial w_1,\\partial L/\\partial b_1,\\partial L/\\partial w_2,\\partial L/\\partial b_2)=(1.35,0.675,-0.495,-0.45)$.",
+      "connects": "Backprop is the chain rule flowing backward through a computational graph, reusing each local derivative exactly where it is needed."
+    },
+    "practice": [
+      {
+        "problem": "Let $u=3x$, $v=u^2$, $L=v$ with $x=2$. Compute $dL/dx$ by backprop.",
+        "steps": [
+          {
+            "do": "Forward compute $u$",
+            "result": "$u=3(2)=6$",
+            "why": "first operation"
+          },
+          {
+            "do": "Forward compute $v$",
+            "result": "$v=6^2=36$",
+            "why": "second operation"
+          },
+          {
+            "do": "Start backward",
+            "result": "$\\bar v=1$",
+            "why": "$L=v$"
+          },
+          {
+            "do": "Pass to $u$",
+            "result": "$\\bar u=\\bar v\\cdot2u=1\\cdot12=12$",
+            "why": "derivative of $u^2$ is $2u$"
+          },
+          {
+            "do": "Pass to $x$",
+            "result": "$\\bar x=\\bar u\\cdot3=36$",
+            "why": "derivative of $3x$ is $3$"
+          }
+        ],
+        "answer": "$dL/dx=36$."
+      },
+      {
+        "problem": "For $z=wx+b$, $L=\\frac12(z-t)^2$ with $x=4$, $w=0.25$, $b=0.5$, $t=2$, find $\\partial L/\\partial w$ and $\\partial L/\\partial b$.",
+        "steps": [
+          {
+            "do": "Compute $z$",
+            "result": "$z=0.25(4)+0.5=1.5$",
+            "why": "forward linear output"
+          },
+          {
+            "do": "Compute residual",
+            "result": "$z-t=1.5-2=-0.5$",
+            "why": "loss depends on the residual"
+          },
+          {
+            "do": "Start backward",
+            "result": "$\\bar z=z-t=-0.5$",
+            "why": "derivative of half squared error"
+          },
+          {
+            "do": "Gradient for $w$",
+            "result": "$\\partial L/\\partial w=\\bar z\\,x=(-0.5)(4)=-2$",
+            "why": "local derivative of $z$ with respect to $w$ is $x$"
+          },
+          {
+            "do": "Gradient for $b$",
+            "result": "$\\partial L/\\partial b=\\bar z=-0.5$",
+            "why": "local derivative of $z$ with respect to $b$ is $1$"
+          }
+        ],
+        "answer": "$\\partial L/\\partial w=-2$, $\\partial L/\\partial b=-0.5$."
+      },
+      {
+        "problem": "Let $a=-0.3$, $h=\\operatorname{ReLU}(a)$, $y=2h$, and $L=y^2$. Find $dL/da$.",
+        "steps": [
+          {
+            "do": "Apply ReLU",
+            "result": "$h=0$",
+            "why": "negative pre-activation is clipped"
+          },
+          {
+            "do": "Compute output",
+            "result": "$y=2(0)=0$",
+            "why": "linear output after ReLU"
+          },
+          {
+            "do": "Start backward",
+            "result": "$\\bar y=2y=0$",
+            "why": "derivative of $y^2$"
+          },
+          {
+            "do": "Pass to $h$",
+            "result": "$\\bar h=\\bar y\\cdot2=0$",
+            "why": "local derivative of $2h$ is $2$"
+          },
+          {
+            "do": "Differentiate ReLU",
+            "result": "$\\partial h/\\partial a=0$",
+            "why": "$a<0$"
+          },
+          {
+            "do": "Pass to $a$",
+            "result": "$\\bar a=0\\cdot0=0$",
+            "why": "the inactive ReLU blocks the gradient"
+          }
+        ],
+        "answer": "$dL/da=0$."
+      },
+      {
+        "problem": "For $s=w_1x_1+w_2x_2+b$, $p=\\sigma(s)$, $L=-\\ln p$ with $x_1=1$, $x_2=2$, $w_1=0.4$, $w_2=-0.1$, $b=0$, compute gradients.",
+        "steps": [
+          {
+            "do": "Compute the logit",
+            "result": "$s=0.4(1)-0.1(2)+0=0.2$",
+            "why": "linear score"
+          },
+          {
+            "do": "Compute the probability",
+            "result": "$p=\\sigma(0.2)\\approx0.5498$",
+            "why": "sigmoid output"
+          },
+          {
+            "do": "Use the logistic-loss gradient",
+            "result": "$\\bar s=p-1\\approx-0.4502$",
+            "why": "for target $1$, cross-entropy with sigmoid simplifies"
+          },
+          {
+            "do": "Gradient for $w_1$",
+            "result": "$\\partial L/\\partial w_1=\\bar s x_1=-0.4502$",
+            "why": "local derivative of $s$ with respect to $w_1$ is $x_1$"
+          },
+          {
+            "do": "Gradient for $w_2$",
+            "result": "$\\partial L/\\partial w_2=\\bar s x_2=-0.9004$",
+            "why": "local derivative of $s$ with respect to $w_2$ is $x_2$"
+          },
+          {
+            "do": "Gradient for $b$",
+            "result": "$\\partial L/\\partial b=\\bar s=-0.4502$",
+            "why": "local derivative of $s$ with respect to $b$ is $1$"
+          }
+        ],
+        "answer": "Approximately $(-0.4502,-0.9004,-0.4502)$ for $(w_1,w_2,b)$."
+      },
+      {
+        "problem": "Gradient-check the worked example's $w_2$ using $h=0.001$, with all other values fixed. Compare to backprop's $-0.495$.",
+        "steps": [
+          {
+            "do": "Perturb upward",
+            "result": "$w_2^+=-1.499$",
+            "why": "add $0.001$ to $w_2$"
+          },
+          {
+            "do": "Compute upward output",
+            "result": "$y^+=-1.499(1.1)+0.2=-1.4489$",
+            "why": "reuse cached $h=1.1$"
+          },
+          {
+            "do": "Compute upward loss",
+            "result": "$L^+=\\frac12(-1.4489+1)^2\\approx0.1007556$",
+            "why": "target is $-1$"
+          },
+          {
+            "do": "Perturb downward",
+            "result": "$w_2^-=-1.501$",
+            "why": "subtract $0.001$ from $w_2$"
+          },
+          {
+            "do": "Compute downward output",
+            "result": "$y^-=-1.501(1.1)+0.2=-1.4511$",
+            "why": "reuse cached $h=1.1$"
+          },
+          {
+            "do": "Compute downward loss",
+            "result": "$L^-=\\frac12(-1.4511+1)^2\\approx0.1017456$",
+            "why": "target is $-1$"
+          },
+          {
+            "do": "Apply central difference",
+            "result": "$\\dfrac{L^+-L^-}{0.002}\\approx-0.495$",
+            "why": "finite difference estimates the gradient"
+          }
+        ],
+        "answer": "The gradient check gives about $-0.495$, matching backprop."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Training neural networks",
+        "background": "Backprop makes deep learning practical by computing all parameter gradients in roughly the cost of one forward pass plus one backward pass.",
+        "numbers": "A model with $10^7$ parameters would need about $2\\times10^7$ loss evaluations for central-difference gradients, but backprop gets all gradients with one forward and one backward sweep."
+      },
+      {
+        "title": "Automatic differentiation",
+        "background": "Modern frameworks build a computational graph and apply the same chain-rule bookkeeping automatically.",
+        "numbers": "For $y=(3x+1)^2$ at $x=2$, autodiff stores $u=7$ and returns $dy/dx=2u\\cdot3=42$."
+      },
+      {
+        "title": "Gradient checking",
+        "background": "Finite differences are too slow for training but excellent for catching implementation mistakes in custom layers.",
+        "numbers": "If analytic gradient is $-0.495$ and finite difference is $-0.4949$, the absolute difference is $0.0001$, small enough for many checks."
+      },
+      {
+        "title": "Vanishing gradients",
+        "background": "Repeated chain-rule multiplication by numbers below one can shrink signals across many layers.",
+        "numbers": "Multiplying by $0.5$ through $20$ layers gives $0.5^{20}\\approx9.54\\times10^{-7}$, almost no gradient."
+      },
+      {
+        "title": "Exploding gradients",
+        "background": "The same chain rule can also multiply by numbers above one repeatedly, causing unstable updates.",
+        "numbers": "Multiplying by $1.2$ through $50$ layers gives $1.2^{50}\\approx9100$, so a small upstream gradient can become enormous."
+      },
+      {
+        "title": "Residual connections",
+        "background": "Skip connections give gradients an additive path around difficult layers, which helps deep networks train.",
+        "numbers": "If a residual block is $y=x+F(x)$ with $F'(x)=0.1$, then $dy/dx=1.1$ instead of only $0.1$."
+      },
+      {
+        "title": "Shared parameters",
+        "background": "When one parameter is used in multiple places, backprop sums contributions from every path.",
+        "numbers": "If a weight contributes gradients $0.3$, $-0.1$, and $0.8$ from three time steps, the total gradient is $1.0$."
+      },
+      {
+        "title": "Memory tradeoffs",
+        "background": "Backprop needs forward values, so large models trade memory for recomputation through checkpointing.",
+        "numbers": "Storing $24$ layer activations at $200$ MB each costs $4.8$ GB; checkpointing every fourth layer stores about $6$ activations, or $1.2$ GB, before recomputation overhead."
+      }
+    ],
+    "applicationsClose": "Backprop is the chain rule wearing an engineering uniform: local derivatives, cached values, summed paths, and gradients delivered to every parameter.",
+    "takeaways": [
+      "Backprop computes adjoints $\\bar v=\\partial L/\\partial v$ by moving backward through a computational graph.",
+      "Each node multiplies the upstream gradient by its local derivative; shared inputs sum gradient contributions.",
+      "Gradient checking, vanishing gradients, exploding gradients, and residual connections are all chain-rule consequences."
+    ],
     "prereqs": [
       "math-01-61"
     ]

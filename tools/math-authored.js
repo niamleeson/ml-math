@@ -389,7 +389,7 @@ const laplace = {
   ]
 };
 
-module.exports = {
+const inline = {
   "math-01-01": t1_functions,
   "math-01-02": t1_transform,
   "math-01-03": t1_exp,
@@ -399,3 +399,18 @@ module.exports = {
   "math-01-07": t1_limits,
   "math-03-27": laplace
 };
+
+// Merge any per-batch authored files from tools/authored/*.js. A directory file
+// that defines the same id OVERRIDES the inline version above, so batches can
+// supersede the early hand-authored lessons as the section is filled out.
+const fs = require("fs");
+const path = require("path");
+const merged = Object.assign({}, inline);
+const dir = path.join(__dirname, "authored");
+if (fs.existsSync(dir)) {
+  for (const f of fs.readdirSync(dir).sort()) {
+    if (f.endsWith(".js")) Object.assign(merged, require(path.join(dir, f)));
+  }
+}
+
+module.exports = merged;
