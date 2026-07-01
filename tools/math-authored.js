@@ -367,9 +367,33 @@ const laplace = {
     connects: "poles and stability — the roots in $s$ are the system's natural modes, and their real parts decide whether it decays, blows up, or oscillates."
   },
   practice: [
-    { problem: "$y'+3y=0,\\ y(0)=5$", answer: "$y=5e^{-3t}$" },
-    { problem: "$y'+y=e^{-2t},\\ y(0)=0$", answer: "$Y=\\dfrac{1}{(s+1)(s+2)}$, so $y=e^{-t}-e^{-2t}$" },
-    { problem: "$y''+2y'+5y=0,\\ y(0)=1,\\ y'(0)=0$: find the poles and classify", answer: "$s=-1\\pm2i$ → damped oscillation (stable)" }
+    { problem: "$y'+3y=0,\\ y(0)=5$", steps: [
+      { do: "Transform", result: "$sY-5+3Y=0$", why: "$\\mathcal{L}\\{y'\\}=sY-y(0)$" },
+      { do: "Isolate $Y$", result: "$Y=\\dfrac{5}{s+3}$", why: "collect and divide by $s+3$" },
+      { do: "Invert", result: "$y=5e^{-3t}$", why: "$\\mathcal{L}^{-1}\\{1/(s+a)\\}=e^{-at}$" }
+    ], answer: "$y=5e^{-3t}$" },
+    { problem: "$y'+y=e^{-2t},\\ y(0)=0$", steps: [
+      { do: "Transform both sides", result: "$sY+Y=\\dfrac{1}{s+2}$", why: "$\\mathcal{L}\\{e^{-2t}\\}=1/(s+2)$" },
+      { do: "Isolate $Y$", result: "$Y=\\dfrac{1}{(s+1)(s+2)}$", why: "divide by $s+1$" },
+      { do: "Partial fractions", result: "$Y=\\dfrac{1}{s+1}-\\dfrac{1}{s+2}$", why: "cover-up gives $A=1,B=-1$" },
+      { do: "Invert", result: "$y=e^{-t}-e^{-2t}$", why: "term by term" }
+    ], answer: "$y=e^{-t}-e^{-2t}$" },
+    { problem: "$y''+2y'+5y=0,\\ y(0)=1,\\ y'(0)=0$: find the poles and classify", steps: [
+      { do: "Transform", result: "$s^2Y-s+2(sY-1)+5Y=0$", why: "$\\mathcal{L}\\{y''\\}=s^2Y-sy(0)-y'(0)$" },
+      { do: "Solve for $Y$", result: "$Y=\\dfrac{s+2}{s^2+2s+5}$", why: "collect $Y$ terms" },
+      { do: "Find the poles", result: "$s=-1\\pm2i$", why: "roots of $s^2+2s+5$" },
+      { do: "Classify", result: "damped oscillation (stable)", why: "negative real part with nonzero imaginary part" }
+    ], answer: "poles $s=-1\\pm2i$; $y=e^{-t}(\\cos2t+\\tfrac12\\sin2t)$" },
+    { problem: "Invert $Y(s)=\\dfrac{s}{s^2+9}$", steps: [
+      { do: "Match the cosine form", result: "$\\dfrac{s}{s^2+\\omega^2}$ with $\\omega=3$", why: "$\\mathcal{L}\\{\\cos\\omega t\\}=s/(s^2+\\omega^2)$" },
+      { do: "Read off", result: "$\\cos3t$", why: "$\\omega^2=9$" }
+    ], answer: "$y(t)=\\cos3t$" },
+    { problem: "Solve $y'-y=0,\\ y(0)=2$ and note the stability", steps: [
+      { do: "Transform", result: "$sY-2-Y=0$", why: "$\\mathcal{L}\\{y'\\}=sY-y(0)$" },
+      { do: "Isolate $Y$", result: "$Y=\\dfrac{2}{s-1}$", why: "divide by $s-1$" },
+      { do: "Invert", result: "$y=2e^{t}$", why: "pole at $s=+1$" },
+      { do: "Read stability", result: "unstable (grows)", why: "the pole has positive real part" }
+    ], answer: "$y=2e^{t}$ — pole at $+1$, so it grows (unstable)" }
   ],
   applications: [
     { title: "Momentum & training stability", background: "Polyak's 1964 heavy-ball method; near a minimum it is a damped oscillator $\\ddot x+c\\dot x+x=0$ with poles $s=\\tfrac{-c\\pm\\sqrt{c^2-4}}{2}$.", numbers: "$c=0.5$: $-0.25\\pm0.97i$ (oscillates); $c=2$: $-1$ (critical, fastest); $c=3$: $-0.38,-2.62$ ($2.6\\times$ slower)." },

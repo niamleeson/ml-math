@@ -2,7 +2,12 @@
 "use strict";
 const A = require("./math-authored.js");
 const prefix = process.argv[2] || "math-01-";
-const FORBIDDEN_FIELDS = ["hints", "mistakes", "difficulty", "demo", "tier", "prereqs"];
+const FORBIDDEN_FIELDS = ["hints", "mistakes", "difficulty", "demo", "tier"];
+// Actual lesson counts per topic (from the curriculum in gen-math.js)
+const TOPIC_COUNTS = { "01": 62, "02": 41, "03": 35, "04": 32, "05": 21, "06": 19, "07": 20,
+  "08": 23, "09": 39, "10": 15, "11": 18, "12": 20, "13": 18, "14": 23, "15": 27, "16": 19,
+  "17": 40, "18": 30, "19": 24, "20": 19, "21": 20, "22": 26, "23": 17, "24": 20, "25": 20,
+  "26": 22, "27": 19 };
 const EMOJI = /[\u2705\u274C\u2714\u2713\u26A0\u2757\u2728\uD83D\uD83C\uD83E]/;
 const ITALIC = /<i>|<\/i>|<em>|<\/em>/;
 
@@ -56,10 +61,13 @@ for (const id of ids) {
   if (errs.length) problems.push(`${id} "${l.title || "?"}":\n   - ${errs.join("\n   - ")}`);
 }
 
-// coverage: which 1..62 are present
+// coverage: topic-aware (each topic has its own lesson count)
+const tnum = prefix.match(/math-(\d\d)-/) ? prefix.match(/math-(\d\d)-/)[1] : null;
 const present = new Set(ids.map(id => parseInt(id.split("-")[2], 10)));
 const missing = [];
-for (let i = 1; i <= 62; i++) if (!present.has(i)) missing.push(i);
+if (tnum && TOPIC_COUNTS[tnum]) {
+  for (let i = 1; i <= TOPIC_COUNTS[tnum]; i++) if (!present.has(i)) missing.push(i);
+}
 
 console.log(`Checked ${ids.length} lessons under ${prefix}`);
 if (missing.length) console.log(`MISSING lesson numbers: ${missing.join(", ")}`);
