@@ -1,7 +1,7 @@
 /* Authored lesson content for the All ML renderer, keyed by topic id.
    Each value is HTML rendered into a section card; MathJax typesets $...$ and $$...$$.
    Use String.raw`...` so LaTeX backslashes (\frac, \sqrt, \top) survive intact.
-   Topics with no entry here fall back to the five-section scaffold automatically. */
+   Topics with no entry here fall back to the four-section scaffold automatically. */
 window.ALLML_CONTENT = window.ALLML_CONTENT || {};
 
 window.ALLML_CONTENT["8.11"] = {
@@ -41,58 +41,51 @@ window.ALLML_CONTENT["8.11"] = {
       Every number below is executed in the companion notebook; the examples walk the formula's moving parts from a single
       number to a full pass.</p>
 
-    <p><b>Scoring — the dot product.</b> <b>(1)</b> each score is one dot product against a Query $a=[2,1]$:</p>
+    <p><b>Scoring — the dot product.</b> Each score is one dot product against a Query $a=[2,1]$:</p>
     <table class="mini">
       <tr><th>Key</th><th>$a\cdot k$</th><th>meaning</th></tr>
       <tr><td>$[2,1]$ aligned</td><td>$5$</td><td>attend hard</td></tr>
       <tr><td>$[-1,2]$ orthogonal</td><td>$0$</td><td>ignore</td></tr>
       <tr><td>$[-2,-1]$ opposite</td><td>$-5$</td><td>pushed away</td></tr>
     </table>
-    <p><b>(2)</b> magnitude scales it: $a\cdot[3,4]=10$ but $(2a)\cdot[3,4]=20$. <b>(3)</b> cosine removes magnitude:
-      $[1,0]\cdot[1,0]=1$ and $[1,0]\cdot[10,0]=10$, yet both have cosine $1.00$. <b>(4)</b> the score is <i>directed</i>:
-      with the matrix below $\text{score}(0\!\to\!1)=1$ while $\text{score}(1\!\to\!0)=0$ — that asymmetry is why $Q$ and $K$ are separate.</p>
+    <p>Magnitude scales it: $a\cdot[3,4]=10$ but $(2a)\cdot[3,4]=20$. Cosine, by contrast, throws magnitude away —
+      $[1,0]\cdot[1,0]=1$ and $[1,0]\cdot[10,0]=10$, yet both have cosine $1.00$. And the score is <i>directed</i>: with the
+      matrix below $\text{score}(0\!\to\!1)=1$ while $\text{score}(1\!\to\!0)=0$ — that asymmetry is why $Q$ and $K$ are separate.</p>
 
-    <p><b>Building $QK^\top$.</b> <b>(5)</b> three tokens give the full $3\times3$ table:</p>
+    <p><b>Building $QK^\top$.</b> Three tokens give the full $3\times3$ table:</p>
     <div class="formula-box">$$QK^\top=\begin{bmatrix}1&1&0\\0&1&1\\1&2&1\end{bmatrix}$$</div>
-    <p><b>(6)</b> row $0$ is who token 0 attends to; column $0$ is who attends <i>to</i> token 0 — different vectors.</p>
+    <p>Row $0$ is who token 0 attends to; column $0$ is who attends <i>to</i> token 0 — different vectors.</p>
 
-    <p><b>Scaling by $\sqrt{d_k}$.</b> <b>(7)</b> the measured spread of $q\cdot k$ tracks $\sqrt{d_k}$ almost exactly:</p>
+    <p><b>Scaling by $\sqrt{d_k}$.</b> The measured spread of $q\cdot k$ tracks $\sqrt{d_k}$ almost exactly:</p>
     <table class="mini">
       <tr><th>$d_k$</th><th>$4$</th><th>$64$</th><th>$512$</th></tr>
       <tr><td>measured std of $q\cdot k$</td><td>$2.0$</td><td>$8.0$</td><td>$22.9$</td></tr>
       <tr><td>$\sqrt{d_k}$</td><td>$2.0$</td><td>$8.0$</td><td>$22.6$</td></tr>
     </table>
-    <p><b>(8)</b> unscaled large scores $[16,8,0]$ softmax to $[1,0,0]$ — saturated, gradient near zero. <b>(9)</b> the same
-      scores $\div 8$ give $[0.665,0.245,0.090]$ — soft and still learnable. That is the entire reason for the $\sqrt{d_k}$.</p>
+    <p>Unscaled large scores $[16,8,0]$ softmax to $[1,0,0]$ — saturated, gradient near zero — while the same scores $\div 8$
+      give $[0.665,0.245,0.090]$, soft and still learnable. That is the entire reason for the $\sqrt{d_k}$.</p>
 
-    <p><b>Softmax.</b> <b>(10)</b> $\text{softmax}([2,1,0])=[0.665,0.245,0.090]$. <b>(11)</b> it is shift-invariant:
-      $[102,101,100]$ gives the <i>identical</i> weights (why we subtract the row max for stability). <b>(12)</b> it sharpens —
-      a gap of $3.0$ in $[4,1]$ becomes $[0.953,0.047]$, a $20\times$ ratio. <b>(13)</b> temperature controls the peak:
-      $\div 0.5\to[0.867,0.117,0.016]$ (peaky), $\div 2\to[0.506,0.307,0.186]$ (flat). <b>(14)</b> a tie $[1,1]\to[0.5,0.5]$;
-      a small gap $[0.707,0]\to[0.67,0.33]$.</p>
+    <p><b>Softmax.</b> Start simple: $\text{softmax}([2,1,0])=[0.665,0.245,0.090]$. It is shift-invariant — $[102,101,100]$
+      gives the <i>identical</i> weights (why we subtract the row max for stability). It sharpens: a gap of $3.0$ in $[4,1]$
+      becomes $[0.953,0.047]$, a $20\times$ ratio. Temperature controls the peak — $\div 0.5\to[0.867,0.117,0.016]$ (peaky),
+      $\div 2\to[0.506,0.307,0.186]$ (flat). And a tie $[1,1]\to[0.5,0.5]$, while a small gap $[0.707,0]\to[0.67,0.33]$.</p>
 
-    <p><b>The weighted average $(\times V)$.</b> <b>(15)</b> the realistic end-to-end: "it" with scaled scores $[4.0,1.0,2.5]$
-      softmaxes to $[0.786,0.039,0.175]$; with Values $V=\{[0,0],[4,0],[2,3]\}$ the output is $[0.507,0.526]$ — overwhelmingly the
-      "animal" Value. <b>(16)</b> the weights are $\ge 0$ and sum to $1$, so the output is a convex combination — provably inside the
-      Values' hull, it can never overshoot. <b>(17)</b> push the weights near one-hot $[0.01,0.98,0.01]$ and the output $[3.94,0.03]$
-      snaps onto a single Value $V_1=[4,0]$ — the hard-lookup limit.</p>
+    <p><b>The weighted average $(\times V)$.</b> The realistic end-to-end: "it" with scaled scores $[4.0,1.0,2.5]$ softmaxes to
+      $[0.786,0.039,0.175]$; with Values $V=\{[0,0],[4,0],[2,3]\}$ the output is $[0.507,0.526]$ — overwhelmingly the "animal"
+      Value. Because the weights are $\ge 0$ and sum to $1$, the output is a convex combination — provably inside the Values'
+      hull, so it can never overshoot. Push the weights near one-hot $[0.01,0.98,0.01]$ and the output $[3.94,0.03]$ snaps onto a
+      single Value $V_1=[4,0]$ — the hard-lookup limit.</p>
 
-    <p><b>Multi-head.</b> <b>(18)</b> with $d_\text{model}=512$ and $h=8$ heads, each head works in $d_k=512/8=64$ dimensions and the
-      eight $64$-wide outputs concatenate back to $8\times64=512$ — so running eight heads costs about the same as one, buying
+    <p><b>Multi-head.</b> With $d_\text{model}=512$ and $h=8$ heads, each head works in $d_k=512/8=64$ dimensions and the eight
+      $64$-wide outputs concatenate back to $8\times64=512$ — so running eight heads costs about the same as one, buying
       parallelism of meaning almost for free.</p>
 
-    <p><b>Masking.</b> <b>(19)</b> a causal mask adds $-\infty$ above the diagonal <i>before</i> softmax, so the upper triangle is
-      exactly $0$ and every row still sums to $1$:</p>
+    <p><b>Masking.</b> A causal mask adds $-\infty$ above the diagonal <i>before</i> softmax, so the upper triangle is exactly
+      $0$ and every row still sums to $1$:</p>
     <div class="formula-box">$$\begin{bmatrix}1&0&0&0\\0.96&0.04&0&0\\0.21&0.12&0.67&0\\0.15&0.14&0.64&0.07\end{bmatrix}$$</div>
-    <p><b>(20)</b> a padding mask on the last (pad) key sends its weight to $0$ and renormalizes the rest:
-      $[0.085,0.232,0.052,0.631]\to[0.231,0.629,0.140,0]$, still summing to $1$.</p>`,
-
-  code: String.raw`
-    <p><i>Everything above, runnable and verified.</i> The companion Colab notebook rebuilds all twenty examples from scratch in
-      numpy, cross-checks the full layer against <code>F.scaled_dot_product_attention</code>, and renders nine static
-      visualizations — the angle-swept dot product, the attention-flow diagram (opacity = weight), the convex-hull blend,
-      per-head heatmaps, and the autoregressive mask "unlock". It is run-all safe and self-verifying: every cell ends in an
-      <code>assert</code>. Open it with the <b>Open in Colab</b> button at the top of this lesson.</p>`,
+    <p>A padding mask on the last (pad) key sends its weight to $0$ and renormalizes the rest:
+      $[0.085,0.232,0.052,0.631]\to[0.231,0.629,0.140,0]$, still summing to $1$. Every figure and cross-check for these lives in
+      the notebook — the <b>Open in Colab</b> button at the top of this lesson.</p>`,
 
   pitfalls: String.raw`
     <ul>
