@@ -88,9 +88,8 @@ Close on the transferable thread ("one idea, many uniforms").
 
 1. **Problem** + skills tags. (No difficulty badge — it added noise, not signal.)
 2. **Strategy cue** — one line naming the obstacle and the tool.
-3. **Step-by-step** — **one operation per step**: `action → result`, then a short italic *why*.
-   Define notation up front. No separate hints: if a pointer is worth giving, put it directly in
-   the strategy cue or a step's *why*.
+3. **Step-by-step** — **one operation per step**: `action → result`, then a short *why* after an
+   em-dash. Define notation up front. (The renderer formats the *why* as plain text — no italics.)
 4. **Verify** — substitute back / sanity check, in words (no check-mark glyphs).
 5. **Answer** — stated plainly.
 6. **Connects to** — one line back to the lesson's concept.
@@ -153,7 +152,9 @@ revealable step-by-step solution; it will not accept trivial answer-only entries
 ## Formatting conventions
 
 - Readable math: `$...$` inline, `$$...$$` display (MathJax). Avoid heavy custom macros.
-- **Bold** key terms on first meaningful use (*pole*, *eigenfunction*, *stable*).
+- **Bold** key terms on first meaningful use (pole, eigenfunction, stable).
+- **No italics** — no `<i>`/`<em>` tags and no italicized taglines. Use **bold** for emphasis, or
+  just plain words. `renderMath` forces `font-style: normal` throughout the math lesson.
 - Use `<ol class="mnum">` (numbered) / `<ul class="mbul">` (bulleted) for lists, and
   `<table class="extable">` for tables. Never use the app's `.steps` class in math lessons —
   its number-circles and connecting line are distracting. In authored data you just supply

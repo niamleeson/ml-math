@@ -556,17 +556,19 @@
   #content .book-chapter blockquote { margin: 0 0 14px; padding: 4px 0 4px 16px; border-left: 3px solid var(--border); color: var(--ink-dim); font-style: italic; }
   #content .book-takeaways { margin-top: 26px; border-top: 1px solid var(--border); padding-top: 14px; }
   #content .book-takeaways h3 { margin: 0 0 8px; }
-  #content .scaffold-note { color: var(--ink-dim); font-style: italic; }
-  /* Math lessons: skills line, revealable hints/solutions, plain numbered/bulleted lists */
+  #content .scaffold-note { color: var(--ink-dim); }
+  /* Math lessons: skills line, revealable solutions, plain lists — and no italics anywhere. */
+  #content .mathdoc, #content .mathdoc .lesson-sub, #content .mathdoc i, #content .mathdoc em,
+  #content .mathdoc caption, #content .mathdoc blockquote { font-style: normal; }
   #content .lesson-meta { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 13px; color: var(--ink-dim); margin: 2px 0 14px; }
-  #content .lesson-meta .skills { font-style: italic; }
+  #content .lesson-meta .skills { color: var(--ink-dim); }
   #content .strategy { color: var(--ink-dim); }
   #content details.hint { margin: 6px 0; border-left: 3px solid var(--border); padding-left: 14px; }
   #content details.hint > summary { cursor: pointer; color: var(--accent); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; list-style: none; }
   #content details.hint > summary::-webkit-details-marker { display: none; }
   #content details.hint > summary::before { content: "\25B8  "; }
   #content details.hint[open] > summary::before { content: "\25BE  "; }
-  #content .connects { font-style: italic; color: var(--ink-dim); }
+  #content .connects { color: var(--ink-dim); }
   #content .practice-item { margin: 12px 0; }
   /* Plain lists for the math track (no number-circles / connecting line). */
   #content ol.mnum { list-style: decimal; padding-left: 24px; margin: 8px 0; }
@@ -1716,13 +1718,13 @@ const App = (function () {
     let meta = "";
     if (w.skills && w.skills.length) meta += `<span class="skills">${w.skills.join(" \u00B7 ")}</span>`;
     meta = meta ? `<p class="lesson-meta">${meta}</p>` : "";
-    const steps = (w.steps || []).map(s => `<li><b>${s.do}</b>${s.result ? ` &rarr; ${s.result}` : ""}${s.why ? ` <i>${s.why}</i>` : ""}</li>`).join("");
+    const steps = (w.steps || []).map(s => `<li><b>${s.do}</b>${s.result ? ` &rarr; ${s.result}` : ""}${s.why ? ` &mdash; ${s.why}` : ""}</li>`).join("");
     const practice = (l.practice && l.practice.length)
       ? `<p><b>Practice — ${l.practice.length} problems, each fully worked.</b> Try it, then reveal the step-by-step solution.</p>` +
         l.practice.map((pr, i) =>
           `<div class="practice-item"><p><b>${i + 1}.</b> ${pr.problem}</p>` +
           `<details class="hint"><summary>Step-by-step solution</summary>` +
-          ((pr.steps && pr.steps.length) ? `<ol class="mnum">${pr.steps.map(s => `<li><b>${s.do}</b>${s.result ? ` &rarr; ${s.result}` : ""}${s.why ? ` <i>${s.why}</i>` : ""}</li>`).join("")}</ol>` : (pr.solution ? `<p>${pr.solution}</p>` : "")) +
+          ((pr.steps && pr.steps.length) ? `<ol class="mnum">${pr.steps.map(s => `<li><b>${s.do}</b>${s.result ? ` &rarr; ${s.result}` : ""}${s.why ? ` &mdash; ${s.why}` : ""}</li>`).join("")}</ol>` : (pr.solution ? `<p>${pr.solution}</p>` : "")) +
           (pr.answer ? `<p><b>Answer:</b> ${pr.answer}</p>` : "") +
           `</details></div>`
         ).join("")
@@ -1748,12 +1750,14 @@ const App = (function () {
     const takeaways = (l.takeaways && l.takeaways.length)
       ? `<div class="book-takeaways"><h3>Key takeaways</h3><ul>${l.takeaways.map(t => `<li>${t}</li>`).join("")}</ul></div>` : "";
 
-    return `<div class="crumbs">${l.book || l.module}</div>` +
+    return `<div class="mathdoc">` +
+      `<div class="crumbs">${l.book || l.module}</div>` +
       `<h2 class="lesson-title">${l.title}</h2>` +
       (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
       prereqLinks(l.prereqs) +
       `<div class="card book-chapter">${conn}${moti}${defn}${worked}${appsSec}${takeaways}</div>` +
-      navRow(id, prev, next);
+      navRow(id, prev, next) +
+      `</div>`;
   }
 
   function open(id) {

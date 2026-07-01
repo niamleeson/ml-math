@@ -15,12 +15,12 @@
         "variables, numbers, and the coordinate plane"
       ],
       "leadsTo": [
-        "<i>Function transformations</i>",
+        "Function transformations",
         "limits",
         "the derivative"
       ],
       "usedWith": [
-        "every model in ML — a model <i>is</i> a function from inputs to a prediction"
+        "every model in ML — a model is a function from inputs to a prediction"
       ]
     },
     "motivation": "<p>Think of a function as a dependable machine: one input in, exactly one output out — the same output every time for the same input. A vending machine that always returns a soda for button B3 is a function; one that sometimes returns chips is not.</p><p>That one rule — one input, one output — is the whole idea, and it is what lets us reason about change later.</p>",
@@ -81,7 +81,7 @@
     "tagline": "Shift, stretch, and flip a graph you already know — without re-deriving anything.",
     "connections": {
       "buildsOn": [
-        "<i>Functions and their graphs</i>"
+        "Functions and their graphs"
       ],
       "leadsTo": [
         "reading exponentials, logs, and trig as shifted/scaled base curves"
@@ -91,8 +91,8 @@
         "the bias & scale inside every neural-network layer"
       ]
     },
-    "motivation": "<p>Once you know one graph, you get a whole family for free. Sliding, stretching, or flipping a curve does not change what <i>kind</i> of curve it is — only where it sits and how tall it stands.</p>",
-    "definition": "<p>Starting from $y=f(x)$: $f(x)+c$ shifts up by $c$; $f(x-c)$ shifts right by $c$; $a\\,f(x)$ stretches vertically by $a$; $f(-x)$ reflects across the $y$-axis. Watch the counter-intuitive one: inside the function, $x-c$ moves the graph <i>right</i>, not left.</p>",
+    "motivation": "<p>Once you know one graph, you get a whole family for free. Sliding, stretching, or flipping a curve does not change what kind of curve it is — only where it sits and how tall it stands.</p>",
+    "definition": "<p>Starting from $y=f(x)$: $f(x)+c$ shifts up by $c$; $f(x-c)$ shifts right by $c$; $a\\,f(x)$ stretches vertically by $a$; $f(-x)$ reflects across the $y$-axis. Watch the counter-intuitive one: inside the function, $x-c$ moves the graph right, not left.</p>",
     "worked": {
       "problem": "Turn $f(x)=x^2$ into $g(x)=(x-2)^2+1$.",
       "skills": [
@@ -163,7 +163,7 @@
         "anything growing by a constant factor"
       ]
     },
-    "motivation": "<p>Adding the same amount repeatedly gives a line. <i>Multiplying</i> by the same factor repeatedly gives an exponential — and it explodes. That runaway growth, and its mirror image (decay toward zero), is why exponentials are everywhere.</p>",
+    "motivation": "<p>Adding the same amount repeatedly gives a line. Multiplying by the same factor repeatedly gives an exponential — and it explodes. That runaway growth, and its mirror image (decay toward zero), is why exponentials are everywhere.</p>",
     "definition": "<p>An <b>exponential</b> is $f(x)=a^x$ with base $a>0$; the natural base $e\\approx 2.718$ gives $e^x$. Its defining property turns sums into products: $e^{x+y}=e^x e^y$. Note $a^0=1$, and $a>0$ keeps the output positive and real.</p>",
     "worked": {
       "problem": "Read off values of $2^x$ and $e^x$.",
@@ -224,7 +224,7 @@
     "tagline": "The inverse of exponentials — and the trick that turns products into sums.",
     "connections": {
       "buildsOn": [
-        "<i>Exponential functions</i> (the log undoes them)"
+        "Exponential functions (the log undoes them)"
       ],
       "leadsTo": [
         "logarithmic differentiation",
@@ -370,7 +370,7 @@
     "tagline": "Going backwards from a ratio to the angle that produced it.",
     "connections": {
       "buildsOn": [
-        "<i>Trigonometric functions</i>"
+        "Trigonometric functions"
       ],
       "leadsTo": [
         "their derivatives and integrals"
@@ -440,7 +440,7 @@
     "tagline": "What value does a function head toward as the input closes in — even if it never arrives?",
     "connections": {
       "buildsOn": [
-        "<i>Functions and their graphs</i>",
+        "Functions and their graphs",
         "the everyday idea of getting closer"
       ],
       "leadsTo": [
@@ -451,7 +451,7 @@
         "convergence throughout ML — a loss settling toward a value, a learning rate shrinking to zero"
       ]
     },
-    "motivation": "<p>Sometimes you cannot simply plug in. Look at $f(x)=\\dfrac{x^2-1}{x-1}$ at $x=1$: you get $\\tfrac00$, undefined. And yet the graph clearly heads somewhere as $x$ slides toward $1$.</p><p>A <b>limit</b> answers exactly that — not the value <i>at</i> the point, but the value the function is <i>heading toward</i>. The destination can be clear even when the road has a pothole right at the end. That shift in question is the doorway to all of calculus.</p>",
+    "motivation": "<p>Sometimes you cannot simply plug in. Look at $f(x)=\\dfrac{x^2-1}{x-1}$ at $x=1$: you get $\\tfrac00$, undefined. And yet the graph clearly heads somewhere as $x$ slides toward $1$.</p><p>A <b>limit</b> answers exactly that — not the value at the point, but the value the function is heading toward. The destination can be clear even when the road has a pothole right at the end. That shift in question is the doorway to all of calculus.</p>",
     "definition": "<p>$\\lim_{x\\to a}f(x)=L$ means $f(x)$ can be made as close to $L$ as we like by taking $x$ close enough to $a$ (from both sides), without ever setting $x=a$. Rigorously, the $\\varepsilon$–$\\delta$ statement: for every $\\varepsilon>0$ there is a $\\delta>0$ with $0<|x-a|<\\delta \\Rightarrow |f(x)-L|<\\varepsilon$.</p><p><b>Assumptions that matter:</b> the value $f(a)$ is irrelevant — it may be undefined and the limit can still exist. But the left and right limits must agree, or the limit does not exist.</p>",
     "worked": {
       "problem": "Compute $\\displaystyle\\lim_{x\\to1}\\frac{x^2-1}{x-1}$.",
