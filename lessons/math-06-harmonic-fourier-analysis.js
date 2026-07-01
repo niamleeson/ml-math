@@ -9,37 +9,523 @@
   B({
     "id": "math-06-01",
     "title": "Periodic functions",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: periodic functions.",
+    "tagline": "A periodic function repeats its behavior after a fixed step, turning time into a circle you can revisit.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "functions",
+        "trigonometric functions",
+        "graphs"
       ],
       "leadsTo": [
-        "the next lesson, <i>Orthogonality of sinusoids</i>"
+        "orthogonality of sinusoids",
+        "Fourier series",
+        "frequency analysis"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "sine and cosine",
+        "modular arithmetic",
+        "symmetry",
+        "limits"
       ]
-    }
+    },
+    "motivation": "<p>You already recognize repetition: a clock hand returns to the top every 12 hours, a cosine wave returns to the same height every full turn, and a daily pattern repeats tomorrow.</p><p>A <b>periodic function</b> gives that repetition a precise name. Instead of treating a long signal as endless new information, we learn the smallest repeat block and reuse it. That is the first doorway into Fourier analysis.</p>",
+    "definition": "<p>A function $f$ is <b>periodic</b> with period $T>0$ if $$f(t+T)=f(t)$$ for every allowed input $t$. The smallest positive such $T$, when it exists, is the fundamental period. For example, $\\sin t$ and $\\cos t$ have fundamental period $2\\pi$ because moving one full circle returns to the same coordinate.</p><p>Why this identity matters: if $f(t+T)=f(t)$, then applying it repeatedly gives $f(t+nT)=f(t)$ for every integer $n$. One verified repeat length controls the whole line, the way one clock face controls every hour count.</p><p><b>Assumptions that matter:</b> the equality must hold for every input in the domain, not just some sample points; a period is positive; constant functions have every positive period and no unique smallest one; and sums of periodic functions may have a common period only when their periods fit together rationally.</p>",
+    "worked": {
+      "problem": "Find the fundamental period of $f(t)=3\\sin(2t)-\\cos(6t)$.",
+      "skills": [
+        "periods of sinusoids",
+        "least common multiples",
+        "frequency reading"
+      ],
+      "strategy": "Each sinusoid repeats at its own pace. Find each period, then find the smallest time that makes both repeat.",
+      "steps": [
+        {
+          "do": "Read the sine frequency",
+          "result": "$2$",
+          "why": "$\\sin(\\omega t)$ has period $2\\pi/\\omega$"
+        },
+        {
+          "do": "Compute the sine period",
+          "result": "$T_1=2\\pi/2=\\pi$",
+          "why": "one full sine cycle needs angle change $2\\pi$"
+        },
+        {
+          "do": "Read the cosine frequency",
+          "result": "$6$",
+          "why": "$\\cos(6t)$ cycles six times as fast as $\\cos t$"
+        },
+        {
+          "do": "Compute the cosine period",
+          "result": "$T_2=2\\pi/6=\\pi/3$",
+          "why": "one full cosine cycle needs angle change $2\\pi$"
+        },
+        {
+          "do": "Find the smallest common repeat",
+          "result": "$T=\\pi$",
+          "why": "$\\pi$ is one sine period and three cosine periods"
+        }
+      ],
+      "verify": "At $t+\\pi$, $\\sin(2t+2\\pi)=\\sin(2t)$ and $\\cos(6t+6\\pi)=\\cos(6t)$, so the whole function repeats.",
+      "answer": "The fundamental period is $\\pi$.",
+      "connects": "Fourier analysis begins by reading a repeated signal through its component periods."
+    },
+    "practice": [
+      {
+        "problem": "Show that $f(t)=\\cos(4t)$ has period $\\pi/2$.",
+        "steps": [
+          {
+            "do": "Start from the period formula",
+            "result": "$T=2\\pi/\\omega$",
+            "why": "$\\omega$ is the angular frequency"
+          },
+          {
+            "do": "Substitute $\\omega=4$",
+            "result": "$T=2\\pi/4$",
+            "why": "the angle is $4t$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$T=\\pi/2$",
+            "why": "divide numerator and denominator by $2$"
+          },
+          {
+            "do": "Check the shifted angle",
+            "result": "$4(t+\\pi/2)=4t+2\\pi$",
+            "why": "cosine repeats after $2\\pi$"
+          },
+          {
+            "do": "Apply cosine periodicity",
+            "result": "$\\cos(4t+2\\pi)=\\cos(4t)$",
+            "why": "one full turn changes nothing"
+          }
+        ],
+        "answer": "$\\pi/2$ is a period, and it is the fundamental period."
+      },
+      {
+        "problem": "Find the fundamental period of $g(t)=\\sin(3t)+2\\sin(5t)$.",
+        "steps": [
+          {
+            "do": "Compute the first period",
+            "result": "$T_1=2\\pi/3$",
+            "why": "the first angular frequency is $3$"
+          },
+          {
+            "do": "Compute the second period",
+            "result": "$T_2=2\\pi/5$",
+            "why": "the second angular frequency is $5$"
+          },
+          {
+            "do": "Require both angles to complete cycles",
+            "result": "$3T=2\\pi m$ and $5T=2\\pi n$",
+            "why": "$m,n$ must be integers"
+          },
+          {
+            "do": "Test $T=2\\pi$",
+            "result": "$3T=6\\pi$ and $5T=10\\pi$",
+            "why": "both are integer multiples of $2\\pi$"
+          },
+          {
+            "do": "Check for a smaller common time",
+            "result": "none positive below $2\\pi$",
+            "why": "frequencies $3$ and $5$ have greatest common divisor $1$"
+          }
+        ],
+        "answer": "The fundamental period is $2\\pi$."
+      },
+      {
+        "problem": "A signal repeats every $0.25$ seconds. Find its frequency in cycles per second and angular frequency.",
+        "steps": [
+          {
+            "do": "Name the period",
+            "result": "$T=0.25$ seconds",
+            "why": "one repeat takes a quarter second"
+          },
+          {
+            "do": "Compute ordinary frequency",
+            "result": "$f=1/T=1/0.25=4$ Hz",
+            "why": "frequency counts cycles per second"
+          },
+          {
+            "do": "Use angular frequency",
+            "result": "$\\omega=2\\pi f$",
+            "why": "one cycle is $2\\pi$ radians"
+          },
+          {
+            "do": "Substitute $f=4$",
+            "result": "$\\omega=8\\pi$ radians per second",
+            "why": "multiply by $2\\pi$"
+          },
+          {
+            "do": "Check the period formula",
+            "result": "$2\\pi/(8\\pi)=0.25$",
+            "why": "the angular frequency matches the given period"
+          }
+        ],
+        "answer": "Frequency is $4$ Hz and angular frequency is $8\\pi$ radians per second."
+      },
+      {
+        "problem": "Decide whether $h(t)=\\sin(2t)+\\sin(\\sqrt2\\,t)$ is periodic.",
+        "steps": [
+          {
+            "do": "Compute the first period",
+            "result": "$T_1=\\pi$",
+            "why": "$2\\pi/2=\\pi$"
+          },
+          {
+            "do": "Compute the second period",
+            "result": "$T_2=2\\pi/\\sqrt2=\\sqrt2\\pi$",
+            "why": "divide by the angular frequency $\\sqrt2$"
+          },
+          {
+            "do": "Form the period ratio",
+            "result": "$T_2/T_1=\\sqrt2$",
+            "why": "compare whether the periods fit together"
+          },
+          {
+            "do": "Classify the ratio",
+            "result": "irrational",
+            "why": "$\\sqrt2$ is not a ratio of integers"
+          },
+          {
+            "do": "Conclude about common period",
+            "result": "no common positive period",
+            "why": "integer repeats cannot line up exactly"
+          }
+        ],
+        "answer": "$h$ is not periodic."
+      },
+      {
+        "problem": "A seasonal feature uses $x(d)=\\cos(2\\pi d/365)$ for day $d$. Compute $x(0)$, $x(365)$, and $x(730)$, then state the period.",
+        "steps": [
+          {
+            "do": "Evaluate day $0$",
+            "result": "$x(0)=\\cos0=1$",
+            "why": "the angle is zero"
+          },
+          {
+            "do": "Evaluate day $365$",
+            "result": "$x(365)=\\cos(2\\pi)=1$",
+            "why": "one full yearly turn"
+          },
+          {
+            "do": "Evaluate day $730$",
+            "result": "$x(730)=\\cos(4\\pi)=1$",
+            "why": "two full yearly turns"
+          },
+          {
+            "do": "Find the repeat length",
+            "result": "$T=365$ days",
+            "why": "adding 365 adds $2\\pi$ to the angle"
+          },
+          {
+            "do": "Check the formula",
+            "result": "$x(d+365)=\\cos(2\\pi d/365+2\\pi)$",
+            "why": "cosine repeats after $2\\pi$"
+          }
+        ],
+        "answer": "$x(0)=x(365)=x(730)=1$, and the period is $365$ days."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Seasonal features",
+        "background": "Models often need calendar variables, but month numbers make December and January look far apart. Periodic encodings wrap the year into a circle.",
+        "numbers": "For day $91$, $2\\pi\\cdot91/365\\approx1.57$, so $\\sin\\theta\\approx1$ and $\\cos\\theta\\approx0$."
+      },
+      {
+        "title": "Audio pitch",
+        "background": "A musical note is pressure that repeats quickly. Pitch is frequency, the reciprocal of period.",
+        "numbers": "A $440$ Hz A note has period $1/440\\approx0.00227$ seconds."
+      },
+      {
+        "title": "Server traffic cycles",
+        "background": "Traffic often has daily and weekly rhythms. Periodic functions give a compact way to model repeatable load.",
+        "numbers": "A daily cosine term uses $\\omega=2\\pi/24=\\pi/12$ radians per hour."
+      },
+      {
+        "title": "Rotating machinery",
+        "background": "Sensors on motors and disks produce periodic readings because the physical position repeats after each rotation.",
+        "numbers": "A fan at $1800$ rpm makes $30$ rotations per second, so its period is $1/30\\approx0.0333$ seconds."
+      },
+      {
+        "title": "Positional encodings",
+        "background": "Transformer encodings use sinusoidal channels so positions can be compared through phases at different periods.",
+        "numbers": "The channel $\\sin(p\\pi/2)$ repeats every $4$ positions: $0,1,0,-1,0$."
+      },
+      {
+        "title": "Modulo arithmetic in code",
+        "background": "Periodic indexing appears whenever a buffer, clock, or circular array wraps around.",
+        "numbers": "In an array of length $8$, index $19$ maps to $19\\bmod8=3$, the same slot as index $3$."
+      }
+    ],
+    "applicationsClose": "The shared thread is repeat length: once you know the period, distant inputs can be folded back into one understandable cycle.",
+    "takeaways": [
+      "A period $T$ satisfies $f(t+T)=f(t)$ for every allowed $t$.",
+      "For $\\sin(\\omega t)$ or $\\cos(\\omega t)$, the fundamental period is $2\\pi/|\\omega|$.",
+      "Sums of periodic functions repeat only when their periods share a common multiple.",
+      "Periodic thinking turns waves, seasons, clocks, and circular code into one idea."
+    ]
   });
 
   B({
     "id": "math-06-02",
     "title": "Orthogonality of sinusoids",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: orthogonality of sinusoids.",
+    "tagline": "Different sine and cosine waves are independent directions under an integral dot product.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Periodic functions</i>"
+        "periodic functions",
+        "definite integrals",
+        "trigonometric identities"
       ],
       "leadsTo": [
-        "the next lesson, <i>Fourier series</i>"
+        "Fourier series",
+        "complex Fourier coefficients",
+        "least-squares projection"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "inner products",
+        "orthogonal bases",
+        "Pythagorean theorem",
+        "symmetry"
       ]
     },
+    "motivation": "<p>You already know perpendicular vectors do not overlap in direction: $(1,0)$ and $(0,1)$ have dot product $0$. Fourier analysis uses the same idea, but the vectors are whole waves.</p><p>The dot product becomes an integral over a full period. When two sinusoids have different integer frequencies, their positive and negative overlap cancels perfectly. That cancellation is what lets us separate one frequency from another.</p>",
+    "definition": "<p>For real functions on $[-\\pi,\\pi]$, define the inner product $$\\langle f,g\\rangle=\\int_{-\\pi}^{\\pi} f(t)g(t)\\,dt.$$ Two functions are <b>orthogonal</b> if this inner product is $0$. For positive integers $m\\ne n$, $$\\int_{-\\pi}^{\\pi}\\sin(mt)\\sin(nt)\\,dt=0,$$ and the same orthogonality holds for distinct cosines and for sine against cosine.</p><p>One derivation uses the product identity $\\sin(mt)\\sin(nt)=\\frac12[\\cos((m-n)t)-\\cos((m+n)t)]$. Integrating a nonzero integer-frequency cosine over $[-\\pi,\\pi]$ gives zero, so the cross term disappears.</p><p><b>Assumptions that matter:</b> the interval must cover a whole common period; the frequencies here are integers on $[-\\pi,\\pi]$; the normalization is not unit length because $\\int_{-\\pi}^{\\pi}\\sin^2(nt)\\,dt=\\pi$; and orthogonal means zero inner product, not zero pointwise product.</p>",
+    "worked": {
+      "problem": "Compute $\\displaystyle\\int_{-\\pi}^{\\pi}\\sin(2t)\\sin(5t)\\,dt$.",
+      "skills": [
+        "orthogonality",
+        "product-to-sum identities",
+        "definite integrals"
+      ],
+      "strategy": "The frequencies differ, so the answer should be zero. Use the identity to see the cancellation explicitly.",
+      "steps": [
+        {
+          "do": "Apply the product identity",
+          "result": "$\\sin(2t)\\sin(5t)=\\frac12[\\cos(3t)-\\cos(7t)]$",
+          "why": "products of sines become sums of cosines"
+        },
+        {
+          "do": "Substitute into the integral",
+          "result": "$\\frac12\\int_{-\\pi}^{\\pi}[\\cos(3t)-\\cos(7t)]\\,dt$",
+          "why": "linearity lets the factor move outside"
+        },
+        {
+          "do": "Integrate $\\cos(3t)$",
+          "result": "$\\frac{\\sin(3t)}{3}\\big|_{-\\pi}^{\\pi}=0$",
+          "why": "$\\sin(3\\pi)=\\sin(-3\\pi)=0$"
+        },
+        {
+          "do": "Integrate $\\cos(7t)$",
+          "result": "$\\frac{\\sin(7t)}{7}\\big|_{-\\pi}^{\\pi}=0$",
+          "why": "$\\sin(7\\pi)=\\sin(-7\\pi)=0$"
+        },
+        {
+          "do": "Combine the pieces",
+          "result": "$\\frac12(0-0)=0$",
+          "why": "both full-cycle averages vanish"
+        }
+      ],
+      "verify": "The frequencies $2$ and $5$ are different integer frequencies, so orthogonality predicts zero overlap.",
+      "answer": "$\\displaystyle\\int_{-\\pi}^{\\pi}\\sin(2t)\\sin(5t)\\,dt=0$.",
+      "connects": "This zero is the frequency-separation fact Fourier series uses to isolate coefficients."
+    },
+    "practice": [
+      {
+        "problem": "Compute $\\int_{-\\pi}^{\\pi}\\cos(3t)\\cos(3t)\\,dt$.",
+        "steps": [
+          {
+            "do": "Rewrite the integrand",
+            "result": "$\\cos^2(3t)=\\frac12(1+\\cos(6t))$",
+            "why": "use the power-reduction identity"
+          },
+          {
+            "do": "Substitute into the integral",
+            "result": "$\\frac12\\int_{-\\pi}^{\\pi}(1+\\cos(6t))\\,dt$",
+            "why": "split the squared cosine"
+          },
+          {
+            "do": "Integrate the constant",
+            "result": "$\\int_{-\\pi}^{\\pi}1\\,dt=2\\pi$",
+            "why": "the interval length is $2\\pi$"
+          },
+          {
+            "do": "Integrate the oscillating term",
+            "result": "$\\int_{-\\pi}^{\\pi}\\cos(6t)\\,dt=0$",
+            "why": "a full number of cycles cancels"
+          },
+          {
+            "do": "Multiply by one half",
+            "result": "$\\pi$",
+            "why": "only half of the constant area remains"
+          }
+        ],
+        "answer": "$\\pi$."
+      },
+      {
+        "problem": "Compute $\\int_{-\\pi}^{\\pi}\\sin(4t)\\cos(4t)\\,dt$.",
+        "steps": [
+          {
+            "do": "Use a product identity",
+            "result": "$\\sin(4t)\\cos(4t)=\\frac12\\sin(8t)$",
+            "why": "sine times cosine doubles the angle"
+          },
+          {
+            "do": "Substitute into the integral",
+            "result": "$\\frac12\\int_{-\\pi}^{\\pi}\\sin(8t)\\,dt$",
+            "why": "move the constant outside"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$-\\frac{\\cos(8t)}{8}$",
+            "why": "differentiate cosine to get sine with a minus sign"
+          },
+          {
+            "do": "Evaluate endpoints",
+            "result": "$-\\cos(8\\pi)/8+\\cos(-8\\pi)/8=0$",
+            "why": "both cosines equal $1$"
+          },
+          {
+            "do": "Apply the factor",
+            "result": "$0$",
+            "why": "the full-cycle sine has zero net area"
+          }
+        ],
+        "answer": "$0$."
+      },
+      {
+        "problem": "Find the coefficient of $\\sin(2t)$ in $f(t)=5\\sin(2t)+3\\cos(t)$ using $b_2=\\frac1\\pi\\int_{-\\pi}^{\\pi}f(t)\\sin(2t)\\,dt$.",
+        "steps": [
+          {
+            "do": "Write the projection integral",
+            "result": "$b_2=\\frac1\\pi\\int_{-\\pi}^{\\pi}(5\\sin(2t)+3\\cos t)\\sin(2t)\\,dt$",
+            "why": "project onto the target wave"
+          },
+          {
+            "do": "Distribute the product",
+            "result": "$\\frac1\\pi[5\\int\\sin^2(2t)\\,dt+3\\int\\cos t\\sin(2t)\\,dt]$",
+            "why": "linearity separates components"
+          },
+          {
+            "do": "Use the squared norm",
+            "result": "$\\int_{-\\pi}^{\\pi}\\sin^2(2t)\\,dt=\\pi$",
+            "why": "every nonzero integer sine has norm squared $\\pi$"
+          },
+          {
+            "do": "Use orthogonality",
+            "result": "$\\int_{-\\pi}^{\\pi}\\cos t\\sin(2t)\\,dt=0$",
+            "why": "sines and cosines are orthogonal"
+          },
+          {
+            "do": "Compute the coefficient",
+            "result": "$b_2=\\frac1\\pi(5\\pi+0)=5$",
+            "why": "normalization cancels the norm"
+          }
+        ],
+        "answer": "$b_2=5$."
+      },
+      {
+        "problem": "Show that $1$ and $\\cos(2t)$ are orthogonal on $[-\\pi,\\pi]$.",
+        "steps": [
+          {
+            "do": "Write the inner product",
+            "result": "$\\langle 1,\\cos(2t)\\rangle=\\int_{-\\pi}^{\\pi}\\cos(2t)\\,dt$",
+            "why": "multiplying by $1$ changes nothing"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$\\frac{\\sin(2t)}{2}$",
+            "why": "the derivative of $\\sin(2t)$ is $2\\cos(2t)$"
+          },
+          {
+            "do": "Evaluate the upper endpoint",
+            "result": "$\\sin(2\\pi)/2=0$",
+            "why": "sine vanishes at integer multiples of $\\pi$"
+          },
+          {
+            "do": "Evaluate the lower endpoint",
+            "result": "$\\sin(-2\\pi)/2=0$",
+            "why": "the lower endpoint also lands on a full cycle"
+          },
+          {
+            "do": "Subtract endpoints",
+            "result": "$0-0=0$",
+            "why": "zero inner product means orthogonal"
+          }
+        ],
+        "answer": "$1$ and $\\cos(2t)$ are orthogonal on $[-\\pi,\\pi]$."
+      },
+      {
+        "problem": "For samples $[1,0,-1,0]$, compute its dot product with the discrete sine pattern $[0,1,0,-1]$ and interpret the result.",
+        "steps": [
+          {
+            "do": "Multiply first entries",
+            "result": "$1\\cdot0=0$",
+            "why": "dot products multiply matching positions"
+          },
+          {
+            "do": "Multiply second entries",
+            "result": "$0\\cdot1=0$",
+            "why": "the second signal is zero there"
+          },
+          {
+            "do": "Multiply third entries",
+            "result": "$-1\\cdot0=0$",
+            "why": "again one factor is zero"
+          },
+          {
+            "do": "Multiply fourth entries",
+            "result": "$0\\cdot(-1)=0$",
+            "why": "the first signal is zero there"
+          },
+          {
+            "do": "Add the products",
+            "result": "$0+0+0+0=0$",
+            "why": "zero dot product means no overlap in this sampled inner product"
+          }
+        ],
+        "answer": "The dot product is $0$, so these sampled cosine-like and sine-like patterns are orthogonal."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Fourier coefficient extraction",
+        "background": "Orthogonality lets one coefficient be measured without interference from the others.",
+        "numbers": "If $f(t)=7\\cos(3t)+2\\sin t$, then $\\frac1\\pi\\int_{-\\pi}^{\\pi}f(t)\\cos(3t)\\,dt=7$."
+      },
+      {
+        "title": "Audio equalizers",
+        "background": "An equalizer boosts or cuts frequency bands because different sinusoidal components can be separated.",
+        "numbers": "A $1000$ Hz tone and $2000$ Hz tone have zero ideal inner product over $0.01$ seconds because that window contains $10$ and $20$ cycles."
+      },
+      {
+        "title": "Least-squares projection",
+        "background": "Fitting with orthogonal features makes coefficients independent, just like perpendicular vector coordinates.",
+        "numbers": "If basis norms are $\\pi$ and inner product with a signal is $4\\pi$, the coefficient is $4\\pi/\\pi=4$."
+      },
+      {
+        "title": "Image compression",
+        "background": "Cosine transforms use orthogonal cosine patterns so image blocks can be represented by independent weights.",
+        "numbers": "In an $8$-pixel row, the constant pattern has dot product $8$ with all-ones data, while many alternating patterns sum to $0$."
+      },
+      {
+        "title": "Communication channels",
+        "background": "Orthogonal carriers can share a medium because each receiver projects onto its own carrier.",
+        "numbers": "Over one second, $\\int_0^1\\sin(2\\pi 3t)\\sin(2\\pi 5t)\\,dt=0$ for integer frequencies $3$ and $5$."
+      },
+      {
+        "title": "Feature decorrelation",
+        "background": "Machine learning often benefits when features are less redundant. Orthogonal sinusoids are the clean mathematical model.",
+        "numbers": "Two centered vectors with dot product $0$ and norms $2$ and $3$ have cosine similarity $0/(2\\cdot3)=0$."
+      }
+    ],
+    "applicationsClose": "Orthogonality is independence made computable: integrate against the direction you want, and unrelated waves vanish.",
+    "takeaways": [
+      "The function inner product on a period is an integral of a product.",
+      "Distinct integer-frequency sinusoids are orthogonal over $[-\\pi,\\pi]$.",
+      "The squared norm of $\\sin(nt)$ or $\\cos(nt)$ on $[-\\pi,\\pi]$ is $\\pi$.",
+      "Orthogonality is the engine behind coefficient extraction and compression."
+    ],
     "prereqs": [
       "math-06-01"
     ]
@@ -48,19 +534,262 @@
   B({
     "id": "math-06-03",
     "title": "Fourier series",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: fourier series.",
+    "tagline": "A periodic signal can be rebuilt from a constant term plus sine and cosine waves.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Orthogonality of sinusoids</i>"
+        "periodic functions",
+        "orthogonality of sinusoids",
+        "definite integrals"
       ],
       "leadsTo": [
-        "the next lesson, <i>Convergence of Fourier series</i>"
+        "convergence of Fourier series",
+        "complex Fourier coefficients",
+        "Fourier transform"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "inner products",
+        "infinite series",
+        "trigonometric identities",
+        "least-squares approximation"
       ]
     },
+    "motivation": "<p>You can already describe a simple wave like $3\\sin(2t)$. But real periodic signals are rarely one clean wave. A square wave, a voice note, and a seasonal traffic curve all have shape.</p><p>A <b>Fourier series</b> says: keep the period, and decompose the shape into pure frequencies. It is like describing a color by amounts of red, green, and blue, except the basis colors are sinusoids.</p>",
+    "definition": "<p>For a $2\\pi$-periodic function $f$, its real Fourier series is $$f(t)\\sim \\frac{a_0}{2}+\\sum_{n=1}^{\\infty}\\big(a_n\\cos(nt)+b_n\\sin(nt)\\big),$$ where $$a_n=\\frac1\\pi\\int_{-\\pi}^{\\pi}f(t)\\cos(nt)\\,dt,\\quad b_n=\\frac1\\pi\\int_{-\\pi}^{\\pi}f(t)\\sin(nt)\\,dt,$$ and $a_0=\\frac1\\pi\\int_{-\\pi}^{\\pi}f(t)\\,dt$.</p><p>These formulas come from orthogonality. If you multiply the series by $\\cos(kt)$ and integrate, every term vanishes except $a_k\\cos^2(kt)$, whose integral is $a_k\\pi$. Dividing by $\\pi$ isolates $a_k$.</p><p><b>Assumptions that matter:</b> the formulas are written for period $2\\pi$; convergence is a separate question; $a_0/2$ is the average value; and enough integrability is needed so the coefficient integrals exist.</p>",
+    "worked": {
+      "problem": "Find the Fourier coefficients of $f(t)=2+3\\cos t-4\\sin(2t)$ on $[-\\pi,\\pi]$.",
+      "skills": [
+        "coefficient reading",
+        "orthogonality",
+        "Fourier representation"
+      ],
+      "strategy": "The function is already written in Fourier form, so use orthogonality to read the nonzero coefficients.",
+      "steps": [
+        {
+          "do": "Match the constant term",
+          "result": "$a_0/2=2$",
+          "why": "the Fourier constant is written as half of $a_0$"
+        },
+        {
+          "do": "Solve for $a_0$",
+          "result": "$a_0=4$",
+          "why": "multiply both sides by $2$"
+        },
+        {
+          "do": "Match the cosine term",
+          "result": "$a_1=3$",
+          "why": "$3\\cos t$ is the first cosine component"
+        },
+        {
+          "do": "Match the sine term",
+          "result": "$b_2=-4$",
+          "why": "$-4\\sin(2t)$ is the second sine component"
+        },
+        {
+          "do": "Set remaining coefficients",
+          "result": "all other $a_n$ and $b_n$ are $0$",
+          "why": "no other frequencies are present"
+        }
+      ],
+      "verify": "Rebuilding $a_0/2+a_1\\cos t+b_2\\sin(2t)$ gives $2+3\\cos t-4\\sin(2t)$ exactly.",
+      "answer": "$a_0=4$, $a_1=3$, $b_2=-4$, and all other coefficients are $0$.",
+      "connects": "Fourier coefficients are coordinates of a periodic function in sinusoidal directions."
+    },
+    "practice": [
+      {
+        "problem": "Find $a_0$ for $f(t)=5+\\cos(3t)$.",
+        "steps": [
+          {
+            "do": "Use the formula",
+            "result": "$a_0=\\frac1\\pi\\int_{-\\pi}^{\\pi}(5+\\cos(3t))\\,dt$",
+            "why": "the constant coefficient measures average level"
+          },
+          {
+            "do": "Integrate the constant",
+            "result": "$\\int_{-\\pi}^{\\pi}5\\,dt=10\\pi$",
+            "why": "the interval has length $2\\pi$"
+          },
+          {
+            "do": "Integrate the cosine",
+            "result": "$\\int_{-\\pi}^{\\pi}\\cos(3t)\\,dt=0$",
+            "why": "full cycles cancel"
+          },
+          {
+            "do": "Substitute the areas",
+            "result": "$a_0=\\frac1\\pi(10\\pi+0)$",
+            "why": "combine the two integrals"
+          },
+          {
+            "do": "Simplify",
+            "result": "$a_0=10$",
+            "why": "divide by $\\pi$"
+          }
+        ],
+        "answer": "$a_0=10$, so the average term is $a_0/2=5$."
+      },
+      {
+        "problem": "Find $b_1$ for $f(t)=6\\sin t+2\\cos(4t)$.",
+        "steps": [
+          {
+            "do": "Write the coefficient",
+            "result": "$b_1=\\frac1\\pi\\int_{-\\pi}^{\\pi}f(t)\\sin t\\,dt$",
+            "why": "project onto $\\sin t$"
+          },
+          {
+            "do": "Substitute $f$",
+            "result": "$\\frac1\\pi\\int(6\\sin t+2\\cos(4t))\\sin t\\,dt$",
+            "why": "use the given function"
+          },
+          {
+            "do": "Separate terms",
+            "result": "$\\frac1\\pi(6\\int\\sin^2t\\,dt+2\\int\\cos(4t)\\sin t\\,dt)$",
+            "why": "linearity"
+          },
+          {
+            "do": "Use norms and orthogonality",
+            "result": "$\\frac1\\pi(6\\pi+0)$",
+            "why": "$\\sin t$ has norm squared $\\pi$ and the cross term vanishes"
+          },
+          {
+            "do": "Simplify",
+            "result": "$6$",
+            "why": "the normalization cancels"
+          }
+        ],
+        "answer": "$b_1=6$."
+      },
+      {
+        "problem": "Find the first two nonzero terms of the Fourier series for $f(t)=t$ on $[-\\pi,\\pi]$, using that it is odd.",
+        "steps": [
+          {
+            "do": "Use odd symmetry",
+            "result": "$a_0=0$ and $a_n=0$",
+            "why": "an odd function has no constant or cosine terms on a symmetric interval"
+          },
+          {
+            "do": "Write the sine coefficient",
+            "result": "$b_n=\\frac1\\pi\\int_{-\\pi}^{\\pi}t\\sin(nt)\\,dt$",
+            "why": "only sine terms remain"
+          },
+          {
+            "do": "Use the known evaluated integral",
+            "result": "$b_n=2(-1)^{n+1}/n$",
+            "why": "integration by parts gives this formula"
+          },
+          {
+            "do": "Set $n=1$",
+            "result": "$b_1=2$",
+            "why": "$(-1)^2=1$"
+          },
+          {
+            "do": "Set $n=2$",
+            "result": "$b_2=-1$",
+            "why": "$2(-1)^3/2=-1$"
+          }
+        ],
+        "answer": "The first two nonzero terms are $2\\sin t-\\sin(2t)$."
+      },
+      {
+        "problem": "For an even function with $a_0=6$, $a_1=-2$, $a_2=1$, and all sine coefficients zero, write the two-harmonic approximation.",
+        "steps": [
+          {
+            "do": "Start with the Fourier form",
+            "result": "$a_0/2+a_1\\cos t+a_2\\cos(2t)$",
+            "why": "keep terms through the second harmonic"
+          },
+          {
+            "do": "Substitute $a_0=6$",
+            "result": "$3+a_1\\cos t+a_2\\cos(2t)$",
+            "why": "the constant term is half of $a_0$"
+          },
+          {
+            "do": "Substitute $a_1=-2$",
+            "result": "$3-2\\cos t+a_2\\cos(2t)$",
+            "why": "first cosine coefficient"
+          },
+          {
+            "do": "Substitute $a_2=1$",
+            "result": "$3-2\\cos t+\\cos(2t)$",
+            "why": "second cosine coefficient"
+          },
+          {
+            "do": "Confirm sine terms",
+            "result": "no sine terms",
+            "why": "the function is even and the given sine coefficients are zero"
+          }
+        ],
+        "answer": "$3-2\\cos t+\\cos(2t)$."
+      },
+      {
+        "problem": "Approximate $f(t)=1+0.5\\cos t+0.25\\sin(2t)$ at $t=\\pi/2$ using its listed Fourier terms.",
+        "steps": [
+          {
+            "do": "Substitute $t=\\pi/2$",
+            "result": "$1+0.5\\cos(\\pi/2)+0.25\\sin(\\pi)$",
+            "why": "evaluate the approximation at the requested point"
+          },
+          {
+            "do": "Evaluate the cosine",
+            "result": "$\\cos(\\pi/2)=0$",
+            "why": "unit-circle value"
+          },
+          {
+            "do": "Evaluate the sine",
+            "result": "$\\sin\\pi=0$",
+            "why": "the sine crosses zero"
+          },
+          {
+            "do": "Substitute the values",
+            "result": "$1+0.5\\cdot0+0.25\\cdot0$",
+            "why": "both oscillatory terms vanish"
+          },
+          {
+            "do": "Simplify",
+            "result": "$1$",
+            "why": "only the average remains"
+          }
+        ],
+        "answer": "The approximation gives $1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Audio synthesis",
+        "background": "Digital instruments build timbre by combining harmonics, not just one pure tone.",
+        "numbers": "A tone $\\sin(2\\pi 440t)+0.5\\sin(2\\pi 880t)$ has a fundamental at $440$ Hz and a second harmonic at $880$ Hz."
+      },
+      {
+        "title": "Square-wave electronics",
+        "background": "Ideal square waves are represented by odd sine harmonics, explaining their sharp edges and ringing.",
+        "numbers": "The first approximation $\\frac4\\pi(\\sin t+\\frac13\\sin3t)$ has amplitudes about $1.273$ and $0.424$."
+      },
+      {
+        "title": "Seasonal forecasting",
+        "background": "Periodic regression models yearly data with sine and cosine features.",
+        "numbers": "A model $20+8\\cos(2\\pi d/365)$ predicts $28$ at $d=0$ and $12$ at $d=182.5$."
+      },
+      {
+        "title": "Image compression",
+        "background": "JPEG uses cosine-series-like blocks to keep low-frequency structure and discard small high-frequency weights.",
+        "numbers": "If a block coefficient drops from $80$ to $5$, keeping only the $80$ term preserves most visible energy: $80^2/(80^2+5^2)\\approx0.996$."
+      },
+      {
+        "title": "Vibration analysis",
+        "background": "Mechanical systems are diagnosed by harmonic content: a strong harmonic can reveal imbalance or resonance.",
+        "numbers": "A signal $4\\cos(30t)+1\\cos(90t)$ has the third harmonic amplitude $1$, one quarter of the fundamental amplitude $4$."
+      },
+      {
+        "title": "Neural network features",
+        "background": "Fourier features map inputs into sinusoidal coordinates so models can learn high-frequency variation.",
+        "numbers": "For $x=0.25$, features $[\\sin(2\\pi x),\\cos(2\\pi x)]$ equal $[1,0]$."
+      }
+    ],
+    "applicationsClose": "Fourier series turn shape into coordinates: average level, then one frequency at a time.",
+    "takeaways": [
+      "A $2\\pi$-periodic Fourier series uses $a_0/2$, cosine coefficients $a_n$, and sine coefficients $b_n$.",
+      "Orthogonality gives the coefficient formulas by isolating one frequency at a time.",
+      "Even functions have only cosine terms; odd functions have only sine terms.",
+      "Fourier series are the language of periodic audio, images, vibrations, and seasonal signals."
+    ],
     "prereqs": [
       "math-06-02"
     ]
@@ -69,19 +798,262 @@
   B({
     "id": "math-06-04",
     "title": "Convergence of Fourier series",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: convergence of fourier series.",
+    "tagline": "A Fourier series converges to the signal at smooth points and to the midpoint at jumps.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Fourier series</i>"
+        "Fourier series",
+        "one-sided limits",
+        "continuity"
       ],
       "leadsTo": [
-        "the next lesson, <i>Complex Fourier coefficients</i>"
+        "complex Fourier coefficients",
+        "Fourier transform",
+        "distributions"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "piecewise functions",
+        "limits",
+        "infinite series",
+        "mean-square approximation"
       ]
     },
+    "motivation": "<p>Fourier series feel almost magical, but a wise learner asks the honest question: does the infinite sum really come back to the original function?</p><p>The answer is beautifully practical. At ordinary continuous points, the series returns the function value. At a jump, it returns the average of the left and right heights. That midpoint rule is the calm way Fourier handles abrupt edges.</p>",
+    "definition": "<p>A common Dirichlet convergence theorem says: if a $2\\pi$-periodic function is piecewise smooth, then its Fourier series at $t$ converges to $$\\frac{f(t^-)+f(t^+)}{2},$$ where $f(t^-)$ and $f(t^+)$ are the left- and right-hand limits. If $f$ is continuous at $t$, this value equals $f(t)$.</p><p>The midpoint appears because the partial sums use symmetric sine and cosine waves. Near a jump, the waves see both sides of the point. They cannot choose only the left or only the right, so the limiting value balances them.</p><p><b>Assumptions that matter:</b> pointwise convergence needs hypotheses such as piecewise smoothness; jump points use one-sided limits, not the assigned function value; finite partial sums can overshoot near jumps; and convergence in average energy can be stronger than pointwise convergence for rough signals.</p>",
+    "worked": {
+      "problem": "A $2\\pi$-periodic function has $f(t)=-1$ for $-\\pi<t<0$ and $f(t)=3$ for $0<t<\\pi$. What does its Fourier series converge to at $t=0$?",
+      "skills": [
+        "one-sided limits",
+        "jump discontinuities",
+        "Fourier convergence"
+      ],
+      "strategy": "At a jump, do not use either side alone. Average the left and right limits.",
+      "steps": [
+        {
+          "do": "Find the left-hand limit",
+          "result": "$f(0^-)=-1$",
+          "why": "values just left of $0$ use the first branch"
+        },
+        {
+          "do": "Find the right-hand limit",
+          "result": "$f(0^+)=3$",
+          "why": "values just right of $0$ use the second branch"
+        },
+        {
+          "do": "Add the side limits",
+          "result": "$-1+3=2$",
+          "why": "the midpoint uses their sum"
+        },
+        {
+          "do": "Divide by $2$",
+          "result": "$1$",
+          "why": "Fourier convergence at a jump gives the average"
+        },
+        {
+          "do": "State the convergence value",
+          "result": "$S(0)=1$",
+          "why": "$S$ denotes the Fourier series sum"
+        }
+      ],
+      "verify": "The value $1$ lies exactly halfway between $-1$ and $3$, matching the symmetric treatment of the jump.",
+      "answer": "The Fourier series converges to $1$ at $t=0$.",
+      "connects": "The midpoint rule is the practical convergence rule for discontinuities."
+    },
+    "practice": [
+      {
+        "problem": "If $f$ is continuous and $f(1)=4$, what does its Fourier series converge to at $t=1$ under the usual piecewise-smooth assumptions?",
+        "steps": [
+          {
+            "do": "Use continuity",
+            "result": "$f(1^-)=f(1^+)=f(1)$",
+            "why": "left and right limits equal the function value"
+          },
+          {
+            "do": "Substitute the value",
+            "result": "$f(1^-)=f(1^+)=4$",
+            "why": "the function is continuous at $1$"
+          },
+          {
+            "do": "Apply the midpoint formula",
+            "result": "$\\frac{4+4}{2}$",
+            "why": "Fourier convergence uses side limits"
+          },
+          {
+            "do": "Simplify",
+            "result": "$4$",
+            "why": "equal side limits average to themselves"
+          },
+          {
+            "do": "State the conclusion",
+            "result": "the series converges to $4$",
+            "why": "continuous points are recovered exactly"
+          }
+        ],
+        "answer": "It converges to $4$."
+      },
+      {
+        "problem": "A jump has left limit $2$ and right limit $10$. Find the Fourier convergence value at the jump.",
+        "steps": [
+          {
+            "do": "Write the side limits",
+            "result": "$f(t^-)=2$, $f(t^+)=10$",
+            "why": "these are the values approaching the jump"
+          },
+          {
+            "do": "Add them",
+            "result": "$2+10=12$",
+            "why": "midpoint starts with the sum"
+          },
+          {
+            "do": "Divide by $2$",
+            "result": "$6$",
+            "why": "average the two sides"
+          },
+          {
+            "do": "Check location",
+            "result": "$6$ is halfway between $2$ and $10$",
+            "why": "the distance to each side is $4$"
+          },
+          {
+            "do": "State the series value",
+            "result": "$S(t)=6$",
+            "why": "Fourier chooses the midpoint at jumps"
+          }
+        ],
+        "answer": "$6$."
+      },
+      {
+        "problem": "For the square wave $f(t)=1$ on $(0,\\pi)$ and $-1$ on $(-\\pi,0)$, find the convergence values at $t=0$ and $t=\\pi$.",
+        "steps": [
+          {
+            "do": "Read the sides at $0$",
+            "result": "$f(0^-)=-1$, $f(0^+)=1$",
+            "why": "left and right branches meet at a jump"
+          },
+          {
+            "do": "Average at $0$",
+            "result": "$(-1+1)/2=0$",
+            "why": "midpoint rule"
+          },
+          {
+            "do": "Use periodicity at $\\pi$",
+            "result": "$f(\\pi^-) = 1$ and $f(\\pi^+)=-1$",
+            "why": "just after $\\pi$ wraps to just after $-\\pi$"
+          },
+          {
+            "do": "Average at $\\pi$",
+            "result": "$(1-1)/2=0$",
+            "why": "the endpoint is also a jump in the periodic extension"
+          },
+          {
+            "do": "State both values",
+            "result": "$0$ and $0$",
+            "why": "both jumps are symmetric"
+          }
+        ],
+        "answer": "The Fourier series converges to $0$ at both $t=0$ and $t=\\pi$."
+      },
+      {
+        "problem": "A finite partial Fourier sum near a jump overshoots from $0$ to about $1.09$ when the right-hand value is $1$. Compute the overshoot above the right-hand value as a percent of jump height $1$.",
+        "steps": [
+          {
+            "do": "Find the excess",
+            "result": "$1.09-1=0.09$",
+            "why": "overshoot means above the target side"
+          },
+          {
+            "do": "Identify the jump height",
+            "result": "$1-0=1$",
+            "why": "the signal jumps from $0$ to $1$"
+          },
+          {
+            "do": "Divide excess by jump height",
+            "result": "$0.09/1=0.09$",
+            "why": "fraction of the jump"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$9\\%$",
+            "why": "multiply by $100$"
+          },
+          {
+            "do": "Interpret",
+            "result": "about $9\\%$ overshoot",
+            "why": "this is the Gibbs-style edge behavior"
+          }
+        ],
+        "answer": "The overshoot is about $9\\%$ of the jump height."
+      },
+      {
+        "problem": "Suppose $f(t)=t^2$ on $[-\\pi,\\pi]$ and is extended periodically. What does its Fourier series converge to at $t=\\pi$?",
+        "steps": [
+          {
+            "do": "Find the left limit at $\\pi$",
+            "result": "$f(\\pi^-)=\\pi^2$",
+            "why": "inside the interval the function approaches $\\pi^2$"
+          },
+          {
+            "do": "Find the right limit using periodicity",
+            "result": "$f(\\pi^+)=f(-\\pi^+)=\\pi^2$",
+            "why": "the periodic extension wraps to the left endpoint"
+          },
+          {
+            "do": "Compare the side limits",
+            "result": "$\\pi^2=\\pi^2$",
+            "why": "there is no jump at the periodic seam"
+          },
+          {
+            "do": "Apply the midpoint formula",
+            "result": "$(\\pi^2+\\pi^2)/2=\\pi^2$",
+            "why": "equal limits average to themselves"
+          },
+          {
+            "do": "State convergence",
+            "result": "$S(\\pi)=\\pi^2$",
+            "why": "the periodic extension is continuous at the seam"
+          }
+        ],
+        "answer": "It converges to $\\pi^2$ at $t=\\pi$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Edge ringing in images",
+        "background": "Truncated Fourier or cosine expansions can create ripples near sharp edges, a visible form of jump convergence behavior.",
+        "numbers": "A black-to-white edge from $0$ to $1$ may show about $0.09$ overshoot in ideal Fourier truncation."
+      },
+      {
+        "title": "Audio clicks",
+        "background": "Abrupt waveform jumps require many high frequencies. Partial sums approximate the jump with ringing.",
+        "numbers": "A jump from $-0.5$ to $0.5$ has midpoint $0$ and jump height $1$."
+      },
+      {
+        "title": "Signal reconstruction",
+        "background": "Band-limited reconstructions often smooth discontinuities because finite frequencies cannot make a perfect jump.",
+        "numbers": "Using only $50$ harmonics captures features wider than roughly $2\\pi/50\\approx0.126$ radians better than sharper edges."
+      },
+      {
+        "title": "Numerical PDEs",
+        "background": "Fourier methods solve equations efficiently on periodic domains, but shocks and discontinuities need careful interpretation.",
+        "numbers": "A shock with left state $2$ and right state $5$ has Fourier midpoint value $3.5$ at the discontinuity."
+      },
+      {
+        "title": "Compression artifacts",
+        "background": "Keeping too few frequency coefficients blurs edges and produces oscillations because high frequencies carry sharp transitions.",
+        "numbers": "If an edge needs $100$ harmonics and only $10$ are kept, the highest represented frequency is one tenth as large."
+      },
+      {
+        "title": "Modeling discontinuous labels",
+        "background": "Hard thresholds are discontinuous, so sinusoidal approximations near boundaries behave differently from smooth regression targets.",
+        "numbers": "A label jump from $0$ to $1$ has Fourier boundary value $0.5$, not either class label."
+      }
+    ],
+    "applicationsClose": "Convergence teaches humility: Fourier series recover smooth behavior cleanly and treat jumps by averaging both sides.",
+    "takeaways": [
+      "At continuous points, a piecewise-smooth Fourier series converges to $f(t)$.",
+      "At jumps, it converges to $\\frac{f(t^-)+f(t^+)}{2}$.",
+      "Finite partial sums can overshoot near jumps even when the limiting midpoint is correct.",
+      "Pointwise convergence and average-energy convergence answer different questions."
+    ],
     "prereqs": [
       "math-06-03"
     ]
@@ -90,19 +1062,262 @@
   B({
     "id": "math-06-05",
     "title": "Complex Fourier coefficients",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: complex fourier coefficients.",
+    "tagline": "Complex exponentials package sine and cosine into one clean coefficient per frequency.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Convergence of Fourier series</i>"
+        "Fourier series",
+        "Euler's formula",
+        "complex numbers"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Fourier transform</i>"
+        "The Fourier transform",
+        "spectral methods",
+        "discrete Fourier transform"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "inner products",
+        "orthogonality",
+        "complex conjugates",
+        "linear algebra"
       ]
     },
+    "motivation": "<p>Sine and cosine coefficients work, but they come in pairs. Euler's formula $e^{int}=\\cos(nt)+i\\sin(nt)$ lets us treat each frequency as one rotating complex wave.</p><p>The complex form is not meant to make the idea stranger. It makes bookkeeping cleaner: negative frequencies, phases, and amplitudes all live in one symmetric coefficient sequence.</p>",
+    "definition": "<p>For a $2\\pi$-periodic function $f$, the complex Fourier series is $$f(t)\\sim\\sum_{n=-\\infty}^{\\infty}c_n e^{int},\\quad c_n=\\frac{1}{2\\pi}\\int_{-\\pi}^{\\pi}f(t)e^{-int}\\,dt.$$ Here $i^2=-1$, $n$ is an integer frequency, and $c_n$ is the complex coordinate of $f$ in the direction $e^{int}$.</p><p>The coefficient formula comes from complex orthogonality: $\\int_{-\\pi}^{\\pi}e^{int}e^{-ikt}\\,dt$ is $2\\pi$ when $n=k$ and $0$ otherwise. Multiplying by $e^{-ikt}$ and integrating isolates $c_k$.</p><p><b>Assumptions that matter:</b> this form uses period $2\\pi$; real-valued signals satisfy $c_{-n}=\\overline{c_n}$; $c_0$ is the average value; and complex coefficients encode both amplitude and phase.</p>",
+    "worked": {
+      "problem": "Find the complex Fourier coefficients for $f(t)=3\\cos t$.",
+      "skills": [
+        "Euler's formula",
+        "coefficient matching",
+        "negative frequencies"
+      ],
+      "strategy": "Rewrite cosine as two complex exponentials, then read the coefficients.",
+      "steps": [
+        {
+          "do": "Use Euler's cosine identity",
+          "result": "$\\cos t=\\frac{e^{it}+e^{-it}}{2}$",
+          "why": "cosine is the even part of complex rotation"
+        },
+        {
+          "do": "Multiply by $3$",
+          "result": "$3\\cos t=\\frac32e^{it}+\\frac32e^{-it}$",
+          "why": "scale both exponential terms"
+        },
+        {
+          "do": "Match the $n=1$ term",
+          "result": "$c_1=\\frac32$",
+          "why": "the coefficient of $e^{it}$ is $c_1$"
+        },
+        {
+          "do": "Match the $n=-1$ term",
+          "result": "$c_{-1}=\\frac32$",
+          "why": "the coefficient of $e^{-it}$ is $c_{-1}$"
+        },
+        {
+          "do": "Set other coefficients",
+          "result": "$c_n=0$ for $n\\ne\\pm1$",
+          "why": "no other exponentials appear"
+        }
+      ],
+      "verify": "$c_1e^{it}+c_{-1}e^{-it}=\\frac32(e^{it}+e^{-it})=3\\cos t$.",
+      "answer": "$c_1=c_{-1}=\\frac32$, and all other $c_n$ are $0$.",
+      "connects": "Complex coefficients combine the two real trig coordinates into positive and negative frequency coordinates."
+    },
+    "practice": [
+      {
+        "problem": "Find the complex coefficients for $f(t)=2\\sin t$.",
+        "steps": [
+          {
+            "do": "Use Euler's sine identity",
+            "result": "$\\sin t=\\frac{e^{it}-e^{-it}}{2i}$",
+            "why": "sine is the odd part of complex rotation"
+          },
+          {
+            "do": "Multiply by $2$",
+            "result": "$2\\sin t=\\frac{e^{it}-e^{-it}}{i}$",
+            "why": "scale the sine"
+          },
+          {
+            "do": "Simplify $1/i$",
+            "result": "$1/i=-i$",
+            "why": "multiply numerator and denominator by $i$"
+          },
+          {
+            "do": "Read the $e^{it}$ coefficient",
+            "result": "$c_1=-i$",
+            "why": "the coefficient is $1/i$"
+          },
+          {
+            "do": "Read the $e^{-it}$ coefficient",
+            "result": "$c_{-1}=i$",
+            "why": "the negative sign changes $-1/i$ to $i$"
+          }
+        ],
+        "answer": "$c_1=-i$, $c_{-1}=i$, and all other coefficients are $0$."
+      },
+      {
+        "problem": "Find $c_0$ for $f(t)=4+\\cos(2t)$.",
+        "steps": [
+          {
+            "do": "Use the average formula",
+            "result": "$c_0=\\frac1{2\\pi}\\int_{-\\pi}^{\\pi}(4+\\cos(2t))\\,dt$",
+            "why": "the zero-frequency coefficient is the average"
+          },
+          {
+            "do": "Integrate the constant",
+            "result": "$8\\pi$",
+            "why": "four over length $2\\pi$ gives area $8\\pi$"
+          },
+          {
+            "do": "Integrate the cosine",
+            "result": "$0$",
+            "why": "full cycles cancel"
+          },
+          {
+            "do": "Substitute",
+            "result": "$c_0=\\frac1{2\\pi}(8\\pi)$",
+            "why": "combine the areas"
+          },
+          {
+            "do": "Simplify",
+            "result": "$4$",
+            "why": "divide by $2\\pi$"
+          }
+        ],
+        "answer": "$c_0=4$."
+      },
+      {
+        "problem": "Convert real coefficients $a_2=6$ and $b_2=-4$ into complex coefficients $c_2$ and $c_{-2}$.",
+        "steps": [
+          {
+            "do": "Use the conversion",
+            "result": "$c_n=\\frac{a_n-ib_n}{2}$",
+            "why": "combine cosine and sine at positive frequency"
+          },
+          {
+            "do": "Substitute $a_2=6$, $b_2=-4$",
+            "result": "$c_2=\\frac{6-i(-4)}{2}$",
+            "why": "use the given real coefficients"
+          },
+          {
+            "do": "Simplify $c_2$",
+            "result": "$c_2=3+2i$",
+            "why": "divide by $2$"
+          },
+          {
+            "do": "Use conjugate symmetry",
+            "result": "$c_{-2}=\\overline{c_2}$",
+            "why": "the original signal is real-valued"
+          },
+          {
+            "do": "Write the negative coefficient",
+            "result": "$c_{-2}=3-2i$",
+            "why": "conjugation flips the sign of the imaginary part"
+          }
+        ],
+        "answer": "$c_2=3+2i$ and $c_{-2}=3-2i$."
+      },
+      {
+        "problem": "For $c_3=2e^{-i\\pi/4}$ and $c_{-3}=2e^{i\\pi/4}$, find the real contribution at frequency $3$.",
+        "steps": [
+          {
+            "do": "Write the paired terms",
+            "result": "$2e^{-i\\pi/4}e^{i3t}+2e^{i\\pi/4}e^{-i3t}$",
+            "why": "use positive and negative frequencies together"
+          },
+          {
+            "do": "Combine exponents",
+            "result": "$2e^{i(3t-\\pi/4)}+2e^{-i(3t-\\pi/4)}$",
+            "why": "add exponents with the same base"
+          },
+          {
+            "do": "Use the cosine identity",
+            "result": "$4\\cos(3t-\\pi/4)$",
+            "why": "$e^{ix}+e^{-ix}=2\\cos x$"
+          },
+          {
+            "do": "Read the amplitude",
+            "result": "$4$",
+            "why": "paired complex magnitude $2$ becomes real amplitude $4$"
+          },
+          {
+            "do": "Read the phase",
+            "result": "$\\pi/4$",
+            "why": "the cosine is shifted by $\\pi/4$"
+          }
+        ],
+        "answer": "The real contribution is $4\\cos(3t-\\pi/4)$."
+      },
+      {
+        "problem": "Compute $c_1$ for $f(t)=e^{it}+2e^{-i2t}$.",
+        "steps": [
+          {
+            "do": "Identify the series form",
+            "result": "$f(t)=1\\cdot e^{i1t}+2\\cdot e^{-i2t}$",
+            "why": "the function is already in complex Fourier form"
+          },
+          {
+            "do": "Match the $n=1$ term",
+            "result": "$c_1=1$",
+            "why": "coefficient of $e^{it}$"
+          },
+          {
+            "do": "Match the $n=-2$ term",
+            "result": "$c_{-2}=2$",
+            "why": "coefficient of $e^{-i2t}$"
+          },
+          {
+            "do": "Check for other $n=1$ contributions",
+            "result": "none",
+            "why": "orthogonality prevents the $n=-2$ term from contributing to $c_1$"
+          },
+          {
+            "do": "State the requested coefficient",
+            "result": "$c_1=1$",
+            "why": "only the first term matches"
+          }
+        ],
+        "answer": "$c_1=1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Phase and amplitude",
+        "background": "Complex coefficients store phase naturally, which is cleaner than separate sine and cosine numbers.",
+        "numbers": "If $c_5=3e^{i\\pi/6}$, the paired real amplitude is $2|c_5|=6$."
+      },
+      {
+        "title": "Discrete Fourier transform",
+        "background": "The DFT is the sampled version of complex Fourier coefficients and powers modern signal processing.",
+        "numbers": "For $N=8$, frequency index $k=2$ corresponds to $2$ cycles per $8$ samples."
+      },
+      {
+        "title": "Spectral neural operators",
+        "background": "Some ML architectures transform data to Fourier coefficients, modify them, and transform back.",
+        "numbers": "Keeping $16$ complex modes out of $128$ keeps $16/128=12.5\\%$ of frequency indices."
+      },
+      {
+        "title": "Communication phase shifts",
+        "background": "Radio signals encode information in amplitude and phase, both represented by complex numbers.",
+        "numbers": "A coefficient $2e^{i\\pi/2}=2i$ has magnitude $2$ and phase $90^\\circ$."
+      },
+      {
+        "title": "Fast convolution",
+        "background": "Complex Fourier coefficients turn convolution into multiplication, which is why FFT methods are fast.",
+        "numbers": "Multiplying coefficients $(3+4i)(1-i)=7+i$ combines magnitude and phase at one frequency."
+      },
+      {
+        "title": "Real-signal symmetry",
+        "background": "For real data, negative frequencies are not extra information; they are conjugates of positive frequencies.",
+        "numbers": "If $c_7=1-2i$, then $c_{-7}=1+2i$ for a real-valued signal."
+      }
+    ],
+    "applicationsClose": "Complex Fourier coefficients are compact frequency coordinates: one number carries size, direction, and phase.",
+    "takeaways": [
+      "The complex series is $\\sum c_n e^{int}$ with $c_n=\\frac1{2\\pi}\\int f(t)e^{-int}\\,dt$.",
+      "Euler's formula turns sine and cosine pairs into positive and negative complex frequencies.",
+      "Real signals satisfy $c_{-n}=\\overline{c_n}$.",
+      "Magnitude and phase live naturally inside each complex coefficient."
+    ],
     "prereqs": [
       "math-06-04"
     ]
@@ -111,19 +1326,262 @@
   B({
     "id": "math-06-06",
     "title": "The Fourier transform",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: the fourier transform.",
+    "tagline": "The Fourier transform turns a nonperiodic signal into a continuum of frequencies.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Complex Fourier coefficients</i>"
+        "complex Fourier coefficients",
+        "improper integrals",
+        "complex exponentials"
       ],
       "leadsTo": [
-        "the next lesson, <i>Properties of the Fourier transform</i>"
+        "properties of the Fourier transform",
+        "the convolution theorem",
+        "spectral analysis"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "integrals",
+        "inner products",
+        "linear systems",
+        "limits"
       ]
     },
+    "motivation": "<p>Fourier series works beautifully for repeating signals. But many signals do not repeat: a pulse, a word, a click, a probability density, a one-time measurement.</p><p>The <b>Fourier transform</b> keeps the same question and changes the setting. Instead of integer harmonics of one period, it asks how much of every real frequency $\\omega$ is present.</p>",
+    "definition": "<p>One common convention defines the Fourier transform of $f$ by $$\\hat{f}(\\omega)=\\int_{-\\infty}^{\\infty} f(t)e^{-i\\omega t}\\,dt,$$ with inverse $$f(t)=\\frac1{2\\pi}\\int_{-\\infty}^{\\infty}\\hat{f}(\\omega)e^{i\\omega t}\\,d\\omega.$$ Here $t$ is the original variable, $\\omega$ is angular frequency, and $\\hat{f}(\\omega)$ is the frequency-domain description.</p><p>This is the limiting version of complex Fourier series as the period grows without bound. The frequency spacing becomes smaller and smaller, so the coefficient sum becomes an integral over continuous frequency.</p><p><b>Assumptions that matter:</b> transform conventions differ by factors of $2\\pi$; ordinary integrals work cleanly for integrable functions; some important signals require distributions; and $\\hat{f}$ is generally complex because it stores amplitude and phase.</p>",
+    "worked": {
+      "problem": "Compute the Fourier transform of $f(t)=e^{-a t}$ for $t\\ge0$ and $0$ for $t<0$, with $a>0$.",
+      "skills": [
+        "improper integrals",
+        "complex exponentials",
+        "transform definition"
+      ],
+      "strategy": "Use the definition and combine the real decay with the complex oscillation before integrating.",
+      "steps": [
+        {
+          "do": "Write the transform",
+          "result": "$\\hat{f}(\\omega)=\\int_0^{\\infty}e^{-at}e^{-i\\omega t}\\,dt$",
+          "why": "the signal is zero for negative $t$"
+        },
+        {
+          "do": "Combine exponents",
+          "result": "$\\int_0^{\\infty}e^{-(a+i\\omega)t}\\,dt$",
+          "why": "multiply exponentials by adding exponents"
+        },
+        {
+          "do": "Find an antiderivative",
+          "result": "$-\\frac{1}{a+i\\omega}e^{-(a+i\\omega)t}$",
+          "why": "differentiate to recover the integrand"
+        },
+        {
+          "do": "Evaluate at $\\infty$",
+          "result": "$0$",
+          "why": "$a>0$ makes the real decay vanish"
+        },
+        {
+          "do": "Evaluate at $0$ and subtract",
+          "result": "$0-\\left(-\\frac1{a+i\\omega}\\right)=\\frac1{a+i\\omega}$",
+          "why": "$e^0=1$"
+        }
+      ],
+      "verify": "At $\\omega=0$, the transform is $1/a$, which equals the area under $e^{-at}$ on $[0,\\infty)$.",
+      "answer": "$\\hat{f}(\\omega)=\\dfrac1{a+i\\omega}$.",
+      "connects": "The transform measures how a decaying pulse overlaps every complex sinusoid."
+    },
+    "practice": [
+      {
+        "problem": "Compute $\\hat{f}(0)$ for $f(t)=e^{-2|t|}$.",
+        "steps": [
+          {
+            "do": "Use the definition at zero frequency",
+            "result": "$\\hat{f}(0)=\\int_{-\\infty}^{\\infty}e^{-2|t|}\\,dt$",
+            "why": "$e^{-i0t}=1$"
+          },
+          {
+            "do": "Use even symmetry",
+            "result": "$2\\int_0^{\\infty}e^{-2t}\\,dt$",
+            "why": "the function is even"
+          },
+          {
+            "do": "Integrate the exponential",
+            "result": "$\\int_0^{\\infty}e^{-2t}\\,dt=1/2$",
+            "why": "area of a decaying exponential with rate $2$"
+          },
+          {
+            "do": "Multiply by $2$",
+            "result": "$1$",
+            "why": "include both sides of the real line"
+          },
+          {
+            "do": "Interpret",
+            "result": "$\\hat{f}(0)=1$",
+            "why": "zero frequency equals total area"
+          }
+        ],
+        "answer": "$\\hat{f}(0)=1$."
+      },
+      {
+        "problem": "Compute the transform of the box $f(t)=1$ for $|t|\\le1$ and $0$ otherwise.",
+        "steps": [
+          {
+            "do": "Write the finite integral",
+            "result": "$\\hat{f}(\\omega)=\\int_{-1}^{1}e^{-i\\omega t}\\,dt$",
+            "why": "the signal is zero outside the box"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$\\frac{e^{-i\\omega t}}{-i\\omega}$",
+            "why": "integrate the exponential"
+          },
+          {
+            "do": "Evaluate endpoints",
+            "result": "$\\frac{e^{-i\\omega}-e^{i\\omega}}{-i\\omega}$",
+            "why": "substitute $1$ and $-1$"
+          },
+          {
+            "do": "Use Euler's sine identity",
+            "result": "$\\frac{-2i\\sin\\omega}{-i\\omega}$",
+            "why": "$e^{-i\\omega}-e^{i\\omega}=-2i\\sin\\omega$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$\\frac{2\\sin\\omega}{\\omega}$",
+            "why": "cancel $-i$"
+          }
+        ],
+        "answer": "$\\hat{f}(\\omega)=2\\sin\\omega/\\omega$, with value $2$ at $\\omega=0$ by continuity."
+      },
+      {
+        "problem": "Using the convention above, what is the inverse-transform constant?",
+        "steps": [
+          {
+            "do": "Read the forward convention",
+            "result": "$\\hat{f}(\\omega)=\\int f(t)e^{-i\\omega t}\\,dt$",
+            "why": "there is no constant in front"
+          },
+          {
+            "do": "Recall the matching inverse",
+            "result": "$f(t)=\\frac1{2\\pi}\\int\\hat{f}(\\omega)e^{i\\omega t}\\,d\\omega$",
+            "why": "this convention puts the full factor in the inverse"
+          },
+          {
+            "do": "Identify the constant",
+            "result": "$1/(2\\pi)$",
+            "why": "it multiplies the inverse integral"
+          },
+          {
+            "do": "Check dimensions",
+            "result": "forward times inverse restores the original scale",
+            "why": "the $2\\pi$ accounts for angular frequency"
+          },
+          {
+            "do": "State the answer",
+            "result": "$\\frac1{2\\pi}$",
+            "why": "that is the inverse normalization"
+          }
+        ],
+        "answer": "The inverse-transform constant is $1/(2\\pi)$."
+      },
+      {
+        "problem": "For $f(t)=e^{-3t}$ on $t\\ge0$, find $|\\hat{f}(4)|$.",
+        "steps": [
+          {
+            "do": "Use the one-sided exponential transform",
+            "result": "$\\hat{f}(\\omega)=1/(3+i\\omega)$",
+            "why": "use $a=3$"
+          },
+          {
+            "do": "Substitute $\\omega=4$",
+            "result": "$\\hat{f}(4)=1/(3+4i)$",
+            "why": "evaluate at the requested frequency"
+          },
+          {
+            "do": "Find the denominator magnitude",
+            "result": "$|3+4i|=5$",
+            "why": "use the $3$-$4$-$5$ triangle"
+          },
+          {
+            "do": "Take the reciprocal magnitude",
+            "result": "$|1/(3+4i)|=1/5$",
+            "why": "magnitudes divide"
+          },
+          {
+            "do": "Convert to decimal",
+            "result": "$0.2$",
+            "why": "$1/5=0.2$"
+          }
+        ],
+        "answer": "$|\\hat{f}(4)|=0.2$."
+      },
+      {
+        "problem": "A sampled signal lasts $0.5$ seconds. Estimate the rough frequency resolution $\\Delta f$ in cycles per second.",
+        "steps": [
+          {
+            "do": "Name the observation length",
+            "result": "$T=0.5$ seconds",
+            "why": "finite windows set frequency spacing"
+          },
+          {
+            "do": "Use the resolution rule",
+            "result": "$\\Delta f\\approx1/T$",
+            "why": "one full extra cycle must fit in the window"
+          },
+          {
+            "do": "Substitute $T=0.5$",
+            "result": "$\\Delta f\\approx1/0.5$",
+            "why": "use the given duration"
+          },
+          {
+            "do": "Simplify",
+            "result": "$2$ Hz",
+            "why": "divide by one half"
+          },
+          {
+            "do": "Interpret",
+            "result": "frequencies closer than about $2$ Hz are hard to separate",
+            "why": "short windows blur frequency"
+          }
+        ],
+        "answer": "The rough frequency resolution is $2$ Hz."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Audio spectrum",
+        "background": "Audio tools display frequency content by transforming time pressure into frequency amplitudes.",
+        "numbers": "A $0.01$ second window has rough resolution $1/0.01=100$ Hz."
+      },
+      {
+        "title": "Image frequency analysis",
+        "background": "Images can be transformed along spatial axes; low frequencies are smooth regions and high frequencies are edges.",
+        "numbers": "A stripe pattern repeating every $8$ pixels has spatial frequency $1/8=0.125$ cycles per pixel."
+      },
+      {
+        "title": "Probability characteristic functions",
+        "background": "Probability uses a Fourier-transform cousin to describe distributions through expectations of complex exponentials.",
+        "numbers": "For a normal with variance $4$, the characteristic function magnitude includes $e^{-4\\omega^2/2}=e^{-2\\omega^2}$."
+      },
+      {
+        "title": "Solving differential equations",
+        "background": "Fourier transforms turn derivatives into multiplication, simplifying linear differential equations.",
+        "numbers": "If differentiation becomes $i\\omega$, then a second derivative becomes $(i\\omega)^2=-\\omega^2$."
+      },
+      {
+        "title": "MRI reconstruction",
+        "background": "MRI machines measure frequency-domain data and reconstruct spatial images by inverse Fourier transform.",
+        "numbers": "A $256\\times256$ image has $65,536$ spatial pixels and the same number of frequency samples in a full grid."
+      },
+      {
+        "title": "ML spectral bias",
+        "background": "Neural networks often learn low-frequency components earlier than high-frequency details, so Fourier analysis helps diagnose training behavior.",
+        "numbers": "If a target has amplitudes $10$ at frequency $1$ and $0.5$ at frequency $20$, the low-frequency energy is $10^2/0.5^2=400$ times larger."
+      }
+    ],
+    "applicationsClose": "The Fourier transform is the nonperiodic frequency lens: time or space on one side, continuous frequency on the other.",
+    "takeaways": [
+      "With this convention, $\\hat{f}(\\omega)=\\int f(t)e^{-i\\omega t}\\,dt$ and the inverse has $1/(2\\pi)$.",
+      "Fourier series become Fourier transforms when the period grows and frequency spacing becomes continuous.",
+      "Zero frequency records total area under the signal.",
+      "Transforms are complex because they store phase as well as amplitude."
+    ],
     "prereqs": [
       "math-06-05"
     ]
@@ -132,19 +1590,262 @@
   B({
     "id": "math-06-07",
     "title": "Properties of the Fourier transform",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: properties of the fourier transform.",
+    "tagline": "Shifts, scales, derivatives, and modulation have predictable signatures in frequency.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Fourier transform</i>"
+        "The Fourier transform",
+        "complex exponentials",
+        "calculus rules"
       ],
       "leadsTo": [
-        "the next lesson, <i>The convolution theorem</i>"
+        "The convolution theorem",
+        "filtering",
+        "spectral PDE methods"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "linearity",
+        "change of variables",
+        "integration by parts",
+        "symmetry"
       ]
     },
+    "motivation": "<p>Computing every transform from the definition would be tiring. The real power comes when you know how ordinary actions change the spectrum.</p><p>If you shift a signal, its magnitudes stay the same and phases rotate. If you differentiate, high frequencies get multiplied more strongly. These properties let you reason without starting over.</p>",
+    "definition": "<p>Using $\\hat{f}(\\omega)=\\int_{-\\infty}^{\\infty}f(t)e^{-i\\omega t}\\,dt$, key properties include linearity $\\widehat{af+bg}=a\\hat{f}+b\\hat{g}$, time shift $\\widehat{f(t-t_0)}=e^{-i\\omega t_0}\\hat{f}(\\omega)$, scaling $\\widehat{f(at)}=\\frac1{|a|}\\hat{f}(\\omega/a)$, and differentiation $\\widehat{f'}=i\\omega\\hat{f}(\\omega)$ when boundary terms vanish.</p><p>The derivative rule follows by integration by parts: $\\int f'(t)e^{-i\\omega t}\\,dt=[f(t)e^{-i\\omega t}]_{-\\infty}^{\\infty}+i\\omega\\int f(t)e^{-i\\omega t}\\,dt$. If the boundary term is zero, only $i\\omega\\hat{f}$ remains.</p><p><b>Assumptions that matter:</b> boundary decay is needed for derivative formulas; scaling uses $|a|$ because interval length changes; shifts change phase but not magnitude; and all properties depend on the transform convention.</p>",
+    "worked": {
+      "problem": "If $\\hat{f}(\\omega)=1/(1+\\omega^2)$, find the transform of $g(t)=f(t-3)$.",
+      "skills": [
+        "time shifts",
+        "phase factors",
+        "frequency-domain reading"
+      ],
+      "strategy": "A delay in time multiplies the transform by a complex phase factor.",
+      "steps": [
+        {
+          "do": "Identify the shift",
+          "result": "$g(t)=f(t-3)$",
+          "why": "the signal is delayed by $3$"
+        },
+        {
+          "do": "Use the shift property",
+          "result": "$\\hat{g}(\\omega)=e^{-i\\omega\\cdot3}\\hat{f}(\\omega)$",
+          "why": "time delay produces phase rotation"
+        },
+        {
+          "do": "Substitute $\\hat{f}$",
+          "result": "$\\hat{g}(\\omega)=e^{-i3\\omega}\\frac1{1+\\omega^2}$",
+          "why": "use the given transform"
+        },
+        {
+          "do": "Read the magnitude",
+          "result": "$|\\hat{g}(\\omega)|=1/(1+\\omega^2)$",
+          "why": "$|e^{-i3\\omega}|=1$"
+        },
+        {
+          "do": "Read the phase change",
+          "result": "phase decreases by $3\\omega$",
+          "why": "the exponential is a pure rotation"
+        }
+      ],
+      "verify": "A shift should not change how much of each frequency is present, only where the wave aligns in phase.",
+      "answer": "$\\hat{g}(\\omega)=e^{-i3\\omega}/(1+\\omega^2)$.",
+      "connects": "Transform properties let us update spectra when the time signal is moved, stretched, or differentiated."
+    },
+    "practice": [
+      {
+        "problem": "If $h(t)=2f(t)-3g(t)$, express $\\hat{h}(\\omega)$ in terms of $\\hat{f}$ and $\\hat{g}$.",
+        "steps": [
+          {
+            "do": "Identify the operation",
+            "result": "linear combination",
+            "why": "$h$ is built by scaling and adding signals"
+          },
+          {
+            "do": "Apply linearity to $2f$",
+            "result": "$\\widehat{2f}=2\\hat{f}$",
+            "why": "constants pass through the transform"
+          },
+          {
+            "do": "Apply linearity to $-3g$",
+            "result": "$\\widehat{-3g}=-3\\hat{g}$",
+            "why": "negative scaling also passes through"
+          },
+          {
+            "do": "Add the transformed pieces",
+            "result": "$\\hat{h}(\\omega)=2\\hat{f}(\\omega)-3\\hat{g}(\\omega)$",
+            "why": "transforms preserve sums"
+          },
+          {
+            "do": "Check variables",
+            "result": "all terms use the same $\\omega$",
+            "why": "they live in the same frequency domain"
+          }
+        ],
+        "answer": "$\\hat{h}(\\omega)=2\\hat{f}(\\omega)-3\\hat{g}(\\omega)$."
+      },
+      {
+        "problem": "If $\\hat{f}(\\omega)=e^{-\\omega^2}$, find the transform of $f(2t)$.",
+        "steps": [
+          {
+            "do": "Identify the scale",
+            "result": "$a=2$",
+            "why": "the input is $2t$"
+          },
+          {
+            "do": "Use the scaling property",
+            "result": "$\\widehat{f(2t)}=\\frac12\\hat{f}(\\omega/2)$",
+            "why": "time compression widens frequency and halves area"
+          },
+          {
+            "do": "Substitute the transform",
+            "result": "$\\frac12 e^{-(\\omega/2)^2}$",
+            "why": "replace the argument by $\\omega/2$"
+          },
+          {
+            "do": "Simplify the exponent",
+            "result": "$\\frac12 e^{-\\omega^2/4}$",
+            "why": "square $\\omega/2$"
+          },
+          {
+            "do": "Interpret",
+            "result": "frequency content is wider",
+            "why": "time compression broadens the spectrum"
+          }
+        ],
+        "answer": "$\\widehat{f(2t)}(\\omega)=\\frac12e^{-\\omega^2/4}$."
+      },
+      {
+        "problem": "If $\\hat{f}(\\omega)=1/(1+\\omega^2)$ and boundary terms vanish, find $\\widehat{f'}(\\omega)$.",
+        "steps": [
+          {
+            "do": "Use the derivative property",
+            "result": "$\\widehat{f'}(\\omega)=i\\omega\\hat{f}(\\omega)$",
+            "why": "differentiation becomes multiplication"
+          },
+          {
+            "do": "Substitute $\\hat{f}$",
+            "result": "$i\\omega\\cdot\\frac1{1+\\omega^2}$",
+            "why": "use the given transform"
+          },
+          {
+            "do": "Write as one fraction",
+            "result": "$\\frac{i\\omega}{1+\\omega^2}$",
+            "why": "combine factors"
+          },
+          {
+            "do": "Check zero frequency",
+            "result": "$0$",
+            "why": "a derivative has zero total area when endpoints match"
+          },
+          {
+            "do": "Interpret high frequencies",
+            "result": "larger $|\\omega|$ are emphasized",
+            "why": "multiplication by $\\omega$ boosts rapid oscillations"
+          }
+        ],
+        "answer": "$\\widehat{f'}(\\omega)=\\frac{i\\omega}{1+\\omega^2}$."
+      },
+      {
+        "problem": "If $g(t)=e^{i5t}f(t)$, express $\\hat{g}(\\omega)$.",
+        "steps": [
+          {
+            "do": "Write the transform",
+            "result": "$\\hat{g}(\\omega)=\\int f(t)e^{i5t}e^{-i\\omega t}\\,dt$",
+            "why": "use the definition"
+          },
+          {
+            "do": "Combine exponentials",
+            "result": "$\\int f(t)e^{-i(\\omega-5)t}\\,dt$",
+            "why": "$i5t-i\\omega t=-i(\\omega-5)t$"
+          },
+          {
+            "do": "Recognize the transform argument",
+            "result": "$\\hat{f}(\\omega-5)$",
+            "why": "the frequency variable is shifted"
+          },
+          {
+            "do": "Name the property",
+            "result": "modulation shifts spectrum",
+            "why": "multiplying by a complex tone moves frequencies"
+          },
+          {
+            "do": "Interpret the direction",
+            "result": "shift right by $5$",
+            "why": "features at frequency $0$ move to $5$"
+          }
+        ],
+        "answer": "$\\hat{g}(\\omega)=\\hat{f}(\\omega-5)$."
+      },
+      {
+        "problem": "A signal is delayed by $0.01$ seconds. At frequency $100$ Hz, what phase shift in radians occurs for $e^{-i2\\pi f t_0}$?",
+        "steps": [
+          {
+            "do": "Name the delay",
+            "result": "$t_0=0.01$",
+            "why": "given in seconds"
+          },
+          {
+            "do": "Name the frequency",
+            "result": "$f=100$ Hz",
+            "why": "cycles per second"
+          },
+          {
+            "do": "Use angular phase",
+            "result": "$2\\pi f t_0$",
+            "why": "one cycle is $2\\pi$ radians"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$2\\pi\\cdot100\\cdot0.01=2\\pi$",
+            "why": "the delay is one full cycle at $100$ Hz"
+          },
+          {
+            "do": "Apply the delay sign",
+            "result": "$-2\\pi$",
+            "why": "a delay uses $e^{-i2\\pi f t_0}$"
+          }
+        ],
+        "answer": "The phase shift is $-2\\pi$ radians, equivalent to no visible phase change modulo $2\\pi$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Filtering derivatives",
+        "background": "Edges in images are derivatives, and the Fourier derivative rule explains why edges emphasize high frequencies.",
+        "numbers": "At $\\omega=10$, differentiation multiplies magnitude by $10$; at $\\omega=1$, it multiplies by $1$."
+      },
+      {
+        "title": "Audio delay",
+        "background": "A pure delay should not change loudness at any frequency, only phase alignment.",
+        "numbers": "A $5$ ms delay at $200$ Hz gives phase $-2\\pi\\cdot200\\cdot0.005=-2\\pi$."
+      },
+      {
+        "title": "Time stretching",
+        "background": "Slowing a signal spreads it in time and compresses its spectrum.",
+        "numbers": "If $g(t)=f(t/2)$, then $\\hat{g}(\\omega)=2\\hat{f}(2\\omega)$, so frequencies are halved."
+      },
+      {
+        "title": "Radio modulation",
+        "background": "Multiplying by a carrier moves a baseband signal up to a transmission frequency.",
+        "numbers": "Multiplication by $e^{i1000t}$ shifts $\\hat{f}(\\omega)$ to $\\hat{f}(\\omega-1000)$."
+      },
+      {
+        "title": "PDE solvers",
+        "background": "Fourier methods solve constant-coefficient differential equations by replacing derivatives with powers of $i\\omega$.",
+        "numbers": "A second derivative transforms to $-\\omega^2\\hat{f}$, so at $\\omega=3$ the multiplier is $-9$."
+      },
+      {
+        "title": "Data augmentation shifts",
+        "background": "Shift-invariant models should respond similarly to translated inputs. Fourier magnitudes explain why phase changes but energy does not.",
+        "numbers": "For a shift by $4$ pixels, coefficient magnitude stays $|C_k|$ while phase changes by $-2\\pi k\\cdot4/N$."
+      }
+    ],
+    "applicationsClose": "Transform properties are a toolkit: change the signal in time, and the frequency-domain effect is usually simpler than recomputing from scratch.",
+    "takeaways": [
+      "Linearity lets transforms pass through sums and scalar multiples.",
+      "Time shifts multiply by phase factors and preserve magnitude.",
+      "Time compression broadens frequency content with a $1/|a|$ scale factor.",
+      "Differentiation becomes multiplication by $i\\omega$ when boundary terms vanish."
+    ],
     "prereqs": [
       "math-06-06"
     ]
@@ -153,19 +1854,262 @@
   B({
     "id": "math-06-08",
     "title": "The convolution theorem",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: the convolution theorem.",
+    "tagline": "Convolution in time becomes multiplication in frequency, and multiplication in time becomes convolution in frequency.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Properties of the Fourier transform</i>"
+        "properties of the Fourier transform",
+        "integrals",
+        "linear systems"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Dirac delta</i>"
+        "filtering",
+        "spectral algorithms",
+        "distributions"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "Fourier transform",
+        "inner products",
+        "probability densities",
+        "polynomials"
       ]
     },
+    "motivation": "<p>Convolution can feel like a heavy sliding integral: flip one function, slide it, multiply, and add. That is a lot to carry in the time domain.</p><p>The Fourier transform reveals the simple story underneath. A filter that convolves with a signal simply multiplies each frequency by a frequency response. That is one of the most useful facts in applied mathematics.</p>",
+    "definition": "<p>The convolution of two functions is $$(f*g)(t)=\\int_{-\\infty}^{\\infty}f(\\tau)g(t-\\tau)\\,d\\tau.$$ With the transform convention $\\hat{f}(\\omega)=\\int f(t)e^{-i\\omega t}\\,dt$, the <b>convolution theorem</b> says $$\\widehat{f*g}(\\omega)=\\hat{f}(\\omega)\\hat{g}(\\omega).$$ Conversely, $\\widehat{fg}=\\frac1{2\\pi}\\hat{f}*\\hat{g}$ under this convention.</p><p>The theorem comes from substituting the convolution integral into the transform, then changing variables $u=t-\\tau$. The inner integral becomes $\\hat{g}(\\omega)$ and the remaining outer integral becomes $\\hat{f}(\\omega)$.</p><p><b>Assumptions that matter:</b> the functions need enough integrability to swap integrals safely; constants depend on the Fourier convention; convolution is commutative; and in discrete computation, circular convolution appears unless padding prevents wraparound.</p>",
+    "worked": {
+      "problem": "If $\\hat{f}(\\omega)=\\frac1{1+\\omega^2}$ and $\\hat{g}(\\omega)=e^{-\\omega^2}$, find $\\widehat{f*g}(\\omega)$.",
+      "skills": [
+        "convolution theorem",
+        "frequency multiplication",
+        "transform notation"
+      ],
+      "strategy": "Do not compute the sliding integral. Multiply the two transforms.",
+      "steps": [
+        {
+          "do": "Write the theorem",
+          "result": "$\\widehat{f*g}=\\hat{f}\\hat{g}$",
+          "why": "convolution in time becomes multiplication in frequency"
+        },
+        {
+          "do": "Substitute $\\hat{f}$",
+          "result": "$\\widehat{f*g}(\\omega)=\\frac1{1+\\omega^2}\\hat{g}(\\omega)$",
+          "why": "use the first given transform"
+        },
+        {
+          "do": "Substitute $\\hat{g}$",
+          "result": "$\\frac1{1+\\omega^2}e^{-\\omega^2}$",
+          "why": "use the second given transform"
+        },
+        {
+          "do": "Write as one expression",
+          "result": "$\\frac{e^{-\\omega^2}}{1+\\omega^2}$",
+          "why": "multiply the frequency responses"
+        },
+        {
+          "do": "Check zero frequency",
+          "result": "$1$",
+          "why": "$e^0/(1+0)=1$"
+        }
+      ],
+      "verify": "The result is smaller at high frequency than either a flat response because both factors reduce high-frequency content.",
+      "answer": "$\\widehat{f*g}(\\omega)=\\dfrac{e^{-\\omega^2}}{1+\\omega^2}$.",
+      "connects": "Filtering is convolution viewed as frequency-by-frequency multiplication."
+    },
+    "practice": [
+      {
+        "problem": "A filter has frequency response $H(\\omega)=0.2$ at a certain frequency, and a signal has coefficient $X(\\omega)=5e^{i\\pi/3}$. What is the output coefficient?",
+        "steps": [
+          {
+            "do": "Use frequency multiplication",
+            "result": "$Y(\\omega)=H(\\omega)X(\\omega)$",
+            "why": "filtering is convolution in time"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$Y=0.2\\cdot5e^{i\\pi/3}$",
+            "why": "use the given response and coefficient"
+          },
+          {
+            "do": "Multiply magnitudes",
+            "result": "$1e^{i\\pi/3}$",
+            "why": "$0.2\\cdot5=1$"
+          },
+          {
+            "do": "Read phase",
+            "result": "$\\pi/3$",
+            "why": "a positive real filter does not change phase"
+          },
+          {
+            "do": "State the coefficient",
+            "result": "$e^{i\\pi/3}$",
+            "why": "magnitude one remains"
+          }
+        ],
+        "answer": "The output coefficient is $e^{i\\pi/3}$."
+      },
+      {
+        "problem": "Compute the discrete convolution of $[1,2]$ with $[3,4]$.",
+        "steps": [
+          {
+            "do": "Compute index $0$",
+            "result": "$1\\cdot3=3$",
+            "why": "only the first pair overlaps"
+          },
+          {
+            "do": "Compute index $1$",
+            "result": "$1\\cdot4+2\\cdot3=10$",
+            "why": "two overlaps contribute"
+          },
+          {
+            "do": "Compute index $2$",
+            "result": "$2\\cdot4=8$",
+            "why": "only the last pair overlaps"
+          },
+          {
+            "do": "List the result",
+            "result": "$[3,10,8]$",
+            "why": "linear convolution length is $2+2-1=3$"
+          },
+          {
+            "do": "Check by polynomial multiplication",
+            "result": "$(1+2x)(3+4x)=3+10x+8x^2$",
+            "why": "coefficients match convolution"
+          }
+        ],
+        "answer": "$[3,10,8]$."
+      },
+      {
+        "problem": "If $\\widehat{f*g}(\\omega)=6$ and $\\hat{f}(\\omega)=2$ at one frequency, find $\\hat{g}(\\omega)$ there.",
+        "steps": [
+          {
+            "do": "Use the convolution theorem",
+            "result": "$\\widehat{f*g}=\\hat{f}\\hat{g}$",
+            "why": "frequency-domain product"
+          },
+          {
+            "do": "Substitute the known values",
+            "result": "$6=2\\hat{g}(\\omega)$",
+            "why": "work at the one frequency"
+          },
+          {
+            "do": "Divide by $2$",
+            "result": "$\\hat{g}(\\omega)=3$",
+            "why": "isolate the unknown response"
+          },
+          {
+            "do": "Check multiplication",
+            "result": "$2\\cdot3=6$",
+            "why": "matches the output"
+          },
+          {
+            "do": "Interpret",
+            "result": "the second factor triples that frequency after the first factor is counted",
+            "why": "responses multiply"
+          }
+        ],
+        "answer": "$\\hat{g}(\\omega)=3$."
+      },
+      {
+        "problem": "A moving-average filter uses weights $[1/3,1/3,1/3]$. Convolve it with signal samples $[3,6,9]$ using valid positions only.",
+        "steps": [
+          {
+            "do": "Align the three weights",
+            "result": "$[3,6,9]$ under $[1/3,1/3,1/3]$",
+            "why": "valid convolution needs full overlap"
+          },
+          {
+            "do": "Multiply first sample",
+            "result": "$3\\cdot1/3=1$",
+            "why": "weighted contribution"
+          },
+          {
+            "do": "Multiply second sample",
+            "result": "$6\\cdot1/3=2$",
+            "why": "weighted contribution"
+          },
+          {
+            "do": "Multiply third sample",
+            "result": "$9\\cdot1/3=3$",
+            "why": "weighted contribution"
+          },
+          {
+            "do": "Add contributions",
+            "result": "$1+2+3=6$",
+            "why": "the moving average is the sum of weighted samples"
+          }
+        ],
+        "answer": "The valid filtered output is $6$."
+      },
+      {
+        "problem": "Two independent variables have density means $2$ and $5$. Their sum density is a convolution. What is the mean of the sum?",
+        "steps": [
+          {
+            "do": "Name the variables",
+            "result": "$X$ has mean $2$, $Y$ has mean $5$",
+            "why": "given values"
+          },
+          {
+            "do": "Use independence",
+            "result": "density of $X+Y$ is $f_X*f_Y$",
+            "why": "sums of independent variables convolve densities"
+          },
+          {
+            "do": "Use expectation linearity",
+            "result": "$E[X+Y]=E[X]+E[Y]$",
+            "why": "means add even before computing the convolution"
+          },
+          {
+            "do": "Substitute means",
+            "result": "$2+5=7$",
+            "why": "add the two averages"
+          },
+          {
+            "do": "Interpret",
+            "result": "the convolved density is centered at $7$",
+            "why": "the sum's average shifts accordingly"
+          }
+        ],
+        "answer": "The mean of the sum is $7$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Image blurring",
+        "background": "Blurring an image convolves it with a small kernel; in frequency, it suppresses high-frequency edges.",
+        "numbers": "A $3$-pixel average of $[30,60,90]$ gives $(30+60+90)/3=60$."
+      },
+      {
+        "title": "CNN layers",
+        "background": "Convolutional neural networks learn kernels that detect local patterns such as edges and textures.",
+        "numbers": "A kernel $[-1,0,1]$ on samples $[2,5,9]$ gives $-2+0+9=7$, a rightward difference."
+      },
+      {
+        "title": "Fast polynomial multiplication",
+        "background": "Multiplying polynomials is convolution of coefficients, and FFTs speed it up by multiplying values in frequency-like space.",
+        "numbers": "$(1+2x)(3+4x)=3+10x+8x^2$, so coefficient convolution is $[3,10,8]$."
+      },
+      {
+        "title": "Probability sums",
+        "background": "The density of a sum of independent random variables is the convolution of their densities.",
+        "numbers": "Two independent fair dice have $6$ ways to sum to $7$ out of $36$, so probability is $6/36=1/6$."
+      },
+      {
+        "title": "Audio reverb",
+        "background": "Reverberation convolves dry audio with an impulse response of a room.",
+        "numbers": "If an impulse response has echoes $[1,0.5]$, input pulse $[2]$ produces $[2,1]$."
+      },
+      {
+        "title": "Low-pass filtering",
+        "background": "A smoothing filter multiplies the spectrum by a response near $1$ at low frequencies and near $0$ at high frequencies.",
+        "numbers": "If $H(2)=0.9$ and $H(20)=0.1$, amplitudes $10$ and $4$ become $9$ and $0.4$."
+      }
+    ],
+    "applicationsClose": "Convolution theorem is the great simplifier: sliding weighted sums in one world become ordinary products in the other.",
+    "takeaways": [
+      "Convolution is $(f*g)(t)=\\int f(\\tau)g(t-\\tau)\\,d\\tau$.",
+      "With this convention, $\\widehat{f*g}=\\hat{f}\\hat{g}$.",
+      "Filtering is convolution in time and multiplication in frequency.",
+      "Discrete convolution underlies CNNs, smoothing, polynomial multiplication, and probability sums."
+    ],
     "prereqs": [
       "math-06-07"
     ]
@@ -174,19 +2118,262 @@
   B({
     "id": "math-06-09",
     "title": "The Dirac delta",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: the dirac delta.",
+    "tagline": "The Dirac delta is an idealized unit impulse that samples a function at one point.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The convolution theorem</i>"
+        "integrals",
+        "Fourier transform",
+        "limits of narrow pulses"
       ],
       "leadsTo": [
-        "the next lesson, <i>Distributions</i>"
+        "Distributions",
+        "impulse responses",
+        "Green's functions"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "convolution",
+        "linear systems",
+        "measure-like thinking",
+        "test functions"
       ]
     },
+    "motivation": "<p>Sometimes a system is tested with a very short, very strong input: a tap on a table, a camera flash, a unit spike in a signal. Ordinary functions struggle to describe an infinitely narrow spike with area one.</p><p>The <b>Dirac delta</b> is the ideal version of that spike. It is not a normal function. It is a rule for integrals: place it at $a$, and it extracts the value of the function there.</p>",
+    "definition": "<p>The Dirac delta $\\delta(t-a)$ is defined by its sifting property $$\\int_{-\\infty}^{\\infty} f(t)\\delta(t-a)\\,dt=f(a)$$ for nice test functions $f$. It has total mass $1$ because choosing $f(t)=1$ gives $\\int\\delta(t-a)\\,dt=1$.</p><p>You can think of it as a limit of pulses whose widths shrink and heights grow while area stays $1$. For example, a rectangle of width $\\varepsilon$ and height $1/\\varepsilon$ has area $1$; as $\\varepsilon\\to0$, it concentrates all mass at one point.</p><p><b>Assumptions that matter:</b> $\\delta$ is a distribution, not an ordinary finite-valued function; equations involving it are interpreted under integrals; scaling obeys $\\delta(at)=\\delta(t)/|a|$; and convolution with $\\delta$ leaves a signal unchanged.</p>",
+    "worked": {
+      "problem": "Evaluate $\\displaystyle\\int_{-\\infty}^{\\infty}(t^2+3t)\\delta(t-2)\\,dt$.",
+      "skills": [
+        "sifting property",
+        "evaluation",
+        "distributions"
+      ],
+      "strategy": "The delta at $2$ samples the function multiplying it at $t=2$.",
+      "steps": [
+        {
+          "do": "Identify the sampled function",
+          "result": "$f(t)=t^2+3t$",
+          "why": "this is the factor next to the delta"
+        },
+        {
+          "do": "Identify the delta location",
+          "result": "$a=2$",
+          "why": "$\\delta(t-2)$ is centered at $2$"
+        },
+        {
+          "do": "Apply the sifting property",
+          "result": "$\\int f(t)\\delta(t-2)\\,dt=f(2)$",
+          "why": "delta samples at its center"
+        },
+        {
+          "do": "Evaluate $f(2)$",
+          "result": "$2^2+3\\cdot2=4+6$",
+          "why": "substitute $t=2$"
+        },
+        {
+          "do": "Simplify",
+          "result": "$10$",
+          "why": "add the terms"
+        }
+      ],
+      "verify": "A narrow unit-area pulse around $2$ would average values near $10$, so the ideal limit gives exactly $10$.",
+      "answer": "The integral equals $10$.",
+      "connects": "The delta turns integration into sampling, which is why it models impulses and point sources."
+    },
+    "practice": [
+      {
+        "problem": "Evaluate $\\int_{-\\infty}^{\\infty}\\cos t\\,\\delta(t-\\pi)\\,dt$.",
+        "steps": [
+          {
+            "do": "Identify the function",
+            "result": "$f(t)=\\cos t$",
+            "why": "the smooth factor is being sampled"
+          },
+          {
+            "do": "Identify the location",
+            "result": "$a=\\pi$",
+            "why": "$\\delta(t-\\pi)$ is centered at $\\pi$"
+          },
+          {
+            "do": "Apply sifting",
+            "result": "$f(\\pi)$",
+            "why": "delta extracts the value at its center"
+          },
+          {
+            "do": "Evaluate cosine",
+            "result": "$\\cos\\pi=-1$",
+            "why": "unit-circle value"
+          },
+          {
+            "do": "State the integral",
+            "result": "$-1$",
+            "why": "the integral equals the sampled value"
+          }
+        ],
+        "answer": "$-1$."
+      },
+      {
+        "problem": "Compute $\\int_{-\\infty}^{\\infty}5\\delta(t+3)\\,dt$.",
+        "steps": [
+          {
+            "do": "Rewrite the center",
+            "result": "$\\delta(t+3)=\\delta(t-(-3))$",
+            "why": "the impulse is located at $-3$"
+          },
+          {
+            "do": "Use total mass",
+            "result": "$\\int\\delta(t+3)\\,dt=1$",
+            "why": "every shifted delta has unit mass"
+          },
+          {
+            "do": "Pull out the constant",
+            "result": "$5\\int\\delta(t+3)\\,dt$",
+            "why": "linearity of integration"
+          },
+          {
+            "do": "Substitute the mass",
+            "result": "$5\\cdot1$",
+            "why": "unit impulse area"
+          },
+          {
+            "do": "Simplify",
+            "result": "$5$",
+            "why": "multiply"
+          }
+        ],
+        "answer": "$5$."
+      },
+      {
+        "problem": "Evaluate $\\int_{0}^{\\infty}e^{-t}\\delta(t-4)\\,dt$.",
+        "steps": [
+          {
+            "do": "Check the delta location",
+            "result": "$4$",
+            "why": "the impulse is at $t=4$"
+          },
+          {
+            "do": "Check the integration interval",
+            "result": "$4\\in[0,\\infty)$",
+            "why": "the impulse lies inside the interval"
+          },
+          {
+            "do": "Apply sifting on the interval",
+            "result": "$e^{-4}$",
+            "why": "the point inside the interval contributes"
+          },
+          {
+            "do": "Approximate if desired",
+            "result": "$e^{-4}\\approx0.0183$",
+            "why": "numerical sense check"
+          },
+          {
+            "do": "State the exact value",
+            "result": "$e^{-4}$",
+            "why": "the delta samples the exponential"
+          }
+        ],
+        "answer": "$e^{-4}$."
+      },
+      {
+        "problem": "Use scaling to simplify $\\delta(3t)$.",
+        "steps": [
+          {
+            "do": "Recall the scaling rule",
+            "result": "$\\delta(at)=\\frac1{|a|}\\delta(t)$",
+            "why": "area must remain one after horizontal scaling"
+          },
+          {
+            "do": "Identify $a$",
+            "result": "$a=3$",
+            "why": "the argument is $3t$"
+          },
+          {
+            "do": "Substitute into the rule",
+            "result": "$\\delta(3t)=\\frac1{|3|}\\delta(t)$",
+            "why": "apply scaling"
+          },
+          {
+            "do": "Simplify the absolute value",
+            "result": "$\\frac13\\delta(t)$",
+            "why": "$|3|=3$"
+          },
+          {
+            "do": "Check area",
+            "result": "area remains $1$",
+            "why": "the factor compensates for compression"
+          }
+        ],
+        "answer": "$\\delta(3t)=\\frac13\\delta(t)$."
+      },
+      {
+        "problem": "Show that $(f*\\delta)(t)=f(t)$ using the convolution definition.",
+        "steps": [
+          {
+            "do": "Write the convolution",
+            "result": "$(f*\\delta)(t)=\\int_{-\\infty}^{\\infty}f(\\tau)\\delta(t-\\tau)\\,d\\tau$",
+            "why": "use $g(t-\\tau)=\\delta(t-\\tau)$"
+          },
+          {
+            "do": "Rewrite the delta",
+            "result": "$\\delta(t-\\tau)=\\delta(\\tau-t)$",
+            "why": "delta is even in its argument"
+          },
+          {
+            "do": "Identify the sampled variable",
+            "result": "$\\tau=t$",
+            "why": "$\\delta(\\tau-t)$ is centered at $\\tau=t$"
+          },
+          {
+            "do": "Apply sifting",
+            "result": "$f(t)$",
+            "why": "the integral samples $f(\\tau)$ at $\\tau=t$"
+          },
+          {
+            "do": "Interpret",
+            "result": "delta is the identity for convolution",
+            "why": "an impulse response with only an immediate spike changes nothing"
+          }
+        ],
+        "answer": "$(f*\\delta)(t)=f(t)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Impulse response",
+        "background": "Linear systems are often understood by how they respond to a unit impulse.",
+        "numbers": "If input $\\delta(t)$ produces output $h(t)$, then input $3\\delta(t-2)$ produces $3h(t-2)$."
+      },
+      {
+        "title": "Sampling",
+        "background": "Ideal sampling multiplies a signal by impulses at sample times, storing exact values in theory.",
+        "numbers": "$\\int f(t)\\delta(t-0.01)\\,dt=f(0.01)$, one sample at $10$ ms."
+      },
+      {
+        "title": "Point masses in probability",
+        "background": "A discrete probability at one value can be represented with a delta in continuous notation.",
+        "numbers": "A variable equal to $5$ with probability $1$ has expectation $\\int x\\delta(x-5)\\,dx=5$."
+      },
+      {
+        "title": "Green's functions",
+        "background": "Differential equations use deltas as point sources; the response to a point source builds responses to general sources.",
+        "numbers": "A source $2\\delta(x-3)$ has total strength $\\int2\\delta(x-3)\\,dx=2$."
+      },
+      {
+        "title": "Computer graphics lights",
+        "background": "An ideal point light is modeled as energy concentrated at a location, conceptually like a spatial delta.",
+        "numbers": "A point contribution $10\\delta(x-x_0)$ has total intensity $10$."
+      },
+      {
+        "title": "Neural spike trains",
+        "background": "Spike times are often represented as sums of impulses so timing is exact before smoothing.",
+        "numbers": "Spikes at $1.2$ ms and $3.7$ ms can be written $\\delta(t-1.2)+\\delta(t-3.7)$."
+      }
+    ],
+    "applicationsClose": "The delta is the ideal point event: zero width, unit mass, and exact sampling when placed under an integral.",
+    "takeaways": [
+      "$\\delta(t-a)$ is defined by $\\int f(t)\\delta(t-a)\\,dt=f(a)$.",
+      "The delta is a distribution, not an ordinary function with finite point values.",
+      "It can be viewed as the limit of unit-area pulses that become narrower and taller.",
+      "Convolution with $\\delta$ leaves a signal unchanged."
+    ],
     "prereqs": [
       "math-06-08"
     ]
@@ -195,19 +2382,262 @@
   B({
     "id": "math-06-10",
     "title": "Distributions",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: distributions.",
+    "tagline": "Distributions extend functions by defining how objects act under integrals against smooth tests.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Dirac delta</i>"
+        "The Dirac delta",
+        "Fourier transform",
+        "integration by parts"
       ],
       "leadsTo": [
-        "the next lesson, <i>The uncertainty principle</i>"
+        "weak derivatives",
+        "Green's functions",
+        "generalized Fourier transforms"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "test functions",
+        "linear functionals",
+        "differential equations",
+        "limits"
       ]
     },
+    "motivation": "<p>The Dirac delta already taught us a useful lesson: some mathematical objects are too sharp to be ordinary functions, but still make perfect sense inside integrals.</p><p><b>Distributions</b> make that lesson systematic. Instead of asking for a point value, we ask how the object acts on every smooth test function. This lets derivatives of jumps, impulses, and point sources enter calculus without breaking it.</p>",
+    "definition": "<p>A distribution $T$ is a linear rule that takes a smooth, compactly supported test function $\\varphi$ and returns a number, written $\\langle T,\\varphi\\rangle$. An ordinary integrable function $f$ defines a distribution by $$\\langle T_f,\\varphi\\rangle=\\int_{-\\infty}^{\\infty}f(t)\\varphi(t)\\,dt.$$ The delta distribution is $\\langle\\delta_a,\\varphi\\rangle=\\varphi(a)$.</p><p>The distributional derivative is defined by moving the derivative onto the test function: $$\\langle T',\\varphi\\rangle=-\\langle T,\\varphi'\\rangle.$$ This comes from integration by parts for ordinary functions, where the boundary term vanishes because test functions have compact support.</p><p><b>Assumptions that matter:</b> distributions are compared by how they act on all test functions; derivatives are defined weakly through integration by parts; ordinary functions that differ only on a negligible set define the same distribution; and Fourier transforms extend to distributions such as constants and deltas.</p>",
+    "worked": {
+      "problem": "Show that the distributional derivative of the Heaviside step $H(t)$ is $\\delta(t)$, where $H(t)=0$ for $t<0$ and $H(t)=1$ for $t>0$.",
+      "skills": [
+        "distributional derivative",
+        "test functions",
+        "integration by parts"
+      ],
+      "strategy": "Use the definition of weak derivative and let the test function carry the derivative.",
+      "steps": [
+        {
+          "do": "Write the derivative action",
+          "result": "$\\langle H',\\varphi\\rangle=-\\langle H,\\varphi'\\rangle$",
+          "why": "definition of distributional derivative"
+        },
+        {
+          "do": "Replace $H$ by its support",
+          "result": "$-\\int_0^{\\infty}\\varphi'(t)\\,dt$",
+          "why": "$H(t)=1$ for positive $t$ and $0$ for negative $t$"
+        },
+        {
+          "do": "Integrate $\\varphi'$",
+          "result": "$-[\\varphi(\\infty)-\\varphi(0)]$",
+          "why": "fundamental theorem of calculus"
+        },
+        {
+          "do": "Use compact support",
+          "result": "$-[0-\\varphi(0)]$",
+          "why": "test functions vanish at infinity"
+        },
+        {
+          "do": "Simplify",
+          "result": "$\\varphi(0)$",
+          "why": "negating gives the value at zero"
+        }
+      ],
+      "verify": "$\\langle\\delta,\\varphi\\rangle=\\varphi(0)$, exactly the action we obtained for $H'$.",
+      "answer": "In the distributional sense, $H'=\\delta$.",
+      "connects": "Distributions let a jump have a derivative: the derivative is an impulse at the jump."
+    },
+    "practice": [
+      {
+        "problem": "For the ordinary function $f(t)=2$ on $[0,1]$ and $0$ elsewhere, compute $\\langle T_f,\\varphi\\rangle$ if $\\varphi(t)=t+1$ on $[0,1]$.",
+        "steps": [
+          {
+            "do": "Write the distribution action",
+            "result": "$\\langle T_f,\\varphi\\rangle=\\int_{-\\infty}^{\\infty}f(t)\\varphi(t)\\,dt$",
+            "why": "ordinary functions define distributions by integration"
+          },
+          {
+            "do": "Use the support of $f$",
+            "result": "$\\int_0^1 2(t+1)\\,dt$",
+            "why": "$f$ is zero outside $[0,1]$"
+          },
+          {
+            "do": "Distribute the factor",
+            "result": "$\\int_0^1(2t+2)\\,dt$",
+            "why": "simplify the integrand"
+          },
+          {
+            "do": "Integrate",
+            "result": "$[t^2+2t]_0^1$",
+            "why": "antiderivative of $2t+2$"
+          },
+          {
+            "do": "Evaluate endpoints",
+            "result": "$1+2=3$",
+            "why": "the lower endpoint gives zero"
+          }
+        ],
+        "answer": "$\\langle T_f,\\varphi\\rangle=3$."
+      },
+      {
+        "problem": "Compute $\\langle\\delta_2,\\varphi\\rangle$ for $\\varphi(t)=t^2-1$.",
+        "steps": [
+          {
+            "do": "Recall delta action",
+            "result": "$\\langle\\delta_a,\\varphi\\rangle=\\varphi(a)$",
+            "why": "delta samples the test function"
+          },
+          {
+            "do": "Identify the point",
+            "result": "$a=2$",
+            "why": "the delta is centered at $2$"
+          },
+          {
+            "do": "Evaluate the test function",
+            "result": "$\\varphi(2)=2^2-1$",
+            "why": "substitute $2$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$3$",
+            "why": "$4-1=3$"
+          },
+          {
+            "do": "State the action",
+            "result": "$\\langle\\delta_2,\\varphi\\rangle=3$",
+            "why": "the distribution returns that sample"
+          }
+        ],
+        "answer": "$3$."
+      },
+      {
+        "problem": "Compute $\\langle\\delta'_0,\\varphi\\rangle$ for $\\varphi(t)=e^t$.",
+        "steps": [
+          {
+            "do": "Use distributional derivative",
+            "result": "$\\langle\\delta'_0,\\varphi\\rangle=-\\langle\\delta_0,\\varphi'\\rangle$",
+            "why": "move the derivative to the test function with a minus sign"
+          },
+          {
+            "do": "Differentiate the test function",
+            "result": "$\\varphi'(t)=e^t$",
+            "why": "derivative of $e^t$ is itself"
+          },
+          {
+            "do": "Apply delta sampling",
+            "result": "$\\langle\\delta_0,\\varphi'\\rangle=\\varphi'(0)$",
+            "why": "delta samples at zero"
+          },
+          {
+            "do": "Evaluate the derivative",
+            "result": "$\\varphi'(0)=1$",
+            "why": "$e^0=1$"
+          },
+          {
+            "do": "Apply the minus sign",
+            "result": "$-1$",
+            "why": "derivative of a distribution includes the negative sign"
+          }
+        ],
+        "answer": "$\\langle\\delta'_0,\\varphi\\rangle=-1$."
+      },
+      {
+        "problem": "A step jumps from $2$ to $7$ at $t=0$. What is its distributional derivative?",
+        "steps": [
+          {
+            "do": "Compute the jump size",
+            "result": "$7-2=5$",
+            "why": "impulse strength equals right value minus left value"
+          },
+          {
+            "do": "Recall the Heaviside derivative",
+            "result": "$H'=\\delta$",
+            "why": "a unit jump produces a unit impulse"
+          },
+          {
+            "do": "Scale by the jump",
+            "result": "$5\\delta(t)$",
+            "why": "a jump five times as large gives five times the impulse"
+          },
+          {
+            "do": "Note constant parts",
+            "result": "derivative of the baseline is $0$",
+            "why": "constant regions have zero ordinary derivative"
+          },
+          {
+            "do": "State the result",
+            "result": "$5\\delta(t)$",
+            "why": "only the jump contributes"
+          }
+        ],
+        "answer": "The distributional derivative is $5\\delta(t)$."
+      },
+      {
+        "problem": "Using $\\widehat{1}=2\\pi\\delta(\\omega)$ under this convention, what is the transform of the constant function $4$?",
+        "steps": [
+          {
+            "do": "Use linearity",
+            "result": "$\\widehat{4}=4\\widehat{1}$",
+            "why": "constants scale distributions"
+          },
+          {
+            "do": "Substitute the known transform",
+            "result": "$4\\cdot2\\pi\\delta(\\omega)$",
+            "why": "use $\\widehat{1}=2\\pi\\delta(\\omega)$"
+          },
+          {
+            "do": "Multiply constants",
+            "result": "$8\\pi\\delta(\\omega)$",
+            "why": "$4\\cdot2\\pi=8\\pi$"
+          },
+          {
+            "do": "Interpret frequency",
+            "result": "all mass is at $\\omega=0$",
+            "why": "a constant has only zero-frequency content"
+          },
+          {
+            "do": "State the transform",
+            "result": "$8\\pi\\delta(\\omega)$",
+            "why": "distribution notation captures the nonintegrable constant"
+          }
+        ],
+        "answer": "$\\widehat{4}=8\\pi\\delta(\\omega)$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Weak derivatives in PDEs",
+        "background": "Solutions with corners or jumps may not have classical derivatives everywhere, but weak derivatives still let equations make sense.",
+        "numbers": "A jump from $0$ to $3$ contributes $3\\delta$ to the weak derivative."
+      },
+      {
+        "title": "Point sources",
+        "background": "Heat, wave, and Poisson equations often model concentrated sources with deltas.",
+        "numbers": "A source $10\\delta(x-2)$ has total strength $10$ because $\\int10\\delta(x-2)\\,dx=10$."
+      },
+      {
+        "title": "Fourier transform of constants",
+        "background": "A constant signal is not integrable over the whole line, but as a distribution it has only zero frequency.",
+        "numbers": "Under this convention, $\\widehat{1}=2\\pi\\delta(\\omega)$ and $\\widehat{5}=10\\pi\\delta(\\omega)$."
+      },
+      {
+        "title": "Edge detection",
+        "background": "An image edge is like a jump; differentiating turns it into a concentrated response at the boundary.",
+        "numbers": "A pixel row changing from $20$ to $80$ has jump size $60$, so an ideal derivative places strength $60$ at the edge."
+      },
+      {
+        "title": "Impulse trains",
+        "background": "Sampling theory represents repeated samples as a train of delta distributions.",
+        "numbers": "Sampling every $0.01$ seconds uses impulses at $t=n\\cdot0.01$, giving $100$ impulses per second."
+      },
+      {
+        "title": "Optimization with nonsmooth losses",
+        "background": "Subgradients and weak derivatives extend derivative thinking to functions with corners.",
+        "numbers": "For $|x|$, the ordinary derivative is $-1$ left and $1$ right; the corner needs generalized derivative language."
+      }
+    ],
+    "applicationsClose": "Distributions keep calculus alive at sharp objects: jumps, impulses, constants over infinite domains, and point sources all become legitimate actors.",
+    "takeaways": [
+      "A distribution is defined by its action on smooth test functions.",
+      "Ordinary functions define distributions by integration against tests.",
+      "Distributional derivatives move the derivative onto the test function with a minus sign.",
+      "The delta, weak derivatives, and Fourier transforms of nonintegrable signals all live naturally in distribution language."
+    ],
     "prereqs": [
       "math-06-09"
     ]
@@ -216,19 +2646,257 @@
   B({
     "id": "math-06-11",
     "title": "The uncertainty principle",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: the uncertainty principle.",
+    "tagline": "A signal cannot be perfectly sharp in time and perfectly sharp in frequency at the same time.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Distributions</i>"
+        "Fourier transform",
+        "variance",
+        "complex exponentials"
       ],
       "leadsTo": [
-        "the next lesson, <i>Sampling and the Nyquist–Shannon theorem</i>"
+        "Sampling and the Nyquist-Shannon theorem",
+        "Wavelets",
+        "Spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "Fourier transform",
+        "Gaussian functions",
+        "inner products",
+        "norms"
       ]
     },
+    "motivation": "<p>You already know the tradeoff from ordinary life: a quick clap tells you exactly when something happened, but it contains a broad burst of pitches. A long pure tone has a clean pitch, but it is spread out in time.</p><p>The <b>uncertainty principle</b> makes that tradeoff precise. Fourier analysis lets us move between time and frequency, but it does not let us concentrate a nonzero signal arbitrarily tightly in both places. This is not a failure of measurement; it is geometry.</p>",
+    "definition": "<p>For a square-integrable signal $f(t)$ with Fourier transform $\\widehat f(\\omega)$, define the time center $t_0$ and frequency center $\\omega_0$ as the energy-weighted means. The spreads are $\\Delta t^2=\\dfrac{\\int (t-t_0)^2|f(t)|^2\\,dt}{\\int |f(t)|^2\\,dt}$ and $\\Delta \\omega^2=\\dfrac{\\int (\\omega-\\omega_0)^2|\\widehat f(\\omega)|^2\\,d\\omega}{\\int |\\widehat f(\\omega)|^2\\,d\\omega}$.</p><p>With the convention $\\widehat f(\\omega)=\\int f(t)e^{-i\\omega t}\\,dt$, the Fourier uncertainty inequality is $\\Delta t\\,\\Delta\\omega\\ge \\tfrac12$. The reason is Cauchy-Schwarz: the product of the sizes of $(t-t_0)f$ and the derivative-related frequency spread must dominate their inner product. Gaussians make the inequality tight.</p><p><b>Assumptions that matter:</b> the signal must have finite energy and finite second moments; constants change if the Fourier convention uses frequency in cycles per second; and zero signal is excluded because its center and spread are undefined.</p>",
+    "worked": {
+      "problem": "A normalized Gaussian window has time spread $\\Delta t=0.04$ seconds. Using $\\Delta t\\,\\Delta\\omega\\ge\\tfrac12$, find the smallest possible angular-frequency spread and convert it to cycles per second.",
+      "skills": [
+        "uncertainty inequality",
+        "unit conversion",
+        "Fourier conventions"
+      ],
+      "strategy": "Use the inequality first in angular frequency, then divide by $2\\pi$ to convert radians per second to hertz.",
+      "steps": [
+        {
+          "do": "Write the inequality",
+          "result": "$\\Delta t\\,\\Delta\\omega\\ge\\tfrac12$",
+          "why": "this convention measures frequency in radians per second"
+        },
+        {
+          "do": "Substitute $\\Delta t=0.04$",
+          "result": "$0.04\\Delta\\omega\\ge0.5$",
+          "why": "the time spread is given"
+        },
+        {
+          "do": "Divide by $0.04$",
+          "result": "$\\Delta\\omega\\ge12.5$ rad/s",
+          "why": "$0.5/0.04=12.5$"
+        },
+        {
+          "do": "Convert to cycles per second",
+          "result": "$\\Delta f=\\Delta\\omega/(2\\pi)$",
+          "why": "one cycle is $2\\pi$ radians"
+        },
+        {
+          "do": "Approximate the hertz spread",
+          "result": "$\\Delta f\\ge12.5/(2\\pi)\\approx1.99$ Hz",
+          "why": "$2\\pi\\approx6.283$"
+        }
+      ],
+      "verify": "A short $0.04$ second pulse requiring about $2$ Hz or more of spread is sensible: sharper timing needs a wider frequency band.",
+      "answer": "$\\Delta\\omega\\ge12.5$ rad/s, or $\\Delta f\\ge1.99$ Hz.",
+      "connects": "The inequality turns the vague phrase time-frequency tradeoff into a numerical lower bound."
+    },
+    "practice": [
+      {
+        "problem": "If $\\Delta t=0.10$ s, find the minimum $\\Delta\\omega$ and $\\Delta f$.",
+        "steps": [
+          {
+            "do": "Start with the uncertainty bound",
+            "result": "$\\Delta t\\,\\Delta\\omega\\ge\\tfrac12$",
+            "why": "angular frequency convention"
+          },
+          {
+            "do": "Substitute the time spread",
+            "result": "$0.10\\Delta\\omega\\ge0.5$",
+            "why": "use the given value"
+          },
+          {
+            "do": "Divide by $0.10$",
+            "result": "$\\Delta\\omega\\ge5$ rad/s",
+            "why": "$0.5/0.10=5$"
+          },
+          {
+            "do": "Convert units",
+            "result": "$\\Delta f\\ge5/(2\\pi)$",
+            "why": "hertz are cycles per second"
+          },
+          {
+            "do": "Approximate",
+            "result": "$\\Delta f\\ge0.796$ Hz",
+            "why": "$5/6.283\\approx0.796$"
+          }
+        ],
+        "answer": "The minimum spread is $5$ rad/s, or about $0.796$ Hz."
+      },
+      {
+        "problem": "A signal has $\\Delta\\omega=40$ rad/s. What is the smallest possible $\\Delta t$?",
+        "steps": [
+          {
+            "do": "Write the bound",
+            "result": "$\\Delta t\\,40\\ge0.5$",
+            "why": "substitute $\\Delta\\omega=40$"
+          },
+          {
+            "do": "Divide by $40$",
+            "result": "$\\Delta t\\ge0.0125$ s",
+            "why": "$0.5/40=0.0125$"
+          },
+          {
+            "do": "Convert to milliseconds",
+            "result": "$0.0125\\text{ s}=12.5\\text{ ms}$",
+            "why": "multiply seconds by $1000$"
+          },
+          {
+            "do": "Interpret the result",
+            "result": "at least $12.5$ ms",
+            "why": "a wide frequency spread permits a shorter pulse"
+          }
+        ],
+        "answer": "The time spread must be at least $0.0125$ s, or $12.5$ ms."
+      },
+      {
+        "problem": "A desired pulse has $\\Delta t=5$ ms and $\\Delta f=10$ Hz. Does it satisfy the uncertainty bound?",
+        "steps": [
+          {
+            "do": "Convert time to seconds",
+            "result": "$5\\text{ ms}=0.005$ s",
+            "why": "the inequality uses seconds"
+          },
+          {
+            "do": "Convert hertz to angular spread",
+            "result": "$\\Delta\\omega=2\\pi\\cdot10=20\\pi$ rad/s",
+            "why": "angular frequency is radians per second"
+          },
+          {
+            "do": "Multiply spreads",
+            "result": "$\\Delta t\\,\\Delta\\omega=0.005\\cdot20\\pi=0.1\\pi$",
+            "why": "test the product"
+          },
+          {
+            "do": "Approximate the product",
+            "result": "$0.1\\pi\\approx0.314$",
+            "why": "$\\pi\\approx3.14$"
+          },
+          {
+            "do": "Compare with the lower bound",
+            "result": "$0.314<0.5$",
+            "why": "the product is too small"
+          }
+        ],
+        "answer": "No. Those spreads violate the bound because $0.314<0.5$."
+      },
+      {
+        "problem": "For a Gaussian with $\\Delta t\\,\\Delta\\omega=\\tfrac12$ and $\\Delta t=0.02$ s, find $\\Delta\\omega$ and the product after doubling the time spread.",
+        "steps": [
+          {
+            "do": "Use equality",
+            "result": "$0.02\\Delta\\omega=0.5$",
+            "why": "Gaussians can attain the minimum"
+          },
+          {
+            "do": "Solve for frequency spread",
+            "result": "$\\Delta\\omega=25$ rad/s",
+            "why": "$0.5/0.02=25$"
+          },
+          {
+            "do": "Double the time spread",
+            "result": "$\\Delta t_{new}=0.04$ s",
+            "why": "the question changes only time spread"
+          },
+          {
+            "do": "Keep the old frequency spread",
+            "result": "$0.04\\cdot25=1$",
+            "why": "compute the new product"
+          },
+          {
+            "do": "Compare to the minimum",
+            "result": "$1>0.5$",
+            "why": "wider time support allows a non-minimal product"
+          }
+        ],
+        "answer": "The original $\\Delta\\omega$ is $25$ rad/s; after doubling time spread with the same frequency spread, the product is $1$."
+      },
+      {
+        "problem": "An audio feature extractor wants frame uncertainty $\\Delta t=0.025$ s. What is the best-case frequency uncertainty in hertz?",
+        "steps": [
+          {
+            "do": "Write the angular bound",
+            "result": "$0.025\\Delta\\omega\\ge0.5$",
+            "why": "insert the frame time spread"
+          },
+          {
+            "do": "Solve for angular spread",
+            "result": "$\\Delta\\omega\\ge20$ rad/s",
+            "why": "$0.5/0.025=20$"
+          },
+          {
+            "do": "Convert to hertz",
+            "result": "$\\Delta f\\ge20/(2\\pi)$",
+            "why": "divide by radians per cycle"
+          },
+          {
+            "do": "Approximate",
+            "result": "$\\Delta f\\ge3.18$ Hz",
+            "why": "$20/6.283\\approx3.18$"
+          },
+          {
+            "do": "Interpret for features",
+            "result": "about $3.18$ Hz or wider",
+            "why": "a frame this localized cannot have arbitrarily precise pitch"
+          }
+        ],
+        "answer": "The best-case frequency uncertainty is about $3.18$ Hz."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Short-time audio analysis",
+        "background": "Speech systems analyze small frames because words change over time. The uncertainty principle explains why very short frames blur pitch.",
+        "numbers": "A $25$ ms frame gives best-case $\\Delta f\\ge1/(4\\pi\\cdot0.025)\\approx3.18$ Hz under this convention."
+      },
+      {
+        "title": "Spectrogram window choice",
+        "background": "Spectrograms trade time detail against frequency detail by choosing a window length.",
+        "numbers": "At $16$ kHz, a $400$-sample window lasts $400/16000=0.025$ s; a $1600$-sample window lasts $0.1$ s and can support four times finer frequency spread."
+      },
+      {
+        "title": "Image edge localization",
+        "background": "A sharp edge is localized in space, so its Fourier representation needs many spatial frequencies.",
+        "numbers": "A feature localized to $\\Delta x=2$ pixels needs $\\Delta k\\ge0.25$ radians per pixel from $\\Delta x\\Delta k\\ge0.5$."
+      },
+      {
+        "title": "Gabor filters",
+        "background": "Gabor filters use Gaussian-windowed sinusoids because Gaussians are optimally concentrated in time and frequency.",
+        "numbers": "If a Gabor has $\\Delta t=0.05$ s, equality gives $\\Delta\\omega=10$ rad/s, about $1.59$ Hz."
+      },
+      {
+        "title": "Radar and sonar pulses",
+        "background": "Range resolution wants short pulses, while velocity resolution wants narrow frequency spread. The same Fourier tradeoff appears in sensing.",
+        "numbers": "A $1$ ms pulse implies $\\Delta\\omega\\ge500$ rad/s, so $\\Delta f\\ge79.6$ Hz."
+      },
+      {
+        "title": "Neural time-frequency features",
+        "background": "Audio and biosignal models often learn filters that resemble localized wave packets. Their shapes still obey Fourier concentration limits.",
+        "numbers": "A learned filter with $\\Delta t=0.02$ s cannot have $\\Delta f$ below $25/(2\\pi)\\approx3.98$ Hz if it is near the minimum."
+      }
+    ],
+    "applicationsClose": "Across audio, images, sensing, and learned filters, the same wisdom holds: sharper location costs broader spectrum.",
+    "takeaways": [
+      "Time spread and frequency spread obey $\\Delta t\\,\\Delta\\omega\\ge\\tfrac12$ under the angular-frequency convention.",
+      "Gaussians are the optimally concentrated signals that attain equality.",
+      "Changing Fourier conventions changes constants, not the tradeoff.",
+      "Window choices in real systems are uncertainty choices in practical form."
+    ],
     "prereqs": [
       "math-06-10"
     ]
@@ -236,20 +2904,238 @@
 
   B({
     "id": "math-06-12",
-    "title": "Sampling and the Nyquist–Shannon theorem",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: sampling and the nyquist–shannon theorem.",
+    "title": "Sampling and the Nyquist-Shannon theorem",
+    "tagline": "A band-limited signal can be recovered from samples if you sample faster than twice its highest frequency.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The uncertainty principle</i>"
+        "The uncertainty principle",
+        "Fourier transform",
+        "sine waves"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Discrete Fourier Transform (DFT)</i>"
+        "The Discrete Fourier Transform (DFT)",
+        "Filtering",
+        "Spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "band limits",
+        "sinc interpolation",
+        "periodic functions",
+        "frequency spectra"
       ]
     },
+    "motivation": "<p>You already sample the world whenever you take photos, record audio, or log sensor readings. The worry is simple: how many measurements are enough to reconstruct the thing between them?</p><p>The <b>Nyquist-Shannon theorem</b> gives the clean answer for band-limited signals. If no frequency above $B$ Hz is present, sampling above $2B$ Hz preserves the information. Sample too slowly, and high frequencies masquerade as lower ones through aliasing.</p>",
+    "definition": "<p>A continuous signal $x(t)$ is <b>band-limited</b> to $B$ Hz if its Fourier transform is zero for all frequencies with $|f|>B$. If the sampling rate is $f_s>2B$, then $x(t)$ can be reconstructed exactly from samples $x[n]=x(n/f_s)$ by sinc interpolation: $$x(t)=\\sum_{n=-\\infty}^{\\infty}x[n]\\,\\operatorname{sinc}(f_s t-n).$$</p><p>The key reason is spectral replication. Sampling in time copies the spectrum every $f_s$ Hz. If $f_s>2B$, the copies do not overlap, so an ideal low-pass filter can keep the central copy and remove the rest. If copies overlap, aliasing has mixed frequencies irreversibly.</p><p><b>Assumptions that matter:</b> exact recovery requires perfect band limitation, exact samples, infinite sinc interpolation, and an ideal low-pass filter. Real systems approximate this with anti-alias filters and finite windows.</p>",
+    "worked": {
+      "problem": "A sensor signal has no frequency above $120$ Hz. What sampling rate is required, and does $200$ Hz sampling avoid aliasing?",
+      "skills": [
+        "Nyquist rate",
+        "aliasing check",
+        "sampling units"
+      ],
+      "strategy": "Compute twice the highest frequency, then compare the proposed sampling rate with that threshold.",
+      "steps": [
+        {
+          "do": "Identify the band limit",
+          "result": "$B=120$ Hz",
+          "why": "highest present frequency"
+        },
+        {
+          "do": "Compute the Nyquist rate",
+          "result": "$2B=240$ Hz",
+          "why": "samples must exceed twice the band limit"
+        },
+        {
+          "do": "Compare the proposed rate",
+          "result": "$200<240$",
+          "why": "the sampler is slower than the Nyquist rate"
+        },
+        {
+          "do": "State the consequence",
+          "result": "aliasing can occur",
+          "why": "spectral copies overlap when sampling is too slow"
+        },
+        {
+          "do": "Give a safe example rate",
+          "result": "$f_s=250$ Hz",
+          "why": "it is greater than $240$ Hz"
+        }
+      ],
+      "verify": "A $120$ Hz sinusoid sampled at $200$ Hz would be above the $100$ Hz Nyquist frequency, so the warning is consistent.",
+      "answer": "The sampling rate must be greater than $240$ Hz; $200$ Hz is not enough.",
+      "connects": "Sampling is safe only when the spectrum fits inside half the sampling rate."
+    },
+    "practice": [
+      {
+        "problem": "Audio is band-limited to $20$ kHz. What minimum sampling rate does the theorem suggest?",
+        "steps": [
+          {
+            "do": "Set the band limit",
+            "result": "$B=20000$ Hz",
+            "why": "$20$ kHz equals $20000$ Hz"
+          },
+          {
+            "do": "Double the band limit",
+            "result": "$2B=40000$ Hz",
+            "why": "Nyquist rate"
+          },
+          {
+            "do": "State strict condition",
+            "result": "$f_s>40000$ Hz",
+            "why": "the theorem uses greater than twice the band limit"
+          },
+          {
+            "do": "Compare with CD audio",
+            "result": "$44100>40000$",
+            "why": "CD sampling exceeds the threshold"
+          }
+        ],
+        "answer": "A rate above $40$ kHz is required; $44.1$ kHz satisfies it."
+      },
+      {
+        "problem": "A $70$ Hz sine wave is sampled at $100$ Hz. What alias frequency appears?",
+        "steps": [
+          {
+            "do": "Find the Nyquist frequency",
+            "result": "$f_s/2=50$ Hz",
+            "why": "frequencies above this fold"
+          },
+          {
+            "do": "Subtract from the sampling rate",
+            "result": "$100-70=30$ Hz",
+            "why": "a frequency between $50$ and $100$ aliases to $f_s-f$"
+          },
+          {
+            "do": "Check the alias range",
+            "result": "$30<50$",
+            "why": "the folded frequency lies below Nyquist"
+          },
+          {
+            "do": "State the observed frequency",
+            "result": "$30$ Hz",
+            "why": "samples cannot distinguish it from the original"
+          }
+        ],
+        "answer": "The $70$ Hz sine aliases to $30$ Hz."
+      },
+      {
+        "problem": "A camera records $60$ frames per second. What is the highest temporal frequency that can be represented without aliasing?",
+        "steps": [
+          {
+            "do": "Identify the sampling rate",
+            "result": "$f_s=60$ Hz",
+            "why": "frames per second are temporal samples"
+          },
+          {
+            "do": "Compute half the rate",
+            "result": "$f_s/2=30$ Hz",
+            "why": "Nyquist frequency"
+          },
+          {
+            "do": "State the safe band",
+            "result": "$B<30$ Hz",
+            "why": "strictly below half the sampling rate avoids overlap"
+          },
+          {
+            "do": "Interpret in motion",
+            "result": "fewer than $30$ cycles per second",
+            "why": "faster periodic motion can fold"
+          }
+        ],
+        "answer": "Frequencies below $30$ Hz are representable without aliasing."
+      },
+      {
+        "problem": "Sampling at $1000$ Hz, a true tone at $620$ Hz is observed. Find its alias below Nyquist.",
+        "steps": [
+          {
+            "do": "Compute the Nyquist frequency",
+            "result": "$500$ Hz",
+            "why": "$1000/2=500$"
+          },
+          {
+            "do": "Notice the tone is above Nyquist",
+            "result": "$620>500$",
+            "why": "folding is needed"
+          },
+          {
+            "do": "Subtract from the sampling rate",
+            "result": "$1000-620=380$ Hz",
+            "why": "first folding below Nyquist"
+          },
+          {
+            "do": "Check the result",
+            "result": "$380<500$",
+            "why": "the alias is now in the observable band"
+          }
+        ],
+        "answer": "The tone aliases to $380$ Hz."
+      },
+      {
+        "problem": "A model consumes sensor data sampled at $256$ Hz after an anti-alias filter with cutoff $90$ Hz. Is the cutoff safe?",
+        "steps": [
+          {
+            "do": "Compute the Nyquist frequency",
+            "result": "$256/2=128$ Hz",
+            "why": "half the sampling rate"
+          },
+          {
+            "do": "Compare cutoff to Nyquist",
+            "result": "$90<128$",
+            "why": "kept frequencies fit below the folding point"
+          },
+          {
+            "do": "Compute margin",
+            "result": "$128-90=38$ Hz",
+            "why": "distance from cutoff to Nyquist"
+          },
+          {
+            "do": "State practical status",
+            "result": "safe in principle",
+            "why": "a transition band can fit in the margin"
+          }
+        ],
+        "answer": "Yes. A $90$ Hz cutoff is below the $128$ Hz Nyquist frequency, leaving a $38$ Hz margin."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Digital audio",
+        "background": "Audio systems sample pressure waves. The standard $44.1$ kHz rate was chosen to cover human hearing with room for filtering.",
+        "numbers": "For $B=20$ kHz, $2B=40$ kHz, and $44.1$ kHz leaves $4.1$ kHz for a transition band."
+      },
+      {
+        "title": "Video frame rates",
+        "background": "Video samples motion in time. Fast periodic motion can appear to move backward when sampled too slowly.",
+        "numbers": "At $24$ fps, the Nyquist temporal frequency is $12$ Hz; a $14$ Hz wheel pattern can alias to $24-14=10$ Hz."
+      },
+      {
+        "title": "Medical sensors",
+        "background": "ECG and EEG pipelines use anti-alias filters before digitization so high-frequency noise does not fold into useful bands.",
+        "numbers": "Sampling at $500$ Hz gives Nyquist $250$ Hz, so a $150$ Hz low-pass cutoff is safely below it."
+      },
+      {
+        "title": "Image sampling",
+        "background": "Camera pixels sample a spatial scene. Fine stripes above the pixel Nyquist frequency create moire patterns.",
+        "numbers": "With pixel spacing $0.01$ mm, sampling rate is $100$ samples/mm and Nyquist is $50$ cycles/mm."
+      },
+      {
+        "title": "ML time-series features",
+        "background": "Models trained on sampled sensors inherit any aliasing in the data. Good preprocessing protects the learner from false patterns.",
+        "numbers": "A $90$ Hz vibration sampled at $100$ Hz appears as $10$ Hz, because $100-90=10$."
+      },
+      {
+        "title": "Downsampling embeddings or maps",
+        "background": "Before reducing resolution, engineers blur or low-pass filter to remove frequencies the coarse grid cannot carry.",
+        "numbers": "Downsampling an image by $2$ halves the sampling rate, so the new Nyquist limit is half the old one."
+      }
+    ],
+    "applicationsClose": "Sampling is a promise with conditions: limit the band, sample fast enough, and reconstruction becomes mathematics rather than guesswork.",
+    "takeaways": [
+      "A band-limited signal with maximum frequency $B$ Hz needs sampling rate greater than $2B$ Hz for exact recovery.",
+      "Sampling copies the spectrum every $f_s$ Hz; aliasing is overlap between those copies.",
+      "Anti-alias filters remove frequencies above the new Nyquist limit before sampling or downsampling.",
+      "Real systems approximate the ideal theorem with finite filters and safety margins."
+    ],
     "prereqs": [
       "math-06-11"
     ]
@@ -258,19 +3144,257 @@
   B({
     "id": "math-06-13",
     "title": "The Discrete Fourier Transform (DFT)",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: the discrete fourier transform (dft).",
+    "tagline": "The DFT rewrites a finite list of samples as a finite list of rotating frequency components.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Sampling and the Nyquist–Shannon theorem</i>"
+        "Sampling and the Nyquist-Shannon theorem",
+        "complex numbers",
+        "orthogonality"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Fast Fourier Transform (FFT)</i>"
+        "The Fast Fourier Transform (FFT)",
+        "Filtering",
+        "Spectral methods"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "vectors",
+        "inner products",
+        "roots of unity",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You already know a finite signal as a list: four samples, eight samples, a thousand samples. The DFT asks a powerful question: how much of each discrete frequency is hiding in that list?</p><p>The answer is another list. Instead of time samples, it contains frequency coefficients. Each coefficient is an inner product with a rotating complex wave, so the DFT is geometry in a circular basis.</p>",
+    "definition": "<p>For $N$ samples $x_0,x_1,\\ldots,x_{N-1}$, the <b>Discrete Fourier Transform</b> is $$X_k=\\sum_{n=0}^{N-1}x_n e^{-2\\pi i kn/N},\\quad k=0,1,\\ldots,N-1.$$ The inverse transform is $$x_n=\\dfrac1N\\sum_{k=0}^{N-1}X_k e^{2\\pi i kn/N}.$$ Here $n$ indexes time samples, $k$ indexes frequency bins, and $e^{-2\\pi i/N}$ is a root of unity.</p><p>The inverse works because the complex waves are orthogonal: $\\sum_{n=0}^{N-1}e^{2\\pi i(k-m)n/N}=0$ when $k\\ne m$ and equals $N$ when $k=m$. So projecting onto each wave and summing back reconstructs the original vector.</p><p><b>Assumptions that matter:</b> the DFT treats the input as one period of a periodic signal; bin $k$ corresponds to frequency $k f_s/N$ for sampling rate $f_s$; and real-valued inputs have conjugate-symmetric coefficients.</p>",
+    "worked": {
+      "problem": "Compute the $4$-point DFT of $x=[1,0,-1,0]$.",
+      "skills": [
+        "DFT formula",
+        "roots of unity",
+        "complex arithmetic"
+      ],
+      "strategy": "Use $N=4$, so the basis values are powers of $e^{-2\\pi i/4}=-i$.",
+      "steps": [
+        {
+          "do": "Set the root of unity",
+          "result": "$w=e^{-2\\pi i/4}=-i$",
+          "why": "the DFT uses powers of this root"
+        },
+        {
+          "do": "Compute $X_0$",
+          "result": "$1+0-1+0=0$",
+          "why": "bin zero sums all samples"
+        },
+        {
+          "do": "Compute $X_1$",
+          "result": "$1+0\\cdot w+(-1)w^2+0\\cdot w^3$",
+          "why": "use powers $w^n$"
+        },
+        {
+          "do": "Simplify $X_1$",
+          "result": "$1-(-1)=2$",
+          "why": "$w^2=(-i)^2=-1$"
+        },
+        {
+          "do": "Compute $X_2$",
+          "result": "$1+0\\cdot(-1)+(-1)(1)+0\\cdot(-1)=0$",
+          "why": "powers of $e^{-\\pi i}$ alternate"
+        },
+        {
+          "do": "Use symmetry for $X_3$",
+          "result": "$X_3=2$",
+          "why": "the real even pattern gives matching bins $1$ and $3$"
+        }
+      ],
+      "verify": "The inverse gives $x_0=(0+2+0+2)/4=1$ and $x_2=(0-2+0-2)/4=-1$, matching the original samples.",
+      "answer": "The DFT is $X=[0,2,0,2]$.",
+      "connects": "The samples are explained entirely by the two one-cycle directions on a length-four circle."
+    },
+    "practice": [
+      {
+        "problem": "Compute the $4$-point DFT of $x=[1,1,1,1]$.",
+        "steps": [
+          {
+            "do": "Compute $X_0$",
+            "result": "$1+1+1+1=4$",
+            "why": "DC is the sum"
+          },
+          {
+            "do": "Use root cancellation for $X_1$",
+            "result": "$1+w+w^2+w^3=0$",
+            "why": "all fourth roots sum to zero"
+          },
+          {
+            "do": "Use alternating powers for $X_2$",
+            "result": "$1-1+1-1=0$",
+            "why": "the samples are constant"
+          },
+          {
+            "do": "Use conjugate cancellation for $X_3$",
+            "result": "$1+w^3+w^6+w^9=0$",
+            "why": "nonzero bins cancel"
+          }
+        ],
+        "answer": "$X=[4,0,0,0]$."
+      },
+      {
+        "problem": "Compute the $4$-point DFT of $x=[1,-1,1,-1]$.",
+        "steps": [
+          {
+            "do": "Compute $X_0$",
+            "result": "$1-1+1-1=0$",
+            "why": "zero average"
+          },
+          {
+            "do": "Compute $X_1$",
+            "result": "$1+(-1)(-i)+1(-1)+(-1)i$",
+            "why": "use powers $1,-i,-1,i$"
+          },
+          {
+            "do": "Simplify $X_1$",
+            "result": "$0$",
+            "why": "$1-1=0$ and $i-i=0$"
+          },
+          {
+            "do": "Compute $X_2$",
+            "result": "$1+(-1)(-1)+1(1)+(-1)(-1)=4$",
+            "why": "bin 2 matches the alternating pattern"
+          },
+          {
+            "do": "Use symmetry",
+            "result": "$X_3=0$",
+            "why": "only the Nyquist bin is present"
+          }
+        ],
+        "answer": "$X=[0,0,4,0]$."
+      },
+      {
+        "problem": "For $N=8$ and sampling rate $f_s=800$ Hz, what physical frequencies correspond to bins $k=0,1,2,4$?",
+        "steps": [
+          {
+            "do": "Compute bin spacing",
+            "result": "$f_s/N=800/8=100$ Hz",
+            "why": "adjacent bins are equally spaced"
+          },
+          {
+            "do": "Map bin $0$",
+            "result": "$0\\cdot100=0$ Hz",
+            "why": "DC component"
+          },
+          {
+            "do": "Map bin $1$",
+            "result": "$1\\cdot100=100$ Hz",
+            "why": "one cycle per $N$ samples"
+          },
+          {
+            "do": "Map bin $2$",
+            "result": "$2\\cdot100=200$ Hz",
+            "why": "two cycles per block"
+          },
+          {
+            "do": "Map bin $4$",
+            "result": "$4\\cdot100=400$ Hz",
+            "why": "Nyquist frequency for $800$ Hz sampling"
+          }
+        ],
+        "answer": "The bins correspond to $0$, $100$, $200$, and $400$ Hz."
+      },
+      {
+        "problem": "Use the inverse DFT to recover $x_0$ from $X=[0,2,0,2]$ with $N=4$.",
+        "steps": [
+          {
+            "do": "Write the inverse at $n=0$",
+            "result": "$x_0=\\dfrac14\\sum_{k=0}^{3}X_k e^{0}$",
+            "why": "all exponentials equal $1$ at $n=0$"
+          },
+          {
+            "do": "Substitute coefficients",
+            "result": "$x_0=\\dfrac14(0+2+0+2)$",
+            "why": "use the given DFT"
+          },
+          {
+            "do": "Add the numerator",
+            "result": "$4$",
+            "why": "sum the coefficients"
+          },
+          {
+            "do": "Divide by $4$",
+            "result": "$x_0=1$",
+            "why": "inverse DFT normalization"
+          }
+        ],
+        "answer": "$x_0=1$."
+      },
+      {
+        "problem": "A real signal has $N=8$ and $X_1=3-4i$. What is $X_7$? What is the magnitude of each?",
+        "steps": [
+          {
+            "do": "Use conjugate symmetry",
+            "result": "$X_{N-k}=\\overline{X_k}$",
+            "why": "real time-domain samples imply paired coefficients"
+          },
+          {
+            "do": "Substitute $N=8$ and $k=1$",
+            "result": "$X_7=\\overline{X_1}$",
+            "why": "$8-1=7$"
+          },
+          {
+            "do": "Conjugate the value",
+            "result": "$X_7=3+4i$",
+            "why": "change the sign of the imaginary part"
+          },
+          {
+            "do": "Compute the magnitude",
+            "result": "$|X_1|=\\sqrt{3^2+(-4)^2}=5$",
+            "why": "Pythagorean length"
+          },
+          {
+            "do": "Use equal magnitudes",
+            "result": "$|X_7|=5$",
+            "why": "conjugates have the same magnitude"
+          }
+        ],
+        "answer": "$X_7=3+4i$, and both magnitudes are $5$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Audio spectrum analysis",
+        "background": "Audio editors use the DFT to show which tones are present in a short block.",
+        "numbers": "With $N=1024$ at $f_s=44100$ Hz, bin spacing is $44100/1024\\approx43.1$ Hz."
+      },
+      {
+        "title": "Image frequency content",
+        "background": "Images are two-dimensional arrays, and the DFT separates slow gradients from sharp textures.",
+        "numbers": "An $8\\times8$ block has $64$ DFT coefficients; the $(0,0)$ coefficient is the sum of all pixel values."
+      },
+      {
+        "title": "Convolution acceleration",
+        "background": "Convolution in time becomes multiplication in frequency, which is useful even before learning the FFT.",
+        "numbers": "If two DFT bins are $X_k=2+ i$ and $H_k=3$, the output bin is $Y_k=6+3i$."
+      },
+      {
+        "title": "Seasonality detection",
+        "background": "Time-series analysts use DFT peaks to find repeating patterns in traffic, sales, or sensors.",
+        "numbers": "With $N=168$ hourly samples, bin $k=7$ represents $7/168=1/24$ cycles per hour, a daily cycle."
+      },
+      {
+        "title": "Neural signal features",
+        "background": "Brain and wearable models often consume band powers derived from DFT coefficients.",
+        "numbers": "If $|X_5|=10$ and $N=100$, a simple normalized power is $10^2/100=1$."
+      },
+      {
+        "title": "Polynomial and circular structure",
+        "background": "The DFT evaluates a polynomial at roots of unity, a viewpoint used in algorithms and numerical math.",
+        "numbers": "For samples $[1,2]$, the $2$-point DFT is evaluation at $1$ and $-1$: $3$ and $-1$."
+      }
+    ],
+    "applicationsClose": "The DFT turns finite data into finite frequencies, giving signals, images, and algorithms a common coordinate system.",
+    "takeaways": [
+      "$X_k=\\sum_{n=0}^{N-1}x_n e^{-2\\pi i kn/N}$ projects samples onto discrete complex waves.",
+      "The inverse DFT reconstructs samples by averaging frequency coefficients with opposite rotations.",
+      "Bin spacing is $f_s/N$, and real signals have conjugate-symmetric spectra.",
+      "The DFT treats a finite block as one period of a periodic signal."
+    ],
     "prereqs": [
       "math-06-12"
     ]
@@ -279,19 +3403,242 @@
   B({
     "id": "math-06-14",
     "title": "The Fast Fourier Transform (FFT)",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: the fast fourier transform (fft).",
+    "tagline": "The FFT computes the same DFT by reusing symmetry instead of doing every sum from scratch.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Discrete Fourier Transform (DFT)</i>"
+        "The Discrete Fourier Transform (DFT)",
+        "recursion",
+        "roots of unity"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Laplace connection (s = iω)</i>"
+        "Filtering",
+        "Spectral methods",
+        "Convolutions in CNNs & spectral architectures"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "divide and conquer",
+        "matrix factorization",
+        "complex multiplication",
+        "polynomial multiplication"
       ]
     },
+    "motivation": "<p>You already know the DFT formula, but computing it directly is expensive. For $N$ samples, each of $N$ output bins sums $N$ terms, so the direct method needs about $N^2$ work.</p><p>The <b>Fast Fourier Transform</b> keeps the same mathematical answer and changes the route. It splits even and odd samples, reuses smaller DFTs, and stitches them together with roots of unity. That turns a beautiful transform into a practical engine.</p>",
+    "definition": "<p>For even $N$, write the DFT sum as even-indexed plus odd-indexed samples: $$X_k=\\sum_{m=0}^{N/2-1}x_{2m}e^{-2\\pi i km/(N/2)}+e^{-2\\pi i k/N}\\sum_{m=0}^{N/2-1}x_{2m+1}e^{-2\\pi i km/(N/2)}.$$ If $E_k$ is the DFT of the even samples and $O_k$ is the DFT of the odd samples, then $X_k=E_k+w_N^k O_k$ and $X_{k+N/2}=E_k-w_N^k O_k$, where $w_N=e^{-2\\pi i/N}$.</p><p>This identity is the butterfly. Repeating the split for powers of two gives $O(N\\log_2 N)$ work instead of $O(N^2)$, because there are $\\log_2 N$ stages and about $N$ operations per stage.</p><p><b>Assumptions that matter:</b> the classic radix-2 FFT is simplest when $N$ is a power of two; the output is the exact DFT up to floating-point roundoff; and different libraries choose different normalization conventions for forward and inverse transforms.</p>",
+    "worked": {
+      "problem": "Estimate the operation-count improvement for an FFT versus a direct DFT when $N=1024$.",
+      "skills": [
+        "complexity",
+        "logarithms",
+        "orders of growth"
+      ],
+      "strategy": "Compare $N^2$ direct work with $N\\log_2N$ FFT work using powers of two.",
+      "steps": [
+        {
+          "do": "Compute direct DFT scale",
+          "result": "$N^2=1024^2=1,048,576$",
+          "why": "there are $N$ bins with $N$ terms each"
+        },
+        {
+          "do": "Compute the logarithm",
+          "result": "$\\log_2 1024=10$",
+          "why": "$1024=2^{10}$"
+        },
+        {
+          "do": "Compute FFT scale",
+          "result": "$N\\log_2N=1024\\cdot10=10,240$",
+          "why": "ten butterfly stages"
+        },
+        {
+          "do": "Divide the work estimates",
+          "result": "$1,048,576/10,240=102.4$",
+          "why": "compare direct to fast"
+        },
+        {
+          "do": "Interpret",
+          "result": "about $100$ times fewer basic operations",
+          "why": "constant factors vary, but the scaling advantage is large"
+        }
+      ],
+      "verify": "The ratio grows with $N$; for small $N$ overhead can matter, but at $1024$ the asymptotic win is already visible.",
+      "answer": "The FFT estimate is about $10,240$ units versus $1,048,576$ for direct DFT, roughly a $102$ times improvement.",
+      "connects": "The FFT is the DFT plus divide-and-conquer reuse."
+    },
+    "practice": [
+      {
+        "problem": "For $N=8$, compare $N^2$ and $N\\log_2N$.",
+        "steps": [
+          {
+            "do": "Compute direct work",
+            "result": "$8^2=64$",
+            "why": "direct DFT scale"
+          },
+          {
+            "do": "Compute logarithm",
+            "result": "$\\log_2 8=3$",
+            "why": "$8=2^3$"
+          },
+          {
+            "do": "Compute FFT work",
+            "result": "$8\\cdot3=24$",
+            "why": "three stages"
+          },
+          {
+            "do": "Compute the ratio",
+            "result": "$64/24\\approx2.67$",
+            "why": "direct work divided by FFT work"
+          }
+        ],
+        "answer": "Direct scale is $64$; FFT scale is $24$, about $2.67$ times smaller."
+      },
+      {
+        "problem": "For $N=4096$, compute $N\\log_2N$.",
+        "steps": [
+          {
+            "do": "Recognize the power",
+            "result": "$4096=2^{12}$",
+            "why": "powers of two are FFT-friendly"
+          },
+          {
+            "do": "Find the logarithm",
+            "result": "$\\log_2 4096=12$",
+            "why": "exponent of two"
+          },
+          {
+            "do": "Multiply",
+            "result": "$4096\\cdot12=49,152$",
+            "why": "FFT scale"
+          },
+          {
+            "do": "Compare to direct scale",
+            "result": "$4096^2=16,777,216$",
+            "why": "direct DFT scale"
+          }
+        ],
+        "answer": "$N\\log_2N=49,152$, much smaller than $16,777,216$."
+      },
+      {
+        "problem": "Use one butterfly with $E=5$, $O=2$, and twiddle factor $w=1$ to compute two outputs.",
+        "steps": [
+          {
+            "do": "Write the butterfly formulas",
+            "result": "$X_{top}=E+wO$, $X_{bottom}=E-wO$",
+            "why": "combine even and odd DFTs"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$X_{top}=5+1\\cdot2$",
+            "why": "top output"
+          },
+          {
+            "do": "Simplify top",
+            "result": "$X_{top}=7$",
+            "why": "add"
+          },
+          {
+            "do": "Compute bottom",
+            "result": "$X_{bottom}=5-1\\cdot2=3$",
+            "why": "subtract"
+          }
+        ],
+        "answer": "The butterfly outputs are $7$ and $3$."
+      },
+      {
+        "problem": "Use one butterfly with $E=3+i$, $O=1-i$, and $w=-i$.",
+        "steps": [
+          {
+            "do": "Multiply the twiddle and odd value",
+            "result": "$wO=(-i)(1-i)$",
+            "why": "butterfly needs $wO$"
+          },
+          {
+            "do": "Simplify the product",
+            "result": "$wO=-1-i$",
+            "why": "$-i+i^2=-i-1$"
+          },
+          {
+            "do": "Compute the top output",
+            "result": "$E+wO=(3+i)+(-1-i)=2$",
+            "why": "add complex numbers"
+          },
+          {
+            "do": "Compute the bottom output",
+            "result": "$E-wO=(3+i)-(-1-i)=4+2i$",
+            "why": "subtract complex numbers"
+          }
+        ],
+        "answer": "The butterfly outputs are $2$ and $4+2i$."
+      },
+      {
+        "problem": "A convolution uses FFTs of length $2048$. Estimate direct circular convolution work $N^2$ versus FFT-based work $3N\\log_2N$ for two forward FFTs and one inverse FFT.",
+        "steps": [
+          {
+            "do": "Compute direct scale",
+            "result": "$2048^2=4,194,304$",
+            "why": "direct circular convolution has quadratic scale"
+          },
+          {
+            "do": "Compute the logarithm",
+            "result": "$\\log_2 2048=11$",
+            "why": "$2048=2^{11}$"
+          },
+          {
+            "do": "Compute one FFT scale",
+            "result": "$2048\\cdot11=22,528$",
+            "why": "one transform"
+          },
+          {
+            "do": "Compute three-transform scale",
+            "result": "$3\\cdot22,528=67,584$",
+            "why": "two forward transforms and one inverse transform"
+          },
+          {
+            "do": "Compare",
+            "result": "$4,194,304/67,584\\approx62.1$",
+            "why": "rough speedup estimate"
+          }
+        ],
+        "answer": "The FFT-based estimate is $67,584$ versus $4,194,304$, about $62$ times smaller."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Fast spectrograms",
+        "background": "Speech and music systems compute thousands of DFTs. The FFT makes real-time spectrograms possible.",
+        "numbers": "A $1024$-point frame drops from about $1,048,576$ direct units to $10,240$ FFT units."
+      },
+      {
+        "title": "Fast convolution",
+        "background": "Long filters can be applied by transforming, multiplying bins, and transforming back.",
+        "numbers": "For length $2048$, three FFTs cost about $67,584$ scale units, far below $4,194,304$ direct units."
+      },
+      {
+        "title": "Polynomial multiplication",
+        "background": "The FFT multiplies polynomials by evaluating at roots of unity, multiplying values, and interpolating.",
+        "numbers": "Multiplying two degree-$1023$ polynomials needs a transform length at least $2048$."
+      },
+      {
+        "title": "Image compression",
+        "background": "Frequency transforms expose smooth image structure. Although JPEG uses DCT rather than DFT, the fast-transform idea is the same family.",
+        "numbers": "An $8\\times8$ block has $64$ coefficients; fast separable transforms work row by row and column by column."
+      },
+      {
+        "title": "Scientific simulation",
+        "background": "Many PDE solvers repeatedly move between physical and spectral grids. FFT speed makes those loops practical.",
+        "numbers": "A $1024\\times1024$ two-dimensional FFT costs on the order of $2N^2\\log_2N\\approx20,971,520$ one-dimensional units."
+      },
+      {
+        "title": "ML feature pipelines",
+        "background": "Audio, vibration, and biosignal models often compute FFT features before classification.",
+        "numbers": "At $100$ frames per second with $512$-point FFTs, the scale is $100\\cdot512\\cdot9=460,800$ units per second."
+      }
+    ],
+    "applicationsClose": "The FFT is a lesson in mathematical engineering: the same transform becomes powerful when symmetry is used instead of ignored.",
+    "takeaways": [
+      "The FFT computes the DFT, not an approximation to a different transform.",
+      "Radix-2 FFT splits even and odd samples and combines them with butterfly operations.",
+      "The work drops from $O(N^2)$ to $O(N\\log N)$.",
+      "Fast transforms power spectra, convolution, compression, and numerical simulation."
+    ],
     "prereqs": [
       "math-06-13"
     ]
@@ -300,19 +3647,257 @@
   B({
     "id": "math-06-15",
     "title": "The Laplace connection (s = iω)",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: the laplace connection (s = iω).",
+    "tagline": "Laplace and Fourier transforms are two views of exponential probing: one allows growth and decay, the other stays on the oscillatory axis.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Fast Fourier Transform (FFT)</i>"
+        "Fourier transform",
+        "complex exponentials",
+        "The Laplace transform"
       ],
       "leadsTo": [
-        "the next lesson, <i>Wavelets</i>"
+        "Filtering",
+        "Spectral methods",
+        "stability analysis"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "complex plane",
+        "poles",
+        "regions of convergence",
+        "differential equations"
       ]
     },
+    "motivation": "<p>You already know Fourier analysis tests a signal against pure rotations $e^{-i\\omega t}$. Laplace analysis tests against $e^{-st}$, where $s$ can include both decay and rotation.</p><p>The connection is beautifully simple: setting $s=i\\omega$ puts Laplace on the imaginary axis and recovers the Fourier transform when convergence allows it. The extra real part of $s$ is like adding damping before listening for frequency.</p>",
+    "definition": "<p>The one-sided Laplace transform of $x(t)$ is $X(s)=\\int_0^{\\infty}x(t)e^{-st}\\,dt$, where $s=\\sigma+i\\omega$ is complex. The Fourier transform on $[0,\\infty)$ is obtained formally by $s=i\\omega$: $X(i\\omega)=\\int_0^{\\infty}x(t)e^{-i\\omega t}\\,dt$.</p><p>The real part $\\sigma$ controls exponential damping because $e^{-st}=e^{-\\sigma t}e^{-i\\omega t}$. If a signal grows or decays, the Laplace transform may converge only in a <b>region of convergence</b>. The Fourier transform exists when the imaginary axis lies inside that region, or under a suitable generalized interpretation.</p><p><b>Assumptions that matter:</b> one-sided and two-sided transforms have different definitions; $s=i\\omega$ is valid only when the integral or transfer function is well-defined on the imaginary axis; and poles on the imaginary axis often signal non-decaying oscillation rather than ordinary absolute convergence.</p>",
+    "worked": {
+      "problem": "For $x(t)=e^{-2t}$ for $t\\ge0$, compute $X(s)$ and then evaluate $X(i\\omega)$.",
+      "skills": [
+        "Laplace transform",
+        "complex substitution",
+        "frequency response"
+      ],
+      "strategy": "Integrate the damped exponential, then place $s$ on the imaginary axis.",
+      "steps": [
+        {
+          "do": "Write the Laplace integral",
+          "result": "$X(s)=\\int_0^{\\infty}e^{-2t}e^{-st}\\,dt$",
+          "why": "insert the signal into the definition"
+        },
+        {
+          "do": "Combine exponentials",
+          "result": "$X(s)=\\int_0^{\\infty}e^{-(s+2)t}\\,dt$",
+          "why": "exponents add"
+        },
+        {
+          "do": "Integrate",
+          "result": "$X(s)=\\dfrac{1}{s+2}$",
+          "why": "the integral of a decaying exponential is reciprocal of its rate"
+        },
+        {
+          "do": "State convergence",
+          "result": "$\\operatorname{Re}(s)>-2$",
+          "why": "the real decay rate must be positive"
+        },
+        {
+          "do": "Substitute $s=i\\omega$",
+          "result": "$X(i\\omega)=\\dfrac{1}{2+i\\omega}$",
+          "why": "Fourier response lies on the imaginary axis"
+        },
+        {
+          "do": "Compute magnitude",
+          "result": "$|X(i\\omega)|=\\dfrac{1}{\\sqrt{4+\\omega^2}}$",
+          "why": "magnitude of $2+i\\omega$ is $\\sqrt{4+\\omega^2}$"
+        }
+      ],
+      "verify": "At $\\omega=0$, the response is $1/2$, equal to the area under $e^{-2t}$, so the formula passes a basic check.",
+      "answer": "$X(s)=1/(s+2)$ for $\\operatorname{Re}(s)>-2$, and $X(i\\omega)=1/(2+i\\omega)$.",
+      "connects": "Laplace reveals the pole at $s=-2$; Fourier reads the same system along the imaginary axis."
+    },
+    "practice": [
+      {
+        "problem": "For $x(t)=e^{-3t}$ on $t\\ge0$, find $X(s)$ and $X(i\\omega)$.",
+        "steps": [
+          {
+            "do": "Write the integral",
+            "result": "$X(s)=\\int_0^{\\infty}e^{-(s+3)t}\\,dt$",
+            "why": "combine $e^{-3t}$ with $e^{-st}$"
+          },
+          {
+            "do": "Integrate",
+            "result": "$X(s)=\\dfrac{1}{s+3}$",
+            "why": "reciprocal of decay rate"
+          },
+          {
+            "do": "State convergence",
+            "result": "$\\operatorname{Re}(s)>-3$",
+            "why": "the exponential must decay"
+          },
+          {
+            "do": "Set $s=i\\omega$",
+            "result": "$X(i\\omega)=\\dfrac{1}{3+i\\omega}$",
+            "why": "Fourier connection"
+          }
+        ],
+        "answer": "$X(s)=1/(s+3)$ and $X(i\\omega)=1/(3+i\\omega)$."
+      },
+      {
+        "problem": "For transfer function $H(s)=1/(s+5)$, compute the gain $|H(i\\omega)|$ at $\\omega=0$ and $\\omega=5$.",
+        "steps": [
+          {
+            "do": "Substitute $s=i\\omega$",
+            "result": "$H(i\\omega)=1/(5+i\\omega)$",
+            "why": "frequency response"
+          },
+          {
+            "do": "Write the magnitude",
+            "result": "$|H(i\\omega)|=1/\\sqrt{25+\\omega^2}$",
+            "why": "magnitude of complex denominator"
+          },
+          {
+            "do": "Evaluate at $\\omega=0$",
+            "result": "$|H(0)|=1/5=0.2$",
+            "why": "zero frequency"
+          },
+          {
+            "do": "Evaluate at $\\omega=5$",
+            "result": "$|H(5i)|=1/\\sqrt{50}\\approx0.141$",
+            "why": "$25+25=50$"
+          }
+        ],
+        "answer": "The gains are $0.2$ at $\\omega=0$ and about $0.141$ at $\\omega=5$."
+      },
+      {
+        "problem": "Does $x(t)=e^{2t}$ on $t\\ge0$ have an ordinary Fourier transform by setting $s=i\\omega$?",
+        "steps": [
+          {
+            "do": "Compute the Laplace form",
+            "result": "$X(s)=\\int_0^{\\infty}e^{(2-s)t}\\,dt$",
+            "why": "insert the growing signal"
+          },
+          {
+            "do": "State convergence condition",
+            "result": "$\\operatorname{Re}(s)>2$",
+            "why": "damping must beat growth"
+          },
+          {
+            "do": "Locate the imaginary axis",
+            "result": "$\\operatorname{Re}(i\\omega)=0$",
+            "why": "pure oscillation has no damping"
+          },
+          {
+            "do": "Compare to the region",
+            "result": "$0\\not>2$",
+            "why": "the imaginary axis is outside the region of convergence"
+          },
+          {
+            "do": "Conclude",
+            "result": "ordinary Fourier transform does not converge",
+            "why": "the signal grows without decay"
+          }
+        ],
+        "answer": "No. The imaginary axis is outside the region of convergence."
+      },
+      {
+        "problem": "For $H(s)=\\dfrac{2}{s^2+3s+2}$, factor the denominator and list the poles.",
+        "steps": [
+          {
+            "do": "Factor the quadratic",
+            "result": "$s^2+3s+2=(s+1)(s+2)$",
+            "why": "find pole locations"
+          },
+          {
+            "do": "Rewrite the transfer function",
+            "result": "$H(s)=\\dfrac{2}{(s+1)(s+2)}$",
+            "why": "factored form exposes poles"
+          },
+          {
+            "do": "Set first factor to zero",
+            "result": "$s=-1$",
+            "why": "denominator zero"
+          },
+          {
+            "do": "Set second factor to zero",
+            "result": "$s=-2$",
+            "why": "denominator zero"
+          },
+          {
+            "do": "Interpret stability",
+            "result": "both poles have negative real part",
+            "why": "responses decay in time"
+          }
+        ],
+        "answer": "The poles are $s=-1$ and $s=-2$."
+      },
+      {
+        "problem": "For $H(s)=1/(s+2)$, find the angular frequency where the gain drops to $1/\\sqrt{8}$.",
+        "steps": [
+          {
+            "do": "Write the gain",
+            "result": "$|H(i\\omega)|=1/\\sqrt{4+\\omega^2}$",
+            "why": "substitute $s=i\\omega$"
+          },
+          {
+            "do": "Set the target gain",
+            "result": "$1/\\sqrt{4+\\omega^2}=1/\\sqrt8$",
+            "why": "use the requested value"
+          },
+          {
+            "do": "Equate denominators",
+            "result": "$4+\\omega^2=8$",
+            "why": "positive square roots match"
+          },
+          {
+            "do": "Solve for $\\omega^2$",
+            "result": "$\\omega^2=4$",
+            "why": "subtract $4$"
+          },
+          {
+            "do": "Take the nonnegative frequency",
+            "result": "$\\omega=2$ rad/s",
+            "why": "frequency magnitude is nonnegative"
+          }
+        ],
+        "answer": "The gain is $1/\\sqrt8$ at $\\omega=2$ rad/s."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Control-system frequency response",
+        "background": "Engineers design controllers in the $s$-plane, then inspect behavior on $s=i\\omega$ to see sinusoidal gain.",
+        "numbers": "For $H(s)=1/(s+10)$, DC gain is $0.1$ and gain at $\\omega=10$ is $1/\\sqrt{200}\\approx0.0707$."
+      },
+      {
+        "title": "Low-pass filters",
+        "background": "Simple exponential impulse responses produce first-order low-pass filters.",
+        "numbers": "Impulse response $e^{-5t}$ gives $H(i\\omega)=1/(5+i\\omega)$, with gain $0.2$ at $\\omega=0$."
+      },
+      {
+        "title": "Stability from poles",
+        "background": "Laplace poles show whether system modes decay, persist, or grow.",
+        "numbers": "A pole at $s=-3$ gives factor $e^{-3t}$, so after $2$ seconds the amplitude is $e^{-6}\\approx0.00248$."
+      },
+      {
+        "title": "Damped oscillations",
+        "background": "A damped sinusoid has poles with negative real parts and imaginary oscillation rates.",
+        "numbers": "Poles $-1\\pm4i$ correspond to decay $e^{-t}$ and angular frequency $4$ rad/s."
+      },
+      {
+        "title": "Optimization dynamics",
+        "background": "Linearized training dynamics can be studied like systems: eigenvalues with negative real parts decay.",
+        "numbers": "Mode $e^{-0.5t}$ drops to $e^{-5}\\approx0.0067$ after $10$ time units."
+      },
+      {
+        "title": "Signal modeling",
+        "background": "Autoregressive and state-space models use pole locations to control smoothness and oscillation.",
+        "numbers": "A continuous pole at $-2$ sampled every $0.1$ s maps to discrete factor $e^{-0.2}\\approx0.819$."
+      }
+    ],
+    "applicationsClose": "Laplace gives the whole complex landscape; Fourier is the important walk along the oscillatory axis.",
+    "takeaways": [
+      "Setting $s=i\\omega$ connects Laplace transforms to Fourier frequency response when convergence permits.",
+      "The real part of $s$ supplies damping or growth; the imaginary part supplies oscillation.",
+      "Regions of convergence decide whether the imaginary axis is allowed.",
+      "Poles explain decay, stability, and resonance."
+    ],
     "prereqs": [
       "math-06-14"
     ]
@@ -321,19 +3906,252 @@
   B({
     "id": "math-06-16",
     "title": "Wavelets",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: wavelets.",
+    "tagline": "Wavelets analyze signals with small localized waves, giving time and scale information together.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Laplace connection (s = iω)</i>"
+        "The uncertainty principle",
+        "Fourier transform",
+        "orthonormal bases"
       ],
       "leadsTo": [
-        "the next lesson, <i>Filtering</i>"
+        "Filtering",
+        "Spectral methods",
+        "Convolutions in CNNs & spectral architectures"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "multiresolution analysis",
+        "inner products",
+        "basis expansions",
+        "dyadic scaling"
       ]
     },
+    "motivation": "<p>Fourier analysis is wonderful for steady tones, but many signals are not steady. A word begins and ends, an edge appears at one location, a sensor spike lasts for a moment. We want frequency information without losing place.</p><p><b>Wavelets</b> answer with short waves that can shift and stretch. Wide wavelets see slow trends; narrow wavelets see sharp details. The result is a multiscale map of where patterns live.</p>",
+    "definition": "<p>A wavelet family is built from a mother wavelet $\\psi(t)$ by scaling and shifting: $\\psi_{a,b}(t)=\\dfrac{1}{\\sqrt{|a|}}\\psi\\left(\\dfrac{t-b}{a}\\right)$, where $a$ controls scale and $b$ controls location. The continuous wavelet transform is $W(a,b)=\\int x(t)\\overline{\\psi_{a,b}(t)}\\,dt$.</p><p>The discrete wavelet transform often uses dyadic scales $a=2^j$ and shifts $b=k2^j$. For the Haar wavelet, averages capture coarse structure and differences capture detail. Repeating this split gives a multiresolution representation.</p><p><b>Assumptions that matter:</b> useful wavelets have finite energy and usually zero mean; orthonormal discrete wavelets require carefully matched scaling and wavelet filters; and boundary handling matters for finite signals.</p>",
+    "worked": {
+      "problem": "Compute one-level Haar averages and details for $x=[4,6,10,14]$ using average $(a+b)/2$ and detail $(a-b)/2$ for each pair.",
+      "skills": [
+        "Haar transform",
+        "averages",
+        "details"
+      ],
+      "strategy": "Pair neighboring samples, compute coarse averages, then compute local differences.",
+      "steps": [
+        {
+          "do": "Pair the samples",
+          "result": "$(4,6)$ and $(10,14)$",
+          "why": "one-level Haar works on adjacent pairs"
+        },
+        {
+          "do": "Average the first pair",
+          "result": "$(4+6)/2=5$",
+          "why": "coarse value for the first location"
+        },
+        {
+          "do": "Compute the first detail",
+          "result": "$(4-6)/2=-1$",
+          "why": "signed difference within the first pair"
+        },
+        {
+          "do": "Average the second pair",
+          "result": "$(10+14)/2=12$",
+          "why": "coarse value for the second location"
+        },
+        {
+          "do": "Compute the second detail",
+          "result": "$(10-14)/2=-2$",
+          "why": "signed difference within the second pair"
+        },
+        {
+          "do": "List coefficients",
+          "result": "averages $[5,12]$, details $[-1,-2]$",
+          "why": "separate smooth trend from local changes"
+        }
+      ],
+      "verify": "Reconstruction works: $5+(-1)=4$, $5-(-1)=6$, $12+(-2)=10$, and $12-(-2)=14$.",
+      "answer": "The one-level Haar coefficients are averages $[5,12]$ and details $[-1,-2]$.",
+      "connects": "Wavelets store both where a change occurs and the scale of the change."
+    },
+    "practice": [
+      {
+        "problem": "Compute one-level Haar averages and details for $x=[8,4,6,6]$.",
+        "steps": [
+          {
+            "do": "Pair the samples",
+            "result": "$(8,4)$ and $(6,6)$",
+            "why": "use adjacent pairs"
+          },
+          {
+            "do": "Average first pair",
+            "result": "$(8+4)/2=6$",
+            "why": "coarse coefficient"
+          },
+          {
+            "do": "Detail first pair",
+            "result": "$(8-4)/2=2$",
+            "why": "local difference"
+          },
+          {
+            "do": "Average second pair",
+            "result": "$(6+6)/2=6$",
+            "why": "coarse coefficient"
+          },
+          {
+            "do": "Detail second pair",
+            "result": "$(6-6)/2=0$",
+            "why": "no local change"
+          }
+        ],
+        "answer": "Averages $[6,6]$, details $[2,0]$."
+      },
+      {
+        "problem": "Reconstruct a pair from Haar average $7$ and detail $-3$.",
+        "steps": [
+          {
+            "do": "Use reconstruction for the first value",
+            "result": "$a+d=7+(-3)=4$",
+            "why": "average plus detail recovers the left sample"
+          },
+          {
+            "do": "Use reconstruction for the second value",
+            "result": "$a-d=7-(-3)=10$",
+            "why": "average minus detail recovers the right sample"
+          },
+          {
+            "do": "Check the average",
+            "result": "$(4+10)/2=7$",
+            "why": "matches the given average"
+          },
+          {
+            "do": "Check the detail",
+            "result": "$(4-10)/2=-3$",
+            "why": "matches the given detail"
+          }
+        ],
+        "answer": "The reconstructed pair is $[4,10]$."
+      },
+      {
+        "problem": "Compute two-level Haar coefficients for $x=[2,4,6,8]$ using the same average-detail convention.",
+        "steps": [
+          {
+            "do": "Compute first pair average and detail",
+            "result": "$3$ and $-1$",
+            "why": "$(2+4)/2=3$, $(2-4)/2=-1$"
+          },
+          {
+            "do": "Compute second pair average and detail",
+            "result": "$7$ and $-1$",
+            "why": "$(6+8)/2=7$, $(6-8)/2=-1$"
+          },
+          {
+            "do": "Pair the coarse averages",
+            "result": "$(3,7)$",
+            "why": "second level transforms the coarse trend"
+          },
+          {
+            "do": "Compute second-level average",
+            "result": "$(3+7)/2=5$",
+            "why": "global coarse value"
+          },
+          {
+            "do": "Compute second-level detail",
+            "result": "$(3-7)/2=-2$",
+            "why": "coarse-scale change"
+          }
+        ],
+        "answer": "Two-level coefficients are global average $5$, coarse detail $-2$, and fine details $[-1,-1]$."
+      },
+      {
+        "problem": "A detail coefficient is $0$ for pair $(a,b)$. What relation must $a$ and $b$ satisfy?",
+        "steps": [
+          {
+            "do": "Write the detail formula",
+            "result": "$(a-b)/2=0$",
+            "why": "Haar detail is half the difference"
+          },
+          {
+            "do": "Multiply by $2$",
+            "result": "$a-b=0$",
+            "why": "remove the denominator"
+          },
+          {
+            "do": "Solve for equality",
+            "result": "$a=b$",
+            "why": "add $b$ to both sides"
+          },
+          {
+            "do": "Interpret",
+            "result": "the pair is locally constant",
+            "why": "zero detail means no within-pair change"
+          }
+        ],
+        "answer": "The samples must be equal: $a=b$."
+      },
+      {
+        "problem": "A denoising step keeps average $10$ and changes detail from $3$ to $0$. Reconstruct before and after thresholding.",
+        "steps": [
+          {
+            "do": "Reconstruct before thresholding",
+            "result": "$[10+3,10-3]=[13,7]$",
+            "why": "average plus and minus detail"
+          },
+          {
+            "do": "Set the thresholded detail",
+            "result": "$d=0$",
+            "why": "small detail removed"
+          },
+          {
+            "do": "Reconstruct after thresholding",
+            "result": "$[10+0,10-0]=[10,10]$",
+            "why": "the pair becomes smooth"
+          },
+          {
+            "do": "Compare changes",
+            "result": "$13\\mapsto10$ and $7\\mapsto10$",
+            "why": "detail removal reduces local variation"
+          }
+        ],
+        "answer": "Before thresholding the pair is $[13,7]$; after thresholding it is $[10,10]$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Image compression",
+        "background": "Wavelet compression keeps large coarse and edge coefficients while discarding tiny details. JPEG 2000 uses this multiresolution idea.",
+        "numbers": "If $1000$ coefficients are stored and $850$ small ones are set to zero, only $150$ remain, a $6.67$ to $1$ sparsity ratio."
+      },
+      {
+        "title": "Denoising",
+        "background": "Noise often appears as many small high-frequency coefficients. Thresholding details can reduce noise while preserving larger structures.",
+        "numbers": "A detail $0.03$ is removed by threshold $0.05$, while detail $0.20$ is kept."
+      },
+      {
+        "title": "Edge detection",
+        "background": "Haar details are large where neighboring values change suddenly, so they locate edges.",
+        "numbers": "Pair $(20,80)$ has detail $(20-80)/2=-30$, much larger than pair $(20,22)$ with detail $-1$."
+      },
+      {
+        "title": "Time-frequency audio",
+        "background": "Wavelets use short windows at high frequencies and long windows at low frequencies, matching many natural signals.",
+        "numbers": "At scale $a=4$, a base $10$ ms wavelet covers about $40$ ms."
+      },
+      {
+        "title": "Graph and geometric ML",
+        "background": "Wavelet-like bases on graphs capture local neighborhoods at multiple scales.",
+        "numbers": "A two-hop scale around a node with degrees $3$ and $4$ can aggregate up to $1+3+12=16$ local positions in a simple tree-like count."
+      },
+      {
+        "title": "Feature pyramids",
+        "background": "Computer vision models use multiscale representations that echo wavelet thinking: coarse context plus fine detail.",
+        "numbers": "An image pyramid from $256\\times256$ to $128\\times128$ to $64\\times64$ has $65,536+16,384+4,096=86,016$ spatial locations."
+      }
+    ],
+    "applicationsClose": "Wavelets keep the local story: what scale, what location, and how strong the change is.",
+    "takeaways": [
+      "Wavelets are shifted and scaled versions of a mother wavelet.",
+      "Haar wavelets split data into averages and details.",
+      "Multiresolution analysis separates coarse trend from fine changes.",
+      "Wavelets are useful when frequency content changes over time or space."
+    ],
     "prereqs": [
       "math-06-15"
     ]
@@ -342,19 +4160,252 @@
   B({
     "id": "math-06-17",
     "title": "Filtering",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: filtering.",
+    "tagline": "Filtering keeps the parts of a signal you want and suppresses the parts you do not.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Wavelets</i>"
+        "The Discrete Fourier Transform (DFT)",
+        "The Laplace connection (s = iω)",
+        "convolution"
       ],
       "leadsTo": [
-        "the next lesson, <i>Spectral methods</i>"
+        "Spectral methods",
+        "Convolutions in CNNs & spectral architectures",
+        "signal denoising"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "convolution",
+        "frequency response",
+        "transfer functions",
+        "z-transforms"
       ]
     },
+    "motivation": "<p>You already filter informally when you ignore background noise and listen for a voice. Mathematically, a filter is a rule that changes a signal so some patterns remain and others shrink.</p><p>Fourier analysis makes filtering especially clear: convolution in time becomes multiplication in frequency. A low-pass filter keeps slow variation; a high-pass filter keeps rapid changes; a band-pass filter keeps a chosen range.</p>",
+    "definition": "<p>For a discrete signal $x[n]$ and impulse response $h[n]$, linear time-invariant filtering is convolution: $y[n]=\\sum_m h[m]x[n-m]$. In the frequency domain, the DFT gives $Y_k=H_kX_k$, where $H_k$ is the filter's frequency response.</p><p>The multiplication rule follows from shifting complex exponentials: if the input is $e^{i\\omega n}$, convolution with $h$ returns the same exponential times $H(\\omega)=\\sum_m h[m]e^{-i\\omega m}$. So complex waves are eigenvectors of filtering.</p><p><b>Assumptions that matter:</b> ordinary DFT multiplication corresponds to circular convolution unless padding is used; stable filters have summable impulse responses in the infinite case; and causal real-time filters can only use present and past samples.</p>",
+    "worked": {
+      "problem": "Apply the moving-average filter $h=[\\tfrac12,\\tfrac12]$ to $x=[2,6,10]$ using valid convolution positions.",
+      "skills": [
+        "convolution",
+        "moving averages",
+        "filter interpretation"
+      ],
+      "strategy": "Slide the two-tap filter over adjacent pairs and average each pair.",
+      "steps": [
+        {
+          "do": "Place the filter on the first pair",
+          "result": "$(2,6)$",
+          "why": "valid convolution uses full overlap"
+        },
+        {
+          "do": "Compute first output",
+          "result": "$\\tfrac12\\cdot2+\\tfrac12\\cdot6=4$",
+          "why": "average the adjacent samples"
+        },
+        {
+          "do": "Place the filter on the second pair",
+          "result": "$(6,10)$",
+          "why": "slide one sample"
+        },
+        {
+          "do": "Compute second output",
+          "result": "$\\tfrac12\\cdot6+\\tfrac12\\cdot10=8$",
+          "why": "average the next adjacent samples"
+        },
+        {
+          "do": "List the output",
+          "result": "$y=[4,8]$",
+          "why": "valid filtering produces two positions"
+        }
+      ],
+      "verify": "The output is smoother than the input: the jump from $2$ to $10$ becomes values centered between neighbors.",
+      "answer": "$y=[4,8]$.",
+      "connects": "A moving average is a low-pass filter because it suppresses rapid sample-to-sample changes."
+    },
+    "practice": [
+      {
+        "problem": "Apply the difference filter $h=[1,-1]$ to $x=[3,7,6,10]$ using valid positions.",
+        "steps": [
+          {
+            "do": "Use the first pair",
+            "result": "$(3,7)$",
+            "why": "first full overlap"
+          },
+          {
+            "do": "Compute first output",
+            "result": "$1\\cdot3-1\\cdot7=-4$",
+            "why": "difference filter"
+          },
+          {
+            "do": "Use the second pair",
+            "result": "$(7,6)$",
+            "why": "slide one sample"
+          },
+          {
+            "do": "Compute second output",
+            "result": "$7-6=1$",
+            "why": "local change"
+          },
+          {
+            "do": "Use the third pair",
+            "result": "$6-10=-4$",
+            "why": "last full overlap"
+          }
+        ],
+        "answer": "The valid output is $[-4,1,-4]$."
+      },
+      {
+        "problem": "A frequency bin has $X_k=5$ and a filter has $H_k=0.2$. What is $Y_k$?",
+        "steps": [
+          {
+            "do": "Write the frequency-domain rule",
+            "result": "$Y_k=H_kX_k$",
+            "why": "filtering multiplies spectra"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$Y_k=0.2\\cdot5$",
+            "why": "use the given bin and response"
+          },
+          {
+            "do": "Multiply",
+            "result": "$Y_k=1$",
+            "why": "the filter attenuates this bin"
+          },
+          {
+            "do": "Interpret gain",
+            "result": "amplitude reduced by factor $5$",
+            "why": "$0.2=1/5$"
+          }
+        ],
+        "answer": "$Y_k=1$."
+      },
+      {
+        "problem": "For moving average $h=[1/3,1/3,1/3]$, apply valid filtering to $x=[3,6,9,12]$.",
+        "steps": [
+          {
+            "do": "Use first length-three window",
+            "result": "$[3,6,9]$",
+            "why": "filter length is three"
+          },
+          {
+            "do": "Compute first output",
+            "result": "$(3+6+9)/3=6$",
+            "why": "average"
+          },
+          {
+            "do": "Use second window",
+            "result": "$[6,9,12]$",
+            "why": "slide one sample"
+          },
+          {
+            "do": "Compute second output",
+            "result": "$(6+9+12)/3=9$",
+            "why": "average"
+          },
+          {
+            "do": "List output",
+            "result": "$[6,9]$",
+            "why": "two valid positions"
+          }
+        ],
+        "answer": "The valid filtered output is $[6,9]$."
+      },
+      {
+        "problem": "A first-order low-pass has gain $|H(i\\omega)|=1/\\sqrt{1+(\\omega/10)^2}$. Compute gains at $\\omega=0$ and $\\omega=10$.",
+        "steps": [
+          {
+            "do": "Evaluate at zero",
+            "result": "$|H(0)|=1/\\sqrt{1+0}=1$",
+            "why": "DC passes fully"
+          },
+          {
+            "do": "Substitute $\\omega=10$",
+            "result": "$1/\\sqrt{1+(10/10)^2}$",
+            "why": "use the cutoff scale"
+          },
+          {
+            "do": "Simplify the denominator",
+            "result": "$1/\\sqrt2$",
+            "why": "$1+1=2$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.707$",
+            "why": "$1/\\sqrt2\\approx0.707$"
+          }
+        ],
+        "answer": "The gains are $1$ at $0$ rad/s and about $0.707$ at $10$ rad/s."
+      },
+      {
+        "problem": "A noisy DFT has magnitudes $[20,8,2,1]$. A low-pass mask keeps bins $0$ and $1$ and zeros bins $2$ and $3$. What are the output magnitudes?",
+        "steps": [
+          {
+            "do": "Write the mask",
+            "result": "$H=[1,1,0,0]$",
+            "why": "kept bins have gain one and removed bins gain zero"
+          },
+          {
+            "do": "Multiply bin $0$",
+            "result": "$20\\cdot1=20$",
+            "why": "DC kept"
+          },
+          {
+            "do": "Multiply bin $1$",
+            "result": "$8\\cdot1=8$",
+            "why": "low frequency kept"
+          },
+          {
+            "do": "Multiply bin $2$",
+            "result": "$2\\cdot0=0$",
+            "why": "high frequency removed"
+          },
+          {
+            "do": "Multiply bin $3$",
+            "result": "$1\\cdot0=0$",
+            "why": "high frequency removed"
+          }
+        ],
+        "answer": "The output magnitudes are $[20,8,0,0]$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Audio denoising",
+        "background": "Low-pass and band-pass filters reduce hiss or isolate speech bands.",
+        "numbers": "At $16$ kHz sampling, keeping below $4$ kHz retains bins with frequency $k\\cdot16000/N<4000$, so for $N=1024$ keep roughly $k<256$."
+      },
+      {
+        "title": "Image blur",
+        "background": "Blurring is low-pass filtering in space. Averaging neighboring pixels removes high-frequency texture.",
+        "numbers": "A $3\\times3$ box blur replaces a patch sum $900$ by $900/9=100$ at the center."
+      },
+      {
+        "title": "Edge detection",
+        "background": "High-pass filters emphasize rapid changes, which often correspond to edges.",
+        "numbers": "A one-dimensional difference on values $[20,80]$ gives $60$, while $[20,22]$ gives $2$."
+      },
+      {
+        "title": "Anti-alias preprocessing",
+        "background": "Before downsampling, filters remove frequencies that the lower sampling rate cannot represent.",
+        "numbers": "Downsampling from $1000$ Hz to $250$ Hz requires a cutoff below $125$ Hz."
+      },
+      {
+        "title": "Exponential smoothing",
+        "background": "Streaming systems often smooth a measurement with a one-pole filter.",
+        "numbers": "With $y_t=0.8y_{t-1}+0.2x_t$, a new sample $x_t=10$ and old state $5$ gives $y_t=6$."
+      },
+      {
+        "title": "CNN kernels as learned filters",
+        "background": "Convolutional networks learn spatial filters rather than hand-designing them.",
+        "numbers": "A $3\\times3$ kernel with all entries $1/9$ applied to a patch summing to $45$ outputs $5$."
+      }
+    ],
+    "applicationsClose": "Filtering is selection by structure: smooth what should be smooth, sharpen what should be sharp, and remove what does not belong.",
+    "takeaways": [
+      "Linear time-invariant filtering is convolution in time or multiplication in frequency.",
+      "Low-pass filters keep slow variation; high-pass filters keep rapid changes.",
+      "DFT-based filtering must handle circular convolution and padding carefully.",
+      "Many ML kernels are learned filters with data-chosen coefficients."
+    ],
     "prereqs": [
       "math-06-16"
     ]
@@ -363,19 +4414,242 @@
   B({
     "id": "math-06-18",
     "title": "Spectral methods",
-    "tier": "🟡",
-    "tagline": "One concept from Harmonic / Fourier analysis: spectral methods.",
+    "tagline": "Spectral methods solve problems by moving into a basis where global patterns become simple coefficients.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Filtering</i>"
+        "Filtering",
+        "The Fast Fourier Transform (FFT)",
+        "eigenvectors"
       ],
       "leadsTo": [
-        "the next lesson, <i>Convolutions in CNNs & spectral architectures</i>"
+        "Convolutions in CNNs & spectral architectures",
+        "PDE solvers",
+        "graph Fourier analysis"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "orthogonal bases",
+        "eigenvalues",
+        "differential equations",
+        "linear operators"
       ]
     },
+    "motivation": "<p>You already saw that Fourier modes simplify filtering because each mode is multiplied by a gain. Spectral methods push that idea further: choose a basis where the operator itself becomes easy.</p><p>For derivatives, waves are especially friendly. Differentiating $e^{ikx}$ just multiplies by $ik$. That turns some differential equations into algebraic equations for coefficients.</p>",
+    "definition": "<p>A <b>spectral method</b> approximates a function as $u(x)\\approx\\sum_k \\widehat u_k\\phi_k(x)$ using global basis functions such as Fourier modes, Chebyshev polynomials, or eigenvectors of a graph Laplacian. Operators are applied to coefficients whenever the basis diagonalizes or nearly diagonalizes the operator.</p><p>For periodic Fourier modes, $\\dfrac{d}{dx}e^{ikx}=ik e^{ikx}$ and $\\dfrac{d^2}{dx^2}e^{ikx}=-k^2 e^{ikx}$. So the heat equation $u_t=\\alpha u_{xx}$ gives coefficient evolution $\\widehat u_k(t)=\\widehat u_k(0)e^{-\\alpha k^2 t}$.</p><p><b>Assumptions that matter:</b> Fourier spectral methods naturally fit periodic smooth functions; nonperiodic boundaries need other bases or careful treatment; nonsmooth functions can cause ringing; and numerical implementations need dealiasing for nonlinear products.</p>",
+    "worked": {
+      "problem": "A heat equation mode has initial coefficient $\\widehat u_3(0)=5$, diffusivity $\\alpha=0.1$, and time $t=2$. Compute $\\widehat u_3(t)$ using $\\widehat u_k(t)=\\widehat u_k(0)e^{-\\alpha k^2t}$.",
+      "skills": [
+        "Fourier modes",
+        "heat equation",
+        "exponential decay"
+      ],
+      "strategy": "Compute the decay exponent for the mode, then multiply the initial coefficient.",
+      "steps": [
+        {
+          "do": "Identify the mode",
+          "result": "$k=3$",
+          "why": "the coefficient is $\\widehat u_3$"
+        },
+        {
+          "do": "Compute $k^2$",
+          "result": "$3^2=9$",
+          "why": "heat decay depends on squared frequency"
+        },
+        {
+          "do": "Compute the exponent",
+          "result": "$-\\alpha k^2t=-0.1\\cdot9\\cdot2=-1.8$",
+          "why": "substitute diffusivity and time"
+        },
+        {
+          "do": "Compute the decay factor",
+          "result": "$e^{-1.8}\\approx0.165$",
+          "why": "exponential damping"
+        },
+        {
+          "do": "Multiply by the initial coefficient",
+          "result": "$5\\cdot0.165\\approx0.826$",
+          "why": "coefficient evolves independently"
+        }
+      ],
+      "verify": "The coefficient shrinks from $5$ to less than $1$, which matches heat smoothing high-frequency modes.",
+      "answer": "$\\widehat u_3(2)\\approx0.826$.",
+      "connects": "In a spectral basis, a differential equation can become one scalar update per frequency."
+    },
+    "practice": [
+      {
+        "problem": "For the heat equation with $\\alpha=0.2$, $k=2$, $t=1$, and $\\widehat u_2(0)=3$, compute $\\widehat u_2(t)$.",
+        "steps": [
+          {
+            "do": "Compute $k^2$",
+            "result": "$2^2=4$",
+            "why": "squared mode number"
+          },
+          {
+            "do": "Compute the exponent",
+            "result": "$-0.2\\cdot4\\cdot1=-0.8$",
+            "why": "heat decay formula"
+          },
+          {
+            "do": "Approximate decay",
+            "result": "$e^{-0.8}\\approx0.449$",
+            "why": "exponential value"
+          },
+          {
+            "do": "Multiply coefficient",
+            "result": "$3\\cdot0.449\\approx1.348$",
+            "why": "scale the initial mode"
+          }
+        ],
+        "answer": "$\\widehat u_2(1)\\approx1.348$."
+      },
+      {
+        "problem": "Differentiate $u(x)=2\\sin(3x)$ twice and compare with the spectral rule.",
+        "steps": [
+          {
+            "do": "Differentiate once",
+            "result": "$u'(x)=6\\cos(3x)$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Differentiate twice",
+            "result": "$u''(x)=-18\\sin(3x)$",
+            "why": "differentiate cosine"
+          },
+          {
+            "do": "Apply spectral factor",
+            "result": "$-k^2=-9$",
+            "why": "second derivative multiplies mode $k=3$ by $-9$"
+          },
+          {
+            "do": "Multiply original amplitude",
+            "result": "$-9\\cdot2\\sin(3x)=-18\\sin(3x)$",
+            "why": "matches direct differentiation"
+          }
+        ],
+        "answer": "$u''(x)=-18\\sin(3x)$, exactly matching the spectral factor $-9$."
+      },
+      {
+        "problem": "A low-pass spectral approximation keeps modes $k=0,1,2$ and drops mode $3$. If magnitudes are $[10,4,1,0.5]$, what remains?",
+        "steps": [
+          {
+            "do": "Write the keep mask",
+            "result": "$[1,1,1,0]$",
+            "why": "modes $0$ through $2$ are retained"
+          },
+          {
+            "do": "Multiply mode $0$",
+            "result": "$10\\cdot1=10$",
+            "why": "keep"
+          },
+          {
+            "do": "Multiply mode $1$",
+            "result": "$4\\cdot1=4$",
+            "why": "keep"
+          },
+          {
+            "do": "Multiply mode $2$",
+            "result": "$1\\cdot1=1$",
+            "why": "keep"
+          },
+          {
+            "do": "Multiply mode $3$",
+            "result": "$0.5\\cdot0=0$",
+            "why": "drop"
+          }
+        ],
+        "answer": "The remaining magnitudes are $[10,4,1,0]$."
+      },
+      {
+        "problem": "A graph Laplacian eigenvector has eigenvalue $\\lambda=6$. A heat step uses factor $e^{-0.05\\lambda}$. Compute the factor.",
+        "steps": [
+          {
+            "do": "Substitute eigenvalue",
+            "result": "$e^{-0.05\\cdot6}$",
+            "why": "graph spectral heat factor"
+          },
+          {
+            "do": "Multiply exponent",
+            "result": "$e^{-0.3}$",
+            "why": "$0.05\\cdot6=0.3$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$e^{-0.3}\\approx0.741$",
+            "why": "exponential decay"
+          },
+          {
+            "do": "Interpret",
+            "result": "the component keeps about $74.1\\%$",
+            "why": "higher eigenvalues decay more"
+          }
+        ],
+        "answer": "The factor is approximately $0.741$."
+      },
+      {
+        "problem": "A nonlinear spectral code multiplies two signals whose highest kept mode is $5$. What maximum mode can the product create, and why might dealiasing be needed if only modes through $6$ are stored?",
+        "steps": [
+          {
+            "do": "Add highest input modes",
+            "result": "$5+5=10$",
+            "why": "products of waves add frequencies"
+          },
+          {
+            "do": "Compare with storage limit",
+            "result": "$10>6$",
+            "why": "the product creates modes beyond the grid"
+          },
+          {
+            "do": "Name the risk",
+            "result": "aliasing",
+            "why": "unrepresented high modes can fold into lower modes"
+          },
+          {
+            "do": "State the remedy",
+            "result": "dealias or use more modes",
+            "why": "remove or represent the created high frequencies"
+          }
+        ],
+        "answer": "The product can create mode $10$; storing only through $6$ risks aliasing, so dealiasing is needed."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Heat and diffusion solvers",
+        "background": "Spectral methods solve smooth periodic diffusion problems very efficiently because each Fourier mode decays independently.",
+        "numbers": "With $\\alpha=0.1$, mode $k=5$ decays by $e^{-0.1\\cdot25\\cdot1}=e^{-2.5}\\approx0.082$ after one time unit."
+      },
+      {
+        "title": "Fluid simulation",
+        "background": "Pseudo-spectral methods are common in idealized turbulence because derivatives are accurate in Fourier space.",
+        "numbers": "A $256$-point periodic grid has Fourier modes up to about $128$ before dealiasing choices."
+      },
+      {
+        "title": "Graph signal processing",
+        "background": "Graph spectral methods expand node features in Laplacian eigenvectors, generalizing Fourier modes to networks.",
+        "numbers": "A component with eigenvalue $12$ under heat factor $e^{-0.1\\lambda}$ is scaled by $e^{-1.2}\\approx0.301$."
+      },
+      {
+        "title": "Spectral clustering",
+        "background": "Clustering can use low-frequency graph eigenvectors because they vary smoothly within connected groups.",
+        "numbers": "Using the first $3$ nontrivial eigenvectors embeds each node into $\\mathbb{R}^3$ before k-means."
+      },
+      {
+        "title": "Fast Poisson solves",
+        "background": "Some boundary-value equations become division by eigenvalues in a spectral basis.",
+        "numbers": "If $-u''=f$ and $\\widehat f_4=8$, then $\\widehat u_4=8/4^2=0.5$ for a periodic Fourier mode."
+      },
+      {
+        "title": "Neural operators",
+        "background": "Modern operator-learning models sometimes update only low Fourier modes to learn maps between functions.",
+        "numbers": "Keeping $16$ modes out of a $128$-mode grid uses $12.5\\%$ of the one-dimensional spectrum."
+      }
+    ],
+    "applicationsClose": "Spectral methods work when the right basis makes the operator simple and the solution smooth enough to be economical.",
+    "takeaways": [
+      "Spectral methods represent functions by coefficients in global bases.",
+      "Fourier modes turn derivatives into multiplication by $ik$ or $-k^2$.",
+      "Smooth problems can need few spectral coefficients; nonsmooth ones may ring.",
+      "Graph and neural spectral methods extend the same basis-change idea."
+    ],
     "prereqs": [
       "math-06-17"
     ]
@@ -384,19 +4658,257 @@
   B({
     "id": "math-06-19",
     "title": "Convolutions in CNNs & spectral architectures",
-    "tier": "🟡",
-    "tagline": "Capstone — how harmonic / fourier analysis shows up directly in CS & ML.",
+    "tagline": "CNN kernels are learned filters, and spectral architectures learn which frequencies and modes should pass.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Spectral methods</i>"
+        "Filtering",
+        "Spectral methods",
+        "The Fast Fourier Transform (FFT)"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "deep learning architectures",
+        "graph neural networks",
+        "neural operators"
       ],
       "usedWith": [
-        "the other concepts in Harmonic / Fourier analysis and its capstone"
+        "convolution",
+        "linear operators",
+        "Fourier bases",
+        "matrix multiplication"
       ]
     },
+    "motivation": "<p>You already know filtering as convolution: slide a small pattern over data and combine nearby values. A convolutional neural network learns those small patterns from examples instead of hand-designing them.</p><p>Spectral architectures keep the same spirit but change coordinates. Instead of learning only local kernels in pixel space, they may learn multipliers in Fourier space, graph spectral space, or another basis where global structure is easier to control.</p>",
+    "definition": "<p>For a single-channel image patch $X$ and kernel $K$, a CNN convolution output is a local weighted sum: $Y_{i,j}=\\sum_{a,b}K_{a,b}X_{i+a,j+b}$, with details depending on padding, stride, and whether the implementation flips the kernel. With multiple channels, sums also run over input channels.</p><p>The Fourier link is the convolution theorem: spatial convolution corresponds to frequency-domain multiplication, $\\widehat Y_k=\\widehat K_k\\widehat X_k$. Thus a learned convolution kernel is a learned filter. Spectral layers can instead learn frequency multipliers directly, often truncating to low modes for efficiency or stability.</p><p><b>Assumptions that matter:</b> CNN libraries often implement cross-correlation rather than mathematically flipped convolution; padding changes output size and boundary behavior; translation equivariance assumes shared weights; and spectral methods need a chosen basis and normalization convention.</p>",
+    "worked": {
+      "problem": "A $3\\times3$ grayscale patch is $\\begin{bmatrix}1&2&1\\\\0&3&2\\\\1&1&0\\end{bmatrix}$ and a learned edge kernel is $\\begin{bmatrix}1&0&-1\\\\1&0&-1\\\\1&0&-1\\end{bmatrix}$. Using CNN-style cross-correlation, compute the single output value, then apply ReLU.",
+      "skills": [
+        "CNN convolution",
+        "weighted sums",
+        "activation functions"
+      ],
+      "strategy": "Multiply entries in matching positions, add the nine products, then pass the scalar through ReLU.",
+      "steps": [
+        {
+          "do": "Multiply the first row",
+          "result": "$1\\cdot1+0\\cdot2+(-1)\\cdot1=0$",
+          "why": "entrywise products across row one"
+        },
+        {
+          "do": "Multiply the second row",
+          "result": "$1\\cdot0+0\\cdot3+(-1)\\cdot2=-2$",
+          "why": "entrywise products across row two"
+        },
+        {
+          "do": "Multiply the third row",
+          "result": "$1\\cdot1+0\\cdot1+(-1)\\cdot0=1$",
+          "why": "entrywise products across row three"
+        },
+        {
+          "do": "Add row contributions",
+          "result": "$0+(-2)+1=-1$",
+          "why": "convolution output is the total weighted sum"
+        },
+        {
+          "do": "Apply ReLU",
+          "result": "$\\max(0,-1)=0$",
+          "why": "negative pre-activation is clipped"
+        }
+      ],
+      "verify": "The kernel compares left-column mass $1+0+1=2$ with right-column mass $1+2+0=3$, so a negative response $2-3=-1$ is expected.",
+      "answer": "The pre-activation is $-1$, and the ReLU output is $0$.",
+      "connects": "A CNN convolution is a learned local filter followed by a nonlinear decision."
+    },
+    "practice": [
+      {
+        "problem": "A $2\\times2$ patch $\\begin{bmatrix}2&1\\\\0&3\\end{bmatrix}$ uses kernel $\\begin{bmatrix}1&-1\\\\0&2\\end{bmatrix}$. Compute the CNN-style output.",
+        "steps": [
+          {
+            "do": "Multiply top-left entries",
+            "result": "$1\\cdot2=2$",
+            "why": "first weighted pixel"
+          },
+          {
+            "do": "Multiply top-right entries",
+            "result": "$(-1)\\cdot1=-1$",
+            "why": "second weighted pixel"
+          },
+          {
+            "do": "Multiply bottom-left entries",
+            "result": "$0\\cdot0=0$",
+            "why": "third weighted pixel"
+          },
+          {
+            "do": "Multiply bottom-right entries",
+            "result": "$2\\cdot3=6$",
+            "why": "fourth weighted pixel"
+          },
+          {
+            "do": "Add products",
+            "result": "$2-1+0+6=7$",
+            "why": "local weighted sum"
+          }
+        ],
+        "answer": "The output is $7$."
+      },
+      {
+        "problem": "A $5\\times5$ image uses a $3\\times3$ kernel with stride $1$ and no padding. What is the output spatial size?",
+        "steps": [
+          {
+            "do": "Write the one-dimensional size formula",
+            "result": "$\\text{out}=5-3+1$",
+            "why": "valid positions without padding"
+          },
+          {
+            "do": "Compute one dimension",
+            "result": "$3$",
+            "why": "the kernel starts at positions $1$, $2$, and $3$"
+          },
+          {
+            "do": "Apply to both dimensions",
+            "result": "$3\\times3$",
+            "why": "height and width follow the same formula"
+          },
+          {
+            "do": "Count outputs",
+            "result": "$9$ spatial positions",
+            "why": "$3\\cdot3=9$"
+          }
+        ],
+        "answer": "The output is $3\\times3$, with $9$ spatial positions."
+      },
+      {
+        "problem": "A convolution layer has $16$ input channels, $32$ output channels, and $3\\times3$ kernels. How many weights are learned, ignoring bias?",
+        "steps": [
+          {
+            "do": "Count weights per output channel",
+            "result": "$16\\cdot3\\cdot3=144$",
+            "why": "each output channel reads all input channels"
+          },
+          {
+            "do": "Multiply by output channels",
+            "result": "$144\\cdot32=4608$",
+            "why": "each output channel has its own kernel bank"
+          },
+          {
+            "do": "State bias exclusion",
+            "result": "$4608$ weights",
+            "why": "the problem says to ignore bias"
+          },
+          {
+            "do": "Optional bias count",
+            "result": "$32$ more if included",
+            "why": "one bias per output channel is common"
+          }
+        ],
+        "answer": "The layer has $4608$ learned weights without bias."
+      },
+      {
+        "problem": "In a spectral layer, an input Fourier coefficient is $\\widehat X_4=3-2i$ and the learned multiplier is $M_4=0.5$. What is the output coefficient and its magnitude?",
+        "steps": [
+          {
+            "do": "Use spectral multiplication",
+            "result": "$\\widehat Y_4=M_4\\widehat X_4$",
+            "why": "spectral filters multiply modes"
+          },
+          {
+            "do": "Substitute values",
+            "result": "$\\widehat Y_4=0.5(3-2i)$",
+            "why": "use the learned multiplier"
+          },
+          {
+            "do": "Multiply",
+            "result": "$\\widehat Y_4=1.5-i$",
+            "why": "scale real and imaginary parts"
+          },
+          {
+            "do": "Compute magnitude",
+            "result": "$|\\widehat Y_4|=\\sqrt{1.5^2+(-1)^2}=\\sqrt{3.25}$",
+            "why": "complex magnitude"
+          },
+          {
+            "do": "Approximate",
+            "result": "$|\\widehat Y_4|\\approx1.803$",
+            "why": "$\\sqrt{3.25}\\approx1.803$"
+          }
+        ],
+        "answer": "The output coefficient is $1.5-i$ with magnitude about $1.803$."
+      },
+      {
+        "problem": "A Fourier neural operator keeps $12$ positive modes and $12$ negative modes out of $128$ one-dimensional modes. What fraction of modes are directly learned?",
+        "steps": [
+          {
+            "do": "Count kept modes",
+            "result": "$12+12=24$",
+            "why": "positive and negative modes are both retained"
+          },
+          {
+            "do": "Write the fraction",
+            "result": "$24/128$",
+            "why": "kept modes over total modes"
+          },
+          {
+            "do": "Simplify",
+            "result": "$3/16$",
+            "why": "divide numerator and denominator by $8$"
+          },
+          {
+            "do": "Convert to decimal",
+            "result": "$0.1875$",
+            "why": "$3/16=0.1875$"
+          },
+          {
+            "do": "Convert to percent",
+            "result": "$18.75\\%$",
+            "why": "multiply by $100$"
+          }
+        ],
+        "answer": "The layer directly learns $24$ of $128$ modes, or $18.75\\%$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Edge detectors in first CNN layers",
+        "background": "Early CNN filters often learn edge-like patterns because edges are useful local features in images.",
+        "numbers": "The worked kernel computes left-column sum minus right-column sum: for left $2$ and right $3$, response is $-1$."
+      },
+      {
+        "title": "Parameter sharing",
+        "background": "Convolution reuses the same weights at every location, which makes image models much smaller than fully connected ones.",
+        "numbers": "A $32\\times32$ grayscale image to $16$ feature maps with $3\\times3$ kernels uses $16\\cdot9=144$ weights, not $1024\\cdot16=16,384$."
+      },
+      {
+        "title": "Multi-channel feature extraction",
+        "background": "Deep CNN layers mix channels so each output can combine color, texture, and previous features.",
+        "numbers": "With $64$ input channels, $128$ output channels, and $3\\times3$ kernels, weights are $64\\cdot128\\cdot9=73,728$."
+      },
+      {
+        "title": "FFT convolution for large kernels",
+        "background": "Very large kernels can be faster in frequency space because convolution becomes multiplication.",
+        "numbers": "For length $2048$, direct convolution scale $4,194,304$ can be compared with about $67,584$ for three FFT-scale transforms."
+      },
+      {
+        "title": "Fourier neural operators",
+        "background": "FNO-style models learn mappings between functions by updating low Fourier modes and returning to physical space.",
+        "numbers": "Keeping $16$ positive and $16$ negative modes out of $256$ keeps $32/256=12.5\\%$ of one-dimensional modes."
+      },
+      {
+        "title": "Graph spectral networks",
+        "background": "On graphs, Laplacian eigenvectors replace sine waves, letting filters act on smooth or oscillatory graph modes.",
+        "numbers": "A multiplier $g(\\lambda)=1/(1+\\lambda)$ gives gains $1$, $0.5$, and $0.2$ at eigenvalues $0$, $1$, and $4$."
+      },
+      {
+        "title": "Anti-aliasing in vision models",
+        "background": "Strided convolution downsamples feature maps, so blur or low-pass operations can reduce aliasing artifacts.",
+        "numbers": "Going from $64\\times64$ to $32\\times32$ halves the spatial sampling rate, so the new Nyquist limit is half the old one."
+      }
+    ],
+    "applicationsClose": "CNNs and spectral models share one thread: learn how information should be mixed, whether locally in space or globally by modes.",
+    "takeaways": [
+      "A CNN convolution is a learned weighted sum applied across spatial locations and channels.",
+      "Convolution is filtering; in Fourier coordinates it becomes multiplication of modes.",
+      "Spectral architectures can learn mode multipliers directly and often keep only selected modes.",
+      "Padding, stride, channels, and basis choice determine what the layer can represent."
+    ],
     "prereqs": [
       "math-06-18"
     ]

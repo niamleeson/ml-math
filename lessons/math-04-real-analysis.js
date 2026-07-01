@@ -9,37 +9,549 @@
   B({
     "id": "math-04-01",
     "title": "Proof techniques",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: proof techniques.",
+    "tagline": "A proof is a careful bridge from assumptions you are allowed to use to a conclusion you can trust.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "logic",
+        "sets",
+        "algebraic manipulation"
       ],
       "leadsTo": [
-        "the next lesson, <i>The natural and rational numbers</i>"
+        "induction",
+        "completeness proofs",
+        "convergence proofs"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "quantifiers",
+        "implication",
+        "contrapositive",
+        "contradiction",
+        "mathematical induction"
       ]
-    }
+    },
+    "motivation": "<p>You already know how to check an example. If someone claims every even square comes from an even number, you can test $4$, $36$, and $100$. Examples build trust, but they do not cover infinitely many cases.</p><p>A <b>proof</b> is the way we cover all cases without listing them. Real analysis is proof-heavy because its claims are usually about every $\\varepsilon>0$, every large enough $N$, or every bounded sequence. The warm secret is that most proofs reuse a few dependable moves.</p>",
+    "definition": "<p>A <b>direct proof</b> starts from hypotheses and derives the conclusion. A <b>contrapositive proof</b> proves $\\neg Q\\Rightarrow\\neg P$ instead of $P\\Rightarrow Q$; these are logically equivalent. A <b>contradiction proof</b> assumes the statement is false and derives something impossible, such as $0=1$. <b>Induction</b> proves a base case and then proves $P(n)\\Rightarrow P(n+1)$ for all allowed $n$.</p><p>The key equivalence for implications is derived from truth values: $P\\Rightarrow Q$ fails only when $P$ is true and $Q$ is false. The contrapositive $\\neg Q\\Rightarrow\\neg P$ fails in exactly the same case, so proving one proves the other.</p><p><b>Assumptions that matter:</b> name the universe of discourse, keep quantifiers in order, do not prove only examples when the claim is universal, and when using contradiction make sure the contradiction follows from the negated claim plus accepted facts.</p>",
+    "worked": {
+      "problem": "Prove: if $n^2$ is even, then $n$ is even, for integer $n$.",
+      "skills": [
+        "contrapositive",
+        "integer parity",
+        "universal statements"
+      ],
+      "strategy": "The square is awkward — prove the contrapositive by starting with an odd integer.",
+      "steps": [
+        {
+          "do": "State the contrapositive",
+          "result": "if $n$ is not even, then $n^2$ is not even",
+          "why": "contrapositive is equivalent to the original implication"
+        },
+        {
+          "do": "Rewrite not even for an integer",
+          "result": "$n=2k+1$ for some $k\\in\\mathbb{Z}$",
+          "why": "odd integers have this form"
+        },
+        {
+          "do": "Square the expression",
+          "result": "$n^2=(2k+1)^2$",
+          "why": "substitute the odd form into the square"
+        },
+        {
+          "do": "Expand the square",
+          "result": "$n^2=4k^2+4k+1$",
+          "why": "multiply out one operation"
+        },
+        {
+          "do": "Factor the even part",
+          "result": "$n^2=2(2k^2+2k)+1$",
+          "why": "separate a multiple of 2 plus 1"
+        },
+        {
+          "do": "Conclude oddness",
+          "result": "$n^2$ is odd",
+          "why": "it has the form $2m+1$ with $m=2k^2+2k$"
+        }
+      ],
+      "verify": "The contrapositive proves exactly the original claim; for instance, $n=5$ gives $25$ odd, so no odd integer can have an even square.",
+      "answer": "For every integer $n$, if $n^2$ is even, then $n$ is even.",
+      "connects": "Contrapositive proof turns a hard conclusion about $n$ into an easier assumption about $n$."
+    },
+    "practice": [
+      {
+        "problem": "Prove directly: if $a$ and $b$ are even integers, then $a+b$ is even.",
+        "steps": [
+          {
+            "do": "Write the first even integer",
+            "result": "$a=2m$ for some $m\\in\\mathbb{Z}$",
+            "why": "definition of even"
+          },
+          {
+            "do": "Write the second even integer",
+            "result": "$b=2n$ for some $n\\in\\mathbb{Z}$",
+            "why": "definition of even"
+          },
+          {
+            "do": "Add the expressions",
+            "result": "$a+b=2m+2n$",
+            "why": "substitute both forms"
+          },
+          {
+            "do": "Factor out 2",
+            "result": "$a+b=2(m+n)$",
+            "why": "show a multiple of 2"
+          },
+          {
+            "do": "Use closure",
+            "result": "$m+n\\in\\mathbb{Z}$",
+            "why": "integers are closed under addition"
+          }
+        ],
+        "answer": "$a+b$ is even."
+      },
+      {
+        "problem": "Disprove the universal claim: every prime number is odd.",
+        "steps": [
+          {
+            "do": "Understand the claim",
+            "result": "all primes would have odd parity",
+            "why": "a universal claim needs every case"
+          },
+          {
+            "do": "Search the smallest primes",
+            "result": "$2,3,5,7$",
+            "why": "counterexamples often appear early"
+          },
+          {
+            "do": "Check primality of 2",
+            "result": "2 has only positive divisors 1 and 2",
+            "why": "that is the definition of prime"
+          },
+          {
+            "do": "Check parity of 2",
+            "result": "2 is even",
+            "why": "$2=2\\cdot1$"
+          },
+          {
+            "do": "State the counterexample",
+            "result": "$2$ is prime and not odd",
+            "why": "one counterexample disproves a universal statement"
+          }
+        ],
+        "answer": "The claim is false; $2$ is a counterexample."
+      },
+      {
+        "problem": "Prove by contradiction that $\\sqrt{2}$ is irrational, using the fact that if $n^2$ is even then $n$ is even.",
+        "steps": [
+          {
+            "do": "Assume the negation",
+            "result": "$\\sqrt2=p/q$ in lowest terms",
+            "why": "rational means a ratio of integers"
+          },
+          {
+            "do": "Square both sides",
+            "result": "$2=p^2/q^2$",
+            "why": "remove the radical"
+          },
+          {
+            "do": "Multiply by $q^2$",
+            "result": "$p^2=2q^2$",
+            "why": "clear the denominator"
+          },
+          {
+            "do": "Infer parity of $p$",
+            "result": "$p$ is even",
+            "why": "$p^2$ is even"
+          },
+          {
+            "do": "Write $p=2k$",
+            "result": "$4k^2=2q^2$",
+            "why": "substitute into $p^2=2q^2$"
+          },
+          {
+            "do": "Divide by 2",
+            "result": "$q^2=2k^2$",
+            "why": "isolate the parity of $q^2$"
+          },
+          {
+            "do": "Infer parity of $q$",
+            "result": "$q$ is even",
+            "why": "$q^2$ is even"
+          },
+          {
+            "do": "Contradict lowest terms",
+            "result": "$p$ and $q$ share factor 2",
+            "why": "lowest terms cannot have a common factor"
+          }
+        ],
+        "answer": "$\\sqrt2$ is irrational."
+      },
+      {
+        "problem": "Prove by induction that $1+2+\\cdots+n=n(n+1)/2$ for every $n\\ge1$.",
+        "steps": [
+          {
+            "do": "Check the base case",
+            "result": "$1=1(2)/2$",
+            "why": "the formula holds for $n=1$"
+          },
+          {
+            "do": "Assume the induction hypothesis",
+            "result": "$1+\\cdots+n=n(n+1)/2$",
+            "why": "this is the temporary assumption"
+          },
+          {
+            "do": "Add the next term",
+            "result": "$1+\\cdots+n+(n+1)=n(n+1)/2+(n+1)$",
+            "why": "build the $n+1$ case"
+          },
+          {
+            "do": "Factor $n+1$",
+            "result": "$(n+1)(n/2+1)$",
+            "why": "pull out the common factor"
+          },
+          {
+            "do": "Rewrite the factor",
+            "result": "$(n+1)(n+2)/2$",
+            "why": "$n/2+1=(n+2)/2$"
+          },
+          {
+            "do": "Match the formula",
+            "result": "$(n+1)((n+1)+1)/2$",
+            "why": "this is the statement with $n+1$"
+          }
+        ],
+        "answer": "The formula holds for all integers $n\\ge1$."
+      },
+      {
+        "problem": "For $a_n=1/n$, prove from the definition that $a_n<0.01$ for all sufficiently large $n$.",
+        "steps": [
+          {
+            "do": "Translate the target",
+            "result": "$1/n<0.01$",
+            "why": "the sequence term must be below the tolerance"
+          },
+          {
+            "do": "Invert the inequality",
+            "result": "$n>100$",
+            "why": "all quantities are positive"
+          },
+          {
+            "do": "Choose a threshold",
+            "result": "$N=101$",
+            "why": "integers larger than 100 work"
+          },
+          {
+            "do": "Check any later index",
+            "result": "n\\ge101$",
+            "why": "then $n>100$"
+          },
+          {
+            "do": "Conclude the bound",
+            "result": "$1/n\\le1/101<0.01$",
+            "why": "larger denominators give smaller reciprocals"
+          }
+        ],
+        "answer": "For every $n\\ge101$, $1/n<0.01$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Program invariants",
+        "background": "Proof ideas entered computing through formal verification: an invariant is a claim that stays true every time a loop runs.",
+        "numbers": "If a loop adds $1+2+\\cdots+n$, the invariant after $k=4$ steps is sum $=4\\cdot5/2=10$; after step $5$, add $5$ to get $15=5\\cdot6/2$."
+      },
+      {
+        "title": "Counterexample-driven testing",
+        "background": "A single failing input can refute a universal claim about software, just like a mathematical counterexample.",
+        "numbers": "Claim: sorting preserves the first item. Input $[3,1,2]$ sorts to $[1,2,3]$, so the first item changes from $3$ to $1$."
+      },
+      {
+        "title": "Induction for recursive algorithms",
+        "background": "Recursive programs are often proved correct by induction on input size.",
+        "numbers": "If merge sort is correct for lists of length $4$, two correct sorted halves $[1,5]$ and $[2,3]$ merge to $[1,2,3,5]$ for length $4$."
+      },
+      {
+        "title": "Bounding numerical error",
+        "background": "Analysis proofs often bound error instead of computing it exactly.",
+        "numbers": "If each of $1000$ additions has error at most $10^{-12}$, a crude total bound is $1000\\cdot10^{-12}=10^{-9}$."
+      },
+      {
+        "title": "Generalization guarantees",
+        "background": "Learning theory proves statements of the form: with high probability, every model in a class has small gap.",
+        "numbers": "A bound $0.02+\\sqrt{\\log(100)/10000}\\approx0.02+0.0215=0.0415$ gives a concrete error-gap ceiling."
+      },
+      {
+        "title": "Termination arguments",
+        "background": "A proof that a quantity decreases to zero can show an algorithm stops.",
+        "numbers": "If an integer counter starts at $17$ and decreases by $3$ while positive, the values $17,14,11,8,5,2,-1$ show termination after $6$ decreases."
+      }
+    ],
+    "applicationsClose": "Proof techniques are reusable habits: direct, contrapositive, contradiction, induction, and counterexample all turn infinite trust into finite reasoning.",
+    "takeaways": [
+      "A proof covers all cases allowed by the hypotheses.",
+      "Contrapositive proof is logically equivalent to the original implication.",
+      "Contradiction assumes the negation and derives impossibility.",
+      "Induction proves a base case and a one-step transfer."
+    ]
   });
 
   B({
     "id": "math-04-02",
     "title": "The natural and rational numbers",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: the natural and rational numbers.",
+    "tagline": "The natural numbers count; the rational numbers compare counts as exact ratios.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Proof techniques</i>"
+        "sets",
+        "integer arithmetic",
+        "proof by induction"
       ],
       "leadsTo": [
-        "the next lesson, <i>The real numbers</i>"
+        "real numbers",
+        "density",
+        "countability"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "divisibility",
+        "equivalence classes",
+        "order",
+        "induction"
       ]
     },
+    "motivation": "<p>You already count with $1,2,3,\\ldots$ and you already divide a pizza into fractions like $3/4$. Real analysis begins by slowing down and asking what these number systems really guarantee.</p><p>The natural numbers give the rhythm of induction and sequences. The rational numbers give exact ratios, dense order, and the first surprise: there are always more rationals between two rationals, yet they still leave gaps like $\\sqrt2$.</p>",
+    "definition": "<p>The <b>natural numbers</b> $\\mathbb{N}$ are the counting numbers, equipped with a first element and a successor operation. Their key proof principle is induction: if $P(1)$ is true and $P(n)\\Rightarrow P(n+1)$ for every $n\\in\\mathbb{N}$, then $P(n)$ is true for all $n$.</p><p>The <b>rational numbers</b> are $\\mathbb{Q}=\\{p/q:p,q\\in\\mathbb{Z},q\\ne0\\}$. Fractions represent the same rational when $p/q=r/s$ exactly when $ps=qr$. Between any two rationals $a<b$, the average $(a+b)/2$ is rational and satisfies $a<(a+b)/2<b$, so $\\mathbb{Q}$ is dense in itself.</p><p><b>Assumptions that matter:</b> denominators are never zero; rational equality is equality of numbers, not necessarily equality of written fractions; and density does not mean completeness, because sequences of rationals can converge toward irrational limits.</p>",
+    "worked": {
+      "problem": "Show that there is a rational number strictly between $2/5$ and $3/5$.",
+      "skills": [
+        "rational arithmetic",
+        "density",
+        "order"
+      ],
+      "strategy": "Use the midpoint — averages preserve rationality and land between the endpoints.",
+      "steps": [
+        {
+          "do": "Name the endpoints",
+          "result": "$a=2/5$ and $b=3/5$",
+          "why": "we want a number between them"
+        },
+        {
+          "do": "Form the midpoint",
+          "result": "$(a+b)/2$",
+          "why": "midpoints lie between distinct endpoints"
+        },
+        {
+          "do": "Add the fractions",
+          "result": "$2/5+3/5=5/5=1$",
+          "why": "common denominators add directly"
+        },
+        {
+          "do": "Divide by 2",
+          "result": "$1/2$",
+          "why": "the midpoint is rational"
+        },
+        {
+          "do": "Compare with the endpoints",
+          "result": "$2/5<1/2<3/5$",
+          "why": "$0.4<0.5<0.6$"
+        }
+      ],
+      "verify": "The number $1/2$ is $5/10$, while $2/5=4/10$ and $3/5=6/10$, so it is strictly between them.",
+      "answer": "$1/2$ is a rational number between $2/5$ and $3/5$.",
+      "connects": "Density says rational numbers have no adjacent neighbors."
+    },
+    "practice": [
+      {
+        "problem": "Use induction to prove $2+4+\\cdots+2n=n(n+1)$ for $n\\ge1$.",
+        "steps": [
+          {
+            "do": "Check $n=1$",
+            "result": "$2=1\\cdot2$",
+            "why": "base case"
+          },
+          {
+            "do": "Assume the formula",
+            "result": "$2+4+\\cdots+2n=n(n+1)$",
+            "why": "induction hypothesis"
+          },
+          {
+            "do": "Add the next even number",
+            "result": "$n(n+1)+2(n+1)$",
+            "why": "the next term is $2(n+1)$"
+          },
+          {
+            "do": "Factor $n+1$",
+            "result": "$(n+1)(n+2)$",
+            "why": "combine the two terms"
+          },
+          {
+            "do": "Match the next formula",
+            "result": "$(n+1)((n+1)+1)$",
+            "why": "this is the statement for $n+1$"
+          }
+        ],
+        "answer": "The formula holds for all $n\\ge1$."
+      },
+      {
+        "problem": "Decide whether $18/24$ and $3/4$ represent the same rational number.",
+        "steps": [
+          {
+            "do": "Use cross multiplication",
+            "result": "$18\\cdot4$ and $24\\cdot3$",
+            "why": "fractions are equal when cross products match"
+          },
+          {
+            "do": "Compute the first product",
+            "result": "$72$",
+            "why": "$18\\cdot4=72$"
+          },
+          {
+            "do": "Compute the second product",
+            "result": "$72$",
+            "why": "$24\\cdot3=72$"
+          },
+          {
+            "do": "Compare products",
+            "result": "$72=72$",
+            "why": "the equality test passes"
+          },
+          {
+            "do": "State the conclusion",
+            "result": "$18/24=3/4$",
+            "why": "different fractions can name the same rational"
+          }
+        ],
+        "answer": "Yes, they represent the same rational number."
+      },
+      {
+        "problem": "Find a rational number between $7/10$ and $71/100$.",
+        "steps": [
+          {
+            "do": "Rewrite the first endpoint",
+            "result": "$7/10=70/100$",
+            "why": "use a common denominator"
+          },
+          {
+            "do": "Name the interval",
+            "result": "$70/100<q<71/100$",
+            "why": "the endpoints are close"
+          },
+          {
+            "do": "Use a larger denominator",
+            "result": "$70/100=700/1000$ and $71/100=710/1000$",
+            "why": "refine the scale"
+          },
+          {
+            "do": "Choose an integer between",
+            "result": "$705$",
+            "why": "it lies between $700$ and $710$"
+          },
+          {
+            "do": "Form the rational",
+            "result": "$705/1000=141/200$",
+            "why": "reduce by dividing by 5"
+          }
+        ],
+        "answer": "$141/200$ is one rational number between them."
+      },
+      {
+        "problem": "Prove that if $q$ is rational and $q\\ne0$, then $1/q$ is rational.",
+        "steps": [
+          {
+            "do": "Write $q$ as a fraction",
+            "result": "$q=p/r$ with $p,r\\in\\mathbb{Z}$ and $r\\ne0$",
+            "why": "definition of rational"
+          },
+          {
+            "do": "Use $q\\ne0$",
+            "result": "$p\\ne0$",
+            "why": "a zero numerator would make $q=0$"
+          },
+          {
+            "do": "Invert the fraction",
+            "result": "$1/q=r/p$",
+            "why": "reciprocal swaps numerator and denominator"
+          },
+          {
+            "do": "Check the denominator",
+            "result": "$p\\ne0$",
+            "why": "the new denominator is allowed"
+          },
+          {
+            "do": "Conclude rationality",
+            "result": "$r/p\\in\\mathbb{Q}$",
+            "why": "it is a ratio of integers with nonzero denominator"
+          }
+        ],
+        "answer": "$1/q$ is rational."
+      },
+      {
+        "problem": "A rational grid uses step size $1/8$. List the first five positive grid points and locate $0.6$ between two of them.",
+        "steps": [
+          {
+            "do": "Write the grid rule",
+            "result": "k/8$ for $k\\in\\mathbb{N}$",
+            "why": "positive grid points use positive integers"
+          },
+          {
+            "do": "List five points",
+            "result": "$1/8,2/8,3/8,4/8,5/8$",
+            "why": "take $k=1$ through $5$"
+          },
+          {
+            "do": "Convert around $0.6$",
+            "result": "$4/8=0.5$ and $5/8=0.625$",
+            "why": "decimal comparison"
+          },
+          {
+            "do": "Compare the value",
+            "result": "$0.5<0.6<0.625$",
+            "why": "place it between neighboring grid points"
+          },
+          {
+            "do": "State the bracket",
+            "result": "$4/8<0.6<5/8$",
+            "why": "the grid brackets the value"
+          }
+        ],
+        "answer": "The first five are $1/8,1/4,3/8,1/2,5/8$, and $0.6$ lies between $1/2$ and $5/8$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Array indices and natural numbers",
+        "background": "Computer programs count positions with natural-number-like indices. Induction proves loops handle every position.",
+        "numbers": "For an array of length $5$, indices $0,1,2,3,4$ are visited by adding 1 each time; exactly $5$ visits occur."
+      },
+      {
+        "title": "Rational timestamps",
+        "background": "Distributed systems often quantize time into rational ticks to avoid floating ambiguity.",
+        "numbers": "At $60$ frames per second, frame $37$ occurs at $37/60\\approx0.6167$ seconds."
+      },
+      {
+        "title": "Exact probability models",
+        "background": "Finite probability spaces use rational probabilities when outcomes are counted exactly.",
+        "numbers": "A fair die has probability $2/6=1/3$ of rolling an even number."
+      },
+      {
+        "title": "Feature binning",
+        "background": "Rational cut points divide a numeric feature into exact intervals.",
+        "numbers": "Bins of width $1/4$ over $[0,1]$ are $[0,0.25)$, $[0.25,0.5)$, $[0.5,0.75)$, $[0.75,1]$."
+      },
+      {
+        "title": "Fixed-point arithmetic",
+        "background": "Hardware and finance often store rationals with a fixed denominator instead of arbitrary floats.",
+        "numbers": "Cents store dollars in units of $1/100$; $12.34$ dollars is the integer $1234$ over $100$."
+      },
+      {
+        "title": "Search grids in ML",
+        "background": "Hyperparameter sweeps often choose rational grids before continuous tuning.",
+        "numbers": "A learning-rate grid $\\{1/1000,3/1000,10/1000\\}$ is $\\{0.001,0.003,0.010\\}$ exactly as rationals."
+      }
+    ],
+    "applicationsClose": "Counting, ratios, grids, and induction all come from the same early number systems; real analysis keeps their strengths and then studies their gaps.",
+    "takeaways": [
+      "$\\mathbb{N}$ supports induction and sequence indexing.",
+      "$\\mathbb{Q}$ consists of integer ratios with nonzero denominator.",
+      "Fractions are equal when cross products agree.",
+      "Between two rationals, their midpoint is another rational."
+    ],
     "prereqs": [
       "math-04-01"
     ]
@@ -48,19 +560,262 @@
   B({
     "id": "math-04-03",
     "title": "The real numbers",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: the real numbers.",
+    "tagline": "The real numbers fill the gaps left by rationals, giving limits a place to land.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The natural and rational numbers</i>"
+        "natural numbers",
+        "rational numbers",
+        "ordered sets"
       ],
       "leadsTo": [
-        "the next lesson, <i>Completeness, suprema, and infima</i>"
+        "completeness",
+        "suprema",
+        "limits of sequences"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "absolute value",
+        "intervals",
+        "density",
+        "least upper bound property"
       ]
     },
+    "motivation": "<p>You already use decimals as if every point on the number line has a name. Rationals name many points, but not all: no rational square equals $2$.</p><p>The <b>real numbers</b> are the completed number line. They keep rational arithmetic and order, add irrational points, and make rigorous convergence possible. Without $\\mathbb{R}$, a sequence could get closer and closer to a missing destination.</p>",
+    "definition": "<p>The real numbers $\\mathbb{R}$ form an ordered field containing $\\mathbb{Q}$: you can add, subtract, multiply, divide by nonzero numbers, and compare with $<$. They also satisfy <b>completeness</b>: every nonempty subset of $\\mathbb{R}$ that is bounded above has a least upper bound in $\\mathbb{R}$.</p><p>Completeness is the gap-filling axiom. For example, $S=\\{q\\in\\mathbb{Q}:q^2<2\\}$ is bounded above in $\\mathbb{Q}$ but has no rational least upper bound. In $\\mathbb{R}$, its supremum is $\\sqrt2$.</p><p><b>Assumptions that matter:</b> the usual algebraic rules hold, order is compatible with arithmetic, absolute value measures distance by $|x-y|$, and completeness is an axiom for $\\mathbb{R}$ rather than a theorem inherited from $\\mathbb{Q}$.</p>",
+    "worked": {
+      "problem": "Show that $\\sqrt2$ lies between $1.4$ and $1.5$.",
+      "skills": [
+        "order",
+        "squares",
+        "irrational numbers"
+      ],
+      "strategy": "For positive numbers, compare squares to locate the square root.",
+      "steps": [
+        {
+          "do": "Square the lower bound",
+          "result": "$1.4^2=1.96$",
+          "why": "compute the comparison value"
+        },
+        {
+          "do": "Compare with 2",
+          "result": "$1.96<2$",
+          "why": "so $1.4$ is below $\\sqrt2$"
+        },
+        {
+          "do": "Square the upper bound",
+          "result": "$1.5^2=2.25$",
+          "why": "compute the second comparison value"
+        },
+        {
+          "do": "Compare with 2",
+          "result": "$2<2.25$",
+          "why": "so $\\sqrt2$ is below $1.5$"
+        },
+        {
+          "do": "Combine inequalities",
+          "result": "$1.4<\\sqrt2<1.5$",
+          "why": "positive square roots preserve order"
+        }
+      ],
+      "verify": "Numerically $\\sqrt2\\approx1.4142$, which sits in the bracket.",
+      "answer": "$1.4<\\sqrt2<1.5$.",
+      "connects": "The real line contains limits and roots that rational arithmetic points toward but may not contain."
+    },
+    "practice": [
+      {
+        "problem": "Prove $|3-7|=4$ and interpret it as distance.",
+        "steps": [
+          {
+            "do": "Subtract",
+            "result": "$3-7=-4$",
+            "why": "distance uses the difference"
+          },
+          {
+            "do": "Apply absolute value",
+            "result": "$|-4|=4$",
+            "why": "absolute value removes sign"
+          },
+          {
+            "do": "Reverse the order",
+            "result": "$7-3=4$",
+            "why": "distance is symmetric"
+          },
+          {
+            "do": "Apply absolute value again",
+            "result": "$|7-3|=4$",
+            "why": "same distance"
+          },
+          {
+            "do": "State the interpretation",
+            "result": "the points are 4 units apart",
+            "why": "distance is nonnegative"
+          }
+        ],
+        "answer": "$|3-7|=4$, so the distance is 4."
+      },
+      {
+        "problem": "Find rational and irrational numbers between $2$ and $3$.",
+        "steps": [
+          {
+            "do": "Choose a rational midpoint",
+            "result": "$(2+3)/2=5/2$",
+            "why": "midpoint lies between"
+          },
+          {
+            "do": "Choose a known irrational",
+            "result": "$\\sqrt5$",
+            "why": "it is not rational"
+          },
+          {
+            "do": "Square the lower comparison",
+            "result": "$2^2=4<5$",
+            "why": "so $2<\\sqrt5$"
+          },
+          {
+            "do": "Square the upper comparison",
+            "result": "$5<9=3^2$",
+            "why": "so $\\sqrt5<3$"
+          },
+          {
+            "do": "List both numbers",
+            "result": "$5/2$ and $\\sqrt5$",
+            "why": "one rational and one irrational"
+          }
+        ],
+        "answer": "$5/2$ and $\\sqrt5$ both lie between $2$ and $3$."
+      },
+      {
+        "problem": "Show that if $|x-4|<0.2$, then $3.8<x<4.2$.",
+        "steps": [
+          {
+            "do": "Use the absolute value inequality",
+            "result": "$-0.2<x-4<0.2$",
+            "why": "distance below 0.2 means two-sided bound"
+          },
+          {
+            "do": "Add 4 to the left part",
+            "result": "$3.8<x$",
+            "why": "shift the lower bound"
+          },
+          {
+            "do": "Add 4 to the right part",
+            "result": "$x<4.2$",
+            "why": "shift the upper bound"
+          },
+          {
+            "do": "Combine",
+            "result": "$3.8<x<4.2$",
+            "why": "both inequalities hold"
+          },
+          {
+            "do": "Interpret",
+            "result": "$x$ is within 0.2 of 4",
+            "why": "this is interval language"
+          }
+        ],
+        "answer": "$3.8<x<4.2$."
+      },
+      {
+        "problem": "Give an upper bound and a lower bound for $A=[-2,5)$.",
+        "steps": [
+          {
+            "do": "Read the interval",
+            "result": "$-2\\le x<5$",
+            "why": "membership condition"
+          },
+          {
+            "do": "Choose a lower bound",
+            "result": "$-2$",
+            "why": "no element is smaller than $-2$"
+          },
+          {
+            "do": "Choose an upper bound",
+            "result": "$5$",
+            "why": "all elements are less than $5$"
+          },
+          {
+            "do": "Note endpoint status",
+            "result": "$5\\notin A$",
+            "why": "upper bounds need not belong to the set"
+          },
+          {
+            "do": "State both bounds",
+            "result": "lower bound $-2$, upper bound $5$",
+            "why": "these are valid bounds"
+          }
+        ],
+        "answer": "$-2$ is a lower bound and $5$ is an upper bound."
+      },
+      {
+        "problem": "A sequence of rational brackets for a threshold is $[1.41,1.42]$. Show this bracket could contain $\\sqrt2$.",
+        "steps": [
+          {
+            "do": "Square the left endpoint",
+            "result": "$1.41^2=1.9881$",
+            "why": "compare below 2"
+          },
+          {
+            "do": "Compare left square",
+            "result": "$1.9881<2$",
+            "why": "left endpoint is below $\\sqrt2$"
+          },
+          {
+            "do": "Square the right endpoint",
+            "result": "$1.42^2=2.0164$",
+            "why": "compare above 2"
+          },
+          {
+            "do": "Compare right square",
+            "result": "$2<2.0164$",
+            "why": "right endpoint is above $\\sqrt2$"
+          },
+          {
+            "do": "Conclude containment",
+            "result": "$1.41<\\sqrt2<1.42$",
+            "why": "the bracket contains the real limit"
+          }
+        ],
+        "answer": "Yes, $\\sqrt2$ lies in $[1.41,1.42]$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Floating-point numbers approximate reals",
+        "background": "Computers cannot store every real, so floating-point arithmetic approximates the real line with finitely many representable numbers.",
+        "numbers": "The real $1/10$ is stored near $0.10000000000000000555$ in binary double precision."
+      },
+      {
+        "title": "Optimization assumes real parameters",
+        "background": "Gradient methods usually model weights as real numbers even though hardware stores approximations.",
+        "numbers": "A weight update $w=1.2-0.1(0.7)=1.13$ is real arithmetic before rounding."
+      },
+      {
+        "title": "Geometry and graphics",
+        "background": "Coordinates in graphics are modeled as real numbers so lines and curves can meet at non-grid points.",
+        "numbers": "The midpoint of $(0,0)$ and $(1,\\sqrt2)$ is $(0.5,0.7071\\ldots)$."
+      },
+      {
+        "title": "Probability thresholds",
+        "background": "Real-valued scores allow fine threshold changes in classifiers.",
+        "numbers": "A threshold moving from $0.700$ to $0.705$ changes the accepted interval by length $0.005$."
+      },
+      {
+        "title": "Numerical root finding",
+        "background": "Root finders rely on real-number completeness to bracket limits.",
+        "numbers": "If $f(1)=-1$ and $f(2)=2$, bisection first tests $1.5$, then halves the bracket length from $1$ to $0.5$."
+      },
+      {
+        "title": "Measurement models",
+        "background": "Physical measurements are modeled by real intervals because sensors have uncertainty.",
+        "numbers": "A reading $25.0\\pm0.1$ degrees means the real value is modeled in $[24.9,25.1]$, an interval of width $0.2$."
+      }
+    ],
+    "applicationsClose": "The real numbers are the completed stage on which distance, limits, optimization, and measurement can behave without missing endpoints.",
+    "takeaways": [
+      "$\\mathbb{R}$ is an ordered field containing $\\mathbb{Q}$.",
+      "Completeness fills rational gaps such as $\\sqrt2$.",
+      "Absolute value $|x-y|$ measures distance on the real line.",
+      "Intervals and bounds are the language of rigorous approximation."
+    ],
     "prereqs": [
       "math-04-02"
     ]
@@ -69,19 +824,272 @@
   B({
     "id": "math-04-04",
     "title": "Completeness, suprema, and infima",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: completeness, suprema, and infima.",
+    "tagline": "Completeness says a bounded nonempty set has a sharp edge, even when the edge is not in the set.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The real numbers</i>"
+        "real numbers",
+        "order",
+        "bounds"
       ],
       "leadsTo": [
-        "the next lesson, <i>Countable and uncountable sets</i>"
+        "monotone convergence",
+        "Bolzano-Weierstrass",
+        "Cauchy completeness"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "upper bounds",
+        "lower bounds",
+        "least upper bound",
+        "greatest lower bound"
       ]
     },
+    "motivation": "<p>You already know the difference between a ceiling and the lowest possible ceiling. The set $(0,1)$ has many upper bounds — $2$, $1.5$, and $1$ — but $1$ is the sharp one.</p><p>That sharp-bound idea is the heart of real analysis. Completeness says that sharp upper bounds exist for all nonempty real sets that are bounded above. It is the quiet engine behind convergence theorems.</p>",
+    "definition": "<p>An <b>upper bound</b> for a set $S\\subseteq\\mathbb{R}$ is a number $M$ such that $x\\le M$ for every $x\\in S$. The <b>supremum</b> $\\sup S$ is the least upper bound: it is an upper bound, and every smaller number fails to be an upper bound. Similarly, $m=\\inf S$ is the greatest lower bound.</p><p>The completeness axiom states: every nonempty subset of $\\mathbb{R}$ that is bounded above has a supremum in $\\mathbb{R}$. The useful epsilon form is: if $\\alpha=\\sup S$, then for every $\\varepsilon>0$ there is some $s\\in S$ with $\\alpha-\\varepsilon<s\\le\\alpha$. Otherwise $\\alpha-\\varepsilon$ would still be an upper bound, contradicting leastness.</p><p><b>Assumptions that matter:</b> $S$ must be nonempty for its supremum to be meaningful here, boundedness is required, the supremum may or may not belong to $S$, and completeness is special to $\\mathbb{R}$, not $\\mathbb{Q}$.</p>",
+    "worked": {
+      "problem": "Find $\\sup S$ and $\\inf S$ for $S=(2,5]$.",
+      "skills": [
+        "bounds",
+        "open and closed endpoints",
+        "supremum and infimum"
+      ],
+      "strategy": "Read the interval endpoints, then decide whether membership matters for sharp bounds.",
+      "steps": [
+        {
+          "do": "Read the set",
+          "result": "$2<x\\le5$",
+          "why": "open at 2 and closed at 5"
+        },
+        {
+          "do": "Find an upper bound",
+          "result": "$5$",
+          "why": "every element is at most 5"
+        },
+        {
+          "do": "Show it is least",
+          "result": "any $M<5$ misses elements near 5",
+          "why": "for example $(M+5)/2$ lies above $M$ and below 5"
+        },
+        {
+          "do": "Find a lower bound",
+          "result": "$2$",
+          "why": "every element is greater than 2"
+        },
+        {
+          "do": "Show it is greatest",
+          "result": "any $m>2$ misses elements near 2",
+          "why": "for example $(2+m)/2$ lies below $m$ and above 2"
+        }
+      ],
+      "verify": "The endpoint $5$ belongs to the set but $2$ does not; membership is not required for a supremum or infimum.",
+      "answer": "$\\sup S=5$ and $\\inf S=2$.",
+      "connects": "Sharp bounds capture edges of sets, not merely points included in sets."
+    },
+    "practice": [
+      {
+        "problem": "Find $\\sup$ and $\\inf$ of $A=\\{1/n:n\\in\\mathbb{N}\\}$.",
+        "steps": [
+          {
+            "do": "List early values",
+            "result": "$1,1/2,1/3,\\ldots$",
+            "why": "the set decreases toward 0"
+          },
+          {
+            "do": "Identify the largest value",
+            "result": "$1$",
+            "why": "the first term is largest"
+          },
+          {
+            "do": "State the supremum",
+            "result": "$\\sup A=1$",
+            "why": "a maximum is automatically the least upper bound"
+          },
+          {
+            "do": "Find a lower bound",
+            "result": "$0$",
+            "why": "all terms are positive"
+          },
+          {
+            "do": "Show sharpness of 0",
+            "result": "for any $\\varepsilon>0$, choose $n>1/\\varepsilon$",
+            "why": "then $1/n<\\varepsilon$"
+          }
+        ],
+        "answer": "$\\sup A=1$ and $\\inf A=0$."
+      },
+      {
+        "problem": "Find the supremum of $B=\\{x\\in\\mathbb{R}:x^2<9\\}$.",
+        "steps": [
+          {
+            "do": "Solve the inequality",
+            "result": "$-3<x<3$",
+            "why": "square below 9 means distance from 0 below 3"
+          },
+          {
+            "do": "Rewrite the set",
+            "result": "$B=(-3,3)$",
+            "why": "interval form"
+          },
+          {
+            "do": "Identify an upper bound",
+            "result": "$3$",
+            "why": "all elements are less than 3"
+          },
+          {
+            "do": "Show smaller numbers fail",
+            "result": "if $M<3$, $(M+3)/2$ lies in $B$ and exceeds $M$",
+            "why": "midpoint argument"
+          },
+          {
+            "do": "State the supremum",
+            "result": "$\\sup B=3$",
+            "why": "least upper bound"
+          }
+        ],
+        "answer": "$\\sup B=3$."
+      },
+      {
+        "problem": "Use the epsilon property of supremum for $S=(0,1)$ with $\\varepsilon=0.01$.",
+        "steps": [
+          {
+            "do": "Identify the supremum",
+            "result": "$\\sup S=1$",
+            "why": "the interval approaches 1 from below"
+          },
+          {
+            "do": "Compute the epsilon lower target",
+            "result": "$1-0.01=0.99$",
+            "why": "epsilon neighborhood below the supremum"
+          },
+          {
+            "do": "Choose a set element",
+            "result": "$s=0.995$",
+            "why": "it is between 0 and 1"
+          },
+          {
+            "do": "Compare to the target",
+            "result": "$0.99<0.995\\le1$",
+            "why": "the epsilon property is met"
+          },
+          {
+            "do": "Conclude sharpness",
+            "result": "points of $S$ get within 0.01 of 1",
+            "why": "leastness is visible"
+          }
+        ],
+        "answer": "For $\\varepsilon=0.01$, $s=0.995$ works."
+      },
+      {
+        "problem": "Show that $7$ is not the supremum of $[0,5]$.",
+        "steps": [
+          {
+            "do": "Check upper-bound status",
+            "result": "$7$ is an upper bound",
+            "why": "all set elements are at most 5"
+          },
+          {
+            "do": "Find a smaller upper bound",
+            "result": "$6$",
+            "why": "all set elements are also at most 6"
+          },
+          {
+            "do": "Find an even sharper upper bound",
+            "result": "$5$",
+            "why": "the endpoint is in the set"
+          },
+          {
+            "do": "Apply leastness",
+            "result": "$7$ cannot be least",
+            "why": "a smaller upper bound exists"
+          },
+          {
+            "do": "State the true supremum",
+            "result": "$5$",
+            "why": "it is the smallest upper bound"
+          }
+        ],
+        "answer": "$7$ is an upper bound but not the supremum; the supremum is $5$."
+      },
+      {
+        "problem": "For losses observed in training, $L_t=0.2+1/t$, find the infimum over $t\\in\\mathbb{N}$ and the first $t$ with $L_t<0.21$.",
+        "steps": [
+          {
+            "do": "Read the sequence",
+            "result": "$1.2,0.7,0.533\\ldots$",
+            "why": "terms decrease toward 0.2"
+          },
+          {
+            "do": "Identify a lower bound",
+            "result": "$0.2$",
+            "why": "$1/t$ is positive"
+          },
+          {
+            "do": "Show sharpness",
+            "result": "$1/t$ can be below any $\\varepsilon>0$",
+            "why": "choose $t>1/\\varepsilon$"
+          },
+          {
+            "do": "Solve the threshold",
+            "result": "$0.2+1/t<0.21$",
+            "why": "translate the target"
+          },
+          {
+            "do": "Subtract $0.2$",
+            "result": "$1/t<0.01$",
+            "why": "isolate reciprocal"
+          },
+          {
+            "do": "Invert",
+            "result": "$t>100$",
+            "why": "positive quantities"
+          },
+          {
+            "do": "Choose first integer",
+            "result": "$t=101$",
+            "why": "smallest integer above 100"
+          }
+        ],
+        "answer": "The infimum is $0.2$, and the first $t$ with $L_t<0.21$ is $101$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Training-loss floors",
+        "background": "Empirical losses often approach a floor that behaves like an infimum even if no finite epoch attains it.",
+        "numbers": "For $L_t=0.15+2/t$, $L_{100}=0.17$, $L_{1000}=0.152$, and the infimum is $0.15$."
+      },
+      {
+        "title": "Best possible validation score",
+        "background": "A hyperparameter search over an interval asks for a supremum of achievable scores.",
+        "numbers": "If scores are $s(\\lambda)=0.8- (\\lambda-0.3)^2$ on $[0,1]$, the supremum is $0.8$ at $\\lambda=0.3$."
+      },
+      {
+        "title": "Binary search brackets",
+        "background": "Root-finding maintains an interval whose endpoints are bounds for the solution.",
+        "numbers": "Starting with $[1,2]$, after three bisections the bracket length is $1/8=0.125$."
+      },
+      {
+        "title": "Robust safety limits",
+        "background": "Systems use worst-case upper bounds to guarantee capacity.",
+        "numbers": "If each request uses at most $12$ MB and there are $80$ requests, a memory upper bound is $960$ MB."
+      },
+      {
+        "title": "Quantile definitions",
+        "background": "Statistics defines quantiles using infima of sets of CDF values.",
+        "numbers": "If $F(3)=0.88$ and $F(4)=0.94$, the $0.90$ quantile is the infimum of $x$ with $F(x)\\ge0.90$, here between 3 and 4."
+      },
+      {
+        "title": "Optimization constraints",
+        "background": "Feasible regions are sets, and optima are sharp bounds of objective values.",
+        "numbers": "For $f(x)=2x$ on $0<x<5$, the supremum is $10$ but no feasible $x$ attains value $10$."
+      }
+    ],
+    "applicationsClose": "Suprema and infima are the sharp edges of sets; completeness guarantees those edges exist in the real line when boundedness allows them.",
+    "takeaways": [
+      "A supremum is the least upper bound; an infimum is the greatest lower bound.",
+      "The sharp bound may fail to belong to the set.",
+      "Completeness guarantees suprema for nonempty bounded-above subsets of $\\mathbb{R}$.",
+      "The epsilon property of supremum is a key proof tool."
+    ],
     "prereqs": [
       "math-04-03"
     ]
@@ -90,19 +1098,272 @@
   B({
     "id": "math-04-05",
     "title": "Countable and uncountable sets",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: countable and uncountable sets.",
+    "tagline": "Counting a set means listing it without missing anything, even if the list is infinite.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Completeness, suprema, and infima</i>"
+        "sets",
+        "natural numbers",
+        "rational numbers"
       ],
       "leadsTo": [
-        "the next lesson, <i>Sequences</i>"
+        "sequences",
+        "real-number cardinality",
+        "diagonal arguments"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "bijections",
+        "injections",
+        "surjections",
+        "power sets"
       ]
     },
+    "motivation": "<p>You already know finite counting. Infinite counting asks a subtler question: can the elements be arranged as a sequence $a_1,a_2,a_3,\\ldots$ so every element appears somewhere?</p><p>Some infinite sets can be listed, like the integers and rationals. The real numbers cannot. That difference is not about size in a vague sense; it is proved by exact maps and diagonal arguments.</p>",
+    "definition": "<p>A set $S$ is <b>countable</b> if it is finite or there is a surjection from $\\mathbb{N}$ onto $S$; equivalently, its elements can be listed in a sequence, possibly with repeats. A set is <b>uncountable</b> if no such listing exists.</p><p>The rationals are countable because pairs $(p,q)\\in\\mathbb{Z}\\times\\mathbb{N}$ can be arranged by increasing $|p|+q$, skipping duplicates. The interval $(0,1)$ is uncountable by Cantor's diagonal argument: any proposed decimal list can be defeated by building a new decimal that differs from the $n$th listed number in its $n$th digit.</p><p><b>Assumptions that matter:</b> listings must include every element after finitely many steps, decimal representations should avoid ambiguous tails like $0.4999\\ldots=0.5000\\ldots$, and countable unions of countable sets are countable.</p>",
+    "worked": {
+      "problem": "Explain why the set of even natural numbers is countable.",
+      "skills": [
+        "bijections",
+        "infinite sets",
+        "natural-number indexing"
+      ],
+      "strategy": "Build an explicit listing by matching each natural number with one even number.",
+      "steps": [
+        {
+          "do": "Define a map",
+          "result": "$f(n)=2n$",
+          "why": "send each natural number to an even number"
+        },
+        {
+          "do": "Check the output",
+          "result": "$f(n)$ is even",
+          "why": "it is a multiple of 2"
+        },
+        {
+          "do": "Show every positive even appears",
+          "result": "2k=f(k)$",
+          "why": "an arbitrary even number has preimage $k$"
+        },
+        {
+          "do": "Show no duplicates",
+          "result": "$2m=2n\\Rightarrow m=n$",
+          "why": "divide by 2"
+        },
+        {
+          "do": "Conclude bijection",
+          "result": "$\\mathbb{N}$ and even naturals match",
+          "why": "a bijection proves countability"
+        }
+      ],
+      "verify": "The listing is $2,4,6,8,\\ldots$, and every positive even number appears at its own half-index.",
+      "answer": "The even natural numbers are countable via $n\\mapsto2n$.",
+      "connects": "Countability is about listability, not about being finite."
+    },
+    "practice": [
+      {
+        "problem": "List a bijection from $\\mathbb{N}$ to the nonnegative integers $\\{0,1,2,\\ldots\\}$.",
+        "steps": [
+          {
+            "do": "Propose a map",
+            "result": "$f(n)=n-1$",
+            "why": "shift the list down by one"
+          },
+          {
+            "do": "Check the first value",
+            "result": "$f(1)=0$",
+            "why": "the target starts at zero"
+          },
+          {
+            "do": "Check later values",
+            "result": "$f(2)=1$, $f(3)=2$",
+            "why": "the pattern continues"
+          },
+          {
+            "do": "Show every target appears",
+            "result": "k=f(k+1)$",
+            "why": "any nonnegative integer has a preimage"
+          },
+          {
+            "do": "Show no duplicates",
+            "result": "n-1=m-1\\Rightarrow n=m$",
+            "why": "add 1 to both sides"
+          }
+        ],
+        "answer": "$f(n)=n-1$ is a bijection."
+      },
+      {
+        "problem": "Show that the set of integer pairs $(i,j)$ with $|i|+|j|\\le1$ is finite and count it.",
+        "steps": [
+          {
+            "do": "List pair with sum 0",
+            "result": "$(0,0)$",
+            "why": "only both absolute values zero"
+          },
+          {
+            "do": "List pairs with sum 1",
+            "result": "$(1,0),(-1,0),(0,1),(0,-1)$",
+            "why": "one coordinate has absolute value 1"
+          },
+          {
+            "do": "Count the first group",
+            "result": "1",
+            "why": "one pair"
+          },
+          {
+            "do": "Count the second group",
+            "result": "4",
+            "why": "four axis neighbors"
+          },
+          {
+            "do": "Add counts",
+            "result": "$1+4=5$",
+            "why": "finite union of listed groups"
+          }
+        ],
+        "answer": "There are $5$ such pairs."
+      },
+      {
+        "problem": "Give the first six positive rationals in a diagonal-style list using numerator plus denominator: $p,q\\in\\mathbb{N}$ and skip duplicates.",
+        "steps": [
+          {
+            "do": "Use sum $p+q=2$",
+            "result": "$1/1$",
+            "why": "first diagonal"
+          },
+          {
+            "do": "Use sum $p+q=3$",
+            "result": "$1/2,2/1$",
+            "why": "next diagonal"
+          },
+          {
+            "do": "Use sum $p+q=4$",
+            "result": "$1/3,3/1$",
+            "why": "skip $2/2$ because it equals $1/1$"
+          },
+          {
+            "do": "Use sum $p+q=5$",
+            "result": "$1/4$",
+            "why": "this gives the sixth item"
+          },
+          {
+            "do": "Collect six items",
+            "result": "$1,1/2,2,1/3,3,1/4$",
+            "why": "a listing can continue forever"
+          }
+        ],
+        "answer": "One possible first six are $1,1/2,2,1/3,3,1/4$."
+      },
+      {
+        "problem": "Use a diagonal step to construct a number differing from $0.111\\ldots$, $0.222\\ldots$, and $0.333\\ldots$ in positions 1, 2, and 3.",
+        "steps": [
+          {
+            "do": "Read the first diagonal digit",
+            "result": "$1$",
+            "why": "from the first number"
+          },
+          {
+            "do": "Choose a different first digit",
+            "result": "$4$",
+            "why": "avoid the listed digit"
+          },
+          {
+            "do": "Read the second diagonal digit",
+            "result": "$2$",
+            "why": "from the second number"
+          },
+          {
+            "do": "Choose a different second digit",
+            "result": "$5$",
+            "why": "avoid the listed digit"
+          },
+          {
+            "do": "Read the third diagonal digit",
+            "result": "$3$",
+            "why": "from the third number"
+          },
+          {
+            "do": "Choose a different third digit",
+            "result": "$6$",
+            "why": "avoid the listed digit"
+          },
+          {
+            "do": "Build a decimal prefix",
+            "result": "$0.456\\ldots$",
+            "why": "it differs from each listed number in its own position"
+          }
+        ],
+        "answer": "A number beginning $0.456\\ldots$ differs from the three listed numbers in the required positions."
+      },
+      {
+        "problem": "A dataset uses all binary strings of length $10$. Count them and compare with countability of all finite binary strings.",
+        "steps": [
+          {
+            "do": "Count choices per position",
+            "result": "2",
+            "why": "each bit is 0 or 1"
+          },
+          {
+            "do": "Multiply over 10 positions",
+            "result": "$2^{10}$",
+            "why": "independent choices"
+          },
+          {
+            "do": "Compute the number",
+            "result": "$1024$",
+            "why": "ten bits give 1024 strings"
+          },
+          {
+            "do": "Classify fixed length",
+            "result": "finite",
+            "why": "there are exactly 1024"
+          },
+          {
+            "do": "Classify all finite lengths",
+            "result": "countable",
+            "why": "list by length $0,1,2,\\ldots$ and lexicographic order within each length"
+          }
+        ],
+        "answer": "Length-$10$ binary strings number $1024$; all finite binary strings are countable."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Dataset indexing",
+        "background": "Finite datasets are counted by assigning each example an integer id.",
+        "numbers": "A dataset with $1,000,000$ examples can be indexed by integers $0$ through $999,999$."
+      },
+      {
+        "title": "Vocabulary tokens",
+        "background": "A model vocabulary is finite, while all finite token sequences over it are countable.",
+        "numbers": "With vocabulary size $50000$, there are $50000^3=125,000,000,000,000$ sequences of length 3, still finite for fixed length."
+      },
+      {
+        "title": "Program strings",
+        "background": "All finite programs over a finite alphabet are countable because they can be listed by length.",
+        "numbers": "With $128$ ASCII characters, there are $128^5=34,359,738,368$ strings of length 5."
+      },
+      {
+        "title": "Real-valued parameters",
+        "background": "Even one real-valued weight ranges over an uncountable set in the mathematical model.",
+        "numbers": "The interval $[0,1]$ for a single weight is uncountable, unlike any finite grid of $1001$ values."
+      },
+      {
+        "title": "Compression limits",
+        "background": "Only countably many finite descriptions exist, so most real numbers cannot have finite descriptions.",
+        "numbers": "There are at most $2^{100}$ binary descriptions of length 100, but uncountably many reals in $[0,1]$."
+      },
+      {
+        "title": "Hyperparameter grids versus continua",
+        "background": "A grid search is countable or finite; continuous optimization works over an uncountable idealization.",
+        "numbers": "A grid with $101$ learning rates and $51$ weight decays has $101\\cdot51=5151$ settings, while $[0,1]^2$ is uncountable."
+      }
+    ],
+    "applicationsClose": "Countability asks whether infinity can be put into a sequence; rationals can, reals cannot, and that split shapes analysis and computation.",
+    "takeaways": [
+      "A countable set can be listed by natural numbers.",
+      "$\\mathbb{Z}$ and $\\mathbb{Q}$ are countable.",
+      "Cantor's diagonal argument proves $(0,1)$ is uncountable.",
+      "Finite strings over a finite alphabet are countable, but real intervals are not."
+    ],
     "prereqs": [
       "math-04-04"
     ]
@@ -111,19 +1372,272 @@
   B({
     "id": "math-04-06",
     "title": "Sequences",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: sequences.",
+    "tagline": "A sequence is a numbered stream of values, one term for each natural-number time step.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Countable and uncountable sets</i>"
+        "natural numbers",
+        "functions",
+        "real numbers"
       ],
       "leadsTo": [
-        "the next lesson, <i>Limits of sequences</i>"
+        "limits of sequences",
+        "subsequences",
+        "series"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "recursion",
+        "monotonicity",
+        "boundedness",
+        "absolute value"
       ]
     },
+    "motivation": "<p>You already read lists like $1,1/2,1/3,\\ldots$ and feel their direction. A sequence formalizes that feeling: it is a function whose input is a natural number.</p><p>Sequences are the laboratory of real analysis. Before functions vary continuously, sequences let us study indexed approximation, iteration, training epochs, and algorithms step by step.</p>",
+    "definition": "<p>A <b>sequence</b> of real numbers is a function $a:\\mathbb{N}\\to\\mathbb{R}$, usually written $(a_n)$, where $a_n$ is the $n$th term. A sequence is <b>bounded above</b> if $a_n\\le M$ for all $n$, <b>bounded below</b> if $m\\le a_n$ for all $n$, and <b>bounded</b> if $|a_n|\\le C$ for all $n$.</p><p>It is <b>increasing</b> if $a_{n+1}\\ge a_n$ for all $n$ and <b>decreasing</b> if $a_{n+1}\\le a_n$ for all $n$. Monotonicity is proved by comparing $a_{n+1}-a_n$ or $a_{n+1}/a_n$ when terms are positive.</p><p><b>Assumptions that matter:</b> the index $n$ is discrete, early terms do not always reveal long-run behavior, and formulas may be explicit like $a_n=1/n$ or recursive like $a_{n+1}=0.5a_n+1$.</p>",
+    "worked": {
+      "problem": "For $a_n=3-1/n$, list the first four terms and decide whether the sequence is increasing and bounded above.",
+      "skills": [
+        "sequence notation",
+        "monotonicity",
+        "bounds"
+      ],
+      "strategy": "Compute concrete terms, then compare the general difference.",
+      "steps": [
+        {
+          "do": "Compute $a_1$",
+          "result": "$3-1=2$",
+          "why": "substitute $n=1$"
+        },
+        {
+          "do": "Compute $a_2$",
+          "result": "$3-1/2=2.5$",
+          "why": "substitute $n=2$"
+        },
+        {
+          "do": "Compute $a_3$",
+          "result": "$3-1/3=8/3$",
+          "why": "substitute $n=3$"
+        },
+        {
+          "do": "Compute $a_4$",
+          "result": "$3-1/4=11/4$",
+          "why": "substitute $n=4$"
+        },
+        {
+          "do": "Compare consecutive terms",
+          "result": "$a_{n+1}-a_n=1/n-1/(n+1)$",
+          "why": "subtract the formulas"
+        },
+        {
+          "do": "Simplify the difference",
+          "result": "$1/[n(n+1)]>0$",
+          "why": "positive denominator"
+        },
+        {
+          "do": "Find an upper bound",
+          "result": "$a_n<3$",
+          "why": "subtracting $1/n$ keeps terms below 3"
+        }
+      ],
+      "verify": "The first terms $2,2.5,2.666\\ldots,2.75$ rise and stay below $3$.",
+      "answer": "The first four terms are $2,5/2,8/3,11/4$; the sequence is increasing and bounded above by $3$.",
+      "connects": "Monotone bounded sequences are exactly the kind completeness later forces to converge."
+    },
+    "practice": [
+      {
+        "problem": "For $b_n=(-1)^n$, list the first six terms and decide whether it is bounded.",
+        "steps": [
+          {
+            "do": "Substitute $n=1$",
+            "result": "$-1$",
+            "why": "odd exponent"
+          },
+          {
+            "do": "Substitute $n=2$",
+            "result": "$1$",
+            "why": "even exponent"
+          },
+          {
+            "do": "Continue the pattern",
+            "result": "$-1,1,-1,1,-1,1$",
+            "why": "alternation"
+          },
+          {
+            "do": "Compute absolute values",
+            "result": "$|b_n|=1$",
+            "why": "both possible values have magnitude 1"
+          },
+          {
+            "do": "State a bound",
+            "result": "$|b_n|\\le1$",
+            "why": "works for every term"
+          }
+        ],
+        "answer": "The first six terms are $-1,1,-1,1,-1,1$; it is bounded by 1."
+      },
+      {
+        "problem": "Show $c_n=n/(n+1)$ is increasing.",
+        "steps": [
+          {
+            "do": "Write the next term",
+            "result": "$c_{n+1}=(n+1)/(n+2)$",
+            "why": "replace $n$ by $n+1$"
+          },
+          {
+            "do": "Subtract",
+            "result": "$c_{n+1}-c_n=(n+1)/(n+2)-n/(n+1)$",
+            "why": "compare consecutive terms"
+          },
+          {
+            "do": "Use a common denominator",
+            "result": "$[(n+1)^2-n(n+2)]/[(n+1)(n+2)]$",
+            "why": "combine fractions"
+          },
+          {
+            "do": "Simplify numerator",
+            "result": "$1$",
+            "why": "$(n+1)^2-n(n+2)=1$"
+          },
+          {
+            "do": "Check sign",
+            "result": "$1/[(n+1)(n+2)]>0$",
+            "why": "denominator is positive"
+          }
+        ],
+        "answer": "$c_n$ is increasing."
+      },
+      {
+        "problem": "Show $d_n=5+2/n$ is decreasing and bounded below.",
+        "steps": [
+          {
+            "do": "Write the next term",
+            "result": "$d_{n+1}=5+2/(n+1)$",
+            "why": "replace the index"
+          },
+          {
+            "do": "Compare reciprocals",
+            "result": "$1/(n+1)<1/n$",
+            "why": "larger denominator gives smaller value"
+          },
+          {
+            "do": "Multiply by 2",
+            "result": "$2/(n+1)<2/n$",
+            "why": "positive multiplication preserves order"
+          },
+          {
+            "do": "Add 5",
+            "result": "$d_{n+1}<d_n$",
+            "why": "sequence is decreasing"
+          },
+          {
+            "do": "Find a lower bound",
+            "result": "$d_n>5$",
+            "why": "$2/n$ is positive"
+          }
+        ],
+        "answer": "The sequence is decreasing and bounded below by $5$."
+      },
+      {
+        "problem": "For recursive $x_{n+1}=0.5x_n+1$ with $x_1=0$, compute $x_2,x_3,x_4,x_5$.",
+        "steps": [
+          {
+            "do": "Compute $x_2$",
+            "result": "$0.5\\cdot0+1=1$",
+            "why": "use the recursion"
+          },
+          {
+            "do": "Compute $x_3$",
+            "result": "$0.5\\cdot1+1=1.5$",
+            "why": "feed in $x_2$"
+          },
+          {
+            "do": "Compute $x_4$",
+            "result": "$0.5\\cdot1.5+1=1.75$",
+            "why": "feed in $x_3$"
+          },
+          {
+            "do": "Compute $x_5$",
+            "result": "$0.5\\cdot1.75+1=1.875$",
+            "why": "feed in $x_4$"
+          },
+          {
+            "do": "Notice the target",
+            "result": "terms approach $2$ from below",
+            "why": "the fixed point solves $x=0.5x+1$"
+          }
+        ],
+        "answer": "$x_2=1$, $x_3=1.5$, $x_4=1.75$, $x_5=1.875$."
+      },
+      {
+        "problem": "A training metric is $m_n=0.9+0.2(-1)^n/n$. Compute $m_1,m_2,m_3$ and give a simple bound.",
+        "steps": [
+          {
+            "do": "Compute $m_1$",
+            "result": "$0.9-0.2=0.7$",
+            "why": "$(-1)^1=-1$"
+          },
+          {
+            "do": "Compute $m_2$",
+            "result": "$0.9+0.1=1.0$",
+            "why": "$0.2/2=0.1$"
+          },
+          {
+            "do": "Compute $m_3$",
+            "result": "$0.9-0.2/3\\approx0.8333$",
+            "why": "$(-1)^3=-1$"
+          },
+          {
+            "do": "Bound the oscillation",
+            "result": "|0.2(-1)^n/n|\\le0.2$",
+            "why": "because $1/n\\le1$"
+          },
+          {
+            "do": "Bound the metric",
+            "result": "$0.7\\le m_n\\le1.1$",
+            "why": "add and subtract 0.2 from 0.9"
+          }
+        ],
+        "answer": "$m_1=0.7$, $m_2=1.0$, $m_3\\approx0.8333$, and $0.7\\le m_n\\le1.1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Training epochs",
+        "background": "Metrics over epochs are sequences, so monotonicity and boundedness describe learning curves.",
+        "numbers": "Losses $1.0,0.7,0.55,0.48$ form a decreasing prefix bounded below by $0$."
+      },
+      {
+        "title": "Iterative algorithms",
+        "background": "Fixed-point methods produce recursive sequences.",
+        "numbers": "Starting $x_1=0$ with $x_{n+1}=0.5x_n+1$ gives $1,1.5,1.75$, approaching $2$."
+      },
+      {
+        "title": "Streaming averages",
+        "background": "A running average is a sequence indexed by sample count.",
+        "numbers": "Values $4,6,8$ give averages $4,5,6$ after $1,2,3$ samples."
+      },
+      {
+        "title": "Learning-rate schedules",
+        "background": "Step sizes are sequences chosen to control optimization.",
+        "numbers": "$\\eta_n=0.1/n$ gives $0.1,0.05,0.0333$ for the first three steps."
+      },
+      {
+        "title": "Queue lengths over time",
+        "background": "System load measurements form sequences sampled at discrete times.",
+        "numbers": "Queue sizes $2,5,3,8$ are bounded by $8$ over the observed window."
+      },
+      {
+        "title": "Gradient norms",
+        "background": "Convergence diagnostics often track a sequence of gradient norms.",
+        "numbers": "Norms $0.9,0.4,0.18,0.08$ are positive and decreasing in this window."
+      }
+    ],
+    "applicationsClose": "A sequence is just a numbered stream, but boundedness, monotonicity, and recursion make it powerful enough to model approximation and iteration.",
+    "takeaways": [
+      "A real sequence is a function from $\\mathbb{N}$ to $\\mathbb{R}$.",
+      "Boundedness controls how large terms can get.",
+      "Monotonicity is usually proved by comparing consecutive terms.",
+      "Recursive sequences describe many iterative algorithms."
+    ],
     "prereqs": [
       "math-04-05"
     ]
@@ -132,19 +1646,266 @@
   B({
     "id": "math-04-07",
     "title": "Limits of sequences",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: limits of sequences.",
+    "tagline": "A sequence converges when its tail can be forced inside any tolerance around one number.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Sequences</i>"
+        "sequences",
+        "absolute value",
+        "real numbers"
       ],
       "leadsTo": [
-        "the next lesson, <i>Subsequences</i>"
+        "subsequences",
+        "Cauchy sequences",
+        "infinite series"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "epsilon-N proofs",
+        "algebraic limits",
+        "squeeze theorem"
       ]
     },
+    "motivation": "<p>You can look at $1,1/2,1/3,\\ldots$ and feel it heading to $0$. Real analysis asks us to say exactly what that means.</p><p>The answer is the $\\varepsilon$-$N$ definition. It sounds formal at first, but it is simply a promise: after some point in the list, every term stays within your chosen tolerance.</p>",
+    "definition": "<p>A sequence $(a_n)$ <b>converges</b> to $L\\in\\mathbb{R}$, written $a_n\\to L$ or $\\lim_{n\\to\\infty}a_n=L$, if for every $\\varepsilon>0$ there exists $N\\in\\mathbb{N}$ such that $n\\ge N\\Rightarrow |a_n-L|<\\varepsilon$.</p><p>Every symbol has a job: $\\varepsilon$ is the tolerance chosen by someone else, $N$ is the threshold you are allowed to choose, and the implication controls all later indices, not just one term. For $a_n=1/n$, choosing $N>1/\\varepsilon$ works because $n\\ge N$ forces $1/n\\le1/N<\\varepsilon$.</p><p><b>Assumptions that matter:</b> the limit $L$ is finite in $\\mathbb{R}$, $N$ may depend on $\\varepsilon$, strict inequality can be achieved by choosing a slightly larger integer, and changing finitely many early terms does not change the limit.</p>",
+    "worked": {
+      "problem": "Prove $1/n\\to0$ using the $\\varepsilon$-$N$ definition.",
+      "skills": [
+        "epsilon-N proof",
+        "reciprocal bounds",
+        "quantifiers"
+      ],
+      "strategy": "Start from the desired inequality $1/n<\\varepsilon$ and solve for a large enough $n$.",
+      "steps": [
+        {
+          "do": "Write the target",
+          "result": "$|1/n-0|<\\varepsilon$",
+          "why": "definition of convergence to 0"
+        },
+        {
+          "do": "Simplify the absolute value",
+          "result": "$1/n<\\varepsilon$",
+          "why": "terms are positive"
+        },
+        {
+          "do": "Solve for $n$",
+          "result": "$n>1/\\varepsilon$",
+          "why": "invert positive quantities"
+        },
+        {
+          "do": "Choose a threshold",
+          "result": "$N>1/\\varepsilon$",
+          "why": "take an integer larger than the reciprocal"
+        },
+        {
+          "do": "Use $n\\ge N$",
+          "result": "$1/n\\le1/N$",
+          "why": "larger denominator gives smaller reciprocal"
+        },
+        {
+          "do": "Apply the threshold choice",
+          "result": "$1/N<\\varepsilon$",
+          "why": "because $N>1/\\varepsilon$"
+        }
+      ],
+      "verify": "If $\\varepsilon=0.001$, choose $N=1001$; then every $n\\ge1001$ has $1/n<0.001$.",
+      "answer": "For every $\\varepsilon>0$, such an $N$ exists, so $1/n\\to0$.",
+      "connects": "The proof shows convergence is a tail guarantee, not a statement about early terms."
+    },
+    "practice": [
+      {
+        "problem": "Find $N$ so $|2+3/n-2|<0.01$ for all $n\\ge N$.",
+        "steps": [
+          {
+            "do": "Simplify the distance",
+            "result": "$|3/n|<0.01$",
+            "why": "subtract the proposed limit"
+          },
+          {
+            "do": "Remove absolute value",
+            "result": "$3/n<0.01$",
+            "why": "terms are positive"
+          },
+          {
+            "do": "Solve for $n$",
+            "result": "$n>300$",
+            "why": "divide by 0.01"
+          },
+          {
+            "do": "Choose the first integer threshold",
+            "result": "$N=301$",
+            "why": "strict inequality needs above 300"
+          },
+          {
+            "do": "Check the tail",
+            "result": "$n\\ge301\\Rightarrow3/n\\le3/301<0.01$",
+            "why": "threshold works"
+          }
+        ],
+        "answer": "$N=301$ works."
+      },
+      {
+        "problem": "Prove $(5n+1)/n\\to5$.",
+        "steps": [
+          {
+            "do": "Subtract the limit",
+            "result": "$\\left|(5n+1)/n-5\\right|$",
+            "why": "start with the definition"
+          },
+          {
+            "do": "Simplify the expression",
+            "result": "$|1/n|$",
+            "why": "$5n/n-5=0$"
+          },
+          {
+            "do": "Set the target",
+            "result": "$1/n<\\varepsilon$",
+            "why": "need distance below tolerance"
+          },
+          {
+            "do": "Choose threshold",
+            "result": "$N>1/\\varepsilon$",
+            "why": "same reciprocal bound"
+          },
+          {
+            "do": "Conclude for $n\\ge N$",
+            "result": "$1/n\\le1/N<\\varepsilon$",
+            "why": "tail lies inside tolerance"
+          }
+        ],
+        "answer": "$(5n+1)/n\\to5$."
+      },
+      {
+        "problem": "Show $(-1)^n/n\\to0$.",
+        "steps": [
+          {
+            "do": "Start with distance",
+            "result": "$|(-1)^n/n-0|$",
+            "why": "definition"
+          },
+          {
+            "do": "Separate absolute values",
+            "result": "$|(-1)^n|/n$",
+            "why": "absolute value of quotient"
+          },
+          {
+            "do": "Evaluate the sign magnitude",
+            "result": "$1/n$",
+            "why": "$|(-1)^n|=1$"
+          },
+          {
+            "do": "Choose threshold",
+            "result": "$N>1/\\varepsilon$",
+            "why": "make $1/n$ small"
+          },
+          {
+            "do": "Conclude",
+            "result": "$|(-1)^n/n|<\\varepsilon$ for $n\\ge N$",
+            "why": "oscillation is squeezed by shrinking size"
+          }
+        ],
+        "answer": "$(-1)^n/n\\to0$."
+      },
+      {
+        "problem": "Prove that $a_n=4$ for all $n$ converges to $4$.",
+        "steps": [
+          {
+            "do": "Write the distance",
+            "result": "$|4-4|$",
+            "why": "compare term to limit"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0$",
+            "why": "constant sequence has zero error"
+          },
+          {
+            "do": "Compare to tolerance",
+            "result": "$0<\\varepsilon$",
+            "why": "every positive tolerance contains 0"
+          },
+          {
+            "do": "Choose a threshold",
+            "result": "$N=1$",
+            "why": "all terms already work"
+          },
+          {
+            "do": "State the implication",
+            "result": "n\\ge1\\Rightarrow |a_n-4|<\\varepsilon$",
+            "why": "definition is satisfied"
+          }
+        ],
+        "answer": "The constant sequence converges to $4$."
+      },
+      {
+        "problem": "A validation error is $e_n=0.12+0.8/n$. Find $N$ so $|e_n-0.12|<0.005$.",
+        "steps": [
+          {
+            "do": "Subtract the limit",
+            "result": "$|0.8/n|<0.005$",
+            "why": "isolate the decaying term"
+          },
+          {
+            "do": "Remove absolute value",
+            "result": "$0.8/n<0.005$",
+            "why": "positive term"
+          },
+          {
+            "do": "Solve for $n$",
+            "result": "$n>160$",
+            "why": "$0.8/0.005=160$"
+          },
+          {
+            "do": "Choose threshold",
+            "result": "$N=161$",
+            "why": "integer above 160"
+          },
+          {
+            "do": "Check",
+            "result": "$0.8/161\\approx0.00497$",
+            "why": "below the tolerance"
+          }
+        ],
+        "answer": "$N=161$ works."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Stopping criteria",
+        "background": "Optimization stops when a sequence of changes is below a tolerance.",
+        "numbers": "If update size is $1/n$, then below $0.001$ requires $n>1000$, so $N=1001$."
+      },
+      {
+        "title": "Validation-curve plateaus",
+        "background": "A metric sequence can converge to a performance ceiling or floor.",
+        "numbers": "For $a_n=0.9-0.3/n$, being within $0.01$ of $0.9$ needs $0.3/n<0.01$, so $n>30$."
+      },
+      {
+        "title": "Monte Carlo estimates",
+        "background": "Sample averages often converge to expected values as sample size grows.",
+        "numbers": "An error bound shaped like $2/\\sqrt n$ drops below $0.05$ when $\\sqrt n>40$, so $n>1600$."
+      },
+      {
+        "title": "Iterative solvers",
+        "background": "Numerical methods track residual sequences approaching zero.",
+        "numbers": "Residual $r_k=0.5^k$ is below $0.01$ at $k=7$ because $0.5^7=0.0078125$."
+      },
+      {
+        "title": "Learning-rate decay",
+        "background": "Schedules are designed so step sizes converge to zero.",
+        "numbers": "$\\eta_n=0.1/n$ is below $10^{-4}$ after $n>1000$."
+      },
+      {
+        "title": "Streaming calibration",
+        "background": "Online metrics stabilize when new examples have shrinking influence.",
+        "numbers": "The first example's weight in an average after $n=10000$ samples is $1/10000=0.0001$."
+      }
+    ],
+    "applicationsClose": "The $\\varepsilon$-$N$ definition is a precise tail promise: choose any tolerance, and the sequence eventually stays inside it.",
+    "takeaways": [
+      "$a_n\\to L$ means every tolerance around $L$ eventually contains all tail terms.",
+      "$N$ may depend on $\\varepsilon$.",
+      "Absolute value measures distance to the proposed limit.",
+      "Oscillation can still converge if its amplitude shrinks to zero."
+    ],
     "prereqs": [
       "math-04-06"
     ]
@@ -153,19 +1914,266 @@
   B({
     "id": "math-04-08",
     "title": "Subsequences",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: subsequences.",
+    "tagline": "A subsequence keeps the original order while selecting an infinite trail of terms.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Limits of sequences</i>"
+        "sequences",
+        "limits of sequences",
+        "natural-number indices"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Bolzano–Weierstrass theorem</i>"
+        "Bolzano-Weierstrass",
+        "compactness",
+        "cluster points"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "monotone subsequences",
+        "convergence",
+        "index maps"
       ]
     },
+    "motivation": "<p>You have probably skimmed a long list by looking at every other term. That is a subsequence: not a new universe, just a careful infinite selection.</p><p>Subsequences reveal hidden behavior. A sequence may oscillate, but its even terms and odd terms can have separate limits. Real analysis uses subsequences to detect convergence, nonconvergence, and compactness.</p>",
+    "definition": "<p>A <b>subsequence</b> of $(a_n)$ is $(a_{n_k})$, where $n_1<n_2<n_3<\\cdots$ are natural numbers. The indices must strictly increase so the original order is preserved and infinitely many terms are selected.</p><p>If $a_n\\to L$, then every subsequence also converges to $L$. Proof: given $\\varepsilon>0$, choose $N$ so $n\\ge N\\Rightarrow |a_n-L|<\\varepsilon$. Since $n_k\\ge k$, all sufficiently large $k$ have $n_k\\ge N$, so $|a_{n_k}-L|<\\varepsilon$.</p><p><b>Assumptions that matter:</b> a subsequence is infinite, repeated finite selections do not count, indices are increasing, and different subsequential limits prove the original sequence cannot converge.</p>",
+    "worked": {
+      "problem": "For $a_n=(-1)^n+1/n$, find the limits of the even and odd subsequences.",
+      "skills": [
+        "subsequence indices",
+        "limits",
+        "oscillation"
+      ],
+      "strategy": "Write formulas for $a_{2k}$ and $a_{2k-1}$, then take $k\\to\\infty$.",
+      "steps": [
+        {
+          "do": "Write the even-index term",
+          "result": "$a_{2k}=(-1)^{2k}+1/(2k)$",
+          "why": "substitute $n=2k$"
+        },
+        {
+          "do": "Simplify the sign",
+          "result": "$a_{2k}=1+1/(2k)$",
+          "why": "even powers of $-1$ equal 1"
+        },
+        {
+          "do": "Take the even limit",
+          "result": "$a_{2k}\\to1$",
+          "why": "the reciprocal term tends to 0"
+        },
+        {
+          "do": "Write the odd-index term",
+          "result": "$a_{2k-1}=(-1)^{2k-1}+1/(2k-1)$",
+          "why": "substitute odd indices"
+        },
+        {
+          "do": "Simplify the sign",
+          "result": "$a_{2k-1}=-1+1/(2k-1)$",
+          "why": "odd powers of $-1$ equal -1"
+        },
+        {
+          "do": "Take the odd limit",
+          "result": "$a_{2k-1}\\to-1$",
+          "why": "the reciprocal term tends to 0"
+        }
+      ],
+      "verify": "The subsequences approach different numbers, so the full sequence cannot have one limit.",
+      "answer": "The even subsequence converges to $1$ and the odd subsequence converges to $-1$.",
+      "connects": "Subsequences can expose multiple tail behaviors inside one sequence."
+    },
+    "practice": [
+      {
+        "problem": "For $a_n=1/n$, write the subsequence with indices $n_k=3k$ and find its limit.",
+        "steps": [
+          {
+            "do": "Substitute the index",
+            "result": "$a_{n_k}=a_{3k}$",
+            "why": "use $n_k=3k$"
+          },
+          {
+            "do": "Use the formula",
+            "result": "$a_{3k}=1/(3k)$",
+            "why": "replace $n$ by $3k$"
+          },
+          {
+            "do": "Compare to $1/k$",
+            "result": "$1/(3k)\\le1/k$",
+            "why": "positive denominator is larger"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$1/(3k)\\to0$",
+            "why": "constant factor does not change zero limit"
+          },
+          {
+            "do": "State the subsequence limit",
+            "result": "0",
+            "why": "same as the original"
+          }
+        ],
+        "answer": "The subsequence is $1/(3k)$ and it converges to $0$."
+      },
+      {
+        "problem": "Is $a_2,a_4,a_6,\\ldots$ a subsequence of $(a_n)$? Explain with indices.",
+        "steps": [
+          {
+            "do": "Choose index rule",
+            "result": "$n_k=2k$",
+            "why": "even indices"
+          },
+          {
+            "do": "Check first index",
+            "result": "$n_1=2$",
+            "why": "gives $a_2$"
+          },
+          {
+            "do": "Check second index",
+            "result": "$n_2=4$",
+            "why": "gives $a_4$"
+          },
+          {
+            "do": "Check increasing property",
+            "result": "$2k<2(k+1)$",
+            "why": "indices strictly increase"
+          },
+          {
+            "do": "Conclude",
+            "result": "yes",
+            "why": "it is an infinite order-preserving selection"
+          }
+        ],
+        "answer": "Yes; it is the subsequence $a_{2k}$."
+      },
+      {
+        "problem": "Show that $1,-1,1,-1,\\ldots$ does not converge using subsequences.",
+        "steps": [
+          {
+            "do": "Define the even subsequence",
+            "result": "a_{2k}=1$",
+            "why": "even terms are 1"
+          },
+          {
+            "do": "Take its limit",
+            "result": "$1$",
+            "why": "constant subsequence"
+          },
+          {
+            "do": "Define the odd subsequence",
+            "result": "a_{2k-1}=-1$",
+            "why": "odd terms are -1"
+          },
+          {
+            "do": "Take its limit",
+            "result": "$-1$",
+            "why": "constant subsequence"
+          },
+          {
+            "do": "Compare limits",
+            "result": "$1\\ne-1$",
+            "why": "a convergent sequence cannot have two subsequential limits"
+          }
+        ],
+        "answer": "The sequence does not converge."
+      },
+      {
+        "problem": "For $a_n=n/(n+1)$, find the subsequence $a_{k^2}$ and its limit.",
+        "steps": [
+          {
+            "do": "Substitute $n=k^2$",
+            "result": "$a_{k^2}=k^2/(k^2+1)$",
+            "why": "use square indices"
+          },
+          {
+            "do": "Rewrite the expression",
+            "result": "$1-1/(k^2+1)$",
+            "why": "subtract from 1"
+          },
+          {
+            "do": "Take the reciprocal limit",
+            "result": "$1/(k^2+1)\\to0$",
+            "why": "denominator grows"
+          },
+          {
+            "do": "Take the subsequence limit",
+            "result": "$1$",
+            "why": "remaining value"
+          },
+          {
+            "do": "Connect to original",
+            "result": "same limit as $a_n$",
+            "why": "subsequences of convergent sequences share the limit"
+          }
+        ],
+        "answer": "$a_{k^2}=k^2/(k^2+1)\\to1$."
+      },
+      {
+        "problem": "A training log alternates validation scores $0.80,0.70,0.85,0.72,0.875,0.73,\\ldots$ with even scores approaching $0.75$ and odd scores approaching $0.90$. What does that imply?",
+        "steps": [
+          {
+            "do": "Identify odd subsequence",
+            "result": "$0.80,0.85,0.875,\\ldots$",
+            "why": "odd-indexed scores"
+          },
+          {
+            "do": "State its limit",
+            "result": "$0.90$",
+            "why": "given behavior"
+          },
+          {
+            "do": "Identify even subsequence",
+            "result": "$0.70,0.72,0.73,\\ldots$",
+            "why": "even-indexed scores"
+          },
+          {
+            "do": "State its limit",
+            "result": "$0.75$",
+            "why": "given behavior"
+          },
+          {
+            "do": "Compare limits",
+            "result": "$0.90\\ne0.75$",
+            "why": "two subsequential limits differ"
+          }
+        ],
+        "answer": "The full validation-score sequence does not converge."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Train versus validation alternation",
+        "background": "Logs often alternate metric types; subsequences separate them.",
+        "numbers": "If odd entries are training losses $0.6,0.4,0.3$ and even entries are validation losses $0.7,0.55,0.50$, analyze $a_{2k-1}$ and $a_{2k}$ separately."
+      },
+      {
+        "title": "Mini-batch cycles",
+        "background": "Cyclic data order can create subsequences for each phase of a cycle.",
+        "numbers": "A 3-batch cycle uses subsequences $a_{3k}$, $a_{3k+1}$, and $a_{3k+2}$; their limits reveal periodic bias."
+      },
+      {
+        "title": "Checkpoint sampling",
+        "background": "Saving every tenth epoch forms a subsequence of a full training run.",
+        "numbers": "Epochs $10,20,30$ use index rule $n_k=10k$ and preserve chronological order."
+      },
+      {
+        "title": "Detecting nonconvergence",
+        "background": "Different subsequential limits prove an oscillating algorithm has not settled.",
+        "numbers": "Updates $1,-1,1,-1$ have even subsequence $1$ and odd subsequence $-1$."
+      },
+      {
+        "title": "Sparse evaluation",
+        "background": "Expensive validation may be run at square-number epochs.",
+        "numbers": "Epochs $1,4,9,16$ follow $n_k=k^2$; this is still a valid subsequence."
+      },
+      {
+        "title": "Cluster analysis in simulations",
+        "background": "Long simulations may visit several regimes; subsequences isolate visits near one regime.",
+        "numbers": "Samples near value $2$ at times $5,11,19$ form a subsequence if those times increase."
+      }
+    ],
+    "applicationsClose": "Subsequences are infinite order-preserving selections; they inherit limits from convergent sequences and expose multiple behaviors in divergent ones.",
+    "takeaways": [
+      "A subsequence has indices $n_1<n_2<\\cdots$.",
+      "Every subsequence of a convergent sequence has the same limit.",
+      "Two subsequences with different limits prove divergence.",
+      "Subsequences are central to compactness arguments."
+    ],
     "prereqs": [
       "math-04-07"
     ]
@@ -174,19 +2182,266 @@
   B({
     "id": "math-04-09",
     "title": "The Bolzano–Weierstrass theorem",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: the bolzano–weierstrass theorem.",
+    "tagline": "Every bounded real sequence contains a convergent subsequence.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Subsequences</i>"
+        "bounded sequences",
+        "subsequences",
+        "completeness"
       ],
       "leadsTo": [
-        "the next lesson, <i>Cauchy sequences</i>"
+        "compactness",
+        "Cauchy sequences",
+        "convergent subsequences in optimization"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "interval nesting",
+        "supremum",
+        "monotone subsequences"
       ]
     },
+    "motivation": "<p>A bounded sequence can still jump around forever. The surprise is that in the real line it cannot avoid having some convergent trail hiding inside it.</p><p>The <b>Bolzano-Weierstrass theorem</b> is one of the first compactness results: boundedness plus the completeness of $\\mathbb{R}$ forces a convergent subsequence. It is a gentle but powerful guarantee of structure.</p>",
+    "definition": "<p><b>Bolzano-Weierstrass:</b> every bounded sequence in $\\mathbb{R}$ has a convergent subsequence. One proof repeatedly bisects a closed interval containing infinitely many terms. At each stage choose a half that still contains infinitely many terms; the nested intervals have lengths tending to $0$, and completeness gives a unique point trapped inside. Selecting one term from each interval yields a subsequence converging to that point.</p><p>The epsilon reason: after enough bisections, the chosen interval length is below $\\varepsilon$. All later selected subsequence terms lie in that same tiny interval around the trapped point, so their distance from the point is below $\\varepsilon$.</p><p><b>Assumptions that matter:</b> the sequence must be bounded and real-valued, the selected indices must increase, and the theorem guarantees existence of a convergent subsequence, not convergence of the whole sequence.</p>",
+    "worked": {
+      "problem": "Use Bolzano-Weierstrass to justify a convergent subsequence of $a_n=(-1)^n+1/n$, and identify one.",
+      "skills": [
+        "boundedness",
+        "subsequences",
+        "subsequential limits"
+      ],
+      "strategy": "First show boundedness, then exhibit a convergent subsequence explicitly.",
+      "steps": [
+        {
+          "do": "Bound the sign term",
+          "result": "$-1\\le(-1)^n\\le1$",
+          "why": "it only takes two values"
+        },
+        {
+          "do": "Bound the reciprocal term",
+          "result": "$0<1/n\\le1$",
+          "why": "for $n\\ge1$"
+        },
+        {
+          "do": "Combine bounds",
+          "result": "$-1<a_n\\le2$",
+          "why": "add the inequalities"
+        },
+        {
+          "do": "Invoke the theorem",
+          "result": "a convergent subsequence exists",
+          "why": "the sequence is bounded in $\\mathbb{R}$"
+        },
+        {
+          "do": "Choose even indices",
+          "result": "$a_{2k}=1+1/(2k)$",
+          "why": "even powers are positive"
+        },
+        {
+          "do": "Take the limit",
+          "result": "$a_{2k}\\to1$",
+          "why": "the reciprocal term tends to 0"
+        }
+      ],
+      "verify": "The odd subsequence also converges, to $-1$, confirming the theorem while the full sequence still diverges.",
+      "answer": "The sequence is bounded, so a convergent subsequence exists; one is $a_{2k}\\to1$.",
+      "connects": "Bolzano-Weierstrass guarantees hidden convergence inside bounded real sequences."
+    },
+    "practice": [
+      {
+        "problem": "Find a convergent subsequence of $(-1)^n$.",
+        "steps": [
+          {
+            "do": "Choose even indices",
+            "result": "n_k=2k$",
+            "why": "preserve increasing order"
+          },
+          {
+            "do": "Evaluate the subsequence",
+            "result": "a_{2k}=1$",
+            "why": "even powers of $-1$"
+          },
+          {
+            "do": "Recognize constant behavior",
+            "result": "1,1,1,\\ldots$",
+            "why": "all selected terms match"
+          },
+          {
+            "do": "Take the limit",
+            "result": "1$",
+            "why": "constant sequences converge to their value"
+          },
+          {
+            "do": "State the result",
+            "result": "$a_{2k}\\to1$",
+            "why": "one convergent subsequence found"
+          }
+        ],
+        "answer": "The even subsequence converges to $1$."
+      },
+      {
+        "problem": "Show $\\sin n$ has a convergent subsequence without identifying its limit.",
+        "steps": [
+          {
+            "do": "Use the sine bound",
+            "result": "$-1\\le\\sin n\\le1$",
+            "why": "sine values always lie in this interval"
+          },
+          {
+            "do": "State boundedness",
+            "result": "$(\\sin n)$ is bounded",
+            "why": "all terms are inside $[-1,1]$"
+          },
+          {
+            "do": "Check real-valued condition",
+            "result": "$\\sin n\\in\\mathbb{R}$",
+            "why": "the theorem applies in $\\mathbb{R}$"
+          },
+          {
+            "do": "Apply Bolzano-Weierstrass",
+            "result": "there exists a convergent subsequence",
+            "why": "bounded real sequence"
+          },
+          {
+            "do": "Name the conclusion",
+            "result": "$\\sin(n_k)\\to L$ for some $L\\in[-1,1]$",
+            "why": "the exact $L$ is not required"
+          }
+        ],
+        "answer": "A convergent subsequence exists by Bolzano-Weierstrass."
+      },
+      {
+        "problem": "Explain why Bolzano-Weierstrass does not apply to $a_n=n$.",
+        "steps": [
+          {
+            "do": "Check bounded above",
+            "result": "$a_n=n$ has no upper bound",
+            "why": "for any $M$, choose $n>M$"
+          },
+          {
+            "do": "State failure",
+            "result": "the sequence is unbounded",
+            "why": "boundedness is required"
+          },
+          {
+            "do": "Compare with theorem",
+            "result": "Bolzano-Weierstrass needs bounded real sequence",
+            "why": "an assumption fails"
+          },
+          {
+            "do": "Assess subsequences",
+            "result": "any subsequence $a_{n_k}=n_k\\to\\infty$",
+            "why": "indices increase without bound"
+          },
+          {
+            "do": "Conclude",
+            "result": "no finite convergent subsequence is guaranteed or present",
+            "why": "the theorem cannot be used"
+          }
+        ],
+        "answer": "It is unbounded, so the theorem does not apply."
+      },
+      {
+        "problem": "In the interval-halving proof, how many halvings make an initial interval of length $8$ shorter than $0.1$?",
+        "steps": [
+          {
+            "do": "Write length after $k$ halvings",
+            "result": "$8/2^k$",
+            "why": "each bisection halves length"
+          },
+          {
+            "do": "Set the target",
+            "result": "$8/2^k<0.1$",
+            "why": "want length below tolerance"
+          },
+          {
+            "do": "Rearrange",
+            "result": "$2^k>80$",
+            "why": "multiply by $2^k$ and divide by 0.1"
+          },
+          {
+            "do": "Test powers",
+            "result": "$2^6=64$, $2^7=128$",
+            "why": "find first power above 80"
+          },
+          {
+            "do": "Choose $k$",
+            "result": "$7$",
+            "why": "seven halvings suffice"
+          }
+        ],
+        "answer": "$7$ halvings make the length less than $0.1$."
+      },
+      {
+        "problem": "A bounded metric sequence has all values in $[0,1]$. What does Bolzano-Weierstrass guarantee, and what does it not guarantee?",
+        "steps": [
+          {
+            "do": "State boundedness",
+            "result": "$0\\le a_n\\le1$",
+            "why": "all terms lie in a bounded interval"
+          },
+          {
+            "do": "Apply the theorem",
+            "result": "some subsequence converges",
+            "why": "bounded real sequence"
+          },
+          {
+            "do": "Name the limit location",
+            "result": "$L\\in[0,1]$",
+            "why": "closed interval contains subsequential limits"
+          },
+          {
+            "do": "Avoid overclaiming",
+            "result": "the full sequence need not converge",
+            "why": "oscillation can remain"
+          },
+          {
+            "do": "Give a model example",
+            "result": "$0,1,0,1,\\ldots$",
+            "why": "bounded with convergent constant subsequences but divergent full sequence"
+          }
+        ],
+        "answer": "It guarantees a convergent subsequence with limit in $[0,1]$, not convergence of the full sequence."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Checkpoint selection",
+        "background": "A bounded sequence of validation scores always has a convergent subsequence of checkpoints in the mathematical model.",
+        "numbers": "Scores in $[0,1]$ at epochs $1,2,\\ldots$ satisfy the boundedness hypothesis exactly."
+      },
+      {
+        "title": "Parameter clipping",
+        "background": "Clipping weights to a bounded interval creates compactness in one dimension.",
+        "numbers": "If weights are clipped to $[-5,5]$, any infinite sequence of one weight has a convergent subsequence."
+      },
+      {
+        "title": "Simulation samples",
+        "background": "Bounded physical measurements contain stable subsequences even when the whole trace oscillates.",
+        "numbers": "Temperature readings in $[18,22]$ over infinitely many samples have a convergent subsequence."
+      },
+      {
+        "title": "Interval nesting algorithms",
+        "background": "Bisection and branch-and-bound shrink intervals using the same nested-interval idea.",
+        "numbers": "Starting length $4$, after $10$ halvings length is $4/1024\\approx0.00391$."
+      },
+      {
+        "title": "Compactness intuition for optimization",
+        "background": "Existence proofs for minimizers often combine bounded feasible sets with convergent subsequences.",
+        "numbers": "A sequence of candidate losses $0.5,0.4,0.35$ with parameters in $[0,1]$ has subsequential parameter limits."
+      },
+      {
+        "title": "Adversarial examples on bounded pixels",
+        "background": "Images live in a bounded cube, which makes subsequence compactness plausible coordinatewise.",
+        "numbers": "A grayscale pixel sequence in $[0,255]$ has a convergent subsequence for that pixel value."
+      }
+    ],
+    "applicationsClose": "Bolzano-Weierstrass is the hidden-convergence theorem: bounded real sequences may wander, but some infinite trail settles.",
+    "takeaways": [
+      "Every bounded real sequence has a convergent subsequence.",
+      "The theorem relies on completeness of $\\mathbb{R}$.",
+      "It does not imply the original sequence converges.",
+      "Interval halving is the core proof idea."
+    ],
     "prereqs": [
       "math-04-08"
     ]
@@ -195,19 +2450,271 @@
   B({
     "id": "math-04-10",
     "title": "Cauchy sequences",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: cauchy sequences.",
+    "tagline": "A Cauchy sequence is one whose terms eventually get close to each other, even before you know the limit.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Bolzano–Weierstrass theorem</i>"
+        "limits of sequences",
+        "absolute value",
+        "completeness"
       ],
       "leadsTo": [
-        "the next lesson, <i>Infinite series</i>"
+        "complete metric spaces",
+        "infinite series",
+        "fixed-point methods"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "epsilon-N proofs",
+        "convergence",
+        "triangle inequality"
       ]
     },
+    "motivation": "<p>Usually convergence names a destination first. Cauchy sequences ask a more practical question: do the late terms crowd together so tightly that a destination must exist?</p><p>In the real numbers, the answer is yes. Cauchy is the internal test for convergence: terms eventually agree with each other, and completeness supplies the limit.</p>",
+    "definition": "<p>A sequence $(a_n)$ is <b>Cauchy</b> if for every $\\varepsilon>0$ there exists $N\\in\\mathbb{N}$ such that $m,n\\ge N\\Rightarrow |a_m-a_n|<\\varepsilon$. The definition compares tail terms to each other, not to a known $L$.</p><p>Every convergent sequence is Cauchy: if $a_n\\to L$, choose $N$ so $|a_n-L|<\\varepsilon/2$ for $n\\ge N$. Then for $m,n\\ge N$, the triangle inequality gives $|a_m-a_n|\\le |a_m-L|+|a_n-L|<\\varepsilon$. In $\\mathbb{R}$, completeness gives the converse: every Cauchy sequence converges.</p><p><b>Assumptions that matter:</b> both indices must be in the tail, $N$ depends on $\\varepsilon$, the triangle inequality is the proof engine, and Cauchy implies convergence in $\\mathbb{R}$ but not in every incomplete space.</p>",
+    "worked": {
+      "problem": "Prove $a_n=1/n$ is Cauchy.",
+      "skills": [
+        "Cauchy definition",
+        "tail bounds",
+        "epsilon-N proof"
+      ],
+      "strategy": "For large $m,n$, both terms are close to 0, so their difference is small by the triangle inequality.",
+      "steps": [
+        {
+          "do": "Start with the difference",
+          "result": "$|1/m-1/n|$",
+          "why": "Cauchy compares two tail terms"
+        },
+        {
+          "do": "Apply the triangle inequality",
+          "result": "$|1/m-1/n|\\le1/m+1/n$",
+          "why": "bound by distances to 0"
+        },
+        {
+          "do": "Choose a threshold",
+          "result": "$N>2/\\varepsilon$",
+          "why": "make each reciprocal below $\\varepsilon/2$"
+        },
+        {
+          "do": "Use $m\\ge N$",
+          "result": "$1/m\\le1/N<\\varepsilon/2$",
+          "why": "tail bound for first index"
+        },
+        {
+          "do": "Use $n\\ge N$",
+          "result": "$1/n\\le1/N<\\varepsilon/2$",
+          "why": "tail bound for second index"
+        },
+        {
+          "do": "Add the bounds",
+          "result": "$|1/m-1/n|<\\varepsilon$",
+          "why": "two halves make the tolerance"
+        }
+      ],
+      "verify": "For $\\varepsilon=0.01$, any $N>200$ works; after that, any two tail reciprocals differ by less than $0.01$.",
+      "answer": "$(1/n)$ is Cauchy.",
+      "connects": "Cauchy proofs show the tail clusters even without naming the limit first."
+    },
+    "practice": [
+      {
+        "problem": "Show every constant sequence $a_n=7$ is Cauchy.",
+        "steps": [
+          {
+            "do": "Compare two terms",
+            "result": "$|a_m-a_n|=|7-7|$",
+            "why": "use arbitrary indices"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0$",
+            "why": "same value"
+          },
+          {
+            "do": "Compare to tolerance",
+            "result": "$0<\\varepsilon$",
+            "why": "positive tolerance"
+          },
+          {
+            "do": "Choose threshold",
+            "result": "$N=1$",
+            "why": "all terms work"
+          },
+          {
+            "do": "State conclusion",
+            "result": "m,n\\ge1\\Rightarrow |a_m-a_n|<\\varepsilon$",
+            "why": "Cauchy definition"
+          }
+        ],
+        "answer": "The constant sequence is Cauchy."
+      },
+      {
+        "problem": "Show $a_n=(-1)^n$ is not Cauchy.",
+        "steps": [
+          {
+            "do": "Choose a tolerance",
+            "result": "$\\varepsilon=1$",
+            "why": "one failed tolerance is enough"
+          },
+          {
+            "do": "Take any threshold",
+            "result": "N$ arbitrary",
+            "why": "we must find late terms far apart"
+          },
+          {
+            "do": "Choose a late even index",
+            "result": "m\\ge N$ even",
+            "why": "possible beyond any threshold"
+          },
+          {
+            "do": "Choose a late odd index",
+            "result": "n\\ge N$ odd",
+            "why": "also possible beyond any threshold"
+          },
+          {
+            "do": "Compute the distance",
+            "result": "|a_m-a_n|=|1-(-1)|=2$",
+            "why": "tail terms remain far apart"
+          },
+          {
+            "do": "Compare to tolerance",
+            "result": "$2\\not<1$",
+            "why": "Cauchy condition fails"
+          }
+        ],
+        "answer": "$(-1)^n$ is not Cauchy."
+      },
+      {
+        "problem": "If $|a_n-3|<0.01$ for all $n\\ge100$, show tail terms differ by less than $0.02$.",
+        "steps": [
+          {
+            "do": "Take tail indices",
+            "result": "m,n\\ge100$",
+            "why": "both estimates apply"
+          },
+          {
+            "do": "Insert the limit point",
+            "result": "$|a_m-a_n|\\le |a_m-3|+|a_n-3|$",
+            "why": "triangle inequality"
+          },
+          {
+            "do": "Use the first bound",
+            "result": "$|a_m-3|<0.01$",
+            "why": "given"
+          },
+          {
+            "do": "Use the second bound",
+            "result": "$|a_n-3|<0.01$",
+            "why": "given"
+          },
+          {
+            "do": "Add",
+            "result": "$|a_m-a_n|<0.02$",
+            "why": "tail terms are close"
+          }
+        ],
+        "answer": "For $m,n\\ge100$, $|a_m-a_n|<0.02$."
+      },
+      {
+        "problem": "Show $a_n=\\sum_{k=1}^n 2^{-k}$ is Cauchy using a tail estimate.",
+        "steps": [
+          {
+            "do": "Assume $m>n$",
+            "result": "$a_m-a_n=\\sum_{k=n+1}^m2^{-k}$",
+            "why": "subtract partial sums"
+          },
+          {
+            "do": "Bound by the infinite tail",
+            "result": "$\\sum_{k=n+1}^{\\infty}2^{-k}$",
+            "why": "finite tail is smaller"
+          },
+          {
+            "do": "Evaluate the geometric tail",
+            "result": "$2^{-n}$",
+            "why": "first omitted term $2^{-(n+1)}$ over $1-1/2$"
+          },
+          {
+            "do": "Choose threshold",
+            "result": "$N$ with $2^{-N}<\\varepsilon$",
+            "why": "powers of 2 shrink to 0"
+          },
+          {
+            "do": "Conclude for $m,n\\ge N$",
+            "result": "|a_m-a_n|<\\varepsilon$",
+            "why": "tail bound controls differences"
+          }
+        ],
+        "answer": "The partial sums are Cauchy."
+      },
+      {
+        "problem": "An iterative solver has residual estimates $|x_m-x_n|\\le0.9^n$ whenever $m>n$. Find $N$ for tolerance $0.01$.",
+        "steps": [
+          {
+            "do": "Set the target",
+            "result": "$0.9^n<0.01$",
+            "why": "ensure all later differences are small"
+          },
+          {
+            "do": "Take logarithms",
+            "result": "$n\\log(0.9)<\\log(0.01)$",
+            "why": "both sides positive after careful sign handling"
+          },
+          {
+            "do": "Divide by negative log",
+            "result": "$n>\\log(0.01)/\\log(0.9)$",
+            "why": "inequality flips because $\\log(0.9)<0$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$\\log(0.01)/\\log(0.9)\\approx43.7$",
+            "why": "calculator values"
+          },
+          {
+            "do": "Choose threshold",
+            "result": "$N=44$",
+            "why": "integer above the bound"
+          }
+        ],
+        "answer": "$N=44$ makes the residual bound less than $0.01$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Stopping without knowing the answer",
+        "background": "Numerical algorithms often stop when successive iterates are close, a Cauchy-style criterion.",
+        "numbers": "If $|x_{k+1}-x_k|<10^{-6}$ for many late $k$, the tail is empirically clustering."
+      },
+      {
+        "title": "Partial sums of series",
+        "background": "Series convergence is exactly Cauchy behavior of partial sums.",
+        "numbers": "For geometric tail $2^{-n}$, choosing $n=20$ gives tail below $9.54\\cdot10^{-7}$."
+      },
+      {
+        "title": "Distributed consensus",
+        "background": "Nodes reaching agreement means their values become pairwise close.",
+        "numbers": "If all node values after round 50 lie in $[1.000,1.003]$, every pair differs by at most $0.003$."
+      },
+      {
+        "title": "Model checkpoint stability",
+        "background": "A run is stable when late checkpoints change little in parameter space.",
+        "numbers": "If parameter vectors at epochs after 100 differ by norm below $0.02$, they satisfy a practical Cauchy tolerance."
+      },
+      {
+        "title": "Compression refinement",
+        "background": "Progressive encoders produce better approximations whose differences shrink.",
+        "numbers": "If frame approximations differ by at most $255/2^k$, then at $k=12$ the bound is about $0.0623$ intensity units."
+      },
+      {
+        "title": "Completeness of real arithmetic",
+        "background": "Cauchy decimal approximations define real numbers.",
+        "numbers": "Approximations $1.4,1.41,1.414,1.4142$ have pairwise tail differences below $0.001$ after the third term."
+      }
+    ],
+    "applicationsClose": "Cauchy sequences let the tail certify convergence internally; in $\\mathbb{R}$, completeness turns that clustering into an actual limit.",
+    "takeaways": [
+      "Cauchy means all sufficiently late pairs of terms are close.",
+      "Every convergent real sequence is Cauchy by the triangle inequality.",
+      "Every Cauchy sequence in $\\mathbb{R}$ converges.",
+      "Series convergence is Cauchy convergence of partial sums."
+    ],
     "prereqs": [
       "math-04-09"
     ]
@@ -216,19 +2723,272 @@
   B({
     "id": "math-04-11",
     "title": "Infinite series",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: infinite series.",
+    "tagline": "An infinite series converges when its sequence of partial sums converges.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Cauchy sequences</i>"
+        "sequences",
+        "limits of sequences",
+        "Cauchy sequences"
       ],
       "leadsTo": [
-        "the next lesson, <i>Convergence tests for series</i>"
+        "power series",
+        "Fourier series",
+        "expectations and approximations"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "partial sums",
+        "geometric series",
+        "comparison tests",
+        "absolute convergence"
       ]
     },
+    "motivation": "<p>You already add finite lists. An infinite series asks what happens when the list never stops: $a_1+a_2+a_3+\\cdots$.</p><p>The careful move is to stop after $n$ terms, study the partial sums $s_n$, and ask whether those sums converge. Infinite addition is not magic; it is a sequence limit.</p>",
+    "definition": "<p>Given a sequence $(a_n)$, the <b>infinite series</b> $\\sum_{n=1}^{\\infty}a_n$ has partial sums $s_N=\\sum_{n=1}^{N}a_n$. The series <b>converges</b> to $S$ if $s_N\\to S$ as $N\\to\\infty$; otherwise it diverges.</p><p>The geometric series is the model example: if $|r|<1$, then $\\sum_{n=0}^{\\infty}ar^n=a/(1-r)$. Derive it from finite sums: $s_N=a(1-r^{N+1})/(1-r)$, and $r^{N+1}\\to0$ when $|r|<1$.</p><p><b>Assumptions that matter:</b> terms must satisfy $a_n\\to0$ for convergence, but that condition alone is not sufficient; convergence means partial sums converge; absolute convergence of $\\sum |a_n|$ implies convergence of $\\sum a_n$; and rearrangements are delicate for conditionally convergent series.</p>",
+    "worked": {
+      "problem": "Compute $\\sum_{n=0}^{\\infty}3(1/2)^n$.",
+      "skills": [
+        "geometric series",
+        "partial sums",
+        "convergence condition"
+      ],
+      "strategy": "Identify the first term and ratio, check $|r|<1$, then use the geometric formula.",
+      "steps": [
+        {
+          "do": "Identify the first term",
+          "result": "$a=3$",
+          "why": "term at $n=0$"
+        },
+        {
+          "do": "Identify the ratio",
+          "result": "$r=1/2$",
+          "why": "each term is half the previous one"
+        },
+        {
+          "do": "Check convergence",
+          "result": "|r|=1/2<1$",
+          "why": "geometric series converges"
+        },
+        {
+          "do": "Apply the formula",
+          "result": "$a/(1-r)=3/(1-1/2)$",
+          "why": "sum of a convergent geometric series"
+        },
+        {
+          "do": "Simplify the denominator",
+          "result": "$3/(1/2)$",
+          "why": "$1-1/2=1/2$"
+        },
+        {
+          "do": "Divide",
+          "result": "$6$",
+          "why": "dividing by one half doubles"
+        }
+      ],
+      "verify": "The partial sums $3,4.5,5.25,5.625$ move toward $6$ from below.",
+      "answer": "$\\sum_{n=0}^{\\infty}3(1/2)^n=6$.",
+      "connects": "A series is controlled by the convergence of its partial sums."
+    },
+    "practice": [
+      {
+        "problem": "Find the first four partial sums of $\\sum_{n=1}^{\\infty}1/n$.",
+        "steps": [
+          {
+            "do": "Compute $s_1$",
+            "result": "$1$",
+            "why": "first term"
+          },
+          {
+            "do": "Compute $s_2$",
+            "result": "$1+1/2=3/2$",
+            "why": "add second term"
+          },
+          {
+            "do": "Compute $s_3$",
+            "result": "$3/2+1/3=11/6$",
+            "why": "common denominator 6"
+          },
+          {
+            "do": "Compute $s_4$",
+            "result": "$11/6+1/4=25/12$",
+            "why": "common denominator 12"
+          },
+          {
+            "do": "Note behavior",
+            "result": "partial sums increase",
+            "why": "all terms are positive"
+          }
+        ],
+        "answer": "$s_1=1$, $s_2=3/2$, $s_3=11/6$, $s_4=25/12$."
+      },
+      {
+        "problem": "Use the geometric formula to sum $\\sum_{n=1}^{\\infty}5(0.2)^{n-1}$.",
+        "steps": [
+          {
+            "do": "Identify the first term",
+            "result": "$5$",
+            "why": "when $n=1$, exponent is 0"
+          },
+          {
+            "do": "Identify the ratio",
+            "result": "$0.2$",
+            "why": "each term is multiplied by 0.2"
+          },
+          {
+            "do": "Check convergence",
+            "result": "$0.2<1$",
+            "why": "geometric condition"
+          },
+          {
+            "do": "Apply formula",
+            "result": "$5/(1-0.2)$",
+            "why": "sum is first term over one minus ratio"
+          },
+          {
+            "do": "Simplify",
+            "result": "$5/0.8=6.25$",
+            "why": "divide"
+          }
+        ],
+        "answer": "The sum is $6.25$."
+      },
+      {
+        "problem": "Show that $\\sum_{n=1}^{\\infty}1/n$ fails the term test?",
+        "steps": [
+          {
+            "do": "Identify the terms",
+            "result": "$a_n=1/n$",
+            "why": "harmonic-series terms"
+          },
+          {
+            "do": "Take the term limit",
+            "result": "$a_n\\to0$",
+            "why": "reciprocals shrink"
+          },
+          {
+            "do": "Recall the term test",
+            "result": "if $a_n$ does not tend to 0, the series diverges",
+            "why": "it is only a one-way test"
+          },
+          {
+            "do": "Apply the test",
+            "result": "inconclusive",
+            "why": "the terms do tend to 0"
+          },
+          {
+            "do": "State the known result",
+            "result": "the harmonic series still diverges",
+            "why": "zero terms are necessary, not sufficient"
+          }
+        ],
+        "answer": "The term test is inconclusive; although $1/n\\to0$, the harmonic series diverges."
+      },
+      {
+        "problem": "Use comparison to show $\\sum_{n=1}^{\\infty}1/n^2$ has tail after $N$ bounded by $1/N$.",
+        "steps": [
+          {
+            "do": "Compare terms for $n>N$",
+            "result": "$1/n^2\\le1/[n(n-1)]$",
+            "why": "because $n-1\\le n$"
+          },
+          {
+            "do": "Rewrite comparison term",
+            "result": "$1/[n(n-1)]=1/(n-1)-1/n$",
+            "why": "telescoping identity"
+          },
+          {
+            "do": "Sum from $N+1$ to $M$",
+            "result": "$\\sum_{n=N+1}^{M}(1/(n-1)-1/n)$",
+            "why": "finite comparison tail"
+          },
+          {
+            "do": "Telescope",
+            "result": "$1/N-1/M$",
+            "why": "middle terms cancel"
+          },
+          {
+            "do": "Let $M\\to\\infty$",
+            "result": "$\\le1/N$",
+            "why": "the last term tends to 0"
+          }
+        ],
+        "answer": "The tail after $N$ is at most $1/N$."
+      },
+      {
+        "problem": "A discounted reward is $1+0.9+0.9^2+\\cdots$. Compute its infinite sum and the tail after 10 terms.",
+        "steps": [
+          {
+            "do": "Identify first term and ratio",
+            "result": "$a=1$, $r=0.9$",
+            "why": "geometric rewards"
+          },
+          {
+            "do": "Compute total sum",
+            "result": "$1/(1-0.9)=10$",
+            "why": "geometric formula"
+          },
+          {
+            "do": "Write tail after 10 terms",
+            "result": "$0.9^{10}+0.9^{11}+\\cdots$",
+            "why": "first omitted term"
+          },
+          {
+            "do": "Sum the tail",
+            "result": "$0.9^{10}/(1-0.9)$",
+            "why": "geometric tail formula"
+          },
+          {
+            "do": "Approximate",
+            "result": "$0.3487/0.1=3.487$",
+            "why": "using $0.9^{10}\\approx0.3487$"
+          }
+        ],
+        "answer": "The total is $10$, and the tail after 10 terms is about $3.487$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Discounted reinforcement learning",
+        "background": "Discounted returns are geometric series when rewards are constant.",
+        "numbers": "With reward $2$ and $\\gamma=0.95$, return is $2/(1-0.95)=40$."
+      },
+      {
+        "title": "Neural network residual corrections",
+        "background": "Iterative refinement can be modeled by shrinking error terms.",
+        "numbers": "Errors $1,0.5,0.25,\\ldots$ sum to $2$, so total correction is bounded."
+      },
+      {
+        "title": "Numerical approximation tails",
+        "background": "Series tail bounds tell you how many terms are enough.",
+        "numbers": "For a $1/n^2$ tail below $0.001$, the bound $1/N<0.001$ requires $N>1000$."
+      },
+      {
+        "title": "Computer graphics lighting",
+        "background": "Multiple light bounces with reflectance below 1 form a geometric decay.",
+        "numbers": "Reflectance $0.6$ gives total relative light $1/(1-0.6)=2.5$ over infinitely many bounces."
+      },
+      {
+        "title": "Queueing and retries",
+        "background": "Repeated retry probabilities often form geometric sums.",
+        "numbers": "If retry probability is $0.2$, expected attempts are $1+0.2+0.04+\\cdots=1.25$."
+      },
+      {
+        "title": "Power-series features",
+        "background": "Many functions are approximated by infinite polynomial series truncated in practice.",
+        "numbers": "For $e^1$, the first four terms $1+1+1/2+1/6=2.6667$ approximate $e\\approx2.7183$ with error about $0.0516$."
+      },
+      {
+        "title": "Signal decompositions",
+        "background": "Fourier series represent signals as infinite sums of waves, with coefficients controlling convergence.",
+        "numbers": "If amplitudes are $1/2^k$, total amplitude bound is $1$ because $1/2+1/4+\\cdots=1$."
+      }
+    ],
+    "applicationsClose": "An infinite series is a sequence of partial sums in disguise; convergence means those finite sums approach one stable value.",
+    "takeaways": [
+      "$\\sum a_n$ converges when partial sums $s_N$ converge.",
+      "Geometric series converge for $|r|<1$ and sum to $a/(1-r)$.",
+      "Terms must go to zero, but that alone does not guarantee convergence.",
+      "Tail estimates turn infinite sums into practical finite approximations."
+    ],
     "prereqs": [
       "math-04-10"
     ]
@@ -237,19 +2997,267 @@
   B({
     "id": "math-04-12",
     "title": "Convergence tests for series",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: convergence tests for series.",
+    "tagline": "Convergence tests let you decide whether infinitely many small terms add to a finite total.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Infinite series</i>"
+        "Infinite series",
+        "limits of sequences",
+        "positive sequences"
       ],
       "leadsTo": [
-        "the next lesson, <i>Absolute and conditional convergence</i>"
+        "Absolute and conditional convergence",
+        "power series",
+        "Taylor's theorem with remainder"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "comparison",
+        "$p$-series",
+        "geometric series",
+        "ratio and root limits"
       ]
     },
+    "motivation": "<p>You already know how to add a long finite list. A series asks for more: if the list never ends, do the partial sums settle down? The geometric series $1+\\dfrac12+\\dfrac14+\\cdots=2$ says yes, while $1+\\dfrac12+\\dfrac13+\\cdots$ says no.</p><p><b>Convergence tests</b> are careful shortcuts. They replace the impossible task of adding forever with a finite diagnosis: compare the tail to a series whose behavior you already trust, or measure how fast the terms shrink.</p>",
+    "definition": "<p>A series $\\sum_{n=1}^{\\infty}a_n$ converges when its partial sums $s_N=\\sum_{n=1}^{N}a_n$ converge to a finite limit. The first necessary test is $a_n\\to0$; if not, the series diverges. For nonnegative terms, comparison says $0\\le a_n\\le b_n$ and $\\sum b_n$ convergent implies $\\sum a_n$ convergent, while $0\\le b_n\\le a_n$ and $\\sum b_n$ divergent implies $\\sum a_n$ divergent.</p><p>The ratio test follows from comparison with a geometric series. If $\\lim |a_{n+1}/a_n|=L<1$, then eventually the terms shrink like $r^n$ for some $L<r<1$, so the tail is bounded by a convergent geometric tail. If $L>1$, the terms do not tend to zero.</p><p><b>Assumptions that matter:</b> comparison tests require eventual nonnegative terms; the term test proves only divergence; ratio and root tests are inconclusive when the limit is $1$; endpoint or borderline cases often need a different test.</p>",
+    "worked": {
+      "problem": "Determine whether $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{4n+3}{n^3+1}$ converges.",
+      "skills": [
+        "limit comparison",
+        "$p$-series",
+        "tail behavior"
+      ],
+      "strategy": "The leading terms look like $4n/n^3=4/n^2$, so compare with the convergent $p$-series $\\sum 1/n^2$.",
+      "steps": [
+        {
+          "do": "Choose a comparison",
+          "result": "$b_n=1/n^2$",
+          "why": "the largest powers control the tail"
+        },
+        {
+          "do": "Form the ratio",
+          "result": "$\\dfrac{a_n}{b_n}=\\dfrac{4n+3}{n^3+1}\\cdot n^2$",
+          "why": "limit comparison checks long-run proportionality"
+        },
+        {
+          "do": "Multiply",
+          "result": "$\\dfrac{4n^3+3n^2}{n^3+1}$",
+          "why": "write one rational expression"
+        },
+        {
+          "do": "Divide by $n^3$",
+          "result": "$\\dfrac{4+3/n}{1+1/n^3}$",
+          "why": "vanishing terms become visible"
+        },
+        {
+          "do": "Take the limit",
+          "result": "$4$",
+          "why": "$3/n\\to0$ and $1/n^3\\to0$"
+        },
+        {
+          "do": "Classify the comparison series",
+          "result": "$\\sum 1/n^2$ converges",
+          "why": "it is a $p$-series with $p=2>1$"
+        }
+      ],
+      "verify": "The comparison limit is finite and positive, so the two positive series share behavior; the known one converges.",
+      "answer": "The series converges by limit comparison with $\\sum 1/n^2$.",
+      "connects": "A convergence test reads the tail shape instead of trying to add infinitely many terms."
+    },
+    "practice": [
+      {
+        "problem": "Test $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{7}{3^n}$.",
+        "steps": [
+          {
+            "do": "Rewrite the terms",
+            "result": "$7(1/3)^n$",
+            "why": "this is geometric"
+          },
+          {
+            "do": "Identify the ratio",
+            "result": "$r=1/3$",
+            "why": "successive terms multiply by $1/3$"
+          },
+          {
+            "do": "Check the condition",
+            "result": "$|r|<1$",
+            "why": "geometric series converge exactly then"
+          },
+          {
+            "do": "Find the first term",
+            "result": "$7/3$",
+            "why": "the sum starts at $n=1$"
+          },
+          {
+            "do": "Compute the sum",
+            "result": "$\\dfrac{7/3}{1-1/3}=\\dfrac72$",
+            "why": "geometric sum formula"
+          }
+        ],
+        "answer": "Converges, with sum $7/2$."
+      },
+      {
+        "problem": "Test $\\displaystyle\\sum_{n=2}^{\\infty}\\frac{1}{n(\\ln n)^2}$.",
+        "steps": [
+          {
+            "do": "Choose the integral test",
+            "result": "$f(x)=1/[x(\\ln x)^2]$",
+            "why": "the terms are positive and eventually decreasing"
+          },
+          {
+            "do": "Set up the integral",
+            "result": "$\\int_2^{\\infty}\\dfrac{dx}{x(\\ln x)^2}$",
+            "why": "series and integral share tail behavior"
+          },
+          {
+            "do": "Substitute",
+            "result": "$u=\\ln x$, $du=dx/x$",
+            "why": "this matches the denominator"
+          },
+          {
+            "do": "Integrate",
+            "result": "$\\int_{\\ln2}^{\\infty}u^{-2}\\,du$",
+            "why": "the integral becomes a $p$-type integral"
+          },
+          {
+            "do": "Evaluate the improper integral",
+            "result": "$[-1/u]_{\\ln2}^{\\infty}=1/\\ln2$",
+            "why": "the upper endpoint contributes $0$"
+          }
+        ],
+        "answer": "Converges by the integral test."
+      },
+      {
+        "problem": "Test $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{n}{n^2+5}$.",
+        "steps": [
+          {
+            "do": "Choose a comparison",
+            "result": "$1/n$",
+            "why": "the term has leading size $n/n^2$"
+          },
+          {
+            "do": "Form the limit comparison",
+            "result": "$\\dfrac{n/(n^2+5)}{1/n}=\\dfrac{n^2}{n^2+5}$",
+            "why": "compare long-run scale"
+          },
+          {
+            "do": "Divide by $n^2$",
+            "result": "$\\dfrac{1}{1+5/n^2}$",
+            "why": "prepare the limit"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$1$",
+            "why": "$5/n^2\\to0$"
+          },
+          {
+            "do": "Use the known behavior",
+            "result": "$\\sum 1/n$ diverges",
+            "why": "the harmonic series diverges"
+          }
+        ],
+        "answer": "Diverges by limit comparison with the harmonic series."
+      },
+      {
+        "problem": "Test $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{n!}{10^n}$.",
+        "steps": [
+          {
+            "do": "Choose the ratio test",
+            "result": "$a_n=n!/10^n$",
+            "why": "factorials simplify in ratios"
+          },
+          {
+            "do": "Form the ratio",
+            "result": "$\\dfrac{a_{n+1}}{a_n}=\\dfrac{(n+1)!}{10^{n+1}}\\cdot\\dfrac{10^n}{n!}$",
+            "why": "compare consecutive terms"
+          },
+          {
+            "do": "Cancel factors",
+            "result": "$\\dfrac{n+1}{10}$",
+            "why": "$n!$ and $10^n$ cancel"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$\\infty$",
+            "why": "the numerator grows without bound"
+          },
+          {
+            "do": "Apply the ratio test",
+            "result": "diverges",
+            "why": "ratio eventually exceeds $1$"
+          }
+        ],
+        "answer": "Diverges by the ratio test."
+      },
+      {
+        "problem": "A gradient-noise proof uses $\\displaystyle\\sum_{t=1}^{\\infty}\\eta_t^2$ with $\\eta_t=0.1/t$. Test it.",
+        "steps": [
+          {
+            "do": "Square the schedule",
+            "result": "$\\eta_t^2=0.01/t^2$",
+            "why": "variance terms use squared learning rates"
+          },
+          {
+            "do": "Factor the constant",
+            "result": "$0.01\\sum_{t=1}^{\\infty}1/t^2$",
+            "why": "constants do not affect convergence"
+          },
+          {
+            "do": "Identify the $p$-series",
+            "result": "$p=2$",
+            "why": "the denominator is $t^2$"
+          },
+          {
+            "do": "Check the condition",
+            "result": "$2>1$",
+            "why": "$p$-series converge for $p>1$"
+          },
+          {
+            "do": "State the implication",
+            "result": "the squared schedule is summable",
+            "why": "the noise contribution has finite total bound"
+          }
+        ],
+        "answer": "$\\sum \\eta_t^2$ converges."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Learning-rate schedules",
+        "background": "Classical stochastic approximation separates total movement from total noise using two series tests.",
+        "numbers": "For $\\eta_t=1/t$, $\\sum\\eta_t$ diverges but $\\sum\\eta_t^2=\\sum1/t^2$ converges, matching the standard condition."
+      },
+      {
+        "title": "Taylor tail control",
+        "background": "Numerical libraries approximate smooth functions by truncating infinite series and bounding the tail.",
+        "numbers": "For $e^{0.5}$, the fifth term is $0.5^5/5!=0.0002604$, already below $3\\times10^{-4}$."
+      },
+      {
+        "title": "Discounted reinforcement learning",
+        "background": "Discounted returns are geometric series when rewards are bounded.",
+        "numbers": "If $|r_t|\\le3$ and $\\gamma=0.9$, then total magnitude is at most $3/(1-0.9)=30$."
+      },
+      {
+        "title": "Iterative solver errors",
+        "background": "Many linear solvers reduce error by a fixed factor each iteration.",
+        "numbers": "Starting error $5$ with ratio $0.2$ has tail after step $4$ bounded by $5(0.2)^4/(1-0.2)=0.01$."
+      },
+      {
+        "title": "Feature expansions",
+        "background": "Kernel and basis methods may add infinitely many features in theory, then keep a finite prefix in practice.",
+        "numbers": "A tail $\\sum_{n=8}^{\\infty}0.1^n=0.1^8/0.9\\approx1.11\\times10^{-8}$ is negligible."
+      },
+      {
+        "title": "Runtime expectations",
+        "background": "Expected costs can be infinite or finite depending on tail probabilities.",
+        "numbers": "If a retry takes $n$ ms with probability $2^{-n}$, comparison with $\\sum n/2^n=2$ shows finite expected time."
+      }
+    ],
+    "applicationsClose": "The same question keeps returning: does the long tail have finite total weight?",
+    "takeaways": [
+      "A series converges when partial sums approach a finite limit.",
+      "Comparison tests transfer known behavior from simpler positive series.",
+      "Ratio and root tests detect geometric-rate decay, but limit $1$ is inconclusive.",
+      "Series tests are tail tools: finite early terms never decide convergence."
+    ],
     "prereqs": [
       "math-04-11"
     ]
@@ -258,19 +3266,267 @@
   B({
     "id": "math-04-13",
     "title": "Absolute and conditional convergence",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: absolute and conditional convergence.",
+    "tagline": "Absolute convergence is robust convergence; conditional convergence is real but delicate.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Convergence tests for series</i>"
+        "Convergence tests for series",
+        "alternating series",
+        "absolute values"
       ],
       "leadsTo": [
-        "the next lesson, <i>Limits of functions (ε–δ)</i>"
+        "Limits of functions (ε–δ)",
+        "rearrangements",
+        "power series"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "comparison",
+        "alternating series test",
+        "Cauchy criterion",
+        "rearrangement"
       ]
     },
+    "motivation": "<p>You have seen that signs can help a series settle. The alternating harmonic series $1-\\dfrac12+\\dfrac13-\\dfrac14+\\cdots$ converges, even though the positive harmonic series diverges.</p><p>That raises a careful question: is the series converging because the magnitudes are genuinely small enough, or because positive and negative terms cancel in just the right order? Absolute and conditional convergence separate those two stories.</p>",
+    "definition": "<p>A series $\\sum a_n$ is <b>absolutely convergent</b> if $\\sum |a_n|$ converges. It is <b>conditionally convergent</b> if $\\sum a_n$ converges but $\\sum |a_n|$ diverges. Absolute convergence implies convergence because the positive and negative parts are each bounded by the absolute-value sum.</p><p>For alternating series $\\sum (-1)^n b_n$ with $b_n\\ge0$, if $b_n$ decreases to $0$, then the partial sums converge. The proof traps even and odd partial sums around the same limit: one monotone sequence descends, the other ascends, and the gap is $b_{N+1}\\to0$.</p><p><b>Assumptions that matter:</b> absolute convergence survives rearrangement; conditional convergence can change value under rearrangement; the alternating test needs eventual decrease and $b_n\\to0$; convergence of $\\sum a_n$ alone does not imply convergence of $\\sum |a_n|$.</p>",
+    "worked": {
+      "problem": "Classify $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{(-1)^{n+1}}{n}$ as absolutely convergent, conditionally convergent, or divergent.",
+      "skills": [
+        "alternating series",
+        "absolute convergence",
+        "harmonic series"
+      ],
+      "strategy": "Test the signed series with alternating behavior, then test absolute values separately.",
+      "steps": [
+        {
+          "do": "Name the magnitudes",
+          "result": "$b_n=1/n$",
+          "why": "the signs alternate outside the positive size"
+        },
+        {
+          "do": "Check the limit",
+          "result": "$b_n\\to0$",
+          "why": "terms must shrink to zero"
+        },
+        {
+          "do": "Check monotonicity",
+          "result": "$b_{n+1}<b_n$",
+          "why": "reciprocals decrease"
+        },
+        {
+          "do": "Apply the alternating test",
+          "result": "$\\sum (-1)^{n+1}/n$ converges",
+          "why": "decreasing magnitudes tend to zero"
+        },
+        {
+          "do": "Take absolute values",
+          "result": "$\\sum |(-1)^{n+1}/n|=\\sum1/n$",
+          "why": "absolute values remove signs"
+        },
+        {
+          "do": "Classify the absolute series",
+          "result": "diverges",
+          "why": "the harmonic series diverges"
+        }
+      ],
+      "verify": "The signed series converges but its magnitude-only version diverges, so cancellation is essential.",
+      "answer": "The alternating harmonic series converges conditionally.",
+      "connects": "Conditional convergence means the order and signs are doing real work."
+    },
+    "practice": [
+      {
+        "problem": "Classify $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{(-1)^n}{n^2}$.",
+        "steps": [
+          {
+            "do": "Take absolute values",
+            "result": "$\\sum 1/n^2$",
+            "why": "absolute convergence is tested first"
+          },
+          {
+            "do": "Identify the series",
+            "result": "$p=2$",
+            "why": "this is a $p$-series"
+          },
+          {
+            "do": "Check convergence",
+            "result": "converges",
+            "why": "$p=2>1$"
+          },
+          {
+            "do": "Transfer to the signed series",
+            "result": "$\\sum (-1)^n/n^2$ converges",
+            "why": "absolute convergence implies convergence"
+          },
+          {
+            "do": "Classify",
+            "result": "absolutely convergent",
+            "why": "the absolute-value series converges"
+          }
+        ],
+        "answer": "Absolutely convergent."
+      },
+      {
+        "problem": "Classify $\\displaystyle\\sum_{n=2}^{\\infty}\\frac{(-1)^n}{\\sqrt n}$.",
+        "steps": [
+          {
+            "do": "Set magnitudes",
+            "result": "$b_n=1/\\sqrt n$",
+            "why": "ignore signs for the alternating test"
+          },
+          {
+            "do": "Check the limit",
+            "result": "$b_n\\to0$",
+            "why": "square roots grow"
+          },
+          {
+            "do": "Check decrease",
+            "result": "$b_{n+1}<b_n$",
+            "why": "reciprocal square roots decrease"
+          },
+          {
+            "do": "Apply alternating convergence",
+            "result": "the signed series converges",
+            "why": "the alternating test applies"
+          },
+          {
+            "do": "Test absolute convergence",
+            "result": "$\\sum 1/n^{1/2}$ diverges",
+            "why": "$p=1/2\\le1$"
+          }
+        ],
+        "answer": "Conditionally convergent."
+      },
+      {
+        "problem": "Classify $\\displaystyle\\sum_{n=1}^{\\infty}(-1)^n\\frac{n}{n+1}$.",
+        "steps": [
+          {
+            "do": "Find term magnitudes",
+            "result": "$b_n=n/(n+1)$",
+            "why": "alternating signs alone are not enough"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$b_n\\to1$",
+            "why": "divide top and bottom by $n$"
+          },
+          {
+            "do": "Check the term test",
+            "result": "$a_n$ does not tend to $0$",
+            "why": "the signed terms oscillate near $\\pm1$"
+          },
+          {
+            "do": "Apply divergence",
+            "result": "diverges",
+            "why": "a necessary condition fails"
+          },
+          {
+            "do": "Skip absolute classification",
+            "result": "not convergent",
+            "why": "conditional or absolute labels require convergence first"
+          }
+        ],
+        "answer": "Divergent by the term test."
+      },
+      {
+        "problem": "Classify $\\displaystyle\\sum_{n=1}^{\\infty}\\frac{\\sin n}{n^2}$.",
+        "steps": [
+          {
+            "do": "Bound the absolute value",
+            "result": "$|\\sin n/n^2|\\le1/n^2$",
+            "why": "$|\\sin n|\\le1$"
+          },
+          {
+            "do": "Use a known series",
+            "result": "$\\sum1/n^2$ converges",
+            "why": "$p=2>1$"
+          },
+          {
+            "do": "Apply comparison",
+            "result": "$\\sum |\\sin n|/n^2$ converges",
+            "why": "bounded above by a convergent positive series"
+          },
+          {
+            "do": "Conclude signed convergence",
+            "result": "$\\sum \\sin n/n^2$ converges",
+            "why": "absolute convergence implies convergence"
+          },
+          {
+            "do": "Classify",
+            "result": "absolutely convergent",
+            "why": "the absolute-value series converges"
+          }
+        ],
+        "answer": "Absolutely convergent."
+      },
+      {
+        "problem": "A stochastic update has corrections $(-1)^{t+1}/t$ in a fixed order. What kind of convergence describes the total correction?",
+        "steps": [
+          {
+            "do": "Write the series",
+            "result": "$\\sum_{t=1}^{\\infty}(-1)^{t+1}/t$",
+            "why": "the correction signs alternate"
+          },
+          {
+            "do": "Check alternating conditions",
+            "result": "$1/t\\downarrow0$",
+            "why": "magnitudes decrease to zero"
+          },
+          {
+            "do": "Conclude signed convergence",
+            "result": "converges",
+            "why": "alternating series test"
+          },
+          {
+            "do": "Take absolute values",
+            "result": "$\\sum1/t$",
+            "why": "remove cancellation"
+          },
+          {
+            "do": "Classify absolute behavior",
+            "result": "diverges",
+            "why": "harmonic series"
+          }
+        ],
+        "answer": "The correction sum is conditionally convergent."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Numerical summation order",
+        "background": "Floating-point arithmetic already depends on order; conditional series add a mathematical version of that fragility.",
+        "numbers": "Summing $1-1/2+1/3-1/4$ gives $0.5833$, while grouping $(1-1/2)+(-1/4+1/3)$ gives $0.5833$ here, but infinite rearrangements can change conditionally convergent limits."
+      },
+      {
+        "title": "Fourier series",
+        "background": "Signals are often represented by signed sine and cosine coefficients whose absolute summability controls robustness.",
+        "numbers": "Coefficients $1/n^2$ are absolutely summable; coefficients $(-1)^n/n$ are only conditionally summable."
+      },
+      {
+        "title": "Gradient noise cancellation",
+        "background": "Alternating errors may cancel in a fixed schedule, but absolute bounds are safer for proofs.",
+        "numbers": "Errors $0.1(-1)^t/t$ have conditional total, while $0.1/t^2$ has absolute total $0.1\\pi^2/6\\approx0.1645$."
+      },
+      {
+        "title": "Perturbation expansions",
+        "background": "Physics and approximation theory often distinguish convergent magnitude from lucky sign cancellation.",
+        "numbers": "Terms $(-0.2)^n$ converge absolutely because $\\sum0.2^n=0.25$ from $n=1$."
+      },
+      {
+        "title": "Regularization penalties",
+        "background": "Absolute summability of coefficients makes infinite linear models stable under reordering and implementation details.",
+        "numbers": "Weights $w_n=1/2^n$ satisfy $\\sum|w_n|=1$, so feature contributions stay bounded if $|x_n|\\le1$."
+      },
+      {
+        "title": "Monte Carlo control variates",
+        "background": "Signed corrections reduce variance by cancellation, but absolute bounds give reliable worst-case guarantees.",
+        "numbers": "Corrections $0.05(-1)^n/n$ cancel conditionally; replacing by $0.05/n^2$ gives absolute total about $0.0822$."
+      }
+    ],
+    "applicationsClose": "Absolute convergence is convergence with a safety margin; conditional convergence is useful but order-sensitive.",
+    "takeaways": [
+      "Absolute convergence means $\\sum |a_n|$ converges.",
+      "Absolute convergence implies ordinary convergence.",
+      "Conditional convergence means the signed series converges but the absolute series diverges.",
+      "Alternating cancellation can prove convergence, but it may depend on order."
+    ],
     "prereqs": [
       "math-04-12"
     ]
@@ -279,19 +3535,272 @@
   B({
     "id": "math-04-14",
     "title": "Limits of functions (ε–δ)",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: limits of functions (ε–δ).",
+    "tagline": "The epsilon-delta definition turns the phrase 'as close as we like' into a precise promise.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Absolute and conditional convergence</i>"
+        "Absolute and conditional convergence",
+        "limits of sequences",
+        "inequalities"
       ],
       "leadsTo": [
-        "the next lesson, <i>Continuity (ε–δ)</i>"
+        "Continuity (ε–δ)",
+        "the derivative, rigorously",
+        "uniform continuity"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "neighborhoods",
+        "proof by inequalities",
+        "squeeze theorem",
+        "sequential limits"
       ]
     },
+    "motivation": "<p>You already compute limits by simplifying, graphing, or substituting after removing a hole. Real analysis asks one more honest question: what does it mean to say the outputs get close?</p><p>The $\\varepsilon$-$\\delta$ definition answers with a game. Someone names an output tolerance $\\varepsilon>0$. You respond with an input tolerance $\\delta>0$ that forces every nearby input to produce an output within $\\varepsilon$ of the target.</p>",
+    "definition": "<p>We write $\\lim_{x\\to a}f(x)=L$ if for every $\\varepsilon>0$ there exists $\\delta>0$ such that whenever $0<|x-a|<\\delta$, we have $|f(x)-L|<\\varepsilon$. Here $\\varepsilon$ is the allowed output error, $\\delta$ is the input radius, $a$ is the approach point, and $L$ is the proposed limit.</p><p>For a proof, start from $|f(x)-L|$ and bound it by something involving $|x-a|$. If $|f(x)-L|\\le C|x-a|$, choose $\\delta=\\varepsilon/C$. The puncture $0<|x-a|$ means the value at $a$ itself is irrelevant.</p><p><b>Assumptions that matter:</b> $\\delta$ may depend on $\\varepsilon$ and on the point $a$; it must not depend on the particular $x$ chosen after the fact; both sides of $a$ are included unless the domain restricts the approach; the definition proves a claimed limit, not just a computed value.</p>",
+    "worked": {
+      "problem": "Prove $\\displaystyle\\lim_{x\\to3}(2x+1)=7$ using $\\varepsilon$-$\\delta$.",
+      "skills": [
+        "epsilon-delta proof",
+        "linear bounds",
+        "choosing $\\delta$"
+      ],
+      "strategy": "Rewrite the output error as a constant times the input error, then choose $\\delta$ to make it less than $\\varepsilon$.",
+      "steps": [
+        {
+          "do": "Compute the output error",
+          "result": "$|(2x+1)-7|$",
+          "why": "compare $f(x)$ to the proposed limit"
+        },
+        {
+          "do": "Simplify",
+          "result": "$|2x-6|$",
+          "why": "combine constants"
+        },
+        {
+          "do": "Factor",
+          "result": "$2|x-3|$",
+          "why": "separate the input error"
+        },
+        {
+          "do": "Set a sufficient condition",
+          "result": "$2|x-3|<\\varepsilon$",
+          "why": "this guarantees the desired output error"
+        },
+        {
+          "do": "Solve for input error",
+          "result": "$|x-3|<\\varepsilon/2$",
+          "why": "divide by $2$"
+        },
+        {
+          "do": "Choose delta",
+          "result": "$\\delta=\\varepsilon/2$",
+          "why": "then $0<|x-3|<\\delta$ forces the bound"
+        }
+      ],
+      "verify": "If $0<|x-3|<\\varepsilon/2$, then $|(2x+1)-7|=2|x-3|<\\varepsilon$.",
+      "answer": "For every $\\varepsilon>0$, choose $\\delta=\\varepsilon/2$; this proves the limit is $7$.",
+      "connects": "The whole proof is a controlled translation from input closeness to output closeness."
+    },
+    "practice": [
+      {
+        "problem": "Prove $\\lim_{x\\to2}(5x-4)=6$.",
+        "steps": [
+          {
+            "do": "Write the output error",
+            "result": "$|(5x-4)-6|$",
+            "why": "compare to the claimed limit"
+          },
+          {
+            "do": "Simplify",
+            "result": "$|5x-10|$",
+            "why": "combine constants"
+          },
+          {
+            "do": "Factor",
+            "result": "$5|x-2|$",
+            "why": "isolate the input error"
+          },
+          {
+            "do": "Require this below $\\varepsilon$",
+            "result": "$5|x-2|<\\varepsilon$",
+            "why": "this is enough"
+          },
+          {
+            "do": "Choose",
+            "result": "$\\delta=\\varepsilon/5$",
+            "why": "then $|x-2|<\\delta$ gives the desired bound"
+          }
+        ],
+        "answer": "Choose $\\delta=\\varepsilon/5$."
+      },
+      {
+        "problem": "Prove $\\lim_{x\\to1}x^2=1$.",
+        "steps": [
+          {
+            "do": "Factor the error",
+            "result": "$|x^2-1|=|x-1||x+1|$",
+            "why": "one factor is the input error"
+          },
+          {
+            "do": "Add a local restriction",
+            "result": "$|x-1|<1$",
+            "why": "this keeps $x$ near $1$"
+          },
+          {
+            "do": "Bound $x$",
+            "result": "$0<x<2$",
+            "why": "within distance $1$ of $1$"
+          },
+          {
+            "do": "Bound the extra factor",
+            "result": "$|x+1|<3$",
+            "why": "$x<2$ gives $x+1<3$"
+          },
+          {
+            "do": "Force the product",
+            "result": "$|x^2-1|<3|x-1|$",
+            "why": "use the bound"
+          },
+          {
+            "do": "Choose delta",
+            "result": "$\\delta=\\min(1,\\varepsilon/3)$",
+            "why": "satisfy both the local bound and the error bound"
+          }
+        ],
+        "answer": "Choose $\\delta=\\min(1,\\varepsilon/3)$."
+      },
+      {
+        "problem": "Prove $\\lim_{x\\to0}3x^2=0$.",
+        "steps": [
+          {
+            "do": "Write the output error",
+            "result": "$|3x^2-0|=3|x|^2$",
+            "why": "target limit is zero"
+          },
+          {
+            "do": "Set the desired inequality",
+            "result": "$3|x|^2<\\varepsilon$",
+            "why": "this is exactly what we need"
+          },
+          {
+            "do": "Solve for $|x|$",
+            "result": "$|x|<\\sqrt{\\varepsilon/3}$",
+            "why": "take square roots"
+          },
+          {
+            "do": "Choose delta",
+            "result": "$\\delta=\\sqrt{\\varepsilon/3}$",
+            "why": "positive for every $\\varepsilon>0$"
+          },
+          {
+            "do": "Check implication",
+            "result": "$0<|x|<\\delta\\Rightarrow3x^2<\\varepsilon$",
+            "why": "square the chosen bound"
+          }
+        ],
+        "answer": "Choose $\\delta=\\sqrt{\\varepsilon/3}$."
+      },
+      {
+        "problem": "Prove $\\lim_{x\\to4}\\sqrt{x}=2$ using the conjugate idea.",
+        "steps": [
+          {
+            "do": "Write the error",
+            "result": "$|\\sqrt{x}-2|$",
+            "why": "compare outputs"
+          },
+          {
+            "do": "Multiply by a conjugate form",
+            "result": "$\\dfrac{|x-4|}{\\sqrt{x}+2}$",
+            "why": "rationalize the difference"
+          },
+          {
+            "do": "Bound the denominator",
+            "result": "$\\sqrt{x}+2\\ge2$",
+            "why": "square roots are nonnegative near the domain"
+          },
+          {
+            "do": "Bound the error",
+            "result": "$|\\sqrt{x}-2|\\le |x-4|/2$",
+            "why": "larger denominator means smaller fraction"
+          },
+          {
+            "do": "Choose delta",
+            "result": "$\\delta=2\\varepsilon$",
+            "why": "then $|x-4|/2<\\varepsilon$"
+          }
+        ],
+        "answer": "Choose $\\delta=2\\varepsilon$ for domain points $x\\ge0$."
+      },
+      {
+        "problem": "A scalar model score is $s(w)=4w+0.2$. Prove that as $w\\to1$, $s(w)\\to4.2$ and find $\\delta$ for $\\varepsilon=0.01$.",
+        "steps": [
+          {
+            "do": "Write the error",
+            "result": "$|(4w+0.2)-4.2|$",
+            "why": "compare score to target"
+          },
+          {
+            "do": "Simplify",
+            "result": "$4|w-1|$",
+            "why": "factor the input error"
+          },
+          {
+            "do": "Choose symbolic delta",
+            "result": "$\\delta=\\varepsilon/4$",
+            "why": "make $4|w-1|<\\varepsilon$"
+          },
+          {
+            "do": "Substitute $\\varepsilon=0.01$",
+            "result": "$\\delta=0.01/4$",
+            "why": "use the requested tolerance"
+          },
+          {
+            "do": "Compute",
+            "result": "$\\delta=0.0025$",
+            "why": "divide by $4$"
+          }
+        ],
+        "answer": "Choose $\\delta=\\varepsilon/4$; for $\\varepsilon=0.01$, use $\\delta=0.0025$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Numerical tolerance design",
+        "background": "Engineering code often translates an output tolerance into an input tolerance, exactly the epsilon-delta pattern.",
+        "numbers": "For $f(x)=2x$, output error below $0.001$ requires input error below $0.0005$."
+      },
+      {
+        "title": "Gradient checking",
+        "background": "Finite-difference checks rely on limiting statements becoming true below small step sizes.",
+        "numbers": "If error is bounded by $5h$, then target error $10^{-4}$ is guaranteed when $h<2\\times10^{-5}$."
+      },
+      {
+        "title": "Sensor calibration",
+        "background": "A sensor specification turns physical input closeness into voltage output closeness.",
+        "numbers": "If voltage is $0.02T+0.5$, keeping voltage within $0.01$ V requires temperature within $0.5^\\circ$C."
+      },
+      {
+        "title": "Robust thresholds",
+        "background": "A classifier score near a threshold needs input margins so small perturbations do not flip decisions.",
+        "numbers": "If score changes at most $3\\|\\Delta x\\|$ and margin is $0.06$, perturbations below $0.02$ keep the sign."
+      },
+      {
+        "title": "Floating-point APIs",
+        "background": "Libraries document tolerances because exact equality is rarely the right promise.",
+        "numbers": "If a routine has output error at most $10h$, choosing $h=10^{-8}$ gives error at most $10^{-7}$."
+      },
+      {
+        "title": "Continuity proofs in optimization",
+        "background": "Existence theorems for minimizers start with rigorous control of objective changes.",
+        "numbers": "For $L(w)=w^2$ near $2$, $|w-2|<0.001$ gives $|L(w)-4|<5(0.001)=0.005$ using a local bound."
+      }
+    ],
+    "applicationsClose": "Epsilon-delta rigor is the language of guaranteed tolerance transfer.",
+    "takeaways": [
+      "$\\varepsilon$ controls output error; $\\delta$ controls input error.",
+      "A proof works by bounding $|f(x)-L|$ in terms of $|x-a|$.",
+      "The value $f(a)$ is irrelevant to the limit because $0<|x-a|$ punctures the point.",
+      "Delta may depend on epsilon and the approach point, but not on the later choice of $x$."
+    ],
     "prereqs": [
       "math-04-13"
     ]
@@ -300,19 +3809,272 @@
   B({
     "id": "math-04-15",
     "title": "Continuity (ε–δ)",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: continuity (ε–δ).",
+    "tagline": "Continuity says nearby inputs force nearby outputs, with the function value as the destination.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Limits of functions (ε–δ)</i>"
+        "Limits of functions (ε–δ)",
+        "functions",
+        "absolute value inequalities"
       ],
       "leadsTo": [
-        "the next lesson, <i>Properties of continuous functions</i>"
+        "Properties of continuous functions",
+        "Uniform continuity",
+        "the derivative, rigorously"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "composition",
+        "local bounds",
+        "intermediate values",
+        "compact intervals"
       ]
     },
+    "motivation": "<p>You already recognize a continuous graph as one without a jump or hole. The $\\varepsilon$-$\\delta$ definition gives that picture a precise test at a point.</p><p>Continuity is a promise from the function: if you demand the output stay within $\\varepsilon$ of $f(a)$, I can tell you how close $x$ must stay to $a$. No surprise at the point.</p>",
+    "definition": "<p>A function $f$ is continuous at $a$ if for every $\\varepsilon>0$ there exists $\\delta>0$ such that $|x-a|<\\delta$ and $x$ in the domain imply $|f(x)-f(a)|<\\varepsilon$. Equivalently, $\\lim_{x\\to a}f(x)=f(a)$.</p><p>This is the limit definition with the target $L$ replaced by the actual value $f(a)$. The proof pattern is the same: start with $|f(x)-f(a)|$, bound it using $|x-a|$, and choose $\\delta$ small enough.</p><p><b>Assumptions that matter:</b> continuity is relative to the domain; endpoints use one-sided neighborhoods within the domain; $\\delta$ may depend on the point $a$; sums, products, quotients with nonzero denominator, and compositions preserve continuity when their parts are continuous.</p>",
+    "worked": {
+      "problem": "Prove that $f(x)=x^2$ is continuous at $a=3$.",
+      "skills": [
+        "epsilon-delta continuity",
+        "local bounding",
+        "factoring"
+      ],
+      "strategy": "Factor the output change and locally bound the harmless factor $|x+3|$.",
+      "steps": [
+        {
+          "do": "Write the output change",
+          "result": "$|x^2-3^2|$",
+          "why": "compare $f(x)$ to $f(3)$"
+        },
+        {
+          "do": "Factor",
+          "result": "$|x-3||x+3|$",
+          "why": "difference of squares"
+        },
+        {
+          "do": "Impose a local restriction",
+          "result": "$|x-3|<1$",
+          "why": "keep $x$ near $3$"
+        },
+        {
+          "do": "Bound $x$",
+          "result": "$2<x<4$",
+          "why": "distance less than $1$ from $3$"
+        },
+        {
+          "do": "Bound the second factor",
+          "result": "$|x+3|<7$",
+          "why": "$x<4$ gives $x+3<7$"
+        },
+        {
+          "do": "Choose delta",
+          "result": "$\\delta=\\min(1,\\varepsilon/7)$",
+          "why": "control both the local bound and the output error"
+        }
+      ],
+      "verify": "If $|x-3|<\\delta$, then $|x^2-9|<7|x-3|\\le7\\delta\\le\\varepsilon$.",
+      "answer": "$x^2$ is continuous at $3$.",
+      "connects": "Continuity is a limit proof where the target is the actual function value."
+    },
+    "practice": [
+      {
+        "problem": "Prove $f(x)=4x-1$ is continuous at $a=2$.",
+        "steps": [
+          {
+            "do": "Evaluate the point",
+            "result": "$f(2)=7$",
+            "why": "this is the target value"
+          },
+          {
+            "do": "Write the error",
+            "result": "$|(4x-1)-7|$",
+            "why": "compare output values"
+          },
+          {
+            "do": "Simplify",
+            "result": "$4|x-2|$",
+            "why": "factor the input error"
+          },
+          {
+            "do": "Require the error below $\\varepsilon$",
+            "result": "$4|x-2|<\\varepsilon$",
+            "why": "this is enough"
+          },
+          {
+            "do": "Choose delta",
+            "result": "$\\delta=\\varepsilon/4$",
+            "why": "then $|x-2|<\\delta$ works"
+          }
+        ],
+        "answer": "Choose $\\delta=\\varepsilon/4$; the function is continuous at $2$."
+      },
+      {
+        "problem": "Prove $f(x)=1/x$ is continuous at $a=2$.",
+        "steps": [
+          {
+            "do": "Write the error",
+            "result": "$\\left|\\dfrac1x-\\dfrac12\\right|$",
+            "why": "compare $f(x)$ with $f(2)$"
+          },
+          {
+            "do": "Combine fractions",
+            "result": "$\\dfrac{|x-2|}{2|x|}$",
+            "why": "use a common denominator"
+          },
+          {
+            "do": "Restrict locally",
+            "result": "$|x-2|<1$",
+            "why": "keep $x$ away from zero"
+          },
+          {
+            "do": "Bound the denominator",
+            "result": "$|x|>1$",
+            "why": "$x$ stays between $1$ and $3$"
+          },
+          {
+            "do": "Bound the error",
+            "result": "$\\dfrac{|x-2|}{2}$",
+            "why": "$2|x|>2$"
+          },
+          {
+            "do": "Choose delta",
+            "result": "$\\delta=\\min(1,2\\varepsilon)$",
+            "why": "then $|x-2|/2<\\varepsilon$"
+          }
+        ],
+        "answer": "Choose $\\delta=\\min(1,2\\varepsilon)$."
+      },
+      {
+        "problem": "Show $f(x)=|x|$ is continuous at $a=-3$.",
+        "steps": [
+          {
+            "do": "Use reverse triangle inequality",
+            "result": "$||x|-|-3||\\le|x-(-3)|$",
+            "why": "absolute value is distance from zero"
+          },
+          {
+            "do": "Simplify the point",
+            "result": "$||x|-3|\\le|x+3|$",
+            "why": "$|-3|=3$"
+          },
+          {
+            "do": "Set the desired condition",
+            "result": "$|x+3|<\\varepsilon$",
+            "why": "this bounds the output error"
+          },
+          {
+            "do": "Choose delta",
+            "result": "$\\delta=\\varepsilon$",
+            "why": "the inequality has constant $1$"
+          },
+          {
+            "do": "Check",
+            "result": "$|x+3|<\\delta\\Rightarrow||x|-3|<\\varepsilon$",
+            "why": "substitute the choice"
+          }
+        ],
+        "answer": "$|x|$ is continuous at $-3$ with $\\delta=\\varepsilon$."
+      },
+      {
+        "problem": "For $g(x)=\\begin{cases}x^2,&x\\ne1\\\\c,&x=1\\end{cases}$, choose $c$ so $g$ is continuous at $1$.",
+        "steps": [
+          {
+            "do": "Compute the limit expression",
+            "result": "$\\lim_{x\\to1}x^2$",
+            "why": "nearby values use $x^2$"
+          },
+          {
+            "do": "Use polynomial continuity",
+            "result": "$\\lim_{x\\to1}x^2=1$",
+            "why": "or prove by epsilon-delta"
+          },
+          {
+            "do": "Evaluate the assigned value",
+            "result": "$g(1)=c$",
+            "why": "the point value is chosen separately"
+          },
+          {
+            "do": "Set value equal to limit",
+            "result": "$c=1$",
+            "why": "continuity requires agreement"
+          },
+          {
+            "do": "State the result",
+            "result": "continuous at $1$",
+            "why": "the hole has been filled"
+          }
+        ],
+        "answer": "Choose $c=1$."
+      },
+      {
+        "problem": "A calibration map $v(T)=0.02T+0.5$ is continuous at $T=25$. Find a $\\delta$ that guarantees voltage error below $0.004$ V.",
+        "steps": [
+          {
+            "do": "Write the output error",
+            "result": "$|(0.02T+0.5)-(0.02\\cdot25+0.5)|$",
+            "why": "compare nearby temperature to base temperature"
+          },
+          {
+            "do": "Simplify",
+            "result": "$0.02|T-25|$",
+            "why": "linear terms cancel"
+          },
+          {
+            "do": "Set the tolerance",
+            "result": "$0.02|T-25|<0.004$",
+            "why": "requested voltage error"
+          },
+          {
+            "do": "Solve",
+            "result": "$|T-25|<0.2$",
+            "why": "$0.004/0.02=0.2$"
+          },
+          {
+            "do": "Choose delta",
+            "result": "$\\delta=0.2$",
+            "why": "temperature within $0.2^\\circ$C is enough"
+          }
+        ],
+        "answer": "$\\delta=0.2^\\circ$C."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Stable preprocessing",
+        "background": "Feature transformations should not make tiny measurement noise produce huge output jumps unless intended.",
+        "numbers": "Standardization $z=(x-50)/10$ turns input error $0.2$ into output error $0.02$."
+      },
+      {
+        "title": "Sensor calibration",
+        "background": "Continuity is a minimum expectation for many physical sensors.",
+        "numbers": "For $v(T)=0.01T+1$, changing $T$ by $0.5$ changes voltage by $0.005$ V."
+      },
+      {
+        "title": "ReLU networks",
+        "background": "ReLU is continuous, so a network built from affine maps and ReLUs is continuous even though slopes can jump.",
+        "numbers": "$r(-0.001)=0$, $r(0)=0$, and $r(0.001)=0.001$ near the kink."
+      },
+      {
+        "title": "Loss curves",
+        "background": "Gradient methods rely on objectives that change predictably under small parameter moves.",
+        "numbers": "For $L(w)=(w-3)^2$, moving from $3$ to $3.01$ changes loss from $0$ to $0.0001$."
+      },
+      {
+        "title": "Interpolation",
+        "background": "Graphics and data pipelines use continuous interpolation to avoid visual or statistical jumps.",
+        "numbers": "Linear interpolation from $10$ to $18$ over $4$ seconds gives $14$ at $2$ seconds."
+      },
+      {
+        "title": "Probability calibration",
+        "background": "Calibration curves model observed frequency as a continuous function of predicted probability.",
+        "numbers": "If $c(p)=0.8p+0.1$, then $p=0.70$ gives $0.66$ and $p=0.71$ gives $0.668$."
+      }
+    ],
+    "applicationsClose": "Continuity is the first reliability promise: small enough input changes make output changes small enough too.",
+    "takeaways": [
+      "Continuity at $a$ means $\\lim_{x\\to a}f(x)=f(a)$ in epsilon-delta form.",
+      "Proofs bound $|f(x)-f(a)|$ using $|x-a|$.",
+      "Continuity is checked relative to the domain, especially at endpoints.",
+      "Sums, products, quotients away from zero, and compositions preserve continuity."
+    ],
     "prereqs": [
       "math-04-14"
     ]
@@ -321,19 +4083,262 @@
   B({
     "id": "math-04-16",
     "title": "Properties of continuous functions",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: properties of continuous functions.",
+    "tagline": "Continuity is powerful because it survives algebra and guarantees values on closed intervals.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Continuity (ε–δ)</i>"
+        "Continuity (ε–δ)",
+        "closed intervals",
+        "suprema and infima"
       ],
       "leadsTo": [
-        "the next lesson, <i>Uniform continuity</i>"
+        "Uniform continuity",
+        "the Mean Value Theorem",
+        "the Riemann integral"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "Intermediate Value Theorem",
+        "Extreme Value Theorem",
+        "composition",
+        "compactness"
       ]
     },
+    "motivation": "<p>Once you can prove one function is continuous, you do not want to restart every proof from scratch. Real analysis gives you closure rules: continuous functions can be added, multiplied, divided safely away from zero, and composed.</p><p>On closed bounded intervals, continuity gives even stronger promises: no skipped heights and actual maximum and minimum values. These are existence theorems, and they are the quiet engine behind many algorithms.</p>",
+    "definition": "<p>If $f$ and $g$ are continuous at $a$, then $f+g$, $fg$, and $cf$ are continuous at $a$; $f/g$ is continuous at $a$ when $g(a)\\ne0$; and $g\\circ f$ is continuous at $a$ when $f$ is continuous at $a$ and $g$ is continuous at $f(a)$. These follow by translating epsilon tolerances through sums, products, and compositions.</p><p>Two major interval properties are the <b>Intermediate Value Theorem</b> and the <b>Extreme Value Theorem</b>. If $f$ is continuous on $[a,b]$, it takes every value between $f(a)$ and $f(b)$, and it attains both a maximum and a minimum on $[a,b]$.</p><p><b>Assumptions that matter:</b> the interval must be closed and bounded for the Extreme Value Theorem; IVT needs continuity on the whole interval; quotient continuity requires a nonzero denominator; a function may be continuous on an open interval and still fail to attain a maximum.</p>",
+    "worked": {
+      "problem": "Show that $f(x)=\\dfrac{x^2+1}{x-2}$ is continuous on $[0,1]$ and attains a maximum and minimum there.",
+      "skills": [
+        "continuity rules",
+        "quotients",
+        "Extreme Value Theorem"
+      ],
+      "strategy": "Build continuity from polynomial and quotient rules, then use the closed-interval theorem.",
+      "steps": [
+        {
+          "do": "Classify the numerator",
+          "result": "$x^2+1$ is continuous",
+          "why": "polynomials are continuous"
+        },
+        {
+          "do": "Classify the denominator",
+          "result": "$x-2$ is continuous",
+          "why": "linear functions are continuous"
+        },
+        {
+          "do": "Check zeros on the interval",
+          "result": "$x-2\\ne0$ for $0\\le x\\le1$",
+          "why": "the zero is at $x=2$"
+        },
+        {
+          "do": "Apply quotient continuity",
+          "result": "$f$ is continuous on $[0,1]$",
+          "why": "denominator never vanishes there"
+        },
+        {
+          "do": "Apply EVT",
+          "result": "$f$ attains a maximum and a minimum",
+          "why": "continuous on a closed bounded interval"
+        }
+      ],
+      "verify": "The theorem promises existence even before we compute the actual points.",
+      "answer": "$f$ is continuous on $[0,1]$ and has both an absolute maximum and an absolute minimum there.",
+      "connects": "Continuity rules build functions; interval theorems extract guarantees from them."
+    },
+    "practice": [
+      {
+        "problem": "Prove $h(x)=\\sqrt{x^2+4}$ is continuous for all real $x$.",
+        "steps": [
+          {
+            "do": "Start with $x^2+4$",
+            "result": "continuous on $\\mathbb{R}$",
+            "why": "polynomials are continuous"
+          },
+          {
+            "do": "Check its range",
+            "result": "$x^2+4\\ge4$",
+            "why": "the square root input is always positive"
+          },
+          {
+            "do": "Use square-root continuity",
+            "result": "$\\sqrt{u}$ is continuous for $u\\ge0$",
+            "why": "standard continuous function"
+          },
+          {
+            "do": "Apply composition",
+            "result": "$\\sqrt{x^2+4}$ is continuous",
+            "why": "continuous after continuous"
+          },
+          {
+            "do": "State the domain",
+            "result": "$\\mathbb{R}$",
+            "why": "no input is excluded"
+          }
+        ],
+        "answer": "$h$ is continuous on $\\mathbb{R}$."
+      },
+      {
+        "problem": "Explain why $f(x)=1/x$ does not necessarily attain a maximum on $(0,1)$.",
+        "steps": [
+          {
+            "do": "Check continuity",
+            "result": "$1/x$ is continuous on $(0,1)$",
+            "why": "the denominator is nonzero"
+          },
+          {
+            "do": "Inspect near zero",
+            "result": "$f(x)\\to\\infty$ as $x\\to0^+$",
+            "why": "the reciprocal blows up"
+          },
+          {
+            "do": "Check the interval",
+            "result": "$(0,1)$ is not closed",
+            "why": "the endpoint $0$ is missing"
+          },
+          {
+            "do": "Compare with EVT",
+            "result": "EVT assumptions fail",
+            "why": "closed bounded interval is required"
+          },
+          {
+            "do": "Conclude",
+            "result": "no maximum is attained",
+            "why": "values grow without bound"
+          }
+        ],
+        "answer": "Continuity on an open interval is not enough; no maximum is attained."
+      },
+      {
+        "problem": "Use IVT to show $x^3+x-1=0$ has a solution in $(0,1)$.",
+        "steps": [
+          {
+            "do": "Name the function",
+            "result": "$f(x)=x^3+x-1$",
+            "why": "put the equation into $f(x)=0$ form"
+          },
+          {
+            "do": "State continuity",
+            "result": "$f$ is continuous on $[0,1]$",
+            "why": "polynomial"
+          },
+          {
+            "do": "Evaluate left endpoint",
+            "result": "$f(0)=-1$",
+            "why": "substitute $0$"
+          },
+          {
+            "do": "Evaluate right endpoint",
+            "result": "$f(1)=1$",
+            "why": "$1+1-1=1$"
+          },
+          {
+            "do": "Apply IVT",
+            "result": "some $c\\in(0,1)$ has $f(c)=0$",
+            "why": "zero lies between $-1$ and $1$"
+          }
+        ],
+        "answer": "A solution exists in $(0,1)$."
+      },
+      {
+        "problem": "Find where $q(x)=\\dfrac{\\sin x}{x^2+1}$ is continuous.",
+        "steps": [
+          {
+            "do": "Classify the numerator",
+            "result": "$\\sin x$ is continuous",
+            "why": "standard trig function"
+          },
+          {
+            "do": "Classify the denominator",
+            "result": "$x^2+1$ is continuous",
+            "why": "polynomial"
+          },
+          {
+            "do": "Check denominator zeros",
+            "result": "$x^2+1\\ge1$",
+            "why": "never zero over the reals"
+          },
+          {
+            "do": "Apply quotient rule",
+            "result": "continuous everywhere",
+            "why": "quotient by a nonzero continuous function"
+          },
+          {
+            "do": "State the set",
+            "result": "$\\mathbb{R}$",
+            "why": "all real inputs are allowed"
+          }
+        ],
+        "answer": "$q$ is continuous on $\\mathbb{R}$."
+      },
+      {
+        "problem": "A validation curve $M(\\lambda)$ is continuous on $[0,1]$, with $M(0)=0.62$ and $M(1)=0.78$. What theorem guarantees a setting with $M=0.70$?",
+        "steps": [
+          {
+            "do": "Check the interval",
+            "result": "$[0,1]$",
+            "why": "closed interval where continuity is given"
+          },
+          {
+            "do": "Check endpoint values",
+            "result": "$0.62$ and $0.78$",
+            "why": "known metric values"
+          },
+          {
+            "do": "Locate the target",
+            "result": "$0.62<0.70<0.78$",
+            "why": "target lies between endpoints"
+          },
+          {
+            "do": "Apply the theorem",
+            "result": "Intermediate Value Theorem",
+            "why": "continuous functions hit intermediate values"
+          },
+          {
+            "do": "State the guarantee",
+            "result": "some $\\lambda\\in[0,1]$ has $M(\\lambda)=0.70$",
+            "why": "existence, not exact location"
+          }
+        ],
+        "answer": "The Intermediate Value Theorem guarantees such a setting."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Root finding by bisection",
+        "background": "Bisection relies on IVT: a continuous sign change traps a root.",
+        "numbers": "If $f(1)=-2$ and $f(2)=3$, the first midpoint is $1.5$; the sign at $1.5$ chooses the next half interval."
+      },
+      {
+        "title": "Hyperparameter targets",
+        "background": "Smooth validation curves can guarantee an operating point between two tested settings.",
+        "numbers": "Metric $0.70$ at $\\lambda=0.01$ and $0.82$ at $\\lambda=1$ guarantees some setting with $0.75$."
+      },
+      {
+        "title": "Existence of best settings",
+        "background": "EVT says a continuous objective on a compact search interval has an optimizer.",
+        "numbers": "A continuous loss on $[0,10]$ has a minimum; on $(0,10)$ the minimum might sit at missing endpoint $0$."
+      },
+      {
+        "title": "Safe composition in pipelines",
+        "background": "ML preprocessing chains rely on continuity rules through scaling, activation, and normalization.",
+        "numbers": "If $z=(x-5)/2$ and $r=\\max(0,z)$, then $x=7.2$ gives $z=1.1$ and $r=1.1$ continuously."
+      },
+      {
+        "title": "Calibration thresholds",
+        "background": "A continuous score-to-rate curve lets teams solve for desired rates.",
+        "numbers": "If positive rate drops from $0.9$ to $0.2$, IVT gives a threshold with rate $0.5$."
+      },
+      {
+        "title": "Graphics intersections",
+        "background": "Signed distance fields use continuity to detect surface crossings between samples.",
+        "numbers": "Values $-0.3$ and $0.1$ at neighboring points imply a zero crossing between them if the field is continuous."
+      }
+    ],
+    "applicationsClose": "Continuity is not only local smoothness; it is an engine for building functions and proving solutions exist.",
+    "takeaways": [
+      "Continuous functions are closed under sums, products, safe quotients, and composition.",
+      "IVT guarantees intermediate values on continuous intervals.",
+      "EVT guarantees maxima and minima on closed bounded intervals.",
+      "Closed and bounded assumptions matter; open intervals can lose extrema."
+    ],
     "prereqs": [
       "math-04-15"
     ]
@@ -342,19 +4347,262 @@
   B({
     "id": "math-04-17",
     "title": "Uniform continuity",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: uniform continuity.",
+    "tagline": "Uniform continuity uses one delta that works everywhere in the domain.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Properties of continuous functions</i>"
+        "Properties of continuous functions",
+        "epsilon-delta continuity",
+        "compact intervals"
       ],
       "leadsTo": [
-        "the next lesson, <i>The derivative, rigorously</i>"
+        "The derivative, rigorously",
+        "Riemann integration",
+        "uniform convergence"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "Lipschitz bounds",
+        "compactness",
+        "Heine-Cantor theorem",
+        "Cauchy sequences"
       ]
     },
+    "motivation": "<p>Ordinary continuity lets $\\delta$ depend on the point. Near a steep part of a graph, you may need a smaller input window than elsewhere.</p><p><b>Uniform continuity</b> asks for one input window that works across the whole domain. It is a stronger global promise: if two inputs are close enough, their outputs are close enough, no matter where the inputs live.</p>",
+    "definition": "<p>A function $f$ is uniformly continuous on a set $D$ if for every $\\varepsilon>0$ there exists $\\delta>0$ such that for all $x,y\\in D$, $|x-y|<\\delta$ implies $|f(x)-f(y)|<\\varepsilon$. The same $\\delta$ must work for every pair of points in $D$.</p><p>If $|f(x)-f(y)|\\le K|x-y|$ on $D$, then $f$ is uniformly continuous by choosing $\\delta=\\varepsilon/K$. Also, every continuous function on a closed bounded interval is uniformly continuous; this is the Heine-Cantor theorem.</p><p><b>Assumptions that matter:</b> uniform continuity is a property on a specified domain; the same formula can be uniformly continuous on one domain and not another; compactness often supplies uniform continuity; unbounded slopes near a missing point can make uniform continuity fail.</p>",
+    "worked": {
+      "problem": "Prove $f(x)=3x+2$ is uniformly continuous on $\\mathbb{R}$.",
+      "skills": [
+        "uniform epsilon-delta",
+        "Lipschitz bound",
+        "global delta"
+      ],
+      "strategy": "Bound output differences directly by a constant times input differences.",
+      "steps": [
+        {
+          "do": "Take two inputs",
+          "result": "$x,y\\in\\mathbb{R}$",
+          "why": "uniform continuity compares arbitrary pairs"
+        },
+        {
+          "do": "Compute output difference",
+          "result": "$|f(x)-f(y)|=|(3x+2)-(3y+2)|$",
+          "why": "start from the target"
+        },
+        {
+          "do": "Simplify",
+          "result": "$3|x-y|$",
+          "why": "constants cancel"
+        },
+        {
+          "do": "Set a sufficient condition",
+          "result": "$3|x-y|<\\varepsilon$",
+          "why": "this gives the desired output closeness"
+        },
+        {
+          "do": "Choose delta",
+          "result": "$\\delta=\\varepsilon/3$",
+          "why": "works for every $x,y$"
+        }
+      ],
+      "verify": "The chosen $\\delta$ does not mention a base point, so it is global across $\\mathbb{R}$.",
+      "answer": "$f(x)=3x+2$ is uniformly continuous on $\\mathbb{R}$.",
+      "connects": "A Lipschitz bound is the friendliest path to uniform continuity."
+    },
+    "practice": [
+      {
+        "problem": "Prove $f(x)=x^2$ is uniformly continuous on $[0,2]$.",
+        "steps": [
+          {
+            "do": "Write the difference",
+            "result": "$|x^2-y^2|=|x-y||x+y|$",
+            "why": "factor the square difference"
+          },
+          {
+            "do": "Use the domain",
+            "result": "$0\\le x,y\\le2$",
+            "why": "both points lie in $[0,2]$"
+          },
+          {
+            "do": "Bound the extra factor",
+            "result": "$|x+y|\\le4$",
+            "why": "largest sum is $4$"
+          },
+          {
+            "do": "Bound the output difference",
+            "result": "$|x^2-y^2|\\le4|x-y|$",
+            "why": "combine the bounds"
+          },
+          {
+            "do": "Choose delta",
+            "result": "$\\delta=\\varepsilon/4$",
+            "why": "one choice works on the whole interval"
+          }
+        ],
+        "answer": "Uniformly continuous on $[0,2]$ with $\\delta=\\varepsilon/4$."
+      },
+      {
+        "problem": "Show $f(x)=1/x$ is uniformly continuous on $[1,\\infty)$.",
+        "steps": [
+          {
+            "do": "Write the difference",
+            "result": "$\\left|\\dfrac1x-\\dfrac1y\\right|=\\dfrac{|x-y|}{|xy|}$",
+            "why": "combine fractions"
+          },
+          {
+            "do": "Use the domain",
+            "result": "$x\\ge1$ and $y\\ge1$",
+            "why": "both inputs are in $[1,\\infty)$"
+          },
+          {
+            "do": "Bound the denominator",
+            "result": "$|xy|\\ge1$",
+            "why": "product of two numbers at least $1$"
+          },
+          {
+            "do": "Bound the output difference",
+            "result": "$\\left|1/x-1/y\\right|\\le|x-y|$",
+            "why": "divide by at least $1$"
+          },
+          {
+            "do": "Choose delta",
+            "result": "$\\delta=\\varepsilon$",
+            "why": "global bound has constant $1$"
+          }
+        ],
+        "answer": "Uniformly continuous on $[1,\\infty)$."
+      },
+      {
+        "problem": "Show $f(x)=1/x$ is not uniformly continuous on $(0,1)$.",
+        "steps": [
+          {
+            "do": "Choose paired inputs",
+            "result": "$x_n=1/n$, $y_n=1/(n+1)$",
+            "why": "both approach the missing point $0$"
+          },
+          {
+            "do": "Compute input distance",
+            "result": "$|x_n-y_n|=1/[n(n+1)]$",
+            "why": "subtract the fractions"
+          },
+          {
+            "do": "Take the input limit",
+            "result": "$|x_n-y_n|\\to0$",
+            "why": "denominator grows"
+          },
+          {
+            "do": "Compute output values",
+            "result": "$f(x_n)=n$, $f(y_n)=n+1$",
+            "why": "reciprocals"
+          },
+          {
+            "do": "Compute output distance",
+            "result": "$|f(x_n)-f(y_n)|=1$",
+            "why": "never becomes small"
+          }
+        ],
+        "answer": "Not uniformly continuous on $(0,1)$."
+      },
+      {
+        "problem": "Use Heine-Cantor to justify that $\\sqrt{x}$ is uniformly continuous on $[0,9]$.",
+        "steps": [
+          {
+            "do": "Identify the domain",
+            "result": "$[0,9]$",
+            "why": "closed and bounded interval"
+          },
+          {
+            "do": "Check continuity",
+            "result": "$\\sqrt{x}$ is continuous on $[0,9]$",
+            "why": "square root is continuous on nonnegative inputs"
+          },
+          {
+            "do": "Name the theorem",
+            "result": "Heine-Cantor",
+            "why": "continuous on compact implies uniformly continuous"
+          },
+          {
+            "do": "Apply it",
+            "result": "$\\sqrt{x}$ is uniformly continuous",
+            "why": "all assumptions hold"
+          },
+          {
+            "do": "Interpret",
+            "result": "one $\\delta$ works for every $x,y\\in[0,9]$",
+            "why": "that is the uniform conclusion"
+          }
+        ],
+        "answer": "$\\sqrt{x}$ is uniformly continuous on $[0,9]$."
+      },
+      {
+        "problem": "A model score satisfies $|s(x)-s(y)|\\le8\\|x-y\\|$. What input distance guarantees score change below $0.04$?",
+        "steps": [
+          {
+            "do": "Use the Lipschitz bound",
+            "result": "$|s(x)-s(y)|\\le8\\|x-y\\|$",
+            "why": "given global control"
+          },
+          {
+            "do": "Set the desired tolerance",
+            "result": "$8\\|x-y\\|<0.04$",
+            "why": "score change should be below $0.04$"
+          },
+          {
+            "do": "Solve",
+            "result": "$\\|x-y\\|<0.005$",
+            "why": "$0.04/8=0.005$"
+          },
+          {
+            "do": "Choose delta",
+            "result": "$\\delta=0.005$",
+            "why": "works for all pairs"
+          },
+          {
+            "do": "Interpret",
+            "result": "the guarantee is uniform",
+            "why": "the bound has no base point"
+          }
+        ],
+        "answer": "Input distance below $0.005$ is enough."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Robust model guarantees",
+        "background": "Lipschitz certificates are uniform-continuity statements used in adversarial robustness.",
+        "numbers": "If $K=5$, perturbation norm $0.01$ changes score by at most $0.05$."
+      },
+      {
+        "title": "Interpolation grids",
+        "background": "Uniform continuity says one grid spacing can control approximation error over a whole interval.",
+        "numbers": "If $|f'|\\le4$, grid spacing $0.0025$ keeps linear sample-to-sample change below $0.01$."
+      },
+      {
+        "title": "Compact domains",
+        "background": "Closed bounded feature ranges turn pointwise continuity into uniform control.",
+        "numbers": "Any continuous feature map on $[0,1]^{10}$ is uniformly continuous; the theorem supplies a global $\\delta$."
+      },
+      {
+        "title": "Numerical integration",
+        "background": "Riemann integration proofs use uniform continuity to make oscillation small on every subinterval.",
+        "numbers": "If oscillation per subinterval is below $0.001$ over length $2$, upper-lower sum gap is below $0.002$."
+      },
+      {
+        "title": "Simulation stability",
+        "background": "A uniform time-step guarantee is stronger than a guarantee that changes from state to state.",
+        "numbers": "If position update is $2$-Lipschitz in time, a step $h=0.01$ changes position by at most $0.02$."
+      },
+      {
+        "title": "Embedding drift",
+        "background": "Uniform bounds help monitor whether small input edits can move embeddings too far.",
+        "numbers": "With bound $\\|e(x)-e(y)\\|\\le12\\|x-y\\|$, an edit of size $0.003$ moves embedding at most $0.036$."
+      }
+    ],
+    "applicationsClose": "Uniform continuity is global reliability: one closeness rule works everywhere in the chosen domain.",
+    "takeaways": [
+      "Uniform continuity compares all pairs $x,y$ with one $\\delta$.",
+      "Lipschitz bounds imply uniform continuity immediately.",
+      "Continuous functions on closed bounded intervals are uniformly continuous.",
+      "The domain matters: $1/x$ behaves differently on $[1,\\infty)$ and $(0,1)$."
+    ],
     "prereqs": [
       "math-04-16"
     ]
@@ -363,19 +4611,267 @@
   B({
     "id": "math-04-18",
     "title": "The derivative, rigorously",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: the derivative, rigorously.",
+    "tagline": "The derivative is the limit of slopes, made precise enough to prove what it can and cannot do.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Uniform continuity</i>"
+        "Uniform continuity",
+        "limits of functions (ε–δ)",
+        "difference quotients"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Mean Value Theorem</i>"
+        "The Mean Value Theorem",
+        "Taylor's theorem with remainder",
+        "the Riemann integral"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "linear approximation",
+        "chain rule",
+        "local extrema",
+        "Lipschitz bounds"
       ]
     },
+    "motivation": "<p>You already use derivatives as slopes and rates of change. The rigorous definition asks exactly which slope: not a secant over a visible interval, but the limiting slope as the interval shrinks to zero.</p><p>This matters because corners, cusps, and vertical tangents can look almost slope-like from one side but fail to have one two-sided linear rate. The definition keeps us honest.</p>",
+    "definition": "<p>A function $f$ is differentiable at $a$ if the limit $$f'(a)=\\lim_{h\\to0}\\frac{f(a+h)-f(a)}{h}$$ exists as a finite real number. Equivalently, $$f(a+h)=f(a)+f'(a)h+r(h)h,$$ where $r(h)\\to0$ as $h\\to0$; this says the function has a linear approximation whose error is small compared with $h$.</p><p>Differentiability implies continuity: if the difference quotient tends to $f'(a)$, then $f(a+h)-f(a)=h\\cdot\\frac{f(a+h)-f(a)}{h}\\to0$, so $f(a+h)\\to f(a)$.</p><p><b>Assumptions that matter:</b> the two-sided limit must exist and be finite; differentiability is pointwise unless an interval is stated; a function can be continuous without being differentiable; derivative rules require the relevant derivatives to exist.</p>",
+    "worked": {
+      "problem": "Use the definition to compute the derivative of $f(x)=x^2$ at $a=3$.",
+      "skills": [
+        "difference quotient",
+        "limits",
+        "algebraic cancellation"
+      ],
+      "strategy": "Expand $f(3+h)$, cancel the constant term, divide by $h$, then let $h\\to0$.",
+      "steps": [
+        {
+          "do": "Write the quotient",
+          "result": "$\\dfrac{(3+h)^2-3^2}{h}$",
+          "why": "use the derivative definition"
+        },
+        {
+          "do": "Expand",
+          "result": "$\\dfrac{9+6h+h^2-9}{h}$",
+          "why": "square the binomial"
+        },
+        {
+          "do": "Cancel constants",
+          "result": "$\\dfrac{6h+h^2}{h}$",
+          "why": "$9-9=0$"
+        },
+        {
+          "do": "Factor the numerator",
+          "result": "$\\dfrac{h(6+h)}{h}$",
+          "why": "prepare to cancel $h$"
+        },
+        {
+          "do": "Cancel $h$",
+          "result": "$6+h$",
+          "why": "the quotient considers $h\\ne0$"
+        },
+        {
+          "do": "Take the limit",
+          "result": "$6$",
+          "why": "$h\\to0$"
+        }
+      ],
+      "verify": "The power rule predicts $2x$, and at $x=3$ that gives $6$.",
+      "answer": "$f'(3)=6$.",
+      "connects": "The derivative is the limiting slope after the secant's width disappears."
+    },
+    "practice": [
+      {
+        "problem": "Use the definition to find $f'(a)$ for $f(x)=5x+1$.",
+        "steps": [
+          {
+            "do": "Write the quotient",
+            "result": "$\\dfrac{[5(a+h)+1]-(5a+1)}{h}$",
+            "why": "definition at $a$"
+          },
+          {
+            "do": "Distribute",
+            "result": "$\\dfrac{5a+5h+1-5a-1}{h}$",
+            "why": "expand the numerator"
+          },
+          {
+            "do": "Cancel",
+            "result": "$\\dfrac{5h}{h}$",
+            "why": "constant terms vanish"
+          },
+          {
+            "do": "Simplify",
+            "result": "$5$",
+            "why": "cancel $h\\ne0$"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$5$",
+            "why": "constant limit"
+          }
+        ],
+        "answer": "$f'(a)=5$."
+      },
+      {
+        "problem": "Use the definition to find $f'(a)$ for $f(x)=x^3$.",
+        "steps": [
+          {
+            "do": "Write the quotient",
+            "result": "$\\dfrac{(a+h)^3-a^3}{h}$",
+            "why": "definition"
+          },
+          {
+            "do": "Expand",
+            "result": "$\\dfrac{a^3+3a^2h+3ah^2+h^3-a^3}{h}$",
+            "why": "binomial theorem"
+          },
+          {
+            "do": "Cancel",
+            "result": "$\\dfrac{3a^2h+3ah^2+h^3}{h}$",
+            "why": "$a^3$ terms cancel"
+          },
+          {
+            "do": "Divide by $h$",
+            "result": "$3a^2+3ah+h^2$",
+            "why": "factor one $h$ from each term"
+          },
+          {
+            "do": "Let $h\\to0$",
+            "result": "$3a^2$",
+            "why": "terms with $h$ vanish"
+          }
+        ],
+        "answer": "$f'(a)=3a^2$."
+      },
+      {
+        "problem": "Show $f(x)=|x|$ is not differentiable at $0$.",
+        "steps": [
+          {
+            "do": "Write the quotient",
+            "result": "$\\dfrac{|0+h|-0}{h}=\\dfrac{|h|}{h}$",
+            "why": "definition at zero"
+          },
+          {
+            "do": "Approach from the right",
+            "result": "$h>0\\Rightarrow |h|/h=1$",
+            "why": "positive $h$ stays positive"
+          },
+          {
+            "do": "Approach from the left",
+            "result": "$h<0\\Rightarrow |h|/h=-1$",
+            "why": "negative $h$ changes sign"
+          },
+          {
+            "do": "Compare one-sided limits",
+            "result": "$1\\ne-1$",
+            "why": "two-sided derivative limit must agree"
+          },
+          {
+            "do": "Conclude",
+            "result": "not differentiable at $0$",
+            "why": "the derivative limit does not exist"
+          }
+        ],
+        "answer": "$|x|$ is not differentiable at $0$."
+      },
+      {
+        "problem": "Prove differentiability implies continuity using $h\\to0$ notation.",
+        "steps": [
+          {
+            "do": "Assume differentiability",
+            "result": "$\\dfrac{f(a+h)-f(a)}{h}\\to f'(a)$",
+            "why": "definition"
+          },
+          {
+            "do": "Rewrite the output change",
+            "result": "$f(a+h)-f(a)=h\\cdot\\dfrac{f(a+h)-f(a)}{h}$",
+            "why": "multiply and divide by $h$"
+          },
+          {
+            "do": "Take the first factor limit",
+            "result": "$h\\to0$",
+            "why": "by approach"
+          },
+          {
+            "do": "Take the second factor limit",
+            "result": "$f'(a)$",
+            "why": "differentiability"
+          },
+          {
+            "do": "Multiply limits",
+            "result": "$f(a+h)-f(a)\\to0$",
+            "why": "zero times a finite limit is zero"
+          }
+        ],
+        "answer": "$f(a+h)\\to f(a)$, so $f$ is continuous at $a$."
+      },
+      {
+        "problem": "For $L(w)=w^2$ at $w=2$, compute the central-difference gradient estimate with $h=0.01$ and compare to the derivative.",
+        "steps": [
+          {
+            "do": "Compute right value",
+            "result": "$L(2.01)=4.0401$",
+            "why": "square $2.01$"
+          },
+          {
+            "do": "Compute left value",
+            "result": "$L(1.99)=3.9601$",
+            "why": "square $1.99$"
+          },
+          {
+            "do": "Subtract",
+            "result": "$4.0401-3.9601=0.08$",
+            "why": "symmetric output change"
+          },
+          {
+            "do": "Divide by $2h$",
+            "result": "$0.08/0.02=4$",
+            "why": "central difference formula"
+          },
+          {
+            "do": "Compare",
+            "result": "$L'(2)=2\\cdot2=4$",
+            "why": "exact derivative"
+          }
+        ],
+        "answer": "The estimate is $4$, matching the exact derivative."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Backpropagation",
+        "background": "Neural-network training computes derivatives of loss with respect to parameters by chaining local derivatives.",
+        "numbers": "For $L(w)=(w-3)^2$, $L'(1)=2(1-3)=-4$, so a step with rate $0.1$ moves to $1.4$."
+      },
+      {
+        "title": "Gradient checking",
+        "background": "Finite differences test whether an implemented derivative matches the limiting slope.",
+        "numbers": "If analytic gradient is $6.000$ and finite difference is $6.002$, absolute error is $0.002$."
+      },
+      {
+        "title": "Sensitivity analysis",
+        "background": "A derivative turns small input changes into first-order output estimates.",
+        "numbers": "If $f'(5)=12$, then an input change $0.01$ predicts output change about $0.12$."
+      },
+      {
+        "title": "Nondifferentiable activations",
+        "background": "ReLU has a corner at zero, so frameworks choose a convention for the derivative there.",
+        "numbers": "For $r(x)=\\max(0,x)$, left slope $0$ and right slope $1$ disagree at $0$."
+      },
+      {
+        "title": "Optimization stopping",
+        "background": "Small derivative magnitude near a point suggests locally flat loss, though not always a minimum.",
+        "numbers": "For $L(w)=w^4$, $L'(0.1)=4(0.001)=0.004$, already small."
+      },
+      {
+        "title": "Physics rates",
+        "background": "Velocity is the derivative of position, made rigorous as a limiting average velocity.",
+        "numbers": "For $s(t)=t^2$, average velocity from $2$ to $2.01$ is $(4.0401-4)/0.01=4.01$, tending to $4$."
+      }
+    ],
+    "applicationsClose": "The derivative is a limit with a job: it turns local change into a precise linear rate.",
+    "takeaways": [
+      "$f'(a)=\\lim_{h\\to0}[f(a+h)-f(a)]/h$ when the finite two-sided limit exists.",
+      "Differentiability implies continuity, but continuity need not imply differentiability.",
+      "Corners fail because one-sided slope limits disagree.",
+      "Derivatives justify linear approximations and gradient-based algorithms."
+    ],
     "prereqs": [
       "math-04-17"
     ]
@@ -384,19 +4880,267 @@
   B({
     "id": "math-04-19",
     "title": "The Mean Value Theorem",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: the mean value theorem.",
+    "tagline": "Somewhere on a smooth trip, the instantaneous speed matches the average speed.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The derivative, rigorously</i>"
+        "The derivative, rigorously",
+        "continuity",
+        "closed intervals"
       ],
       "leadsTo": [
-        "the next lesson, <i>Taylor's theorem with remainder</i>"
+        "Taylor's theorem with remainder",
+        "monotonicity tests",
+        "inverse function ideas"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "Rolle's theorem",
+        "Lipschitz bounds",
+        "error estimates",
+        "optimization"
       ]
     },
+    "motivation": "<p>If a car travels $100$ km in $2$ hours, its average speed is $50$ km/h. If its position was continuous and differentiable during the trip, then at some instant the speedometer had to read exactly $50$ km/h.</p><p>The Mean Value Theorem is that everyday idea in calculus form. It turns endpoint information into a guaranteed derivative value somewhere inside.</p>",
+    "definition": "<p>If $f$ is continuous on $[a,b]$ and differentiable on $(a,b)$, then there exists $c\\in(a,b)$ such that $$f'(c)=\\frac{f(b)-f(a)}{b-a}.$$ The right side is the secant slope; the theorem says a tangent slope matches it somewhere.</p><p>It follows from Rolle's theorem. Subtract the secant line from $f$ to make a new function $g$ with $g(a)=g(b)$. Rolle's theorem gives $g'(c)=0$, and unpacking $g'$ gives $f'(c)$ equal to the secant slope.</p><p><b>Assumptions that matter:</b> continuity on the closed interval and differentiability on the open interval are both required; corners or jumps can break the conclusion; MVT guarantees existence of at least one $c$, not a unique one.</p>",
+    "worked": {
+      "problem": "Apply the Mean Value Theorem to $f(x)=x^2$ on $[1,3]$ and find $c$.",
+      "skills": [
+        "MVT hypotheses",
+        "secant slope",
+        "derivative equation"
+      ],
+      "strategy": "Verify the hypotheses, compute the average slope, then solve $f'(c)$ equals that slope.",
+      "steps": [
+        {
+          "do": "Check continuity",
+          "result": "$x^2$ is continuous on $[1,3]$",
+          "why": "polynomial"
+        },
+        {
+          "do": "Check differentiability",
+          "result": "$x^2$ is differentiable on $(1,3)$",
+          "why": "polynomial"
+        },
+        {
+          "do": "Compute endpoint values",
+          "result": "$f(3)=9$, $f(1)=1$",
+          "why": "needed for the secant slope"
+        },
+        {
+          "do": "Compute average slope",
+          "result": "$\\dfrac{9-1}{3-1}=4$",
+          "why": "change in output over change in input"
+        },
+        {
+          "do": "Compute derivative",
+          "result": "$f'(x)=2x$",
+          "why": "power rule"
+        },
+        {
+          "do": "Solve $f'(c)=4$",
+          "result": "$2c=4$, so $c=2$",
+          "why": "MVT tangent slope equals secant slope"
+        }
+      ],
+      "verify": "$c=2$ lies inside $(1,3)$, exactly where the tangent slope is $4$.",
+      "answer": "The MVT point is $c=2$.",
+      "connects": "MVT bridges global change across an interval to local derivative information inside it."
+    },
+    "practice": [
+      {
+        "problem": "Apply MVT to $f(x)=x^3$ on $[0,2]$ and find a point $c$.",
+        "steps": [
+          {
+            "do": "Check hypotheses",
+            "result": "$x^3$ is continuous and differentiable",
+            "why": "polynomial"
+          },
+          {
+            "do": "Compute endpoint values",
+            "result": "$f(2)=8$, $f(0)=0$",
+            "why": "secant slope data"
+          },
+          {
+            "do": "Compute secant slope",
+            "result": "$(8-0)/(2-0)=4$",
+            "why": "average rate of change"
+          },
+          {
+            "do": "Compute derivative",
+            "result": "$f'(x)=3x^2$",
+            "why": "power rule"
+          },
+          {
+            "do": "Solve",
+            "result": "$3c^2=4$, so $c=2/\\sqrt3$",
+            "why": "positive solution in $(0,2)$"
+          }
+        ],
+        "answer": "$c=2/\\sqrt3\\approx1.155$."
+      },
+      {
+        "problem": "Use MVT to prove $|\\sin b-\\sin a|\\le|b-a|$.",
+        "steps": [
+          {
+            "do": "Set the function",
+            "result": "$f(x)=\\sin x$",
+            "why": "difference of sine values"
+          },
+          {
+            "do": "Apply MVT",
+            "result": "$\\sin b-\\sin a=\\cos(c)(b-a)$",
+            "why": "for some $c$ between $a$ and $b$"
+          },
+          {
+            "do": "Take absolute values",
+            "result": "$|\\sin b-\\sin a|=|\\cos c|\\,|b-a|$",
+            "why": "absolute product"
+          },
+          {
+            "do": "Use cosine bound",
+            "result": "$|\\cos c|\\le1$",
+            "why": "cosine ranges between $-1$ and $1$"
+          },
+          {
+            "do": "Conclude",
+            "result": "$|\\sin b-\\sin a|\\le|b-a|$",
+            "why": "multiply by the bound"
+          }
+        ],
+        "answer": "$\\sin x$ is $1$-Lipschitz."
+      },
+      {
+        "problem": "If $f'(x)=0$ for all $x\\in(a,b)$, prove $f$ is constant on $(a,b)$.",
+        "steps": [
+          {
+            "do": "Choose two points",
+            "result": "$u<v$ in $(a,b)$",
+            "why": "show any two values match"
+          },
+          {
+            "do": "Apply MVT on $[u,v]$",
+            "result": "$f(v)-f(u)=f'(c)(v-u)$",
+            "why": "for some $c\\in(u,v)$"
+          },
+          {
+            "do": "Use the derivative condition",
+            "result": "$f'(c)=0$",
+            "why": "given for every interior point"
+          },
+          {
+            "do": "Simplify",
+            "result": "$f(v)-f(u)=0$",
+            "why": "zero times the interval length"
+          },
+          {
+            "do": "Conclude",
+            "result": "$f(v)=f(u)$",
+            "why": "arbitrary points have equal values"
+          }
+        ],
+        "answer": "$f$ is constant."
+      },
+      {
+        "problem": "Does MVT apply to $f(x)=|x|$ on $[-1,1]$?",
+        "steps": [
+          {
+            "do": "Check continuity",
+            "result": "$|x|$ is continuous on $[-1,1]$",
+            "why": "absolute value is continuous"
+          },
+          {
+            "do": "Check differentiability",
+            "result": "not differentiable at $0$",
+            "why": "left and right slopes differ"
+          },
+          {
+            "do": "Compare with interval",
+            "result": "$0\\in(-1,1)$",
+            "why": "the corner is in the open interval"
+          },
+          {
+            "do": "Assess hypotheses",
+            "result": "MVT does not apply",
+            "why": "differentiability fails"
+          },
+          {
+            "do": "Note the secant slope",
+            "result": "$(1-1)/2=0$",
+            "why": "no theorem guarantees a matching derivative"
+          }
+        ],
+        "answer": "No. The function is not differentiable at $0$."
+      },
+      {
+        "problem": "A loss has derivative bounded by $|L'(w)|\\le6$ on $[1,1.2]$. Bound $|L(1.2)-L(1)|$.",
+        "steps": [
+          {
+            "do": "Apply MVT",
+            "result": "$L(1.2)-L(1)=L'(c)(0.2)$",
+            "why": "for some $c\\in(1,1.2)$"
+          },
+          {
+            "do": "Take absolute values",
+            "result": "$|L(1.2)-L(1)|=|L'(c)|0.2$",
+            "why": "distance is positive"
+          },
+          {
+            "do": "Use the derivative bound",
+            "result": "$|L'(c)|\\le6$",
+            "why": "given on the interval"
+          },
+          {
+            "do": "Multiply",
+            "result": "$|L(1.2)-L(1)|\\le6(0.2)$",
+            "why": "MVT bound"
+          },
+          {
+            "do": "Compute",
+            "result": "$1.2$",
+            "why": "six times two tenths"
+          }
+        ],
+        "answer": "The loss change is at most $1.2$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Lipschitz guarantees",
+        "background": "Derivative bounds become global change bounds through MVT.",
+        "numbers": "If $|f'|\\le4$ on an interval, moving $0.03$ changes $f$ by at most $0.12$."
+      },
+      {
+        "title": "Gradient clipping intuition",
+        "background": "Bounding gradients bounds how much loss can change over a parameter step.",
+        "numbers": "Gradient norm bound $10$ and step norm $0.001$ give loss change at most about $0.01$."
+      },
+      {
+        "title": "Speed checks",
+        "background": "Average-speed arguments are direct MVT applications.",
+        "numbers": "Traveling $150$ km in $3$ hours guarantees an instant at $50$ km/h if position is smooth."
+      },
+      {
+        "title": "Root uniqueness",
+        "background": "If a derivative is always positive, a function is strictly increasing and cannot cross zero twice.",
+        "numbers": "If $f'\\ge2$ and $f(1)=-1$, then $f(2)\\ge1$, so at most one root in a monotone interval."
+      },
+      {
+        "title": "Error bounds",
+        "background": "Taylor's theorem uses MVT-style reasoning to control the remainder.",
+        "numbers": "If $|f''|\\le3$, linearization error over $h=0.1$ is at most $3h^2/2=0.015$."
+      },
+      {
+        "title": "Robust scores",
+        "background": "A score derivative bound controls sensitivity to feature changes.",
+        "numbers": "If $|s'(x)|\\le0.8$, changing a scalar feature by $0.5$ changes score by at most $0.4$."
+      }
+    ],
+    "applicationsClose": "The Mean Value Theorem is the bridge from local derivative bounds to interval-wide guarantees.",
+    "takeaways": [
+      "MVT requires continuity on $[a,b]$ and differentiability on $(a,b)$.",
+      "It guarantees $f'(c)=[f(b)-f(a)]/(b-a)$ for some interior $c$.",
+      "Derivative bounds imply function-change bounds.",
+      "Missing differentiability or continuity can break the theorem."
+    ],
     "prereqs": [
       "math-04-18"
     ]
@@ -405,19 +5149,272 @@
   B({
     "id": "math-04-20",
     "title": "Taylor's theorem with remainder",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: taylor's theorem with remainder.",
+    "tagline": "Taylor's theorem tells you not only the polynomial approximation, but how much error remains.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Mean Value Theorem</i>"
+        "The Mean Value Theorem",
+        "higher derivatives",
+        "Taylor polynomials"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Riemann integral</i>"
+        "The Riemann integral",
+        "power series and analyticity",
+        "optimization approximations"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "remainder bounds",
+        "local approximation",
+        "Newton's method",
+        "error analysis"
       ]
     },
+    "motivation": "<p>Taylor polynomials are wonderfully practical: replace a hard function by a polynomial near a point. But approximation without an error statement is only a hope.</p><p>Taylor's theorem adds the missing honesty. It says exactly how the neglected part depends on a higher derivative and the distance from the center.</p>",
+    "definition": "<p>If $f$ has $n+1$ derivatives on an interval containing $a$ and $x$, then $$f(x)=\\sum_{k=0}^{n}\\frac{f^{(k)}(a)}{k!}(x-a)^k+R_n(x),$$ where the Lagrange remainder is $$R_n(x)=\\frac{f^{(n+1)}(c)}{(n+1)!}(x-a)^{n+1}$$ for some $c$ between $a$ and $x$.</p><p>The proof is an iterated Mean Value Theorem idea: build the polynomial matching derivatives through order $n$ at $a$, then use a Rolle-type argument to force the remaining error to be controlled by the $(n+1)$st derivative at an intermediate point.</p><p><b>Assumptions that matter:</b> the needed derivatives must exist on the interval; the unknown point $c$ lies between $a$ and $x$; practical error bounds replace $|f^{(n+1)}(c)|$ by a known maximum $M$; a Taylor polynomial is local unless the remainder is controlled.</p>",
+    "worked": {
+      "problem": "Approximate $e^{0.2}$ with the degree $2$ Taylor polynomial at $0$ and bound the error.",
+      "skills": [
+        "Taylor polynomial",
+        "Lagrange remainder",
+        "numerical bound"
+      ],
+      "strategy": "Use $e^x=1+x+x^2/2$ through degree $2$, then bound the third derivative on $[0,0.2]$.",
+      "steps": [
+        {
+          "do": "Write the polynomial",
+          "result": "$T_2(x)=1+x+x^2/2$",
+          "why": "all derivatives of $e^x$ at $0$ equal $1$"
+        },
+        {
+          "do": "Substitute $x=0.2$",
+          "result": "$T_2(0.2)=1+0.2+0.2^2/2$",
+          "why": "evaluate the approximation"
+        },
+        {
+          "do": "Compute",
+          "result": "$1.22$",
+          "why": "$0.2^2/2=0.02$"
+        },
+        {
+          "do": "Identify the remainder",
+          "result": "$R_2(0.2)=e^c(0.2)^3/3!$",
+          "why": "third derivative of $e^x$ is $e^x$"
+        },
+        {
+          "do": "Bound the derivative",
+          "result": "$e^c\\le e^{0.2}<1.23$",
+          "why": "$c\\in(0,0.2)$"
+        },
+        {
+          "do": "Bound the error",
+          "result": "$|R_2|<1.23(0.008)/6=0.00164$",
+          "why": "apply the Lagrange bound"
+        }
+      ],
+      "verify": "The true value is about $1.22140$, which is within $0.00164$ of $1.22$.",
+      "answer": "$e^{0.2}\\approx1.22$ with error less than $0.00164$.",
+      "connects": "Taylor's theorem turns an approximation into a certified approximation."
+    },
+    "practice": [
+      {
+        "problem": "Use degree $1$ Taylor at $0$ to approximate $\\sin(0.1)$ and bound the error.",
+        "steps": [
+          {
+            "do": "Write the polynomial",
+            "result": "$T_1(x)=x$",
+            "why": "$\\sin0=0$ and $\\cos0=1$"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$T_1(0.1)=0.1$",
+            "why": "substitute"
+          },
+          {
+            "do": "Use a second-degree remainder form",
+            "result": "$|R_1|\\le M(0.1)^2/2$",
+            "why": "degree $1$ uses second derivative"
+          },
+          {
+            "do": "Bound the second derivative",
+            "result": "$|f''(x)|=|-sin x|\\le1$",
+            "why": "sine magnitude is at most $1$"
+          },
+          {
+            "do": "Compute the bound",
+            "result": "$0.01/2=0.005$",
+            "why": "substitute $M=1$"
+          }
+        ],
+        "answer": "$\\sin(0.1)\\approx0.1$ with error at most $0.005$."
+      },
+      {
+        "problem": "Use $1+x$ to approximate $\\sqrt{1+x}$ at $x=0.04$? First find the correct linear Taylor approximation at $0$.",
+        "steps": [
+          {
+            "do": "Define the function",
+            "result": "$f(x)=\\sqrt{1+x}$",
+            "why": "center at $x=0$"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$f(0)=1$",
+            "why": "constant term"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=\\dfrac{1}{2\\sqrt{1+x}}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Evaluate derivative",
+            "result": "$f'(0)=1/2$",
+            "why": "substitute $0$"
+          },
+          {
+            "do": "Write the linear polynomial",
+            "result": "$T_1(x)=1+x/2$",
+            "why": "not $1+x$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$T_1(0.04)=1.02$",
+            "why": "half of $0.04$ is $0.02$"
+          }
+        ],
+        "answer": "$\\sqrt{1.04}\\approx1.02$."
+      },
+      {
+        "problem": "Bound the error of approximating $\\cos(0.3)$ by $1-0.3^2/2$.",
+        "steps": [
+          {
+            "do": "Use degree $2$ polynomial",
+            "result": "$T_2(x)=1-x^2/2$",
+            "why": "Maclaurin cosine through degree $2$"
+          },
+          {
+            "do": "Identify next derivative order",
+            "result": "$n+1=3$",
+            "why": "degree $2$ remainder"
+          },
+          {
+            "do": "Use a derivative bound",
+            "result": "$|f^{(3)}(x)|=|\\sin x|\\le1$",
+            "why": "global bound"
+          },
+          {
+            "do": "Apply the bound",
+            "result": "$|R_2|\\le(0.3)^3/3!$",
+            "why": "Lagrange remainder"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.027/6=0.0045$",
+            "why": "arithmetic"
+          }
+        ],
+        "answer": "Error at most $0.0045$; a sharper degree $3$ term is zero at the center but this bound is valid."
+      },
+      {
+        "problem": "For $f(x)=\\ln(1+x)$, approximate $\\ln(1.1)$ by $x-x^2/2$ and estimate using the next term magnitude.",
+        "steps": [
+          {
+            "do": "Set $x=0.1$",
+            "result": "$\\ln(1.1)$",
+            "why": "match $\\ln(1+x)$"
+          },
+          {
+            "do": "Evaluate polynomial",
+            "result": "$0.1-0.1^2/2$",
+            "why": "degree $2$ Maclaurin"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.095$",
+            "why": "$0.1-0.005$"
+          },
+          {
+            "do": "Estimate next term",
+            "result": "$0.1^3/3=0.000333\\ldots$",
+            "why": "alternating log series next magnitude"
+          },
+          {
+            "do": "State interval",
+            "result": "$0.094667$ to $0.095333$",
+            "why": "true value lies within about one next term"
+          }
+        ],
+        "answer": "$\\ln(1.1)\\approx0.095$ with error about at most $0.000333$."
+      },
+      {
+        "problem": "A loss has $|L'''(w)|\\le12$ near $w=0$. If you use a quadratic Taylor model at $0$, bound the error at $w=0.05$.",
+        "steps": [
+          {
+            "do": "Identify degree",
+            "result": "$n=2$",
+            "why": "quadratic model"
+          },
+          {
+            "do": "Write the remainder bound",
+            "result": "$|R_2(w)|\\le M|w|^3/3!$",
+            "why": "Lagrange remainder"
+          },
+          {
+            "do": "Substitute $M=12$",
+            "result": "$12(0.05)^3/6$",
+            "why": "third derivative bound"
+          },
+          {
+            "do": "Compute the cube",
+            "result": "$0.05^3=0.000125$",
+            "why": "small displacement"
+          },
+          {
+            "do": "Compute the bound",
+            "result": "$12(0.000125)/6=0.00025$",
+            "why": "arithmetic"
+          }
+        ],
+        "answer": "The quadratic-model error is at most $0.00025$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Fast math libraries",
+        "background": "Implementations of exp, log, and trig use polynomial approximations with certified remainders on small intervals.",
+        "numbers": "$e^{0.1}\\approx1+0.1+0.005+0.0001667=1.1051667$, within about $4.2\\times10^{-6}$ after the next term."
+      },
+      {
+        "title": "Newton's method",
+        "background": "Newton steps come from a local Taylor model of a function or objective.",
+        "numbers": "For $f(x)=x^2-2$ at $x=1.5$, Newton gives $1.5-0.25/3=1.4167$."
+      },
+      {
+        "title": "Loss curvature",
+        "background": "Second-order optimization reads the quadratic Taylor term as local curvature.",
+        "numbers": "If $L(w)\\approx2+0.5(w-4)^2$, moving $0.2$ raises loss by $0.5(0.04)=0.02$."
+      },
+      {
+        "title": "Quantization error",
+        "background": "Taylor bounds estimate how much nonlinear transforms amplify small rounding errors.",
+        "numbers": "If $|f''|\\le10$ and rounding $h=0.001$, second-order error is at most $10h^2/2=5\\times10^{-6}$."
+      },
+      {
+        "title": "Activation approximations",
+        "background": "Inference kernels approximate activations by low-degree polynomials on bounded ranges.",
+        "numbers": "For $\\tanh(0.2)$, $x-x^3/3=0.19733$, close to $0.19738$."
+      },
+      {
+        "title": "Uncertainty propagation",
+        "background": "The delta method is Taylor's theorem applied to random perturbations.",
+        "numbers": "For $g(x)=x^2$ near $3$ with standard deviation $0.1$, first-order output standard deviation is $|g'(3)|0.1=0.6$."
+      }
+    ],
+    "applicationsClose": "Taylor's theorem is local approximation with accountability: every polynomial comes with a remainder to bound.",
+    "takeaways": [
+      "Taylor's theorem writes a function as a degree $n$ polynomial plus a remainder.",
+      "The Lagrange remainder uses an $(n+1)$st derivative at some intermediate point.",
+      "Bounding that derivative gives practical numerical error bounds.",
+      "Approximation quality depends on distance from the center and derivative size."
+    ],
     "prereqs": [
       "math-04-19"
     ]
@@ -426,19 +5423,273 @@
   B({
     "id": "math-04-21",
     "title": "The Riemann integral",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: the riemann integral.",
+    "tagline": "The Riemann integral defines area by trapping a function between upper and lower sums.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Taylor's theorem with remainder</i>"
+        "Taylor's theorem with remainder",
+        "suprema and infima",
+        "partitions"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Fundamental Theorem of Calculus</i>"
+        "The Fundamental Theorem of Calculus",
+        "numerical integration",
+        "measure and probability"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "upper and lower sums",
+        "uniform continuity",
+        "step functions",
+        "accumulation"
       ]
     },
+    "motivation": "<p>You already think of $\\int_a^b f(x)\\,dx$ as area or accumulated change. Riemann's definition asks how to make that idea precise using only rectangles.</p><p>Take a partition of the interval, use the largest function value on each small piece for an upper rectangle and the smallest for a lower rectangle. If those two totals can be forced together, the area is well-defined.</p>",
+    "definition": "<p>A partition $P$ of $[a,b]$ is a finite list $a=x_0<x_1<\\cdots<x_n=b$. On each subinterval $[x_{i-1},x_i]$, let $M_i=\\sup f$ and $m_i=\\inf f$. The upper and lower sums are $$U(f,P)=\\sum_{i=1}^{n}M_i\\Delta x_i,\\qquad L(f,P)=\\sum_{i=1}^{n}m_i\\Delta x_i,$$ where $\\Delta x_i=x_i-x_{i-1}$.</p><p>A bounded function is Riemann integrable if for every $\\varepsilon>0$ there is a partition $P$ such that $U(f,P)-L(f,P)<\\varepsilon$. Continuous functions on $[a,b]$ are integrable because uniform continuity makes the oscillation on sufficiently small subintervals uniformly small.</p><p><b>Assumptions that matter:</b> the function must be bounded for the usual Riemann definition; partitions are finite; discontinuities are allowed if they are not too wild; upper and lower sums use suprema and infima, not just sampled endpoints.</p>",
+    "worked": {
+      "problem": "Compute the Riemann integral of $f(x)=x$ on $[0,1]$ using equal partitions and lower and upper sums.",
+      "skills": [
+        "partitions",
+        "upper sums",
+        "lower sums",
+        "limit of sums"
+      ],
+      "strategy": "For an increasing function, left endpoints give lower sums and right endpoints give upper sums.",
+      "steps": [
+        {
+          "do": "Choose equal partition",
+          "result": "$x_i=i/n$",
+          "why": "split $[0,1]$ into $n$ equal pieces"
+        },
+        {
+          "do": "Set the width",
+          "result": "$\\Delta x=1/n$",
+          "why": "each subinterval has equal length"
+        },
+        {
+          "do": "Write the lower sum",
+          "result": "$L_n=\\sum_{i=1}^{n}\\frac{i-1}{n}\\cdot\\frac1n$",
+          "why": "left endpoint is the infimum on each piece"
+        },
+        {
+          "do": "Evaluate the lower sum",
+          "result": "$L_n=\\dfrac{1}{n^2}\\sum_{i=1}^{n}(i-1)=\\dfrac{n-1}{2n}$",
+          "why": "sum $0+1+\\cdots+(n-1)$"
+        },
+        {
+          "do": "Write the upper sum",
+          "result": "$U_n=\\sum_{i=1}^{n}\\frac{i}{n}\\cdot\\frac1n$",
+          "why": "right endpoint is the supremum"
+        },
+        {
+          "do": "Evaluate the upper sum",
+          "result": "$U_n=\\dfrac{1}{n^2}\\sum_{i=1}^{n}i=\\dfrac{n+1}{2n}$",
+          "why": "sum $1+\\cdots+n$"
+        },
+        {
+          "do": "Take limits",
+          "result": "$L_n\\to\\frac12$ and $U_n\\to\\frac12$",
+          "why": "the bounds squeeze together"
+        }
+      ],
+      "verify": "The upper-lower gap is $U_n-L_n=1/n$, which can be made smaller than any $\\varepsilon>0$.",
+      "answer": "$\\displaystyle\\int_0^1 x\\,dx=\\frac12$.",
+      "connects": "Riemann integration is the moment when all fine enough rectangle traps agree on one number."
+    },
+    "practice": [
+      {
+        "problem": "For $f(x)=2$ on $[1,4]$, compute upper and lower sums for any partition.",
+        "steps": [
+          {
+            "do": "Find each infimum",
+            "result": "$m_i=2$",
+            "why": "the function is constant"
+          },
+          {
+            "do": "Find each supremum",
+            "result": "$M_i=2$",
+            "why": "same constant value"
+          },
+          {
+            "do": "Write the lower sum",
+            "result": "$L(f,P)=\\sum 2\\Delta x_i$",
+            "why": "rectangle height is $2$"
+          },
+          {
+            "do": "Sum widths",
+            "result": "$\\sum\\Delta x_i=4-1=3$",
+            "why": "subinterval lengths fill the interval"
+          },
+          {
+            "do": "Compute both sums",
+            "result": "$L(f,P)=U(f,P)=6$",
+            "why": "upper and lower sums match"
+          }
+        ],
+        "answer": "$\\int_1^4 2\\,dx=6$."
+      },
+      {
+        "problem": "For $f(x)=x^2$ on $[0,1]$, write the right-endpoint Riemann sum with $n$ equal parts.",
+        "steps": [
+          {
+            "do": "Set nodes",
+            "result": "$x_i=i/n$",
+            "why": "equal partition"
+          },
+          {
+            "do": "Set width",
+            "result": "$\\Delta x=1/n$",
+            "why": "unit interval split into $n$ pieces"
+          },
+          {
+            "do": "Evaluate right endpoints",
+            "result": "$f(x_i)=(i/n)^2$",
+            "why": "square each right endpoint"
+          },
+          {
+            "do": "Write the sum",
+            "result": "$R_n=\\sum_{i=1}^{n}(i/n)^2(1/n)$",
+            "why": "height times width"
+          },
+          {
+            "do": "Simplify",
+            "result": "$R_n=\\dfrac{1}{n^3}\\sum_{i=1}^{n}i^2$",
+            "why": "factor out powers of $n$"
+          }
+        ],
+        "answer": "$R_n=\\dfrac{1}{n^3}\\sum_{i=1}^{n}i^2$, which tends to $1/3$."
+      },
+      {
+        "problem": "Show a bounded function with one jump, $f(x)=0$ for $x<1/2$ and $f(x)=1$ for $x\\ge1/2$, is Riemann integrable on $[0,1]$.",
+        "steps": [
+          {
+            "do": "Choose a small interval around the jump",
+            "result": "length $\\eta$",
+            "why": "only near the jump can upper and lower sums differ"
+          },
+          {
+            "do": "Partition at its endpoints",
+            "result": "$[1/2-\\eta/2,1/2+\\eta/2]$",
+            "why": "isolate the discontinuity"
+          },
+          {
+            "do": "Compare outside intervals",
+            "result": "upper sum equals lower sum",
+            "why": "the function is constant on each outside piece"
+          },
+          {
+            "do": "Bound the jump contribution",
+            "result": "$1\\cdot\\eta$",
+            "why": "oscillation at most $1$ over length $\\eta$"
+          },
+          {
+            "do": "Choose $\\eta$",
+            "result": "$\\eta<\\varepsilon$",
+            "why": "then upper-lower gap is below $\\varepsilon$"
+          }
+        ],
+        "answer": "It is Riemann integrable; its integral is $1/2$."
+      },
+      {
+        "problem": "Use the trapezoidal rule as a Riemann-sum approximation for $\\int_0^2 x\\,dx$ with one interval.",
+        "steps": [
+          {
+            "do": "Evaluate endpoints",
+            "result": "$f(0)=0$, $f(2)=2$",
+            "why": "trapezoid uses endpoint heights"
+          },
+          {
+            "do": "Average heights",
+            "result": "$(0+2)/2=1$",
+            "why": "trapezoid average height"
+          },
+          {
+            "do": "Compute width",
+            "result": "$2-0=2$",
+            "why": "interval length"
+          },
+          {
+            "do": "Multiply",
+            "result": "$1\\cdot2=2$",
+            "why": "area of trapezoid"
+          },
+          {
+            "do": "Compare exact",
+            "result": "$\\int_0^2x\\,dx=2$",
+            "why": "a line is integrated exactly by one trapezoid"
+          }
+        ],
+        "answer": "The approximation and exact integral are both $2$."
+      },
+      {
+        "problem": "A loss curve has values $1.0,0.8,0.7$ at epochs $0,1,2$. Approximate accumulated loss by rectangles using left endpoints.",
+        "steps": [
+          {
+            "do": "Set interval widths",
+            "result": "$\\Delta t=1$",
+            "why": "samples are one epoch apart"
+          },
+          {
+            "do": "Choose left heights",
+            "result": "$1.0$ and $0.8$",
+            "why": "left endpoints for intervals $[0,1]$ and $[1,2]$"
+          },
+          {
+            "do": "Compute first rectangle",
+            "result": "$1.0\\cdot1=1.0$",
+            "why": "height times width"
+          },
+          {
+            "do": "Compute second rectangle",
+            "result": "$0.8\\cdot1=0.8$",
+            "why": "height times width"
+          },
+          {
+            "do": "Add",
+            "result": "$1.8$",
+            "why": "total accumulated loss estimate"
+          }
+        ],
+        "answer": "Left-rectangle accumulated loss is $1.8$ loss-epochs."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Area under ROC curves",
+        "background": "AUC is an integral of true positive rate over false positive rate, usually approximated from sampled thresholds.",
+        "numbers": "Trapezoids with widths $0.2$ and average heights $0.6,0.8,0.9,0.95,1.0$ give AUC $0.2(4.25)=0.85$."
+      },
+      {
+        "title": "Expected values",
+        "background": "Continuous expectations are integrals, and Riemann sums are the first finite approximation.",
+        "numbers": "Values $1,4,9$ with equal weight $1/3$ give expected value estimate $(1+4+9)/3=4.667$."
+      },
+      {
+        "title": "Training diagnostics",
+        "background": "Area under a loss curve measures cumulative training cost, not just final loss.",
+        "numbers": "Losses $1.0,0.8,0.7$ over two epochs give trapezoid area $[(1.0+0.7)/2+0.8]=1.65$."
+      },
+      {
+        "title": "Sensor accumulation",
+        "background": "Distance from velocity samples is a physical Riemann-sum idea.",
+        "numbers": "Velocities $0,3,5$ m/s over two one-second intervals give left estimate $0+3=3$ m."
+      },
+      {
+        "title": "Histogram probabilities",
+        "background": "Density curves integrate to probability; histograms approximate the integral by rectangles.",
+        "numbers": "Three bins of width $0.5$ with heights $0.2,0.6,0.4$ have mass $0.5(1.2)=0.6$."
+      },
+      {
+        "title": "Numerical quadrature",
+        "background": "Scientific computing refines partitions until rectangle or trapezoid estimates stabilize.",
+        "numbers": "If upper and lower sums differ by $0.0008$, the integral is known within that gap."
+      }
+    ],
+    "applicationsClose": "Riemann integration is accumulation made rigorous by squeezing all sufficiently fine rectangle sums together.",
+    "takeaways": [
+      "Upper sums use suprema; lower sums use infima over partition intervals.",
+      "A bounded function is Riemann integrable when upper-lower gaps can be made arbitrarily small.",
+      "Continuous functions on closed intervals are Riemann integrable.",
+      "Riemann sums are the foundation behind numerical area and accumulation estimates."
+    ],
     "prereqs": [
       "math-04-20"
     ]
@@ -447,19 +5698,262 @@
   B({
     "id": "math-04-22",
     "title": "The Fundamental Theorem of Calculus",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: the fundamental theorem of calculus.",
+    "tagline": "The Fundamental Theorem shows that differentiation and integration undo each other under the right hypotheses.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Riemann integral</i>"
+        "The Riemann integral",
+        "continuity",
+        "the derivative, rigorously"
       ],
       "leadsTo": [
-        "the next lesson, <i>Sequences of functions</i>"
+        "Sequences of functions",
+        "differential equations",
+        "probability densities"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "antiderivatives",
+        "accumulation functions",
+        "area",
+        "change of variables"
       ]
     },
+    "motivation": "<p>Differentiation measures instantaneous change; integration measures accumulated change. The Fundamental Theorem of Calculus explains why these two ideas are not separate subjects.</p><p>If you accumulate a continuous function and then ask for the rate of accumulation, you recover the original function. If you know an antiderivative, you can compute a definite integral by endpoint subtraction.</p>",
+    "definition": "<p><b>FTC Part 1:</b> If $f$ is continuous on $[a,b]$ and $F(x)=\\int_a^x f(t)\\,dt$, then $F$ is differentiable on $(a,b)$ and $F'(x)=f(x)$. The proof compares $$\\frac{F(x+h)-F(x)}{h}=\\frac{1}{h}\\int_x^{x+h}f(t)\\,dt,$$ the average value of $f$ over a short interval; continuity makes that average tend to $f(x)$.</p><p><b>FTC Part 2:</b> If $G'(x)=f(x)$ on $[a,b]$, then $$\\int_a^b f(x)\\,dx=G(b)-G(a).$$ This follows because the accumulation function and $G$ have the same derivative, so they differ by a constant.</p><p><b>Assumptions that matter:</b> continuity of $f$ gives the clean Part 1 statement; antiderivatives must be valid on the whole interval for Part 2; endpoints matter; signed area can be negative when $f$ is below the axis.</p>",
+    "worked": {
+      "problem": "Use the Fundamental Theorem to compute $\\displaystyle\\int_1^3 2x\\,dx$.",
+      "skills": [
+        "antiderivatives",
+        "endpoint evaluation",
+        "definite integrals"
+      ],
+      "strategy": "Find an antiderivative of $2x$, then subtract its endpoint values.",
+      "steps": [
+        {
+          "do": "Find an antiderivative",
+          "result": "$G(x)=x^2$",
+          "why": "$G'(x)=2x$"
+        },
+        {
+          "do": "Write the FTC formula",
+          "result": "$\\int_1^3 2x\\,dx=G(3)-G(1)$",
+          "why": "definite integral from antiderivative"
+        },
+        {
+          "do": "Evaluate the right endpoint",
+          "result": "$G(3)=9$",
+          "why": "square $3$"
+        },
+        {
+          "do": "Evaluate the left endpoint",
+          "result": "$G(1)=1$",
+          "why": "square $1$"
+        },
+        {
+          "do": "Subtract",
+          "result": "$9-1=8$",
+          "why": "net accumulation over the interval"
+        }
+      ],
+      "verify": "The graph $2x$ is positive and increasing from $2$ to $6$ over width $2$, so area $8$ is plausible: average height $4$ times width $2$.",
+      "answer": "$\\displaystyle\\int_1^3 2x\\,dx=8$.",
+      "connects": "FTC turns an accumulation problem into endpoint arithmetic once an antiderivative is known."
+    },
+    "practice": [
+      {
+        "problem": "Let $F(x)=\\int_0^x \\cos t\\,dt$. Find $F'(x)$ and $F(\\pi/2)$.",
+        "steps": [
+          {
+            "do": "Apply FTC Part 1",
+            "result": "$F'(x)=\\cos x$",
+            "why": "the integrand is continuous"
+          },
+          {
+            "do": "Find an antiderivative",
+            "result": "$G(t)=\\sin t$",
+            "why": "derivative of sine is cosine"
+          },
+          {
+            "do": "Use FTC Part 2",
+            "result": "$F(\\pi/2)=\\sin(\\pi/2)-\\sin0$",
+            "why": "evaluate endpoints"
+          },
+          {
+            "do": "Evaluate sine values",
+            "result": "$1-0$",
+            "why": "unit circle values"
+          },
+          {
+            "do": "Compute",
+            "result": "$1$",
+            "why": "subtract"
+          }
+        ],
+        "answer": "$F'(x)=\\cos x$ and $F(\\pi/2)=1$."
+      },
+      {
+        "problem": "Compute $\\displaystyle\\int_0^2 (3x^2+1)\\,dx$.",
+        "steps": [
+          {
+            "do": "Find an antiderivative",
+            "result": "$G(x)=x^3+x$",
+            "why": "differentiate to get $3x^2+1$"
+          },
+          {
+            "do": "Evaluate at $2$",
+            "result": "$G(2)=8+2=10$",
+            "why": "right endpoint"
+          },
+          {
+            "do": "Evaluate at $0$",
+            "result": "$G(0)=0$",
+            "why": "left endpoint"
+          },
+          {
+            "do": "Subtract",
+            "result": "$10-0=10$",
+            "why": "FTC"
+          },
+          {
+            "do": "Check positivity",
+            "result": "integrand is positive",
+            "why": "area should be positive"
+          }
+        ],
+        "answer": "$10$."
+      },
+      {
+        "problem": "If $A(x)=\\int_2^x \\sqrt{1+t^2}\\,dt$, find $A'(3)$.",
+        "steps": [
+          {
+            "do": "Identify the integrand",
+            "result": "$f(t)=\\sqrt{1+t^2}$",
+            "why": "the accumulated function"
+          },
+          {
+            "do": "Check continuity",
+            "result": "continuous for all $t$",
+            "why": "$1+t^2>0$"
+          },
+          {
+            "do": "Apply FTC Part 1",
+            "result": "$A'(x)=\\sqrt{1+x^2}$",
+            "why": "differentiate the upper-limit accumulation"
+          },
+          {
+            "do": "Substitute $x=3$",
+            "result": "$A'(3)=\\sqrt{10}$",
+            "why": "replace $x$ by $3$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$\\sqrt{10}\\approx3.162$",
+            "why": "numeric rate of accumulation"
+          }
+        ],
+        "answer": "$A'(3)=\\sqrt{10}\\approx3.162$."
+      },
+      {
+        "problem": "Compute $\\displaystyle\\int_1^e \\frac{1}{x}\\,dx$.",
+        "steps": [
+          {
+            "do": "Find an antiderivative",
+            "result": "$G(x)=\\ln x$",
+            "why": "on positive $x$, derivative of $\\ln x$ is $1/x$"
+          },
+          {
+            "do": "Evaluate right endpoint",
+            "result": "$G(e)=1$",
+            "why": "$\\ln e=1$"
+          },
+          {
+            "do": "Evaluate left endpoint",
+            "result": "$G(1)=0$",
+            "why": "$\\ln1=0$"
+          },
+          {
+            "do": "Subtract",
+            "result": "$1-0=1$",
+            "why": "FTC"
+          },
+          {
+            "do": "Check domain",
+            "result": "$[1,e]$ is positive",
+            "why": "the antiderivative is valid throughout"
+          }
+        ],
+        "answer": "$1$."
+      },
+      {
+        "problem": "A training loss rate is modeled by $r(t)=0.6e^{-0.3t}$. Compute accumulated loss decrease from $t=0$ to $t=5$.",
+        "steps": [
+          {
+            "do": "Find an antiderivative",
+            "result": "$G(t)=-2e^{-0.3t}$",
+            "why": "derivative is $0.6e^{-0.3t}$"
+          },
+          {
+            "do": "Apply FTC",
+            "result": "$\\int_0^5 r(t)\\,dt=G(5)-G(0)$",
+            "why": "accumulated rate"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$-2e^{-1.5}-(-2)$",
+            "why": "$0.3\\cdot5=1.5$"
+          },
+          {
+            "do": "Approximate",
+            "result": "$2(1-e^{-1.5})$",
+            "why": "factor positive form"
+          },
+          {
+            "do": "Compute",
+            "result": "$2(1-0.2231)=1.5538$",
+            "why": "use $e^{-1.5}\\approx0.2231$"
+          }
+        ],
+        "answer": "Accumulated decrease is about $1.554$ loss units."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Accumulated gradients",
+        "background": "Continuous-time optimization views parameter change as the integral of velocity or negative gradient flow.",
+        "numbers": "If $dw/dt=-0.2$ for $5$ seconds, total change is $\\int_0^5-0.2\\,dt=-1$."
+      },
+      {
+        "title": "Probability from density",
+        "background": "A probability density accumulates to a cumulative distribution function, and FTC says the derivative of the CDF is the density.",
+        "numbers": "For density $f(x)=2x$ on $[0,1]$, $P(0.2\\le X\\le0.5)=0.5^2-0.2^2=0.21$."
+      },
+      {
+        "title": "Area under learning curves",
+        "background": "Training diagnostics integrate loss or accuracy over time to compare whole runs.",
+        "numbers": "If loss rate curve is $L(t)=1-t/10$ from $0$ to $5$, area is $[t-t^2/20]_0^5=3.75$."
+      },
+      {
+        "title": "Physics simulation",
+        "background": "Position is accumulated velocity; velocity is the derivative of position.",
+        "numbers": "Velocity $v(t)=3t^2$ from $0$ to $2$ gives displacement $t^3|_0^2=8$ meters."
+      },
+      {
+        "title": "Calibration curves",
+        "background": "A density over scores can be integrated to count mass in a score band.",
+        "numbers": "Uniform density $0.5$ on a length-$2$ interval gives mass $0.5(2)=1$."
+      },
+      {
+        "title": "Numerical checks",
+        "background": "FTC lets numerical integration and differentiation validate each other.",
+        "numbers": "If $F(x)=x^3$, then $F'(x)=3x^2$ and $\\int_1^2 3x^2\\,dx=8-1=7$."
+      }
+    ],
+    "applicationsClose": "The Fundamental Theorem is the great unifier: rates accumulate, and accumulated continuous rates differentiate back to themselves.",
+    "takeaways": [
+      "If $F(x)=\\int_a^x f(t)\\,dt$ and $f$ is continuous, then $F'(x)=f(x)$.",
+      "If $G'=f$, then $\\int_a^b f=G(b)-G(a)$.",
+      "Continuity and a valid antiderivative on the interval are the key hypotheses.",
+      "FTC turns area, probability, motion, and training diagnostics into endpoint calculations when antiderivatives are known."
+    ],
     "prereqs": [
       "math-04-21"
     ]
@@ -468,19 +5962,231 @@
   B({
     "id": "math-04-23",
     "title": "Sequences of functions",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: sequences of functions.",
+    "tagline": "A sequence of functions is a whole list of curves, and convergence asks what curve the list is becoming.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Fundamental Theorem of Calculus</i>"
+        "sequences",
+        "functions",
+        "limits"
       ],
       "leadsTo": [
-        "the next lesson, <i>Series of functions</i>"
+        "pointwise convergence",
+        "uniform convergence",
+        "series of functions"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "supremum norms",
+        "continuity",
+        "limits of functions"
       ]
     },
+    "motivation": "<p>You already know a numerical sequence like $1,1/2,1/3,\\ldots$ can settle toward $0$. Now replace each number by an entire function. Instead of one dot moving, a whole curve moves.</p><p>A <b>sequence of functions</b> lets us study approximations that improve step by step: polynomials approaching a target, kernels getting sharper, or models becoming more expressive. The warm question is the same as before: as $n$ grows, what remains?</p>",
+    "definition": "<p>A sequence of functions is a list $f_1,f_2,f_3,\\ldots$ where each $f_n$ maps the same domain $D$ into numbers. A candidate limit $f$ is found by checking, for each fixed input $x\\in D$, whether $f_n(x)$ approaches a number. In symbols, $f(x)=\\lim_{n\\to\\infty}f_n(x)$ when the limit exists.</p><p><b>Assumptions that matter:</b> all functions should be compared on a stated domain; the input $x$ is held fixed when taking the limit; and endpoints can behave differently from interior points.</p>",
+    "worked": {
+      "problem": "For $f_n(x)=x^n$ on $[0,1]$, find the pointwise limit.",
+      "skills": [
+        "fixed-input limits",
+        "endpoint checking",
+        "piecewise functions"
+      ],
+      "strategy": "Hold $x$ fixed. Interior points with $0\\le x<1$ behave differently from $x=1$.",
+      "steps": [
+        {
+          "do": "Check $x=0$",
+          "result": "$f_n(0)=0^n=0$",
+          "why": "every term is zero"
+        },
+        {
+          "do": "Check a fixed $0<x<1$",
+          "result": "$x^n\\to0$",
+          "why": "repeated multiplication by a number below $1$ shrinks to zero"
+        },
+        {
+          "do": "Check $x=1$",
+          "result": "$f_n(1)=1^n=1$",
+          "why": "the endpoint never changes"
+        },
+        {
+          "do": "Assemble the limit",
+          "result": "$f(x)=0$ for $0\\le x<1$ and $f(1)=1$",
+          "why": "the cases give different values"
+        }
+      ],
+      "verify": "At $x=0.5$, $0.5^{10}\\approx0.00098$, close to $0$; at $x=1$, every value is exactly $1$.",
+      "answer": "The pointwise limit is $f(x)=0$ on $[0,1)$ and $f(1)=1$.",
+      "connects": "This example prepares the distinction between pointwise and uniform convergence."
+    },
+    "practice": [
+      {
+        "problem": "Find the pointwise limit of $f_n(x)=x/n$ on $[-2,2]$.",
+        "steps": [
+          {
+            "do": "Fix $x$",
+            "result": "$f_n(x)=x/n$",
+            "why": "pointwise convergence treats $x$ as constant"
+          },
+          {
+            "do": "Take the numerical limit",
+            "result": "$x/n\\to0$",
+            "why": "a fixed number divided by $n$ vanishes"
+          },
+          {
+            "do": "Check a sample",
+            "result": "$f_{100}(2)=0.02$",
+            "why": "values shrink on the interval"
+          },
+          {
+            "do": "State the limit",
+            "result": "$f(x)=0$",
+            "why": "every fixed input has the same limit"
+          }
+        ],
+        "answer": "$f_n\\to0$ pointwise."
+      },
+      {
+        "problem": "Find the pointwise limit of $f_n(x)=\\dfrac{nx}{1+nx}$ on $[0,1]$.",
+        "steps": [
+          {
+            "do": "Check $x=0$",
+            "result": "$f_n(0)=0$",
+            "why": "the numerator is zero"
+          },
+          {
+            "do": "Fix $x>0$",
+            "result": "$\\dfrac{nx}{1+nx}=\\dfrac{1}{1+1/(nx)}$",
+            "why": "divide by $nx$"
+          },
+          {
+            "do": "Take $n\\to\\infty$",
+            "result": "$\\dfrac{1}{1+0}=1$",
+            "why": "$1/(nx)\\to0$"
+          },
+          {
+            "do": "Assemble",
+            "result": "$f(0)=0$, $f(x)=1$ for $x>0$",
+            "why": "the endpoint differs"
+          }
+        ],
+        "answer": "$f(0)=0$ and $f(x)=1$ for $0<x\\le1$."
+      },
+      {
+        "problem": "For $f_n(x)=\\sin(x/n)$ on $[-10,10]$, find the pointwise limit.",
+        "steps": [
+          {
+            "do": "Fix $x$",
+            "result": "$x/n\\to0$",
+            "why": "the angle shrinks"
+          },
+          {
+            "do": "Use continuity",
+            "result": "$\\sin(x/n)\\to\\sin0$",
+            "why": "sine preserves limits"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$\\sin0=0$",
+            "why": "standard trig value"
+          },
+          {
+            "do": "State the limit",
+            "result": "$f(x)=0$",
+            "why": "the same result holds for each fixed input"
+          }
+        ],
+        "answer": "$0$ pointwise."
+      },
+      {
+        "problem": "For $f_n(x)=1+x^2/n$ on $[-3,3]$, find the pointwise limit.",
+        "steps": [
+          {
+            "do": "Fix $x$",
+            "result": "$x^2$ is constant",
+            "why": "the input is not moving"
+          },
+          {
+            "do": "Take the changing term",
+            "result": "$x^2/n\\to0$",
+            "why": "fixed numerator over growing denominator"
+          },
+          {
+            "do": "Combine with $1$",
+            "result": "$1+0=1$",
+            "why": "limits add"
+          },
+          {
+            "do": "Check $x=3$",
+            "result": "$f_{100}(3)=1.09$",
+            "why": "even the endpoint moves toward $1$"
+          }
+        ],
+        "answer": "$f_n\\to1$ pointwise."
+      },
+      {
+        "problem": "For fixed $x\\ge0$, find $\\lim_{n\\to\\infty}\\left(1-\\dfrac{x}{n}\\right)^n$.",
+        "steps": [
+          {
+            "do": "Recognize the pattern",
+            "result": "$(1+a/n)^n\\to e^a$",
+            "why": "standard exponential limit"
+          },
+          {
+            "do": "Set $a=-x$",
+            "result": "$\\left(1-\\dfrac{x}{n}\\right)^n=(1+a/n)^n$",
+            "why": "match the form"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$e^{-x}$",
+            "why": "the fixed input becomes the exponent"
+          },
+          {
+            "do": "Check $x=2$",
+            "result": "$(1-2/100)^{100}\\approx0.133$",
+            "why": "close to $e^{-2}\\approx0.135$"
+          }
+        ],
+        "answer": "$e^{-x}$ pointwise for fixed $x$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Polynomial approximation",
+        "background": "Approximation theory replaces complicated functions by improving polynomial lists.",
+        "numbers": "$p_3(1)=1+1+1/2+1/6=2.667$ and $p_6(1)\\approx2.7181$, approaching $e\\approx2.7183$."
+      },
+      {
+        "title": "Kernel bandwidths",
+        "background": "Statistics studies sequences of kernels as smoothing becomes sharper.",
+        "numbers": "For $f_n(x)=e^{-nx^2}$, $f_{10}(0.2)=e^{-0.4}\\approx0.670$ but $f_{100}(0.2)=e^{-4}\\approx0.018$."
+      },
+      {
+        "title": "Training snapshots",
+        "background": "A model after each epoch is a function from inputs to predictions.",
+        "numbers": "For one input, predictions $0.20,0.35,0.44,0.49$ suggest a fixed-input limit near $0.5$."
+      },
+      {
+        "title": "Iterative solvers",
+        "background": "Numerical methods often output one approximate function per iteration.",
+        "numbers": "$f_n(x)=\\cos(x)/n$ has $f_{20}(1)\\approx0.027$ and tends to $0$."
+      },
+      {
+        "title": "Regularization paths",
+        "background": "Changing a penalty creates a sequence of fitted functions.",
+        "numbers": "$f_n(x)=x/(1+1/n)$ gives $f_{10}(2)=1.818$ and $f_{100}(2)=1.980$, approaching $2$."
+      },
+      {
+        "title": "Wide-network limits",
+        "background": "Theory treats each width as a function and asks whether predictions settle.",
+        "numbers": "If $|f_n(x)-f(x)|\\le0.1/n$, then at width index $n=50$ the error is at most $0.002$."
+      }
+    ],
+    "applicationsClose": "Sequences of functions let one familiar limit idea act on whole curves, but the domain and fixed-input rule matter deeply.",
+    "takeaways": [
+      "A sequence of functions is a list $f_n$ on a common domain.",
+      "Pointwise analysis fixes $x$ first, then sends $n\\to\\infty$.",
+      "Endpoints often behave differently from interior points.",
+      "These sequences lead naturally to pointwise and uniform convergence."
+    ],
     "prereqs": [
       "math-04-22"
     ]
@@ -489,19 +6195,231 @@
   B({
     "id": "math-04-24",
     "title": "Series of functions",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: series of functions.",
+    "tagline": "A series of functions adds infinitely many curves and asks whether the sum curve is well-defined.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Sequences of functions</i>"
+        "sequences of functions",
+        "infinite series",
+        "partial sums"
       ],
       "leadsTo": [
-        "the next lesson, <i>Pointwise convergence</i>"
+        "power series",
+        "uniform convergence",
+        "term-by-term differentiation"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "geometric series",
+        "comparison tests",
+        "supremum norms"
       ]
     },
+    "motivation": "<p>You already know that $1+1/2+1/4+\\cdots=2$. A <b>series of functions</b> asks the same question with terms that depend on $x$: add one curve, then another, then another.</p><p>The partial sums are the honest way to watch the build. Each $S_N(x)$ is ordinary and finite; the series converges where these finite sums settle as $N$ grows.</p>",
+    "definition": "<p>A series of functions has the form $\\sum_{n=0}^{\\infty} f_n(x)$. Its $N$th partial sum is $S_N(x)=\\sum_{n=0}^{N}f_n(x)$. The series converges at an input $x$ when $S_N(x)$ has a finite limit, and the sum function is $S(x)=\\lim_{N\\to\\infty}S_N(x)$.</p><p><b>Assumptions that matter:</b> convergence may hold for some inputs and fail for others; comparison tests often require bounding $|f_n(x)|$; and term-by-term operations need stronger convergence than pointwise convergence alone.</p>",
+    "worked": {
+      "problem": "Find the sum of $\\sum_{n=0}^{\\infty} x^n$ for $|x|<1$.",
+      "skills": [
+        "geometric series",
+        "partial sums",
+        "domain restrictions"
+      ],
+      "strategy": "Recognize a geometric series with ratio $x$, then state where the ratio has magnitude below $1$.",
+      "steps": [
+        {
+          "do": "Write the partial sum",
+          "result": "$S_N=1+x+x^2+\\cdots+x^N$",
+          "why": "finite sums are safe"
+        },
+        {
+          "do": "Use the geometric formula",
+          "result": "$S_N=\\dfrac{1-x^{N+1}}{1-x}$",
+          "why": "valid for $x\\ne1$"
+        },
+        {
+          "do": "Apply $|x|<1$",
+          "result": "$x^{N+1}\\to0$",
+          "why": "powers inside the unit interval vanish"
+        },
+        {
+          "do": "Take the limit",
+          "result": "$S(x)=\\dfrac{1}{1-x}$",
+          "why": "the remaining expression is the infinite sum"
+        }
+      ],
+      "verify": "At $x=0.5$, the first four terms sum to $1.875$ and the formula gives $2$, so the partial sums are moving toward the right value.",
+      "answer": "$\\sum_{n=0}^{\\infty}x^n=1/(1-x)$ for $|x|<1$.",
+      "connects": "Power series begin with this geometric example."
+    },
+    "practice": [
+      {
+        "problem": "Find $\\sum_{n=1}^{\\infty}\\dfrac{x^n}{2^n}$ for $|x|<2$.",
+        "steps": [
+          {
+            "do": "Rewrite the term",
+            "result": "$(x/2)^n$",
+            "why": "this is geometric"
+          },
+          {
+            "do": "Identify the first term",
+            "result": "$x/2$",
+            "why": "the sum starts at $n=1$"
+          },
+          {
+            "do": "Identify the ratio",
+            "result": "$r=x/2$",
+            "why": "each term multiplies by $x/2$"
+          },
+          {
+            "do": "Use the sum",
+            "result": "$\\dfrac{x/2}{1-x/2}=\\dfrac{x}{2-x}$",
+            "why": "geometric formula"
+          }
+        ],
+        "answer": "$x/(2-x)$ for $|x|<2$."
+      },
+      {
+        "problem": "For $\\sum_{n=1}^{\\infty}\\dfrac{x}{n^2}$, find the sum function.",
+        "steps": [
+          {
+            "do": "Factor out $x$",
+            "result": "$x\\sum_{n=1}^{\\infty}\\dfrac1{n^2}$",
+            "why": "$x$ does not depend on $n$"
+          },
+          {
+            "do": "Use the known sum",
+            "result": "$\\sum 1/n^2=\\pi^2/6$",
+            "why": "Basel series"
+          },
+          {
+            "do": "Multiply by $x$",
+            "result": "$S(x)=\\dfrac{\\pi^2}{6}x$",
+            "why": "constant factors pass through sums"
+          },
+          {
+            "do": "Check $x=3$",
+            "result": "$S(3)=\\pi^2/2\\approx4.935$",
+            "why": "concrete value"
+          }
+        ],
+        "answer": "$S(x)=\\pi^2x/6$."
+      },
+      {
+        "problem": "Test convergence of $\\sum_{n=1}^{\\infty} n x^n$ at $x=0.5$.",
+        "steps": [
+          {
+            "do": "Substitute $x=0.5$",
+            "result": "$\\sum n(0.5)^n$",
+            "why": "test a numerical series"
+          },
+          {
+            "do": "Use the ratio test",
+            "result": "$\\dfrac{a_{n+1}}{a_n}=\\dfrac{n+1}{n}\\cdot0.5$",
+            "why": "compare consecutive terms"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$0.5$",
+            "why": "$(n+1)/n\\to1$"
+          },
+          {
+            "do": "Apply the test",
+            "result": "converges",
+            "why": "the limiting ratio is less than $1$"
+          }
+        ],
+        "answer": "Converges at $x=0.5$."
+      },
+      {
+        "problem": "Find where $\\sum_{n=0}^{\\infty} (3x)^n$ converges.",
+        "steps": [
+          {
+            "do": "Identify the ratio",
+            "result": "$r=3x$",
+            "why": "geometric series"
+          },
+          {
+            "do": "Apply the condition",
+            "result": "$|3x|<1$",
+            "why": "ratio magnitude below $1$"
+          },
+          {
+            "do": "Solve",
+            "result": "$|x|<1/3$",
+            "why": "divide by $3$"
+          },
+          {
+            "do": "Check endpoints",
+            "result": "diverges at $x=\\pm1/3$",
+            "why": "terms do not approach zero"
+          }
+        ],
+        "answer": "Converges for $|x|<1/3$."
+      },
+      {
+        "problem": "Approximate $\\sum_{n=0}^{\\infty}(-0.1)^n$ and bound the tail after $4$ terms.",
+        "steps": [
+          {
+            "do": "Use the sum formula",
+            "result": "$S=1/(1+0.1)=0.90909\\ldots$",
+            "why": "ratio is $-0.1$"
+          },
+          {
+            "do": "Compute four terms",
+            "result": "$S_3=1-0.1+0.01-0.001=0.909$",
+            "why": "terms $n=0$ through $3$"
+          },
+          {
+            "do": "Bound the tail",
+            "result": "$|R_3|\\le\\dfrac{0.1^4}{1-0.1}$",
+            "why": "geometric tail formula"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$0.000111\\ldots$",
+            "why": "$0.1^4=0.0001$"
+          }
+        ],
+        "answer": "Sum $0.90909\\ldots$; four-term error at most about $0.000111$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Fourier series",
+        "background": "Fourier showed that periodic signals can be represented as infinite sums of sine and cosine functions.",
+        "numbers": "$\\sin x+(1/3)\\sin3x+(1/5)\\sin5x$ uses amplitudes $1$, $0.333$, and $0.2$."
+      },
+      {
+        "title": "Taylor models",
+        "background": "Calculus approximates smooth functions by adding polynomial terms one by one.",
+        "numbers": "For $e^{0.5}$, $1+0.5+0.5^2/2+0.5^3/6=1.6458$, close to $1.6487$."
+      },
+      {
+        "title": "Kernel expansions",
+        "background": "Machine learning kernels can be understood through infinite feature expansions.",
+        "numbers": "For $e^{xy}$ with $xy=0.2$, $1+xy+(xy)^2/2=1.22$."
+      },
+      {
+        "title": "Boosting corrections",
+        "background": "Boosting adds correction functions to improve a current predictor.",
+        "numbers": "Corrections of sizes $0.4,0.2,0.1,0.05$ total $0.75$ after four rounds."
+      },
+      {
+        "title": "Signal compression",
+        "background": "Function series separate large low-frequency terms from small details.",
+        "numbers": "Coefficients $3$, $1$, and $0.25$ carry squared energy $9+1+0.0625=10.0625$."
+      },
+      {
+        "title": "Discounted returns",
+        "background": "Reinforcement learning uses infinite series of discounted rewards.",
+        "numbers": "With reward $2$ and discount $0.9$, total return is $2/(1-0.9)=20$."
+      }
+    ],
+    "applicationsClose": "Series of functions are infinite construction kits: convergence decides whether the construction has a stable final shape.",
+    "takeaways": [
+      "A function series is studied through partial sums $S_N$.",
+      "Geometric series provide the basic exact model.",
+      "The convergence set can be smaller than the original domain.",
+      "Applications rely on controlling tail error."
+    ],
     "prereqs": [
       "math-04-23"
     ]
@@ -510,19 +6428,231 @@
   B({
     "id": "math-04-25",
     "title": "Pointwise convergence",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: pointwise convergence.",
+    "tagline": "Pointwise convergence watches one input at a time, like checking each seat in a stadium separately.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Series of functions</i>"
+        "sequences of functions",
+        "limits",
+        "piecewise definitions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Uniform convergence</i>"
+        "uniform convergence",
+        "continuity of limits",
+        "interchange of limits and integrals"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "epsilon definitions",
+        "counterexamples",
+        "series of functions"
       ]
     },
+    "motivation": "<p>You have already practiced limits of $f_n(x)$ by fixing $x$. <b>Pointwise convergence</b> names exactly that habit. For each input, ask whether the output sequence settles.</p><p>The kindness and the danger are the same: pointwise convergence is easy to check input by input, but it may hide uneven behavior across the domain. A limit curve can lose continuity even when every $f_n$ is continuous.</p>",
+    "definition": "<p>A sequence $f_n$ converges <b>pointwise</b> to $f$ on $D$ if for every fixed $x\\in D$ and every $\\varepsilon>0$, there is an $N$ that may depend on $x$ and $\\varepsilon$ such that $n\\ge N$ implies $|f_n(x)-f(x)|<\\varepsilon$.</p><p><b>Assumptions that matter:</b> the phrase \"for every fixed $x$\" is essential; the required $N$ may change from point to point; pointwise convergence alone does not preserve continuity, boundedness, integrals, or derivatives.</p>",
+    "worked": {
+      "problem": "Show that $f_n(x)=x^n$ converges pointwise on $[0,1]$ and identify the limit.",
+      "skills": [
+        "pointwise definition",
+        "endpoint cases",
+        "piecewise limits"
+      ],
+      "strategy": "Use separate fixed-input cases: $0\\le x<1$ and $x=1$.",
+      "steps": [
+        {
+          "do": "Fix $0\\le x<1$",
+          "result": "$x^n\\to0$",
+          "why": "powers of a fixed number below $1$ vanish"
+        },
+        {
+          "do": "Fix $x=1$",
+          "result": "$1^n=1$",
+          "why": "the endpoint never changes"
+        },
+        {
+          "do": "Define the candidate",
+          "result": "$f(x)=0$ for $x<1$ and $f(1)=1$",
+          "why": "each fixed input has a numerical limit"
+        },
+        {
+          "do": "Name the convergence",
+          "result": "$f_n\\to f$ pointwise",
+          "why": "the limit exists at every input"
+        }
+      ],
+      "verify": "At $x=0.9$, many terms are needed: $0.9^{100}\\approx0.000027$; at $x=1$ no shrinking happens.",
+      "answer": "Pointwise limit $f(x)=0$ for $0\\le x<1$ and $f(1)=1$.",
+      "connects": "This example shows why pointwise convergence can preserve each input but not graph shape."
+    },
+    "practice": [
+      {
+        "problem": "Show $f_n(x)=\\dfrac{x}{n+x}$ converges pointwise to $0$ on $[0,10]$.",
+        "steps": [
+          {
+            "do": "Fix $x$",
+            "result": "$x/(n+x)$",
+            "why": "treat $x$ as constant"
+          },
+          {
+            "do": "Divide by $n$",
+            "result": "$\\dfrac{x/n}{1+x/n}$",
+            "why": "make the limit visible"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$0/(1+0)=0$",
+            "why": "$x/n\\to0$"
+          },
+          {
+            "do": "State convergence",
+            "result": "$f_n(x)\\to0$",
+            "why": "works for every fixed $x$"
+          }
+        ],
+        "answer": "Pointwise limit $0$."
+      },
+      {
+        "problem": "Find the pointwise limit of $f_n(x)=\\mathbf{1}_{[0,1/n]}(x)$ on $[0,1]$.",
+        "steps": [
+          {
+            "do": "Check $x=0$",
+            "result": "$f_n(0)=1$",
+            "why": "zero belongs to every interval"
+          },
+          {
+            "do": "Fix $x>0$",
+            "result": "choose $N>1/x$",
+            "why": "then $1/n<x$ for $n\\ge N$"
+          },
+          {
+            "do": "Evaluate for $n\\ge N$",
+            "result": "$f_n(x)=0$",
+            "why": "$x$ is no longer in the interval"
+          },
+          {
+            "do": "Assemble",
+            "result": "$f(0)=1$, $f(x)=0$ for $x>0$",
+            "why": "one point remains different"
+          }
+        ],
+        "answer": "$f(0)=1$ and $f(x)=0$ for $0<x\\le1$."
+      },
+      {
+        "problem": "Does $f_n(x)=\\cos x+1/n$ converge pointwise on $\\mathbb{R}$?",
+        "steps": [
+          {
+            "do": "Fix $x$",
+            "result": "$\\cos x$ is constant",
+            "why": "only $1/n$ changes"
+          },
+          {
+            "do": "Take the changing limit",
+            "result": "$1/n\\to0$",
+            "why": "standard sequence"
+          },
+          {
+            "do": "Combine",
+            "result": "$\\cos x+1/n\\to\\cos x$",
+            "why": "limits add"
+          },
+          {
+            "do": "State the limit",
+            "result": "$f(x)=\\cos x$",
+            "why": "valid for every real input"
+          }
+        ],
+        "answer": "Yes, pointwise to $\\cos x$."
+      },
+      {
+        "problem": "Find the pointwise limit of $f_n(x)=\\dfrac{1}{1+n x^2}$ on $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Check $x=0$",
+            "result": "$f_n(0)=1$",
+            "why": "denominator is always $1$"
+          },
+          {
+            "do": "Fix $x\\ne0$",
+            "result": "$nx^2\\to\\infty$",
+            "why": "$x^2$ is positive"
+          },
+          {
+            "do": "Take the reciprocal limit",
+            "result": "$1/(1+nx^2)\\to0$",
+            "why": "denominator grows"
+          },
+          {
+            "do": "Assemble",
+            "result": "$f(0)=1$, $f(x)=0$ for $x\\ne0$",
+            "why": "the spike narrows"
+          }
+        ],
+        "answer": "$f(0)=1$ and $f(x)=0$ otherwise."
+      },
+      {
+        "problem": "For $f_n(x)=\\min(nx,1)$ on $[0,1]$, find the pointwise limit.",
+        "steps": [
+          {
+            "do": "Check $x=0$",
+            "result": "$f_n(0)=0$",
+            "why": "the minimum of $0$ and $1$ is $0$"
+          },
+          {
+            "do": "Fix $x>0$",
+            "result": "choose $N\\ge1/x$",
+            "why": "then $nx\\ge1$"
+          },
+          {
+            "do": "Evaluate after that",
+            "result": "$f_n(x)=1$",
+            "why": "the minimum becomes $1$"
+          },
+          {
+            "do": "Assemble",
+            "result": "$f(0)=0$, $f(x)=1$ for $x>0$",
+            "why": "transition sharpens"
+          }
+        ],
+        "answer": "$f(0)=0$ and $f(x)=1$ for $0<x\\le1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Threshold classifiers",
+        "background": "Smooth threshold approximations can converge pointwise to a hard rule.",
+        "numbers": "$\\sigma(10(0.6-0.5))=0.731$ and $\\sigma(50(0.6-0.5))=0.993$, approaching $1$."
+      },
+      {
+        "title": "Narrowing kernels",
+        "background": "Density kernels may become spikes, disappearing away from the center.",
+        "numbers": "$e^{-10(0.2)^2}=0.670$ but $e^{-100(0.2)^2}=0.018$."
+      },
+      {
+        "title": "Model snapshots",
+        "background": "Training predictions at one example form a numerical sequence.",
+        "numbers": "Predicted probabilities $0.40,0.46,0.49,0.505$ suggest a limit near $0.5$."
+      },
+      {
+        "title": "Grid refinement",
+        "background": "Approximations can converge at each fixed coordinate as a grid is refined.",
+        "numbers": "If point error is $2^{-n}$, after $10$ refinements it is $1/1024\\approx0.00098$."
+      },
+      {
+        "title": "Regularization annealing",
+        "background": "Reduced penalties can approach an unpenalized fit at each input.",
+        "numbers": "$f_n(3)=3/(1+0.2/n)$ gives $2.884$ at $n=5$ and $2.988$ at $n=50$."
+      },
+      {
+        "title": "Sensor simulations",
+        "background": "Simulations are often checked at fixed sensor locations.",
+        "numbers": "Temperature estimates $21.0,21.4,21.49,21.501$ suggest a pointwise limit near $21.5$."
+      }
+    ],
+    "applicationsClose": "Pointwise convergence is honest but local: it tells the truth at every fixed input while allowing global shape to change sharply.",
+    "takeaways": [
+      "Pointwise convergence fixes $x$ first and lets $n$ grow.",
+      "The required $N$ may depend on the input.",
+      "Continuous functions can converge pointwise to a discontinuous limit.",
+      "Uniform convergence strengthens this by choosing one $N$ for all inputs."
+    ],
     "prereqs": [
       "math-04-24"
     ]
@@ -531,19 +6661,231 @@
   B({
     "id": "math-04-26",
     "title": "Uniform convergence",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: uniform convergence.",
+    "tagline": "Uniform convergence means the whole graph gets close at once, not just one input at a time.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Pointwise convergence</i>"
+        "pointwise convergence",
+        "supremum",
+        "absolute value distance"
       ],
       "leadsTo": [
-        "the next lesson, <i>Power series and analyticity</i>"
+        "interchanging limits and integrals",
+        "power series convergence",
+        "complete metric spaces"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "Cauchy criteria",
+        "Weierstrass M-test",
+        "continuity of limits"
       ]
     },
+    "motivation": "<p>Pointwise convergence can feel like checking one tile at a time. <b>Uniform convergence</b> asks for something stronger: after some stage, every tile is close at once.</p><p>The mental picture is a shrinking tube around the limit function. Uniform convergence says the entire graph of $f_n$ eventually fits inside any tube of radius $\\varepsilon$ around $f$.</p>",
+    "definition": "<p>A sequence $f_n$ converges <b>uniformly</b> to $f$ on $D$ if for every $\\varepsilon>0$ there is an $N$ such that for all $n\\ge N$ and all $x\\in D$, $|f_n(x)-f(x)|<\\varepsilon$. Equivalently, $\\sup_{x\\in D}|f_n(x)-f(x)|\\to0$.</p><p><b>Assumptions that matter:</b> the same $N$ must work for every input; the domain matters; and uniform convergence of continuous functions preserves continuity of the limit.</p>",
+    "worked": {
+      "problem": "Show that $f_n(x)=x/n$ converges uniformly to $0$ on $[0,2]$.",
+      "skills": [
+        "supremum norm",
+        "epsilon proof",
+        "bounding"
+      ],
+      "strategy": "Bound the largest possible error on the whole interval, then make that bound small.",
+      "steps": [
+        {
+          "do": "Compute the error",
+          "result": "$|f_n(x)-0|=x/n$",
+          "why": "$x\\ge0$ on the interval"
+        },
+        {
+          "do": "Find the largest error",
+          "result": "$\\sup_{0\\le x\\le2}x/n=2/n$",
+          "why": "the largest $x$ is $2$"
+        },
+        {
+          "do": "Take the limit",
+          "result": "$2/n\\to0$",
+          "why": "the global error bound vanishes"
+        },
+        {
+          "do": "Choose $N$",
+          "result": "$N>2/\\varepsilon$",
+          "why": "then $2/n<\\varepsilon$ for all $n\\ge N$"
+        }
+      ],
+      "verify": "For $\\varepsilon=0.01$, any $n>200$ makes every error on $[0,2]$ less than $0.01$.",
+      "answer": "$f_n\\to0$ uniformly on $[0,2]$.",
+      "connects": "Uniform convergence is convergence in the sup norm: one number measures the whole graph error."
+    },
+    "practice": [
+      {
+        "problem": "Show $f_n(x)=\\dfrac{\\sin x}{n}$ converges uniformly to $0$ on $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Compute the error",
+            "result": "$|\\sin x|/n$",
+            "why": "subtract the zero limit"
+          },
+          {
+            "do": "Use the sine bound",
+            "result": "$|\\sin x|\\le1$",
+            "why": "valid for all real inputs"
+          },
+          {
+            "do": "Bound the supremum",
+            "result": "$\\sup |f_n(x)|\\le1/n$",
+            "why": "same bound works everywhere"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$1/n\\to0$",
+            "why": "global error shrinks"
+          }
+        ],
+        "answer": "Uniformly converges to $0$."
+      },
+      {
+        "problem": "Show $f_n(x)=x^n$ does not converge uniformly to its pointwise limit on $[0,1]$.",
+        "steps": [
+          {
+            "do": "Recall the limit",
+            "result": "$f(x)=0$ for $x<1$, $f(1)=1$",
+            "why": "pointwise result"
+          },
+          {
+            "do": "Choose $x_n=(1/2)^{1/n}$",
+            "result": "$x_n<1$",
+            "why": "a moving input near $1$"
+          },
+          {
+            "do": "Evaluate the error",
+            "result": "$|f_n(x_n)-f(x_n)|=1/2$",
+            "why": "the limit below $1$ is zero"
+          },
+          {
+            "do": "Conclude",
+            "result": "not uniform",
+            "why": "supremum error does not tend to zero"
+          }
+        ],
+        "answer": "Not uniform on $[0,1]$."
+      },
+      {
+        "problem": "Test uniform convergence of $f_n(x)=\\dfrac{x}{n+x}$ to $0$ on $[0,10]$.",
+        "steps": [
+          {
+            "do": "Compute the error",
+            "result": "$x/(n+x)$",
+            "why": "nonnegative on the interval"
+          },
+          {
+            "do": "Find its largest value",
+            "result": "$x=10$",
+            "why": "the expression increases with $x$"
+          },
+          {
+            "do": "Compute the maximum",
+            "result": "$10/(n+10)$",
+            "why": "substitute endpoint"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$10/(n+10)\\to0$",
+            "why": "largest error vanishes"
+          }
+        ],
+        "answer": "Uniform convergence to $0$."
+      },
+      {
+        "problem": "Show $f_n(x)=\\dfrac{1}{1+nx}$ does not converge uniformly to $0$ on $(0,1]$.",
+        "steps": [
+          {
+            "do": "Recall pointwise limit",
+            "result": "$0$ for fixed $x>0$",
+            "why": "denominator grows"
+          },
+          {
+            "do": "Choose $x_n=1/n$",
+            "result": "allowed input",
+            "why": "it lies in $(0,1]$"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$f_n(1/n)=1/2$",
+            "why": "error stays large"
+          },
+          {
+            "do": "Conclude",
+            "result": "not uniform",
+            "why": "one moving input defeats the global bound"
+          }
+        ],
+        "answer": "Not uniform on $(0,1]$."
+      },
+      {
+        "problem": "Use the Weierstrass M-test for $\\sum_{n=1}^{\\infty}\\dfrac{x^n}{n^2}$ on $[-1,1]$.",
+        "steps": [
+          {
+            "do": "Bound each term",
+            "result": "$|x^n/n^2|\\le1/n^2$",
+            "why": "$|x|\\le1$"
+          },
+          {
+            "do": "Check comparison",
+            "result": "$\\sum 1/n^2$ converges",
+            "why": "$p=2>1$"
+          },
+          {
+            "do": "Apply the M-test",
+            "result": "uniform convergence",
+            "why": "summable uniform bounds control tails"
+          },
+          {
+            "do": "Interpret",
+            "result": "partial sums are uniformly Cauchy",
+            "why": "all inputs share one tail bound"
+          }
+        ],
+        "answer": "Uniform convergence by the M-test."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Stable approximation errors",
+        "background": "Uniform convergence gives one worst-case error bound.",
+        "numbers": "If $\\sup |f_n-f|\\le2/n$, then $n=1000$ guarantees error at most $0.002$ everywhere."
+      },
+      {
+        "title": "Continuity preservation",
+        "background": "A uniform limit of continuous functions is continuous.",
+        "numbers": "Sup errors $0.1,0.05,0.025$ squeeze the whole graph toward one continuous limit."
+      },
+      {
+        "title": "Numerical libraries",
+        "background": "Function approximations need maximum error guarantees, not just sample checks.",
+        "numbers": "A sine approximation with max error $10^{-6}$ on $[-\\pi,\\pi]$ is uniformly accurate over width $6.283$."
+      },
+      {
+        "title": "Calibration guarantees",
+        "background": "A surrogate calibration curve should be close for all scores.",
+        "numbers": "If $|\\hat c(p)-c(p)|\\le0.01$ for all $p\\in[0,1]$, every score has at most $1$ percentage point error."
+      },
+      {
+        "title": "Interchanging integrals",
+        "background": "Uniform convergence lets limits pass through integrals on finite intervals.",
+        "numbers": "If $\\sup|f_n-f|\\le0.001$ on length $5$, then $|\\int f_n-\\int f|\\le0.005$."
+      },
+      {
+        "title": "Power-series tails",
+        "background": "Uniform tail bounds justify finite polynomials across an interval.",
+        "numbers": "For $\\sum x^n$ on $|x|\\le0.5$, the tail after degree $5$ is at most $0.5^6/(1-0.5)=0.03125$."
+      }
+    ],
+    "applicationsClose": "Uniform convergence turns many pointwise promises into one global promise, protecting continuity, integrals, and worst-case error bounds.",
+    "takeaways": [
+      "Uniform convergence means $\\sup_D |f_n-f|\\to0$.",
+      "One $N$ must work for all inputs.",
+      "Moving counterexample points often show non-uniformity.",
+      "Uniform convergence preserves more structure than pointwise convergence."
+    ],
     "prereqs": [
       "math-04-25"
     ]
@@ -552,19 +6894,231 @@
   B({
     "id": "math-04-27",
     "title": "Power series and analyticity",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: power series and analyticity.",
+    "tagline": "A power series is an infinite polynomial, and analyticity means the function is truly equal to such a series nearby.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Uniform convergence</i>"
+        "series of functions",
+        "Taylor polynomials",
+        "derivatives"
       ],
       "leadsTo": [
-        "the next lesson, <i>Metric spaces</i>"
+        "analytic functions",
+        "radius of convergence",
+        "generating functions"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "ratio test",
+        "uniform convergence",
+        "term-by-term differentiation"
       ]
     },
+    "motivation": "<p>Polynomials are comfortable: add, differentiate, integrate, and evaluate them with ordinary arithmetic. A <b>power series</b> keeps that comfort while allowing infinitely many terms.</p><p>The beautiful payoff is <b>analyticity</b>. Some functions are not merely approximated by their Taylor series; near a point, they are exactly the sum of that series.</p>",
+    "definition": "<p>A power series centered at $a$ is $\\sum_{n=0}^{\\infty} c_n(x-a)^n$. It converges inside a radius $R$, diverges outside that radius, and needs separate endpoint checks. A function is <b>analytic</b> at $a$ if it equals a power series in some interval around $a$.</p><p><b>Assumptions that matter:</b> the radius comes from coefficient growth, often by the ratio test; endpoints are not decided by the radius alone; inside the radius, power series may be differentiated and integrated term by term.</p>",
+    "worked": {
+      "problem": "Find the radius of convergence for $\\sum_{n=0}^{\\infty}\\dfrac{x^n}{3^n}$ and its sum.",
+      "skills": [
+        "geometric power series",
+        "radius of convergence",
+        "sum formula"
+      ],
+      "strategy": "Treat the series as geometric with ratio $x/3$.",
+      "steps": [
+        {
+          "do": "Identify the ratio",
+          "result": "$r=x/3$",
+          "why": "each term multiplies by $x/3$"
+        },
+        {
+          "do": "Apply convergence",
+          "result": "$|x/3|<1$",
+          "why": "geometric series require $|r|<1$"
+        },
+        {
+          "do": "Solve",
+          "result": "$|x|<3$",
+          "why": "radius is $3$ around center $0$"
+        },
+        {
+          "do": "Use the sum formula",
+          "result": "$S(x)=\\dfrac{1}{1-x/3}$",
+          "why": "sum of $\\sum r^n$"
+        }
+      ],
+      "verify": "At $x=1.5$, the ratio is $0.5$ and the sum is $2$; at $x=3$, terms equal $1$ and do not approach zero.",
+      "answer": "Radius $R=3$; sum $S(x)=1/(1-x/3)$ for $|x|<3$.",
+      "connects": "This is the prototype: a power series behaves like an infinite polynomial inside its radius."
+    },
+    "practice": [
+      {
+        "problem": "Find the radius of $\\sum_{n=0}^{\\infty} n x^n$.",
+        "steps": [
+          {
+            "do": "Use the ratio test",
+            "result": "$a_n=nx^n$",
+            "why": "coefficients grow linearly"
+          },
+          {
+            "do": "Form the ratio",
+            "result": "$\\dfrac{n+1}{n}|x|$",
+            "why": "compare consecutive terms"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$|x|$",
+            "why": "$(n+1)/n\\to1$"
+          },
+          {
+            "do": "Apply the condition",
+            "result": "$|x|<1$",
+            "why": "ratio limit must be below $1$"
+          }
+        ],
+        "answer": "Radius $R=1$."
+      },
+      {
+        "problem": "Find the radius of $\\sum_{n=0}^{\\infty}\\dfrac{x^n}{n!}$.",
+        "steps": [
+          {
+            "do": "Form the ratio",
+            "result": "$\\left|\\dfrac{x^{n+1}/(n+1)!}{x^n/n!}\\right|$",
+            "why": "ratio test"
+          },
+          {
+            "do": "Cancel",
+            "result": "$\\dfrac{|x|}{n+1}$",
+            "why": "$n!/(n+1)!=1/(n+1)$"
+          },
+          {
+            "do": "Take the limit",
+            "result": "$0$",
+            "why": "for every fixed $x$"
+          },
+          {
+            "do": "Conclude",
+            "result": "$R=\\infty$",
+            "why": "the test succeeds for all real $x$"
+          }
+        ],
+        "answer": "Radius is infinite."
+      },
+      {
+        "problem": "Use the first four terms of $e^x$ to approximate $e^{0.2}$.",
+        "steps": [
+          {
+            "do": "Write terms",
+            "result": "$1+x+x^2/2+x^3/6$",
+            "why": "Maclaurin series for $e^x$"
+          },
+          {
+            "do": "Substitute",
+            "result": "$1+0.2+0.04/2+0.008/6$",
+            "why": "evaluate at $0.2$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$1.22133\\ldots$",
+            "why": "add the four terms"
+          },
+          {
+            "do": "Compare",
+            "result": "$e^{0.2}\\approx1.22140$",
+            "why": "the approximation is close"
+          }
+        ],
+        "answer": "Approximately $1.22133$."
+      },
+      {
+        "problem": "Find the interval of convergence for $\\sum_{n=1}^{\\infty}\\dfrac{x^n}{n}$.",
+        "steps": [
+          {
+            "do": "Use the ratio test",
+            "result": "$\\left|\\dfrac{x^{n+1}/(n+1)}{x^n/n}\\right|\\to |x|$",
+            "why": "$n/(n+1)\\to1$"
+          },
+          {
+            "do": "Get the radius",
+            "result": "$|x|<1$",
+            "why": "ratio below $1$"
+          },
+          {
+            "do": "Check $x=1$",
+            "result": "$\\sum1/n$ diverges",
+            "why": "harmonic series"
+          },
+          {
+            "do": "Check $x=-1$",
+            "result": "$\\sum(-1)^n/n$ converges",
+            "why": "alternating harmonic series"
+          }
+        ],
+        "answer": "Interval $[-1,1)$."
+      },
+      {
+        "problem": "Differentiate $\\sum_{n=0}^{\\infty}x^n=1/(1-x)$ term by term for $|x|<1$.",
+        "steps": [
+          {
+            "do": "Differentiate the left side",
+            "result": "$\\sum_{n=1}^{\\infty}n x^{n-1}$",
+            "why": "power rule"
+          },
+          {
+            "do": "Differentiate the right side",
+            "result": "$1/(1-x)^2$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Equate",
+            "result": "$\\sum_{n=1}^{\\infty}n x^{n-1}=\\dfrac{1}{(1-x)^2}$",
+            "why": "valid inside radius"
+          },
+          {
+            "do": "Check at $x=0.5$",
+            "result": "$4$",
+            "why": "$1/(0.5)^2=4$"
+          }
+        ],
+        "answer": "$\\sum_{n=1}^{\\infty}n x^{n-1}=1/(1-x)^2$ for $|x|<1$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Fast elementary functions",
+        "background": "Computers evaluate functions with polynomial pieces derived from power series.",
+        "numbers": "For $\\sin(0.1)$, $0.1-0.1^3/6=0.0998333$, matching the true value to about $8$ decimal places."
+      },
+      {
+        "title": "Analytic loss approximations",
+        "background": "Near a smooth minimum, Taylor series explain quadratic approximations.",
+        "numbers": "If $L(w)=L(0)+3w^2+2w^3+\\cdots$, then at $w=0.1$ the cubic term is $0.002$ and the quadratic term is $0.03$."
+      },
+      {
+        "title": "Generating functions",
+        "background": "Combinatorics stores sequences as coefficients of power series.",
+        "numbers": "$1+x+x^2+\\cdots$ has coefficient $1$ for every count and sums to $1.25$ at $x=0.2$."
+      },
+      {
+        "title": "Moment generating functions",
+        "background": "Probability uses analytic functions to encode moments by derivatives at zero.",
+        "numbers": "For $M(t)=e^{2t}$, $M'(0)=2$ and $M''(0)=4$."
+      },
+      {
+        "title": "Activation local behavior",
+        "background": "Smooth activations have local series that explain near-linear behavior.",
+        "numbers": "The sigmoid near $0$ is $0.5+x/4+\\cdots$; at $x=0.2$ this gives $0.55$, close to $0.5498$."
+      },
+      {
+        "title": "Error control",
+        "background": "Power-series remainders give concrete accuracy guarantees.",
+        "numbers": "For $e^{0.1}$ after terms through $x^3/6$, the next term is $0.1^4/24\\approx0.00000417$."
+      }
+    ],
+    "applicationsClose": "Power series make infinite processes feel polynomial, and analyticity tells us when that polynomial language exactly matches the function nearby.",
+    "takeaways": [
+      "A power series has the form $\\sum c_n(x-a)^n$.",
+      "The radius of convergence is often found with ratio or root tests.",
+      "Endpoints require separate checks.",
+      "Inside the radius, power series can be differentiated and integrated term by term."
+    ],
     "prereqs": [
       "math-04-26"
     ]
@@ -573,19 +7127,231 @@
   B({
     "id": "math-04-28",
     "title": "Metric spaces",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: metric spaces.",
+    "tagline": "A metric space is any world where distance obeys the rules needed for convergence to make sense.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Power series and analyticity</i>"
+        "sets",
+        "absolute value",
+        "vectors"
       ],
       "leadsTo": [
-        "the next lesson, <i>Open and closed sets</i>"
+        "open and closed sets",
+        "compactness",
+        "contraction mapping theorem"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "norms",
+        "Cauchy sequences",
+        "continuity"
       ]
     },
+    "motivation": "<p>You already trust distance on the real line: $|x-y|$ says how far two numbers are. A metric space keeps the useful rules of distance and lets the objects be vectors, functions, strings, distributions, or model parameters.</p><p>Once distance is defined, familiar ideas return: points can approach, sequences can converge, and maps can be continuous.</p>",
+    "definition": "<p>A <b>metric space</b> is a set $X$ together with a distance function $d:X\\times X\\to[0,\\infty)$ such that for all $x,y,z\\in X$: $d(x,y)=0$ exactly when $x=y$; $d(x,y)=d(y,x)$; and $d(x,z)\\le d(x,y)+d(y,z)$. The last rule is the triangle inequality.</p><p><b>Assumptions that matter:</b> the metric must be chosen and stated; different metrics on the same set can define different notions of closeness; and convergence means $d(x_n,x)\\to0$ in the chosen metric.</p>",
+    "worked": {
+      "problem": "Verify the triangle inequality for $d(x,y)=|x-y|$ using $x=2$, $y=5$, $z=9$.",
+      "skills": [
+        "absolute value distance",
+        "metric axioms",
+        "triangle inequality"
+      ],
+      "strategy": "Compute all three distances and compare direct distance with the two-leg path.",
+      "steps": [
+        {
+          "do": "Compute $d(x,z)$",
+          "result": "$d(2,9)=|2-9|=7$",
+          "why": "direct distance"
+        },
+        {
+          "do": "Compute $d(x,y)$",
+          "result": "$d(2,5)=3$",
+          "why": "first leg"
+        },
+        {
+          "do": "Compute $d(y,z)$",
+          "result": "$d(5,9)=4$",
+          "why": "second leg"
+        },
+        {
+          "do": "Compare",
+          "result": "$7\\le3+4=7$",
+          "why": "the direct route is no longer than going through $y$"
+        }
+      ],
+      "verify": "Equality holds because the three points lie in order on the real line.",
+      "answer": "The triangle inequality holds in this numerical case.",
+      "connects": "Metric spaces abstract the reliable behavior of distance."
+    },
+    "practice": [
+      {
+        "problem": "In $\\mathbb{R}^2$ with Euclidean distance, find $d((1,2),(4,6))$.",
+        "steps": [
+          {
+            "do": "Subtract coordinates",
+            "result": "$(3,4)$",
+            "why": "distance depends on displacement"
+          },
+          {
+            "do": "Square components",
+            "result": "$3^2+4^2=25$",
+            "why": "Euclidean distance uses sum of squares"
+          },
+          {
+            "do": "Take square root",
+            "result": "$\\sqrt{25}=5$",
+            "why": "Pythagorean theorem"
+          },
+          {
+            "do": "State distance",
+            "result": "$5$",
+            "why": "a $3$-$4$-$5$ triangle"
+          }
+        ],
+        "answer": "$5$."
+      },
+      {
+        "problem": "With metric $d_1(x,y)=|x_1-y_1|+|x_2-y_2|$, find distance from $(1,2)$ to $(4,6)$.",
+        "steps": [
+          {
+            "do": "First coordinate",
+            "result": "$|1-4|=3$",
+            "why": "horizontal move"
+          },
+          {
+            "do": "Second coordinate",
+            "result": "$|2-6|=4$",
+            "why": "vertical move"
+          },
+          {
+            "do": "Add",
+            "result": "$3+4=7$",
+            "why": "Manhattan metric"
+          },
+          {
+            "do": "Compare",
+            "result": "$7>5$",
+            "why": "different metrics give different distances"
+          }
+        ],
+        "answer": "$7$."
+      },
+      {
+        "problem": "For vectors $a=(1,0,2)$ and $b=(1,3,-1)$, compute $d_\\infty(a,b)$.",
+        "steps": [
+          {
+            "do": "Compute coordinate gaps",
+            "result": "$0,3,3$",
+            "why": "absolute differences"
+          },
+          {
+            "do": "Take the maximum",
+            "result": "$3$",
+            "why": "sup distance uses largest error"
+          },
+          {
+            "do": "State value",
+            "result": "$d_\\infty(a,b)=3$",
+            "why": "one coordinate controls the distance"
+          },
+          {
+            "do": "Interpret",
+            "result": "all coordinates differ by at most $3$",
+            "why": "the sup-norm promise"
+          }
+        ],
+        "answer": "$3$."
+      },
+      {
+        "problem": "Show $x_n=1/n$ converges to $0$ in the usual metric.",
+        "steps": [
+          {
+            "do": "Write distance",
+            "result": "$d(x_n,0)=|1/n-0|$",
+            "why": "convergence is distance to the limit"
+          },
+          {
+            "do": "Simplify",
+            "result": "$1/n$",
+            "why": "positive term"
+          },
+          {
+            "do": "Take limit",
+            "result": "$1/n\\to0$",
+            "why": "standard sequence"
+          },
+          {
+            "do": "Conclude",
+            "result": "$x_n\\to0$",
+            "why": "distance vanishes"
+          }
+        ],
+        "answer": "$1/n\\to0$, so $x_n\\to0$."
+      },
+      {
+        "problem": "For functions on $[0,1]$ with $d(f,g)=\\sup|f-g|$, compute distance between $f(x)=x$ and $g(x)=x^2$.",
+        "steps": [
+          {
+            "do": "Write gap",
+            "result": "$|x-x^2|=x-x^2$",
+            "why": "nonnegative on $[0,1]$"
+          },
+          {
+            "do": "Differentiate gap",
+            "result": "$1-2x$",
+            "why": "find maximum"
+          },
+          {
+            "do": "Set derivative zero",
+            "result": "$x=1/2$",
+            "why": "critical point"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$1/2-1/4=1/4$",
+            "why": "endpoint gaps are zero"
+          }
+        ],
+        "answer": "$d(f,g)=1/4$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Nearest-neighbor search",
+        "background": "Classifiers and retrieval systems depend on a chosen metric.",
+        "numbers": "Point $(1,2)$ is distance $5$ from $(4,6)$ in Euclidean metric but $7$ in Manhattan metric."
+      },
+      {
+        "title": "Embedding similarity",
+        "background": "Vector databases turn similarity into distance for ranking.",
+        "numbers": "Unit vectors with cosine similarity $0.8$ have Euclidean distance $\\sqrt{2-2(0.8)}\\approx0.632$."
+      },
+      {
+        "title": "Function approximation",
+        "background": "Uniform error is a metric on bounded functions.",
+        "numbers": "If $\\sup|f-g|=0.02$, every prediction of $g$ is within $0.02$ of $f$."
+      },
+      {
+        "title": "Edit distance",
+        "background": "Computer science uses metrics beyond geometry, such as string distances.",
+        "numbers": "The words 'cat' and 'cut' have edit distance $1$ by replacing $a$ with $u$."
+      },
+      {
+        "title": "Distribution distance",
+        "background": "ML objectives compare probability distributions with distance-like quantities.",
+        "numbers": "For $p=(0.2,0.8)$ and $q=(0.5,0.5)$, $L^1$ distance is $0.6$."
+      },
+      {
+        "title": "Optimization stopping",
+        "background": "Convergence of iterates is measured by a distance between parameters.",
+        "numbers": "If $\\|w_{t+1}-w_t\\|_2=0.001$ and tolerance is $0.005$, the step-size test passes."
+      }
+    ],
+    "applicationsClose": "A metric is the quiet infrastructure under convergence: once distance is honest, limits and continuity can be discussed in many worlds.",
+    "takeaways": [
+      "A metric is a nonnegative, symmetric distance with identity and triangle inequality.",
+      "The chosen metric defines what close means.",
+      "Convergence means distance to the proposed limit tends to zero.",
+      "Vectors, functions, strings, and distributions can all live in metric spaces."
+    ],
     "prereqs": [
       "math-04-27"
     ]
@@ -594,19 +7360,231 @@
   B({
     "id": "math-04-29",
     "title": "Open and closed sets",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: open and closed sets.",
+    "tagline": "Open sets contain wiggle room around every point; closed sets contain their boundary limits.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Metric spaces</i>"
+        "metric spaces",
+        "balls",
+        "sequences"
       ],
       "leadsTo": [
-        "the next lesson, <i>Compactness</i>"
+        "compactness",
+        "continuity in metric spaces",
+        "optimization on feasible sets"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "neighborhoods",
+        "boundaries",
+        "limits of sequences"
       ]
     },
+    "motivation": "<p>On the real line, $(0,1)$ feels different from $[0,1]$. The first lets every point wiggle a little without leaving; the second includes the endpoints where the interval stops.</p><p><b>Open</b> and <b>closed</b> sets turn that feeling into metric-space language. They tell us where local arguments are safe and where limiting sequences stay inside.</p>",
+    "definition": "<p>In a metric space, the open ball of radius $r$ around $x$ is $B(x,r)=\\{y:d(x,y)<r\\}$. A set $U$ is <b>open</b> if every $x\\in U$ has some ball $B(x,r)$ contained in $U$. A set $C$ is <b>closed</b> if every convergent sequence from $C$ has its limit in $C$.</p><p><b>Assumptions that matter:</b> openness and closedness depend on the metric and ambient space; a set can be both open and closed; and a set can be neither open nor closed.</p>",
+    "worked": {
+      "problem": "Decide whether $(0,1)$ and $[0,1]$ are open or closed in $\\mathbb{R}$.",
+      "skills": [
+        "neighborhoods",
+        "sequence limits",
+        "interval endpoints"
+      ],
+      "strategy": "Check wiggle room for openness and endpoint limits for closedness.",
+      "steps": [
+        {
+          "do": "Test $(0,1)$ for openness",
+          "result": "$r<\\min(x,1-x)$ works",
+          "why": "a small interval around $x$ stays inside"
+        },
+        {
+          "do": "Test $(0,1)$ for closedness",
+          "result": "$1/n\\in(0,1)$ but $1/n\\to0$",
+          "why": "the limit $0$ is missing"
+        },
+        {
+          "do": "Test $[0,1]$ for openness",
+          "result": "$0$ has no positive-radius real ball inside",
+          "why": "balls around $0$ include negative points"
+        },
+        {
+          "do": "Test $[0,1]$ for closedness",
+          "result": "limits of sequences in $[0,1]$ stay in $[0,1]$",
+          "why": "the interval includes endpoints"
+        }
+      ],
+      "verify": "The two intervals differ exactly at boundary behavior: wiggle room versus containing limits.",
+      "answer": "$(0,1)$ is open not closed; $[0,1]$ is closed not open in $\\mathbb{R}$.",
+      "connects": "Open sets support local movement; closed sets support limit-taking."
+    },
+    "practice": [
+      {
+        "problem": "Is $(0,1]$ open, closed, both, or neither in $\\mathbb{R}$?",
+        "steps": [
+          {
+            "do": "Check openness at $1$",
+            "result": "small balls around $1$ include points above $1$",
+            "why": "those points leave the set"
+          },
+          {
+            "do": "Conclude not open",
+            "result": "not open",
+            "why": "one point lacks wiggle room"
+          },
+          {
+            "do": "Check closedness at $0$",
+            "result": "$1/n\\in(0,1]$ and $1/n\\to0$",
+            "why": "sequence stays in the set"
+          },
+          {
+            "do": "Observe the limit",
+            "result": "$0\\notin(0,1]$",
+            "why": "missing limit breaks closedness"
+          }
+        ],
+        "answer": "Neither open nor closed."
+      },
+      {
+        "problem": "Show $\\{x:|x-2|<0.5\\}$ is open in $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Rewrite",
+            "result": "$1.5<x<2.5$",
+            "why": "absolute value is distance from $2$"
+          },
+          {
+            "do": "Pick $x$ in the set",
+            "result": "$x\\in(1.5,2.5)$",
+            "why": "arbitrary interior point"
+          },
+          {
+            "do": "Choose radius",
+            "result": "$r<\\min(x-1.5,2.5-x)$",
+            "why": "stay away from endpoints"
+          },
+          {
+            "do": "Conclude",
+            "result": "$B(x,r)$ stays inside",
+            "why": "every point has wiggle room"
+          }
+        ],
+        "answer": "Open."
+      },
+      {
+        "problem": "Is $\\{0\\}\\cup[1,2]$ closed in $\\mathbb{R}$?",
+        "steps": [
+          {
+            "do": "Identify pieces",
+            "result": "$\\{0\\}$ and $[1,2]$",
+            "why": "both include boundary points"
+          },
+          {
+            "do": "Find possible clusters",
+            "result": "$0$ or points in $[1,2]$",
+            "why": "there is a gap between $0$ and $1$"
+          },
+          {
+            "do": "Check inclusion",
+            "result": "all possible limits are included",
+            "why": "no boundary is missing"
+          },
+          {
+            "do": "Conclude",
+            "result": "closed",
+            "why": "no sequence limit escapes"
+          }
+        ],
+        "answer": "Closed."
+      },
+      {
+        "problem": "In the subspace $X=[0,1]$, is $[0,0.2)$ open relative to $X$?",
+        "steps": [
+          {
+            "do": "Use ambient space",
+            "result": "$X=[0,1]$",
+            "why": "openness is relative"
+          },
+          {
+            "do": "Write intersection",
+            "result": "$[0,0.2)=X\\cap(-0.1,0.2)$",
+            "why": "intersect an open real interval with $X$"
+          },
+          {
+            "do": "Apply subspace rule",
+            "result": "open in $X$",
+            "why": "relative balls cannot go outside $X$"
+          },
+          {
+            "do": "Contrast",
+            "result": "not open in $\\mathbb{R}$",
+            "why": "a real ball around $0$ includes negatives"
+          }
+        ],
+        "answer": "Open in $[0,1]$, not open in $\\mathbb{R}$."
+      },
+      {
+        "problem": "Show $\\{x:x^2\\le4\\}$ is closed in $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Solve inequality",
+            "result": "$-2\\le x\\le2$",
+            "why": "square at most $4$"
+          },
+          {
+            "do": "Recognize interval",
+            "result": "$[-2,2]$",
+            "why": "closed interval"
+          },
+          {
+            "do": "Use sequence criterion",
+            "result": "limits preserve $-2\\le x_n\\le2$",
+            "why": "order is preserved under limits"
+          },
+          {
+            "do": "Conclude",
+            "result": "closed",
+            "why": "all limits remain inside"
+          }
+        ],
+        "answer": "Closed."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Feasible regions",
+        "background": "Optimization constraints may be open or closed, affecting whether optima are attained.",
+        "numbers": "Minimize $x$ over $(0,1)$ has infimum $0$ but no minimizer; over $[0,1]$, the minimum is $0$."
+      },
+      {
+        "title": "Safe parameter ranges",
+        "background": "Strict inequalities create open sets with room for perturbation.",
+        "numbers": "If $0<\\eta<0.1$, then $\\eta=0.05$ has margin $0.05$ to each boundary."
+      },
+      {
+        "title": "Clipping constraints",
+        "background": "Closed intervals are common in bounded numerical systems.",
+        "numbers": "A probability clipped to $[0,1]$ can converge to $0$ or $1$ and remain allowed."
+      },
+      {
+        "title": "Decision boundaries",
+        "background": "Classification regions depend on whether the threshold is included.",
+        "numbers": "Accept if $s\\ge0.7$ gives region $[0.7,1]$, including score $0.700$."
+      },
+      {
+        "title": "Robustness margins",
+        "background": "Open balls formalize perturbations that stay within a property.",
+        "numbers": "Certified radius $0.03$ in $L^\\infty$ means max pixel change below $0.03$ stays in the guarantee set."
+      },
+      {
+        "title": "Limit closure in algorithms",
+        "background": "Closed feasible sets keep convergent iterates feasible in the limit.",
+        "numbers": "If every iterate has norm at most $1$ and $w_t\\to w$, then closedness gives $\\|w\\|\\le1$."
+      }
+    ],
+    "applicationsClose": "Open sets are about local freedom; closed sets are about safe limits. Analysis and ML guarantees need both ideas at the right moment.",
+    "takeaways": [
+      "Open means every point contains a small ball inside the set.",
+      "Closed means limits of convergent sequences from the set stay in the set.",
+      "The ambient metric space matters.",
+      "A set may be open, closed, both, or neither."
+    ],
     "prereqs": [
       "math-04-28"
     ]
@@ -615,19 +7593,236 @@
   B({
     "id": "math-04-30",
     "title": "Compactness",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: compactness.",
+    "tagline": "Compactness is the finite-control principle: infinitely many possibilities can be managed by finitely many local pieces.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Open and closed sets</i>"
+        "open and closed sets",
+        "boundedness",
+        "sequences"
       ],
       "leadsTo": [
-        "the next lesson, <i>The contraction mapping theorem</i>"
+        "existence of maxima and minima",
+        "uniform continuity",
+        "fixed-point theorems"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "closed intervals",
+        "subsequences",
+        "optimization"
       ]
     },
+    "motivation": "<p>Closed intervals like $[0,1]$ have a comforting property: continuous functions reach their maximum and minimum there. Open intervals like $(0,1)$ do not always behave so kindly.</p><p><b>Compactness</b> is the deep reason. It says the set is small enough and complete enough that infinite searching cannot escape to a missing edge or infinity.</p>",
+    "definition": "<p>In $\\mathbb{R}^n$, the Heine-Borel theorem says a set is <b>compact</b> exactly when it is closed and bounded. Sequentially, compactness means every sequence in the set has a convergent subsequence whose limit is still in the set.</p><p><b>Assumptions that matter:</b> closed and bounded characterizes compactness in finite-dimensional Euclidean spaces, not every metric space; compactness is relative to the metric; and continuous functions on compact sets attain maxima and minima.</p>",
+    "worked": {
+      "problem": "Show that $[0,2]$ is compact and use it to find the maximum of $f(x)=x(2-x)$.",
+      "skills": [
+        "closed and bounded",
+        "critical points",
+        "extreme value theorem"
+      ],
+      "strategy": "Use Heine-Borel for compactness, then check endpoints and critical points.",
+      "steps": [
+        {
+          "do": "Check closedness",
+          "result": "$[0,2]$ contains endpoints",
+          "why": "closed interval"
+        },
+        {
+          "do": "Check boundedness",
+          "result": "$0\\le x\\le2$",
+          "why": "finite bounds"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$f'(x)=2-2x$",
+          "why": "find interior candidates"
+        },
+        {
+          "do": "Solve",
+          "result": "$x=1$",
+          "why": "critical point"
+        },
+        {
+          "do": "Evaluate",
+          "result": "$f(0)=0$, $f(1)=1$, $f(2)=0$",
+          "why": "compare candidates"
+        }
+      ],
+      "verify": "The parabola opens downward, so the middle value should be highest.",
+      "answer": "$[0,2]$ is compact; the maximum is $1$ at $x=1$.",
+      "connects": "Compactness turns continuous optimization from a hope into a guarantee."
+    },
+    "practice": [
+      {
+        "problem": "Is $(0,1)$ compact in $\\mathbb{R}$?",
+        "steps": [
+          {
+            "do": "Check boundedness",
+            "result": "bounded",
+            "why": "all points lie between $0$ and $1$"
+          },
+          {
+            "do": "Check closedness",
+            "result": "not closed",
+            "why": "endpoints are missing"
+          },
+          {
+            "do": "Use Heine-Borel",
+            "result": "not compact",
+            "why": "compact subsets of $\\mathbb{R}$ are closed and bounded"
+          },
+          {
+            "do": "Give a sequence",
+            "result": "$1/n\\in(0,1)$ and $1/n\\to0$",
+            "why": "the limit is missing"
+          }
+        ],
+        "answer": "Not compact."
+      },
+      {
+        "problem": "Is $\\{1/n:n\\ge1\\}\\cup\\{0\\}$ compact in $\\mathbb{R}$?",
+        "steps": [
+          {
+            "do": "Check boundedness",
+            "result": "contained in $[0,1]$",
+            "why": "finite bounds"
+          },
+          {
+            "do": "Find accumulation point",
+            "result": "$0$",
+            "why": "$1/n$ clusters at zero"
+          },
+          {
+            "do": "Observe inclusion",
+            "result": "$0$ is included",
+            "why": "no limit point is missing"
+          },
+          {
+            "do": "Conclude",
+            "result": "compact",
+            "why": "closed and bounded in $\\mathbb{R}$"
+          }
+        ],
+        "answer": "Compact."
+      },
+      {
+        "problem": "Find the minimum of $f(x)=x^2-4x+5$ on $[0,5]$.",
+        "steps": [
+          {
+            "do": "Use compactness",
+            "result": "$[0,5]$ is compact",
+            "why": "continuous functions attain extrema"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=2x-4$",
+            "why": "critical point test"
+          },
+          {
+            "do": "Solve",
+            "result": "$x=2$",
+            "why": "interior candidate"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$f(0)=5$, $f(2)=1$, $f(5)=10$",
+            "why": "compare candidates"
+          }
+        ],
+        "answer": "Minimum $1$ at $x=2$."
+      },
+      {
+        "problem": "Show $[0,\\infty)$ is not compact in $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Check closedness",
+            "result": "closed",
+            "why": "it contains its endpoint"
+          },
+          {
+            "do": "Check boundedness",
+            "result": "not bounded",
+            "why": "values grow without limit"
+          },
+          {
+            "do": "Use Heine-Borel",
+            "result": "not compact",
+            "why": "compact needs closed and bounded"
+          },
+          {
+            "do": "Give a sequence",
+            "result": "$x_n=n$",
+            "why": "no subsequence converges to a finite point"
+          }
+        ],
+        "answer": "Not compact."
+      },
+      {
+        "problem": "Why does $f(x)=1/x$ fail to attain a maximum on $(0,1]$?",
+        "steps": [
+          {
+            "do": "Check the domain",
+            "result": "$(0,1]$",
+            "why": "not closed because $0$ is missing"
+          },
+          {
+            "do": "Observe behavior",
+            "result": "$1/x\\to\\infty$ as $x\\to0^+$",
+            "why": "values escape near the missing boundary"
+          },
+          {
+            "do": "Check a finite point",
+            "result": "$f(1)=1$",
+            "why": "this is not the largest value"
+          },
+          {
+            "do": "Conclude",
+            "result": "no maximum",
+            "why": "compactness is missing"
+          }
+        ],
+        "answer": "No maximum is attained."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Existence of optima",
+        "background": "Continuous losses on compact parameter sets have minimizers.",
+        "numbers": "For $L(w)=(w-2)^2$ on $[-1,1]$, the minimum is at $w=1$ with loss $1$."
+      },
+      {
+        "title": "Hyperparameter boxes",
+        "background": "Search often restricts parameters to compact intervals.",
+        "numbers": "Learning rate in $[10^{-4},10^{-1}]$ and weight decay in $[0,0.1]$ form a closed bounded rectangle."
+      },
+      {
+        "title": "Uniform continuity",
+        "background": "Continuous functions on compact sets cannot change arbitrarily suddenly.",
+        "numbers": "For $f(x)=x^2$ on $[0,3]$, $|f'(x)|\\le6$, so a $0.01$ move changes output by at most about $0.06$."
+      },
+      {
+        "title": "Subsequence extraction",
+        "background": "Compactness guarantees bounded histories have convergent subsequences.",
+        "numbers": "A sequence of weights in $[-5,5]$ has some convergent subsequence."
+      },
+      {
+        "title": "Certified verification",
+        "background": "Finite coverings of compact domains support interval arithmetic.",
+        "numbers": "Cover $[0,1]$ by intervals of width $0.1$; only $10$ intervals are needed."
+      },
+      {
+        "title": "Probability simplex",
+        "background": "Finite-dimensional probability vectors form compact feasible sets.",
+        "numbers": "For two classes, $p\\in[0,1]$; entropy is maximized at $p=0.5$ with value $\\ln2\\approx0.693$."
+      }
+    ],
+    "applicationsClose": "Compactness is why finite-dimensional continuous optimization can make existence promises instead of chasing escaping sequences forever.",
+    "takeaways": [
+      "In $\\mathbb{R}^n$, compact means closed and bounded.",
+      "Every sequence in a compact set has a convergent subsequence with limit in the set.",
+      "Continuous functions on compact sets attain maxima and minima.",
+      "Missing boundaries or unbounded directions often break compactness."
+    ],
     "prereqs": [
       "math-04-29"
     ]
@@ -636,19 +7831,236 @@
   B({
     "id": "math-04-31",
     "title": "The contraction mapping theorem",
-    "tier": "🟡",
-    "tagline": "One concept from Real analysis: the contraction mapping theorem.",
+    "tagline": "A contraction pulls points closer together, so repeated application must settle at one fixed point.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Compactness</i>"
+        "metric spaces",
+        "complete spaces",
+        "fixed points"
       ],
       "leadsTo": [
-        "the next lesson, <i>Convergence guarantees for gradient methods</i>"
+        "fixed-point iteration",
+        "gradient method guarantees",
+        "Banach spaces"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "Lipschitz constants",
+        "Cauchy sequences",
+        "iterative solvers"
       ]
     },
+    "motivation": "<p>Many algorithms repeat the same update: start with $x_0$, compute $x_1=T(x_0)$, then keep going. The natural question is whether this settles.</p><p>The contraction mapping theorem gives a practical answer. If the update always shrinks distances by a fixed factor below $1$, then all paths lead to one fixed point.</p>",
+    "definition": "<p>A map $T$ on a metric space $(X,d)$ is a <b>contraction</b> if there is a constant $0\\le q<1$ such that $d(Tx,Ty)\\le qd(x,y)$ for all $x,y\\in X$. If $X$ is complete and $T$ maps $X$ into itself, then $T$ has a unique fixed point $x^*$ with $T(x^*)=x^*$, and $x_{k+1}=T(x_k)$ converges to $x^*$ from any start.</p><p><b>Assumptions that matter:</b> completeness is essential; the map must send the space into itself; and the Lipschitz constant must be strictly less than $1$.</p>",
+    "worked": {
+      "problem": "Use the theorem for $T(x)=0.5x+1$ on $\\mathbb{R}$ and start $x_0=0$.",
+      "skills": [
+        "Lipschitz constants",
+        "fixed points",
+        "iteration"
+      ],
+      "strategy": "Show the update halves distances, solve the fixed-point equation, and watch the iterates approach it.",
+      "steps": [
+        {
+          "do": "Compute distance after applying $T$",
+          "result": "$|T(x)-T(y)|=|0.5x+1-(0.5y+1)|$",
+          "why": "subtract outputs"
+        },
+        {
+          "do": "Simplify",
+          "result": "$0.5|x-y|$",
+          "why": "the constant cancels"
+        },
+        {
+          "do": "Identify the factor",
+          "result": "$q=0.5$",
+          "why": "strictly below $1$"
+        },
+        {
+          "do": "Solve fixed point",
+          "result": "$x=0.5x+1$ gives $x=2$",
+          "why": "$T(x)=x$"
+        },
+        {
+          "do": "Iterate from $0$",
+          "result": "$0,1,1.5,1.75,1.875$",
+          "why": "values move toward $2$"
+        }
+      ],
+      "verify": "The error halves each step: $2$, $1$, $0.5$, $0.25$.",
+      "answer": "Unique fixed point $x^*=2$, and iteration converges to it.",
+      "connects": "This is the model for many convergence proofs: shrink distances, then convergence follows."
+    },
+    "practice": [
+      {
+        "problem": "For $T(x)=0.8x+3$, find the contraction factor and fixed point.",
+        "steps": [
+          {
+            "do": "Compute distance",
+            "result": "$|T(x)-T(y)|=0.8|x-y|$",
+            "why": "linear part controls distances"
+          },
+          {
+            "do": "Identify $q$",
+            "result": "$0.8<1$",
+            "why": "contraction"
+          },
+          {
+            "do": "Solve fixed point",
+            "result": "$x=0.8x+3$",
+            "why": "set $T(x)=x$"
+          },
+          {
+            "do": "Isolate",
+            "result": "$0.2x=3$, so $x=15$",
+            "why": "divide by $0.2$"
+          }
+        ],
+        "answer": "$q=0.8$, fixed point $15$."
+      },
+      {
+        "problem": "Iterate $x_{k+1}=0.25x_k+6$ from $x_0=0$ for three steps and find the limit.",
+        "steps": [
+          {
+            "do": "Compute $x_1$",
+            "result": "$6$",
+            "why": "$0.25\\cdot0+6$"
+          },
+          {
+            "do": "Compute $x_2$",
+            "result": "$7.5$",
+            "why": "$0.25\\cdot6+6$"
+          },
+          {
+            "do": "Compute $x_3$",
+            "result": "$7.875$",
+            "why": "$0.25\\cdot7.5+6$"
+          },
+          {
+            "do": "Solve fixed point",
+            "result": "$x=0.25x+6$ gives $x=8$",
+            "why": "iteration approaches fixed point"
+          }
+        ],
+        "answer": "Steps $6,7.5,7.875$; limit $8$."
+      },
+      {
+        "problem": "Show $T(x)=x+1$ is not a contraction on $\\mathbb{R}$.",
+        "steps": [
+          {
+            "do": "Compute distance",
+            "result": "$|T(x)-T(y)|=|x+1-y-1|$",
+            "why": "compare outputs"
+          },
+          {
+            "do": "Simplify",
+            "result": "$|x-y|$",
+            "why": "distance is unchanged"
+          },
+          {
+            "do": "Identify best constant",
+            "result": "$q=1$",
+            "why": "not strictly less than $1$"
+          },
+          {
+            "do": "Conclude",
+            "result": "not a contraction",
+            "why": "the theorem cannot apply"
+          }
+        ],
+        "answer": "Not a contraction."
+      },
+      {
+        "problem": "For $T(x)=\\cos x$ on $[0,1]$, use $|\\sin x|\\le\\sin1\\approx0.842$ to explain contraction.",
+        "steps": [
+          {
+            "do": "Use derivative bound",
+            "result": "$|T'(x)|=|\\sin x|\\le0.842$",
+            "why": "mean value theorem gives a Lipschitz bound"
+          },
+          {
+            "do": "Set $q$",
+            "result": "$q=0.842<1$",
+            "why": "strict contraction"
+          },
+          {
+            "do": "Check mapping",
+            "result": "$\\cos([0,1])\\subset[\\cos1,1]\\subset[0,1]$",
+            "why": "the interval maps into itself"
+          },
+          {
+            "do": "Apply theorem",
+            "result": "unique fixed point",
+            "why": "complete interval plus contraction"
+          }
+        ],
+        "answer": "There is a unique fixed point in $[0,1]$."
+      },
+      {
+        "problem": "If a contraction has $q=0.6$ and initial error $5$, bound error after $4$ steps.",
+        "steps": [
+          {
+            "do": "Use error bound",
+            "result": "$|x_k-x^*|\\le q^k|x_0-x^*|$",
+            "why": "errors shrink geometrically"
+          },
+          {
+            "do": "Substitute",
+            "result": "$0.6^4\\cdot5$",
+            "why": "four steps"
+          },
+          {
+            "do": "Compute power",
+            "result": "$0.1296$",
+            "why": "multiply four factors"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.648$",
+            "why": "final bound"
+          }
+        ],
+        "answer": "At most $0.648$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Fixed-point solvers",
+        "background": "Nonlinear equations are often rewritten as $x=T(x)$ and iterated.",
+        "numbers": "For $T(x)=0.5x+1$, an initial error $2$ is at most $2/1024\\approx0.00195$ after $10$ steps."
+      },
+      {
+        "title": "Dynamic programming",
+        "background": "Bellman operators with discount are contractions under the sup norm.",
+        "numbers": "With discount $\\gamma=0.9$, value-iteration errors shrink by at most $10\\%$ each step relative to the previous bound."
+      },
+      {
+        "title": "Iterative linear solvers",
+        "background": "Linear updates converge when their iteration matrix shrinks distances.",
+        "numbers": "If an update matrix has norm $0.4$, error $1.0$ becomes at most $0.4$, then $0.16$, then $0.064$."
+      },
+      {
+        "title": "Implicit neural layers",
+        "background": "Deep equilibrium models define activations as fixed points of a layer map.",
+        "numbers": "A layer with Lipschitz constant $0.7$ reduces a $3$-unit hidden-state error to at most $3(0.7)^5\\approx0.504$."
+      },
+      {
+        "title": "Policy evaluation",
+        "background": "RL value functions satisfy contraction equations because future rewards are discounted.",
+        "numbers": "With $\\gamma=0.95$, an error bound $1$ contracts to $0.95^{20}\\approx0.358$ after $20$ iterations."
+      },
+      {
+        "title": "Stability warnings",
+        "background": "Showing an update is not a contraction warns of stall or divergence.",
+        "numbers": "$T(x)=1.05x$ expands distance $2$ to $2.1$, so errors grow by $5\\%$ per step."
+      }
+    ],
+    "applicationsClose": "The contraction theorem is convergence made visible: shrink distance by a fixed ratio, and the algorithm has one destination plus a geometric error clock.",
+    "takeaways": [
+      "A contraction satisfies $d(Tx,Ty)\\le qd(x,y)$ with $q<1$.",
+      "On a complete space, a contraction has a unique fixed point.",
+      "Iterating the contraction converges from any starting point.",
+      "The error shrinks geometrically, roughly like $q^k$."
+    ],
     "prereqs": [
       "math-04-30"
     ]
@@ -657,19 +8069,256 @@
   B({
     "id": "math-04-32",
     "title": "Convergence guarantees for gradient methods",
-    "tier": "🟡",
-    "tagline": "Capstone — how real analysis shows up directly in CS & ML.",
+    "tagline": "Gradient methods converge when smoothness, curvature, and step size turn an update into a controlled fixed-point process.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The contraction mapping theorem</i>"
+        "gradients",
+        "Lipschitz constants",
+        "contraction mapping theorem"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "convex optimization",
+        "stochastic gradient methods",
+        "deep-learning training analysis"
       ],
       "usedWith": [
-        "the other concepts in Real analysis and its capstone"
+        "strong convexity",
+        "smoothness",
+        "fixed-point iteration"
       ]
     },
+    "motivation": "<p>Gradient descent feels simple: move downhill by $w_{k+1}=w_k-\\eta\\nabla f(w_k)$. The serious question is why this repeated move should converge instead of bounce, crawl, or explode.</p><p>The capstone idea is that assumptions turn the update into a reliable map. Smoothness limits how quickly gradients can change; curvature keeps the minimizer identifiable; and the learning rate controls whether the update is a contraction.</p>",
+    "definition": "<p>Gradient descent uses $w_{k+1}=T(w_k)=w_k-\\eta\\nabla f(w_k)$. For a one-dimensional quadratic $f(w)=\\frac{a}{2}(w-w^*)^2$, the update is $w_{k+1}-w^*=(1-\\eta a)(w_k-w^*)$, so it is a contraction exactly when $|1-\\eta a|<1$. More generally, $L$-Lipschitz gradients and $\\mu$-strong convexity give standard linear-rate guarantees for suitable $\\eta$.</p><p><b>Assumptions that matter:</b> smoothness means gradients are not changing too abruptly; strong convexity gives a single well-conditioned minimizer; step size must respect the largest curvature; stochastic gradients add noise and require smaller or decaying steps for exact convergence.</p>",
+    "worked": {
+      "problem": "For $f(w)=\\frac12\\cdot4(w-3)^2$, run gradient descent with $\\eta=0.2$ from $w_0=0$ and prove contraction.",
+      "skills": [
+        "quadratic gradients",
+        "contraction factors",
+        "gradient descent updates"
+      ],
+      "strategy": "Compute the update map, read its contraction factor, then iterate numerically.",
+      "steps": [
+        {
+          "do": "Compute the gradient",
+          "result": "$f'(w)=4(w-3)$",
+          "why": "differentiate the quadratic"
+        },
+        {
+          "do": "Write the update",
+          "result": "$w_{k+1}=w_k-0.2\\cdot4(w_k-3)$",
+          "why": "gradient descent formula"
+        },
+        {
+          "do": "Simplify the map",
+          "result": "$w_{k+1}=0.2w_k+2.4$",
+          "why": "$1-0.8=0.2$ and $0.8\\cdot3=2.4$"
+        },
+        {
+          "do": "Find the fixed point",
+          "result": "$w=0.2w+2.4$ gives $w=3$",
+          "why": "the minimizer is the fixed point"
+        },
+        {
+          "do": "Read contraction factor",
+          "result": "$q=0.2$",
+          "why": "distances to the fixed point shrink by factor $0.2$"
+        },
+        {
+          "do": "Compute iterates",
+          "result": "$w_1=2.4$, $w_2=2.88$, $w_3=2.976$",
+          "why": "weights approach $3$ quickly"
+        }
+      ],
+      "verify": "Errors are $3$, $0.6$, $0.12$, $0.024$, exactly multiplying by $0.2$ each step.",
+      "answer": "The update is a contraction with factor $0.2$ and converges linearly to $w^*=3$.",
+      "connects": "Gradient descent on a well-behaved quadratic is fixed-point iteration with a visible contraction factor."
+    },
+    "practice": [
+      {
+        "problem": "For $f(w)=\\frac12\\cdot10w^2$, what step sizes make gradient descent a contraction?",
+        "steps": [
+          {
+            "do": "Compute gradient",
+            "result": "$f'(w)=10w$",
+            "why": "quadratic curvature is $10$"
+          },
+          {
+            "do": "Write error update",
+            "result": "$w_{k+1}=(1-10\\eta)w_k$",
+            "why": "minimizer is $0$"
+          },
+          {
+            "do": "Require contraction",
+            "result": "$|1-10\\eta|<1$",
+            "why": "error factor magnitude below $1$"
+          },
+          {
+            "do": "Solve",
+            "result": "$0<\\eta<0.2$",
+            "why": "subtract and divide"
+          }
+        ],
+        "answer": "$0<\\eta<0.2$."
+      },
+      {
+        "problem": "Run two steps on $f(w)=(w-5)^2$ with $\\eta=0.1$ from $w_0=1$.",
+        "steps": [
+          {
+            "do": "Compute gradient",
+            "result": "$f'(w)=2(w-5)$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Evaluate at $w_0=1$",
+            "result": "$f'(1)=-8$",
+            "why": "current point is left of minimizer"
+          },
+          {
+            "do": "Update once",
+            "result": "$w_1=1-0.1(-8)=1.8$",
+            "why": "move opposite gradient"
+          },
+          {
+            "do": "Evaluate next gradient",
+            "result": "$f'(1.8)=-6.4$",
+            "why": "still left of $5$"
+          },
+          {
+            "do": "Update twice",
+            "result": "$w_2=1.8-0.1(-6.4)=2.44$",
+            "why": "closer to minimizer"
+          }
+        ],
+        "answer": "$w_1=1.8$, $w_2=2.44$."
+      },
+      {
+        "problem": "For $f(w)=5w^2$, show why $\\eta=0.25$ diverges.",
+        "steps": [
+          {
+            "do": "Compute gradient",
+            "result": "$f'(w)=10w$",
+            "why": "curvature factor"
+          },
+          {
+            "do": "Write update",
+            "result": "$w_{k+1}=w_k-0.25(10w_k)$",
+            "why": "gradient descent"
+          },
+          {
+            "do": "Simplify",
+            "result": "$w_{k+1}=-1.5w_k$",
+            "why": "error multiplier"
+          },
+          {
+            "do": "Check magnitude",
+            "result": "$|-1.5|>1$",
+            "why": "distances grow"
+          },
+          {
+            "do": "Give example",
+            "result": "$w_0=1$, $w_1=-1.5$, $w_2=2.25$",
+            "why": "oscillation expands"
+          }
+        ],
+        "answer": "It diverges because the error multiplier has magnitude $1.5$."
+      },
+      {
+        "problem": "A gradient map has contraction factor $q=0.8$ and initial distance $10$. Bound distance after $15$ steps.",
+        "steps": [
+          {
+            "do": "Use geometric error",
+            "result": "$d_k\\le q^k d_0$",
+            "why": "contraction bound"
+          },
+          {
+            "do": "Substitute",
+            "result": "$d_{15}\\le0.8^{15}\\cdot10$",
+            "why": "fifteen steps"
+          },
+          {
+            "do": "Compute",
+            "result": "$0.8^{15}\\approx0.0352$",
+            "why": "repeated multiplication"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.352$",
+            "why": "final distance bound"
+          }
+        ],
+        "answer": "At most about $0.352$."
+      },
+      {
+        "problem": "For a smooth convex function with $L=20$, choose a safe fixed step and explain the descent condition.",
+        "steps": [
+          {
+            "do": "Use safe rule",
+            "result": "$\\eta\\le1/L$",
+            "why": "smooth convex descent guarantee"
+          },
+          {
+            "do": "Substitute $L=20$",
+            "result": "$\\eta\\le0.05$",
+            "why": "reciprocal of gradient-change rate"
+          },
+          {
+            "do": "Choose concrete step",
+            "result": "$\\eta=0.04$",
+            "why": "strictly below the bound"
+          },
+          {
+            "do": "State meaning",
+            "result": "loss decreases under the standard smoothness inequality",
+            "why": "the quadratic upper bound is controlled"
+          }
+        ],
+        "answer": "A safe choice is $\\eta=0.04$; $0.05$ is the $1/L$ boundary."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Why gradient descent converges on a quadratic",
+        "background": "A positive quadratic has a linear gradient, so the algorithm is exactly fixed-point iteration.",
+        "numbers": "For curvature $a=4$ and $\\eta=0.2$, the error factor is $|1-0.8|=0.2$; error $3$ becomes $0.6$, then $0.12$."
+      },
+      {
+        "title": "Learning-rate upper bounds",
+        "background": "Smoothness limits how aggressive a step can be before overshooting dominates descent.",
+        "numbers": "If largest curvature is $L=50$, the simple safe step $1/L$ is $0.02$; step $0.1$ is five times larger."
+      },
+      {
+        "title": "Strong convexity gives linear rates",
+        "background": "Strong convexity prevents flat valleys and gives a unique minimizer with geometric decay.",
+        "numbers": "With $L=10$, $\\mu=2$, step $1/L=0.1$ gives factor $1-\\mu/L=0.8$, so $100$ error units drop to $80$."
+      },
+      {
+        "title": "Fixed-point view of updates",
+        "background": "An optimum satisfies $\\nabla f(w^*)=0$, so it is a fixed point of $T(w)=w-\\eta\\nabla f(w)$.",
+        "numbers": "For $f(w)=(w-3)^2$, $T(w)=w-0.1\\cdot2(w-3)=0.8w+0.6$, whose fixed point is $3$."
+      },
+      {
+        "title": "Divergence from too-large steps",
+        "background": "Oversized learning rates can create expanding oscillations even on easy losses.",
+        "numbers": "For $f(w)=5w^2$ and $\\eta=0.25$, multiplier is $-1.5$; magnitudes go $1,1.5,2.25,3.375$."
+      },
+      {
+        "title": "Stochastic gradient noise",
+        "background": "SGD uses noisy gradients, so constant steps often converge to a noise ball rather than the exact minimizer.",
+        "numbers": "If gradient noise standard deviation is $0.2$ and step is $0.01$, update noise scale is about $0.002$ per step."
+      },
+      {
+        "title": "Gradient clipping",
+        "background": "Deep learning often controls effective Lipschitz behavior when exact constants are unavailable.",
+        "numbers": "Clipping a gradient norm from $50$ to $5$ with step $0.01$ changes update length from $0.5$ to $0.05$."
+      }
+    ],
+    "applicationsClose": "Gradient convergence is not magic: smoothness controls the landscape, curvature identifies the target, and the learning rate decides whether the update contracts or expands.",
+    "takeaways": [
+      "Gradient descent is fixed-point iteration $w_{k+1}=w_k-\\eta\\nabla f(w_k)$.",
+      "For a quadratic, the error multiplier is $1-\\eta a$ in one dimension.",
+      "Convergence requires the step size to respect curvature, such as $0<\\eta<2/L$ in the quadratic case.",
+      "Strong convexity plus smoothness gives geometric convergence guarantees; noise and nonconvexity require more care."
+    ],
     "prereqs": [
       "math-04-31"
     ]
