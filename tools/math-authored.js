@@ -289,6 +289,46 @@ const t1_invtrig = {
   ]
 };
 
+const t1_limits = {
+  id: "math-01-07",
+  title: "Limits: definition and computation",
+  tagline: "What value does a function head toward as the input closes in — even if it never arrives?",
+  sections: [
+    { h: "Connections", body:
+      "<ul class=\"steps\">" +
+      "<li><b>Builds on</b> — <i>Functions and their graphs</i>, and the everyday idea of \"getting closer\".</li>" +
+      "<li><b>Leads to</b> — continuity, and then the derivative (which is itself a limit of slopes).</li>" +
+      "<li><b>Used with</b> — convergence throughout ML: a training loss settling toward a value, a learning rate shrinking toward zero.</li></ul>" },
+    { h: "Motivation & Intuition", body:
+      "<p>Sometimes you cannot simply plug in. Look at $f(x) = \\dfrac{x^2 - 1}{x - 1}$ at $x = 1$: you get $\\tfrac{0}{0}$, which is undefined. And yet the graph clearly heads somewhere as $x$ slides toward $1$.</p>" +
+      "<p>A <b>limit</b> answers exactly that question — not \"what is the value <i>at</i> the point?\" but \"what value is the function <i>heading toward</i> as we approach the point?\" The destination can be perfectly clear even when the road has a pothole right at the end. That shift in question is the doorway to all of calculus.</p>" },
+    { h: "Definition & Assumptions", body:
+      "<p>We write</p>" +
+      "$$ \\lim_{x \\to a} f(x) = L $$" +
+      "<p>to mean: $f(x)$ can be made as close to $L$ as we like by taking $x$ close enough to $a$ (from both sides), <i>without</i> ever setting $x = a$. The rigorous version is the $\\varepsilon$–$\\delta$ statement: for every tolerance $\\varepsilon > 0$ there is a closeness $\\delta > 0$ such that $0 < |x - a| < \\delta$ forces $|f(x) - L| < \\varepsilon$.</p>" +
+      "<p><b>Assumptions that matter:</b> the value $f(a)$ is irrelevant — it may be undefined and the limit can still exist. But the two <i>one-sided</i> limits (approaching from the left and from the right) must agree, or the limit does not exist.</p>" },
+    { h: "Worked Example & Practice", body:
+      "<p>Compute $\\displaystyle\\lim_{x \\to 1} \\frac{x^2 - 1}{x - 1}$, one operation at a time.</p><ol class=\"steps\">" +
+      "<li><b>Try direct substitution</b> &rarr; $\\tfrac{0}{0}$. <i>Indeterminate — substitution alone fails, so rewrite first.</i></li>" +
+      "<li><b>Factor the numerator</b> &rarr; $\\dfrac{(x-1)(x+1)}{x-1}$. <i>$x^2 - 1$ is a difference of squares.</i></li>" +
+      "<li><b>Cancel the common $(x-1)$</b> &rarr; $x + 1$ (valid for $x \\ne 1$). <i>The limit ignores the single point $x = 1$.</i></li>" +
+      "<li><b>Substitute $x = 1$</b> &rarr; $1 + 1 = 2$. <i>The simplified form is continuous, so plugging in is now safe.</i></li></ol>" +
+      "<p><b>Verify numerically.</b> $x = 0.9 \\to 1.9$; $x = 0.99 \\to 1.99$; $x = 1.1 \\to 2.1$; $x = 1.01 \\to 2.01$. The values close in on $2$ from both sides. &#10003;</p>" +
+      "<p><b>Practice</b> (scaffolding fades):</p><ul class=\"steps\">" +
+      "<li>$\\displaystyle\\lim_{x \\to 2}\\frac{x^2 - 4}{x - 2}$. &rarr; factor to $x + 2$, so the limit is $4$.</li>" +
+      "<li>$\\displaystyle\\lim_{x \\to 0}\\frac{\\sin x}{x}$. &rarr; $1$ (the classic squeeze-theorem limit; check: at $x = 0.01$, $\\sin x / x = 0.99998$).</li></ul>" },
+    { h: "Real-World Applications in CS & ML", body:
+      "<p><b>The gradient is a limit.</b> Backpropagation rests on the derivative, defined as $f'(x) = \\lim_{h \\to 0}\\frac{f(x+h) - f(x)}{h}$. To sanity-check a hand-coded gradient, engineers compute the same ratio at a small finite $h$ (a \"gradient check\"). For $f(x) = x^2$ at $x = 2$ with $h = 0.001$: $\\frac{2.001^2 - 2^2}{0.001} = \\frac{4.004001 - 4}{0.001} = 4.001$, essentially the true derivative $4$.</p>" +
+      "<p><b>Training convergence.</b> When we say SGD \"converges\", we mean the loss $L_t$ has a limit as $t \\to \\infty$; and schedules like $\\eta_t = \\eta_0 / t$ drive the learning rate's limit to $0$ so updates settle rather than bounce.</p>" }
+  ],
+  takeaways: [
+    "$\\lim_{x\\to a} f(x) = L$ asks where $f$ is heading near $a$, not its value at $a$.",
+    "If direct substitution gives $\\tfrac{0}{0}$, rewrite (factor and cancel) then substitute.",
+    "Left and right limits must agree for the limit to exist.",
+    "The derivative/gradient is a limit; finite-difference gradient checks approximate it (e.g. $4.001 \\approx 4$)."
+  ]
+};
+
 module.exports = {
   "math-01-01": t1_functions,
   "math-01-02": t1_transform,
@@ -296,5 +336,6 @@ module.exports = {
   "math-01-04": t1_log,
   "math-01-05": t1_trig,
   "math-01-06": t1_invtrig,
+  "math-01-07": t1_limits,
   "math-03-27": laplace
 };
