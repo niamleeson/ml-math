@@ -569,6 +569,9 @@
   #content .lesson-meta .skills { color: var(--ink-dim); }
   #content .strategy { color: var(--ink-dim); }
   #content details.hint { margin: 6px 0; border-left: 3px solid var(--border); padding-left: 14px; }
+  /* The revealed step-by-step solution should read at the normal body size, not the small
+     13px .hint default; the summary keeps its own smaller size via the rule below. */
+  #content details.hint { font-size: 17px; color: var(--ink); }
   #content details.hint > summary { cursor: pointer; color: var(--accent); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; list-style: none; }
   #content details.hint > summary::-webkit-details-marker { display: none; }
   #content details.hint > summary::before { content: "\25B8  "; }
@@ -1790,7 +1793,7 @@ const App = (function () {
       const inner = Array.isArray(d)
         ? `<ol class="mnum">${d.map(s => `<li><b>${s.do}</b>${s.result ? ` &rarr; ${s.result}` : ""}${s.why ? ` &mdash; ${s.why}` : ""}</li>`).join("")}</ol>`
         : `${d}`;
-      derivHTML = `<h4 class="book-h" style="font-size:16px">Why it&rsquo;s true — derivation</h4>${inner}`;
+      derivHTML = `<h4 class="book-h">Why it&rsquo;s true — derivation</h4>${inner}`;
     }
     const defn = `<h3 class="book-h">Definition &amp; Assumptions</h3>` + (l.definition || noteHTML) + symTbl + derivHTML;
 
