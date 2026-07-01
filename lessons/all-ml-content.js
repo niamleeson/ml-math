@@ -38,54 +38,100 @@ window.ALLML_CONTENT["8.11"] = {
     <div class="formula-box">$$\text{Attention}(Q,K,V)=\text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$</div>
     <p>With tokens $X\in\mathbb{R}^{T\times d}$: $Q=XW_q$, $K=XW_k$ (each $T\times d_k$) and $V=XW_v$ ($T\times d_v$).
       Then $QK^\top$ is the $T\times T$ score table, softmax runs along each row, and $\times V$ blends the Values.
-      Every number below is executed in the companion notebook; the examples walk the formula's moving parts from a single
-      number to a full pass.</p>
+      Below, every number is computed in view and then read; each block is executed in the companion notebook.</p>
 
-    <p><b>Scoring — the dot product.</b> Each score is one dot product against a Query $a=[2,1]$:</p>
-    <table class="mini">
-      <tr><th>Key</th><th>$a\cdot k$</th><th>meaning</th></tr>
-      <tr><td>$[2,1]$ aligned</td><td>$5$</td><td>attend hard</td></tr>
-      <tr><td>$[-1,2]$ orthogonal</td><td>$0$</td><td>ignore</td></tr>
-      <tr><td>$[-2,-1]$ opposite</td><td>$-5$</td><td>pushed away</td></tr>
-    </table>
-    <p>Magnitude scales it: $a\cdot[3,4]=10$ but $(2a)\cdot[3,4]=20$. Cosine, by contrast, throws magnitude away —
-      $[1,0]\cdot[1,0]=1$ and $[1,0]\cdot[10,0]=10$, yet both have cosine $1.00$. And the score is <i>directed</i>: with the
-      matrix below $\text{score}(0\!\to\!1)=1$ while $\text{score}(1\!\to\!0)=0$ — that asymmetry is why $Q$ and $K$ are separate.</p>
+    <p><b>Scoring — the dot product.</b> A score is one dot product. With a Query $a=[2,1]$:</p>
+    <ol class="work">
+      <li>aligned $[2,1]$: $\;2\cdot2+1\cdot1=5$</li>
+      <li>orthogonal $[-1,2]$: $\;2\cdot(-1)+1\cdot2=0$</li>
+      <li>opposite $[-2,-1]$: $\;2\cdot(-2)+1\cdot(-1)=-5$</li>
+    </ol>
+    <p class="interp"><b>Read it:</b> the score is largest when the vectors point the same way, zero when perpendicular, negative
+      when opposed — it is literally a measure of alignment.</p>
+    <p>Magnitude matters too, not just direction: $a\cdot[3,4]=2\cdot3+1\cdot4=10$, and doubling the Query doubles it,
+      $(2a)\cdot[3,4]=20$. Cosine strips that out — $\cos=\frac{a\cdot k}{\lVert a\rVert\,\lVert k\rVert}$, so $[1,0]$ against
+      $[1,0]$ and against $[10,0]$ both give $\cos=1.00$ even though the raw dots are $1$ and $10$. And the score is
+      <i>directed</i>: below $\text{score}(0\!\to\!1)=1$ while $\text{score}(1\!\to\!0)=0$ — which is exactly why $Q$ and $K$ are separate matrices.</p>
 
-    <p><b>Building $QK^\top$.</b> Three tokens give the full $3\times3$ table:</p>
+    <p><b>Building $QK^\top$.</b> Entry $(i,j)$ is $Q_i\cdot K_j$. Take row 0, with $Q_0=[1,0]$ against $K_0=[1,0]$, $K_1=[1,1]$, $K_2=[0,1]$:</p>
+    <ol class="work">
+      <li>$Q_0\cdot K_0 = 1\cdot1+0\cdot0 = 1$</li>
+      <li>$Q_0\cdot K_1 = 1\cdot1+0\cdot1 = 1$</li>
+      <li>$Q_0\cdot K_2 = 1\cdot0+0\cdot1 = 0$</li>
+    </ol>
+    <p>Repeating for the other two tokens fills the whole table:</p>
     <div class="formula-box">$$QK^\top=\begin{bmatrix}1&1&0\\0&1&1\\1&2&1\end{bmatrix}$$</div>
-    <p>Row $0$ is who token 0 attends to; column $0$ is who attends <i>to</i> token 0 — different vectors.</p>
+    <p class="interp"><b>Read it:</b> row $i$ is <i>who token $i$ attends to</i>; column $j$ is <i>who attends to token $j$</i>.
+      They are different vectors — attention is not symmetric.</p>
 
-    <p><b>Scaling by $\sqrt{d_k}$.</b> The measured spread of $q\cdot k$ tracks $\sqrt{d_k}$ almost exactly:</p>
+    <p><b>Scaling by $\sqrt{d_k}$.</b> Why divide the scores at all? Each component of $Q,K$ has variance $1$, and
+      $q\cdot k=\sum_{i=1}^{d_k} q_i k_i$ sums $d_k$ independent terms of variance $1$, so $\text{Var}(q\cdot k)=d_k$ and its
+      typical magnitude is $\sqrt{d_k}$. Measured over random vectors:</p>
     <table class="mini">
       <tr><th>$d_k$</th><th>$4$</th><th>$64$</th><th>$512$</th></tr>
       <tr><td>measured std of $q\cdot k$</td><td>$2.0$</td><td>$8.0$</td><td>$22.9$</td></tr>
       <tr><td>$\sqrt{d_k}$</td><td>$2.0$</td><td>$8.0$</td><td>$22.6$</td></tr>
     </table>
-    <p>Unscaled large scores $[16,8,0]$ softmax to $[1,0,0]$ — saturated, gradient near zero — while the same scores $\div 8$
-      give $[0.665,0.245,0.090]$, soft and still learnable. That is the entire reason for the $\sqrt{d_k}$.</p>
+    <p>Skip the scaling and the scores blow up. Feed the unscaled $[16,8,0]$ into softmax:</p>
+    <ol class="work">
+      <li>exponentiate: $e^{16}=8{,}886{,}111,\; e^{8}=2{,}981,\; e^{0}=1$</li>
+      <li>the top term alone is $e^{8}\approx 2981\times$ larger than the next</li>
+      <li>weights $\Rightarrow [\,1.000,\; 0.000,\; 0.000\,]$</li>
+    </ol>
+    <p class="interp"><b>Read it:</b> the distribution collapses onto a single position — a spike where softmax's gradient is
+      almost $0$, so the model stops learning. Dividing by $\sqrt{d_k}$ (here $[16,8,0]\div 8=[2,1,0]$) keeps it soft.</p>
 
-    <p><b>Softmax.</b> Start simple: $\text{softmax}([2,1,0])=[0.665,0.245,0.090]$. It is shift-invariant — $[102,101,100]$
-      gives the <i>identical</i> weights (why we subtract the row max for stability). It sharpens: a gap of $3.0$ in $[4,1]$
-      becomes $[0.953,0.047]$, a $20\times$ ratio. Temperature controls the peak — $\div 0.5\to[0.867,0.117,0.016]$ (peaky),
-      $\div 2\to[0.506,0.307,0.186]$ (flat). And a tie $[1,1]\to[0.5,0.5]$, while a small gap $[0.707,0]\to[0.67,0.33]$.</p>
+    <p><b>Softmax.</b> This is what turns scores into weights. Walk $\text{softmax}([2,1,0])$ one operation at a time:</p>
+    <ol class="work">
+      <li>exponentiate: $e^{2}=7.389,\; e^{1}=2.718,\; e^{0}=1.000$</li>
+      <li>sum: $7.389+2.718+1.000=11.107$</li>
+      <li>divide: $\tfrac{7.389}{11.107}=0.665,\;\; \tfrac{2.718}{11.107}=0.245,\;\; \tfrac{1.000}{11.107}=0.090$</li>
+    </ol>
+    <p class="interp"><b>Read it:</b> a logit gap of just $1.0$ became a $0.665$ vs $0.245$ share — a $2.7\times$ preference — and
+      the three weights are all positive and sum to $1$, so they are a genuine distribution over positions.</p>
+    <p>Two properties fall straight out of that arithmetic. It is <b>shift-invariant</b>: adding $100$ to every score,
+      $[102,101,100]$, cancels in the ratio ($e^{102}/e^{101}=e$, exactly as $e^{2}/e^{1}=e$) and returns the identical
+      $[0.665,0.245,0.090]$ — which is why we subtract the row max before exponentiating, to avoid overflow. And it
+      <b>sharpens</b>: for $[4,1]$, $e^{4}=54.598$, $e^{1}=2.718$, sum $57.316$, giving $[0.953,0.047]$ — a gap of $3$ became a
+      $20\times$ ratio. Temperature tunes the peak: dividing the scores by $0.5$ concentrates them to $[0.867,0.117,0.016]$,
+      dividing by $2$ flattens them to $[0.506,0.307,0.186]$.</p>
 
-    <p><b>The weighted average $(\times V)$.</b> The realistic end-to-end: "it" with scaled scores $[4.0,1.0,2.5]$ softmaxes to
-      $[0.786,0.039,0.175]$; with Values $V=\{[0,0],[4,0],[2,3]\}$ the output is $[0.507,0.526]$ — overwhelmingly the "animal"
-      Value. Because the weights are $\ge 0$ and sum to $1$, the output is a convex combination — provably inside the Values'
-      hull, so it can never overshoot. Push the weights near one-hot $[0.01,0.98,0.01]$ and the output $[3.94,0.03]$ snaps onto a
-      single Value $V_1=[4,0]$ — the hard-lookup limit.</p>
+    <p><b>The weighted average $(\times V)$.</b> Now the full "it" example, end to end. Scaled scores $[4.0,1.0,2.5]$ against
+      Values $V_0=[0,0]$, $V_1=[4,0]$ ("animal"), $V_2=[2,3]$:</p>
+    <ol class="work">
+      <li>softmax: $e^{4}=54.598,\; e^{1}=2.718,\; e^{2.5}=12.182$; sum $69.499$; weights $[0.786,\,0.039,\,0.175]$</li>
+      <li>blend the Values coordinate by coordinate:</li>
+      <li>$x = 0.786\cdot0 + 0.039\cdot4 + 0.175\cdot2 = 0.156+0.350 = 0.506$</li>
+      <li>$y = 0.786\cdot0 + 0.039\cdot0 + 0.175\cdot3 = 0.525$</li>
+      <li>output $=[\,0.506,\; 0.525\,]$</li>
+    </ol>
+    <p class="interp"><b>Read it:</b> the output lands almost exactly on $V_1=[4,0]$, the "animal" Value — the pronoun "it"
+      resolved to "animal", purely by weighted averaging, no rule written by hand.</p>
+    <p>Because the weights are $\ge 0$ and sum to $1$, the output is a <i>convex combination</i>: it can never leave the triangle
+      spanned by the three Values, so it cannot overshoot them. Push the weights near one-hot, $[0.01,0.98,0.01]$, and the output
+      $0.98\cdot[4,0]=[3.94,0.03]$ snaps onto a single Value — the hard-lookup limit, where soft attention becomes an ordinary
+      dictionary lookup.</p>
 
-    <p><b>Multi-head.</b> With $d_\text{model}=512$ and $h=8$ heads, each head works in $d_k=512/8=64$ dimensions and the eight
-      $64$-wide outputs concatenate back to $8\times64=512$ — so running eight heads costs about the same as one, buying
-      parallelism of meaning almost for free.</p>
+    <p><b>Multi-head.</b> One head produces one distribution per token, so it can track only one kind of relation. Run several in
+      parallel instead: with $d_\text{model}=512$ and $h=8$ heads, each head works in $d_k=512/8=64$ dimensions, and the eight
+      $64$-wide outputs concatenate back to $8\times64=512$.</p>
+    <p class="interp"><b>Read it:</b> because each head is $1/8$ the width, eight of them cost about the same as one full-width
+      attention — you get eight different relations (syntax, coreference, position) almost for free.</p>
 
-    <p><b>Masking.</b> A causal mask adds $-\infty$ above the diagonal <i>before</i> softmax, so the upper triangle is exactly
-      $0$ and every row still sums to $1$:</p>
-    <div class="formula-box">$$\begin{bmatrix}1&0&0&0\\0.96&0.04&0&0\\0.21&0.12&0.67&0\\0.15&0.14&0.64&0.07\end{bmatrix}$$</div>
-    <p>A padding mask on the last (pad) key sends its weight to $0$ and renormalizes the rest:
-      $[0.085,0.232,0.052,0.631]\to[0.231,0.629,0.140,0]$, still summing to $1$. Every figure and cross-check for these lives in
-      the notebook — the <b>Open in Colab</b> button at the top of this lesson.</p>`,
+    <p><b>Masking.</b> To stop a token from seeing the future, add $-\infty$ to those scores <i>before</i> softmax. Token at
+      position 1, with scores $[2,1]$ for positions $0,1$ and $-\infty$ for $2,3$:</p>
+    <ol class="work">
+      <li>exponentiate: $e^{2}=7.389,\; e^{1}=2.718,\; e^{-\infty}=0,\; e^{-\infty}=0$</li>
+      <li>sum: $7.389+2.718=10.107$</li>
+      <li>weights $=[\,0.731,\; 0.269,\; 0,\; 0\,]$</li>
+    </ol>
+    <p class="interp"><b>Read it:</b> the future positions get <i>exactly</i> $0$ (since $e^{-\infty}=0$) and the surviving weights
+      still sum to $1$. Masking <i>before</i> softmax is what lets it renormalize correctly — masking after would leave the row
+      summing to less than $1$.</p>
+    <p>The same trick handles padding. Real scores $[1,2,0.5]$ with a $\langle\text{pad}\rangle$ key at the end ($-\infty$):
+      $e^{1}=2.718,\; e^{2}=7.389,\; e^{0.5}=1.649$, sum $11.756$, giving $[0.231,0.629,0.140,0]$ — the pad contributes nothing and
+      the rest renormalize. Every figure and cross-check for all of the above lives in the notebook: the <b>Open in Colab</b>
+      button at the top of this lesson.</p>`,
 
   pitfalls: String.raw`
     <ul>
