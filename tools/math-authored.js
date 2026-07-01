@@ -293,9 +293,36 @@ const t1_limits = {
     connects: "continuity — the answer $2$ is exactly $f$'s continuous extension at $x=1$, filling the hole in the graph."
   },
   practice: [
-    { problem: "$\\displaystyle\\lim_{x\\to2}\\frac{x^2-4}{x-2}$", answer: "factor to $x+2$, limit $=4$" },
-    { problem: "$\\displaystyle\\lim_{x\\to0}\\frac{\\sin x}{x}$", answer: "$1$ (at $x=0.01$, ratio $=0.99998$)" },
-    { problem: "$\\displaystyle\\lim_{x\\to3}\\frac{x^2-9}{x-3}$", answer: "$6$" }
+    { tier: "Tier 1 — direct substitution", problems: [
+      { problem: "$\\lim_{x\\to3}(2x+1)$", solution: "Continuous, so substitute: $2(3)+1=7$." },
+      { problem: "$\\lim_{x\\to0}(x^2+4)$", solution: "Substitute: $0+4=4$." },
+      { problem: "$\\lim_{x\\to2}x^3$", solution: "Substitute: $2^3=8$." },
+      { problem: "$\\lim_{x\\to1}5$", solution: "A constant function — the limit is $5$." }
+    ]},
+    { tier: "Tier 2 — $0/0$: factor and cancel", problems: [
+      { problem: "$\\lim_{x\\to2}\\frac{x^2-4}{x-2}$", solution: "$0/0$; factor $\\frac{(x-2)(x+2)}{x-2}=x+2\\to4$." },
+      { problem: "$\\lim_{x\\to3}\\frac{x^2-9}{x-3}$", solution: "Factor to $x+3\\to6$." },
+      { problem: "$\\lim_{x\\to0}\\frac{x^2+3x}{x}$", solution: "Factor $\\frac{x(x+3)}{x}=x+3\\to3$." },
+      { problem: "$\\lim_{x\\to-1}\\frac{x^2-1}{x+1}$", solution: "Factor $\\frac{(x-1)(x+1)}{x+1}=x-1\\to-2$." }
+    ]},
+    { tier: "Tier 3 — rationalize the tricky ones", problems: [
+      { problem: "$\\lim_{x\\to0}\\frac{\\sqrt{x+1}-1}{x}$", solution: "Multiply by the conjugate: $\\frac{x}{x(\\sqrt{x+1}+1)}=\\frac{1}{\\sqrt{x+1}+1}\\to\\frac12$." },
+      { problem: "$\\lim_{x\\to4}\\frac{\\sqrt{x}-2}{x-4}$", solution: "$x-4=(\\sqrt{x}-2)(\\sqrt{x}+2)$; cancel to $\\frac{1}{\\sqrt{x}+2}\\to\\frac14$." },
+      { problem: "$\\lim_{x\\to1}\\frac{x-1}{\\sqrt{x}-1}$", solution: "$x-1=(\\sqrt{x}-1)(\\sqrt{x}+1)$; cancel to $\\sqrt{x}+1\\to2$." },
+      { problem: "$\\lim_{x\\to0}\\frac{\\frac{1}{x+1}-1}{x}$", solution: "Combine the top: $\\frac{-x/(x+1)}{x}=\\frac{-1}{x+1}\\to-1$." }
+    ]},
+    { tier: "Tier 4 — one-sided, infinity, and non-existence", problems: [
+      { problem: "$\\lim_{x\\to0}\\frac{\\sin x}{x}$", solution: "A standard squeeze-theorem limit: $1$ (at $x=0.01$, ratio $=0.99998$)." },
+      { problem: "$\\lim_{x\\to\\infty}\\frac{3x^2+5x}{x^2}$", solution: "Divide through by $x^2$: $3+\\frac5x\\to3$." },
+      { problem: "$\\lim_{x\\to0^{+}}\\frac{1}{x}$", solution: "From the right, $1/x$ grows without bound: $+\\infty$ (an infinite limit, not a number)." },
+      { problem: "$\\lim_{x\\to0}\\frac{|x|}{x}$", solution: "Right side $\\to+1$, left side $\\to-1$ — they disagree, so the limit does not exist." }
+    ]},
+    { tier: "Tier 5 — advanced & the ML connection", problems: [
+      { problem: "$\\lim_{x\\to\\infty}\\left(1+\\frac1x\\right)^x$", solution: "This is the very definition of $e\\approx2.718$." },
+      { problem: "$\\lim_{x\\to0}\\frac{e^x-1}{x}$", solution: "$1$ — this limit is exactly the derivative of $e^x$ at $0$." },
+      { problem: "$\\lim_{h\\to0}\\frac{(x+h)^2-x^2}{h}$", solution: "Expand: $\\frac{2xh+h^2}{h}=2x+h\\to2x$ — the derivative of $x^2$, i.e. a gradient." },
+      { problem: "$\\lim_{x\\to\\infty}\\sigma(x)$ and its slope", solution: "$\\sigma(x)\\to1$ and the slope $\\sigma(1-\\sigma)\\to0$ — saturation, the vanishing-gradient limit." }
+    ]}
   ],
   applications: [
     { title: "The gradient is a limit", background: "Backprop rests on $f'(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}$; a gradient check evaluates it at small finite $h$.", numbers: "For $f(x)=x^2$ at $x=2$, $h=0.001$ gives $\\frac{4.004001-4}{0.001}=4.001\\approx4$." },

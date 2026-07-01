@@ -64,7 +64,8 @@ property rather than asserting it. Fold in the conditions/assumptions that must 
 ### 4. Worked Example & Practice
 One fully guided worked example in the **full guided-walkthrough format** (below) — difficulty
 badge, skills tags, strategy cue, **interactive revealable hints**, one-operation-per-step,
-verify, common mistakes, answer, connects-to — then faded practice problems. The worked example
+verify, common mistakes, answer, connects-to — then **20 practice problems** (5 tiers of 4, each
+with a revealable guided solution; see *Practice-set design*). The worked example
 ends with **one sentence** planting the key reading (e.g. "the exponent −2 is a pole; negative
 means it decays — stable") that section 5 builds on.
 
@@ -141,19 +142,22 @@ Lessons may include interactivity **where it aids understanding** — not on eve
 
 ---
 
-## Practice-set design (the full-strength version of section 4)
+## Practice-set design (REQUIRED in every authored §4)
 
-- Exactly **20 problems, strictly increasing difficulty**, in **5 tiers of 4**; each tier adds
-  exactly one new wrinkle:
+- **Exactly 20 problems, strictly increasing difficulty, in 5 tiers of 4.** This is a hard
+  requirement — not optional, not "a few faded problems." Each tier adds one new wrinkle:
   1. compute / apply the definition directly
   2. properties & basic inverses
-  3. first-order applications
-  4. second-order / structural cases (roots, poles, repeated/complex, etc.)
-  5. advanced — forcing, convolution, impulse, and a **capstone** that reconnects to the big idea
-- Every problem carries a difficulty badge + skills tags and is fully worked in the guided format.
+  3. harder algebra / rewrites
+  4. one-sided, infinity, structural cases, non-existence
+  5. advanced — and a **capstone** problem that reconnects to the CS/ML big idea
+- Each problem is shown with its statement plus a **revealable `<details>` guided solution**
+  (the key move → the answer), so the page stays clean until the learner asks.
+- The single fully-worked example that opens §4 still uses the complete guided-walkthrough
+  format (badge, skills, strategy, hints, one-op-per-step, verify, mistakes, connects-to).
 
-(The generated lessons ship a compact worked example + a few faded problems; the full 20-problem
-ladder is authored per lesson when depth is added.)
+Schema: `practice` is an array of 5 tiers, each `{ tier: "Tier N — label", problems: [ {problem, solution} × 4 ] }`.
+`renderMath` refuses to drift: it renders tier headers and a revealable solution per problem.
 
 ---
 
@@ -200,7 +204,9 @@ B({
     steps: [{ do: "…", result: "…", why: "…" }],   // one operation per step
     verify: "…", answer: "…", mistakes: ["…"], connects: "…"
   },
-  practice: [{ problem: "…", answer: "…" }],
+  practice: [                  // 20 problems = 5 tiers of 4 (REQUIRED)
+    { tier: "Tier 1 — …", problems: [{ problem: "…", solution: "…" }] }  // ×5 tiers, 4 each
+  ],
   applications: [{ title: "…", background: "…", numbers: "…" }],   // ≥6
   applicationsClose: "…",      // §5 closing thread ("one idea, many uniforms")
   takeaways: ["…"],
