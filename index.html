@@ -150,7 +150,7 @@
     color: var(--ink); background: var(--panel-2);
     border-bottom: 1px solid var(--border);
   }
-  .supergroup > .sg-head:hover { background: var(--panel); }
+  .supergroup > .sg-head:hover { background: var(--border); }
   .sg-head .chev { transition: transform .18s ease; color: var(--ink-dim); font-size: 11px; }
   .supergroup.collapsed > .sg-head { border-bottom: none; }
   .supergroup.collapsed > .sg-head .chev { transform: rotate(-90deg); }
@@ -569,6 +569,7 @@
   #content details.hint > summary::before { content: "\25B8  "; }
   #content details.hint[open] > summary::before { content: "\25BE  "; }
   #content .connects { font-style: italic; color: var(--ink-dim); }
+  #content .practice-tier { margin: 16px 0 4px; font-size: 15px; }
 </style>
 </head>
 <body>
@@ -1720,7 +1721,12 @@ const App = (function () {
     const mistakes = (w.mistakes && w.mistakes.length)
       ? `<p><b>Common mistakes.</b></p><ul class="steps">${w.mistakes.map(m => `<li>\u274C ${m}</li>`).join("")}</ul>` : "";
     const practice = (l.practice && l.practice.length)
-      ? `<p><b>Practice</b> (hints fade):</p><ul class="steps">${l.practice.map(p => `<li>${p.problem} &rarr; ${p.answer}</li>`).join("")}</ul>` : "";
+      ? (l.practice[0] && l.practice[0].problems)
+        ? `<p><b>Practice — 20 problems, increasing difficulty.</b> Try each, then reveal the guided solution.</p>` +
+          l.practice.map(t => `<p class="practice-tier"><b>${t.tier}</b></p><ol class="steps">` +
+            t.problems.map(pr => `<li>${pr.problem}<details class="hint"><summary>Solution</summary>${/^\s*<(p|ul|ol|div)/i.test(pr.solution) ? pr.solution : `<p>${pr.solution}</p>`}</details></li>`).join("") + `</ol>`).join("")
+        : `<p><b>Practice</b> (hints fade):</p><ul class="steps">${l.practice.map(p => `<li>${p.problem} &rarr; ${p.answer}</li>`).join("")}</ul>`
+      : "";
     const workedBody = (w.problem || (w.steps && w.steps.length))
       ? meta +
         (w.problem ? `<p>${w.problem}</p>` : "") +
