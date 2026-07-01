@@ -7,6 +7,7 @@ window.ALLML_CONTENT = window.ALLML_CONTENT || {};
 /* ---------------- 1.1 Empirical Risk Minimization ---------------- */
 window.ALLML_CONTENT["1.1"] = {
   tagline: "We can't measure the true error, so we minimize the error we can see: the average loss on the training sample.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.1-erm.ipynb",
   context: String.raw`
     <p>This is the first stone in the whole tower of learning theory, and it rests on things you already know.</p>
     <ul>
@@ -53,6 +54,7 @@ window.ALLML_CONTENT["1.1"] = {
 /* ---------------- 1.2 The bias–complexity tradeoff ---------------- */
 window.ALLML_CONTENT["1.2"] = {
   tagline: "Total error splits in two: how good the best model in your class could be, and how well finite data lets you find it.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.2-bias-complexity.ipynb",
   context: String.raw`
     <p>This lesson is the learning-theory face of a friend you have already met.</p>
     <ul>
@@ -89,6 +91,7 @@ window.ALLML_CONTENT["1.2"] = {
 /* ---------------- 1.3 PAC learning ---------------- */
 window.ALLML_CONTENT["1.3"] = {
   tagline: "Probably Approximately Correct: with enough samples, ERM is within epsilon of the best, with probability at least one minus delta.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.3-pac-learning.ipynb",
   context: String.raw`
     <p>This lesson turns the worry of 1.1 into a guarantee with a number attached.</p>
     <ul>
@@ -136,6 +139,7 @@ window.ALLML_CONTENT["1.3"] = {
 /* ---------------- 1.4 VC dimension ---------------- */
 window.ALLML_CONTENT["1.4"] = {
   tagline: "The largest set of points a class can label in every possible way: the right notion of size when the class is infinite.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.4-vc-dimension.ipynb",
   context: String.raw`
     <p>This lesson rescues PAC learning from a dead end.</p>
     <ul>
@@ -179,6 +183,7 @@ window.ALLML_CONTENT["1.4"] = {
 /* ---------------- 1.5 Rademacher complexity ---------------- */
 window.ALLML_CONTENT["1.5"] = {
   tagline: "How well a class can fit pure random noise: a data-dependent measure of richness that often beats VC dimension.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.5-rademacher.ipynb",
   context: String.raw`
     <p>This lesson sharpens the ruler from 1.4.</p>
     <ul>
@@ -220,6 +225,7 @@ window.ALLML_CONTENT["1.5"] = {
 /* ---------------- 1.6 Generalization bounds ---------------- */
 window.ALLML_CONTENT["1.6"] = {
   tagline: "A high-probability ceiling on the gap between the training error you measured and the true error you care about.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.6-generalization-bounds.ipynb",
   context: String.raw`
     <p>This lesson is where the earlier pieces become a usable inequality.</p>
     <ul>
@@ -269,6 +275,7 @@ window.ALLML_CONTENT["1.6"] = {
 /* ---------------- 1.7 Structural Risk Minimization ---------------- */
 window.ALLML_CONTENT["1.7"] = {
   tagline: "Do not fix the model class in advance: search a ladder of nested classes, minimizing training error plus a complexity penalty.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.7-srm.ipynb",
   context: String.raw`
     <p>This lesson operationalizes the balance struck in 1.2.</p>
     <ul>
@@ -305,6 +312,7 @@ window.ALLML_CONTENT["1.7"] = {
 /* ---------------- 1.8 Regularization theory ---------------- */
 window.ALLML_CONTENT["1.8"] = {
   tagline: "Add a penalty on complexity to the training objective: the smooth, continuous cousin of Structural Risk Minimization.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.8-regularization.ipynb",
   context: String.raw`
     <p>This lesson turns the discrete ladder of 1.7 into a continuous dial.</p>
     <ul>
@@ -341,6 +349,7 @@ window.ALLML_CONTENT["1.8"] = {
 /* ---------------- 1.9 Algorithmic stability ---------------- */
 window.ALLML_CONTENT["1.9"] = {
   tagline: "If removing one training point barely changes the model, the model generalizes: stability implies generalization.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.9-stability.ipynb",
   context: String.raw`
     <p>This lesson offers a second, independent route to the guarantees of 1.6.</p>
     <ul>
@@ -382,6 +391,7 @@ window.ALLML_CONTENT["1.9"] = {
 /* ---------------- 1.10 The No Free Lunch theorem ---------------- */
 window.ALLML_CONTENT["1.10"] = {
   tagline: "Averaged over all possible problems, every learning algorithm is exactly as good as random guessing: no universal learner exists.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.10-no-free-lunch.ipynb",
   context: String.raw`
     <p>This lesson draws the outer boundary of what learning can promise.</p>
     <ul>
@@ -421,6 +431,7 @@ window.ALLML_CONTENT["1.10"] = {
 /* ---------------- 1.11 Uniform convergence ---------------- */
 window.ALLML_CONTENT["1.11"] = {
   tagline: "The engine under every bound: training error converges to true error simultaneously for all hypotheses in the class.",
+  colab: "https://colab.research.google.com/github/niamleeson/ml-math/blob/main/notebooks/1.11-uniform-convergence.ipynb",
   context: String.raw`
     <p>This lesson exposes the machinery that has been running quietly beneath the whole of Part 1.</p>
     <ul>
