@@ -141,6 +141,20 @@
   }
   .module .lessons { list-style: none; margin: 0; padding: 0 0 8px; }
   .module.collapsed .lessons { display: none; }
+  /* Supergroup: a top-level umbrella (e.g. "Math") wrapping several module sections. */
+  .supergroup { border-bottom: 1px solid var(--border); }
+  .supergroup > .sg-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 13px 16px; cursor: pointer; user-select: none;
+    font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink); background: var(--panel-2);
+  }
+  .supergroup > .sg-head:hover { background: var(--panel); }
+  .sg-head .chev { transition: transform .18s ease; color: var(--ink-dim); font-size: 11px; }
+  .supergroup.collapsed > .sg-head .chev { transform: rotate(-90deg); }
+  .supergroup.collapsed > .sg-body { display: none; }
+  .supergroup > .sg-body > .module > .mod-head { padding-left: 28px; font-weight: 500; }
+  .supergroup > .sg-body > .module .lessons li a.navlink { padding-left: 50px; }
   .lessons li { display: block; }
   .lessons li a.navlink {
     padding: 7px 16px 7px 38px; font-size: 13px; cursor: pointer; color: var(--ink-dim);
@@ -1299,16 +1313,43 @@ const App = (function () {
     return names.map(n => ({ name: n, lessons: mods[n] }));
   }
 
+  // Nest the Capstones and every "Papers · …" category under one collapsible
+  // "Papers" parent in the sidebar. The lesson's own `module` is unchanged.
+  function superGroupOf(name) {
+    return (name === "Capstones" || /^Papers\s*·/.test(name)) ? "Papers" : null;
+  }
+  // Under the "Papers" parent, drop the redundant "Papers · " prefix from a
+  // child's label so it reads e.g. "Papers › Foundations & Optimization".
+  function navLabel(name, sgName) {
+    return sgName === "Papers" ? name.replace(/^Papers\s*·\s*/, "") : name;
+  }
+
   function renderSidebar() {
     const groups = group();
     const wrap = document.getElementById("modules");
     wrap.innerHTML = "";
     order.length = 0;
+    const superBodies = {};   // superGroup name -> its body element (e.g. "Math")
     groups.forEach((g, gi) => {
+      const sgName = (g.lessons[0] && g.lessons[0].superGroup) || superGroupOf(g.name);
+      let container = wrap;
+      if (sgName) {
+        if (!superBodies[sgName]) {
+          const sg = document.createElement("div");
+          sg.className = "supergroup collapsed";
+          sg.innerHTML =
+            `<div class="sg-head"><span class="chev">▼</span><span>${sgName}</span></div>` +
+            `<div class="sg-body"></div>`;
+          sg.querySelector(".sg-head").onclick = () => sg.classList.toggle("collapsed");
+          wrap.appendChild(sg);
+          superBodies[sgName] = sg.querySelector(".sg-body");
+        }
+        container = superBodies[sgName];
+      }
       const mod = document.createElement("div");
       mod.className = "module collapsed";
       mod.innerHTML =
-        `<div class="mod-head"><span class="chev">▼</span><span>${g.name}</span></div>` +
+        `<div class="mod-head"><span class="chev">▼</span><span>${navLabel(g.name, sgName)}</span></div>` +
         `<ul class="lessons"></ul>`;
       const ul = mod.querySelector(".lessons");
       g.lessons.forEach(l => {
@@ -1329,7 +1370,7 @@ const App = (function () {
         if (e.target.closest(".modbar")) return;
         mod.classList.toggle("collapsed");
       };
-      wrap.appendChild(mod);
+      container.appendChild(mod);
     });
   }
 
@@ -1644,8 +1685,64 @@ const App = (function () {
       (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
       prereqLinks(l.prereqs) +
       `<div class="card book-chapter">${body}${takeaways}</div>` +
-      (l.demo && !/id="demo-host"/.test(body) ? `<div class="card"><h3>Play with it</h3><div class="demo" id="demo-host"></div></div>` : "") +
       codeVizBlock(id) +
+      navRow(id, prev, next);
+  }
+
+  // ===== Math track: our own 5-section spec. Structure is enforced here, not by the author. =====
+  function renderMath(l, id, prev, next) {
+    const noteHTML = `<p class="scaffold-note">To be authored.</p>`;
+    const wrapP = h => /^\s*<(p|ul|ol|table|div|details|h[1-6])/i.test(h) ? h : `<p>${h}</p>`;
+
+    const c = l.connections || {};
+    let ci = "";
+    if (c.buildsOn && c.buildsOn.length) ci += `<li><b>Builds on</b> — ${c.buildsOn.join("; ")}.</li>`;
+    if (c.leadsTo && c.leadsTo.length)   ci += `<li><b>Leads to</b> — ${c.leadsTo.join("; ")}.</li>`;
+    if (c.usedWith && c.usedWith.length) ci += `<li><b>Used with</b> — ${c.usedWith.join("; ")}.</li>`;
+    const conn = `<h3 class="book-h">Connections</h3>` + (ci ? `<ul class="steps">${ci}</ul>` : noteHTML);
+
+    const moti = `<h3 class="book-h">Motivation &amp; Intuition</h3>` + (l.motivation || noteHTML);
+    const defn = `<h3 class="book-h">Definition &amp; Assumptions</h3>` + (l.definition || noteHTML);
+
+    const w = l.worked || {};
+    let meta = "";
+    if (w.difficulty) meta += `<span class="difficulty">${"\u25CF".repeat(w.difficulty)}${"\u25CB".repeat(Math.max(0, 5 - w.difficulty))}</span>`;
+    if (w.skills && w.skills.length) meta += `<span class="skills">${w.skills.join(" \u00B7 ")}</span>`;
+    meta = meta ? `<p class="lesson-meta">${meta}</p>` : "";
+    const hints = (w.hints || []).map((h, i) => `<details class="hint"><summary>Hint ${i + 1}</summary>${wrapP(h)}</details>`).join("");
+    const steps = (w.steps || []).map(s => `<li><b>${s.do}</b>${s.result ? ` &rarr; ${s.result}` : ""}${s.why ? ` <i>${s.why}</i>` : ""}</li>`).join("");
+    const mistakes = (w.mistakes && w.mistakes.length)
+      ? `<p><b>Common mistakes.</b></p><ul class="steps">${w.mistakes.map(m => `<li>\u274C ${m}</li>`).join("")}</ul>` : "";
+    const practice = (l.practice && l.practice.length)
+      ? `<p><b>Practice</b> (hints fade):</p><ul class="steps">${l.practice.map(p => `<li>${p.problem} &rarr; ${p.answer}</li>`).join("")}</ul>` : "";
+    const workedBody = (w.problem || (w.steps && w.steps.length))
+      ? meta +
+        (w.problem ? `<p>${w.problem}</p>` : "") +
+        (w.strategy ? `<p class="strategy"><b>Strategy.</b> ${w.strategy}</p>` : "") +
+        hints +
+        (steps ? `<p>Now, one operation at a time:</p><ol class="steps">${steps}</ol>` : "") +
+        (w.verify ? `<p><b>Verify.</b> ${w.verify}</p>` : "") +
+        (w.answer ? `<p><b>Answer:</b> ${w.answer}</p>` : "") +
+        mistakes +
+        (w.connects ? `<p class="connects"><b>Connects to:</b> ${w.connects}</p>` : "") +
+        (l.demo ? `<div class="demo" id="demo-host"></div>` : "") +
+        practice
+      : noteHTML;
+    const worked = `<h3 class="book-h">Worked Example &amp; Practice</h3>` + workedBody;
+
+    const apps = (l.applications && l.applications.length)
+      ? l.applications.map((a, i) => `<p><b>${i + 1}. ${a.title}.</b> ${a.background || ""}${a.numbers ? " " + a.numbers : ""}</p>`).join("")
+      : noteHTML;
+    const appsSec = `<h3 class="book-h">Real-World Applications in CS &amp; ML</h3>` + apps;
+
+    const takeaways = (l.takeaways && l.takeaways.length)
+      ? `<div class="book-takeaways"><h3>Key takeaways</h3><ul>${l.takeaways.map(t => `<li>${t}</li>`).join("")}</ul></div>` : "";
+
+    return `<div class="crumbs">${l.book || l.module}</div>` +
+      `<h2 class="lesson-title">${l.title}</h2>` +
+      (l.tagline ? `<p class="lesson-sub">${l.tagline}</p>` : "") +
+      prereqLinks(l.prereqs) +
+      `<div class="card book-chapter">${conn}${moti}${defn}${worked}${appsSec}${takeaways}</div>` +
       navRow(id, prev, next);
   }
 
@@ -1675,6 +1772,7 @@ const App = (function () {
     else if (l.paper) { html = renderPaper(l, id, prev, next); }
     else if (l.template === "pytorch") { html = renderPyTorch(l, id, prev, next); }
     else if (l.template === "book") { html = renderBook(l, id, prev, next); }
+    else if (l.template === "math") { html = renderMath(l, id, prev, next); }
     else { html =
       `<div class="crumbs">${l.module}</div>` +
       `<h2 class="lesson-title">${l.title}</h2>` +
@@ -1709,6 +1807,8 @@ const App = (function () {
     if (activeLi) {
       const mod = activeLi.closest(".module");
       if (mod) mod.classList.remove("collapsed");
+      const sg = activeLi.closest(".supergroup");
+      if (sg) sg.classList.remove("collapsed");
       activeLi.scrollIntoView({ block: "nearest" });
     }
     if (l.demo) { try { l.demo(document.getElementById("demo-host")); } catch (e) { console.warn(e); } }
@@ -1736,6 +1836,11 @@ const App = (function () {
       });
       mod.style.display = any ? "" : "none";
       if (q && any) mod.classList.remove("collapsed");
+    });
+    document.querySelectorAll(".supergroup").forEach(sg => {
+      const anyMod = [...sg.querySelectorAll(".module")].some(m => m.style.display !== "none");
+      sg.style.display = anyMod ? "" : "none";
+      if (q && anyMod) sg.classList.remove("collapsed");
     });
   }
 
