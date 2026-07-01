@@ -9,37 +9,539 @@
   B({
     "id": "math-25-01",
     "title": "States and evolution",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: states and evolution.",
+    "tagline": "A dynamical system starts with a state and a rule for how that state changes.",
     "connections": {
       "buildsOn": [
-        "the prerequisites for this topic"
+        "Functions and their graphs",
+        "vectors",
+        "sequences",
+        "derivatives as rates of change"
       ],
       "leadsTo": [
-        "the next lesson, <i>One-dimensional flows</i>"
+        "One-dimensional flows",
+        "Fixed points",
+        "Phase portraits"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "recursion",
+        "differential equations",
+        "vector fields",
+        "iteration"
       ]
-    }
+    },
+    "motivation": "<p>You already know how to update something step by step. If a bank balance earns interest, today's balance helps determine tomorrow's balance. If a ball is moving, its current position and velocity help determine what happens next.</p><p>A <b>dynamical system</b> gives this idea a clean language: name the current state, name the evolution rule, then follow the rule. The comfort is that even complicated motion begins with one honest question: what information do we need right now to predict the next change?</p>",
+    "definition": "<p>A <b>state</b> is a collection of variables that describes the system at one moment, often written $x_t$ in discrete time or $x(t)$ in continuous time. A discrete-time system has an update rule $x_{t+1}=F(x_t)$, where $F$ maps the current state to the next state. A continuous-time system has a differential equation $\\dot{x}=f(x)$, where $\\dot{x}=dx/dt$ is the instantaneous velocity of the state.</p><p>The reason this works is the Markov-style bookkeeping: if the state contains all variables needed for prediction, the future can be generated from the present rule. Starting from $x_0$, a discrete system gives $x_1=F(x_0)$, then $x_2=F(x_1)$, and so on. Starting from $x(0)$, a continuous system follows the velocity field $f$.</p><p><b>Assumptions that matter:</b> the state must include enough information to make the rule valid; the same rule is applied at each step or each time unless stated otherwise; discrete time counts jumps, while continuous time flows; and units matter because a state component, an update, and a rate are not interchangeable.</p>",
+    "worked": {
+      "problem": "For the discrete system $x_{t+1}=0.5x_t+3$ with $x_0=4$, compute $x_1$, $x_2$, $x_3$, and describe the direction of evolution.",
+      "skills": [
+        "state updates",
+        "iteration",
+        "linear recurrence"
+      ],
+      "strategy": "The rule uses the current state — apply it once per step and keep the time index straight.",
+      "steps": [
+        {
+          "do": "Substitute $x_0=4$",
+          "result": "$x_1=0.5(4)+3$",
+          "why": "the next state comes from the current state"
+        },
+        {
+          "do": "Compute $x_1$",
+          "result": "$x_1=5$",
+          "why": "$2+3=5$"
+        },
+        {
+          "do": "Substitute $x_1=5$",
+          "result": "$x_2=0.5(5)+3$",
+          "why": "use the new state for the next update"
+        },
+        {
+          "do": "Compute $x_2$",
+          "result": "$x_2=5.5$",
+          "why": "$2.5+3=5.5$"
+        },
+        {
+          "do": "Substitute $x_2=5.5$",
+          "result": "$x_3=0.5(5.5)+3$",
+          "why": "iterate the same rule again"
+        },
+        {
+          "do": "Compute $x_3$",
+          "result": "$x_3=5.75$",
+          "why": "$2.75+3=5.75$"
+        },
+        {
+          "do": "Compare the values",
+          "result": "$4,5,5.5,5.75$",
+          "why": "the state is increasing but by smaller amounts"
+        }
+      ],
+      "verify": "The increments are $1$, $0.5$, and $0.25$, so the motion is slowing as it rises toward a steady value.",
+      "answer": "$x_1=5$, $x_2=5.5$, $x_3=5.75$; the state moves upward with shrinking steps.",
+      "connects": "Evolution is repeated application of a rule to the current state."
+    },
+    "practice": [
+      {
+        "problem": "For $x_{t+1}=2x_t-1$ with $x_0=3$, compute $x_1$, $x_2$, and $x_3$.",
+        "steps": [
+          {
+            "do": "Substitute $x_0=3$",
+            "result": "$x_1=2(3)-1$",
+            "why": "start from the given initial state"
+          },
+          {
+            "do": "Compute $x_1$",
+            "result": "$x_1=5$",
+            "why": "$6-1=5$"
+          },
+          {
+            "do": "Substitute $x_1=5$",
+            "result": "$x_2=2(5)-1$",
+            "why": "the second update uses $x_1$"
+          },
+          {
+            "do": "Compute $x_2$",
+            "result": "$x_2=9$",
+            "why": "$10-1=9$"
+          },
+          {
+            "do": "Substitute $x_2=9$",
+            "result": "$x_3=2(9)-1=17$",
+            "why": "apply the same evolution rule once more"
+          }
+        ],
+        "answer": "$x_1=5$, $x_2=9$, and $x_3=17$."
+      },
+      {
+        "problem": "A state is $s_t=(p_t,v_t)$ with update $p_{t+1}=p_t+v_t$ and $v_{t+1}=v_t-2$. Starting at $(10,6)$, find the next two states.",
+        "steps": [
+          {
+            "do": "Update position once",
+            "result": "$p_1=10+6=16$",
+            "why": "new position uses current position plus velocity"
+          },
+          {
+            "do": "Update velocity once",
+            "result": "$v_1=6-2=4$",
+            "why": "velocity decreases by 2"
+          },
+          {
+            "do": "Write the first state",
+            "result": "$s_1=(16,4)$",
+            "why": "a state records both components"
+          },
+          {
+            "do": "Update position again",
+            "result": "$p_2=16+4=20$",
+            "why": "use the updated velocity"
+          },
+          {
+            "do": "Update velocity again",
+            "result": "$v_2=4-2=2$",
+            "why": "apply the same rule again"
+          }
+        ],
+        "answer": "$s_1=(16,4)$ and $s_2=(20,2)$."
+      },
+      {
+        "problem": "For $x_{t+1}=0.8x_t$ with $x_0=50$, compute $x_1$, $x_2$, and the percent change each step.",
+        "steps": [
+          {
+            "do": "Compute the first update",
+            "result": "$x_1=0.8(50)=40$",
+            "why": "multiply the current state by 0.8"
+          },
+          {
+            "do": "Compute the second update",
+            "result": "$x_2=0.8(40)=32$",
+            "why": "apply the same multiplier again"
+          },
+          {
+            "do": "Find the first change",
+            "result": "$40-50=-10$",
+            "why": "compare new minus old"
+          },
+          {
+            "do": "Convert the first change to percent",
+            "result": "$-10/50=-0.20$",
+            "why": "divide by the old state"
+          },
+          {
+            "do": "Check the second percent",
+            "result": "$(32-40)/40=-0.20$",
+            "why": "the same multiplier gives the same percent change"
+          }
+        ],
+        "answer": "$x_1=40$, $x_2=32$, and the state decreases by $20\\%$ each step."
+      },
+      {
+        "problem": "For the continuous system $\\dot{x}=4-x$, find the velocity at $x=1$, $x=4$, and $x=6$.",
+        "steps": [
+          {
+            "do": "Substitute $x=1$",
+            "result": "$\\dot{x}=4-1=3$",
+            "why": "velocity is the value of the right-hand side"
+          },
+          {
+            "do": "Interpret the sign at $1$",
+            "result": "positive velocity",
+            "why": "the state moves upward when $\\dot{x}>0$"
+          },
+          {
+            "do": "Substitute $x=4$",
+            "result": "$\\dot{x}=4-4=0$",
+            "why": "the state has no instantaneous motion there"
+          },
+          {
+            "do": "Substitute $x=6$",
+            "result": "$\\dot{x}=4-6=-2$",
+            "why": "evaluate the same rate rule"
+          },
+          {
+            "do": "Interpret the sign at $6$",
+            "result": "negative velocity",
+            "why": "the state moves downward when $\\dot{x}<0$"
+          }
+        ],
+        "answer": "The velocities are $3$, $0$, and $-2$; motion rises below $4$, stops at $4$, and falls above $4$."
+      },
+      {
+        "problem": "A training metric follows $m_{t+1}=m_t+0.1(1-m_t)$ from $m_0=0.60$. Compute $m_1$, $m_2$, and the remaining gap to $1$ after two steps.",
+        "steps": [
+          {
+            "do": "Compute the first improvement",
+            "result": "$0.1(1-0.60)=0.04$",
+            "why": "the update takes 10 percent of the remaining gap"
+          },
+          {
+            "do": "Update the metric",
+            "result": "$m_1=0.60+0.04=0.64$",
+            "why": "add the improvement to the current metric"
+          },
+          {
+            "do": "Compute the second improvement",
+            "result": "$0.1(1-0.64)=0.036$",
+            "why": "the gap is now smaller"
+          },
+          {
+            "do": "Update again",
+            "result": "$m_2=0.64+0.036=0.676$",
+            "why": "apply the rule once more"
+          },
+          {
+            "do": "Find the remaining gap",
+            "result": "$1-0.676=0.324$",
+            "why": "gap means target minus current value"
+          }
+        ],
+        "answer": "$m_1=0.64$, $m_2=0.676$, and the remaining gap is $0.324$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Gradient descent as state evolution",
+        "background": "Training a model updates parameters over many steps. The parameter vector is the state, and the optimizer is the evolution rule.",
+        "numbers": "For $w_{t+1}=w_t-0.1(2w_t-4)$ and $w_0=0$, $w_1=0.4$ and $w_2=0.72$."
+      },
+      {
+        "title": "Recurrent neural networks",
+        "background": "RNNs were built to process sequences by carrying a hidden state forward. Each token updates the state before the next token arrives.",
+        "numbers": "With $h_{t+1}=0.5h_t+x_t$, $h_0=0$, and inputs $2,4$, the states are $h_1=2$ and $h_2=5$."
+      },
+      {
+        "title": "Epidemic counts",
+        "background": "Simple epidemic models track susceptible and infected counts as a state. The rule estimates how those counts change over time.",
+        "numbers": "If infections grow by factor $1.2$ per day from $100$, then after two days $100(1.2)^2=144$."
+      },
+      {
+        "title": "Physics simulation",
+        "background": "Games and robotics simulate motion by updating position and velocity. The state must include velocity because position alone is not enough.",
+        "numbers": "With $p_{t+1}=p_t+0.1v_t$, $p_0=5$, and $v_0=3$, the next position is $5.3$."
+      },
+      {
+        "title": "Markov chains",
+        "background": "A Markov chain evolves a probability state through a transition matrix. It is discrete-time dynamics on probabilities.",
+        "numbers": "If $[0.7,0.3]$ moves by matrix rows $[0.8,0.2]$ and $[0.1,0.9]$, the first new probability is $0.7(0.8)+0.3(0.1)=0.59$."
+      },
+      {
+        "title": "Queues and servers",
+        "background": "Computer systems track queue length as a state. Arrivals and service completions update the state over time.",
+        "numbers": "A queue with $12$ jobs, $5$ arrivals, and $7$ completions updates to $12+5-7=10$ jobs."
+      }
+    ],
+    "applicationsClose": "States and evolution are the shared grammar behind learning loops, simulations, chains, queues, and physical motion.",
+    "takeaways": [
+      "A state stores the variables needed to predict the system's next change.",
+      "Discrete systems iterate $x_{t+1}=F(x_t)$; continuous systems follow $\\dot{x}=f(x)$.",
+      "Good modeling begins by choosing a state that contains enough information.",
+      "Many ML algorithms are dynamical systems in parameter or hidden-state space."
+    ]
   });
 
   B({
     "id": "math-25-02",
     "title": "One-dimensional flows",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: one-dimensional flows.",
+    "tagline": "On a line, the sign of the velocity tells you which way the state flows.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>States and evolution</i>"
+        "States and evolution",
+        "derivatives as rates of change",
+        "sign charts"
       ],
       "leadsTo": [
-        "the next lesson, <i>Fixed points</i>"
+        "Fixed points",
+        "Stability of fixed points",
+        "Bifurcations"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "differential equations",
+        "phase lines",
+        "roots of functions",
+        "separation of variables"
       ]
     },
+    "motivation": "<p>You can read a number line like a road. If the velocity is positive, the traveler moves right; if it is negative, the traveler moves left; if it is zero, the traveler pauses.</p><p>A one-dimensional flow turns that picture into analysis. You do not always need the exact formula for $x(t)$. Often the sign of $f(x)$ in $\\dot{x}=f(x)$ already tells the story: where motion goes, where it stops, and which places attract nearby states.</p>",
+    "definition": "<p>A <b>one-dimensional flow</b> is a continuous-time dynamical system $\\dot{x}=f(x)$ with one state variable $x$. The function $f$ assigns a velocity to each position. If $f(x)>0$, solutions move toward larger $x$; if $f(x)<0$, they move toward smaller $x$; if $f(x)=0$, the state is stationary.</p><p>The phase-line method comes from the differential equation itself: for a tiny time step $\\Delta t$, the change is approximately $\\Delta x\\approx f(x)\\Delta t$. With $\\Delta t>0$, the sign of $\\Delta x$ is the sign of $f(x)$. That is why arrows on the line are enough to predict direction.</p><p><b>Assumptions that matter:</b> time moves forward; $f$ is usually taken continuous so signs do not change except through zeros; the phase line describes direction, not exact timing; and one-dimensional solutions cannot pass through an equilibrium when uniqueness holds.</p>",
+    "worked": {
+      "problem": "Draw the phase-line information for $\\dot{x}=x(4-x)$ by testing intervals around its zeros.",
+      "skills": [
+        "phase lines",
+        "sign charts",
+        "equilibrium candidates"
+      ],
+      "strategy": "Zeros split the line — test one point in each interval to determine the flow direction.",
+      "steps": [
+        {
+          "do": "Set the velocity equal to zero",
+          "result": "$x(4-x)=0$",
+          "why": "motion stops where the right-hand side is zero"
+        },
+        {
+          "do": "Solve for zeros",
+          "result": "$x=0$ or $x=4$",
+          "why": "use the zero-product property"
+        },
+        {
+          "do": "Test $x=-1$",
+          "result": "$(-1)(5)=-5<0$",
+          "why": "this represents the interval $(-\\infty,0)$"
+        },
+        {
+          "do": "Test $x=2$",
+          "result": "$(2)(2)=4>0$",
+          "why": "this represents the interval $(0,4)$"
+        },
+        {
+          "do": "Test $x=5$",
+          "result": "$(5)(-1)=-5<0$",
+          "why": "this represents the interval $(4,\\infty)$"
+        },
+        {
+          "do": "Translate signs to arrows",
+          "result": "left, right, left",
+          "why": "negative velocity moves left and positive velocity moves right"
+        }
+      ],
+      "verify": "Values below $0$ decrease, values between $0$ and $4$ increase, and values above $4$ decrease, so nearby motion points toward $4$ and away from $0$.",
+      "answer": "Equilibria are $0$ and $4$; arrows are left on $(-\\infty,0)$, right on $(0,4)$, and left on $(4,\\infty)$.",
+      "connects": "A phase line compresses a whole differential equation into directions on the state line."
+    },
+    "practice": [
+      {
+        "problem": "For $\\dot{x}=x-2$, find the zero and the flow direction on each side.",
+        "steps": [
+          {
+            "do": "Set the velocity to zero",
+            "result": "$x-2=0$",
+            "why": "zeros are possible stopping points"
+          },
+          {
+            "do": "Solve for the zero",
+            "result": "$x=2$",
+            "why": "add 2 to both sides"
+          },
+          {
+            "do": "Test $x=0$",
+            "result": "$0-2=-2<0$",
+            "why": "choose a point left of 2"
+          },
+          {
+            "do": "Test $x=3$",
+            "result": "$3-2=1>0$",
+            "why": "choose a point right of 2"
+          },
+          {
+            "do": "Translate signs",
+            "result": "left on $(-\\infty,2)$ and right on $(2,\\infty)$",
+            "why": "sign determines direction"
+          }
+        ],
+        "answer": "The zero is $x=2$; the flow moves left below $2$ and right above $2$."
+      },
+      {
+        "problem": "For $\\dot{x}=3-x$, find the zero and flow direction on each side.",
+        "steps": [
+          {
+            "do": "Set the velocity to zero",
+            "result": "$3-x=0$",
+            "why": "stationary points have zero velocity"
+          },
+          {
+            "do": "Solve for $x$",
+            "result": "$x=3$",
+            "why": "move $x$ to the other side"
+          },
+          {
+            "do": "Test $x=1$",
+            "result": "$3-1=2>0$",
+            "why": "this point is left of 3"
+          },
+          {
+            "do": "Test $x=5$",
+            "result": "$3-5=-2<0$",
+            "why": "this point is right of 3"
+          },
+          {
+            "do": "Translate signs",
+            "result": "right below $3$ and left above $3$",
+            "why": "positive moves right and negative moves left"
+          }
+        ],
+        "answer": "The zero is $x=3$; the flow points toward $3$ from both sides."
+      },
+      {
+        "problem": "For $\\dot{x}=x^2-1$, make a sign chart across its zeros.",
+        "steps": [
+          {
+            "do": "Factor the velocity",
+            "result": "$x^2-1=(x-1)(x+1)$",
+            "why": "factoring exposes zeros"
+          },
+          {
+            "do": "Find the zeros",
+            "result": "$x=-1$ and $x=1$",
+            "why": "each factor can be zero"
+          },
+          {
+            "do": "Test $x=-2$",
+            "result": "$4-1=3>0$",
+            "why": "represent the left interval"
+          },
+          {
+            "do": "Test $x=0$",
+            "result": "$0-1=-1<0$",
+            "why": "represent the middle interval"
+          },
+          {
+            "do": "Test $x=2$",
+            "result": "$4-1=3>0$",
+            "why": "represent the right interval"
+          }
+        ],
+        "answer": "The flow points right on $(-\\infty,-1)$, left on $(-1,1)$, and right on $(1,\\infty)$."
+      },
+      {
+        "problem": "For $\\dot{x}=-(x+2)(x-3)$, find the flow directions on the three intervals.",
+        "steps": [
+          {
+            "do": "Find the zeros",
+            "result": "$x=-2$ and $x=3$",
+            "why": "each factor can make the velocity zero"
+          },
+          {
+            "do": "Test $x=-3$",
+            "result": "$-(-1)(-6)=-6<0$",
+            "why": "left of both zeros"
+          },
+          {
+            "do": "Test $x=0$",
+            "result": "$-(2)(-3)=6>0$",
+            "why": "between the zeros"
+          },
+          {
+            "do": "Test $x=4$",
+            "result": "$-(6)(1)=-6<0$",
+            "why": "right of both zeros"
+          },
+          {
+            "do": "Convert signs to arrows",
+            "result": "left, right, left",
+            "why": "velocity sign gives direction"
+          }
+        ],
+        "answer": "The flow moves left on $(-\\infty,-2)$, right on $(-2,3)$, and left on $(3,\\infty)$."
+      },
+      {
+        "problem": "A scalar training error follows $\\dot{e}=-0.5e$. If $e=10$, $e=2$, and $e=-1$, find the velocity and interpret the direction.",
+        "steps": [
+          {
+            "do": "Substitute $e=10$",
+            "result": "$\\dot{e}=-0.5(10)=-5$",
+            "why": "evaluate the rate rule"
+          },
+          {
+            "do": "Substitute $e=2$",
+            "result": "$\\dot{e}=-0.5(2)=-1$",
+            "why": "positive errors decrease"
+          },
+          {
+            "do": "Substitute $e=-1$",
+            "result": "$\\dot{e}=-0.5(-1)=0.5$",
+            "why": "negative errors increase"
+          },
+          {
+            "do": "Find the zero",
+            "result": "$e=0$",
+            "why": "the rate vanishes only at zero"
+          },
+          {
+            "do": "Interpret the arrows",
+            "result": "motion points toward $0$",
+            "why": "positive states move down and negative states move up"
+          }
+        ],
+        "answer": "Velocities are $-5$, $-1$, and $0.5$; the flow moves toward zero error."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Error decay",
+        "background": "Many learning curves can be approximated by one scalar gap shrinking toward zero. A one-dimensional flow captures the direction before fine details are known.",
+        "numbers": "For $\\dot{e}=-0.2e$, an error $e=5$ has velocity $-1$, so it initially decreases by about $0.1$ over $0.1$ time units."
+      },
+      {
+        "title": "Population with carrying capacity",
+        "background": "The logistic model was introduced for populations that grow when small but slow near environmental limits.",
+        "numbers": "For $\\dot{x}=0.1x(100-x)$, at $x=20$ the velocity is $160$, while at $x=120$ it is $-240$."
+      },
+      {
+        "title": "Thermostat relaxation",
+        "background": "Objects often cool or warm toward ambient temperature. The temperature difference is a one-dimensional state.",
+        "numbers": "With $\\dot{T}=0.3(70-T)$, at $T=60$ the velocity is $3$ degrees per unit time; at $T=80$ it is $-3$."
+      },
+      {
+        "title": "Chemical concentration",
+        "background": "First-order reactions decrease concentration at a rate proportional to the amount present.",
+        "numbers": "If $\\dot{c}=-0.4c$ and $c=8$, then $\\dot{c}=-3.2$ concentration units per minute."
+      },
+      {
+        "title": "Regularization path intuition",
+        "background": "A tuning parameter may be adjusted continuously toward a target validation condition. A scalar flow models the direction of adjustment.",
+        "numbers": "If $\\dot{\\lambda}=0.05(1-\\lambda)$, then at $\\lambda=0.2$ the velocity is $0.04$."
+      },
+      {
+        "title": "Queue stabilization",
+        "background": "A simplified queue can be modeled by the difference between arrival rate and service response. The sign tells whether the queue grows or shrinks.",
+        "numbers": "For $\\dot{q}=6-0.5q$, a queue of $4$ grows at rate $4$, while a queue of $20$ shrinks at rate $-4$."
+      }
+    ],
+    "applicationsClose": "One-dimensional flows teach the essential habit of reading motion from signs before chasing exact solutions.",
+    "takeaways": [
+      "In $\\dot{x}=f(x)$, positive $f(x)$ moves the state right and negative $f(x)$ moves it left.",
+      "Zeros of $f$ split the phase line into intervals where direction can be tested.",
+      "A phase line describes qualitative motion even without solving for $x(t)$.",
+      "Scalar ML quantities such as errors, gaps, and tuning parameters often have useful flow models."
+    ],
     "prereqs": [
       "math-25-01"
     ]
@@ -48,19 +550,262 @@
   B({
     "id": "math-25-03",
     "title": "Fixed points",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: fixed points.",
+    "tagline": "A fixed point is a state that the dynamics leave exactly where it is.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>One-dimensional flows</i>"
+        "States and evolution",
+        "One-dimensional flows",
+        "solving equations"
       ],
       "leadsTo": [
-        "the next lesson, <i>Stability of fixed points</i>"
+        "Stability of fixed points",
+        "Saddle-node bifurcations",
+        "Classification of equilibria"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "roots",
+        "iteration",
+        "equilibria",
+        "phase lines"
       ]
     },
+    "motivation": "<p>Some states are special because the rule stops changing them. If a room is exactly at the thermostat setting, the idealized temperature difference no longer moves. If an iteration lands on a value that maps to itself, the next value is the same.</p><p>These states are the landmarks of dynamics. Before asking whether motion spirals, oscillates, or becomes chaotic, we first ask where it can stand still.</p>",
+    "definition": "<p>For a discrete-time system $x_{t+1}=F(x_t)$, a <b>fixed point</b> is a value $x^\\ast$ satisfying $F(x^\\ast)=x^\\ast$. For a continuous-time system $\\dot{x}=f(x)$, an equilibrium or fixed point satisfies $f(x^\\ast)=0$. The symbol $x^\\ast$ means a special state, not multiplication.</p><p>The equations differ because the meanings of the rules differ. In discrete time, staying fixed means the next state equals the current state. In continuous time, staying fixed means the velocity is zero, so the state has no instantaneous reason to move.</p><p><b>Assumptions that matter:</b> fixed points depend on the chosen rule and domain; solving the algebraic equation finds candidates, but the domain may exclude some; continuous equilibria are zeros of velocity, not necessarily zeros of the state; and fixed points need not be stable.</p>",
+    "worked": {
+      "problem": "Find the fixed points of the discrete system $x_{t+1}=F(x_t)=0.5x_t+3$.",
+      "skills": [
+        "fixed-point equations",
+        "linear algebra",
+        "discrete dynamics"
+      ],
+      "strategy": "A fixed point equals its own update — set $F(x)$ equal to $x$ and solve.",
+      "steps": [
+        {
+          "do": "Write the fixed-point condition",
+          "result": "$F(x^\\ast)=x^\\ast$",
+          "why": "the next state must equal the current state"
+        },
+        {
+          "do": "Substitute the rule",
+          "result": "$0.5x^\\ast+3=x^\\ast$",
+          "why": "replace $F$ with its formula"
+        },
+        {
+          "do": "Subtract $0.5x^\\ast$",
+          "result": "$3=0.5x^\\ast$",
+          "why": "collect the state terms on one side"
+        },
+        {
+          "do": "Divide by $0.5$",
+          "result": "$x^\\ast=6$",
+          "why": "isolate the fixed point"
+        },
+        {
+          "do": "Check the update",
+          "result": "$F(6)=0.5(6)+3=6$",
+          "why": "the rule leaves 6 unchanged"
+        }
+      ],
+      "verify": "Starting at $6$ gives $6,6,6,\\ldots$, so it is genuinely fixed.",
+      "answer": "The unique fixed point is $x^\\ast=6$.",
+      "connects": "Fixed points are the still landmarks around which evolution is organized."
+    },
+    "practice": [
+      {
+        "problem": "Find the fixed point of $x_{t+1}=0.25x_t+9$.",
+        "steps": [
+          {
+            "do": "Set next state equal to current state",
+            "result": "$0.25x^\\ast+9=x^\\ast$",
+            "why": "use the discrete fixed-point condition"
+          },
+          {
+            "do": "Subtract $0.25x^\\ast$",
+            "result": "$9=0.75x^\\ast$",
+            "why": "collect the variable terms"
+          },
+          {
+            "do": "Divide by $0.75$",
+            "result": "$x^\\ast=12$",
+            "why": "$9/0.75=12$"
+          },
+          {
+            "do": "Check in the rule",
+            "result": "$0.25(12)+9=12$",
+            "why": "$3+9=12$"
+          },
+          {
+            "do": "State uniqueness",
+            "result": "one fixed point",
+            "why": "a nonconstant linear equation has one solution"
+          }
+        ],
+        "answer": "$x^\\ast=12$."
+      },
+      {
+        "problem": "Find the equilibria of $\\dot{x}=x^2-4$.",
+        "steps": [
+          {
+            "do": "Set velocity to zero",
+            "result": "$x^2-4=0$",
+            "why": "continuous fixed points have zero velocity"
+          },
+          {
+            "do": "Factor",
+            "result": "$(x-2)(x+2)=0$",
+            "why": "difference of squares"
+          },
+          {
+            "do": "Use zero-product property",
+            "result": "$x=2$ or $x=-2$",
+            "why": "one factor must vanish"
+          },
+          {
+            "do": "Check $x=2$",
+            "result": "$2^2-4=0$",
+            "why": "substitute into the velocity"
+          },
+          {
+            "do": "Check $x=-2$",
+            "result": "$(-2)^2-4=0$",
+            "why": "both values stop the flow"
+          }
+        ],
+        "answer": "The equilibria are $x^\\ast=-2$ and $x^\\ast=2$."
+      },
+      {
+        "problem": "Find all fixed points of the logistic map $x_{t+1}=rx_t(1-x_t)$ when $r=2$.",
+        "steps": [
+          {
+            "do": "Write the fixed-point equation",
+            "result": "$2x^\\ast(1-x^\\ast)=x^\\ast$",
+            "why": "the update must equal the current state"
+          },
+          {
+            "do": "Move all terms to one side",
+            "result": "$2x^\\ast-2(x^\\ast)^2-x^\\ast=0$",
+            "why": "prepare to factor"
+          },
+          {
+            "do": "Combine like terms",
+            "result": "$x^\\ast-2(x^\\ast)^2=0$",
+            "why": "$2x^\\ast-x^\\ast=x^\\ast$"
+          },
+          {
+            "do": "Factor",
+            "result": "$x^\\ast(1-2x^\\ast)=0$",
+            "why": "common factor $x^\\ast$"
+          },
+          {
+            "do": "Solve each factor",
+            "result": "$x^\\ast=0$ or $x^\\ast=1/2$",
+            "why": "use zero-product property"
+          }
+        ],
+        "answer": "The fixed points are $0$ and $1/2$."
+      },
+      {
+        "problem": "Find the equilibrium of $\\dot{x}=5-2x$ and verify it by evaluating the velocity.",
+        "steps": [
+          {
+            "do": "Set velocity to zero",
+            "result": "$5-2x^\\ast=0$",
+            "why": "equilibrium means no motion"
+          },
+          {
+            "do": "Move the variable term",
+            "result": "$5=2x^\\ast$",
+            "why": "add $2x^\\ast$ to both sides"
+          },
+          {
+            "do": "Divide by 2",
+            "result": "$x^\\ast=2.5$",
+            "why": "isolate the state"
+          },
+          {
+            "do": "Evaluate the velocity",
+            "result": "$5-2(2.5)=0$",
+            "why": "substitute the candidate"
+          },
+          {
+            "do": "Interpret",
+            "result": "the state stays at $2.5$",
+            "why": "zero velocity prevents movement"
+          }
+        ],
+        "answer": "The equilibrium is $x^\\ast=2.5$."
+      },
+      {
+        "problem": "A model-parameter update is $w_{t+1}=w_t-0.2(4w_t-8)$. Find the fixed point and interpret it as a zero-gradient condition.",
+        "steps": [
+          {
+            "do": "Set update equal to current parameter",
+            "result": "$w^\\ast-0.2(4w^\\ast-8)=w^\\ast$",
+            "why": "fixed point means no update changes $w$"
+          },
+          {
+            "do": "Subtract $w^\\ast$ from both sides",
+            "result": "$-0.2(4w^\\ast-8)=0$",
+            "why": "remove the unchanged part"
+          },
+          {
+            "do": "Divide by $-0.2$",
+            "result": "$4w^\\ast-8=0$",
+            "why": "the step size is nonzero"
+          },
+          {
+            "do": "Solve for $w^\\ast$",
+            "result": "$w^\\ast=2$",
+            "why": "add 8 and divide by 4"
+          },
+          {
+            "do": "Interpret the gradient",
+            "result": "$4(2)-8=0$",
+            "why": "the update stops when the gradient term is zero"
+          }
+        ],
+        "answer": "The fixed point is $w^\\ast=2$, where the gradient term vanishes."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Optimizer convergence points",
+        "background": "Training algorithms stop changing parameters when the update rule maps parameters to themselves. Fixed points include minima, maxima, and saddles.",
+        "numbers": "For $w_{t+1}=w_t-0.1(2w_t-6)$, the fixed point solves $2w-6=0$, so $w=3$."
+      },
+      {
+        "title": "PageRank equilibrium",
+        "background": "PageRank is computed by repeatedly applying a link-transition rule until scores barely change. The final score vector is a fixed point.",
+        "numbers": "If a two-page rule sends $p$ to $0.2+0.6p$, the fixed point solves $p=0.2+0.6p$, giving $p=0.5$."
+      },
+      {
+        "title": "Economic balance",
+        "background": "Supply-demand models look for prices where the forces to raise and lower price cancel. That price is an equilibrium.",
+        "numbers": "If $\\dot{p}=20-4p$, the equilibrium is $p=5$ because $20-4(5)=0$."
+      },
+      {
+        "title": "Population carrying capacity",
+        "background": "In logistic growth, a population can settle at a carrying capacity where births and constraints balance.",
+        "numbers": "For $\\dot{x}=0.1x(100-x)$, equilibria are $x=0$ and $x=100$."
+      },
+      {
+        "title": "Batch normalization running averages",
+        "background": "Running averages update toward observed statistics. If observations stay constant, the average has a fixed point at that constant.",
+        "numbers": "For $m_{t+1}=0.9m_t+0.1(50)$, the fixed point solves $m=0.9m+5$, so $m=50$."
+      },
+      {
+        "title": "Control setpoints",
+        "background": "Controllers are designed so the desired target is an equilibrium. Deviations should move back toward it if the design is stable.",
+        "numbers": "For $\\dot{x}=2(10-x)$, the equilibrium is $x=10$ because the velocity is $0$ there."
+      }
+    ],
+    "applicationsClose": "Fixed points are where repeated rules, flows, averages, rankings, and controllers can settle.",
+    "takeaways": [
+      "Discrete fixed points solve $F(x^\\ast)=x^\\ast$.",
+      "Continuous equilibria solve $f(x^\\ast)=0$.",
+      "Finding fixed points is algebra; understanding their behavior requires stability.",
+      "Many ML training and averaging procedures can be read through their fixed points."
+    ],
     "prereqs": [
       "math-25-02"
     ]
@@ -69,19 +814,273 @@
   B({
     "id": "math-25-04",
     "title": "Stability of fixed points",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: stability of fixed points.",
+    "tagline": "Stability asks whether nearby states come back, run away, or balance on a knife edge.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Fixed points</i>"
+        "Fixed points",
+        "One-dimensional flows",
+        "derivatives",
+        "absolute value"
       ],
       "leadsTo": [
-        "the next lesson, <i>Saddle-node bifurcations</i>"
+        "Saddle-node bifurcations",
+        "Classification of equilibria",
+        "Nonlinear systems and linearization"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "linear approximation",
+        "eigenvalues",
+        "phase lines",
+        "Taylor expansion"
       ]
     },
+    "motivation": "<p>Finding a fixed point is like finding a parking spot on a hill. Stability asks what happens if the car is nudged a little. Does it roll back into the spot, roll away, or stay undecided?</p><p>This distinction matters everywhere in ML and simulation. A training point that attracts nearby parameters is different from a saddle that only looks stationary. Stability tells us what the neighborhood does.</p>",
+    "definition": "<p>A fixed point $x^\\ast$ is <b>stable</b> if states starting nearby remain nearby, and <b>asymptotically stable</b> if they also approach $x^\\ast$ over time. For a one-dimensional flow $\\dot{x}=f(x)$, if $f'(x^\\ast)<0$, nearby states are pulled toward $x^\\ast$; if $f'(x^\\ast)>0$, they are pushed away. For a discrete map $x_{t+1}=F(x_t)$, the local test is $|F'(x^\\ast)|<1$ for attraction and $|F'(x^\\ast)|>1$ for repulsion.</p><p>The derivative test comes from linearization. Near the fixed point, $f(x)\\approx f'(x^\\ast)(x-x^\\ast)$ because $f(x^\\ast)=0$. A negative coefficient makes positive deviations decrease and negative deviations increase, both back toward zero deviation.</p><p><b>Assumptions that matter:</b> these are local tests; derivatives must exist; zero derivative or $|F'|=1$ is inconclusive; nonlinear terms can decide borderline cases; and stability is about nearby initial conditions, not necessarily faraway ones.</p>",
+    "worked": {
+      "problem": "Classify the equilibria of $\\dot{x}=x(4-x)$ using the derivative test.",
+      "skills": [
+        "equilibria",
+        "derivative test",
+        "local stability"
+      ],
+      "strategy": "Find where velocity is zero, then evaluate $f'$ at each fixed point.",
+      "steps": [
+        {
+          "do": "Find equilibria",
+          "result": "$x^\\ast=0$ and $x^\\ast=4$",
+          "why": "$x(4-x)=0$"
+        },
+        {
+          "do": "Expand the velocity",
+          "result": "$f(x)=4x-x^2$",
+          "why": "expansion makes differentiation direct"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$f'(x)=4-2x$",
+          "why": "use the power rule"
+        },
+        {
+          "do": "Evaluate at $0$",
+          "result": "$f'(0)=4>0$",
+          "why": "positive derivative means repelling for a flow"
+        },
+        {
+          "do": "Classify $0$",
+          "result": "unstable",
+          "why": "nearby deviations grow away from $0$"
+        },
+        {
+          "do": "Evaluate at $4$",
+          "result": "$f'(4)=-4<0$",
+          "why": "negative derivative means attracting for a flow"
+        },
+        {
+          "do": "Classify $4$",
+          "result": "asymptotically stable",
+          "why": "nearby states move back toward $4$"
+        }
+      ],
+      "verify": "The phase line also points away from $0$ and toward $4$, matching the derivative test.",
+      "answer": "$x^\\ast=0$ is unstable; $x^\\ast=4$ is asymptotically stable.",
+      "connects": "Stability is local motion read through the slope of the evolution rule."
+    },
+    "practice": [
+      {
+        "problem": "Classify the equilibrium of $\\dot{x}=3-x$.",
+        "steps": [
+          {
+            "do": "Find the equilibrium",
+            "result": "$3-x^\\ast=0$",
+            "why": "set velocity to zero"
+          },
+          {
+            "do": "Solve",
+            "result": "$x^\\ast=3$",
+            "why": "move $x^\\ast$ to the other side"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=-1$",
+            "why": "the derivative of $3-x$ is $-1$"
+          },
+          {
+            "do": "Evaluate at the equilibrium",
+            "result": "$f'(3)=-1<0$",
+            "why": "the slope is negative"
+          },
+          {
+            "do": "Classify",
+            "result": "asymptotically stable",
+            "why": "negative slope attracts in one-dimensional flows"
+          }
+        ],
+        "answer": "$x^\\ast=3$ is asymptotically stable."
+      },
+      {
+        "problem": "Classify the equilibria of $\\dot{x}=x^2-1$.",
+        "steps": [
+          {
+            "do": "Find zeros",
+            "result": "$x^\\ast=-1$ and $x^\\ast=1$",
+            "why": "$x^2-1=0$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=2x$",
+            "why": "use the power rule"
+          },
+          {
+            "do": "Evaluate at $-1$",
+            "result": "$f'(-1)=-2<0$",
+            "why": "substitute the first equilibrium"
+          },
+          {
+            "do": "Classify $-1$",
+            "result": "stable",
+            "why": "negative derivative attracts"
+          },
+          {
+            "do": "Evaluate and classify $1$",
+            "result": "$f'(1)=2>0$, unstable",
+            "why": "positive derivative repels"
+          }
+        ],
+        "answer": "$-1$ is asymptotically stable and $1$ is unstable."
+      },
+      {
+        "problem": "For the map $F(x)=0.4x+6$, find the fixed point and classify it.",
+        "steps": [
+          {
+            "do": "Set $F(x^\\ast)=x^\\ast$",
+            "result": "$0.4x^\\ast+6=x^\\ast$",
+            "why": "discrete fixed-point condition"
+          },
+          {
+            "do": "Solve",
+            "result": "$x^\\ast=10$",
+            "why": "$6=0.6x^\\ast$"
+          },
+          {
+            "do": "Differentiate the map",
+            "result": "$F'(x)=0.4$",
+            "why": "linear coefficient is the derivative"
+          },
+          {
+            "do": "Take absolute value",
+            "result": "$|F'(10)|=0.4<1$",
+            "why": "discrete attraction uses absolute slope"
+          },
+          {
+            "do": "Classify",
+            "result": "attracting",
+            "why": "nearby errors shrink by factor $0.4$ each step"
+          }
+        ],
+        "answer": "The fixed point is $10$, and it is attracting."
+      },
+      {
+        "problem": "For the map $F(x)=1.2x-2$, find the fixed point and classify it.",
+        "steps": [
+          {
+            "do": "Set the fixed-point equation",
+            "result": "$1.2x^\\ast-2=x^\\ast$",
+            "why": "the update equals the state"
+          },
+          {
+            "do": "Subtract $x^\\ast$",
+            "result": "$0.2x^\\ast-2=0$",
+            "why": "collect terms"
+          },
+          {
+            "do": "Solve",
+            "result": "$x^\\ast=10$",
+            "why": "$2/0.2=10$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$F'(x)=1.2$",
+            "why": "the map is linear"
+          },
+          {
+            "do": "Classify",
+            "result": "repelling",
+            "why": "$|1.2|>1$ makes nearby errors grow"
+          }
+        ],
+        "answer": "The fixed point $10$ is repelling."
+      },
+      {
+        "problem": "A parameter follows $\\dot{w}=-(w-2)(w+1)$. Classify both equilibria by the derivative test.",
+        "steps": [
+          {
+            "do": "Find equilibria",
+            "result": "$w^\\ast=2$ and $w^\\ast=-1$",
+            "why": "each factor can be zero"
+          },
+          {
+            "do": "Expand",
+            "result": "$f(w)=-w^2+w+2$",
+            "why": "multiplying helps differentiate"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(w)=-2w+1$",
+            "why": "use the power rule"
+          },
+          {
+            "do": "Evaluate at $2$",
+            "result": "$f'(2)=-3<0$",
+            "why": "negative slope attracts"
+          },
+          {
+            "do": "Evaluate at $-1$",
+            "result": "$f'(-1)=3>0$",
+            "why": "positive slope repels"
+          }
+        ],
+        "answer": "$w=2$ is asymptotically stable; $w=-1$ is unstable."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Training minima",
+        "background": "A local minimum of a loss can be stable under small gradient-descent steps because nearby parameters move back toward it.",
+        "numbers": "For $L(w)=(w-3)^2$, gradient flow $\\dot{w}=-2(w-3)$ has $f'(3)=-2<0$, so $w=3$ is stable."
+      },
+      {
+        "title": "Exploding and vanishing recurrences",
+        "background": "Repeated maps amplify or shrink perturbations depending on slope. This is the scalar version of recurrent-network stability.",
+        "numbers": "Errors under $e_{t+1}=0.7e_t$ shrink from $1$ to $0.49$ in two steps; under $1.2e_t$ they grow to $1.44$."
+      },
+      {
+        "title": "Thermostat targets",
+        "background": "A well-designed thermostat target attracts nearby temperatures. If feedback has the wrong sign, it repels instead.",
+        "numbers": "For $\\dot{T}=0.5(70-T)$, $f'(70)=-0.5$, so the target $70$ is stable."
+      },
+      {
+        "title": "Population extinction versus carrying capacity",
+        "background": "Ecological fixed points can represent extinction or sustainable population. Stability says which outcomes nearby populations approach.",
+        "numbers": "For $\\dot{x}=0.1x(100-x)$, $f'(0)=10>0$ and $f'(100)=-10<0$."
+      },
+      {
+        "title": "Numerical solvers",
+        "background": "Fixed-point iteration $x_{t+1}=F(x_t)$ converges locally when the slope magnitude is below one.",
+        "numbers": "If $F'(x^\\ast)=0.2$, an initial error $0.5$ is about $0.1$ after one step."
+      },
+      {
+        "title": "Control feedback gain",
+        "background": "Feedback controllers choose gains so deviations decay rather than grow. The derivative of the closed-loop rule measures that decay.",
+        "numbers": "A deviation update $d_{t+1}=-0.6d_t$ gives magnitudes $1,0.6,0.36$, so oscillations shrink."
+      }
+    ],
+    "applicationsClose": "Stability is the local weather around a fixed point: attracting, repelling, or too delicate for the first test.",
+    "takeaways": [
+      "For one-dimensional flows, $f'(x^\\ast)<0$ attracts and $f'(x^\\ast)>0$ repels.",
+      "For maps, $|F'(x^\\ast)|<1$ attracts and $|F'(x^\\ast)|>1$ repels.",
+      "Borderline cases require more than the first derivative.",
+      "Stability turns fixed points into meaningful predictions about nearby behavior."
+    ],
     "prereqs": [
       "math-25-03"
     ]
@@ -90,19 +1089,273 @@
   B({
     "id": "math-25-05",
     "title": "Saddle-node bifurcations",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: saddle-node bifurcations.",
+    "tagline": "A saddle-node bifurcation is where two fixed points meet and disappear.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Stability of fixed points</i>"
+        "Fixed points",
+        "Stability of fixed points",
+        "quadratic equations",
+        "parameters"
       ],
       "leadsTo": [
-        "the next lesson, <i>Transcritical and pitchfork bifurcations</i>"
+        "Transcritical and pitchfork bifurcations",
+        "Nonlinear systems and linearization",
+        "chaos"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "normal forms",
+        "phase lines",
+        "discriminants",
+        "parameter spaces"
       ]
     },
+    "motivation": "<p>Sometimes a system changes smoothly as a parameter changes, until suddenly its qualitative behavior changes. A tiny parameter shift can remove the resting place a state had been approaching.</p><p>A saddle-node bifurcation is the simplest version of that story. One stable and one unstable fixed point collide. On one side there are two landmarks; at the critical value they merge; on the other side there are none.</p>",
+    "definition": "<p>The standard saddle-node normal form is $\\dot{x}=r-x^2$, where $x$ is the state and $r$ is a parameter. Fixed points satisfy $r-x^2=0$, so $x^\\ast=\\pm\\sqrt{r}$ when $r>0$, one repeated fixed point $x^\\ast=0$ when $r=0$, and no real fixed points when $r<0$.</p><p>The collision is visible in the equation. As $r\\downarrow0$, the two fixed points $-\\sqrt{r}$ and $\\sqrt{r}$ move toward each other. At $r=0$ they meet at $0$. For $r<0$, the equation $x^2=r$ has no real solution, so the fixed points are gone.</p><p><b>Assumptions that matter:</b> the parameter changes slowly relative to the local dynamics; the normal form describes behavior near the collision, not necessarily far away; $r$ is real; and stability at the exact bifurcation can be semistable or degenerate because $f'(0)=0$.</p>",
+    "worked": {
+      "problem": "Analyze $\\dot{x}=r-x^2$ at $r=4$, $r=0$, and $r=-1$.",
+      "skills": [
+        "bifurcation parameter",
+        "fixed points",
+        "stability"
+      ],
+      "strategy": "Solve $r-x^2=0$ for each parameter, then use $f'(x)=-2x$ for stability when possible.",
+      "steps": [
+        {
+          "do": "Set the velocity to zero",
+          "result": "$r-x^2=0$",
+          "why": "fixed points have zero velocity"
+        },
+        {
+          "do": "Solve symbolically",
+          "result": "$x^\\ast=\\pm\\sqrt{r}$",
+          "why": "move $x^2$ to the other side"
+        },
+        {
+          "do": "Substitute $r=4$",
+          "result": "$x^\\ast=-2$ and $x^\\ast=2$",
+          "why": "$\\sqrt4=2$"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$f'(x)=-2x$",
+          "why": "stability uses the slope at a fixed point"
+        },
+        {
+          "do": "Classify at $r=4$",
+          "result": "$-2$ unstable and $2$ stable",
+          "why": "$f'(-2)=4>0$ and $f'(2)=-4<0$"
+        },
+        {
+          "do": "Substitute $r=0$",
+          "result": "$x^\\ast=0$",
+          "why": "the two roots have collided"
+        },
+        {
+          "do": "Substitute $r=-1$",
+          "result": "no real fixed points",
+          "why": "$x^2=-1$ has no real solution"
+        }
+      ],
+      "verify": "For $r=4$, the phase line points away from $-2$ and toward $2$; for negative $r$, $r-x^2$ is always negative, so no stopping point exists.",
+      "answer": "$r=4$ has unstable $-2$ and stable $2$; $r=0$ has a degenerate fixed point at $0$; $r=-1$ has none.",
+      "connects": "The saddle-node pattern is creation or annihilation of a stable-unstable pair."
+    },
+    "practice": [
+      {
+        "problem": "For $\\dot{x}=r-x^2$, find fixed points at $r=9$ and classify them.",
+        "steps": [
+          {
+            "do": "Set velocity to zero",
+            "result": "$9-x^2=0$",
+            "why": "use $r=9$"
+          },
+          {
+            "do": "Solve",
+            "result": "$x=\\pm3$",
+            "why": "$x^2=9$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=-2x$",
+            "why": "use the normal-form derivative"
+          },
+          {
+            "do": "Evaluate at $-3$",
+            "result": "$f'(-3)=6>0$",
+            "why": "positive slope repels"
+          },
+          {
+            "do": "Evaluate at $3$",
+            "result": "$f'(3)=-6<0$",
+            "why": "negative slope attracts"
+          }
+        ],
+        "answer": "$-3$ is unstable and $3$ is stable."
+      },
+      {
+        "problem": "For $\\dot{x}=r+x^2$, determine how many fixed points exist for $r=-4$, $0$, and $1$.",
+        "steps": [
+          {
+            "do": "Set velocity to zero",
+            "result": "$r+x^2=0$",
+            "why": "fixed points stop the flow"
+          },
+          {
+            "do": "Solve for $x^2$",
+            "result": "$x^2=-r$",
+            "why": "move $r$ to the other side"
+          },
+          {
+            "do": "Use $r=-4$",
+            "result": "$x=\\pm2$",
+            "why": "$x^2=4$"
+          },
+          {
+            "do": "Use $r=0$",
+            "result": "$x=0$",
+            "why": "the two roots meet"
+          },
+          {
+            "do": "Use $r=1$",
+            "result": "no real roots",
+            "why": "$x^2=-1$ is impossible over the reals"
+          }
+        ],
+        "answer": "There are two fixed points for $r=-4$, one degenerate fixed point for $r=0$, and none for $r=1$."
+      },
+      {
+        "problem": "For $\\dot{x}=r-(x-2)^2$, find the saddle-node location and fixed points when $r=1$.",
+        "steps": [
+          {
+            "do": "Set the velocity to zero",
+            "result": "$r-(x-2)^2=0$",
+            "why": "equilibria have zero velocity"
+          },
+          {
+            "do": "Solve for the square",
+            "result": "$(x-2)^2=r$",
+            "why": "move the square term"
+          },
+          {
+            "do": "Find the collision parameter",
+            "result": "$r=0$",
+            "why": "the two roots merge when the square equals zero"
+          },
+          {
+            "do": "Use $r=1$",
+            "result": "$x-2=\\pm1$",
+            "why": "take square roots"
+          },
+          {
+            "do": "Solve for $x$",
+            "result": "$x=1$ and $x=3$",
+            "why": "add 2 to both roots"
+          }
+        ],
+        "answer": "The saddle-node occurs at $r=0$, $x=2$; for $r=1$ the fixed points are $1$ and $3$."
+      },
+      {
+        "problem": "For $\\dot{x}=r+2x-x^2$, find the parameter value where fixed points collide.",
+        "steps": [
+          {
+            "do": "Set velocity to zero",
+            "result": "$r+2x-x^2=0$",
+            "why": "fixed points solve the quadratic"
+          },
+          {
+            "do": "Rewrite as a standard quadratic",
+            "result": "$x^2-2x-r=0$",
+            "why": "multiply by $-1$"
+          },
+          {
+            "do": "Compute the discriminant",
+            "result": "$D=(-2)^2-4(1)(-r)=4+4r$",
+            "why": "collision happens when the discriminant is zero"
+          },
+          {
+            "do": "Set $D=0$",
+            "result": "$4+4r=0$",
+            "why": "a repeated root marks the saddle-node"
+          },
+          {
+            "do": "Solve for $r$",
+            "result": "$r=-1$",
+            "why": "subtract 4 and divide by 4"
+          }
+        ],
+        "answer": "The fixed points collide at $r=-1$."
+      },
+      {
+        "problem": "A scalar model has $\\dot{z}=a-z^2$. For $a=0.04$, find the stable fixed point and the recovery velocity at $z=0$.",
+        "steps": [
+          {
+            "do": "Find the fixed points",
+            "result": "$z=\\pm\\sqrt{0.04}=\\pm0.2$",
+            "why": "solve $a-z^2=0$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(z)=-2z$",
+            "why": "use the derivative stability test"
+          },
+          {
+            "do": "Identify the stable point",
+            "result": "$z=0.2$",
+            "why": "$f'(0.2)=-0.4<0$"
+          },
+          {
+            "do": "Evaluate velocity at $z=0$",
+            "result": "$\\dot{z}=0.04-0=0.04$",
+            "why": "substitute into the flow"
+          },
+          {
+            "do": "Interpret",
+            "result": "the state initially increases toward $0.2$",
+            "why": "positive velocity moves right"
+          }
+        ],
+        "answer": "The stable fixed point is $0.2$, and the velocity at $0$ is $0.04$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Tipping points in feedback systems",
+        "background": "Saddle-node bifurcations model tipping points where a stable operating state disappears. Climate, ecology, and control systems all use this language.",
+        "numbers": "In $\\dot{x}=r-x^2$, reducing $r$ from $0.01$ to $-0.01$ changes fixed points from $\\pm0.1$ to none."
+      },
+      {
+        "title": "Optimizer failure modes",
+        "background": "A useful minimum can vanish as a hyperparameter changes, leaving the optimizer to move elsewhere. The local shape resembles a saddle-node.",
+        "numbers": "If local stationary points follow $w=\\pm\\sqrt{\\alpha}$, then at $\\alpha=0.04$ they are $\\pm0.2$, but at $\\alpha=-0.01$ none remain."
+      },
+      {
+        "title": "Power-grid voltage collapse",
+        "background": "Power systems can lose a stable voltage equilibrium as demand rises. Saddle-node bifurcation is a standard model of voltage collapse.",
+        "numbers": "A reduced model $\\dot{v}=r-(v-1)^2$ has equilibria $v=0.8$ and $1.2$ when $r=0.04$; both vanish when $r<0$."
+      },
+      {
+        "title": "Neural activation thresholds",
+        "background": "Some neuron models switch from resting to firing when input crosses a threshold. A saddle-node can represent the birth of repetitive activity.",
+        "numbers": "With input parameter $r=0.0025$, the normal-form roots are $\\pm0.05$; at $r=0$ they merge."
+      },
+      {
+        "title": "Recommendation market equilibria",
+        "background": "Feedback between exposure and popularity can create or destroy steady adoption levels. A simple scalar model can expose the tipping point.",
+        "numbers": "If adoption obeys $\\dot{x}=r-(x-0.5)^2$, then $r=0.01$ gives equilibria $0.4$ and $0.6$."
+      },
+      {
+        "title": "Mechanical buckling",
+        "background": "Structures under load can lose an equilibrium shape. Near a fold, the load parameter controls whether two nearby equilibria exist.",
+        "numbers": "The equation $P_c-P-y^2=0$ gives deflections $y=\\pm0.1$ when $P_c-P=0.01$ and none when $P>P_c$."
+      }
+    ],
+    "applicationsClose": "The saddle-node lesson is cautionary and powerful: smooth parameter change can erase the state a system relied on.",
+    "takeaways": [
+      "The normal form $\\dot{x}=r-x^2$ has two, one, or zero fixed points depending on $r$.",
+      "At the bifurcation, a stable and an unstable fixed point collide.",
+      "The square-root dependence $\\pm\\sqrt{r}$ is the signature local geometry.",
+      "Saddle-node bifurcations model tipping points in engineering, ecology, and learning systems."
+    ],
     "prereqs": [
       "math-25-04"
     ]
@@ -111,19 +1364,272 @@
   B({
     "id": "math-25-06",
     "title": "Transcritical and pitchfork bifurcations",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: transcritical and pitchfork bifurcations.",
+    "tagline": "Some bifurcations do not destroy fixed points; they exchange or split stability.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Saddle-node bifurcations</i>"
+        "Saddle-node bifurcations",
+        "Stability of fixed points",
+        "factoring polynomials"
       ],
       "leadsTo": [
-        "the next lesson, <i>Two-dimensional linear systems</i>"
+        "Two-dimensional linear systems",
+        "Phase portraits",
+        "Nonlinear systems and linearization"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "normal forms",
+        "symmetry",
+        "phase lines",
+        "parameter diagrams"
       ]
     },
+    "motivation": "<p>A saddle-node is dramatic: fixed points appear or vanish. But not every qualitative change is disappearance. Sometimes two branches pass through one another and trade stability. Sometimes one branch splits into three because symmetry allows two equal choices.</p><p>Transcritical and pitchfork bifurcations give those two stories names. They are especially helpful when a parameter controls whether a baseline state is safe, unstable, or replaced by new stable states.</p>",
+    "definition": "<p>The transcritical normal form is $\\dot{x}=rx-x^2=x(r-x)$. Its fixed points are $x=0$ and $x=r$, and they exchange stability at $r=0$. The supercritical pitchfork normal form is $\\dot{x}=rx-x^3=x(r-x^2)$. Its fixed points are $x=0$ for all $r$, plus $x=\\pm\\sqrt{r}$ when $r>0$.</p><p>The algebra shows the geometry. In the transcritical case, two branches $x=0$ and $x=r$ cross. In the pitchfork case, symmetry under $x\\mapsto -x$ makes the nonzero branches appear as a matched pair. Stability follows from $f'(x)$ at each branch.</p><p><b>Assumptions that matter:</b> these normal forms describe local behavior near $x=0$, $r=0$; the pitchfork form relies on symmetry that real systems may break; derivative tests fail exactly at the bifurcation; and the sign convention here is the common supercritical pitchfork.</p>",
+    "worked": {
+      "problem": "For the transcritical system $\\dot{x}=rx-x^2$, find and classify fixed points when $r=2$ and when $r=-2$.",
+      "skills": [
+        "transcritical bifurcation",
+        "factoring",
+        "stability exchange"
+      ],
+      "strategy": "Factor the velocity, identify the two branches, then use $f'(x)=r-2x$.",
+      "steps": [
+        {
+          "do": "Factor the velocity",
+          "result": "$f(x)=x(r-x)$",
+          "why": "factoring exposes the fixed-point branches"
+        },
+        {
+          "do": "Find fixed points",
+          "result": "$x^\\ast=0$ and $x^\\ast=r$",
+          "why": "each factor can be zero"
+        },
+        {
+          "do": "Differentiate",
+          "result": "$f'(x)=r-2x$",
+          "why": "stability comes from the local slope"
+        },
+        {
+          "do": "Use $r=2$ at $x=0$",
+          "result": "$f'(0)=2>0$",
+          "why": "the origin is repelling"
+        },
+        {
+          "do": "Use $r=2$ at $x=2$",
+          "result": "$f'(2)=-2<0$",
+          "why": "the nonzero branch is attracting"
+        },
+        {
+          "do": "Use $r=-2$ at $x=0$",
+          "result": "$f'(0)=-2<0$",
+          "why": "the origin is attracting"
+        },
+        {
+          "do": "Use $r=-2$ at $x=-2$",
+          "result": "$f'(-2)=2>0$",
+          "why": "the nonzero branch is repelling"
+        }
+      ],
+      "verify": "The branch $x=0$ changes from stable to unstable as $r$ crosses $0$, while $x=r$ changes the other way.",
+      "answer": "For $r=2$, $0$ is unstable and $2$ is stable. For $r=-2$, $0$ is stable and $-2$ is unstable.",
+      "connects": "A transcritical bifurcation is a stability exchange between crossing fixed-point branches."
+    },
+    "practice": [
+      {
+        "problem": "For $\\dot{x}=rx-x^2$ with $r=3$, find fixed points and classify them.",
+        "steps": [
+          {
+            "do": "Factor",
+            "result": "$x(3-x)$",
+            "why": "substitute $r=3$"
+          },
+          {
+            "do": "Find fixed points",
+            "result": "$x=0$ and $x=3$",
+            "why": "each factor can vanish"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=3-2x$",
+            "why": "use the derivative test"
+          },
+          {
+            "do": "Evaluate at $0$",
+            "result": "$f'(0)=3>0$",
+            "why": "positive slope repels"
+          },
+          {
+            "do": "Evaluate at $3$",
+            "result": "$f'(3)=-3<0$",
+            "why": "negative slope attracts"
+          }
+        ],
+        "answer": "$0$ is unstable and $3$ is stable."
+      },
+      {
+        "problem": "For $\\dot{x}=rx-x^3$ with $r=4$, find all fixed points.",
+        "steps": [
+          {
+            "do": "Factor",
+            "result": "$x(4-x^2)=0$",
+            "why": "substitute $r=4$"
+          },
+          {
+            "do": "Use the first factor",
+            "result": "$x=0$",
+            "why": "the origin remains a branch"
+          },
+          {
+            "do": "Use the second factor",
+            "result": "$x^2=4$",
+            "why": "nonzero roots satisfy $4-x^2=0$"
+          },
+          {
+            "do": "Take square roots",
+            "result": "$x=\\pm2$",
+            "why": "$\\sqrt4=2$"
+          },
+          {
+            "do": "List all roots",
+            "result": "$-2,0,2$",
+            "why": "include the origin and both symmetric branches"
+          }
+        ],
+        "answer": "The fixed points are $x=-2$, $0$, and $2$."
+      },
+      {
+        "problem": "Classify the pitchfork fixed points of $\\dot{x}=rx-x^3$ when $r=1$.",
+        "steps": [
+          {
+            "do": "List fixed points",
+            "result": "$x=-1,0,1$",
+            "why": "from $x(1-x^2)=0$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=1-3x^2$",
+            "why": "use the derivative test"
+          },
+          {
+            "do": "Evaluate at $0$",
+            "result": "$f'(0)=1>0$",
+            "why": "the origin repels"
+          },
+          {
+            "do": "Evaluate at $1$",
+            "result": "$f'(1)=-2<0$",
+            "why": "the right branch attracts"
+          },
+          {
+            "do": "Evaluate at $-1$",
+            "result": "$f'(-1)=-2<0$",
+            "why": "the left branch also attracts"
+          }
+        ],
+        "answer": "$0$ is unstable; $-1$ and $1$ are stable."
+      },
+      {
+        "problem": "For $\\dot{x}=rx-x^3$ with $r=-1$, find and classify the fixed points.",
+        "steps": [
+          {
+            "do": "Set velocity to zero",
+            "result": "$x(-1-x^2)=0$",
+            "why": "substitute $r=-1$"
+          },
+          {
+            "do": "Solve the first factor",
+            "result": "$x=0$",
+            "why": "the origin is always a fixed point"
+          },
+          {
+            "do": "Check the second factor",
+            "result": "$-1-x^2=0$ has no real solution",
+            "why": "$x^2=-1$ is impossible over reals"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(x)=-1-3x^2$",
+            "why": "use the derivative test"
+          },
+          {
+            "do": "Evaluate at $0$",
+            "result": "$f'(0)=-1<0$",
+            "why": "negative slope attracts"
+          }
+        ],
+        "answer": "The only real fixed point is $0$, and it is stable."
+      },
+      {
+        "problem": "A symmetric model has $\\dot{a}=\\mu a-a^3$. If $\\mu=0.09$, find the stable nonzero states and classify the origin.",
+        "steps": [
+          {
+            "do": "Find nonzero branches",
+            "result": "$a=\\pm\\sqrt{0.09}$",
+            "why": "solve $\\mu-a^2=0$"
+          },
+          {
+            "do": "Compute the roots",
+            "result": "$a=\\pm0.3$",
+            "why": "$0.3^2=0.09$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$f'(a)=0.09-3a^2$",
+            "why": "linearize the flow"
+          },
+          {
+            "do": "Classify the origin",
+            "result": "$f'(0)=0.09>0$",
+            "why": "positive slope repels"
+          },
+          {
+            "do": "Classify a nonzero branch",
+            "result": "$f'(0.3)=0.09-0.27=-0.18<0$",
+            "why": "both symmetric branches have the same stability"
+          }
+        ],
+        "answer": "The stable states are $a=\\pm0.3$; the origin is unstable."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Disease-free to endemic transition",
+        "background": "Epidemic models often have a disease-free equilibrium that changes stability when a reproduction parameter crosses a threshold. A transcritical bifurcation captures that exchange.",
+        "numbers": "In $\\dot{x}=rx-x^2$, $r=0.2$ gives stable endemic level $x=0.2$ and unstable disease-free level $0$."
+      },
+      {
+        "title": "Symmetry breaking",
+        "background": "Pitchfork bifurcations model systems that must choose between two symmetric states. Physics, pattern formation, and representation learning all use this idea.",
+        "numbers": "For $\\dot{x}=rx-x^3$ with $r=0.16$, the stable states are $x=\\pm0.4$."
+      },
+      {
+        "title": "Feature specialization",
+        "background": "A symmetric learning system can begin with equal representations, then split into two specialized choices when a gain parameter increases.",
+        "numbers": "If specialization amplitude follows $a=\\sqrt{g}$, then $g=0.25$ gives amplitudes $\\pm0.5$."
+      },
+      {
+        "title": "Laser threshold models",
+        "background": "Some laser models use a transcritical threshold where zero intensity loses stability and positive intensity becomes stable.",
+        "numbers": "The normal form with $r=1.5$ has intensity fixed points $0$ and $1.5$, with the positive branch stable."
+      },
+      {
+        "title": "Buckling with symmetry",
+        "background": "A straight beam under compression may buckle left or right. The two directions are symmetric, matching pitchfork geometry.",
+        "numbers": "If deflection satisfies $y=\\pm\\sqrt{P-P_c}$ and $P-P_c=0.04$, then $y=\\pm0.2$."
+      },
+      {
+        "title": "Fairness threshold dynamics",
+        "background": "A baseline operating point may exchange stability with an adjusted policy branch as a constraint strength changes. The transcritical picture helps track which branch is stable.",
+        "numbers": "For $\\dot{x}=cx-x^2$ and $c=-0.1$, $x=0$ is stable while $x=-0.1$ is unstable by the slope test."
+      }
+    ],
+    "applicationsClose": "Transcritical and pitchfork bifurcations show that qualitative change can be an exchange or a symmetric split, not only disappearance.",
+    "takeaways": [
+      "Transcritical normal form $\\dot{x}=rx-x^2$ has branches $x=0$ and $x=r$ that exchange stability.",
+      "Supercritical pitchfork normal form $\\dot{x}=rx-x^3$ creates stable symmetric branches for $r>0$.",
+      "Stability comes from evaluating $f'(x^\\ast)$ away from the bifurcation point.",
+      "Symmetry is the key assumption behind the clean pitchfork picture."
+    ],
     "prereqs": [
       "math-25-05"
     ]
@@ -132,19 +1638,268 @@
   B({
     "id": "math-25-07",
     "title": "Two-dimensional linear systems",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: two-dimensional linear systems.",
+    "tagline": "A matrix can turn the plane into a flow of lines, spirals, saddles, and sinks.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Transcritical and pitchfork bifurcations</i>"
+        "vectors",
+        "matrices",
+        "eigenvalues and eigenvectors",
+        "States and evolution"
       ],
       "leadsTo": [
-        "the next lesson, <i>Phase portraits</i>"
+        "Phase portraits",
+        "Classification of equilibria",
+        "Nonlinear systems and linearization"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "linear algebra",
+        "systems of differential equations",
+        "eigenvectors",
+        "matrix exponentials"
       ]
     },
+    "motivation": "<p>One-dimensional systems move on a line. Many real states need at least two coordinates: position and velocity, two competing populations, or two model parameters. Once two coordinates interact, a matrix becomes the local rule of motion.</p><p>Linear systems are the training ground. They are simple enough to solve, but rich enough to show the behaviors that nonlinear systems imitate near equilibria.</p>",
+    "definition": "<p>A two-dimensional linear system has the form $\\dot{\\mathbf{x}}=A\\mathbf{x}$, where $\\mathbf{x}=(x,y)^T$ is the state vector and $A$ is a $2\\times2$ matrix. The origin is always an equilibrium because $A\\mathbf{0}=\\mathbf{0}$. If $A\\mathbf{v}=\\lambda\\mathbf{v}$, then motion along the eigenvector direction satisfies $\\dot{c}=\\lambda c$, so $c(t)=c(0)e^{\\lambda t}$.</p><p>This eigenvector fact is the bridge from linear algebra to dynamics. Along an eigenvector, the matrix acts like multiplication by one number. Negative real $\\lambda$ decays, positive real $\\lambda$ grows, and complex eigenvalues combine rotation with growth or decay.</p><p><b>Assumptions that matter:</b> the system is homogeneous and linear; matrix entries are constant in time; eigenvalue behavior describes the whole system when there are enough eigenvectors, with generalized eigenvectors handling repeated cases; and units of matrix entries are rates per unit time.</p>",
+    "worked": {
+      "problem": "For $\\dot{\\mathbf{x}}=A\\mathbf{x}$ with $A=\\begin{pmatrix}-1&0\\\\0&-3\\end{pmatrix}$ and $\\mathbf{x}(0)=(4,2)$, solve for $x(t)$ and $y(t)$.",
+      "skills": [
+        "diagonal systems",
+        "exponential decay",
+        "initial values"
+      ],
+      "strategy": "A diagonal matrix separates the coordinates — solve each scalar equation independently.",
+      "steps": [
+        {
+          "do": "Write the first coordinate equation",
+          "result": "$\\dot{x}=-x$",
+          "why": "the first diagonal entry multiplies $x$"
+        },
+        {
+          "do": "Solve the first equation",
+          "result": "$x(t)=C_1e^{-t}$",
+          "why": "solutions to $\\dot{x}=\\lambda x$ are exponentials"
+        },
+        {
+          "do": "Use $x(0)=4$",
+          "result": "$C_1=4$",
+          "why": "$e^0=1$"
+        },
+        {
+          "do": "Write the second coordinate equation",
+          "result": "$\\dot{y}=-3y$",
+          "why": "the second diagonal entry multiplies $y$"
+        },
+        {
+          "do": "Solve the second equation",
+          "result": "$y(t)=C_2e^{-3t}$",
+          "why": "the rate is $-3$"
+        },
+        {
+          "do": "Use $y(0)=2$",
+          "result": "$C_2=2$",
+          "why": "match the initial condition"
+        }
+      ],
+      "verify": "Both coordinates decay to zero, and $y$ decays faster because $e^{-3t}$ shrinks faster than $e^{-t}$.",
+      "answer": "$\\mathbf{x}(t)=(4e^{-t},2e^{-3t})^T$.",
+      "connects": "Diagonal linear systems reveal eigenvalue behavior coordinate by coordinate."
+    },
+    "practice": [
+      {
+        "problem": "Solve $\\dot{x}=2x$, $\\dot{y}=-y$ with initial state $(1,5)$.",
+        "steps": [
+          {
+            "do": "Solve the $x$ equation",
+            "result": "$x(t)=C_1e^{2t}$",
+            "why": "growth rate is 2"
+          },
+          {
+            "do": "Use $x(0)=1$",
+            "result": "$C_1=1$",
+            "why": "initial value fixes the constant"
+          },
+          {
+            "do": "Solve the $y$ equation",
+            "result": "$y(t)=C_2e^{-t}$",
+            "why": "decay rate is $-1$"
+          },
+          {
+            "do": "Use $y(0)=5$",
+            "result": "$C_2=5$",
+            "why": "match the second coordinate"
+          },
+          {
+            "do": "Combine coordinates",
+            "result": "$(e^{2t},5e^{-t})$",
+            "why": "the state vector stores both solutions"
+          }
+        ],
+        "answer": "$\\mathbf{x}(t)=(e^{2t},5e^{-t})^T$."
+      },
+      {
+        "problem": "For $A=\\begin{pmatrix}2&0\\\\0&-1\\end{pmatrix}$, identify eigenvalues, eigenvector axes, and qualitative behavior.",
+        "steps": [
+          {
+            "do": "Read the first eigenvalue",
+            "result": "$\\lambda_1=2$",
+            "why": "diagonal entries are eigenvalues for a diagonal matrix"
+          },
+          {
+            "do": "Read the first eigenvector direction",
+            "result": "the $x$-axis",
+            "why": "the first coordinate evolves independently"
+          },
+          {
+            "do": "Read the second eigenvalue",
+            "result": "$\\lambda_2=-1$",
+            "why": "the second diagonal entry is the second eigenvalue"
+          },
+          {
+            "do": "Read the second eigenvector direction",
+            "result": "the $y$-axis",
+            "why": "the second coordinate evolves independently"
+          },
+          {
+            "do": "Interpret signs",
+            "result": "grow along $x$, decay along $y$",
+            "why": "positive eigenvalues repel and negative eigenvalues attract"
+          }
+        ],
+        "answer": "Eigenvalues $2$ and $-1$; the system is a saddle with unstable $x$-axis and stable $y$-axis."
+      },
+      {
+        "problem": "Find the eigenvalues of $A=\\begin{pmatrix}0&1\\\\-2&-3\\end{pmatrix}$.",
+        "steps": [
+          {
+            "do": "Write the characteristic determinant",
+            "result": "$\\det(A-\\lambda I)=\\det\\begin{pmatrix}-\\lambda&1\\\\-2&-3-\\lambda\\end{pmatrix}$",
+            "why": "eigenvalues solve determinant zero"
+          },
+          {
+            "do": "Compute the determinant",
+            "result": "$\\lambda(3+\\lambda)+2$",
+            "why": "multiply diagonal terms and subtract off-diagonal product"
+          },
+          {
+            "do": "Expand",
+            "result": "$\\lambda^2+3\\lambda+2$",
+            "why": "distribute $\\lambda$"
+          },
+          {
+            "do": "Factor",
+            "result": "$(\\lambda+1)(\\lambda+2)$",
+            "why": "find two numbers multiplying to 2 and summing to 3"
+          },
+          {
+            "do": "Set factors to zero",
+            "result": "$\\lambda=-1$ and $\\lambda=-2$",
+            "why": "eigenvalues are roots"
+          }
+        ],
+        "answer": "The eigenvalues are $-1$ and $-2$."
+      },
+      {
+        "problem": "For $A=\\begin{pmatrix}0&-1\\\\1&0\\end{pmatrix}$, compute $\\dot{\\mathbf{x}}$ at $\\mathbf{x}=(1,0)$ and $(0,1)$.",
+        "steps": [
+          {
+            "do": "Multiply at $(1,0)$",
+            "result": "$A(1,0)^T=(0,1)^T$",
+            "why": "use the first column of $A$"
+          },
+          {
+            "do": "Interpret the first velocity",
+            "result": "upward",
+            "why": "the velocity vector is $(0,1)$"
+          },
+          {
+            "do": "Multiply at $(0,1)$",
+            "result": "$A(0,1)^T=(-1,0)^T$",
+            "why": "use the second column of $A$"
+          },
+          {
+            "do": "Interpret the second velocity",
+            "result": "leftward",
+            "why": "the velocity vector is $(-1,0)$"
+          },
+          {
+            "do": "Infer the motion",
+            "result": "counterclockwise rotation",
+            "why": "right point moves up and top point moves left"
+          }
+        ],
+        "answer": "The velocities are $(0,1)$ and $(-1,0)$, indicating counterclockwise rotation."
+      },
+      {
+        "problem": "A two-parameter error model has $\\dot{e}_1=-4e_1$ and $\\dot{e}_2=-0.5e_2$. Starting from $(2,2)$, compare both errors at $t=2$ using $e^{-8}\\approx0.00034$ and $e^{-1}\\approx0.368$.",
+        "steps": [
+          {
+            "do": "Write the first solution",
+            "result": "$e_1(t)=2e^{-4t}$",
+            "why": "initial value is 2 and rate is $-4$"
+          },
+          {
+            "do": "Evaluate at $t=2$",
+            "result": "$e_1(2)=2e^{-8}\\approx0.00068$",
+            "why": "use the given exponential"
+          },
+          {
+            "do": "Write the second solution",
+            "result": "$e_2(t)=2e^{-0.5t}$",
+            "why": "initial value is 2 and rate is $-0.5$"
+          },
+          {
+            "do": "Evaluate at $t=2$",
+            "result": "$e_2(2)=2e^{-1}\\approx0.736$",
+            "why": "use the given exponential"
+          },
+          {
+            "do": "Compare",
+            "result": "$e_2$ remains much larger",
+            "why": "the slow eigenvalue controls late decay"
+          }
+        ],
+        "answer": "At $t=2$, $e_1\\approx0.00068$ and $e_2\\approx0.736$; the second mode decays more slowly."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Local training dynamics",
+        "background": "Near a quadratic minimum, gradient flow is linear in the parameter error. Eigenvalues of the Hessian set decay rates.",
+        "numbers": "For $\\dot{e}=\\operatorname{diag}(-10,-1)e$, errors decay as $e^{-10t}$ and $e^{-t}$; at $t=1$, the factors are about $0.000045$ and $0.368$."
+      },
+      {
+        "title": "Oscillators",
+        "background": "Position-velocity systems such as springs naturally form two-dimensional linear systems. Pure imaginary eigenvalues produce rotation in phase space.",
+        "numbers": "For $\\dot{x}=v$, $\\dot{v}=-x$, the state $(1,0)$ has velocity $(0,-1)$ and moves around the origin."
+      },
+      {
+        "title": "Competing modes",
+        "background": "Linear models often decompose into independent modes. The slowest decaying mode dominates long-time behavior.",
+        "numbers": "If modes decay as $3e^{-t}$ and $2e^{-5t}$, at $t=2$ they are $0.406$ and $0.000091$, so the first dominates."
+      },
+      {
+        "title": "Control systems",
+        "background": "Linear state-space models are central in control. Stability is read from eigenvalues of the system matrix.",
+        "numbers": "Eigenvalues $-2$ and $-0.5$ imply both modes decay; the $-0.5$ mode has time constant $2$."
+      },
+      {
+        "title": "Principal directions in optimization",
+        "background": "Near a quadratic loss, eigenvectors identify directions of curvature. Gradient flow moves fastest along high-curvature directions.",
+        "numbers": "For curvature matrix $\\operatorname{diag}(8,2)$, gradient-flow rates are $-8$ and $-2$."
+      },
+      {
+        "title": "Linearized epidemic models",
+        "background": "Early epidemic dynamics can be approximated by a linear system around a disease-free state. Positive eigenvalues mean growth of infection modes.",
+        "numbers": "If one eigenvalue is $0.3$, a small infection component grows by factor $e^{0.3}\\approx1.35$ in one time unit."
+      }
+    ],
+    "applicationsClose": "Two-dimensional linear systems are where matrices become motion: stretching, shrinking, rotating, and mixing state directions.",
+    "takeaways": [
+      "A linear system has form $\\dot{\\mathbf{x}}=A\\mathbf{x}$ and equilibrium at the origin.",
+      "Eigenvectors give special directions where motion reduces to scalar exponential growth or decay.",
+      "Negative real eigenvalues decay; positive real eigenvalues grow; complex eigenvalues rotate with growth or decay.",
+      "Linear systems provide the local vocabulary for nonlinear dynamics."
+    ],
     "prereqs": [
       "math-25-06"
     ]
@@ -153,19 +1908,273 @@
   B({
     "id": "math-25-08",
     "title": "Phase portraits",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: phase portraits.",
+    "tagline": "A phase portrait is a map of motion in state space, not just a graph of one variable over time.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Two-dimensional linear systems</i>"
+        "Two-dimensional linear systems",
+        "vectors",
+        "One-dimensional flows",
+        "graphs in the plane"
       ],
       "leadsTo": [
-        "the next lesson, <i>Classification of equilibria</i>"
+        "Classification of equilibria",
+        "Nonlinear systems and linearization",
+        "chaos"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "vector fields",
+        "nullclines",
+        "trajectories",
+        "eigenvectors"
       ]
     },
+    "motivation": "<p>When a system has two state variables, plotting $x(t)$ alone can hide the story. The pair $(x,y)$ moves through a plane, and each point in the plane has a little velocity arrow attached to it.</p><p>A phase portrait lets you see the whole motion at once: where trajectories head, where they curve, which points are still, and which regions flow together. It is a weather map for dynamics.</p>",
+    "definition": "<p>For a planar system $\\dot{x}=f(x,y)$, $\\dot{y}=g(x,y)$, the <b>phase portrait</b> is the picture of the vector field $(f(x,y),g(x,y))$ together with representative trajectories. An $x$-nullcline is where $f(x,y)=0$, so motion is vertical there. A $y$-nullcline is where $g(x,y)=0$, so motion is horizontal there. Intersections of nullclines are equilibria.</p><p>The portrait follows directly from the state equation: at each point, the derivative vector tells the tangent direction of the trajectory. If you sketch enough arrows and respect nullclines, trajectories become readable without solving the system exactly.</p><p><b>Assumptions that matter:</b> trajectories follow forward time; representative arrows show direction, not exact speed unless scaled carefully; uniqueness usually prevents trajectories from crossing; and nullclines are not trajectories in general, only places where one component of velocity is zero.</p>",
+    "worked": {
+      "problem": "For $\\dot{x}=y$ and $\\dot{y}=-x$, find the nullclines and sample directions at $(1,0)$, $(0,1)$, $(-1,0)$, and $(0,-1)$.",
+      "skills": [
+        "phase portraits",
+        "nullclines",
+        "vector fields"
+      ],
+      "strategy": "Set each velocity component to zero for nullclines, then evaluate the vector field at key points.",
+      "steps": [
+        {
+          "do": "Set $\\dot{x}=0$",
+          "result": "$y=0$",
+          "why": "the $x$-nullcline has no horizontal motion"
+        },
+        {
+          "do": "Set $\\dot{y}=0$",
+          "result": "$x=0$",
+          "why": "the $y$-nullcline has no vertical motion"
+        },
+        {
+          "do": "Evaluate at $(1,0)$",
+          "result": "$(\\dot{x},\\dot{y})=(0,-1)$",
+          "why": "substitute $x=1$, $y=0$"
+        },
+        {
+          "do": "Evaluate at $(0,1)$",
+          "result": "$(\\dot{x},\\dot{y})=(1,0)$",
+          "why": "substitute $x=0$, $y=1$"
+        },
+        {
+          "do": "Evaluate at $(-1,0)$",
+          "result": "$(\\dot{x},\\dot{y})=(0,1)$",
+          "why": "substitute $x=-1$, $y=0$"
+        },
+        {
+          "do": "Evaluate at $(0,-1)$",
+          "result": "$(\\dot{x},\\dot{y})=(-1,0)$",
+          "why": "substitute $x=0$, $y=-1$"
+        },
+        {
+          "do": "Read the rotation",
+          "result": "clockwise",
+          "why": "right point moves down, bottom point moves left, left point moves up, top point moves right"
+        }
+      ],
+      "verify": "The vector is always perpendicular to $(x,y)$ for these sample points, so trajectories circle the origin rather than moving inward or outward.",
+      "answer": "Nullclines are $y=0$ and $x=0$; the sample arrows show clockwise circular motion around the origin.",
+      "connects": "A phase portrait converts differential equations into geometry in state space."
+    },
+    "practice": [
+      {
+        "problem": "For $\\dot{x}=x$, $\\dot{y}=-y$, find the velocity at $(1,1)$, $(-1,1)$, and $(1,-1)$.",
+        "steps": [
+          {
+            "do": "Evaluate at $(1,1)$",
+            "result": "$(\\dot{x},\\dot{y})=(1,-1)$",
+            "why": "substitute into both components"
+          },
+          {
+            "do": "Interpret the first arrow",
+            "result": "right and down",
+            "why": "positive $x$ velocity and negative $y$ velocity"
+          },
+          {
+            "do": "Evaluate at $(-1,1)$",
+            "result": "$(\\dot{x},\\dot{y})=(-1,-1)$",
+            "why": "use $x=-1$, $y=1$"
+          },
+          {
+            "do": "Evaluate at $(1,-1)$",
+            "result": "$(\\dot{x},\\dot{y})=(1,1)$",
+            "why": "use $x=1$, $y=-1$"
+          },
+          {
+            "do": "Read the portrait",
+            "result": "away along $x$ and toward the $x$-axis in $y$",
+            "why": "$x$ grows away from zero while $y$ decays toward zero"
+          }
+        ],
+        "answer": "The arrows are $(1,-1)$, $(-1,-1)$, and $(1,1)$; the portrait is saddle-like."
+      },
+      {
+        "problem": "For $\\dot{x}=2-y$, $\\dot{y}=x-1$, find both nullclines and their equilibrium.",
+        "steps": [
+          {
+            "do": "Set $\\dot{x}=0$",
+            "result": "$2-y=0$",
+            "why": "find the $x$-nullcline"
+          },
+          {
+            "do": "Solve for $y$",
+            "result": "$y=2$",
+            "why": "horizontal velocity vanishes there"
+          },
+          {
+            "do": "Set $\\dot{y}=0$",
+            "result": "$x-1=0$",
+            "why": "find the $y$-nullcline"
+          },
+          {
+            "do": "Solve for $x$",
+            "result": "$x=1$",
+            "why": "vertical velocity vanishes there"
+          },
+          {
+            "do": "Intersect nullclines",
+            "result": "$(1,2)$",
+            "why": "both velocity components vanish at the equilibrium"
+          }
+        ],
+        "answer": "The nullclines are $y=2$ and $x=1$; the equilibrium is $(1,2)$."
+      },
+      {
+        "problem": "For $\\dot{x}=x(1-y)$ and $\\dot{y}=y(x-1)$, find the nullclines.",
+        "steps": [
+          {
+            "do": "Set $\\dot{x}=0$",
+            "result": "$x(1-y)=0$",
+            "why": "zero horizontal velocity"
+          },
+          {
+            "do": "Solve the $x$-nullclines",
+            "result": "$x=0$ or $y=1$",
+            "why": "use zero-product property"
+          },
+          {
+            "do": "Set $\\dot{y}=0$",
+            "result": "$y(x-1)=0$",
+            "why": "zero vertical velocity"
+          },
+          {
+            "do": "Solve the $y$-nullclines",
+            "result": "$y=0$ or $x=1$",
+            "why": "use zero-product property"
+          },
+          {
+            "do": "Find intersections",
+            "result": "$(0,0)$ and $(1,1)$",
+            "why": "equilibria sit where one nullcline from each family meets"
+          }
+        ],
+        "answer": "The $x$-nullclines are $x=0$, $y=1$; the $y$-nullclines are $y=0$, $x=1$; equilibria are $(0,0)$ and $(1,1)$."
+      },
+      {
+        "problem": "For $\\dot{x}=-x-y$, $\\dot{y}=x-y$, evaluate the vector field at $(1,0)$ and $(0,1)$ and infer spiral direction.",
+        "steps": [
+          {
+            "do": "Evaluate at $(1,0)$",
+            "result": "$(\\dot{x},\\dot{y})=(-1,1)$",
+            "why": "substitute $x=1$, $y=0$"
+          },
+          {
+            "do": "Read the first arrow",
+            "result": "left and up",
+            "why": "both components give direction"
+          },
+          {
+            "do": "Evaluate at $(0,1)$",
+            "result": "$(\\dot{x},\\dot{y})=(-1,-1)$",
+            "why": "substitute $x=0$, $y=1$"
+          },
+          {
+            "do": "Read the second arrow",
+            "result": "left and down",
+            "why": "both components are negative there"
+          },
+          {
+            "do": "Infer rotation",
+            "result": "counterclockwise with inward drift",
+            "why": "right side moves upward and top moves left, while $-x$ and $-y$ terms damp"
+          }
+        ],
+        "answer": "The arrows suggest counterclockwise spiraling inward."
+      },
+      {
+        "problem": "A two-feature training state follows $\\dot{u}=-u$ and $\\dot{v}=-4v$. Starting at $(2,2)$, find the direction at that point and which axis is approached first.",
+        "steps": [
+          {
+            "do": "Evaluate the vector field",
+            "result": "$(\\dot{u},\\dot{v})=(-2,-8)$",
+            "why": "substitute $u=2$, $v=2$"
+          },
+          {
+            "do": "Compare speed components",
+            "result": "$|\\dot{v}|=8>|\\dot{u}|=2$",
+            "why": "vertical component is larger"
+          },
+          {
+            "do": "Solve the coordinates",
+            "result": "$u(t)=2e^{-t}$ and $v(t)=2e^{-4t}$",
+            "why": "separate diagonal equations"
+          },
+          {
+            "do": "Compare decay rates",
+            "result": "$v$ decays faster",
+            "why": "$e^{-4t}$ shrinks faster than $e^{-t}$"
+          },
+          {
+            "do": "Interpret the portrait",
+            "result": "trajectories flatten toward the $u$-axis before reaching the origin",
+            "why": "the $v$ coordinate becomes small first"
+          }
+        ],
+        "answer": "The direction is $(-2,-8)$, and the trajectory approaches the $u$-axis first because $v$ decays faster."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Optimization trajectories",
+        "background": "Plotting two parameters against each other can reveal whether training heads directly to a minimum, curves through a valley, or oscillates.",
+        "numbers": "For $\\dot{w}_1=-w_1$, $\\dot{w}_2=-10w_2$, the point $(1,1)$ moves with velocity $(-1,-10)$."
+      },
+      {
+        "title": "Predator-prey cycles",
+        "background": "Ecology popularized phase portraits because prey and predator populations interact cyclically. The plane shows cycles better than separate time plots.",
+        "numbers": "For $\\dot{x}=x(1-y)$, $\\dot{y}=y(x-1)$, at $(2,1)$ the velocity is $(0,2)$, straight upward."
+      },
+      {
+        "title": "Mechanical position-velocity diagrams",
+        "background": "Phase portraits for oscillators plot position against velocity. Engineers read damping and oscillation directly from the shape.",
+        "numbers": "For $\\dot{x}=v$, $\\dot{v}=-x-0.2v$, at $(1,0)$ the velocity is $(0,-1)$."
+      },
+      {
+        "title": "Generative model dynamics",
+        "background": "Some generative samplers follow differential equations through latent space. Phase portraits help diagnose whether trajectories collapse or circulate.",
+        "numbers": "A latent flow $\\dot{z}_1=-z_2$, $\\dot{z}_2=z_1$ sends $(1,0)$ to velocity $(0,1)$."
+      },
+      {
+        "title": "Control state-space plots",
+        "background": "Controllers are often evaluated by trajectories in state space. Overshoot and damping are visible as spirals or direct approaches.",
+        "numbers": "The system $\\dot{x}=v$, $\\dot{v}=-4x-4v$ at $(1,0)$ has velocity $(0,-4)$ toward lower velocity."
+      },
+      {
+        "title": "Nullclines in neural activity models",
+        "background": "Neuroscience models often use voltage and recovery variables. Nullclines organize where each variable pauses.",
+        "numbers": "If $\\dot{v}=v-v^3/3-w$, then at $v=0.6$ the $v$-nullcline is $w=0.6-0.216/3=0.528$."
+      }
+    ],
+    "applicationsClose": "Phase portraits make dynamics visible by replacing isolated formulas with a map of directions and trajectories.",
+    "takeaways": [
+      "A phase portrait shows vector-field arrows and representative trajectories in state space.",
+      "Nullclines mark where one velocity component is zero.",
+      "Equilibria occur where nullclines intersect.",
+      "Trajectories usually cannot cross when solutions are unique."
+    ],
     "prereqs": [
       "math-25-07"
     ]
@@ -174,19 +2183,273 @@
   B({
     "id": "math-25-09",
     "title": "Classification of equilibria",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: classification of equilibria.",
+    "tagline": "Eigenvalues name the local personality of a planar equilibrium.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Phase portraits</i>"
+        "Two-dimensional linear systems",
+        "Phase portraits",
+        "eigenvalues",
+        "Stability of fixed points"
       ],
       "leadsTo": [
-        "the next lesson, <i>Nonlinear systems and linearization</i>"
+        "Nonlinear systems and linearization",
+        "chaos",
+        "Lyapunov methods"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "trace and determinant",
+        "characteristic polynomials",
+        "phase portraits",
+        "linearization"
       ]
     },
+    "motivation": "<p>Near an equilibrium in the plane, trajectories can approach, flee, spiral, circle, or split along different directions. The picture may look complicated, but a $2\\times2$ matrix keeps a surprisingly compact summary.</p><p>The eigenvalues tell whether modes grow or decay, and whether rotation is present. Classification is the dictionary that translates those eigenvalues into words like sink, source, saddle, and spiral.</p>",
+    "definition": "<p>For $\\dot{\\mathbf{x}}=A\\mathbf{x}$, classify the equilibrium at the origin by the eigenvalues of $A$. Two negative real eigenvalues give a stable node or sink. Two positive real eigenvalues give an unstable node or source. Real eigenvalues with opposite signs give a saddle. Complex eigenvalues $a\\pm bi$ with $b\\ne0$ give spirals if $a\\ne0$ and a center for the linear system if $a=0$.</p><p>For a $2\\times2$ matrix, the trace $\\tau=\\operatorname{tr}(A)$ and determinant $\\Delta=\\det(A)$ help because the characteristic polynomial is $\\lambda^2-\\tau\\lambda+\\Delta=0$. The discriminant $\\tau^2-4\\Delta$ decides real versus complex eigenvalues, while signs of real parts decide stability.</p><p><b>Assumptions that matter:</b> this classification is exact for linear systems; repeated eigenvalues need extra care; centers in nonlinear systems require more analysis; and determinant $\\Delta<0$ always indicates a saddle because eigenvalues have opposite signs.</p>",
+    "worked": {
+      "problem": "Classify the origin for $A=\\begin{pmatrix}0&1\\\\-2&-3\\end{pmatrix}$.",
+      "skills": [
+        "eigenvalues",
+        "classification",
+        "stable nodes"
+      ],
+      "strategy": "Find the characteristic polynomial, solve for eigenvalues, then translate their signs.",
+      "steps": [
+        {
+          "do": "Compute the trace",
+          "result": "$\\tau=0+(-3)=-3$",
+          "why": "trace is the sum of diagonal entries"
+        },
+        {
+          "do": "Compute the determinant",
+          "result": "$\\Delta=0(-3)-1(-2)=2$",
+          "why": "use $ad-bc$"
+        },
+        {
+          "do": "Write the characteristic polynomial",
+          "result": "$\\lambda^2-\\tau\\lambda+\\Delta=\\lambda^2+3\\lambda+2$",
+          "why": "substitute trace and determinant"
+        },
+        {
+          "do": "Factor",
+          "result": "$(\\lambda+1)(\\lambda+2)$",
+          "why": "the roots are easy to read"
+        },
+        {
+          "do": "Find eigenvalues",
+          "result": "$\\lambda=-1$ and $\\lambda=-2$",
+          "why": "set each factor to zero"
+        },
+        {
+          "do": "Classify signs",
+          "result": "both real and negative",
+          "why": "both modes decay"
+        },
+        {
+          "do": "Name the equilibrium",
+          "result": "stable node",
+          "why": "two negative real eigenvalues form a sink without spiraling"
+        }
+      ],
+      "verify": "The determinant is positive and trace is negative, consistent with both eigenvalues having negative real parts.",
+      "answer": "The origin is a stable node, also called a sink.",
+      "connects": "Classification turns eigenvalue arithmetic into phase-portrait vocabulary."
+    },
+    "practice": [
+      {
+        "problem": "Classify $A=\\begin{pmatrix}2&0\\\\0&3\\end{pmatrix}$.",
+        "steps": [
+          {
+            "do": "Read eigenvalues",
+            "result": "$\\lambda_1=2$, $\\lambda_2=3$",
+            "why": "diagonal entries are eigenvalues"
+          },
+          {
+            "do": "Check signs",
+            "result": "both positive",
+            "why": "each mode grows"
+          },
+          {
+            "do": "Check realness",
+            "result": "both real",
+            "why": "diagonal matrix has real eigenvalues"
+          },
+          {
+            "do": "Name the type",
+            "result": "unstable node",
+            "why": "two positive real eigenvalues repel"
+          },
+          {
+            "do": "Name the stability",
+            "result": "source",
+            "why": "nearby states move away from the origin"
+          }
+        ],
+        "answer": "The origin is an unstable node, or source."
+      },
+      {
+        "problem": "Classify $A=\\begin{pmatrix}1&0\\\\0&-4\\end{pmatrix}$.",
+        "steps": [
+          {
+            "do": "Read eigenvalues",
+            "result": "$1$ and $-4$",
+            "why": "the matrix is diagonal"
+          },
+          {
+            "do": "Compare signs",
+            "result": "opposite signs",
+            "why": "one mode grows and one decays"
+          },
+          {
+            "do": "Identify stable direction",
+            "result": "$y$-axis",
+            "why": "the $-4$ eigenvalue decays"
+          },
+          {
+            "do": "Identify unstable direction",
+            "result": "$x$-axis",
+            "why": "the $1$ eigenvalue grows"
+          },
+          {
+            "do": "Classify",
+            "result": "saddle",
+            "why": "opposite signs always give saddle behavior"
+          }
+        ],
+        "answer": "The origin is a saddle."
+      },
+      {
+        "problem": "Classify $A=\\begin{pmatrix}0&-2\\\\2&0\\end{pmatrix}$.",
+        "steps": [
+          {
+            "do": "Compute trace",
+            "result": "$\\tau=0$",
+            "why": "diagonal entries sum to zero"
+          },
+          {
+            "do": "Compute determinant",
+            "result": "$\\Delta=4$",
+            "why": "$0\\cdot0-(-2)(2)=4$"
+          },
+          {
+            "do": "Compute discriminant",
+            "result": "$\\tau^2-4\\Delta=0-16=-16$",
+            "why": "negative discriminant means complex eigenvalues"
+          },
+          {
+            "do": "Find real part",
+            "result": "$\\tau/2=0$",
+            "why": "complex eigenvalues have real part half the trace"
+          },
+          {
+            "do": "Classify",
+            "result": "center",
+            "why": "pure imaginary eigenvalues rotate without growth or decay in the linear system"
+          }
+        ],
+        "answer": "The origin is a center."
+      },
+      {
+        "problem": "Classify a system with trace $\\tau=-2$ and determinant $\\Delta=5$.",
+        "steps": [
+          {
+            "do": "Compute discriminant",
+            "result": "$\\tau^2-4\\Delta=4-20=-16$",
+            "why": "decide real versus complex"
+          },
+          {
+            "do": "Identify eigenvalue type",
+            "result": "complex conjugates",
+            "why": "negative discriminant"
+          },
+          {
+            "do": "Compute real part",
+            "result": "$\\tau/2=-1$",
+            "why": "real part is half the trace"
+          },
+          {
+            "do": "Determine stability",
+            "result": "stable",
+            "why": "negative real part decays"
+          },
+          {
+            "do": "Name the portrait",
+            "result": "stable spiral",
+            "why": "complex eigenvalues rotate while decaying"
+          }
+        ],
+        "answer": "The equilibrium is a stable spiral."
+      },
+      {
+        "problem": "A linearized optimizer has eigenvalues $-0.2$ and $-5$. Classify the equilibrium and identify the slow mode.",
+        "steps": [
+          {
+            "do": "Check signs",
+            "result": "both eigenvalues are negative",
+            "why": "both modes decay"
+          },
+          {
+            "do": "Check realness",
+            "result": "both eigenvalues are real",
+            "why": "no oscillatory part is listed"
+          },
+          {
+            "do": "Classify",
+            "result": "stable node",
+            "why": "negative real eigenvalues form a sink"
+          },
+          {
+            "do": "Compare magnitudes",
+            "result": "$|-0.2|<|-5|$",
+            "why": "smaller magnitude decays more slowly"
+          },
+          {
+            "do": "Identify slow mode",
+            "result": "the $-0.2$ mode",
+            "why": "$e^{-0.2t}$ shrinks slower than $e^{-5t}$"
+          }
+        ],
+        "answer": "It is a stable node, with the $-0.2$ eigenmode controlling slow convergence."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Convergence shape in optimization",
+        "background": "Near a minimum, eigenvalues of the local linearized flow explain whether parameters glide smoothly or oscillate.",
+        "numbers": "Eigenvalues $-1$ and $-10$ give a stable node; after one unit, mode factors are $0.368$ and $0.000045$."
+      },
+      {
+        "title": "Saddle points in loss landscapes",
+        "background": "High-dimensional losses often contain saddles. In two dimensions, opposite-sign eigenvalues show one direction descending and another ascending.",
+        "numbers": "Eigenvalues $3$ and $-2$ mean one perturbation grows like $e^{3t}$ while another decays like $e^{-2t}$."
+      },
+      {
+        "title": "Damped oscillations",
+        "background": "Physical and control systems spiral into equilibrium when damping is present with inertia. Complex eigenvalues encode that spiral.",
+        "numbers": "Eigenvalues $-0.5\\pm2i$ have decay factor $e^{-0.5t}$; at $t=2$, amplitude is multiplied by $e^{-1}\\approx0.368$."
+      },
+      {
+        "title": "Undamped oscillators",
+        "background": "Centers appear in ideal conservative systems with no damping. Energy stays constant in the linear model.",
+        "numbers": "Eigenvalues $\\pm3i$ rotate with angular speed $3$, giving period $2\\pi/3\\approx2.09$."
+      },
+      {
+        "title": "Control design",
+        "background": "Engineers place eigenvalues to get desired stability and response speed. More negative real parts settle faster but may require stronger control.",
+        "numbers": "A pole at $-4$ has time constant $1/4=0.25$, while a pole at $-1$ has time constant $1$."
+      },
+      {
+        "title": "Generative adversarial dynamics",
+        "background": "Minimax training can create rotational dynamics around equilibria. Complex eigenvalues are a local sign of cycling behavior.",
+        "numbers": "A local matrix with eigenvalues $-0.1\\pm1.5i$ spirals inward slowly, with amplitude factor $e^{-0.1}\\approx0.905$ per unit time."
+      }
+    ],
+    "applicationsClose": "Classification is a compact legend for the phase portrait: eigenvalues become motion names.",
+    "takeaways": [
+      "Opposite-sign real eigenvalues give a saddle.",
+      "Negative real parts attract; positive real parts repel.",
+      "Complex eigenvalues create rotation; their real part decides spiral in or out.",
+      "Trace, determinant, and discriminant quickly organize the $2\\times2$ cases."
+    ],
     "prereqs": [
       "math-25-08"
     ]
@@ -195,19 +2458,284 @@
   B({
     "id": "math-25-10",
     "title": "Nonlinear systems and linearization",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: nonlinear systems and linearization.",
+    "tagline": "Near an equilibrium, the Jacobian gives the best linear first look at nonlinear motion.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Classification of equilibria</i>"
+        "Phase portraits",
+        "Classification of equilibria",
+        "partial derivatives",
+        "Jacobians"
       ],
       "leadsTo": [
-        "the next lesson, <i>Limit cycles</i>"
+        "Lyapunov stability",
+        "limit cycles",
+        "chaos",
+        "continuous-time ML dynamics"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "Taylor approximation",
+        "eigenvalues",
+        "Jacobian matrices",
+        "nullclines"
       ]
     },
+    "motivation": "<p>Real dynamical systems are rarely perfectly linear. Populations multiply, activations saturate, feedback clips, and parameters interact. But close to an equilibrium, a nonlinear curve often looks almost like its tangent line.</p><p>Linearization is the disciplined version of that intuition. We compute the Jacobian at the equilibrium, classify the resulting linear system, and use it as the first local portrait of the nonlinear system.</p>",
+    "definition": "<p>For a nonlinear planar system $\\dot{x}=f(x,y)$, $\\dot{y}=g(x,y)$, an equilibrium $(x^\\ast,y^\\ast)$ satisfies $f(x^\\ast,y^\\ast)=0$ and $g(x^\\ast,y^\\ast)=0$. The <b>Jacobian</b> is $$J(x,y)=\\begin{pmatrix}\\partial f/\\partial x&\\partial f/\\partial y\\\\\\partial g/\\partial x&\\partial g/\\partial y\\end{pmatrix}.$$ The linearization near the equilibrium is $\\dot{\\mathbf{u}}=J(x^\\ast,y^\\ast)\\mathbf{u}$, where $\\mathbf{u}$ is the small displacement from equilibrium.</p><p>This is multivariable Taylor approximation: $f$ and $g$ are replaced by their first-order changes around the equilibrium. The constant terms vanish because the equilibrium has zero velocity. Eigenvalues of the Jacobian then predict local stability when no eigenvalue has zero real part.</p><p><b>Assumptions that matter:</b> the functions should be differentiable near the equilibrium; the conclusion is local; if an eigenvalue has zero real part, linearization may be inconclusive; and nonlinear terms can create behavior such as limit cycles that no single local linearization fully explains.</p>",
+    "worked": {
+      "problem": "For $\\dot{x}=x(1-y)$, $\\dot{y}=y(x-1)$, linearize at $(0,0)$ and classify the equilibrium.",
+      "skills": [
+        "Jacobians",
+        "linearization",
+        "saddle classification"
+      ],
+      "strategy": "Compute the Jacobian, evaluate it at the equilibrium, then classify the eigenvalues.",
+      "steps": [
+        {
+          "do": "Name $f$ and $g$",
+          "result": "$f(x,y)=x-xy$, $g(x,y)=xy-y$",
+          "why": "expand products before differentiating"
+        },
+        {
+          "do": "Compute $\\partial f/\\partial x$",
+          "result": "$1-y$",
+          "why": "differentiate $x-xy$ with respect to $x$"
+        },
+        {
+          "do": "Compute $\\partial f/\\partial y$",
+          "result": "$-x$",
+          "why": "differentiate $x-xy$ with respect to $y$"
+        },
+        {
+          "do": "Compute $\\partial g/\\partial x$",
+          "result": "$y$",
+          "why": "differentiate $xy-y$ with respect to $x$"
+        },
+        {
+          "do": "Compute $\\partial g/\\partial y$",
+          "result": "$x-1$",
+          "why": "differentiate $xy-y$ with respect to $y$"
+        },
+        {
+          "do": "Evaluate at $(0,0)$",
+          "result": "$J(0,0)=\\begin{pmatrix}1&0\\\\0&-1\\end{pmatrix}$",
+          "why": "substitute $x=0$, $y=0$"
+        },
+        {
+          "do": "Read eigenvalues",
+          "result": "$1$ and $-1$",
+          "why": "the evaluated Jacobian is diagonal"
+        },
+        {
+          "do": "Classify",
+          "result": "saddle",
+          "why": "opposite-sign eigenvalues"
+        }
+      ],
+      "verify": "Near $(0,0)$, the $x$ direction grows and the $y$ direction decays, exactly the saddle pattern.",
+      "answer": "The linearization is $\\dot{\\mathbf{u}}=\\begin{pmatrix}1&0\\\\0&-1\\end{pmatrix}\\mathbf{u}$, so $(0,0)$ is a saddle.",
+      "connects": "Linearization lets the local nonlinear portrait borrow the classification of a linear system."
+    },
+    "practice": [
+      {
+        "problem": "For $\\dot{x}=x-x^2$, linearize the one-dimensional system at $x=1$ and classify it.",
+        "steps": [
+          {
+            "do": "Find the derivative",
+            "result": "$f'(x)=1-2x$",
+            "why": "linearization in one dimension uses the derivative"
+          },
+          {
+            "do": "Evaluate at $x=1$",
+            "result": "$f'(1)=-1$",
+            "why": "substitute the equilibrium"
+          },
+          {
+            "do": "Write the displacement",
+            "result": "$u=x-1$",
+            "why": "measure distance from equilibrium"
+          },
+          {
+            "do": "Write the linearization",
+            "result": "$\\dot{u}=-u$",
+            "why": "use $f'(1)$ as the coefficient"
+          },
+          {
+            "do": "Classify",
+            "result": "stable",
+            "why": "negative coefficient attracts"
+          }
+        ],
+        "answer": "The linearization is $\\dot{u}=-u$, so $x=1$ is stable."
+      },
+      {
+        "problem": "For $\\dot{x}=x+y^2$, $\\dot{y}=-2y$, compute the Jacobian at $(0,0)$.",
+        "steps": [
+          {
+            "do": "Compute $\\partial f/\\partial x$",
+            "result": "$1$",
+            "why": "differentiate $x+y^2$ with respect to $x$"
+          },
+          {
+            "do": "Compute $\\partial f/\\partial y$",
+            "result": "$2y$",
+            "why": "differentiate with respect to $y$"
+          },
+          {
+            "do": "Compute $\\partial g/\\partial x$",
+            "result": "$0$",
+            "why": "$-2y$ has no $x$ term"
+          },
+          {
+            "do": "Compute $\\partial g/\\partial y$",
+            "result": "$-2$",
+            "why": "differentiate $-2y$"
+          },
+          {
+            "do": "Evaluate at $(0,0)$",
+            "result": "$J(0,0)=\\begin{pmatrix}1&0\\\\0&-2\\end{pmatrix}$",
+            "why": "$2y=0$ at the origin"
+          }
+        ],
+        "answer": "$J(0,0)=\\begin{pmatrix}1&0\\\\0&-2\\end{pmatrix}$, so the equilibrium is saddle-like."
+      },
+      {
+        "problem": "For $\\dot{x}=y$, $\\dot{y}=-\\sin x$, linearize at $(0,0)$.",
+        "steps": [
+          {
+            "do": "Name the functions",
+            "result": "$f(x,y)=y$, $g(x,y)=-\\sin x$",
+            "why": "identify the two velocity components"
+          },
+          {
+            "do": "Compute the first row",
+            "result": "$\\partial f/\\partial x=0$, $\\partial f/\\partial y=1$",
+            "why": "$y$ changes only with $y$"
+          },
+          {
+            "do": "Compute $\\partial g/\\partial x$",
+            "result": "$-\\cos x$",
+            "why": "derivative of $-\\sin x$"
+          },
+          {
+            "do": "Compute $\\partial g/\\partial y$",
+            "result": "$0$",
+            "why": "$g$ has no $y$ term"
+          },
+          {
+            "do": "Evaluate at $(0,0)$",
+            "result": "$J(0,0)=\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}$",
+            "why": "$\\cos0=1$"
+          }
+        ],
+        "answer": "The linearization is $\\dot{\\mathbf{u}}=\\begin{pmatrix}0&1\\\\-1&0\\end{pmatrix}\\mathbf{u}$, a linear center."
+      },
+      {
+        "problem": "For $\\dot{x}=x(2-x-y)$, $\\dot{y}=y(1-x)$, compute the Jacobian at $(1,1)$.",
+        "steps": [
+          {
+            "do": "Expand $f$",
+            "result": "$f=2x-x^2-xy$",
+            "why": "expansion makes partial derivatives direct"
+          },
+          {
+            "do": "Compute $f$ derivatives",
+            "result": "$f_x=2-2x-y$, $f_y=-x$",
+            "why": "differentiate with respect to each variable"
+          },
+          {
+            "do": "Expand $g$",
+            "result": "$g=y-xy$",
+            "why": "write the product terms"
+          },
+          {
+            "do": "Compute $g$ derivatives",
+            "result": "$g_x=-y$, $g_y=1-x$",
+            "why": "differentiate with respect to each variable"
+          },
+          {
+            "do": "Evaluate at $(1,1)$",
+            "result": "$J(1,1)=\\begin{pmatrix}-1&-1\\\\-1&0\\end{pmatrix}$",
+            "why": "substitute $x=1$, $y=1$"
+          }
+        ],
+        "answer": "$J(1,1)=\\begin{pmatrix}-1&-1\\\\-1&0\\end{pmatrix}$."
+      },
+      {
+        "problem": "A two-parameter loss has gradient flow $\\dot{\\mathbf{w}}=-\\nabla L$ with $L(u,v)=u^2+4v^2+uv$. Linearize at $(0,0)$ and classify using the Hessian.",
+        "steps": [
+          {
+            "do": "Compute $\\partial L/\\partial u$",
+            "result": "$2u+v$",
+            "why": "differentiate the loss with respect to $u$"
+          },
+          {
+            "do": "Compute $\\partial L/\\partial v$",
+            "result": "$8v+u$",
+            "why": "differentiate with respect to $v$"
+          },
+          {
+            "do": "Write gradient flow",
+            "result": "$\\dot{u}=-(2u+v)$, $\\dot{v}=-(u+8v)$",
+            "why": "gradient flow moves downhill"
+          },
+          {
+            "do": "Write the Jacobian",
+            "result": "$J=\\begin{pmatrix}-2&-1\\\\-1&-8\\end{pmatrix}$",
+            "why": "the system is already linear"
+          },
+          {
+            "do": "Check trace and determinant",
+            "result": "$\\tau=-10$, $\\Delta=16-1=15$",
+            "why": "negative trace and positive determinant suggest attraction"
+          },
+          {
+            "do": "Compute discriminant",
+            "result": "$\\tau^2-4\\Delta=100-60=40>0$",
+            "why": "eigenvalues are real"
+          }
+        ],
+        "answer": "The linearization has two negative real eigenvalues, so $(0,0)$ is a stable node for the gradient flow."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Local loss-landscape analysis",
+        "background": "Near a critical point, gradient flow linearizes to $\\dot{e}=-He$, where $H$ is the Hessian. This links optimization dynamics to eigenvalues.",
+        "numbers": "If Hessian eigenvalues are $2$ and $5$, gradient-flow eigenvalues are $-2$ and $-5$, so both modes decay."
+      },
+      {
+        "title": "Neural ODE stability",
+        "background": "Neural ODEs define hidden-state dynamics continuously. The Jacobian of the learned vector field controls local expansion or contraction.",
+        "numbers": "A local Jacobian with largest real eigenvalue $0.4$ expands perturbations by about $e^{0.4}\\approx1.49$ in one time unit."
+      },
+      {
+        "title": "Predator-prey equilibria",
+        "background": "Nonlinear ecology models use Jacobians at coexistence states to detect cycles or instability.",
+        "numbers": "For $\\dot{x}=x(1-y)$, $\\dot{y}=y(x-1)$, $J(1,1)=\\begin{pmatrix}0&-1\\\\1&0\\end{pmatrix}$, giving a linear center."
+      },
+      {
+        "title": "Epidemic thresholds",
+        "background": "Linearizing around a disease-free equilibrium reveals whether small infections grow. Positive eigenvalues mean invasion.",
+        "numbers": "If the infection component linearizes as $\\dot{i}=0.2i$, then $i(t)=i_0e^{0.2t}$ grows by factor $1.22$ after one unit."
+      },
+      {
+        "title": "Robotics near setpoints",
+        "background": "Robot controllers are nonlinear, but near a target pose the Jacobian predicts whether small errors decay.",
+        "numbers": "A local error matrix with eigenvalues $-3$ and $-4$ reduces mode amplitudes by factors $e^{-3}\\approx0.050$ and $e^{-4}\\approx0.018$ after one second."
+      },
+      {
+        "title": "GAN and minimax training",
+        "background": "Adversarial training often has rotational local dynamics. Linearization reveals whether those rotations damp, persist, or grow.",
+        "numbers": "Eigenvalues $0.1\\pm2i$ imply outward spiraling with amplitude factor $e^{0.1}\\approx1.105$ per unit time."
+      }
+    ],
+    "applicationsClose": "Linearization is not the whole nonlinear story, but it is the first reliable local translation from equations to motion.",
+    "takeaways": [
+      "Equilibria of nonlinear systems solve all velocity components equal to zero.",
+      "The Jacobian matrix contains first partial derivatives of the vector field.",
+      "Evaluating the Jacobian at an equilibrium gives the local linear system.",
+      "If no eigenvalue has zero real part, Jacobian eigenvalues determine local stability type."
+    ],
     "prereqs": [
       "math-25-09"
     ]
@@ -216,19 +2744,267 @@
   B({
     "id": "math-25-11",
     "title": "Limit cycles",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: limit cycles.",
+    "tagline": "A limit cycle is a closed orbit that nearby motion eventually traces again and again.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Nonlinear systems and linearization</i>"
+        "phase portraits",
+        "equilibria and stability",
+        "two-dimensional ODEs"
       ],
       "leadsTo": [
-        "the next lesson, <i>The Poincaré–Bendixson theorem</i>"
+        "The Poincaré–Bendixson theorem",
+        "bifurcations",
+        "oscillatory systems"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "polar coordinates",
+        "nullclines",
+        "linearization",
+        "periodic solutions"
       ]
     },
+    "motivation": "<p>You already know equilibrium as a resting place: if a system reaches it, nothing changes. But many systems do not settle to stillness. A heartbeat, a clock, and a predator-prey cycle keep moving while still becoming predictable.</p><p>A <b>limit cycle</b> is that kind of predictable motion. The state returns to the same loop, not because it is stuck, but because the surrounding flow gently herds nearby trajectories toward a repeating orbit.</p>",
+    "definition": "<p>For an autonomous system $\\dot{x}=f(x,y)$, $\\dot{y}=g(x,y)$, a <b>periodic orbit</b> is a nonconstant solution with $(x(t+T),y(t+T))=(x(t),y(t))$ for some period $T>0$. A <b>limit cycle</b> is an isolated periodic orbit: nearby closed orbits are not packed arbitrarily close to it.</p><p>In polar coordinates, a common test form is $\\dot{r}=h(r)$ and $\\dot{\\theta}=\\omega$. If $h(r_\\ast)=0$ and nearby radii move toward $r_\\ast$, then $r=r_\\ast$ gives a stable cycle. For example, $\\dot{r}=r(1-r)$ makes $r$ increase below $1$ and decrease above $1$, so the circle $r=1$ attracts nearby motion.</p><p><b>Assumptions that matter:</b> the system is autonomous so the phase portrait does not change with time; the periodic orbit is isolated; stability is judged from nearby initial states; and a closed curve is a trajectory only when the vector field is tangent to it everywhere.</p>",
+    "worked": {
+      "problem": "For $\\dot{r}=r(1-r)$ and $\\dot{\\theta}=2$, show that $r=1$ is a stable limit cycle and find its period.",
+      "skills": [
+        "polar systems",
+        "radial stability",
+        "period calculation"
+      ],
+      "strategy": "The radius decides attraction and the angular speed decides how long one lap takes.",
+      "steps": [
+        {
+          "do": "Set the radial equation to zero",
+          "result": "$r(1-r)=0$",
+          "why": "constant-radius orbits need $\\dot{r}=0$"
+        },
+        {
+          "do": "Solve for radii",
+          "result": "$r=0$ or $r=1$",
+          "why": "zero-product property"
+        },
+        {
+          "do": "Check a radius below $1$",
+          "result": "$r=0.5$ gives $\\dot{r}=0.25>0$",
+          "why": "the radius moves outward"
+        },
+        {
+          "do": "Check a radius above $1$",
+          "result": "$r=1.5$ gives $\\dot{r}=-0.75<0$",
+          "why": "the radius moves inward"
+        },
+        {
+          "do": "Identify the attracting circle",
+          "result": "$r=1$",
+          "why": "nearby radii move toward it from both sides"
+        },
+        {
+          "do": "Compute the period",
+          "result": "$T=2\\pi/2=\\pi$",
+          "why": "angular speed $2$ radians per time needs $2\\pi$ radians for one lap"
+        }
+      ],
+      "verify": "A point with $r=0.8$ moves outward and one with $r=1.2$ moves inward, so both are pushed toward the same circle.",
+      "answer": "$r=1$ is a stable limit cycle with period $\\pi$.",
+      "connects": "A limit cycle is stability as a loop rather than stability as a point."
+    },
+    "practice": [
+      {
+        "problem": "For $\\dot{r}=r(2-r)$, $\\dot{\\theta}=1$, identify the attracting cycle and its period.",
+        "steps": [
+          {
+            "do": "Set $\\dot{r}=0$",
+            "result": "$r(2-r)=0$",
+            "why": "constant radius requires zero radial velocity"
+          },
+          {
+            "do": "Solve the radial equation",
+            "result": "$r=0$ or $r=2$",
+            "why": "zero-product property"
+          },
+          {
+            "do": "Test $r=1$",
+            "result": "$\\dot{r}=1>0$",
+            "why": "radii below 2 move outward"
+          },
+          {
+            "do": "Test $r=3$",
+            "result": "$\\dot{r}=-3<0$",
+            "why": "radii above 2 move inward"
+          },
+          {
+            "do": "Compute the period",
+            "result": "$T=2\\pi/1=2\\pi$",
+            "why": "one revolution needs $2\\pi$ radians"
+          }
+        ],
+        "answer": "The stable limit cycle is $r=2$ with period $2\\pi$."
+      },
+      {
+        "problem": "For $\\dot{r}=r(r-1)$, $\\dot{\\theta}=4$, decide whether $r=1$ is stable or unstable and find the period.",
+        "steps": [
+          {
+            "do": "Find the nonzero radial equilibrium",
+            "result": "$r=1$",
+            "why": "$r(r-1)=0$"
+          },
+          {
+            "do": "Test just below the circle",
+            "result": "r=0.5 gives $\\dot{r}=-0.25$",
+            "why": "the radius moves inward, away from 1"
+          },
+          {
+            "do": "Test just above the circle",
+            "result": "r=1.5 gives $\\dot{r}=0.75$",
+            "why": "the radius moves outward, away from 1"
+          },
+          {
+            "do": "Classify the cycle",
+            "result": "unstable",
+            "why": "nearby radii move away on both sides"
+          },
+          {
+            "do": "Compute the period",
+            "result": "$T=2\\pi/4=\\pi/2$",
+            "why": "angular speed is 4"
+          }
+        ],
+        "answer": "The cycle $r=1$ is unstable, with period $\\pi/2$."
+      },
+      {
+        "problem": "For $\\dot{r}=r(1-r^2)$, $\\dot{\\theta}=3$, show that $r=1$ attracts positive radii near it.",
+        "steps": [
+          {
+            "do": "Set $\\dot{r}=0$",
+            "result": "$r(1-r^2)=0$",
+            "why": "constant radii occur where radial velocity vanishes"
+          },
+          {
+            "do": "Solve for nonnegative radii",
+            "result": "$r=0$ or $r=1$",
+            "why": "negative radius is not used in this polar description"
+          },
+          {
+            "do": "Test $r=0.8$",
+            "result": "$0.8(1-0.64)=0.288>0$",
+            "why": "below 1 moves outward"
+          },
+          {
+            "do": "Test $r=1.2$",
+            "result": "$1.2(1-1.44)=-0.528<0$",
+            "why": "above 1 moves inward"
+          },
+          {
+            "do": "Read the stability",
+            "result": "stable cycle at $r=1$",
+            "why": "both signs push toward the circle"
+          }
+        ],
+        "answer": "$r=1$ is a stable limit cycle for nearby positive radii."
+      },
+      {
+        "problem": "A trajectory on a circular limit cycle has angular speed $0.5$ radians per second. How many seconds does one loop take, and how many loops occur in $40$ seconds?",
+        "steps": [
+          {
+            "do": "Use the period formula",
+            "result": "$T=2\\pi/\\omega$",
+            "why": "one loop is $2\\pi$ radians"
+          },
+          {
+            "do": "Substitute $\\omega=0.5$",
+            "result": "$T=2\\pi/0.5$",
+            "why": "use the given speed"
+          },
+          {
+            "do": "Simplify the period",
+            "result": "$T=4\\pi\\approx12.57$ seconds",
+            "why": "dividing by one half doubles"
+          },
+          {
+            "do": "Divide total time by period",
+            "result": "$40/(4\\pi)\\approx3.18$",
+            "why": "number of loops is time over period"
+          },
+          {
+            "do": "Interpret the count",
+            "result": "about $3$ full loops plus part of another",
+            "why": "$3.18$ exceeds 3 but is below 4"
+          }
+        ],
+        "answer": "One loop takes $4\\pi\\approx12.57$ seconds; $40$ seconds contains about $3.18$ loops."
+      },
+      {
+        "problem": "A two-state training monitor is modeled in polar coordinates by $\\dot{r}=0.2r(1-r)$, $\\dot{\\theta}=0.1$. If $r(0)=1.4$, what direction does $r$ initially move, and what is the cycle period?",
+        "steps": [
+          {
+            "do": "Substitute the initial radius",
+            "result": "$\\dot{r}=0.2(1.4)(1-1.4)$",
+            "why": "evaluate radial motion"
+          },
+          {
+            "do": "Simplify the sign",
+            "result": "$\\dot{r}=-0.112$",
+            "why": "$0.28\\cdot(-0.4)=-0.112$"
+          },
+          {
+            "do": "Interpret the radial sign",
+            "result": "$r$ decreases",
+            "why": "negative radial velocity moves inward"
+          },
+          {
+            "do": "Identify the attracting radius",
+            "result": "$r=1$",
+            "why": "radii above 1 decrease and below 1 increase"
+          },
+          {
+            "do": "Compute the period",
+            "result": "$T=2\\pi/0.1=20\\pi\\approx62.83$",
+            "why": "slow angular speed means a long loop"
+          }
+        ],
+        "answer": "The radius initially decreases toward $1$; the period is $20\\pi\\approx62.83$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Heart rhythms",
+        "background": "Physiology often models a healthy heartbeat as a self-sustained oscillator: after a small disturbance, the rhythm returns to its repeating cycle.",
+        "numbers": "At $75$ beats per minute, one cycle takes $60/75=0.8$ seconds."
+      },
+      {
+        "title": "Van der Pol oscillator",
+        "background": "The Van der Pol equation was introduced for electrical circuits with nonlinear damping and became a classic source of stable oscillations.",
+        "numbers": "If a simulated oscillator repeats every $6.3$ seconds, then $10$ minutes contains $600/6.3\\approx95.2$ cycles."
+      },
+      {
+        "title": "Clock regulation",
+        "background": "A pendulum clock is useful because many nearby swings return to nearly the same amplitude instead of dying instantly or exploding.",
+        "numbers": "A clock ticking once per second has angular frequency $2\\pi$ radians per second for a one-second cycle."
+      },
+      {
+        "title": "Predator-prey cycles",
+        "background": "Ecology uses closed or near-closed phase curves to describe repeating rises and falls in populations.",
+        "numbers": "If a hare-lynx cycle lasts $10$ years, then a $50$-year record covers about $5$ loops."
+      },
+      {
+        "title": "Optimization oscillations",
+        "background": "Momentum methods can circle around a valley before settling. A stable cycle is a warning that the parameters may keep repeating instead of converging.",
+        "numbers": "If validation loss repeats every $400$ steps, then $2000$ steps show $2000/400=5$ loops."
+      },
+      {
+        "title": "Neural oscillators",
+        "background": "Central pattern generators in robotics produce rhythmic walking signals using stable cycles.",
+        "numbers": "A gait frequency of $2$ Hz means period $1/2=0.5$ seconds per step cycle."
+      }
+    ],
+    "applicationsClose": "Limit cycles show that stable long-run behavior can be rhythmic rather than still.",
+    "takeaways": [
+      "A limit cycle is an isolated periodic orbit.",
+      "Stability asks whether nearby trajectories approach or leave the loop.",
+      "In polar form, signs of $\\dot{r}$ around $r_\\ast$ reveal attraction or repulsion.",
+      "The period comes from angular speed when $\\dot{\\theta}$ is constant."
+    ],
     "prereqs": [
       "math-25-10"
     ]
@@ -237,19 +3013,267 @@
   B({
     "id": "math-25-12",
     "title": "The Poincaré–Bendixson theorem",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: the poincaré–bendixson theorem.",
+    "tagline": "In the plane, a trapped trajectory that avoids equilibria must eventually circle a periodic orbit.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Limit cycles</i>"
+        "limit cycles",
+        "compact sets",
+        "planar autonomous systems"
       ],
       "leadsTo": [
-        "the next lesson, <i>Lyapunov functions</i>"
+        "chaos in higher dimensions",
+        "bifurcation theory",
+        "strange attractors"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "phase portraits",
+        "invariant regions",
+        "equilibria",
+        "omega-limit sets"
       ]
     },
+    "motivation": "<p>You have seen that a two-dimensional system can settle to a point or to a loop. A natural question is whether something wilder can happen in the plane if a trajectory stays trapped forever.</p><p>The <b>Poincaré–Bendixson theorem</b> gives a surprisingly comforting answer. In a planar autonomous system, if motion remains in a closed bounded region and does not settle on an equilibrium, its long-run behavior must include a periodic orbit.</p>",
+    "definition": "<p>One useful form says: for a continuously differentiable autonomous system in the plane, if a forward trajectory stays in a compact region $R$, and its omega-limit set contains no equilibrium point, then the omega-limit set is a periodic orbit. Here the <b>omega-limit set</b> means the states approached along times $t\\to\\infty$.</p><p>The idea is planar geometry. A trajectory in the plane cannot cross itself, because uniqueness would then force the same future from the crossing point. If it is trapped forever and cannot end at a rest point, the remaining organized possibility is circulation around a closed orbit.</p><p><b>Assumptions that matter:</b> the theorem is for two-dimensional autonomous systems; the vector field must be regular enough for uniqueness; the trapping region must be closed and bounded; and equilibria inside the limiting behavior change the conclusion.</p>",
+    "worked": {
+      "problem": "A planar system has a trapping annulus $1\\le r\\le3$, angular speed always positive, and no equilibria in the annulus. What does Poincaré–Bendixson guarantee?",
+      "skills": [
+        "theorem hypotheses",
+        "trapping regions",
+        "periodic orbits"
+      ],
+      "strategy": "Check the hypotheses one by one; the theorem is a guarantee machine only when all assumptions are present.",
+      "steps": [
+        {
+          "do": "Identify the dimension",
+          "result": "two-dimensional",
+          "why": "the state is represented in the plane"
+        },
+        {
+          "do": "Check boundedness",
+          "result": "$1\\le r\\le3$ is bounded",
+          "why": "radii cannot grow beyond 3"
+        },
+        {
+          "do": "Check closedness",
+          "result": "$1\\le r\\le3$ includes its boundaries",
+          "why": "the annulus is closed"
+        },
+        {
+          "do": "Use the trapping condition",
+          "result": "the trajectory stays in the annulus",
+          "why": "forward motion remains in a compact region"
+        },
+        {
+          "do": "Use the no-equilibrium condition",
+          "result": "no rest point lies in the annulus",
+          "why": "the limiting set cannot be only an equilibrium"
+        },
+        {
+          "do": "Apply the theorem",
+          "result": "a periodic orbit exists in the annulus",
+          "why": "trapped planar motion with no equilibrium must cycle"
+        }
+      ],
+      "verify": "Each hypothesis is structural, not numerical: plane, compact trap, and no equilibria are exactly the ingredients needed.",
+      "answer": "The theorem guarantees at least one periodic orbit in the annulus.",
+      "connects": "Poincaré–Bendixson is powerful because it proves a cycle exists without solving the ODE."
+    },
+    "practice": [
+      {
+        "problem": "A trajectory of a planar autonomous system remains in the disk $x^2+y^2\\le4$, and the disk contains no equilibria. What can you conclude if the disk is forward invariant?",
+        "steps": [
+          {
+            "do": "Read the region",
+            "result": "$x^2+y^2\\le4$",
+            "why": "this is a closed disk of radius 2"
+          },
+          {
+            "do": "Check boundedness",
+            "result": "radius is at most $2$",
+            "why": "the region is bounded"
+          },
+          {
+            "do": "Use forward invariance",
+            "result": "the trajectory stays in the disk",
+            "why": "motion is trapped"
+          },
+          {
+            "do": "Use the equilibrium condition",
+            "result": "no equilibria are in the disk",
+            "why": "the limiting behavior cannot be a rest point"
+          },
+          {
+            "do": "Apply Poincaré–Bendixson",
+            "result": "a periodic orbit exists",
+            "why": "the hypotheses match the theorem"
+          }
+        ],
+        "answer": "There must be a periodic orbit in the disk."
+      },
+      {
+        "problem": "Why can the theorem not be applied to $\\dot{x}=-x$, $\\dot{y}=-y$ on the disk $x^2+y^2\\le1$?",
+        "steps": [
+          {
+            "do": "Find the equilibrium",
+            "result": "$(0,0)$",
+            "why": "both derivatives vanish there"
+          },
+          {
+            "do": "Check that it lies in the disk",
+            "result": "$0^2+0^2=0\\le1$",
+            "why": "the rest point is inside"
+          },
+          {
+            "do": "Compare with the theorem",
+            "result": "the no-equilibrium hypothesis fails",
+            "why": "Poincaré–Bendixson needs no equilibrium in the omega-limit set"
+          },
+          {
+            "do": "Describe actual behavior",
+            "result": "trajectories approach $(0,0)$",
+            "why": "linear decay pulls inward"
+          },
+          {
+            "do": "State the conclusion",
+            "result": "no cycle is guaranteed",
+            "why": "a failed hypothesis blocks the theorem"
+          }
+        ],
+        "answer": "The theorem does not apply because the disk contains an equilibrium, and trajectories actually approach it."
+      },
+      {
+        "problem": "A trapping region is $2\\le r\\le5$. Its area is not needed, but compute it and explain why compactness still matters.",
+        "steps": [
+          {
+            "do": "Write the annulus area formula",
+            "result": "$\\pi R^2-\\pi r^2$",
+            "why": "outer disk minus inner disk"
+          },
+          {
+            "do": "Substitute the radii",
+            "result": "$\\pi(5^2)-\\pi(2^2)$",
+            "why": "use $R=5$ and $r=2$"
+          },
+          {
+            "do": "Simplify",
+            "result": "$21\\pi$",
+            "why": "$25\\pi-4\\pi=21\\pi$"
+          },
+          {
+            "do": "Identify compactness",
+            "result": "closed and bounded",
+            "why": "both boundary circles are included and radii are limited"
+          },
+          {
+            "do": "Connect to the theorem",
+            "result": "trapped motion has accumulation points",
+            "why": "compactness prevents escape to infinity"
+          }
+        ],
+        "answer": "The annulus area is $21\\pi$, and its closed bounded shape is what lets long-run behavior stay in view."
+      },
+      {
+        "problem": "A planar system is trapped in a square $[-1,1]\\times[-1,1]$, but one equilibrium lies at $(0.2,0.3)$. What extra information would you need before claiming a cycle?",
+        "steps": [
+          {
+            "do": "Check the trapping region",
+            "result": "the square is compact",
+            "why": "closed and bounded"
+          },
+          {
+            "do": "Locate the equilibrium",
+            "result": "$(0.2,0.3)$ is inside",
+            "why": "both coordinates lie between $-1$ and $1$"
+          },
+          {
+            "do": "Notice the obstacle",
+            "result": "an equilibrium is present",
+            "why": "the simple no-equilibrium hypothesis fails"
+          },
+          {
+            "do": "Name the needed information",
+            "result": "the omega-limit set avoids that equilibrium",
+            "why": "Poincaré–Bendixson can still help if the limiting set contains no rest point"
+          },
+          {
+            "do": "State the cautious conclusion",
+            "result": "cannot claim a cycle from the given data",
+            "why": "the theorem's conditions are not yet verified"
+          }
+        ],
+        "answer": "You would need to know the trajectory's omega-limit set contains no equilibrium; otherwise no cycle is guaranteed."
+      },
+      {
+        "problem": "Why does Poincaré–Bendixson not explain chaotic attractors in three-dimensional systems?",
+        "steps": [
+          {
+            "do": "State the theorem's dimension",
+            "result": "planar systems",
+            "why": "it is a two-dimensional result"
+          },
+          {
+            "do": "Compare dimensions",
+            "result": "three-dimensional systems are not planar",
+            "why": "their trajectories have more room"
+          },
+          {
+            "do": "Recall non-crossing intuition",
+            "result": "plane curves cannot cross themselves",
+            "why": "this restriction is weaker in 3D"
+          },
+          {
+            "do": "Identify possible behavior",
+            "result": "chaotic attractors can occur",
+            "why": "3D systems can fold and stretch without crossing in the same way"
+          },
+          {
+            "do": "State the limitation",
+            "result": "the theorem does not apply",
+            "why": "one hypothesis, dimension, fails"
+          }
+        ],
+        "answer": "It does not apply because the theorem is planar; three-dimensional systems can support chaotic attractors."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Existence without formulas",
+        "background": "Engineers often cannot solve nonlinear ODEs exactly. The theorem can still certify an oscillation from geometry.",
+        "numbers": "If a simulation keeps $1\\le r\\le2$ for $10,000$ time units and no equilibrium is present, the theorem points to a cycle without needing a closed-form solution."
+      },
+      {
+        "title": "Chemical oscillators",
+        "background": "The Belousov-Zhabotinsky reaction made chemical oscillations famous. Planar reductions are often analyzed through trapping regions.",
+        "numbers": "If concentration coordinates stay between $0.1$ and $0.9$, the square area is $0.8^2=0.64$."
+      },
+      {
+        "title": "Population models",
+        "background": "Predator-prey systems can be checked for bounded positive regions before looking for cycles.",
+        "numbers": "If prey remains between $20$ and $80$ and predators between $5$ and $30$, the rectangle has area $60\\cdot25=1500$ in population units."
+      },
+      {
+        "title": "Electrical circuits",
+        "background": "Nonlinear circuits may oscillate because voltage-current states are trapped away from rest.",
+        "numbers": "A voltage bounded by $[-5,5]$ and current by $[-2,2]$ gives a state rectangle of area $10\\cdot4=40$."
+      },
+      {
+        "title": "Why planar RNNs are limited",
+        "background": "A two-dimensional continuous-time recurrent system cannot have true chaos under the theorem's setting.",
+        "numbers": "With two hidden coordinates bounded in $[-1,1]^2$, long-run behavior is far more restricted than in three hidden dimensions."
+      },
+      {
+        "title": "Model debugging",
+        "background": "When a 2D simulation looks irregular, Poincaré–Bendixson reminds you to check nonautonomous forcing, discontinuities, or numerical artifacts.",
+        "numbers": "A step size of $0.1$ over $100$ seconds gives $1000$ updates; reducing to $0.01$ gives $10000$ updates to test whether the pattern persists."
+      }
+    ],
+    "applicationsClose": "The theorem is a quiet boundary line: planar autonomous systems can cycle, but true chaos needs another ingredient.",
+    "takeaways": [
+      "Poincaré–Bendixson applies to planar autonomous systems with trapped forward motion.",
+      "If the omega-limit set has no equilibrium, a periodic orbit must occur.",
+      "The theorem proves existence, not the exact shape or period of the orbit.",
+      "Its failure in higher dimensions helps explain why chaos first appears in richer systems."
+    ],
     "prereqs": [
       "math-25-11"
     ]
@@ -258,19 +3282,267 @@
   B({
     "id": "math-25-13",
     "title": "Lyapunov functions",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: lyapunov functions.",
+    "tagline": "A Lyapunov function proves stability by finding an energy-like quantity that always decreases.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The Poincaré–Bendixson theorem</i>"
+        "equilibria",
+        "gradients",
+        "positive definite functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Discrete maps</i>"
+        "LaSalle invariance",
+        "control stability",
+        "training dynamics"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "quadratic forms",
+        "level sets",
+        "eigenvalues",
+        "differential inequalities"
       ]
     },
+    "motivation": "<p>You already know how a marble behaves in a bowl: if its energy keeps going down, it cannot climb away forever. Stability theory borrows that idea even when there is no literal bowl.</p><p>A <b>Lyapunov function</b> is an invented energy. If it is smallest at the equilibrium and decreases along every nearby trajectory, it proves the equilibrium is stable without solving the system exactly.</p>",
+    "definition": "<p>For $\\dot{x}=f(x)$ with equilibrium $x=0$, a scalar function $V(x)$ is a Lyapunov function near $0$ if $V(0)=0$, $V(x)>0$ for $x\\ne0$, and the derivative along trajectories $\\dot{V}(x)=\\nabla V(x)\\cdot f(x)$ is nonpositive. If $\\dot{V}(x)<0$ for $x\\ne0$, the equilibrium is asymptotically stable.</p><p>The derivative formula comes from the chain rule: as the state moves, $V$ changes at rate $\\sum_i (\\partial V/\\partial x_i)\\dot{x}_i=\\nabla V\\cdot f$. So stability becomes an inequality about a scalar function instead of a full solution formula.</p><p><b>Assumptions that matter:</b> $V$ must be differentiable where we use $\\nabla V$; positive definiteness is relative to the equilibrium; negative semidefinite $\\dot{V}$ proves weaker stability unless additional invariance arguments apply; and the result is local unless $V$ grows properly over the whole state space.</p>",
+    "worked": {
+      "problem": "Use $V(x,y)=x^2+y^2$ to test stability of $\\dot{x}=-2x$, $\\dot{y}=-y$ at the origin.",
+      "skills": [
+        "chain rule",
+        "positive definiteness",
+        "asymptotic stability"
+      ],
+      "strategy": "The candidate is a squared distance — differentiate it along the system and check the sign.",
+      "steps": [
+        {
+          "do": "Check the value at the origin",
+          "result": "$V(0,0)=0$",
+          "why": "both squared terms vanish"
+        },
+        {
+          "do": "Check positivity away from the origin",
+          "result": "$x^2+y^2>0$ for $(x,y)\\ne(0,0)$",
+          "why": "a sum of squares is positive unless both are zero"
+        },
+        {
+          "do": "Compute the gradient",
+          "result": "$\\nabla V=(2x,2y)$",
+          "why": "differentiate with respect to each coordinate"
+        },
+        {
+          "do": "Dot with the vector field",
+          "result": "$\\dot{V}=(2x)(-2x)+(2y)(-y)$",
+          "why": "chain rule along trajectories"
+        },
+        {
+          "do": "Simplify",
+          "result": "$\\dot{V}=-4x^2-2y^2$",
+          "why": "multiply the terms"
+        },
+        {
+          "do": "Classify the sign",
+          "result": "$\\dot{V}<0$ for $(x,y)\\ne(0,0)$",
+          "why": "at least one squared term is positive away from the origin"
+        }
+      ],
+      "verify": "The derivative is zero only at the origin, so the energy strictly decreases along every nonzero nearby state.",
+      "answer": "The origin is asymptotically stable.",
+      "connects": "Lyapunov functions turn stability into a monotone quantity you can audit."
+    },
+    "practice": [
+      {
+        "problem": "For $\\dot{x}=-3x$, use $V=x^2$ to prove stability of $x=0$.",
+        "steps": [
+          {
+            "do": "Check $V(0)$",
+            "result": "$0$",
+            "why": "the square of zero is zero"
+          },
+          {
+            "do": "Check positivity",
+            "result": "$x^2>0$ for $x\\ne0$",
+            "why": "squares are positive away from zero"
+          },
+          {
+            "do": "Differentiate $V$",
+            "result": "$\\dot{V}=2x\\dot{x}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Substitute the dynamics",
+            "result": "$\\dot{V}=2x(-3x)$",
+            "why": "use $\\dot{x}=-3x$"
+          },
+          {
+            "do": "Simplify the sign",
+            "result": "$\\dot{V}=-6x^2<0$ for $x\\ne0$",
+            "why": "negative multiple of a positive square"
+          }
+        ],
+        "answer": "$x=0$ is asymptotically stable."
+      },
+      {
+        "problem": "For $\\dot{x}=x$, test $V=x^2$. What does the sign say?",
+        "steps": [
+          {
+            "do": "Check positivity of $V$",
+            "result": "$x^2>0$ for $x\\ne0$",
+            "why": "the candidate is positive definite"
+          },
+          {
+            "do": "Differentiate along trajectories",
+            "result": "$\\dot{V}=2x\\dot{x}$",
+            "why": "chain rule"
+          },
+          {
+            "do": "Substitute $\\dot{x}=x$",
+            "result": "$\\dot{V}=2x^2$",
+            "why": "replace the velocity"
+          },
+          {
+            "do": "Read the sign",
+            "result": "$\\dot{V}>0$ for $x\\ne0$",
+            "why": "the quantity increases away from zero"
+          },
+          {
+            "do": "Interpret stability",
+            "result": "not stable by this test",
+            "why": "energy growth indicates repulsion, not attraction"
+          }
+        ],
+        "answer": "$V$ increases, so the origin is unstable rather than Lyapunov stable."
+      },
+      {
+        "problem": "For $\\dot{x}=-x+y$, $\\dot{y}=-x-y$, compute $\\dot{V}$ for $V=x^2+y^2$.",
+        "steps": [
+          {
+            "do": "Compute the gradient",
+            "result": "$\\nabla V=(2x,2y)$",
+            "why": "differentiate the sum of squares"
+          },
+          {
+            "do": "Dot with the vector field",
+            "result": "$\\dot{V}=2x(-x+y)+2y(-x-y)$",
+            "why": "apply the chain rule"
+          },
+          {
+            "do": "Expand the first term",
+            "result": "$-2x^2+2xy$",
+            "why": "multiply by $2x$"
+          },
+          {
+            "do": "Expand the second term",
+            "result": "$-2xy-2y^2$",
+            "why": "multiply by $2y$"
+          },
+          {
+            "do": "Combine terms",
+            "result": "$\\dot{V}=-2x^2-2y^2$",
+            "why": "the cross terms cancel"
+          }
+        ],
+        "answer": "$\\dot{V}=-2x^2-2y^2<0$ away from the origin, so the origin is asymptotically stable."
+      },
+      {
+        "problem": "Let $V(x,y)=4x^2+y^2$. Is it positive definite? Evaluate it at $(1,2)$ and $(0,0)$.",
+        "steps": [
+          {
+            "do": "Evaluate at the origin",
+            "result": "$V(0,0)=0$",
+            "why": "both terms vanish"
+          },
+          {
+            "do": "Inspect nonzero states",
+            "result": "$4x^2+y^2>0$ if $(x,y)\\ne(0,0)$",
+            "why": "positive coefficients multiply squares"
+          },
+          {
+            "do": "Evaluate at $(1,2)$",
+            "result": "$4(1)^2+2^2$",
+            "why": "substitute the point"
+          },
+          {
+            "do": "Simplify",
+            "result": "$8$",
+            "why": "$4+4=8$"
+          },
+          {
+            "do": "State the property",
+            "result": "positive definite",
+            "why": "zero only at the origin and positive elsewhere"
+          }
+        ],
+        "answer": "Yes. $V$ is positive definite, with $V(1,2)=8$ and $V(0,0)=0$."
+      },
+      {
+        "problem": "Gradient descent on $L(w)=\\frac12w^2$ uses $w_{k+1}=w_k-0.4w_k$. Show the Lyapunov value $V_k=w_k^2$ decreases from $w_0=5$ to $w_1$.",
+        "steps": [
+          {
+            "do": "Simplify the update",
+            "result": "$w_{k+1}=0.6w_k$",
+            "why": "$1-0.4=0.6$"
+          },
+          {
+            "do": "Compute the next weight",
+            "result": "$w_1=0.6\\cdot5=3$",
+            "why": "apply the update"
+          },
+          {
+            "do": "Compute the initial Lyapunov value",
+            "result": "$V_0=5^2=25$",
+            "why": "square the initial state"
+          },
+          {
+            "do": "Compute the next Lyapunov value",
+            "result": "$V_1=3^2=9$",
+            "why": "square the next state"
+          },
+          {
+            "do": "Compare values",
+            "result": "$9<25$",
+            "why": "the energy-like quantity decreased"
+          }
+        ],
+        "answer": "The Lyapunov value drops from $25$ to $9$, so this step moves toward the stable fixed point."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Control systems",
+        "background": "Lyapunov's method became central in control because aircraft and robots need stability guarantees without closed-form trajectories.",
+        "numbers": "If $V$ drops from $10$ to $6$ in $2$ seconds, the average decrease rate is $(6-10)/2=-2$ per second."
+      },
+      {
+        "title": "Robotics balance",
+        "background": "A balancing robot can use mechanical energy as a Lyapunov-like quantity near upright posture.",
+        "numbers": "If angle error is $0.1$ rad and angular velocity is $0.2$ rad/s, $V=0.1^2+0.2^2=0.05$."
+      },
+      {
+        "title": "Gradient descent",
+        "background": "For convex losses, the loss itself often behaves like a Lyapunov function under small enough steps.",
+        "numbers": "If losses are $1.20,0.84,0.60$, the decreases are $0.36$ and $0.24$, both positive improvements."
+      },
+      {
+        "title": "Neural network training monitors",
+        "background": "Engineers watch whether training loss decreases smoothly; persistent increases suggest the step size may be too large.",
+        "numbers": "A loss jump from $0.80$ to $1.12$ is a $40\\%$ increase because $1.12/0.80=1.4$."
+      },
+      {
+        "title": "Markov chain convergence",
+        "background": "Some stochastic processes use distance to stationarity as a Lyapunov-like drift measure.",
+        "numbers": "If expected distance changes from $5$ to $0.9\\cdot5=4.5$, the drift is $-0.5$."
+      },
+      {
+        "title": "Safe reinforcement learning",
+        "background": "Safety filters often require a barrier or Lyapunov function not to increase beyond a threshold.",
+        "numbers": "If safety value must satisfy $V\\le1$ and the current value is $0.64$, a proposed action predicting $V=0.81$ remains inside the limit."
+      }
+    ],
+    "applicationsClose": "The shared move is to replace a hard trajectory question with an easier scalar question: does the energy go down?",
+    "takeaways": [
+      "A Lyapunov function is positive at nonzero states and zero at the equilibrium.",
+      "The derivative along trajectories is $\\dot{V}=\\nabla V\\cdot f$.",
+      "Strictly negative $\\dot{V}$ away from equilibrium proves asymptotic stability.",
+      "Loss curves and energy measures are practical Lyapunov ideas in ML and control."
+    ],
     "prereqs": [
       "math-25-12"
     ]
@@ -279,19 +3551,267 @@
   B({
     "id": "math-25-14",
     "title": "Discrete maps",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: discrete maps.",
+    "tagline": "A discrete map updates a state step by step, so dynamics become iteration.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Lyapunov functions</i>"
+        "fixed points",
+        "stability",
+        "iteration"
       ],
       "leadsTo": [
-        "the next lesson, <i>The logistic map</i>"
+        "chaos",
+        "bifurcations",
+        "numerical simulation"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "fixed points",
+        "derivatives",
+        "linearization",
+        "eigenvalues"
       ]
     },
+    "motivation": "<p>You already know recursion: today's value becomes tomorrow's input. A discrete map is recursion treated as a dynamical system.</p><p>Instead of following $\\dot{x}$ continuously, we study $x_{n+1}=F(x_n)$. Fixed points, stability, cycles, and chaos all appear in this simple step-by-step world.</p>",
+    "definition": "<p>A <b>discrete map</b> is an update rule $x_{n+1}=F(x_n)$, where $n$ is an integer time index and $F$ maps the current state to the next state. A <b>fixed point</b> satisfies $x^\\ast=F(x^\\ast)$.</p><p>In one dimension, a differentiable fixed point is locally attracting when $|F'(x^\\ast)|<1$ and repelling when $|F'(x^\\ast)|>1$. This comes from linearizing: if $e_n=x_n-x^\\ast$, then $e_{n+1}\\approx F'(x^\\ast)e_n$, so errors shrink exactly when the multiplier has absolute value below $1$.</p><p><b>Assumptions that matter:</b> time advances in integer steps; local stability uses differentiability near the fixed point; $|F'|=1$ is inconclusive by the simple test; and iterates can leave the intended domain unless the map preserves it.</p>",
+    "worked": {
+      "problem": "For $F(x)=0.5x+3$, find the fixed point and decide whether it attracts nearby iterates.",
+      "skills": [
+        "fixed points",
+        "derivative test",
+        "iteration"
+      ],
+      "strategy": "Solve $x=F(x)$, then use the slope magnitude to read local stability.",
+      "steps": [
+        {
+          "do": "Write the fixed-point equation",
+          "result": "$x=0.5x+3$",
+          "why": "fixed points stay unchanged by the map"
+        },
+        {
+          "do": "Subtract $0.5x$",
+          "result": "$0.5x=3$",
+          "why": "collect $x$ terms"
+        },
+        {
+          "do": "Divide by $0.5$",
+          "result": "$x=6$",
+          "why": "solve for the fixed point"
+        },
+        {
+          "do": "Differentiate the map",
+          "result": "$F'(x)=0.5$",
+          "why": "the map is linear"
+        },
+        {
+          "do": "Take the absolute value",
+          "result": "$|F'(6)|=0.5<1$",
+          "why": "errors shrink by half each step"
+        },
+        {
+          "do": "Classify the point",
+          "result": "attracting",
+          "why": "nearby iterates move toward $6$"
+        }
+      ],
+      "verify": "Starting from $x_0=10$ gives $x_1=8$, closer to $6$, which matches the stability test.",
+      "answer": "The fixed point is $6$, and it is attracting.",
+      "connects": "A discrete map turns stability into the behavior of repeated updates."
+    },
+    "practice": [
+      {
+        "problem": "Iterate $x_{n+1}=0.5x_n+1$ from $x_0=0$ for three steps.",
+        "steps": [
+          {
+            "do": "Compute $x_1$",
+            "result": "$0.5\\cdot0+1=1$",
+            "why": "apply the rule once"
+          },
+          {
+            "do": "Compute $x_2$",
+            "result": "$0.5\\cdot1+1=1.5$",
+            "why": "feed $x_1$ back in"
+          },
+          {
+            "do": "Compute $x_3$",
+            "result": "$0.5\\cdot1.5+1=1.75$",
+            "why": "feed $x_2$ back in"
+          },
+          {
+            "do": "Find the fixed point",
+            "result": "$x=0.5x+1$",
+            "why": "compare with the destination"
+          },
+          {
+            "do": "Solve it",
+            "result": "$x=2$",
+            "why": "the iterates are moving toward 2"
+          }
+        ],
+        "answer": "The first three iterates are $1$, $1.5$, and $1.75$."
+      },
+      {
+        "problem": "Find and classify the fixed point of $F(x)=2x-3$.",
+        "steps": [
+          {
+            "do": "Set $x=F(x)$",
+            "result": "$x=2x-3$",
+            "why": "fixed point equation"
+          },
+          {
+            "do": "Subtract $2x$",
+            "result": "$-x=-3$",
+            "why": "collect terms"
+          },
+          {
+            "do": "Solve",
+            "result": "$x=3$",
+            "why": "multiply by $-1$"
+          },
+          {
+            "do": "Differentiate",
+            "result": "$F'(x)=2$",
+            "why": "linear map slope"
+          },
+          {
+            "do": "Classify",
+            "result": "repelling",
+            "why": "$|2|>1$ grows errors"
+          }
+        ],
+        "answer": "The fixed point is $3$, and it is repelling."
+      },
+      {
+        "problem": "For $F(x)=x^2$, classify fixed points $0$ and $1$ using derivatives.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$F'(x)=2x$",
+            "why": "needed for the local test"
+          },
+          {
+            "do": "Evaluate at $0$",
+            "result": "$F'(0)=0$",
+            "why": "substitute the first fixed point"
+          },
+          {
+            "do": "Classify $0$",
+            "result": "attracting",
+            "why": "$|0|<1$"
+          },
+          {
+            "do": "Evaluate at $1$",
+            "result": "$F'(1)=2$",
+            "why": "substitute the second fixed point"
+          },
+          {
+            "do": "Classify $1$",
+            "result": "repelling",
+            "why": "$|2|>1$"
+          }
+        ],
+        "answer": "$0$ is attracting and $1$ is repelling."
+      },
+      {
+        "problem": "Find the period-2 orbit of $F(x)=1-x$.",
+        "steps": [
+          {
+            "do": "Compose the map",
+            "result": "$F(F(x))=1-(1-x)$",
+            "why": "apply the rule twice"
+          },
+          {
+            "do": "Simplify",
+            "result": "$F(F(x))=x$",
+            "why": "two steps return every point"
+          },
+          {
+            "do": "Exclude fixed points",
+            "result": "$x=1-x$",
+            "why": "period 2 requires not period 1"
+          },
+          {
+            "do": "Solve the fixed equation",
+            "result": "$x=1/2$",
+            "why": "only this point is fixed"
+          },
+          {
+            "do": "State period-2 points",
+            "result": "all $x\\ne1/2$ alternate with $1-x$",
+            "why": "they return after two steps"
+          }
+        ],
+        "answer": "Every $x\\ne1/2$ belongs to a period-2 orbit $x,1-x$."
+      },
+      {
+        "problem": "A scalar RNN update is $h_{t+1}=0.8h_t+1$ with $h_0=0$. Compute three hidden states and the fixed point.",
+        "steps": [
+          {
+            "do": "Compute $h_1$",
+            "result": "$0.8\\cdot0+1=1$",
+            "why": "first update"
+          },
+          {
+            "do": "Compute $h_2$",
+            "result": "$0.8\\cdot1+1=1.8$",
+            "why": "second update"
+          },
+          {
+            "do": "Compute $h_3$",
+            "result": "$0.8\\cdot1.8+1=2.44$",
+            "why": "third update"
+          },
+          {
+            "do": "Set fixed point equation",
+            "result": "$h=0.8h+1$",
+            "why": "steady hidden state"
+          },
+          {
+            "do": "Solve",
+            "result": "$h=5$",
+            "why": "$0.2h=1$"
+          }
+        ],
+        "answer": "The states are $1$, $1.8$, $2.44$, and the attracting fixed point is $5$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Iterated algorithms",
+        "background": "Many algorithms are maps: the next estimate is computed from the current estimate.",
+        "numbers": "Newton-style updates producing $2.0,1.5,1.4167$ are discrete iterates indexed by step."
+      },
+      {
+        "title": "Simulation step size",
+        "background": "Numerical solvers turn continuous systems into discrete maps, so stability can depend on the time step.",
+        "numbers": "Euler on $\\dot{x}=-x$ gives $x_{n+1}=(1-h)x_n$; with $h=0.1$, the multiplier is $0.9$."
+      },
+      {
+        "title": "Population fractions",
+        "background": "Maps are natural when generations do not overlap or updates happen in batches.",
+        "numbers": "A fraction $0.3$ updated by $2(0.3)(0.7)$ becomes $0.42$."
+      },
+      {
+        "title": "Optimizer updates",
+        "background": "Training loops are discrete dynamical systems on parameters.",
+        "numbers": "If $w_{k+1}=0.8w_k$ and $w_0=5$, then $w_4=0.8^4\\cdot5=2.048$."
+      },
+      {
+        "title": "Recurrent networks",
+        "background": "RNN hidden states are repeatedly updated, so fixed points and cycles describe long-run memory.",
+        "numbers": "With $h_{t+1}=0.6h_t+2$, the fixed point is $h=5$."
+      },
+      {
+        "title": "Digital filters",
+        "background": "Signal smoothing uses recurrence relations that must be stable to avoid runaway outputs.",
+        "numbers": "For $y_{n+1}=0.9y_n+0.1x_n$, an old impulse has weight $0.9^{10}\\approx0.349$ after 10 steps."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same question keeps returning: what happens when the rule is applied again and again?",
+    "takeaways": [
+      "Iterating a rule creates a discrete dynamical system.",
+      "Fixed points and cycles are long-run patterns of repeated updates.",
+      "Derivative or multiplier magnitudes below $1$ shrink local errors.",
+      "ML training loops and recurrent states use the same stability logic."
+    ],
     "prereqs": [
       "math-25-13"
     ]
@@ -300,19 +3820,267 @@
   B({
     "id": "math-25-15",
     "title": "The logistic map",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: the logistic map.",
+    "tagline": "The logistic map shows how a tiny nonlinear update can grow, settle, oscillate, or become chaotic.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Discrete maps</i>"
+        "discrete maps",
+        "fixed-point stability",
+        "quadratic functions"
       ],
       "leadsTo": [
-        "the next lesson, <i>Period doubling</i>"
+        "period doubling",
+        "chaos",
+        "bifurcation diagrams"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "fixed points",
+        "derivatives",
+        "linearization",
+        "eigenvalues"
       ]
     },
+    "motivation": "<p>You have seen linear updates where each step simply multiplies by a constant. The logistic map adds one gentle constraint: growth slows when the state gets large.</p><p>The rule $x_{n+1}=rx_n(1-x_n)$ became famous because it is only one line, yet it contains fixed points, period doubling, and chaos. It is a small laboratory for nonlinear dynamics.</p>",
+    "definition": "<p>The <b>logistic map</b> is $x_{n+1}=F(x_n)=rx_n(1-x_n)$, usually with $0\\le x_n\\le1$ and $0\\le r\\le4$. The parameter $r$ controls growth strength, while the factor $(1-x_n)$ limits growth near carrying capacity.</p><p>Fixed points solve $x=rx(1-x)$. This gives $x=0$ or, when $r\\ne0$, $x=1-1/r$. Their stability follows from $F'(x)=r(1-2x)$: the nonzero fixed point is attracting when $|2-r|<1$, so $1<r<3$.</p><p><b>Assumptions that matter:</b> the usual interval model uses $0\\le r\\le4$ so $[0,1]$ maps into itself; fixed-point stability is local; long-run behavior can depend strongly on $r$; and numerical rounding can matter in chaotic regimes.</p>",
+    "worked": {
+      "problem": "For the logistic map with $r=2.5$, find the nonzero fixed point and test its stability.",
+      "skills": [
+        "fixed points",
+        "logistic derivative",
+        "stability interval"
+      ],
+      "strategy": "Solve the fixed-point equation, then evaluate the derivative at that point.",
+      "steps": [
+        {
+          "do": "Write the nonzero formula",
+          "result": "$x^\\ast=1-1/r$",
+          "why": "from solving $x=rx(1-x)$"
+        },
+        {
+          "do": "Substitute $r=2.5$",
+          "result": "$x^\\ast=1-1/2.5$",
+          "why": "use the parameter"
+        },
+        {
+          "do": "Compute the fixed point",
+          "result": "$x^\\ast=0.6$",
+          "why": "$1/2.5=0.4$"
+        },
+        {
+          "do": "Differentiate the map",
+          "result": "$F'(x)=r(1-2x)$",
+          "why": "derivative of $rx(1-x)$"
+        },
+        {
+          "do": "Evaluate at $0.6$",
+          "result": "$F'(0.6)=2.5(1-1.2)=-0.5$",
+          "why": "substitute the fixed point"
+        },
+        {
+          "do": "Classify",
+          "result": "attracting",
+          "why": "$|-0.5|<1$"
+        }
+      ],
+      "verify": "The negative derivative means errors alternate signs, but the factor $0.5$ makes them shrink.",
+      "answer": "The nonzero fixed point is $0.6$, and it is attracting.",
+      "connects": "The logistic map packages nonlinear feedback into one quadratic update."
+    },
+    "practice": [
+      {
+        "problem": "For $r=2$, find the nonzero fixed point.",
+        "steps": [
+          {
+            "do": "Use the formula",
+            "result": "$x^\\ast=1-1/r$",
+            "why": "nonzero logistic fixed point"
+          },
+          {
+            "do": "Substitute $r=2$",
+            "result": "$1-1/2$",
+            "why": "use the parameter"
+          },
+          {
+            "do": "Simplify",
+            "result": "$1/2$",
+            "why": "subtract"
+          },
+          {
+            "do": "Check in the map",
+            "result": "$2(1/2)(1-1/2)=1/2$",
+            "why": "substitute back"
+          },
+          {
+            "do": "State the fixed point",
+            "result": "$0.5$",
+            "why": "the value repeats"
+          }
+        ],
+        "answer": "The nonzero fixed point is $0.5$."
+      },
+      {
+        "problem": "Compute three iterates for $r=3$, $x_0=0.2$.",
+        "steps": [
+          {
+            "do": "Compute $x_1$",
+            "result": "$3(0.2)(0.8)=0.48$",
+            "why": "apply the map"
+          },
+          {
+            "do": "Compute $x_2$",
+            "result": "$3(0.48)(0.52)=0.7488$",
+            "why": "feed back $x_1$"
+          },
+          {
+            "do": "Compute $x_3$",
+            "result": "$3(0.7488)(0.2512)$",
+            "why": "feed back $x_2$"
+          },
+          {
+            "do": "Multiply",
+            "result": "$x_3\\approx0.5643$",
+            "why": "$0.7488\\cdot0.2512\\cdot3\\approx0.5643$"
+          },
+          {
+            "do": "Interpret",
+            "result": "values remain in $[0,1]$",
+            "why": "$r=3$ preserves the interval"
+          }
+        ],
+        "answer": "The iterates are $0.48$, $0.7488$, and about $0.5643$."
+      },
+      {
+        "problem": "At $r=3.2$, test stability of the nonzero fixed point.",
+        "steps": [
+          {
+            "do": "Find the fixed point",
+            "result": "$x^\\ast=1-1/3.2=0.6875$",
+            "why": "use the formula"
+          },
+          {
+            "do": "Use derivative shortcut",
+            "result": "$F'(x^\\ast)=2-r$",
+            "why": "substitute $x^\\ast=1-1/r$ into $r(1-2x)$"
+          },
+          {
+            "do": "Substitute $r=3.2$",
+            "result": "$2-3.2=-1.2$",
+            "why": "compute the multiplier"
+          },
+          {
+            "do": "Take absolute value",
+            "result": "$1.2>1$",
+            "why": "errors grow"
+          },
+          {
+            "do": "Classify",
+            "result": "repelling",
+            "why": "the fixed point has lost stability"
+          }
+        ],
+        "answer": "The nonzero fixed point is repelling at $r=3.2$."
+      },
+      {
+        "problem": "Find all fixed points when $r=4$.",
+        "steps": [
+          {
+            "do": "Set $x=4x(1-x)$",
+            "result": "fixed-point equation",
+            "why": "same value after one step"
+          },
+          {
+            "do": "Move all terms to one side",
+            "result": "$0=3x-4x^2$",
+            "why": "subtract $x$"
+          },
+          {
+            "do": "Factor",
+            "result": "$0=x(3-4x)$",
+            "why": "common factor $x$"
+          },
+          {
+            "do": "Solve first factor",
+            "result": "$x=0$",
+            "why": "zero-product property"
+          },
+          {
+            "do": "Solve second factor",
+            "result": "$x=3/4$",
+            "why": "$3-4x=0$"
+          }
+        ],
+        "answer": "The fixed points are $0$ and $3/4$."
+      },
+      {
+        "problem": "A population fraction follows $x_{n+1}=2.8x_n(1-x_n)$ from $x_0=0.1$. Compute $x_1$ and $x_2$.",
+        "steps": [
+          {
+            "do": "Compute $x_1$",
+            "result": "$2.8(0.1)(0.9)$",
+            "why": "apply the logistic rule"
+          },
+          {
+            "do": "Simplify $x_1$",
+            "result": "$0.252$",
+            "why": "$2.8\\cdot0.09=0.252$"
+          },
+          {
+            "do": "Compute $1-x_1$",
+            "result": "$0.748$",
+            "why": "needed for the next step"
+          },
+          {
+            "do": "Compute $x_2$",
+            "result": "$2.8(0.252)(0.748)$",
+            "why": "apply the rule again"
+          },
+          {
+            "do": "Multiply",
+            "result": "$x_2\\approx0.5278$",
+            "why": "$0.252\\cdot0.748\\cdot2.8\\approx0.5278$"
+          }
+        ],
+        "answer": "$x_1=0.252$ and $x_2\\approx0.5278$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Iterated algorithms",
+        "background": "Many algorithms are maps: the next estimate is computed from the current estimate.",
+        "numbers": "Newton-style updates producing $2.0,1.5,1.4167$ are discrete iterates indexed by step."
+      },
+      {
+        "title": "Simulation step size",
+        "background": "Numerical solvers turn continuous systems into discrete maps, so stability can depend on the time step.",
+        "numbers": "Euler on $\\dot{x}=-x$ gives $x_{n+1}=(1-h)x_n$; with $h=0.1$, the multiplier is $0.9$."
+      },
+      {
+        "title": "Population fractions",
+        "background": "Maps are natural when generations do not overlap or updates happen in batches.",
+        "numbers": "A fraction $0.3$ updated by $2(0.3)(0.7)$ becomes $0.42$."
+      },
+      {
+        "title": "Optimizer updates",
+        "background": "Training loops are discrete dynamical systems on parameters.",
+        "numbers": "If $w_{k+1}=0.8w_k$ and $w_0=5$, then $w_4=0.8^4\\cdot5=2.048$."
+      },
+      {
+        "title": "Recurrent networks",
+        "background": "RNN hidden states are repeatedly updated, so fixed points and cycles describe long-run memory.",
+        "numbers": "With $h_{t+1}=0.6h_t+2$, the fixed point is $h=5$."
+      },
+      {
+        "title": "Digital filters",
+        "background": "Signal smoothing uses recurrence relations that must be stable to avoid runaway outputs.",
+        "numbers": "For $y_{n+1}=0.9y_n+0.1x_n$, an old impulse has weight $0.9^{10}\\approx0.349$ after 10 steps."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same question keeps returning: what happens when the rule is applied again and again?",
+    "takeaways": [
+      "Iterating a rule creates a discrete dynamical system.",
+      "Fixed points and cycles are long-run patterns of repeated updates.",
+      "Derivative or multiplier magnitudes below $1$ shrink local errors.",
+      "ML training loops and recurrent states use the same stability logic."
+    ],
     "prereqs": [
       "math-25-14"
     ]
@@ -321,19 +4089,267 @@
   B({
     "id": "math-25-16",
     "title": "Period doubling",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: period doubling.",
+    "tagline": "Period doubling is the route where one stable rhythm becomes two, then four, then a cascade toward chaos.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>The logistic map</i>"
+        "logistic map",
+        "fixed-point multipliers",
+        "composition of maps"
       ],
       "leadsTo": [
-        "the next lesson, <i>Chaos and sensitive dependence</i>"
+        "chaos and sensitive dependence",
+        "Feigenbaum scaling",
+        "bifurcation diagrams"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "fixed points",
+        "derivatives",
+        "linearization",
+        "eigenvalues"
       ]
     },
+    "motivation": "<p>A stable fixed point is a rhythm of length one: same state every step. Sometimes changing a parameter makes that rhythm alternate between two values instead.</p><p>That first flip is called period doubling. Repeated flips, from period $1$ to $2$ to $4$ to $8$, are one of the clearest roads from order to chaos.</p>",
+    "definition": "<p>For a map $x_{n+1}=F_r(x_n)$, a <b>period-2 orbit</b> satisfies $F_r(F_r(x))=x$ but $F_r(x)\\ne x$. <b>Period doubling</b> occurs when a stable period-$k$ orbit loses stability and a stable period-$2k$ orbit appears as a parameter changes.</p><p>The multiplier of a period-$k$ orbit is the product of derivatives around the orbit. Stability requires the absolute value of that product to be below $1$. A flip bifurcation typically occurs when the multiplier passes through $-1$, causing alternating errors to stop shrinking.</p><p><b>Assumptions that matter:</b> we are studying iterated maps; period means the smallest repeating step count; derivative products describe local stability; and period doubling is common but not the only route to chaos.</p>",
+    "worked": {
+      "problem": "For a period-2 orbit with derivatives $F'(a)=-0.4$ and $F'(b)=1.5$, decide whether the 2-cycle is stable.",
+      "skills": [
+        "cycle multipliers",
+        "derivative products",
+        "stability"
+      ],
+      "strategy": "A two-cycle returns after two steps, so multiply the two local slopes.",
+      "steps": [
+        {
+          "do": "Write the multiplier",
+          "result": "$m=F'(a)F'(b)$",
+          "why": "derivatives multiply around a cycle"
+        },
+        {
+          "do": "Substitute values",
+          "result": "$m=(-0.4)(1.5)$",
+          "why": "use the two slopes"
+        },
+        {
+          "do": "Multiply",
+          "result": "$m=-0.6$",
+          "why": "compute the product"
+        },
+        {
+          "do": "Take absolute value",
+          "result": "$|m|=0.6$",
+          "why": "stability uses magnitude"
+        },
+        {
+          "do": "Compare with $1$",
+          "result": "$0.6<1$",
+          "why": "errors shrink every two steps"
+        },
+        {
+          "do": "Classify",
+          "result": "stable period-2 orbit",
+          "why": "nearby states approach the alternating pair"
+        }
+      ],
+      "verify": "The sign indicates alternation, but the magnitude below one indicates shrinking over full cycles.",
+      "answer": "The 2-cycle is stable.",
+      "connects": "Period doubling is stability bookkeeping over repeated returns."
+    },
+    "practice": [
+      {
+        "problem": "A fixed point multiplier changes from $-0.8$ to $-1.2$. What happens to local stability?",
+        "steps": [
+          {
+            "do": "Check the first magnitude",
+            "result": "$|-0.8|=0.8$",
+            "why": "before the change"
+          },
+          {
+            "do": "Classify the first case",
+            "result": "stable",
+            "why": "$0.8<1$"
+          },
+          {
+            "do": "Check the second magnitude",
+            "result": "$|-1.2|=1.2$",
+            "why": "after the change"
+          },
+          {
+            "do": "Classify the second case",
+            "result": "unstable",
+            "why": "$1.2>1$"
+          },
+          {
+            "do": "Connect to period doubling",
+            "result": "crossing $-1$ suggests a flip",
+            "why": "alternating errors stop shrinking"
+          }
+        ],
+        "answer": "The fixed point changes from stable to unstable, consistent with a period-doubling flip."
+      },
+      {
+        "problem": "For a 2-cycle with slopes $0.5$ and $0.5$, classify it.",
+        "steps": [
+          {
+            "do": "Multiply slopes",
+            "result": "$m=0.5\\cdot0.5$",
+            "why": "cycle multiplier"
+          },
+          {
+            "do": "Simplify",
+            "result": "$m=0.25$",
+            "why": "product"
+          },
+          {
+            "do": "Take magnitude",
+            "result": "$|m|=0.25$",
+            "why": "stability test"
+          },
+          {
+            "do": "Compare with $1$",
+            "result": "$0.25<1$",
+            "why": "errors shrink every cycle"
+          },
+          {
+            "do": "Classify",
+            "result": "stable",
+            "why": "nearby points approach the 2-cycle"
+          }
+        ],
+        "answer": "The 2-cycle is stable."
+      },
+      {
+        "problem": "For a 4-cycle with slopes $-0.5,1.1,-0.8,0.6$, classify it.",
+        "steps": [
+          {
+            "do": "Write the product",
+            "result": "$m=(-0.5)(1.1)(-0.8)(0.6)$",
+            "why": "multiply around the orbit"
+          },
+          {
+            "do": "Multiply first pair",
+            "result": "$(-0.5)(1.1)=-0.55$",
+            "why": "partial product"
+          },
+          {
+            "do": "Multiply next factor",
+            "result": "$(-0.55)(-0.8)=0.44$",
+            "why": "partial product"
+          },
+          {
+            "do": "Multiply final factor",
+            "result": "$0.44\\cdot0.6=0.264$",
+            "why": "cycle multiplier"
+          },
+          {
+            "do": "Classify",
+            "result": "stable",
+            "why": "$|0.264|<1$"
+          }
+        ],
+        "answer": "The 4-cycle is stable."
+      },
+      {
+        "problem": "Starting from period $1$, list periods after four doublings.",
+        "steps": [
+          {
+            "do": "First doubling",
+            "result": "$1\\to2$",
+            "why": "double the period"
+          },
+          {
+            "do": "Second doubling",
+            "result": "$2\\to4$",
+            "why": "double again"
+          },
+          {
+            "do": "Third doubling",
+            "result": "$4\\to8$",
+            "why": "double again"
+          },
+          {
+            "do": "Fourth doubling",
+            "result": "$8\\to16$",
+            "why": "double again"
+          },
+          {
+            "do": "List the sequence",
+            "result": "$1,2,4,8,16$",
+            "why": "include the starting period"
+          }
+        ],
+        "answer": "The periods are $1,2,4,8,16$."
+      },
+      {
+        "problem": "A validation metric alternates $0.72,0.81,0.72,0.81$. What is its period, and what would period doubling look like next?",
+        "steps": [
+          {
+            "do": "Identify the repeating block",
+            "result": "$0.72,0.81$",
+            "why": "the two values repeat"
+          },
+          {
+            "do": "Count the block length",
+            "result": "$2$",
+            "why": "two steps complete one pattern"
+          },
+          {
+            "do": "State the period",
+            "result": "period $2$",
+            "why": "assuming the two values are distinct"
+          },
+          {
+            "do": "Double the period",
+            "result": "$2\\to4$",
+            "why": "next period doubling"
+          },
+          {
+            "do": "Describe a possible pattern",
+            "result": "$a,b,c,d,a,b,c,d$",
+            "why": "four distinct values would repeat"
+          }
+        ],
+        "answer": "The observed period is $2$; another doubling would create a period-$4$ pattern."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Iterated algorithms",
+        "background": "Many algorithms are maps: the next estimate is computed from the current estimate.",
+        "numbers": "Newton-style updates producing $2.0,1.5,1.4167$ are discrete iterates indexed by step."
+      },
+      {
+        "title": "Simulation step size",
+        "background": "Numerical solvers turn continuous systems into discrete maps, so stability can depend on the time step.",
+        "numbers": "Euler on $\\dot{x}=-x$ gives $x_{n+1}=(1-h)x_n$; with $h=0.1$, the multiplier is $0.9$."
+      },
+      {
+        "title": "Population fractions",
+        "background": "Maps are natural when generations do not overlap or updates happen in batches.",
+        "numbers": "A fraction $0.3$ updated by $2(0.3)(0.7)$ becomes $0.42$."
+      },
+      {
+        "title": "Optimizer updates",
+        "background": "Training loops are discrete dynamical systems on parameters.",
+        "numbers": "If $w_{k+1}=0.8w_k$ and $w_0=5$, then $w_4=0.8^4\\cdot5=2.048$."
+      },
+      {
+        "title": "Recurrent networks",
+        "background": "RNN hidden states are repeatedly updated, so fixed points and cycles describe long-run memory.",
+        "numbers": "With $h_{t+1}=0.6h_t+2$, the fixed point is $h=5$."
+      },
+      {
+        "title": "Digital filters",
+        "background": "Signal smoothing uses recurrence relations that must be stable to avoid runaway outputs.",
+        "numbers": "For $y_{n+1}=0.9y_n+0.1x_n$, an old impulse has weight $0.9^{10}\\approx0.349$ after 10 steps."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same question keeps returning: what happens when the rule is applied again and again?",
+    "takeaways": [
+      "Iterating a rule creates a discrete dynamical system.",
+      "Fixed points and cycles are long-run patterns of repeated updates.",
+      "Derivative or multiplier magnitudes below $1$ shrink local errors.",
+      "ML training loops and recurrent states use the same stability logic."
+    ],
     "prereqs": [
       "math-25-15"
     ]
@@ -342,19 +4358,262 @@
   B({
     "id": "math-25-17",
     "title": "Chaos and sensitive dependence",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: chaos and sensitive dependence.",
+    "tagline": "Chaos means deterministic rules can amplify tiny differences until prediction becomes fragile.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Period doubling</i>"
+        "period doubling",
+        "Lyapunov exponents",
+        "bounded maps"
       ],
       "leadsTo": [
-        "the next lesson, <i>Strange attractors</i>"
+        "strange attractors",
+        "fractals",
+        "forecast limits"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "fixed points",
+        "derivatives",
+        "linearization",
+        "eigenvalues"
       ]
     },
+    "motivation": "<p>It is tempting to think deterministic means predictable forever. If the rule has no randomness, surely the future is fixed. It is fixed, but it may not be practically knowable.</p><p><b>Chaos</b> appears when nearby initial states separate rapidly while the motion remains bounded and structured. Sensitive dependence is the part you feel first: a tiny measurement error can become a large forecast error.</p>",
+    "definition": "<p>A dynamical system has <b>sensitive dependence on initial conditions</b> if arbitrarily close starting states eventually separate by a noticeable amount. A common quantitative measure is a positive <b>Lyapunov exponent</b> $\\lambda$, where small errors grow roughly like $|\\delta_n|\\approx e^{\\lambda n}|\\delta_0|$ for discrete time.</p><p>This estimate comes from repeated linearization. Each step multiplies a small error by a local slope; over many steps, products of slopes turn into sums of logarithms. A positive average logarithmic growth rate means exponential error growth.</p><p><b>Assumptions that matter:</b> chaos is not mere randomness; the system is deterministic; boundedness keeps trajectories from simply escaping; and a positive Lyapunov exponent describes typical local error growth, not exact separation at every step.</p>",
+    "worked": {
+      "problem": "If two initial errors differ by $\\delta_0=10^{-6}$ and grow like $e^{0.7n}\\delta_0$, estimate the error after $10$ steps.",
+      "skills": [
+        "Lyapunov exponent",
+        "exponential growth",
+        "forecast horizon"
+      ],
+      "strategy": "Use the exponential error model and compare the result with the initial error.",
+      "steps": [
+        {
+          "do": "Write the model",
+          "result": "$\\delta_{10}=e^{0.7\\cdot10}10^{-6}$",
+          "why": "substitute $n=10$"
+        },
+        {
+          "do": "Multiply the exponent",
+          "result": "$0.7\\cdot10=7$",
+          "why": "compute growth exponent"
+        },
+        {
+          "do": "Use $e^7\\approx1096.6$",
+          "result": "$\\delta_{10}\\approx1096.6\\cdot10^{-6}$",
+          "why": "evaluate the exponential"
+        },
+        {
+          "do": "Simplify",
+          "result": "$\\delta_{10}\\approx0.00110$",
+          "why": "move the decimal"
+        },
+        {
+          "do": "Compute amplification",
+          "result": "$0.00110/10^{-6}\\approx1096.6$",
+          "why": "compare final to initial"
+        }
+      ],
+      "verify": "A millionth becoming about one thousandth is a large practical loss of precision.",
+      "answer": "After $10$ steps the error is about $0.00110$.",
+      "connects": "Sensitive dependence is exponential error growth made visible."
+    },
+    "practice": [
+      {
+        "problem": "An error doubles each step from $0.001$. What is it after $8$ steps?",
+        "steps": [
+          {
+            "do": "Write the model",
+            "result": "$\\delta_8=0.001\\cdot2^8$",
+            "why": "doubling means multiply by $2^8$"
+          },
+          {
+            "do": "Compute the power",
+            "result": "$2^8=256$",
+            "why": "eight doublings"
+          },
+          {
+            "do": "Multiply",
+            "result": "$0.001\\cdot256=0.256$",
+            "why": "scale the initial error"
+          },
+          {
+            "do": "Compare to start",
+            "result": "$0.256/0.001=256$",
+            "why": "amplification factor"
+          },
+          {
+            "do": "Interpret",
+            "result": "prediction is much less precise",
+            "why": "the uncertainty grew strongly"
+          }
+        ],
+        "answer": "The error is $0.256$."
+      },
+      {
+        "problem": "With Lyapunov exponent $\\lambda=0.2$, how many steps until an error is multiplied by about $e^2$?",
+        "steps": [
+          {
+            "do": "Set the exponent",
+            "result": "$0.2n=2$",
+            "why": "growth factor $e^{\\lambda n}$"
+          },
+          {
+            "do": "Solve for $n$",
+            "result": "$n=10$",
+            "why": "divide by $0.2$"
+          },
+          {
+            "do": "Compute the factor",
+            "result": "$e^2\\approx7.389$",
+            "why": "interpret growth"
+          },
+          {
+            "do": "Check",
+            "result": "$e^{0.2\\cdot10}=e^2$",
+            "why": "substitute back"
+          },
+          {
+            "do": "State the time",
+            "result": "10 steps",
+            "why": "integer step count"
+          }
+        ],
+        "answer": "It takes $10$ steps."
+      },
+      {
+        "problem": "For the map $F(x)=4x(1-x)$, compute the local error multiplier at $x=0.25$.",
+        "steps": [
+          {
+            "do": "Differentiate",
+            "result": "$F'(x)=4(1-2x)$",
+            "why": "derivative of the logistic map"
+          },
+          {
+            "do": "Substitute $x=0.25$",
+            "result": "$F'(0.25)=4(1-0.5)$",
+            "why": "evaluate the slope"
+          },
+          {
+            "do": "Simplify",
+            "result": "$F'(0.25)=2$",
+            "why": "local multiplier"
+          },
+          {
+            "do": "Interpret magnitude",
+            "result": "$|2|>1$",
+            "why": "nearby errors initially grow"
+          },
+          {
+            "do": "State local effect",
+            "result": "small separations double approximately",
+            "why": "linearization near the point"
+          }
+        ],
+        "answer": "The local error multiplier is $2$."
+      },
+      {
+        "problem": "If measurement precision is $10^{-4}$ and errors grow by factor $3$ per step, when do they exceed $0.1$?",
+        "steps": [
+          {
+            "do": "Write inequality",
+            "result": "$10^{-4}3^n>0.1$",
+            "why": "growth model"
+          },
+          {
+            "do": "Divide by $10^{-4}$",
+            "result": "$3^n>1000$",
+            "why": "isolate the power"
+          },
+          {
+            "do": "Compare powers",
+            "result": "$3^6=729$",
+            "why": "six steps is not enough"
+          },
+          {
+            "do": "Compute next power",
+            "result": "$3^7=2187$",
+            "why": "seven steps exceeds 1000"
+          },
+          {
+            "do": "State horizon",
+            "result": "$7$ steps",
+            "why": "first step count exceeding the threshold"
+          }
+        ],
+        "answer": "The error exceeds $0.1$ after $7$ steps."
+      },
+      {
+        "problem": "Two training runs start with losses differing by $0.0001$. After $12$ chaotic updates the difference is $0.4096$. What average per-step factor does this match if it is a power of $2$?",
+        "steps": [
+          {
+            "do": "Compute amplification",
+            "result": "$0.4096/0.0001=4096$",
+            "why": "final difference over initial difference"
+          },
+          {
+            "do": "Recognize the power",
+            "result": "$4096=2^{12}$",
+            "why": "standard power of two"
+          },
+          {
+            "do": "Relate to steps",
+            "result": "$12$ steps",
+            "why": "given update count"
+          },
+          {
+            "do": "Find per-step factor",
+            "result": "$2$",
+            "why": "$2^{12}$ over 12 steps"
+          },
+          {
+            "do": "Interpret",
+            "result": "differences doubled each step on average",
+            "why": "sensitive dependence in update space"
+          }
+        ],
+        "answer": "It matches an average factor of $2$ per step."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Iterated algorithms",
+        "background": "Many algorithms are maps: the next estimate is computed from the current estimate.",
+        "numbers": "Newton-style updates producing $2.0,1.5,1.4167$ are discrete iterates indexed by step."
+      },
+      {
+        "title": "Simulation step size",
+        "background": "Numerical solvers turn continuous systems into discrete maps, so stability can depend on the time step.",
+        "numbers": "Euler on $\\dot{x}=-x$ gives $x_{n+1}=(1-h)x_n$; with $h=0.1$, the multiplier is $0.9$."
+      },
+      {
+        "title": "Population fractions",
+        "background": "Maps are natural when generations do not overlap or updates happen in batches.",
+        "numbers": "A fraction $0.3$ updated by $2(0.3)(0.7)$ becomes $0.42$."
+      },
+      {
+        "title": "Optimizer updates",
+        "background": "Training loops are discrete dynamical systems on parameters.",
+        "numbers": "If $w_{k+1}=0.8w_k$ and $w_0=5$, then $w_4=0.8^4\\cdot5=2.048$."
+      },
+      {
+        "title": "Recurrent networks",
+        "background": "RNN hidden states are repeatedly updated, so fixed points and cycles describe long-run memory.",
+        "numbers": "With $h_{t+1}=0.6h_t+2$, the fixed point is $h=5$."
+      },
+      {
+        "title": "Digital filters",
+        "background": "Signal smoothing uses recurrence relations that must be stable to avoid runaway outputs.",
+        "numbers": "For $y_{n+1}=0.9y_n+0.1x_n$, an old impulse has weight $0.9^{10}\\approx0.349$ after 10 steps."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same question keeps returning: what happens when the rule is applied again and again?",
+    "takeaways": [
+      "Iterating a rule creates a discrete dynamical system.",
+      "Fixed points and cycles are long-run patterns of repeated updates.",
+      "Derivative or multiplier magnitudes below $1$ shrink local errors.",
+      "ML training loops and recurrent states use the same stability logic."
+    ],
     "prereqs": [
       "math-25-16"
     ]
@@ -363,19 +4622,262 @@
   B({
     "id": "math-25-18",
     "title": "Strange attractors",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: strange attractors.",
+    "tagline": "A strange attractor pulls trajectories into a bounded set with folded, fractal-like structure.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Chaos and sensitive dependence</i>"
+        "chaos and sensitive dependence",
+        "attractors",
+        "phase space"
       ],
       "leadsTo": [
-        "the next lesson, <i>Fractals</i>"
+        "fractals",
+        "ergodic ideas",
+        "chaotic time series"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "fixed points",
+        "derivatives",
+        "linearization",
+        "eigenvalues"
       ]
     },
+    "motivation": "<p>You know an attractor can be a point or a loop. In chaotic systems, the long-run destination can be neither: trajectories stay bounded, never settle, and trace a delicate folded shape.</p><p>That object is a <b>strange attractor</b>. It attracts nearby states like a stable object, but motion on it remains sensitive and richly structured.</p>",
+    "definition": "<p>A <b>strange attractor</b> is an attracting invariant set with complicated geometry, often fractal structure, and sensitive dependence on initial conditions. Invariance means that once a trajectory is on the set, the dynamics keep it on the set. Attraction means nearby trajectories approach the set over time.</p><p>The folding-and-stretching picture explains the paradox. Stretching separates nearby states, while folding keeps the set bounded. Repeating both operations creates layered structure: never escaping, never becoming a simple curve.</p><p><b>Assumptions that matter:</b> precise definitions vary across texts; attraction is judged for a basin of nearby initial states; sensitive dependence is behavior on the attractor; and numerical plots are approximations, not the attractor itself.</p>",
+    "worked": {
+      "problem": "A process stretches distances by $3$ and then folds them back into a bounded region each step. If two nearby points begin $0.0002$ apart, what is their separation after $5$ stretch phases before folding?",
+      "skills": [
+        "stretching",
+        "boundedness",
+        "chaotic amplification"
+      ],
+      "strategy": "Separate the local stretching calculation from the global folding that keeps motion bounded.",
+      "steps": [
+        {
+          "do": "Write the stretch model",
+          "result": "$d_5=0.0002\\cdot3^5$",
+          "why": "each step triples local distance"
+        },
+        {
+          "do": "Compute the power",
+          "result": "$3^5=243$",
+          "why": "five stretches"
+        },
+        {
+          "do": "Multiply",
+          "result": "$d_5=0.0486$",
+          "why": "$0.0002\\cdot243$"
+        },
+        {
+          "do": "Describe folding",
+          "result": "the region remains bounded",
+          "why": "folding prevents unlimited escape"
+        },
+        {
+          "do": "Connect both effects",
+          "result": "stretching plus folding",
+          "why": "this combination supports strange attractors"
+        }
+      ],
+      "verify": "The local separation grows, but folding is why the long-run set can stay finite.",
+      "answer": "Before folding limits the geometry, the separation is $0.0486$.",
+      "connects": "A strange attractor is organized by repeated stretching and folding."
+    },
+    "practice": [
+      {
+        "problem": "A bounded attractor lies in $0\\le x\\le2$, $0\\le y\\le3$. What rectangle contains it and what is the area?",
+        "steps": [
+          {
+            "do": "Read the $x$ bounds",
+            "result": "width $=2-0=2$",
+            "why": "horizontal span"
+          },
+          {
+            "do": "Read the $y$ bounds",
+            "result": "height $=3-0=3$",
+            "why": "vertical span"
+          },
+          {
+            "do": "Write the rectangle",
+            "result": "$[0,2]\\times[0,3]$",
+            "why": "combine coordinate bounds"
+          },
+          {
+            "do": "Compute area",
+            "result": "$2\\cdot3=6$",
+            "why": "rectangle area"
+          },
+          {
+            "do": "Interpret boundedness",
+            "result": "trajectories do not escape this box",
+            "why": "attraction is to a contained set"
+          }
+        ],
+        "answer": "The containing rectangle is $[0,2]\\times[0,3]$ with area $6$."
+      },
+      {
+        "problem": "If distances grow by $e^{0.4t}$ on an attractor, estimate growth after $5$ time units.",
+        "steps": [
+          {
+            "do": "Write the factor",
+            "result": "$e^{0.4\\cdot5}$",
+            "why": "use the exponent model"
+          },
+          {
+            "do": "Multiply exponent",
+            "result": "$2$",
+            "why": "$0.4\\cdot5=2$"
+          },
+          {
+            "do": "Evaluate",
+            "result": "$e^2\\approx7.389$",
+            "why": "standard approximation"
+          },
+          {
+            "do": "Interpret",
+            "result": "nearby distances grow about $7.4$ times",
+            "why": "local sensitivity"
+          },
+          {
+            "do": "Remember boundedness",
+            "result": "growth cannot continue forever in raw distance",
+            "why": "folding keeps the attractor bounded"
+          }
+        ],
+        "answer": "The local growth factor is about $7.389$."
+      },
+      {
+        "problem": "A simulation approaches an attractor: distances to the plotted set are $1.0,0.5,0.25,0.125$. What factor shrinks each step?",
+        "steps": [
+          {
+            "do": "Compare first two",
+            "result": "$0.5/1.0=0.5$",
+            "why": "first shrink"
+          },
+          {
+            "do": "Compare next two",
+            "result": "$0.25/0.5=0.5$",
+            "why": "second shrink"
+          },
+          {
+            "do": "Compare final pair",
+            "result": "$0.125/0.25=0.5$",
+            "why": "third shrink"
+          },
+          {
+            "do": "State the factor",
+            "result": "$0.5$",
+            "why": "consistent ratio"
+          },
+          {
+            "do": "Interpret",
+            "result": "distance halves each step",
+            "why": "attraction toward the set"
+          }
+        ],
+        "answer": "The distance-to-attractor shrinks by factor $0.5$ each step."
+      },
+      {
+        "problem": "Why is a stable limit cycle not usually called strange?",
+        "steps": [
+          {
+            "do": "Identify the geometry",
+            "result": "a smooth closed curve",
+            "why": "a limit cycle is one-dimensional and regular"
+          },
+          {
+            "do": "Identify sensitivity",
+            "result": "nearby phase errors do not typically grow chaotically",
+            "why": "motion is predictable up to phase"
+          },
+          {
+            "do": "Compare with strange attractors",
+            "result": "fractal-like folded structure",
+            "why": "strange geometry is more complicated"
+          },
+          {
+            "do": "Compare dynamics",
+            "result": "sensitive dependence on the attractor",
+            "why": "strange attractors amplify nearby differences"
+          },
+          {
+            "do": "State the distinction",
+            "result": "attracting is not enough",
+            "why": "strangeness adds geometry and sensitivity"
+          }
+        ],
+        "answer": "A limit cycle attracts, but it lacks the fractal-like geometry and sensitive dependence typical of strange attractors."
+      },
+      {
+        "problem": "A hidden-state model remains bounded with $\\|h_t\\|\\le5$ but nearby states separate from $0.001$ to $1.024$ after $10$ steps. What factor per step is suggested?",
+        "steps": [
+          {
+            "do": "Compute amplification",
+            "result": "$1.024/0.001=1024$",
+            "why": "final over initial"
+          },
+          {
+            "do": "Recognize the power",
+            "result": "$1024=2^{10}$",
+            "why": "power of two"
+          },
+          {
+            "do": "Use the step count",
+            "result": "10 steps",
+            "why": "given duration"
+          },
+          {
+            "do": "Find per-step factor",
+            "result": "$2$",
+            "why": "$2^{10}$ over ten steps"
+          },
+          {
+            "do": "Interpret with boundedness",
+            "result": "stretching happens inside a bounded region",
+            "why": "a strange-attractor-like warning sign"
+          }
+        ],
+        "answer": "The suggested per-step separation factor is $2$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Iterated algorithms",
+        "background": "Many algorithms are maps: the next estimate is computed from the current estimate.",
+        "numbers": "Newton-style updates producing $2.0,1.5,1.4167$ are discrete iterates indexed by step."
+      },
+      {
+        "title": "Simulation step size",
+        "background": "Numerical solvers turn continuous systems into discrete maps, so stability can depend on the time step.",
+        "numbers": "Euler on $\\dot{x}=-x$ gives $x_{n+1}=(1-h)x_n$; with $h=0.1$, the multiplier is $0.9$."
+      },
+      {
+        "title": "Population fractions",
+        "background": "Maps are natural when generations do not overlap or updates happen in batches.",
+        "numbers": "A fraction $0.3$ updated by $2(0.3)(0.7)$ becomes $0.42$."
+      },
+      {
+        "title": "Optimizer updates",
+        "background": "Training loops are discrete dynamical systems on parameters.",
+        "numbers": "If $w_{k+1}=0.8w_k$ and $w_0=5$, then $w_4=0.8^4\\cdot5=2.048$."
+      },
+      {
+        "title": "Recurrent networks",
+        "background": "RNN hidden states are repeatedly updated, so fixed points and cycles describe long-run memory.",
+        "numbers": "With $h_{t+1}=0.6h_t+2$, the fixed point is $h=5$."
+      },
+      {
+        "title": "Digital filters",
+        "background": "Signal smoothing uses recurrence relations that must be stable to avoid runaway outputs.",
+        "numbers": "For $y_{n+1}=0.9y_n+0.1x_n$, an old impulse has weight $0.9^{10}\\approx0.349$ after 10 steps."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same question keeps returning: what happens when the rule is applied again and again?",
+    "takeaways": [
+      "Iterating a rule creates a discrete dynamical system.",
+      "Fixed points and cycles are long-run patterns of repeated updates.",
+      "Derivative or multiplier magnitudes below $1$ shrink local errors.",
+      "ML training loops and recurrent states use the same stability logic."
+    ],
     "prereqs": [
       "math-25-17"
     ]
@@ -384,19 +4886,262 @@
   B({
     "id": "math-25-19",
     "title": "Fractals",
-    "tier": "🟡",
-    "tagline": "One concept from Dynamical systems & chaos: fractals.",
+    "tagline": "Fractals are shapes whose detail persists across scales, often with non-integer dimension.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Strange attractors</i>"
+        "self-similarity",
+        "logarithms",
+        "strange attractors"
       ],
       "leadsTo": [
-        "the next lesson, <i>Training dynamics & RNN stability</i>"
+        "fractal dimension",
+        "multiscale modeling",
+        "chaotic boundaries"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "fixed points",
+        "derivatives",
+        "linearization",
+        "eigenvalues"
       ]
     },
+    "motivation": "<p>You already know ordinary dimensions: a line is one-dimensional, a square is two-dimensional. But some shapes are too crinkly to fit cleanly into those categories.</p><p><b>Fractals</b> describe patterns whose detail repeats or persists as you zoom in. They appear in chaotic attractors, branching networks, image compression, and the rough boundaries of many natural objects.</p>",
+    "definition": "<p>A self-similar fractal is built from $N$ smaller copies of itself, each scaled by a factor $s$ in length. Its similarity dimension is $D=\\dfrac{\\log N}{\\log(1/s)}$ when the copies fit the ideal self-similar assumptions.</p><p>The formula comes from matching scale. A one-dimensional line split into two half-size copies has $2=(1/(1/2))^1$. A square split into four half-size copies has $4=(1/(1/2))^2$. Solving $N=(1/s)^D$ gives $D=\\log N/\\log(1/s)$.</p><p><b>Assumptions that matter:</b> exact similarity dimension assumes ideal self-similarity; real data only show scaling over a finite range; different fractal dimensions exist; and a fractal is not automatically chaotic, though chaos often creates fractal sets.</p>",
+    "worked": {
+      "problem": "Compute the similarity dimension of the Cantor set, built from $2$ copies scaled by $1/3$.",
+      "skills": [
+        "self-similarity",
+        "logarithms",
+        "dimension"
+      ],
+      "strategy": "Use $D=\\log N/\\log(1/s)$ with the copy count and scale factor.",
+      "steps": [
+        {
+          "do": "Identify the number of copies",
+          "result": "$N=2$",
+          "why": "two remaining thirds"
+        },
+        {
+          "do": "Identify the scale",
+          "result": "$s=1/3$",
+          "why": "each copy is one third as long"
+        },
+        {
+          "do": "Compute the denominator",
+          "result": "$\\log(1/s)=\\log3$",
+          "why": "because $1/(1/3)=3$"
+        },
+        {
+          "do": "Write the dimension",
+          "result": "$D=\\log2/\\log3$",
+          "why": "substitute into the formula"
+        },
+        {
+          "do": "Approximate",
+          "result": "$D\\approx0.631$",
+          "why": "using natural or common logs gives the same ratio"
+        }
+      ],
+      "verify": "The dimension lies between $0$ and $1$, matching a dust-like set richer than points but thinner than a line.",
+      "answer": "The Cantor set has similarity dimension $\\log2/\\log3\\approx0.631$.",
+      "connects": "Fractal dimension measures how detail scales, not just how a shape looks."
+    },
+    "practice": [
+      {
+        "problem": "Find the dimension of a line segment split into $2$ copies scaled by $1/2$.",
+        "steps": [
+          {
+            "do": "Identify copies",
+            "result": "$N=2$",
+            "why": "two halves"
+          },
+          {
+            "do": "Identify scale",
+            "result": "$s=1/2$",
+            "why": "each copy half-size"
+          },
+          {
+            "do": "Compute denominator",
+            "result": "$\\log(1/s)=\\log2$",
+            "why": "reciprocal scale"
+          },
+          {
+            "do": "Form the ratio",
+            "result": "$D=\\log2/\\log2$",
+            "why": "substitute"
+          },
+          {
+            "do": "Simplify",
+            "result": "$D=1$",
+            "why": "a line is one-dimensional"
+          }
+        ],
+        "answer": "The dimension is $1$."
+      },
+      {
+        "problem": "Find the dimension of a square split into $4$ copies scaled by $1/2$.",
+        "steps": [
+          {
+            "do": "Identify copies",
+            "result": "$N=4$",
+            "why": "four smaller squares"
+          },
+          {
+            "do": "Identify scale",
+            "result": "$s=1/2$",
+            "why": "half-size copies"
+          },
+          {
+            "do": "Write the ratio",
+            "result": "$D=\\log4/\\log2$",
+            "why": "similarity dimension"
+          },
+          {
+            "do": "Use $4=2^2$",
+            "result": "$\\log4=2\\log2$",
+            "why": "log rule"
+          },
+          {
+            "do": "Simplify",
+            "result": "$D=2$",
+            "why": "a square is two-dimensional"
+          }
+        ],
+        "answer": "The dimension is $2$."
+      },
+      {
+        "problem": "Find the Sierpinski triangle dimension with $3$ copies scaled by $1/2$.",
+        "steps": [
+          {
+            "do": "Identify copies",
+            "result": "$N=3$",
+            "why": "three corner triangles"
+          },
+          {
+            "do": "Identify scale",
+            "result": "$s=1/2$",
+            "why": "each copy half-size"
+          },
+          {
+            "do": "Write dimension",
+            "result": "$D=\\log3/\\log2$",
+            "why": "substitute"
+          },
+          {
+            "do": "Approximate logs",
+            "result": "$D\\approx1.099/0.693$",
+            "why": "natural log values"
+          },
+          {
+            "do": "Divide",
+            "result": "$D\\approx1.585$",
+            "why": "between line and area"
+          }
+        ],
+        "answer": "The dimension is $\\log3/\\log2\\approx1.585$."
+      },
+      {
+        "problem": "A coastline estimate uses box sizes $1$, $1/2$, $1/4$ with counts $10$, $18$, $32$. Estimate dimension from first and last scales.",
+        "steps": [
+          {
+            "do": "Compute count ratio",
+            "result": "$32/10=3.2$",
+            "why": "change in boxes"
+          },
+          {
+            "do": "Compute scale ratio",
+            "result": "$1/(1/4)=4$",
+            "why": "finest boxes are four times smaller"
+          },
+          {
+            "do": "Use dimension estimate",
+            "result": "$D\\approx\\log3.2/\\log4$",
+            "why": "box-counting slope"
+          },
+          {
+            "do": "Approximate",
+            "result": "$D\\approx1.163/1.386$",
+            "why": "natural logs"
+          },
+          {
+            "do": "Divide",
+            "result": "$D\\approx0.839$",
+            "why": "finite data gives a rough estimate"
+          }
+        ],
+        "answer": "The rough estimate from those two scales is $D\\approx0.839$."
+      },
+      {
+        "problem": "An image pyramid halves width and height each level. If level 0 has $1024\\times1024$ pixels, how many pixels are at level 3?",
+        "steps": [
+          {
+            "do": "Compute side scale after 3 levels",
+            "result": "$1024/2^3$",
+            "why": "halve three times"
+          },
+          {
+            "do": "Simplify side length",
+            "result": "$128$",
+            "why": "$1024/8=128$"
+          },
+          {
+            "do": "Compute pixel count",
+            "result": "$128\\cdot128$",
+            "why": "area in pixels"
+          },
+          {
+            "do": "Multiply",
+            "result": "$16384$",
+            "why": "square 128"
+          },
+          {
+            "do": "Compare to original",
+            "result": "$16384/1048576=1/64$",
+            "why": "area scales by $(1/2)^{6}$ over three levels"
+          }
+        ],
+        "answer": "Level 3 has $128\\times128=16384$ pixels."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Iterated algorithms",
+        "background": "Many algorithms are maps: the next estimate is computed from the current estimate.",
+        "numbers": "Newton-style updates producing $2.0,1.5,1.4167$ are discrete iterates indexed by step."
+      },
+      {
+        "title": "Simulation step size",
+        "background": "Numerical solvers turn continuous systems into discrete maps, so stability can depend on the time step.",
+        "numbers": "Euler on $\\dot{x}=-x$ gives $x_{n+1}=(1-h)x_n$; with $h=0.1$, the multiplier is $0.9$."
+      },
+      {
+        "title": "Population fractions",
+        "background": "Maps are natural when generations do not overlap or updates happen in batches.",
+        "numbers": "A fraction $0.3$ updated by $2(0.3)(0.7)$ becomes $0.42$."
+      },
+      {
+        "title": "Optimizer updates",
+        "background": "Training loops are discrete dynamical systems on parameters.",
+        "numbers": "If $w_{k+1}=0.8w_k$ and $w_0=5$, then $w_4=0.8^4\\cdot5=2.048$."
+      },
+      {
+        "title": "Recurrent networks",
+        "background": "RNN hidden states are repeatedly updated, so fixed points and cycles describe long-run memory.",
+        "numbers": "With $h_{t+1}=0.6h_t+2$, the fixed point is $h=5$."
+      },
+      {
+        "title": "Digital filters",
+        "background": "Signal smoothing uses recurrence relations that must be stable to avoid runaway outputs.",
+        "numbers": "For $y_{n+1}=0.9y_n+0.1x_n$, an old impulse has weight $0.9^{10}\\approx0.349$ after 10 steps."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same question keeps returning: what happens when the rule is applied again and again?",
+    "takeaways": [
+      "Iterating a rule creates a discrete dynamical system.",
+      "Fixed points and cycles are long-run patterns of repeated updates.",
+      "Derivative or multiplier magnitudes below $1$ shrink local errors.",
+      "ML training loops and recurrent states use the same stability logic."
+    ],
     "prereqs": [
       "math-25-18"
     ]
@@ -405,19 +5150,267 @@
   B({
     "id": "math-25-20",
     "title": "Training dynamics & RNN stability",
-    "tier": "🟡",
-    "tagline": "Capstone — how dynamical systems & chaos shows up directly in CS & ML.",
+    "tagline": "Training and recurrent models are dynamical systems, so stability tells us when signals learn, vanish, explode, or oscillate.",
     "connections": {
       "buildsOn": [
-        "the previous lesson, <i>Fractals</i>"
+        "discrete maps",
+        "Lyapunov functions",
+        "chaos and sensitive dependence"
       ],
       "leadsTo": [
-        "the next topic in the track"
+        "stable architectures",
+        "optimizer tuning",
+        "sequence modeling"
       ],
       "usedWith": [
-        "the other concepts in Dynamical systems & chaos and its capstone"
+        "fixed points",
+        "derivatives",
+        "linearization",
+        "eigenvalues"
       ]
     },
+    "motivation": "<p>You have already studied maps, fixed points, Lyapunov functions, and sensitive dependence. ML uses the same ideas every day, sometimes under different names.</p><p>Gradient descent iterates parameters. Recurrent neural networks iterate hidden states. Stability decides whether errors shrink, gradients vanish, activations explode, or a model keeps a useful memory without blowing up.</p>",
+    "definition": "<p>A simple training update is $w_{k+1}=w_k-\\eta\\nabla L(w_k)$, a discrete dynamical system on parameters. A simple linear RNN is $h_t=Wh_{t-1}+Ux_t$, and with zero input its stability is governed by repeated multiplication by $W$.</p><p>If $W$ has spectral radius $\\rho(W)<1$, then powers $W^t$ tend to shrink typical hidden states; if $\\rho(W)>1$, some directions can grow. In one dimension, $h_t=ah_{t-1}$ gives $h_t=a^t h_0$, so the whole story is visible: $|a|<1$ vanishes, $|a|>1$ explodes, and negative $a$ alternates signs.</p><p><b>Assumptions that matter:</b> nonlinear activations can saturate or clip growth; local linearization uses Jacobians; training stability depends on learning rate and curvature; and useful memory often requires being near stable, not blindly making every multiplier tiny.</p>",
+    "worked": {
+      "problem": "A one-dimensional RNN has $h_t=1.2h_{t-1}$ with $h_0=0.5$. Compute $h_5$ and decide whether the zero state is stable.",
+      "skills": [
+        "RNN recurrence",
+        "powers",
+        "stability"
+      ],
+      "strategy": "Repeated multiplication tells us both the hidden value and whether errors grow.",
+      "steps": [
+        {
+          "do": "Write the closed form",
+          "result": "$h_t=1.2^t h_0$",
+          "why": "iterate the same multiplier"
+        },
+        {
+          "do": "Substitute $t=5$",
+          "result": "$h_5=1.2^5\\cdot0.5$",
+          "why": "use the requested step"
+        },
+        {
+          "do": "Compute the power",
+          "result": "$1.2^5\\approx2.48832$",
+          "why": "multiply five factors"
+        },
+        {
+          "do": "Compute $h_5$",
+          "result": "$h_5\\approx1.24416$",
+          "why": "multiply by $0.5$"
+        },
+        {
+          "do": "Check the multiplier magnitude",
+          "result": "$|1.2|>1$",
+          "why": "hidden differences grow"
+        },
+        {
+          "do": "Classify zero state",
+          "result": "unstable",
+          "why": "small nonzero states move away"
+        }
+      ],
+      "verify": "The hidden state more than doubles in five steps, so the instability is visible numerically.",
+      "answer": "$h_5\\approx1.24416$, and the zero state is unstable.",
+      "connects": "RNN stability is dynamical-systems stability in ML clothing."
+    },
+    "practice": [
+      {
+        "problem": "For $h_t=0.7h_{t-1}$ with $h_0=10$, compute $h_3$ and classify stability.",
+        "steps": [
+          {
+            "do": "Write closed form",
+            "result": "$h_3=0.7^3\\cdot10$",
+            "why": "iterate the multiplier"
+          },
+          {
+            "do": "Compute power",
+            "result": "$0.7^3=0.343$",
+            "why": "multiply"
+          },
+          {
+            "do": "Compute value",
+            "result": "$h_3=3.43$",
+            "why": "multiply by 10"
+          },
+          {
+            "do": "Check magnitude",
+            "result": "$|0.7|<1$",
+            "why": "states shrink"
+          },
+          {
+            "do": "Classify",
+            "result": "stable toward zero",
+            "why": "hidden state decays"
+          }
+        ],
+        "answer": "$h_3=3.43$, and zero is stable."
+      },
+      {
+        "problem": "Gradient descent on $L(w)=\\frac12(4)w^2$ uses $w_{k+1}=w_k-\\eta4w_k$. For $\\eta=0.3$, find the multiplier and classify.",
+        "steps": [
+          {
+            "do": "Write the update",
+            "result": "$w_{k+1}=(1-4\\eta)w_k$",
+            "why": "factor out $w_k$"
+          },
+          {
+            "do": "Substitute $\\eta=0.3$",
+            "result": "$1-4(0.3)$",
+            "why": "compute multiplier"
+          },
+          {
+            "do": "Simplify",
+            "result": "$-0.2$",
+            "why": "$1-1.2=-0.2$"
+          },
+          {
+            "do": "Check magnitude",
+            "result": "$|-0.2|<1$",
+            "why": "errors shrink"
+          },
+          {
+            "do": "Interpret sign",
+            "result": "alternating but stable",
+            "why": "negative multiplier flips signs"
+          }
+        ],
+        "answer": "The multiplier is $-0.2$, so the update is stable with sign alternation."
+      },
+      {
+        "problem": "For the same loss, test $\\eta=0.6$.",
+        "steps": [
+          {
+            "do": "Use multiplier formula",
+            "result": "$1-4\\eta$",
+            "why": "from the quadratic gradient"
+          },
+          {
+            "do": "Substitute $0.6$",
+            "result": "$1-2.4$",
+            "why": "compute"
+          },
+          {
+            "do": "Simplify",
+            "result": "$-1.4$",
+            "why": "multiplier"
+          },
+          {
+            "do": "Check magnitude",
+            "result": "$1.4>1$",
+            "why": "errors grow"
+          },
+          {
+            "do": "Classify",
+            "result": "unstable",
+            "why": "the learning rate is too large"
+          }
+        ],
+        "answer": "The multiplier is $-1.4$, so the update is unstable."
+      },
+      {
+        "problem": "A diagonal recurrent matrix has eigenvalues $0.9$ and $1.1$. Which direction dominates after many steps?",
+        "steps": [
+          {
+            "do": "Compare magnitudes",
+            "result": "$|0.9|=0.9$, $|1.1|=1.1$",
+            "why": "growth depends on magnitude"
+          },
+          {
+            "do": "Classify first direction",
+            "result": "decays",
+            "why": "$0.9^t\\to0$"
+          },
+          {
+            "do": "Classify second direction",
+            "result": "grows",
+            "why": "$1.1^t$ increases"
+          },
+          {
+            "do": "Compute after 10 steps",
+            "result": "$1.1^{10}\\approx2.594$",
+            "why": "growth factor"
+          },
+          {
+            "do": "State dominant direction",
+            "result": "eigenvalue $1.1$ direction",
+            "why": "it expands while the other decays"
+          }
+        ],
+        "answer": "The eigenvalue $1.1$ direction dominates and can cause exploding hidden states."
+      },
+      {
+        "problem": "A gradient norm is clipped from $12$ to maximum $5$. What scale factor is applied, and what is the new norm?",
+        "steps": [
+          {
+            "do": "Write the scale",
+            "result": "$5/12$",
+            "why": "target norm over current norm"
+          },
+          {
+            "do": "Approximate",
+            "result": "$5/12\\approx0.4167$",
+            "why": "decimal scale"
+          },
+          {
+            "do": "Apply to the norm",
+            "result": "$12\\cdot(5/12)$",
+            "why": "scale the vector"
+          },
+          {
+            "do": "Simplify",
+            "result": "$5$",
+            "why": "clipped norm"
+          },
+          {
+            "do": "Interpret",
+            "result": "direction is preserved while size is limited",
+            "why": "clipping controls unstable updates"
+          }
+        ],
+        "answer": "The gradient is scaled by $5/12\\approx0.4167$, giving new norm $5$."
+      }
+    ],
+    "applications": [
+      {
+        "title": "Vanishing hidden states",
+        "background": "When recurrent multipliers are below one, old information fades exponentially.",
+        "numbers": "With multiplier $0.8$, a signal after $20$ steps has weight $0.8^{20}\\approx0.0115$."
+      },
+      {
+        "title": "Exploding gradients",
+        "background": "Backpropagation through time multiplies Jacobians repeatedly, so norms can grow fast.",
+        "numbers": "A factor $1.2$ over $30$ steps gives $1.2^{30}\\approx237.4$."
+      },
+      {
+        "title": "Learning-rate stability",
+        "background": "Quadratic losses show why too-large learning rates oscillate or diverge.",
+        "numbers": "For curvature $10$, gradient descent is stable when $|1-10\\eta|<1$, so $0<\\eta<0.2$."
+      },
+      {
+        "title": "Gradient clipping",
+        "background": "Clipping was popularized in sequence models to control exploding gradients without changing direction.",
+        "numbers": "A gradient norm $50$ clipped to $5$ is scaled by $5/50=0.1$."
+      },
+      {
+        "title": "Residual connections",
+        "background": "Residual updates keep Jacobians closer to identity, helping gradients move through depth.",
+        "numbers": "If each layer multiplies by $0.98$, then $100$ layers give $0.98^{100}\\approx0.133$, much larger than $0.9^{100}\\approx0.000027$."
+      },
+      {
+        "title": "Gated RNN memory",
+        "background": "LSTM and GRU gates regulate multipliers so useful information can persist.",
+        "numbers": "A forget gate $f=0.95$ keeps $0.95^{20}\\approx0.358$ of a signal after 20 steps."
+      }
+    ],
+    "applicationsClose": "Across these examples, the same question keeps returning: what happens when the rule is applied again and again?",
+    "takeaways": [
+      "Iterating a rule creates a discrete dynamical system.",
+      "Fixed points and cycles are long-run patterns of repeated updates.",
+      "Derivative or multiplier magnitudes below $1$ shrink local errors.",
+      "ML training loops and recurrent states use the same stability logic."
+    ],
     "prereqs": [
       "math-25-19"
     ]
