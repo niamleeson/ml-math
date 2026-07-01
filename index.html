@@ -1701,7 +1701,6 @@ const App = (function () {
   // ===== Math track: our own 5-section spec. Structure is enforced here, not by the author. =====
   function renderMath(l, id, prev, next) {
     const noteHTML = `<p class="scaffold-note">To be authored.</p>`;
-    const wrapP = h => /^\s*<(p|ul|ol|table|div|details|h[1-6])/i.test(h) ? h : `<p>${h}</p>`;
 
     const c = l.connections || {};
     let ci = "";
@@ -1717,10 +1716,7 @@ const App = (function () {
     let meta = "";
     if (w.skills && w.skills.length) meta += `<span class="skills">${w.skills.join(" \u00B7 ")}</span>`;
     meta = meta ? `<p class="lesson-meta">${meta}</p>` : "";
-    const hints = (w.hints || []).map((h, i) => `<details class="hint"><summary>Hint ${i + 1}</summary>${wrapP(h)}</details>`).join("");
     const steps = (w.steps || []).map(s => `<li><b>${s.do}</b>${s.result ? ` &rarr; ${s.result}` : ""}${s.why ? ` <i>${s.why}</i>` : ""}</li>`).join("");
-    const mistakes = (w.mistakes && w.mistakes.length)
-      ? `<p><b>Common mistakes.</b></p><ul class="mbul">${w.mistakes.map(m => `<li>\u274C ${m}</li>`).join("")}</ul>` : "";
     const practice = (l.practice && l.practice.length)
       ? `<p><b>Practice — ${l.practice.length} problems, each fully worked.</b> Try it, then reveal the step-by-step solution.</p>` +
         l.practice.map((pr, i) =>
@@ -1735,11 +1731,9 @@ const App = (function () {
       ? meta +
         (w.problem ? `<p>${w.problem}</p>` : "") +
         (w.strategy ? `<p class="strategy"><b>Strategy.</b> ${w.strategy}</p>` : "") +
-        hints +
         (steps ? `<p>Now, one operation at a time:</p><ol class="mnum">${steps}</ol>` : "") +
         (w.verify ? `<p><b>Verify.</b> ${w.verify}</p>` : "") +
         (w.answer ? `<p><b>Answer:</b> ${w.answer}</p>` : "") +
-        mistakes +
         (w.connects ? `<p class="connects"><b>Connects to:</b> ${w.connects}</p>` : "") +
         practice
       : noteHTML;

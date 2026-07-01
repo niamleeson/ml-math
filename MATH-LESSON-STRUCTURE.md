@@ -63,11 +63,10 @@ property rather than asserting it. Fold in the conditions/assumptions that must 
 
 ### 4. Worked Example & Practice
 One fully guided worked example in the **guided-walkthrough format** (below) — skills tags,
-strategy cue, revealable hints, one-operation-per-step, verify, common mistakes, answer,
-connects-to — then **5 practice problems**, each with a full revealable step-by-step solution
-(see *Practice-set design*). The worked example ends with **one sentence** planting the key
-reading (e.g. "the exponent −2 is a pole; negative means it decays — stable") that section 5
-builds on.
+strategy cue, one-operation-per-step, verify, answer, connects-to — then **5 practice problems**,
+each with a full revealable step-by-step solution (see *Practice-set design*). The worked example
+ends with **one sentence** planting the key reading (e.g. "the exponent −2 is a pole; negative
+means it decays — stable") that section 5 builds on.
 
 *Voice: patient.*
 
@@ -89,13 +88,17 @@ Close on the transferable thread ("one idea, many uniforms").
 
 1. **Problem** + skills tags. (No difficulty badge — it added noise, not signal.)
 2. **Strategy cue** — one line naming the obstacle and the tool.
-3. **Hints** — 2–3 progressive and fading, rendered as revealable `<details class="hint">` toggles.
-4. **Step-by-step** — **one operation per step**: `action → result`, then a short italic *why*.
-   Define notation up front.
-5. **Verify** — substitute back / sanity check (✓).
-6. **Common mistakes** — 2–3 ❌ with how to avoid.
-7. **Answer** — stated plainly.
-8. **Connects to** — one line back to the lesson's concept.
+3. **Step-by-step** — **one operation per step**: `action → result`, then a short italic *why*.
+   Define notation up front. No separate hints: if a pointer is worth giving, put it directly in
+   the strategy cue or a step's *why*.
+4. **Verify** — substitute back / sanity check, in words (no check-mark glyphs).
+5. **Answer** — stated plainly.
+6. **Connects to** — one line back to the lesson's concept.
+
+**No "Common mistakes" section.** If a misconception is important, address it inside the definition
+or a step's *why* — do not add a separate list.
+
+**No hints. No emojis** — not ✓, ❌, ⚠, or any decorative glyph. Plain words only.
 
 **Rule: never bundle operations.** "Substitute, factor, and isolate" is three steps, not one.
 
@@ -110,24 +113,22 @@ worked: {
   problem: "Compute …",
   skills: ["factoring", "indeterminate forms"],
   strategy: "Direct substitution gives 0/0 — rewrite before you plug in.",
-  hints: ["Factor the numerator.", "Cancel the common factor, then substitute."],
   steps: [ { do: "Factor", result: "(x-1)(x+1)/(x-1)", why: "difference of squares" } ],
-  verify: "x=0.99 → 1.99 and x=1.01 → 2.01 ✓",
+  verify: "x=0.99 → 1.99 and x=1.01 → 2.01, closing on 2 from both sides",
   answer: "2",
-  mistakes: ["Saying the limit doesn't exist because f(1) is undefined."],
   connects: "continuity — the limit is f's continuous extension at x=1."
 }
 ```
 
 ---
 
-## Interactive elements
+## Interactivity
 
-- **Revealable hints and step-by-step solutions** — native `<details class="hint">` toggles. Zero
-  JS, work inside the textbook page, keep it uncluttered until the learner asks. This is the only
-  interactivity the math track uses.
-- **No custom widgets.** Do not add sliders, canvases, or `demo(host)` functions — they distract
-  from the reading. If a visual is essential, prefer a static figure.
+- **Revealable step-by-step solutions** for the 5 practice problems — native
+  `<details class="hint">` toggles (try it yourself, then reveal). This is the *only* interactivity
+  the math track uses.
+- **No hints, no widgets, no sliders/canvases/`demo()`** — they distract from the reading. If a
+  visual is essential, prefer a static figure.
 
 ---
 
@@ -157,7 +158,7 @@ revealable step-by-step solution; it will not accept trivial answer-only entries
   `<table class="extable">` for tables. Never use the app's `.steps` class in math lessons —
   its number-circles and connecting line are distracting. In authored data you just supply
   `steps: [{do,result,why}]`; `renderMath` emits the plain markup.
-- ✓ for verified checks, ❌ for pitfalls.
+- No check-marks, crosses, warning signs, or any emoji/decorative glyph — plain words only.
 - **One operation per step, always. Every application shows real numbers.**
 
 ---
@@ -190,9 +191,8 @@ B({
   definition: "…",             // §3
   worked: {                    // §4  (renderer lays out the guided-walkthrough)
     problem: "…", skills: ["…"], strategy: "…",
-    hints: ["…"],              // → revealable <details>
     steps: [{ do: "…", result: "…", why: "…" }],   // one operation per step
-    verify: "…", answer: "…", mistakes: ["…"], connects: "…"
+    verify: "…", answer: "…", connects: "…"
   },
   practice: [                  // exactly 5 problems, each fully worked (REQUIRED)
     { problem: "…", steps: [{ do: "…", result: "…", why: "…" }], answer: "…" }  // ×5

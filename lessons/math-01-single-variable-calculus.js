@@ -461,11 +461,6 @@
         "one-sided limits"
       ],
       "strategy": "Direct substitution gives $\\tfrac00$, an indeterminate form. Rewrite to cancel what causes the $0$, then substitute.",
-      "hints": [
-        "Plug in $x=1$ first and name the problem you hit.",
-        "The numerator $x^2-1$ is a difference of squares — factor it.",
-        "Cancel the common $(x-1)$ — legal, since the limit never sets $x=1$ — then substitute."
-      ],
       "steps": [
         {
           "do": "Try direct substitution",
@@ -488,13 +483,8 @@
           "why": "the simplified form is continuous, so plugging in is safe"
         }
       ],
-      "verify": "$x=0.99\\to1.99$ and $x=1.01\\to2.01$ — closing on $2$ from both sides &#10003;.",
+      "verify": "$x=0.99\\to1.99$ and $x=1.01\\to2.01$ — closing on $2$ from both sides.",
       "answer": "$\\displaystyle\\lim_{x\\to1}\\frac{x^2-1}{x-1}=2$",
-      "mistakes": [
-        "Declaring the limit \"does not exist\" because $f(1)$ is undefined — the value <i>at</i> the point is irrelevant.",
-        "Forgetting the cancelled form $x+1$ only equals $f$ for $x\\ne1$.",
-        "Checking one side only — the left and right limits must agree."
-      ],
       "connects": "continuity — the answer $2$ is exactly $f$'s continuous extension at $x=1$, filling the hole in the graph."
     },
     "practice": [

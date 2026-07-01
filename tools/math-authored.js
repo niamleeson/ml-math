@@ -7,16 +7,17 @@
        connections: { buildsOn:[], leadsTo:[], usedWith:[] },   // §1
        motivation: "html",                                       // §2
        definition: "html",                                       // §3
-       worked: { problem, difficulty, skills:[], strategy,       // §4
-                 hints:[], steps:[{do,result,why}],
-                 verify, answer, mistakes:[], connects },
-       practice: [{problem, answer}],
+       worked: { problem, skills:[], strategy,                   // §4
+                 steps:[{do,result,why}], verify, answer, connects },
+       practice: [{problem, steps:[{do,result,why}], answer}],   // exactly 5
        applications: [{title, background, numbers}],             // §5 (>=6)
-       takeaways: [],
-       demo?: function(host){}                                   // optional widget
+       applicationsClose: "html",
+       takeaways: []
      }
 
    The renderer enforces the structure; the author only fills fields.
+   No hints, no common-mistakes section, no emojis — fold anything relevant
+   straight into the walkthrough or the definition.
    ===================================================================== */
 "use strict";
 
@@ -265,24 +266,14 @@ const t1_limits = {
     problem: "Compute $\\displaystyle\\lim_{x\\to1}\\frac{x^2-1}{x-1}$.",
     skills: ["factoring", "indeterminate forms", "one-sided limits"],
     strategy: "Direct substitution gives $\\tfrac00$, an indeterminate form. Rewrite to cancel what causes the $0$, then substitute.",
-    hints: [
-      "Plug in $x=1$ first and name the problem you hit.",
-      "The numerator $x^2-1$ is a difference of squares — factor it.",
-      "Cancel the common $(x-1)$ — legal, since the limit never sets $x=1$ — then substitute."
-    ],
     steps: [
       { do: "Try direct substitution", result: "$\\tfrac00$", why: "indeterminate — substitution alone fails" },
       { do: "Factor the numerator", result: "$\\dfrac{(x-1)(x+1)}{x-1}$", why: "difference of squares" },
       { do: "Cancel $(x-1)$", result: "$x+1$ (for $x\\ne1$)", why: "the limit ignores the single point $x=1$" },
       { do: "Substitute $x=1$", result: "$2$", why: "the simplified form is continuous, so plugging in is safe" }
     ],
-    verify: "$x=0.99\\to1.99$ and $x=1.01\\to2.01$ — closing on $2$ from both sides &#10003;.",
+    verify: "$x=0.99\\to1.99$ and $x=1.01\\to2.01$ — closing on $2$ from both sides.",
     answer: "$\\displaystyle\\lim_{x\\to1}\\frac{x^2-1}{x-1}=2$",
-    mistakes: [
-      "Declaring the limit \"does not exist\" because $f(1)$ is undefined — the value <i>at</i> the point is irrelevant.",
-      "Forgetting the cancelled form $x+1$ only equals $f$ for $x\\ne1$.",
-      "Checking one side only — the left and right limits must agree."
-    ],
     connects: "continuity — the answer $2$ is exactly $f$'s continuous extension at $x=1$, filling the hole in the graph."
   },
   practice: [
@@ -361,11 +352,6 @@ const laplace = {
     problem: "Solve the initial-value problem $y'+2y=2$, with $y(0)=0$. Let $Y=\\mathcal{L}\\{y(t)\\}$.",
     skills: ["derivative property", "partial fractions", "table inversion"],
     strategy: "The derivative is the obstacle — transform to turn it into algebra; the initial condition rides along.",
-    hints: [
-      "Apply $\\mathcal{L}$; use $\\mathcal{L}\\{y'\\}=sY-y(0)$ and $\\mathcal{L}\\{2\\}=2/s$.",
-      "Get every $Y$ term on the left, then isolate $Y$.",
-      "Split with partial fractions, then invert each term by sight."
-    ],
     steps: [
       { do: "Apply $\\mathcal{L}$ to both sides", result: "$\\mathcal{L}\\{y'\\}+2Y=\\mathcal{L}\\{2\\}$", why: "linearity transforms each term separately" },
       { do: "Replace $\\mathcal{L}\\{y'\\}$ with $sY-y(0)$", result: "$sY-y(0)+2Y=\\mathcal{L}\\{2\\}$", why: "this removes the derivative" },
@@ -376,14 +362,9 @@ const laplace = {
       { do: "Partial fractions", result: "$Y=\\dfrac{1}{s}-\\dfrac{1}{s+2}$", why: "match table entries" },
       { do: "Invert each term", result: "$y(t)=1-e^{-2t}$", why: "$\\mathcal{L}^{-1}\\{1/(s+a)\\}=e^{-at}$" }
     ],
-    verify: "$y(0)=1-1=0$ &#10003; and $y'+2y=2e^{-2t}+2(1-e^{-2t})=2$ &#10003;. The exponent $-2$ is a <b>pole</b>; negative means it decays — stable.",
+    verify: "$y(0)=1-1=0$ and $y'+2y=2e^{-2t}+2(1-e^{-2t})=2$, both check out. The exponent $-2$ is a <b>pole</b>; negative means it decays — stable.",
     answer: "$y(t)=1-e^{-2t}$ (rises to steady state $1$ with time constant $1/2$)",
-    mistakes: [
-      "Dropping the $-y(0)$ term (the #1 error).",
-      "Ignoring the region of convergence when inverting.",
-      "Double-counting the initial condition."
-    ],
-    connects: "poles &amp; stability — the roots in $s$ are the system's natural modes, and their real parts decide whether it decays, blows up, or oscillates."
+    connects: "poles and stability — the roots in $s$ are the system's natural modes, and their real parts decide whether it decays, blows up, or oscillates."
   },
   practice: [
     { problem: "$y'+3y=0,\\ y(0)=5$", answer: "$y=5e^{-3t}$" },

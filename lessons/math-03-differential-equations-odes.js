@@ -587,11 +587,6 @@
         "table inversion"
       ],
       "strategy": "The derivative is the obstacle — transform to turn it into algebra; the initial condition rides along.",
-      "hints": [
-        "Apply $\\mathcal{L}$; use $\\mathcal{L}\\{y'\\}=sY-y(0)$ and $\\mathcal{L}\\{2\\}=2/s$.",
-        "Get every $Y$ term on the left, then isolate $Y$.",
-        "Split with partial fractions, then invert each term by sight."
-      ],
       "steps": [
         {
           "do": "Apply $\\mathcal{L}$ to both sides",
@@ -634,14 +629,9 @@
           "why": "$\\mathcal{L}^{-1}\\{1/(s+a)\\}=e^{-at}$"
         }
       ],
-      "verify": "$y(0)=1-1=0$ &#10003; and $y'+2y=2e^{-2t}+2(1-e^{-2t})=2$ &#10003;. The exponent $-2$ is a <b>pole</b>; negative means it decays — stable.",
+      "verify": "$y(0)=1-1=0$ and $y'+2y=2e^{-2t}+2(1-e^{-2t})=2$, both check out. The exponent $-2$ is a <b>pole</b>; negative means it decays — stable.",
       "answer": "$y(t)=1-e^{-2t}$ (rises to steady state $1$ with time constant $1/2$)",
-      "mistakes": [
-        "Dropping the $-y(0)$ term (the #1 error).",
-        "Ignoring the region of convergence when inverting.",
-        "Double-counting the initial condition."
-      ],
-      "connects": "poles &amp; stability — the roots in $s$ are the system's natural modes, and their real parts decide whether it decays, blows up, or oscillates."
+      "connects": "poles and stability — the roots in $s$ are the system's natural modes, and their real parts decide whether it decays, blows up, or oscillates."
     },
     "practice": [
       {
