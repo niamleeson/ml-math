@@ -1787,7 +1787,7 @@ module.exports = {
         }
       ],
       "verify": "A small gradient-descent step with learning rate $0.1$ gives $w_2=-1.4505$, $b_2=0.245$, $w_1=0.365$, $b_1=0.0325$. The output moves from $-1.45$ to about $-1.355$, closer to target $-1$ and with lower loss.",
-      "answer": "$\nabla L=(\\partial L/\\partial w_1,\\partial L/\\partial b_1,\\partial L/\\partial w_2,\\partial L/\\partial b_2)=(1.35,0.675,-0.495,-0.45)$.",
+      "answer": "$\\nabla L=(\\partial L/\\partial w_1,\\partial L/\\partial b_1,\\partial L/\\partial w_2,\\partial L/\\partial b_2)=(1.35,0.675,-0.495,-0.45)$.",
       "connects": "Backprop is the chain rule flowing backward through a computational graph, reusing each local derivative exactly where it is needed."
     },
     "practice": [
