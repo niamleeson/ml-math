@@ -709,15 +709,10 @@
     "Game theory",
     "Dynamical systems & chaos",
     "Control theory",
-    "Numerical methods / scientific computing",
-    // === Curriculum — team upskilling track (from the AFP-AI Learning Guide; nested under "Curriculum") ===
-    "Domain 0 · ML Foundations",
-    "Domain 1 · Core: Ranking & Evaluation",
-    "Domain 2 · Recommenders, Embeddings & Retrieval",
-    "Domain 3 · Unsupervised",
-    "Domain 4 · Applied LLMs / GenAI",
-    "Domain 5 · Bandits & RL",
-    "Domain 6 · Optimization & Marketplace"
+    "Numerical methods / scientific computing"
+    // NOTE: the Curriculum track (superGroup "Curriculum") is intentionally NOT listed here.
+    // Modules absent from MODULE_ORDER sort last (index 99), and afp-ai.js loads after the
+    // All ML scripts, so the Curriculum umbrella renders *below* "All ML" in the sidebar.
   ];
 </script>
 
@@ -1304,9 +1299,6 @@
 <script src="lessons/math-26-control-theory.js"></script>
 <script src="lessons/math-27-numerical-methods-scientific-computing.js"></script>
 
-<!-- Curriculum track — generated (template:"afp" -> renderAFP). -->
-<script src="lessons/afp-ai.js"></script>
-
 <!-- All ML curriculum: data, authored content, and its own (separate) textbook renderer. -->
 <script src="lessons/all-ml.js"></script>
 <script src="lessons/all-ml-content.js"></script>
@@ -1363,6 +1355,10 @@
 <script src="lessons/all-ml-content-part-27.js"></script>
 <script src="lessons/all-ml-apps-part-27.js"></script>
 <script src="lessons/all-ml-register.js"></script>
+
+<!-- Curriculum track — generated (template:"afp" -> renderAFP). Loaded AFTER the All ML
+     scripts so the "Curriculum" umbrella (kept out of MODULE_ORDER) renders below "All ML". -->
+<script src="lessons/afp-ai.js"></script>
 
 <!-- Light / dark theme toggle, persisted in localStorage. -->
 <script>
