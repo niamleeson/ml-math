@@ -14,7 +14,7 @@ const M15 = {
   connections: {
     buildsOn: ["feature vectors and scaling", "distances and norms", "basic probability densities"],
     leadsTo: ["persona discovery", "topic modeling", "retrieval evaluation without labels"],
-    usedWith: ["PCA or UMAP for visualization", "silhouette and stability metrics", "human review of cluster names"]
+    usedWith: ["PCA (principal component analysis) or UMAP (uniform manifold approximation and projection) for visualization", "silhouette and stability metrics", "human review of cluster names"]
   },
   motivation:
     "<p>You already know how to train a model when the answer column exists. Clustering starts one step earlier: the data has useful shape, but no one has labeled the personas, cohorts, or content groups yet. In ads and marketplace work, that is common. We may have creator bios, viewer behavior, campaign goals, and creative embeddings, but no canonical list of cohorts waiting in a table.</p>" +
@@ -22,10 +22,10 @@ const M15 = {
   definition:
     "<p><b>Definition.</b> Given feature vectors $x_1,\\ldots,x_n \\in \\mathbb{R}^d$, clustering partitions or softly assigns the points into groups so points in the same group are more similar than points in different groups. For k-means, the objective is the within-cluster sum of squared errors:</p>" +
     "$$\\min_{C_1,\\ldots,C_k,\\mu_1,\\ldots,\\mu_k} \\sum_{j=1}^k \\sum_{x_i \\in C_j} \\|x_i-\\mu_j\\|_2^2.$$" +
-    "<p>A Gaussian mixture model instead assumes $p(x)=\\sum_{j=1}^k \\pi_j\\mathcal{N}(x\\mid\\mu_j,\\Sigma_j)$ and returns soft responsibilities. Density methods such as DBSCAN and HDBSCAN define clusters as dense regions separated by sparse space; they can mark noise and do not require choosing $k$.</p>",
+    "<p>A Gaussian mixture model instead assumes $p(x)=\\sum_{j=1}^k \\pi_j\\mathcal{N}(x\\mid\\mu_j,\\Sigma_j)$ and returns soft responsibilities. Density methods such as DBSCAN (density-based spatial clustering of applications with noise) and HDBSCAN (hierarchical density-based spatial clustering of applications with noise) define clusters as dense regions separated by sparse space; they can mark noise and do not require choosing $k$.</p>",
   symbols: [
     { sym: "$x_i \\in \\mathbb{R}^d$", desc: "the feature vector for member, creator, ad, or content item $i$." },
-    { sym: "$k$", desc: "the requested number of k-means or GMM groups." },
+    { sym: "$k$", desc: "the requested number of k-means or GMM (Gaussian mixture model) groups." },
     { sym: "$C_j$", desc: "the set of points assigned to cluster $j$." },
     { sym: "$\\mu_j$", desc: "cluster $j$'s centroid or Gaussian mean." },
     { sym: "$\\Sigma_j$", desc: "cluster $j$'s covariance in a Gaussian mixture." },
@@ -33,10 +33,10 @@ const M15 = {
     { sym: "$s_i$", desc: "silhouette score for point $i$, comparing its own-cluster distance to nearest-other-cluster distance." }
   ],
   derivation: [
-    { do: "Fix centroids in k-means", result: "assign each $x_i$ to the nearest $\\mu_j$", why: "with centroids fixed, the SSE contribution for a point is minimized by its closest centroid" },
+    { do: "Fix centroids in k-means", result: "assign each $x_i$ to the nearest $\\mu_j$", why: "with centroids fixed, the SSE (sum of squared errors) contribution for a point is minimized by its closest centroid" },
     { do: "Fix assignments", result: "set $\\mu_j=\\frac{1}{|C_j|}\\sum_{x_i\\in C_j}x_i$", why: "the mean is the squared-error minimizer for points in one cluster" },
     { do: "Alternate the two steps", result: "Lloyd's algorithm monotonically decreases SSE until assignments stop changing", why: "each assignment or mean update cannot increase the objective" },
-    { do: "Replace hard labels by mixture probabilities", result: "$r_{ij}=\\frac{\\pi_j\\mathcal{N}(x_i\\mid\\mu_j,\\Sigma_j)}{\\sum_{\\ell}\\pi_{\\ell}\\mathcal{N}(x_i\\mid\\mu_{\\ell},\\Sigma_{\\ell})}$", why: "the EM E-step computes how much each component explains each point" },
+    { do: "Replace hard labels by mixture probabilities", result: "$r_{ij}=\\frac{\\pi_j\\mathcal{N}(x_i\\mid\\mu_j,\\Sigma_j)}{\\sum_{\\ell}\\pi_{\\ell}\\mathcal{N}(x_i\\mid\\mu_{\\ell},\\Sigma_{\\ell})}$", why: "the EM (expectation-maximization) E-step computes how much each component explains each point" },
     { do: "Validate without labels", result: "use silhouette, Davies-Bouldin, elbow curves, and resampling stability", why: "unsupervised scores are proxies, so agreement across several checks is safer than trusting one number" }
   ],
   worked: {
@@ -249,8 +249,8 @@ const M16 = {
     usedWith: ["standardization", "clustering", "Mahalanobis distance and reconstruction error"]
   },
   motivation:
-    "<p>Modern ads and ML systems create wide feature tables: creative embeddings, audience summaries, campaign metrics, pacing signals, and text features can easily reach hundreds or thousands of dimensions. People cannot inspect that space directly, but many problems still ask for a human-readable map: what groups exist, what changed, and which points are strange?</p>" +
-    "<p>Dimensionality reduction makes a faithful small view of the large space. PCA gives the best linear low-dimensional summary by variance; UMAP and t-SNE give nonlinear visual maps that are excellent for exploration but should not be treated as calibrated distances. Anomaly detection then asks which points are poorly reconstructed, isolated, locally rare, or far under the normal covariance shape.</p>",
+    "<p>Modern ads and ML (machine learning) systems create wide feature tables: creative embeddings, audience summaries, campaign metrics, pacing signals, and text features can easily reach hundreds or thousands of dimensions. People cannot inspect that space directly, but many problems still ask for a human-readable map: what groups exist, what changed, and which points are strange?</p>" +
+    "<p>Dimensionality reduction makes a faithful small view of the large space. PCA (principal component analysis) gives the best linear low-dimensional summary by variance; UMAP (uniform manifold approximation and projection) and t-SNE (t-distributed stochastic neighbor embedding) give nonlinear visual maps that are excellent for exploration but should not be treated as calibrated distances. Anomaly detection then asks which points are poorly reconstructed, isolated, locally rare, or far under the normal covariance shape.</p>",
   definition:
     "<p><b>Definition.</b> PCA centers data matrix $X \\in \\mathbb{R}^{n\\times d}$, computes covariance $S=\\frac{1}{n-1}X_c^\\top X_c$, and chooses eigenvectors with largest eigenvalues. The $r$-dimensional projection is</p>" +
     "$$Z=X_c W_r,$$" +
@@ -338,11 +338,11 @@ const M16 = {
   applications: [
     { title: "Creative Intelligence embedding maps", background: "Creative Intelligence systems often embed ad copy and image concepts into hundreds of dimensions. PCA or UMAP gives reviewers a map for browsing themes before creating supervised labels.", numbers: "If 768-dimensional creative embeddings reduce to 2 PCA components explaining 31% and 14% variance, the map preserves 45% of linear variance. That is enough for exploration, not enough to replace the original embedding for ranking." },
     { title: "Instream Ads content exploration", background: "Video inventory can be summarized by transcript, visual, and engagement features. A two-dimensional nonlinear map helps reviewers see pockets of tutorials, interviews, and promotional clips.", numbers: "From 100,000 videos, reviewing 50 nearest neighbors around each of 20 map landmarks touches 1,000 videos, or 1% of inventory. If 16 landmarks are coherent, the quick map review has an 80% landmark success rate." },
-    { title: "Audience segmentation quality checks", background: "After clustering audiences, PCA helps show whether segments are separated by real feature variation or by one noisy feature. This is a diagnostic view before launch.", numbers: "If PC1 explains 52% variance and a cohort's centroid is 1.8 standard deviations above average on PC1, while another is -1.2, their separation along PC1 is 3.0 standard deviations." },
+    { title: "Audience segmentation quality checks", background: "After clustering audiences, PCA helps show whether segments are separated by real feature variation or by one noisy feature. This is a diagnostic view before launch.", numbers: "If PC1 (first principal component) explains 52% variance and a cohort's centroid is 1.8 standard deviations above average on PC1, while another is -1.2, their separation along PC1 is 3.0 standard deviations." },
     { title: "Anomaly detection on ads metrics", background: "Daily campaign metrics such as impressions, CTR, CPC, spend, and conversions form a normal operating cloud. Outlier scores identify days worth investigating for tracking, auction, or pacing issues.", numbers: "For standardized metrics with diagonal covariance, a day at $(3,0,2,0,1)$ has squared distance $3^2+0^2+2^2+0^2+1^2=14$. In 5 dimensions, that is a much stronger flag than a day with score 4." },
-    { title: "Creator Marketplace suspicious cohort shifts", background: "A creator cohort's feature distribution can drift after a product or inventory change. PCA gives a stable low-dimensional view for comparing this week to last week.", numbers: "If last week's centroid in PC space is $(0.2,-0.1)$ and this week's is $(1.4,0.5)$, the shift length is $\\sqrt{1.2^2+0.6^2}\\approx1.34$ PC units. That number is easy to track over releases." },
+    { title: "Creator Marketplace suspicious cohort shifts", background: "A creator cohort's feature distribution can drift after a product or inventory change. PCA gives a stable low-dimensional view for comparing this week to last week.", numbers: "If last week's centroid in PC (principal component) space is $(0.2,-0.1)$ and this week's is $(1.4,0.5)$, the shift length is $\\sqrt{1.2^2+0.6^2}\\approx1.34$ PC units. That number is easy to track over releases." },
     { title: "Feature monitoring for model inputs", background: "PCA reconstruction error can monitor whether live feature vectors still look like training data. It catches correlated shifts that per-feature dashboards can miss.", numbers: "If the training 99th percentile reconstruction error is 2.8 and today's p99 is 5.6, the tail error doubled. A live vector with error 7.0 is $7.0/2.8=2.5\\times$ the training p99 threshold." },
-    { title: "Local Outlier Factor for niche inventory", background: "Some campaigns naturally serve niche inventory, so global distance alone may overflag them. LOF compares a point with its local neighborhood, which is useful when density varies across segments.", numbers: "If a video's local reachability density is 0.25 and its neighbors average 0.75, a simple LOF-style ratio is $0.75/0.25=3.0$, suggesting the point is much sparser than its local context." }
+    { title: "Local Outlier Factor for niche inventory", background: "Some campaigns naturally serve niche inventory, so global distance alone may overflag them. LOF (local outlier factor) compares a point with its local neighborhood, which is useful when density varies across segments.", numbers: "If a video's local reachability density is 0.25 and its neighbors average 0.75, a simple LOF-style ratio is $0.75/0.25=3.0$, suggesting the point is much sparser than its local context." }
   ],
   applicationsClose:
     "<p>Dimensionality reduction and anomaly detection are the inspection tools of high-dimensional ML systems. PCA tells you which linear directions carry variance; UMAP helps humans browse neighborhoods; anomaly scores tell you which examples deserve attention before they become incidents.</p>",

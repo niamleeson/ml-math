@@ -23,8 +23,8 @@ const M17 = {
       "sequence modeling"
     ],
     "leadsTo": [
-      "LLM fundamentals + prompting",
-      "RAG & query understanding",
+      "LLM (large language model) fundamentals + prompting",
+      "RAG (retrieval-augmented generation) & query understanding",
       "semantic retrieval",
       "multimodal creative intelligence"
     ],
@@ -384,8 +384,8 @@ const M18 = {
       "probability chains"
     ],
     "leadsTo": [
-      "RAG & query understanding",
-      "LLM evaluation",
+      "RAG (retrieval-augmented generation) & query understanding",
+      "LLM (large language model) evaluation",
       "agentic workflows",
       "creative generation guardrails"
     ],
@@ -719,7 +719,7 @@ const M19 = {
     "buildsOn": [
       "embeddings",
       "cosine similarity",
-      "LLM prompting",
+      "LLM (large language model) prompting",
       "classification thresholds"
     ],
     "leadsTo": [
@@ -736,7 +736,7 @@ const M19 = {
       "confidence calibration"
     ]
   },
-  "motivation": "<p>An LLM can sound confident even when it is missing product facts. RAG changes the job: first retrieve relevant evidence, then ask the model to answer from that evidence, and fall back when retrieval is weak. This is how we keep language interfaces useful without asking them to memorize every campaign rule, creator taxonomy, or policy detail.</p><p>Query understanding adds one more production step. A Creator Marketplace search such as 'enterprise AI creators in Canada with security audience' must become structured intent and slots before retrieval, ranking, and filters can work. The safest system measures confidence and chooses answer-versus-fallback deliberately.</p>",
+  "motivation": "<p>An LLM can sound confident even when it is missing product facts. RAG (retrieval-augmented generation) changes the job: first retrieve relevant evidence, then ask the model to answer from that evidence, and fall back when retrieval is weak. This is how we keep language interfaces useful without asking them to memorize every campaign rule, creator taxonomy, or policy detail.</p><p>Query understanding adds one more production step. A Creator Marketplace search such as 'enterprise AI creators in Canada with security audience' must become structured intent and slots before retrieval, ranking, and filters can work. The safest system measures confidence and chooses answer-versus-fallback deliberately.</p>",
   "definition": "<p><b>Definition.</b> Retrieval-augmented generation uses a pipeline</p><p>$$\\text{query} \\to \\text{retrieve}(k) \\to \\text{augment prompt with evidence} \\to \\text{generate grounded answer}.$$</p><p>Dense retrieval commonly scores a query embedding $q$ and chunk embedding $c_i$ by cosine similarity $s_i=\\frac{q^\\top c_i}{\\|q\\|\\|c_i\\|}$. A reranker may rescore the top candidates. For natural-language to structured parsing, the system predicts intent, slots, and a confidence score; if confidence is below threshold $\\gamma$, it returns a fallback rather than a brittle interpretation.</p>",
   "symbols": [
     {
@@ -968,7 +968,7 @@ const M19 = {
   "takeaways": [
     "RAG follows retrieve, augment, generate; the generated answer should be grounded in cited chunks.",
     "Cosine similarity and reranking turn a natural-language request into ranked evidence.",
-    "NL-to-structured systems need confidence thresholds and fallbacks because a bad parse can be worse than no parse."
+    "NL (natural language)-to-structured systems need confidence thresholds and fallbacks because a bad parse can be worse than no parse."
   ],
   "resources": [
     {

@@ -101,16 +101,16 @@ const M2 = {
     }
   ],
   applications: [
-    { title: "Palette-driven pCTR feature clocks", background: "pCTR models often use member, advertiser, and context aggregates. The useful signal is past behavior, but the label is future click behavior, so the clock boundary decides whether the feature is valid.", numbers: "For an impression at 10:00, 12 campaign clicks from 09:00-09:59 are valid. The 3 clicks from 10:00-10:05 are invalid for that row; including them can move a sparse campaign feature from 12 to 15, a 25% leak-driven lift." },
+    { title: "Palette-driven pCTR (predicted click-through rate) feature clocks", background: "pCTR models often use member, advertiser, and context aggregates. The useful signal is past behavior, but the label is future click behavior, so the clock boundary decides whether the feature is valid.", numbers: "For an impression at 10:00, 12 campaign clicks from 09:00-09:59 are valid. The 3 clicks from 10:00-10:05 are invalid for that row; including them can move a sparse campaign feature from 12 to 15, a 25% leak-driven lift." },
     { title: "Creator Marketplace AI high-cardinality IDs", background: "Creator and advertiser IDs carry strong memorized priors, but raw IDs can explode the feature space. Hashing keeps a bounded representation for retrieval or ranking candidates.", numbers: "Hashing 2,000,000 creator IDs into 262,144 buckets gives an average load of $2{,}000{,}000/262{,}144 \\approx 7.63$ IDs per bucket; collisions are expected, so the model must combine ID buckets with content features." },
     { title: "Instream Ads content classification", background: "Video classifiers mix categorical taxonomy labels with numeric engagement features. Engagement features must be computed from organic traffic before the ad decision, not from ad delivery outcomes.", numbers: "A video with 400 organic impressions and 36 completions has pre-decision completion rate $36/400=0.09$. Adding 20 ad completions observed after serving would report $56/420=0.133$, changing the feature by 4.3 percentage points." },
     { title: "Event Ads cold-start pacing", background: "New events have little response history, so feature engineering falls back to organizer history, category priors, and smoothed counts.", numbers: "If an event has 1 click in 5 impressions and its category prior is 4%, a smoothed rate with weight 20 is $(1+20\\cdot0.04)/(5+20)=1.8/25=0.072$ rather than the noisy raw 20%." },
-    { title: "Search Ads query relevance", background: "Query-ad relevance uses text features plus historical query statistics. Target leakage can appear when post-auction clicks are joined as if they were pre-auction query features.", numbers: "For query `data science course`, 80 prior impressions and 8 prior clicks give CTR 10%. If the current row's click is included, the count becomes 9/81=11.1%, a small but systematic label echo." },
+    { title: "Search Ads query relevance", background: "Query-ad relevance uses text features plus historical query statistics. Target leakage can appear when post-auction clicks are joined as if they were pre-auction query features.", numbers: "For query `data science course`, 80 prior impressions and 8 prior clicks give CTR (click-through rate) 10%. If the current row's click is included, the count becomes 9/81=11.1%, a small but systematic label echo." },
     { title: "Creative Intelligence GenAI features", background: "Creative rankers may use generated labels such as tone, call-to-action, or image category. These are safe if generated from the creative before launch and unsafe if derived from campaign performance summaries.", numbers: "A prelaunch creative-quality score of 0.72 is valid. A postlaunch `top_decile_creative` flag computed after 10,000 impressions and 140 clicks uses the observed 1.4% CTR, so it cannot be a training feature for those impressions." },
     { title: "Event Organic discovery and Feed SPR", background: "Feed ranking features are often logged online and replayed offline. Using logged online features is a practical way to reduce skew because the row stores what serving actually saw.", numbers: "If offline recomputation says author affinity is 0.61 but logged serving value is 0.54, the absolute skew is 0.07. Across 1M rows, even a mean skew of 0.01 can move calibrated probabilities enough to affect rank order." }
   ],
   applicationsClose:
-    `<p>Feature work is where offline ML becomes production ML. The same rule protects every project: encode the world as it was at decision time, fit transformations on train only, and make the online scorer able to reproduce the row exactly.</p>`,
+    `<p>Feature work is where offline ML (machine learning) becomes production ML. The same rule protects every project: encode the world as it was at decision time, fit transformations on train only, and make the online scorer able to reproduce the row exactly.</p>`,
   takeaways: [
     "Leakage means a feature depends on the future label or on information unavailable at serving time.",
     "Point-in-time joins, out-of-fold encodings, and train-only scaling keep validation honest.",
@@ -174,7 +174,7 @@ const M2 = {
       `X_val_scaled[["past_clicks"]] = scaler.transform(X_val[["past_clicks"]])\n\n` +
       `assert abs(X_train_scaled["past_clicks"].mean()) < 1e-12` },
     { t: "md", src:
-      `## Step 3 - Compare honest and leaky validation AUC\n\n` +
+      `## Step 3 - Compare honest and leaky validation AUC (area under the ROC curve)\n\n` +
       `The leaky model gets an offline score that would not survive serving.` },
     { t: "code", src:
       `honest_model = LogisticRegression(max_iter=1000)\n` +
@@ -220,7 +220,7 @@ const M3 = {
   connections: {
     buildsOn: ["supervised learning", "probability", "derivatives and gradients"],
     leadsTo: ["Model families", "Calibration", "Neural network training"],
-    usedWith: ["log loss", "SGD", "learning rate schedules", "L1 and L2 penalties"]
+    usedWith: ["log loss", "SGD (stochastic gradient descent)", "learning rate schedules", "L1 and L2 penalties"]
   },
   motivation:
     `<p>Once the features are honest, training still needs a target to chase. For click prediction, the model does not merely say yes or no; it outputs a probability. A prediction of 0.51 and a prediction of 0.99 are both positive at a 0.5 threshold, but they should not be punished the same when the click fails to happen.</p>` +
@@ -305,11 +305,11 @@ const M3 = {
     }
   ],
   applications: [
-    { title: "Palette-driven pCTR log loss", background: "Ads ranking needs calibrated probabilities, not just class labels. Log loss rewards probabilities that match observed click frequencies and punishes confident misses.", numbers: "For a clicked ad, predicting $p=0.02$ gives loss $-\\log0.02\\approx3.912$. Predicting $p=0.20$ gives $-\\log0.20\\approx1.609$, a reduction of 2.303 nats for the same positive label." },
+    { title: "Palette-driven pCTR (predicted click-through rate) log loss", background: "Ads ranking needs calibrated probabilities, not just class labels. Log loss rewards probabilities that match observed click frequencies and punishes confident misses.", numbers: "For a clicked ad, predicting $p=0.02$ gives loss $-\\log0.02\\approx3.912$. Predicting $p=0.20$ gives $-\\log0.20\\approx1.609$, a reduction of 2.303 nats for the same positive label." },
     { title: "L2 shrinkage for Search Ads query features", background: "Sparse query-ad features can get huge weights from a few lucky clicks. L2 pulls those weights back unless there is enough repeated evidence.", numbers: "With weight 5 and $\\lambda_2=0.01$, L2 adds gradient $2\\cdot0.01\\cdot5=0.10$ toward zero on every batch, even before the data gradient is considered." },
     { title: "L1 sparsity in Creative Intelligence", background: "Creative rankers may start with thousands of generated attributes. L1 helps identify a smaller useful subset for interpretation and serving cost.", numbers: "If 8,000 candidate attributes train with L1 and 6,200 weights become zero, only 1,800 remain active; that is a 77.5% reduction in active feature count." },
     { title: "Adam for neural creator matching", background: "Embedding-heavy models have parameters with very different gradient scales. Adam adapts per-parameter step sizes, which is why it is a common default for neural recommenders.", numbers: "With learning rate 0.001, a raw gradient of 0.2 and second-moment estimate 0.04 gives normalized step about $0.001\\cdot0.2/\\sqrt{0.04}=0.001$, not 0.0002." },
-    { title: "Event Ads cold-start regularization", background: "Cold-start slices have few labels, so an unregularized model can learn extreme coefficients for organizer or category IDs.", numbers: "A category with 2 clicks in 5 impressions has raw CTR 40%, while the global CTR is 5%. L2/priors stop a tiny slice from acting like it has the confidence of 10,000 impressions." },
+    { title: "Event Ads cold-start regularization", background: "Cold-start slices have few labels, so an unregularized model can learn extreme coefficients for organizer or category IDs.", numbers: "A category with 2 clicks in 5 impressions has raw CTR (click-through rate) 40%, while the global CTR is 5%. L2/priors stop a tiny slice from acting like it has the confidence of 10,000 impressions." },
     { title: "Instream Ads content classifier training", background: "Multiclass classifiers use cross-entropy, the multiclass version of log loss. The same idea punishes low probability on the true class.", numbers: "If the true class is `sports`, assigning probability 0.70 gives loss $-\\log0.70\\approx0.357$; assigning 0.10 gives $-\\log0.10\\approx2.303$." },
     { title: "Learning-rate gates before A/B tests", background: "Training instability can masquerade as modeling progress. Teams watch loss curves before trusting offline metrics.", numbers: "If validation log loss moves 0.231, 0.245, 0.229, 0.251 while train loss falls monotonically, reducing $\\eta$ from 0.1 to 0.03 is a targeted first experiment." }
   ],
@@ -329,7 +329,7 @@ const M3 = {
   notebook: [
     { t: "md", src:
       `# M3 · Loss & optimization\n\n` +
-      `_Curriculum · Domain 0 · ML Foundations_\n\n` +
+      `_Curriculum · Domain 0 · ML (machine learning) Foundations_\n\n` +
       `**Watch one logistic model learn by moving opposite the gradient.**\n\n` +
       `This notebook computes log loss and gradient-descent updates directly. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._` },
     { t: "code", src:
@@ -419,7 +419,7 @@ const M4 = {
   m: 4, domain: 0,
   title: "Model families (linear → GBDT → intro to neural nets)",
   tagline: "Choose the model whose built-in assumptions match the data shape, serving constraints, and signal you actually have.",
-  skipIf: "say when you'd pick a GBDT vs a neural net and why.",
+  skipIf: "say when you'd pick a GBDT (gradient-boosted decision trees) vs a neural net and why.",
   mapsTo: ["all"],
   connections: {
     buildsOn: ["supervised learning", "feature engineering", "loss and optimization"],
@@ -447,7 +447,7 @@ const M4 = {
     { do: "Trade bias and variance", result: "capacity rises from linear to GBDT to deep nets", why: "more flexible families can fit richer patterns but need more data and controls" }
   ],
   worked: {
-    problem: "You own an ads-tabular pCTR problem with 20 numeric aggregates, 15 categorical fields after encoding, 2M rows, strict latency, and no text/image inputs. Pick a starting model family and justify it.",
+    problem: "You own an ads-tabular pCTR (predicted click-through rate) problem with 20 numeric aggregates, 15 categorical fields after encoding, 2M rows, strict latency, and no text/image inputs. Pick a starting model family and justify it.",
     skills: ["model selection", "inductive bias", "bias-variance reasoning"],
     strategy: "Match data shape first, then check whether representation learning is required.",
     steps: [
@@ -482,7 +482,7 @@ const M4 = {
       answer: "Start with a regularized linear/logistic model."
     },
     {
-      problem: "A GBDT improves train AUC by 0.08 over linear but validation AUC by only 0.005. What concern does this raise?",
+      problem: "A GBDT improves train AUC (area under the ROC curve) by 0.08 over linear but validation AUC by only 0.005. What concern does this raise?",
       steps: [
         { do: "Compare gains", result: "train gain is much larger than validation gain", why: "capacity may be fitting sample-specific patterns" },
         { do: "Name the concern", result: "overfitting or high variance", why: "the flexible model does not generalize proportionally" },
@@ -510,12 +510,12 @@ const M4 = {
     }
   ],
   applications: [
-    { title: "GBDT for Palette-driven pCTR tabular signals", background: "Classic ads response models often start with engineered tabular signals: past CTRs, budgets, frequencies, advertiser quality, and context features. GBDTs naturally find threshold interactions among them.", numbers: "If a linear baseline has validation AUC 0.742 and a GBDT reaches 0.764, the absolute gain is 0.022. On 10M impression pairs, that means many more positive-negative pairs are correctly ordered." },
+    { title: "GBDT for Palette-driven pCTR tabular signals", background: "Classic ads response models often start with engineered tabular signals: past CTRs (click-through rates), budgets, frequencies, advertiser quality, and context features. GBDTs naturally find threshold interactions among them.", numbers: "If a linear baseline has validation AUC 0.742 and a GBDT reaches 0.764, the absolute gain is 0.022. On 10M impression pairs, that means many more positive-negative pairs are correctly ordered." },
     { title: "Linear baselines for Search Ads filters", background: "Query relevance filters often need predictable latency and debuggable weights. Linear models remain strong when features are sparse lexical matches and calibrated priors.", numbers: "With 40 active sparse features, a linear scorer needs about 40 multiply-adds. A 500-tree GBDT at depth 6 needs up to 3,000 branch decisions, which may be unnecessary for a first-stage filter." },
     { title: "Neural nets for Creator Marketplace matching", background: "Matching a brand brief to creators depends on language, audience embeddings, and creator histories. Neural two-tower or cross-encoder models can learn shared semantic spaces.", numbers: "A 128-dimensional brief embedding and 128-dimensional creator embedding compare with 128 dot-product terms; retrieving top candidates from 1M creators becomes feasible with approximate nearest neighbor search." },
     { title: "Instream Ads content understanding", background: "Organic-video relevance and safety classification often use text, audio, frame, and metadata representations. Neural nets dominate when raw modalities matter.", numbers: "A thumbnail embedding of 512 floats plus a title embedding of 384 floats gives 896 dense inputs before metadata. A small MLP with 896 by 128 first-layer weights has 114,688 weights, manageable with enough labels." },
     { title: "Event Ads cold-start hybrid", background: "Cold-start event pacing may combine a GBDT over event metadata with neural embeddings for organizer and topic similarity. Hybrid systems use each family where its bias fits.", numbers: "If the tabular GBDT predicts pAttend 0.030 and an embedding similarity feature adds a calibrated lift of 1.4, the combined prior-style estimate is about $0.030\\cdot1.4=0.042$ before clipping/calibration." },
-    { title: "Creative Intelligence ranker selection", background: "Creative rankers may begin as GBDTs over generated attributes, then move to neural models when generated text/image embeddings become central.", numbers: "A GBDT using 120 generated attributes may score in 4 ms. A neural model using 768-dimensional creative embeddings may improve NDCG@10 by 0.015 but cost 12 ms, making latency part of the decision." },
+    { title: "Creative Intelligence ranker selection", background: "Creative rankers may begin as GBDTs over generated attributes, then move to neural models when generated text/image embeddings become central.", numbers: "A GBDT using 120 generated attributes may score in 4 ms. A neural model using 768-dimensional creative embeddings may improve NDCG (normalized discounted cumulative gain)@10 by 0.015 but cost 12 ms, making latency part of the decision." },
     { title: "Wide & Deep style ads ranking", background: "Wide linear terms memorize important sparse crosses while deep components generalize through embeddings. This is why hybrid recommender architectures became common.", numbers: "A wide feature `query=data_science AND advertiser=learning` can carry one memorized weight, while a 64-dimensional advertiser embedding shares signal across thousands of related advertisers." }
   ],
   applicationsClose:
@@ -538,7 +538,7 @@ const M4 = {
   notebook: [
     { t: "md", src:
       `# M4 · Model families\n\n` +
-      `_Curriculum · Domain 0 · ML Foundations_\n\n` +
+      `_Curriculum · Domain 0 · ML (machine learning) Foundations_\n\n` +
       `**Compare a linear model with a tree ensemble on tabular ads-style data.**\n\n` +
       `We create nonlinear tabular signal, then compare logistic regression and a gradient boosting model. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._` },
     { t: "code", src:
@@ -612,25 +612,25 @@ const M5 = {
   m: 5, domain: 0,
   title: "Offline metrics (AUC, Precision, Recall, F1, MRR, NDCG)",
   tagline: "Translate model scores into the exact offline questions that ranking, filtering, and launch decisions need answered.",
-  skipIf: "interpret an ROC + NDCG and design a per-slice evaluation.",
+  skipIf: "interpret an ROC (receiver operating characteristic) + NDCG (normalized discounted cumulative gain) and design a per-slice evaluation.",
   mapsTo: ["all"],
   connections: {
     buildsOn: ["supervised learning", "feature engineering", "model families"],
     leadsTo: ["Calibration", "Ranking losses", "Experiment design"],
-    usedWith: ["confusion matrices", "ROC curves", "precision-recall curves", "MRR", "NDCG", "slice analysis"]
+    usedWith: ["confusion matrices", "ROC curves", "precision-recall curves", "MRR (mean reciprocal rank)", "NDCG", "slice analysis"]
   },
   motivation:
     `<p>A trained model gives scores, but the team still has to decide whether those scores are good enough for a launch, a retrain, or another week of feature work. Accuracy may be fine for a balanced toy problem and useless for rare clicks. A ranking model can have no single threshold at all, because its job is to order candidates.</p>` +
-    `<p>Offline metrics are the language of those decisions. Precision and recall describe thresholded filters. AUC asks whether positives outrank negatives. MRR rewards putting the first relevant result early. NDCG handles graded relevance and top-heavy ranking. Per-slice evaluation keeps a global win from hiding a failure on a business-critical segment.</p>`,
+    `<p>Offline metrics are the language of those decisions. Precision and recall describe thresholded filters. AUC (area under the ROC curve) asks whether positives outrank negatives. MRR rewards putting the first relevant result early. NDCG handles graded relevance and top-heavy ranking. Per-slice evaluation keeps a global win from hiding a failure on a business-critical segment.</p>`,
   definition:
-    `<p><b>Definition.</b> For a binary classifier at a threshold, precision is $\\frac{TP}{TP+FP}$, recall is $\\frac{TP}{TP+FN}$, and $F1=\\frac{2PR}{P+R}$. ROC-AUC is the probability that a randomly chosen positive receives a higher score than a randomly chosen negative, with ties counted as half. For ranked lists, reciprocal rank is $1/r$ for the first relevant item at rank $r$, and $$DCG@k=\\sum_{i=1}^k \\frac{rel_i}{\\log_2(i+1)},\\qquad NDCG@k=\\frac{DCG@k}{IDCG@k}.$$</p>` +
-    `<p><b>Assumptions that matter:</b> the metric must match product behavior, labels must mean the same thing across slices, and the evaluation window must match the prediction window. For imbalanced click tasks, PR-AUC can be more sensitive than ROC-AUC. For ranking tasks with graded labels, NDCG is often more informative than binary precision.</p>`,
+    `<p><b>Definition.</b> For a binary classifier at a threshold, precision is $\\frac{TP}{TP+FP}$, recall is $\\frac{TP}{TP+FN}$, and $F1=\\frac{2PR}{P+R}$. ROC-AUC (area under the ROC curve) is the probability that a randomly chosen positive receives a higher score than a randomly chosen negative, with ties counted as half. For ranked lists, reciprocal rank is $1/r$ for the first relevant item at rank $r$, and $$DCG@k=\\sum_{i=1}^k \\frac{rel_i}{\\log_2(i+1)},\\qquad NDCG@k=\\frac{DCG@k}{IDCG@k}.$$</p>` +
+    `<p><b>Assumptions that matter:</b> the metric must match product behavior, labels must mean the same thing across slices, and the evaluation window must match the prediction window. For imbalanced click tasks, PR-AUC (area under the precision-recall curve) can be more sensitive than ROC-AUC. For ranking tasks with graded labels, NDCG is often more informative than binary precision.</p>`,
   symbols: [
     { sym: "$TP,FP,TN,FN$", desc: "confusion-matrix counts after choosing a threshold." },
     { sym: "$P,R$", desc: "precision and recall." },
     { sym: "$rel_i$", desc: "relevance grade of the item shown at rank $i$." },
     { sym: "$DCG@k$", desc: "discounted cumulative gain through rank $k$." },
-    { sym: "$IDCG@k$", desc: "the best possible DCG@k for the same labels." }
+    { sym: "$IDCG@k$", desc: "the best possible DCG (discounted cumulative gain)@k for the same labels." }
   ],
   derivation: [
     { do: "Choose a threshold", result: "scores become predicted positives or negatives", why: "precision and recall require decisions, not just scores" },
@@ -649,7 +649,7 @@ const M5 = {
       { do: "Count pair wins", result: "0.9 beats 0.8 and 0.3; 0.4 loses to 0.8 and beats 0.3", why: "each positive-negative pair contributes one win or loss" },
       { do: "Compute AUC", result: "$3/4=0.75$", why: "three wins out of four positive-negative pairs" },
       { do: "Compute DCG@3", result: "$3/\\log_2 2+0/\\log_2 3+1/\\log_2 4=3.5$", why: "rank 1 is undiscounted and rank 3 is divided by 2" },
-      { do: "Compute IDCG@3", result: "$3/\\log_2 2+1/\\log_2 3+0/\\log_2 4\\approx3.631$", why: "the ideal order puts relevance 3 before relevance 1" },
+      { do: "Compute IDCG (ideal discounted cumulative gain)@3", result: "$3/\\log_2 2+1/\\log_2 3+0/\\log_2 4\\approx3.631$", why: "the ideal order puts relevance 3 before relevance 1" },
       { do: "Normalize", result: "$NDCG@3=3.5/3.631\\approx0.964$", why: "normalization compares against the best possible ordering" }
     ],
     verify: "The AUC is below 1 because one negative outranks one positive; the NDCG is high because the most relevant item is already first.",
@@ -658,7 +658,7 @@ const M5 = {
   },
   practice: [
     {
-      problem: "At a threshold, a classifier has TP=30, FP=10, FN=20. Compute precision, recall, and F1.",
+      problem: "At a threshold, a classifier has TP=30, FP=10, FN=20. Compute precision, recall, and F1 (F1 score).",
       steps: [
         { do: "Compute precision", result: "$30/(30+10)=0.75$", why: "40 items were predicted positive" },
         { do: "Compute recall", result: "$30/(30+20)=0.60$", why: "50 true positives existed" },
@@ -703,7 +703,7 @@ const M5 = {
     }
   ],
   applications: [
-    { title: "Palette-driven pCTR ROC-AUC", background: "pCTR models rank ads by expected response. ROC-AUC is useful because ranking quality matters even before a threshold is chosen.", numbers: "If 760 out of 1,000 sampled positive-negative pairs put the clicked impression above the non-clicked impression, AUC is $760/1000=0.760$." },
+    { title: "Palette-driven pCTR (predicted click-through rate) ROC-AUC", background: "pCTR models rank ads by expected response. ROC-AUC is useful because ranking quality matters even before a threshold is chosen.", numbers: "If 760 out of 1,000 sampled positive-negative pairs put the clicked impression above the non-clicked impression, AUC is $760/1000=0.760$." },
     { title: "Search Ads relevance precision", background: "A query relevance filter may require high precision so irrelevant ads are blocked even if recall is not perfect.", numbers: "At one threshold, 900 ads pass and 810 are judged relevant, so precision is $810/900=0.90$. If total relevant ads are 1,200, recall is $810/1200=0.675$." },
     { title: "Creator Marketplace AI MRR", background: "For creator search, the first strong match matters because users inspect the top of the list. MRR captures how early the first relevant creator appears.", numbers: "For three searches with first relevant ranks 1, 2, and 5, MRR is $(1+1/2+1/5)/3=1.7/3\\approx0.567$." },
     { title: "Event Organic discovery NDCG", background: "Feed ranking for event posts has graded labels: skip, click, RSVP, attend. NDCG rewards putting the highest-gain events near the top.", numbers: "For gains [3,1,0] at ranks 1-3, DCG is $3+1/\\log_2 3+0=3.631$. If ideal is the same, NDCG@3 is 1.0." },
@@ -728,7 +728,7 @@ const M5 = {
   notebook: [
     { t: "md", src:
       `# M5 · Offline metrics\n\n` +
-      `_Curriculum · Domain 0 · ML Foundations_\n\n` +
+      `_Curriculum · Domain 0 · ML (machine learning) Foundations_\n\n` +
       `**Compute classification and ranking metrics from scored examples.**\n\n` +
       `We calculate AUC and NDCG directly, then compare against scikit-learn. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._` },
     { t: "code", src:

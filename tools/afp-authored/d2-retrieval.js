@@ -14,7 +14,7 @@ const M11 = {
   mapsTo: ["all"],
   connections: {
     buildsOn: ["vectors and dot products", "supervised learning", "matrix factorization intuition"],
-    leadsTo: ["Two-tower / EBR retrieval architecture", "ANN / vector search & indexing", "Encoders & contrastive training"],
+    leadsTo: ["Two-tower / EBR (embedding-based retrieval) retrieval architecture", "ANN (approximate nearest neighbor) / vector search & indexing", "Encoders & contrastive training"],
     usedWith: ["cosine similarity", "normalization", "retrieval recall", "downstream evaluation"]
   },
   motivation:
@@ -65,7 +65,7 @@ const M11 = {
       answer: "The cosine similarity is $0.48$."
     },
     {
-      problem: "A retrieval set has 8 relevant creators. Your top 10 returns 5 of them. What is recall@10?",
+      problem: "A retrieval set has 8 relevant creators. Your top 10 returns 5 of them. What is recall@10 (recall at 10)?",
       steps: [
         { do: "Name the numerator", result: "retrieved relevant creators $=5$", why: "recall counts relevant items found" },
         { do: "Name the denominator", result: "all relevant creators $=8$", why: "the denominator is the complete labeled relevant set" },
@@ -107,7 +107,7 @@ const M11 = {
     { title: "Creative Intelligence asset clustering", background: "Creative Intelligence can cluster ad images or copy so marketers see repeated concepts instead of a long flat list. The embedding decides whether two pieces are variations on one idea.", numbers: "Ten assets averaging pairwise cosine 0.86 inside a cluster and 0.22 to the next cluster have a separation margin of $0.86-0.22=0.64$, enough to treat them as one theme." },
     { title: "Instream Ads video-topic retrieval", background: "Video embeddings can retrieve safe, relevant organic videos for ad placement without relying only on category labels. The learned space captures transcript, visual, and engagement signals together.", numbers: "If a campaign needs 5,000 candidate videos and exact topic labels cover only 3,200, embedding retrieval that adds 1,100 approved near-neighbors increases supply to 4,300, a $1,100/3,200=34.4\%$ expansion." },
     { title: "Event Ads audience similarity", background: "Events often have sparse attendance labels. Embedding the event description and likely audience makes a cold-start event comparable to past events with known attendance patterns.", numbers: "A new AI webinar has cosine 0.92 to a past AI webinar with 8% attend rate and 0.41 to a sales meetup with 3% attend rate; nearest-neighbor smoothing would weight the 8% history much more heavily." },
-    { title: "Palette pCTR feature compression", background: "High-cardinality member and advertiser features can be embedded before entering a click model. The downstream pCTR model gets dense coordinates instead of millions of sparse IDs.", numbers: "Replacing 1,000,000 sparse advertiser IDs with 64-dimensional embeddings changes the active input from a million-column one-hot space to 64 numbers per advertiser, while keeping $64/1{,}000{,}000=0.0064\%$ as many coordinates." }
+    { title: "Palette pCTR feature compression", background: "High-cardinality member and advertiser features can be embedded before entering a click model. The downstream pCTR (predicted click-through rate) model gets dense coordinates instead of millions of sparse IDs.", numbers: "Replacing 1,000,000 sparse advertiser IDs with 64-dimensional embeddings changes the active input from a million-column one-hot space to 64 numbers per advertiser, while keeping $64/1{,}000{,}000=0.0064\%$ as many coordinates." }
   ],
   applicationsClose:
     "<p>Embeddings are the shared language of retrieval. The same geometry that finds creators for a brand brief can cluster creatives, expand video supply, and compress IDs for pCTR. Once you can ask whether neighbors are meaningful, you can improve nearly every AFP-AI project that starts with candidate generation.</p>",
@@ -152,8 +152,8 @@ const M12 = {
   mapsTo: ["Creator Marketplace AI", "Search Ads"],
   connections: {
     buildsOn: ["embeddings", "softmax classification", "negative sampling"],
-    leadsTo: ["ANN / vector search & indexing", "hard-negative mining", "retrieval evaluation at scale"],
-    usedWith: ["in-batch negatives", "sampling-bias correction", "recall@k", "offline-online serving parity"]
+    leadsTo: ["ANN (approximate nearest neighbor) / vector search & indexing", "hard-negative mining", "retrieval evaluation at scale"],
+    usedWith: ["in-batch negatives", "sampling-bias correction", "recall@k (recall at k)", "offline-online serving parity"]
   },
   motivation:
     "<p>A retrieval system cannot run a large cross-feature model over every possible creator or ad for every request. Creator Marketplace AI might need to search millions of creators for one brand brief, and Search Ads may need candidates while the member is still typing.</p>" +
@@ -246,7 +246,7 @@ const M12 = {
     { title: "Creative Intelligence asset-to-asset retrieval", background: "A creative brief can be the query tower input and historical creatives can be item tower inputs. This helps marketers find examples without manually tagging every template.", numbers: "If top-20 retrieval contains 14 approved examples from 30 known positives, recall@20 is $14/30=0.467$; top-100 with 24 hits reaches $24/30=0.800$." },
     { title: "Event Ads cold-start matching", background: "For a new event with no attendance history, the query tower can embed event text and organizer context while the item tower embeds member or audience segments.", numbers: "Precomputing 500,000 audience embeddings nightly avoids scoring $500{,}000$ tower passes online; the request computes 1 query vector plus ANN lookup instead." },
     { title: "Instream Ads video retrieval", background: "A campaign objective can retrieve videos with aligned transcript and topic embeddings. The two-tower stage supplies a broad safe set for policy and suitability filters.", numbers: "If suitability filters keep 70% of retrieved candidates, a target of 10,000 usable videos requires retrieving at least $10{,}000/0.70\\approx14{,}286$ candidates upstream." },
-    { title: "Palette pCTR candidate features", background: "A retrieval tower can feed dense ad-member match features into the pCTR stack. The final model still predicts clicks, but it starts from better semantic candidates.", numbers: "A candidate generator lifting recall@100 from 0.55 to 0.70 gives the ranker $0.70/0.55\\approx1.27\\times$ as many labeled positives to choose from in the first 100 slots." }
+    { title: "Palette pCTR candidate features", background: "A retrieval tower can feed dense ad-member match features into the pCTR (predicted click-through rate) stack. The final model still predicts clicks, but it starts from better semantic candidates.", numbers: "A candidate generator lifting recall@100 from 0.55 to 0.70 gives the ranker $0.70/0.55\\approx1.27\\times$ as many labeled positives to choose from in the first 100 slots." }
   ],
   applicationsClose:
     "<p>The two-tower pattern separates what must be fresh from what can be prepared. Query embeddings are computed at request time; creator, ad, event, and creative embeddings are refreshed offline. That split is why dense retrieval can be both learned and fast.</p>",
@@ -266,7 +266,7 @@ const M12 = {
     "Dense Passage Retrieval (Karpukhin et al., 2020)"
   ],
   notebook: [
-    { t: "md", src: "# M12 · Two-tower / EBR retrieval architecture\n\n_Curriculum · Domain 2 · Retrieval & Representation_\n\n**Train query and item towers into one space, then serve with precomputed item embeddings.**\n\nThe batch loss is $\\ell=-\\log\\frac{\\exp(s_{+})}{\\sum_j\\exp(s_j)}$, and the serving score is a dot product." },
+    { t: "md", src: "# M12 · Two-tower / EBR (embedding-based retrieval) retrieval architecture\n\n_Curriculum · Domain 2 · Retrieval & Representation_\n\n**Train query and item towers into one space, then serve with precomputed item embeddings.**\n\nThe batch loss is $\\ell=-\\log\\frac{\\exp(s_{+})}{\\sum_j\\exp(s_j)}$, and the serving score is a dot product." },
     { t: "code", src: "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(12)" },
     { t: "md", src: "## Tiny batch of query and item embeddings\n\nRows are matched pairs. Every other item in the batch becomes an in-batch negative." },
     { t: "code", src: "query = np.array([\n    [1.0, 0.2, 0.1],\n    [0.1, 1.0, 0.2],\n    [0.2, 0.1, 1.0],\n    [0.8, 0.4, 0.1],\n])\nitem = np.array([\n    [0.9, 0.3, 0.1],\n    [0.0, 0.9, 0.3],\n    [0.3, 0.2, 0.9],\n    [0.7, 0.5, 0.0],\n])\n\nscores = query @ item.T\n\nprint(pd.DataFrame(scores).round(3))" },
@@ -287,20 +287,20 @@ const M13 = {
   m: 13, domain: 2,
   title: "ANN / vector search & indexing (HNSW, IVF-PQ, ScaNN)",
   tagline: "Trade a little exactness for the latency and memory needed to search millions of embeddings.",
-  skipIf: "choose HNSW vs IVF-PQ and tune recall vs latency.",
+  skipIf: "choose HNSW (hierarchical navigable small world) vs IVF-PQ (inverted file with product quantization) and tune recall vs latency.",
   mapsTo: ["Creator Marketplace AI"],
   connections: {
-    buildsOn: ["embedding spaces", "nearest neighbors", "recall@k"],
+    buildsOn: ["embedding spaces", "nearest neighbors", "recall@k (recall at k)"],
     leadsTo: ["production retrieval serving", "hybrid dense and lexical search", "reranking architectures"],
-    usedWith: ["HNSW efSearch", "IVF nprobe", "product quantization", "latency-memory-recall tradeoffs"]
+    usedWith: ["HNSW efSearch", "IVF (inverted file) nprobe", "product quantization", "latency-memory-recall tradeoffs"]
   },
   motivation:
     "<p>Exact nearest-neighbor search is beautifully simple: compare the query to every creator vector and sort. That is fine for a notebook and impossible for a live Creator Marketplace search path if the catalog has millions of vectors and many requests per second.</p>" +
     "<p><b>Approximate nearest neighbor</b> indexing keeps the same goal but refuses to inspect everything. Graph methods like HNSW walk through neighbor links; IVF-PQ narrows search to coarse clusters and compressed codes; ScaNN combines partitioning and anisotropic quantization. The practical skill is not memorizing names — it is choosing the knob that buys latency without losing too much recall.</p>",
   definition:
-    "<p><b>Definition.</b> Exact top-$k$ vector search returns the $k$ items with largest similarity $q^\\top x_i$ or cosine. ANN returns an approximate set $A_k(q)$ faster than exact search, and we measure quality by recall:</p>" +
+    "<p><b>Definition.</b> Exact top-$k$ vector search returns the $k$ items with largest similarity $q^\\top x_i$ or cosine. ANN (approximate nearest neighbor) returns an approximate set $A_k(q)$ faster than exact search, and we measure quality by recall:</p>" +
     "<p>$$\\operatorname{recall@k}=\\frac{|A_k(q)\\cap E_k(q)|}{|E_k(q)|},$$</p>" +
-    "<p>where $E_k(q)$ is the exact top-$k$. HNSW increases recall with larger $\\operatorname{efSearch}$; IVF-style indexes increase recall with larger $\\operatorname{nprobe}$; PQ saves memory by storing compressed subvector codes instead of full float vectors.</p>",
+    "<p>where $E_k(q)$ is the exact top-$k$. HNSW increases recall with larger $\\operatorname{efSearch}$; IVF-style indexes increase recall with larger $\\operatorname{nprobe}$; PQ (product quantization) saves memory by storing compressed subvector codes instead of full float vectors.</p>",
   symbols: [
     { sym: "$q$", desc: "the query embedding." },
     { sym: "$x_i$", desc: "the embedding of catalog item $i$." },
@@ -386,7 +386,7 @@ const M13 = {
   applicationsClose:
     "<p>ANN indexing is where representation learning meets production physics. The embedding model decides what should be near; HNSW, IVF-PQ, ScaNN, and hybrid retrieval decide how much of that neighborhood you can afford to find under real latency and memory limits.</p>",
   takeaways: [
-    "Exact kNN costs $N\\cdot d$ work per query; ANN reduces candidate comparisons by using graphs, partitions, or compression.",
+    "Exact kNN (k-nearest neighbors) costs $N\\cdot d$ work per query; ANN reduces candidate comparisons by using graphs, partitions, or compression.",
     "Recall@k compares approximate results to exact top-k and is the central quality metric for index tuning.",
     "HNSW favors high-recall low-latency search with memory overhead; IVF-PQ favors memory compression and tunable probing; ScaNN is built around efficient partitioning and quantization.",
     "Hybrid dense plus lexical retrieval often beats either method alone in ads and creator search."
@@ -538,7 +538,7 @@ const M14 = {
     "Sentence-BERT (Reimers & Gurevych, 2019)",
     "SimCSE (Gao et al., 2021)",
     "E5 Text Embeddings (Wang et al., 2022)",
-    "CPC / InfoNCE (van den Oord et al., 2018)",
+    "CPC (contrastive predictive coding) / InfoNCE (van den Oord et al., 2018)",
     "SimCLR (Chen et al., 2020)",
     "MoCo (He et al., 2020)"
   ],

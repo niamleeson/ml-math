@@ -38,12 +38,12 @@ const M1 = {
   mapsTo: ["all"],
   connections: {
     buildsOn: ["functions (input to output)", "vectors and features", "basic probability"],
-    leadsTo: ["Feature engineering & leakage", "Loss & optimization", "Ranking & CTR models"],
+    leadsTo: ["Feature engineering & leakage", "Loss & optimization", "Ranking & CTR (click-through rate) models"],
     usedWith: ["train/validation/test splitting", "offline metrics", "regularization"]
   },
   motivation:
     "<p>Almost every model the AFP-AI team ships is supervised: you have historical examples where the answer is known, and you want a function that predicts the answer for new cases. Did a member click this ad? Is this video about cooking? Will this event get attendance? Each is a row of features paired with a known label, and the job is to learn the mapping.</p>" +
-    "<p>The one idea that makes this trustworthy is the split between fitting and judging. A model that merely memorizes the training rows is worthless in production. So we hold out data the model never sees during training, and score it there. Everything else in ML foundations, from loss functions to calibration, exists to make that held-out score both high and honest.</p>",
+    "<p>The one idea that makes this trustworthy is the split between fitting and judging. A model that merely memorizes the training rows is worthless in production. So we hold out data the model never sees during training, and score it there. Everything else in ML (machine learning) foundations, from loss functions to calibration, exists to make that held-out score both high and honest.</p>",
   definition:
     "<p><b>Definition.</b> Supervised learning fits a function $f_\\theta: \\mathcal{X} \\to \\mathcal{Y}$ from a training set $\\{(x_i, y_i)\\}_{i=1}^n$ by choosing parameters $\\theta$ that minimize the average loss $\\frac{1}{n}\\sum_i \\ell(f_\\theta(x_i), y_i)$. When $\\mathcal{Y}$ is a finite set of classes it is <b>classification</b>; when $\\mathcal{Y}=\\mathbb{R}$ it is <b>regression</b>.</p>" +
     "<p><b>Assumptions that matter:</b> training and serving data are drawn from (roughly) the same distribution; the examples are informative about the label; and you evaluate on a split the fitting never touched. Break any of these and a strong offline number will not survive an A/B test.</p>",
@@ -79,12 +79,12 @@ const M1 = {
       problem: "A dataset predicts minutes-watched per video (a non-negative real number). Classification or regression, and one reasonable loss?",
       steps: [
         { do: "Check the target type", result: "continuous, $y \\ge 0$", why: "a real-valued target is regression" },
-        { do: "Choose a loss", result: "squared error, or Poisson/gamma for skew", why: "watch-time is right-skewed, so a count/positive loss often fits better than plain MSE" }
+        { do: "Choose a loss", result: "squared error, or Poisson/gamma for skew", why: "watch-time is right-skewed, so a count/positive loss often fits better than plain MSE (mean squared error)" }
       ],
       answer: "Regression; squared error as a baseline, Poisson/Tweedie if heavily skewed."
     },
     {
-      problem: "Your model scores 0.99 AUC on train and 0.71 on validation. What is happening and what is one fix?",
+      problem: "Your model scores 0.99 AUC (area under the ROC curve) on train and 0.71 on validation. What is happening and what is one fix?",
       steps: [
         { do: "Read the gap", result: "large train−val gap", why: "the model fits noise it cannot reproduce on new data" },
         { do: "Name it", result: "overfitting", why: "high variance, low bias" },
@@ -104,7 +104,7 @@ const M1 = {
       problem: "You have 50,000 rows but only 200 positives (clicks). Name two consequences for how you split and evaluate.",
       steps: [
         { do: "Splitting", result: "stratify by label", why: "random splits can leave a fold with almost no positives" },
-        { do: "Evaluation", result: "accuracy is misleading; use AUC / PR-AUC", why: "predicting 'never click' scores 99.6% accuracy yet is useless" }
+        { do: "Evaluation", result: "accuracy is misleading; use AUC / PR-AUC (area under the precision-recall curve)", why: "predicting 'never click' scores 99.6% accuracy yet is useless" }
       ],
       answer: "Stratify the split; judge with AUC or PR-AUC, not raw accuracy."
     },
@@ -118,7 +118,7 @@ const M1 = {
     }
   ],
   applications: [
-    { title: "pCTR for ads (Palette-driven pCTR)", background: "The click model behind ad ranking is textbook supervised binary classification; LinkedIn and every ads platform train it on logged impressions.", numbers: "From 1M impressions with a 0.6% base rate, a model outputting $p=0.02$ on a slice that truly clicks at 2% is well-calibrated; log loss at the base rate alone is $-0.006\\log0.006-0.994\\log0.994\\approx0.037$ nats — the floor any model must beat." },
+    { title: "pCTR (predicted click-through rate) for ads (Palette-driven pCTR)", background: "The click model behind ad ranking is textbook supervised binary classification; LinkedIn and every ads platform train it on logged impressions.", numbers: "From 1M impressions with a 0.6% base rate, a model outputting $p=0.02$ on a slice that truly clicks at 2% is well-calibrated; log loss at the base rate alone is $-0.006\\log0.006-0.994\\log0.994\\approx0.037$ nats — the floor any model must beat." },
     { title: "Organic video content classification (Instream Ads)", background: "Labeling a video's topic from its signals is multiclass supervised learning; open-ended categories are added as new label columns over time.", numbers: "With 12 categories and 30k labeled videos, a stratified 70/15/15 split gives 21k/4.5k/4.5k; a baseline that always predicts the majority class (say 25% of data) sets the accuracy floor at 0.25 to beat." },
     { title: "Event attendance prediction (Event Ads pAttend)", background: "Predicting whether a member attends an event is supervised classification feeding response models and pacing.", numbers: "If 8% of invited members attend, a lift chart's top decile capturing 40% of attenders means $0.40/0.10=4\\times$ lift over random targeting." },
     { title: "Feed SPR for Event posts (Event Organic discovery)", background: "Session/engagement prediction for ranking Feed posts is a supervised model scored offline before any online test.", numbers: "A candidate model improving validation AUC from 0.720 to 0.735 (+0.015) is the kind of offline delta teams gate an A/B test on." },

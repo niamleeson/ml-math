@@ -24,7 +24,7 @@
       "leadsTo": [
         "Feature engineering & leakage",
         "Loss & optimization",
-        "Ranking & CTR models"
+        "Ranking & CTR (click-through rate) models"
       ],
       "usedWith": [
         "train/validation/test splitting",
@@ -32,7 +32,7 @@
         "regularization"
       ]
     },
-    "motivation": "<p>Almost every model the AFP-AI team ships is supervised: you have historical examples where the answer is known, and you want a function that predicts the answer for new cases. Did a member click this ad? Is this video about cooking? Will this event get attendance? Each is a row of features paired with a known label, and the job is to learn the mapping.</p><p>The one idea that makes this trustworthy is the split between fitting and judging. A model that merely memorizes the training rows is worthless in production. So we hold out data the model never sees during training, and score it there. Everything else in ML foundations, from loss functions to calibration, exists to make that held-out score both high and honest.</p>",
+    "motivation": "<p>Almost every model the AFP-AI team ships is supervised: you have historical examples where the answer is known, and you want a function that predicts the answer for new cases. Did a member click this ad? Is this video about cooking? Will this event get attendance? Each is a row of features paired with a known label, and the job is to learn the mapping.</p><p>The one idea that makes this trustworthy is the split between fitting and judging. A model that merely memorizes the training rows is worthless in production. So we hold out data the model never sees during training, and score it there. Everything else in ML (machine learning) foundations, from loss functions to calibration, exists to make that held-out score both high and honest.</p>",
     "definition": "<p><b>Definition.</b> Supervised learning fits a function $f_\\theta: \\mathcal{X} \\to \\mathcal{Y}$ from a training set $\\{(x_i, y_i)\\}_{i=1}^n$ by choosing parameters $\\theta$ that minimize the average loss $\\frac{1}{n}\\sum_i \\ell(f_\\theta(x_i), y_i)$. When $\\mathcal{Y}$ is a finite set of classes it is <b>classification</b>; when $\\mathcal{Y}=\\mathbb{R}$ it is <b>regression</b>.</p><p><b>Assumptions that matter:</b> training and serving data are drawn from (roughly) the same distribution; the examples are informative about the label; and you evaluate on a split the fitting never touched. Break any of these and a strong offline number will not survive an A/B test.</p>",
     "symbols": [
       {
@@ -124,13 +124,13 @@
           {
             "do": "Choose a loss",
             "result": "squared error, or Poisson/gamma for skew",
-            "why": "watch-time is right-skewed, so a count/positive loss often fits better than plain MSE"
+            "why": "watch-time is right-skewed, so a count/positive loss often fits better than plain MSE (mean squared error)"
           }
         ],
         "answer": "Regression; squared error as a baseline, Poisson/Tweedie if heavily skewed."
       },
       {
-        "problem": "Your model scores 0.99 AUC on train and 0.71 on validation. What is happening and what is one fix?",
+        "problem": "Your model scores 0.99 AUC (area under the ROC curve) on train and 0.71 on validation. What is happening and what is one fix?",
         "steps": [
           {
             "do": "Read the gap",
@@ -176,7 +176,7 @@
           },
           {
             "do": "Evaluation",
-            "result": "accuracy is misleading; use AUC / PR-AUC",
+            "result": "accuracy is misleading; use AUC / PR-AUC (area under the precision-recall curve)",
             "why": "predicting 'never click' scores 99.6% accuracy yet is useless"
           }
         ],
@@ -201,7 +201,7 @@
     ],
     "applications": [
       {
-        "title": "pCTR for ads (Palette-driven pCTR)",
+        "title": "pCTR (predicted click-through rate) for ads (Palette-driven pCTR)",
         "background": "The click model behind ad ranking is textbook supervised binary classification; LinkedIn and every ads platform train it on logged impressions.",
         "numbers": "From 1M impressions with a 0.6% base rate, a model outputting $p=0.02$ on a slice that truly clicks at 2% is well-calibrated; log loss at the base rate alone is $-0.006\\log0.006-0.994\\log0.994\\approx0.037$ nats — the floor any model must beat."
       },
@@ -490,7 +490,7 @@
     ],
     "applications": [
       {
-        "title": "Palette-driven pCTR feature clocks",
+        "title": "Palette-driven pCTR (predicted click-through rate) feature clocks",
         "background": "pCTR models often use member, advertiser, and context aggregates. The useful signal is past behavior, but the label is future click behavior, so the clock boundary decides whether the feature is valid.",
         "numbers": "For an impression at 10:00, 12 campaign clicks from 09:00-09:59 are valid. The 3 clicks from 10:00-10:05 are invalid for that row; including them can move a sparse campaign feature from 12 to 15, a 25% leak-driven lift."
       },
@@ -512,7 +512,7 @@
       {
         "title": "Search Ads query relevance",
         "background": "Query-ad relevance uses text features plus historical query statistics. Target leakage can appear when post-auction clicks are joined as if they were pre-auction query features.",
-        "numbers": "For query `data science course`, 80 prior impressions and 8 prior clicks give CTR 10%. If the current row's click is included, the count becomes 9/81=11.1%, a small but systematic label echo."
+        "numbers": "For query `data science course`, 80 prior impressions and 8 prior clicks give CTR (click-through rate) 10%. If the current row's click is included, the count becomes 9/81=11.1%, a small but systematic label echo."
       },
       {
         "title": "Creative Intelligence GenAI features",
@@ -525,7 +525,7 @@
         "numbers": "If offline recomputation says author affinity is 0.61 but logged serving value is 0.54, the absolute skew is 0.07. Across 1M rows, even a mean skew of 0.01 can move calibrated probabilities enough to affect rank order."
       }
     ],
-    "applicationsClose": "<p>Feature work is where offline ML becomes production ML. The same rule protects every project: encode the world as it was at decision time, fit transformations on train only, and make the online scorer able to reproduce the row exactly.</p>",
+    "applicationsClose": "<p>Feature work is where offline ML (machine learning) becomes production ML. The same rule protects every project: encode the world as it was at decision time, fit transformations on train only, and make the online scorer able to reproduce the row exactly.</p>",
     "takeaways": [
       "Leakage means a feature depends on the future label or on information unavailable at serving time.",
       "Point-in-time joins, out-of-fold encodings, and train-only scaling keep validation honest.",
@@ -573,7 +573,7 @@
       ],
       "usedWith": [
         "log loss",
-        "SGD",
+        "SGD (stochastic gradient descent)",
         "learning rate schedules",
         "L1 and L2 penalties"
       ]
@@ -777,7 +777,7 @@
     ],
     "applications": [
       {
-        "title": "Palette-driven pCTR log loss",
+        "title": "Palette-driven pCTR (predicted click-through rate) log loss",
         "background": "Ads ranking needs calibrated probabilities, not just class labels. Log loss rewards probabilities that match observed click frequencies and punishes confident misses.",
         "numbers": "For a clicked ad, predicting $p=0.02$ gives loss $-\\log0.02\\approx3.912$. Predicting $p=0.20$ gives $-\\log0.20\\approx1.609$, a reduction of 2.303 nats for the same positive label."
       },
@@ -799,7 +799,7 @@
       {
         "title": "Event Ads cold-start regularization",
         "background": "Cold-start slices have few labels, so an unregularized model can learn extreme coefficients for organizer or category IDs.",
-        "numbers": "A category with 2 clicks in 5 impressions has raw CTR 40%, while the global CTR is 5%. L2/priors stop a tiny slice from acting like it has the confidence of 10,000 impressions."
+        "numbers": "A category with 2 clicks in 5 impressions has raw CTR (click-through rate) 40%, while the global CTR is 5%. L2/priors stop a tiny slice from acting like it has the confidence of 10,000 impressions."
       },
       {
         "title": "Instream Ads content classifier training",
@@ -843,7 +843,7 @@
     "book": "Curriculum · ML Foundations",
     "title": "M4 · Model families (linear → GBDT → intro to neural nets)",
     "tagline": "Choose the model whose built-in assumptions match the data shape, serving constraints, and signal you actually have.",
-    "skipIf": "say when you'd pick a GBDT vs a neural net and why.",
+    "skipIf": "say when you'd pick a GBDT (gradient-boosted decision trees) vs a neural net and why.",
     "mapsTo": [
       "all"
     ],
@@ -917,7 +917,7 @@
       }
     ],
     "worked": {
-      "problem": "You own an ads-tabular pCTR problem with 20 numeric aggregates, 15 categorical fields after encoding, 2M rows, strict latency, and no text/image inputs. Pick a starting model family and justify it.",
+      "problem": "You own an ads-tabular pCTR (predicted click-through rate) problem with 20 numeric aggregates, 15 categorical fields after encoding, 2M rows, strict latency, and no text/image inputs. Pick a starting model family and justify it.",
       "skills": [
         "model selection",
         "inductive bias",
@@ -1004,7 +1004,7 @@
         "answer": "Start with a regularized linear/logistic model."
       },
       {
-        "problem": "A GBDT improves train AUC by 0.08 over linear but validation AUC by only 0.005. What concern does this raise?",
+        "problem": "A GBDT improves train AUC (area under the ROC curve) by 0.08 over linear but validation AUC by only 0.005. What concern does this raise?",
         "steps": [
           {
             "do": "Compare gains",
@@ -1070,7 +1070,7 @@
     "applications": [
       {
         "title": "GBDT for Palette-driven pCTR tabular signals",
-        "background": "Classic ads response models often start with engineered tabular signals: past CTRs, budgets, frequencies, advertiser quality, and context features. GBDTs naturally find threshold interactions among them.",
+        "background": "Classic ads response models often start with engineered tabular signals: past CTRs (click-through rates), budgets, frequencies, advertiser quality, and context features. GBDTs naturally find threshold interactions among them.",
         "numbers": "If a linear baseline has validation AUC 0.742 and a GBDT reaches 0.764, the absolute gain is 0.022. On 10M impression pairs, that means many more positive-negative pairs are correctly ordered."
       },
       {
@@ -1096,7 +1096,7 @@
       {
         "title": "Creative Intelligence ranker selection",
         "background": "Creative rankers may begin as GBDTs over generated attributes, then move to neural models when generated text/image embeddings become central.",
-        "numbers": "A GBDT using 120 generated attributes may score in 4 ms. A neural model using 768-dimensional creative embeddings may improve NDCG@10 by 0.015 but cost 12 ms, making latency part of the decision."
+        "numbers": "A GBDT using 120 generated attributes may score in 4 ms. A neural model using 768-dimensional creative embeddings may improve NDCG (normalized discounted cumulative gain)@10 by 0.015 but cost 12 ms, making latency part of the decision."
       },
       {
         "title": "Wide & Deep style ads ranking",
@@ -1140,7 +1140,7 @@
     "book": "Curriculum · ML Foundations",
     "title": "M5 · Offline metrics (AUC, Precision, Recall, F1, MRR, NDCG)",
     "tagline": "Translate model scores into the exact offline questions that ranking, filtering, and launch decisions need answered.",
-    "skipIf": "interpret an ROC + NDCG and design a per-slice evaluation.",
+    "skipIf": "interpret an ROC (receiver operating characteristic) + NDCG (normalized discounted cumulative gain) and design a per-slice evaluation.",
     "mapsTo": [
       "all"
     ],
@@ -1159,13 +1159,13 @@
         "confusion matrices",
         "ROC curves",
         "precision-recall curves",
-        "MRR",
+        "MRR (mean reciprocal rank)",
         "NDCG",
         "slice analysis"
       ]
     },
-    "motivation": "<p>A trained model gives scores, but the team still has to decide whether those scores are good enough for a launch, a retrain, or another week of feature work. Accuracy may be fine for a balanced toy problem and useless for rare clicks. A ranking model can have no single threshold at all, because its job is to order candidates.</p><p>Offline metrics are the language of those decisions. Precision and recall describe thresholded filters. AUC asks whether positives outrank negatives. MRR rewards putting the first relevant result early. NDCG handles graded relevance and top-heavy ranking. Per-slice evaluation keeps a global win from hiding a failure on a business-critical segment.</p>",
-    "definition": "<p><b>Definition.</b> For a binary classifier at a threshold, precision is $\\frac{TP}{TP+FP}$, recall is $\\frac{TP}{TP+FN}$, and $F1=\\frac{2PR}{P+R}$. ROC-AUC is the probability that a randomly chosen positive receives a higher score than a randomly chosen negative, with ties counted as half. For ranked lists, reciprocal rank is $1/r$ for the first relevant item at rank $r$, and $$DCG@k=\\sum_{i=1}^k \\frac{rel_i}{\\log_2(i+1)},\\qquad NDCG@k=\\frac{DCG@k}{IDCG@k}.$$</p><p><b>Assumptions that matter:</b> the metric must match product behavior, labels must mean the same thing across slices, and the evaluation window must match the prediction window. For imbalanced click tasks, PR-AUC can be more sensitive than ROC-AUC. For ranking tasks with graded labels, NDCG is often more informative than binary precision.</p>",
+    "motivation": "<p>A trained model gives scores, but the team still has to decide whether those scores are good enough for a launch, a retrain, or another week of feature work. Accuracy may be fine for a balanced toy problem and useless for rare clicks. A ranking model can have no single threshold at all, because its job is to order candidates.</p><p>Offline metrics are the language of those decisions. Precision and recall describe thresholded filters. AUC (area under the ROC curve) asks whether positives outrank negatives. MRR rewards putting the first relevant result early. NDCG handles graded relevance and top-heavy ranking. Per-slice evaluation keeps a global win from hiding a failure on a business-critical segment.</p>",
+    "definition": "<p><b>Definition.</b> For a binary classifier at a threshold, precision is $\\frac{TP}{TP+FP}$, recall is $\\frac{TP}{TP+FN}$, and $F1=\\frac{2PR}{P+R}$. ROC-AUC (area under the ROC curve) is the probability that a randomly chosen positive receives a higher score than a randomly chosen negative, with ties counted as half. For ranked lists, reciprocal rank is $1/r$ for the first relevant item at rank $r$, and $$DCG@k=\\sum_{i=1}^k \\frac{rel_i}{\\log_2(i+1)},\\qquad NDCG@k=\\frac{DCG@k}{IDCG@k}.$$</p><p><b>Assumptions that matter:</b> the metric must match product behavior, labels must mean the same thing across slices, and the evaluation window must match the prediction window. For imbalanced click tasks, PR-AUC (area under the precision-recall curve) can be more sensitive than ROC-AUC. For ranking tasks with graded labels, NDCG is often more informative than binary precision.</p>",
     "symbols": [
       {
         "sym": "$TP,FP,TN,FN$",
@@ -1185,7 +1185,7 @@
       },
       {
         "sym": "$IDCG@k$",
-        "desc": "the best possible DCG@k for the same labels."
+        "desc": "the best possible DCG (discounted cumulative gain)@k for the same labels."
       }
     ],
     "derivation": [
@@ -1250,7 +1250,7 @@
           "why": "rank 1 is undiscounted and rank 3 is divided by 2"
         },
         {
-          "do": "Compute IDCG@3",
+          "do": "Compute IDCG (ideal discounted cumulative gain)@3",
           "result": "$3/\\log_2 2+1/\\log_2 3+0/\\log_2 4\\approx3.631$",
           "why": "the ideal order puts relevance 3 before relevance 1"
         },
@@ -1266,7 +1266,7 @@
     },
     "practice": [
       {
-        "problem": "At a threshold, a classifier has TP=30, FP=10, FN=20. Compute precision, recall, and F1.",
+        "problem": "At a threshold, a classifier has TP=30, FP=10, FN=20. Compute precision, recall, and F1 (F1 score).",
         "steps": [
           {
             "do": "Compute precision",
@@ -1368,7 +1368,7 @@
     ],
     "applications": [
       {
-        "title": "Palette-driven pCTR ROC-AUC",
+        "title": "Palette-driven pCTR (predicted click-through rate) ROC-AUC",
         "background": "pCTR models rank ads by expected response. ROC-AUC is useful because ranking quality matters even before a threshold is chosen.",
         "numbers": "If 760 out of 1,000 sampled positive-negative pairs put the clicked impression above the non-clicked impression, AUC is $760/1000=0.760$."
       },
@@ -1436,7 +1436,7 @@
     "book": "Curriculum · Ranking & Evaluation",
     "title": "M6 · RecSys landscape: collaborative filtering / matrix factorization → two-tower → sequential & generative recommenders",
     "tagline": "Choose the recommender family that matches the data, latency, and product question in front of you.",
-    "skipIf": "contrast CF vs two-tower vs generative recommenders and pick per use-case.",
+    "skipIf": "contrast CF (collaborative filtering) vs two-tower vs generative recommenders and pick per use-case.",
     "mapsTo": [
       "all"
     ],
@@ -1575,7 +1575,7 @@
         "answer": "The order is $b$ (4), $c$ (3), then $a$ (2)."
       },
       {
-        "problem": "You have item metadata but no item interactions. Which family should be the first production baseline: user-neighborhood CF, pure MF lookup factors, or a two-tower/hybrid model?",
+        "problem": "You have item metadata but no item interactions. Which family should be the first production baseline: user-neighborhood CF, pure MF (matrix factorization) lookup factors, or a two-tower/hybrid model?",
         "steps": [
           {
             "do": "Check collaborative overlap",
@@ -1641,7 +1641,7 @@
             "why": "validity and retrieval quality must both be checked"
           }
         ],
-        "answer": "Guard generative retrieval with catalog-constrained decoding plus standard retrieval metrics such as recall@K or NDCG@K."
+        "answer": "Guard generative retrieval with catalog-constrained decoding plus standard retrieval metrics such as recall@K or NDCG (normalized discounted cumulative gain)@K."
       }
     ],
     "applications": [
@@ -1677,7 +1677,7 @@
       },
       {
         "title": "Palette-driven pCTR feature reuse",
-        "background": "The same palette/content embeddings used in retrieval can become dense features for a downstream pCTR ranker.",
+        "background": "The same palette/content embeddings used in retrieval can become dense features for a downstream pCTR (predicted click-through rate) ranker.",
         "numbers": "A retrieval score of 2.4 plus calibrated pCTR 0.018 and bid 6 gives expected click value $0.018\\times6=0.108$ before other terms."
       }
     ],
@@ -1736,8 +1736,8 @@
         "auction-aware ranking"
       ],
       "usedWith": [
-        "AUC",
-        "NDCG",
+        "AUC (area under the receiver operating characteristic curve)",
+        "NDCG (normalized discounted cumulative gain)",
         "calibrated probabilities"
       ]
     },
@@ -1823,7 +1823,7 @@
         {
           "do": "Score ad A",
           "result": "$S_A=4\\cdot0.030+0.5\\cdot0.20+0.2\\cdot0.08=0.236$",
-          "why": "bid-weighted pCTR is combined with view and long-response heads"
+          "why": "bid-weighted pCTR (predicted click-through rate) is combined with view and long-response heads"
         },
         {
           "do": "Score ad B",
@@ -1858,7 +1858,7 @@
         "answer": "The pairwise loss is about 1.038."
       },
       {
-        "problem": "Compute $S=bid\\cdot pCTR+0.3\\cdot pVTR$ for ad A: bid 5, pCTR 0.02, pVTR 0.30; ad B: bid 8, pCTR 0.012, pVTR 0.20.",
+        "problem": "Compute $S=bid\\cdot pCTR+0.3\\cdot pVTR$ for ad A: bid 5, pCTR 0.02, pVTR (predicted view-through rate) 0.30; ad B: bid 8, pCTR 0.012, pVTR 0.20.",
         "steps": [
           {
             "do": "Score ad A",
@@ -1874,7 +1874,7 @@
         "answer": "Ad A ranks first with 0.190 versus 0.156."
       },
       {
-        "problem": "A slate has relevance labels [3, 0, 1]. Compute DCG@3.",
+        "problem": "A slate has relevance labels [3, 0, 1]. Compute DCG (discounted cumulative gain)@3.",
         "steps": [
           {
             "do": "Compute position 1 gain",
@@ -1966,7 +1966,7 @@
     ],
     "applicationsClose": "<p>Ranking is where probabilities become product choices. Pointwise models give calibrated heads, pairwise losses teach preferences, and listwise metrics remind us that the top of the slate is where members actually live.</p>",
     "takeaways": [
-      "pCTR, pVTR, and pLTR are probability heads that often feed a larger ranking score.",
+      "pCTR, pVTR, and pLTR (predicted long-term response) are probability heads that often feed a larger ranking score.",
       "Pointwise objectives learn labels independently; pairwise objectives learn preferences; listwise objectives optimize slate quality.",
       "Multi-objective ranking requires calibrated or otherwise comparable heads."
     ],
@@ -2004,7 +2004,7 @@
     ],
     "connections": {
       "buildsOn": [
-        "pCTR heads",
+        "pCTR (predicted click-through rate) heads",
         "log loss",
         "validation splits"
       ],
@@ -2019,7 +2019,7 @@
         "Platt and isotonic calibration"
       ]
     },
-    "motivation": "<p>A ranker can be excellent at ordering yet still dangerous as a probability source. If a model says 0.10 on a slice and only 0.04 of those impressions click, the order might be useful but the marketplace math is wrong. In ads, multiplying pCTR by bid turns calibration error into money allocation error.</p><p>Calibration asks for a simple promise: among examples predicted at $p$, about a fraction $p$ should be positive. Rare events and sparse slices make that promise hard. Platt scaling bends scores through a sigmoid; isotonic regression learns a monotone stair-step map; ECE summarizes the reliability diagram as $\\sum_b \\frac{n_b}{n}|acc(b)-conf(b)|$.</p>",
+    "motivation": "<p>A ranker can be excellent at ordering yet still dangerous as a probability source. If a model says 0.10 on a slice and only 0.04 of those impressions click, the order might be useful but the marketplace math is wrong. In ads, multiplying pCTR by bid turns calibration error into money allocation error.</p><p>Calibration asks for a simple promise: among examples predicted at $p$, about a fraction $p$ should be positive. Rare events and sparse slices make that promise hard. Platt scaling bends scores through a sigmoid; isotonic regression learns a monotone stair-step map; ECE (expected calibration error) summarizes the reliability diagram as $\\sum_b \\frac{n_b}{n}|acc(b)-conf(b)|$.</p>",
     "definition": "<p><b>Definition.</b> A probabilistic classifier is calibrated if $\\Pr(Y=1\\mid \\hat p=p)=p$. Expected calibration error bins predictions and compares each bin's empirical accuracy $acc(b)$ to its mean confidence $conf(b)$: $$ECE=\\sum_{b=1}^B \\frac{n_b}{n}\\left|acc(b)-conf(b)\\right|.$$ Platt scaling fits $\\hat p'=\\sigma(a z+b)$ to raw score $z$; isotonic calibration fits a monotone function $g(z)$.</p><p><b>Assumptions that matter:</b> calibration must be fit on held-out data; bins need enough examples to be stable; rare positives make variance large; and resampling or class-weighting can improve learning while still requiring a post-training calibration read.</p>",
     "symbols": [
       {
@@ -2487,12 +2487,12 @@
       {
         "title": "Search Ads new queries",
         "background": "Rare or new queries can transfer from semantic query embeddings and neighboring known queries before click logs accumulate.",
-        "numbers": "A query cluster CTR of 0.018 and exact-query CTR of 0.030 with $w=0.2$ yields $0.8(0.018)+0.2(0.030)=0.0204$."
+        "numbers": "A query cluster CTR (click-through rate) of 0.018 and exact-query CTR of 0.030 with $w=0.2$ yields $0.8(0.018)+0.2(0.030)=0.0204$."
       },
       {
         "title": "Instream Ads new video inventory",
         "background": "New organic videos can use content classification and creator priors until enough view-through outcomes arrive.",
-        "numbers": "If content pVTR is 0.24 and early measured pVTR is 0.30 after 100 impressions with $k=900$, the blend is $0.9(0.24)+0.1(0.30)=0.246$."
+        "numbers": "If content pVTR (predicted view-through rate) is 0.24 and early measured pVTR is 0.30 after 100 impressions with $k=900$, the blend is $0.9(0.24)+0.1(0.30)=0.246$."
       },
       {
         "title": "Event Organic Feed SPR new posts",
@@ -2536,7 +2536,7 @@
     "book": "Curriculum · Ranking & Evaluation",
     "title": "M10 · Learning with sparse & implicit labels (recsys)",
     "tagline": "Train recommenders from clicks, views, and skips without pretending missing feedback is the same as dislike.",
-    "skipIf": "train a recsys model on implicit feedback with principled negatives + debiasing.",
+    "skipIf": "train a RecSys (recommender system) model on implicit feedback with principled negatives + debiasing.",
     "mapsTo": [
       "Creator Marketplace AI"
     ],
@@ -2549,7 +2549,7 @@
       "leadsTo": [
         "two-tower training",
         "debiasing",
-        "PU learning"
+        "PU (positive-unlabeled) learning"
       ],
       "usedWith": [
         "negative sampling",
@@ -2557,8 +2557,8 @@
         "inverse propensity weighting"
       ]
     },
-    "motivation": "<p>Most recommender labels are implicit. A click, view, save, reply, or registration is a positive hint; absence is ambiguous. The member may dislike the item, but they also may never have seen it, may have seen it in a poor position, or may convert later. Treating every missing pair as a true negative floods training with false certainty.</p><p>The job is to learn from positives while constructing negatives honestly. Uniform negatives teach broad separation; popularity and in-batch negatives are efficient but biased; hard negatives sharpen the boundary. Debiasing methods such as IPS correct exposure effects, and sampling-bias corrections adjust losses so $p(i\\mid u)$ is not mostly a mirror of the sampler.</p>",
-    "definition": "<p><b>Definition.</b> Implicit-feedback recommendation learns from observed positive events $y_{ui}=1$ and unobserved pairs whose label is unknown, not necessarily $0$. Pairwise BPR maximizes $\\log\\sigma(s(u,i^+)-s(u,i^-))$ for sampled negatives. In-batch softmax for one positive item is $$\\ell_u=-\\log\\frac{\\exp(s(u,i^+)-\\log q(i^+))}{\\sum_{j\\in B}\\exp(s(u,j)-\\log q(j))},$$ where $q(j)$ is a sampling or popularity probability used for correction.</p><p><b>Assumptions that matter:</b> exposure is biased by previous rankers; position affects clicks; missing labels are a mixture of unexposed, ignored, and delayed outcomes; and negative sampling changes the training distribution unless corrected or evaluated carefully.</p>",
+    "motivation": "<p>Most recommender labels are implicit. A click, view, save, reply, or registration is a positive hint; absence is ambiguous. The member may dislike the item, but they also may never have seen it, may have seen it in a poor position, or may convert later. Treating every missing pair as a true negative floods training with false certainty.</p><p>The job is to learn from positives while constructing negatives honestly. Uniform negatives teach broad separation; popularity and in-batch negatives are efficient but biased; hard negatives sharpen the boundary. Debiasing methods such as IPS (inverse propensity scoring) correct exposure effects, and sampling-bias corrections adjust losses so $p(i\\mid u)$ is not mostly a mirror of the sampler.</p>",
+    "definition": "<p><b>Definition.</b> Implicit-feedback recommendation learns from observed positive events $y_{ui}=1$ and unobserved pairs whose label is unknown, not necessarily $0$. Pairwise BPR (Bayesian personalized ranking) maximizes $\\log\\sigma(s(u,i^+)-s(u,i^-))$ for sampled negatives. In-batch softmax for one positive item is $$\\ell_u=-\\log\\frac{\\exp(s(u,i^+)-\\log q(i^+))}{\\sum_{j\\in B}\\exp(s(u,j)-\\log q(j))},$$ where $q(j)$ is a sampling or popularity probability used for correction.</p><p><b>Assumptions that matter:</b> exposure is biased by previous rankers; position affects clicks; missing labels are a mixture of unexposed, ignored, and delayed outcomes; and negative sampling changes the training distribution unless corrected or evaluated carefully.</p>",
     "symbols": [
       {
         "sym": "$i^+$",
@@ -2825,8 +2825,8 @@
         "matrix factorization intuition"
       ],
       "leadsTo": [
-        "Two-tower / EBR retrieval architecture",
-        "ANN / vector search & indexing",
+        "Two-tower / EBR (embedding-based retrieval) retrieval architecture",
+        "ANN (approximate nearest neighbor) / vector search & indexing",
         "Encoders & contrastive training"
       ],
       "usedWith": [
@@ -2954,7 +2954,7 @@
         "answer": "The cosine similarity is $0.48$."
       },
       {
-        "problem": "A retrieval set has 8 relevant creators. Your top 10 returns 5 of them. What is recall@10?",
+        "problem": "A retrieval set has 8 relevant creators. Your top 10 returns 5 of them. What is recall@10 (recall at 10)?",
         "steps": [
           {
             "do": "Name the numerator",
@@ -3066,7 +3066,7 @@
       },
       {
         "title": "Palette pCTR feature compression",
-        "background": "High-cardinality member and advertiser features can be embedded before entering a click model. The downstream pCTR model gets dense coordinates instead of millions of sparse IDs.",
+        "background": "High-cardinality member and advertiser features can be embedded before entering a click model. The downstream pCTR (predicted click-through rate) model gets dense coordinates instead of millions of sparse IDs.",
         "numbers": "Replacing 1,000,000 sparse advertiser IDs with 64-dimensional embeddings changes the active input from a million-column one-hot space to 64 numbers per advertiser, while keeping $64/1{,}000{,}000=0.0064%$ as many coordinates."
       }
     ],
@@ -3115,14 +3115,14 @@
         "negative sampling"
       ],
       "leadsTo": [
-        "ANN / vector search & indexing",
+        "ANN (approximate nearest neighbor) / vector search & indexing",
         "hard-negative mining",
         "retrieval evaluation at scale"
       ],
       "usedWith": [
         "in-batch negatives",
         "sampling-bias correction",
-        "recall@k",
+        "recall@k (recall at k)",
         "offline-online serving parity"
       ]
     },
@@ -3350,7 +3350,7 @@
       },
       {
         "title": "Palette pCTR candidate features",
-        "background": "A retrieval tower can feed dense ad-member match features into the pCTR stack. The final model still predicts clicks, but it starts from better semantic candidates.",
+        "background": "A retrieval tower can feed dense ad-member match features into the pCTR (predicted click-through rate) stack. The final model still predicts clicks, but it starts from better semantic candidates.",
         "numbers": "A candidate generator lifting recall@100 from 0.55 to 0.70 gives the ranker $0.70/0.55\\approx1.27\\times$ as many labeled positives to choose from in the first 100 slots."
       }
     ],
@@ -3387,7 +3387,7 @@
     "book": "Curriculum · Retrieval & Embeddings",
     "title": "M13 · ANN / vector search & indexing (HNSW, IVF-PQ, ScaNN)",
     "tagline": "Trade a little exactness for the latency and memory needed to search millions of embeddings.",
-    "skipIf": "choose HNSW vs IVF-PQ and tune recall vs latency.",
+    "skipIf": "choose HNSW (hierarchical navigable small world) vs IVF-PQ (inverted file with product quantization) and tune recall vs latency.",
     "mapsTo": [
       "Creator Marketplace AI"
     ],
@@ -3395,7 +3395,7 @@
       "buildsOn": [
         "embedding spaces",
         "nearest neighbors",
-        "recall@k"
+        "recall@k (recall at k)"
       ],
       "leadsTo": [
         "production retrieval serving",
@@ -3404,13 +3404,13 @@
       ],
       "usedWith": [
         "HNSW efSearch",
-        "IVF nprobe",
+        "IVF (inverted file) nprobe",
         "product quantization",
         "latency-memory-recall tradeoffs"
       ]
     },
     "motivation": "<p>Exact nearest-neighbor search is beautifully simple: compare the query to every creator vector and sort. That is fine for a notebook and impossible for a live Creator Marketplace search path if the catalog has millions of vectors and many requests per second.</p><p><b>Approximate nearest neighbor</b> indexing keeps the same goal but refuses to inspect everything. Graph methods like HNSW walk through neighbor links; IVF-PQ narrows search to coarse clusters and compressed codes; ScaNN combines partitioning and anisotropic quantization. The practical skill is not memorizing names — it is choosing the knob that buys latency without losing too much recall.</p>",
-    "definition": "<p><b>Definition.</b> Exact top-$k$ vector search returns the $k$ items with largest similarity $q^\\top x_i$ or cosine. ANN returns an approximate set $A_k(q)$ faster than exact search, and we measure quality by recall:</p><p>$$\\operatorname{recall@k}=\\frac{|A_k(q)\\cap E_k(q)|}{|E_k(q)|},$$</p><p>where $E_k(q)$ is the exact top-$k$. HNSW increases recall with larger $\\operatorname{efSearch}$; IVF-style indexes increase recall with larger $\\operatorname{nprobe}$; PQ saves memory by storing compressed subvector codes instead of full float vectors.</p>",
+    "definition": "<p><b>Definition.</b> Exact top-$k$ vector search returns the $k$ items with largest similarity $q^\\top x_i$ or cosine. ANN (approximate nearest neighbor) returns an approximate set $A_k(q)$ faster than exact search, and we measure quality by recall:</p><p>$$\\operatorname{recall@k}=\\frac{|A_k(q)\\cap E_k(q)|}{|E_k(q)|},$$</p><p>where $E_k(q)$ is the exact top-$k$. HNSW increases recall with larger $\\operatorname{efSearch}$; IVF-style indexes increase recall with larger $\\operatorname{nprobe}$; PQ (product quantization) saves memory by storing compressed subvector codes instead of full float vectors.</p>",
     "symbols": [
       {
         "sym": "$q$",
@@ -3629,7 +3629,7 @@
     ],
     "applicationsClose": "<p>ANN indexing is where representation learning meets production physics. The embedding model decides what should be near; HNSW, IVF-PQ, ScaNN, and hybrid retrieval decide how much of that neighborhood you can afford to find under real latency and memory limits.</p>",
     "takeaways": [
-      "Exact kNN costs $N\\cdot d$ work per query; ANN reduces candidate comparisons by using graphs, partitions, or compression.",
+      "Exact kNN (k-nearest neighbors) costs $N\\cdot d$ work per query; ANN reduces candidate comparisons by using graphs, partitions, or compression.",
       "Recall@k compares approximate results to exact top-k and is the central quality metric for index tuning.",
       "HNSW favors high-recall low-latency search with memory overhead; IVF-PQ favors memory compression and tunable probing; ScaNN is built around efficient partitioning and quantization.",
       "Hybrid dense plus lexical retrieval often beats either method alone in ads and creator search."
@@ -3942,7 +3942,7 @@
       "Sentence-BERT (Reimers & Gurevych, 2019)",
       "SimCSE (Gao et al., 2021)",
       "E5 Text Embeddings (Wang et al., 2022)",
-      "CPC / InfoNCE (van den Oord et al., 2018)",
+      "CPC (contrastive predictive coding) / InfoNCE (van den Oord et al., 2018)",
       "SimCLR (Chen et al., 2020)",
       "MoCo (He et al., 2020)"
     ],
@@ -3973,13 +3973,13 @@
         "retrieval evaluation without labels"
       ],
       "usedWith": [
-        "PCA or UMAP for visualization",
+        "PCA (principal component analysis) or UMAP (uniform manifold approximation and projection) for visualization",
         "silhouette and stability metrics",
         "human review of cluster names"
       ]
     },
     "motivation": "<p>You already know how to train a model when the answer column exists. Clustering starts one step earlier: the data has useful shape, but no one has labeled the personas, cohorts, or content groups yet. In ads and marketplace work, that is common. We may have creator bios, viewer behavior, campaign goals, and creative embeddings, but no canonical list of cohorts waiting in a table.</p><p>The promise of clustering is not magic labeling; it is disciplined grouping. We choose a notion of similarity, run an algorithm that prefers compact or dense groups, then ask whether the groups are coherent, stable, and useful for a downstream decision. A good cluster is a hypothesis you can inspect, name, and test.</p>",
-    "definition": "<p><b>Definition.</b> Given feature vectors $x_1,\\ldots,x_n \\in \\mathbb{R}^d$, clustering partitions or softly assigns the points into groups so points in the same group are more similar than points in different groups. For k-means, the objective is the within-cluster sum of squared errors:</p>$$\\min_{C_1,\\ldots,C_k,\\mu_1,\\ldots,\\mu_k} \\sum_{j=1}^k \\sum_{x_i \\in C_j} \\|x_i-\\mu_j\\|_2^2.$$<p>A Gaussian mixture model instead assumes $p(x)=\\sum_{j=1}^k \\pi_j\\mathcal{N}(x\\mid\\mu_j,\\Sigma_j)$ and returns soft responsibilities. Density methods such as DBSCAN and HDBSCAN define clusters as dense regions separated by sparse space; they can mark noise and do not require choosing $k$.</p>",
+    "definition": "<p><b>Definition.</b> Given feature vectors $x_1,\\ldots,x_n \\in \\mathbb{R}^d$, clustering partitions or softly assigns the points into groups so points in the same group are more similar than points in different groups. For k-means, the objective is the within-cluster sum of squared errors:</p>$$\\min_{C_1,\\ldots,C_k,\\mu_1,\\ldots,\\mu_k} \\sum_{j=1}^k \\sum_{x_i \\in C_j} \\|x_i-\\mu_j\\|_2^2.$$<p>A Gaussian mixture model instead assumes $p(x)=\\sum_{j=1}^k \\pi_j\\mathcal{N}(x\\mid\\mu_j,\\Sigma_j)$ and returns soft responsibilities. Density methods such as DBSCAN (density-based spatial clustering of applications with noise) and HDBSCAN (hierarchical density-based spatial clustering of applications with noise) define clusters as dense regions separated by sparse space; they can mark noise and do not require choosing $k$.</p>",
     "symbols": [
       {
         "sym": "$x_i \\in \\mathbb{R}^d$",
@@ -3987,7 +3987,7 @@
       },
       {
         "sym": "$k$",
-        "desc": "the requested number of k-means or GMM groups."
+        "desc": "the requested number of k-means or GMM (Gaussian mixture model) groups."
       },
       {
         "sym": "$C_j$",
@@ -4014,7 +4014,7 @@
       {
         "do": "Fix centroids in k-means",
         "result": "assign each $x_i$ to the nearest $\\mu_j$",
-        "why": "with centroids fixed, the SSE contribution for a point is minimized by its closest centroid"
+        "why": "with centroids fixed, the SSE (sum of squared errors) contribution for a point is minimized by its closest centroid"
       },
       {
         "do": "Fix assignments",
@@ -4029,7 +4029,7 @@
       {
         "do": "Replace hard labels by mixture probabilities",
         "result": "$r_{ij}=\\frac{\\pi_j\\mathcal{N}(x_i\\mid\\mu_j,\\Sigma_j)}{\\sum_{\\ell}\\pi_{\\ell}\\mathcal{N}(x_i\\mid\\mu_{\\ell},\\Sigma_{\\ell})}$",
-        "why": "the EM E-step computes how much each component explains each point"
+        "why": "the EM (expectation-maximization) E-step computes how much each component explains each point"
       },
       {
         "do": "Validate without labels",
@@ -4302,7 +4302,7 @@
         "Mahalanobis distance and reconstruction error"
       ]
     },
-    "motivation": "<p>Modern ads and ML systems create wide feature tables: creative embeddings, audience summaries, campaign metrics, pacing signals, and text features can easily reach hundreds or thousands of dimensions. People cannot inspect that space directly, but many problems still ask for a human-readable map: what groups exist, what changed, and which points are strange?</p><p>Dimensionality reduction makes a faithful small view of the large space. PCA gives the best linear low-dimensional summary by variance; UMAP and t-SNE give nonlinear visual maps that are excellent for exploration but should not be treated as calibrated distances. Anomaly detection then asks which points are poorly reconstructed, isolated, locally rare, or far under the normal covariance shape.</p>",
+    "motivation": "<p>Modern ads and ML (machine learning) systems create wide feature tables: creative embeddings, audience summaries, campaign metrics, pacing signals, and text features can easily reach hundreds or thousands of dimensions. People cannot inspect that space directly, but many problems still ask for a human-readable map: what groups exist, what changed, and which points are strange?</p><p>Dimensionality reduction makes a faithful small view of the large space. PCA (principal component analysis) gives the best linear low-dimensional summary by variance; UMAP (uniform manifold approximation and projection) and t-SNE (t-distributed stochastic neighbor embedding) give nonlinear visual maps that are excellent for exploration but should not be treated as calibrated distances. Anomaly detection then asks which points are poorly reconstructed, isolated, locally rare, or far under the normal covariance shape.</p>",
     "definition": "<p><b>Definition.</b> PCA centers data matrix $X \\in \\mathbb{R}^{n\\times d}$, computes covariance $S=\\frac{1}{n-1}X_c^\\top X_c$, and chooses eigenvectors with largest eigenvalues. The $r$-dimensional projection is</p>$$Z=X_c W_r,$$<p>where columns of $W_r$ are the top $r$ eigenvectors. The explained-variance ratio for component $j$ is $\\lambda_j/\\sum_{\\ell=1}^d\\lambda_{\\ell}$. An anomaly score can be reconstruction error $\\|x-\\hat{x}\\|_2^2$, Mahalanobis distance $(x-\\mu)^\\top\\Sigma^{-1}(x-\\mu)$, or a learned score from IsolationForest or Local Outlier Factor.</p>",
     "symbols": [
       {
@@ -4532,7 +4532,7 @@
       {
         "title": "Audience segmentation quality checks",
         "background": "After clustering audiences, PCA helps show whether segments are separated by real feature variation or by one noisy feature. This is a diagnostic view before launch.",
-        "numbers": "If PC1 explains 52% variance and a cohort's centroid is 1.8 standard deviations above average on PC1, while another is -1.2, their separation along PC1 is 3.0 standard deviations."
+        "numbers": "If PC1 (first principal component) explains 52% variance and a cohort's centroid is 1.8 standard deviations above average on PC1, while another is -1.2, their separation along PC1 is 3.0 standard deviations."
       },
       {
         "title": "Anomaly detection on ads metrics",
@@ -4542,7 +4542,7 @@
       {
         "title": "Creator Marketplace suspicious cohort shifts",
         "background": "A creator cohort's feature distribution can drift after a product or inventory change. PCA gives a stable low-dimensional view for comparing this week to last week.",
-        "numbers": "If last week's centroid in PC space is $(0.2,-0.1)$ and this week's is $(1.4,0.5)$, the shift length is $\\sqrt{1.2^2+0.6^2}\\approx1.34$ PC units. That number is easy to track over releases."
+        "numbers": "If last week's centroid in PC (principal component) space is $(0.2,-0.1)$ and this week's is $(1.4,0.5)$, the shift length is $\\sqrt{1.2^2+0.6^2}\\approx1.34$ PC units. That number is easy to track over releases."
       },
       {
         "title": "Feature monitoring for model inputs",
@@ -4551,7 +4551,7 @@
       },
       {
         "title": "Local Outlier Factor for niche inventory",
-        "background": "Some campaigns naturally serve niche inventory, so global distance alone may overflag them. LOF compares a point with its local neighborhood, which is useful when density varies across segments.",
+        "background": "Some campaigns naturally serve niche inventory, so global distance alone may overflag them. LOF (local outlier factor) compares a point with its local neighborhood, which is useful when density varies across segments.",
         "numbers": "If a video's local reachability density is 0.25 and its neighbors average 0.75, a simple LOF-style ratio is $0.75/0.25=3.0$, suggesting the point is much sparser than its local context."
       }
     ],
@@ -4602,8 +4602,8 @@
         "sequence modeling"
       ],
       "leadsTo": [
-        "LLM fundamentals + prompting",
-        "RAG & query understanding",
+        "LLM (large language model) fundamentals + prompting",
+        "RAG (retrieval-augmented generation) & query understanding",
         "semantic retrieval",
         "multimodal creative intelligence"
       ],
@@ -4901,8 +4901,8 @@
         "probability chains"
       ],
       "leadsTo": [
-        "RAG & query understanding",
-        "LLM evaluation",
+        "RAG (retrieval-augmented generation) & query understanding",
+        "LLM (large language model) evaluation",
         "agentic workflows",
         "creative generation guardrails"
       ],
@@ -5174,7 +5174,7 @@
       "buildsOn": [
         "embeddings",
         "cosine similarity",
-        "LLM prompting",
+        "LLM (large language model) prompting",
         "classification thresholds"
       ],
       "leadsTo": [
@@ -5191,7 +5191,7 @@
         "confidence calibration"
       ]
     },
-    "motivation": "<p>An LLM can sound confident even when it is missing product facts. RAG changes the job: first retrieve relevant evidence, then ask the model to answer from that evidence, and fall back when retrieval is weak. This is how we keep language interfaces useful without asking them to memorize every campaign rule, creator taxonomy, or policy detail.</p><p>Query understanding adds one more production step. A Creator Marketplace search such as 'enterprise AI creators in Canada with security audience' must become structured intent and slots before retrieval, ranking, and filters can work. The safest system measures confidence and chooses answer-versus-fallback deliberately.</p>",
+    "motivation": "<p>An LLM can sound confident even when it is missing product facts. RAG (retrieval-augmented generation) changes the job: first retrieve relevant evidence, then ask the model to answer from that evidence, and fall back when retrieval is weak. This is how we keep language interfaces useful without asking them to memorize every campaign rule, creator taxonomy, or policy detail.</p><p>Query understanding adds one more production step. A Creator Marketplace search such as 'enterprise AI creators in Canada with security audience' must become structured intent and slots before retrieval, ranking, and filters can work. The safest system measures confidence and chooses answer-versus-fallback deliberately.</p>",
     "definition": "<p><b>Definition.</b> Retrieval-augmented generation uses a pipeline</p><p>$$\\text{query} \\to \\text{retrieve}(k) \\to \\text{augment prompt with evidence} \\to \\text{generate grounded answer}.$$</p><p>Dense retrieval commonly scores a query embedding $q$ and chunk embedding $c_i$ by cosine similarity $s_i=\\frac{q^\\top c_i}{\\|q\\|\\|c_i\\|}$. A reranker may rescore the top candidates. For natural-language to structured parsing, the system predicts intent, slots, and a confidence score; if confidence is below threshold $\\gamma$, it returns a fallback rather than a brittle interpretation.</p>",
     "symbols": [
       {
@@ -5423,7 +5423,7 @@
     "takeaways": [
       "RAG follows retrieve, augment, generate; the generated answer should be grounded in cited chunks.",
       "Cosine similarity and reranking turn a natural-language request into ranked evidence.",
-      "NL-to-structured systems need confidence thresholds and fallbacks because a bad parse can be worse than no parse."
+      "NL (natural language)-to-structured systems need confidence thresholds and fallbacks because a bad parse can be worse than no parse."
     ],
     "resources": [
       {
@@ -5468,16 +5468,16 @@
       "leadsTo": [
         "multilingual content classifiers",
         "efficient GenAI serving",
-        "LLM prompt and model improvement loops"
+        "LLM (large language model) prompt and model improvement loops"
       ],
       "usedWith": [
         "softmax",
-        "KL divergence",
+        "KL (Kullback-Leibler (divergence))",
         "low-rank matrix factorization",
         "temperature scaling"
       ]
     },
-    "motivation": "<p>You already know how to train a classifier from labeled examples. The harder production question is what to do when the best starting point is a large pretrained model: should you prompt it, fine-tune it, adapt only a few parameters, or train a smaller student to imitate it? In AFP-AI work, that choice shows up in Instream Ads content classification, multilingual policy labels, and GenAI prompt-improvement systems.</p><p>The single load-bearing idea is <b>reuse the teacher signal without paying the full teacher cost forever</b>. Full fine-tuning changes every weight, PEFT/LoRA changes a small low-rank adapter, and distillation trains a compact student on the teacher's softened probabilities. You keep the knowledge that matters for the product slice while controlling latency, memory, governance, and iteration speed.</p>",
+    "motivation": "<p>You already know how to train a classifier from labeled examples. The harder production question is what to do when the best starting point is a large pretrained model: should you prompt it, fine-tune it, adapt only a few parameters, or train a smaller student to imitate it? In AFP-AI work, that choice shows up in Instream Ads content classification, multilingual policy labels, and GenAI prompt-improvement systems.</p><p>The single load-bearing idea is <b>reuse the teacher signal without paying the full teacher cost forever</b>. Full fine-tuning changes every weight, PEFT (parameter-efficient fine-tuning)/LoRA (low-rank adaptation) changes a small low-rank adapter, and distillation trains a compact student on the teacher's softened probabilities. You keep the knowledge that matters for the product slice while controlling latency, memory, governance, and iteration speed.</p>",
     "definition": "<p><b>Definition.</b> Fine-tuning starts from pretrained parameters $\\theta_0$ and optimizes a task loss on labeled examples, producing $\\theta=\\theta_0+\\Delta\\theta$. Full fine-tuning lets every parameter move. Parameter-efficient fine-tuning, such as LoRA, freezes the base weight $W\\in\\mathbb{R}^{d\\times k}$ and learns a low-rank update $\\Delta W=BA$, where $B\\in\\mathbb{R}^{d\\times r}$, $A\\in\\mathbb{R}^{r\\times k}$, and $r\\ll\\min(d,k)$.</p><p><b>Distillation</b> trains a student model $s_\\phi$ to match a teacher distribution $q_T$ computed with temperature $T$: $$q_T(c)=\\frac{\\exp(z_c/T)}{\\sum_j \\exp(z_j/T)},\\qquad L_{KD}=T^2\\sum_c q_T(c)\\log\\frac{q_T(c)}{p_T(c)}.$$ Classification usually optimizes cross-entropy over labels or soft labels; generation optimizes next-token likelihood, preference losses, or task-specific judge scores. Prompt first when the behavior is already present, fine-tune when the behavior is missing but data is available, and distill when a strong behavior must become cheaper or more stable to serve.</p>",
     "symbols": [
       {
@@ -6048,7 +6048,7 @@
       },
       {
         "label": "HuggingFace — Diffusion Models course",
-        "note": "DDPM/DDIM in code"
+        "note": "DDPM (denoising diffusion probabilistic model)/DDIM in code"
       },
       {
         "label": "fast.ai — Stable Diffusion",
@@ -6099,7 +6099,7 @@
         "bias audits"
       ]
     },
-    "motivation": "<p>LLM-as-judge is tempting because GenAI systems produce open-ended text, images, and recommendations faster than humans can review them. A judge can score whether a creative rewrite is clear, whether a prompt follows policy, or whether a video classification rationale is grounded. But a judge is still a model, and models can be confidently wrong.</p><p>The core habit is <b>validate the evaluator before trusting the evaluation</b>. A good rubric makes the task legible; agreement statistics compare judge decisions to humans; bias probes reveal whether answer order, verbosity, or model identity changes the verdict. Once measured, those issues can be mitigated with swaps, calibration sets, length controls, and human escalation.</p>",
+    "motivation": "<p>LLM (large language model)-as-judge is tempting because GenAI systems produce open-ended text, images, and recommendations faster than humans can review them. A judge can score whether a creative rewrite is clear, whether a prompt follows policy, or whether a video classification rationale is grounded. But a judge is still a model, and models can be confidently wrong.</p><p>The core habit is <b>validate the evaluator before trusting the evaluation</b>. A good rubric makes the task legible; agreement statistics compare judge decisions to humans; bias probes reveal whether answer order, verbosity, or model identity changes the verdict. Once measured, those issues can be mitigated with swaps, calibration sets, length controls, and human escalation.</p>",
     "definition": "<p><b>Definition.</b> An LLM judge maps an item $x$, candidate output $a$, and rubric $r$ to a score or label $J(x,a,r)$. Validation compares judge labels with human labels. For two raters and $K$ categories, Cohen's kappa is $$\\kappa=\\frac{p_o-p_e}{1-p_e},\\qquad p_e=\\sum_{k=1}^{K}p_{H,k}p_{J,k},$$ where $p_o$ is observed agreement and $p_e$ is agreement expected by chance from the raters' marginal label rates.</p><p>For numeric scores, also inspect correlation, calibration by score bucket, and disagreement examples. For pairwise judgments, test <b>position bias</b> by swapping candidate order: a reliable judge should not prefer the first answer merely because it appears first. Mitigations include order randomization, swapped duplicate evaluations, concise rubrics, length normalization, and human review for low-confidence or high-impact cases.</p>",
     "symbols": [
       {
@@ -6395,7 +6395,7 @@
     "book": "Curriculum · Bandits & RL",
     "title": "M23 · RLHF, DPO, PPO",
     "tagline": "Turn human preference labels into safer model behavior while keeping the tuned model close to a trusted reference.",
-    "skipIf": "design a fine-tuning plan for LLM RL tuning.",
+    "skipIf": "design a fine-tuning plan for LLM (large language model) RL (reinforcement learning) tuning.",
     "mapsTo": [
       "Creative Intelligence"
     ],
@@ -6411,12 +6411,12 @@
         "preference optimization"
       ],
       "usedWith": [
-        "KL divergence",
+        "KL (Kullback-Leibler (divergence))",
         "Bradley-Terry models",
         "stochastic policies"
       ]
     },
-    "motivation": "<p>You already know how to train a model from labels. RLHF starts when the label is not a single right answer, but a human preference: this generated headline is clearer than that one; this prompt completion follows the brand guardrail better than that one. For Creative Intelligence, those comparisons are often easier and more reliable than asking reviewers to invent a perfect numeric score.</p><p>The key idea is to convert preferences into an optimization signal, then update carefully. PPO uses a learned reward model and a KL penalty so the model improves without drifting far from the reference. DPO keeps the same preference spirit but skips the explicit reward model by optimizing a closed-form preference objective directly.</p>",
+    "motivation": "<p>You already know how to train a model from labels. RLHF (reinforcement learning from human feedback) starts when the label is not a single right answer, but a human preference: this generated headline is clearer than that one; this prompt completion follows the brand guardrail better than that one. For Creative Intelligence, those comparisons are often easier and more reliable than asking reviewers to invent a perfect numeric score.</p><p>The key idea is to convert preferences into an optimization signal, then update carefully. PPO (proximal policy optimization) uses a learned reward model and a KL penalty so the model improves without drifting far from the reference. DPO (direct preference optimization) keeps the same preference spirit but skips the explicit reward model by optimizing a closed-form preference objective directly.</p>",
     "definition": "<p><b>Definition.</b> In RLHF, humans compare outputs, a reward model learns scores $r_\\phi(x,y)$, and a policy $\\pi_\\theta(y|x)$ is fine-tuned to maximize reward while staying close to a reference $\\pi_0$:</p><p>$$\\max_\\theta\\; \\mathbb{E}_{y\\sim\\pi_\\theta}[r_\\phi(x,y)] - \\beta\\,D_{KL}(\\pi_\\theta(\\cdot|x)\\|\\pi_0(\\cdot|x)).$$</p><p>For a preference pair where $y_w$ beats $y_l$, Bradley-Terry uses $P(y_w \\succ y_l)=\\sigma(r_\\phi(x,y_w)-r_\\phi(x,y_l))$. PPO estimates policy-gradient updates with a clipped probability ratio; DPO optimizes preferences directly by comparing policy log-ratios to reference log-ratios.</p>",
     "symbols": [
       {
@@ -6674,7 +6674,7 @@
     "book": "Curriculum · Bandits & RL",
     "title": "M24 · Counterfactual / off-policy evaluation (IPS/DR)",
     "tagline": "Estimate a new policy from logged ads data before spending traffic on a risky experiment.",
-    "skipIf": "estimate a policy's value from logged data using IPS/DR.",
+    "skipIf": "estimate a policy's value from logged data using IPS (inverse propensity scoring)/DR (doubly robust).",
     "mapsTo": [
       "Advanced"
     ],
@@ -6818,7 +6818,7 @@
         "answer": "$1.0$."
       },
       {
-        "problem": "Weights are $[0.5,2.0,1.5]$ and weighted rewards are $[0,2,1.5]$. Compute SNIPS.",
+        "problem": "Weights are $[0.5,2.0,1.5]$ and weighted rewards are $[0,2,1.5]$. Compute SNIPS (self-normalized inverse propensity scoring).",
         "steps": [
           {
             "do": "Sum weighted rewards",
@@ -6909,7 +6909,7 @@
       },
       {
         "title": "Launch decision confidence",
-        "background": "OPE should report uncertainty, not just a point estimate, because logs are finite and propensities vary.",
+        "background": "OPE (off-policy evaluation) should report uncertainty, not just a point estimate, because logs are finite and propensities vary.",
         "numbers": "A slice estimate of 0.012 with bootstrap standard error 0.002 has a rough 95% interval $0.012\\pm1.96\\cdot0.002=[0.0081,0.0159]$."
       }
     ],
@@ -6956,7 +6956,7 @@
       ],
       "usedWith": [
         "regret",
-        "UCB bonuses",
+        "UCB (upper confidence bound) bonuses",
         "Bayesian posteriors"
       ]
     },
@@ -7011,7 +7011,7 @@
       }
     ],
     "worked": {
-      "problem": "Three creative variants have counts $n=[100,25,10]$, empirical CTRs $\\hat\\mu=[0.040,0.050,0.030]$, current round $t=136$, and $c=0.2$. Compute UCB indices and pick an arm. Contrast with greedy selection.",
+      "problem": "Three creative variants have counts $n=[100,25,10]$, empirical CTRs (click-through rates) $\\hat\\mu=[0.040,0.050,0.030]$, current round $t=136$, and $c=0.2$. Compute UCB indices and pick an arm. Contrast with greedy selection.",
       "skills": [
         "UCB index",
         "exploration bonus",
@@ -7173,7 +7173,7 @@
         "numbers": "Trying 4 variants for 250 impressions each creates 1,000 exploration impressions; at 3% CTR, expect $1000\\cdot0.03=30$ clicks across the warm-up."
       }
     ],
-    "applicationsClose": "<p>Bandits are the middle ground between static experiments and full RL. They fit when the action matters now, the feedback is partial, and tomorrow's state is mostly unchanged by today's choice.</p>",
+    "applicationsClose": "<p>Bandits are the middle ground between static experiments and full RL (reinforcement learning). They fit when the action matters now, the feedback is partial, and tomorrow's state is mostly unchanged by today's choice.</p>",
     "takeaways": [
       "Bandits observe reward only for the chosen action, so exploration is not optional.",
       "UCB explores through optimism, epsilon-greedy through randomization, and Thompson sampling through posterior samples.",
@@ -7204,7 +7204,7 @@
     "book": "Curriculum · Bandits & RL",
     "title": "M26 · RL foundations (MDPs, value/policy, policy gradients) + where RL fits ads",
     "tagline": "Model decisions whose consequences change the next decision, not just the current reward.",
-    "skipIf": "state an MDP and explain the bandit vs full-RL trade-offs.",
+    "skipIf": "state an MDP (Markov decision process) and explain the bandit vs full RL (reinforcement learning) trade-offs.",
     "mapsTo": [
       "Instream Ads perf",
       "Event Ads perf"
@@ -7415,7 +7415,7 @@
       {
         "title": "Bandit boundary for creative selection",
         "background": "If a creative choice affects only the current impression reward, a contextual bandit is usually simpler and safer than RL.",
-        "numbers": "A 4.2% CTR arm versus a 4.0% arm over 50,000 impressions has immediate expected gain $(0.042-0.040)\\cdot50000=100$ clicks, with no future state needed."
+        "numbers": "A 4.2% CTR (click-through rate) arm versus a 4.0% arm over 50,000 impressions has immediate expected gain $(0.042-0.040)\\cdot50000=100$ clicks, with no future state needed."
       },
       {
         "title": "Value iteration for small simulators",
@@ -7469,7 +7469,7 @@
     "book": "Curriculum · Optimization & Marketplace",
     "title": "M27 · Linear & convex optimization (LP/QP, duality)",
     "tagline": "Turn marketplace trade-offs into constraints, objectives, and shadow prices engineers can reason about.",
-    "skipIf": "write an LP and explain duals / shadow prices.",
+    "skipIf": "write an LP (linear program) and explain duals / shadow prices.",
     "mapsTo": [
       "Event Ads perf",
       "Search Ads",
@@ -7487,12 +7487,12 @@
         "guaranteed delivery optimization"
       ],
       "usedWith": [
-        "KKT conditions",
+        "KKT (Karush-Kuhn-Tucker) conditions",
         "quadratic programming",
         "constrained empirical risk minimization"
       ]
     },
-    "motivation": "<p>You already know how to score an ad: a calibrated model can estimate pCTR, and a bid can turn that probability into expected value. The harder marketplace question is what to do when not every valuable action is allowed. Event Ads may have delivery guarantees, Instream Ads may have inventory constraints, and Search Ads may need relevance guardrails before the auction can even run.</p><p><b>Optimization</b> is the language for those trade-offs. An objective says what we want to maximize, constraints say what production must respect, and the dual variables explain which constraints are actually expensive. That last part is the ads-engineer superpower: a shadow price turns a vague complaint like 'budget is tight' into a number, such as 'one more dollar of budget would add 6 expected clicks.'</p>",
+    "motivation": "<p>You already know how to score an ad: a calibrated model can estimate pCTR (predicted click-through rate), and a bid can turn that probability into expected value. The harder marketplace question is what to do when not every valuable action is allowed. Event Ads may have delivery guarantees, Instream Ads may have inventory constraints, and Search Ads may need relevance guardrails before the auction can even run.</p><p><b>Optimization</b> is the language for those trade-offs. An objective says what we want to maximize, constraints say what production must respect, and the dual variables explain which constraints are actually expensive. That last part is the ads-engineer superpower: a shadow price turns a vague complaint like 'budget is tight' into a number, such as 'one more dollar of budget would add 6 expected clicks.'</p>",
     "definition": "<p><b>Linear program.</b> In standard maximization form, choose nonnegative decisions $x$ to solve</p>$$\\max_x c^\\top x \\quad \\text{subject to}\\quad Ax \\le b, x \\ge 0.$$<p>The objective $c^\\top x$ and all constraints are linear. A convex optimization problem generalizes this by maximizing a concave objective or minimizing a convex objective over a convex feasible set, so every local optimum is globally meaningful. A quadratic program adds a quadratic term, for example $\\min_x \\frac12 x^\\top Qx + q^\\top x$ with $Q \\succeq 0$ and linear constraints.</p><p>The <b>dual</b> attaches a nonnegative price $\\lambda_j$ to each $\\le$ constraint. Weak duality says every dual-feasible solution upper-bounds the primal maximum. Under mild regularity for LPs and convex programs, strong duality holds: the best upper bound equals the best feasible objective. The KKT conditions combine feasibility, stationarity, and complementary slackness; $\\lambda_j(b_j-A_jx)=0$ says only tight constraints can have positive shadow price.</p>",
     "symbols": [
       {
@@ -7645,7 +7645,7 @@
         "answer": "The shadow price is 2 objective units per extra resource unit."
       },
       {
-        "problem": "An Instream allocator minimizes $\\frac12(x-10)^2+\\frac12(y-8)^2$ subject to $x+y \\le 12$. Is this a convex QP, and why?",
+        "problem": "An Instream allocator minimizes $\\frac12(x-10)^2+\\frac12(y-8)^2$ subject to $x+y \\le 12$. Is this a convex QP (quadratic program), and why?",
         "steps": [
           {
             "do": "Read the Hessian",
@@ -7745,7 +7745,7 @@
         "numbers": "If treatment adds 12k dollars revenue but quality loss is 0.08% against a 0.10% cap, the constraint is feasible; a variant adding 15k dollars with 0.14% loss is rejected unless the guardrail shadow price makes the trade acceptable to the policy owner."
       }
     ],
-    "applicationsClose": "<p>The same pattern keeps showing up: choose decisions, score them with calibrated value, constrain the production reality, and read the duals to know what is scarce. LPs and QPs are not just solver inputs; they are a shared language for ads PMs, ML engineers, and infra teams to debate marketplace trade-offs with numbers.</p>",
+    "applicationsClose": "<p>The same pattern keeps showing up: choose decisions, score them with calibrated value, constrain the production reality, and read the duals to know what is scarce. LPs and QPs are not just solver inputs; they are a shared language for ads PMs, ML (machine learning) engineers, and infra teams to debate marketplace trade-offs with numbers.</p>",
     "takeaways": [
       "An LP maximizes $c^\\top x$ over linear constraints; a convex QP adds curvature while preserving global optimality.",
       "Dual variables are shadow prices: the marginal value of relaxing a binding constraint.",
@@ -7783,7 +7783,7 @@
     "module": "Domain 6 · Optimization & Marketplace",
     "book": "Curriculum · Optimization & Marketplace",
     "title": "M28 · Ads marketplace optimization (value-of-impression, pacing, guaranteed delivery, auctions, multi-objective + guardrails)",
-    "tagline": "Connect calibrated pCTR to real marketplace decisions: value, auction rank, pacing, delivery, and guardrails.",
+    "tagline": "Connect calibrated pCTR (predicted click-through rate) to real marketplace decisions: value, auction rank, pacing, delivery, and guardrails.",
     "skipIf": "explain how a calibrated pCTR feeds a marketplace value/allocation.",
     "mapsTo": [
       "Instream Ads perf",
@@ -7807,7 +7807,7 @@
         "constrained allocation"
       ]
     },
-    "motivation": "<p>This is the capstone because it is where the previous modules stop being separate skills. Palette gives a calibrated pCTR, the advertiser gives a bid or goal, optimization chooses an allocation, and the marketplace must still respect budget, user experience, relevance, and delivery commitments. A tiny calibration error can become a real budget or quality error once it enters the auction.</p><p>The load-bearing idea is <b>value of an impression</b>: $v=\\widehat{pCTR}\\times bid$ for a CPC-style objective. That value can be ranked in an auction, multiplied by a pacing control signal, and constrained by guaranteed-delivery or guardrail rows. The marketplace is not one model; it is a control system built from predictions, prices, and constraints.</p>",
+    "motivation": "<p>This is the capstone because it is where the previous modules stop being separate skills. Palette gives a calibrated pCTR, the advertiser gives a bid or goal, optimization chooses an allocation, and the marketplace must still respect budget, user experience, relevance, and delivery commitments. A tiny calibration error can become a real budget or quality error once it enters the auction.</p><p>The load-bearing idea is <b>value of an impression</b>: $v=\\widehat{pCTR}\\times bid$ for a CPC (cost per click)-style objective. That value can be ranked in an auction, multiplied by a pacing control signal, and constrained by guaranteed-delivery or guardrail rows. The marketplace is not one model; it is a control system built from predictions, prices, and constraints.</p>",
     "definition": "<p>For candidate ad $i$ in an impression opportunity, a simple expected-value score is</p>$$v_i = q_i,\\widehat{p}_i,b_i,m_i,$$<p>where $\\widehat{p}_i$ is calibrated pCTR, $b_i$ is bid, $q_i$ is a quality or relevance factor, and $m_i$ is a pacing multiplier. In a second-price auction, the highest ranked candidate wins but pays a price tied to the next competitor, often normalized by the winner's prediction or quality. Pacing updates $m_i$ as feedback: underspend raises the multiplier, overspend lowers it.</p><p>Guaranteed delivery can be written as constrained optimization: choose allocations $x_{ij}$ from impression segments $j$ to campaigns $i$ to maximize value while satisfying supply, eligibility, campaign goals, and guardrails. Multi-objective optimization can be handled by a weighted objective, such as revenue plus engagement, or by constraints, such as maximize revenue subject to member-quality loss $\\le 0.1\\%$.</p>",
     "symbols": [
       {

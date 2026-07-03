@@ -15,12 +15,12 @@ const M20 = {
   mapsTo: ["all"],
   connections: {
     buildsOn: ["supervised learning", "cross-entropy loss", "embeddings and classifiers", "train/validation/test discipline"],
-    leadsTo: ["multilingual content classifiers", "efficient GenAI serving", "LLM prompt and model improvement loops"],
-    usedWith: ["softmax", "KL divergence", "low-rank matrix factorization", "temperature scaling"]
+    leadsTo: ["multilingual content classifiers", "efficient GenAI serving", "LLM (large language model) prompt and model improvement loops"],
+    usedWith: ["softmax", "KL (Kullback-Leibler (divergence))", "low-rank matrix factorization", "temperature scaling"]
   },
   motivation:
     "<p>You already know how to train a classifier from labeled examples. The harder production question is what to do when the best starting point is a large pretrained model: should you prompt it, fine-tune it, adapt only a few parameters, or train a smaller student to imitate it? In AFP-AI work, that choice shows up in Instream Ads content classification, multilingual policy labels, and GenAI prompt-improvement systems.</p>" +
-    "<p>The single load-bearing idea is <b>reuse the teacher signal without paying the full teacher cost forever</b>. Full fine-tuning changes every weight, PEFT/LoRA changes a small low-rank adapter, and distillation trains a compact student on the teacher's softened probabilities. You keep the knowledge that matters for the product slice while controlling latency, memory, governance, and iteration speed.</p>",
+    "<p>The single load-bearing idea is <b>reuse the teacher signal without paying the full teacher cost forever</b>. Full fine-tuning changes every weight, PEFT (parameter-efficient fine-tuning)/LoRA (low-rank adaptation) changes a small low-rank adapter, and distillation trains a compact student on the teacher's softened probabilities. You keep the knowledge that matters for the product slice while controlling latency, memory, governance, and iteration speed.</p>",
   definition:
     "<p><b>Definition.</b> Fine-tuning starts from pretrained parameters $\\theta_0$ and optimizes a task loss on labeled examples, producing $\\theta=\\theta_0+\\Delta\\theta$. Full fine-tuning lets every parameter move. Parameter-efficient fine-tuning, such as LoRA, freezes the base weight $W\\in\\mathbb{R}^{d\\times k}$ and learns a low-rank update $\\Delta W=BA$, where $B\\in\\mathbb{R}^{d\\times r}$, $A\\in\\mathbb{R}^{r\\times k}$, and $r\\ll\\min(d,k)$.</p>" +
     "<p><b>Distillation</b> trains a student model $s_\\phi$ to match a teacher distribution $q_T$ computed with temperature $T$: $$q_T(c)=\\frac{\\exp(z_c/T)}{\\sum_j \\exp(z_j/T)},\\qquad L_{KD}=T^2\\sum_c q_T(c)\\log\\frac{q_T(c)}{p_T(c)}.$$ Classification usually optimizes cross-entropy over labels or soft labels; generation optimizes next-token likelihood, preference losses, or task-specific judge scores. Prompt first when the behavior is already present, fine-tune when the behavior is missing but data is available, and distill when a strong behavior must become cheaper or more stable to serve.</p>",
@@ -265,7 +265,7 @@ const M21 = {
   ],
   resources: [
     { label: "Lil'Log — What are Diffusion Models?", note: "forward/reverse process math" },
-    { label: "HuggingFace — Diffusion Models course", note: "DDPM/DDIM in code" },
+    { label: "HuggingFace — Diffusion Models course", note: "DDPM (denoising diffusion probabilistic model)/DDIM in code" },
     { label: "fast.ai — Stable Diffusion", note: "latent diffusion, guidance" }
   ],
   papers: [
@@ -308,7 +308,7 @@ const M22 = {
     usedWith: ["Cohen's kappa", "rank correlation", "A/B test guardrails", "bias audits"]
   },
   motivation:
-    "<p>LLM-as-judge is tempting because GenAI systems produce open-ended text, images, and recommendations faster than humans can review them. A judge can score whether a creative rewrite is clear, whether a prompt follows policy, or whether a video classification rationale is grounded. But a judge is still a model, and models can be confidently wrong.</p>" +
+    "<p>LLM (large language model)-as-judge is tempting because GenAI systems produce open-ended text, images, and recommendations faster than humans can review them. A judge can score whether a creative rewrite is clear, whether a prompt follows policy, or whether a video classification rationale is grounded. But a judge is still a model, and models can be confidently wrong.</p>" +
     "<p>The core habit is <b>validate the evaluator before trusting the evaluation</b>. A good rubric makes the task legible; agreement statistics compare judge decisions to humans; bias probes reveal whether answer order, verbosity, or model identity changes the verdict. Once measured, those issues can be mitigated with swaps, calibration sets, length controls, and human escalation.</p>",
   definition:
     "<p><b>Definition.</b> An LLM judge maps an item $x$, candidate output $a$, and rubric $r$ to a score or label $J(x,a,r)$. Validation compares judge labels with human labels. For two raters and $K$ categories, Cohen's kappa is $$\\kappa=\\frac{p_o-p_e}{1-p_e},\\qquad p_e=\\sum_{k=1}^{K}p_{H,k}p_{J,k},$$ where $p_o$ is observed agreement and $p_e$ is agreement expected by chance from the raters' marginal label rates.</p>" +

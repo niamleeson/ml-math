@@ -11,15 +11,15 @@ const M27 = {
   m: 27, domain: 6,
   title: "Linear & convex optimization (LP/QP, duality)",
   tagline: "Turn marketplace trade-offs into constraints, objectives, and shadow prices engineers can reason about.",
-  skipIf: "write an LP and explain duals / shadow prices.",
+  skipIf: "write an LP (linear program) and explain duals / shadow prices.",
   mapsTo: ["Event Ads perf", "Search Ads", "Instream Ads perf"],
   connections: {
     buildsOn: ["linear algebra and dot products", "gradients and loss functions", "calibration and expected value"],
     leadsTo: ["auction allocation", "budget pacing", "guaranteed delivery optimization"],
-    usedWith: ["KKT conditions", "quadratic programming", "constrained empirical risk minimization"]
+    usedWith: ["KKT (Karush-Kuhn-Tucker) conditions", "quadratic programming", "constrained empirical risk minimization"]
   },
   motivation:
-    "<p>You already know how to score an ad: a calibrated model can estimate pCTR, and a bid can turn that probability into expected value. The harder marketplace question is what to do when not every valuable action is allowed. Event Ads may have delivery guarantees, Instream Ads may have inventory constraints, and Search Ads may need relevance guardrails before the auction can even run.</p>" +
+    "<p>You already know how to score an ad: a calibrated model can estimate pCTR (predicted click-through rate), and a bid can turn that probability into expected value. The harder marketplace question is what to do when not every valuable action is allowed. Event Ads may have delivery guarantees, Instream Ads may have inventory constraints, and Search Ads may need relevance guardrails before the auction can even run.</p>" +
     "<p><b>Optimization</b> is the language for those trade-offs. An objective says what we want to maximize, constraints say what production must respect, and the dual variables explain which constraints are actually expensive. That last part is the ads-engineer superpower: a shadow price turns a vague complaint like 'budget is tight' into a number, such as 'one more dollar of budget would add 6 expected clicks.'</p>",
   definition:
     "<p><b>Linear program.</b> In standard maximization form, choose nonnegative decisions $x$ to solve</p>" +
@@ -79,7 +79,7 @@ const M27 = {
       answer: "The shadow price is 2 objective units per extra resource unit."
     },
     {
-      problem: "An Instream allocator minimizes $\\frac12(x-10)^2+\\frac12(y-8)^2$ subject to $x+y \\le 12$. Is this a convex QP, and why?",
+      problem: "An Instream allocator minimizes $\\frac12(x-10)^2+\\frac12(y-8)^2$ subject to $x+y \\le 12$. Is this a convex QP (quadratic program), and why?",
       steps: [
         { do: "Read the Hessian", result: "$Q=I$", why: "the squared deviations have positive curvature in both variables" },
         { do: "Check the feasible set", result: "$x+y \\le 12$ is a half-space", why: "linear inequalities define convex sets" },
@@ -116,7 +116,7 @@ const M27 = {
     { title: "Guardrail-constrained model launch", background: "When a new ranking model improves revenue but must not hurt quality, the launch decision can be posed as maximize revenue subject to guardrail loss below a threshold.", numbers: "If treatment adds 12k dollars revenue but quality loss is 0.08% against a 0.10% cap, the constraint is feasible; a variant adding 15k dollars with 0.14% loss is rejected unless the guardrail shadow price makes the trade acceptable to the policy owner." }
   ],
   applicationsClose:
-    "<p>The same pattern keeps showing up: choose decisions, score them with calibrated value, constrain the production reality, and read the duals to know what is scarce. LPs and QPs are not just solver inputs; they are a shared language for ads PMs, ML engineers, and infra teams to debate marketplace trade-offs with numbers.</p>",
+    "<p>The same pattern keeps showing up: choose decisions, score them with calibrated value, constrain the production reality, and read the duals to know what is scarce. LPs and QPs are not just solver inputs; they are a shared language for ads PMs, ML (machine learning) engineers, and infra teams to debate marketplace trade-offs with numbers.</p>",
   takeaways: [
     "An LP maximizes $c^\\top x$ over linear constraints; a convex QP adds curvature while preserving global optimality.",
     "Dual variables are shadow prices: the marginal value of relaxing a binding constraint.",
@@ -232,7 +232,7 @@ const M27 = {
 const M28 = {
   m: 28, domain: 6,
   title: "Ads marketplace optimization (value-of-impression, pacing, guaranteed delivery, auctions, multi-objective + guardrails)",
-  tagline: "Connect calibrated pCTR to real marketplace decisions: value, auction rank, pacing, delivery, and guardrails.",
+  tagline: "Connect calibrated pCTR (predicted click-through rate) to real marketplace decisions: value, auction rank, pacing, delivery, and guardrails.",
   skipIf: "explain how a calibrated pCTR feeds a marketplace value/allocation.",
   mapsTo: ["Instream Ads perf", "Event Ads perf", "Search Ads"],
   connections: {
@@ -242,7 +242,7 @@ const M28 = {
   },
   motivation:
     "<p>This is the capstone because it is where the previous modules stop being separate skills. Palette gives a calibrated pCTR, the advertiser gives a bid or goal, optimization chooses an allocation, and the marketplace must still respect budget, user experience, relevance, and delivery commitments. A tiny calibration error can become a real budget or quality error once it enters the auction.</p>" +
-    "<p>The load-bearing idea is <b>value of an impression</b>: $v=\\widehat{pCTR}\\times bid$ for a CPC-style objective. That value can be ranked in an auction, multiplied by a pacing control signal, and constrained by guaranteed-delivery or guardrail rows. The marketplace is not one model; it is a control system built from predictions, prices, and constraints.</p>",
+    "<p>The load-bearing idea is <b>value of an impression</b>: $v=\\widehat{pCTR}\\times bid$ for a CPC (cost per click)-style objective. That value can be ranked in an auction, multiplied by a pacing control signal, and constrained by guaranteed-delivery or guardrail rows. The marketplace is not one model; it is a control system built from predictions, prices, and constraints.</p>",
   definition:
     "<p>For candidate ad $i$ in an impression opportunity, a simple expected-value score is</p>" +
     "$$v_i = q_i\,\\widehat{p}_i\,b_i\,m_i,$$" +

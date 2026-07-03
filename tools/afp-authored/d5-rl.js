@@ -12,7 +12,7 @@ const M23 = {
   "domain": 5,
   "title": "RLHF, DPO, PPO",
   "tagline": "Turn human preference labels into safer model behavior while keeping the tuned model close to a trusted reference.",
-  "skipIf": "design a fine-tuning plan for LLM RL tuning.",
+  "skipIf": "design a fine-tuning plan for LLM (large language model) RL (reinforcement learning) tuning.",
   "mapsTo": [
     "Creative Intelligence"
   ],
@@ -28,12 +28,12 @@ const M23 = {
       "preference optimization"
     ],
     "usedWith": [
-      "KL divergence",
+      "KL (Kullback-Leibler (divergence))",
       "Bradley-Terry models",
       "stochastic policies"
     ]
   },
-  "motivation": "<p>You already know how to train a model from labels. RLHF starts when the label is not a single right answer, but a human preference: this generated headline is clearer than that one; this prompt completion follows the brand guardrail better than that one. For Creative Intelligence, those comparisons are often easier and more reliable than asking reviewers to invent a perfect numeric score.</p><p>The key idea is to convert preferences into an optimization signal, then update carefully. PPO uses a learned reward model and a KL penalty so the model improves without drifting far from the reference. DPO keeps the same preference spirit but skips the explicit reward model by optimizing a closed-form preference objective directly.</p>",
+  "motivation": "<p>You already know how to train a model from labels. RLHF (reinforcement learning from human feedback) starts when the label is not a single right answer, but a human preference: this generated headline is clearer than that one; this prompt completion follows the brand guardrail better than that one. For Creative Intelligence, those comparisons are often easier and more reliable than asking reviewers to invent a perfect numeric score.</p><p>The key idea is to convert preferences into an optimization signal, then update carefully. PPO (proximal policy optimization) uses a learned reward model and a KL penalty so the model improves without drifting far from the reference. DPO (direct preference optimization) keeps the same preference spirit but skips the explicit reward model by optimizing a closed-form preference objective directly.</p>",
   "definition": "<p><b>Definition.</b> In RLHF, humans compare outputs, a reward model learns scores $r_\\phi(x,y)$, and a policy $\\pi_\\theta(y|x)$ is fine-tuned to maximize reward while staying close to a reference $\\pi_0$:</p><p>$$\\max_\\theta\\; \\mathbb{E}_{y\\sim\\pi_\\theta}[r_\\phi(x,y)] - \\beta\\,D_{KL}(\\pi_\\theta(\\cdot|x)\\|\\pi_0(\\cdot|x)).$$</p><p>For a preference pair where $y_w$ beats $y_l$, Bradley-Terry uses $P(y_w \\succ y_l)=\\sigma(r_\\phi(x,y_w)-r_\\phi(x,y_l))$. PPO estimates policy-gradient updates with a clipped probability ratio; DPO optimizes preferences directly by comparing policy log-ratios to reference log-ratios.</p>",
   "symbols": [
     {
@@ -345,7 +345,7 @@ const M24 = {
   "domain": 5,
   "title": "Counterfactual / off-policy evaluation (IPS/DR)",
   "tagline": "Estimate a new policy from logged ads data before spending traffic on a risky experiment.",
-  "skipIf": "estimate a policy's value from logged data using IPS/DR.",
+  "skipIf": "estimate a policy's value from logged data using IPS (inverse propensity scoring)/DR (doubly robust).",
   "mapsTo": [
     "Advanced"
   ],
@@ -489,7 +489,7 @@ const M24 = {
       "answer": "$1.0$."
     },
     {
-      "problem": "Weights are $[0.5,2.0,1.5]$ and weighted rewards are $[0,2,1.5]$. Compute SNIPS.",
+      "problem": "Weights are $[0.5,2.0,1.5]$ and weighted rewards are $[0,2,1.5]$. Compute SNIPS (self-normalized inverse propensity scoring).",
       "steps": [
         {
           "do": "Sum weighted rewards",
@@ -580,7 +580,7 @@ const M24 = {
     },
     {
       "title": "Launch decision confidence",
-      "background": "OPE should report uncertainty, not just a point estimate, because logs are finite and propensities vary.",
+      "background": "OPE (off-policy evaluation) should report uncertainty, not just a point estimate, because logs are finite and propensities vary.",
       "numbers": "A slice estimate of 0.012 with bootstrap standard error 0.002 has a rough 95% interval $0.012\\pm1.96\\cdot0.002=[0.0081,0.0159]$."
     }
   ],
@@ -681,7 +681,7 @@ const M25 = {
     ],
     "usedWith": [
       "regret",
-      "UCB bonuses",
+      "UCB (upper confidence bound) bonuses",
       "Bayesian posteriors"
     ]
   },
@@ -736,7 +736,7 @@ const M25 = {
     }
   ],
   "worked": {
-    "problem": "Three creative variants have counts $n=[100,25,10]$, empirical CTRs $\\hat\\mu=[0.040,0.050,0.030]$, current round $t=136$, and $c=0.2$. Compute UCB indices and pick an arm. Contrast with greedy selection.",
+    "problem": "Three creative variants have counts $n=[100,25,10]$, empirical CTRs (click-through rates) $\\hat\\mu=[0.040,0.050,0.030]$, current round $t=136$, and $c=0.2$. Compute UCB indices and pick an arm. Contrast with greedy selection.",
     "skills": [
       "UCB index",
       "exploration bonus",
@@ -898,7 +898,7 @@ const M25 = {
       "numbers": "Trying 4 variants for 250 impressions each creates 1,000 exploration impressions; at 3% CTR, expect $1000\\cdot0.03=30$ clicks across the warm-up."
     }
   ],
-  "applicationsClose": "<p>Bandits are the middle ground between static experiments and full RL. They fit when the action matters now, the feedback is partial, and tomorrow's state is mostly unchanged by today's choice.</p>",
+  "applicationsClose": "<p>Bandits are the middle ground between static experiments and full RL (reinforcement learning). They fit when the action matters now, the feedback is partial, and tomorrow's state is mostly unchanged by today's choice.</p>",
   "takeaways": [
     "Bandits observe reward only for the chosen action, so exploration is not optional.",
     "UCB explores through optimism, epsilon-greedy through randomization, and Thompson sampling through posterior samples.",
@@ -983,7 +983,7 @@ const M26 = {
   "domain": 5,
   "title": "RL foundations (MDPs, value/policy, policy gradients) + where RL fits ads",
   "tagline": "Model decisions whose consequences change the next decision, not just the current reward.",
-  "skipIf": "state an MDP and explain the bandit vs full-RL trade-offs.",
+  "skipIf": "state an MDP (Markov decision process) and explain the bandit vs full RL (reinforcement learning) trade-offs.",
   "mapsTo": [
     "Instream Ads perf",
     "Event Ads perf"
@@ -1194,7 +1194,7 @@ const M26 = {
     {
       "title": "Bandit boundary for creative selection",
       "background": "If a creative choice affects only the current impression reward, a contextual bandit is usually simpler and safer than RL.",
-      "numbers": "A 4.2% CTR arm versus a 4.0% arm over 50,000 impressions has immediate expected gain $(0.042-0.040)\\cdot50000=100$ clicks, with no future state needed."
+      "numbers": "A 4.2% CTR (click-through rate) arm versus a 4.0% arm over 50,000 impressions has immediate expected gain $(0.042-0.040)\\cdot50000=100$ clicks, with no future state needed."
     },
     {
       "title": "Value iteration for small simulators",

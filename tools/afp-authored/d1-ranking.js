@@ -11,7 +11,7 @@ const M6 = {
   m: 6, domain: 1,
   title: "RecSys landscape: collaborative filtering / matrix factorization → two-tower → sequential & generative recommenders",
   tagline: "Choose the recommender family that matches the data, latency, and product question in front of you.",
-  skipIf: "contrast CF vs two-tower vs generative recommenders and pick per use-case.",
+  skipIf: "contrast CF (collaborative filtering) vs two-tower vs generative recommenders and pick per use-case.",
   mapsTo: ["all"],
   connections: {
     buildsOn: ["supervised learning", "vector similarity", "train/serve candidate funnels"],
@@ -56,10 +56,10 @@ const M6 = {
   },
   practice: [
     { problem: "A user vector is $p=(1,2)$ and three item vectors are $q_a=(2,0)$, $q_b=(0,2)$, $q_c=(1,1)$. Rank the items by matrix-factorization score.", steps: [ { do: "Score item a", result: "$p^\\top q_a=1\\cdot2+2\\cdot0=2$", why: "dot products sum coordinate-wise matches" }, { do: "Score item b", result: "$p^\\top q_b=1\\cdot0+2\\cdot2=4$", why: "the second coordinate matches strongly" }, { do: "Score item c", result: "$p^\\top q_c=1\\cdot1+2\\cdot1=3$", why: "the hybrid item matches both dimensions moderately" } ], answer: "The order is $b$ (4), $c$ (3), then $a$ (2)." },
-    { problem: "You have item metadata but no item interactions. Which family should be the first production baseline: user-neighborhood CF, pure MF lookup factors, or a two-tower/hybrid model?", steps: [ { do: "Check collaborative overlap", result: "new items have no interaction columns", why: "neighborhood CF and pure MF cannot estimate reliable item factors without observations" }, { do: "Use available features", result: "encode metadata in an item tower or hybrid scorer", why: "content features let the model place cold items before interaction history accumulates" } ], answer: "Start with a content-aware two-tower or hybrid baseline, then hand off to collaborative signals when interactions arrive." },
+    { problem: "You have item metadata but no item interactions. Which family should be the first production baseline: user-neighborhood CF, pure MF (matrix factorization) lookup factors, or a two-tower/hybrid model?", steps: [ { do: "Check collaborative overlap", result: "new items have no interaction columns", why: "neighborhood CF and pure MF cannot estimate reliable item factors without observations" }, { do: "Use available features", result: "encode metadata in an item tower or hybrid scorer", why: "content features let the model place cold items before interaction history accumulates" } ], answer: "Start with a content-aware two-tower or hybrid baseline, then hand off to collaborative signals when interactions arrive." },
     { problem: "A session is [event post, event ad, registration page]. Why is a sequential recommender more appropriate than static MF for the next action?", steps: [ { do: "Inspect the signal", result: "the order shows rising event intent", why: "the latest actions change the next-item distribution" }, { do: "Compare model assumptions", result: "static MF compresses the whole history into one vector", why: "it may miss that the recent registration page matters more than older activity" }, { do: "Pick the family", result: "SASRec/BERT4Rec-style sequence modeling", why: "attention can weight recent and related actions differently" } ], answer: "Use a sequential recommender because the ordered path carries intent that a static user factor can blur." },
     { problem: "A two-tower model returns 1,000 candidates in 12 ms, while a cross-feature ranker scores 1,000 items in 500 ms. Why not run the ranker over all 10M items?", steps: [ { do: "Scale ranker cost", result: "$10{,}000{,}000/1{,}000 \\times 500\\text{ ms}=5{,}000\\text{ s}$", why: "the ranker cost grows linearly with item count" }, { do: "Read the latency", result: "5,000 seconds is impossible online", why: "interactive products need responses in milliseconds" } ], answer: "Use fast retrieval to shrink 10M items to a few hundred or thousand, then run the expensive ranker." },
-    { problem: "A generative retriever emits item tokens. Name one evaluation risk and one guardrail.", steps: [ { do: "Name the risk", result: "the model can generate valid-looking but irrelevant or unavailable item IDs", why: "language fluency is not the same as catalog relevance" }, { do: "Add a guardrail", result: "constrain decoding to catalog tokens and measure recall@K against logged positives", why: "validity and retrieval quality must both be checked" } ], answer: "Guard generative retrieval with catalog-constrained decoding plus standard retrieval metrics such as recall@K or NDCG@K." }
+    { problem: "A generative retriever emits item tokens. Name one evaluation risk and one guardrail.", steps: [ { do: "Name the risk", result: "the model can generate valid-looking but irrelevant or unavailable item IDs", why: "language fluency is not the same as catalog relevance" }, { do: "Add a guardrail", result: "constrain decoding to catalog tokens and measure recall@K against logged positives", why: "validity and retrieval quality must both be checked" } ], answer: "Guard generative retrieval with catalog-constrained decoding plus standard retrieval metrics such as recall@K or NDCG (normalized discounted cumulative gain)@K." }
   ],
   applications: [
     { title: "Creator Marketplace AI candidate generation", background: "A brand brief and a creator can each be embedded by a two-tower model before a richer ranker considers price, safety, and campaign fit.", numbers: "If the creator catalog has 2M profiles and ANN retrieval returns 500, the ranker sees $500/2{,}000{,}000=0.025\\%$ of the catalog while keeping recall high enough to be useful." },
@@ -68,7 +68,7 @@ const M6 = {
     { title: "Event Organic discovery in Feed SPR", background: "Feed can retrieve event posts using member-event affinity before SPR ranking decides session value and freshness.", numbers: "If retrieval recall@200 rises from 0.70 to 0.82 on held-out attended events, the ranker gets $0.12\\times10{,}000=1{,}200$ additional true-positive opportunities per 10k positives." },
     { title: "Search Ads query relevance", background: "Query and ad towers are a natural retrieval pair because the query is short, the ad catalog is large, and latency is tight.", numbers: "For query vector $(1,3)$, ad A $(1,1)$ scores 4 and ad B $(3,0)$ scores 3, so the relevance candidate set favors A before auction logic." },
     { title: "Creative Intelligence similar-creative search", background: "Creative embeddings let teams find comparable assets, diagnose fatigue, and retrieve examples for recommendations.", numbers: "Cosine similarity $0.92$ versus $0.41$ means one creative is near-duplicate while the other is merely same category; thresholds such as 0.85 can flag reuse." },
-    { title: "Palette-driven pCTR feature reuse", background: "The same palette/content embeddings used in retrieval can become dense features for a downstream pCTR ranker.", numbers: "A retrieval score of 2.4 plus calibrated pCTR 0.018 and bid 6 gives expected click value $0.018\\times6=0.108$ before other terms." }
+    { title: "Palette-driven pCTR feature reuse", background: "The same palette/content embeddings used in retrieval can become dense features for a downstream pCTR (predicted click-through rate) ranker.", numbers: "A retrieval score of 2.4 plus calibrated pCTR 0.018 and bid 6 gives expected click value $0.018\\times6=0.108$ before other terms." }
   ],
   applicationsClose:
     "<p>Recommender families are not rivals so much as stages in a maturity curve. Start with the signals you truly have, retrieve cheaply, rank carefully, and let sequence or generative models enter when order and intent justify their complexity.</p>",
@@ -91,7 +91,7 @@ const M6 = {
     "HSTU: Actions Speak Louder than Words (Zhai et al., 2024)"
   ],
   notebook: [
-    { t: "md", src: "# M6 · RecSys landscape\n\n_Curriculum · Domain 1 · Ranking & Recommenders_\n\n**Choose the recommender family that matches the data, latency, and product question.**\n\nWe build a tiny matrix-factorization retrieval example, then treat its dot products as the first stage of a retrieval-to-ranking funnel. Run top to bottom. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
+    { t: "md", src: "# M6 · RecSys (recommender system) landscape\n\n_Curriculum · Domain 1 · Ranking & Recommenders_\n\n**Choose the recommender family that matches the data, latency, and product question.**\n\nWe build a tiny matrix-factorization retrieval example, then treat its dot products as the first stage of a retrieval-to-ranking funnel. Run top to bottom. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
     { t: "code", src: "# Setup - CPU-only and deterministic.\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(6)" },
     { t: "md", src: "## First, look at the data\n\nRows are users or briefs, columns are items or creators. Most production matrices are sparse; this one is small enough to see. A low-rank model predicts $\\hat r_{ui}=p_u^\\top q_i$." },
     { t: "code", src: "users = [\"brief_A\", \"brief_B\", \"brief_C\"]\nitems = [\"creator_tech\", \"creator_hybrid\", \"creator_event\"]\nR = np.array([[5.0, 3.0, 0.0], [0.0, 2.0, 5.0], [4.0, 4.0, 1.0]])\nratings = pd.DataFrame(R, index=users, columns=items)\n\nprint(ratings)" },
@@ -118,7 +118,7 @@ const M7 = {
   connections: {
     buildsOn: ["supervised classification", "log loss", "candidate retrieval"],
     leadsTo: ["calibration", "multi-objective optimization", "auction-aware ranking"],
-    usedWith: ["AUC", "NDCG", "calibrated probabilities"]
+    usedWith: ["AUC (area under the receiver operating characteristic curve)", "NDCG (normalized discounted cumulative gain)", "calibrated probabilities"]
   },
   motivation:
     "<p>Once retrieval has narrowed the world to a few hundred candidates, the product still needs an order. Ads, creators, videos, events, and search results all ask the same question: which item should appear first for this member in this context? A raw click score is useful, but the final rank often blends click probability, view probability, long-click probability, value, quality, and constraints.</p>" +
@@ -149,7 +149,7 @@ const M7 = {
       { do: "Compute the margin", result: "$\\Delta=s_A-s_B=1.2-0.4=0.8$", why: "the clicked item should outrank the skipped item" },
       { do: "Apply the sigmoid", result: "$\\sigma(0.8)=\\frac{1}{1+e^{-0.8}}\\approx0.690$", why: "this is the model's probability that A beats B" },
       { do: "Compute pairwise loss", result: "$-\\log(0.690)\\approx0.371$", why: "a positive margin gives moderate but not zero loss" },
-      { do: "Score ad A", result: "$S_A=4\\cdot0.030+0.5\\cdot0.20+0.2\\cdot0.08=0.236$", why: "bid-weighted pCTR is combined with view and long-response heads" },
+      { do: "Score ad A", result: "$S_A=4\\cdot0.030+0.5\\cdot0.20+0.2\\cdot0.08=0.236$", why: "bid-weighted pCTR (predicted click-through rate) is combined with view and long-response heads" },
       { do: "Score ad B", result: "$S_B=6\\cdot0.018+0.5\\cdot0.12+0.2\\cdot0.04=0.176$", why: "a higher bid does not overcome lower response probabilities here" }
     ],
     verify: "The clicked ad has both the higher pairwise score and the higher combined score, so the two readings agree for this toy case.",
@@ -158,8 +158,8 @@ const M7 = {
   },
   practice: [
     { problem: "A positive item has score 0.3 and a negative item has score 0.9. Compute the pairwise loss $-\\log\\sigma(s_+-s_-)$.", steps: [ { do: "Compute the margin", result: "$\\Delta=0.3-0.9=-0.6$", why: "the model ranks the positive item too low" }, { do: "Apply sigmoid", result: "$\\sigma(-0.6)\\approx0.354$", why: "the model assigns low probability to the correct ordering" }, { do: "Take negative log", result: "$-\\log(0.354)\\approx1.038$", why: "wrongly ordered pairs receive large loss" } ], answer: "The pairwise loss is about 1.038." },
-    { problem: "Compute $S=bid\\cdot pCTR+0.3\\cdot pVTR$ for ad A: bid 5, pCTR 0.02, pVTR 0.30; ad B: bid 8, pCTR 0.012, pVTR 0.20.", steps: [ { do: "Score ad A", result: "$5\\cdot0.02+0.3\\cdot0.30=0.19$", why: "click value and video value are both included" }, { do: "Score ad B", result: "$8\\cdot0.012+0.3\\cdot0.20=0.156$", why: "the higher bid is offset by lower probabilities" } ], answer: "Ad A ranks first with 0.190 versus 0.156." },
-    { problem: "A slate has relevance labels [3, 0, 1]. Compute DCG@3.", steps: [ { do: "Compute position 1 gain", result: "$(2^3-1)/\\log_2(2)=7$", why: "top position has no discount" }, { do: "Compute position 2 gain", result: "$(2^0-1)/\\log_2(3)=0$", why: "zero relevance contributes no gain" }, { do: "Compute position 3 gain", result: "$(2^1-1)/\\log_2(4)=0.5$", why: "rank 3 has discount 2" } ], answer: "DCG@3 is $7.5$." },
+    { problem: "Compute $S=bid\\cdot pCTR+0.3\\cdot pVTR$ for ad A: bid 5, pCTR 0.02, pVTR (predicted view-through rate) 0.30; ad B: bid 8, pCTR 0.012, pVTR 0.20.", steps: [ { do: "Score ad A", result: "$5\\cdot0.02+0.3\\cdot0.30=0.19$", why: "click value and video value are both included" }, { do: "Score ad B", result: "$8\\cdot0.012+0.3\\cdot0.20=0.156$", why: "the higher bid is offset by lower probabilities" } ], answer: "Ad A ranks first with 0.190 versus 0.156." },
+    { problem: "A slate has relevance labels [3, 0, 1]. Compute DCG (discounted cumulative gain)@3.", steps: [ { do: "Compute position 1 gain", result: "$(2^3-1)/\\log_2(2)=7$", why: "top position has no discount" }, { do: "Compute position 2 gain", result: "$(2^0-1)/\\log_2(3)=0$", why: "zero relevance contributes no gain" }, { do: "Compute position 3 gain", result: "$(2^1-1)/\\log_2(4)=0.5$", why: "rank 3 has discount 2" } ], answer: "DCG@3 is $7.5$." },
     { problem: "Why can a ranker with high AUC still produce a weak top slot?", steps: [ { do: "Read what AUC measures", result: "average pair ordering over positives and negatives", why: "it does not focus only on rank 1" }, { do: "Read the product need", result: "top-slot utility depends on the first few positions", why: "small errors at the top can dominate user impact" } ], answer: "AUC can hide top-position mistakes; use listwise metrics such as NDCG@K or top-slot precision as well." },
     { problem: "A click head is calibrated but a dwell head is not. What can go wrong in $S=pCTR+\\lambda pDwell$?", steps: [ { do: "Compare units", result: "$pCTR$ means observed click frequency, but raw $pDwell$ may not mean probability", why: "uncalibrated heads are not comparable" }, { do: "Trace the score", result: "one head can dominate because of scale rather than value", why: "multi-objective addition assumes meaningful numeric units" } ], answer: "Calibrate or rescale heads before combining, or the score can optimize an arbitrary scale artifact." }
   ],
@@ -175,7 +175,7 @@ const M7 = {
   applicationsClose:
     "<p>Ranking is where probabilities become product choices. Pointwise models give calibrated heads, pairwise losses teach preferences, and listwise metrics remind us that the top of the slate is where members actually live.</p>",
   takeaways: [
-    "pCTR, pVTR, and pLTR are probability heads that often feed a larger ranking score.",
+    "pCTR, pVTR, and pLTR (predicted long-term response) are probability heads that often feed a larger ranking score.",
     "Pointwise objectives learn labels independently; pairwise objectives learn preferences; listwise objectives optimize slate quality.",
     "Multi-objective ranking requires calibrated or otherwise comparable heads."
   ],
@@ -216,13 +216,13 @@ const M8 = {
   skipIf: "calibrate a sparse-slice model and explain why raw scores mislead.",
   mapsTo: ["all"],
   connections: {
-    buildsOn: ["pCTR heads", "log loss", "validation splits"],
+    buildsOn: ["pCTR (predicted click-through rate) heads", "log loss", "validation splits"],
     leadsTo: ["auction value", "thresholding", "sparse-slice monitoring"],
     usedWith: ["reliability diagrams", "class weighting", "Platt and isotonic calibration"]
   },
   motivation:
     "<p>A ranker can be excellent at ordering yet still dangerous as a probability source. If a model says 0.10 on a slice and only 0.04 of those impressions click, the order might be useful but the marketplace math is wrong. In ads, multiplying pCTR by bid turns calibration error into money allocation error.</p>" +
-    "<p>Calibration asks for a simple promise: among examples predicted at $p$, about a fraction $p$ should be positive. Rare events and sparse slices make that promise hard. Platt scaling bends scores through a sigmoid; isotonic regression learns a monotone stair-step map; ECE summarizes the reliability diagram as $\\sum_b \\frac{n_b}{n}|acc(b)-conf(b)|$.</p>",
+    "<p>Calibration asks for a simple promise: among examples predicted at $p$, about a fraction $p$ should be positive. Rare events and sparse slices make that promise hard. Platt scaling bends scores through a sigmoid; isotonic regression learns a monotone stair-step map; ECE (expected calibration error) summarizes the reliability diagram as $\\sum_b \\frac{n_b}{n}|acc(b)-conf(b)|$.</p>",
   definition:
     "<p><b>Definition.</b> A probabilistic classifier is calibrated if $\\Pr(Y=1\\mid \\hat p=p)=p$. Expected calibration error bins predictions and compares each bin's empirical accuracy $acc(b)$ to its mean confidence $conf(b)$: $$ECE=\\sum_{b=1}^B \\frac{n_b}{n}\\left|acc(b)-conf(b)\\right|.$$ Platt scaling fits $\\hat p'=\\sigma(a z+b)$ to raw score $z$; isotonic calibration fits a monotone function $g(z)$.</p>" +
     "<p><b>Assumptions that matter:</b> calibration must be fit on held-out data; bins need enough examples to be stable; rare positives make variance large; and resampling or class-weighting can improve learning while still requiring a post-training calibration read.</p>",
@@ -365,8 +365,8 @@ const M9 = {
     { title: "Event Ads pacing cold-start", background: "New events need delivery before the pAttend model has reliable event-specific outcomes, so pacing starts from priors and moves to warm estimates.", numbers: "With prior 0.008, warm 0.020, $n=500$, $k=1500$, the blend is $0.75\\cdot0.008+0.25\\cdot0.020=0.011$." },
     { title: "Creator Marketplace AI new creators", background: "A creator with no marketplace campaigns can still be represented by profile topics, audience, and organic content signals.", numbers: "If content score is 0.62 and warm marketplace score is 0.80 after $n=50$ with $k=150$, blend weight is 0.25 and score is $0.75(0.62)+0.25(0.80)=0.665$." },
     { title: "Creative Intelligence new assets", background: "A fresh creative has no fatigue or lift history, so visual/text embeddings and campaign priors carry the first decisions.", numbers: "A new creative prior lift 0.03 blended with early lift 0.09 at $w=0.10$ gives $0.9(0.03)+0.1(0.09)=0.036$." },
-    { title: "Search Ads new queries", background: "Rare or new queries can transfer from semantic query embeddings and neighboring known queries before click logs accumulate.", numbers: "A query cluster CTR of 0.018 and exact-query CTR of 0.030 with $w=0.2$ yields $0.8(0.018)+0.2(0.030)=0.0204$." },
-    { title: "Instream Ads new video inventory", background: "New organic videos can use content classification and creator priors until enough view-through outcomes arrive.", numbers: "If content pVTR is 0.24 and early measured pVTR is 0.30 after 100 impressions with $k=900$, the blend is $0.9(0.24)+0.1(0.30)=0.246$." },
+    { title: "Search Ads new queries", background: "Rare or new queries can transfer from semantic query embeddings and neighboring known queries before click logs accumulate.", numbers: "A query cluster CTR (click-through rate) of 0.018 and exact-query CTR of 0.030 with $w=0.2$ yields $0.8(0.018)+0.2(0.030)=0.0204$." },
+    { title: "Instream Ads new video inventory", background: "New organic videos can use content classification and creator priors until enough view-through outcomes arrive.", numbers: "If content pVTR (predicted view-through rate) is 0.24 and early measured pVTR is 0.30 after 100 impressions with $k=900$, the blend is $0.9(0.24)+0.1(0.30)=0.246$." },
     { title: "Event Organic Feed SPR new posts", background: "New event posts need Feed exposure before SPR labels exist, so organizer reputation and text relevance act as transfer signals.", numbers: "Organizer prior 0.05 and post early score 0.08 with $n=300$, $k=700$ blend to $0.7(0.05)+0.3(0.08)=0.059$." },
     { title: "Distilling a large ranker", background: "A large cross-feature teacher can teach a smaller online student to approximate ranking behavior under latency constraints.", numbers: "For teacher [0.6,0.3,0.1] and student [0.5,0.4,0.1], distillation loss is $-[0.6\\log0.5+0.3\\log0.4+0.1\\log0.1]\\approx0.898$." }
   ],
@@ -408,18 +408,18 @@ const M10 = {
   m: 10, domain: 1,
   title: "Learning with sparse & implicit labels (recsys)",
   tagline: "Train recommenders from clicks, views, and skips without pretending missing feedback is the same as dislike.",
-  skipIf: "train a recsys model on implicit feedback with principled negatives + debiasing.",
+  skipIf: "train a RecSys (recommender system) model on implicit feedback with principled negatives + debiasing.",
   mapsTo: ["Creator Marketplace AI"],
   connections: {
     buildsOn: ["recommender retrieval", "ranking losses", "class imbalance"],
-    leadsTo: ["two-tower training", "debiasing", "PU learning"],
+    leadsTo: ["two-tower training", "debiasing", "PU (positive-unlabeled) learning"],
     usedWith: ["negative sampling", "in-batch softmax", "inverse propensity weighting"]
   },
   motivation:
     "<p>Most recommender labels are implicit. A click, view, save, reply, or registration is a positive hint; absence is ambiguous. The member may dislike the item, but they also may never have seen it, may have seen it in a poor position, or may convert later. Treating every missing pair as a true negative floods training with false certainty.</p>" +
-    "<p>The job is to learn from positives while constructing negatives honestly. Uniform negatives teach broad separation; popularity and in-batch negatives are efficient but biased; hard negatives sharpen the boundary. Debiasing methods such as IPS correct exposure effects, and sampling-bias corrections adjust losses so $p(i\\mid u)$ is not mostly a mirror of the sampler.</p>",
+    "<p>The job is to learn from positives while constructing negatives honestly. Uniform negatives teach broad separation; popularity and in-batch negatives are efficient but biased; hard negatives sharpen the boundary. Debiasing methods such as IPS (inverse propensity scoring) correct exposure effects, and sampling-bias corrections adjust losses so $p(i\\mid u)$ is not mostly a mirror of the sampler.</p>",
   definition:
-    "<p><b>Definition.</b> Implicit-feedback recommendation learns from observed positive events $y_{ui}=1$ and unobserved pairs whose label is unknown, not necessarily $0$. Pairwise BPR maximizes $\\log\\sigma(s(u,i^+)-s(u,i^-))$ for sampled negatives. In-batch softmax for one positive item is $$\\ell_u=-\\log\\frac{\\exp(s(u,i^+)-\\log q(i^+))}{\\sum_{j\\in B}\\exp(s(u,j)-\\log q(j))},$$ where $q(j)$ is a sampling or popularity probability used for correction.</p>" +
+    "<p><b>Definition.</b> Implicit-feedback recommendation learns from observed positive events $y_{ui}=1$ and unobserved pairs whose label is unknown, not necessarily $0$. Pairwise BPR (Bayesian personalized ranking) maximizes $\\log\\sigma(s(u,i^+)-s(u,i^-))$ for sampled negatives. In-batch softmax for one positive item is $$\\ell_u=-\\log\\frac{\\exp(s(u,i^+)-\\log q(i^+))}{\\sum_{j\\in B}\\exp(s(u,j)-\\log q(j))},$$ where $q(j)$ is a sampling or popularity probability used for correction.</p>" +
     "<p><b>Assumptions that matter:</b> exposure is biased by previous rankers; position affects clicks; missing labels are a mixture of unexposed, ignored, and delayed outcomes; and negative sampling changes the training distribution unless corrected or evaluated carefully.</p>",
   symbols: [
     { sym: "$i^+$", desc: "an observed positive item for a user or context." },
