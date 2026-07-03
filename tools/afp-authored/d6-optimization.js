@@ -133,7 +133,7 @@ const M27 = {
   notebook: [
     { t: "md", src:
       "# M27 · Linear & convex optimization\n\n" +
-      "AFP-AI · Domain 6 · Optimization\n\n" +
+      "Curriculum · Domain 6 · Optimization\n\n" +
       "We solve a tiny ads LP by enumerating vertices, then read a shadow price by perturbing the budget. The math shape is $\\max c^\\top x$ subject to $Ax \\le b$ and $x \\ge 0$." },
     { t: "code", src:
       "import numpy as np\n" +
@@ -355,7 +355,7 @@ const M28 = {
   notebook: [
     { t: "md", src:
       "# M28 · Ads marketplace optimization\n\n" +
-      "AFP-AI · Domain 6 · Optimization\n\n" +
+      "Curriculum · Domain 6 · Optimization\n\n" +
       "This notebook simulates a tiny auction and pacing loop. Candidate value is $v=\\widehat{pCTR} \\times bid \\times m$, where $m$ is a pacing multiplier." },
     { t: "code", src:
       "import numpy as np\n" +

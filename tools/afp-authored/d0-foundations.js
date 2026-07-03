@@ -146,7 +146,7 @@ const M1 = {
   notebook: [
     { t: "md", src:
       "# M1 · Supervised learning\n\n" +
-      "_AFP-AI · Domain 0 · ML Foundations_\n\n" +
+      "_Curriculum · Domain 0 · ML Foundations_\n\n" +
       "**Learn a function from labeled examples, then judge it on data it has never seen.**\n\n" +
       "We build a binary click-style classifier end to end: split the data honestly, fit a model, and read the **generalization gap** between train and validation. Run each cell top to bottom. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
     { t: "code", src:

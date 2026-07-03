@@ -127,7 +127,7 @@ const M11 = {
     "Sentence-BERT (Reimers & Gurevych, 2019)"
   ],
   notebook: [
-    { t: "md", src: "# M11 · Embeddings & representation learning\n\n_AFP-AI · Domain 2 · Retrieval & Representation_\n\n**Turn messy people, text, and ads into vectors whose geometry can be searched.**\n\nWe will build tiny creator and query embeddings, compare dot product with cosine similarity, and measure retrieval recall. The key formula is $\\operatorname{cos}(q,i)=\\frac{q^\\top i}{\|q\|\|i\|}$." },
+    { t: "md", src: "# M11 · Embeddings & representation learning\n\n_Curriculum · Domain 2 · Retrieval & Representation_\n\n**Turn messy people, text, and ads into vectors whose geometry can be searched.**\n\nWe will build tiny creator and query embeddings, compare dot product with cosine similarity, and measure retrieval recall. The key formula is $\\operatorname{cos}(q,i)=\\frac{q^\\top i}{\|q\|\|i\|}$." },
     { t: "code", src: "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(11)" },
     { t: "md", src: "## A tiny semantic space\n\nEach creator has four hand-built signals. In production those coordinates are learned, but this toy space lets us inspect the geometry." },
     { t: "code", src: "names = np.array([\"ai founder\", \"career coach\", \"b2b security\", \"food creator\", \"cloud architect\", \"event host\"])\nemb = np.array([\n    [0.90, 0.70, 0.80, 0.10],\n    [0.30, 0.85, 0.25, 0.20],\n    [0.85, 0.40, 0.95, 0.05],\n    [0.05, 0.20, 0.05, 0.95],\n    [0.80, 0.35, 0.75, 0.10],\n    [0.35, 0.90, 0.30, 0.30],\n])\nquery = np.array([0.88, 0.50, 0.90, 0.05])\n\nprint(pd.DataFrame(emb, index=names, columns=[\"ai\", \"audience\", \"security\", \"lifestyle\"]))" },
@@ -266,7 +266,7 @@ const M12 = {
     "Dense Passage Retrieval (Karpukhin et al., 2020)"
   ],
   notebook: [
-    { t: "md", src: "# M12 · Two-tower / EBR retrieval architecture\n\n_AFP-AI · Domain 2 · Retrieval & Representation_\n\n**Train query and item towers into one space, then serve with precomputed item embeddings.**\n\nThe batch loss is $\\ell=-\\log\\frac{\\exp(s_{+})}{\\sum_j\\exp(s_j)}$, and the serving score is a dot product." },
+    { t: "md", src: "# M12 · Two-tower / EBR retrieval architecture\n\n_Curriculum · Domain 2 · Retrieval & Representation_\n\n**Train query and item towers into one space, then serve with precomputed item embeddings.**\n\nThe batch loss is $\\ell=-\\log\\frac{\\exp(s_{+})}{\\sum_j\\exp(s_j)}$, and the serving score is a dot product." },
     { t: "code", src: "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(12)" },
     { t: "md", src: "## Tiny batch of query and item embeddings\n\nRows are matched pairs. Every other item in the batch becomes an in-batch negative." },
     { t: "code", src: "query = np.array([\n    [1.0, 0.2, 0.1],\n    [0.1, 1.0, 0.2],\n    [0.2, 0.1, 1.0],\n    [0.8, 0.4, 0.1],\n])\nitem = np.array([\n    [0.9, 0.3, 0.1],\n    [0.0, 0.9, 0.3],\n    [0.3, 0.2, 0.9],\n    [0.7, 0.5, 0.0],\n])\n\nscores = query @ item.T\n\nprint(pd.DataFrame(scores).round(3))" },
@@ -401,7 +401,7 @@ const M13 = {
     "Product Quantization (Jégou et al., 2011)"
   ],
   notebook: [
-    { t: "md", src: "# M13 · ANN / vector search & indexing\n\n_AFP-AI · Domain 2 · Retrieval & Representation_\n\n**Trade a little exactness for the latency needed to search many vectors.**\n\nWe compare exact top-k search with a tiny approximate search. Quality is $\\operatorname{recall@k}=\\frac{|A_k\\cap E_k|}{k}$." },
+    { t: "md", src: "# M13 · ANN / vector search & indexing\n\n_Curriculum · Domain 2 · Retrieval & Representation_\n\n**Trade a little exactness for the latency needed to search many vectors.**\n\nWe compare exact top-k search with a tiny approximate search. Quality is $\\operatorname{recall@k}=\\frac{|A_k\\cap E_k|}{k}$." },
     { t: "code", src: "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nimport time\n\nrng = np.random.default_rng(13)" },
     { t: "md", src: "## Synthetic creator embeddings\n\nWe make clustered vectors so approximate search can use a cheap coarse partition, similar in spirit to IVF." },
     { t: "code", src: "n_clusters = 8\nitems_per_cluster = 80\ndim = 12\ncenters = rng.normal(size=(n_clusters, dim))\ncenters = centers / np.linalg.norm(centers, axis=1, keepdims=True)\nlabels = np.repeat(np.arange(n_clusters), items_per_cluster)\nnoise = rng.normal(scale=0.18, size=(n_clusters * items_per_cluster, dim))\nitems = centers[labels] + noise\nitems = items / np.linalg.norm(items, axis=1, keepdims=True)\nquery = centers[3] + centers[5] + rng.normal(scale=0.05, size=dim)\nquery = query / np.linalg.norm(query)\n\nprint(items.shape)" },
@@ -543,7 +543,7 @@ const M14 = {
     "MoCo (He et al., 2020)"
   ],
   notebook: [
-    { t: "md", src: "# M14 · Encoders & contrastive training\n\n_AFP-AI · Domain 2 · Retrieval & Representation_\n\n**Fine-tune text encoders so positives pull together and confusing negatives push apart.**\n\nWe simulate encoder embeddings with small numpy vectors. The InfoNCE loss is $\\ell=-\\log\\frac{\\exp(s_+/\\tau)}{\\sum_j\\exp(s_j/\\tau)}$." },
+    { t: "md", src: "# M14 · Encoders & contrastive training\n\n_Curriculum · Domain 2 · Retrieval & Representation_\n\n**Fine-tune text encoders so positives pull together and confusing negatives push apart.**\n\nWe simulate encoder embeddings with small numpy vectors. The InfoNCE loss is $\\ell=-\\log\\frac{\\exp(s_+/\\tau)}{\\sum_j\\exp(s_j/\\tau)}$." },
     { t: "code", src: "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(14)" },
     { t: "md", src: "## Simulated encoder outputs\n\nNo transformer weights are downloaded. These vectors stand in for brief and creator embeddings after a text encoder." },
     { t: "code", src: "query = np.array([1.0, 0.2, 0.1, 0.0])\npositive = np.array([0.9, 0.25, 0.1, 0.05])\neasy_negative = np.array([0.0, 0.1, 0.9, 0.2])\nhard_negative = np.array([0.75, 0.30, 0.15, 0.10])\nitems = np.vstack([positive, easy_negative, hard_negative])\nlabels = np.array([\"positive\", \"easy negative\", \"hard negative\"])\n\ndef normalize(x):\n    return x / np.linalg.norm(x, axis=-1, keepdims=True)\n\nquery_n = normalize(query)\nitems_n = normalize(items)\ncosines = items_n @ query_n\n\nprint(pd.DataFrame({\"item\": labels, \"cosine\": cosines}).round(3))" },

@@ -131,7 +131,7 @@ const M20 = {
     "XLM-R (Conneau et al., 2020)"
   ],
   notebook: [
-    { t: "md", src: "# M20 · Fine-tuning / distillation\n\n_AFP-AI · Domain 4 · GenAI_\n\nWe train a small teacher classifier for ad-text intent, then train a compact student on the teacher's soft labels. The math idea is $KL(q_T \\Vert p_T)$: the student learns the full teacher distribution, not just the winning class." },
+    { t: "md", src: "# M20 · Fine-tuning / distillation\n\n_Curriculum · Domain 4 · GenAI_\n\nWe train a small teacher classifier for ad-text intent, then train a compact student on the teacher's soft labels. The math idea is $KL(q_T \\Vert p_T)$: the student learns the full teacher distribution, not just the winning class." },
     { t: "code", src: "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom sklearn.datasets import make_classification\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import accuracy_score\nfrom sklearn.metrics import log_loss\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\n\nrng = np.random.default_rng(20)" },
     { t: "md", src: "## Synthetic AFP-AI classification task\n\nThink of each row as a creative or video candidate with text, visual, and account features. The label is a small taxonomy class for routing or guidance." },
     { t: "code", src: "X, y = make_classification(\n    n_samples=2400,\n    n_features=12,\n    n_informative=7,\n    n_redundant=2,\n    n_classes=3,\n    class_sep=2.0,\n    random_state=20\n)\n\nX_train, X_val, y_train, y_val = train_test_split(\n    X,\n    y,\n    test_size=0.30,\n    random_state=20,\n    stratify=y\n)\n\nscaler = StandardScaler()\nX_train = scaler.fit_transform(X_train)\nX_val = scaler.transform(X_val)\n\nprint(X_train.shape)\nprint(np.bincount(y_train))" },
@@ -277,7 +277,7 @@ const M21 = {
     "Sora technical report (OpenAI, 2024)"
   ],
   notebook: [
-    { t: "md", src: "# M21 · Diffusion & visual generation\n\n_AFP-AI · Domain 4 · GenAI_\n\nWe build a tiny CPU-only diffusion demo. The forward formula is $x_t=\\sqrt{\\bar\\alpha_t}x_0+\\sqrt{1-\\bar\\alpha_t}\\epsilon$, and the reverse process will denoise a toy distribution." },
+    { t: "md", src: "# M21 · Diffusion & visual generation\n\n_Curriculum · Domain 4 · GenAI_\n\nWe build a tiny CPU-only diffusion demo. The forward formula is $x_t=\\sqrt{\\bar\\alpha_t}x_0+\\sqrt{1-\\bar\\alpha_t}\\epsilon$, and the reverse process will denoise a toy distribution." },
     { t: "code", src: "import numpy as np\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(21)" },
     { t: "md", src: "## A toy creative distribution\n\nInstead of images, we use 2-D points from two clusters. Think of the axes as two learned visual features, such as warmth and contrast." },
     { t: "code", src: "n = 600\nleft = rng.normal(loc=[-2.0, 0.0], scale=0.35, size=(n // 2, 2))\nright = rng.normal(loc=[2.0, 0.0], scale=0.35, size=(n // 2, 2))\nx0 = np.vstack([left, right])\nlabels = np.array([0] * (n // 2) + [1] * (n // 2))\n\nprint(x0.shape)\nassert x0.shape == (600, 2)" },
@@ -423,7 +423,7 @@ const M22 = {
     "Constitutional AI (Bai et al., 2022)"
   ],
   notebook: [
-    { t: "md", src: "# M22 · LLM-as-judge validation\n\n_AFP-AI · Domain 4 · GenAI_\n\nWe simulate a judge and humans, then compute agreement, correlation, calibration, and position bias. The key statistic is Cohen's $\\kappa=(p_o-p_e)/(1-p_e)$." },
+    { t: "md", src: "# M22 · LLM-as-judge validation\n\n_Curriculum · Domain 4 · GenAI_\n\nWe simulate a judge and humans, then compute agreement, correlation, calibration, and position bias. The key statistic is Cohen's $\\kappa=(p_o-p_e)/(1-p_e)$." },
     { t: "code", src: "import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom sklearn.metrics import cohen_kappa_score\nfrom sklearn.metrics import confusion_matrix\n\nrng = np.random.default_rng(22)" },
     { t: "md", src: "## Simulate human labels and judge labels\n\nLabels are binary for simplicity: 1 means the creative response passes the rubric, 0 means it does not." },
     { t: "code", src: "n = 240\nhuman = rng.binomial(1, 0.58, size=n)\nflip = rng.binomial(1, 0.18, size=n)\njudge = np.where(flip == 1, 1 - human, human)\n\nprint(np.bincount(human))\nprint(np.bincount(judge))\nassert len(human) == len(judge)" },

@@ -283,7 +283,7 @@ const M23 = {
   "notebook": [
     {
       "t": "md",
-      "src": "# M23 · RLHF, DPO, PPO\n\n_AFP-AI · Domain 5 · Reinforcement learning_\n\n**Tune an assistant from preference signals without forgetting the reference model.**\n\nThis notebook builds the smallest useful RLHF playground: Bradley-Terry preferences, a KL-penalized policy objective, a PPO clipped term, and a DPO-style direct preference update."
+      "src": "# M23 · RLHF, DPO, PPO\n\n_Curriculum · Domain 5 · Reinforcement learning_\n\n**Tune an assistant from preference signals without forgetting the reference model.**\n\nThis notebook builds the smallest useful RLHF playground: Bradley-Terry preferences, a KL-penalized policy objective, a PPO clipped term, and a DPO-style direct preference update."
     },
     {
       "t": "code",
@@ -602,7 +602,7 @@ const M24 = {
   "notebook": [
     {
       "t": "md",
-      "src": "# M24 · Counterfactual / off-policy evaluation\n\n_AFP-AI · Domain 5 · Reinforcement learning_\n\n**Estimate a new ads policy from old logged traffic before risking an online test.**\n\nWe compute IPS, self-normalized IPS, and Doubly Robust estimates on a tiny logged bandit table."
+      "src": "# M24 · Counterfactual / off-policy evaluation\n\n_Curriculum · Domain 5 · Reinforcement learning_\n\n**Estimate a new ads policy from old logged traffic before risking an online test.**\n\nWe compute IPS, self-normalized IPS, and Doubly Robust estimates on a tiny logged bandit table."
     },
     {
       "t": "code",
@@ -921,7 +921,7 @@ const M25 = {
   "notebook": [
     {
       "t": "md",
-      "src": "# M25 · Contextual bandits\n\n_AFP-AI · Domain 5 · Reinforcement learning_\n\n**Choose creative variants while learning which one works.**\n\nWe compare epsilon-greedy, UCB, and Thompson sampling on a deterministic Bernoulli-bandit simulation."
+      "src": "# M25 · Contextual bandits\n\n_Curriculum · Domain 5 · Reinforcement learning_\n\n**Choose creative variants while learning which one works.**\n\nWe compare epsilon-greedy, UCB, and Thompson sampling on a deterministic Bernoulli-bandit simulation."
     },
     {
       "t": "code",
@@ -1240,7 +1240,7 @@ const M26 = {
   "notebook": [
     {
       "t": "md",
-      "src": "# M26 · RL foundations\n\n_AFP-AI · Domain 5 · Reinforcement learning_\n\n**State an MDP, compute values, and know when full RL is worth the complexity.**\n\nWe build a tiny pacing MDP and run value iteration, then compute one REINFORCE policy-gradient term."
+      "src": "# M26 · RL foundations\n\n_Curriculum · Domain 5 · Reinforcement learning_\n\n**State an MDP, compute values, and know when full RL is worth the complexity.**\n\nWe build a tiny pacing MDP and run value iteration, then compute one REINFORCE policy-gradient term."
     },
     {
       "t": "code",

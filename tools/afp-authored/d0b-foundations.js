@@ -125,7 +125,7 @@ const M2 = {
   notebook: [
     { t: "md", src:
       `# M2 · Feature engineering & leakage\n\n` +
-      `_AFP-AI · Domain 0 · ML Foundations_\n\n` +
+      `_Curriculum · Domain 0 · ML Foundations_\n\n` +
       `**Build leak-free features by respecting the prediction-time clock.**\n\n` +
       `We create a tiny ads click dataset with one honest historical feature and one leaky future feature. Run each cell top to bottom. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._` },
     { t: "code", src:
@@ -329,7 +329,7 @@ const M3 = {
   notebook: [
     { t: "md", src:
       `# M3 · Loss & optimization\n\n` +
-      `_AFP-AI · Domain 0 · ML Foundations_\n\n` +
+      `_Curriculum · Domain 0 · ML Foundations_\n\n` +
       `**Watch one logistic model learn by moving opposite the gradient.**\n\n` +
       `This notebook computes log loss and gradient-descent updates directly. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._` },
     { t: "code", src:
@@ -538,7 +538,7 @@ const M4 = {
   notebook: [
     { t: "md", src:
       `# M4 · Model families\n\n` +
-      `_AFP-AI · Domain 0 · ML Foundations_\n\n` +
+      `_Curriculum · Domain 0 · ML Foundations_\n\n` +
       `**Compare a linear model with a tree ensemble on tabular ads-style data.**\n\n` +
       `We create nonlinear tabular signal, then compare logistic regression and a gradient boosting model. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._` },
     { t: "code", src:
@@ -728,7 +728,7 @@ const M5 = {
   notebook: [
     { t: "md", src:
       `# M5 · Offline metrics\n\n` +
-      `_AFP-AI · Domain 0 · ML Foundations_\n\n` +
+      `_Curriculum · Domain 0 · ML Foundations_\n\n` +
       `**Compute classification and ranking metrics from scored examples.**\n\n` +
       `We calculate AUC and NDCG directly, then compare against scikit-learn. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._` },
     { t: "code", src:

@@ -3,12 +3,12 @@
    28 modules across 7 domains; template:"afp" renders via renderAFP in index.html. */
 (function () {
   window.LESSONS = window.LESSONS || [];
-  const B = (o) => window.LESSONS.push(Object.assign({ template: "afp", superGroup: "AFP-AI" }, o));
+  const B = (o) => window.LESSONS.push(Object.assign({ template: "afp", superGroup: "Curriculum" }, o));
 
   B({
     "id": "afp-m01",
     "module": "Domain 0 · ML Foundations",
-    "book": "AFP-AI · ML Foundations",
+    "book": "Curriculum · ML Foundations",
     "title": "M1 · Supervised learning",
     "tagline": "Learn a function from labeled examples, then judge it on data it has never seen.",
     "skipIf": "frame a problem as features to a label, split train/val/test, reason about over/underfitting, and pick classification vs regression.",
@@ -266,7 +266,7 @@
   B({
     "id": "afp-m02",
     "module": "Domain 0 · ML Foundations",
-    "book": "AFP-AI · ML Foundations",
+    "book": "Curriculum · ML Foundations",
     "title": "M2 · Feature engineering & leakage",
     "tagline": "Turn raw logged events into trustworthy model inputs without accidentally smuggling the answer into the row.",
     "skipIf": "explain target leakage and build a leak-free feature/label join, and handle and normalize categorical, numerical, and float features.",
@@ -553,7 +553,7 @@
   B({
     "id": "afp-m03",
     "module": "Domain 0 · ML Foundations",
-    "book": "AFP-AI · ML Foundations",
+    "book": "Curriculum · ML Foundations",
     "title": "M3 · Loss & optimization (gradient descent, regularization)",
     "tagline": "See training as a sequence of small parameter moves that reduce a chosen notion of wrongness.",
     "skipIf": "derive and explain log loss + L1/L2 regularization and what the optimizer actually does.",
@@ -840,7 +840,7 @@
   B({
     "id": "afp-m04",
     "module": "Domain 0 · ML Foundations",
-    "book": "AFP-AI · ML Foundations",
+    "book": "Curriculum · ML Foundations",
     "title": "M4 · Model families (linear → GBDT → intro to neural nets)",
     "tagline": "Choose the model whose built-in assumptions match the data shape, serving constraints, and signal you actually have.",
     "skipIf": "say when you'd pick a GBDT vs a neural net and why.",
@@ -1137,7 +1137,7 @@
   B({
     "id": "afp-m05",
     "module": "Domain 0 · ML Foundations",
-    "book": "AFP-AI · ML Foundations",
+    "book": "Curriculum · ML Foundations",
     "title": "M5 · Offline metrics (AUC, Precision, Recall, F1, MRR, NDCG)",
     "tagline": "Translate model scores into the exact offline questions that ranking, filtering, and launch decisions need answered.",
     "skipIf": "interpret an ROC + NDCG and design a per-slice evaluation.",
@@ -1433,7 +1433,7 @@
   B({
     "id": "afp-m06",
     "module": "Domain 1 · Core: Ranking & Evaluation",
-    "book": "AFP-AI · Ranking & Evaluation",
+    "book": "Curriculum · Ranking & Evaluation",
     "title": "M6 · RecSys landscape: collaborative filtering / matrix factorization → two-tower → sequential & generative recommenders",
     "tagline": "Choose the recommender family that matches the data, latency, and product question in front of you.",
     "skipIf": "contrast CF vs two-tower vs generative recommenders and pick per use-case.",
@@ -1717,7 +1717,7 @@
   B({
     "id": "afp-m07",
     "module": "Domain 1 · Core: Ranking & Evaluation",
-    "book": "AFP-AI · Ranking & Evaluation",
+    "book": "Curriculum · Ranking & Evaluation",
     "title": "M7 · Ranking & CTR-family (pCTR/pVTR/pLTR), learning-to-rank",
     "tagline": "Turn calibrated response probabilities into an ordered list that serves members, advertisers, and the marketplace.",
     "skipIf": "explain pointwise vs pairwise vs listwise ranking and a multi-objective head.",
@@ -1995,7 +1995,7 @@
   B({
     "id": "afp-m08",
     "module": "Domain 1 · Core: Ranking & Evaluation",
-    "book": "AFP-AI · Ranking & Evaluation",
+    "book": "Curriculum · Ranking & Evaluation",
     "title": "M8 · Calibration & class imbalance (isotonic/Platt, rare events, sparse slices)",
     "tagline": "Make predicted probabilities mean what the marketplace thinks they mean, especially when positives are rare.",
     "skipIf": "calibrate a sparse-slice model and explain why raw scores mislead.",
@@ -2262,7 +2262,7 @@
   B({
     "id": "afp-m09",
     "module": "Domain 1 · Core: Ranking & Evaluation",
-    "book": "AFP-AI · Ranking & Evaluation",
+    "book": "Curriculum · Ranking & Evaluation",
     "title": "M9 · Cold-start / warm-start / transfer & distillation",
     "tagline": "Move safely from priors and content features to learned personalization, with explicit handoff criteria.",
     "skipIf": "design a cold→warm handoff with explicit exit criteria.",
@@ -2533,7 +2533,7 @@
   B({
     "id": "afp-m10",
     "module": "Domain 1 · Core: Ranking & Evaluation",
-    "book": "AFP-AI · Ranking & Evaluation",
+    "book": "Curriculum · Ranking & Evaluation",
     "title": "M10 · Learning with sparse & implicit labels (recsys)",
     "tagline": "Train recommenders from clicks, views, and skips without pretending missing feedback is the same as dislike.",
     "skipIf": "train a recsys model on implicit feedback with principled negatives + debiasing.",
@@ -2811,7 +2811,7 @@
   B({
     "id": "afp-m11",
     "module": "Domain 2 · Recommenders, Embeddings & Retrieval",
-    "book": "AFP-AI · Retrieval & Embeddings",
+    "book": "Curriculum · Retrieval & Embeddings",
     "title": "M11 · Embeddings & representation learning",
     "tagline": "Turn messy people, text, and ads into vectors whose geometry can be searched, measured, and learned.",
     "skipIf": "explain what an embedding space encodes and how you'd evaluate it.",
@@ -3100,7 +3100,7 @@
   B({
     "id": "afp-m12",
     "module": "Domain 2 · Recommenders, Embeddings & Retrieval",
-    "book": "AFP-AI · Retrieval & Embeddings",
+    "book": "Curriculum · Retrieval & Embeddings",
     "title": "M12 · Two-tower / EBR retrieval architecture (+ serving)",
     "tagline": "Train query and item towers into one space, then serve fast by precomputing the item side.",
     "skipIf": "build a two-tower retrieval model and reason about the negatives.",
@@ -3384,7 +3384,7 @@
   B({
     "id": "afp-m13",
     "module": "Domain 2 · Recommenders, Embeddings & Retrieval",
-    "book": "AFP-AI · Retrieval & Embeddings",
+    "book": "Curriculum · Retrieval & Embeddings",
     "title": "M13 · ANN / vector search & indexing (HNSW, IVF-PQ, ScaNN)",
     "tagline": "Trade a little exactness for the latency and memory needed to search millions of embeddings.",
     "skipIf": "choose HNSW vs IVF-PQ and tune recall vs latency.",
@@ -3657,7 +3657,7 @@
   B({
     "id": "afp-m14",
     "module": "Domain 2 · Recommenders, Embeddings & Retrieval",
-    "book": "AFP-AI · Retrieval & Embeddings",
+    "book": "Curriculum · Retrieval & Embeddings",
     "title": "M14 · Encoders & contrastive training (dual/cross-encoder, InfoNCE, hard negatives)",
     "tagline": "Fine-tune text encoders so positives pull together and confusing negatives finally push apart.",
     "skipIf": "fine-tune a text encoder with a contrastive objective + hard negatives.",
@@ -3954,7 +3954,7 @@
   B({
     "id": "afp-m15",
     "module": "Domain 3 · Unsupervised",
-    "book": "AFP-AI · Unsupervised",
+    "book": "Curriculum · Unsupervised",
     "title": "M15 · Clustering & cohort/persona discovery (k-means, GMM, HDBSCAN)",
     "tagline": "Find structure without labels, then test whether the structure is stable enough to use.",
     "skipIf": "pick a clustering method and validate clusters without labels.",
@@ -4278,7 +4278,7 @@
   B({
     "id": "afp-m16",
     "module": "Domain 3 · Unsupervised",
-    "book": "AFP-AI · Unsupervised",
+    "book": "Curriculum · Unsupervised",
     "title": "M16 · Dimensionality reduction & anomaly detection (PCA/UMAP)",
     "tagline": "Compress high-dimensional behavior into a useful view, then spot points that do not belong.",
     "skipIf": "reduce and visualize high-dimensional features and flag outliers.",
@@ -4587,7 +4587,7 @@
   B({
     "id": "afp-m17",
     "module": "Domain 4 · Applied LLMs / GenAI",
-    "book": "AFP-AI · Applied LLMs / GenAI",
+    "book": "Curriculum · Applied LLMs / GenAI",
     "title": "M17 · Transformer basics (attention/self-attention, positional encoding, encoder vs decoder)",
     "tagline": "Use attention to let each token decide which other tokens matter before any generation or ranking happens.",
     "skipIf": "explain self-attention and when to use an encoder vs a decoder.",
@@ -4886,7 +4886,7 @@
   B({
     "id": "afp-m18",
     "module": "Domain 4 · Applied LLMs / GenAI",
-    "book": "AFP-AI · Applied LLMs / GenAI",
+    "book": "Curriculum · Applied LLMs / GenAI",
     "title": "M18 · LLM fundamentals + prompting",
     "tagline": "Turn text into tokens, tokens into probabilities, and prompts into reliable structured behavior.",
     "skipIf": "explain tokens/context, few-shot prompting, and structured output.",
@@ -5163,7 +5163,7 @@
   B({
     "id": "afp-m19",
     "module": "Domain 4 · Applied LLMs / GenAI",
-    "book": "AFP-AI · Applied LLMs / GenAI",
+    "book": "Curriculum · Applied LLMs / GenAI",
     "title": "M19 · RAG & query understanding (NL→structured)",
     "tagline": "Ground generation in retrieved evidence, then parse natural language into structured decisions with a fallback.",
     "skipIf": "build retrieval-grounded query interpretation with a low-confidence fallback.",
@@ -5451,7 +5451,7 @@
   B({
     "id": "afp-m20",
     "module": "Domain 4 · Applied LLMs / GenAI",
-    "book": "AFP-AI · Applied LLMs / GenAI",
+    "book": "Curriculum · Applied LLMs / GenAI",
     "title": "M20 · Fine-tuning / distillation (classify & generate)",
     "tagline": "Adapt a strong model to your task, then compress what it knows into something you can serve.",
     "skipIf": "choose fine-tune vs distill and run it for a classifier.",
@@ -5760,7 +5760,7 @@
   B({
     "id": "afp-m21",
     "module": "Domain 4 · Applied LLMs / GenAI",
-    "book": "AFP-AI · Applied LLMs / GenAI",
+    "book": "Curriculum · Applied LLMs / GenAI",
     "title": "M21 · Diffusion & visual generation (forward/reverse denoising, conditioning/guidance, text-to-image/video)",
     "tagline": "Generate by learning how to remove noise, one controlled step at a time.",
     "skipIf": "explain how a conditioned diffusion model generates an image or video.",
@@ -6071,7 +6071,7 @@
   B({
     "id": "afp-m22",
     "module": "Domain 4 · Applied LLMs / GenAI",
-    "book": "AFP-AI · Applied LLMs / GenAI",
+    "book": "Curriculum · Applied LLMs / GenAI",
     "title": "M22 · LLM-as-judge & validating the judge (rubric design, human-agreement, bias, calibration)",
     "tagline": "Use a model to evaluate outputs only after you measure how well the evaluator behaves.",
     "skipIf": "quantify a judge's agreement with humans and detect and correct its biases.",
@@ -6392,7 +6392,7 @@
   B({
     "id": "afp-m23",
     "module": "Domain 5 · Bandits & RL",
-    "book": "AFP-AI · Bandits & RL",
+    "book": "Curriculum · Bandits & RL",
     "title": "M23 · RLHF, DPO, PPO",
     "tagline": "Turn human preference labels into safer model behavior while keeping the tuned model close to a trusted reference.",
     "skipIf": "design a fine-tuning plan for LLM RL tuning.",
@@ -6671,7 +6671,7 @@
   B({
     "id": "afp-m24",
     "module": "Domain 5 · Bandits & RL",
-    "book": "AFP-AI · Bandits & RL",
+    "book": "Curriculum · Bandits & RL",
     "title": "M24 · Counterfactual / off-policy evaluation (IPS/DR)",
     "tagline": "Estimate a new policy from logged ads data before spending traffic on a risky experiment.",
     "skipIf": "estimate a policy's value from logged data using IPS/DR.",
@@ -6936,7 +6936,7 @@
   B({
     "id": "afp-m25",
     "module": "Domain 5 · Bandits & RL",
-    "book": "AFP-AI · Bandits & RL",
+    "book": "Curriculum · Bandits & RL",
     "title": "M25 · Contextual bandits (explore/exploit)",
     "tagline": "Learn which directive or variant works while still sending enough traffic to discover better choices.",
     "skipIf": "frame directive/variant selection as a bandit.",
@@ -7201,7 +7201,7 @@
   B({
     "id": "afp-m26",
     "module": "Domain 5 · Bandits & RL",
-    "book": "AFP-AI · Bandits & RL",
+    "book": "Curriculum · Bandits & RL",
     "title": "M26 · RL foundations (MDPs, value/policy, policy gradients) + where RL fits ads",
     "tagline": "Model decisions whose consequences change the next decision, not just the current reward.",
     "skipIf": "state an MDP and explain the bandit vs full-RL trade-offs.",
@@ -7466,7 +7466,7 @@
   B({
     "id": "afp-m27",
     "module": "Domain 6 · Optimization & Marketplace",
-    "book": "AFP-AI · Optimization & Marketplace",
+    "book": "Curriculum · Optimization & Marketplace",
     "title": "M27 · Linear & convex optimization (LP/QP, duality)",
     "tagline": "Turn marketplace trade-offs into constraints, objectives, and shadow prices engineers can reason about.",
     "skipIf": "write an LP and explain duals / shadow prices.",
@@ -7781,7 +7781,7 @@
   B({
     "id": "afp-m28",
     "module": "Domain 6 · Optimization & Marketplace",
-    "book": "AFP-AI · Optimization & Marketplace",
+    "book": "Curriculum · Optimization & Marketplace",
     "title": "M28 · Ads marketplace optimization (value-of-impression, pacing, guaranteed delivery, auctions, multi-objective + guardrails)",
     "tagline": "Connect calibrated pCTR to real marketplace decisions: value, auction rank, pacing, delivery, and guardrails.",
     "skipIf": "explain how a calibrated pCTR feeds a marketplace value/allocation.",

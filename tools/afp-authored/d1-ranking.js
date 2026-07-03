@@ -91,7 +91,7 @@ const M6 = {
     "HSTU: Actions Speak Louder than Words (Zhai et al., 2024)"
   ],
   notebook: [
-    { t: "md", src: "# M6 · RecSys landscape\n\n_AFP-AI · Domain 1 · Ranking & Recommenders_\n\n**Choose the recommender family that matches the data, latency, and product question.**\n\nWe build a tiny matrix-factorization retrieval example, then treat its dot products as the first stage of a retrieval-to-ranking funnel. Run top to bottom. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
+    { t: "md", src: "# M6 · RecSys landscape\n\n_Curriculum · Domain 1 · Ranking & Recommenders_\n\n**Choose the recommender family that matches the data, latency, and product question.**\n\nWe build a tiny matrix-factorization retrieval example, then treat its dot products as the first stage of a retrieval-to-ranking funnel. Run top to bottom. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
     { t: "code", src: "# Setup - CPU-only and deterministic.\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(6)" },
     { t: "md", src: "## First, look at the data\n\nRows are users or briefs, columns are items or creators. Most production matrices are sparse; this one is small enough to see. A low-rank model predicts $\\hat r_{ui}=p_u^\\top q_i$." },
     { t: "code", src: "users = [\"brief_A\", \"brief_B\", \"brief_C\"]\nitems = [\"creator_tech\", \"creator_hybrid\", \"creator_event\"]\nR = np.array([[5.0, 3.0, 0.0], [0.0, 2.0, 5.0], [4.0, 4.0, 1.0]])\nratings = pd.DataFrame(R, index=users, columns=items)\n\nprint(ratings)" },
@@ -191,7 +191,7 @@ const M7 = {
     "DLRM (Naumov et al., 2019)"
   ],
   notebook: [
-    { t: "md", src: "# M7 · Ranking & CTR-family\n\n_AFP-AI · Domain 1 · Ranking & Recommenders_\n\n**Turn response probabilities into an ordered list.**\n\nWe compare pointwise pCTR scoring, pairwise loss, and a simple multi-objective rank score. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
+    { t: "md", src: "# M7 · Ranking & CTR-family\n\n_Curriculum · Domain 1 · Ranking & Recommenders_\n\n**Turn response probabilities into an ordered list.**\n\nWe compare pointwise pCTR scoring, pairwise loss, and a simple multi-objective rank score. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
     { t: "code", src: "# Setup - CPU-only and deterministic.\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(7)" },
     { t: "md", src: "## First, look at candidates\n\nEach row is an ad candidate with predicted probabilities. A ranker may combine $pCTR$, $pVTR$, and value weights rather than sorting by clicks alone." },
     { t: "code", src: "df = pd.DataFrame({\"ad\": [\"A\", \"B\", \"C\", \"D\"], \"bid\": [5.0, 8.0, 4.0, 6.0], \"pctr\": [0.026, 0.016, 0.030, 0.020], \"pvtr\": [0.18, 0.25, 0.10, 0.22], \"clicked\": [1, 0, 1, 0]})\n\nprint(df)" },
@@ -289,7 +289,7 @@ const M8 = {
     "Modeling Delayed Feedback in Display Advertising (Chapelle, 2014)"
   ],
   notebook: [
-    { t: "md", src: "# M8 · Calibration & class imbalance\n\n_AFP-AI · Domain 1 · Ranking & Recommenders_\n\n**Make predicted probabilities mean what downstream systems think they mean.**\n\nWe compute ECE, fit Platt scaling, and draw a reliability diagram for rare click-style labels. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
+    { t: "md", src: "# M8 · Calibration & class imbalance\n\n_Curriculum · Domain 1 · Ranking & Recommenders_\n\n**Make predicted probabilities mean what downstream systems think they mean.**\n\nWe compute ECE, fit Platt scaling, and draw a reliability diagram for rare click-style labels. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
     { t: "code", src: "# Setup - CPU-only and deterministic.\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\nfrom sklearn.linear_model import LogisticRegression\nfrom sklearn.metrics import log_loss\n\nrng = np.random.default_rng(8)" },
     { t: "md", src: "## First, look at raw scores\n\nA model can be good at ranking but overconfident as a probability source. Calibration asks whether $\\Pr(Y=1\\mid \\hat p=p)=p$." },
     { t: "code", src: "n = 3000\nz = rng.normal(size=n)\nraw_p = 1.0 / (1.0 + np.exp(-(1.4 * z - 2.6)))\ntrue_p = 0.65 * raw_p\ny = (rng.random(n) < true_p).astype(int)\n\nprint(\"positive rate:\", round(y.mean(), 4))\nprint(\"mean raw probability:\", round(raw_p.mean(), 4))" },
@@ -386,7 +386,7 @@ const M9 = {
     "Distilling the Knowledge in a Neural Network (Hinton et al., 2015)"
   ],
   notebook: [
-    { t: "md", src: "# M9 · Cold-start, warm-start, transfer & distillation\n\n_AFP-AI · Domain 1 · Ranking & Recommenders_\n\n**Move safely from priors to learned personalization.**\n\nWe blend a cold prior with a warm estimate using an evidence-based confidence weight. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
+    { t: "md", src: "# M9 · Cold-start, warm-start, transfer & distillation\n\n_Curriculum · Domain 1 · Ranking & Recommenders_\n\n**Move safely from priors to learned personalization.**\n\nWe blend a cold prior with a warm estimate using an evidence-based confidence weight. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
     { t: "code", src: "# Setup - CPU-only and deterministic.\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(9)" },
     { t: "md", src: "## First, look at cold and warm scores\n\nA cold-start item begins with priors and content features. As evidence count $n$ grows, the blended score moves toward the warm estimate." },
     { t: "code", src: "events = pd.DataFrame({\"event\": [\"A\", \"B\", \"C\"], \"cold\": [0.010, 0.016, 0.012], \"warm\": [0.026, 0.020, 0.018], \"impressions\": [100, 800, 2500], \"attends\": [1, 14, 55]})\n\nprint(events)" },
@@ -486,7 +486,7 @@ const M10 = {
     "Modeling Delayed Feedback in Display Advertising (Chapelle, 2014)"
   ],
   notebook: [
-    { t: "md", src: "# M10 · Learning with sparse & implicit labels\n\n_AFP-AI · Domain 1 · Ranking & Recommenders_\n\n**Train from clicks and views without pretending missing means dislike.**\n\nWe build an in-batch softmax, apply popularity correction, and compare BPR margins. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
+    { t: "md", src: "# M10 · Learning with sparse & implicit labels\n\n_Curriculum · Domain 1 · Ranking & Recommenders_\n\n**Train from clicks and views without pretending missing means dislike.**\n\nWe build an in-batch softmax, apply popularity correction, and compare BPR margins. _Save a copy to your Drive (File -> Save a copy in Drive) to keep your edits._" },
     { t: "code", src: "# Setup - CPU-only and deterministic.\nimport numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(10)" },
     { t: "md", src: "## First, look at implicit feedback\n\nObserved clicks are positives. Unobserved pairs may be unexposed, ignored, or delayed. Pairwise training uses $\\log\\sigma(s(u,i^+)-s(u,i^-))$." },
     { t: "code", src: "items = [\"positive\", \"popular_neg\", \"rare_neg\", \"hard_neg\"]\nscores = np.array([3.0, 2.0, 1.0, 2.6])\nq = np.array([0.10, 0.50, 0.05, 0.20])\ndf = pd.DataFrame({\"item\": items, \"score\": scores, \"sample_q\": q})\n\nprint(df)" },

@@ -135,7 +135,7 @@ const M15 = {
   notebook: [
     { t: "md", src:
       "# M15 · Clustering & cohort/persona discovery\n\n" +
-      "AFP-AI · Domain 3 · Unsupervised learning\n\n" +
+      "Curriculum · Domain 3 · Unsupervised learning\n\n" +
       "**Find structure without labels, then test whether the structure is stable enough to use.**\n\n" +
       "We will create creator-style feature vectors, run k-means, compare $k$ with silhouette, inspect GMM soft assignments, and use DBSCAN to mark noise. Run top to bottom." },
     { t: "code", src:
@@ -363,7 +363,7 @@ const M16 = {
   notebook: [
     { t: "md", src:
       "# M16 · Dimensionality reduction & anomaly detection\n\n" +
-      "AFP-AI · Domain 3 · Unsupervised learning\n\n" +
+      "Curriculum · Domain 3 · Unsupervised learning\n\n" +
       "**Compress high-dimensional behavior into a useful view, then spot points that do not belong.**\n\n" +
       "We will use PCA to map synthetic ads metrics, inspect explained variance, and flag anomalies with reconstruction error and IsolationForest." },
     { t: "code", src:

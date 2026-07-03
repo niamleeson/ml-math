@@ -562,7 +562,7 @@
   #content .book-takeaways { margin-top: 26px; border-top: 1px solid var(--border); padding-top: 14px; }
   #content .book-takeaways h3 { margin: 0 0 8px; }
   #content .scaffold-note { color: var(--ink-dim); }
-  /* AFP-AI track extras: the self-check callout, project map, and per-module resource/paper asides. */
+  /* Curriculum track extras: the self-check callout, project map, and per-module resource/paper asides. */
   #content .mathdoc.afp .afp-skip {
     margin: 0 0 14px; padding: 8px 12px; border-left: 3px solid var(--accent);
     background: color-mix(in srgb, var(--accent) 6%, var(--panel));
@@ -710,7 +710,7 @@
     "Dynamical systems & chaos",
     "Control theory",
     "Numerical methods / scientific computing",
-    // === AFP-AI Learning Guide — team upskilling track (nested under "AFP-AI") ===
+    // === Curriculum — team upskilling track (from the AFP-AI Learning Guide; nested under "Curriculum") ===
     "Domain 0 · ML Foundations",
     "Domain 1 · Core: Ranking & Evaluation",
     "Domain 2 · Recommenders, Embeddings & Retrieval",
@@ -1304,7 +1304,7 @@
 <script src="lessons/math-26-control-theory.js"></script>
 <script src="lessons/math-27-numerical-methods-scientific-computing.js"></script>
 
-<!-- AFP-AI Learning Guide — generated track (template:"afp" -> renderAFP). -->
+<!-- Curriculum track — generated (template:"afp" -> renderAFP). -->
 <script src="lessons/afp-ai.js"></script>
 
 <!-- All ML curriculum: data, authored content, and its own (separate) textbook renderer. -->
@@ -1802,7 +1802,7 @@ const App = (function () {
 
   // ===== Math track: our own 5-section spec. Structure is enforced here, not by the author. =====
   // Shared monochrome-textbook body (the 5 sections). Used by the Math track
-  // (renderMath) and the AFP-AI track (renderAFP) so their pages cannot drift.
+  // (renderMath) and the Curriculum track (renderAFP) so their pages cannot drift.
   function bookChapterBody(l) {
     const noteHTML = `<p class="scaffold-note">To be authored.</p>`;
 
@@ -1879,14 +1879,14 @@ const App = (function () {
       `</div>`;
   }
 
-  // AFP-AI track — the same textbook body, wrapped with the guide's extras:
-  // a "Skip if you can already…" self-check, a "Where this matters at AFP-AI"
+  // Curriculum track — the same textbook body, wrapped with the guide's extras:
+  // a "Skip if you can already…" self-check, a "Where this matters" project
   // project map, an Open-in-Colab button, and per-module resource + SOTA-paper lists.
   function renderAFP(l, id, prev, next) {
     const skip = l.skipIf
       ? `<div class="afp-skip"><b>Skip if you can already&hellip;</b> ${l.skipIf}</div>` : "";
     const maps = (l.mapsTo && l.mapsTo.length)
-      ? `<div class="afp-maps"><span class="afp-maps-label">Where this matters at AFP-AI</span>${l.mapsTo.map(m => `<span class="afp-chip">${m}</span>`).join("")}</div>` : "";
+      ? `<div class="afp-maps"><span class="afp-maps-label">Where this matters</span>${l.mapsTo.map(m => `<span class="afp-chip">${m}</span>`).join("")}</div>` : "";
     const resources = (l.resources && l.resources.length)
       ? `<div class="afp-aside"><h3 class="book-h">Learning resources</h3><ul class="mbul">${l.resources.map(r => `<li>${r.label}${r.note ? ` &mdash; ${r.note}` : ""}</li>`).join("")}</ul></div>` : "";
     const papers = (l.papers && l.papers.length)

@@ -302,7 +302,7 @@ const M17 = {
   "notebook": [
     {
       "t": "md",
-      "src": "# M17 · Transformer basics\n\nAFP-AI · Domain 4 · LLMs\n\n**Use attention to let each token decide which other tokens matter.**\n\nIn this notebook we implement scaled dot-product attention from scratch with NumPy. The core formula is\n\n$$\\text{softmax}(QK^\\top/\\sqrt{d})V$$\n\nNo model weights, downloads, or GPUs are needed."
+      "src": "# M17 · Transformer basics\n\nCurriculum · Domain 4 · LLMs\n\n**Use attention to let each token decide which other tokens matter.**\n\nIn this notebook we implement scaled dot-product attention from scratch with NumPy. The core formula is\n\n$$\\text{softmax}(QK^\\top/\\sqrt{d})V$$\n\nNo model weights, downloads, or GPUs are needed."
     },
     {
       "t": "code",
@@ -641,7 +641,7 @@ const M18 = {
   "notebook": [
     {
       "t": "md",
-      "src": "# M18 · LLM fundamentals + prompting\n\nAFP-AI · Domain 4 · LLMs\n\n**Turn tokens into probabilities and prompts into reliable structured behavior.**\n\nWe simulate a tiny language model with NumPy. The core probability is\n\n$$P(x_1,\\ldots,x_T)=\\prod_t P(x_t\\mid x_{<t})$$\n\nand perplexity is $\\exp$ of average negative log probability."
+      "src": "# M18 · LLM fundamentals + prompting\n\nCurriculum · Domain 4 · LLMs\n\n**Turn tokens into probabilities and prompts into reliable structured behavior.**\n\nWe simulate a tiny language model with NumPy. The core probability is\n\n$$P(x_1,\\ldots,x_T)=\\prod_t P(x_t\\mid x_{<t})$$\n\nand perplexity is $\\exp$ of average negative log probability."
     },
     {
       "t": "code",
@@ -991,7 +991,7 @@ const M19 = {
   "notebook": [
     {
       "t": "md",
-      "src": "# M19 · RAG & query understanding\n\nAFP-AI · Domain 4 · LLMs\n\n**Ground answers in retrieved evidence, then fallback when confidence is low.**\n\nWe build a tiny retrieval pipeline and slot parser. Retrieval uses cosine similarity\n\n$$s_i=\\frac{q^\\top c_i}{\\|q\\|\\|c_i\\|}$$\n\nso all numbers are inspectable."
+      "src": "# M19 · RAG & query understanding\n\nCurriculum · Domain 4 · LLMs\n\n**Ground answers in retrieved evidence, then fallback when confidence is low.**\n\nWe build a tiny retrieval pipeline and slot parser. Retrieval uses cosine similarity\n\n$$s_i=\\frac{q^\\top c_i}{\\|q\\|\\|c_i\\|}$$\n\nso all numbers are inspectable."
     },
     {
       "t": "code",

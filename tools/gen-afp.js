@@ -4,7 +4,7 @@
    Reads every tools/afp-authored/*.js (each `module.exports = [lessons]`),
    merges + sorts by module number `m`, and emits a single
    lessons/afp-ai.js registering all modules into window.LESSONS with
-   template:"afp" + superGroup:"AFP-AI".
+   template:"afp" + superGroup:"Curriculum".
 
    Run:  node tools/gen-afp.js
    ===================================================================== */
@@ -16,13 +16,13 @@ const SRC = path.join(__dirname, "afp-authored");
 
 /* Domain metadata: the nav-section name (module) and breadcrumb (book) per domain. */
 const DOMAINS = {
-  0: { module: "Domain 0 · ML Foundations",                        book: "AFP-AI · ML Foundations" },
-  1: { module: "Domain 1 · Core: Ranking & Evaluation",            book: "AFP-AI · Ranking & Evaluation" },
-  2: { module: "Domain 2 · Recommenders, Embeddings & Retrieval",  book: "AFP-AI · Retrieval & Embeddings" },
-  3: { module: "Domain 3 · Unsupervised",                          book: "AFP-AI · Unsupervised" },
-  4: { module: "Domain 4 · Applied LLMs / GenAI",                  book: "AFP-AI · Applied LLMs / GenAI" },
-  5: { module: "Domain 5 · Bandits & RL",                          book: "AFP-AI · Bandits & RL" },
-  6: { module: "Domain 6 · Optimization & Marketplace",            book: "AFP-AI · Optimization & Marketplace" }
+  0: { module: "Domain 0 · ML Foundations",                        book: "Curriculum · ML Foundations" },
+  1: { module: "Domain 1 · Core: Ranking & Evaluation",            book: "Curriculum · Ranking & Evaluation" },
+  2: { module: "Domain 2 · Recommenders, Embeddings & Retrieval",  book: "Curriculum · Retrieval & Embeddings" },
+  3: { module: "Domain 3 · Unsupervised",                          book: "Curriculum · Unsupervised" },
+  4: { module: "Domain 4 · Applied LLMs / GenAI",                  book: "Curriculum · Applied LLMs / GenAI" },
+  5: { module: "Domain 5 · Bandits & RL",                          book: "Curriculum · Bandits & RL" },
+  6: { module: "Domain 6 · Optimization & Marketplace",            book: "Curriculum · Optimization & Marketplace" }
 };
 /* MODULE_ORDER must list the domain sections in this order (0..6). */
 const MODULE_ORDER = [0, 1, 2, 3, 4, 5, 6].map(d => DOMAINS[d].module);
@@ -78,7 +78,7 @@ const file =
   `   ${objs.length} modules across 7 domains; template:"afp" renders via renderAFP in index.html. */\n` +
   `(function () {\n` +
   `  window.LESSONS = window.LESSONS || [];\n` +
-  `  const B = (o) => window.LESSONS.push(Object.assign({ template: "afp", superGroup: "AFP-AI" }, o));\n\n` +
+  `  const B = (o) => window.LESSONS.push(Object.assign({ template: "afp", superGroup: "Curriculum" }, o));\n\n` +
   body + `\n})();\n`;
 fs.writeFileSync(path.join(OUT, "afp-ai.js"), file);
 

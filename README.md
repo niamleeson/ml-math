@@ -46,14 +46,14 @@ Each `lessons/*.js` just pushes lesson objects into `window.LESSONS`. To **add a
 
 > LaTeX tip when editing: inside JS strings every backslash is **doubled** (`\\frac`, `\\sum`). A matrix row-break is `\\\\`.
 
-## AFP-AI Learning Guide track
+## Curriculum track (from the AFP-AI Learning Guide)
 
 A self-contained upskilling track built from the **AFP-AI Learning Guide** (Param Kulkarni):
 **7 domains → 28 modules (M1–M28)**, each a full lesson (intuition → definition → worked
 example → 5 practice problems → real-world applications) plus a hands-on **Google Colab**
-notebook. It's nested in the sidebar under an **AFP-AI** umbrella and rendered by `renderAFP`
-(`template:"afp"`), which adds a "Skip if you can already…" self-check, a "Where this matters
-at AFP-AI" project map, curated learning resources, SOTA papers, and an "Open notebook in
+notebook. It's nested in the sidebar under a **Curriculum** umbrella and rendered by `renderAFP`
+(`template:"afp"`), which adds a "Skip if you can already…" self-check, a "Where this matters"
+project map, curated learning resources, SOTA papers, and an "Open notebook in
 Colab" button.
 
 Everything is generated from authored data — do not edit `lessons/afp-ai.js` or
