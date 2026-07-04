@@ -168,22 +168,36 @@ function mdToNotebook(md, title) {
 /* ---------- build the registration file ---------- */
 const data = LESSONS.map((m, i) => {
   const md = fs.readFileSync(path.join(SRC, m.file + ".md"), "utf8");
-  const conv = convert(md);
-  let html = conv.html;
   const hasNb = m.type === "Colab" || m.type === "Both";
+  let title, html;
   if (hasNb) {
-    // 1) write a runnable notebook from the full lesson markdown (code + prose)
+    // Split at the hands-on section (## 3.). Everything from there lives ONLY in the
+    // notebook, so the lesson page never duplicates the notebook's content.
+    const lines = md.split("\n");
+    const s3 = lines.findIndex((l) => /^##\s+3\./.test(l));
+    const pre = (s3 === -1 ? lines : lines.slice(0, s3)).join("\n");
+    const hands = s3 === -1 ? "" : lines.slice(s3).join("\n");
+    const conv = convert(pre);          // page keeps only Overview + Key Idea
+    title = conv.title || m.nav;
+    // 1) runnable notebook = the whole hands-on section (+ a short title / intro)
     if (!fs.existsSync(NB_DIR)) fs.mkdirSync(NB_DIR, { recursive: true });
-    fs.writeFileSync(path.join(NB_DIR, m.file + ".ipynb"), JSON.stringify(mdToNotebook(md, conv.title || m.nav), null, 1));
-    // 2) in the lesson page: drop inline code, add an Open-in-Colab button at the hands-on section
+    const nbMd = "# " + title + " — hands-on notebook\n\n> Runnable companion for the **" + title +
+      "** lesson in the AI Cheat Sheet. The lesson page has the concept overview; this is the lab.\n\n" + hands;
+    fs.writeFileSync(path.join(NB_DIR, m.file + ".ipynb"), JSON.stringify(mdToNotebook(nbMd, title), null, 1));
+    // 2) lesson page hands-on section = just a Colab button + an index of what's inside
     const url = "https://colab.research.google.com/github/" + REPO + "/blob/" + BRANCH + "/topics/notebooks/" + m.file + ".ipynb";
-    html = html.replace(/<pre><code class="language-python">[\s\S]*?<\/code><\/pre>\s*/g, "");
     const btn = '<p class="cs-colab"><a class="cs-colab-btn" href="' + url + '" target="_blank" rel="noopener">▶ Open the runnable notebook in Google Colab</a></p>';
-    html = /<h2>3\.[^<]*<\/h2>/.test(html) ? html.replace(/(<h2>3\.[^<]*<\/h2>)/, "$1\n" + btn) : (btn + html);
+    const exs = (hands.match(/^#{3,4}\s+[EA]\d+\..*$/gm) || []).map((h) => "<li>" + esc(h.replace(/^#{3,4}\s+/, "").trim()) + "</li>").join("");
+    const list = exs ? '<p>It builds these step by step, with commented code and plots:</p><ul class="cs-nb-list">' + exs + "</ul>" : "";
+    html = conv.html + "\n<h2>3. Hands-on Notebook</h2>\n" + btn + list;
+  } else {
+    const conv = convert(md);
+    title = conv.title || m.nav;
+    html = conv.html;
   }
   return {
     id: "cs-" + m.file,
-    title: conv.title || m.nav,
+    title: title,
     module: "AI Cheat Sheet",
     template: "cheatsheet",
     meta: m.badge + " " + m.type + " · " + m.source,

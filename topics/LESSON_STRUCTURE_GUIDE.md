@@ -86,11 +86,10 @@ Every lesson `.md` has up to 4 parts (Part 3/4 differ by example type; 🧮 nume
 | Tips | the technique + why it helps |
 
 **Part 3 — Worked Examples (5 easy + 5 advanced), step-by-step university-lecture style.**
-- 🧮 topics: written as **pen-and-paper derivations** directly in the lesson `.md` (every step shown with reasoning).
-- 💻 topics: **all 10** live in the notebook as granular coded examples; the lesson `.md` lists their titles + links to the notebook.
-- ⚖️ topics: hand-derivation examples appear as text in the `.md`; the code examples live in the notebook.
+- 🧮 topics (no notebook): written as **pen-and-paper derivations** directly in the lesson `.md` (every step shown with reasoning).
+- 💻 and ⚖️ topics (have a notebook): **all 10** worked examples — coded examples *and* any pen-and-paper derivations — live **only in the notebook**. The lesson page does **not** repeat them; it just lists their titles (see Part 4).
 
-**Part 4 — Hands-on: Google Colab** (💻 and ⚖️ only) — an *Open in Colab* button linking to a runnable `topics/notebooks/<NN>-<slug>.ipynb`. The lesson page shows **this link, not the code inline** — the runnable code lives only in the notebook (the lesson keeps the prose walkthrough, math, and, for ⚖️, the pen-and-paper derivations). Omitted entirely for 🧮 topics.
+**Part 4 — Hands-on: Google Colab** (💻 and ⚖️ only) — the lesson page's hands-on section is only an *Open in Colab* button (→ runnable `topics/notebooks/<NN>-<slug>.ipynb`) plus a short **index** of the examples inside. To avoid duplication, the **entire hands-on walkthrough — prose, code, plots, and pen-and-paper derivations — lives only in the notebook**; the lesson page keeps just Overview + Key Idea. Omitted entirely for 🧮 topics.
 
 *No separate Practice-Questions section — the 5 easy + 5 advanced worked examples in Part 3 are the practice for every lesson type.*
 
