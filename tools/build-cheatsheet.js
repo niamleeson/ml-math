@@ -179,11 +179,10 @@ const data = LESSONS.map((m, i) => {
     const hands = s3 === -1 ? "" : lines.slice(s3).join("\n");
     const conv = convert(pre);          // page keeps only Overview + Key Idea
     title = conv.title || m.nav;
-    // 1) runnable notebook = the whole hands-on section (+ a short title / intro)
+    // 1) runnable notebook = the FULL lesson (concept + the entire hands-on
+    //    walkthrough with code & plots) so it is a complete self-contained companion.
     if (!fs.existsSync(NB_DIR)) fs.mkdirSync(NB_DIR, { recursive: true });
-    const nbMd = "# " + title + " — hands-on notebook\n\n> Runnable companion for the **" + title +
-      "** lesson in the AI Cheat Sheet. The lesson page has the concept overview; this is the lab.\n\n" + hands;
-    fs.writeFileSync(path.join(NB_DIR, m.file + ".ipynb"), JSON.stringify(mdToNotebook(nbMd, title), null, 1));
+    fs.writeFileSync(path.join(NB_DIR, m.file + ".ipynb"), JSON.stringify(mdToNotebook(md, title), null, 1));
     // 2) lesson page hands-on section = just a Colab button + an index of what's inside
     const url = "https://colab.research.google.com/github/" + REPO + "/blob/" + BRANCH + "/topics/notebooks/" + m.file + ".ipynb";
     const btn = '<p class="cs-colab"><a class="cs-colab-btn" href="' + url + '" target="_blank" rel="noopener">▶ Open the runnable notebook in Google Colab</a></p>';
