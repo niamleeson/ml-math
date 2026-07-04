@@ -43,7 +43,3 @@ Dimensionality reduction compresses high-dimensional data while preserving the s
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `variance_trap` in A1 — shows PCA can discard low-variance but label-relevant information.
 - **Signature visualizations:** principal axes drawn on scatterplots; variance-explained / scree curve; 2-D projection and reconstruction grids.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify eigenvalues/eigenvectors; compute a 2×2 covariance matrix; choose $k$ from cumulative explained variance; interpret a loading vector; distinguish PCA from ICA in one sentence.
-- **🔴 Hard (5) — themes:** prove covariance is symmetric so spectral theorem applies; derive PCA as variance maximization with a unit-norm constraint; compute reconstruction error after projection; diagnose when scaling changes the first PC; explain ICA identifiability assumptions and why Gaussian sources are problematic.

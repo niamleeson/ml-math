@@ -50,7 +50,3 @@ just word-by-word lookup."
 - **Runtime:** GPU recommended for encoder-decoder/attention examples; toy CPU fallbacks should be included.
 - **Failure/edge dataset included:** ambiguous/long translation examples in A5 — show greedy search errors, beam length bias, and diffuse attention on long sequences.
 - **Signature visualizations:** beam-search expansion tree; BLEU n-gram match highlights; attention-weight heatmap over source and target tokens.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute bigram probabilities; interpret perplexity; run one beam-search step; compute clipped unigram precision; read an attention heatmap row.
-- **🔴 Hard (5) — themes:** compare greedy vs beam search failures; apply length normalization; decide whether bad translation is search or model error; derive attention context vector; explain why BLEU can disagree with human judgment.

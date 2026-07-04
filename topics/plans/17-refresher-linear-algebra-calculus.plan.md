@@ -38,7 +38,3 @@ Refresh the algebra and calculus operations that appear constantly in ML objecti
 
 ## Part 4 — Colab Notebook
 N/A — 🧮 numeric topic (no notebook).
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify valid matrix-product shapes; compute an inner product and three norms; find a $2\times2$ determinant; use $(AB)^T=B^TA^T$; compute a two-variable gradient.
-- **🔴 Hard (5) — themes:** prove trace cyclicity for compatible matrices; find rank and linear dependence from columns; test PSD using eigenvalues and quadratic forms; derive a Hessian for a quadratic loss; use trace/determinant gradient identities in a small optimization expression.

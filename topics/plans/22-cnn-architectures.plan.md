@@ -49,7 +49,3 @@ residual shortcuts, and parallel Inception branches.
 - **Runtime:** GPU recommended (tiny subsets keep fallback possible, but GAN and CIFAR examples should flag GPU)
 - **Failure/edge dataset included:** imbalanced 2-D Gaussian mixture in A2 — demonstrates GAN mode collapse; deep plain CNN in A3 shows vanishing-gradient/training degradation compared with ResNet.
 - **Signature visualizations:** GAN real/fake grids and discriminator surface; residual-block skip/add feature maps; Inception branch/module diagrams with learned feature maps.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify generator vs discriminator roles; read the residual-block equation; explain why skip connections help; compute Inception branch output depth after concatenation; explain why $1\times1$ convolution reduces compute.
-- **🔴 Hard (5) — themes:** diagnose mode collapse from sample grids; compare parameter counts with/without bottlenecks; reason about gradient flow through an identity shortcut; choose GAN/ResNet/Inception for a task; interpret architecture tradeoffs from accuracy/params/FLOPs.

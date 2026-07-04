@@ -38,7 +38,3 @@ Discrete random variables turn outcomes into numbers, so probability questions b
 
 ## Part 4 — Colab Notebook (omit if 🧮)
 N/A — 🧮 numeric topic (no notebook).
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** read a PMF table; compute Bernoulli/binomial/geometric probabilities; calculate expectation; calculate variance via $\mathbb{E}[X^2]-(\mathbb{E}[X])^2$; transform a PMF under a simple function.
-- **🔴 Hard (5) — themes:** derive a conditional PMF; use total expectation; marginalize a joint PMF; prove or disprove independence; derive variance of a sum under independence and identify dependence pitfalls.

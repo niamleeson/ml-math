@@ -50,7 +50,3 @@ relationships. Hook: "king − man + woman ≈ queen" as evidence that vector sp
 - **Runtime:** CPU
 - **Failure/edge dataset included:** rare/OOV and polysemous-word set in A4 — shows that embeddings cannot represent unseen words and single-vector embeddings blur meanings like river `bank` vs financial `bank`.
 - **Signature visualizations:** training-loss curve; 2-D t-SNE map with labels; nearest-neighbor tables and `king − man + woman` analogy arrows.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** contrast one-hot and embeddings; compute cosine similarity; identify skip-gram vs CBOW inputs/targets; explain negative sampling; read nearest-neighbor output.
-- **🔴 Hard (5) — themes:** derive skip-gram softmax denominator cost; build a co-occurrence matrix for GloVe; analyze analogy failures; tune t-SNE perplexity interpretation; reason about embedding bias and domain shift.

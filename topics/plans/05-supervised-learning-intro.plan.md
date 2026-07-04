@@ -38,7 +38,3 @@ Introduce the supervised-learning vocabulary that will be reused throughout CS 2
 
 ## Part 4 — Colab Notebook (omit if 🧮)
 N/A — 🧮 numeric topic (no notebook).
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** label prediction tasks as regression/classification; identify discriminative vs generative goals; compute common losses; calculate a cost from per-example losses; perform one gradient-descent update.
-- **🔴 Hard (5) — themes:** compare logistic/hinge/cross-entropy penalties; assemble $J(\theta)$ from $h_\theta$ and data; contrast SGD and batch updates numerically; derive a simple MLE via log-likelihood; execute and interpret a Newton update.

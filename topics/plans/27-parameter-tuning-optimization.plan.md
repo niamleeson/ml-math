@@ -43,7 +43,3 @@ Optimization choices often decide whether the same neural network trains smoothl
 - **Runtime:** CPU
 - **Failure/edge dataset included:** ill-conditioned quadratic with an intentionally too-high learning rate in A2 — shows oscillation/divergence instead of convergence.
 - **Signature visualizations:** optimizer gradient paths on a 3-D/contour loss surface; loss curves by optimizer; LR-schedule effects over epochs.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute one SGD/momentum update; identify Xavier fan-in/fan-out bounds; read an LR schedule plot; explain why RMSprop scales coordinates differently; choose freeze strategy for small vs large data.
-- **🔴 Hard (5) — themes:** derive Adam bias correction at $t=2$; diagnose divergence from a loss curve; compare momentum vs RMSprop on ravines; design a hyperparameter search budget; justify when transfer learning can hurt.

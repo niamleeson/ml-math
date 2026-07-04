@@ -38,7 +38,3 @@ Metrics translate predictions into decisions about model quality. Hook: the same
 
 ## Part 4 — Colab Notebook (omit if 🧮)
 N/A — 🧮 numeric topic (no notebook).
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute TP/FP/FN/TN from labels; calculate accuracy/precision/recall/specificity; compute F1; read one ROC point; compute $SS_{tot}$ and $R^2$.
-- **🔴 Hard (5) — themes:** choose metrics for imbalanced screening; derive when F1 improves after threshold change; compute ROC-AUC from ranked scores; interpret negative $R^2$; compare adjusted $R^2$, AIC, and BIC for nested models.

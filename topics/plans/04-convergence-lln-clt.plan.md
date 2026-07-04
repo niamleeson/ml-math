@@ -43,7 +43,3 @@ Convergence theorems explain why averages stabilize and why sums often look norm
 - **Runtime:** CPU
 - **Failure/edge dataset included:** Cauchy samples in A5 — demonstrates that sample means can remain unstable when finite-mean/finite-variance assumptions behind the standard LLN/CLT intuition are violated.
 - **Signature visualizations:** running sample-mean trajectories converging to $\mu$; empirical error probability vs Chebyshev bound; standardized sample-mean histograms approaching a normal curve.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** apply Markov inequality; apply Chebyshev inequality; compute mean/variance of a sample mean; state convergence in probability; standardize a sum for the CLT.
-- **🔴 Hard (5) — themes:** prove WLLN using Chebyshev; compare Chebyshev and empirical/simulation probabilities; use CLT for a finite-sample approximation; apply binomial normal approximation with continuity correction; identify when LLN/CLT assumptions fail or need modification.

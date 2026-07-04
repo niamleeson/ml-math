@@ -43,7 +43,3 @@ SGD is the basic engine that turns per-example loss gradients into learned weigh
 - **Runtime:** CPU
 - **Failure/edge dataset included:** noisy regression/classification with high SGD variance in A1 — contrasts noisy per-example updates against stable but costlier batch gradients.
 - **Signature visualizations:** noisy vs smooth descent paths; loss curves by learning rate/batch size; fine-tuning accuracy curves and trainable-parameter bars.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute one SGD update; evaluate sigmoid and derivative; distinguish SGD/BGD; identify train/validation/test roles; read learning-rate loss curves.
-- **🔴 Hard (5) — themes:** derive mini-batch gradient variance intuition; trace backprop sensitivities through a computation graph; choose $\eta,T,\lambda$ from validation curves; separate approximation from estimation error; select freeze/partial/full fine-tuning for dataset size.

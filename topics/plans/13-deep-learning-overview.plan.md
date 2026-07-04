@@ -43,7 +43,3 @@ Deep learning stacks differentiable layers so models can learn representations i
 - **Runtime:** CPU; GPU optional for faster neural-net/RNN cells but not required for the tiny datasets.
 - **Failure/edge dataset included:** noisy `moons` and sparse-reward gridworld — shows unstable learning rates, overfitting, and reward sparsity.
 - **Signature visualizations:** training curves; decision boundary per epoch; activation histograms / feature maps; confusion matrix; gridworld value heatmaps.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify layers/weights/biases; compute one activation value; read a cross-entropy term; compute CNN output size; name LSTM gates and MDP components.
-- **🔴 Hard (5) — themes:** trace a one-sample backprop chain rule; diagnose vanishing gradients from activation choices; choose learning-rate remedies from curves; reason about dropout train vs inference scaling; apply Bellman or Q-learning updates to one transition.

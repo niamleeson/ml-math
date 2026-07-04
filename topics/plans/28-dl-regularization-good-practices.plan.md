@@ -43,7 +43,3 @@ Regularization controls overfitting by changing what solutions are easy for the 
 - **Runtime:** CPU
 - **Failure/edge dataset included:** noisy two-moons with an oversized MLP and no regularization in A1 — demonstrates memorization and validation loss rising.
 - **Signature visualizations:** train/validation curves with and without regularization; weight histograms/coefficient paths; early-stopping marker and dropout/batch-norm activation plots.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute L2 penalty/gradient; convert dropout probability to keep probability; read an early-stopping plot; compare numerical and analytical gradients; explain why batch norm normalizes mini-batches.
-- **🔴 Hard (5) — themes:** diagnose high bias vs high variance from curves; choose L1/L2/elastic net for correlated sparse features; analyze dropout too high vs too low; reason about small-batch BN instability; design a debugging checklist using small-batch overfit and gradient checking.

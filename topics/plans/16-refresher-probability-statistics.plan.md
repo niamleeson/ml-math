@@ -38,7 +38,3 @@ This refresher rebuilds the probability and statistics toolkit used throughout M
 
 ## Part 4 — Colab Notebook (omit if 🧮)
 N/A — 🧮 numeric topic (no notebook).
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute permutations/combinations; apply basic Bayes; calculate expectation/variance; use CDF to find interval probability; compute covariance/correlation from a small table.
-- **🔴 Hard (5) — themes:** use partition-form Bayes; derive a transformed density; marginalize a joint distribution and test independence; apply Chebyshev carefully; analyze estimator bias and CLT scaling.

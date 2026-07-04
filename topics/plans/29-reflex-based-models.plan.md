@@ -43,7 +43,3 @@ Reflex-based models turn inputs into feature vectors, score them with weights, a
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `make_moons` in A5 — shows a raw linear score cannot represent the curved boundary while k-NN/neural nets can.
 - **Signature visualizations:** decision boundary with score/margin regions; hinge/logistic/zero-one loss curves; residual and loss plots for regression.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute $\phi(x)$ and $w\cdot\phi(x)$; classify by sign; compute margin; evaluate hinge/logistic/squared loss; explain residual vs margin.
-- **🔴 Hard (5) — themes:** average train loss over a dataset; design a feature map for non-linear separation; compare hinge/logistic sensitivity to outliers; choose squared vs absolute loss; reason about k-NN bias/variance as $k$ changes.

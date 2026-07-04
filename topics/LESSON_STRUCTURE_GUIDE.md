@@ -67,7 +67,7 @@ Each topic has a **content category** (what kind of thing it teaches) and an **e
 
 ## 2. Lesson file structure (the `.md` lesson)
 
-Every lesson `.md` has 5 parts. Part 3/4 differ by example type.
+Every lesson `.md` has up to 4 parts (Part 3/4 differ by example type; 🧮 numeric lessons have no notebook).
 
 **Part 1 — Overview** — what it is + why it matters (2–3 sentences) + one-line intuition.
 
@@ -90,9 +90,9 @@ Every lesson `.md` has 5 parts. Part 3/4 differ by example type.
 - 💻 topics: **all 10** live in the notebook as granular coded examples; the lesson `.md` lists their titles + links to the notebook.
 - ⚖️ topics: hand-derivation examples appear as text in the `.md`; the code examples live in the notebook.
 
-**Part 4 — Hands-on: Google Colab** (💻 and ⚖️ only) — an *Open in Colab* badge + link to `topics/notebooks/<NN>-<slug>.ipynb`. Omitted entirely for 🧮 topics.
+**Part 4 — Hands-on: Google Colab** (💻 and ⚖️ only) — an *Open in Colab* button linking to a runnable `topics/notebooks/<NN>-<slug>.ipynb`. The lesson page shows **this link, not the code inline** — the runnable code lives only in the notebook (the lesson keeps the prose walkthrough, math, and, for ⚖️, the pen-and-paper derivations). Omitted entirely for 🧮 topics.
 
-**Part 5 — Practice Questions** — 🟢 5 easy + 🔴 5 hard, with solutions in a collapsible `<details>` block. Lives in the lesson `.md` (not the notebook).
+*No separate Practice-Questions section — the 5 easy + 5 advanced worked examples in Part 3 are the practice for every lesson type.*
 
 ---
 
@@ -179,6 +179,5 @@ Visualizations must fit the concept and what the code is doing:
 
 Each `topics/plans/<NN>-<slug>.plan.md` follows the template in `topics/plans/_TEMPLATE.plan.md`
 and records: metadata, the Part-2 focus, the concrete **10 worked-example designs**
-(title · data source · visualization · build-step granularity), the notebook estimate,
-and the 5 easy / 5 hard practice-question themes. See `topics/plans/11-clustering.plan.md`
+(title · data source · visualization · build-step granularity), and the notebook estimate. See `topics/plans/11-clustering.plan.md`
 for a fully worked reference.

@@ -47,7 +47,3 @@
 - **Runtime:** <CPU / GPU>
 - **Failure/edge dataset included:** <which one and what it demonstrates>
 - **Signature visualizations:** <the 2–3 viz that define this notebook>
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** <...>
-- **🔴 Hard (5) — themes:** <...>

@@ -43,7 +43,3 @@ Unsupervised learning discovers latent structure without labels: k-means assigns
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `moons` in A1 — demonstrates that k-means' squared-distance/Voronoi geometry fails on non-convex crescent clusters.
 - **Signature visualizations:** k-means centroid movement and final clusters; PCA principal axes/projection with explained variance; cluster-profile heatmap after PCA+k-means pipeline.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify k-means assignment/update steps; compute inertia from a few points; interpret an elbow plot; explain covariance/eigenvector role in PCA; read explained-variance curves.
-- **🔴 Hard (5) — themes:** diagnose k-means failure from cluster shape; reason about scaling effects on distances and covariance; choose PCA components for compression; compare clustering before/after PCA; design an unsupervised pipeline for unlabeled AI feature vectors.

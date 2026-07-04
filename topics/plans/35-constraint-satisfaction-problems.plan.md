@@ -43,7 +43,3 @@ CSPs model problems as variables, domains, and constraints, then search for assi
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `two_color_triangle` in A3 — an unsatisfiable CSP where forward checking/AC-3 exposes an empty domain; A5 also shows ICM getting stuck in a local minimum on a loopy graph.
 - **Signature visualizations:** constraint-graph coloring with domains beside nodes; backtracking search tree unfolding with pruned branches; AC-3 domain-shrink animation / beam-search tree.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify variables, domains, and factor scopes; compute assignment weight; decide if an assignment is consistent; run one forward-checking update; choose the most-constrained variable.
-- **🔴 Hard (5) — themes:** trace AC-3 until convergence; compare naive backtracking with dynamic ordering; explain beam-size tradeoffs; show why ICM can get stuck while Gibbs may escape; compute how an elimination ordering creates a high-arity factor and relates to treewidth.

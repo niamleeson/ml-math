@@ -43,7 +43,3 @@ Game playing plans against other agents, so values depend on what the opponent w
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `branching_blowup_trees` in A1 — plain minimax expands exponentially many nodes as depth grows; alpha-beta with good ordering returns the same value while pruning large subtrees.
 - **Signature visualizations:** game tree values propagating upward; alpha-beta pruned branches grayed; best move highlighted on a board/payoff matrix.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** label max/min/chance nodes; compute a minimax value for a tiny tree; compute one expectimax expected value; identify when an alpha-beta branch can be pruned; check pure-strategy Nash conditions in a 2x2 game.
-- **🔴 Hard (5) — themes:** prove alpha-beta preserves the minimax value; analyze best-case vs. worst-case node counts; design an evaluation function and explain its bias; compare minimax and expectimax when the opponent model is wrong; solve a simple mixed-strategy zero-sum game.

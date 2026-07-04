@@ -43,7 +43,3 @@ Cover two deep-vision methods that reuse learned representations: face systems c
 - **Runtime:** GPU recommended for neural style transfer optimization; CPU acceptable for toy embedding computations but slower for NST.
 - **Failure/edge dataset included:** look-alike/occluded face pairs in A1 and high-frequency noise style in A5 — demonstrate threshold ambiguity and style artifacts.
 - **Signature visualizations:** embedding-distance histograms with threshold; triplet margin scatterplots; query-to-gallery distance matrix; content/style/generated triptych with optimization snapshots.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** distinguish face verification from recognition; compute a simple embedding distance; evaluate triplet loss for one triplet; explain the role of a threshold; identify content, style, and generated images.
-- **🔴 Hard (5) — themes:** pick a threshold under false-accept/false-reject tradeoffs; explain hard-negative triplet mining; derive how Gram matrices represent style correlations; reason about $\alpha$ vs $\beta$ in $J(G)$; diagnose a style-transfer failure from loss curves and generated snapshots.

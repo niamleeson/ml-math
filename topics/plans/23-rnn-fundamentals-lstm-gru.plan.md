@@ -50,7 +50,3 @@ forget, update, and reveal. Hook: "a sentence is not a bag of words — order an
 - **Runtime:** CPU
 - **Failure/edge dataset included:** synthetic long copy task in A1/A2 — vanilla RNN loses long-range information while LSTM preserves it through gates.
 - **Signature visualizations:** unrolled RNN graph; LSTM/GRU gate activations over time; generated text samples with sequence prediction plots.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify one-to-one/one-to-many/many-to-one/many-to-many setups; compute one vanilla RNN activation; explain temporal weight sharing; name each GRU/LSTM gate role; read a gradient-clipping plot.
-- **🔴 Hard (5) — themes:** derive one full LSTM timestep; compare GRU and LSTM memory equations; explain vanishing gradients via repeated multiplication; choose bidirectional vs unidirectional RNN; diagnose a gate-activation heatmap.

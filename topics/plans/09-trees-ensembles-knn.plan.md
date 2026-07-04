@@ -43,7 +43,3 @@ Trees, ensembles, and k-nearest neighbors are flexible non-parametric models tha
 - **Runtime:** CPU
 - **Failure/edge dataset included:** noisy `make_moons` in A1 shows deep decision-tree overfitting; high-dimensional noise in A5 shows k-NN distance degradation.
 - **Signature visualizations:** decision regions that become blockier with depth; k-NN neighbor/highlight and k-sweep boundaries; feature-importance bars plus boosting residual/weight evolution.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute Gini for a split; explain entropy vs Gini; predict how increasing tree depth changes bias/variance; identify why forests use random features; describe k-NN majority voting.
-- **🔴 Hard (5) — themes:** compare pruning to max-depth regularization; explain variance reduction from bagging; trace AdaBoost weight updates conceptually; diagnose when feature importance is misleading; analyze why k-NN fails in high dimensions or with unscaled features.

@@ -38,7 +38,3 @@ Learning theory explains when low training error is evidence of low test error, 
 
 ## Part 4 — Colab Notebook
 N/A — 🧮 numeric topic (no notebook).
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** use the union bound; compute a Hoeffding probability; calculate empirical error; define PAC assumptions; identify whether a set is shattered from a simple picture.
-- **🔴 Hard (5) — themes:** derive a sample-complexity inequality; prove the ERM excess-error step; reason about VC dimension of intervals or linear classifiers; compare two hypothesis classes by capacity; explain how increasing $m$, $d$, $k$, or $\delta$ changes a bound.

@@ -45,7 +45,3 @@ Hook: an AI agent can answer questions by proving what every model of its knowle
 
 ## Part 4 — Colab Notebook
 N/A — 🧮 numeric topic (no notebook).
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** evaluate a formula under one model; fill a truth table for a connective; list models satisfying a two-symbol formula; test satisfiability of a tiny KB; apply one or two modus-ponens steps to Horn clauses.
-- **🔴 Hard (5) — themes:** classify a query as entailed/contradicted/contingent; convert a formula with $\leftrightarrow$ and nested negations to CNF; write a resolution proof; prove entailment by adding the negated query; analyze whether a rule set is sound and complete for the given KB class.

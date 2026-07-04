@@ -38,7 +38,3 @@ Build probability from the ground up: choose a sample space, assign probabilitie
 
 ## Part 4 — Colab Notebook (omit if 🧮)
 N/A — 🧮 numeric topic (no notebook).
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify valid sample spaces; use complement rule; compute a conditional probability from counts; test two events for independence; count simple permutations/combinations.
-- **🔴 Hard (5) — themes:** apply Bayes' rule with multiple hypotheses; prove a corollary from the axioms; distinguish independence from conditional independence; solve a partition/total-probability posterior problem; combine multinomial counting with event probabilities.

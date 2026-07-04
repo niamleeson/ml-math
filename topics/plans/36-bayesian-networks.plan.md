@@ -53,7 +53,3 @@ conditional independence and explaining away.
 - **Runtime:** CPU
 - **Failure/edge dataset included:** rare-observation particle-filtering sequence in A4 demonstrates weight degeneracy and sampling error; zero-count CPT data in A5 demonstrates why Laplace smoothing is needed.
 - **Signature visualizations:** DAGs annotated with CPTs; posterior probability bar charts; forward/backward message heatmaps; Gibbs/particle convergence curves.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify parents and CPT dimensions; compute one joint assignment from a BN factorization; check local normalization; read a simple conditional independence from a chain/fork/collider; compute a one-variable posterior by enumeration.
-- **🔴 Hard (5) — themes:** explain away numerically in a collider; choose an efficient variable-elimination order and justify factor sizes; run one forward-backward smoothing calculation; derive one Gibbs conditional from Markov blanket factors; estimate a Laplace-smoothed CPT from sparse counts.

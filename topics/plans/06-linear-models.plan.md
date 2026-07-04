@@ -43,7 +43,3 @@ Linear models connect simple geometry (lines, planes, hyperplanes) to probabilit
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `make_moons` in A3 — shows a linear decision boundary cannot represent nonlinear class geometry.
 - **Signature visualizations:** fitted line + residuals; loss-vs-iteration with 3-D loss-surface path; logistic probability contours and linear boundary failure.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute $X^TX$ and $X^Ty$; identify the role of an intercept column; evaluate a sigmoid probability; interpret a logistic decision boundary; match Gaussian/Bernoulli/Poisson to GLM use cases.
-- **🔴 Hard (5) — themes:** derive normal equations from squared loss; compare batch LMS to stochastic updates; explain why logistic regression has no closed-form solution; analyze the effect of $\tau$ in LWR; derive the softmax probability ratio between two classes.

@@ -46,7 +46,3 @@ large list of propositional implications.
 
 ## Part 4 — Colab Notebook
 N/A — 🧮 numeric topic (no notebook).
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify constants, variables, predicates, and arity; evaluate a quantified statement in a finite model; apply a substitution; compute a simple most general unifier; perform one first-order modus-ponens derivation.
-- **🔴 Hard (5) — themes:** chain multiple Horn-clause inferences with substitutions; explain why a proposed unifier fails; write a first-order resolution refutation; standardize variables apart before resolving; reason about semi-decidability for a recursive rule base.

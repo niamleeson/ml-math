@@ -43,7 +43,3 @@ MDPs extend search to worlds where actions have uncertain outcomes and rewards a
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `gamma_one_cycle` in A4 — value iteration does not converge when $\gamma=1$ and the MDP contains a positive-reward cycle; a discounted version shows the repair.
 - **Signature visualizations:** value heatmap updating per sweep; final policy arrows over the grid; reward-per-episode and exploration heatmaps for Q-learning.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** name the MDP components; verify a transition distribution sums to one; compute discounted utility for a short path; do one Bellman backup; identify exploration vs. exploitation in epsilon-greedy.
-- **🔴 Hard (5) — themes:** derive the Bellman optimality equation from $Q_{\text{opt}}$; compare policy evaluation and value iteration complexity; explain on-policy SARSA vs. off-policy Q-learning; prove why $\gamma<1$ helps convergence; design rewards that make a longer stochastic route preferable to a shorter risky route.

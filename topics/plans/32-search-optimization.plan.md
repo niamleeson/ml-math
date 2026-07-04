@@ -43,7 +43,3 @@ Search turns planning into "choose actions from a start state until an end state
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `bad_heuristic_graph` in A3 — an inadmissible heuristic overestimates the optimal branch, causing A* to return a suboptimal path; `negative_edge_graph` in A4 shows why UCS requires nonnegative costs.
 - **Signature visualizations:** grid maze coloring explored/frontier/final path at each expansion; BFS-vs-A*-vs-UCS explored-count bars; weighted graph with live priority labels and the chosen shortest path.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify the components of a search problem; choose queue/stack/priority queue for BFS/DFS/UCS; compute one BFS expansion order; calculate one UCS priority update; decide whether a simple heuristic is admissible.
-- **🔴 Hard (5) — themes:** prove the UCS pop invariant; construct a consistent heuristic from a relaxation; show consistency implies admissibility; explain why adding a constant to negative costs changes the problem; design a graph where an inadmissible heuristic makes A* return a nonoptimal path.

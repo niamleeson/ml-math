@@ -43,7 +43,3 @@ Generative learning models the class-conditional data distribution $P(x\mid y)$ 
 - **Runtime:** CPU
 - **Failure/edge dataset included:** unequal-covariance Gaussian data in A2 and correlated-feature data in A5 — show shared-covariance and independence assumptions breaking.
 - **Signature visualizations:** per-class Gaussian contour formation; class density + decision boundary; word probability and posterior bar charts.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute $\hat\phi$; compute class means; identify the shared covariance assumption; factor a Naive Bayes likelihood; explain why Bayes rule turns likelihoods into posteriors.
-- **🔴 Hard (5) — themes:** derive GDA MLEs; show why shared covariance gives a linear boundary; calculate a posterior odds ratio; analyze zero counts and Laplace smoothing; construct correlated features where Naive Bayes double-counts evidence.

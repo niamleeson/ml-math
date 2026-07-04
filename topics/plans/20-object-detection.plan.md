@@ -43,7 +43,3 @@ Object detection extends image classification by predicting both what objects ar
 - **Runtime:** CPU for small examples; GPU optional for faster pretrained detector inference.
 - **Failure/edge dataset included:** crowded shelf/birds in A4 — exposes missed small objects, overlapping boxes, and NMS threshold sensitivity.
 - **Signature visualizations:** bounding boxes with labels; shaded intersection/union IoU diagrams; NMS before/after; YOLO grid with anchor assignments.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** distinguish classification/localization/detection; compute IoU for two boxes; convert box coordinate formats; interpret confidence and class labels; state the NMS algorithm.
-- **🔴 Hard (5) — themes:** choose IoU and confidence thresholds for an application; explain anchor boxes for overlapping objects; encode a YOLO target tensor cell; debug NMS suppressing a true neighboring object; classify false positives/false negatives from detector outputs.

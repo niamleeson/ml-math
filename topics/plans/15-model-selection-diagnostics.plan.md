@@ -43,7 +43,3 @@ Model selection is how we choose a model without fooling ourselves; diagnostics 
 - **Runtime:** CPU
 - **Failure/edge dataset included:** leakage demo in A2 — shows validation scores inflated when preprocessing uses held-out fold information.
 - **Signature visualizations:** moving-fold CV schematic; train/validation learning curves; bias-variance decision boundaries; coefficient paths; confusion matrix with error-analysis grid.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** define train/validation/test roles; average CV errors; identify underfit vs overfit from train/test errors; match LASSO/Ridge/Elastic Net to use cases; read a learning curve.
-- **🔴 Hard (5) — themes:** design leakage-free CV pipelines; choose remedies from bias/variance symptoms; compare hold-out, k-fold, and LOOCV costs; justify nested CV for hyperparameter search; plan an error-analysis and ablation study.

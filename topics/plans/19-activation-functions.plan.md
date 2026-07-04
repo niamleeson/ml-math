@@ -43,7 +43,3 @@ Activation functions inject nonlinearity into neural networks and shape how grad
 - **Runtime:** CPU
 - **Failure/edge dataset included:** large negative initialization in A3 — demonstrates the dying ReLU problem; extreme logits in A5 demonstrate softmax overflow.
 - **Signature visualizations:** each activation and derivative overlaid; activation/gradient histograms; softmax probability bars and Jacobian heatmap.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute sigmoid output; compute tanh derivative; evaluate ReLU/Leaky ReLU piecewise; convert logits to softmax probabilities; identify which activations saturate.
-- **🔴 Hard (5) — themes:** derive the softmax Jacobian; show softmax plus cross-entropy gives $p-y$; diagnose vanishing gradients from derivative plots; explain dying ReLU and a mitigation; implement stable softmax by subtracting the maximum logit.

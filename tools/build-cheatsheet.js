@@ -15,6 +15,8 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 const SRC = path.join(ROOT, "topics", "lessons");
 const OUT = path.join(ROOT, "lessons", "cheatsheet.js");
+const NB_DIR = path.join(ROOT, "topics", "notebooks");
+const REPO = "niamleeson/ml-math", BRANCH = "main";
 
 // Ordered lessons for this section (fresh nav labels + blurbs).
 const LESSONS = [
@@ -131,13 +133,57 @@ function convert(md) {
   return { title, html: html.trim() };
 }
 
+/* ---------- Markdown -> runnable .ipynb (for 💻 / ⚖️ lessons) ---------- */
+function nbSource(text) {
+  const lines = text.split("\n");
+  return lines.map((l, i) => (i < lines.length - 1 ? l + "\n" : l));
+}
+function mdToNotebook(md, title) {
+  const cells = [];
+  let mdbuf = [], code = [], inCode = false;
+  function flushMd() {
+    const kept = mdbuf.filter((l) => !/^>\s*(?:\*\*Source|📓)/.test(l) && !/colab-badge|Open In Colab/i.test(l));
+    const txt = kept.join("\n").trim();
+    mdbuf = [];
+    if (txt) cells.push({ cell_type: "markdown", metadata: {}, source: nbSource(txt) });
+  }
+  md.split("\n").forEach((line) => {
+    const open = line.match(/^```(\w*)\s*$/);
+    if (!inCode && open && /^(python|py)$/i.test(open[1])) { flushMd(); inCode = true; code = []; return; }
+    if (inCode && /^```\s*$/.test(line)) { cells.push({ cell_type: "code", metadata: {}, execution_count: null, outputs: [], source: nbSource(code.join("\n")) }); inCode = false; return; }
+    if (inCode) code.push(line); else mdbuf.push(line);
+  });
+  flushMd();
+  return {
+    cells: cells,
+    metadata: {
+      colab: { name: title, provenance: [], toc_visible: true },
+      kernelspec: { name: "python3", display_name: "Python 3" },
+      language_info: { name: "python" }
+    },
+    nbformat: 4, nbformat_minor: 0
+  };
+}
+
 /* ---------- build the registration file ---------- */
 const data = LESSONS.map((m, i) => {
   const md = fs.readFileSync(path.join(SRC, m.file + ".md"), "utf8");
-  const { title, html } = convert(md);
+  const conv = convert(md);
+  let html = conv.html;
+  const hasNb = m.type === "Colab" || m.type === "Both";
+  if (hasNb) {
+    // 1) write a runnable notebook from the full lesson markdown (code + prose)
+    if (!fs.existsSync(NB_DIR)) fs.mkdirSync(NB_DIR, { recursive: true });
+    fs.writeFileSync(path.join(NB_DIR, m.file + ".ipynb"), JSON.stringify(mdToNotebook(md, conv.title || m.nav), null, 1));
+    // 2) in the lesson page: drop inline code, add an Open-in-Colab button at the hands-on section
+    const url = "https://colab.research.google.com/github/" + REPO + "/blob/" + BRANCH + "/topics/notebooks/" + m.file + ".ipynb";
+    html = html.replace(/<pre><code class="language-python">[\s\S]*?<\/code><\/pre>\s*/g, "");
+    const btn = '<p class="cs-colab"><a class="cs-colab-btn" href="' + url + '" target="_blank" rel="noopener">▶ Open the runnable notebook in Google Colab</a></p>';
+    html = /<h2>3\.[^<]*<\/h2>/.test(html) ? html.replace(/(<h2>3\.[^<]*<\/h2>)/, "$1\n" + btn) : (btn + html);
+  }
   return {
     id: "cs-" + m.file,
-    title: title || m.nav,
+    title: conv.title || m.nav,
     module: "AI Cheat Sheet",
     template: "cheatsheet",
     meta: m.badge + " " + m.type + " · " + m.source,

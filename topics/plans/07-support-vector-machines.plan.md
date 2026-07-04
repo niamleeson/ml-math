@@ -43,7 +43,3 @@ Support Vector Machines choose the separating hyperplane with the largest margin
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `make_circles`/`make_moons` in A1 — shows a linear SVM cannot separate nonlinear geometry.
 - **Signature visualizations:** decision boundary with parallel margins and circled support vectors; `C` sweep margin panels; linear-vs-RBF kernel comparison.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute margin width from $w$; identify support vectors from a plot; evaluate hinge loss; explain what increasing `C` usually does; distinguish linear and RBF kernels.
-- **🔴 Hard (5) — themes:** derive why maximizing margin becomes minimizing $\frac12\lVert w\rVert^2$; reason about slack variables for overlapping data; predict gamma effects on overfitting; prove only support vectors affect the dual prediction; design a dataset where a linear SVM fails but RBF succeeds.

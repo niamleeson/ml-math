@@ -46,7 +46,3 @@ assumptions → very different groups" — motivate why the choice of algorithm 
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `moons` in A1 — shows k-means' spherical-cluster assumption breaking.
 - **Signature visualizations:** animated centroid migration; dendrogram with cut line; silhouette plot.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** definition of distortion; why standardize features; read an elbow plot; interpret a silhouette value; k-means vs hierarchical in one line.
-- **🔴 Hard (5) — themes:** prove k-means monotonically decreases distortion; derive EM soft-assignment update; construct a dataset where k-means++ still finds a bad optimum; choose linkage for a given cluster shape; relate silhouette to inter/intra-cluster distances.

@@ -52,7 +52,3 @@ succeed depending on preprocessing and training mechanics."
 - **Runtime:** CPU
 - **Failure/edge dataset included:** invalid augmentation set in A2 — shows that augmentation must preserve labels; no-BN/high-learning-rate comparison in A3 shows unstable training.
 - **Signature visualizations:** augmentation montage; batch-normalization activation histograms; loss/accuracy curves with diagnostics and misclassified-image grid.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** identify label-preserving augmentations; define epoch vs mini-batch; compute binary cross-entropy; apply one weight update; interpret a batch-normalization histogram.
-- **🔴 Hard (5) — themes:** choose safe augmentations for a dataset; diagnose overfitting from train/val curves; explain why batch norm permits larger learning rates; trace gradients through a small network; design an end-to-end training pipeline with edge-case checks.

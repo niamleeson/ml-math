@@ -38,7 +38,3 @@ Continuous probability replaces sums with integrals: PDFs give density, CDFs giv
 
 ## Part 4 — Colab Notebook (omit if 🧮)
 N/A — 🧮 numeric topic (no notebook).
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** normalize a PDF; integrate interval probability; move between CDF and PDF; compute uniform/exponential/normal summaries; standardize a Gaussian probability.
-- **🔴 Hard (5) — themes:** derive conditional PDFs; marginalize a joint density; compute conditional expectation; transform variables using CDF or inverse methods; use convolution/covariance/total variance in multi-step problems.

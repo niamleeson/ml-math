@@ -43,7 +43,3 @@ Introduce CNNs as neural networks that preserve spatial structure through local 
 - **Runtime:** CPU
 - **Failure/edge dataset included:** shifted/scaled digits in A5 — shows that basic CNNs still fail when transformations exceed learned invariances.
 - **Signature visualizations:** feature maps and learned filters; layer output-shape table; training curves and confusion matrix.
-
-## Part 5 — Practice Questions
-- **🟢 Easy (5) — themes:** compute one convolution cell; compute output size from $I,F,S,P$; count CONV parameters; explain why POOL has zero learned parameters; distinguish CONV, POOL, and FC roles.
-- **🔴 Hard (5) — themes:** repair non-integer output-size hyperparameters; compare valid/same/full padding effects; compute receptive field after multiple layers; diagnose over-parameterized FC designs; explain a CNN failure under distribution shift or aggressive transformations.
