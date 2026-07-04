@@ -188,13 +188,23 @@
     border-radius: 8px; padding: 8px 12px;
   }
   .nav-extra a:hover { border-color: var(--accent); color: var(--accent); }
-  /* AI Cheat Sheet — featured top nav group (fresh, first in the list) */
-  .cs-nav { margin: 12px 12px 6px; padding: 10px 10px 8px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
-  .cs-nav .cs-nav-head { display: block; font-weight: 700; font-size: 13px; letter-spacing: .02em; color: var(--ink); text-decoration: none; padding: 2px 4px 8px; }
-  .cs-nav .cs-nav-head:hover { color: var(--accent); }
-  .cs-nav ul { list-style: none; margin: 0; padding: 0; }
-  .cs-nav li a { display: block; font-size: 12.5px; color: var(--ink-dim); text-decoration: none; padding: 5px 8px; border-radius: 6px; }
-  .cs-nav li a:hover { background: var(--panel-2); color: var(--ink); }
+  /* AI Cheat Sheet — in-app lesson content (monochrome; only code, links & buttons keep colour) */
+  #content .cs-lesson { font-size: 18px; }
+  #content .cs-lesson h2 { font-size: 24px; font-weight: 700; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); color: var(--ink); }
+  #content .cs-lesson h3 { font-size: 20px; margin: 28px 0 8px; color: var(--ink); }
+  #content .cs-lesson h4 { font-size: 17px; margin: 22px 0 6px; color: var(--ink); }
+  #content .cs-lesson p, #content .cs-lesson li { color: var(--ink); }
+  #content .cs-lesson a { color: var(--accent); text-decoration: underline; }
+  #content .cs-lesson blockquote { margin: 16px 0; padding: 6px 16px; border-left: 3px solid var(--ink); color: var(--ink-dim); font-size: 15px; }
+  #content .cs-lesson code { background: var(--panel-2); padding: 1px 5px; border-radius: 4px; font-size: 0.86em; }
+  #content .cs-lesson pre { margin: 16px 0; border-radius: 8px; overflow: auto; }
+  #content .cs-lesson pre code { display: block; padding: 16px 18px; background: #282c34; font-size: 13.5px; line-height: 1.55; border-radius: 8px; }
+  #content .cs-lesson table { border-collapse: collapse; width: 100%; margin: 18px 0; font-size: 15px; }
+  #content .cs-lesson th, #content .cs-lesson td { border: 1px solid var(--border); padding: 8px 11px; text-align: left; vertical-align: top; }
+  #content .cs-lesson thead th { border-bottom: 2px solid var(--ink); font-weight: 700; }
+  #content .cs-lesson details { margin: 18px 0; border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; }
+  #content .cs-lesson summary { cursor: pointer; font-weight: 700; }
+  #content .cs-meta { color: var(--ink-dim); font-size: 14px; margin: -20px 0 28px; }
   .lesson-links { margin: -6px 0 16px; font-size: 13px; }
   .app-uses { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13.5px; }
   .app-uses b { color: var(--ink); }
@@ -649,18 +659,6 @@
       <a href="sim.html" title="Build a model end-to-end in a mock ML lab">🛠️ ML Lab</a>
     </div>
   </div>
-  <!-- AI Cheat Sheet — fresh section, first item in the nav -->
-  <div class="cs-nav">
-    <a class="cs-nav-head" href="cheatsheet/index.html">🧠 AI Cheat Sheet</a>
-    <ul>
-      <li><a href="cheatsheet/02-discrete-random-variables.html">Discrete Random Variables</a></li>
-      <li><a href="cheatsheet/07-support-vector-machines.html">Support Vector Machines</a></li>
-      <li><a href="cheatsheet/11-clustering.html">Clustering</a></li>
-      <li><a href="cheatsheet/14-ml-metrics.html">ML Metrics</a></li>
-      <li><a href="cheatsheet/32-search-optimization.html">Search Optimization</a></li>
-      <li><a href="cheatsheet/33-markov-decision-processes.html">MDPs &amp; Q-learning</a></li>
-    </ul>
-  </div>
   <div id="modules"></div>
 </nav>
 
@@ -692,6 +690,7 @@
   };
   // Order the (merged) groups appear in the sidebar:
   window.MODULE_ORDER = [
+    "AI Cheat Sheet",
     "Foundations & Linear Algebra",
     "Probability & Statistics",
     "Practical Statistics",
@@ -765,6 +764,8 @@
 <script src="lessons/charts.js"></script>
 
 <!-- Content files. Plain <script src> works directly from file:// (no server needed). -->
+<!-- AI Cheat Sheet lessons (auto-generated from topics/lessons/*.md by tools/build-cheatsheet.js). -->
+<script src="lessons/cheatsheet.js"></script>
 <script src="lessons/00-foundations.js"></script>
 <script src="lessons/01-probability.js"></script>
 <script src="lessons/02-ml.js"></script>
@@ -1463,6 +1464,7 @@ const App = (function () {
   //  • "Papers"  — the Capstones plus every "Papers · …" category.
   // (A third, "Math", is assigned per-lesson via the `superGroup` field.)
   function superGroupOf(name) {
+    if (name === "AI Cheat Sheet") return null;   // top-level standalone group, first in the nav
     if (name === "Capstones" || /^Papers\s*·/.test(name)) return "Papers";
     const i = MODULE_ORDER.indexOf(name), cap = MODULE_ORDER.indexOf("Capstones");
     if (i !== -1 && cap !== -1 && i < cap) return "Course";
@@ -1972,6 +1974,20 @@ const App = (function () {
       `</div>`;
   }
 
+  // AI Cheat Sheet — renders a Markdown-derived lesson in the content pane
+  // (fresh renderer; the HTML content lives in lessons/cheatsheet.js).
+  function renderCheatsheet(l) {
+    const p = l.prevId && byId[l.prevId], n = l.nextId && byId[l.nextId];
+    return `<div class="crumbs">${l.module}</div>` +
+      `<h2 class="lesson-title">${l.title}</h2>` +
+      (l.meta ? `<p class="cs-meta">${l.meta}</p>` : "") +
+      `<div class="cs-lesson">${l.html}</div>` +
+      `<div class="nav-row">` +
+        `<button ${p ? `onclick="App.open('${l.prevId}')"` : "disabled"}><span>← Previous</span>${p ? p.title : ""}</button>` +
+        `<button class="next" ${n ? `onclick="App.open('${l.nextId}')"` : "disabled"}><span>Next →</span>${n ? n.title : ""}</button>` +
+      `</div>`;
+  }
+
   function open(id) {
     const l = byId[id];
     if (!l) return;
@@ -1994,7 +2010,8 @@ const App = (function () {
       : "";
 
     let html;
-    if (l.type === "capstone") { html = renderCapstone(l, id, prev, next); }
+    if (l.template === "cheatsheet") { html = renderCheatsheet(l, id, prev, next); }
+    else if (l.type === "capstone") { html = renderCapstone(l, id, prev, next); }
     else if (l.paper) { html = renderPaper(l, id, prev, next); }
     else if (l.template === "pytorch") { html = renderPyTorch(l, id, prev, next); }
     else if (l.template === "book") { html = renderBook(l, id, prev, next); }
