@@ -1,7 +1,0 @@
-    "Domain 0 · ML Foundations",
-    "Domain 1 · Core: Ranking & Evaluation",
-    "Domain 2 · Recommenders, Embeddings & Retrieval",
-    "Domain 3 · Unsupervised",
-    "Domain 4 · Applied LLMs / GenAI",
-    "Domain 5 · Bandits & RL",
-    "Domain 6 · Optimization & Marketplace",
