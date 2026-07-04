@@ -74,18 +74,26 @@ Dropping the leaky column moves AUC from an implausible **0.98** to an honest **
 
 ## M2.2 · Point-in-time feature/label joins
 
-**The idea.** A feature-freeze time $t_i$ separates what you may use (before) from what you may not (after). For a click-count feature on impression $i$, the leak-free **as-of** rule is:
+**The one-line idea.** A point-in-time (or *as-of*) join attaches to each training row the feature value **as it was at that row's own prediction moment** — not today's value, and not a value computed over the whole history. Every row gets its features "frozen" at a different instant.
+
+**Why a normal join quietly leaks.** Your labels live in an event log (one row per impression, each with its own timestamp), but your *features* usually live in a table that holds either **(a)** the latest value ("campaign 12345 has 5,000 total clicks") or **(b)** every event for that key. Join the two on `campaign_id` the normal way and you staple *today's* number — or a count over *all* clicks, including ones that happened after the impression — onto a row from three weeks ago. The model trains on a number no one could have known at serving time. That is look-ahead leakage arriving through the join itself.
+
+**The mental model: rewind the world to $t$.** Think of grading a weather forecaster. To score the forecast they made *yesterday morning*, you must use only what they knew *yesterday morning* — not the rain you can now see fell that afternoon. An as-of join does exactly this: for a row whose prediction happened at time $t$, it rewinds every feature table to its state at $t$ and reads the value from then. Different rows rewind to different instants.
+
+**Two clocks: features look back, labels look forward.** The freeze time $t_i$ is the divider. Features may only see events *before* $t_i$; the label is only allowed to see events *after* it. For a campaign-click feature on impression $i$, the leak-free rule is a **backward** sum:
 
 $$c_i = \sum_j \mathbf{1}\big[\text{campaign}(e_j) = \text{campaign}(i)\big]\,\mathbf{1}\big[\text{timestamp}(e_j) < t_i\big].$$
 
-The label comes from an **attribution window** *after* $t_i$: e.g. "clicked within 24h" is $y_i = \mathbf{1}[\exists\ \text{click in } [t_i, t_i+\Delta)]$. Rows whose window has not fully elapsed are **censored** — exclude them or model the censoring, or you undercount positives.
+The label comes from a forward **attribution window**: "clicked within 24h" is $y_i = \mathbf{1}[\exists\ \text{click in } [t_i,\ t_i+\Delta)]$. Same event log, opposite directions in time.
 
-**Splitting.** Split by **time** for time-ordered data (train on the past, validate on the future) and by **entity** when members/campaigns repeat, so neither the future nor a shared entity leaks across the split.
+**Censoring: why the most recent rows are traps.** Because the label looks *forward* by $\Delta$, a row whose window has not fully elapsed yet is **censored** — a "no-click" there might just mean "the click hasn't happened *yet*." Keeping such rows undercounts positives and teaches the model to be pessimistic. Fix: drop rows newer than $\text{now} - \Delta$, or model the censoring explicitly.
+
+**Splitting.** Split by **time** for time-ordered data — train on the past, validate on the future — so the split mirrors how the model runs in production. Also split by **entity** when the same member or campaign repeats, so a shared entity can't sit on both sides (group leakage, from M2.1).
 
 **Worked example — the leaky join vs the as-of join.** Given an impression at 10:00 with campaign clicks at 09:10, 09:40, 10:04, 10:20:
 
-- Naive equi-join on `campaign_id` (all clicks): count = 4 — **leaks** the 10:04 and 10:20 clicks.
-- As-of join (`timestamp < 10:00`): count = 2 — correct.
+- Naive equi-join on `campaign_id` (all clicks for the campaign): count = 4 — **leaks** the 10:04 and 10:20 clicks that happened *after* the impression.
+- As-of join (`timestamp < 10:00`): count = 2 — correct, because it only sees the 09:10 and 09:40 clicks.
 
 ```python
 feat = pd.merge_asof(
