@@ -1,0 +1,1160 @@
+# Constraint Satisfaction Problems & Factor Graphs
+> **Source:** CS 221 · **Category:** Concept+Method · **Type:** ⚖️ Both · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> 📓 The coded examples form a runnable notebook section; an `.ipynb` will be generated.
+
+## 1. Overview
+
+A constraint satisfaction problem (CSP) describes a problem by naming variables, listing each variable's domain of possible values, and imposing constraints that rule out incompatible combinations. Instead of searching blindly through every complete assignment, CSP algorithms exploit local structure: as soon as a partial assignment violates a constraint, the entire branch below it can be discarded.
+
+**One-line intuition:** CSP solving is disciplined trial-and-error: try values, propagate the consequences, and backtrack only when the remaining domains prove the choice impossible.
+
+CSPs are a central representation for map coloring, scheduling, resource allocation, Sudoku-like puzzles, and many symbolic reasoning tasks. Factor graphs generalize CSPs by allowing nonnegative factor weights; CSPs are the special case where every factor is either $0$ (violated) or $1$ (satisfied).
+
+## 2. Key Idea
+
+### 2.1 Variables, domains, factors, and weights
+
+A factor graph contains variables
+
+$$
+X=(X_1,\\ldots,X_n),\qquad X_i\in \operatorname{Domain}_i,
+$$
+
+and factors
+
+$$
+f_1,\\ldots,f_m,\qquad f_j(x)\ge 0.
+$$
+
+The **scope** of $f_j$ is the set of variables that $f_j$ depends on. Its **arity** is the size of that scope. A unary factor has arity $1$; a binary factor has arity $2$.
+
+For a complete assignment
+
+$$
+x=(x_1,\\ldots,x_n),
+$$
+
+the assignment weight is
+
+$$
+\operatorname{Weight}(x)=\prod_{j=1}^{m} f_j(x).
+$$
+
+A CSP is the 0/1-valued special case:
+
+$$
+\forall j,\qquad f_j(x)\in\{0,1\}.
+$$
+
+A constraint $j$ is satisfied exactly when $f_j(x)=1$. A complete assignment is **consistent** when all constraints are satisfied:
+
+$$
+\operatorname{Weight}(x)=1
+\iff
+\prod_{j=1}^{m} f_j(x)=1
+\iff
+\forall j,\ f_j(x)=1.
+$$
+
+If any factor is violated, then
+
+$$
+\exists j\ f_j(x)=0
+\quad\Longrightarrow\quad
+\operatorname{Weight}(x)=0.
+$$
+
+### 2.2 Backtracking search
+
+Backtracking incrementally builds a partial assignment. At each step it selects one unassigned variable, tries its values, checks constraints whose scopes are now fully assigned, and recurses.
+
+```text
+Backtracking(partial_assignment x):
+    if every variable is assigned:
+        return x if every constraint is satisfied
+    choose an unassigned variable X_i
+    for each value v in Domain_i:
+        extend x with X_i = v
+        if no constraint involving assigned variables is violated:
+            result <- Backtracking(x)
+            if result is not failure:
+                return result
+        remove X_i from x
+    return failure
+```
+
+The worst-case running time is still exponential. If all domains have size $d$ and there are $n$ variables, the raw search tree can contain
+
+$$
+1+d+d^2+\cdots+d^n=\frac{d^{n+1}-1}{d-1}=O(d^n)
+$$
+
+nodes. The point of CSP methods is not to change the worst-case class, but to shrink the practical tree dramatically.
+
+### 2.3 Dependent factors and early pruning
+
+For a partial assignment $x$ and candidate variable $X_i$, the dependent factors
+
+$$
+D(x,X_i)
+$$
+
+are the factors connecting $X_i$ to already assigned variables. When we tentatively assign $X_i=v$, we only need to check factors in $D(x,X_i)$ plus any unary factor on $X_i$. If a factor evaluates to $0$, the candidate value cannot appear in any valid completion of this branch.
+
+### 2.4 Forward checking
+
+Forward checking performs one-step lookahead. After setting $X_i=v$, each unassigned neighbor $X_k$ loses any value $u$ that is inconsistent with $X_i=v$.
+
+For a binary constraint $c_{ik}$, the updated domain is
+
+$$
+\operatorname{Domain}'_k
+=
+\{u\in\operatorname{Domain}_k: c_{ik}(v,u)=1\}.
+$$
+
+If any neighbor domain becomes empty,
+
+$$
+\operatorname{Domain}'_k=\varnothing,
+$$
+
+then no completion exists below the current partial assignment, so the solver backtracks immediately.
+
+### 2.5 Arc consistency and AC-3
+
+An arc $(X_i,X_k)$ is consistent when every value of $X_i$ has at least one supporting value of $X_k$:
+
+$$
+\forall a\in\operatorname{Domain}_i,
+\exists b\in\operatorname{Domain}_k
+\quad\text{such that}\quad
+c_{ik}(a,b)=1.
+$$
+
+The operation
+
+$$
+\operatorname{Revise}(X_i,X_k)
+$$
+
+removes unsupported values from $\operatorname{Domain}_i$:
+
+$$
+\operatorname{Domain}_i
+\leftarrow
+\{a\in\operatorname{Domain}_i:\exists b\in\operatorname{Domain}_k,\\ c_{ik}(a,b)=1\}.
+$$
+
+AC-3 repeatedly enforces arc consistency with a queue:
+
+```text
+AC-3(domains, constraints):
+    queue <- all directed arcs (X_i, X_k)
+    while queue is not empty:
+        (X_i, X_k) <- pop queue
+        if Revise(X_i, X_k) removed any values:
+            if Domain_i is empty:
+                return failure
+            for every neighbor X_h of X_i except X_k:
+                push (X_h, X_i) onto queue
+    return reduced domains
+```
+
+The important causal chain is
+
+$$
+\text{domain shrinks}
+\Longrightarrow
+\text{neighbors may lose support}
+\Longrightarrow
+\text{recheck incoming arcs}.
+$$
+
+### 2.6 Dynamic variable and value ordering
+
+The **most constrained variable** heuristic chooses the unassigned variable with the fewest remaining legal values:
+
+$$
+X^*=\operatorname*{argmin}_{X_i\notin\operatorname{assigned}}|\operatorname{Domain}_i^{\text{remaining}}|.
+$$
+
+This tends to fail early. If a variable has no legal values, we discover the contradiction before expanding irrelevant branches.
+
+The **least constrained value** heuristic chooses the value that leaves the most options for neighbors:
+
+$$
+v^*=\operatorname*{argmax}_{v\in\operatorname{Domain}_i}
+\sum_{X_k\in\operatorname{Nbr}(X_i)}
+\left|\{u\in\operatorname{Domain}_k:c_{ik}(v,u)=1\}\right|.
+$$
+
+This tends to postpone conflicts by preserving future flexibility.
+
+### 2.7 Beam search and approximate assignment
+
+Beam search keeps only the top $K$ partial assignments after each variable is assigned. For branching factor $b$ and $n$ variables, each layer expands at most $K b$ candidates and sorts them, giving
+
+$$
+O(n\,K b\log(K b))
+$$
+
+time. $K=1$ is greedy search; $K\to\infty$ recovers full breadth-first enumeration of partial assignments.
+
+### 2.8 ICM and Gibbs updates
+
+For weighted factor graphs, iterated conditional modes (ICM) repeatedly updates one variable to the value that maximizes the product of local factors:
+
+$$
+x_i\leftarrow
+\operatorname*{argmax}_{v\in\operatorname{Domain}_i}
+\prod_{j:X_i\in\operatorname{scope}(f_j)} f_j(x_{-i},v).
+$$
+
+Gibbs sampling uses the same local weights but samples instead of maximizing:
+
+$$
+\Pr(X_i=v\mid x_{-i})
+=
+\frac{\prod_{j:X_i\in\operatorname{scope}(f_j)} f_j(x_{-i},v)}
+{\sum_{u\in\operatorname{Domain}_i}\prod_{j:X_i\in\operatorname{scope}(f_j)} f_j(x_{-i},u)}.
+$$
+
+ICM is deterministic and can get trapped in local optima. Gibbs is stochastic and can sometimes escape because even non-best values can receive nonzero probability.
+
+## 3. Worked Examples
+
+### 🟢 Basics (warm-up)
+
+#### B1. Check one unary constraint on one assignment
+
+Goal: evaluate a single unary constraint before combining it with any other factor.
+
+Let
+
+$$
+X\in\{0,1,2\},
+\qquad
+f(X)=[X=1].
+$$
+
+Check the assignment $X=1$:
+
+$$
+f(1)=[1=1]=1.
+$$
+
+So the unary constraint is satisfied:
+
+$$
+\boxed{X=1\text{ passes the constraint}}.
+$$
+
+Check the assignment $X=2$:
+
+$$
+f(2)=[2=1]=0.
+$$
+
+So the unary constraint is violated:
+
+$$
+\boxed{X=2\text{ fails the constraint}}.
+$$
+
+#### B2. List the remaining domain after one assignment
+
+Let
+
+$$
+X,Y\in\{1,2,3\},
+\qquad
+c(X,Y)=[X<Y].
+$$
+
+Suppose we assign
+
+$$
+X=2.
+$$
+
+The remaining legal domain for $Y$ is
+
+$$
+\operatorname{Domain}'(Y)=\{y\in\{1,2,3\}:2<y\}.
+$$
+
+Check every value:
+
+$$
+y=1:\ 2<1\text{ is false},
+$$
+
+$$
+y=2:\ 2<2\text{ is false},
+$$
+
+$$
+y=3:\ 2<3\text{ is true}.
+$$
+
+Therefore
+
+$$
+\operatorname{Domain}'(Y)=\{3\}.
+$$
+
+The one-step lookahead conclusion is
+
+$$
+\boxed{X=2\Longrightarrow Y\text{ must be }3}.
+$$
+
+#### B3. Count conflicts in one toy coloring
+
+Consider a path graph
+
+$$
+A-B-C
+$$
+
+with the color assignment
+
+$$
+A=\text{red},\qquad B=\text{red},\qquad C=\text{blue}.
+$$
+
+The CSP constraint on each edge is “neighboring vertices must have different colors.” For edge $(A,B)$,
+
+$$
+A\ne B
+\quad\Longleftrightarrow\quad
+\text{red}\ne\text{red},
+$$
+
+which is false, so this edge contributes one conflict. For edge $(B,C)$,
+
+$$
+B\ne C
+\quad\Longleftrightarrow\quad
+\text{red}\ne\text{blue},
+$$
+
+which is true, so this edge contributes zero conflicts. Hence
+
+$$
+\#\text{conflicts}=1+0=1.
+$$
+
+The assignment is not consistent because at least one constraint is violated:
+
+$$
+\boxed{\text{one violated edge: }(A,B)}.
+$$
+
+### Setup
+
+The remaining coded examples are designed to run top-to-bottom as a single notebook section on a CPU. They use a small shared CSP toolkit written from scratch. Optional packages are guarded so the examples still run if a package is unavailable.
+
+```python
+import math  # Provide logarithms and exponentials for weighted-factor calculations.
+import random  # Provide reproducible pseudo-random choices for Gibbs sampling.
+from collections import defaultdict, deque  # Provide compact graph dictionaries and AC-3 queues.
+import numpy as np  # Provide array operations and deterministic numerical helpers.
+import matplotlib.pyplot as plt  # Provide plotting for graphs, trees, grids, and bar charts.
+np.random.seed(22135)  # Fix NumPy randomness so every run produces the same notebook output.
+random.seed(22135)  # Fix Python randomness so stochastic examples are reproducible.
+try:  # Try to import NetworkX because it gives clean constraint-graph layouts.
+    import networkx as nx  # Use NetworkX only when it is installed in the runtime.
+    HAS_NX = True  # Record that NetworkX-backed visualizations are available.
+except Exception:  # Fall back gracefully if NetworkX is missing in a minimal runtime.
+    nx = None  # Store a harmless sentinel so later code can branch cleanly.
+    HAS_NX = False  # Record that manual layouts should be used instead.
+COLORS = ["red", "green", "blue"]  # Define the standard three-color domain for map-coloring examples.
+COLOR_TO_STYLE = {"red": "#e74c3c", "green": "#2ecc71", "blue": "#3498db", "yellow": "#f1c40f"}  # Map names to plot colors.
+def different(a, b):  # Define the core binary map-coloring constraint.
+    return a != b  # Neighboring regions are legal exactly when their colors differ.
+def same_or_smooth(a, b):  # Define a soft compatibility factor for binary denoising examples.
+    return 2.2 if a == b else 0.6  # Equal neighboring labels receive larger factor weight than unequal labels.
+def draw_graph(nodes, edges, assignment=None, domains=None, title="Constraint graph"):  # Draw a CSP graph with optional colors and domains.
+    assignment = assignment or {}  # Use an empty assignment when no node colors are supplied.
+    domains = domains or {}  # Use empty domain annotations when no domains are supplied.
+    if HAS_NX:  # Use NetworkX spring layout when available for readable pictures.
+        graph = nx.Graph()  # Create an undirected graph object for the constraint graph.
+        graph.add_nodes_from(nodes)  # Add all variables as graph nodes.
+        graph.add_edges_from(edges)  # Add all binary constraints as graph edges.
+        pos = nx.spring_layout(graph, seed=22135)  # Compute deterministic node positions.
+    else:  # Use a deterministic circular fallback layout without extra dependencies.
+        angles = np.linspace(0, 2 * np.pi, len(nodes), endpoint=False)  # Spread nodes evenly around a circle.
+        pos = {node: (float(np.cos(angle)), float(np.sin(angle))) for node, angle in zip(nodes, angles)}  # Store fallback coordinates.
+    plt.figure(figsize=(6, 4))  # Create a compact figure that fits in a notebook cell.
+    for a, b in edges:  # Draw every constraint edge before drawing nodes.
+        xa, ya = pos[a]  # Read the first endpoint location.
+        xb, yb = pos[b]  # Read the second endpoint location.
+        plt.plot([xa, xb], [ya, yb], color="black", linewidth=1.5, zorder=1)  # Draw a black constraint edge.
+    for node in nodes:  # Draw each variable node after edges so nodes appear on top.
+        x, y = pos[node]  # Read the plotted location for this variable.
+        face = COLOR_TO_STYLE.get(assignment.get(node), "white")  # Use assigned color or white for unassigned variables.
+        plt.scatter([x], [y], s=900, color=face, edgecolor="black", zorder=2)  # Draw the variable node.
+        label = node if node not in domains else f"{node}\n{sorted(domains[node])}"  # Show domain values when provided.
+        plt.text(x, y, label, ha="center", va="center", fontsize=9, zorder=3)  # Label the node in the center.
+    plt.title(title)  # Add a descriptive title.
+    plt.axis("off")  # Hide axes because this is a graph, not a coordinate plot.
+    plt.show()  # Display the graph in the notebook.
+def constraint_ok(var_a, val_a, var_b, val_b, constraints):  # Check one binary constraint if it exists.
+    if (var_a, var_b) in constraints:  # Handle the stored forward direction.
+        return constraints[(var_a, var_b)](val_a, val_b)  # Evaluate the forward constraint.
+    if (var_b, var_a) in constraints:  # Handle the stored reverse direction.
+        return constraints[(var_b, var_a)](val_b, val_a)  # Evaluate the reverse constraint with flipped arguments.
+    return True  # Non-neighbor variables impose no binary restriction.
+def count_conflicts(edges, assignment):  # Count violated map-coloring edges in a complete or partial assignment.
+    total = 0  # Start with no observed conflicts.
+    for a, b in edges:  # Inspect each neighboring pair.
+        if a in assignment and b in assignment and assignment[a] == assignment[b]:  # Count only assigned equal-color neighbors.
+            total += 1  # Add one violated edge.
+    return total  # Return the final conflict count.
+def copy_domains(domains):  # Copy a domain dictionary without aliasing mutable sets.
+    return {var: set(values) for var, values in domains.items()}  # Return a fresh set for every variable.
+```
+
+### Data — swappable sources
+
+The data block defines several CSPs used by the examples. Change `DATA_SOURCE` to swap among a satisfiable map-coloring instance, an unsatisfiable two-color triangle, and a Sudoku-like $4\times4$ Latin-square puzzle.
+
+```python
+DATA_SOURCE = "australia_map"  # Choose "australia_map", "two_color_triangle", or "mini_sudoku" for different examples.
+map_nodes = ["WA", "NT", "SA", "Q", "NSW", "V", "T"]  # Name the regions in a classic Australia map-coloring CSP.
+map_edges = [("WA", "NT"), ("WA", "SA"), ("NT", "SA"), ("NT", "Q"), ("SA", "Q"), ("SA", "NSW"), ("SA", "V"), ("Q", "NSW"), ("NSW", "V")]  # List neighboring-region constraints.
+map_domains = {node: set(COLORS) for node in map_nodes}  # Give every map region the same three-color domain.
+map_constraints = {edge: different for edge in map_edges}  # Attach the not-equal constraint to every map edge.
+triangle_nodes = ["A", "B", "C"]  # Name three variables in an intentionally impossible triangle CSP.
+triangle_edges = [("A", "B"), ("B", "C"), ("A", "C")]  # Connect every pair so the graph is a triangle.
+triangle_domains = {node: {"red", "green"} for node in triangle_nodes}  # Restrict the triangle to only two colors.
+triangle_constraints = {edge: different for edge in triangle_edges}  # Require adjacent triangle nodes to have different colors.
+sudoku_values = {1, 2, 3, 4}  # Use four symbols for a compact Sudoku-like Latin square.
+sudoku_cells = [(r, c) for r in range(4) for c in range(4)]  # Create sixteen cell variables for a four-by-four grid.
+sudoku_given = {(0, 1): 2, (1, 0): 3, (2, 3): 3, (3, 2): 2}  # Provide a consistent set of fixed clues from a valid four-by-four solution.
+sudoku_domains = {cell: ({sudoku_given[cell]} if cell in sudoku_given else set(sudoku_values)) for cell in sudoku_cells}  # Use singleton domains for clues.
+sudoku_edges = []  # Start an empty list of all row, column, and box inequality constraints.
+for cell_a in sudoku_cells:  # Compare each cell to every later cell.
+    for cell_b in sudoku_cells:  # Consider all possible partner cells.
+        if cell_a < cell_b:  # Keep only one undirected copy of each pair.
+            same_row = cell_a[0] == cell_b[0]  # Detect cells in the same row.
+            same_col = cell_a[1] == cell_b[1]  # Detect cells in the same column.
+            same_box = (cell_a[0] // 2, cell_a[1] // 2) == (cell_b[0] // 2, cell_b[1] // 2)  # Detect cells in the same two-by-two box.
+            if same_row or same_col or same_box:  # Add inequality for row, column, or box peers.
+                sudoku_edges.append((cell_a, cell_b))  # Store this Sudoku peer relationship.
+sudoku_constraints = {edge: (lambda a, b: a != b) for edge in sudoku_edges}  # Use not-equal factors for all Sudoku peers.
+DATASETS = {"australia_map": (map_nodes, map_edges, map_domains, map_constraints), "two_color_triangle": (triangle_nodes, triangle_edges, triangle_domains, triangle_constraints), "mini_sudoku": (sudoku_cells, sudoku_edges, sudoku_domains, sudoku_constraints)}  # Bundle datasets by name.
+active_nodes, active_edges, active_domains, active_constraints = DATASETS[DATA_SOURCE]  # Unpack the selected dataset.
+print(f"Loaded {DATA_SOURCE} with {len(active_nodes)} variables and {len(active_edges)} binary constraints.")  # Confirm which CSP is active.
+draw_graph(active_nodes, active_edges, domains=active_domains, title=f"Initial domains for {DATA_SOURCE}")  # Visualize the selected CSP before solving.
+```
+
+▶ What you'll see: a constraint graph whose nodes are variables and whose edges are binary constraints. Domain sets printed inside nodes are the current legal values before search or propagation begins.
+
+### 🟡 Easy
+
+#### E1. Hand evaluate a factor-graph assignment weight
+
+Use three Boolean variables
+
+$$
+X_1,X_2,X_3\in\{0,1\}.
+$$
+
+Define four factors:
+
+$$
+f_1(X_1)=[X_1=1],
+$$
+
+$$
+f_2(X_1,X_2)=[X_1\lor X_2],
+$$
+
+$$
+f_3(X_2,X_3)=[X_2\land X_3],
+$$
+
+$$
+f_4(X_3)=[X_3>0].
+$$
+
+Evaluate the assignment
+
+$$
+x=(X_1=1,X_2=1,X_3=1).
+$$
+
+First factor:
+
+$$
+f_1(1)=[1=1]=1.
+$$
+
+Second factor:
+
+$$
+f_2(1,1)=[1\lor1]=[1]=1.
+$$
+
+Third factor:
+
+$$
+f_3(1,1)=[1\land1]=[1]=1.
+$$
+
+Fourth factor:
+
+$$
+f_4(1)=[1>0]=1.
+$$
+
+The factor-graph weight is the product:
+
+$$
+\operatorname{Weight}(x)=f_1(x)f_2(x)f_3(x)f_4(x).
+$$
+
+Substitute the values:
+
+$$
+\operatorname{Weight}(x)=1\cdot1\cdot1\cdot1=1.
+$$
+
+Therefore
+
+$$
+\boxed{x=(1,1,1)\text{ is consistent and has weight }1}.
+$$
+
+Now evaluate
+
+$$
+y=(X_1=1,X_2=0,X_3=1).
+$$
+
+The third factor becomes
+
+$$
+f_3(0,1)=[0\land1]=[0]=0.
+$$
+
+Therefore
+
+$$
+\operatorname{Weight}(y)=1\cdot1\cdot0\cdot1=0.
+$$
+
+Thus
+
+$$
+\boxed{y=(1,0,1)\text{ violates }f_3\text{ and is inconsistent}}.
+$$
+
+#### E2. Hand check CSP consistency from a constraint table
+
+Let
+
+$$
+A,B,C\in\{0,1\}
+$$
+
+with constraints
+
+$$
+c_1(A,B)=[A\ne B],
+\qquad
+c_2(B,C)=[B\le C],
+\qquad
+c_3(A,C)=[A\lor C].
+$$
+
+Check the assignment
+
+$$
+A=0,\qquad B=1,\qquad C=1.
+$$
+
+Evaluate each constraint:
+
+$$
+c_1(0,1)=[0\ne1]=1,
+$$
+
+$$
+c_2(1,1)=[1\le1]=1,
+$$
+
+$$
+c_3(0,1)=[0\lor1]=[1]=1.
+$$
+
+The full CSP weight is
+
+$$
+\operatorname{Weight}(0,1,1)=c_1(0,1)c_2(1,1)c_3(0,1)=1\cdot1\cdot1=1.
+$$
+
+So
+
+$$
+\boxed{(A,B,C)=(0,1,1)\text{ is a consistent assignment}}.
+$$
+
+Now check
+
+$$
+A=1,\qquad B=1,\qquad C=0.
+$$
+
+The first constraint is
+
+$$
+c_1(1,1)=[1\ne1]=0.
+$$
+
+The second constraint is
+
+$$
+c_2(1,0)=[1\le0]=0.
+$$
+
+The third constraint is
+
+$$
+c_3(1,0)=[1\lor0]=[1]=1.
+$$
+
+The weight is
+
+$$
+\operatorname{Weight}(1,1,0)=0\cdot0\cdot1=0.
+$$
+
+Thus
+
+$$
+\boxed{(A,B,C)=(1,1,0)\text{ is inconsistent}}.
+$$
+
+#### E3. Propagate one arc-consistency constraint by hand
+
+Let
+
+$$
+X,Y\in\{1,2,3\},
+\qquad
+c(X,Y)=[X<Y].
+$$
+
+To enforce arc consistency of $X$ with respect to $Y$, keep only values $x$ that have some supporting $y$:
+
+$$
+\operatorname{Domain}'(X)
+=
+\{x\in\{1,2,3\}:\exists y\in\{1,2,3\}, x<y\}.
+$$
+
+Check $x=1$:
+
+$$
+\exists y\in\{1,2,3\}:1<y.
+$$
+
+Choose $y=2$:
+
+$$
+1<2\text{ is true},
+$$
+
+so $1$ is supported.
+
+Check $x=2$:
+
+$$
+\exists y\in\{1,2,3\}:2<y.
+$$
+
+Choose $y=3$:
+
+$$
+2<3\text{ is true},
+$$
+
+so $2$ is supported.
+
+Check $x=3$:
+
+$$
+\exists y\in\{1,2,3\}:3<y.
+$$
+
+No value in $\{1,2,3\}$ exceeds $3$, so $3$ is unsupported. Therefore
+
+$$
+\operatorname{Domain}'(X)=\{1,2\}.
+$$
+
+Now enforce arc consistency of $Y$ with respect to $X$:
+
+$$
+\operatorname{Domain}'(Y)
+=
+\{y\in\{1,2,3\}:\exists x\in\{1,2\}, x<y\}.
+$$
+
+Check $y=1$:
+
+$$
+\exists x\in\{1,2\}:x<1
+$$
+
+is false, so $1$ is removed.
+
+Check $y=2$:
+
+$$
+x=1\Rightarrow1<2
+$$
+
+is true, so $2$ remains.
+
+Check $y=3$:
+
+$$
+x=1\Rightarrow1<3
+$$
+
+is true, so $3$ remains. Hence
+
+$$
+\operatorname{Domain}'(Y)=\{2,3\}.
+$$
+
+The hand AC result is
+
+$$
+\boxed{\operatorname{Domain}'(X)=\{1,2\},\quad \operatorname{Domain}'(Y)=\{2,3\}}.
+$$
+
+#### E4. Backtracking map coloring with forward checking
+
+We now solve a small four-region map by hand-coded backtracking. The example uses forward checking after each tentative color choice so impossible branches stop immediately.
+
+```python
+def neighbors_from_edges(nodes, edges):  # Build an adjacency list from undirected binary-constraint edges.
+    neighbors = {node: set() for node in nodes}  # Start every variable with no known neighbors.
+    for a, b in edges:  # Read each binary constraint edge.
+        neighbors[a].add(b)  # Add the second endpoint as a neighbor of the first.
+        neighbors[b].add(a)  # Add the first endpoint as a neighbor of the second.
+    return neighbors  # Return the completed adjacency dictionary.
+def forward_check(var, value, domains, assignment, neighbors, constraints):  # Remove neighbor values made impossible by one assignment.
+    new_domains = copy_domains(domains)  # Copy domains so failed trials can be discarded safely.
+    new_domains[var] = {value}  # Collapse the assigned variable's domain to the chosen value.
+    for nbr in neighbors[var]:  # Inspect every variable constrained with the assigned variable.
+        if nbr in assignment:  # Skip already assigned neighbors because consistency was checked separately.
+            continue  # Move to the next neighbor.
+        allowed = set()  # Collect neighbor values that still have support.
+        for nbr_value in new_domains[nbr]:  # Try each candidate value in the neighbor's current domain.
+            if constraint_ok(var, value, nbr, nbr_value, constraints):  # Keep the value only if the binary constraint is satisfied.
+                allowed.add(nbr_value)  # Record this supported neighbor value.
+        new_domains[nbr] = allowed  # Replace the neighbor domain with only supported values.
+        if not allowed:  # Detect an empty domain caused by the tentative assignment.
+            return None  # Signal that this branch is impossible.
+    return new_domains  # Return the reduced domains for the surviving branch.
+def consistent_with_assignment(var, value, assignment, constraints):  # Check constraints to already assigned variables.
+    for other, other_value in assignment.items():  # Compare the candidate to each assigned variable.
+        if not constraint_ok(var, value, other, other_value, constraints):  # Detect a violated binary constraint.
+            return False  # Reject this candidate value.
+    return True  # Accept the candidate because no assigned-neighbor constraint failed.
+```
+
+```python
+small_nodes = ["A", "B", "C", "D"]  # Define a four-region toy map.
+small_edges = [("A", "B"), ("A", "C"), ("B", "C"), ("C", "D")]  # Define neighboring regions that must differ.
+small_domains = {node: set(COLORS) for node in small_nodes}  # Give every region the three available colors.
+small_constraints = {edge: different for edge in small_edges}  # Use not-equal constraints on every map edge.
+small_neighbors = neighbors_from_edges(small_nodes, small_edges)  # Precompute each region's neighbors.
+trace = []  # Store a human-readable trace of the recursive choices.
+def solve_forward(nodes, domains, assignment):  # Solve the toy map with recursive forward checking.
+    if len(assignment) == len(nodes):  # Stop when every variable has a color.
+        return dict(assignment)  # Return a copy of the complete solution.
+    var = next(node for node in nodes if node not in assignment)  # Choose the next unassigned variable in fixed order.
+    for value in sorted(domains[var]):  # Try values in a deterministic order for reproducibility.
+        trace.append((var, value, "try", dict(assignment)))  # Record the attempted assignment.
+        if not consistent_with_assignment(var, value, assignment, small_constraints):  # Reject immediate assigned-neighbor conflicts.
+            trace.append((var, value, "conflict", dict(assignment)))  # Record the local conflict.
+            continue  # Try the next color.
+        next_domains = forward_check(var, value, domains, assignment, small_neighbors, small_constraints)  # Propagate the tentative choice.
+        if next_domains is None:  # Detect forward-checking failure.
+            trace.append((var, value, "empty-domain", dict(assignment)))  # Record the pruning reason.
+            continue  # Try the next color.
+        assignment[var] = value  # Commit the color for the recursive call.
+        result = solve_forward(nodes, next_domains, assignment)  # Recurse on the reduced problem.
+        if result is not None:  # Stop as soon as a valid coloring is found.
+            return result  # Return the successful solution upward.
+        assignment.pop(var)  # Undo the assignment before trying another value.
+        trace.append((var, value, "backtrack", dict(assignment)))  # Record that recursion below this value failed.
+    return None  # Signal failure when no value works for this variable.
+small_solution = solve_forward(small_nodes, small_domains, {})  # Run the forward-checking solver.
+print("Solution:", small_solution)  # Print the found coloring.
+print("Trace length:", len(trace))  # Print the number of recorded search events.
+draw_graph(small_nodes, small_edges, assignment=small_solution, title="E4 valid four-region coloring")  # Visualize the final consistent assignment.
+```
+
+▶ What you'll see: the four-region graph is colored so every edge connects two different colors. Forward checking prevents the solver from exploring branches whose neighbor domains have already become empty.
+
+#### E5. Most-constrained variable and least-constrained value
+
+This example computes the two dynamic-ordering scores explicitly on a tiny scheduling CSP. Variables are meetings, values are time slots, and edges mean two meetings share an attendee and cannot occur at the same time.
+
+```python
+meetings = ["M1", "M2", "M3", "M4"]  # Define four meetings that need time slots.
+slots = {"9AM", "10AM", "11AM"}  # Define three possible meeting times.
+schedule_edges = [("M1", "M2"), ("M1", "M3"), ("M2", "M3"), ("M3", "M4")]  # Encode shared-attendee conflicts.
+schedule_constraints = {edge: different for edge in schedule_edges}  # Require conflicting meetings to use different slots.
+schedule_neighbors = neighbors_from_edges(meetings, schedule_edges)  # Build the meeting-conflict graph.
+partial_assignment = {"M1": "9AM"}  # Pretend one meeting has already been scheduled.
+remaining_domains = {meeting: set(slots) for meeting in meetings}  # Start with every slot available for every meeting.
+remaining_domains["M1"] = {"9AM"}  # Collapse the assigned meeting's domain.
+for nbr in schedule_neighbors["M1"]:  # Forward-check the consequences of M1 being at 9AM.
+    remaining_domains[nbr] = {slot for slot in remaining_domains[nbr] if slot != "9AM"}  # Remove 9AM from conflicting meetings.
+unassigned = [meeting for meeting in meetings if meeting not in partial_assignment]  # List variables still needing assignment.
+mcv_scores = {meeting: len(remaining_domains[meeting]) for meeting in unassigned}  # Score variables by remaining-domain size.
+chosen_variable = min(unassigned, key=lambda meeting: (mcv_scores[meeting], meeting))  # Select the most constrained variable with deterministic tie-breaking.
+lcv_scores = {}  # Store how many neighbor values each candidate value preserves.
+for value in sorted(remaining_domains[chosen_variable]):  # Evaluate each candidate value for the chosen variable.
+    support_count = 0  # Start with no preserved neighbor options.
+    for nbr in schedule_neighbors[chosen_variable]:  # Inspect each neighboring meeting.
+        if nbr in partial_assignment:  # Skip already assigned neighbors.
+            continue  # Move to the next neighbor.
+        support_count += sum(1 for nbr_value in remaining_domains[nbr] if nbr_value != value)  # Count neighbor values compatible with this value.
+    lcv_scores[value] = support_count  # Store the least-constraining score.
+chosen_value = max(lcv_scores, key=lambda value: (lcv_scores[value], value))  # Choose the value preserving the most neighbor options.
+print("Remaining domains:", {k: sorted(v) for k, v in remaining_domains.items()})  # Show domains after the initial assignment.
+print("MCV scores:", mcv_scores)  # Show domain-size scores for unassigned variables.
+print("Chosen variable:", chosen_variable)  # Show the most constrained variable.
+print("LCV scores for", chosen_variable, ":", lcv_scores)  # Show preserved-neighbor-option scores.
+print("Chosen value:", chosen_value)  # Show the least constraining value.
+draw_graph(meetings, schedule_edges, assignment=partial_assignment, domains=remaining_domains, title="E5 scheduling domains after one assignment")  # Visualize the partial schedule and domains.
+```
+
+▶ What you'll see: after assigning `M1 = 9AM`, meetings connected to `M1` lose `9AM`. The selected variable has the smallest remaining domain, and the selected value preserves the largest number of options for its neighbors.
+
+### 🔴 Advanced
+
+#### A1. AC-3 on a Sudoku-like mini puzzle
+
+AC-3 does not guess. It only deletes values that no longer have support. In Sudoku-like puzzles, singleton clue domains can trigger a cascade of removals across rows, columns, and boxes.
+
+```python
+def revise(xi, xj, domains, constraints):  # Remove values of xi that have no supporting value in xj.
+    removed = set()  # Track values deleted from xi for explanation and plotting.
+    for value_i in set(domains[xi]):  # Iterate over a copy because the domain may shrink.
+        has_support = any(constraint_ok(xi, value_i, xj, value_j, constraints) for value_j in domains[xj])  # Check whether some xj value satisfies the constraint.
+        if not has_support:  # Detect an unsupported xi value.
+            domains[xi].remove(value_i)  # Delete the unsupported value from xi's domain.
+            removed.add(value_i)  # Record the deletion.
+    return removed  # Return exactly which values were removed.
+def ac3(nodes, edges, domains, constraints, max_events=200):  # Enforce arc consistency with a queue of directed arcs.
+    domains = copy_domains(domains)  # Copy domains so the input puzzle remains unchanged.
+    neighbors = neighbors_from_edges(nodes, edges)  # Build adjacency for queue updates.
+    queue = deque()  # Create the AC-3 work queue.
+    for a, b in edges:  # Add both directed versions of every undirected edge.
+        queue.append((a, b))  # Ask whether a is consistent with b.
+        queue.append((b, a))  # Ask whether b is consistent with a.
+    events = []  # Store domain-shrink events for inspection.
+    while queue:  # Continue until no arc can remove more values.
+        xi, xj = queue.popleft()  # Pop the next directed arc.
+        removed = revise(xi, xj, domains, constraints)  # Enforce support of xi values by xj.
+        if removed:  # React only when the domain actually changed.
+            events.append((xi, xj, sorted(removed), {k: set(v) for k, v in domains.items()}))  # Snapshot the deletion event.
+            if not domains[xi]:  # Detect a contradiction when xi loses every value.
+                return domains, events, False  # Return failure with the final empty domain.
+            for xh in neighbors[xi] - {xj}:  # Recheck arcs into xi from all other neighbors.
+                queue.append((xh, xi))  # Add the affected incoming arc to the queue.
+        if len(events) >= max_events:  # Avoid overwhelming displays in very dense examples.
+            break  # Stop recording after the requested number of events.
+    return domains, events, True  # Return reduced domains and success status.
+def print_sudoku_domains(domains):  # Print a compact grid of singleton values or candidate sets.
+    for r in range(4):  # Print one row at a time.
+        row = []  # Collect display strings for this row.
+        for c in range(4):  # Visit each column in the row.
+            vals = sorted(domains[(r, c)])  # Sort candidates for deterministic display.
+            row.append(str(vals[0]) if len(vals) == 1 else "{" + "".join(map(str, vals)) + "}")  # Show singleton or candidate set.
+        print(" | ".join(row))  # Print the formatted row.
+reduced_sudoku_domains, sudoku_events, sudoku_ok = ac3(sudoku_cells, sudoku_edges, sudoku_domains, sudoku_constraints)  # Run AC-3 on the mini puzzle.
+print("AC-3 success:", sudoku_ok)  # Report whether any domain became empty.
+print("Number of shrink events:", len(sudoku_events))  # Report how many domain reductions occurred.
+print_sudoku_domains(reduced_sudoku_domains)  # Print the final candidate grid.
+first_events = sudoku_events[:8]  # Keep the first few events for a readable plot.
+plt.figure(figsize=(8, 3))  # Create a compact event-count plot.
+plt.bar(range(len(first_events)), [len(event[2]) for event in first_events], color="#4c78a8")  # Plot how many values each early event removed.
+plt.xticks(range(len(first_events)), [f"{event[0]}←{event[1]}" for event in first_events], rotation=45, ha="right")  # Label each revised arc.
+plt.ylabel("values removed")  # Label the vertical axis.
+plt.title("A1 early AC-3 domain-shrink events")  # Add the plot title.
+plt.tight_layout()  # Prevent rotated labels from being clipped.
+plt.show()  # Display the AC-3 event plot.
+```
+
+▶ What you'll see: clue cells force their row, column, and box peers to drop matching values. The bar chart shows early directed arcs where `Revise` actually removed candidates.
+
+#### A2. Backtracking tree: naive vs. MCV+LCV+forward checking
+
+Now we compare two complete solvers on the same map-coloring benchmark. The first uses fixed variable and value order. The second uses most-constrained variable, least-constrained value, and forward checking.
+
+```python
+def order_values_lcv(var, domains, assignment, neighbors, constraints):  # Order values by the least-constraining-value heuristic.
+    scores = {}  # Store support-preservation scores.
+    for value in sorted(domains[var]):  # Score each candidate value deterministically.
+        score = 0  # Initialize this value's preserved-options count.
+        for nbr in neighbors[var]:  # Inspect each neighbor of the candidate variable.
+            if nbr in assignment:  # Ignore assigned neighbors because their compatibility is checked directly.
+                continue  # Move to the next neighbor.
+            score += sum(1 for nbr_value in domains[nbr] if constraint_ok(var, value, nbr, nbr_value, constraints))  # Count compatible neighbor values.
+        scores[value] = score  # Store the final preservation score.
+    return sorted(domains[var], key=lambda value: (-scores[value], value))  # Put values that preserve more options first.
+def select_variable_mcv(nodes, domains, assignment):  # Choose the most constrained unassigned variable.
+    candidates = [node for node in nodes if node not in assignment]  # List variables that still need values.
+    return min(candidates, key=lambda node: (len(domains[node]), node))  # Select the smallest remaining domain with deterministic tie-breaking.
+def solve_backtracking(nodes, edges, domains, constraints, use_heuristics=False, use_forward=False):  # Solve a CSP while collecting search statistics.
+    neighbors = neighbors_from_edges(nodes, edges)  # Precompute the constraint graph adjacency list.
+    stats = {"calls": 0, "backtracks": 0, "prunes": 0}  # Initialize counters for comparing solvers.
+    tree_edges = []  # Store parent-child links in the explored search tree.
+    tree_labels = {0: "start"}  # Store labels for tree nodes.
+    next_id = [1]  # Store the next available tree-node id in a mutable box.
+    def recurse(assignment, current_domains, parent_id):  # Define the recursive solver closure.
+        stats["calls"] += 1  # Count this recursive call as one expanded search node.
+        if len(assignment) == len(nodes):  # Detect a complete assignment.
+            return dict(assignment)  # Return a copy of the solution.
+        var = select_variable_mcv(nodes, current_domains, assignment) if use_heuristics else next(node for node in nodes if node not in assignment)  # Choose variable dynamically or fixed-order.
+        values = order_values_lcv(var, current_domains, assignment, neighbors, constraints) if use_heuristics else sorted(current_domains[var])  # Choose values dynamically or fixed-order.
+        for value in values:  # Try each candidate value.
+            child_id = next_id[0]  # Allocate a search-tree node id for this trial.
+            next_id[0] += 1  # Increment the id counter.
+            tree_edges.append((parent_id, child_id))  # Connect this trial to its parent in the search tree.
+            tree_labels[child_id] = f"{var}={value}"  # Label the trial node by the chosen assignment.
+            if not consistent_with_assignment(var, value, assignment, constraints):  # Reject values conflicting with assigned neighbors.
+                stats["prunes"] += 1  # Count immediate consistency pruning.
+                continue  # Try the next value.
+            next_domains = current_domains  # Default to unchanged domains when forward checking is disabled.
+            if use_forward:  # Optionally propagate the candidate assignment.
+                next_domains = forward_check(var, value, current_domains, assignment, neighbors, constraints)  # Apply forward checking.
+                if next_domains is None:  # Detect an empty domain from propagation.
+                    stats["prunes"] += 1  # Count propagation pruning.
+                    continue  # Try another value.
+            assignment[var] = value  # Commit the candidate value.
+            result = recurse(assignment, next_domains, child_id)  # Recurse into the extended assignment.
+            if result is not None:  # Stop after finding one solution.
+                return result  # Return the solution upward.
+            assignment.pop(var)  # Undo the candidate value.
+            stats["backtracks"] += 1  # Count a failed branch that required backtracking.
+        return None  # Signal failure below this partial assignment.
+    solution = recurse({}, copy_domains(domains), 0)  # Start recursion from the empty assignment.
+    return solution, stats, tree_edges, tree_labels  # Return solution and recorded search structure.
+benchmark_nodes = ["A", "B", "C", "D", "E"]  # Define a constrained coloring benchmark where a bad first choice causes backtracking.
+benchmark_edges = [("A", "B"), ("A", "C"), ("B", "C"), ("C", "D"), ("D", "E")]  # Combine a triangle with a short tail.
+benchmark_domains = {"A": {"red", "green"}, "B": {"green"}, "C": {"red", "green", "blue"}, "D": {"red", "green"}, "E": {"red", "green", "blue"}}  # Make B singleton so MCV discovers the bottleneck before A tries the conflicting first value.
+benchmark_constraints = {edge: different for edge in benchmark_edges}  # Use not-equal constraints throughout the benchmark.
+naive_solution, naive_stats, naive_tree_edges, naive_tree_labels = solve_backtracking(benchmark_nodes, benchmark_edges, benchmark_domains, benchmark_constraints, use_heuristics=False, use_forward=False)  # Run fixed-order search.
+smart_solution, smart_stats, smart_tree_edges, smart_tree_labels = solve_backtracking(benchmark_nodes, benchmark_edges, benchmark_domains, benchmark_constraints, use_heuristics=True, use_forward=True)  # Run heuristic forward-checking search.
+print("Naive solution:", naive_solution)  # Print the fixed-order solution.
+print("Naive stats:", naive_stats)  # Print fixed-order search counters.
+print("Heuristic solution:", smart_solution)  # Print the heuristic solution.
+print("Heuristic stats:", smart_stats)  # Print heuristic search counters.
+plt.figure(figsize=(6, 4))  # Create a bar chart comparing solver effort.
+labels = ["calls", "backtracks", "prunes"]  # Define compared metrics.
+x = np.arange(len(labels))  # Create x locations for grouped bars.
+plt.bar(x - 0.18, [naive_stats[label] for label in labels], width=0.36, label="naive", color="#999999")  # Plot naive counts.
+plt.bar(x + 0.18, [smart_stats[label] for label in labels], width=0.36, label="MCV+LCV+FC", color="#4c78a8")  # Plot heuristic counts.
+plt.xticks(x, labels)  # Label each metric group.
+plt.ylabel("count")  # Label the vertical axis.
+plt.title("A2 dynamic ordering reduces search effort")  # Add the comparison title.
+plt.legend()  # Show which bars correspond to each solver.
+plt.tight_layout()  # Fit the chart neatly.
+plt.show()  # Display the comparison chart.
+draw_graph(benchmark_nodes, benchmark_edges, assignment=smart_solution, title="A2 constrained coloring found by heuristic search")  # Show the final valid coloring.
+```
+
+▶ What you'll see: both methods find a valid coloring, but the heuristic solver usually expands fewer nodes and prunes earlier. The colored graph verifies that all neighboring regions have different colors.
+
+#### A3. Failure edge case: unsatisfiable two-color triangle
+
+A triangle graph requires three different colors if every adjacent pair must differ. With only two colors, the CSP is impossible. AC-3 and forward checking expose the contradiction as an empty domain rather than searching forever.
+
+```python
+triangle_reduced, triangle_events, triangle_ok = ac3(triangle_nodes, triangle_edges, triangle_domains, triangle_constraints)  # Run AC-3 on the unsatisfiable triangle.
+triangle_solution, triangle_stats, triangle_tree_edges, triangle_tree_labels = solve_backtracking(triangle_nodes, triangle_edges, triangle_domains, triangle_constraints, use_heuristics=True, use_forward=True)  # Run backtracking with propagation.
+print("AC-3 success:", triangle_ok)  # Report whether AC-3 alone found an empty domain.
+print("Reduced triangle domains:", {k: sorted(v) for k, v in triangle_reduced.items()})  # Print the AC-3-reduced domains.
+print("Backtracking solution:", triangle_solution)  # Show that no complete coloring exists.
+print("Backtracking stats:", triangle_stats)  # Show the amount of search needed to prove failure.
+if triangle_events:  # Plot AC-3 removals only if any occurred.
+    plt.figure(figsize=(6, 3))  # Create an event plot for domain removals.
+    plt.bar(range(len(triangle_events)), [len(event[2]) for event in triangle_events], color="#e74c3c")  # Plot deletion counts in red.
+    plt.xticks(range(len(triangle_events)), [f"{event[0]}←{event[1]}" for event in triangle_events], rotation=45, ha="right")  # Label revised arcs.
+    plt.ylabel("values removed")  # Label the y axis.
+    plt.title("A3 AC-3 removals on two-color triangle")  # Title the contradiction plot.
+    plt.tight_layout()  # Fit labels neatly.
+    plt.show()  # Display the plot.
+else:  # Explain the common case where pure AC-3 cannot prove this global contradiction.
+    print("Pure AC-3 makes no deletions here because every single arc has local support; search is still needed.")  # Distinguish local consistency from global satisfiability.
+draw_graph(triangle_nodes, triangle_edges, domains=triangle_domains, title="A3 unsatisfiable two-color triangle")  # Draw the impossible constraint graph.
+```
+
+▶ What you'll see: this is a useful edge case. Pure AC-3 may not delete anything because every value has local support on every arc, yet the global problem is unsatisfiable. Backtracking with forward checking proves failure by eventually forcing an empty future domain.
+
+#### A4. Beam search approximate assignment on a weighted factor graph
+
+Beam search is not a complete CSP solver unless the beam is wide enough. Here the objective is a weighted factor graph: unary factors prefer some values, binary factors prefer neighboring values to be close. We compare $K=1$, $K=2$, and a very wide beam.
+
+```python
+beam_variables = [f"X{i}" for i in range(1, 6)]  # Define five ordered variables.
+beam_domain = [0, 1, 2]  # Give every variable three possible values.
+unary_scores = {"X1": {0: 5.0, 1: 1.0, 2: 1.2}, "X2": {0: 1.0, 1: 1.0, 2: 5.0}, "X3": {0: 1.0, 1: 1.0, 2: 5.0}, "X4": {0: 1.0, 1: 1.0, 2: 5.0}, "X5": {0: 1.0, 1: 1.0, 2: 5.0}}  # Set local preferences that make greedy search overvalue X1=0.
+def pair_score(a, b):  # Score adjacent assignments in the chain.
+    return 3.0 if a == b else 0.2  # Strongly reward adjacent variables that choose the same value.
+def partial_log_weight(assignment):  # Compute the log weight of a partial chain assignment.
+    total = 0.0  # Start with log weight zero.
+    for var, value in assignment.items():  # Add unary factor contributions for assigned variables.
+        total += math.log(unary_scores[var][value])  # Use logs to avoid underflow and make products additive.
+    for left, right in zip(beam_variables[:-1], beam_variables[1:]):  # Add pair factors whose variables are both assigned.
+        if left in assignment and right in assignment:  # Check whether the adjacent pair is complete.
+            total += math.log(pair_score(assignment[left], assignment[right]))  # Add the log pair factor.
+    return total  # Return the partial log weight.
+def beam_search(width):  # Run beam search with a specified beam width.
+    beam = [({}, 0.0)]  # Start with the empty assignment and log weight zero.
+    history = []  # Store every layer's kept assignments.
+    for var in beam_variables:  # Extend one variable per layer.
+        candidates = []  # Collect all one-step extensions.
+        for assignment, _ in beam:  # Expand each currently kept partial assignment.
+            for value in beam_domain:  # Try every value for the next variable.
+                new_assignment = dict(assignment)  # Copy the partial assignment.
+                new_assignment[var] = value  # Add the candidate value.
+                candidates.append((new_assignment, partial_log_weight(new_assignment)))  # Score the extended assignment.
+        candidates.sort(key=lambda item: item[1], reverse=True)  # Rank candidates by descending log weight.
+        beam = candidates[:width]  # Keep only the top K partial assignments.
+        history.append([(dict(a), score) for a, score in beam])  # Save a snapshot of this layer.
+    return beam[0], history  # Return the best final assignment and all layer snapshots.
+beam_results = {}  # Store results for multiple beam widths.
+for width in [1, 2, 50]:  # Compare greedy, narrow beam, and effectively exhaustive search.
+    best, history = beam_search(width)  # Run beam search at this width.
+    beam_results[width] = (best, history)  # Store the best assignment and history.
+    print("K=", width, "best=", best[0], "weight=", round(math.exp(best[1]), 3))  # Print the final product weight.
+plt.figure(figsize=(6, 4))  # Create a beam-width comparison plot.
+plt.bar([str(k) for k in beam_results], [math.exp(beam_results[k][0][1]) for k in beam_results], color=["#999999", "#4c78a8", "#2ecc71"])  # Plot final weights.
+plt.xlabel("beam width K")  # Label the horizontal axis.
+plt.ylabel("final assignment weight")  # Label the vertical axis.
+plt.title("A4 beam size trades speed for solution quality")  # Add the plot title.
+plt.tight_layout()  # Fit the chart neatly.
+plt.show()  # Display the result.
+```
+
+▶ What you'll see: the greedy beam $K=1$ can commit too early. A wider beam keeps alternatives alive, often finding a higher-weight final assignment at the cost of scoring more candidates.
+
+#### A5. ICM vs. Gibbs on a loopy factor graph
+
+The final advanced example uses a small binary image-denoising grid. Each pixel has a noisy observed value. Unary factors prefer matching the observation; pairwise factors prefer neighboring pixels to be smooth. ICM greedily takes the best local value; Gibbs samples from the local distribution.
+
+```python
+true_grid = np.array([[0, 0, 0, 1, 1], [0, 0, 1, 1, 1], [0, 0, 1, 1, 1], [0, 0, 0, 1, 1], [0, 0, 0, 1, 1]])  # Define a simple clean binary image.
+noise_mask = np.array([[0, 0, 1, 0, 0], [0, 1, 0, 0, 0], [0, 0, 0, 1, 0], [0, 0, 0, 0, 0], [1, 0, 0, 0, 0]])  # Choose deterministic flipped pixels.
+observed_grid = np.abs(true_grid - noise_mask)  # Create the noisy observation by flipping selected bits.
+height, width = observed_grid.shape  # Store grid dimensions for loops.
+def grid_neighbors(r, c):  # List four-neighborhood coordinates inside the image.
+    candidates = [(r - 1, c), (r + 1, c), (r, c - 1), (r, c + 1)]  # Propose up, down, left, and right neighbors.
+    return [(rr, cc) for rr, cc in candidates if 0 <= rr < height and 0 <= cc < width]  # Keep only valid grid cells.
+def unary_grid_factor(r, c, value):  # Score how well a latent pixel matches the noisy observation.
+    return 2.4 if value == observed_grid[r, c] else 0.7  # Prefer the observed bit but allow disagreement.
+def local_grid_weight(state, r, c, value):  # Compute local factor product for assigning one pixel.
+    weight = unary_grid_factor(r, c, value)  # Start with the unary observation factor.
+    for rr, cc in grid_neighbors(r, c):  # Include every neighboring smoothness factor.
+        weight *= same_or_smooth(value, state[rr, cc])  # Multiply by pairwise compatibility with the current neighbor value.
+    return weight  # Return the local conditional weight.
+def total_grid_log_weight(state):  # Compute the full grid log weight for monitoring.
+    total = 0.0  # Start with zero log weight.
+    for r in range(height):  # Visit every row.
+        for c in range(width):  # Visit every column.
+            total += math.log(unary_grid_factor(r, c, state[r, c]))  # Add each unary factor once.
+            for rr, cc in [(r + 1, c), (r, c + 1)]:  # Add only down and right pair factors to avoid double counting.
+                if 0 <= rr < height and 0 <= cc < width:  # Keep valid neighbor coordinates.
+                    total += math.log(same_or_smooth(state[r, c], state[rr, cc]))  # Add the pairwise smoothness factor.
+    return total  # Return the complete log weight.
+def run_icm(initial_state, sweeps=8):  # Run greedy iterated conditional modes.
+    state = initial_state.copy()  # Copy the starting image so the caller's array is unchanged.
+    weights = []  # Track full log weight after each sweep.
+    for sweep in range(sweeps):  # Repeat coordinate-wise greedy updates.
+        for r in range(height):  # Visit rows in deterministic raster order.
+            for c in range(width):  # Visit columns in deterministic raster order.
+                scores = {value: local_grid_weight(state, r, c, value) for value in [0, 1]}  # Score both binary labels locally.
+                state[r, c] = max(scores, key=lambda value: (scores[value], -value))  # Choose the locally best label.
+        weights.append(total_grid_log_weight(state))  # Record the full objective after the sweep.
+    return state, weights  # Return the final greedy state and objective history.
+def run_gibbs(initial_state, sweeps=8, temperature=1.0):  # Run stochastic Gibbs sampling updates.
+    state = initial_state.copy()  # Copy the starting image so sampling is isolated.
+    weights = []  # Track full log weight after each sweep.
+    for sweep in range(sweeps):  # Repeat stochastic coordinate sweeps.
+        for r in range(height):  # Visit rows in deterministic order for reproducibility.
+            for c in range(width):  # Visit columns in deterministic order.
+                raw = np.array([local_grid_weight(state, r, c, value) for value in [0, 1]], dtype=float)  # Compute local weights for labels 0 and 1.
+                adjusted = raw ** (1.0 / temperature)  # Apply temperature to control randomness.
+                probs = adjusted / adjusted.sum()  # Normalize weights into probabilities.
+                state[r, c] = np.random.choice([0, 1], p=probs)  # Sample the next label from the Gibbs conditional.
+        weights.append(total_grid_log_weight(state))  # Record the full objective after this stochastic sweep.
+    return state, weights  # Return the sampled final state and objective history.
+icm_state, icm_weights = run_icm(observed_grid, sweeps=8)  # Run greedy denoising from the noisy image.
+gibbs_state, gibbs_weights = run_gibbs(observed_grid, sweeps=8, temperature=1.4)  # Run stochastic denoising from the same image.
+fig, axes = plt.subplots(1, 4, figsize=(10, 3))  # Create side-by-side image panels.
+for ax, grid, title in zip(axes, [true_grid, observed_grid, icm_state, gibbs_state], ["true", "observed", "ICM", "Gibbs"]):  # Pair each panel with its grid and title.
+    ax.imshow(grid, cmap="gray_r", vmin=0, vmax=1)  # Show binary labels as black and white cells.
+    ax.set_title(title)  # Label the panel.
+    ax.set_xticks([])  # Hide x ticks for cleaner image display.
+    ax.set_yticks([])  # Hide y ticks for cleaner image display.
+plt.tight_layout()  # Fit panels neatly.
+plt.show()  # Display the denoising comparison.
+plt.figure(figsize=(6, 3))  # Create an objective-history figure.
+plt.plot(icm_weights, marker="o", label="ICM")  # Plot greedy objective over sweeps.
+plt.plot(gibbs_weights, marker="o", label="Gibbs")  # Plot stochastic objective over sweeps.
+plt.xlabel("sweep")  # Label the horizontal axis.
+plt.ylabel("log weight")  # Label the vertical axis.
+plt.title("A5 local updates on a loopy factor graph")  # Add the plot title.
+plt.legend()  # Show method labels.
+plt.tight_layout()  # Fit the plot neatly.
+plt.show()  # Display the objective curves.
+```
+
+▶ What you'll see: ICM typically improves quickly and then stops changing because every single pixel is locally optimal. Gibbs may move down temporarily because it samples, but that randomness can help it explore alternatives in loopy graphs.
+
+### Interactive Experiment
+
+Toggle dynamic ordering and forward checking to see how the number of recursive calls and backtracks changes on the same map-coloring CSP.
+
+```python
+try:  # Try to import ipywidgets for a live notebook control.
+    from ipywidgets import interact, Checkbox  # Import lightweight widgets for interactive toggles.
+    WIDGETS_AVAILABLE = True  # Record that the interactive version can be displayed.
+except Exception:  # Fall back gracefully outside notebook environments.
+    interact = None  # Store a sentinel for the missing interact function.
+    Checkbox = None  # Store a sentinel for the missing Checkbox class.
+    WIDGETS_AVAILABLE = False  # Record that static fallback output should be used.
+def experiment(use_ordering=True, use_forward_checking=True):  # Define one experiment run controlled by widget booleans.
+    solution, stats, _, _ = solve_backtracking(map_nodes, map_edges, map_domains, map_constraints, use_heuristics=use_ordering, use_forward=use_forward_checking)  # Run the solver with selected options.
+    print("use_ordering =", use_ordering)  # Print whether MCV and LCV were enabled.
+    print("use_forward_checking =", use_forward_checking)  # Print whether forward checking was enabled.
+    print("solution =", solution)  # Print the found coloring.
+    print("stats =", stats)  # Print recursive calls, backtracks, and prunes.
+    plt.figure(figsize=(5, 3))  # Create a compact metrics plot.
+    plt.bar(list(stats.keys()), list(stats.values()), color=["#4c78a8", "#f58518", "#54a24b"])  # Plot the three counters.
+    plt.ylabel("count")  # Label the vertical axis.
+    plt.title("Interactive CSP search effort")  # Add a plot title.
+    plt.tight_layout()  # Fit the chart neatly.
+    plt.show()  # Display the chart.
+if WIDGETS_AVAILABLE:  # Use live controls when the notebook environment supports widgets.
+    interact(experiment, use_ordering=Checkbox(value=True, description="MCV+LCV ordering"), use_forward_checking=Checkbox(value=True, description="forward checking"))  # Display two toggles linked to the experiment.
+else:  # Use a deterministic fallback when widgets are unavailable.
+    experiment(use_ordering=True, use_forward_checking=True)  # Run the default enabled-heuristics experiment once.
+```
+
+▶ What you'll see: disabling ordering or forward checking usually increases recursive calls and/or backtracks. The exact counters are less important than the direction: better variable/value choices and early domain pruning shrink the effective search tree.

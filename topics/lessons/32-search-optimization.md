@@ -361,6 +361,86 @@ draw_grid(grid, start, goal, title=f"Raw problem: {PROBLEM}")  # Plot the chosen
 
 ▶ What you'll see: the raw grid before search; walls are black, weighted mud cells are brown when present, start is blue, and goal is purple.
 
+### 🟢 Basics (warm-up)
+
+#### B1. List valid neighbors of one grid cell
+
+Goal: list the legal four-neighbor moves from one grid cell while rejecting walls and out-of-bounds cells.
+
+```python
+basic_grid, basic_start, basic_goal = make_grid(3, 3, walls=[(1, 2)], start=(0, 0), goal=(2, 2))  # Build a tiny map so one blocked neighbor is easy to inspect.
+basic_cell = (1, 1)  # Choose the center cell because it has four possible directions before filtering.
+draw_grid(basic_grid, basic_start, basic_goal, current=basic_cell, title="B1 setup: inspect neighbors of the center cell")  # Highlight the cell whose successors we will compute.
+```
+
+▶ What you'll see: a 3×3 grid with one black wall next to the center cell.
+
+```python
+basic_neighbors = list(grid_neighbors(basic_grid, basic_cell))  # Ask the shared helper to keep only in-bounds, non-wall successors.
+print("Valid neighbors:", basic_neighbors)  # Print the surviving cells so the filtering result is explicit.
+draw_grid(basic_grid, basic_start, basic_goal, frontier=basic_neighbors, current=basic_cell, title="B1 result: valid neighbors in yellow")  # Color valid neighbors yellow so the list matches the picture.
+```
+
+▶ What you'll see: three valid neighbors, with the wall excluded from the yellow cells.
+
+👀 **Takeaway:** successor generation is just local filtering: try candidate moves, then keep only legal states.
+
+#### B2. Compare one FIFO queue pop with one LIFO stack pop
+
+Goal: see how the same frontier order produces different next states for BFS and DFS.
+
+```python
+basic_queue = deque(["A", "B", "C"])  # Use a deque because BFS removes the oldest frontier item first.
+basic_stack = ["A", "B", "C"]  # Use a list because DFS removes the newest frontier item first.
+print("Queue before pop:", list(basic_queue))  # Show the BFS frontier before its first removal.
+print("Stack before pop:", basic_stack)  # Show the DFS frontier before its first removal.
+```
+
+▶ What you'll see: both frontiers contain the same labels in the same displayed order.
+
+```python
+basic_queue_next = basic_queue.popleft()  # Pop from the left because FIFO means first-in-first-out.
+basic_stack_next = basic_stack.pop()  # Pop from the right because LIFO means last-in-first-out.
+print("Queue popped:", basic_queue_next, "remaining:", list(basic_queue))  # Show that BFS chooses the oldest label A.
+print("Stack popped:", basic_stack_next, "remaining:", basic_stack)  # Show that DFS chooses the newest label C.
+```
+
+▶ What you'll see: the queue pops `A`, while the stack pops `C`.
+
+👀 **Takeaway:** BFS and DFS differ at the frontier primitive: FIFO spreads outward, while LIFO dives along the newest branch.
+
+#### B3. Mark one visited node to avoid revisiting a tiny graph
+
+Goal: mark one explored node so a cycle does not send search back to a state already handled.
+
+```python
+basic_nodes = ["A", "B", "C"]  # Name three states so the cycle is small enough to read at a glance.
+basic_edges = [("A", "B", 1), ("B", "C", 1), ("C", "A", 1)]  # Add a directed cycle so revisiting is possible.
+basic_pos = {"A": (0, 1), "B": (1, 0), "C": (2, 1)}  # Fix node positions so before-after plots are visually comparable.
+draw_graph(basic_nodes, basic_edges, basic_pos, title="B3 setup: tiny graph with a cycle")  # Draw the graph before any node is marked visited.
+```
+
+▶ What you'll see: a three-node directed cycle `A → B → C → A`.
+
+```python
+basic_visited = {"A"}  # Mark A visited because its outgoing edge has already been expanded.
+draw_graph(basic_nodes, basic_edges, basic_pos, explored=basic_visited, current="A", title="B3 mark visited: A is explored")  # Color A as explored so the visited set becomes visible.
+print("Visited set:", basic_visited)  # Print the exact set that future expansions will check.
+```
+
+▶ What you'll see: node `A` is highlighted as the current explored node, and the visited set contains `A`.
+
+```python
+basic_candidate = "A"  # Simulate following the cycle edge from C back to A.
+if basic_candidate in basic_visited:  # Check membership before pushing because visited nodes should not be expanded twice.
+    print("Skip", basic_candidate, "because it is already visited")  # Explain the skip so the anti-cycle rule is concrete.
+draw_graph(basic_nodes, basic_edges, basic_pos, explored=basic_visited, current="C", title="B3 result: C does not re-add visited A")  # Show that A stays explored instead of reentering the frontier.
+```
+
+▶ What you'll see: the attempted return to `A` is skipped, so the cycle does not cause repeated work.
+
+👀 **Takeaway:** a visited set turns cyclic graphs into finite work by preventing already-expanded states from reentering the frontier.
+
 ### 🟡 Easy Examples
 
 #### E1. BFS on an unweighted grid maze

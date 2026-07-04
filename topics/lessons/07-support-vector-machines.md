@@ -338,6 +338,99 @@ plt.show()  # Render the raw-data plot.
 
 ---
 
+### 🟢 Basics (warm-up)
+
+#### B1. Compute one SVM score $w^Tx-b$ and its sign
+
+Goal: evaluate one point with a fixed separator before fitting any model.
+
+```python
+w_b1 = np.array([1.0, -0.5])  # Choose a separator direction so the score is a simple dot product.
+b_b1 = 0.25  # Choose an offset so the decision boundary is shifted away from the origin.
+x_b1 = np.array([2.0, 1.0])  # Choose one point so we can classify exactly one example.
+```
+
+▶ What you'll see: no output yet; these are the three ingredients of the SVM score.
+
+```python
+score_b1 = w_b1 @ x_b1 - b_b1  # Compute w^T x - b because SVMs classify by the score's sign.
+pred_b1 = np.sign(score_b1)  # Convert the score into class -1 or +1.
+print(f"score = {score_b1:.2f}, predicted class = {int(pred_b1)}")  # Print the raw score and its sign.
+```
+
+▶ What you'll see: a positive score, so the point lands on the +1 side of the boundary.
+
+👀 **Takeaway:** the SVM prediction starts with one signed score; margin ideas come after that.
+
+#### B2. Check one margin constraint $y(w^Tx-b)\ge 1$
+
+Goal: test whether one labeled point is not just correct, but outside the margin.
+
+```python
+w_b2 = np.array([1.0, 0.0])  # Use a vertical boundary so the margin lines are easy to see.
+b_b2 = 0.0  # Put the separating boundary at x1 = 0.
+x_b2 = np.array([1.4, 0.6])  # Choose one positive point to test against the margin.
+y_b2 = 1  # Give the point its true SVM label.
+```
+
+▶ What you'll see: no output yet; this sets up one labeled margin check.
+
+```python
+margin_value_b2 = y_b2 * (w_b2 @ x_b2 - b_b2)  # Multiply by y so correct-side points have positive margin value.
+passes_b2 = margin_value_b2 >= 1  # Check the canonical hard-margin requirement.
+print(f"y(w^T x - b) = {margin_value_b2:.2f}; passes margin? {passes_b2}")  # Report the constraint result.
+```
+
+▶ What you'll see: the value is above 1, so this point satisfies the margin constraint.
+
+```python
+plt.figure(figsize=(5, 4))  # Create a compact sketch for the point and margin lines.
+plt.axvline(0, color="black", linewidth=2, label="boundary: score 0")  # Draw w^T x - b = 0.
+plt.axvline(1, color="black", linestyle="--", label="positive margin: score 1")  # Draw the +1 margin line.
+plt.scatter([x_b2[0]], [x_b2[1]], c="tab:orange", edgecolors="k", s=80, label="tested +1 point")  # Plot the one checked point.
+plt.xlim(-0.5, 2.0)  # Keep the sketch focused on the boundary and margin.
+plt.ylim(0.0, 1.2)  # Keep the point visible with a little vertical room.
+plt.legend()  # Label the boundary, margin, and point.
+plt.show()  # Render the margin sketch.
+```
+
+▶ What you'll see: the point sits to the right of the dashed +1 margin line.
+
+👀 **Takeaway:** correct classification is score sign; margin satisfaction asks whether the signed margin reaches at least 1.
+
+#### B3. Evaluate one Gaussian kernel value $K(x,z)$
+
+Goal: compute one RBF similarity number between two points.
+
+```python
+x_b3 = np.array([0.0, 0.0])  # Choose the first point as a simple reference.
+z_b3 = np.array([1.0, 1.0])  # Choose a second point one diagonal step away.
+sigma_b3 = 1.0  # Use sigma to control how quickly similarity decays with distance.
+```
+
+▶ What you'll see: no output yet; these are the two points and the RBF length scale.
+
+```python
+squared_distance_b3 = np.sum((x_b3 - z_b3) ** 2)  # Compute ||x-z||^2 because the Gaussian kernel depends on squared distance.
+kernel_b3 = np.exp(-squared_distance_b3 / (2 * sigma_b3 ** 2))  # Apply exp(-distance^2 / (2 sigma^2)).
+print(f"squared distance = {squared_distance_b3:.2f}")  # Print the distance term before exponentiating.
+print(f"K(x, z) = {kernel_b3:.3f}")  # Print the final similarity value.
+```
+
+▶ What you'll see: the kernel value is between 0 and 1, with closer points giving larger values.
+
+```python
+closer_z_b3 = np.array([0.2, 0.2])  # Choose a nearby comparison point to isolate the effect of distance.
+closer_kernel_b3 = np.exp(-np.sum((x_b3 - closer_z_b3) ** 2) / (2 * sigma_b3 ** 2))  # Reuse the same RBF formula for the closer point.
+print(f"K(x, closer z) = {closer_kernel_b3:.3f}")  # Print the larger similarity for the closer point.
+```
+
+▶ What you'll see: the closer point has a much larger kernel similarity.
+
+👀 **Takeaway:** an RBF kernel is a distance-to-similarity converter; nearby points behave more alike.
+
+---
+
 ### 🟡 Easy
 
 #### E1. [pen-and-paper] Compute margin width for a candidate separator

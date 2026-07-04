@@ -210,243 +210,7 @@ $$
 
 ## 3. Worked Examples
 
-### 🟡 Easy
-
-### E1. Hand compute discounted utility on a 4-step path
-
-**Problem.** A path has rewards
-
-$$
-r_1=5,\qquad r_2=-2,\qquad r_3=3,\qquad r_4=10
-$$
-
-and discount factor $\gamma=0.8$. Compute
-
-$$
-u(s_0,s_1,s_2,s_3,s_4)=\sum_{i=1}^{4}\gamma^{i-1}r_i.
-$$
-
-**Step-by-step solution.** Write the discounted utility:
-
-$$
-u=r_1+\gamma r_2+\gamma^2r_3+\gamma^3r_4.
-$$
-
-Substitute the numbers:
-
-$$
-u=5+(0.8)(-2)+(0.8)^2(3)+(0.8)^3(10).
-$$
-
-Compute discount powers:
-
-$$
-(0.8)^2=0.64,\qquad (0.8)^3=0.512.
-$$
-
-Compute each term:
-
-$$
-5=5,\qquad (0.8)(-2)=-1.6,\qquad (0.64)(3)=1.92,\qquad (0.512)(10)=5.12.
-$$
-
-Add:
-
-$$
-u=5-1.6+1.92+5.12.
-$$
-
-Combine left to right:
-
-$$
-5-1.6=3.4,\qquad 3.4+1.92=5.32,\qquad 5.32+5.12=10.44.
-$$
-
-**Boxed answer.**
-
-$$
-\boxed{u=10.44.}
-$$
-
----
-
-### E2. One Bellman value-iteration sweep by hand
-
-**Problem.** Consider a deterministic line grid
-
-$$
-A\;--\;B\;--\;C\;--\;G,
-$$
-
-where $G$ is terminal. Actions are Left and Right; moving left from $A$ keeps the agent at $A$. Ordinary moves have reward $-1$, entering $G$ has reward $+10$, $\gamma=0.9$, and
-
-$$
-V^{(0)}(A)=V^{(0)}(B)=V^{(0)}(C)=V^{(0)}(G)=0.
-$$
-
-Compute one value-iteration sweep.
-
-**Step-by-step solution.** The update is
-
-$$
-V^{(1)}(s)=\max_a\sum_{s'}T(s,a,s')\left[\operatorname{Reward}(s,a,s')+\gamma V^{(0)}(s')\right].
-$$
-
-Transitions are deterministic, so each $Q$ candidate is immediate reward plus discounted old successor value.
-
-For $A$:
-
-$$
-Q^{(0)}(A,\text{Left})=-1+0.9V^{(0)}(A)=-1+0=-1,
-$$
-
-$$
-Q^{(0)}(A,\text{Right})=-1+0.9V^{(0)}(B)=-1+0=-1.
-$$
-
-Therefore
-
-$$
-V^{(1)}(A)=\max\{-1,-1\}=-1.
-$$
-
-For $B$:
-
-$$
-Q^{(0)}(B,\text{Left})=-1+0.9V^{(0)}(A)=-1,
-$$
-
-$$
-Q^{(0)}(B,\text{Right})=-1+0.9V^{(0)}(C)=-1.
-$$
-
-Thus
-
-$$
-V^{(1)}(B)=\max\{-1,-1\}=-1.
-$$
-
-For $C$:
-
-$$
-Q^{(0)}(C,\text{Left})=-1+0.9V^{(0)}(B)=-1,
-$$
-
-$$
-Q^{(0)}(C,\text{Right})=10+0.9V^{(0)}(G)=10.
-$$
-
-Thus
-
-$$
-V^{(1)}(C)=\max\{-1,10\}=10.
-$$
-
-For terminal $G$:
-
-$$
-V^{(1)}(G)=0.
-$$
-
-**Boxed answer.**
-
-$$
-\boxed{V^{(1)}(A)=-1,\quad V^{(1)}(B)=-1,\quad V^{(1)}(C)=10,\quad V^{(1)}(G)=0.}
-$$
-
----
-
-### E3. Policy evaluation for a fixed "always right if possible" policy
-
-**Problem.** In the same line grid, evaluate
-
-$$
-\pi(A)=\text{Right},\qquad \pi(B)=\text{Right},\qquad \pi(C)=\text{Right}.
-$$
-
-Write the Bellman equations and compute the first two policy-evaluation sweeps from zero.
-
-**Step-by-step solution.** The Bellman expectation equation is
-
-$$
-V_\pi(s)=\sum_{s'}T(s,\pi(s),s')\left[\operatorname{Reward}(s,\pi(s),s')+\gamma V_\pi(s')\right].
-$$
-
-Because the policy always moves right:
-
-$$
-V_\pi(A)=-1+0.9V_\pi(B),
-$$
-
-$$
-V_\pi(B)=-1+0.9V_\pi(C),
-$$
-
-$$
-V_\pi(C)=10+0.9V_\pi(G),
-$$
-
-and
-
-$$
-V_\pi(G)=0.
-$$
-
-Initialize $V^{(0)}=0$.
-
-Sweep 1:
-
-$$
-V^{(1)}(A)=-1+0.9V^{(0)}(B)=-1,
-$$
-
-$$
-V^{(1)}(B)=-1+0.9V^{(0)}(C)=-1,
-$$
-
-$$
-V^{(1)}(C)=10+0.9V^{(0)}(G)=10,
-$$
-
-$$
-V^{(1)}(G)=0.
-$$
-
-Sweep 2:
-
-$$
-V^{(2)}(A)=-1+0.9V^{(1)}(B)=-1+0.9(-1)=-1.9,
-$$
-
-$$
-V^{(2)}(B)=-1+0.9V^{(1)}(C)=-1+0.9(10)=8,
-$$
-
-$$
-V^{(2)}(C)=10+0.9V^{(1)}(G)=10,
-$$
-
-$$
-V^{(2)}(G)=0.
-$$
-
-The exact values can be solved backward:
-
-$$
-V_\pi(C)=10,\qquad V_\pi(B)=-1+0.9(10)=8,
-$$
-
-$$
-V_\pi(A)=-1+0.9(8)=6.2.
-$$
-
-**Boxed answer.**
-
-$$
-\boxed{V^{(1)}=(-1,-1,10,0),\quad V^{(2)}=(-1.9,8,10,0),\quad V_\pi=(6.2,8,10,0).}
-$$
-
-### (For coded examples) Setup
+### Setup
 
 The following cells run top-to-bottom. They implement value iteration, policy iteration, SARSA, and Q-learning from scratch on tabular gridworlds.
 
@@ -694,7 +458,322 @@ plot_values_policy(active_env, zero_values, title=f"Initial values for DATA_SOUR
 
 ---
 
-### E4. Value iteration with heatmaps
+
+### 🟢 Basics (warm-up)
+
+#### B1. Look up the immediate reward for one transition
+
+Goal: read one $\operatorname{Reward}(s,a,s')$ entry without doing any planning yet.
+
+```python
+transition_rewards = {("s", "go", "s'"): 7}  # Store one known transition reward so the lookup is unambiguous.
+state, action, successor = "s", "go", "s'"  # Name the transition pieces so they match Reward(s,a,s').
+reward = transition_rewards[(state, action, successor)]  # Look up only the immediate reward for this exact transition.
+print(f"Reward({state}, {action}, {successor}) = {reward}")  # Print the primitive MDP reward entry.
+```
+
+▶ What you'll see: the transition `s --go--> s'` has immediate reward `7`.
+
+```python
+print(f"{state} --{action} / reward {reward}--> {successor}")  # Show the same lookup as a tiny labeled edge.
+```
+
+▶ What you'll see: a one-edge transition diagram with the reward written on the edge.
+
+👀 **Takeaway:** a reward lookup is local; it scores one transition before any future value is considered.
+
+---
+
+#### B2. Compute one 2-step discounted return
+
+Goal: combine one immediate reward with one discounted future reward.
+
+```python
+r1 = 2  # Store the first reward because it is received immediately.
+r2 = 4  # Store the second reward because it arrives one step later.
+gamma = 0.5  # Store the discount factor so later rewards count less.
+discounted_return = r1 + gamma * r2  # Add immediate reward plus discounted second reward.
+print(f"u = {r1} + {gamma} * {r2} = {discounted_return}")  # Print the two-step return calculation.
+```
+
+▶ What you'll see: the return is `4.0`, because the future reward `4` is halved before adding it.
+
+```python
+print(f"s0 --r1={r1}--> s1 --r2={r2}, gamma*r2={gamma * r2}--> s2")  # Show where each reward enters the two-edge chain.
+```
+
+▶ What you'll see: the two-edge chain separates the immediate reward from the discounted second reward.
+
+👀 **Takeaway:** discounting leaves the first reward unchanged and shrinks rewards that arrive later.
+
+---
+
+#### B3. Pick the greedy action from one Q-value row
+
+Goal: choose $\arg\max_a Q(s,a)$ from one state's action values.
+
+```python
+actions = ["left", "right", "wait"]  # List the legal actions for one state.
+q_values = np.array([1.2, 2.5, 0.7])  # Store one Q-value row in the same order as the actions.
+best_index = int(np.argmax(q_values))  # Find the position of the largest action value.
+best_action = actions[best_index]  # Convert the winning position back into an action name.
+print(f"greedy action = {best_action}, Q = {q_values[best_index]:.1f}")  # Print the argmax decision.
+```
+
+▶ What you'll see: `right` is selected because its Q-value is the largest.
+
+```python
+colors = ["orange" if i == best_index else "gray" for i in range(len(actions))]  # Highlight only the argmax bar.
+fig, ax = plt.subplots(figsize=(4.5, 3))  # Create a small action-value chart.
+ax.bar(actions, q_values, color=colors)  # Plot one bar per action so the maximum is visible.
+ax.set_title("B3 greedy action from one Q row")  # Label the chart with the decision being made.
+ax.set_ylabel("Q(s, a)")  # Label the vertical axis as action value.
+plt.show()  # Render the highlighted argmax chart.
+```
+
+▶ What you'll see: the `right` bar is tallest and highlighted in orange.
+
+👀 **Takeaway:** a greedy policy does not average actions; it picks the action with the largest current Q-value.
+
+---
+
+### 🟡 Easy
+
+#### E1. Hand compute discounted utility on a 4-step path
+
+**Problem.** A path has rewards
+
+$$
+r_1=5,\qquad r_2=-2,\qquad r_3=3,\qquad r_4=10
+$$
+
+and discount factor $\gamma=0.8$. Compute
+
+$$
+u(s_0,s_1,s_2,s_3,s_4)=\sum_{i=1}^{4}\gamma^{i-1}r_i.
+$$
+
+**Step-by-step solution.** Write the discounted utility:
+
+$$
+u=r_1+\gamma r_2+\gamma^2r_3+\gamma^3r_4.
+$$
+
+Substitute the numbers:
+
+$$
+u=5+(0.8)(-2)+(0.8)^2(3)+(0.8)^3(10).
+$$
+
+Compute discount powers:
+
+$$
+(0.8)^2=0.64,\qquad (0.8)^3=0.512.
+$$
+
+Compute each term:
+
+$$
+5=5,\qquad (0.8)(-2)=-1.6,\qquad (0.64)(3)=1.92,\qquad (0.512)(10)=5.12.
+$$
+
+Add:
+
+$$
+u=5-1.6+1.92+5.12.
+$$
+
+Combine left to right:
+
+$$
+5-1.6=3.4,\qquad 3.4+1.92=5.32,\qquad 5.32+5.12=10.44.
+$$
+
+**Boxed answer.**
+
+$$
+\boxed{u=10.44.}
+$$
+
+---
+
+#### E2. One Bellman value-iteration sweep by hand
+
+**Problem.** Consider a deterministic line grid
+
+$$
+A\;--\;B\;--\;C\;--\;G,
+$$
+
+where $G$ is terminal. Actions are Left and Right; moving left from $A$ keeps the agent at $A$. Ordinary moves have reward $-1$, entering $G$ has reward $+10$, $\gamma=0.9$, and
+
+$$
+V^{(0)}(A)=V^{(0)}(B)=V^{(0)}(C)=V^{(0)}(G)=0.
+$$
+
+Compute one value-iteration sweep.
+
+**Step-by-step solution.** The update is
+
+$$
+V^{(1)}(s)=\max_a\sum_{s'}T(s,a,s')\left[\operatorname{Reward}(s,a,s')+\gamma V^{(0)}(s')\right].
+$$
+
+Transitions are deterministic, so each $Q$ candidate is immediate reward plus discounted old successor value.
+
+For $A$:
+
+$$
+Q^{(0)}(A,\text{Left})=-1+0.9V^{(0)}(A)=-1+0=-1,
+$$
+
+$$
+Q^{(0)}(A,\text{Right})=-1+0.9V^{(0)}(B)=-1+0=-1.
+$$
+
+Therefore
+
+$$
+V^{(1)}(A)=\max\{-1,-1\}=-1.
+$$
+
+For $B$:
+
+$$
+Q^{(0)}(B,\text{Left})=-1+0.9V^{(0)}(A)=-1,
+$$
+
+$$
+Q^{(0)}(B,\text{Right})=-1+0.9V^{(0)}(C)=-1.
+$$
+
+Thus
+
+$$
+V^{(1)}(B)=\max\{-1,-1\}=-1.
+$$
+
+For $C$:
+
+$$
+Q^{(0)}(C,\text{Left})=-1+0.9V^{(0)}(B)=-1,
+$$
+
+$$
+Q^{(0)}(C,\text{Right})=10+0.9V^{(0)}(G)=10.
+$$
+
+Thus
+
+$$
+V^{(1)}(C)=\max\{-1,10\}=10.
+$$
+
+For terminal $G$:
+
+$$
+V^{(1)}(G)=0.
+$$
+
+**Boxed answer.**
+
+$$
+\boxed{V^{(1)}(A)=-1,\quad V^{(1)}(B)=-1,\quad V^{(1)}(C)=10,\quad V^{(1)}(G)=0.}
+$$
+
+---
+
+#### E3. Policy evaluation for a fixed "always right if possible" policy
+
+**Problem.** In the same line grid, evaluate
+
+$$
+\pi(A)=\text{Right},\qquad \pi(B)=\text{Right},\qquad \pi(C)=\text{Right}.
+$$
+
+Write the Bellman equations and compute the first two policy-evaluation sweeps from zero.
+
+**Step-by-step solution.** The Bellman expectation equation is
+
+$$
+V_\pi(s)=\sum_{s'}T(s,\pi(s),s')\left[\operatorname{Reward}(s,\pi(s),s')+\gamma V_\pi(s')\right].
+$$
+
+Because the policy always moves right:
+
+$$
+V_\pi(A)=-1+0.9V_\pi(B),
+$$
+
+$$
+V_\pi(B)=-1+0.9V_\pi(C),
+$$
+
+$$
+V_\pi(C)=10+0.9V_\pi(G),
+$$
+
+and
+
+$$
+V_\pi(G)=0.
+$$
+
+Initialize $V^{(0)}=0$.
+
+Sweep 1:
+
+$$
+V^{(1)}(A)=-1+0.9V^{(0)}(B)=-1,
+$$
+
+$$
+V^{(1)}(B)=-1+0.9V^{(0)}(C)=-1,
+$$
+
+$$
+V^{(1)}(C)=10+0.9V^{(0)}(G)=10,
+$$
+
+$$
+V^{(1)}(G)=0.
+$$
+
+Sweep 2:
+
+$$
+V^{(2)}(A)=-1+0.9V^{(1)}(B)=-1+0.9(-1)=-1.9,
+$$
+
+$$
+V^{(2)}(B)=-1+0.9V^{(1)}(C)=-1+0.9(10)=8,
+$$
+
+$$
+V^{(2)}(C)=10+0.9V^{(1)}(G)=10,
+$$
+
+$$
+V^{(2)}(G)=0.
+$$
+
+The exact values can be solved backward:
+
+$$
+V_\pi(C)=10,\qquad V_\pi(B)=-1+0.9(10)=8,
+$$
+
+$$
+V_\pi(A)=-1+0.9(8)=6.2.
+$$
+
+**Boxed answer.**
+
+$$
+\boxed{V^{(1)}=(-1,-1,10,0),\quad V^{(2)}=(-1.9,8,10,0),\quad V_\pi=(6.2,8,10,0).}
+$$
+
+#### E4. Value iteration with heatmaps
 
 We solve `gridworld_small` with exact value iteration by slowing the algorithm down into a build↔see loop: initialize values, inspect one Bellman backup, run one full sweep, continue to convergence, then extract arrows.
 
@@ -771,7 +850,7 @@ plot_values_policy(gridworld_small, V_small, pi_small, title="E4 step (e): final
 
 ---
 
-### E5. One Q-learning update from experience
+#### E5. One Q-learning update from experience
 
 **Problem.** The agent observes
 
@@ -893,7 +972,7 @@ plt.show()  # Render the before-after visualization.
 
 ### 🔴 Advanced
 
-### A1. Value iteration vs. policy iteration at scale
+#### A1. Value iteration vs. policy iteration at scale
 
 ```python
 gamma = 0.95  # Use one discount factor for both algorithms.
@@ -983,7 +1062,7 @@ plt.show()  # Render the side-by-side final policies.
 
 ---
 
-### A2. Q-learning with epsilon-greedy exploration
+#### A2. Q-learning with epsilon-greedy exploration
 
 ```python
 Q_lava = defaultdict(float)  # Initialize the Q-table for the lava grid.
@@ -1053,7 +1132,7 @@ plot_values_policy(gridworld_lava, V_q_lava, pi_q_lava, title="A2 final Q-learni
 
 ---
 
-### A3. SARSA vs. Q-learning in a risky grid
+#### A3. SARSA vs. Q-learning in a risky grid
 
 ```python
 Q_rule_demo = defaultdict(float)  # Create a tiny Q-table for comparing update targets.
@@ -1104,7 +1183,7 @@ plot_values_policy(cliff_grid, V_q, pi_q, title="A3 Q-learning: greedier values 
 
 ---
 
-### A4. Failure case: $\gamma=1$ on a positive-reward cycle
+#### A4. Failure case: $\gamma=1$ on a positive-reward cycle
 
 This example violates the convergence condition: it has a positive reward cycle and no discounting.
 
@@ -1193,7 +1272,7 @@ Thus discounting makes the infinite-horizon value finite.
 
 ---
 
-### A5. Model-based Monte Carlo from sampled transitions
+#### A5. Model-based Monte Carlo from sampled transitions
 
 ```python
 def collect_random_logs(env, episodes=500, max_steps=50):  # Collect transition logs from random behavior.

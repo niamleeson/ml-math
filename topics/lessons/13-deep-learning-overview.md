@@ -1,0 +1,1340 @@
+# Deep Learning Overview (Neural Nets, CNN, RNN, RL)
+> **Source:** CS 229 · **Category:** Model · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> 📓 Runnable notebook section; an `.ipynb` will be generated.
+
+## 1. Overview
+
+Deep learning stacks differentiable layers so models learn features and predictors together. In this lesson, one tiny network will learn a nonlinear decision boundary by repeating forward pass → loss → backpropagation → update.
+
+**One-line intuition:** neural networks learn by composing many simple neurons, measuring the error, and pushing every weight in the direction that reduces that error.
+
+## 2. Key Idea
+
+A neuron first computes an affine score
+
+$$
+z_j^{[i]}=w_j^{[i]T}x+b_j^{[i]},
+$$
+
+then applies an activation $a_j^{[i]}=g(z_j^{[i]})$. Common activations are
+
+$$
+g(z)=\frac{1}{1+e^{-z}},\qquad g(z)=\frac{e^z-e^{-z}}{e^z+e^{-z}},\qquad g(z)=\max(0,z),\qquad g(z)=\max(\epsilon z,z).
+$$
+
+A small MLP composes these maps:
+
+```text
+Input x
+Hidden scores: z1 = x W1 + b1
+Hidden activations: a1 = tanh(z1) or ReLU(z1)
+Output score: z2 = a1 W2 + b2
+Probability: y_hat = sigmoid(z2)
+```
+
+For binary classification, cross-entropy is
+
+$$
+L(\hat y,y)=-\left[y\log(\hat y)+(1-y)\log(1-\hat y)\right].
+$$
+
+Backpropagation uses the chain rule:
+
+$$
+\frac{\partial L(z,y)}{\partial w}=\frac{\partial L(z,y)}{\partial a}\times\frac{\partial a}{\partial z}\times\frac{\partial z}{\partial w}.
+$$
+
+Gradient descent then updates weights by
+
+$$
+w\leftarrow w-\eta\frac{\partial L(z,y)}{\partial w}.
+$$
+
+```text
+Initialize weights.
+Repeat:
+  Forward pass: compute predictions.
+  Loss: compare predictions to labels.
+  Backward pass: compute gradients by the chain rule.
+  Update: subtract learning-rate-scaled gradients.
+```
+
+CNNs reuse local filters across space; the one-dimensional output size formula is
+
+$$
+N=\frac{W-F+2P}{S}+1.
+$$
+
+Batch normalization rescales a batch by
+
+$$
+x_i\leftarrow \gamma\frac{x_i-\mu_B}{\sqrt{\sigma_B^2+\epsilon}}+\beta.
+$$
+
+RNNs reuse weights over time; LSTMs add input, forget, output, and candidate gates so memory can persist. Reinforcement learning uses an MDP $(S,A,\{P_{sa}\},\gamma,R)$, value iteration applies
+
+$$
+V_{i+1}(s)=R(s)+\max_{a\in A}\left[\sum_{s'\in S}\gamma P_{sa}(s')V_i(s')\right],
+$$
+
+and Q-learning applies
+
+$$
+Q(s,a)\leftarrow Q(s,a)+\alpha\left[R(s,a,s')+\gamma\max_{a'}Q(s',a')-Q(s,a)\right].
+$$
+
+## 3. Hands-on Notebook
+
+### Setup
+
+Run this first. The install line is commented because Colab normally includes these packages; uncomment it only if a dependency is missing.
+
+```python
+# !pip -q install numpy matplotlib scikit-learn ipywidgets  # install the required scientific packages only when the runtime is missing them.
+import numpy as np  # use NumPy for arrays, gradients, and simulations.
+import matplotlib.pyplot as plt  # use Matplotlib for curves, decision boundaries, heatmaps, and images.
+from sklearn.datasets import make_moons, make_circles, make_blobs, make_classification, load_digits  # load synthetic and built-in datasets without network access.
+from sklearn.model_selection import train_test_split  # split examples into train and validation sets.
+from sklearn.preprocessing import StandardScaler  # standardize features so optimization is stable.
+from sklearn.metrics import accuracy_score, confusion_matrix  # evaluate classification results and mistakes.
+try:  # try to enable live Colab widgets.
+    from ipywidgets import interact, FloatSlider, IntSlider, Dropdown  # import widget controls for the experiment section.
+except ModuleNotFoundError:  # keep the notebook runnable if widgets are unavailable.
+    class _FallbackWidget:  # define a small replacement widget class.
+        def __init__(self, value=None, **kwargs):  # accept the same style of arguments as ipywidgets.
+            self.value = value  # store the default value for fallback execution.
+    FloatSlider = _FallbackWidget  # replace FloatSlider with the fallback holder.
+    IntSlider = _FallbackWidget  # replace IntSlider with the fallback holder.
+    Dropdown = _FallbackWidget  # replace Dropdown with the fallback holder.
+    def interact(function, **controls):  # define a fallback interact function.
+        values = {name: control.value for name, control in controls.items()}  # collect default control values.
+        return function(**values)  # run the function once with defaults.
+np.random.seed(229)  # seed older NumPy randomness for reproducibility.
+RNG = np.random.default_rng(229)  # create a modern reproducible random generator.
+plt.style.use("seaborn-v0_8-whitegrid")  # use a readable plotting style.
+EPS = 1e-9  # define a tiny constant for numerical stability.
+
+def sigmoid(z):  # define the sigmoid activation.
+    return 1.0 / (1.0 + np.exp(-np.clip(z, -50.0, 50.0)))  # clip inputs so exponentials do not overflow.
+
+def relu(z):  # define the ReLU activation.
+    return np.maximum(0.0, z)  # keep positive values and zero negative values.
+
+def relu_grad(z):  # define the ReLU derivative.
+    return (z > 0.0).astype(float)  # return one for active units and zero for inactive units.
+
+def bce(y_hat, y):  # define binary cross-entropy.
+    p = np.clip(y_hat, EPS, 1.0 - EPS)  # clip probabilities away from zero and one.
+    return float(-np.mean(y * np.log(p) + (1.0 - y) * np.log(1.0 - p)))  # average the per-example loss.
+
+def one_hot(y, classes):  # convert integer labels into one-hot rows.
+    Y = np.zeros((len(y), classes))  # allocate the target matrix.
+    Y[np.arange(len(y)), y.astype(int)] = 1.0  # place one in the correct class column.
+    return Y  # return one-hot labels.
+
+def softmax(logits):  # convert multiclass scores into probabilities.
+    shifted = logits - logits.max(axis=1, keepdims=True)  # subtract row maxima for stability.
+    exp_scores = np.exp(shifted)  # exponentiate shifted scores.
+    return exp_scores / exp_scores.sum(axis=1, keepdims=True)  # normalize each row.
+
+def make_xor(n=360, noise=0.16, seed=229):  # generate a noisy XOR dataset.
+    rng = np.random.default_rng(seed)  # create a local random generator.
+    X = rng.uniform(-1.25, 1.25, size=(n, 2))  # sample points in a square.
+    y = ((X[:, 0] * X[:, 1]) > 0.0).astype(int)  # label opposite diagonal quadrants as class one.
+    X = X + rng.normal(0.0, noise, size=X.shape)  # add Gaussian noise to make the task realistic.
+    return X, y  # return features and labels.
+
+def standardize(X):  # standardize a feature matrix.
+    scaler = StandardScaler()  # create a scaler object.
+    return scaler.fit_transform(X), scaler  # fit the scaler and return transformed data plus scaler.
+
+def load_deep_data(source="moons", seed=229):  # load one of the swappable 2-D datasets.
+    if source == "moons":  # choose interleaving moons.
+        X, y = make_moons(n_samples=360, noise=0.16, random_state=seed)  # generate noisy moons.
+        desc = "two noisy interleaving moons"  # describe the source.
+    elif source == "circles":  # choose concentric circles.
+        X, y = make_circles(n_samples=360, noise=0.08, factor=0.42, random_state=seed)  # generate rings.
+        desc = "concentric circles"  # describe the source.
+    elif source == "blobs":  # choose two Gaussian blobs.
+        X, y = make_blobs(n_samples=360, centers=2, cluster_std=1.35, random_state=seed)  # generate blobs.
+        desc = "two Gaussian blobs"  # describe the source.
+    elif source == "xor":  # choose noisy XOR quadrants.
+        X, y = make_xor(n=360, noise=0.16, seed=seed)  # generate XOR.
+        desc = "noisy XOR quadrants"  # describe the source.
+    else:  # reject unsupported names.
+        raise ValueError("DATA_SOURCE must be 'moons', 'circles', 'blobs', or 'xor'.")  # explain valid options.
+    X_scaled, scaler = standardize(X)  # standardize features for gradient descent.
+    return X_scaled, y.astype(int), scaler, desc  # return a consistent data bundle.
+
+def plot_binary_data(X, y, title="", ax=None):  # plot a two-class 2-D dataset.
+    ax = plt.gca() if ax is None else ax  # choose the current axes when none are supplied.
+    ax.scatter(X[:, 0], X[:, 1], c=y, cmap="coolwarm", s=38, edgecolor="white", linewidth=0.5, alpha=0.9)  # draw points colored by class.
+    ax.set_title(title)  # set the title.
+    ax.set_xlabel("feature 1")  # label the x-axis.
+    ax.set_ylabel("feature 2")  # label the y-axis.
+    return ax  # return axes for reuse.
+
+def plot_boundary(predict_fn, X, y, title="", ax=None):  # plot class-one probability and decision boundary.
+    ax = plt.gca() if ax is None else ax  # choose the current axes when needed.
+    x_min, x_max = X[:, 0].min() - 0.7, X[:, 0].max() + 0.7  # set horizontal grid bounds.
+    y_min, y_max = X[:, 1].min() - 0.7, X[:, 1].max() + 0.7  # set vertical grid bounds.
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 170), np.linspace(y_min, y_max, 170))  # create a dense grid.
+    grid = np.c_[xx.ravel(), yy.ravel()]  # flatten grid points into rows.
+    probs = predict_fn(grid).reshape(xx.shape)  # evaluate probabilities on the grid.
+    ax.contourf(xx, yy, probs, levels=np.linspace(0.0, 1.0, 21), cmap="coolwarm", alpha=0.35)  # paint probability regions.
+    ax.contour(xx, yy, probs, levels=[0.5], colors="black", linewidths=2.0)  # draw the 0.5 boundary.
+    ax.scatter(X[:, 0], X[:, 1], c=y, cmap="coolwarm", s=30, edgecolor="white", linewidth=0.45)  # overlay examples.
+    ax.set_title(title)  # set the title.
+    ax.set_xlabel("feature 1")  # label the x-axis.
+    ax.set_ylabel("feature 2")  # label the y-axis.
+    return ax  # return axes.
+
+def init_mlp(n_features, hidden, seed=229):  # initialize a one-hidden-layer binary MLP.
+    rng = np.random.default_rng(seed)  # create a local generator.
+    params = {}  # create a parameter dictionary.
+    params["W1"] = rng.normal(0.0, np.sqrt(2.0 / n_features), size=(n_features, hidden))  # initialize first-layer weights.
+    params["b1"] = np.zeros((1, hidden))  # initialize first-layer biases.
+    params["W2"] = rng.normal(0.0, np.sqrt(2.0 / hidden), size=(hidden, 1))  # initialize output weights.
+    params["b2"] = np.zeros((1, 1))  # initialize output bias.
+    return params  # return trainable parameters.
+
+def mlp_forward(X, params):  # compute one MLP forward pass.
+    z1 = X @ params["W1"] + params["b1"]  # compute hidden affine scores.
+    a1 = np.tanh(z1)  # apply tanh hidden activation.
+    z2 = a1 @ params["W2"] + params["b2"]  # compute output affine score.
+    y_hat = sigmoid(z2)  # convert output score to probability.
+    cache = {"X": X, "z1": z1, "a1": a1, "z2": z2, "y_hat": y_hat}  # cache values for backprop.
+    return y_hat, cache  # return probabilities and cache.
+
+def mlp_backward(y, params, cache):  # compute MLP gradients by backpropagation.
+    m = len(y)  # count examples for averaging.
+    y_col = y.reshape(-1, 1)  # reshape labels into a column.
+    dz2 = (cache["y_hat"] - y_col) / m  # combine sigmoid and BCE derivative.
+    dW2 = cache["a1"].T @ dz2  # compute output-weight gradients.
+    db2 = dz2.sum(axis=0, keepdims=True)  # compute output-bias gradient.
+    da1 = dz2 @ params["W2"].T  # propagate error to hidden activations.
+    dz1 = da1 * (1.0 - cache["a1"] ** 2)  # apply tanh derivative.
+    dW1 = cache["X"].T @ dz1  # compute first-layer weight gradients.
+    db1 = dz1.sum(axis=0, keepdims=True)  # compute first-layer bias gradients.
+    return {"W1": dW1, "b1": db1, "W2": dW2, "b2": db2}  # return gradients.
+
+def apply_update(params, grads, lr):  # apply one gradient-descent update.
+    for key in params:  # loop over all parameters.
+        params[key] = params[key] - lr * grads[key]  # subtract the scaled gradient.
+    return params  # return updated parameters.
+
+def train_mlp(X, y, hidden=8, lr=0.08, epochs=600, seed=229, snapshots=None):  # train a one-hidden-layer MLP.
+    params = init_mlp(X.shape[1], hidden, seed=seed)  # initialize parameters.
+    losses = []  # store loss values.
+    accs = []  # store accuracy values.
+    saved = {}  # store requested parameter snapshots.
+    snapshot_set = set([] if snapshots is None else snapshots)  # prepare snapshot lookup.
+    for epoch in range(epochs + 1):  # include epoch zero for an untrained baseline.
+        y_hat, cache = mlp_forward(X, params)  # run the forward pass.
+        losses.append(bce(y_hat.ravel(), y))  # record binary cross-entropy.
+        accs.append(accuracy_score(y, (y_hat.ravel() >= 0.5).astype(int)))  # record threshold accuracy.
+        if epoch in snapshot_set:  # save selected epochs.
+            saved[epoch] = {key: value.copy() for key, value in params.items()}  # deep-copy parameter arrays.
+        if epoch < epochs:  # skip the update after the final logged epoch.
+            grads = mlp_backward(y, params, cache)  # compute gradients.
+            params = apply_update(params, grads, lr)  # update parameters.
+    return params, np.array(losses), np.array(accs), saved  # return model and diagnostics.
+
+def train_logistic(X, y, lr=0.15, epochs=500):  # train a single logistic neuron.
+    w = np.zeros(X.shape[1])  # initialize weights at zero.
+    b = 0.0  # initialize bias at zero.
+    losses = []  # store cross-entropy values.
+    for epoch in range(epochs):  # repeat gradient descent.
+        p = sigmoid(X @ w + b)  # compute probabilities.
+        losses.append(bce(p, y))  # record current loss.
+        error = p - y  # compute prediction error.
+        w = w - lr * (X.T @ error / len(y))  # update weights.
+        b = b - lr * float(np.mean(error))  # update bias.
+    return w, b, np.array(losses)  # return learned parameters and loss trace.
+
+def conv2d(image, kernel, padding=0, stride=1):  # compute a single-filter 2-D convolution/correlation.
+    padded = np.pad(image, pad_width=padding, mode="constant")  # add zero padding.
+    out_rows = (padded.shape[0] - kernel.shape[0]) // stride + 1  # compute output row count.
+    out_cols = (padded.shape[1] - kernel.shape[1]) // stride + 1  # compute output column count.
+    output = np.zeros((out_rows, out_cols))  # allocate feature map.
+    for row in range(out_rows):  # loop over output rows.
+        for col in range(out_cols):  # loop over output columns.
+            patch = padded[row * stride:row * stride + kernel.shape[0], col * stride:col * stride + kernel.shape[1]]  # extract receptive field.
+            output[row, col] = np.sum(patch * kernel)  # multiply by filter and sum.
+    return output  # return feature map.
+
+def max_pool2d(feature_map, pool=2, stride=2):  # apply max pooling.
+    out_rows = (feature_map.shape[0] - pool) // stride + 1  # compute pooled row count.
+    out_cols = (feature_map.shape[1] - pool) // stride + 1  # compute pooled column count.
+    pooled = np.zeros((out_rows, out_cols))  # allocate pooled output.
+    for row in range(out_rows):  # loop over pooled rows.
+        for col in range(out_cols):  # loop over pooled columns.
+            patch = feature_map[row * stride:row * stride + pool, col * stride:col * stride + pool]  # extract pooling window.
+            pooled[row, col] = patch.max()  # keep the maximum activation.
+    return pooled  # return pooled map.
+```
+
+### Data — swappable sources
+
+`DATA_SOURCE` can be `moons`, `circles`, `blobs`, or `xor`. The non-linearly-separable choices show why hidden layers matter.
+
+```python
+DATA_SOURCE = "moons"  # choose one source: "moons", "circles", "blobs", or "xor".
+X_data, y_data, data_scaler, data_desc = load_deep_data(DATA_SOURCE, seed=229)  # load and scale the selected dataset.
+print(f"Loaded {data_desc} with shape {X_data.shape}.")  # report the dataset shape.
+print("Class counts:", np.bincount(y_data))  # report class balance.
+print("Feature means:", np.round(X_data.mean(axis=0), 3))  # show standardized means.
+print("Feature standard deviations:", np.round(X_data.std(axis=0), 3))  # show standardized scales.
+```
+
+```python
+plt.figure(figsize=(6.5, 5.2))  # create the raw-data figure.
+plot_binary_data(X_data, y_data, title=f"Data source: {data_desc}")  # visualize the selected data.
+plt.show()  # render the plot.
+```
+
+▶ What you'll see: `blobs` is close to linearly separable, while `moons`, `circles`, and `xor` require nonlinear boundaries.
+
+### 🟢 Basics (warm-up)
+
+#### B1. Compute one neuron's affine score $w^Tx+b$
+
+```python
+x_b1 = np.array([1.5, -0.7])  # choose one input vector.
+w_b1 = np.array([0.8, -1.2])  # choose one weight per feature.
+b_b1 = 0.3  # choose one scalar bias.
+parts_b1 = w_b1 * x_b1  # compute feature-wise contributions.
+z_b1 = float(np.dot(w_b1, x_b1) + b_b1)  # compute the affine score.
+print("weighted inputs:", np.round(parts_b1, 3))  # print feature contributions.
+print("bias:", b_b1)  # print the bias term.
+print("z = w^T x + b:", round(z_b1, 3))  # print the final score.
+```
+
+```python
+plt.figure(figsize=(6, 4))  # create a contribution plot.
+plt.bar(["w1*x1", "w2*x2", "b"], [parts_b1[0], parts_b1[1], b_b1], color=["steelblue", "darkorange", "gray"])  # show additive terms.
+plt.axhline(0.0, color="black", linewidth=1.0)  # mark zero contribution.
+plt.title(f"B1: additive terms sum to z={z_b1:.2f}")  # title the plot.
+plt.ylabel("contribution")  # label the vertical axis.
+plt.show()  # render the plot.
+```
+
+▶ What you'll see: the bar heights add to the printed affine score.
+
+👀 **Takeaway.** A neuron begins with a linear score before any activation is applied.
+
+#### B2. Apply one activation to one scalar
+
+```python
+z_b2 = -1.4  # choose one scalar score.
+print("sigmoid:", round(float(sigmoid(z_b2)), 3))  # print sigmoid activation.
+print("tanh:", round(float(np.tanh(z_b2)), 3))  # print tanh activation.
+print("ReLU:", round(float(relu(z_b2)), 3))  # print ReLU activation.
+print("Leaky ReLU:", round(float(np.maximum(0.05 * z_b2, z_b2)), 3))  # print leaky ReLU activation.
+```
+
+```python
+z_grid_b2 = np.linspace(-5.0, 5.0, 400)  # create a grid of scores.
+plt.figure(figsize=(7, 5))  # create activation curve figure.
+plt.plot(z_grid_b2, sigmoid(z_grid_b2), label="sigmoid")  # plot sigmoid.
+plt.plot(z_grid_b2, np.tanh(z_grid_b2), label="tanh")  # plot tanh.
+plt.plot(z_grid_b2, relu(z_grid_b2), label="ReLU")  # plot ReLU.
+plt.scatter([z_b2], [sigmoid(z_b2)], color="black", s=80, label="chosen z on sigmoid")  # mark the chosen score.
+plt.title("B2: one score through activation functions")  # title the plot.
+plt.xlabel("z")  # label score axis.
+plt.ylabel("g(z)")  # label activation axis.
+plt.legend()  # show curve labels.
+plt.show()  # render the plot.
+```
+
+▶ What you'll see: the same scalar is squashed, centered, or zeroed depending on the activation.
+
+👀 **Takeaway.** Activations inject nonlinearity into networks.
+
+#### B3. Compute binary cross-entropy for one prediction
+
+```python
+y_b3 = 1.0  # choose a positive true label.
+y_hat_b3 = 0.23  # choose an underconfident positive-class prediction.
+loss_b3 = -(y_b3 * np.log(y_hat_b3) + (1.0 - y_b3) * np.log(1.0 - y_hat_b3))  # compute one-example BCE.
+print("y:", y_b3)  # print true label.
+print("y_hat:", y_hat_b3)  # print predicted probability.
+print("loss:", round(float(loss_b3), 3))  # print binary cross-entropy.
+```
+
+```python
+p_grid_b3 = np.linspace(0.01, 0.99, 300)  # create a safe probability grid.
+plt.figure(figsize=(7, 5))  # create loss curve figure.
+plt.plot(p_grid_b3, -np.log(p_grid_b3), label="loss if y=1")  # plot positive-label loss.
+plt.plot(p_grid_b3, -np.log(1.0 - p_grid_b3), label="loss if y=0")  # plot negative-label loss.
+plt.scatter([y_hat_b3], [loss_b3], color="black", s=90, label="chosen prediction")  # mark the selected prediction.
+plt.title("B3: binary cross-entropy loss curve")  # title the plot.
+plt.xlabel("predicted probability of class 1")  # label x-axis.
+plt.ylabel("loss")  # label y-axis.
+plt.legend()  # show labels.
+plt.show()  # render the plot.
+```
+
+▶ What you'll see: the chosen point is high on the $y=1$ curve because $0.23$ assigns too little probability to the true class.
+
+👀 **Takeaway.** Cross-entropy rewards confident correct probabilities and punishes confident wrong probabilities.
+
+### 🟡 Easy Examples
+
+#### E1. Tiny neuron: forward pass and activation shapes
+
+**Goal.** Use one logistic neuron on linearly separable data and visualize its score heatmap.  
+**Data source.** `linearly_separable_2d`.  
+**We'll build this in 5 steps:** create data, choose weights, compute probabilities, plot the boundary, and inspect score distributions.
+
+```python
+X_e1, y_e1 = make_classification(n_samples=260, n_features=2, n_redundant=0, n_informative=2, n_clusters_per_class=1, class_sep=1.7, random_state=229)  # create a two-feature linear task.
+X_e1, scaler_e1 = standardize(X_e1)  # scale features.
+w_e1 = np.array([1.7, -1.2])  # choose hand-built weights.
+b_e1 = -0.05  # choose a bias.
+z_e1 = X_e1 @ w_e1 + b_e1  # compute affine scores.
+p_e1 = sigmoid(z_e1)  # convert scores to probabilities.
+acc_e1 = accuracy_score(y_e1, (p_e1 >= 0.5).astype(int))  # compute hand-built neuron accuracy.
+print("first scores:", np.round(z_e1[:5], 3))  # show the first scores.
+print("first probabilities:", np.round(p_e1[:5], 3))  # show the first probabilities.
+print("accuracy:", round(acc_e1, 3))  # show accuracy.
+```
+
+```python
+plt.figure(figsize=(6.8, 5.4))  # create boundary figure.
+plot_boundary(lambda grid: sigmoid(grid @ w_e1 + b_e1), X_e1, y_e1, title=f"E1: one-neuron boundary, accuracy={acc_e1:.2f}")  # plot probability heatmap.
+plt.show()  # render the figure.
+```
+
+▶ What you'll see: one straight black line separates the two classes.
+
+```python
+plt.figure(figsize=(7, 4.5))  # create score histogram figure.
+plt.hist(z_e1[y_e1 == 0], bins=25, alpha=0.7, label="class 0")  # plot scores for class zero.
+plt.hist(z_e1[y_e1 == 1], bins=25, alpha=0.7, label="class 1")  # plot scores for class one.
+plt.axvline(0.0, color="black", linestyle="--", label="score 0")  # mark decision threshold.
+plt.title("E1 final: score distributions by class")  # title the plot.
+plt.xlabel("z = w^T x + b")  # label x-axis.
+plt.ylabel("count")  # label y-axis.
+plt.legend()  # show labels.
+plt.show()  # render histogram.
+```
+
+▶ What you'll see: the class histograms mostly fall on different sides of zero.
+
+👀 **Takeaway.** A single logistic neuron is powerful when a straight line is enough.
+
+#### E2. From-scratch logistic neuron with gradient descent
+
+**Goal.** Implement forward pass, loss, gradient, and update for a single logistic neuron.  
+**Data source.** `make_classification`.  
+**We'll build this in 6 steps:** initialize, compute initial loss, compute gradients, train, plot loss, and show the decision boundary.
+
+```python
+X_e2, y_e2 = make_classification(n_samples=320, n_features=2, n_redundant=0, n_informative=2, n_clusters_per_class=1, class_sep=1.35, flip_y=0.03, random_state=230)  # create a noisy linear dataset.
+X_e2, scaler_e2 = standardize(X_e2)  # standardize features.
+w0_e2 = np.zeros(2)  # initialize weights at zero.
+b0_e2 = 0.0  # initialize bias at zero.
+p0_e2 = sigmoid(X_e2 @ w0_e2 + b0_e2)  # compute initial probabilities.
+print("initial loss:", round(bce(p0_e2, y_e2), 3))  # print initial loss.
+print("initial mean probability:", round(float(p0_e2.mean()), 3))  # print mean probability.
+```
+
+```python
+err0_e2 = p0_e2 - y_e2  # compute initial probability errors.
+grad_w0_e2 = X_e2.T @ err0_e2 / len(y_e2)  # compute initial weight gradient.
+grad_b0_e2 = float(np.mean(err0_e2))  # compute initial bias gradient.
+print("initial grad_w:", np.round(grad_w0_e2, 4))  # print weight gradient.
+print("initial grad_b:", round(grad_b0_e2, 4))  # print bias gradient.
+```
+
+```python
+w_e2, b_e2, losses_e2 = train_logistic(X_e2, y_e2, lr=0.18, epochs=600)  # train the logistic neuron.
+p_e2 = sigmoid(X_e2 @ w_e2 + b_e2)  # compute final probabilities.
+acc_e2 = accuracy_score(y_e2, (p_e2 >= 0.5).astype(int))  # compute final accuracy.
+print("learned weights:", np.round(w_e2, 3))  # print learned weights.
+print("learned bias:", round(float(b_e2), 3))  # print learned bias.
+print("final accuracy:", round(acc_e2, 3))  # print final accuracy.
+```
+
+```python
+plt.figure(figsize=(7, 4.5))  # create loss curve figure.
+plt.plot(losses_e2, color="black")  # plot loss over iterations.
+plt.title("E2: logistic-neuron loss decreases")  # title the plot.
+plt.xlabel("iteration")  # label x-axis.
+plt.ylabel("binary cross-entropy")  # label y-axis.
+plt.show()  # render loss curve.
+```
+
+▶ What you'll see: the loss falls quickly, then flattens as the linear classifier approaches its optimum.
+
+```python
+plt.figure(figsize=(6.8, 5.4))  # create boundary figure.
+plot_boundary(lambda grid: sigmoid(grid @ w_e2 + b_e2), X_e2, y_e2, title=f"E2 final: trained logistic neuron, accuracy={acc_e2:.2f}")  # plot final boundary.
+plt.show()  # render boundary.
+```
+
+▶ What you'll see: gradient descent found a straight boundary that separates most points.
+
+👀 **Takeaway.** Logistic regression is a one-neuron network trained by the same forward-loss-backward-update pattern as deeper networks.
+
+#### E3. Tiny 2-layer neural net learns XOR/moons
+
+**Goal.** Train a one-hidden-layer MLP from scratch on nonlinear data and watch its boundary bend.  
+**Data source.** `xor` / `moons`.  
+**We'll build this in 8 steps:** load nonlinear data, initialize, show untrained boundary, train, plot curves, show boundary snapshots, inspect hidden activations, and evaluate.
+
+```python
+X_e3, y_e3, _, desc_e3 = load_deep_data("xor", seed=231)  # load nonlinear XOR data.
+params0_e3 = init_mlp(2, 6, seed=231)  # initialize a six-hidden-unit MLP.
+p0_e3, cache0_e3 = mlp_forward(X_e3, params0_e3)  # run the untrained network.
+print("dataset:", desc_e3)  # print data description.
+print("initial loss:", round(bce(p0_e3.ravel(), y_e3), 3))  # print initial loss.
+```
+
+```python
+plt.figure(figsize=(6.8, 5.4))  # create untrained boundary figure.
+plot_boundary(lambda grid: mlp_forward(grid, params0_e3)[0].ravel(), X_e3, y_e3, title="E3 step 1: untrained MLP")  # plot random boundary.
+plt.show()  # render untrained state.
+```
+
+▶ What you'll see: the random boundary does not yet match the XOR quadrants.
+
+```python
+snap_e3 = [0, 20, 80, 200, 600]  # choose snapshot epochs.
+params_e3, losses_e3, accs_e3, saved_e3 = train_mlp(X_e3, y_e3, hidden=6, lr=0.10, epochs=600, seed=231, snapshots=snap_e3)  # train the MLP.
+p_e3 = mlp_forward(X_e3, params_e3)[0].ravel()  # compute final probabilities.
+acc_e3 = accuracy_score(y_e3, (p_e3 >= 0.5).astype(int))  # compute final accuracy.
+print("final loss:", round(losses_e3[-1], 3))  # print final loss.
+print("final accuracy:", round(acc_e3, 3))  # print final accuracy.
+```
+
+```python
+plt.figure(figsize=(7, 4.5))  # create training curve figure.
+plt.plot(losses_e3, label="loss", color="black")  # plot loss.
+plt.plot(accs_e3, label="accuracy", color="darkorange")  # plot accuracy.
+plt.title("E3: MLP training curve on XOR")  # title the plot.
+plt.xlabel("epoch")  # label x-axis.
+plt.ylabel("value")  # label y-axis.
+plt.legend()  # show labels.
+plt.show()  # render curves.
+```
+
+▶ What you'll see: loss decreases while accuracy rises as hidden units learn useful regions.
+
+```python
+fig, axes = plt.subplots(1, len(snap_e3), figsize=(18, 3.8))  # create boundary snapshot panels.
+for ax, epoch in zip(axes, snap_e3):  # loop over epochs.
+    params_epoch = saved_e3[epoch]  # retrieve saved parameters.
+    plot_boundary(lambda grid, p=params_epoch: mlp_forward(grid, p)[0].ravel(), X_e3, y_e3, title=f"epoch {epoch}", ax=ax)  # plot boundary snapshot.
+plt.tight_layout()  # prevent overlap.
+plt.show()  # render snapshots.
+```
+
+▶ What you'll see: the boundary evolves from arbitrary regions into a nonlinear separator.
+
+```python
+fig, axes = plt.subplots(1, 3, figsize=(14, 4))  # create hidden activation panels.
+for unit in range(3):  # inspect three hidden units.
+    xs = np.linspace(X_e3[:, 0].min() - 0.7, X_e3[:, 0].max() + 0.7, 120)  # create x grid.
+    ys = np.linspace(X_e3[:, 1].min() - 0.7, X_e3[:, 1].max() + 0.7, 120)  # create y grid.
+    xx, yy = np.meshgrid(xs, ys)  # create mesh grid.
+    grid = np.c_[xx.ravel(), yy.ravel()]  # flatten grid.
+    hidden = np.tanh(grid @ params_e3["W1"] + params_e3["b1"])[:, unit].reshape(xx.shape)  # compute hidden activation field.
+    axes[unit].contourf(xx, yy, hidden, levels=20, cmap="viridis")  # plot activation field.
+    axes[unit].scatter(X_e3[:, 0], X_e3[:, 1], c=y_e3, cmap="coolwarm", s=12, edgecolor="white", linewidth=0.2)  # overlay data.
+    axes[unit].set_title(f"hidden unit {unit + 1}")  # title the panel.
+plt.tight_layout()  # prevent overlap.
+plt.show()  # render hidden units.
+```
+
+▶ What you'll see: each hidden unit creates a simple soft region; together they compose the XOR solution.
+
+👀 **Takeaway.** Hidden layers turn raw inputs into features that a final neuron can separate.
+
+#### E4. CNN arithmetic: convolution + padding + stride
+
+**Goal.** Run a hand-coded convolution, ReLU, and max pool on an $8\times8$ edge image.  
+**Data source.** Generated $8\times8$ edge image.  
+**We'll build this in 6 steps:** create image, choose filter, compute output size, convolve, activate, and pool.
+
+```python
+image_e4 = np.zeros((8, 8))  # create an 8-by-8 image.
+image_e4[:, 4:] = 1.0  # make the right half bright.
+kernel_e4 = np.array([[-1.0, 0.0, 1.0], [-1.0, 0.0, 1.0], [-1.0, 0.0, 1.0]])  # define a vertical-edge filter.
+W_e4 = image_e4.shape[0]  # read input width.
+F_e4 = kernel_e4.shape[0]  # read filter width.
+P_e4 = 1  # choose one-pixel padding.
+S_e4 = 1  # choose stride one.
+N_e4 = int((W_e4 - F_e4 + 2 * P_e4) / S_e4 + 1)  # compute output size.
+print("expected output width:", N_e4)  # print formula result.
+```
+
+```python
+feature_e4 = conv2d(image_e4, kernel_e4, padding=P_e4, stride=S_e4)  # compute convolution feature map.
+activated_e4 = relu(feature_e4)  # apply ReLU to keep positive evidence.
+pooled_e4 = max_pool2d(activated_e4, pool=2, stride=2)  # apply 2-by-2 max pooling.
+print("feature shape:", feature_e4.shape)  # print convolution shape.
+print("pooled shape:", pooled_e4.shape)  # print pooled shape.
+```
+
+```python
+fig, axes = plt.subplots(1, 4, figsize=(14, 3.5))  # create CNN pipeline panels.
+axes[0].imshow(image_e4, cmap="gray", vmin=0.0, vmax=1.0)  # show input image.
+axes[0].set_title("input")  # title input.
+axes[1].imshow(kernel_e4, cmap="coolwarm")  # show filter weights.
+axes[1].set_title("filter")  # title filter.
+axes[2].imshow(activated_e4, cmap="magma")  # show activated feature map.
+axes[2].set_title("conv + ReLU")  # title feature map.
+axes[3].imshow(pooled_e4, cmap="magma")  # show pooled map.
+axes[3].set_title("max pool")  # title pooled map.
+for ax in axes:  # clean all image panels.
+    ax.set_xticks([])  # hide x ticks.
+    ax.set_yticks([])  # hide y ticks.
+plt.tight_layout()  # prevent overlap.
+plt.show()  # render CNN arithmetic.
+```
+
+▶ What you'll see: the edge filter activates near the vertical edge, then pooling keeps strong local responses while shrinking the map.
+
+```python
+patch_e4 = np.pad(image_e4, pad_width=P_e4, mode="constant")[2:5, 3:6]  # extract one local receptive field.
+score_e4 = float(np.sum(patch_e4 * kernel_e4))  # multiply and sum for one output pixel.
+print("local patch:")  # introduce the patch.
+print(patch_e4)  # display patch values.
+print("patch score:", score_e4)  # print local convolution score.
+```
+
+▶ What you'll see: one feature-map entry is exactly a local weighted sum.
+
+👀 **Takeaway.** A CNN layer is affine-plus-activation with weight sharing across spatial locations.
+
+#### E5. Mini value iteration on a gridworld
+
+**Goal.** Apply Bellman backups to a toy gridworld and extract a greedy policy.  
+**Data source.** Toy $4\times4$ gridworld.  
+**We'll build this in 6 steps:** define states/actions, implement transitions, sweep values, plot heatmaps, extract policy, and show arrows.
+
+```python
+grid_e5 = (4, 4)  # define grid size.
+goal_e5 = (0, 3)  # define goal state.
+wall_e5 = (1, 1)  # define blocked state.
+actions_e5 = {"U": (-1, 0), "D": (1, 0), "L": (0, -1), "R": (0, 1)}  # define actions.
+gamma_e5 = 0.92  # set discount factor.
+V_e5 = np.zeros(grid_e5)  # initialize values.
+```
+
+```python
+def step_e5(state, action):  # define deterministic transition function.
+    if state == goal_e5:  # keep goal absorbing.
+        return state, 1.0  # return goal reward.
+    dr, dc_delta = actions_e5[action]  # read movement.
+    row_new = state[0] + dr  # compute candidate row.
+    col_new = state[1] + dc_delta  # compute candidate column.
+    blocked = row_new < 0 or row_new >= grid_e5[0] or col_new < 0 or col_new >= grid_e5[1] or (row_new, col_new) == wall_e5  # detect invalid movement.
+    next_state = state if blocked else (row_new, col_new)  # bounce off walls and boundaries.
+    reward = 1.0 if next_state == goal_e5 else -0.04  # give goal reward or step cost.
+    return next_state, reward  # return transition.
+```
+
+```python
+snapshots_e5 = []  # store selected value tables.
+for sweep in range(18):  # run Bellman sweeps.
+    V_new = V_e5.copy()  # copy old values for synchronous update.
+    for row in range(grid_e5[0]):  # loop over rows.
+        for col in range(grid_e5[1]):  # loop over columns.
+            state = (row, col)  # name current state.
+            if state == wall_e5:  # skip wall.
+                V_new[state] = np.nan  # mark wall as missing.
+            elif state == goal_e5:  # handle goal.
+                V_new[state] = 1.0  # set goal value.
+            else:  # update ordinary states.
+                scores = []  # collect action scores.
+                for action in actions_e5:  # evaluate each action.
+                    next_state, reward = step_e5(state, action)  # get transition.
+                    scores.append(reward + gamma_e5 * V_e5[next_state])  # compute Bellman score.
+                V_new[state] = max(scores)  # keep best action value.
+    V_e5 = V_new.copy()  # accept new values.
+    if sweep in [0, 1, 2, 5, 17]:  # save selected sweeps.
+        snapshots_e5.append((sweep + 1, V_e5.copy()))  # store sweep number and values.
+```
+
+```python
+fig, axes = plt.subplots(1, len(snapshots_e5), figsize=(18, 3.4))  # create heatmap panels.
+for ax, (sweep, values) in zip(axes, snapshots_e5):  # loop over snapshots.
+    image = ax.imshow(values, cmap="viridis")  # draw value heatmap.
+    ax.set_title(f"sweep {sweep}")  # title panel.
+    for row in range(grid_e5[0]):  # annotate rows.
+        for col in range(grid_e5[1]):  # annotate columns.
+            text = "W" if (row, col) == wall_e5 else f"{values[row, col]:.2f}"  # choose annotation.
+            ax.text(col, row, text, ha="center", va="center", color="white")  # draw annotation.
+fig.colorbar(image, ax=axes.ravel().tolist(), shrink=0.75)  # add shared colorbar.
+plt.show()  # render value iteration progress.
+```
+
+▶ What you'll see: value propagates backward from the goal over Bellman sweeps.
+
+```python
+arrows_e5 = {"U": "↑", "D": "↓", "L": "←", "R": "→"}  # map actions to arrows.
+policy_e5 = np.full(grid_e5, "", dtype=object)  # allocate policy grid.
+for row in range(grid_e5[0]):  # loop over rows.
+    for col in range(grid_e5[1]):  # loop over columns.
+        state = (row, col)  # name state.
+        if state == wall_e5:  # mark wall.
+            policy_e5[state] = "W"  # write wall marker.
+        elif state == goal_e5:  # mark goal.
+            policy_e5[state] = "G"  # write goal marker.
+        else:  # choose greedy action.
+            score_map = {action: step_e5(state, action)[1] + gamma_e5 * V_e5[step_e5(state, action)[0]] for action in actions_e5}  # compute action values.
+            policy_e5[state] = arrows_e5[max(score_map, key=score_map.get)]  # write best-action arrow.
+print(policy_e5)  # print final policy.
+```
+
+```python
+plt.figure(figsize=(5, 5))  # create final policy figure.
+plt.imshow(V_e5, cmap="viridis")  # show value heatmap.
+for row in range(grid_e5[0]):  # annotate rows.
+    for col in range(grid_e5[1]):  # annotate columns.
+        plt.text(col, row, policy_e5[row, col], ha="center", va="center", color="white", fontsize=18, fontweight="bold")  # draw policy symbols.
+plt.title("E5 final: value function and greedy policy")  # title final plot.
+plt.colorbar(label="V(s)")  # add colorbar.
+plt.show()  # render policy.
+```
+
+▶ What you'll see: arrows point around the wall toward the goal.
+
+👀 **Takeaway.** Value iteration is the Bellman equation turned into repeated computation.
+
+### 🔴 Advanced Examples
+
+#### A1. Backprop by hand-coded NumPy network
+
+**Goal.** Build a tiny MLP from scratch, expose forward → loss → backprop → update, and show training curves plus decision boundaries per epoch.  
+**Data source.** `moons`.  
+**We'll build this in 10 steps:** load data, initialize, forward, loss, gradients, one update, full training, curves, boundaries, and gradient norms.
+
+```python
+X_a1, y_a1, _, desc_a1 = load_deep_data("moons", seed=232)  # load noisy moons.
+params_a1 = init_mlp(2, 10, seed=232)  # initialize a 10-hidden-unit MLP.
+yhat_a1, cache_a1 = mlp_forward(X_a1, params_a1)  # run one forward pass.
+loss_a1 = bce(yhat_a1.ravel(), y_a1)  # compute initial loss.
+print("dataset:", desc_a1)  # print dataset description.
+print("initial loss:", round(loss_a1, 3))  # print initial loss.
+print("W1 shape:", params_a1["W1"].shape)  # print hidden weight shape.
+```
+
+```python
+grads_a1 = mlp_backward(y_a1, params_a1, cache_a1)  # compute manual backprop gradients.
+norms_a1 = {key: float(np.linalg.norm(value)) for key, value in grads_a1.items()}  # compute gradient norms.
+params_one_a1 = {key: value.copy() for key, value in params_a1.items()}  # copy parameters for one update.
+params_one_a1 = apply_update(params_one_a1, grads_a1, lr=0.08)  # apply one gradient-descent step.
+loss_one_a1 = bce(mlp_forward(X_a1, params_one_a1)[0].ravel(), y_a1)  # compute loss after one update.
+print("gradient norms:", {key: round(value, 4) for key, value in norms_a1.items()})  # print norms.
+print("loss after one update:", round(loss_one_a1, 3))  # print updated loss.
+```
+
+```python
+snap_a1 = [0, 10, 50, 150, 400, 900]  # choose epochs for boundary snapshots.
+params_a1_final, losses_a1, accs_a1, saved_a1 = train_mlp(X_a1, y_a1, hidden=10, lr=0.08, epochs=900, seed=232, snapshots=snap_a1)  # train the scratch MLP.
+probs_a1 = mlp_forward(X_a1, params_a1_final)[0].ravel()  # compute final probabilities.
+acc_a1 = accuracy_score(y_a1, (probs_a1 >= 0.5).astype(int))  # compute final accuracy.
+print("final loss:", round(losses_a1[-1], 3))  # print final loss.
+print("final accuracy:", round(acc_a1, 3))  # print final accuracy.
+```
+
+```python
+plt.figure(figsize=(7.5, 4.8))  # create training curve figure.
+plt.plot(losses_a1, color="black", label="loss")  # plot loss.
+plt.plot(accs_a1, color="darkorange", label="accuracy")  # plot accuracy.
+plt.title("A1: manual-backprop MLP training curve")  # title plot.
+plt.xlabel("epoch")  # label x-axis.
+plt.ylabel("value")  # label y-axis.
+plt.legend()  # show labels.
+plt.show()  # render plot.
+```
+
+▶ What you'll see: loss falls and accuracy rises as the nonlinear boundary improves.
+
+```python
+fig, axes = plt.subplots(2, 3, figsize=(15, 9))  # create boundary snapshot grid.
+for ax, epoch in zip(axes.ravel(), snap_a1):  # loop over saved epochs.
+    params_epoch = saved_a1[epoch]  # retrieve snapshot parameters.
+    plot_boundary(lambda grid, p=params_epoch: mlp_forward(grid, p)[0].ravel(), X_a1, y_a1, title=f"epoch {epoch}", ax=ax)  # plot snapshot boundary.
+plt.tight_layout()  # prevent overlap.
+plt.show()  # render boundary evolution.
+```
+
+▶ What you'll see: the decision boundary bends gradually into the gap between the moons.
+
+```python
+grad_trace_a1 = []  # store total gradient norms.
+params_diag_a1 = init_mlp(2, 10, seed=232)  # reset diagnostic model.
+for epoch in range(120):  # run diagnostic training.
+    yh_diag, cache_diag = mlp_forward(X_a1, params_diag_a1)  # forward pass.
+    grads_diag = mlp_backward(y_a1, params_diag_a1, cache_diag)  # backward pass.
+    grad_trace_a1.append(np.sqrt(sum(np.sum(value ** 2) for value in grads_diag.values())))  # store total gradient norm.
+    params_diag_a1 = apply_update(params_diag_a1, grads_diag, lr=0.08)  # update parameters.
+plt.figure(figsize=(7, 4.5))  # create gradient norm figure.
+plt.plot(grad_trace_a1, color="purple")  # plot gradient norm.
+plt.title("A1 final: total gradient norm")  # title plot.
+plt.xlabel("diagnostic epoch")  # label x-axis.
+plt.ylabel("gradient norm")  # label y-axis.
+plt.show()  # render gradient diagnostic.
+```
+
+▶ What you'll see: gradient norms are larger early and generally shrink as the model improves.
+
+👀 **Takeaway.** Backprop is cached forward values plus chain-rule gradients, repeated layer by layer.
+
+#### A2. Learning-rate failure and Adam comparison
+
+**Goal.** Compare too-small, good, and too-large learning rates, then compare gradient descent with Adam-style adaptive moments.  
+**Data source.** `moons` with noisy labels.  
+**We'll build this in 7 steps:** add noise, train learning rates, plot curves, plot boundaries, implement Adam, compare curves, and compare boundaries.
+
+```python
+X_a2, y_clean_a2, _, _ = load_deep_data("moons", seed=233)  # load moons.
+y_a2 = y_clean_a2.copy()  # copy labels.
+flip_a2 = RNG.choice(len(y_a2), size=int(0.08 * len(y_a2)), replace=False)  # choose labels to flip.
+y_a2[flip_a2] = 1 - y_a2[flip_a2]  # inject label noise.
+plt.figure(figsize=(6.5, 5.2))  # create noisy data figure.
+plot_binary_data(X_a2, y_a2, title="A2: moons with 8% label noise")  # plot noisy labels.
+plt.show()  # render data.
+```
+
+▶ What you'll see: most labels follow the moons, but a few contradictory labels create optimization and generalization difficulty.
+
+```python
+lr_values_a2 = [0.003, 0.08, 1.2]  # choose small, good, and large learning rates.
+results_a2 = {}  # allocate result dictionary.
+for lr in lr_values_a2:  # train each learning rate.
+    params_lr, losses_lr, accs_lr, _ = train_mlp(X_a2, y_a2, hidden=12, lr=lr, epochs=450, seed=233, snapshots=[])  # run training.
+    results_a2[lr] = {"params": params_lr, "losses": losses_lr, "accs": accs_lr}  # store run data.
+    print(f"lr={lr}: loss={losses_lr[-1]:.3f}, acc={accs_lr[-1]:.3f}")  # summarize run.
+```
+
+```python
+plt.figure(figsize=(7.5, 4.8))  # create learning-rate plot.
+for lr in lr_values_a2:  # loop over learning rates.
+    plt.plot(results_a2[lr]["losses"], label=f"lr={lr}")  # plot loss curve.
+plt.ylim(0.0, 1.5)  # keep unstable curves readable.
+plt.title("A2: learning-rate comparison")  # title plot.
+plt.xlabel("epoch")  # label x-axis.
+plt.ylabel("binary cross-entropy")  # label y-axis.
+plt.legend()  # show labels.
+plt.show()  # render plot.
+```
+
+▶ What you'll see: too-small learning moves slowly, a good rate learns steadily, and too-large learning can oscillate or settle poorly.
+
+```python
+fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))  # create boundary panels.
+for ax, lr in zip(axes, lr_values_a2):  # loop over learning rates.
+    params_lr = results_a2[lr]["params"]  # get trained model.
+    acc_lr = results_a2[lr]["accs"][-1]  # get final accuracy.
+    plot_boundary(lambda grid, p=params_lr: mlp_forward(grid, p)[0].ravel(), X_a2, y_a2, title=f"lr={lr}, acc={acc_lr:.2f}", ax=ax)  # plot boundary.
+plt.tight_layout()  # prevent overlap.
+plt.show()  # render boundaries.
+```
+
+▶ What you'll see: the good learning rate gives the most useful nonlinear boundary for this noisy dataset.
+
+```python
+def train_mlp_adam(X, y, hidden=12, lr=0.025, epochs=450, seed=233):  # train the same MLP with Adam-style updates.
+    params = init_mlp(X.shape[1], hidden, seed=seed)  # initialize parameters.
+    m = {key: np.zeros_like(value) for key, value in params.items()}  # initialize first moments.
+    v = {key: np.zeros_like(value) for key, value in params.items()}  # initialize second moments.
+    losses = []  # store loss values.
+    for epoch in range(1, epochs + 1):  # count from one for bias correction.
+        yh, cache = mlp_forward(X, params)  # forward pass.
+        losses.append(bce(yh.ravel(), y))  # record loss.
+        grads = mlp_backward(y, params, cache)  # backward pass.
+        for key in params:  # update every parameter.
+            m[key] = 0.9 * m[key] + 0.1 * grads[key]  # update first moment.
+            v[key] = 0.999 * v[key] + 0.001 * grads[key] ** 2  # update second moment.
+            m_hat = m[key] / (1.0 - 0.9 ** epoch)  # bias-correct first moment.
+            v_hat = v[key] / (1.0 - 0.999 ** epoch)  # bias-correct second moment.
+            params[key] = params[key] - lr * m_hat / (np.sqrt(v_hat) + 1e-8)  # apply Adam step.
+    return params, np.array(losses)  # return trained model and losses.
+```
+
+```python
+params_adam_a2, losses_adam_a2 = train_mlp_adam(X_a2, y_a2, hidden=12, lr=0.025, epochs=450, seed=233)  # train Adam-style model.
+plt.figure(figsize=(7.5, 4.8))  # create optimizer comparison figure.
+plt.plot(results_a2[0.08]["losses"], label="gradient descent lr=0.08", color="black")  # plot GD curve.
+plt.plot(losses_adam_a2, label="Adam-style lr=0.025", color="crimson")  # plot Adam-style curve.
+plt.title("A2 final: GD vs Adam-style adaptive updates")  # title plot.
+plt.xlabel("epoch")  # label x-axis.
+plt.ylabel("binary cross-entropy")  # label y-axis.
+plt.legend()  # show labels.
+plt.show()  # render plot.
+```
+
+▶ What you'll see: Adam-style moments often reduce loss faster early by adapting each parameter's step size.
+
+```python
+fig, axes = plt.subplots(1, 2, figsize=(11, 4.8))  # create optimizer boundary panels.
+plot_boundary(lambda grid: mlp_forward(grid, results_a2[0.08]["params"])[0].ravel(), X_a2, y_a2, title="plain gradient descent", ax=axes[0])  # show GD boundary.
+plot_boundary(lambda grid: mlp_forward(grid, params_adam_a2)[0].ravel(), X_a2, y_a2, title="Adam-style updates", ax=axes[1])  # show Adam boundary.
+plt.tight_layout()  # prevent overlap.
+plt.show()  # render boundaries.
+```
+
+▶ What you'll see: both optimizers can learn the pattern, but their loss paths and boundary smoothness differ.
+
+👀 **Takeaway.** The learning rate and optimizer control how gradient information is converted into parameter motion.
+
+#### A3. Dropout and overfitting diagnostics
+
+**Goal.** Train a small multiclass MLP on a small digits subset and compare no-dropout with dropout.  
+**Data source.** Small `digits` subset.  
+**We'll build this in 8 steps:** load digits, split data, implement dropout, train two models, plot curves, inspect activations, compute confusion matrix, and interpret errors.
+
+```python
+digits_a3 = load_digits()  # load 8-by-8 handwritten digits.
+X_digits_a3 = digits_a3.data / 16.0  # scale pixels to 0..1.
+y_digits_a3 = digits_a3.target.astype(int)  # read digit labels.
+idx_a3 = np.r_[np.where(y_digits_a3 == 0)[0][:38], np.where(y_digits_a3 == 1)[0][:38], np.where(y_digits_a3 == 2)[0][:38], np.where(y_digits_a3 == 3)[0][:38]]  # choose a small four-class subset.
+X_small_a3 = X_digits_a3[idx_a3]  # select features.
+y_small_a3 = y_digits_a3[idx_a3]  # select labels.
+X_train_a3, X_val_a3, y_train_a3, y_val_a3 = train_test_split(X_small_a3, y_small_a3, test_size=0.42, stratify=y_small_a3, random_state=229)  # split train and validation.
+print("train shape:", X_train_a3.shape)  # print training shape.
+print("validation shape:", X_val_a3.shape)  # print validation shape.
+```
+
+```python
+fig, axes = plt.subplots(1, 8, figsize=(12, 2.2))  # create digit thumbnail row.
+for ax, idx in zip(axes, range(8)):  # loop over thumbnails.
+    ax.imshow(X_small_a3[idx].reshape(8, 8), cmap="gray_r")  # show one digit image.
+    ax.set_title(f"y={y_small_a3[idx]}")  # label true digit.
+    ax.set_xticks([])  # hide x ticks.
+    ax.set_yticks([])  # hide y ticks.
+plt.show()  # render thumbnails.
+```
+
+▶ What you'll see: tiny low-resolution digits from four classes.
+
+```python
+def train_dropout_mlp(X_train, y_train, X_val, y_val, hidden=48, dropout=0.0, lr=0.35, epochs=420, seed=229):  # train a one-hidden-layer multiclass MLP.
+    rng = np.random.default_rng(seed)  # create random generator.
+    classes = len(np.unique(y_train))  # count classes.
+    W1 = rng.normal(0.0, np.sqrt(2.0 / X_train.shape[1]), size=(X_train.shape[1], hidden))  # initialize hidden weights.
+    b1 = np.zeros((1, hidden))  # initialize hidden bias.
+    W2 = rng.normal(0.0, np.sqrt(2.0 / hidden), size=(hidden, classes))  # initialize output weights.
+    b2 = np.zeros((1, classes))  # initialize output bias.
+    Y = one_hot(y_train, classes)  # one-hot encode labels.
+    hist = {"train_loss": [], "val_loss": [], "train_acc": [], "val_acc": []}  # allocate history.
+    for epoch in range(epochs):  # run training epochs.
+        z1 = X_train @ W1 + b1  # compute hidden scores.
+        a1 = relu(z1)  # apply ReLU.
+        mask = (rng.random(a1.shape) > dropout).astype(float) / max(1.0 - dropout, EPS) if dropout > 0.0 else np.ones_like(a1)  # create inverted dropout mask.
+        a1_drop = a1 * mask  # apply dropout to hidden activations.
+        probs = softmax(a1_drop @ W2 + b2)  # compute class probabilities.
+        loss = -np.mean(np.sum(Y * np.log(np.clip(probs, EPS, 1.0)), axis=1))  # compute cross-entropy.
+        dz2 = (probs - Y) / len(y_train)  # compute output gradient.
+        dW2 = a1_drop.T @ dz2  # compute output-weight gradient.
+        db2 = dz2.sum(axis=0, keepdims=True)  # compute output-bias gradient.
+        dz1 = (dz2 @ W2.T) * mask * relu_grad(z1)  # backprop through dropout and ReLU.
+        dW1 = X_train.T @ dz1  # compute hidden-weight gradient.
+        db1 = dz1.sum(axis=0, keepdims=True)  # compute hidden-bias gradient.
+        W1 = W1 - lr * dW1  # update hidden weights.
+        b1 = b1 - lr * db1  # update hidden bias.
+        W2 = W2 - lr * dW2  # update output weights.
+        b2 = b2 - lr * db2  # update output bias.
+        train_pred = np.argmax(probs, axis=1)  # compute training predictions.
+        val_hidden = relu(X_val @ W1 + b1)  # compute validation hidden activations without dropout.
+        val_probs = softmax(val_hidden @ W2 + b2)  # compute validation probabilities.
+        val_pred = np.argmax(val_probs, axis=1)  # compute validation predictions.
+        hist["train_loss"].append(loss)  # store training loss.
+        hist["val_loss"].append(-np.mean(np.log(np.clip(val_probs[np.arange(len(y_val)), y_val], EPS, 1.0))))  # store validation loss.
+        hist["train_acc"].append(accuracy_score(y_train, train_pred))  # store training accuracy.
+        hist["val_acc"].append(accuracy_score(y_val, val_pred))  # store validation accuracy.
+    return {"W1": W1, "b1": b1, "W2": W2, "b2": b2}, hist  # return model and history.
+```
+
+```python
+model_no_a3, hist_no_a3 = train_dropout_mlp(X_train_a3, y_train_a3, X_val_a3, y_val_a3, dropout=0.0, seed=229)  # train without dropout.
+model_do_a3, hist_do_a3 = train_dropout_mlp(X_train_a3, y_train_a3, X_val_a3, y_val_a3, dropout=0.35, seed=229)  # train with dropout.
+print("no-dropout validation accuracy:", round(hist_no_a3["val_acc"][-1], 3))  # print baseline validation accuracy.
+print("dropout validation accuracy:", round(hist_do_a3["val_acc"][-1], 3))  # print dropout validation accuracy.
+```
+
+```python
+fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))  # create diagnostic panels.
+axes[0].plot(hist_no_a3["train_loss"], label="train no dropout")  # plot baseline train loss.
+axes[0].plot(hist_no_a3["val_loss"], label="val no dropout", linestyle="--")  # plot baseline val loss.
+axes[0].plot(hist_do_a3["train_loss"], label="train dropout")  # plot dropout train loss.
+axes[0].plot(hist_do_a3["val_loss"], label="val dropout", linestyle="--")  # plot dropout val loss.
+axes[0].set_title("A3: train/validation loss")  # title loss panel.
+axes[0].legend(fontsize=8)  # show legend.
+axes[1].plot(hist_no_a3["train_acc"], label="train no dropout")  # plot baseline train accuracy.
+axes[1].plot(hist_no_a3["val_acc"], label="val no dropout", linestyle="--")  # plot baseline val accuracy.
+axes[1].plot(hist_do_a3["train_acc"], label="train dropout")  # plot dropout train accuracy.
+axes[1].plot(hist_do_a3["val_acc"], label="val dropout", linestyle="--")  # plot dropout val accuracy.
+axes[1].set_title("A3: train/validation accuracy")  # title accuracy panel.
+axes[1].legend(fontsize=8)  # show legend.
+plt.tight_layout()  # prevent overlap.
+plt.show()  # render diagnostics.
+```
+
+▶ What you'll see: dropout usually trains more slowly but can reduce the train-validation gap.
+
+```python
+hidden_no_a3 = relu(X_val_a3 @ model_no_a3["W1"] + model_no_a3["b1"])  # compute hidden activations for baseline.
+hidden_do_a3 = relu(X_val_a3 @ model_do_a3["W1"] + model_do_a3["b1"])  # compute hidden activations for dropout model.
+plt.figure(figsize=(7.5, 4.6))  # create activation histogram.
+plt.hist(hidden_no_a3.ravel(), bins=35, alpha=0.65, label="no dropout")  # plot baseline activations.
+plt.hist(hidden_do_a3.ravel(), bins=35, alpha=0.65, label="dropout")  # plot dropout activations.
+plt.title("A3: hidden activation histograms")  # title plot.
+plt.xlabel("ReLU activation")  # label x-axis.
+plt.ylabel("count")  # label y-axis.
+plt.legend()  # show labels.
+plt.show()  # render histogram.
+```
+
+▶ What you'll see: dropout changes the activation distribution because hidden units cannot co-adapt as easily.
+
+```python
+val_probs_a3 = softmax(relu(X_val_a3 @ model_do_a3["W1"] + model_do_a3["b1"]) @ model_do_a3["W2"] + model_do_a3["b2"])  # compute validation probabilities for dropout model.
+val_pred_a3 = np.argmax(val_probs_a3, axis=1)  # compute predicted labels.
+cm_a3 = confusion_matrix(y_val_a3, val_pred_a3, labels=[0, 1, 2, 3])  # compute confusion matrix.
+plt.figure(figsize=(5.4, 4.8))  # create confusion matrix figure.
+plt.imshow(cm_a3, cmap="Blues")  # draw heatmap.
+plt.title("A3 final: validation confusion matrix")  # title plot.
+plt.xlabel("predicted digit")  # label x-axis.
+plt.ylabel("true digit")  # label y-axis.
+plt.xticks(range(4), [0, 1, 2, 3])  # label predicted classes.
+plt.yticks(range(4), [0, 1, 2, 3])  # label true classes.
+for row in range(4):  # loop over rows.
+    for col in range(4):  # loop over columns.
+        plt.text(col, row, cm_a3[row, col], ha="center", va="center", color="black")  # annotate cell count.
+plt.colorbar(label="count")  # add colorbar.
+plt.show()  # render confusion matrix.
+```
+
+▶ What you'll see: most mass should be on the diagonal, and off-diagonal cells reveal confused digit pairs.
+
+👀 **Takeaway.** Dropout is a training-time regularizer that forces a network to avoid relying on any one hidden unit too strongly.
+
+#### A4. Simple RNN/LSTM intuition on sequence prediction
+
+**Goal.** Implement a tiny recurrent network on a sine-wave next-step task and visualize hidden-state traces.  
+**Data source.** Synthetic sine wave.  
+**We'll build this in 8 steps:** create sequences, initialize recurrence, unroll, backprop through time, train, plot loss, plot hidden traces, and compare predictions.
+
+```python
+t_a4 = np.linspace(0.0, 18.0 * np.pi, 900)  # create time coordinates.
+series_a4 = np.sin(t_a4) + 0.25 * np.sin(3.0 * t_a4)  # create a multi-frequency signal.
+seq_len_a4 = 12  # choose input window length.
+X_seq_a4 = np.array([series_a4[i:i + seq_len_a4] for i in range(len(series_a4) - seq_len_a4)])[..., None]  # build sequence windows with one feature.
+y_seq_a4 = np.array([series_a4[i + seq_len_a4] for i in range(len(series_a4) - seq_len_a4)])  # build next-step targets.
+X_train_a4 = X_seq_a4[:220]  # keep a small training subset for CPU speed.
+y_train_a4 = y_seq_a4[:220]  # keep corresponding training targets.
+X_test_a4 = X_seq_a4[650:810]  # choose held-out test windows.
+y_test_a4 = y_seq_a4[650:810]  # choose held-out targets.
+print("training sequence shape:", X_train_a4.shape)  # print RNN input shape.
+```
+
+```python
+plt.figure(figsize=(8, 3.8))  # create sequence plot.
+plt.plot(series_a4[:220], color="black")  # plot initial signal.
+plt.title("A4: synthetic sequence")  # title plot.
+plt.xlabel("time index")  # label x-axis.
+plt.ylabel("value")  # label y-axis.
+plt.show()  # render sequence.
+```
+
+▶ What you'll see: a smooth periodic signal whose next value depends on recent history.
+
+```python
+def train_tiny_rnn(X_train, y_train, hidden=8, lr=0.05, epochs=160, seed=229):  # train a small tanh RNN.
+    rng = np.random.default_rng(seed)  # create generator.
+    Wx = rng.normal(0.0, 0.4, size=(1, hidden))  # initialize input weights.
+    Wh = rng.normal(0.0, 0.25, size=(hidden, hidden))  # initialize recurrent weights.
+    bh = np.zeros((1, hidden))  # initialize hidden bias.
+    Wy = rng.normal(0.0, 0.4, size=(hidden, 1))  # initialize output weights.
+    by = np.zeros((1, 1))  # initialize output bias.
+    losses = []  # store MSE.
+    for epoch in range(epochs):  # train for epochs.
+        dWx = np.zeros_like(Wx)  # reset input gradient.
+        dWh = np.zeros_like(Wh)  # reset recurrent gradient.
+        dbh = np.zeros_like(bh)  # reset hidden-bias gradient.
+        dWy = np.zeros_like(Wy)  # reset output gradient.
+        dby = np.zeros_like(by)  # reset output-bias gradient.
+        total = 0.0  # reset total loss.
+        for seq, target in zip(X_train, y_train):  # loop over windows.
+            hs = []  # store hidden states.
+            h = np.zeros((1, hidden))  # initialize hidden state.
+            for x_t in seq:  # unroll over time.
+                h = np.tanh(x_t.reshape(1, 1) @ Wx + h @ Wh + bh)  # update hidden state.
+                hs.append(h.copy())  # store hidden state.
+            pred = h @ Wy + by  # predict next value.
+            err = pred - target  # compute scalar error.
+            total += float(err ** 2)  # accumulate squared error.
+            dWy += hs[-1].T @ err  # update output-weight gradient.
+            dby += err  # update output-bias gradient.
+            dh = err @ Wy.T  # start hidden gradient.
+            for step in reversed(range(len(seq))):  # backpropagate through time.
+                h_step = hs[step]  # get current hidden state.
+                h_prev = np.zeros_like(h_step) if step == 0 else hs[step - 1]  # get previous hidden state.
+                dz = dh * (1.0 - h_step ** 2)  # apply tanh derivative.
+                dWx += seq[step].reshape(1, 1).T @ dz  # accumulate input gradient.
+                dWh += h_prev.T @ dz  # accumulate recurrent gradient.
+                dbh += dz  # accumulate hidden bias gradient.
+                dh = dz @ Wh.T  # pass gradient backward in time.
+        scale = 1.0 / len(X_train)  # compute averaging scale.
+        for grad in [dWx, dWh, dbh, dWy, dby]:  # loop over gradients.
+            np.clip(grad, -1.0, 1.0, out=grad)  # clip gradients for stability.
+        Wx = Wx - lr * dWx * scale  # update input weights.
+        Wh = Wh - lr * dWh * scale  # update recurrent weights.
+        bh = bh - lr * dbh * scale  # update hidden bias.
+        Wy = Wy - lr * dWy * scale  # update output weights.
+        by = by - lr * dby * scale  # update output bias.
+        losses.append(total * scale)  # record average MSE.
+    return {"Wx": Wx, "Wh": Wh, "bh": bh, "Wy": Wy, "by": by}, np.array(losses)  # return model and loss.
+```
+
+```python
+def rnn_predict(X, model):  # predict and trace hidden states.
+    preds = []  # store predictions.
+    traces = []  # store hidden traces.
+    for seq in X:  # loop over windows.
+        h = np.zeros((1, model["Wh"].shape[0]))  # initialize hidden state.
+        hs = []  # store this sequence's hidden states.
+        for x_t in seq:  # unroll over time.
+            h = np.tanh(x_t.reshape(1, 1) @ model["Wx"] + h @ model["Wh"] + model["bh"])  # update hidden state.
+            hs.append(h.ravel())  # store hidden state.
+        preds.append(float(h @ model["Wy"] + model["by"]))  # store scalar prediction.
+        traces.append(np.array(hs))  # store trace array.
+    return np.array(preds), traces  # return predictions and traces.
+```
+
+```python
+model_a4, losses_a4 = train_tiny_rnn(X_train_a4, y_train_a4, hidden=8, lr=0.05, epochs=160, seed=229)  # train tiny RNN.
+preds_a4, traces_a4 = rnn_predict(X_test_a4, model_a4)  # predict held-out sequence windows.
+print("final training MSE:", round(float(losses_a4[-1]), 4))  # print final MSE.
+```
+
+```python
+plt.figure(figsize=(7.5, 4.5))  # create RNN loss figure.
+plt.plot(losses_a4, color="black")  # plot MSE.
+plt.title("A4: tiny RNN training loss")  # title plot.
+plt.xlabel("epoch")  # label x-axis.
+plt.ylabel("mean squared error")  # label y-axis.
+plt.show()  # render loss curve.
+```
+
+▶ What you'll see: prediction error decreases as recurrent weights learn a memory of recent values.
+
+```python
+trace_a4 = traces_a4[20]  # choose one hidden trace.
+plt.figure(figsize=(8, 4.5))  # create hidden trace figure.
+for unit in range(4):  # show first four hidden units.
+    plt.plot(trace_a4[:, unit], marker="o", label=f"hidden {unit + 1}")  # plot hidden unit over time.
+plt.title("A4: hidden-state traces")  # title plot.
+plt.xlabel("position in input window")  # label x-axis.
+plt.ylabel("activation")  # label y-axis.
+plt.legend()  # show labels.
+plt.show()  # render hidden traces.
+```
+
+▶ What you'll see: hidden units evolve across positions, storing information about the recent sequence.
+
+```python
+plt.figure(figsize=(9, 4.5))  # create prediction plot.
+plt.plot(y_test_a4, label="true next value", color="black")  # plot targets.
+plt.plot(preds_a4, label="RNN prediction", color="crimson", alpha=0.85)  # plot predictions.
+plt.title("A4 final: sequence prediction")  # title plot.
+plt.xlabel("held-out window")  # label x-axis.
+plt.ylabel("value")  # label y-axis.
+plt.legend()  # show labels.
+plt.show()  # render prediction comparison.
+```
+
+▶ What you'll see: the tiny RNN tracks the sine-wave phase, with small errors because it is intentionally minimal.
+
+👀 **Takeaway.** RNNs share parameters across time; LSTM gates refine this idea by controlling memory writes, erases, and reads.
+
+#### A5. Q-learning failure/edge: sparse rewards
+
+**Goal.** Compare sparse-reward and shaped-reward Q-learning in a slippery gridworld.  
+**Data source.** Slippery gridworld.  
+**We'll build this in 9 steps:** define environment, implement slip, train sparse Q-learning, train shaped Q-learning, plot rewards, show Q heatmaps, extract policies, compare policies, and summarize success.
+
+```python
+grid_a5 = (5, 5)  # define grid size.
+start_a5 = (4, 0)  # define start state.
+goal_a5 = (0, 4)  # define goal state.
+hazards_a5 = {(1, 3), (2, 2), (3, 1)}  # define hazardous terminal cells.
+actions_a5 = ["U", "D", "L", "R"]  # list actions.
+delta_a5 = {"U": (-1, 0), "D": (1, 0), "L": (0, -1), "R": (0, 1)}  # map actions to movement.
+state_to_i_a5 = {(row, col): row * grid_a5[1] + col for row in range(grid_a5[0]) for col in range(grid_a5[1])}  # map states to row indices.
+```
+
+```python
+def slip_step_a5(state, action, shaped=False, rng=None):  # simulate one slippery transition.
+    rng = RNG if rng is None else rng  # choose random generator.
+    chosen = action if rng.random() > 0.18 else rng.choice(actions_a5)  # slip to a random action sometimes.
+    dr, dc_delta = delta_a5[chosen]  # read chosen movement.
+    row_new = int(np.clip(state[0] + dr, 0, grid_a5[0] - 1))  # compute clipped row.
+    col_new = int(np.clip(state[1] + dc_delta, 0, grid_a5[1] - 1))  # compute clipped column.
+    next_state = (row_new, col_new)  # package next state.
+    done = next_state == goal_a5 or next_state in hazards_a5  # detect terminal state.
+    if next_state == goal_a5:  # handle goal.
+        reward = 1.0  # give positive terminal reward.
+    elif next_state in hazards_a5:  # handle hazard.
+        reward = -1.0  # give negative terminal reward.
+    elif shaped:  # handle dense shaping.
+        old_dist = abs(state[0] - goal_a5[0]) + abs(state[1] - goal_a5[1])  # compute old Manhattan distance.
+        new_dist = abs(next_state[0] - goal_a5[0]) + abs(next_state[1] - goal_a5[1])  # compute new Manhattan distance.
+        reward = -0.03 + 0.04 * (old_dist - new_dist)  # reward progress and penalize steps.
+    else:  # handle sparse nonterminal move.
+        reward = 0.0  # give no nonterminal feedback.
+    return next_state, reward, done  # return transition.
+```
+
+```python
+def train_q(shaped=False, episodes=800, alpha=0.45, gamma=0.94, epsilon=0.25, seed=234):  # train tabular Q-learning.
+    rng = np.random.default_rng(seed)  # create local generator.
+    Q = np.zeros((grid_a5[0] * grid_a5[1], len(actions_a5)))  # initialize Q-table.
+    rewards = []  # store episode returns.
+    for episode in range(episodes):  # loop over episodes.
+        state = start_a5  # reset state.
+        total = 0.0  # reset return.
+        for step in range(80):  # cap episode length.
+            s_idx = state_to_i_a5[state]  # convert state to index.
+            a_idx = int(rng.integers(len(actions_a5))) if rng.random() < epsilon else int(np.argmax(Q[s_idx]))  # choose epsilon-greedy action.
+            next_state, reward, done = slip_step_a5(state, actions_a5[a_idx], shaped=shaped, rng=rng)  # sample transition.
+            ns_idx = state_to_i_a5[next_state]  # convert next state to index.
+            target = reward + gamma * np.max(Q[ns_idx]) * (0.0 if done else 1.0)  # compute Q-learning target.
+            Q[s_idx, a_idx] = Q[s_idx, a_idx] + alpha * (target - Q[s_idx, a_idx])  # update Q-value.
+            state = next_state  # advance state.
+            total += reward  # accumulate reward.
+            if done:  # stop at terminal state.
+                break  # exit step loop.
+        rewards.append(total)  # store episode return.
+    return Q, np.array(rewards)  # return Q-table and rewards.
+```
+
+```python
+Q_sparse_a5, rewards_sparse_a5 = train_q(shaped=False, episodes=800, seed=234)  # train sparse-reward agent.
+Q_shaped_a5, rewards_shaped_a5 = train_q(shaped=True, episodes=800, seed=234)  # train shaped-reward agent.
+print("last-100 sparse mean:", round(float(rewards_sparse_a5[-100:].mean()), 3))  # summarize sparse returns.
+print("last-100 shaped mean:", round(float(rewards_shaped_a5[-100:].mean()), 3))  # summarize shaped returns.
+```
+
+```python
+def moving_average(values, window=40):  # compute moving average for reward curves.
+    return np.convolve(values, np.ones(window) / window, mode="valid")  # smooth values with a uniform window.
+plt.figure(figsize=(8, 4.8))  # create reward curve figure.
+plt.plot(moving_average(rewards_sparse_a5), label="sparse reward")  # plot sparse rewards.
+plt.plot(moving_average(rewards_shaped_a5), label="shaped reward")  # plot shaped rewards.
+plt.title("A5: Q-learning reward curves")  # title plot.
+plt.xlabel("episode after smoothing")  # label x-axis.
+plt.ylabel("moving-average return")  # label y-axis.
+plt.legend()  # show labels.
+plt.show()  # render curves.
+```
+
+▶ What you'll see: sparse rewards learn slowly and noisily because many early episodes provide little feedback.
+
+```python
+def values_from_Q(Q):  # convert Q-table to state-value grid.
+    return np.max(Q, axis=1).reshape(grid_a5)  # take max action value per state.
+fig, axes = plt.subplots(1, 2, figsize=(10, 4.4))  # create value heatmap panels.
+for ax, values, title in [(axes[0], values_from_Q(Q_sparse_a5), "sparse Q-values"), (axes[1], values_from_Q(Q_shaped_a5), "shaped Q-values")]:  # loop over value grids.
+    image = ax.imshow(values, cmap="viridis")  # draw heatmap.
+    ax.set_title(title)  # title panel.
+    for hazard in hazards_a5:  # mark hazards.
+        ax.text(hazard[1], hazard[0], "H", ha="center", va="center", color="white", fontweight="bold")  # annotate hazard.
+    ax.text(goal_a5[1], goal_a5[0], "G", ha="center", va="center", color="white", fontweight="bold")  # annotate goal.
+fig.colorbar(image, ax=axes.ravel().tolist(), shrink=0.8)  # add colorbar.
+plt.show()  # render heatmaps.
+```
+
+▶ What you'll see: shaped rewards create a smoother value gradient toward the goal.
+
+```python
+def policy_from_Q(Q):  # extract greedy policy arrows.
+    arrows = {"U": "↑", "D": "↓", "L": "←", "R": "→"}  # map actions to symbols.
+    policy = np.full(grid_a5, "", dtype=object)  # allocate symbol grid.
+    for row in range(grid_a5[0]):  # loop over rows.
+        for col in range(grid_a5[1]):  # loop over columns.
+            state = (row, col)  # name current state.
+            if state == goal_a5:  # mark goal.
+                policy[state] = "G"  # write goal marker.
+            elif state in hazards_a5:  # mark hazards.
+                policy[state] = "H"  # write hazard marker.
+            else:  # choose best action.
+                action = actions_a5[int(np.argmax(Q[state_to_i_a5[state]]))]  # get greedy action.
+                policy[state] = arrows[action]  # write action arrow.
+    return policy  # return policy grid.
+policy_sparse_a5 = policy_from_Q(Q_sparse_a5)  # extract sparse policy.
+policy_shaped_a5 = policy_from_Q(Q_shaped_a5)  # extract shaped policy.
+print("sparse policy:")  # introduce sparse policy.
+print(policy_sparse_a5)  # print sparse policy.
+print("shaped policy:")  # introduce shaped policy.
+print(policy_shaped_a5)  # print shaped policy.
+```
+
+```python
+fig, axes = plt.subplots(1, 2, figsize=(10, 4.4))  # create policy panels.
+for ax, policy, values, title in [(axes[0], policy_sparse_a5, values_from_Q(Q_sparse_a5), "sparse policy"), (axes[1], policy_shaped_a5, values_from_Q(Q_shaped_a5), "shaped policy")]:  # loop over policies.
+    ax.imshow(values, cmap="viridis")  # draw value background.
+    ax.set_title(title)  # title panel.
+    for row in range(grid_a5[0]):  # loop over rows.
+        for col in range(grid_a5[1]):  # loop over columns.
+            ax.text(col, row, policy[row, col], ha="center", va="center", color="white", fontsize=17, fontweight="bold")  # annotate policy.
+plt.tight_layout()  # prevent overlap.
+plt.show()  # render policy comparison.
+```
+
+▶ What you'll see: shaped rewards more consistently point the agent around hazards toward the goal.
+
+```python
+success_sparse_a5 = np.mean(rewards_sparse_a5[-100:] > 0.0)  # estimate recent sparse success frequency.
+success_shaped_a5 = np.mean(rewards_shaped_a5[-100:] > 0.0)  # estimate recent shaped success frequency.
+plt.figure(figsize=(5.5, 4.2))  # create success bar plot.
+plt.bar(["sparse", "shaped"], [success_sparse_a5, success_shaped_a5], color=["steelblue", "darkorange"])  # compare success rates.
+plt.ylim(0.0, 1.0)  # use probability scale.
+plt.title("A5 final: positive-return frequency")  # title plot.
+plt.ylabel("fraction of last 100 episodes")  # label y-axis.
+plt.show()  # render final diagnostic.
+```
+
+▶ What you'll see: shaped rewards usually improve the recent positive-return rate in this small slippery world.
+
+👀 **Takeaway.** Q-learning updates are simple, but sparse rewards can make exploration the central difficulty.
+
+### Interactive Experiment
+
+Use the sliders to retrain the from-scratch MLP. CPU is enough for these tiny datasets; no GPU is needed.
+
+```python
+def interactive_mlp_demo(data_source="moons", hidden_units=8, learning_rate=0.08, epochs=350):  # define widget-driven experiment.
+    X_i, y_i, _, desc_i = load_deep_data(data_source, seed=240)  # load selected data.
+    params_i, losses_i, accs_i, _ = train_mlp(X_i, y_i, hidden=int(hidden_units), lr=float(learning_rate), epochs=int(epochs), seed=240, snapshots=[])  # train MLP with selected settings.
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.8))  # create boundary and curve panels.
+    plot_boundary(lambda grid: mlp_forward(grid, params_i)[0].ravel(), X_i, y_i, title=f"{desc_i}: h={hidden_units}, lr={learning_rate:.3f}, acc={accs_i[-1]:.2f}", ax=axes[0])  # plot learned boundary.
+    axes[1].plot(losses_i, color="black", label="loss")  # plot loss.
+    axes[1].plot(accs_i, color="darkorange", label="accuracy")  # plot accuracy.
+    axes[1].set_title("training diagnostics")  # title diagnostics.
+    axes[1].set_xlabel("epoch")  # label x-axis.
+    axes[1].set_ylabel("value")  # label y-axis.
+    axes[1].legend()  # show labels.
+    plt.tight_layout()  # prevent overlap.
+    plt.show()  # render experiment.
+    print(f"Final loss: {losses_i[-1]:.3f}; final accuracy: {accs_i[-1]:.3f}")  # print exact metrics.
+```
+
+```python
+interact(interactive_mlp_demo, data_source=Dropdown(options=["moons", "circles", "blobs", "xor"], value="moons", description="data"), hidden_units=IntSlider(value=8, min=2, max=24, step=2, description="hidden"), learning_rate=FloatSlider(value=0.08, min=0.005, max=0.30, step=0.005, description="lr"), epochs=IntSlider(value=350, min=50, max=900, step=50, description="epochs"))  # create sliders for data, hidden units, learning rate, and epochs.
+```
+
+▶ What you'll see: hidden units control boundary flexibility, learning rate controls optimization behavior, and epochs control how long learning continues.
+
+```python
+interactive_mlp_demo(data_source="circles", hidden_units=10, learning_rate=0.07, epochs=300)  # run one non-interactive example for environments without widgets.
+```
+
+▶ What you'll see: the same scratch MLP learns a curved boundary for concentric circles.

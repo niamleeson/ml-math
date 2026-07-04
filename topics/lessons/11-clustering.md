@@ -209,6 +209,96 @@ plt.show()  # render the raw-data scatter before any model is fit.
 
 ▶ What you'll see: an unlabeled point cloud. For `blobs`, three compact groups are visually obvious; for `moons`, the two curved groups already hint that spherical centroids will struggle.
 
+### 🟢 Basics (warm-up)
+
+#### B1. Squared distance from one point to one centroid
+
+**Goal.** Compute one point-to-centroid squared distance, the primitive inside the k-means objective.
+
+```python
+point_b1 = np.array([2.0, 1.0])  # choose one data point so the distance calculation stays inspectable.
+centroid_b1 = np.array([5.0, 5.0])  # choose one centroid so we can measure how far the point is from its candidate cluster.
+difference_b1 = point_b1 - centroid_b1  # subtract coordinates because Euclidean distance compares feature-by-feature offsets.
+squared_distance_b1 = np.sum(difference_b1 ** 2)  # square and add offsets because k-means minimizes squared Euclidean distance.
+print("coordinate offsets:", difference_b1)  # print the offsets so each contribution to distance is visible.
+print("squared distance:", squared_distance_b1)  # print the scalar cost contributed by this point-centroid pair.
+```
+
+▶ What you'll see: offsets `[-3. -4.]` and squared distance `25.0`, because $(-3)^2+(-4)^2=25$.
+
+```python
+plt.figure(figsize=(5, 4))  # create a small plot so the numeric distance has a geometric meaning.
+plt.scatter(point_b1[0], point_b1[1], s=90, color="slateblue", label="point")  # draw the point whose cluster assignment will be judged by distance.
+plt.scatter(centroid_b1[0], centroid_b1[1], s=180, marker="X", color="black", label="centroid")  # draw the candidate centroid as the cluster representative.
+plt.plot([point_b1[0], centroid_b1[0]], [point_b1[1], centroid_b1[1]], color="gray", linestyle="--")  # connect them so the measured gap is visible.
+plt.title("B1: one squared point-to-centroid distance")  # label the plot with the primitive being practiced.
+plt.legend()  # show which marker is the point and which is the centroid.
+plt.show()  # render the visual check after the printed calculation.
+```
+
+▶ What you'll see: one point, one centroid, and one dashed segment whose squared length is the printed cost.
+
+👀 Takeaway: k-means starts with a tiny local question — "how costly is this point under this centroid?"
+
+#### B2. Assign one point to the nearer of two centroids
+
+**Goal.** Compare two squared distances and assign one point to the nearest centroid.
+
+```python
+point_b2 = np.array([2.0, 1.0])  # keep one point so assignment reduces to a two-choice distance comparison.
+centroids_b2 = np.array([[0.0, 0.0], [5.0, 5.0]])  # create two candidate centroids so the nearest one can win.
+distances_b2 = np.sum((centroids_b2 - point_b2) ** 2, axis=1)  # compute one squared distance per candidate centroid.
+chosen_b2 = np.argmin(distances_b2)  # choose the centroid with the smaller squared distance because k-means uses nearest-centroid assignment.
+print("squared distances:", distances_b2)  # print both costs so the assignment is auditable.
+print("assigned centroid index:", chosen_b2)  # print the winning centroid index for the hard cluster label.
+```
+
+▶ What you'll see: the first centroid wins because its squared distance is smaller than the second centroid's.
+
+```python
+plt.figure(figsize=(5, 4))  # create a compact plot focused only on the assignment decision.
+plt.scatter(point_b2[0], point_b2[1], s=100, color="slateblue", label="point")  # draw the point being assigned.
+plt.scatter(centroids_b2[:, 0], centroids_b2[:, 1], s=180, marker="X", color=["orange", "black"], label="centroids")  # draw both candidate centroids for comparison.
+plt.plot([point_b2[0], centroids_b2[0, 0]], [point_b2[1], centroids_b2[0, 1]], color="orange", linestyle="--")  # show the distance to centroid 0 because it is one candidate cost.
+plt.plot([point_b2[0], centroids_b2[1, 0]], [point_b2[1], centroids_b2[1, 1]], color="black", linestyle="--")  # show the distance to centroid 1 because assignment compares both costs.
+plt.title("B2: assign to the nearer centroid")  # label the plot with the hard-assignment primitive.
+plt.legend()  # keep the point and centroid markers identifiable.
+plt.show()  # render the two distance segments after the printed comparison.
+```
+
+▶ What you'll see: two dashed segments from the same point; the shorter orange segment marks the chosen centroid.
+
+👀 Takeaway: the assignment step is just `argmin` over point-to-centroid squared distances.
+
+#### B3. Update one centroid by averaging assigned points
+
+**Goal.** Replace one centroid with the mean of the points assigned to it.
+
+```python
+assigned_points_b3 = np.array([[1.0, 1.0], [2.0, 1.5], [3.0, 2.0]])  # collect only the points assigned to this one cluster.
+old_centroid_b3 = np.array([0.0, 0.0])  # keep the previous centroid so the update movement is visible.
+new_centroid_b3 = assigned_points_b3.mean(axis=0)  # average assigned points because this minimizes squared distance within the cluster.
+print("old centroid:", old_centroid_b3)  # print the starting representative before the update.
+print("new centroid:", new_centroid_b3)  # print the mean location that becomes the updated representative.
+```
+
+▶ What you'll see: the new centroid is the coordinate-wise average `[2.  1.5]`.
+
+```python
+plt.figure(figsize=(5, 4))  # create a small before-and-after plot for the centroid update.
+plt.scatter(assigned_points_b3[:, 0], assigned_points_b3[:, 1], s=90, color="slateblue", label="assigned points")  # draw the points that vote for the updated centroid.
+plt.scatter(old_centroid_b3[0], old_centroid_b3[1], s=160, marker="X", color="gray", label="old centroid")  # draw the previous centroid so movement can be compared.
+plt.scatter(new_centroid_b3[0], new_centroid_b3[1], s=220, marker="X", color="black", label="new centroid")  # draw the average as the updated centroid.
+plt.arrow(old_centroid_b3[0], old_centroid_b3[1], new_centroid_b3[0] - old_centroid_b3[0], new_centroid_b3[1] - old_centroid_b3[1], width=0.03, color="black", length_includes_head=True)  # show the update direction from old representative to mean.
+plt.title("B3: update centroid to assigned-point mean")  # label the plot with the update primitive.
+plt.legend()  # identify points and both centroid states.
+plt.show()  # render the centroid movement after printing the mean.
+```
+
+▶ What you'll see: the black X lands in the middle of the assigned points, with an arrow from the old centroid.
+
+👀 Takeaway: the update step moves each centroid to the average of its currently assigned points.
+
 ### 🟡 Easy Examples
 
 #### E1. k-means on 3 clean blobs from scratch

@@ -1,0 +1,826 @@
+# Face Recognition & Neural Style Transfer
+> **Source:** CS 230 · **Category:** Method/Model · **Type:** 💻 Colab · [↑ Full reference](../../ai-ml-cheatsheets.md)
+> 📓 Runnable notebook section; an `.ipynb` will be generated.
+
+## 1. Overview
+
+Face-recognition systems and neural style-transfer systems both reuse learned visual representations instead of treating raw pixels as the final object of interest. Face systems map images into embedding vectors and compare distances; style-transfer systems optimize a generated image so its internal activations preserve content while its channel correlations match style.
+
+**One-line intuition:** one vision network can support two very different tasks: identity matching by embedding distance, and image generation by content/style losses.
+
+## 2. Key Idea
+
+### Face verification versus face recognition
+
+**Face verification** asks a one-to-one question: "Is this query image the claimed person?" A system compares a query image to one enrolled reference image and accepts if the distance is below a threshold.
+
+**Face recognition** asks a one-to-many question: "Which person in the database is this query?" A system compares the query to a gallery of $K$ identities, then returns the nearest identity or rejects the query if every distance is too large.
+
+### Siamese embeddings and one-shot learning
+
+A Siamese network uses the same encoder $f(\cdot)$ for both images in a pair. Instead of learning a separate classifier for every possible person, it learns an embedding space where same-identity images are close and different-identity images are far apart:
+
+$$
+d(\text{image 1},\text{image 2})=\left\|f(\text{image 1})-f(\text{image 2})\right\|_2.
+$$
+
+This is useful for one-shot learning because a new identity can be enrolled with only one or a few reference images; the learned similarity function does most of the work.
+
+### Triplet loss
+
+Triplet loss trains on three images: anchor $A$, positive $P$ from the same identity, and negative $N$ from a different identity. With margin $\alpha>0$,
+
+$$
+\ell(A,P,N)=\max\left(d(A,P)-d(A,N)+\alpha,0\right).
+$$
+
+The loss is zero only when the negative is at least $\alpha$ farther from the anchor than the positive is. Hard and semi-hard negatives matter because easy negatives already satisfy the margin and produce no gradient signal.
+
+### Neural style transfer: content loss, style loss, Gram matrix
+
+Neural style transfer starts with a content image $C$, a style image $S$, and a generated image $G$. A chosen layer's activation is denoted $a^{[l]}\in\mathbb{R}^{n_H\times n_W\times n_C}$.
+
+The content loss keeps generated activations close to content activations:
+
+$$
+J_{\text{content}}(C,G)=\frac{1}{2}\left\|a^{[l](C)}-a^{[l](G)}\right\|^2.
+$$
+
+The style representation is the Gram matrix of channel correlations:
+
+$$
+G_{kk'}^{[l]}=\sum_{i=1}^{n_H^{[l]}}\sum_{j=1}^{n_W^{[l]}}a_{ijk}^{[l]}a_{ijk'}^{[l]}.
+$$
+
+A common single-layer style loss is
+
+$$
+J_{\text{style}}^{[l]}(S,G)=\frac{1}{(2n_Hn_Wn_C)^2}\left\|G^{[l](S)}-G^{[l](G)}\right\|_F^2.
+$$
+
+The generated image is optimized by the weighted objective
+
+$$
+J(G)=\alpha J_{\text{content}}(C,G)+\beta J_{\text{style}}(S,G).
+$$
+
+Higher $\alpha$ preserves more content structure; higher $\beta$ emphasizes style statistics.
+
+## 3. Hands-on Notebook
+
+### Setup
+
+Run this first. Everything in this notebook is synthetic and CPU-friendly: no internet, no pretrained model downloads, and no GPU requirement.
+
+```python
+import numpy as np  # use NumPy for embeddings, distances, Gram matrices, and manual gradient steps.
+import matplotlib.pyplot as plt  # use Matplotlib for all distance, embedding, and toy-image visualizations.
+from math import acos  # use arccosine in the cosine-similarity warm-up angle calculation.
+from math import degrees  # convert radians to degrees for an intuitive angle printout.
+try:  # try to import ipywidgets for the final Colab slider experiment.
+    from ipywidgets import interact  # create live controls when the notebook runs in Colab.
+    from ipywidgets import FloatSlider  # create a distance-threshold slider for verification.
+except ModuleNotFoundError:  # keep the notebook runnable in plain Python without widgets installed.
+    class FloatSlider:  # define a minimal slider replacement that stores the default value.
+        def __init__(self, value=0.0, min=0.0, max=1.0, step=0.1, description=""):  # accept the same keyword arguments used below.
+            self.value = value  # store the value that the fallback interaction will pass to the function.
+    def interact(function, **controls):  # define a fallback interaction function that runs once.
+        values = {name: control.value for name, control in controls.items()}  # collect default control values into a dictionary.
+        return function(**values)  # call the target function once so the notebook remains runnable.
+np.random.seed(230)  # seed the legacy NumPy generator for reproducible examples.
+RNG = np.random.default_rng(230)  # create a modern generator for all synthetic data below.
+plt.style.use("seaborn-v0_8-whitegrid")  # choose a readable grid style for university-style plots.
+COLORS = plt.cm.tab10.colors  # store a stable color cycle for identities and labels.
+
+def l2_distance(a, b):  # define Euclidean distance between two embedding vectors.
+    return float(np.linalg.norm(np.asarray(a) - np.asarray(b)))  # convert inputs to arrays and return a plain Python float.
+
+def cosine_similarity(a, b):  # define cosine similarity between two embedding vectors.
+    a = np.asarray(a)  # convert the first input to a NumPy array for vector operations.
+    b = np.asarray(b)  # convert the second input to a NumPy array for vector operations.
+    numerator = float(np.dot(a, b))  # compute the dot product that measures aligned direction.
+    denominator = float(np.linalg.norm(a) * np.linalg.norm(b))  # compute the product of vector lengths for normalization.
+    return numerator / denominator  # return the scale-free similarity in the range [-1, 1] for nonzero vectors.
+
+def gram_matrix(activation):  # define the Gram matrix for an activation tensor shaped height by width by channels.
+    h, w, c = activation.shape  # unpack the spatial and channel dimensions for clarity.
+    features = activation.reshape(h * w, c)  # flatten spatial positions so each row is one location and each column is one channel.
+    return features.T @ features  # multiply channels by channels to get channel-correlation totals.
+
+def content_loss(content, generated):  # compute the CS230 content loss on toy activations.
+    return 0.5 * float(np.sum((content - generated) ** 2))  # return one half times squared activation difference.
+
+def style_loss(style, generated):  # compute a single-layer Gram-matrix style loss on toy activations.
+    h, w, c = generated.shape  # read activation dimensions for the normalization constant.
+    gram_style = gram_matrix(style)  # compute the target style channel correlations.
+    gram_generated = gram_matrix(generated)  # compute the generated channel correlations.
+    denominator = float((2 * h * w * c) ** 2)  # compute the standard style-loss normalization denominator.
+    return float(np.sum((gram_style - gram_generated) ** 2) / denominator)  # return the normalized squared Gram difference.
+
+def total_style_transfer_loss(content, style, generated, alpha=1.0, beta=10.0):  # combine content and style costs.
+    c_loss = content_loss(content, generated)  # compute the content term before weighting.
+    s_loss = style_loss(style, generated)  # compute the style term before weighting.
+    total = alpha * c_loss + beta * s_loss  # combine losses using the requested tradeoff weights.
+    return total, c_loss, s_loss  # return all pieces so plots can separate the terms.
+
+def style_transfer_grad(content, style, generated, alpha=1.0, beta=10.0):  # compute a manual gradient for the toy generated activation.
+    h, w, c = generated.shape  # unpack activation dimensions for reshaping and normalization.
+    content_grad = generated - content  # differentiate one-half squared content loss with respect to generated activations.
+    generated_features = generated.reshape(h * w, c)  # flatten generated activations into a matrix of spatial positions by channels.
+    style_features = style.reshape(h * w, c)  # flatten style activations into the same matrix layout.
+    gram_generated = generated_features.T @ generated_features  # compute generated channel correlations.
+    gram_style = style_features.T @ style_features  # compute target style channel correlations.
+    denominator = float((2 * h * w * c) ** 2)  # compute the style-loss normalization constant.
+    style_grad_flat = (4.0 / denominator) * generated_features @ (gram_generated - gram_style)  # differentiate the squared Gram loss by hand.
+    style_grad = style_grad_flat.reshape(h, w, c)  # restore the gradient to activation-tensor shape.
+    return alpha * content_grad + beta * style_grad  # return the gradient of the weighted total objective.
+
+def normalize_rows(x):  # normalize each embedding vector to unit length when cosine-like geometry is desired.
+    norms = np.linalg.norm(x, axis=1, keepdims=True)  # compute one vector norm per row while keeping matrix shape.
+    return x / np.maximum(norms, 1e-12)  # divide safely so no row creates a zero-division error.
+
+def make_identity_embeddings(num_identities=5, photos_per_identity=4, dim=8, spread=0.18):  # synthesize face embeddings grouped by identity.
+    centers = normalize_rows(RNG.normal(size=(num_identities, dim)))  # create one normalized latent center per identity.
+    embeddings = []  # prepare a list that will hold every noisy embedding.
+    labels = []  # prepare a list that will hold the identity label for every embedding.
+    for identity in range(num_identities):  # loop over identities so each person gets clustered embeddings.
+        for _ in range(photos_per_identity):  # generate several photos per identity.
+            sample = centers[identity] + RNG.normal(scale=spread, size=dim)  # add small photo-level noise around the identity center.
+            embeddings.append(sample)  # store the noisy embedding vector.
+            labels.append(identity)  # store the matching identity label.
+    return np.array(embeddings), np.array(labels), centers  # return embeddings, labels, and clean centers.
+
+def pairwise_l2(A, B):  # compute all Euclidean distances between rows of A and rows of B.
+    diff = A[:, None, :] - B[None, :, :]  # broadcast row differences into a three-dimensional array.
+    return np.sqrt(np.sum(diff ** 2, axis=2))  # collapse feature differences into pairwise Euclidean distances.
+
+def make_toy_image(kind="content", size=16):  # create tiny synthetic images used as activation-like arrays.
+    grid_y, grid_x = np.mgrid[0:size, 0:size]  # build coordinate grids for procedural patterns.
+    if kind == "content":  # create a structured content pattern with a bright central object.
+        image = np.exp(-((grid_x - size * 0.5) ** 2 + (grid_y - size * 0.45) ** 2) / (2 * (size * 0.18) ** 2))  # draw a smooth blob.
+        image += 0.35 * (np.abs(grid_x - grid_y) < 2)  # add a diagonal edge so content has recognizable geometry.
+    elif kind == "mosaic":  # create a blocky style pattern with repeated color-like channels.
+        image = ((grid_x // 4 + grid_y // 4) % 2).astype(float)  # alternate square tiles to mimic a mosaic texture.
+        image += 0.25 * np.sin(grid_x * 1.7)  # add high-frequency variation inside the tiles.
+    elif kind == "swirl":  # create a smooth swirling style pattern.
+        radius = np.sqrt((grid_x - size / 2) ** 2 + (grid_y - size / 2) ** 2)  # compute distance from the image center.
+        angle = np.arctan2(grid_y - size / 2, grid_x - size / 2)  # compute angle around the image center.
+        image = 0.5 + 0.5 * np.sin(2.5 * angle + 0.8 * radius)  # mix angle and radius into a swirl texture.
+    elif kind == "noise":  # create a noisy style edge case.
+        image = RNG.normal(loc=0.5, scale=0.35, size=(size, size))  # sample random pixel intensities to mimic noisy texture.
+    else:  # reject unknown toy-image names clearly.
+        raise ValueError("kind must be content, mosaic, swirl, or noise")  # explain the allowed choices.
+    image = np.clip(image, 0.0, 1.0)  # keep the toy image inside displayable intensity bounds.
+    channel_1 = image  # use the base pattern as the first channel.
+    channel_2 = np.roll(image, shift=2, axis=0)  # create a shifted second channel so Gram correlations are nontrivial.
+    channel_3 = np.roll(image, shift=2, axis=1)  # create a shifted third channel for richer style statistics.
+    return np.stack([channel_1, channel_2, channel_3], axis=2)  # return a height by width by channel tensor.
+
+def show_image_tensor(tensor, title="image", ax=None):  # display a three-channel toy tensor as an RGB-like image.
+    ax = plt.gca() if ax is None else ax  # use current axes when none are supplied.
+    clipped = np.clip(tensor, 0.0, 1.0)  # clip values so imshow receives valid image intensities.
+    ax.imshow(clipped)  # draw the toy tensor as an image.
+    ax.set_title(title)  # label the panel so comparisons are interpretable.
+    ax.axis("off")  # remove axes because spatial coordinates are not the lesson focus.
+    return ax  # return axes for optional downstream annotations.
+```
+
+### Data — swappable sources
+
+Use the toggles below to choose synthetic face embeddings and toy feature maps. The notebook intentionally includes a clean case and a hard case, because real systems must handle threshold ambiguity, look-alikes, and style artifacts.
+
+```python
+FACE_DATA_SOURCE = "clean"  # choose "clean" for separated identities or "hard" for look-alike/occlusion-style overlap.
+STYLE_DATA_SOURCE = "mosaic"  # choose "mosaic", "swirl", or "noise" for the target style texture.
+EMBEDDING_DIM = 8  # use small embeddings so every distance calculation remains inspectable.
+
+def load_face_data(source="clean"):  # create a reusable synthetic face-embedding dataset.
+    if source == "clean":  # build an easier dataset with compact same-person clusters.
+        embeddings, labels, centers = make_identity_embeddings(num_identities=5, photos_per_identity=5, dim=EMBEDDING_DIM, spread=0.14)  # sample clean identity clusters.
+    elif source == "hard":  # build a harder dataset with two look-alike identities and more noise.
+        embeddings, labels, centers = make_identity_embeddings(num_identities=5, photos_per_identity=5, dim=EMBEDDING_DIM, spread=0.22)  # sample noisier identity clusters.
+        centers[1] = normalize_rows((centers[0] + 0.20 * RNG.normal(size=(1, EMBEDDING_DIM))))[0]  # move identity 1 near identity 0 to mimic a look-alike.
+        mask = labels == 1  # locate embeddings belonging to the look-alike identity.
+        embeddings[mask] = centers[1] + RNG.normal(scale=0.24, size=(mask.sum(), EMBEDDING_DIM))  # regenerate those embeddings around the nearby center.
+        embeddings[labels == 3] += RNG.normal(scale=0.35, size=(np.sum(labels == 3), EMBEDDING_DIM))  # perturb one identity to mimic lighting or occlusion.
+    else:  # reject invalid face source names.
+        raise ValueError("FACE_DATA_SOURCE must be clean or hard")  # give a precise error message for the toggle.
+    return embeddings, labels, centers  # return the synthetic face dataset.
+
+face_embeddings, face_labels, face_centers = load_face_data(FACE_DATA_SOURCE)  # load the selected face dataset.
+content_tensor = make_toy_image("content", size=16)  # create the content activation tensor.
+style_tensor = make_toy_image(STYLE_DATA_SOURCE, size=16)  # create the selected style activation tensor.
+print(f"Face data source: {FACE_DATA_SOURCE}")  # report the face-data choice.
+print(f"Face embeddings shape: {face_embeddings.shape}")  # report number of images and embedding dimension.
+print(f"Style data source: {STYLE_DATA_SOURCE}")  # report the style-data choice.
+print(f"Toy tensor shape: {content_tensor.shape}")  # report height, width, and channels for the feature maps.
+```
+
+```python
+plt.figure(figsize=(6, 4))  # create a compact figure for an embedding preview.
+projector = RNG.normal(size=(EMBEDDING_DIM, 2))  # create a fixed random projection from 8-D embeddings to 2-D.
+projected_embeddings = face_embeddings @ projector  # project embeddings for visualization only.
+for identity in np.unique(face_labels):  # draw each identity group separately.
+    mask = face_labels == identity  # select embeddings for the current identity.
+    plt.scatter(projected_embeddings[mask, 0], projected_embeddings[mask, 1], s=55, color=COLORS[identity], label=f"id {identity}")  # show the projected identity cluster.
+plt.title("Synthetic face embeddings projected to 2-D")  # title the diagnostic plot.
+plt.xlabel("random projection 1")  # label the horizontal projection axis.
+plt.ylabel("random projection 2")  # label the vertical projection axis.
+plt.legend(ncol=3, fontsize=8)  # show identity colors without taking too much space.
+plt.show()  # render the embedding preview.
+```
+
+▶ What you'll see: each color is one synthetic identity. In `clean`, clusters are better separated; in `hard`, some clusters overlap, foreshadowing false accepts and false rejects.
+
+```python
+fig, axes = plt.subplots(1, 2, figsize=(7, 3))  # create side-by-side panels for content and style tensors.
+show_image_tensor(content_tensor, "content tensor C", ax=axes[0])  # display the synthetic content tensor.
+show_image_tensor(style_tensor, f"style tensor S: {STYLE_DATA_SOURCE}", ax=axes[1])  # display the selected style tensor.
+plt.tight_layout()  # reduce whitespace between the two panels.
+plt.show()  # render the toy content and style inputs.
+```
+
+▶ What you'll see: the content tensor has a simple object-like blob and edge; the style tensor has texture statistics such as blocks, swirls, or random high-frequency noise.
+
+### 🟢 Basics (warm-up)
+
+#### B1. Cosine similarity between two face embeddings
+
+**Goal.** Compare two toy 3-D embeddings by direction, not length. We'll build this in **2 steps**.
+
+```python
+embedding_a_b1 = np.array([1.0, 2.0, 2.0])  # create the first toy face embedding.
+embedding_b_b1 = np.array([2.0, 1.0, 2.0])  # create the second toy face embedding.
+similarity_b1 = cosine_similarity(embedding_a_b1, embedding_b_b1)  # compute scale-free directional similarity.
+angle_b1 = degrees(acos(np.clip(similarity_b1, -1.0, 1.0)))  # convert similarity into an angle for intuition.
+print("Embedding A:", embedding_a_b1)  # display the first embedding.
+print("Embedding B:", embedding_b_b1)  # display the second embedding.
+print(f"Cosine similarity = {similarity_b1:.3f}")  # display the cosine similarity.
+print(f"Angle between embeddings = {angle_b1:.1f} degrees")  # display the geometric angle.
+```
+
+```python
+plt.figure(figsize=(4.5, 4.5))  # create a square plot for a tiny vector sketch.
+plt.quiver([0, 0], [0, 0], [embedding_a_b1[0], embedding_b_b1[0]], [embedding_a_b1[1], embedding_b_b1[1]], angles="xy", scale_units="xy", scale=1, color=[COLORS[0], COLORS[1]])  # draw the first two coordinates as arrows.
+plt.xlim(0, 2.5)  # set horizontal limits so both arrows fit.
+plt.ylim(0, 2.5)  # set vertical limits so both arrows fit.
+plt.xlabel("embedding coordinate 1")  # label the first coordinate.
+plt.ylabel("embedding coordinate 2")  # label the second coordinate.
+plt.title("B1 angle sketch using first two coordinates")  # title the vector sketch.
+plt.grid(True)  # keep the geometric grid visible.
+plt.show()  # render the angle sketch.
+```
+
+▶ What you'll see: two arrows pointing in similar directions, matching a high cosine similarity. The sketch uses only two coordinates, while the printed value uses all three.
+
+#### B2. L2 distance and threshold decision for one face pair
+
+**Goal.** Turn one embedding distance into an accept/reject verification decision. We'll build this in **2 steps**.
+
+```python
+reference_b2 = np.array([0.20, 0.10, 0.75, -0.15])  # create a toy enrolled reference embedding.
+query_b2 = np.array([0.24, 0.18, 0.68, -0.11])  # create a toy query embedding that should be close.
+threshold_b2 = 0.16  # set a fixed verification threshold.
+distance_b2 = l2_distance(reference_b2, query_b2)  # compute Euclidean distance between reference and query.
+decision_b2 = "ACCEPT: same claimed identity" if distance_b2 <= threshold_b2 else "REJECT: different identity"  # compare distance to threshold.
+print(f"L2 distance = {distance_b2:.3f}")  # display the measured distance.
+print(f"Threshold = {threshold_b2:.3f}")  # display the decision boundary.
+print(decision_b2)  # display the final verification decision.
+```
+
+```python
+plt.figure(figsize=(5.5, 1.8))  # create a horizontal distance-gauge figure.
+plt.axvline(threshold_b2, color="black", linestyle="--", label="threshold")  # draw the accept/reject threshold.
+plt.scatter([distance_b2], [0], s=160, color=COLORS[2], label="pair distance")  # draw the observed pair distance.
+plt.yticks([])  # hide the meaningless vertical axis.
+plt.xlim(0, 0.35)  # show a small distance range around the threshold.
+plt.xlabel("embedding L2 distance")  # label the distance axis.
+plt.title("B2 verification decision")  # title the decision plot.
+plt.legend()  # show which marker is the distance and which line is the threshold.
+plt.show()  # render the distance-gauge plot.
+```
+
+▶ What you'll see: the distance marker falls to the left of the threshold line, so the pair is accepted as the same claimed identity.
+
+#### B3. Gram matrix of a 2×2 two-channel activation map
+
+**Goal.** Compute a tiny style matrix that measures channel correlations. We'll build this in **3 steps**.
+
+```python
+activation_b3 = np.array([[[1.0, 0.0], [2.0, 1.0]], [[0.0, 1.0], [1.0, 2.0]]])  # create a 2 by 2 activation map with 2 channels.
+features_b3 = activation_b3.reshape(4, 2)  # flatten the four spatial locations into rows.
+gram_b3 = gram_matrix(activation_b3)  # compute the channel-by-channel Gram matrix.
+print("Flattened spatial features:")  # introduce the flattened representation.
+print(features_b3)  # show every spatial location's two channel values.
+print("Gram matrix:")  # introduce the Gram result.
+print(gram_b3)  # show channel self-correlations and cross-correlations.
+```
+
+```python
+plt.figure(figsize=(4, 3.5))  # create a small heatmap figure.
+plt.imshow(gram_b3, cmap="Blues")  # display the Gram matrix as a heatmap.
+plt.colorbar(label="channel correlation total")  # add a colorbar so values are readable.
+plt.xticks([0, 1], ["channel 0", "channel 1"])  # label Gram columns by channel.
+plt.yticks([0, 1], ["channel 0", "channel 1"])  # label Gram rows by channel.
+plt.title("B3 Gram matrix heatmap")  # title the tiny style matrix plot.
+for i in range(2):  # loop over Gram rows for numeric annotations.
+    for j in range(2):  # loop over Gram columns for numeric annotations.
+        plt.text(j, i, f"{gram_b3[i, j]:.0f}", ha="center", va="center", color="black")  # write each Gram entry on the heatmap.
+plt.tight_layout()  # keep labels from overlapping.
+plt.show()  # render the Gram heatmap.
+```
+
+▶ What you'll see: diagonal entries measure each channel's total energy, while off-diagonal entries measure how often the two channels are active together.
+
+### 🟡 Easy Examples
+
+#### E1. Compute embedding distances for verification
+
+**Goal.** Compute distances for several same-person and different-person pairs. We'll build this in **6 steps**.
+
+```python
+pairs_e1 = [(0, 1), (0, 6), (5, 7), (8, 14), (10, 11), (12, 22)]  # choose a mix of same-label and different-label pairs.
+distances_e1 = []  # prepare a list for measured pair distances.
+labels_e1 = []  # prepare a list where 1 means same identity and 0 means different identity.
+for left, right in pairs_e1:  # iterate over selected face-image pairs.
+    distance = l2_distance(face_embeddings[left], face_embeddings[right])  # compute the embedding distance for this pair.
+    same = int(face_labels[left] == face_labels[right])  # compute the ground-truth verification label.
+    distances_e1.append(distance)  # store the distance for plotting and printing.
+    labels_e1.append(same)  # store the same/different label.
+print("pair | ids | distance | label")  # print a readable table header.
+for pair, distance, same in zip(pairs_e1, distances_e1, labels_e1):  # loop over all pair results.
+    print(f"{pair} | ({face_labels[pair[0]]}, {face_labels[pair[1]]}) | {distance:.3f} | {'same' if same else 'different'}")  # print one verification row.
+```
+
+```python
+plt.figure(figsize=(7, 3.5))  # create a distance-bar figure.
+bar_colors_e1 = [COLORS[2] if same else COLORS[3] for same in labels_e1]  # color same-person and different-person bars differently.
+plt.bar(np.arange(len(pairs_e1)), distances_e1, color=bar_colors_e1)  # draw one bar per pair distance.
+plt.xticks(np.arange(len(pairs_e1)), [f"{a}-{b}" for a, b in pairs_e1])  # label each bar by its pair indices.
+plt.ylabel("L2 embedding distance")  # label the distance axis.
+plt.xlabel("image pair indices")  # label the pair axis.
+plt.title("E1 verification pair distances")  # title the result plot.
+plt.show()  # render the distance bars.
+```
+
+▶ What you'll see: same-identity bars are usually shorter than different-identity bars, which is exactly what a useful embedding space should produce.
+
+#### E2. Choose a verification threshold
+
+**Goal.** Sweep candidate thresholds and pick the one with the best accuracy on labeled pairs. We'll build this in **6 steps**.
+
+```python
+all_pairs_e2 = []  # prepare a list of every unordered pair of synthetic images.
+all_distances_e2 = []  # prepare a list of every pair distance.
+all_labels_e2 = []  # prepare a list of every pair's same/different label.
+for i in range(len(face_embeddings)):  # choose the left image index.
+    for j in range(i + 1, len(face_embeddings)):  # choose the right image index without duplicating pairs.
+        all_pairs_e2.append((i, j))  # store the pair indices for later inspection.
+        all_distances_e2.append(l2_distance(face_embeddings[i], face_embeddings[j]))  # store the pair's L2 distance.
+        all_labels_e2.append(int(face_labels[i] == face_labels[j]))  # store 1 for same identity and 0 otherwise.
+all_distances_e2 = np.array(all_distances_e2)  # convert distances to an array for vectorized thresholding.
+all_labels_e2 = np.array(all_labels_e2)  # convert labels to an array for vectorized accuracy.
+threshold_grid_e2 = np.linspace(all_distances_e2.min(), all_distances_e2.max(), 80)  # create candidate thresholds across the observed range.
+accuracies_e2 = []  # prepare a list for threshold accuracies.
+for threshold in threshold_grid_e2:  # evaluate each candidate threshold.
+    predictions = (all_distances_e2 <= threshold).astype(int)  # predict same identity when distance is below threshold.
+    accuracies_e2.append(np.mean(predictions == all_labels_e2))  # compute verification accuracy for this threshold.
+best_index_e2 = int(np.argmax(accuracies_e2))  # find the index of the best threshold.
+best_threshold_e2 = float(threshold_grid_e2[best_index_e2])  # read the best threshold value.
+best_accuracy_e2 = float(accuracies_e2[best_index_e2])  # read the best accuracy value.
+print(f"Best threshold = {best_threshold_e2:.3f}")  # print the selected threshold.
+print(f"Best accuracy = {best_accuracy_e2:.3f}")  # print its validation accuracy.
+```
+
+```python
+plt.figure(figsize=(7, 4))  # create a histogram figure.
+plt.hist(all_distances_e2[all_labels_e2 == 1], bins=14, alpha=0.75, color=COLORS[2], label="same identity")  # draw same-person distance distribution.
+plt.hist(all_distances_e2[all_labels_e2 == 0], bins=14, alpha=0.55, color=COLORS[3], label="different identity")  # draw different-person distance distribution.
+plt.axvline(best_threshold_e2, color="black", linestyle="--", label=f"best threshold {best_threshold_e2:.2f}")  # mark the selected threshold.
+plt.xlabel("L2 embedding distance")  # label the histogram axis.
+plt.ylabel("number of pairs")  # label the frequency axis.
+plt.title("E2 threshold selection from labeled pairs")  # title the threshold plot.
+plt.legend()  # show distribution labels and threshold label.
+plt.show()  # render the threshold histogram.
+```
+
+▶ What you'll see: the threshold tries to separate short same-person distances from longer different-person distances. Overlap means no threshold can be perfect.
+
+#### E3. Triplet loss on toy embeddings
+
+**Goal.** Evaluate zero-loss and positive-loss triplets geometrically. We'll build this in **5 steps**.
+
+```python
+anchor_e3 = np.array([0.0, 0.0])  # place the anchor at the origin for a simple plot.
+positive_e3 = np.array([0.6, 0.2])  # place the positive example close to the anchor.
+negative_easy_e3 = np.array([1.8, 0.8])  # place an easy negative far away.
+negative_hard_e3 = np.array([0.9, 0.25])  # place a hard negative too close to the anchor.
+margin_e3 = 0.5  # set the triplet-loss margin.
+def triplet_loss_value(anchor, positive, negative, margin):  # define the scalar triplet loss for one triplet.
+    d_ap = l2_distance(anchor, positive)  # compute anchor-positive distance.
+    d_an = l2_distance(anchor, negative)  # compute anchor-negative distance.
+    loss = max(d_ap - d_an + margin, 0.0)  # apply the hinge formula from CS230.
+    return loss, d_ap, d_an  # return loss and component distances for explanation.
+loss_easy_e3, d_ap_e3, d_an_easy_e3 = triplet_loss_value(anchor_e3, positive_e3, negative_easy_e3, margin_e3)  # evaluate the easy negative.
+loss_hard_e3, _, d_an_hard_e3 = triplet_loss_value(anchor_e3, positive_e3, negative_hard_e3, margin_e3)  # evaluate the hard negative.
+print(f"d(A,P) = {d_ap_e3:.3f}")  # print anchor-positive distance.
+print(f"easy d(A,N) = {d_an_easy_e3:.3f}, loss = {loss_easy_e3:.3f}")  # print easy-negative result.
+print(f"hard d(A,N) = {d_an_hard_e3:.3f}, loss = {loss_hard_e3:.3f}")  # print hard-negative result.
+```
+
+```python
+plt.figure(figsize=(5.5, 5))  # create a square geometry plot.
+plt.scatter([anchor_e3[0]], [anchor_e3[1]], s=180, color="black", label="anchor A")  # plot the anchor.
+plt.scatter([positive_e3[0]], [positive_e3[1]], s=140, color=COLORS[2], label="positive P")  # plot the positive example.
+plt.scatter([negative_easy_e3[0]], [negative_easy_e3[1]], s=140, color=COLORS[0], label="easy negative N")  # plot the easy negative.
+plt.scatter([negative_hard_e3[0]], [negative_hard_e3[1]], s=140, color=COLORS[3], label="hard negative N")  # plot the hard negative.
+margin_radius_e3 = d_ap_e3 + margin_e3  # compute the required exclusion radius for negatives.
+circle_e3 = plt.Circle(anchor_e3, margin_radius_e3, fill=False, linestyle="--", color="gray", label="d(A,P)+margin")  # create a margin circle around the anchor.
+plt.gca().add_patch(circle_e3)  # add the margin circle to the axes.
+plt.axis("equal")  # keep distances visually faithful.
+plt.xlim(-0.4, 2.3)  # set horizontal limits around all points.
+plt.ylim(-0.5, 1.5)  # set vertical limits around all points.
+plt.xlabel("embedding coordinate 1")  # label horizontal embedding coordinate.
+plt.ylabel("embedding coordinate 2")  # label vertical embedding coordinate.
+plt.title("E3 triplet margin geometry")  # title the triplet plot.
+plt.legend(fontsize=8)  # show point labels and margin label.
+plt.show()  # render the triplet geometry.
+```
+
+▶ What you'll see: negatives outside the dashed circle have zero loss; negatives inside the circle violate the margin and create positive triplet loss.
+
+#### E4. Build a mini face-recognition lookup
+
+**Goal.** Compare one query against a gallery of identities and return the nearest neighbor. We'll build this in **6 steps**.
+
+```python
+gallery_indices_e4 = [0, 5, 10, 15, 20]  # choose one enrolled reference image for each of five identities.
+query_index_e4 = 7  # choose a query image whose identity should be matched against the gallery.
+gallery_embeddings_e4 = face_embeddings[gallery_indices_e4]  # collect gallery embeddings.
+gallery_labels_e4 = face_labels[gallery_indices_e4]  # collect gallery identity labels.
+query_embedding_e4 = face_embeddings[query_index_e4]  # collect the query embedding.
+query_label_e4 = face_labels[query_index_e4]  # collect the query's hidden true identity for evaluation.
+distances_e4 = pairwise_l2(query_embedding_e4[None, :], gallery_embeddings_e4).ravel()  # compute query-to-gallery distances.
+best_gallery_position_e4 = int(np.argmin(distances_e4))  # find the nearest gallery position.
+predicted_identity_e4 = int(gallery_labels_e4[best_gallery_position_e4])  # read the nearest identity label.
+print("gallery identity | distance to query")  # print table header.
+for identity, distance in zip(gallery_labels_e4, distances_e4):  # loop over gallery distances.
+    print(f"{identity:16d} | {distance:.3f}")  # print one gallery candidate row.
+print(f"Query true identity = {query_label_e4}")  # print the hidden true query identity.
+print(f"Predicted identity = {predicted_identity_e4}")  # print the nearest-neighbor prediction.
+```
+
+```python
+plt.figure(figsize=(7, 3.5))  # create a nearest-neighbor bar plot.
+colors_e4 = [COLORS[2] if k == best_gallery_position_e4 else "lightgray" for k in range(len(distances_e4))]  # highlight the nearest gallery bar.
+plt.bar(np.arange(len(distances_e4)), distances_e4, color=colors_e4, edgecolor="black")  # draw query-to-gallery distances.
+plt.xticks(np.arange(len(distances_e4)), [f"id {identity}" for identity in gallery_labels_e4])  # label each bar by gallery identity.
+plt.ylabel("query-to-gallery L2 distance")  # label the distance axis.
+plt.xlabel("gallery identity")  # label the gallery axis.
+plt.title("E4 one-to-many recognition lookup")  # title the recognition plot.
+plt.show()  # render the lookup result.
+```
+
+▶ What you'll see: recognition is one-to-many search. The highlighted nearest bar is the predicted identity; if the true identity is absent or too far, a real system should reject.
+
+#### E5. Neural style transfer first run
+
+**Goal.** Optimize a generated toy tensor to match content and style statistics. We'll build this in **8 steps**.
+
+```python
+generated_e5 = np.clip(content_tensor + RNG.normal(scale=0.08, size=content_tensor.shape), 0.0, 1.0)  # initialize generated tensor near content with small noise.
+alpha_e5 = 1.0  # set content weight for the first run.
+beta_e5 = 18.0  # set style weight for the first run.
+learning_rate_e5 = 1.8  # choose a stable step size for the tiny activation optimization.
+steps_e5 = 160  # choose enough steps to visibly reduce the objective on CPU.
+snapshots_e5 = []  # prepare a list of generated tensors at selected steps.
+losses_e5 = []  # prepare a list of total losses during optimization.
+for step in range(steps_e5 + 1):  # run manual gradient descent over the generated tensor.
+    total, c_loss, s_loss = total_style_transfer_loss(content_tensor, style_tensor, generated_e5, alpha=alpha_e5, beta=beta_e5)  # evaluate losses at the current tensor.
+    losses_e5.append(total)  # store the total loss for a learning curve.
+    if step in [0, 40, 80, 160]:  # save snapshots at interpretable milestones.
+        snapshots_e5.append((step, generated_e5.copy()))  # store the current generated tensor.
+    gradient = style_transfer_grad(content_tensor, style_tensor, generated_e5, alpha=alpha_e5, beta=beta_e5)  # compute manual content-plus-style gradient.
+    generated_e5 = np.clip(generated_e5 - learning_rate_e5 * gradient, 0.0, 1.0)  # take a gradient step and clip to displayable values.
+print(f"Initial total loss = {losses_e5[0]:.4f}")  # print the starting objective.
+print(f"Final total loss = {losses_e5[-1]:.4f}")  # print the ending objective.
+```
+
+```python
+plt.figure(figsize=(6.5, 3.5))  # create a learning-curve figure.
+plt.plot(losses_e5, color=COLORS[0])  # draw total objective over optimization steps.
+plt.xlabel("gradient step")  # label the horizontal optimization axis.
+plt.ylabel("weighted total loss")  # label the loss axis.
+plt.title("E5 toy style-transfer optimization curve")  # title the loss curve.
+plt.show()  # render the optimization curve.
+```
+
+▶ What you'll see: the total loss falls quickly at first and then flattens as the generated tensor reaches a compromise between content and style.
+
+```python
+fig, axes = plt.subplots(1, 3, figsize=(9, 3))  # create a content-style-generated triptych.
+show_image_tensor(content_tensor, "content C", ax=axes[0])  # show the content target.
+show_image_tensor(style_tensor, "style S", ax=axes[1])  # show the style target.
+show_image_tensor(generated_e5, "generated G", ax=axes[2])  # show the final generated tensor.
+plt.tight_layout()  # tighten the triptych layout.
+plt.show()  # render the first style-transfer result.
+```
+
+▶ What you'll see: the generated tensor keeps the broad content shape while adopting some texture statistics from the style tensor.
+
+```python
+fig, axes = plt.subplots(1, len(snapshots_e5), figsize=(11, 2.8))  # create a row of optimization snapshots.
+for ax, (step, snapshot) in zip(axes, snapshots_e5):  # loop over saved generated tensors.
+    show_image_tensor(snapshot, f"step {step}", ax=ax)  # display the generated tensor at that step.
+plt.tight_layout()  # keep snapshot titles readable.
+plt.show()  # render the optimization trajectory.
+```
+
+▶ What you'll see: early snapshots resemble noisy content; later snapshots gradually pick up the style texture while preserving the central structure.
+
+### 🔴 Advanced Examples
+
+#### A1. Hard negative face-verification failure case
+
+**Goal.** Diagnose false accepts and false rejects when same/different distance distributions overlap. We'll build this in **8 steps**.
+
+```python
+hard_embeddings_a1, hard_labels_a1, _ = load_face_data("hard")  # load the intentionally difficult face dataset.
+hard_distances_a1 = []  # prepare a list of all hard-case pair distances.
+hard_truth_a1 = []  # prepare a list of true same/different labels.
+hard_pairs_a1 = []  # prepare a list of pair indices for error inspection.
+for i in range(len(hard_embeddings_a1)):  # loop over left image indices.
+    for j in range(i + 1, len(hard_embeddings_a1)):  # loop over right image indices without duplicates.
+        hard_pairs_a1.append((i, j))  # store pair indices.
+        hard_distances_a1.append(l2_distance(hard_embeddings_a1[i], hard_embeddings_a1[j]))  # store pair distance.
+        hard_truth_a1.append(int(hard_labels_a1[i] == hard_labels_a1[j]))  # store same/different truth.
+hard_distances_a1 = np.array(hard_distances_a1)  # convert hard distances to an array.
+hard_truth_a1 = np.array(hard_truth_a1)  # convert hard labels to an array.
+threshold_grid_a1 = np.linspace(hard_distances_a1.min(), hard_distances_a1.max(), 100)  # create thresholds to sweep.
+accuracies_a1 = []  # prepare accuracy values.
+for threshold in threshold_grid_a1:  # evaluate each threshold.
+    predictions = (hard_distances_a1 <= threshold).astype(int)  # accept pairs below threshold.
+    accuracies_a1.append(np.mean(predictions == hard_truth_a1))  # store hard-case accuracy.
+best_threshold_a1 = float(threshold_grid_a1[int(np.argmax(accuracies_a1))])  # choose the best threshold on the hard set.
+predictions_a1 = (hard_distances_a1 <= best_threshold_a1).astype(int)  # compute final hard-case predictions.
+false_accepts_a1 = np.where((predictions_a1 == 1) & (hard_truth_a1 == 0))[0]  # find different-person pairs incorrectly accepted.
+false_rejects_a1 = np.where((predictions_a1 == 0) & (hard_truth_a1 == 1))[0]  # find same-person pairs incorrectly rejected.
+print(f"Hard-case best threshold = {best_threshold_a1:.3f}")  # print the threshold.
+print(f"False accepts = {len(false_accepts_a1)}")  # print false-accept count.
+print(f"False rejects = {len(false_rejects_a1)}")  # print false-reject count.
+```
+
+```python
+plt.figure(figsize=(7, 4))  # create a hard-case histogram.
+plt.hist(hard_distances_a1[hard_truth_a1 == 1], bins=16, alpha=0.75, color=COLORS[2], label="same identity")  # plot same-person hard distances.
+plt.hist(hard_distances_a1[hard_truth_a1 == 0], bins=16, alpha=0.55, color=COLORS[3], label="different identity")  # plot different-person hard distances.
+plt.axvline(best_threshold_a1, color="black", linestyle="--", label="chosen threshold")  # draw the selected threshold.
+plt.xlabel("L2 embedding distance")  # label the distance axis.
+plt.ylabel("number of pairs")  # label the frequency axis.
+plt.title("A1 hard negative overlap")  # title the failure-case plot.
+plt.legend()  # show class and threshold labels.
+plt.show()  # render the overlap histogram.
+```
+
+▶ What you'll see: overlap near the threshold creates unavoidable mistakes. A look-alike pair can be a false accept, while an occluded same-person pair can be a false reject.
+
+```python
+example_false_accept_a1 = false_accepts_a1[0] if len(false_accepts_a1) else None  # choose one false accept if it exists.
+example_false_reject_a1 = false_rejects_a1[0] if len(false_rejects_a1) else None  # choose one false reject if it exists.
+for name, index in [("false accept", example_false_accept_a1), ("false reject", example_false_reject_a1)]:  # loop over error types.
+    if index is not None:  # print details only when that error type exists.
+        pair = hard_pairs_a1[index]  # recover the image-pair indices.
+        ids = (hard_labels_a1[pair[0]], hard_labels_a1[pair[1]])  # recover the pair's identity labels.
+        distance = hard_distances_a1[index]  # recover the pair distance.
+        print(f"{name}: pair {pair}, ids {ids}, distance {distance:.3f}")  # print an interpretable error example.
+```
+
+As an extra A1 diagnostic, sweep the verification threshold to draw a ROC curve for the same accept/reject tradeoff.
+
+```python
+roc_thresholds = np.linspace(all_distances_e2.min() - 0.01, all_distances_e2.max() + 0.01, 120)  # sweep thresholds across and slightly beyond observed distances.
+tpr_values = []  # store true positive rates, also called true accept rates.
+fpr_values = []  # store false positive rates, also called false accept rates.
+for threshold in roc_thresholds:  # evaluate every threshold.
+    predicted_same = (all_distances_e2 <= threshold).astype(int)  # accept pairs below the current threshold.
+    true_positive = np.sum((predicted_same == 1) & (all_labels_e2 == 1))  # count same-person pairs correctly accepted.
+    false_positive = np.sum((predicted_same == 1) & (all_labels_e2 == 0))  # count different-person pairs incorrectly accepted.
+    true_negative = np.sum((predicted_same == 0) & (all_labels_e2 == 0))  # count different-person pairs correctly rejected.
+    false_negative = np.sum((predicted_same == 0) & (all_labels_e2 == 1))  # count same-person pairs incorrectly rejected.
+    tpr = true_positive / max(true_positive + false_negative, 1)  # compute true accept rate safely.
+    fpr = false_positive / max(false_positive + true_negative, 1)  # compute false accept rate safely.
+    tpr_values.append(tpr)  # store true positive rate.
+    fpr_values.append(fpr)  # store false positive rate.
+auc_roc = float(np.trapz(np.array(tpr_values)[np.argsort(fpr_values)], np.array(fpr_values)[np.argsort(fpr_values)]))  # approximate ROC area with trapezoids.
+print(f"Approximate ROC AUC = {auc_roc:.3f}")  # print ROC area as a threshold-independent summary.
+```
+
+```python
+plt.figure(figsize=(5.5, 5))  # create a square ROC figure.
+plt.plot(fpr_values, tpr_values, color=COLORS[0], linewidth=2, label=f"ROC AUC ≈ {auc_roc:.2f}")  # draw the ROC curve.
+plt.plot([0, 1], [0, 1], color="gray", linestyle="--", label="random baseline")  # draw random-ranking baseline.
+plt.xlabel("false accept rate")  # label x-axis.
+plt.ylabel("true accept rate")  # label y-axis.
+plt.title("A6 verification ROC from threshold sweep")  # title ROC plot.
+plt.legend()  # show curve labels.
+plt.axis("square")  # keep ROC geometry square.
+plt.show()  # render ROC curve.
+```
+
+▶ What you'll see: moving the threshold changes both true accepts and false accepts. A curve closer to the top-left corner means better verification separation.
+
+#### A2. Triplet mining intuition
+
+**Goal.** Classify negatives as easy, semi-hard, or hard, then see which triplets train the model. We'll build this in **7 steps**.
+
+```python
+anchor_a2 = hard_embeddings_a1[0]  # choose one anchor embedding from the hard dataset.
+anchor_label_a2 = hard_labels_a1[0]  # read the anchor identity label.
+positive_candidates_a2 = np.where((hard_labels_a1 == anchor_label_a2) & (np.arange(len(hard_labels_a1)) != 0))[0]  # find same-identity positives excluding the anchor.
+positive_index_a2 = int(positive_candidates_a2[0])  # choose the first available positive.
+positive_a2 = hard_embeddings_a1[positive_index_a2]  # read the positive embedding.
+negative_indices_a2 = np.where(hard_labels_a1 != anchor_label_a2)[0]  # find all different-identity negatives.
+d_ap_a2 = l2_distance(anchor_a2, positive_a2)  # compute anchor-positive distance.
+margin_a2 = 0.35  # set the mining margin.
+mining_rows_a2 = []  # prepare rows describing each negative.
+for negative_index in negative_indices_a2:  # loop over candidate negatives.
+    d_an = l2_distance(anchor_a2, hard_embeddings_a1[negative_index])  # compute anchor-negative distance.
+    loss = max(d_ap_a2 - d_an + margin_a2, 0.0)  # compute triplet loss for this negative.
+    if d_an < d_ap_a2:  # identify negatives even closer than the positive.
+        category = "hard"  # label this as a hard negative.
+    elif d_an < d_ap_a2 + margin_a2:  # identify negatives farther than positive but inside the margin.
+        category = "semi-hard"  # label this as semi-hard.
+    else:  # identify negatives that already satisfy the margin.
+        category = "easy"  # label this as easy.
+    mining_rows_a2.append((negative_index, d_an, loss, category))  # store mining information.
+print(f"Anchor label = {anchor_label_a2}, positive index = {positive_index_a2}, d(A,P) = {d_ap_a2:.3f}")  # summarize anchor-positive geometry.
+for row in mining_rows_a2[:10]:  # print the first ten mining rows to keep output readable.
+    print(f"negative {row[0]:2d} | d(A,N)={row[1]:.3f} | loss={row[2]:.3f} | {row[3]}")  # show distance, loss, and category.
+```
+
+```python
+projector_a2 = RNG.normal(size=(EMBEDDING_DIM, 2))  # create a random 2-D projection for mining visualization.
+projected_a2 = hard_embeddings_a1 @ projector_a2  # project all hard embeddings to two dimensions.
+plt.figure(figsize=(6, 5))  # create a mining scatter plot.
+plt.scatter(projected_a2[:, 0], projected_a2[:, 1], c=[COLORS[label] for label in hard_labels_a1], s=45, alpha=0.65)  # draw all embeddings colored by identity.
+plt.scatter(projected_a2[0, 0], projected_a2[0, 1], s=220, color="black", marker="*", label="anchor")  # highlight the anchor.
+plt.scatter(projected_a2[positive_index_a2, 0], projected_a2[positive_index_a2, 1], s=160, color=COLORS[2], edgecolor="black", label="positive")  # highlight the selected positive.
+for negative_index, d_an, loss, category in mining_rows_a2[:8]:  # annotate a few candidate negatives.
+    marker = "x" if category == "easy" else "D" if category == "semi-hard" else "P"  # choose marker shape by mining category.
+    plt.scatter(projected_a2[negative_index, 0], projected_a2[negative_index, 1], s=130, marker=marker, color=COLORS[3], edgecolor="black")  # highlight candidate negative.
+plt.title("A2 triplet mining categories in projected space")  # title the mining plot.
+plt.xlabel("random projection 1")  # label first projection axis.
+plt.ylabel("random projection 2")  # label second projection axis.
+plt.legend(fontsize=8)  # show anchor and positive labels.
+plt.show()  # render triplet-mining visualization.
+```
+
+▶ What you'll see: easy negatives contribute zero loss, semi-hard negatives are useful because they violate the margin without being closer than the positive, and hard negatives may reveal look-alikes or label noise.
+
+#### A3. Recognition as one-to-many search
+
+**Goal.** Use multiple gallery photos per identity, compute a distance matrix, and inspect top-k retrieval. We'll build this in **8 steps**.
+
+```python
+gallery_mask_a3 = np.isin(face_labels, [0, 1, 2, 3, 4])  # keep all five identities in the gallery.
+gallery_embeddings_a3 = face_embeddings[gallery_mask_a3]  # collect gallery embeddings.
+gallery_labels_a3 = face_labels[gallery_mask_a3]  # collect gallery labels.
+query_indices_a3 = [2, 9, 13, 19, 24]  # choose one query from several identities.
+query_embeddings_a3 = face_embeddings[query_indices_a3]  # collect query embeddings.
+query_labels_a3 = face_labels[query_indices_a3]  # collect query labels.
+distance_matrix_a3 = pairwise_l2(query_embeddings_a3, gallery_embeddings_a3)  # compute query-by-gallery distance matrix.
+top_k_a3 = 3  # retrieve the top three nearest gallery photos for each query.
+for q_pos, q_label in enumerate(query_labels_a3):  # loop over queries.
+    ranking = np.argsort(distance_matrix_a3[q_pos])[:top_k_a3]  # find nearest gallery photo indices.
+    retrieved_labels = gallery_labels_a3[ranking]  # read retrieved identity labels.
+    retrieved_distances = distance_matrix_a3[q_pos, ranking]  # read retrieved distances.
+    print(f"query {q_pos} true id {q_label}: top labels {retrieved_labels.tolist()} with distances {np.round(retrieved_distances, 3).tolist()}")  # print top-k result.
+```
+
+```python
+plt.figure(figsize=(10, 4))  # create a heatmap figure for query-to-gallery distances.
+plt.imshow(distance_matrix_a3, aspect="auto", cmap="viridis")  # display smaller distances as one color and larger distances as another.
+plt.colorbar(label="L2 distance")  # add a colorbar for distance values.
+plt.yticks(np.arange(len(query_indices_a3)), [f"query id {label}" for label in query_labels_a3])  # label rows by query identity.
+plt.xticks(np.arange(len(gallery_labels_a3)), [f"{label}" for label in gallery_labels_a3], rotation=90)  # label columns by gallery identity.
+plt.xlabel("gallery photo identity label")  # label gallery axis.
+plt.ylabel("query")  # label query axis.
+plt.title("A3 one-to-many distance matrix")  # title the distance matrix.
+plt.tight_layout()  # prevent rotated labels from being clipped.
+plt.show()  # render the retrieval heatmap.
+```
+
+▶ What you'll see: each query should have low-distance columns for gallery photos of the same identity. Top-k retrieval is recognition viewed as ranked search.
+
+#### A4. Style/content loss decomposition
+
+**Goal.** Track content loss, style loss, and total loss during toy style-transfer optimization. We'll build this in **10 steps**.
+
+```python
+generated_a4 = np.clip(0.75 * content_tensor + 0.25 * RNG.random(content_tensor.shape), 0.0, 1.0)  # initialize generated tensor as content plus noise.
+alpha_a4 = 1.2  # set a content weight that keeps the object visible.
+beta_a4 = 24.0  # set a style weight large enough to change texture statistics.
+learning_rate_a4 = 1.5  # choose a stable manual gradient step size.
+steps_a4 = 220  # run enough steps to see separate loss curves stabilize.
+total_curve_a4 = []  # store total loss values.
+content_curve_a4 = []  # store unweighted content loss values.
+style_curve_a4 = []  # store unweighted style loss values.
+snapshots_a4 = []  # store generated tensors at milestones.
+for step in range(steps_a4 + 1):  # run gradient descent on the generated tensor.
+    total, c_loss, s_loss = total_style_transfer_loss(content_tensor, style_tensor, generated_a4, alpha=alpha_a4, beta=beta_a4)  # compute all losses.
+    total_curve_a4.append(total)  # store weighted total loss.
+    content_curve_a4.append(c_loss)  # store content loss.
+    style_curve_a4.append(s_loss)  # store style loss.
+    if step in [0, 50, 110, 220]:  # save interpretable optimization stages.
+        snapshots_a4.append((step, generated_a4.copy()))  # store a copy of the generated tensor.
+    gradient = style_transfer_grad(content_tensor, style_tensor, generated_a4, alpha=alpha_a4, beta=beta_a4)  # compute manual gradient.
+    generated_a4 = np.clip(generated_a4 - learning_rate_a4 * gradient, 0.0, 1.0)  # update generated tensor and clip to display range.
+print(f"final content loss = {content_curve_a4[-1]:.4f}")  # print final content loss.
+print(f"final style loss = {style_curve_a4[-1]:.4f}")  # print final style loss.
+print(f"final total loss = {total_curve_a4[-1]:.4f}")  # print final weighted total loss.
+```
+
+```python
+plt.figure(figsize=(7, 4))  # create a multi-curve loss plot.
+plt.plot(total_curve_a4, label="weighted total", color="black")  # draw total weighted objective.
+plt.plot(content_curve_a4, label="content loss", color=COLORS[0])  # draw content loss curve.
+plt.plot(style_curve_a4, label="style loss", color=COLORS[1])  # draw style loss curve.
+plt.xlabel("gradient step")  # label optimization steps.
+plt.ylabel("loss value")  # label loss magnitude.
+plt.title("A4 content/style loss decomposition")  # title the decomposition plot.
+plt.legend()  # show which curve is which.
+plt.show()  # render the loss curves.
+```
+
+▶ What you'll see: content and style losses do not always move in perfect sync because the generated tensor is solving a weighted compromise.
+
+```python
+fig, axes = plt.subplots(1, len(snapshots_a4), figsize=(11, 2.8))  # create a row for optimization snapshots.
+for ax, (step, snapshot) in zip(axes, snapshots_a4):  # loop over saved snapshots.
+    show_image_tensor(snapshot, f"step {step}", ax=ax)  # display each generated tensor.
+plt.tight_layout()  # keep snapshot row readable.
+plt.show()  # render A4 snapshots.
+```
+
+▶ What you'll see: the generated tensor gradually changes texture while retaining the high-level content layout.
+
+#### A5. Style-transfer tradeoff and edge case
+
+**Goal.** Vary $\alpha/\beta$ and compare a smooth style with a noisy style artifact. We'll build this in **10 steps**.
+
+```python
+styles_a5 = {"swirl": make_toy_image("swirl", size=16), "noise": make_toy_image("noise", size=16)}  # create two style targets, one structured and one noisy.
+settings_a5 = [(3.0, 6.0, "content-heavy"), (1.0, 18.0, "balanced"), (0.35, 45.0, "style-heavy")]  # define three content/style tradeoffs.
+results_a5 = {}  # prepare a dictionary to hold final generated tensors and losses.
+for style_name, style_target in styles_a5.items():  # loop over structured and noisy styles.
+    results_a5[style_name] = []  # create a result list for this style.
+    for alpha, beta, label in settings_a5:  # loop over tradeoff settings.
+        generated = np.clip(content_tensor + RNG.normal(scale=0.06, size=content_tensor.shape), 0.0, 1.0)  # initialize generated tensor near content.
+        for step in range(150):  # run a short optimization for this tradeoff.
+            gradient = style_transfer_grad(content_tensor, style_target, generated, alpha=alpha, beta=beta)  # compute gradient for this style and tradeoff.
+            generated = np.clip(generated - 0.25 * gradient, 0.0, 1.0)  # update generated tensor with a conservative fixed learning rate.
+        total, c_loss, s_loss = total_style_transfer_loss(content_tensor, style_target, generated, alpha=alpha, beta=beta)  # evaluate final losses.
+        results_a5[style_name].append((label, generated, total, c_loss, s_loss))  # store label, image, and losses.
+        print(f"{style_name:5s} | {label:13s} | total={total:.4f} | content={c_loss:.4f} | style={s_loss:.4f}")  # print a compact result row.
+```
+
+```python
+fig, axes = plt.subplots(len(styles_a5), len(settings_a5) + 1, figsize=(12, 5.5))  # create a grid comparing styles and tradeoffs.
+for row, (style_name, style_target) in enumerate(styles_a5.items()):  # loop over style rows.
+    show_image_tensor(style_target, f"style: {style_name}", ax=axes[row, 0])  # show the style target at the left.
+    for col, (label, generated, total, c_loss, s_loss) in enumerate(results_a5[style_name], start=1):  # loop over generated results.
+        show_image_tensor(generated, label, ax=axes[row, col])  # show one generated tensor for this tradeoff.
+plt.tight_layout()  # tighten the comparison grid.
+plt.show()  # render the tradeoff grid.
+```
+
+▶ What you'll see: content-heavy settings preserve the blob and edge, style-heavy settings exaggerate texture, and the noisy style can inject speckled artifacts even when the loss improves.
+
+### Interactive Experiment
+
+Move the distance threshold to see accept/reject decisions and accuracy update live. In Colab, the slider is interactive; outside Colab, the fallback runs once at the default threshold.
+
+```python
+def threshold_experiment(threshold=best_threshold_e2):  # define the live threshold experiment callback.
+    predictions = (all_distances_e2 <= threshold).astype(int)  # accept all pairs whose distance is below the slider threshold.
+    accuracy = float(np.mean(predictions == all_labels_e2))  # compute current verification accuracy.
+    false_accept_rate = float(np.mean((predictions == 1) & (all_labels_e2 == 0)))  # compute fraction of all pairs that are false accepts.
+    false_reject_rate = float(np.mean((predictions == 0) & (all_labels_e2 == 1)))  # compute fraction of all pairs that are false rejects.
+    plt.figure(figsize=(7, 4))  # create a fresh plot for the current slider value.
+    plt.hist(all_distances_e2[all_labels_e2 == 1], bins=14, alpha=0.75, color=COLORS[2], label="same identity")  # plot same-person distances.
+    plt.hist(all_distances_e2[all_labels_e2 == 0], bins=14, alpha=0.55, color=COLORS[3], label="different identity")  # plot different-person distances.
+    plt.axvline(threshold, color="black", linestyle="--", linewidth=2, label=f"threshold {threshold:.2f}")  # draw the interactive threshold.
+    plt.xlabel("L2 embedding distance")  # label distance axis.
+    plt.ylabel("number of pairs")  # label count axis.
+    plt.title(f"accuracy={accuracy:.3f}, false accepts={false_accept_rate:.3f}, false rejects={false_reject_rate:.3f}")  # summarize current metrics in the title.
+    plt.legend()  # show histogram and threshold labels.
+    plt.show()  # render the interactive plot.
+    print("Accepted pairs are to the left of the threshold; rejected pairs are to the right.")  # explain the decision rule.
+    print(f"Current threshold: {threshold:.3f}")  # print current threshold.
+    print(f"Current accuracy: {accuracy:.3f}")  # print current accuracy.
+    return accuracy  # return accuracy so notebook users see a final scalar.
+
+interact(threshold_experiment, threshold=FloatSlider(value=best_threshold_e2, min=float(all_distances_e2.min()), max=float(all_distances_e2.max()), step=0.01, description="threshold"))  # launch the slider experiment.
+```
+
+▶ What you'll see: lowering the threshold reduces false accepts but increases false rejects; raising it does the opposite. Verification is not just a model problem—it is also an operating-point choice.
