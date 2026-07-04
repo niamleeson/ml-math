@@ -18,7 +18,14 @@ Introduce CNNs as neural networks that preserve spatial structure through local 
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Multiply one 2×2 image patch by one 2×2 filter | pen-and-paper $2\times2$ patch and $2\times2$ filter | highlighted patch with printed dot product | ~2 |
+| B2 | Compute one convolution output size | toy scalars: $I=5,F=3,S=1,P=0$ | printed formula substitution | ~2 |
+| B3 | Take one 2×2 max-pool value | pen-and-paper $2\times2$ activation patch | highlighted maximum in the patch | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand-compute one convolution output cell | pen-and-paper $5\times5$ grayscale grid + $3\times3$ edge filter | shape diagram; highlight one receptive field and resulting scalar | ~3 |
@@ -38,7 +45,7 @@ Introduce CNNs as neural networks that preserve spatial structure through local 
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** notebooks/18-cnn-fundamentals.ipynb
-- **Est. cell count:** ~72 (⚖️ topic → hand calculations in lesson plus coded CNN/visualization examples)
+- **Est. cell count:** ~84 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), from atomic CONV/POOL warm-ups to coded CNN visualizations)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`load_digits`), tensorflow/keras or torch, seaborn for confusion matrices, ipywidgets.
 - **Runtime:** CPU
 - **Failure/edge dataset included:** shifted/scaled digits in A5 — shows that basic CNNs still fail when transformations exceed learned invariances.

@@ -18,7 +18,14 @@ Reflex-based models turn inputs into feature vectors, score them with weights, a
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Compute one linear score $w\cdot\phi(x)$ | toy scalars | printed contribution table | ~2 |
+| B2 | Convert one score into a sign prediction | toy scalars | printed values | ~2 |
+| B3 | Compute hinge loss for one labeled example | toy scalars | one-point margin/loss marker | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand-build a feature vector and score | Toy email/spam features $\phi(x)=(1,\text{links},\text{caps})$, $w=(-2,1.5,0.5)$ | lesson derivation: feature/weight dot-product table; notebook: score contribution bar chart | ~3 |
@@ -38,7 +45,7 @@ Reflex-based models turn inputs into feature vectors, score them with weights, a
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/29-reflex-based-models.ipynb
-- **Est. cell count:** ~70 (⚖️ topic → hand score/loss derivations + coded decision-boundary/loss visualizations)
+- **Est. cell count:** ~82 (⚖️ topic → 3 basics + hand score/loss derivations + coded decision-boundary/loss visualizations)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_circles`, `make_moons`, `KNeighborsClassifier`, `LogisticRegression`, regression utilities), ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `make_moons` in A5 — shows a raw linear score cannot represent the curved boundary while k-NN/neural nets can.

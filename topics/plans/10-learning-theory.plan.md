@@ -18,7 +18,7 @@ Learning theory explains when low training error is evidence of low test error, 
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟡 Easy (5)
 | # | Title | Given | Derivation focus |
 |---|---|---|
 | E1 | Apply the union bound to three bad events | $P(A_1)=0.02$, $P(A_2)=0.04$, $P(A_3)=0.01$ | Compute an upper bound on any bad event and discuss why overlap makes it conservative |

@@ -26,7 +26,7 @@ large list of propositional implications.
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟡 Easy (5)
 | # | Title | Given | Derivation focus |
 |---|---|---|---|
 | E1 | Interpret a model with constants and predicates | Domain $\{alice,bob\}$, constants $A,B$, predicate $Parent$ | Object/predicate table mapping symbols to objects and deciding whether $Parent(A,B)$ is true |

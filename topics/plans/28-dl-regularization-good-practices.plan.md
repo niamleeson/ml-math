@@ -18,7 +18,14 @@ Regularization controls overfitting by changing what solutions are easy for the 
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Apply one dropout mask | toy activation vector and binary mask | printed values + before/mask/after bars | ~2 |
+| B2 | Compute only an L2 penalty | toy weight vector and $\lambda$ | printed values + penalty contribution bar | ~2 |
+| B3 | Read a train-vs-validation gap | toy train/validation loss numbers | printed values + two-point gap plot | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand-compute L2-regularized loss and gradient | Tiny weights $\theta=(3,4)$, base loss $2.0$, $\lambda=0.1$ | lesson derivation: penalty and $2\lambda\theta$ table; notebook: weight-shrink arrow plot | ~3 |
@@ -38,7 +45,7 @@ Regularization controls overfitting by changing what solutions are easy for the 
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/28-dl-regularization-good-practices.ipynb
-- **Est. cell count:** ~76 (⚖️ topic → hand derivations in lesson + coded regularization behavior examples)
+- **Est. cell count:** ~84 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced) in the notebook, with regularization derivations and coded behavior examples)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_moons`, `make_regression`, `load_digits`), ipywidgets; optional torch for neural-network dropout/batch-norm demos
 - **Runtime:** CPU
 - **Failure/edge dataset included:** noisy two-moons with an oversized MLP and no regularization in A1 — demonstrates memorization and validation loss rising.

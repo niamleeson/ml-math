@@ -18,7 +18,14 @@ Activation functions inject nonlinearity into neural networks and shape how grad
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Evaluate one ReLU value and slope | toy scalar: $z=-2$ | printed value and derivative | ~2 |
+| B2 | Compute sigmoid at zero | toy scalar: $z=0$ | single plotted point on sigmoid axis | ~2 |
+| B3 | Softmax a three-score vector | toy logits $(1,0,-1)$ | probability bar chart with sum-to-one check | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Derive and evaluate sigmoid gradient | pen-and-paper $z\in\{-2,0,2\}$ | sigmoid curve with derivative overlaid at sampled points | ~3 |
@@ -38,7 +45,7 @@ Activation functions inject nonlinearity into neural networks and shape how grad
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** notebooks/19-activation-functions.ipynb
-- **Est. cell count:** ~66 (⚖️ topic → derivations plus plots and small-network experiments)
+- **Est. cell count:** ~78 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), from single activation evaluations to plots and small-network experiments)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_moons`), tensorflow/keras or torch, ipywidgets.
 - **Runtime:** CPU
 - **Failure/edge dataset included:** large negative initialization in A3 — demonstrates the dying ReLU problem; extreme logits in A5 demonstrate softmax overflow.

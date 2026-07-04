@@ -18,7 +18,14 @@ Search turns planning into "choose actions from a start state until an end state
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | List valid neighbors of one grid cell | tiny 3×3 grid with one wall | highlighted neighbor cells | ~2 |
+| B2 | Compare one FIFO queue pop with one LIFO stack pop | toy frontier labels | printed queue/stack before-after | ~2 |
+| B3 | Mark one visited node to avoid revisiting a tiny graph | three-node graph with a cycle | node color changes for visited set | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | BFS on an unweighted grid maze | `small_grid` with walls, start, goal | process: redraw grid after every pop with explored cells, frontier ring, and current parent links; result: shortest path + path length | ~8 |
@@ -38,7 +45,7 @@ Search turns planning into "choose actions from a start state until an end state
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/32-search-optimization.ipynb
-- **Est. cell count:** ~145 (💻 topic → all 10 examples coded; A*/UCS examples use granular pop→expand→update costs→push loops with a redraw at each node expansion)
+- **Est. cell count:** ~158 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; A*/UCS examples use granular pop→expand→update costs→push loops with a redraw at each node expansion)
 - **Key libraries:** numpy, matplotlib, networkx, heapq, collections (`deque`), ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `bad_heuristic_graph` in A3 — an inadmissible heuristic overestimates the optimal branch, causing A* to return a suboptimal path; `negative_edge_graph` in A4 shows why UCS requires nonnegative costs.

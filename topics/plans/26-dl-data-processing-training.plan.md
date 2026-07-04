@@ -27,7 +27,14 @@ succeed depending on preprocessing and training mechanics."
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Normalize one tiny feature array | toy feature values $[1,2,5,6]$ | printed values + before/after dot strip | ~3 |
+| B2 | Compute one binary cross-entropy loss | toy scalar prediction and label | printed values + single loss marker on $z$ axis | ~2 |
+| B3 | One scalar weight update | toy weight, gradient, and learning rate | printed values + number-line before/after | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Visualize image augmentations | CIFAR-10 / Fashion-MNIST samples | process: original→flip/rotate/crop/color/noise/mask/contrast grid; result: augmentation montage | ~5 |
@@ -47,7 +54,7 @@ succeed depending on preprocessing and training mechanics."
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/26-dl-data-processing-training.ipynb
-- **Est. cell count:** ~80 (💻 topic → all 10 examples coded; training diagnostics require repeated build↔see loops)
+- **Est. cell count:** ~88 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; training diagnostics require repeated build↔see loops)
 - **Key libraries:** numpy, pandas, matplotlib, scikit-learn, tensorflow/keras or torch, torchvision/tensorflow-datasets, seaborn, ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** invalid augmentation set in A2 — shows that augmentation must preserve labels; no-BN/high-learning-rate comparison in A3 shows unstable training.

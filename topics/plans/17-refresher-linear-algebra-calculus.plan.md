@@ -18,7 +18,7 @@ Refresh the algebra and calculus operations that appear constantly in ML objecti
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟡 Easy (5)
 | # | Title | Given | Derivation focus |
 |---|---|---|---|
 | E1 | Matrix-vector multiplication by rows and columns | $A=\begin{pmatrix}2&-1&0\\1&3&4\end{pmatrix}$, $x=\begin{pmatrix}5\\2\\-1\end{pmatrix}$ | Compute $Ax$ two ways: row inner products and weighted column sum; check output shape $\mathbb{R}^2$. |

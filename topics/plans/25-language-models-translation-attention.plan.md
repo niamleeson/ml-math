@@ -25,7 +25,14 @@ just word-by-word lookup."
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Softmax three attention scores | toy attention scores $e=[1,2,0]$ | printed values + 3-bar probability chart | ~2 |
+| B2 | One attention context weighted sum | three toy encoder activations and fixed attention weights | printed values + weighted-vector bars | ~3 |
+| B3 | Perplexity from three token probabilities | toy next-token probabilities | printed values + probability product trace | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Count an n-gram language model | tiny nursery-rhyme corpus | process: unigram/bigram count tables; result: next-word probability bar chart | ~5 |
@@ -45,7 +52,7 @@ just word-by-word lookup."
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/25-language-models-translation-attention.ipynb
-- **Est. cell count:** ~92 (💻 topic → all 10 examples coded; sequence models and attention need granular decoding visualizations)
+- **Est. cell count:** ~100 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; sequence models and attention need granular decoding visualizations)
 - **Key libraries:** numpy, pandas, matplotlib, tensorflow/keras or torch, scikit-learn, sacrebleu or nltk BLEU, seaborn, ipywidgets
 - **Runtime:** GPU recommended for encoder-decoder/attention examples; toy CPU fallbacks should be included.
 - **Failure/edge dataset included:** ambiguous/long translation examples in A5 — show greedy search errors, beam length bias, and diffuse attention on long sequences.

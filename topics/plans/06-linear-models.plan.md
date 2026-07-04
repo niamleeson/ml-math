@@ -18,7 +18,14 @@ Linear models connect simple geometry (lines, planes, hyperplanes) to probabilit
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Compute one linear score $\theta^Tx$ with an intercept | toy scalars: one feature vector and $\theta$ | printed values | ~2 |
+| B2 | Convert one score into a sigmoid probability $g(z)$ | toy scalars: one logit $z$ | sigmoid point on curve | ~2 |
+| B3 | Compute one locally weighted regression weight $w^{(i)}(x)$ | toy scalars: $x^{(i)}$, query $x$, and $\tau$ | printed values | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | [pen-and-paper] Fit a line with the normal equations | Tiny 3-point dataset with intercept column | Table of $X$, $X^TX$, $X^Ty$, and fitted residuals | pen-and-paper ~4 |
@@ -38,7 +45,7 @@ Linear models connect simple geometry (lines, planes, hyperplanes) to probabilit
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/06-linear-models.ipynb
-- **Est. cell count:** ~74 (⚖️ topic → hand derivations in lesson plus coded OLS/logistic/LWR/softmax examples)
+- **Est. cell count:** ~86 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), mixing hand derivations with coded OLS/logistic/LWR/softmax examples)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_classification`, `make_moons`, `LogisticRegression`, `LinearRegression`), ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `make_moons` in A3 — shows a linear decision boundary cannot represent nonlinear class geometry.

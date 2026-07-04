@@ -338,7 +338,7 @@ plt.show()  # Render the raw-data plot.
 
 ---
 
-### 🟢 Easy
+### 🟡 Easy
 
 #### E1. [pen-and-paper] Compute margin width for a candidate separator
 

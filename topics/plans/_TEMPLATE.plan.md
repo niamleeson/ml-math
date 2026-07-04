@@ -19,7 +19,14 @@
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | | | | ~n |
+| B2 | | | | ~n |
+| B3 | | | | ~n |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | | | | ~n |
@@ -37,7 +44,7 @@
 | A4 | | | | ~n |
 | A5 | | | | ~n |
 
-<!-- For 🧮 Numeric topics: replace "Data source"/"Build steps" columns with "Given" / "Derivation focus";
+<!-- For 🧮 Numeric topics: no Basics tier; replace "Data source"/"Build steps" columns with "Given" / "Derivation focus";
      these are pen-and-paper derivations in the lesson .md, not code. -->
 
 ## Part 4 — Colab Notebook (omit if 🧮)

@@ -28,7 +28,14 @@ conditional independence and explaining away.
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Look up one CPT entry | binary `Disease → Fever` CPT | CPT table cell highlighted for `P(Fever=1 | Disease=1)` | ~2 |
+| B2 | Multiply two factors for one assignment | toy BN factors `P(D)` and `P(Fever|D)` with `D=1,Fever=1` | printed factor values and product | ~2 |
+| B3 | Normalize a two-value posterior row | toy unnormalized weights `[0.18, 0.02]` | two-bar normalized distribution | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand-compute a 3-node medical posterior | Pen-and-paper BN: Disease $D\to Fever F$, $D\to Cough C$ with binary CPTs | Lesson text: tiny DAG and posterior table for $P(D\mid F{=}1,C{=}1)$ | ~4 |
@@ -48,7 +55,7 @@ conditional independence and explaining away.
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/36-bayesian-networks.ipynb
-- **Est. cell count:** ~74 (⚖️ topic → E1/E5 stay as hand derivations; remaining examples coded with granular build↔see loops)
+- **Est. cell count:** ~84 (⚖️ topic → 3 atomic basics plus E1/E5 hand derivations; remaining examples coded with granular build↔see loops)
 - **Key libraries:** numpy, pandas, matplotlib, networkx, pgmpy (or lightweight custom factor tables if pgmpy install fails), scipy, ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** rare-observation particle-filtering sequence in A4 demonstrates weight degeneracy and sampling error; zero-count CPT data in A5 demonstrates why Laplace smoothing is needed.

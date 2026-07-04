@@ -18,7 +18,7 @@ Continuous probability replaces sums with integrals: PDFs give density, CDFs giv
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟡 Easy (5)
 | # | Title | Given | Derivation focus |
 |---|---|---|---|
 | E1 | Validate a triangular PDF | $f_X(x)=cx$ for $0\le x\le2$, $0$ otherwise | Solve for $c$ by normalization; compute $\mathbb{P}(1\le X\le2)$. |

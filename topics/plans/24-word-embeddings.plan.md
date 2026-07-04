@@ -25,7 +25,14 @@ relationships. Hook: "king − man + woman ≈ queen" as evidence that vector sp
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Look up one embedding with $e_w=Eo_w$ | tiny embedding matrix and one one-hot vector | printed selected matrix column and embedding vector | ~2 |
+| B2 | Cosine similarity between two word vectors | two toy 2-D word vectors | angle sketch and printed cosine value | ~2 |
+| B3 | Nearest neighbor in a tiny vocabulary | three toy word vectors plus one query | tiny scatterplot and ranked distance table | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | One-hot vs dense embeddings | tiny hand-written animal/royalty corpus | process: vocabulary and one-hot matrix; result: 2-D toy embedding arrows | ~4 |
@@ -45,7 +52,7 @@ relationships. Hook: "king − man + woman ≈ queen" as evidence that vector sp
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/24-word-embeddings.ipynb
-- **Est. cell count:** ~74 (💻 topic → all 10 examples coded with training, lookup, and visualization loops)
+- **Est. cell count:** ~84 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded with training, lookup, and visualization loops)
 - **Key libraries:** numpy, pandas, matplotlib, scikit-learn (`TSNE`), gensim, nltk or keras text utilities, seaborn
 - **Runtime:** CPU
 - **Failure/edge dataset included:** rare/OOV and polysemous-word set in A4 — shows that embeddings cannot represent unseen words and single-vector embeddings blur meanings like river `bank` vs financial `bank`.

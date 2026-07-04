@@ -170,7 +170,7 @@ Read it as a likelihood reward minus a sample-size-dependent complexity penalty;
 
 ## 3. Worked Examples
 
-### 🟢 Easy
+### 🟡 Easy
 
 #### E1. Fill and read a binary confusion matrix
 

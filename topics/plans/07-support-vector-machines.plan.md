@@ -18,7 +18,14 @@ Support Vector Machines choose the separating hyperplane with the largest margin
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Compute one SVM score $w^Tx-b$ and its sign | toy scalars: one 2-D point, $w$, and $b$ | printed values | ~2 |
+| B2 | Check one margin constraint $y(w^Tx-b)\ge 1$ | toy scalars: one labeled point and separator | point vs margin line sketch | ~3 |
+| B3 | Evaluate one Gaussian kernel value $K(x,z)$ | toy scalars: two 2-D points and $\sigma$ | printed values | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | [pen-and-paper] Compute margin width for a candidate separator | 2-D line with specified $w,b$ and labeled points | Margin-line sketch: $w^Tx-b=0,\pm1$ | pen-and-paper ~4 |
@@ -38,7 +45,7 @@ Support Vector Machines choose the separating hyperplane with the largest margin
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/07-support-vector-machines.ipynb
-- **Est. cell count:** ~70 (⚖️ topic → geometric derivations plus coded margin/kernel experiments)
+- **Est. cell count:** ~82 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), mixing geometric derivations with coded margin/kernel experiments)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`SVC`, `LinearSVC`, `make_blobs`, `make_moons`, `make_circles`), ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `make_circles`/`make_moons` in A1 — shows a linear SVM cannot separate nonlinear geometry.

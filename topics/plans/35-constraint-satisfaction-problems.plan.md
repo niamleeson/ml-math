@@ -18,7 +18,14 @@ CSPs model problems as variables, domains, and constraints, then search for assi
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Check one unary constraint on one assignment | toy scalar assignment `X=1` with constraint `[X=1]` | printed constraint value `1` or `0` | ~2 |
+| B2 | List the remaining domain after one assignment | toy domains `X,Y∈{1,2,3}` with assigned `X=2` and constraint `X<Y` | before/after domain boxes for `Y` | ~2 |
+| B3 | Count conflicts in one toy coloring | three-node path coloring assignment with one repeated neighbor color | tiny constraint table with violated-edge count | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand evaluate a factor-graph assignment weight | 3 Boolean variables with unary and binary factors from the source style | factor graph annotated with factor values; product calculation for one assignment | ~4 |
@@ -38,7 +45,7 @@ CSPs model problems as variables, domains, and constraints, then search for assi
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/35-constraint-satisfaction-problems.ipynb
-- **Est. cell count:** ~120 (⚖️ topic → hand factor/arc-consistency derivations in lesson plus coded backtracking, AC-3, beam search, ICM, and Gibbs visualizations)
+- **Est. cell count:** ~130 (⚖️ topic → 3 atomic basics plus hand factor/arc-consistency derivations and coded backtracking, AC-3, beam search, ICM, and Gibbs visualizations)
 - **Key libraries:** numpy, matplotlib, networkx, pandas, ipywidgets, collections (`deque`, `defaultdict`)
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `two_color_triangle` in A3 — an unsatisfiable CSP where forward checking/AC-3 exposes an empty domain; A5 also shows ICM getting stuck in a local minimum on a loopy graph.

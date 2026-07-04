@@ -18,7 +18,7 @@ Introduce the supervised-learning vocabulary that will be reused throughout CS 2
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟡 Easy (5)
 | # | Title | Given | Derivation focus |
 |---|---|---|---|
 | E1 | Classify a task as regression or classification | Three mini datasets: house size→price, email text→spam/not spam, image→digit class | Identify output type and choose regression vs classifier using the lesson table. |

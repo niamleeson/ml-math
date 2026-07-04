@@ -25,7 +25,14 @@ forget, update, and reveal. Hook: "a sentence is not a bag of words — order an
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Compute one tanh RNN hidden-state update | toy scalar $x^{<t>}$, $a^{<t-1>}$, weights, and bias | printed affine value and tanh output | ~2 |
+| B2 | Compute one sigmoid gate value | toy scalar gate inputs $x^{<t>}$ and $a^{<t-1>}$ | printed logit and gate value on sigmoid curve | ~2 |
+| B3 | Clip one exploding scalar gradient | toy gradient value and clipping threshold | printed raw vs clipped gradient bar | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand-unroll a vanilla RNN for 3 timesteps | tiny numeric sequence `[1, 0, 1]` | process: unrolled computation graph; result: table of $a^{<1>},a^{<2>},a^{<3>}$ and $\hat y$ | ~5 |
@@ -45,7 +52,7 @@ forget, update, and reveal. Hook: "a sentence is not a bag of words — order an
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/23-rnn-fundamentals-lstm-gru.ipynb
-- **Est. cell count:** ~82 (⚖️ topic → E1–E3 hand derivations in lesson plus coded sequence/gate visualizations)
+- **Est. cell count:** ~94 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced) with hand derivations plus coded sequence/gate visualizations)
 - **Key libraries:** numpy, matplotlib, pandas, tensorflow/keras or torch, scikit-learn, seaborn, ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** synthetic long copy task in A1/A2 — vanilla RNN loses long-range information while LSTM preserves it through gates.

@@ -18,7 +18,14 @@ Convergence theorems explain why averages stabilize and why sums often look norm
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Compute one sample mean $M_n$ from three observations | toy scalars: three die rolls | printed values | ~2 |
+| B2 | Plug values into the Markov ratio $\mathbb{E}[X]/a$ | toy scalars: nonnegative $X$, mean, threshold | printed values | ~2 |
+| B3 | Standardize one finite-variance sum into $Z_n$ | toy scalars: $n,\mu,\sigma,\sum_i X_i$ | printed values | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Pen-and-paper: Markov bound for a nonnegative variable | Lesson .md: $X\ge0$, $\mathbb{E}[X]=6$, threshold $a=10$ | N/A — inequality derivation table | ~3 |
@@ -38,7 +45,7 @@ Convergence theorems explain why averages stabilize and why sums often look norm
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/04-convergence-lln-clt.ipynb
-- **Est. cell count:** ~58 (⚖️ topic → 2 pen-and-paper examples in lesson; 8 coded/simulation examples with granular build↔see loops)
+- **Est. cell count:** ~70 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), mixing pen-and-paper derivations with coded/simulation build↔see loops)
 - **Key libraries:** numpy, matplotlib, scipy.stats (`norm`, `binom`, `cauchy`), ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** Cauchy samples in A5 — demonstrates that sample means can remain unstable when finite-mean/finite-variance assumptions behind the standard LLN/CLT intuition are violated.

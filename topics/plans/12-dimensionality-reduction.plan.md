@@ -18,7 +18,14 @@ Dimensionality reduction compresses high-dimensional data while preserving the s
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Center a tiny matrix column by column | toy 3×2 matrix | printed values; before/after mini heatmap | ~3 |
+| B2 | Compute covariance between two centered features | toy centered feature columns | printed values; tiny covariance heatmap | ~3 |
+| B3 | Project one point onto a given unit axis | toy 2-D point and unit vector | point, axis, and projected coordinate on a line | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand-compute eigenvectors of a 2×2 covariance matrix | Pen-and-paper: $\Sigma=\begin{bmatrix}3&1\\1&3\end{bmatrix}$ | principal axes drawn on a 2-D ellipse; variance along each axis labeled | ~4 |
@@ -38,7 +45,7 @@ Dimensionality reduction compresses high-dimensional data while preserving the s
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** notebooks/12-dimensionality-reduction.ipynb
-- **Est. cell count:** ~72 (⚖️ topic → E1–E2 partly pen-and-paper in lesson; remaining examples coded with granular build↔see loops)
+- **Est. cell count:** ~82 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced) live in the notebook with granular build↔see loops)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`PCA`, `FastICA`, `StandardScaler`, `load_iris`, `load_digits`, `load_wine`, `load_breast_cancer`)
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `variance_trap` in A1 — shows PCA can discard low-variance but label-relevant information.

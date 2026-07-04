@@ -18,7 +18,14 @@ Cover two deep-vision methods that reuse learned representations: face systems c
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Cosine similarity between two face embeddings | two toy 3-D embedding vectors | printed values plus tiny angle sketch | ~2 |
+| B2 | L2 distance threshold decision for one face pair | one toy embedding pair and a fixed threshold | printed distance, threshold, and accept/reject label | ~2 |
+| B3 | Gram matrix of a 2×2 two-channel activation map | toy activation tensor | printed channel-correlation matrix heatmap | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Compute embedding distances for verification | small face/image-pair set: same person vs different person | result: pair images with embedding vectors and distance bars | ~6 |
@@ -38,7 +45,7 @@ Cover two deep-vision methods that reuse learned representations: face systems c
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** notebooks/21-face-recognition-style-transfer.ipynb
-- **Est. cell count:** ~86 (💻 topic → all 10 examples coded; two mini-pipelines)
+- **Est. cell count:** ~98 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; two mini-pipelines)
 - **Key libraries:** numpy, matplotlib, PIL, scikit-learn metrics, torch/torchvision, pretrained face/image encoder or lightweight embedding model, ipywidgets.
 - **Runtime:** GPU recommended for neural style transfer optimization; CPU acceptable for toy embedding computations but slower for NST.
 - **Failure/edge dataset included:** look-alike/occluded face pairs in A1 and high-frequency noise style in A5 — demonstrate threshold ambiguity and style artifacts.

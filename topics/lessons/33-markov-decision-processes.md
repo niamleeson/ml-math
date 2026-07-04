@@ -210,7 +210,7 @@ $$
 
 ## 3. Worked Examples
 
-### 🟢 Easy
+### 🟡 Easy
 
 ### E1. Hand compute discounted utility on a 4-step path
 

@@ -18,7 +18,14 @@ MDPs extend search to worlds where actions have uncertain outcomes and rewards a
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Look up the immediate reward for one transition | toy MDP scalars: state `s`, action `go`, successor `s'` | printed transition/reward entry | ~2 |
+| B2 | Compute one 2-step discounted return | toy rewards `r1=2`, `r2=4`, `γ=0.5` | printed values on a two-edge reward chain | ~2 |
+| B3 | Pick the greedy action from one Q-value row | toy Q row for one state with actions `left`, `right`, `wait` | tiny action-value bar chart with argmax highlighted | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand compute discounted utility on a 4-step path | tiny reward chain from the lesson figure | written timeline of $r_1,\gamma r_2,\gamma^2r_3,\gamma^3r_4$; no notebook-only viz | ~3 |
@@ -38,7 +45,7 @@ MDPs extend search to worlds where actions have uncertain outcomes and rewards a
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/33-markov-decision-processes.ipynb
-- **Est. cell count:** ~118 (⚖️ topic → tiny Bellman/Q-learning derivations in lesson plus coded scalable gridworld experiments)
+- **Est. cell count:** ~128 (⚖️ topic → 3 atomic basics plus tiny Bellman/Q-learning derivations and coded scalable gridworld experiments)
 - **Key libraries:** numpy, matplotlib, pandas, seaborn, ipywidgets, collections (`defaultdict`)
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `gamma_one_cycle` in A4 — value iteration does not converge when $\gamma=1$ and the MDP contains a positive-reward cycle; a discounted version shows the repair.

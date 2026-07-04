@@ -18,7 +18,14 @@ Trees, ensembles, and k-nearest neighbors are flexible non-parametric models tha
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Compute Gini impurity for one labeled node | toy class counts | printed values; tiny class-count bar | ~2 |
+| B2 | Measure distances from one query to candidate neighbors | tiny 2-D toy points | scatter with query-to-point distance segments | ~3 |
+| B3 | Majority vote from a short neighbor-label list | toy label list | printed values; vote-count bar | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | CART first split by Gini impurity | Tiny 2-D toy classification table generated in notebook | process: candidate split impurity bars; result: first split drawn on scatter | ~6 |
@@ -38,7 +45,7 @@ Trees, ensembles, and k-nearest neighbors are flexible non-parametric models tha
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/09-trees-ensembles-knn.ipynb
-- **Est. cell count:** ~82 (💻 topic → all 10 examples coded with granular build↔see loops)
+- **Est. cell count:** ~92 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded with granular build↔see loops)
 - **Key libraries:** numpy, pandas, matplotlib, scikit-learn (`DecisionTreeClassifier`, `RandomForestClassifier`, `AdaBoostClassifier`, `GradientBoostingRegressor`, `KNeighborsClassifier`, `make_moons`, `make_classification`, `make_gaussian_quantiles`), ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** noisy `make_moons` in A1 shows deep decision-tree overfitting; high-dimensional noise in A5 shows k-NN distance degradation.

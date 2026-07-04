@@ -85,13 +85,14 @@ Every lesson `.md` has up to 4 parts (Part 3/4 differ by example type; 🧮 nume
 | Concept / Framework | vocabulary + structure |
 | Tips | the technique + why it helps |
 
-**Part 3 — Worked Examples (5 easy + 5 advanced), step-by-step university-lecture style.**
+**Part 3 — Worked Examples (3 basics + 5 easy + 5 advanced = 13), step-by-step university-lecture style.**
+The **basics (🟢)** are 3 atomic warm-ups that each exercise a *single* primitive of the topic (one distance, one update, one lookup, one probability) before the easy tier assembles them into a full method. Difficulty ramp: **🟢 basics → 🟡 easy → 🔴 advanced**.
 - 🧮 topics (no notebook): written as **pen-and-paper derivations** directly in the lesson `.md` (every step shown with reasoning).
-- 💻 and ⚖️ topics (have a notebook): **all 10** worked examples — coded examples *and* any pen-and-paper derivations — live **only in the notebook**. The lesson page does **not** repeat them; it just lists their titles (see Part 4).
+- 💻 and ⚖️ topics (have a notebook): **all 13** worked examples — coded examples *and* any pen-and-paper derivations — live **only in the notebook**. The lesson page does **not** repeat them; it just lists their titles (see Part 4).
 
 **Part 4 — Hands-on: Google Colab** (💻 and ⚖️ only) — the lesson page's hands-on section is only an *Open in Colab* button (→ runnable `topics/notebooks/<NN>-<slug>.ipynb`) plus a short **index** of the examples inside. To avoid duplication, the **entire hands-on walkthrough — prose, code, plots, and pen-and-paper derivations — lives only in the notebook**; the lesson page keeps just Overview + Key Idea. Omitted entirely for 🧮 topics.
 
-*No separate Practice-Questions section — the 5 easy + 5 advanced worked examples in Part 3 are the practice for every lesson type.*
+*No separate Practice-Questions section — the 3 basics + 5 easy + 5 advanced worked examples in Part 3 are the practice for every lesson type.*
 
 ---
 
@@ -104,7 +105,7 @@ pure concept + granular worked examples + a live experiment.
 2. **§ Setup** (3 cells): pinned installs · imports + seed · reusable helpers
 3. **§ Concept recap** (2 cells): overview · key idea + core formula (LaTeX)
 4. **§ Data — swappable sources** (5 cells): explain toggle · `DATA_SOURCE` switch · explore · raw-data plot · "what to look for"
-5. **§ Worked Examples** — 🟢 5 easy + 🔴 5 advanced, each a **variable-length granular block** (see §3.3)
+5. **§ Worked Examples** — 🟢 3 basics + 🟡 5 easy + 🔴 5 advanced, each a **variable-length granular block** (see §3.3)
 6. **§ Interactive experiment** (3 cells): intro · `ipywidgets` sliders → live plot · prompts
 
 ### 3.1 Data-source conventions
@@ -177,6 +178,20 @@ Visualizations must fit the concept and what the code is doing:
 ## 4. Per-lesson plan format
 
 Each `topics/plans/<NN>-<slug>.plan.md` follows the template in `topics/plans/_TEMPLATE.plan.md`
-and records: metadata, the Part-2 focus, the concrete **10 worked-example designs**
+and records: metadata, the Part-2 focus, the concrete **13 worked-example designs (3 basics + 5 easy + 5 advanced)**
 (title · data source · visualization · build-step granularity), and the notebook estimate. See `topics/plans/11-clustering.plan.md`
 for a fully worked reference.
+
+---
+
+## 5. App integration — the "AI Cheat Sheet" section
+
+Built lessons are surfaced **inside** the existing ML-Math single-page app (`index.html`), not as standalone pages.
+
+- **Generation.** `tools/build-cheatsheet.js` (fresh, dependency-free; not shared with the app's own lesson engine) converts `topics/lessons/*.md` into two artifacts, and is re-run with `node tools/build-cheatsheet.js`:
+  - `lessons/cheatsheet.js` — one object per lesson pushed into `window.LESSONS` (module `"AI Cheat Sheet"`, `template:"cheatsheet"`). Holds the **page** HTML: Overview + Key Idea, then a hands-on section that is only an *Open in Colab* button + an index of the examples.
+  - `topics/notebooks/<NN>-<slug>.ipynb` — the runnable notebook (full lesson: concept + entire hands-on walkthrough with code & plots). Only for 💻 / ⚖️ topics.
+- **Nav.** `"AI Cheat Sheet"` is the **first** module (`MODULE_ORDER[0]`) and renders as a top-level **collapsible group** like the others (`superGroupOf` returns `null`, so it is standalone and first — not under Course/Papers/Math).
+- **Rendering.** Lessons open in the app's **content pane** through the existing `open(id)` pipeline (routes on `#hash`, then runs MathJax + highlight.js). A dedicated `renderCheatsheet()` branch + scoped `.cs-lesson` CSS render the Markdown-derived HTML in-app.
+- **Theme.** Lesson content is **black-and-white** (`.cs-lesson` uses `--ink`/`--border`); only **code** (highlight.js dark block), **links**, and the **Colab button** keep colour.
+- **Colab links.** The button targets `colab.research.google.com/github/niamleeson/ml-math/blob/main/topics/notebooks/<NN>-<slug>.ipynb`, so the generated notebooks must be committed/pushed to `main` for the links to resolve.

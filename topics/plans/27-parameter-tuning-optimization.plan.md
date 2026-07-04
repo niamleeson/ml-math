@@ -18,7 +18,14 @@ Optimization choices often decide whether the same neural network trains smoothl
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | One SGD scalar update | toy scalars $w=2$, $g=4$, $\alpha=0.1$ | printed values + number-line before/after | ~2 |
+| B2 | One momentum velocity update | toy scalars $v_0=0$, $g=4$, $\beta=0.9$ | printed values + velocity arrow | ~2 |
+| B3 | Compare two learning-rate steps | toy scalar gradient with two $\alpha$ values | printed values + two arrows on a 1-D loss curve | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand-compute one SGD and momentum update on $J(w)=w^2$ | Tiny numeric case: $w_0=2$, $g=4$, $\alpha=0.1$, $v_0=0$, $\beta=0.9$ | lesson derivation: number-line movement; notebook: 1-D loss curve with before/after points | ~3 |
@@ -38,7 +45,7 @@ Optimization choices often decide whether the same neural network trains smoothl
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/27-parameter-tuning-optimization.ipynb
-- **Est. cell count:** ~72 (⚖️ topic → hand derivations in lesson + coded optimizer/visualization examples)
+- **Est. cell count:** ~80 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced) in the notebook, with optimizer derivations and coded visualizations)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_classification`, `make_moons`, `load_digits`), ipywidgets; optional torch only if available for the MLP/fine-tuning demo
 - **Runtime:** CPU
 - **Failure/edge dataset included:** ill-conditioned quadratic with an intentionally too-high learning rate in A2 — shows oscillation/divergence instead of convergence.

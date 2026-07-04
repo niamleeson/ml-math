@@ -21,7 +21,14 @@ assumptions → very different groups" — motivate why the choice of algorithm 
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Squared distance from one point to one centroid | toy 2-D point and centroid | printed values; point-to-centroid segment | ~2 |
+| B2 | Assign one point to the nearer of two centroids | toy 2-D point and two centroids | scatter with two distance segments and chosen centroid highlighted | ~3 |
+| B3 | Update one centroid by averaging assigned points | tiny assigned point set | printed values; before/after centroid marker | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | k-means on 3 clean blobs ("hello world") | `blobs` | process: centroids migrating per iteration; result: colored clusters + centroids + inertia | ~4 |
@@ -41,7 +48,7 @@ assumptions → very different groups" — motivate why the choice of algorithm 
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** notebooks/11-clustering.ipynb
-- **Est. cell count:** ~68 (💻 topic → all 10 examples coded; granular build↔see loops)
+- **Est. cell count:** ~78 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; granular build↔see loops)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_blobs`, `make_moons`, `KMeans`, `AgglomerativeClustering`, `silhouette_samples`, `PCA`), scipy (`dendrogram`)
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `moons` in A1 — shows k-means' spherical-cluster assumption breaking.

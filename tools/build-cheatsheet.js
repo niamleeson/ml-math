@@ -186,7 +186,7 @@ const data = LESSONS.map((m, i) => {
     // 2) lesson page hands-on section = just a Colab button + an index of what's inside
     const url = "https://colab.research.google.com/github/" + REPO + "/blob/" + BRANCH + "/topics/notebooks/" + m.file + ".ipynb";
     const btn = '<p class="cs-colab"><a class="cs-colab-btn" href="' + url + '" target="_blank" rel="noopener">▶ Open the runnable notebook in Google Colab</a></p>';
-    const exs = (hands.match(/^#{3,4}\s+[EA]\d+\..*$/gm) || []).map((h) => "<li>" + esc(h.replace(/^#{3,4}\s+/, "").trim()) + "</li>").join("");
+    const exs = (hands.match(/^#{3,4}\s+[BEA]\d+\..*$/gm) || []).map((h) => "<li>" + esc(h.replace(/^#{3,4}\s+/, "").trim()) + "</li>").join("");
     const list = exs ? '<p>It builds these step by step, with commented code and plots:</p><ul class="cs-nb-list">' + exs + "</ul>" : "";
     html = conv.html + "\n<h2>3. Hands-on Notebook</h2>\n" + btn + list;
   } else {

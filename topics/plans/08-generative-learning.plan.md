@@ -18,7 +18,14 @@ Generative learning models the class-conditional data distribution $P(x\mid y)$ 
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Estimate one Bernoulli class prior $\hat\phi$ from labels | toy labels | printed count fraction | ~2 |
+| B2 | Compute one GDA class mean $\hat\mu_j$ | toy 2-D points from one class | mean point on tiny scatter | ~3 |
+| B3 | Multiply two Naive Bayes feature likelihoods $\prod_iP(x_i\mid y)$ | toy categorical likelihoods | printed values | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | [pen-and-paper] Estimate GDA class prior and means | Four 2-D labeled points | Table computing $\hat\phi$, $\hat\mu_0$, $\hat\mu_1$ | pen-and-paper ~4 |
@@ -38,7 +45,7 @@ Generative learning models the class-conditional data distribution $P(x\mid y)$ 
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/08-generative-learning.ipynb
-- **Est. cell count:** ~68 (⚖️ topic → hand MLE/Bayes derivations plus coded density and text examples)
+- **Est. cell count:** ~80 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), mixing hand MLE/Bayes derivations with coded density and text examples)
 - **Key libraries:** numpy, matplotlib, scipy.stats, scikit-learn (`GaussianNB`, `MultinomialNB`, `LogisticRegression`, `CountVectorizer`), ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** unequal-covariance Gaussian data in A2 and correlated-feature data in A5 — show shared-covariance and independence assumptions breaking.

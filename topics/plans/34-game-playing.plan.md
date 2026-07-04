@@ -18,7 +18,14 @@ Game playing plans against other agents, so values depend on what the opponent w
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Read the utility of one terminal leaf | toy terminal game state with utility `+3` | single leaf node labeled with `Utility(s)` | ~2 |
+| B2 | Backup one max node over two children | toy agent node with child values `1` and `5` | two-child tree with the max branch highlighted | ~2 |
+| B3 | Backup one min node over two children | toy opponent node with child values `4` and `-2` | two-child tree with the min branch highlighted | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand propagate a depth-2 minimax tree | 8-leaf utility tree from the source figure | game tree with leaf utilities, min/max node values, and best branch highlighted | ~5 |
@@ -38,7 +45,7 @@ Game playing plans against other agents, so values depend on what the opponent w
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/34-game-playing.ipynb
-- **Est. cell count:** ~112 (⚖️ topic → hand tree/payoff derivations in lesson plus coded game-tree and board-game visualizations)
+- **Est. cell count:** ~122 (⚖️ topic → 3 atomic basics plus hand tree/payoff derivations and coded game-tree/board-game visualizations)
 - **Key libraries:** numpy, matplotlib, networkx, pandas, ipywidgets, functools (`lru_cache`)
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `branching_blowup_trees` in A1 — plain minimax expands exponentially many nodes as depth grows; alpha-beta with good ordering returns the same value while pruning large subtrees.

@@ -403,7 +403,7 @@ $$
 
 ## 3. Worked Examples
 
-### 🟢 Easy
+### 🟡 Easy
 
 #### E1. Validate and summarize a PMF
 

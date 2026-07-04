@@ -25,7 +25,7 @@ Hook: an AI agent can answer questions by proving what every model of its knowle
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟡 Easy (5)
 | # | Title | Given | Derivation focus |
 |---|---|---|---|
 | E1 | Evaluate a compound formula in one model | Model $w=\{A:1,B:0,C:1\}$ and formula $(A\wedge \neg B)\to C$ | Recursive interpretation $\mathcal{I}(f,w)$ with a truth-value trace table |

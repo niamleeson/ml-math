@@ -18,7 +18,14 @@ Deep learning stacks differentiable layers so models can learn representations i
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Compute one neuron's affine score $w^Tx+b$ | toy vectors | printed values; tiny weighted-input bar | ~2 |
+| B2 | Apply one activation to one scalar | toy scalar | printed values; point marked on sigmoid/ReLU curve | ~2 |
+| B3 | Compute binary cross-entropy for one prediction | toy label and predicted probability | printed values; loss point on curve | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Tiny neuron: forward pass and activation shapes | `linearly_separable_2d` synthetic | activation curves; neuron score heatmap | ~5 |
@@ -38,7 +45,7 @@ Deep learning stacks differentiable layers so models can learn representations i
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** notebooks/13-deep-learning-overview.ipynb
-- **Est. cell count:** ~95 (💻 topic → all 10 examples coded; backprop examples use granular build↔see loops)
+- **Est. cell count:** ~105 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; backprop examples use granular build↔see loops)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_moons`, `make_classification`, `load_digits`, `confusion_matrix`), ipywidgets; optional torch if available for the dropout/RNN demos
 - **Runtime:** CPU; GPU optional for faster neural-net/RNN cells but not required for the tiny datasets.
 - **Failure/edge dataset included:** noisy `moons` and sparse-reward gridworld — shows unstable learning rates, overfitting, and reward sparsity.

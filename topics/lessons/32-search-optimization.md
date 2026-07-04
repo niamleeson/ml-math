@@ -361,7 +361,7 @@ draw_grid(grid, start, goal, title=f"Raw problem: {PROBLEM}")  # Plot the chosen
 
 ▶ What you'll see: the raw grid before search; walls are black, weighted mud cells are brown when present, start is blue, and goal is purple.
 
-### 🟢 Easy Examples
+### 🟡 Easy Examples
 
 #### E1. BFS on an unweighted grid maze
 

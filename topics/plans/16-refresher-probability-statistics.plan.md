@@ -18,7 +18,7 @@ This refresher rebuilds the probability and statistics toolkit used throughout M
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟡 Easy (5)
 | # | Title | Given | Derivation focus |
 |---|---|---|---|
 | E1 | Count ordered vs unordered selections | choose 3 students from 8 for president/VP/secretary vs committee | compute $P(8,3)$ and $C(8,3)$ and explain why order changes the count |

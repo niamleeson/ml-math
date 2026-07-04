@@ -18,7 +18,14 @@ SGD is the basic engine that turns per-example loss gradients into learned weigh
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Apply one scalar SGD update $w\leftarrow w-\eta g$ | toy scalars | printed before/after weights | ~2 |
+| B2 | Evaluate one sigmoid value $\sigma(z)$ | toy scalars | printed values | ~2 |
+| B3 | Mark frozen vs trainable parameters in a tiny layer | toy weights | trainable-flag table | ~3 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Hand-compute one SGD update for squared loss | One example $\phi(x)=(1,2)$, $y=3$, $w=(0,1)$, $\eta=0.1$ | lesson derivation: prediction, residual, gradient, new $w$; notebook: arrow in weight space | ~4 |
@@ -38,7 +45,7 @@ SGD is the basic engine that turns per-example loss gradients into learned weigh
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/30-sgd-fine-tuning.ipynb
-- **Est. cell count:** ~74 (⚖️ topic → hand SGD/backprop derivations + coded optimization/fine-tuning comparisons)
+- **Est. cell count:** ~86 (⚖️ topic → 3 basics + hand SGD/backprop derivations + coded optimization/fine-tuning comparisons)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_classification`, polynomial features, `load_digits`), ipywidgets; optional torch for fine-tuning/backprop demo
 - **Runtime:** CPU
 - **Failure/edge dataset included:** noisy regression/classification with high SGD variance in A1 — contrasts noisy per-example updates against stable but costlier batch gradients.

@@ -18,7 +18,7 @@ Discrete random variables turn outcomes into numbers, so probability questions b
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟡 Easy (5)
 | # | Title | Given | Derivation focus |
 |---|---|---|---|
 | E1 | Validate and summarize a PMF | $X\in\{0,1,2,3\}$ with probabilities $(0.1,0.2,0.4,0.3)$ | Check normalization; compute $\mathbb{P}(X\ge2)$, $\mathbb{E}[X]$, and $\mathbb{E}[X^2]$. |

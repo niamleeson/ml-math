@@ -18,7 +18,7 @@ Metrics translate predictions into decisions about model quality. Hook: the same
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟡 Easy (5)
 | # | Title | Given | Derivation focus |
 |---|---|---|---|
 | E1 | Fill and read a binary confusion matrix | 100 examples: TP=30, FP=10, FN=5, TN=55 | compute accuracy, precision, recall, and specificity from the 2×2 counts |

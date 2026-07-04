@@ -18,7 +18,7 @@ Build probability from the ground up: choose a sample space, assign probabilitie
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟡 Easy (5)
 | # | Title | Given | Derivation focus |
 |---|---|---|---|
 | E1 | Build a valid finite probability model | $\Omega=\{1,2,3,4\}$ with proposed masses $(0.1,0.2,0.3,0.4)$; event $A=\{2,4\}$ | Check nonnegativity + normalization, compute $\mathbb{P}(A)$ and $\mathbb{P}(A^c)$ from additivity. |

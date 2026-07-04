@@ -18,7 +18,14 @@ Object detection extends image classification by predicting both what objects ar
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Draw one bounding box on a blank grid | toy box coordinates $(1,1,4,3)$ | coordinate grid with one rectangle | ~2 |
+| B2 | Compute IoU for two tiny boxes | toy scalars: two $2\times2$ boxes overlapping by one cell | shaded intersection and union counts | ~3 |
+| B3 | Filter detections by confidence threshold | toy list of three scores and labels | printed kept/dropped rows | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Draw one bounding box on an image | COCO sample: dog on grass | result: image with labeled $(b_x,b_y,b_w,b_h)$ and corner coordinates | ~4 |
@@ -38,7 +45,7 @@ Object detection extends image classification by predicting both what objects ar
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** notebooks/20-object-detection.ipynb
-- **Est. cell count:** ~78 (💻 topic → all 10 examples coded with granular box/IoU/NMS visualizations)
+- **Est. cell count:** ~90 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded with granular box/IoU/NMS visualizations)
 - **Key libraries:** numpy, matplotlib, PIL/opencv-python, torch/torchvision or ultralytics, pandas, ipywidgets.
 - **Runtime:** CPU for small examples; GPU optional for faster pretrained detector inference.
 - **Failure/edge dataset included:** crowded shelf/birds in A4 — exposes missed small objects, overlapping boxes, and NMS threshold sensitivity.

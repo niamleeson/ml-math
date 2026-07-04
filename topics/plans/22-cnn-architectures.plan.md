@@ -24,7 +24,14 @@ residual shortcuts, and parallel Inception branches.
 
 ## Part 3 — Worked Examples
 
-### 🟢 Easy (5)
+### 🟢 Basics (3)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| B1 | Apply one 1×1 convolution to a tiny volume | toy 2×2×3 input volume and one filter | printed channel-weighted sums plus output heatmap | ~3 |
+| B2 | Count parameters of one convolution layer | toy kernel size, input channels, output channels | printed formula and parameter total | ~2 |
+| B3 | Add a residual shortcut $x+F(x)$ | two tiny 2×2 feature maps | before/after heatmaps and printed summed values | ~2 |
+
+### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | E1 | Residual block forward pass on tiny feature maps | synthetic 8×8 image tensors | process: main path + skip tensor shapes; result: residual-add heatmaps before/after activation | ~5 |
@@ -44,7 +51,7 @@ residual shortcuts, and parallel Inception branches.
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/22-cnn-architectures.ipynb
-- **Est. cell count:** ~88 (💻 topic → all 10 examples coded; GAN/ResNet/Inception blocks need granular build↔see loops)
+- **Est. cell count:** ~100 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; GAN/ResNet/Inception blocks need granular build↔see loops)
 - **Key libraries:** numpy, matplotlib, scikit-learn, tensorflow/keras or torch, torchvision/tensorflow-datasets, seaborn
 - **Runtime:** GPU recommended (tiny subsets keep fallback possible, but GAN and CIFAR examples should flag GPU)
 - **Failure/edge dataset included:** imbalanced 2-D Gaussian mixture in A2 — demonstrates GAN mode collapse; deep plain CNN in A3 shows vanishing-gradient/training degradation compared with ResNet.

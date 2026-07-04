@@ -209,7 +209,7 @@ plt.show()  # render the raw-data scatter before any model is fit.
 
 ▶ What you'll see: an unlabeled point cloud. For `blobs`, three compact groups are visually obvious; for `moons`, the two curved groups already hint that spherical centroids will struggle.
 
-### 🟢 Easy Examples
+### 🟡 Easy Examples
 
 #### E1. k-means on 3 clean blobs from scratch
 
