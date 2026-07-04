@@ -165,6 +165,17 @@
      including the last, so no secondary item ever looks border-less. */
   .supergroup > .sg-body > .module > .mod-head { padding-left: 28px; font-weight: 500; }
   .supergroup > .sg-body > .module .lessons li a.navlink { padding-left: 50px; }
+  /* The lone top-level "AI Cheat Sheet" module has no supergroup umbrella, so give its
+     header the same look as the sibling supergroup headers (COURSE, PAPERS, MATH, ALL ML). */
+  #modules > .module { border-bottom: 1px solid var(--border); }
+  #modules > .module:not(.collapsed) { border-bottom: none; }
+  #modules > .module > .mod-head {
+    padding: 13px 16px; font-weight: 700; font-size: 12px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--ink); background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+  }
+  #modules > .module.collapsed > .mod-head { border-bottom: none; }
+  #modules > .module > .mod-head:hover { background: var(--border); }
   .lessons li { display: block; }
   .lessons li a.navlink {
     padding: 7px 16px 7px 38px; font-size: 13px; cursor: pointer; color: var(--ink-dim);
