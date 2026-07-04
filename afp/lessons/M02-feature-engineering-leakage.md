@@ -28,7 +28,25 @@ Five sub-lessons:
 
 **The idea.** Build a row at feature-freeze time $t$ from the history $H_t$ available then, giving features $x_t = \phi(H_t)$; the label $y_{t+\Delta}$ is observed later. The pipeline has **target leakage** if any coordinate of $x_t$ depends on $y_{t+\Delta}$ or on anything observed after $t$.
 
-**The five forms:** *label* leakage (a feature is a function of the outcome), *look-ahead* leakage (post-$t$ data), *train-test contamination* (fitting a transform on all rows before splitting), *group* leakage (the same entity in train and validation), and *aggregation* leakage (a global statistic that includes the row's own future).
+**The five forms.** Leakage is one bug — a feature that "knows the answer" — but it sneaks in through five distinct doors. Learn to name each one, because the *fix* is different for each.
+
+| Form | What leaks | Ads example | Prevention |
+|---|---|---|---|
+| **Label leakage** | A feature *is* the outcome, or a deterministic proxy of it | `was_charged_for_click` used to predict click | Trace each feature's provenance |
+| **Look-ahead leakage** | Data timestamped *after* the freeze time $t$ | `campaign_clicks_24h_after`; today's profile snapshot | Point-in-time / as-of joins (M2.2) |
+| **Train-test contamination** | A transform fit on rows outside the training fold | Scaler/target-encoder fit on all rows before the split | Fit on train only, inside a pipeline |
+| **Group leakage** | The same entity sits in both train and validation | One campaign's impressions split across train & val | Group-aware or time-based splits |
+| **Aggregation leakage** | A statistic computed over a span that includes the row's own future | Global `campaign_ctr` that includes this impression | Trailing windows; leave-one-out |
+
+**1 · Label leakage** — a feature is a function of the outcome. The tell is that the column only *exists* because the label happened: `was_charged_for_click`, `landing_page_view`, or a `campaign_total_clicks` total that already counts this impression's click. Offline AUC looks perfect because you handed the model the answer. *Prevention:* for every feature ask "does this value exist only because the label occurred?" — if yes, drop it.
+
+**2 · Look-ahead leakage** — the feature is real, but built from data observed *after* $t$. `campaign_clicks_24h_after` is the obvious case; the subtle one is joining an entity's *current* snapshot (the member's profile or the campaign's budget *today*) instead of its state as of the impression. The member added skills, the advertiser raised the budget — none of it was knowable at $t$. *Prevention:* as-of joins keyed on the freeze time (M2.2).
+
+**3 · Train-test contamination** — the features are legitimate, but a **transform** saw data it shouldn't. Fitting a scaler, imputer, target-encoder, PCA, feature-selector, or vocabulary on the *full* table before splitting lets validation statistics bleed into training. The mean used for imputation, or the per-campaign target-encoding table, was computed partly from rows you're about to "test" on. *Prevention:* fit every transform on the training fold only and `transform` val/test — wrap it in a pipeline so this can't be forgotten (M2.3, M2.4).
+
+**4 · Group leakage** — a random *row-level* split puts rows from the same entity (member, campaign, advertiser) in both train and validation, so the model memorizes the entity instead of generalizing. It learns "campaign 12345 clicks a lot," then collapses on genuinely new campaigns at serving. *Prevention:* split by group (`GroupKFold` on campaign/member) or, for streaming data, split by time.
+
+**5 · Aggregation leakage** — a global or windowed statistic is computed over a span that includes the row's own future. `campaign_ctr = total_clicks / total_impressions` over the whole table includes *this* impression and later ones; a rolling window *centered* on $t$ peeks forward. *Prevention:* compute aggregates only over data strictly before $t$ (trailing/expanding windows with a shift) and exclude the current row (leave-one-out target encoding).
 
 **Detection signals:** an implausibly high offline metric (AUC near 1.0), a large offline-to-online gap, and one feature dominating importance.
 
