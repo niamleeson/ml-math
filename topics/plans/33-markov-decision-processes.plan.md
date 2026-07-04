@@ -18,12 +18,19 @@ MDPs extend search to worlds where actions have uncertain outcomes and rewards a
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Look up the immediate reward for one transition | toy MDP scalars: state `s`, action `go`, successor `s'` | printed transition/reward entry | ~2 |
 | B2 | Compute one 2-step discounted return | toy rewards `r1=2`, `r2=4`, `γ=0.5` | printed values on a two-edge reward chain | ~2 |
 | B3 | Pick the greedy action from one Q-value row | toy Q row for one state with actions `left`, `right`, `wait` | tiny action-value bar chart with argmax highlighted | ~2 |
+| B4 | Do one Bellman backup for a single Q-value | toy successor values and transition probabilities | successor contribution bar chart | ~3 |
+| B5 | Evaluate one fixed-policy action at one state | one-state policy and Q row | policy-action bar highlighted | ~3 |
+| B6 | Compute an expected value over transition probabilities | two stochastic outcomes with values | weighted-contribution bars | ~3 |
+| B7 | Compare discount factors on one future reward | one immediate reward and one future reward with `γ=0` vs `γ=0.9` | return comparison bar chart | ~3 |
+| B8 | Apply one Q-learning update | single sampled transition update scalars | old/target/new Q bars | ~3 |
+| B9 | Choose one epsilon-greedy action | one Q row plus one exploration coin | explore/exploit interval plot | ~3 |
+| B10 | Check that transition probabilities sum to one | one stochastic action outcome row | transition-probability bar chart | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

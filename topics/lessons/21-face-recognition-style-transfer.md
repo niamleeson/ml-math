@@ -332,6 +332,216 @@ plt.show()  # render the Gram heatmap.
 
 ▶ What you'll see: diagonal entries measure each channel's total energy, while off-diagonal entries measure how often the two channels are active together.
 
+
+#### B4. Normalize one face embedding to unit length
+
+**Goal.** Convert one embedding into a unit vector before cosine-style comparisons. We'll build this in **2 steps**.
+
+```python
+embedding_b4 = np.array([3.0, 4.0, 0.0])  # create a toy face embedding with length five.
+norm_b4 = np.linalg.norm(embedding_b4)  # measure the vector length before normalization.
+unit_b4 = embedding_b4 / norm_b4  # divide by the norm so the vector length becomes one.
+print("original embedding:", embedding_b4)  # show the raw vector.
+print(f"original norm = {norm_b4:.3f}")  # show the raw vector length.
+print("normalized embedding:", unit_b4)  # show the unit-length vector.
+print(f"normalized norm = {np.linalg.norm(unit_b4):.3f}")  # verify the new length.
+```
+
+```python
+plt.figure(figsize=(4.5, 4.5))  # create a small vector plot.
+plt.quiver([0, 0], [0, 0], [embedding_b4[0], unit_b4[0]], [embedding_b4[1], unit_b4[1]], angles="xy", scale_units="xy", scale=1, color=[COLORS[0], COLORS[3]])  # draw raw and normalized directions.
+plt.text(embedding_b4[0] + 0.05, embedding_b4[1], "raw", color=COLORS[0])  # label the raw vector.
+plt.text(unit_b4[0] + 0.05, unit_b4[1], "unit", color=COLORS[3])  # label the normalized vector.
+plt.xlim(0, 3.5)  # set x-limits for both arrows.
+plt.ylim(0, 4.5)  # set y-limits for both arrows.
+plt.title("B4 normalization keeps direction")  # title the normalization sketch.
+plt.grid(True)  # keep the coordinate grid visible.
+plt.show()  # render the plot.
+```
+
+▶ What you'll see: the arrow becomes shorter, but it points in the same direction.
+
+👀 **Takeaway.** Normalization removes scale so comparisons focus on direction.
+
+#### B5. Content loss between two tiny feature maps
+
+**Goal.** Measure how far generated activations are from content activations. We'll build this in **2 steps**.
+
+```python
+content_b5 = np.array([[[0.0], [1.0]], [[1.0], [0.0]]])  # create a tiny content feature map.
+generated_b5 = np.array([[[0.2], [0.7]], [[0.8], [0.1]]])  # create a slightly changed generated feature map.
+loss_b5 = content_loss(content_b5, generated_b5)  # compute one-half squared feature difference.
+print("content feature map:\n", content_b5[:, :, 0])  # print the content activations.
+print("generated feature map:\n", generated_b5[:, :, 0])  # print the generated activations.
+print(f"content loss = {loss_b5:.4f}")  # print the scalar content penalty.
+```
+
+```python
+fig, axes = plt.subplots(1, 3, figsize=(9, 3))  # create panels for content, generated, and absolute error.
+for ax, matrix, title in zip(axes, [content_b5[:, :, 0], generated_b5[:, :, 0], np.abs(content_b5[:, :, 0] - generated_b5[:, :, 0])], ["content", "generated", "absolute difference"]):  # loop over the maps.
+    im = ax.imshow(matrix, cmap="viridis", vmin=0.0, vmax=1.0)  # display each map on a shared scale.
+    ax.set_title(title)  # label the panel.
+    ax.axis("off")  # remove ticks.
+fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.75)  # add one shared colorbar.
+plt.show()  # render the comparison.
+```
+
+▶ What you'll see: larger activation differences contribute more to the content loss.
+
+👀 **Takeaway.** Content loss is just MSE-style distance in a chosen feature layer.
+
+#### B6. Style loss between two Gram matrices
+
+**Goal.** Compare texture statistics after converting activations to Gram matrices. We'll build this in **3 steps**.
+
+```python
+style_b6 = np.array([[[1.0, 0.0], [1.0, 1.0]], [[0.0, 1.0], [1.0, 0.0]]])  # create a tiny style activation tensor.
+generated_b6 = np.array([[[0.8, 0.2], [1.1, 0.7]], [[0.1, 0.9], [0.9, 0.1]]])  # create a generated tensor with similar texture.
+gram_style_b6 = gram_matrix(style_b6)  # compute target style correlations.
+gram_generated_b6 = gram_matrix(generated_b6)  # compute generated correlations.
+style_mse_b6 = float(np.mean((gram_style_b6 - gram_generated_b6) ** 2))  # compute plain MSE between Gram matrices.
+print("style Gram:\n", gram_style_b6)  # print target Gram matrix.
+print("generated Gram:\n", gram_generated_b6)  # print generated Gram matrix.
+print(f"Gram MSE = {style_mse_b6:.4f}")  # print the style mismatch.
+```
+
+```python
+fig, axes = plt.subplots(1, 2, figsize=(7, 3))  # create side-by-side Gram heatmaps.
+for ax, matrix, title in zip(axes, [gram_style_b6, gram_generated_b6], ["style Gram", "generated Gram"]):  # loop over Gram matrices.
+    im = ax.imshow(matrix, cmap="Blues")  # visualize channel correlations.
+    ax.set_title(title)  # label each Gram matrix.
+    ax.set_xticks([0, 1])  # label channel columns.
+    ax.set_yticks([0, 1])  # label channel rows.
+fig.colorbar(im, ax=axes.ravel().tolist(), shrink=0.75)  # add a shared colorbar.
+plt.show()  # render the Gram comparison.
+```
+
+▶ What you'll see: the scalar loss is small when channel-correlation patterns are close.
+
+👀 **Takeaway.** Style transfer matches texture by matching Gram matrices, not pixel positions.
+
+#### B7. Find the nearest gallery embedding
+
+**Goal.** Do one tiny one-to-many face-recognition lookup. We'll build this in **3 steps**.
+
+```python
+gallery_b7 = np.array([[0.0, 0.0], [1.0, 0.2], [0.2, 1.0]])  # create three enrolled gallery embeddings.
+names_b7 = np.array(["Ana", "Bo", "Cy"])  # name the enrolled identities.
+query_b7 = np.array([0.9, 0.1])  # create one query embedding.
+distances_b7 = np.linalg.norm(gallery_b7 - query_b7, axis=1)  # compute query-to-gallery L2 distances.
+best_b7 = int(np.argmin(distances_b7))  # find the nearest gallery row.
+for name, distance in zip(names_b7, distances_b7):  # print each candidate distance.
+    print(f"distance to {name}: {distance:.3f}")  # show one lookup score.
+print("nearest identity:", names_b7[best_b7])  # print the predicted identity.
+```
+
+```python
+plt.figure(figsize=(5, 4))  # create a tiny embedding map.
+plt.scatter(gallery_b7[:, 0], gallery_b7[:, 1], s=100, label="gallery")  # plot enrolled identities.
+plt.scatter([query_b7[0]], [query_b7[1]], s=140, marker="*", color="crimson", label="query")  # plot the query.
+for name, xy in zip(names_b7, gallery_b7):  # label gallery points.
+    plt.text(xy[0] + 0.03, xy[1] + 0.03, name)  # write identity labels.
+plt.title("B7 nearest gallery embedding")  # title the lookup plot.
+plt.legend()  # identify gallery and query markers.
+plt.show()  # render the map.
+```
+
+▶ What you'll see: the query star is closest to Bo, so Bo is returned.
+
+👀 **Takeaway.** Recognition is nearest-neighbor search over enrolled embeddings.
+
+#### B8. Triplet margin score for one anchor-positive-negative set
+
+**Goal.** Compute the raw margin signal $d(a,p)-d(a,n)+\alpha$. We'll build this in **2 steps**.
+
+```python
+anchor_b8 = np.array([0.0, 0.0])  # create an anchor embedding.
+positive_b8 = np.array([0.2, 0.1])  # create a nearby same-identity positive.
+negative_b8 = np.array([0.7, 0.2])  # create a farther different-identity negative.
+margin_b8 = 0.4  # set the required separation margin.
+d_ap_b8 = l2_distance(anchor_b8, positive_b8)  # compute anchor-positive distance.
+d_an_b8 = l2_distance(anchor_b8, negative_b8)  # compute anchor-negative distance.
+raw_b8 = d_ap_b8 - d_an_b8 + margin_b8  # compute the triplet margin expression.
+loss_b8 = max(raw_b8, 0.0)  # hinge the raw score at zero.
+print(f"d(anchor, positive) = {d_ap_b8:.3f}")  # print same-identity distance.
+print(f"d(anchor, negative) = {d_an_b8:.3f}")  # print different-identity distance.
+print(f"triplet loss = max({raw_b8:.3f}, 0) = {loss_b8:.3f}")  # print the hinge result.
+```
+
+```python
+plt.figure(figsize=(5, 4))  # create a tiny triplet plot.
+plt.scatter(*anchor_b8, s=120, label="anchor")  # draw the anchor.
+plt.scatter(*positive_b8, s=120, label="positive")  # draw the positive.
+plt.scatter(*negative_b8, s=120, label="negative")  # draw the negative.
+plt.plot([anchor_b8[0], positive_b8[0]], [anchor_b8[1], positive_b8[1]], color=COLORS[1])  # connect anchor to positive.
+plt.plot([anchor_b8[0], negative_b8[0]], [anchor_b8[1], negative_b8[1]], color=COLORS[2])  # connect anchor to negative.
+plt.title("B8 triplet distances")  # title the margin sketch.
+plt.legend()  # identify triplet points.
+plt.axis("equal")  # preserve distance geometry.
+plt.show()  # render the plot.
+```
+
+▶ What you'll see: the loss is zero only if the negative is far enough beyond the positive.
+
+👀 **Takeaway.** Triplet loss trains relative ordering, not an absolute class label.
+
+#### B9. Compare all query-to-gallery distances
+
+**Goal.** Turn one query into a distance vector over all enrolled identities. We'll build this in **2 steps**.
+
+```python
+query_b9 = np.array([[0.25, 0.95]])  # create one query row vector.
+gallery_b9 = np.array([[0.1, 0.0], [1.0, 0.2], [0.2, 1.1], [0.8, 0.8]])  # create four gallery embeddings.
+names_b9 = ["Ana", "Bo", "Cy", "Di"]  # name the gallery entries.
+distances_b9 = pairwise_l2(query_b9, gallery_b9).ravel()  # compute all query-to-gallery distances with the helper.
+rank_b9 = np.argsort(distances_b9)  # sort candidate identities from nearest to farthest.
+for idx in rank_b9:  # print ranked distances.
+    print(f"{names_b9[idx]}: {distances_b9[idx]:.3f}")  # show one candidate.
+```
+
+```python
+plt.figure(figsize=(6, 3))  # create a ranked-distance bar chart.
+plt.bar([names_b9[i] for i in rank_b9], distances_b9[rank_b9], color="steelblue")  # plot distances in sorted order.
+plt.ylabel("L2 distance to query")  # label the distance axis.
+plt.title("B9 ranked gallery distances")  # title the ranking plot.
+plt.show()  # render the bars.
+```
+
+▶ What you'll see: the closest bar is the best candidate, but the full ranking shows ambiguity.
+
+👀 **Takeaway.** Recognition systems often inspect top-k distances, not just the winner.
+
+#### B10. Reject a nearest face match with a threshold
+
+**Goal.** Combine nearest-neighbor recognition with an unknown-person rejection rule. We'll build this in **2 steps**.
+
+```python
+threshold_b10 = 0.30  # set the maximum allowed nearest-neighbor distance.
+names_b10 = ["Ana", "Bo", "Cy", "Di"]  # name four enrolled gallery entries.
+distances_b10 = np.array([0.72, 0.58, 0.34, 0.49])  # create one query's nearest-neighbor distance vector.
+best_idx_b10 = int(np.argmin(distances_b10))  # find the nearest candidate.
+best_distance_b10 = distances_b10[best_idx_b10]  # read the nearest distance.
+result_b10 = names_b10[best_idx_b10] if best_distance_b10 <= threshold_b10 else "unknown"  # reject if even the nearest is too far.
+print(f"best candidate = {names_b10[best_idx_b10]}")  # print the nearest gallery name.
+print(f"best distance = {best_distance_b10:.3f}")  # print the nearest distance.
+print(f"threshold = {threshold_b10:.3f}")  # print the recognition threshold.
+print("final decision:", result_b10)  # print either an identity or unknown.
+```
+
+```python
+plt.figure(figsize=(6, 2.4))  # create a compact threshold chart.
+plt.axhline(threshold_b10, color="black", linestyle="--", label="reject threshold")  # draw the rejection threshold.
+plt.bar(names_b10, distances_b10, color=[COLORS[2] if i == best_idx_b10 else COLORS[0] for i in range(len(names_b10))])  # highlight the nearest candidate.
+plt.ylabel("distance")  # label the distance axis.
+plt.title("B10 accept nearest only below threshold")  # title the decision plot.
+plt.legend()  # label the threshold.
+plt.show()  # render the plot.
+```
+
+▶ What you'll see: a nearest identity can still be rejected if its distance is above the threshold.
+
+👀 **Takeaway.** One-to-many recognition needs both a nearest match and a reject option.
+
 ### 🟡 Easy Examples
 
 #### E1. Compute embedding distances for verification

@@ -379,6 +379,196 @@ plt.show()  # render the plot.
 
 👀 **Takeaway.** Cross-entropy rewards confident correct probabilities and punishes confident wrong probabilities.
 
+
+#### B4. Apply ReLU and sigmoid to a vector
+
+Goal: transform several scores element by element.
+
+```python
+z_b4 = np.array([-2.0, -0.5, 0.0, 1.5, 3.0])  # choose a small vector of neuron scores.
+relu_b4 = relu(z_b4)  # apply ReLU element by element.
+sigmoid_b4 = sigmoid(z_b4)  # apply sigmoid element by element.
+print("z:", z_b4)  # print original scores.
+print("ReLU(z):", relu_b4)  # print ReLU activations.
+print("sigmoid(z):", np.round(sigmoid_b4, 3))  # print sigmoid activations.
+```
+
+```python
+plt.figure(figsize=(6, 3.6))  # create a compact activation comparison.
+plt.plot(z_b4, relu_b4, marker="o", label="ReLU")  # show ReLU outputs.
+plt.plot(z_b4, sigmoid_b4, marker="o", label="sigmoid")  # show sigmoid outputs.
+plt.title("B4: vector activations")  # title the plot.
+plt.xlabel("z")  # label input score axis.
+plt.ylabel("activation")  # label output axis.
+plt.legend()  # identify activations.
+plt.show()  # render the comparison.
+```
+
+▶ What you'll see: ReLU clips negatives to zero while sigmoid squashes all scores into $(0,1)$.
+
+👀 **Takeaway.** Activations are applied element by element across a layer's score vector.
+
+#### B5. Compute MSE loss for three predictions
+
+Goal: average squared prediction errors.
+
+```python
+y_true_b5 = np.array([1.0, 0.0, 1.0])  # store three target values.
+y_pred_b5 = np.array([0.8, 0.3, 0.4])  # store three model predictions.
+squared_errors_b5 = (y_pred_b5 - y_true_b5) ** 2  # compute one squared error per example.
+mse_b5 = squared_errors_b5.mean()  # average squared errors to get MSE.
+print("squared errors:", np.round(squared_errors_b5, 3))  # print per-example losses.
+print("MSE:", round(float(mse_b5), 3))  # print mean squared error.
+```
+
+```python
+plt.figure(figsize=(5.5, 3.6))  # create a loss contribution chart.
+plt.bar(np.arange(len(squared_errors_b5)), squared_errors_b5, color="steelblue")  # show each squared error.
+plt.title(f"B5: MSE = {mse_b5:.3f}")  # title with average loss.
+plt.xlabel("example")  # label example axis.
+plt.ylabel("squared error")  # label loss axis.
+plt.show()  # render loss contributions.
+```
+
+▶ What you'll see: the largest miss contributes the tallest squared-error bar.
+
+👀 **Takeaway.** MSE is a simple average of squared prediction mistakes.
+
+#### B6. Softmax three logits
+
+Goal: convert three class scores into probabilities that sum to one.
+
+```python
+logits_b6 = np.array([[1.2, 0.4, -0.7]])  # store one row of three class logits.
+probs_b6 = softmax(logits_b6)[0]  # apply the stable softmax helper and unwrap the row.
+print("logits:", logits_b6[0])  # print raw scores.
+print("softmax probabilities:", np.round(probs_b6, 3))  # print class probabilities.
+print("sum:", round(float(probs_b6.sum()), 3))  # verify probabilities sum to one.
+```
+
+```python
+plt.figure(figsize=(5.4, 3.6))  # create a probability bar chart.
+plt.bar([0, 1, 2], probs_b6, color=["steelblue", "darkorange", "gray"])  # show one probability per class.
+plt.title("B6: softmax class probabilities")  # title the plot.
+plt.xlabel("class")  # label class axis.
+plt.ylabel("probability")  # label probability axis.
+plt.show()  # render the distribution.
+```
+
+▶ What you'll see: the largest logit gets the largest probability, but all probabilities sum to one.
+
+👀 **Takeaway.** Softmax turns multiclass scores into a probability distribution.
+
+#### B7. One-hot encode one label
+
+Goal: represent one integer class as a target vector.
+
+```python
+label_b7 = 2  # choose one integer class label.
+num_classes_b7 = 4  # choose the total number of classes.
+one_hot_b7 = np.zeros(num_classes_b7)  # start with zeros for every class.
+one_hot_b7[label_b7] = 1.0  # place one at the correct class index.
+print("label:", label_b7)  # print the class index.
+print("one-hot vector:", one_hot_b7)  # print the target vector.
+```
+
+```python
+plt.figure(figsize=(5.4, 3.2))  # create a target-vector plot.
+plt.bar(np.arange(num_classes_b7), one_hot_b7, color="steelblue")  # show the active class entry.
+plt.title("B7: one-hot target")  # title the plot.
+plt.xlabel("class")  # label class axis.
+plt.ylabel("target value")  # label target axis.
+plt.show()  # render the one-hot vector.
+```
+
+▶ What you'll see: exactly one class position is 1 and all others are 0.
+
+👀 **Takeaway.** One-hot targets let multiclass losses compare a probability vector to the true class.
+
+#### B8. Derivative of sigmoid at one score
+
+Goal: compute the local slope $\sigma(z)(1-\sigma(z))$.
+
+```python
+z_b8 = 0.7  # choose one sigmoid input score.
+s_b8 = float(sigmoid(z_b8))  # compute sigmoid activation.
+derivative_b8 = s_b8 * (1.0 - s_b8)  # compute sigmoid derivative from its output.
+print("z:", z_b8)  # print the input score.
+print("sigmoid(z):", round(s_b8, 3))  # print the activation.
+print("sigmoid derivative:", round(derivative_b8, 3))  # print the local slope.
+```
+
+```python
+z_grid_b8 = np.linspace(-6.0, 6.0, 400)  # create a score grid.
+s_grid_b8 = sigmoid(z_grid_b8)  # compute sigmoid values.
+plt.figure(figsize=(6, 4))  # create a derivative plot.
+plt.plot(z_grid_b8, s_grid_b8 * (1.0 - s_grid_b8), label="sigmoid derivative")  # draw derivative curve.
+plt.scatter([z_b8], [derivative_b8], color="black", s=80, label="chosen z")  # mark the chosen score.
+plt.title("B8: sigmoid derivative")  # title the plot.
+plt.xlabel("z")  # label score axis.
+plt.ylabel("slope")  # label derivative axis.
+plt.legend()  # show marker label.
+plt.show()  # render the local slope.
+```
+
+▶ What you'll see: sigmoid has its largest slope near zero and smaller slopes far from zero.
+
+👀 **Takeaway.** Backpropagation needs activation derivatives to pass gradients through nonlinearities.
+
+#### B9. Count parameters in one dense layer
+
+Goal: count weights and biases in a tiny fully connected layer.
+
+```python
+input_dim_b9 = 3  # choose three input features.
+output_dim_b9 = 4  # choose four output neurons.
+weight_count_b9 = input_dim_b9 * output_dim_b9  # count one weight for every input-output pair.
+bias_count_b9 = output_dim_b9  # count one bias per output neuron.
+total_params_b9 = weight_count_b9 + bias_count_b9  # add weights and biases.
+print("weights:", weight_count_b9)  # print number of weights.
+print("biases:", bias_count_b9)  # print number of biases.
+print("total parameters:", total_params_b9)  # print full layer parameter count.
+```
+
+```python
+plt.figure(figsize=(5.4, 3.4))  # create a parameter-count chart.
+plt.bar(["weights", "biases"], [weight_count_b9, bias_count_b9], color=["steelblue", "gray"])  # compare parameter types.
+plt.title("B9: dense-layer parameters")  # title the plot.
+plt.ylabel("count")  # label count axis.
+plt.show()  # render the count chart.
+```
+
+▶ What you'll see: most parameters are weights, plus one bias per output unit.
+
+👀 **Takeaway.** Dense layers scale as inputs times outputs, then add biases.
+
+#### B10. One gradient-descent weight update
+
+Goal: subtract a learning-rate-scaled gradient from one weight.
+
+```python
+w_b10 = 0.8  # store the current weight.
+grad_b10 = 0.25  # store the gradient of loss with respect to that weight.
+learning_rate_b10 = 0.1  # choose a small learning rate.
+new_w_b10 = w_b10 - learning_rate_b10 * grad_b10  # apply the gradient descent update.
+print("old weight:", w_b10)  # print starting weight.
+print("gradient:", grad_b10)  # print local slope of loss.
+print("new weight:", round(float(new_w_b10), 3))  # print updated weight.
+```
+
+```python
+plt.figure(figsize=(5.4, 3.2))  # create a before/after plot.
+plt.plot([0, 1], [w_b10, new_w_b10], marker="o", color="steelblue")  # connect old and new weights.
+plt.xticks([0, 1], ["before", "after"])  # label update states.
+plt.ylabel("weight value")  # label weight axis.
+plt.title("B10: one gradient-descent update")  # title the plot.
+plt.show()  # render the update.
+```
+
+▶ What you'll see: a positive gradient makes the weight decrease by $\eta$ times the gradient.
+
+👀 **Takeaway.** Learning is repeated tiny parameter updates in the direction that lowers loss.
+
 ### 🟡 Easy Examples
 
 #### E1. Tiny neuron: forward pass and activation shapes

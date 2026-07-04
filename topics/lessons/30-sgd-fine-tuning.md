@@ -132,6 +132,96 @@ Return the fine-tuned model
 
 ## 3. Worked Examples
 
+### Setup
+
+```python
+import numpy as np  # Import NumPy once so every later example can use fast vector operations.
+import matplotlib.pyplot as plt  # Import Matplotlib once so every later example can plot results.
+try:  # Try to import notebook widgets for the final interactive experiment.
+    import ipywidgets as widgets  # Import widgets when the notebook environment supports them.
+    from IPython.display import display  # Import display so widget layouts can be shown.
+    HAS_WIDGETS = True  # Record that interactive widgets are available.
+except Exception:  # Fall back gracefully when widgets are not installed.
+    widgets = None  # Store a harmless placeholder so later code can branch cleanly.
+    display = print  # Reuse print as a minimal display replacement outside notebooks.
+    HAS_WIDGETS = False  # Record that the non-widget fallback should be used.
+np.random.seed(221)  # Seed NumPy's legacy RNG for reproducible helper behavior.
+rng = np.random.default_rng(221)  # Create a modern reproducible random generator for data creation.
+plt.rcParams["figure.figsize"] = (7, 4)  # Set a consistent figure size for readable lesson plots.
+plt.rcParams["axes.grid"] = True  # Turn on grid lines so trajectories and curves are easier to compare.
+def sigmoid(z):  # Define the logistic sigmoid used by classification and fine-tuning examples.
+    z = np.clip(z, -40.0, 40.0)  # Clip extreme inputs to avoid unnecessary overflow in exp.
+    return 1.0 / (1.0 + np.exp(-z))  # Return sigma(z)=1/(1+e^{-z}).
+def binary_cross_entropy(y, p):  # Define average binary cross-entropy for labels y and probabilities p.
+    p = np.clip(p, 1e-9, 1.0 - 1e-9)  # Clip probabilities so log never receives exactly zero.
+    return float(-np.mean(y * np.log(p) + (1.0 - y) * np.log(1.0 - p)))  # Return the mean negative log-likelihood.
+def accuracy(y, p):  # Define a simple 0/1 accuracy helper for probabilistic binary predictions.
+    return float(np.mean((p >= 0.5) == y))  # Threshold probabilities at 0.5 and average correctness.
+def add_bias(X):  # Define a helper that appends an intercept column to a design matrix.
+    return np.c_[np.ones(X.shape[0]), X]  # Concatenate a leading column of ones with the original features.
+def logistic_loss_and_grad(Xb, y, w, l2=0.0):  # Define logistic loss and gradient for biased feature matrix Xb.
+    p = sigmoid(Xb @ w)  # Compute predicted probabilities from the current linear scores.
+    loss = binary_cross_entropy(y, p) + 0.5 * l2 * float(np.sum(w[1:] ** 2))  # Add L2 penalty excluding bias.
+    grad = (Xb.T @ (p - y)) / Xb.shape[0]  # Compute the average cross-entropy gradient.
+    grad[1:] = grad[1:] + l2 * w[1:]  # Add the derivative of the L2 penalty to non-bias weights.
+    return loss, grad, p  # Return loss, gradient, and probabilities for reuse in training loops.
+def run_logistic_sgd(Xb, y, eta=0.1, epochs=60, batch_size=16, l2=0.0, seed=0):  # Train logistic regression by mini-batch SGD.
+    local_rng = np.random.default_rng(seed)  # Create a local RNG so repeated calls are reproducible.
+    w = np.zeros(Xb.shape[1])  # Initialize all weights at zero for a neutral starting point.
+    losses = []  # Store full-data losses after updates so curves are comparable across settings.
+    for epoch in range(epochs):  # Repeat multiple passes over the training data.
+        order = local_rng.permutation(Xb.shape[0])  # Shuffle example order to make updates stochastic.
+        for start in range(0, Xb.shape[0], batch_size):  # Walk through the shuffled data in mini-batches.
+            idx = order[start:start + batch_size]  # Select the current mini-batch indices.
+            _, grad, _ = logistic_loss_and_grad(Xb[idx], y[idx], w, l2=l2)  # Compute the mini-batch gradient.
+            w = w - eta * grad  # Apply the SGD update w <- w - eta * gradient.
+        loss, _, _ = logistic_loss_and_grad(Xb, y, w, l2=l2)  # Measure the full-data loss after this epoch.
+        losses.append(loss)  # Save the epoch loss for plotting.
+    return w, np.array(losses)  # Return the trained weights and the full loss history.
+def mean_squared_error(y_true, y_pred):  # Define mean squared error for regression examples.
+    return float(np.mean((y_true - y_pred) ** 2))  # Average squared residuals across all examples.
+def polynomial_features(x, degree):  # Build polynomial columns 1, x, x^2, ..., x^degree.
+    return np.vstack([x ** k for k in range(degree + 1)]).T  # Stack powers column-wise and transpose to rows.
+```
+
+#### Data — swappable sources
+
+```python
+DATA_SOURCE = "default"  # Choose "default", "noisy", or "shifted" to change the toy data source.
+n_reg = 80  # Set the number of regression points used by SGD versus full-batch comparisons.
+x_reg = rng.uniform(-2.0, 2.0, size=n_reg)  # Draw one-dimensional inputs for the linear regression task.
+noise_scale = 0.7 if DATA_SOURCE == "noisy" else 0.35  # Increase noise when the noisy source is requested.
+y_reg = 1.5 - 2.0 * x_reg + rng.normal(0.0, noise_scale, size=n_reg)  # Generate linear targets with Gaussian noise.
+X_reg = add_bias(x_reg.reshape(-1, 1))  # Add an intercept column to create a two-parameter regression design.
+n_cls = 160  # Set the number of binary-classification examples.
+class0 = rng.normal(loc=[-1.2, -0.7], scale=[0.65, 0.55], size=(n_cls // 2, 2))  # Generate the negative class cloud.
+class1 = rng.normal(loc=[1.1, 0.8], scale=[0.65, 0.55], size=(n_cls // 2, 2))  # Generate the positive class cloud.
+X_cls = np.vstack([class0, class1])  # Combine both class clouds into one feature matrix.
+y_cls = np.r_[np.zeros(n_cls // 2), np.ones(n_cls // 2)]  # Create binary labels aligned with the stacked features.
+shift = np.array([0.35, -0.25]) if DATA_SOURCE == "shifted" else np.array([0.0, 0.0])  # Define an optional domain shift.
+X_cls = X_cls + shift  # Apply the optional shift so learners can test robustness.
+perm = rng.permutation(n_cls)  # Shuffle classification examples so class order is not grouped.
+X_cls = X_cls[perm]  # Reorder features according to the shuffled indices.
+y_cls = y_cls[perm]  # Reorder labels using the same shuffled indices.
+X_cls_b = add_bias(X_cls)  # Add an intercept column for logistic regression.
+x_sine = np.linspace(-3.0, 3.0, 90)  # Create evenly spaced inputs for polynomial regularization examples.
+y_sine = np.sin(1.5 * x_sine) + rng.normal(0.0, 0.18, size=x_sine.shape[0])  # Generate noisy nonlinear targets.
+train_idx = np.arange(0, 60)  # Use the first block as a simple training split for polynomial fitting.
+val_idx = np.arange(60, 90)  # Use the remaining block as a validation split.
+X_transfer = rng.normal(0.0, 1.0, size=(240, 2))  # Generate source inputs for the fine-tuning toy task.
+source_labels = ((X_transfer[:, 0] + X_transfer[:, 1]) > 0.0).astype(float)  # Label the source task by a diagonal boundary.
+target_labels = ((X_transfer[:, 0] - 0.8 * X_transfer[:, 1] + 0.2) > 0.0).astype(float)  # Label the target task by a rotated boundary.
+plt.figure()  # Create a quick data overview figure.
+plt.scatter(X_cls[:, 0], X_cls[:, 1], c=y_cls, cmap="coolwarm", edgecolor="k", alpha=0.75)  # Plot classification data by label.
+plt.title("Swappable toy classification data")  # Title the data plot.
+plt.xlabel("feature 1")  # Label the horizontal feature axis.
+plt.ylabel("feature 2")  # Label the vertical feature axis.
+plt.show()  # Display the data plot before the worked coded examples.
+```
+
+▶ What you'll see: a separable but not perfect two-class toy dataset. Later examples reuse it so optimizer behavior, not changing data, explains most differences.
+
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Apply one scalar SGD update $w\leftarrow w-\eta g$
@@ -175,6 +265,18 @@ $$
 $$
 
 The sign matters: because $g>0$, increasing $w$ would increase the loss locally, so SGD decreases $w$.
+
+```python
+w_b1 = 4.0  # starting scalar parameter from the worked example.
+eta_b1 = 0.25  # learning rate from the worked example.
+g_b1 = 6.0  # scalar gradient from the worked example.
+w_new_b1 = w_b1 - eta_b1 * g_b1  # one SGD step using w <- w - eta g.
+print("updated w:", round(w_new_b1, 4))  # print the boxed value 2.5.
+```
+
+▶ What you'll see: the scalar parameter updates from 4.0 to 2.5.
+
+👀 Takeaway: a positive gradient moves the parameter downward.
 
 #### B2. Evaluate the loss before and after one update
 
@@ -224,6 +326,39 @@ $$
 \boxed{\text{One correct SGD step reduced the loss from }9\text{ to }2.25.}
 $$
 
+```python
+w_before_b2 = 4.0  # starting point used in the hand calculation.
+eta_b2 = 0.25  # learning rate used in the hand calculation.
+loss_before_b2 = (w_before_b2 - 1.0) ** 2  # squared loss before the update.
+grad_b2 = 2.0 * (w_before_b2 - 1.0)  # derivative of (w - 1)^2 at w = 4.
+w_after_b2 = w_before_b2 - eta_b2 * grad_b2  # one SGD step, matching B1.
+loss_after_b2 = (w_after_b2 - 1.0) ** 2  # squared loss after the update.
+print("loss change:", round(loss_before_b2, 4), "->", round(loss_after_b2, 4))  # print 9.0 -> 2.25.
+```
+
+▶ What you'll see: the loss drops from 9.0 to 2.25.
+
+👀 Takeaway: a correctly sized downhill step can reduce loss immediately.
+
+```python
+w_before_b2 = 4.0  # starting point used in the hand calculation.
+eta_b2 = 0.25  # learning rate used in the hand calculation.
+grad_b2 = 2.0 * (w_before_b2 - 1.0)  # derivative of (w - 1)^2 at w = 4.
+w_after_b2 = w_before_b2 - eta_b2 * grad_b2  # one SGD step, matching the math.
+loss_before_b2 = (w_before_b2 - 1.0) ** 2  # squared loss before the update.
+loss_after_b2 = (w_after_b2 - 1.0) ** 2  # squared loss after the update.
+w_grid_b2 = np.linspace(0.0, 4.5, 100)  # grid of scalar w values for the loss bowl.
+loss_grid_b2 = (w_grid_b2 - 1.0) ** 2  # squared loss values on the grid.
+plt.plot(w_grid_b2, loss_grid_b2)  # draw the one-dimensional loss curve.
+plt.scatter([w_before_b2, w_after_b2], [loss_before_b2, loss_after_b2])  # mark before and after points.
+plt.title("B2: one SGD step lowers squared loss")  # title the micro-visualization.
+plt.xlabel("w")  # label the horizontal axis.
+plt.ylabel("Loss(w)")  # label the vertical axis.
+plt.show()  # display the figure.
+```
+
+▶ What you'll see: the point moves downhill on the squared-loss bowl.
+
 #### B3. Mark frozen vs. trainable parameters in a tiny layer
 
 Consider a pretrained feature layer followed by a new classifier head:
@@ -258,6 +393,371 @@ $$
 $$
 \boxed{\text{Freeze means “do not update,” not “the gradient concept disappears.”}}
 $$
+
+
+```python
+params_b3 = np.array(["W_base", "b_base", "w_head", "b_head"])  # parameter names from the table.
+frozen_b3 = np.array([True, True, False, False])  # freeze flags from the fine-tuning plan.
+updated_b3 = np.logical_not(frozen_b3)  # SGD updates exactly the non-frozen parameters.
+for name_b3, is_updated_b3 in zip(params_b3, updated_b3):  # inspect each parameter's update status.
+    print(name_b3, "updated by SGD:", bool(is_updated_b3))  # print whether each parameter moves.
+```
+
+▶ What you'll see: base parameters are not updated, while head parameters are updated.
+
+👀 Takeaway: freezing blocks parameter updates even when gradients exist.
+
+#### B4. Compute the gradient of one scalar squared loss
+
+Use
+
+$$
+\operatorname{Loss}(w)=(w-3)^2.
+$$
+
+Differentiate:
+
+$$
+\frac{d}{dw}(w-3)^2=2(w-3).
+$$
+
+At
+
+$$
+w=5,
+$$
+
+the gradient is
+
+$$
+g=2(5-3)=4.
+$$
+
+$$
+\boxed{g=4}
+$$
+
+The positive gradient says to decrease $w$ if we want to move downhill.
+
+```python
+w_b4 = 5.0  # scalar point where the gradient is evaluated.
+grad_b4 = 2.0 * (w_b4 - 3.0)  # derivative of (w - 3)^2 at w = 5.
+print("gradient:", round(grad_b4, 4))  # print the boxed gradient 4.0.
+```
+
+▶ What you'll see: the computed scalar gradient is 4.0.
+
+👀 Takeaway: the sign and size of the derivative define the local SGD direction.
+
+#### B5. Compare a batch gradient with a single-point gradient
+
+Suppose two example gradients are
+
+$$
+g_1=6,
+\qquad
+g_2=-2.
+$$
+
+A single SGD step on example $1$ uses
+
+$$
+g_{\text{SGD}}=g_1=6.
+$$
+
+A full-batch step averages both examples:
+
+$$
+g_{\text{batch}}=\frac{g_1+g_2}{2}=\frac{6+(-2)}{2}=2.
+$$
+
+$$
+\boxed{g_{\text{SGD}}=6,\qquad g_{\text{batch}}=2}
+$$
+
+Batch gradients are smoother because opposite example signals can cancel.
+
+```python
+g1_b5 = 6.0  # first per-example gradient from the worked example.
+g2_b5 = -2.0  # second per-example gradient from the worked example.
+g_sgd_b5 = g1_b5  # one stochastic update uses only the first example's gradient.
+g_batch_b5 = (g1_b5 + g2_b5) / 2.0  # full-batch gradient averages both examples.
+print("gradients:", "SGD =", round(g_sgd_b5, 4), "batch =", round(g_batch_b5, 4))  # print 6.0 and 2.0.
+```
+
+▶ What you'll see: the stochastic gradient is 6.0, while the batch gradient is 2.0.
+
+👀 Takeaway: averaging can soften conflicting example-level gradient signals.
+
+#### B6. Show one too-large learning-rate step
+
+Use the scalar loss
+
+$$
+\operatorname{Loss}(w)=w^2.
+$$
+
+At $w=1$, the gradient is
+
+$$
+g=2w=2.
+$$
+
+With an overly large learning rate $\eta=2$,
+
+$$
+w_{\text{new}}=1-2\cdot2=-3.
+$$
+
+The loss changes from
+
+$$
+\operatorname{Loss}(1)=1
+$$
+
+to
+
+$$
+\operatorname{Loss}(-3)=9.
+$$
+
+$$
+\boxed{1\longrightarrow 9}
+$$
+
+One oversized step jumped past the minimum and made the loss worse.
+
+```python
+w_before_b6 = 1.0  # starting point on Loss(w) = w^2.
+eta_b6 = 2.0  # intentionally oversized learning rate.
+grad_b6 = 2.0 * w_before_b6  # derivative of w^2 at w = 1.
+loss_before_b6 = w_before_b6 ** 2  # loss before the update.
+w_after_b6 = w_before_b6 - eta_b6 * grad_b6  # one too-large SGD step.
+loss_after_b6 = w_after_b6 ** 2  # loss after overshooting the minimum.
+print("loss change:", round(loss_before_b6, 4), "->", round(loss_after_b6, 4))  # print 1.0 -> 9.0.
+```
+
+▶ What you'll see: the loss increases from 1.0 to 9.0 after the update.
+
+👀 Takeaway: a downhill direction can still fail if the step size is too large.
+
+```python
+w_before_b6 = 1.0  # starting point on Loss(w) = w^2.
+eta_b6 = 2.0  # intentionally oversized learning rate.
+grad_b6 = 2.0 * w_before_b6  # derivative of w^2 at w = 1.
+w_after_b6 = w_before_b6 - eta_b6 * grad_b6  # one too-large SGD step.
+loss_before_b6 = w_before_b6 ** 2  # loss before the update.
+loss_after_b6 = w_after_b6 ** 2  # loss after overshooting the minimum.
+w_grid_b6 = np.linspace(-3.5, 1.5, 100)  # grid of scalar w values around the overshoot.
+loss_grid_b6 = w_grid_b6 ** 2  # squared loss values for Loss(w) = w^2.
+plt.plot(w_grid_b6, loss_grid_b6)  # draw the loss bowl.
+plt.scatter([w_before_b6, w_after_b6], [loss_before_b6, loss_after_b6])  # mark before and after losses.
+plt.plot([w_before_b6, w_after_b6], [loss_before_b6, loss_after_b6])  # connect the oversized step.
+plt.title("B6: too-large learning rate overshoots")  # title the micro-visualization.
+plt.xlabel("w")  # label the horizontal axis.
+plt.ylabel("Loss(w)")  # label the vertical axis.
+plt.show()  # display the figure.
+```
+
+▶ What you'll see: the update jumps across the minimum to a higher-loss point.
+
+#### B7. Apply a freeze mask to one update
+
+Let
+
+$$
+w=\begin{bmatrix}10\\1\\-2\end{bmatrix},
+\qquad
+g=\begin{bmatrix}5\\4\\-3\end{bmatrix},
+\qquad
+\eta=0.1.
+$$
+
+Use freeze mask
+
+$$
+\text{trainable}=\begin{bmatrix}0\\1\\1\end{bmatrix}.
+$$
+
+Mask the gradient:
+
+$$
+g_{\text{masked}}=\begin{bmatrix}0\\4\\-3\end{bmatrix}.
+$$
+
+Update only trainable entries:
+
+$$
+w_{\text{new}}=w-0.1g_{\text{masked}}
+=\begin{bmatrix}10\\0.6\\-1.7\end{bmatrix}.
+$$
+
+$$
+\boxed{w_{\text{new}}=(10,0.6,-1.7)}
+$$
+
+The frozen first parameter did not move.
+
+```python
+w_b7 = np.array([10.0, 1.0, -2.0])  # starting parameter vector from the worked example.
+g_b7 = np.array([5.0, 4.0, -3.0])  # gradient vector from the worked example.
+eta_b7 = 0.1  # learning rate from the worked example.
+trainable_b7 = np.array([0.0, 1.0, 1.0])  # freeze mask with 0 for frozen and 1 for trainable.
+g_masked_b7 = trainable_b7 * g_b7  # mask out the frozen parameter's gradient.
+w_new_b7 = w_b7 - eta_b7 * g_masked_b7  # update only trainable entries.
+print("updated w:", np.round(w_new_b7, 4))  # print the boxed vector [10.0, 0.6, -1.7].
+```
+
+▶ What you'll see: only the second and third entries change.
+
+👀 Takeaway: a freeze mask turns selected gradient components into no-ops.
+
+#### B8. Shuffle indices for one epoch
+
+For four examples, begin with ordered indices
+
+$$
+[0,1,2,3].
+$$
+
+One possible shuffled epoch order is
+
+$$
+[2,0,3,1].
+$$
+
+SGD then visits examples in this order:
+
+$$
+x_2\rightarrow x_0\rightarrow x_3\rightarrow x_1.
+$$
+
+$$
+\boxed{\text{one epoch uses each index exactly once, in shuffled order}}
+$$
+
+Shuffling changes the noise pattern without changing the dataset.
+
+```python
+indices_b8 = np.array([0, 1, 2, 3])  # original ordered example indices.
+order_b8 = np.array([2, 0, 3, 1])  # one fixed shuffled order matching the worked example.
+visited_once_b8 = np.array_equal(np.sort(order_b8), indices_b8)  # check that each index appears exactly once.
+print("epoch order:", order_b8.tolist())  # print the shuffled order [2, 0, 3, 1].
+print("uses each index once:", bool(visited_once_b8))  # print the boxed property of one epoch.
+```
+
+▶ What you'll see: the epoch visits [2, 0, 3, 1] and uses every index once.
+
+👀 Takeaway: shuffling changes order, not membership.
+
+#### B9. Compute a running average loss
+
+Suppose the first three observed losses are
+
+$$
+4,
+\qquad
+2,
+\qquad
+3.
+$$
+
+The running average after three updates is
+
+$$
+\bar{L}_3=\frac{4+2+3}{3}=3.
+$$
+
+If the fourth loss is $1$, then
+
+$$
+\bar{L}_4=\frac{4+2+3+1}{4}=2.5.
+$$
+
+$$
+\boxed{\bar{L}_3=3,\qquad \bar{L}_4=2.5}
+$$
+
+Running averages smooth noisy per-example losses.
+
+```python
+losses_b9 = np.array([4.0, 2.0, 3.0, 1.0])  # observed per-example losses from the worked example.
+avg3_b9 = np.mean(losses_b9[:3])  # running average after the first three updates.
+avg4_b9 = np.mean(losses_b9[:4])  # running average after the fourth update.
+print("running averages:", "L3 =", round(avg3_b9, 4), "L4 =", round(avg4_b9, 4))  # print 3.0 and 2.5.
+```
+
+▶ What you'll see: the running averages are 3.0 after three losses and 2.5 after four.
+
+👀 Takeaway: the average summarizes noisy losses with a smoother trend.
+
+#### B10. Compute one momentum update
+
+Let the previous velocity be
+
+$$
+v=0.4,
+$$
+
+the new gradient be
+
+$$
+g=2,
+$$
+
+and momentum coefficient be
+
+$$
+\beta=0.9.
+$$
+
+Compute the new velocity:
+
+$$
+v_{\text{new}}=\beta v+g=0.9(0.4)+2=2.36.
+$$
+
+With $\eta=0.1$, the parameter step is
+
+$$
+-\eta v_{\text{new}}=-0.236.
+$$
+
+$$
+\boxed{v_{\text{new}}=2.36,\qquad \Delta w=-0.236}
+$$
+
+Momentum carries some direction from previous gradients into the next step.
+
+```python
+v_b10 = 0.4  # previous velocity from the worked example.
+g_b10 = 2.0  # new gradient from the worked example.
+beta_b10 = 0.9  # momentum coefficient from the worked example.
+eta_b10 = 0.1  # learning rate from the worked example.
+v_new_b10 = beta_b10 * v_b10 + g_b10  # momentum update for the new velocity.
+delta_w_b10 = -eta_b10 * v_new_b10  # parameter change induced by the new velocity.
+print("momentum:", "v_new =", round(v_new_b10, 4), "delta_w =", round(delta_w_b10, 4))  # print 2.36 and -0.236.
+```
+
+▶ What you'll see: the new velocity is 2.36 and the parameter step is -0.236.
+
+👀 Takeaway: momentum mixes past direction with the current gradient.
+
+```python
+v_b10 = 0.4  # previous velocity from the worked example.
+g_b10 = 2.0  # new gradient from the worked example.
+beta_b10 = 0.9  # momentum coefficient from the worked example.
+v_new_b10 = beta_b10 * v_b10 + g_b10  # momentum update for the new velocity.
+steps_b10 = np.arange(2)  # two displayed moments: previous and new velocity.
+velocities_b10 = np.array([v_b10, v_new_b10])  # velocity values before and after the update.
+plt.plot(steps_b10, velocities_b10, marker="o")  # draw how momentum changes the velocity.
+plt.title("B10: momentum carries velocity forward")  # title the micro-visualization.
+plt.xlabel("momentum update index")  # label the horizontal axis.
+plt.ylabel("velocity")  # label the vertical axis.
+plt.show()  # display the figure.
+```
+
+▶ What you'll see: the velocity rises from the previous value to the momentum-combined value.
 
 ### 🟡 Easy
 
@@ -355,95 +855,6 @@ $$
 $$
 \boxed{w_{\text{new}}=\begin{bmatrix}0.1\\1.2\end{bmatrix}}
 $$
-
-#### Setup
-
-```python
-import numpy as np  # Import NumPy once so every later example can use fast vector operations.
-import matplotlib.pyplot as plt  # Import Matplotlib once so every later example can plot results.
-try:  # Try to import notebook widgets for the final interactive experiment.
-    import ipywidgets as widgets  # Import widgets when the notebook environment supports them.
-    from IPython.display import display  # Import display so widget layouts can be shown.
-    HAS_WIDGETS = True  # Record that interactive widgets are available.
-except Exception:  # Fall back gracefully when widgets are not installed.
-    widgets = None  # Store a harmless placeholder so later code can branch cleanly.
-    display = print  # Reuse print as a minimal display replacement outside notebooks.
-    HAS_WIDGETS = False  # Record that the non-widget fallback should be used.
-np.random.seed(221)  # Seed NumPy's legacy RNG for reproducible helper behavior.
-rng = np.random.default_rng(221)  # Create a modern reproducible random generator for data creation.
-plt.rcParams["figure.figsize"] = (7, 4)  # Set a consistent figure size for readable lesson plots.
-plt.rcParams["axes.grid"] = True  # Turn on grid lines so trajectories and curves are easier to compare.
-def sigmoid(z):  # Define the logistic sigmoid used by classification and fine-tuning examples.
-    z = np.clip(z, -40.0, 40.0)  # Clip extreme inputs to avoid unnecessary overflow in exp.
-    return 1.0 / (1.0 + np.exp(-z))  # Return sigma(z)=1/(1+e^{-z}).
-def binary_cross_entropy(y, p):  # Define average binary cross-entropy for labels y and probabilities p.
-    p = np.clip(p, 1e-9, 1.0 - 1e-9)  # Clip probabilities so log never receives exactly zero.
-    return float(-np.mean(y * np.log(p) + (1.0 - y) * np.log(1.0 - p)))  # Return the mean negative log-likelihood.
-def accuracy(y, p):  # Define a simple 0/1 accuracy helper for probabilistic binary predictions.
-    return float(np.mean((p >= 0.5) == y))  # Threshold probabilities at 0.5 and average correctness.
-def add_bias(X):  # Define a helper that appends an intercept column to a design matrix.
-    return np.c_[np.ones(X.shape[0]), X]  # Concatenate a leading column of ones with the original features.
-def logistic_loss_and_grad(Xb, y, w, l2=0.0):  # Define logistic loss and gradient for biased feature matrix Xb.
-    p = sigmoid(Xb @ w)  # Compute predicted probabilities from the current linear scores.
-    loss = binary_cross_entropy(y, p) + 0.5 * l2 * float(np.sum(w[1:] ** 2))  # Add L2 penalty excluding bias.
-    grad = (Xb.T @ (p - y)) / Xb.shape[0]  # Compute the average cross-entropy gradient.
-    grad[1:] = grad[1:] + l2 * w[1:]  # Add the derivative of the L2 penalty to non-bias weights.
-    return loss, grad, p  # Return loss, gradient, and probabilities for reuse in training loops.
-def run_logistic_sgd(Xb, y, eta=0.1, epochs=60, batch_size=16, l2=0.0, seed=0):  # Train logistic regression by mini-batch SGD.
-    local_rng = np.random.default_rng(seed)  # Create a local RNG so repeated calls are reproducible.
-    w = np.zeros(Xb.shape[1])  # Initialize all weights at zero for a neutral starting point.
-    losses = []  # Store full-data losses after updates so curves are comparable across settings.
-    for epoch in range(epochs):  # Repeat multiple passes over the training data.
-        order = local_rng.permutation(Xb.shape[0])  # Shuffle example order to make updates stochastic.
-        for start in range(0, Xb.shape[0], batch_size):  # Walk through the shuffled data in mini-batches.
-            idx = order[start:start + batch_size]  # Select the current mini-batch indices.
-            _, grad, _ = logistic_loss_and_grad(Xb[idx], y[idx], w, l2=l2)  # Compute the mini-batch gradient.
-            w = w - eta * grad  # Apply the SGD update w <- w - eta * gradient.
-        loss, _, _ = logistic_loss_and_grad(Xb, y, w, l2=l2)  # Measure the full-data loss after this epoch.
-        losses.append(loss)  # Save the epoch loss for plotting.
-    return w, np.array(losses)  # Return the trained weights and the full loss history.
-def mean_squared_error(y_true, y_pred):  # Define mean squared error for regression examples.
-    return float(np.mean((y_true - y_pred) ** 2))  # Average squared residuals across all examples.
-def polynomial_features(x, degree):  # Build polynomial columns 1, x, x^2, ..., x^degree.
-    return np.vstack([x ** k for k in range(degree + 1)]).T  # Stack powers column-wise and transpose to rows.
-```
-
-#### Data — swappable sources
-
-```python
-DATA_SOURCE = "default"  # Choose "default", "noisy", or "shifted" to change the toy data source.
-n_reg = 80  # Set the number of regression points used by SGD versus full-batch comparisons.
-x_reg = rng.uniform(-2.0, 2.0, size=n_reg)  # Draw one-dimensional inputs for the linear regression task.
-noise_scale = 0.7 if DATA_SOURCE == "noisy" else 0.35  # Increase noise when the noisy source is requested.
-y_reg = 1.5 - 2.0 * x_reg + rng.normal(0.0, noise_scale, size=n_reg)  # Generate linear targets with Gaussian noise.
-X_reg = add_bias(x_reg.reshape(-1, 1))  # Add an intercept column to create a two-parameter regression design.
-n_cls = 160  # Set the number of binary-classification examples.
-class0 = rng.normal(loc=[-1.2, -0.7], scale=[0.65, 0.55], size=(n_cls // 2, 2))  # Generate the negative class cloud.
-class1 = rng.normal(loc=[1.1, 0.8], scale=[0.65, 0.55], size=(n_cls // 2, 2))  # Generate the positive class cloud.
-X_cls = np.vstack([class0, class1])  # Combine both class clouds into one feature matrix.
-y_cls = np.r_[np.zeros(n_cls // 2), np.ones(n_cls // 2)]  # Create binary labels aligned with the stacked features.
-shift = np.array([0.35, -0.25]) if DATA_SOURCE == "shifted" else np.array([0.0, 0.0])  # Define an optional domain shift.
-X_cls = X_cls + shift  # Apply the optional shift so learners can test robustness.
-perm = rng.permutation(n_cls)  # Shuffle classification examples so class order is not grouped.
-X_cls = X_cls[perm]  # Reorder features according to the shuffled indices.
-y_cls = y_cls[perm]  # Reorder labels using the same shuffled indices.
-X_cls_b = add_bias(X_cls)  # Add an intercept column for logistic regression.
-x_sine = np.linspace(-3.0, 3.0, 90)  # Create evenly spaced inputs for polynomial regularization examples.
-y_sine = np.sin(1.5 * x_sine) + rng.normal(0.0, 0.18, size=x_sine.shape[0])  # Generate noisy nonlinear targets.
-train_idx = np.arange(0, 60)  # Use the first block as a simple training split for polynomial fitting.
-val_idx = np.arange(60, 90)  # Use the remaining block as a validation split.
-X_transfer = rng.normal(0.0, 1.0, size=(240, 2))  # Generate source inputs for the fine-tuning toy task.
-source_labels = ((X_transfer[:, 0] + X_transfer[:, 1]) > 0.0).astype(float)  # Label the source task by a diagonal boundary.
-target_labels = ((X_transfer[:, 0] - 0.8 * X_transfer[:, 1] + 0.2) > 0.0).astype(float)  # Label the target task by a rotated boundary.
-plt.figure()  # Create a quick data overview figure.
-plt.scatter(X_cls[:, 0], X_cls[:, 1], c=y_cls, cmap="coolwarm", edgecolor="k", alpha=0.75)  # Plot classification data by label.
-plt.title("Swappable toy classification data")  # Title the data plot.
-plt.xlabel("feature 1")  # Label the horizontal feature axis.
-plt.ylabel("feature 2")  # Label the vertical feature axis.
-plt.show()  # Display the data plot before the worked coded examples.
-```
-
-▶ What you'll see: a separable but not perfect two-class toy dataset. Later examples reuse it so optimizer behavior, not changing data, explains most differences.
 
 #### E2. Compute sigmoid outputs and derivatives, then plot the curve
 

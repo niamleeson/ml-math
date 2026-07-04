@@ -18,15 +18,25 @@ const OUT = path.join(ROOT, "lessons", "cheatsheet.js");
 const NB_DIR = path.join(ROOT, "topics", "notebooks");
 const REPO = "niamleeson/ml-math", BRANCH = "main";
 
-// Ordered lessons for this section (fresh nav labels + blurbs).
-const LESSONS = [
-  { file: "02-discrete-random-variables", nav: "Discrete Random Variables", badge: "🧮", type: "Numeric", source: "Probability · MIT" },
-  { file: "07-support-vector-machines", nav: "Support Vector Machines", badge: "⚖️", type: "Both", source: "CS 229" },
-  { file: "11-clustering", nav: "Clustering", badge: "💻", type: "Colab", source: "CS 229" },
-  { file: "14-ml-metrics", nav: "ML Metrics", badge: "🧮", type: "Numeric", source: "CS 229" },
-  { file: "32-search-optimization", nav: "Search Optimization", badge: "💻", type: "Colab", source: "CS 221" },
-  { file: "33-markov-decision-processes", nav: "MDPs & Q-learning", badge: "⚖️", type: "Both", source: "CS 221" },
-];
+// Auto-discover all lessons from topics/lessons/*.md (ordered by NN). Metadata
+// (badge, type, source, nav label) is parsed from each lesson's meta line + H1.
+const LESSONS = fs.readdirSync(SRC)
+  .filter((f) => /^\d\d-.*\.md$/.test(f))
+  .sort()
+  .map((f) => {
+    const md = fs.readFileSync(path.join(SRC, f), "utf8");
+    const h1 = (md.match(/^#\s+(.+)$/m) || [, f.replace(/\.md$/, "")])[1].trim();
+    const metaLine = (md.match(/^>\s*\*\*Source:\*\*(.+)$/m) || [, ""])[1];
+    const source = (metaLine.match(/^\s*(.+?)\s*·\s*\*\*(?:Category|Type)/) || [, "?"])[1].trim();
+    const tm = metaLine.match(/\*\*Type:\*\*\s*(🧮|💻|⚖️)\s*(Numeric|Colab|Both)/);
+    return {
+      file: f.replace(/\.md$/, ""),
+      nav: h1,
+      badge: tm ? tm[1] : "🧮",
+      type: tm ? tm[2] : "Numeric",
+      source: source,
+    };
+  });
 
 /* ---------- tiny Markdown -> HTML converter (math/code aware) ---------- */
 function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }

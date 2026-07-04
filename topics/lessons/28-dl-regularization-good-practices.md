@@ -304,6 +304,192 @@ plt.show()  # Render the gap plot.
 
 ---
 
+
+#### B4. Compute an L1 penalty
+
+Goal: compute the absolute-value penalty term for one weight vector.
+
+```python
+theta = np.array([3.0, -4.0, 0.0])  # Store a toy weight vector with positive, negative, and zero entries.
+lambda_l1 = 0.2  # Store the L1 regularization strength.
+l1_norm = np.sum(np.abs(theta))  # Compute ||theta||_1 by summing absolute values.
+penalty = lambda_l1 * l1_norm  # Multiply by lambda to get the objective contribution.
+print(f"||theta||_1 = {l1_norm:.1f}")  # Print the absolute-value norm.
+print(f"lambda * ||theta||_1 = {penalty:.1f}")  # Print the L1 penalty.
+fig, ax = plt.subplots()  # Create a small contribution plot.
+ax.bar(["|w1|", "|w2|", "|w3|"], np.abs(theta), color="tab:orange")  # Show absolute coordinate contributions.
+ax.set_ylabel("absolute weight")  # Label the vertical axis.
+ax.set_title("B4 L1 sums absolute weight magnitudes")  # State the primitive.
+plt.show()  # Render the bars.
+```
+
+▶ What you'll see: signs disappear before the values are summed, so $3$ and $-4$ contribute $7$ total.
+
+👀 **Takeaway:** $L_1$ charges absolute magnitudes and can encourage weights to become exactly zero.
+
+---
+
+#### B5. Gradient of an L2 penalty
+
+Goal: compute the extra gradient term added by $L_2$ regularization.
+
+```python
+theta = np.array([3.0, 4.0, 0.0])  # Reuse a tiny weight vector.
+lambda_l2 = 0.1  # Store the L2 regularization strength.
+l2_grad = 2.0 * lambda_l2 * theta  # Compute the gradient contribution of lambda * ||theta||_2^2.
+print(f"theta = {theta}")  # Print the weights.
+print(f"2 * lambda * theta = {l2_grad}")  # Print the penalty gradient.
+fig, ax = plt.subplots()  # Create a gradient bar chart.
+ax.bar(["w1", "w2", "w3"], l2_grad, color="tab:blue")  # Plot the regularization gradient per coordinate.
+ax.set_ylabel("gradient contribution")  # Label the vertical axis.
+ax.set_title("B5 L2 gradient points with the weights")  # State the effect.
+plt.show()  # Render the bars.
+```
+
+▶ What you'll see: larger weights get larger shrinkage gradients, while a zero weight gets none.
+
+👀 **Takeaway:** $L_2$ turns weight size directly into an update pressure back toward zero.
+
+---
+
+#### B6. Scale activations by keep probability
+
+Goal: isolate the inverted-dropout scaling step after a mask has kept some units.
+
+```python
+a = np.array([2.0, 0.0, 4.0, 6.0])  # Store pre-dropout activations.
+mask = np.array([1.0, 0.0, 1.0, 0.0])  # Store a deterministic dropout mask.
+q = 0.5  # Store the keep probability.
+kept = mask * a  # Apply only the masking step first.
+scaled = kept / q  # Divide kept activations by keep probability for inverted dropout.
+print(f"kept activations = {kept}")  # Print the masked vector.
+print(f"scaled activations = {scaled}")  # Print the inverted-dropout scaling result.
+fig, ax = plt.subplots()  # Create a before-after scaling plot.
+positions = np.arange(len(a))  # Create one x-position per neuron.
+ax.bar(positions - 0.18, kept, width=0.36, label="masked only")  # Plot kept values before scaling.
+ax.bar(positions + 0.18, scaled, width=0.36, label="divided by q")  # Plot scaled values.
+ax.set_xticks(positions)  # Mark neuron positions.
+ax.set_title("B6 inverted dropout scaling")  # Label the operation.
+ax.legend()  # Show the two stages.
+plt.show()  # Render the bars.
+```
+
+▶ What you'll see: kept activations double when $q=0.5$.
+
+👀 **Takeaway:** inverted dropout separates two primitives: masking units and scaling survivors to preserve expected size.
+
+---
+
+#### B7. Early-stopping decision from validation history
+
+Goal: decide whether to stop after validation loss has stopped improving.
+
+```python
+val_losses = np.array([0.62, 0.50, 0.44, 0.46, 0.49])  # Store validation loss by epoch.
+patience = 2  # Stop after two epochs without a new best validation loss.
+best_epoch = int(np.argmin(val_losses))  # Find the epoch index with the lowest validation loss.
+epochs_since_best = len(val_losses) - 1 - best_epoch  # Count how many epochs have passed since the best checkpoint.
+should_stop = epochs_since_best >= patience  # Apply the early-stopping rule.
+print(f"best epoch = {best_epoch}")  # Print the best checkpoint index.
+print(f"epochs since best = {epochs_since_best}")  # Print the patience counter.
+print(f"stop now? {should_stop}")  # Print the decision.
+fig, ax = plt.subplots()  # Create a validation-loss curve.
+ax.plot(np.arange(len(val_losses)), val_losses, marker="o")  # Plot validation loss by epoch.
+ax.axvline(best_epoch, color="tab:green", linestyle="--", label="best")  # Mark the best epoch.
+ax.set_xlabel("epoch")  # Label the epoch axis.
+ax.set_ylabel("validation loss")  # Label the monitored metric.
+ax.set_title("B7 early-stopping patience check")  # State the decision primitive.
+ax.legend()  # Show the best marker.
+plt.show()  # Render the curve.
+```
+
+▶ What you'll see: the best validation loss was two epochs ago, so patience 2 says to stop.
+
+👀 **Takeaway:** early stopping uses held-out validation history, not just the latest training loss.
+
+---
+
+#### B8. Weight norm before and after one L2 step
+
+Goal: see how an L2-only update shrinks a weight vector.
+
+```python
+theta = np.array([3.0, 4.0])  # Store a vector with norm five.
+eta = 0.1  # Store the learning rate.
+lambda_l2 = 0.2  # Store the L2 strength.
+theta_new = theta - eta * (2.0 * lambda_l2 * theta)  # Apply one update using only the L2 gradient.
+norm_before = np.linalg.norm(theta)  # Compute the starting weight norm.
+norm_after = np.linalg.norm(theta_new)  # Compute the post-update weight norm.
+print(f"norm before = {norm_before:.3f}")  # Print the original norm.
+print(f"norm after = {norm_after:.3f}")  # Print the shrunken norm.
+fig, ax = plt.subplots()  # Create a norm comparison.
+ax.bar(["before", "after"], [norm_before, norm_after], color=["tab:red", "tab:green"])  # Plot norm before and after decay.
+ax.set_ylabel("L2 norm")  # Label the metric.
+ax.set_title("B8 L2-only update shrinks the weight norm")  # State the effect.
+plt.show()  # Render the bars.
+```
+
+▶ What you'll see: the norm decreases because the update subtracts a positive fraction of the weights.
+
+👀 **Takeaway:** with no data gradient, $L_2$ acts exactly like multiplicative weight decay.
+
+---
+
+#### B9. Add a penalty to a base loss
+
+Goal: combine data loss and regularization into one objective value.
+
+```python
+base_loss = 1.2  # Store the empirical data loss.
+theta = np.array([1.0, -2.0])  # Store a tiny weight vector.
+lambda_l2 = 0.1  # Store the L2 strength.
+penalty = lambda_l2 * np.sum(theta ** 2)  # Compute the L2 penalty contribution.
+total_loss = base_loss + penalty  # Add data loss and penalty to get the optimized objective.
+print(f"base loss = {base_loss:.2f}")  # Print data loss.
+print(f"penalty = {penalty:.2f}")  # Print regularization cost.
+print(f"total objective = {total_loss:.2f}")  # Print combined objective.
+fig, ax = plt.subplots()  # Create a stacked objective plot.
+ax.bar(["objective"], [base_loss], label="base loss", color="gray")  # Plot base loss at the bottom.
+ax.bar(["objective"], [penalty], bottom=[base_loss], label="L2 penalty", color="tab:blue")  # Stack penalty above base loss.
+ax.set_ylabel("loss")  # Label the vertical axis.
+ax.set_title("B9 regularization adds to the objective")  # State the primitive.
+ax.legend()  # Show stacked components.
+plt.show()  # Render the stack.
+```
+
+▶ What you'll see: the optimizer sees the sum, so regularization can change which parameter values look best.
+
+👀 **Takeaway:** regularization is not a separate report card; it is part of the objective being minimized.
+
+---
+
+#### B10. Effect of lambda on one weight
+
+Goal: compare how two $L_2$ strengths shrink the same scalar weight in one step.
+
+```python
+w = 5.0  # Store one scalar weight.
+eta = 0.1  # Store the learning rate.
+lambdas = np.array([0.01, 0.20])  # Compare weak and strong L2 regularization.
+new_weights = w - eta * (2.0 * lambdas * w)  # Apply the L2-only update for each lambda.
+print("lambdas:", lambdas)  # Print regularization strengths.
+print("weights after one L2 step:", np.round(new_weights, 3))  # Print resulting weights.
+fig, ax = plt.subplots()  # Create a comparison plot.
+ax.bar(["λ=0.01", "λ=0.20"], new_weights, color=["tab:blue", "tab:orange"])  # Plot post-update weights.
+ax.axhline(w, color="black", linestyle="--", label="before")  # Mark the original weight.
+ax.set_ylabel("weight after step")  # Label the outcome.
+ax.set_title("B10 larger lambda causes stronger shrinkage")  # State the effect.
+ax.legend()  # Show before line.
+plt.show()  # Render the bars.
+```
+
+▶ What you'll see: the larger regularization strength pulls the weight farther toward zero.
+
+👀 **Takeaway:** $\lambda$ controls how expensive large weights are and therefore how hard weight decay pushes.
+
+---
+
+
 ### 🟡 Easy
 
 #### E1. Hand-compute L2-regularized loss, gradient, and update

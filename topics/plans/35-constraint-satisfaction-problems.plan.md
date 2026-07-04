@@ -18,12 +18,19 @@ CSPs model problems as variables, domains, and constraints, then search for assi
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Check one unary constraint on one assignment | toy scalar assignment `X=1` with constraint `[X=1]` | printed constraint value `1` or `0` | ~2 |
 | B2 | List the remaining domain after one assignment | toy domains `X,Y∈{1,2,3}` with assigned `X=2` and constraint `X<Y` | before/after domain boxes for `Y` | ~2 |
 | B3 | Count conflicts in one toy coloring | three-node path coloring assignment with one repeated neighbor color | tiny constraint table with violated-edge count | ~3 |
+| B4 | Check one binary constraint on two values | two-color assignment on one edge | one edge constraint truth value | ~2 |
+| B5 | Check whether one value is consistent with assigned neighbors | partial coloring with one assigned neighbor | candidate accept/reject result | ~2 |
+| B6 | Compute the degree of one variable | tiny constraint graph centered at `B` | neighbor set and degree count | ~2 |
+| B7 | Pick the most-constrained variable | three remaining domains of sizes `3`, `1`, `2` | domain-size comparison | ~2 |
+| B8 | Forward-check one neighbor domain | `X<Y` after assigning `X=1` | before/after domain for `Y` | ~3 |
+| B9 | Test arc consistency for one arc | `X<Y` with two-value domains | unsupported value removed | ~3 |
+| B10 | Check whether a complete assignment satisfies all constraints | valid three-node path coloring | all edge checks passing | ~3 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

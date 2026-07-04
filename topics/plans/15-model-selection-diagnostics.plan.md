@@ -18,12 +18,19 @@ Model selection is how we choose a model without fooling ourselves; diagnostics 
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Split six examples into train and validation indices | Pen-and-paper: indices 0–5 | colored mini split bar | ~2 |
 | B2 | Average two validation errors into one CV error | toy scalars: errors 0.30 and 0.20 | printed values with mean annotation | ~2 |
 | B3 | Diagnose one train/validation error pair | toy scalars: train error 0.02, validation error 0.25 | tiny train-vs-validation gap bar | ~3 |
+| B4 | Split eight examples into train and test indices | Pen-and-paper: indices 0–7 | colored train/test split bar | ~2 |
+| B5 | Compute train error vs test error | toy counts: 1/10 train mistakes, 4/10 test mistakes | printed error comparison and gap | ~2 |
+| B6 | Make three fold index splits | Pen-and-paper: indices 0–5 | three colored fold blocks | ~2 |
+| B7 | Label one validation-curve point | toy scalars: train error 0.34, validation error 0.36 | single point labeled underfit | ~3 |
+| B8 | Show regularization $\lambda$ shrinking one weight | toy scalar: $w=6$, $\lambda=2$ | before/after weight annotation | ~2 |
+| B9 | Read one learning-curve point | toy scalars: $m=50$, train error 0.08, validation error 0.18 | single learning-curve point with gap | ~2 |
+| B10 | Pick best model by validation score | toy scores: A 0.78, B 0.84, C 0.81 | ranked validation-score table | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
@@ -45,7 +52,7 @@ Model selection is how we choose a model without fooling ourselves; diagnostics 
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** notebooks/15-model-selection-diagnostics.ipynb
-- **Est. cell count:** ~90 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), with basics as atomic warm-ups before coded model-selection and diagnostic examples)
+- **Est. cell count:** ~90 (⚖️ topic → all 20 examples (10 basics + 5 easy + 5 advanced), with basics as atomic warm-ups before coded model-selection and diagnostic examples)
 - **Key libraries:** numpy, pandas, matplotlib, scikit-learn (`train_test_split`, `KFold`, `cross_val_score`, `Pipeline`, `PolynomialFeatures`, `Ridge`, `Lasso`, `LogisticRegression`, `DecisionTreeClassifier`, `SVC`, `confusion_matrix`)
 - **Runtime:** CPU
 - **Failure/edge dataset included:** leakage demo in A2 — shows validation scores inflated when preprocessing uses held-out fold information.

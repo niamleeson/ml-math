@@ -27,12 +27,19 @@ succeed depending on preprocessing and training mechanics."
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Normalize one tiny feature array | toy feature values $[1,2,5,6]$ | printed values + before/after dot strip | ~3 |
 | B2 | Compute one binary cross-entropy loss | toy scalar prediction and label | printed values + single loss marker on $z$ axis | ~2 |
 | B3 | One scalar weight update | toy weight, gradient, and learning rate | printed values + number-line before/after | ~2 |
+| B4 | Min-max normalize one array | toy feature values $[2,4,6,10]$ | printed values + before/after dot strip | ~3 |
+| B5 | One-hot encode three labels | toy labels $[2,0,1]$ | printed matrix + one-hot heatmap | ~2 |
+| B6 | Shuffle then batch indices | six toy example indices | printed batches + shuffled-order timeline | ~3 |
+| B7 | One mini-batch mean gradient | three toy scalar gradients | printed mean + gradient bar chart | ~2 |
+| B8 | Horizontal flip a tiny image | one $3\times3$ grayscale array | printed arrays + before/after image grid | ~2 |
+| B9 | Batch-normalize one mini-batch | toy activation batch $[1,2,5,6]$ | printed stats + before/after bars | ~3 |
+| B10 | Learning-rate times gradient update | toy scalar weight, gradient, and learning rate | printed values + number-line before/after | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

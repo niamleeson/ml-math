@@ -431,6 +431,119 @@ print(f"K(x, closer z) = {closer_kernel_b3:.3f}")  # Print the larger similarity
 
 ---
 
+
+#### B4. Compute the weight norm $\|w\|$
+
+Goal: measure the separator length that controls SVM margin width.
+
+```python
+w_b4 = np.array([3.0, 4.0])  # Choose a two-dimensional weight vector with a familiar length.
+norm_b4 = np.linalg.norm(w_b4)  # Compute the Euclidean norm ||w||.
+print(f"||w|| = {norm_b4:.2f}")  # Display the separator norm.
+```
+
+▶ What you'll see: the vector $(3,4)$ has norm $5$.
+
+👀 **Takeaway:** smaller $\|w\|$ means wider canonical margins.
+
+#### B5. Convert functional margin to geometric margin
+
+Goal: divide one functional margin by $\|w\|$ to get distance in feature units.
+
+```python
+functional_margin_b5 = 2.5  # Store one value of y(w^T x - b).
+norm_w_b5 = 5.0  # Store the separator norm.
+geometric_margin_b5 = functional_margin_b5 / norm_w_b5  # Convert scaled margin into geometric distance.
+print(f"geometric margin = {geometric_margin_b5:.3f}")  # Display the distance-to-correct-side margin.
+```
+
+▶ What you'll see: a functional margin of $2.5$ with $\|w\|=5$ becomes geometric margin $0.5$.
+
+👀 **Takeaway:** geometric margins remove the arbitrary scaling of $w$ and $b$.
+
+#### B6. Compute distance from one point to the boundary
+
+Goal: find the signed distance from a point to the line $w^Tx-b=0$.
+
+```python
+w_b6 = np.array([0.0, 2.0])  # Choose a horizontal boundary normal for easy arithmetic.
+b_b6 = 2.0  # Choose the offset so the boundary is y = 1.
+x_b6 = np.array([3.0, 2.5])  # Choose one point above the boundary.
+signed_distance_b6 = (w_b6 @ x_b6 - b_b6) / np.linalg.norm(w_b6)  # Divide score by ||w|| to get signed distance.
+print(f"signed distance = {signed_distance_b6:.2f}")  # Display the point's distance from the boundary.
+```
+
+▶ What you'll see: the point is $1.5$ units on the positive side of the boundary.
+
+👀 **Takeaway:** SVM geometry turns scores into distances by dividing by $\|w\|$.
+
+#### B7. Evaluate one hinge loss
+
+Goal: compute $\max(0,1-yf)$ for one labeled score.
+
+```python
+y_b7 = -1  # Store the true label.
+f_b7 = -0.3  # Store the raw SVM score w^T x - b.
+margin_b7 = y_b7 * f_b7  # Compute the signed margin y f.
+hinge_b7 = max(0.0, 1.0 - margin_b7)  # Apply the hinge-loss formula.
+print(f"margin = {margin_b7:.2f}")  # Display the signed margin.
+print(f"hinge loss = {hinge_b7:.2f}")  # Display the loss from being inside the margin.
+```
+
+▶ What you'll see: the point is correctly signed but still inside the margin, so hinge loss is positive.
+
+👀 **Takeaway:** hinge loss cares about both correctness and margin clearance.
+
+#### B8. Compute one dot product $x^Tz$
+
+Goal: calculate the linear-kernel similarity between two vectors.
+
+```python
+x_b8 = np.array([1.0, 2.0, -1.0])  # Store the first feature vector.
+z_b8 = np.array([3.0, 0.5, 2.0])  # Store the second feature vector.
+dot_b8 = x_b8 @ z_b8  # Sum coordinate-wise products to compute x^T z.
+print(f"x^T z = {dot_b8:.2f}")  # Display the linear similarity.
+```
+
+▶ What you'll see: positive and negative coordinate products combine into one similarity score.
+
+👀 **Takeaway:** kernels generalize the dot product used by linear separators.
+
+#### B9. Scale $w,b$ and compare predictions
+
+Goal: see that multiplying $w$ and $b$ by the same positive constant preserves the boundary sign.
+
+```python
+w_b9 = np.array([1.0, -1.0])  # Store an original separator direction.
+b_b9 = 0.5  # Store the original offset.
+x_b9 = np.array([2.0, 0.25])  # Store one point to classify.
+scale_b9 = 3.0  # Choose a positive rescaling factor.
+score_original_b9 = w_b9 @ x_b9 - b_b9  # Compute the original signed score.
+score_scaled_b9 = (scale_b9 * w_b9) @ x_b9 - (scale_b9 * b_b9)  # Compute the rescaled signed score.
+print(f"original sign = {np.sign(score_original_b9):.0f}")  # Display the original prediction sign.
+print(f"scaled sign = {np.sign(score_scaled_b9):.0f}")  # Display the rescaled prediction sign.
+```
+
+▶ What you'll see: the score magnitude changes, but the predicted sign stays the same.
+
+👀 **Takeaway:** functional margins change under scaling, but the classifier boundary does not.
+
+#### B10. Identify which of two points is the support vector
+
+Goal: choose the point closest to the canonical margin by comparing $y(w^Tx-b)$ values.
+
+```python
+margins_b10 = np.array([1.0, 2.7])  # Store two signed functional margins.
+point_names_b10 = np.array(["point A", "point B"])  # Name the two candidate points.
+support_index_b10 = np.argmin(margins_b10)  # Pick the smaller margin as the boundary-determining point.
+print(f"support vector candidate = {point_names_b10[support_index_b10]}")  # Display the closest candidate.
+print(f"margin value = {margins_b10[support_index_b10]:.1f}")  # Display its margin value.
+```
+
+▶ What you'll see: the point with margin $1.0$ is the support-vector candidate.
+
+👀 **Takeaway:** support vectors are the closest points that pin down the margin.
+
 ### 🟡 Easy
 
 #### E1. [pen-and-paper] Compute margin width for a candidate separator

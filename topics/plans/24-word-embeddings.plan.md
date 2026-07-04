@@ -25,12 +25,19 @@ relationships. Hook: "king − man + woman ≈ queen" as evidence that vector sp
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Look up one embedding with $e_w=Eo_w$ | tiny embedding matrix and one one-hot vector | printed selected matrix column and embedding vector | ~2 |
 | B2 | Cosine similarity between two word vectors | two toy 2-D word vectors | angle sketch and printed cosine value | ~2 |
 | B3 | Nearest neighbor in a tiny vocabulary | three toy word vectors plus one query | tiny scatterplot and ranked distance table | ~3 |
+| B4 | Analogy vector $a-b+c$ | tiny predefined royalty vectors | analogy arrow sketch and cosine scores | ~2 |
+| B5 | Normalize one word vector | one toy embedding vector | raw-vs-unit norm bar chart | ~2 |
+| B6 | Dot product as unnormalized similarity | two toy 3-D word vectors | raw dot vs cosine bar chart | ~2 |
+| B7 | Softmax over three context scores | three toy context logits | probability bar chart | ~2 |
+| B8 | One skip-gram negative-sampling score | toy center/context word pair | sigmoid curve with pair score | ~2 |
+| B9 | Average two word vectors | two toy context embeddings | vector scatter showing inputs and average | ~2 |
+| B10 | Build one tiny co-occurrence count | one toy sentence and a context window | one-cell co-occurrence heatmap | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

@@ -18,12 +18,19 @@ Generative learning models the class-conditional data distribution $P(x\mid y)$ 
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Estimate one Bernoulli class prior $\hat\phi$ from labels | toy labels | printed count fraction | ~2 |
 | B2 | Compute one GDA class mean $\hat\mu_j$ | toy 2-D points from one class | mean point on tiny scatter | ~3 |
 | B3 | Multiply two Naive Bayes feature likelihoods $\prod_iP(x_i\mid y)$ | toy categorical likelihoods | printed values | ~2 |
+| B4 | Compute one Gaussian pdf value | toy scalars: $x,\mu,\sigma$ | printed density | ~2 |
+| B5 | Compute one class variance | toy scalars: one class feature values | printed mean and variance | ~2 |
+| B6 | Score one point with prior times likelihood | toy scalars: one prior and likelihood | printed unnormalized weight | ~2 |
+| B7 | Normalize two posterior weights | toy class weights | printed posterior probabilities | ~2 |
+| B8 | Multiply three Naive Bayes likelihoods | toy feature likelihoods | printed product | ~2 |
+| B9 | Apply Laplace smoothing to one count | toy count, class total, vocabulary size | printed smoothed probability | ~2 |
+| B10 | Choose the larger posterior with argmax | toy posterior probabilities | printed predicted class | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

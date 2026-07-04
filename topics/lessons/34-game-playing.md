@@ -181,119 +181,7 @@ No player can improve by unilaterally deviating.
 
 ## 3. Worked Examples
 
-### 🟢 Basics (warm-up)
-
-#### B1. Read the utility of one terminal leaf
-
-Goal: evaluate a terminal state without recursion.
-
-Suppose $s_L$ is terminal and its utility for the agent is $+3$.
-
-Because $\operatorname{IsEnd}(s_L)=\text{true}$, the minimax recurrence immediately uses the first case:
-
-$$
-V_{\text{minimax}}(s_L)=\operatorname{Utility}(s_L).
-$$
-
-Substitute the given utility:
-
-$$
-V_{\text{minimax}}(s_L)=3.
-$$
-
-Therefore the backed-up value of this leaf is
-
-$$
-\boxed{3}.
-$$
-
-Interpretation: no player moves at a terminal state; its value is simply the final score.
-
-#### B2. Back up one max node over two children
-
-Goal: compute one agent-controlled backup.
-
-Let state $s$ be controlled by the agent, with two actions leading to child values
-
-$$
-V(s_1)=1,\qquad V(s_2)=5.
-$$
-
-Since $\operatorname{Player}(s)=\text{agent}$,
-
-$$
-V(s)=\max_{a\in\operatorname{Actions}(s)}V(\operatorname{Succ}(s,a)).
-$$
-
-There are two actions, so
-
-$$
-V(s)=\max\{V(s_1),V(s_2)\}.
-$$
-
-Substitute the child values:
-
-$$
-V(s)=\max\{1,5\}=5.
-$$
-
-The maximizing action is the action leading to $s_2$:
-
-$$
-\pi_{\max}(s)=\operatorname*{argmax}_{a\in\{a_1,a_2\}}V(\operatorname{Succ}(s,a))=a_2.
-$$
-
-Thus
-
-$$
-\boxed{V(s)=5,\quad \pi_{\max}(s)=a_2}.
-$$
-
-#### B3. Back up one min node over two children
-
-Goal: compute one opponent-controlled backup.
-
-Let state $s$ be controlled by the opponent, with child values
-
-$$
-V(s_1)=4,\qquad V(s_2)=-2.
-$$
-
-Since $\operatorname{Player}(s)=\text{opp}$,
-
-$$
-V(s)=\min_{a\in\operatorname{Actions}(s)}V(\operatorname{Succ}(s,a)).
-$$
-
-There are two actions, so
-
-$$
-V(s)=\min\{V(s_1),V(s_2)\}.
-$$
-
-Substitute:
-
-$$
-V(s)=\min\{4,-2\}=-2.
-$$
-
-The minimizing opponent chooses the action leading to $s_2$:
-
-$$
-\pi_{\min}(s)=\operatorname*{argmin}_{a\in\{a_1,a_2\}}V(\operatorname{Succ}(s,a))=a_2.
-$$
-
-Therefore
-
-$$
-\boxed{V(s)=-2,\quad \pi_{\min}(s)=a_2}.
-$$
-
-### 🟡 Easy
-
-Before the first coded example, we set up the notebook-style environment and swappable data sources. Run the following two blocks first, then run the coded examples in order.
-
-#### Setup
+### Setup
 
 ```python
 import numpy as np  # Import NumPy so boards, payoff grids, and random utilities are easy to store.
@@ -508,6 +396,518 @@ plot_board(near_end_board, title="Data preview: near-end tic-tac-toe")  # Visual
 ```
 
 ▶ What you'll see: a near-end tic-tac-toe state with three empty cells. The coded examples will ask which empty cell X should choose, then compare exact minimax, alpha-beta pruning, and depth-limited evaluation.
+
+
+### 🟢 Basics (warm-up)
+
+#### B1. Read the utility of one terminal leaf
+
+Goal: evaluate a terminal state without recursion.
+
+Suppose $s_L$ is terminal and its utility for the agent is $+3$.
+
+Because $\operatorname{IsEnd}(s_L)=\text{true}$, the minimax recurrence immediately uses the first case:
+
+$$
+V_{\text{minimax}}(s_L)=\operatorname{Utility}(s_L).
+$$
+
+Substitute the given utility:
+
+$$
+V_{\text{minimax}}(s_L)=3.
+$$
+
+Therefore the backed-up value of this leaf is
+
+$$
+\boxed{3}.
+$$
+
+Interpretation: no player moves at a terminal state; its value is simply the final score.
+
+```python
+utility_b1 = 3  # Store the terminal utility from the worked example.
+is_terminal_b1 = True  # Mark the state as terminal so no recursive backup is needed.
+value_b1 = utility_b1 if is_terminal_b1 else None  # Use the terminal case of minimax — SAME as the math.
+print("V(s_L) =", value_b1)  # Print result (must MATCH boxed answer).
+```
+
+▶ What you'll see: the terminal leaf value printed as 3.
+
+👀 Takeaway: terminal states return utility directly.
+
+#### B2. Back up one max node over two children
+
+Goal: compute one agent-controlled backup.
+
+Let state $s$ be controlled by the agent, with two actions leading to child values
+
+$$
+V(s_1)=1,\qquad V(s_2)=5.
+$$
+
+Since $\operatorname{Player}(s)=\text{agent}$,
+
+$$
+V(s)=\max_{a\in\operatorname{Actions}(s)}V(\operatorname{Succ}(s,a)).
+$$
+
+There are two actions, so
+
+$$
+V(s)=\max\{V(s_1),V(s_2)\}.
+$$
+
+Substitute the child values:
+
+$$
+V(s)=\max\{1,5\}=5.
+$$
+
+The maximizing action is the action leading to $s_2$:
+
+$$
+\pi_{\max}(s)=\operatorname*{argmax}_{a\in\{a_1,a_2\}}V(\operatorname{Succ}(s,a))=a_2.
+$$
+
+Thus
+
+$$
+\boxed{V(s)=5,\quad \pi_{\max}(s)=a_2}.
+$$
+
+Interpretation: the max player picks the higher-value child.
+
+```python
+child_values_b2 = np.array([1, 5])  # Store the two child values from the worked example.
+actions_b2 = np.array(["a_1", "a_2"])  # Store action labels aligned with the child values.
+best_index_b2 = int(np.argmax(child_values_b2))  # Find the index of the maximum child value.
+backed_up_b2 = int(child_values_b2[best_index_b2])  # Max node backup — SAME as the math.
+print("V(s) =", backed_up_b2, "and pi_max(s) =", actions_b2[best_index_b2])  # Print result (must MATCH boxed answer).
+```
+
+▶ What you'll see: the value 5 and action a_2 printed.
+
+```python
+child_values_b2 = np.array([1, 5])  # Store the two child values from the worked example.
+actions_b2 = np.array(["a_1", "a_2"])  # Store action labels aligned with the bars.
+colors_b2 = ["lightgray", "tab:green"]  # Highlight the child selected by the max backup.
+plt.bar(actions_b2, child_values_b2, color=colors_b2)  # Draw one bar per child value.
+plt.title("B2: max backup chooses a_2")  # Title the micro-visualization.
+plt.ylabel("child value")  # Label the vertical axis.
+plt.show()  # Display the bar chart.
+```
+
+▶ What you'll see: the taller a_2 bar highlighted as the max choice.
+
+👀 Takeaway: max backups propagate the largest child value.
+
+#### B3. Back up one min node over two children
+
+Goal: compute one opponent-controlled backup.
+
+Let state $s$ be controlled by the opponent, with child values
+
+$$
+V(s_1)=4,\qquad V(s_2)=-2.
+$$
+
+Since $\operatorname{Player}(s)=\text{opp}$,
+
+$$
+V(s)=\min_{a\in\operatorname{Actions}(s)}V(\operatorname{Succ}(s,a)).
+$$
+
+There are two actions, so
+
+$$
+V(s)=\min\{V(s_1),V(s_2)\}.
+$$
+
+Substitute:
+
+$$
+V(s)=\min\{4,-2\}=-2.
+$$
+
+The minimizing opponent chooses the action leading to $s_2$:
+
+$$
+\pi_{\min}(s)=\operatorname*{argmin}_{a\in\{a_1,a_2\}}V(\operatorname{Succ}(s,a))=a_2.
+$$
+
+Therefore
+
+$$
+\boxed{V(s)=-2,\quad \pi_{\min}(s)=a_2}.
+$$
+
+Interpretation: the min player picks the lower-value child for the agent.
+
+```python
+child_values_b3 = np.array([4, -2])  # Store the two child values from the worked example.
+actions_b3 = np.array(["a_1", "a_2"])  # Store action labels aligned with the child values.
+best_index_b3 = int(np.argmin(child_values_b3))  # Find the index of the minimum child value.
+backed_up_b3 = int(child_values_b3[best_index_b3])  # Min node backup — SAME as the math.
+print("V(s) =", backed_up_b3, "and pi_min(s) =", actions_b3[best_index_b3])  # Print result (must MATCH boxed answer).
+```
+
+▶ What you'll see: the value -2 and action a_2 printed.
+
+```python
+child_values_b3 = np.array([4, -2])  # Store the two child values from the worked example.
+actions_b3 = np.array(["a_1", "a_2"])  # Store action labels aligned with the bars.
+colors_b3 = ["lightgray", "tab:red"]  # Highlight the child selected by the min backup.
+plt.bar(actions_b3, child_values_b3, color=colors_b3)  # Draw one bar per child value.
+plt.axhline(0, color="black", linewidth=1)  # Draw a zero line so the negative value is clear.
+plt.title("B3: min backup chooses a_2")  # Title the micro-visualization.
+plt.ylabel("child value")  # Label the vertical axis.
+plt.show()  # Display the bar chart.
+```
+
+▶ What you'll see: the lower a_2 bar highlighted as the min choice.
+
+👀 Takeaway: min backups propagate the smallest child value.
+
+#### B4. Score one nonterminal state with a static evaluation
+
+Goal: use a cutoff evaluation before searching any children.
+
+Suppose
+
+$$
+\text{open X lines}=3,
+\qquad
+\text{open O lines}=1.
+$$
+
+With
+
+$$
+\operatorname{Eval}(s)=2(\text{open X lines})-2(\text{open O lines}),
+$$
+
+we get
+
+$$
+\operatorname{Eval}(s)=2(3)-2(1)=4.
+$$
+
+Thus
+
+$$
+\boxed{\operatorname{Eval}(s)=4}.
+$$
+
+Interpretation: a cutoff state can be assigned a heuristic score without expanding its children.
+
+```python
+open_x_lines_b4 = 3  # Store the number of open X lines from the worked example.
+open_o_lines_b4 = 1  # Store the number of open O lines from the worked example.
+eval_b4 = 2 * open_x_lines_b4 - 2 * open_o_lines_b4  # Apply the static evaluation — SAME as the math.
+print("Eval(s) =", eval_b4)  # Print result (must MATCH boxed answer).
+```
+
+▶ What you'll see: the evaluation score 4 printed.
+
+```python
+features_b4 = np.array([3, 1])  # Store the feature counts from the worked example for plotting.
+labels_b4 = np.array(["open X", "open O"])  # Store names for the two feature bars.
+plt.bar(labels_b4, features_b4, color=["tab:blue", "tab:orange"])  # Draw the feature counts as bars.
+plt.title("B4: static evaluation features")  # Title the micro-visualization.
+plt.ylabel("count")  # Label the vertical axis.
+plt.show()  # Display the bar chart.
+```
+
+▶ What you'll see: open X has three lines and open O has one.
+
+👀 Takeaway: evaluation functions turn features into cutoff values.
+
+#### B5. Pick the best move from backed-up values
+
+Goal: choose the action with the largest already-computed child value.
+
+Let
+
+$$
+V(a_L)=0,
+\qquad
+V(a_C)=2,
+\qquad
+V(a_R)=-1.
+$$
+
+Then
+
+$$
+\max\{0,2,-1\}=2,
+$$
+
+so
+
+$$
+\boxed{\pi_{\max}(s)=a_C,\quad V(s)=2}.
+$$
+
+Interpretation: once child values are known, choosing the action is an argmax lookup.
+
+```python
+action_values_b5 = np.array([0, 2, -1])  # Store backed-up values for left, center, and right moves.
+actions_b5 = np.array(["a_L", "a_C", "a_R"])  # Store action labels aligned with the values.
+best_index_b5 = int(np.argmax(action_values_b5))  # Find the index of the largest action value.
+value_b5 = int(action_values_b5[best_index_b5])  # Read the selected move value — SAME as the math.
+print("pi_max(s) =", actions_b5[best_index_b5], "and V(s) =", value_b5)  # Print result (must MATCH boxed answer).
+```
+
+▶ What you'll see: action a_C and value 2 printed.
+
+```python
+action_values_b5 = np.array([0, 2, -1])  # Store backed-up values for left, center, and right moves.
+actions_b5 = np.array(["a_L", "a_C", "a_R"])  # Store action labels aligned with the bars.
+colors_b5 = ["lightgray", "tab:green", "lightgray"]  # Highlight the argmax action.
+plt.bar(actions_b5, action_values_b5, color=colors_b5)  # Draw one bar per action value.
+plt.axhline(0, color="black", linewidth=1)  # Draw a zero line for reference.
+plt.title("B5: choose the largest backed-up value")  # Title the micro-visualization.
+plt.ylabel("backed-up value")  # Label the vertical axis.
+plt.show()  # Display the bar chart.
+```
+
+▶ What you'll see: the center action highlighted as the best move.
+
+👀 Takeaway: policies choose actions, not just values.
+
+#### B6. Prune one alpha-beta branch by comparing a bound
+
+Goal: decide whether one remaining branch can be skipped.
+
+At a min node, suppose
+
+$$
+\alpha=4,
+\qquad
+\beta=3.
+$$
+
+The prune test is
+
+$$
+\beta\le\alpha.
+$$
+
+Since
+
+$$
+3\le4,
+$$
+
+this node can never improve max's current alternative. Therefore
+
+$$
+\boxed{\text{prune the remaining children}}.
+$$
+
+Interpretation: when the minimizer's best possible value is already no better than max's guarantee, more siblings cannot matter.
+
+```python
+alpha_b6 = 4  # Store max's current guaranteed lower bound.
+beta_b6 = 3  # Store min's current guaranteed upper bound.
+should_prune_b6 = beta_b6 <= alpha_b6  # Apply the alpha-beta cutoff test — SAME as the math.
+print("decision =", "prune the remaining children" if should_prune_b6 else "keep searching")  # Print result (must MATCH boxed answer).
+```
+
+▶ What you'll see: the pruning decision printed as prune the remaining children.
+
+```python
+bounds_b6 = np.array([4, 3])  # Store alpha and beta from the worked example for plotting.
+labels_b6 = np.array(["alpha", "beta"])  # Store labels for the two bounds.
+plt.bar(labels_b6, bounds_b6, color=["tab:green", "tab:red"])  # Draw alpha and beta as bars.
+plt.title("B6: prune because beta <= alpha")  # Title the micro-visualization.
+plt.ylabel("bound value")  # Label the vertical axis.
+plt.show()  # Display the bar chart.
+```
+
+▶ What you'll see: beta is below alpha, so the cutoff condition holds.
+
+👀 Takeaway: alpha-beta pruning is a bound comparison.
+
+#### B7. Read the terminal utility of a toy board
+
+Goal: map a final board outcome to a utility.
+
+Use utilities from X's perspective:
+
+$$
+\text{X wins}=+1,
+\qquad
+\text{draw}=0,
+\qquad
+\text{X loses}=-1.
+$$
+
+If a terminal board has a completed X row, then
+
+$$
+\operatorname{Utility}(s)=+1.
+$$
+
+Thus
+
+$$
+\boxed{V(s)=+1}.
+$$
+
+Interpretation: terminal board patterns are converted into numeric utilities before any backup.
+
+```python
+board_b7 = np.array([["X", "X", "X"], ["O", "O", "."], [".", ".", "."]])  # Build a terminal board with a completed X row.
+x_row_win_b7 = bool(np.any(np.all(board_b7 == "X", axis=1)))  # Check whether any row is all X.
+utility_b7 = 1 if x_row_win_b7 else 0  # Map the X win to utility +1 — SAME as the math.
+print("V(s) =", utility_b7)  # Print result (must MATCH boxed answer).
+```
+
+▶ What you'll see: the terminal board utility printed as 1.
+
+```python
+board_b7 = np.array([["X", "X", "X"], ["O", "O", "."], [".", ".", "."]])  # Build the same terminal board for plotting.
+fig_b7, ax_b7 = plt.subplots(figsize=(3, 3))  # Create a square tic-tac-toe figure.
+ax_b7.set_xlim(0, 3)  # Set horizontal board limits.
+ax_b7.set_ylim(0, 3)  # Set vertical board limits.
+ax_b7.set_xticks([])  # Hide x-axis ticks.
+ax_b7.set_yticks([])  # Hide y-axis ticks.
+for k_b7 in range(4):  # Draw the board grid lines.
+    ax_b7.plot([k_b7, k_b7], [0, 3], color="black")  # Draw one vertical grid line.
+    ax_b7.plot([0, 3], [k_b7, k_b7], color="black")  # Draw one horizontal grid line.
+for r_b7 in range(3):  # Loop over board rows.
+    for c_b7 in range(3):  # Loop over board columns.
+        ax_b7.text(c_b7 + 0.5, 2.5 - r_b7, board_b7[r_b7, c_b7], ha="center", va="center", fontsize=20)  # Draw each cell mark.
+ax_b7.plot([0.15, 2.85], [2.5, 2.5], color="tab:green", linewidth=4)  # Highlight the completed X row.
+ax_b7.set_title("B7: X row gives utility +1")  # Title the micro-visualization.
+plt.show()  # Display the board.
+```
+
+▶ What you'll see: a tic-tac-toe board with the winning X row highlighted.
+
+👀 Takeaway: terminal detection maps outcomes to utilities.
+
+#### B8. Count nodes in a tiny game tree
+
+Goal: count states before doing any value backups.
+
+A depth-2 binary tree has one root, two children, and four leaves, so
+
+$$
+1+2+4=7.
+$$
+
+Thus plain minimax would inspect
+
+$$
+\boxed{7\text{ nodes}}.
+$$
+
+Interpretation: before pruning, minimax visits every node in this tiny full tree.
+
+```python
+branching_b8 = 2  # Store the binary branching factor.
+depth_b8 = 2  # Store the depth from root to leaves.
+levels_b8 = np.array([branching_b8 ** d_b8 for d_b8 in range(depth_b8 + 1)])  # Count nodes at depths 0, 1, and 2.
+total_nodes_b8 = int(np.sum(levels_b8))  # Sum all levels — SAME as the math.
+print("nodes =", total_nodes_b8)  # Print result (must MATCH boxed answer).
+```
+
+▶ What you'll see: the node count printed as 7.
+
+👀 Takeaway: full tree size is the sum of level counts.
+
+#### B9. Check whether one state is terminal
+
+Goal: apply the terminal predicate before recursing.
+
+Suppose a board has no three-in-a-row and still has one empty cell. Then
+
+$$
+\operatorname{IsEnd}(s)=\text{false}.
+$$
+
+So search should continue:
+
+$$
+\boxed{\text{expand successors}}.
+$$
+
+Interpretation: minimax only stops when a win, loss, draw, or depth cutoff has been reached.
+
+```python
+board_b9 = np.array([["X", "O", "X"], ["X", "O", "O"], ["O", "X", "."]])  # Build a board with one empty cell and no winner.
+rows_b9 = [list(board_b9[r_b9, :]) for r_b9 in range(3)]  # Collect all rows for winner checking.
+cols_b9 = [list(board_b9[:, c_b9]) for c_b9 in range(3)]  # Collect all columns for winner checking.
+diags_b9 = [[board_b9[0, 0], board_b9[1, 1], board_b9[2, 2]], [board_b9[0, 2], board_b9[1, 1], board_b9[2, 0]]]  # Collect both diagonals.
+lines_b9 = rows_b9 + cols_b9 + diags_b9  # Combine every possible three-in-a-row line.
+has_winner_b9 = any(line_b9 == ["X", "X", "X"] or line_b9 == ["O", "O", "O"] for line_b9 in lines_b9)  # Check for any completed line.
+has_empty_b9 = bool(np.any(board_b9 == "."))  # Check whether at least one legal move remains.
+is_end_b9 = has_winner_b9 or not has_empty_b9  # Apply the terminal predicate — SAME as the math.
+print("decision =", "expand successors" if not is_end_b9 else "stop")  # Print result (must MATCH boxed answer).
+```
+
+▶ What you'll see: the decision printed as expand successors.
+
+👀 Takeaway: nonterminal states must still be expanded.
+
+#### B10. Average one expectimax chance node
+
+Goal: compute the value of a random opponent or chance node.
+
+Suppose
+
+$$
+V(s_1)=6,
+\qquad
+V(s_2)=2,
+\qquad
+P(s_1)=P(s_2)=0.5.
+$$
+
+Then
+
+$$
+V(s)=0.5(6)+0.5(2)=4.
+$$
+
+Therefore
+
+$$
+\boxed{V(s)=4}.
+$$
+
+Interpretation: an expectimax chance node propagates the probability-weighted average child value.
+
+```python
+child_values_b10 = np.array([6, 2])  # Store child values from the worked example.
+probabilities_b10 = np.array([0.5, 0.5])  # Store matching chance probabilities.
+expected_value_b10 = float(np.sum(probabilities_b10 * child_values_b10))  # Compute the expectation — SAME as the math.
+print("V(s) =", int(expected_value_b10))  # Print result (must MATCH boxed answer).
+```
+
+▶ What you'll see: the expectimax value printed as 4.
+
+```python
+child_values_b10 = np.array([6, 2])  # Store child values from the worked example.
+probabilities_b10 = np.array([0.5, 0.5])  # Store matching chance probabilities.
+weighted_terms_b10 = probabilities_b10 * child_values_b10  # Compute each contribution to the expectation.
+plt.bar(["0.5*6", "0.5*2"], weighted_terms_b10, color=["tab:blue", "tab:orange"])  # Plot the two weighted terms.
+plt.title("B10: expectimax weighted average")  # Title the micro-visualization.
+plt.ylabel("contribution")  # Label the vertical axis.
+plt.show()  # Display the bar chart.
+```
+
+▶ What you'll see: two contributions, 3 and 1, summing to 4.
+
+👀 Takeaway: chance backups average rather than minimize.
+
+### 🟡 Easy
+
+Before the first coded example, we set up the notebook-style environment and swappable data sources. Run the following two blocks first, then run the coded examples in order.
 
 #### E1. Hand propagate a depth-2 minimax tree
 

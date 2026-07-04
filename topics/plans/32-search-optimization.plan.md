@@ -18,12 +18,19 @@ Search turns planning into "choose actions from a start state until an end state
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | List valid neighbors of one grid cell | tiny 3×3 grid with one wall | highlighted neighbor cells | ~2 |
 | B2 | Compare one FIFO queue pop with one LIFO stack pop | toy frontier labels | printed queue/stack before-after | ~2 |
 | B3 | Mark one visited node to avoid revisiting a tiny graph | three-node graph with a cycle | node color changes for visited set | ~3 |
+| B4 | Compute the path cost of a node list | tiny grid path with mud | highlighted path and printed cost | ~2 |
+| B5 | Reconstruct a path from parent pointers | toy parent dictionary | printed recovered path | ~2 |
+| B6 | Compute a Manhattan heuristic value | toy grid coordinates | printed heuristic value | ~2 |
+| B7 | Test whether a state is the goal | toy candidate states | printed boolean checks | ~2 |
+| B8 | Expand one node by pushing its neighbors | tiny grid with one wall | frontier cells highlighted | ~3 |
+| B9 | Pop the minimum-cost item from a priority queue | toy heap entries | printed popped state | ~2 |
+| B10 | Count expanded nodes | toy popped-state list | printed expanded-count metric | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
@@ -45,7 +52,7 @@ Search turns planning into "choose actions from a start state until an end state
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/32-search-optimization.ipynb
-- **Est. cell count:** ~158 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded; A*/UCS examples use granular pop→expand→update costs→push loops with a redraw at each node expansion)
+- **Est. cell count:** ~186 (💻 topic → all 20 examples (10 basics + 5 easy + 5 advanced) coded; A*/UCS examples use granular pop→expand→update costs→push loops with a redraw at each node expansion)
 - **Key libraries:** numpy, matplotlib, networkx, heapq, collections (`deque`), ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `bad_heuristic_graph` in A3 — an inadmissible heuristic overestimates the optimal branch, causing A* to return a suboptimal path; `negative_edge_graph` in A4 shows why UCS requires nonnegative costs.

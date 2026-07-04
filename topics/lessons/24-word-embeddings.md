@@ -445,6 +445,209 @@ plt.show()  # render the tiny vocabulary map.
 
 👀 **Takeaway.** A nearest-neighbor query is just cosine similarity plus sorting.
 
+
+#### B4. Analogy vector $a-b+c$
+
+**Goal.** Build one analogy query vector before doing any large search.
+
+```python
+king_b4 = MINI["king"]  # look up the toy king vector.
+man_b4 = MINI["man"]  # look up the toy man vector.
+woman_b4 = MINI["woman"]  # look up the toy woman vector.
+query_b4 = king_b4 - man_b4 + woman_b4  # form the classic royalty analogy direction.
+score_queen_b4 = cosine(query_b4, MINI["queen"])  # compare the query to queen.
+score_prince_b4 = cosine(query_b4, MINI["prince"])  # compare the query to prince as a contrast.
+print("query = king - man + woman")  # describe the vector arithmetic.
+print(f"cosine(query, queen) = {score_queen_b4:.4f}")  # print the intended answer score.
+print(f"cosine(query, prince) = {score_prince_b4:.4f}")  # print a contrast score.
+```
+
+```python
+plt.figure(figsize=(5.5, 4.5))  # create a tiny analogy diagram.
+for word in ["man", "woman", "king", "queen"]:  # draw the four relevant words.
+    xy = MINI[word][:2]  # use the first two dimensions for an interpretable sketch.
+    plt.scatter(xy[0], xy[1], s=90)  # plot the word endpoint.
+    plt.text(xy[0] + 0.03, xy[1] + 0.02, word)  # label the word.
+plt.arrow(MINI["man"][0], MINI["man"][1], MINI["woman"][0] - MINI["man"][0], MINI["woman"][1] - MINI["man"][1], head_width=0.035, length_includes_head=True, color="gray")  # show the gender direction.
+plt.arrow(MINI["king"][0], MINI["king"][1], MINI["queen"][0] - MINI["king"][0], MINI["queen"][1] - MINI["king"][1], head_width=0.035, length_includes_head=True, color="crimson")  # show the parallel royalty direction.
+plt.title("B4: analogy direction")  # title the analogy sketch.
+plt.xlabel("gender-like dimension")  # label the first toy axis.
+plt.ylabel("royalty-like dimension")  # label the second toy axis.
+plt.show()  # render the plot.
+```
+
+▶ What you'll see: the same direction that moves man to woman also moves king toward queen.
+
+👀 **Takeaway.** Analogy arithmetic creates a query vector from vector differences.
+
+#### B5. Normalize one word vector
+
+**Goal.** Make one embedding unit length so dot products become cosine comparisons.
+
+```python
+word_b5 = "computer"  # choose a word vector to normalize.
+vector_b5 = MINI[word_b5]  # look up the raw vector.
+norm_b5 = np.linalg.norm(vector_b5)  # compute its length.
+unit_b5 = vector_b5 / norm_b5  # divide by length to get a unit vector.
+print(f"raw norm({word_b5}) = {norm_b5:.4f}")  # print the original length.
+print("unit vector:", np.round(unit_b5, 3))  # print the normalized vector.
+print(f"unit norm = {np.linalg.norm(unit_b5):.4f}")  # verify unit length.
+```
+
+```python
+plt.figure(figsize=(5, 3))  # create a compact bar chart.
+plt.bar(["raw norm", "unit norm"], [norm_b5, np.linalg.norm(unit_b5)], color=["steelblue", "green"])  # compare lengths.
+plt.title("B5 vector normalization")  # title the primitive.
+plt.ylabel("length")  # label the y-axis.
+plt.show()  # render the chart.
+```
+
+▶ What you'll see: normalization changes length to one while preserving direction.
+
+👀 **Takeaway.** Unit vectors let a dot product measure direction similarity.
+
+#### B6. Dot product as unnormalized similarity
+
+**Goal.** Compute the raw alignment score used inside skip-gram and GloVe objectives.
+
+```python
+center_b6 = np.array([0.5, 1.0, -0.5])  # create a center-word embedding.
+context_b6 = np.array([1.0, 0.2, -0.4])  # create a context-word vector.
+dot_b6 = float(center_b6 @ context_b6)  # compute unnormalized similarity.
+cos_b6 = cosine(center_b6, context_b6)  # compute cosine for comparison.
+print(f"dot product = {dot_b6:.3f}")  # print raw alignment.
+print(f"cosine similarity = {cos_b6:.3f}")  # print normalized alignment.
+```
+
+```python
+plt.figure(figsize=(5, 3))  # create a two-bar comparison.
+plt.bar(["dot", "cosine"], [dot_b6, cos_b6], color=["orange", "steelblue"])  # compare raw and normalized scores.
+plt.title("B6 raw dot vs cosine")  # title the comparison.
+plt.show()  # render the bars.
+```
+
+▶ What you'll see: the dot product is an alignment score, but it also depends on vector length.
+
+👀 **Takeaway.** Many embedding losses use dot products before any nearest-neighbor normalization.
+
+#### B7. Softmax over three context scores
+
+**Goal.** Convert three logits into probabilities for a tiny skip-gram prediction.
+
+```python
+scores_b7 = np.array([2.0, 1.0, -0.5])  # create three unnormalized context scores.
+exp_b7 = np.exp(scores_b7 - scores_b7.max())  # exponentiate stabilized scores.
+probs_b7 = exp_b7 / exp_b7.sum()  # normalize into probabilities.
+for word, prob in zip(["queen", "cat", "loan"], probs_b7):  # print each candidate probability.
+    print(f"P({word} | center) = {prob:.3f}")  # show softmax result.
+```
+
+```python
+plt.figure(figsize=(5, 3))  # create a probability chart.
+plt.bar(["queen", "cat", "loan"], probs_b7, color="purple")  # plot softmax probabilities.
+plt.ylim(0, 1)  # show the probability range.
+plt.title("B7 softmax context probabilities")  # title the primitive.
+plt.ylabel("probability")  # label the y-axis.
+plt.show()  # render the chart.
+```
+
+▶ What you'll see: the largest score gets the largest probability, but all probabilities sum to one.
+
+👀 **Takeaway.** Softmax turns competing context scores into a distribution.
+
+#### B8. One skip-gram negative-sampling score
+
+**Goal.** Score one center-context pair with $\sigma(\theta_t^Te_c)$.
+
+```python
+center_word_b8 = "computer"  # choose a center word.
+context_word_b8 = "software"  # choose a likely context word.
+center_vec_b8 = MINI[center_word_b8]  # look up the center embedding.
+context_vec_b8 = MINI[context_word_b8]  # look up the context vector.
+logit_b8 = float(context_vec_b8 @ center_vec_b8)  # compute the skip-gram logit.
+prob_b8 = float(sigmoid(logit_b8))  # convert the logit into a positive-pair score.
+print(f"logit for ({center_word_b8}, {context_word_b8}) = {logit_b8:.3f}")  # print raw pair score.
+print(f"P(y=1 | pair) = {prob_b8:.3f}")  # print sigmoid probability.
+```
+
+```python
+xs_b8 = np.linspace(-4, 4, 200)  # create logit values for a sigmoid curve.
+plt.figure(figsize=(5, 3.5))  # create a small curve plot.
+plt.plot(xs_b8, sigmoid(xs_b8), label="sigmoid")  # draw negative-sampling probability curve.
+plt.scatter([logit_b8], [prob_b8], s=90, color="crimson", label="pair")  # mark the chosen pair.
+plt.xlabel("dot-product logit")  # label x-axis.
+plt.ylabel("positive-pair probability")  # label y-axis.
+plt.title("B8 skip-gram pair score")  # title the score plot.
+plt.legend()  # show legend.
+plt.show()  # render the plot.
+```
+
+▶ What you'll see: related words have a positive dot product and a score above 0.5.
+
+👀 **Takeaway.** Negative sampling is a binary classifier over word pairs.
+
+#### B9. Average two word vectors
+
+**Goal.** Build a tiny CBOW-style context vector by averaging context embeddings.
+
+```python
+left_b9 = MINI["king"]  # look up the left context word.
+right_b9 = MINI["palace"]  # look up the right context word.
+context_average_b9 = (left_b9 + right_b9) / 2.0  # average the two context vectors.
+print("average context vector:", np.round(context_average_b9, 3))  # print the CBOW-style context representation.
+print(f"cosine(avg, queen) = {cosine(context_average_b9, MINI['queen']):.3f}")  # compare with a related target.
+```
+
+```python
+plt.figure(figsize=(5.5, 4.5))  # create a small vector plot.
+for label, vec, color in [("king", left_b9, "steelblue"), ("palace", right_b9, "orange"), ("average", context_average_b9, "crimson")]:  # draw both inputs and their average.
+    plt.scatter(vec[0], vec[1], s=90, color=color)  # plot endpoint.
+    plt.text(vec[0] + 0.03, vec[1] + 0.02, label, color=color)  # label endpoint.
+plt.title("B9 average two context vectors")  # title the CBOW primitive.
+plt.xlabel("dimension 1")  # label axis.
+plt.ylabel("dimension 2")  # label axis.
+plt.show()  # render the plot.
+```
+
+▶ What you'll see: the average lands between the two context words.
+
+👀 **Takeaway.** CBOW summarizes surrounding words by combining their embeddings.
+
+#### B10. Build one tiny co-occurrence count
+
+**Goal.** Count how often one target-context pair appears inside a small window.
+
+```python
+sentence_b10 = "king queen royal palace king crown"  # create one tiny corpus sentence.
+tokens_b10 = tokenize(sentence_b10)  # tokenize the sentence with the lesson helper.
+target_b10 = "king"  # choose the target word.
+context_b10 = "royal"  # choose the context word to count.
+window_b10 = 2  # count context words within two positions.
+count_b10 = 0  # initialize the co-occurrence count.
+for pos, token in enumerate(tokens_b10):  # scan every token position.
+    if token == target_b10:  # only open a window around the target word.
+        left = max(0, pos - window_b10)  # compute left window edge.
+        right = min(len(tokens_b10), pos + window_b10 + 1)  # compute right window edge.
+        count_b10 += sum(tokens_b10[j] == context_b10 for j in range(left, right) if j != pos)  # count matching context tokens.
+print("tokens:", tokens_b10)  # print the tokenized sentence.
+print(f"X[{target_b10}, {context_b10}] = {count_b10}")  # print the co-occurrence entry.
+```
+
+```python
+plt.figure(figsize=(4.5, 3))  # create a one-cell count visualization.
+plt.imshow([[count_b10]], cmap="Greens", vmin=0, vmax=2)  # show the co-occurrence cell.
+plt.xticks([0], [context_b10])  # label the context column.
+plt.yticks([0], [target_b10])  # label the target row.
+plt.text(0, 0, str(count_b10), ha="center", va="center", fontsize=16)  # annotate the count.
+plt.title("B10 one co-occurrence entry")  # title the count primitive.
+plt.colorbar(label="count")  # add a count colorbar.
+plt.show()  # render the heatmap.
+```
+
+▶ What you'll see: one matrix entry counts local target-context co-occurrences.
+
+👀 **Takeaway.** GloVe starts from many simple co-occurrence counts like this one.
+
 ### 🟡 Easy Examples
 
 #### E1. One-hot vs dense embeddings

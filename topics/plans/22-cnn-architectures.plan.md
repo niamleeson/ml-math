@@ -24,12 +24,19 @@ residual shortcuts, and parallel Inception branches.
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Apply one 1×1 convolution to a tiny volume | toy 2×2×3 input volume and one filter | printed channel-weighted sums plus output heatmap | ~3 |
 | B2 | Count parameters of one convolution layer | toy kernel size, input channels, output channels | printed formula and parameter total | ~2 |
 | B3 | Add a residual shortcut $x+F(x)$ | two tiny 2×2 feature maps | before/after heatmaps and printed summed values | ~2 |
+| B4 | Concatenate two feature maps like an Inception module | two toy 2×2 branch tensors | output channel grid and printed shapes | ~2 |
+| B5 | Tiny generator forward pass from noise to vector | toy 2-D noise vector and generator weights | generated-feature bar chart | ~2 |
+| B6 | Discriminator score with a sigmoid | toy sample vector and discriminator weights | sigmoid curve with sample score | ~2 |
+| B7 | ReLU on a small activation volume | toy 2×2×2 activation tensor | before/after printed volume and channel heatmaps | ~2 |
+| B8 | Parameter savings from a $1\times1$ bottleneck | toy channel counts for direct vs bottleneck conv | parameter-count bar chart | ~2 |
+| B9 | Batch-normalize one activation value | one activation with mean, variance, scale, and shift | raw/standardized/output bar chart | ~2 |
+| B10 | Global average pool a feature map | toy 2×2×2 feature tensor | pooled channel-average bar chart | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

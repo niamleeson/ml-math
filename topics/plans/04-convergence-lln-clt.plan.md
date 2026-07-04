@@ -18,12 +18,19 @@ Convergence theorems explain why averages stabilize and why sums often look norm
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Compute one sample mean $M_n$ from three observations | toy scalars: three die rolls | printed values | ~2 |
 | B2 | Plug values into the Markov ratio $\mathbb{E}[X]/a$ | toy scalars: nonnegative $X$, mean, threshold | printed values | ~2 |
 | B3 | Standardize one finite-variance sum into $Z_n$ | toy scalars: $n,\mu,\sigma,\sum_i X_i$ | printed values | ~3 |
+| B4 | Compute the variance of a small sample | toy scalars: four observations | printed deviations and variance | ~3 |
+| B5 | Standardize one observation into a z-score | toy scalars: $x,\mu,\sigma$ | printed z-score | ~2 |
+| B6 | Evaluate one Chebyshev bound | toy scalars: one $k$ value | printed bound | ~2 |
+| B7 | Draw one Bernoulli sample mean | Notebook: Bernoulli$(0.6)$ tiny sample | printed draws and mean | ~2 |
+| B8 | Track running means of five observations | toy scalars: five ordered values | printed running means | ~2 |
+| B9 | Compute one coin-flip proportion | toy binary flips | printed count and proportion | ~2 |
+| B10 | Evaluate one normal density value | toy scalar: one $z$ value | printed pdf height | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

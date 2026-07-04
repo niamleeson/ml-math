@@ -380,6 +380,192 @@ plt.show()  # Render the geometric projection.
 
 ---
 
+
+#### B4. Compute variance of one feature
+
+Goal: measure the average squared deviation of one centered feature.
+
+```python
+feature_b4 = np.array([1.0, 2.0, 4.0, 5.0])  # Store one tiny feature column.
+mean_b4 = feature_b4.mean()  # Compute the feature mean.
+centered_b4 = feature_b4 - mean_b4  # Center the feature so deviations are relative to its mean.
+variance_b4 = np.mean(centered_b4 ** 2)  # Compute PCA-style variance with factor 1/m.
+print("feature:", feature_b4)  # Display original values.
+print("centered feature:", centered_b4)  # Display deviations from the mean.
+print("variance:", variance_b4)  # Display average squared deviation.
+plt.figure(figsize=(5.5, 3.4))  # Create a small deviation plot.
+plt.bar(np.arange(len(feature_b4)), centered_b4 ** 2, color="slateblue")  # Plot each squared deviation.
+plt.title(f"B4 variance = {variance_b4:.2f}")  # Label the computed variance.
+plt.xlabel("example")  # Label examples.
+plt.ylabel("squared deviation")  # Label contribution size.
+plt.show()  # Render the variance contributions.
+```
+
+▶ What you'll see: variance is the average height of the squared-deviation bars.
+
+👀 **Takeaway:** PCA prefers directions with large variance, so variance is the core scalar being optimized.
+
+---
+
+#### B5. Unit-normalize a vector
+
+Goal: turn a direction vector into length one before using it as an axis.
+
+```python
+v_b5 = np.array([3.0, 4.0])  # Store a non-unit direction vector.
+norm_b5 = np.linalg.norm(v_b5)  # Compute its Euclidean length.
+u_b5 = v_b5 / norm_b5  # Divide by length to make a unit vector.
+print("original vector:", v_b5)  # Display the starting direction.
+print("length:", norm_b5)  # Display the original length.
+print("unit vector:", u_b5)  # Display the normalized direction.
+print("unit-vector length:", np.linalg.norm(u_b5))  # Verify length one.
+plt.figure(figsize=(4.5, 4.5))  # Create a square vector plot.
+plt.arrow(0, 0, v_b5[0], v_b5[1], color="gray", width=0.03, length_includes_head=True, label="v")  # Draw the original vector.
+plt.arrow(0, 0, u_b5[0], u_b5[1], color="royalblue", width=0.03, length_includes_head=True, label="u")  # Draw the unit vector.
+plt.xlim(0, 4)  # Set horizontal bounds.
+plt.ylim(0, 5)  # Set vertical bounds.
+plt.gca().set_aspect("equal", adjustable="box")  # Keep geometric lengths honest.
+plt.title("B5 unit-normalized direction")  # Title the plot.
+plt.show()  # Render both arrows.
+```
+
+▶ What you'll see: the blue vector points the same way as the gray vector but has length one.
+
+👀 **Takeaway:** PCA axes are unit vectors so projection coordinates are measured on a consistent scale.
+
+---
+
+#### B6. Compute explained variance ratio
+
+Goal: convert eigenvalues into fractions of total variance explained.
+
+```python
+eigenvalues_b6 = np.array([5.0, 2.0, 1.0])  # Store three component variances.
+ratios_b6 = eigenvalues_b6 / eigenvalues_b6.sum()  # Divide each eigenvalue by total variance.
+cumulative_b6 = np.cumsum(ratios_b6)  # Accumulate explained variance component by component.
+print("eigenvalues:", eigenvalues_b6)  # Display component variances.
+print("explained variance ratios:", np.round(ratios_b6, 3))  # Display variance fractions.
+print("cumulative:", np.round(cumulative_b6, 3))  # Display running total.
+plt.figure(figsize=(5.5, 3.6))  # Create a small bar chart.
+plt.bar([1, 2, 3], ratios_b6, color="slateblue")  # Plot per-component variance fraction.
+plt.plot([1, 2, 3], cumulative_b6, marker="o", color="black")  # Overlay cumulative variance.
+plt.title("B6 explained variance ratio")  # Title the plot.
+plt.xlabel("component")  # Label component axis.
+plt.ylabel("fraction of total variance")  # Label ratio axis.
+plt.show()  # Render the variance summary.
+```
+
+▶ What you'll see: the first component explains the largest fraction.
+
+👀 **Takeaway:** explained variance ratio turns eigenvalues into an interpretable compression score.
+
+---
+
+#### B7. Reconstruct one point from one component
+
+Goal: map a one-dimensional PCA coordinate back into the original feature space.
+
+```python
+mean_b7 = np.array([2.0, 1.0])  # Store the original feature mean.
+u_b7 = np.array([1.0, 1.0]) / np.sqrt(2.0)  # Store one unit principal axis.
+z_b7 = 3.0  # Store one low-dimensional coordinate.
+reconstruction_b7 = mean_b7 + z_b7 * u_b7  # Reconstruct by adding the component contribution back to the mean.
+print("mean:", mean_b7)  # Display the data center.
+print("coordinate z:", z_b7)  # Display the compressed coordinate.
+print("reconstructed point:", np.round(reconstruction_b7, 3))  # Display the reconstructed original-space point.
+plt.figure(figsize=(5, 5))  # Create a geometric reconstruction plot.
+plt.scatter(mean_b7[0], mean_b7[1], color="black", s=70, label="mean")  # Draw the mean.
+plt.scatter(reconstruction_b7[0], reconstruction_b7[1], color="royalblue", s=90, label="reconstruction")  # Draw the reconstructed point.
+plt.plot([mean_b7[0], reconstruction_b7[0]], [mean_b7[1], reconstruction_b7[1]], color="royalblue")  # Draw the component contribution.
+plt.gca().set_aspect("equal", adjustable="box")  # Preserve angles and lengths.
+plt.title("B7 reconstruction from one component")  # Title the plot.
+plt.legend()  # Show marker labels.
+plt.show()  # Render the reconstruction.
+```
+
+▶ What you'll see: the reconstructed point lies on the one-dimensional component line through the mean.
+
+👀 **Takeaway:** PCA reconstruction reverses projection only within the kept component subspace.
+
+---
+
+#### B8. Dot two orthonormal vectors
+
+Goal: verify that perpendicular unit axes have dot product zero.
+
+```python
+u1_b8 = np.array([1.0, 1.0]) / np.sqrt(2.0)  # Store the first unit direction.
+u2_b8 = np.array([1.0, -1.0]) / np.sqrt(2.0)  # Store a perpendicular unit direction.
+dot_b8 = u1_b8 @ u2_b8  # Compute the dot product between directions.
+print("u1 length:", np.linalg.norm(u1_b8))  # Verify first vector length.
+print("u2 length:", np.linalg.norm(u2_b8))  # Verify second vector length.
+print("u1 dot u2:", round(float(dot_b8), 6))  # Verify orthogonality.
+plt.figure(figsize=(4.5, 4.5))  # Create a vector plot.
+plt.arrow(0, 0, u1_b8[0], u1_b8[1], color="royalblue", width=0.02, length_includes_head=True)  # Draw first axis.
+plt.arrow(0, 0, u2_b8[0], u2_b8[1], color="crimson", width=0.02, length_includes_head=True)  # Draw second axis.
+plt.xlim(-1, 1)  # Set horizontal bounds.
+plt.ylim(-1, 1)  # Set vertical bounds.
+plt.gca().set_aspect("equal", adjustable="box")  # Preserve perpendicular geometry.
+plt.title("B8 orthonormal axes")  # Title the plot.
+plt.show()  # Render the axes.
+```
+
+▶ What you'll see: both vectors have length one and dot product zero.
+
+👀 **Takeaway:** PCA components form orthonormal axes, so their coordinates do not overlap.
+
+---
+
+#### B9. Total variance as covariance trace
+
+Goal: add diagonal covariance entries to get total feature variance.
+
+```python
+Sigma_b9 = np.array([[3.0, 0.8], [0.8, 1.5]])  # Store one covariance matrix.
+diagonal_b9 = np.diag(Sigma_b9)  # Extract feature variances from the diagonal.
+trace_b9 = np.trace(Sigma_b9)  # Sum the diagonal entries.
+print("covariance matrix:\n", Sigma_b9)  # Display covariance matrix.
+print("diagonal variances:", diagonal_b9)  # Display per-feature variances.
+print("total variance = trace:", trace_b9)  # Display total variance.
+plt.figure(figsize=(3.8, 3.4))  # Create a heatmap figure.
+plt.imshow(Sigma_b9, cmap="Blues")  # Plot covariance entries.
+plt.colorbar(fraction=0.046)  # Add a color scale.
+plt.title("B9 covariance trace")  # Title the heatmap.
+plt.show()  # Render the covariance matrix.
+```
+
+▶ What you'll see: the trace adds only the variance entries on the diagonal.
+
+👀 **Takeaway:** total variance is preserved by rotation and equals the sum of PCA eigenvalues.
+
+---
+
+#### B10. Eigenvalues of a 2×2 covariance matrix by formula
+
+Goal: compute two eigenvalues from trace and determinant.
+
+```python
+Sigma_b10 = np.array([[3.0, 1.0], [1.0, 3.0]])  # Store a symmetric 2-by-2 covariance matrix.
+trace_b10 = np.trace(Sigma_b10)  # Compute a + d.
+determinant_b10 = np.linalg.det(Sigma_b10)  # Compute ad - bc.
+discriminant_b10 = trace_b10 ** 2 - 4.0 * determinant_b10  # Compute the quadratic discriminant.
+eigenvalues_b10 = np.array([(trace_b10 + np.sqrt(discriminant_b10)) / 2.0, (trace_b10 - np.sqrt(discriminant_b10)) / 2.0])  # Apply the 2-by-2 eigenvalue formula.
+print("trace:", trace_b10)  # Display the trace.
+print("determinant:", round(float(determinant_b10), 3))  # Display the determinant.
+print("eigenvalues:", np.round(eigenvalues_b10, 3))  # Display component variances.
+plt.figure(figsize=(4.5, 3.2))  # Create a small eigenvalue plot.
+plt.bar(["lambda 1", "lambda 2"], eigenvalues_b10, color="slateblue")  # Plot the two eigenvalues.
+plt.title("B10 eigenvalues from trace and determinant")  # Title the plot.
+plt.ylabel("variance")  # Label eigenvalue axis.
+plt.show()  # Render component variances.
+```
+
+▶ What you'll see: the larger eigenvalue corresponds to the higher-variance principal direction.
+
+👀 **Takeaway:** eigenvalues are the variances PCA assigns to its component axes.
+
+---
+
 ### 🟡 Easy
 
 #### E1. Hand-compute eigenvectors of a 2×2 covariance matrix

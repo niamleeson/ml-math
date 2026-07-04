@@ -167,124 +167,6 @@ $$
 
 ## 3. Worked Examples
 
-### 🟢 Basics (warm-up)
-
-#### B1. Compute one linear score $w\cdot\phi(x)$
-
-Let
-
-$$
-\phi(x)=\begin{bmatrix}1\\3\\2\end{bmatrix},
-\qquad
-w=\begin{bmatrix}-2\\1.5\\0.5\end{bmatrix}.
-$$
-
-Compute the score:
-
-$$
-\begin{aligned}
-s(x,w)
-&=w\cdot\phi(x)\\
-&=(-2)(1)+(1.5)(3)+(0.5)(2)\\
-&=-2+4.5+1\\
-&=3.5.
-\end{aligned}
-$$
-
-So
-
-$$
-\boxed{s(x,w)=3.5}.
-$$
-
-The contribution table is
-
-| Feature | Value | Weight | Contribution |
-|---|---:|---:|---:|
-| bias | $1$ | $-2$ | $-2$ |
-| links | $3$ | $1.5$ | $4.5$ |
-| caps | $2$ | $0.5$ | $1$ |
-| total |  |  | $3.5$ |
-
-#### B2. Convert one score into a sign prediction
-
-Use the score from B1:
-
-$$
-s(x,w)=3.5.
-$$
-
-The classifier is
-
-$$
-f_w(x)=\operatorname{sign}(s(x,w)).
-$$
-
-Since
-
-$$
-3.5>0,
-$$
-
-we get
-
-$$
-\begin{aligned}
-f_w(x)&=\operatorname{sign}(3.5)\\
-&=+1.
-\end{aligned}
-$$
-
-Therefore
-
-$$
-\boxed{f_w(x)=+1}.
-$$
-
-#### B3. Compute hinge loss for one labeled example
-
-Suppose the true label is
-
-$$
-y=-1
-$$
-
-but the score is still
-
-$$
-s(x,w)=3.5.
-$$
-
-First compute the margin:
-
-$$
-\begin{aligned}
-m(x,y,w)&=y\,s(x,w)\\
-&=(-1)(3.5)\\
-&=-3.5.
-\end{aligned}
-$$
-
-Now compute hinge loss:
-
-$$
-\begin{aligned}
-\operatorname{Loss}_{\text{hinge}}(x,y,w)
-&=\max(1-m(x,y,w),0)\\
-&=\max(1-(-3.5),0)\\
-&=\max(4.5,0)\\
-&=4.5.
-\end{aligned}
-$$
-
-Thus
-
-$$
-\boxed{m=-3.5,\qquad \operatorname{Loss}_{\text{hinge}}=4.5}.
-$$
-
-The model is not merely wrong; it is confidently wrong, so the hinge penalty is large.
-
 ### Setup
 
 Run this block once before the coded examples. It imports the libraries, seeds randomness, and defines reusable helpers.
@@ -436,6 +318,526 @@ def nn_scores(X, params):  # Compute signed neural-network scores from trained p
     H = np.tanh(X @ W1 + b1)  # Recompute the hidden tanh features.
     return H @ W2 + b2  # Return output logits as classification scores.
 ```
+
+
+### 🟢 Basics (warm-up)
+
+#### B1. Compute one linear score $w\cdot\phi(x)$
+
+Goal: Compute a weighted feature score from one feature vector.
+
+Let
+
+$$
+\phi(x)=\begin{bmatrix}1\\3\\2\end{bmatrix},
+\qquad
+w=\begin{bmatrix}-2\\1.5\\0.5\end{bmatrix}.
+$$
+
+Compute the score:
+
+$$
+\begin{aligned}
+s(x,w)
+&=w\cdot\phi(x)\\
+&=(-2)(1)+(1.5)(3)+(0.5)(2)\\
+&=-2+4.5+1\\
+&=3.5.
+\end{aligned}
+$$
+
+So
+
+$$
+\boxed{s(x,w)=3.5}.
+$$
+
+The contribution table is
+
+| Feature | Value | Weight | Contribution |
+|---|---:|---:|---:|
+| bias | $1$ | $-2$ | $-2$ |
+| links | $3$ | $1.5$ | $4.5$ |
+| caps | $2$ | $0.5$ | $1$ |
+| total |  |  | $3.5$ |
+
+Interpretation: The positive feature contributions outweigh the negative bias, so the score is positive.
+
+```python
+phi_b1 = np.array([1.0, 3.0, 2.0])  # Store the same feature vector used in the hand calculation.
+w_b1 = np.array([-2.0, 1.5, 0.5])  # Store the same weight vector used in the hand calculation.
+contrib_b1 = w_b1 * phi_b1  # Compute each coordinate's contribution to the dot product.
+score_b1 = float(w_b1 @ phi_b1)  # Add the contributions through a dot product to get the score.
+print("contributions:", contrib_b1.tolist())  # Show the three terms -2, 4.5, and 1.
+print("score:", score_b1)  # Print the score, matching the boxed answer 3.5.
+```
+
+▶ What you'll see: The three contributions sum to score $3.5$.
+
+👀 Takeaway: A linear score is just a sum of weighted feature contributions.
+
+#### B2. Convert one score into a sign prediction
+
+Goal: Turn a positive score into a binary classifier output.
+
+Use the score from B1:
+
+$$
+s(x,w)=3.5.
+$$
+
+The classifier is
+
+$$
+f_w(x)=\operatorname{sign}(s(x,w)).
+$$
+
+Since
+
+$$
+3.5>0,
+$$
+
+we get
+
+$$
+\begin{aligned}
+f_w(x)&=\operatorname{sign}(3.5)\\
+&=+1.
+\end{aligned}
+$$
+
+Therefore
+
+$$
+\boxed{f_w(x)=+1}.
+$$
+
+Interpretation: Positive scores predict the positive class.
+
+```python
+score_b2 = 3.5  # Use the same positive score from the pen-and-paper calculation.
+pred_b2 = 1 if score_b2 > 0 else -1 if score_b2 < 0 else 0  # Apply the sign rule with zero kept separate.
+print("prediction:", pred_b2)  # Print the predicted class, matching the boxed answer +1.
+```
+
+▶ What you'll see: The printed prediction is `1`.
+
+👀 Takeaway: Classification begins by converting score sign into a label.
+
+#### B3. Compute hinge loss for one labeled example
+
+Goal: Compute margin and hinge loss when the model is confidently wrong.
+
+Suppose the true label is
+
+$$
+y=-1
+$$
+
+but the score is still
+
+$$
+s(x,w)=3.5.
+$$
+
+First compute the margin:
+
+$$
+\begin{aligned}
+m(x,y,w)&=y\,s(x,w)\\
+&=(-1)(3.5)\\
+&=-3.5.
+\end{aligned}
+$$
+
+Now compute hinge loss:
+
+$$
+\begin{aligned}
+\operatorname{Loss}_{\text{hinge}}(x,y,w)
+&=\max(1-m(x,y,w),0)\\
+&=\max(1-(-3.5),0)\\
+&=\max(4.5,0)\\
+&=4.5.
+\end{aligned}
+$$
+
+Thus
+
+$$
+\boxed{m=-3.5,\qquad \operatorname{Loss}_{\text{hinge}}=4.5}.
+$$
+
+Interpretation: The model is not merely wrong; it is confidently wrong, so the hinge penalty is large.
+
+```python
+y_b3 = -1.0  # Store the true class label from the hand calculation.
+score_b3 = 3.5  # Store the score that has the wrong sign for this label.
+margin_b3 = y_b3 * score_b3  # Compute the signed margin y times score.
+hinge_b3 = max(1.0 - margin_b3, 0.0)  # Apply the hinge-loss formula max(1 - margin, 0).
+print("margin:", margin_b3)  # Print the margin, matching the boxed answer -3.5.
+print("hinge_loss:", hinge_b3)  # Print the hinge loss, matching the boxed answer 4.5.
+```
+
+▶ What you'll see: The margin is `-3.5` and the hinge loss is `4.5`.
+
+👀 Takeaway: Negative margins make hinge loss larger than one.
+
+```python
+margin_point_b3 = -3.5  # Store the worked margin again so this visualization is self-contained.
+hinge_point_b3 = max(1.0 - margin_point_b3, 0.0)  # Compute the worked hinge loss again for the plotted point.
+margins_b3 = np.linspace(-4.0, 3.0, 200)  # Build margin values around the worked example.
+losses_b3 = np.maximum(1.0 - margins_b3, 0.0)  # Compute hinge loss for each margin value.
+plt.plot(margins_b3, losses_b3)  # Draw the hinge-loss curve.
+plt.scatter([margin_point_b3], [hinge_point_b3], color="tab:red", zorder=3)  # Mark the worked example on the curve.
+plt.title("B3: hinge loss at margin -3.5")  # Add a title that identifies the example.
+plt.xlabel("margin")  # Label the horizontal axis as the margin.
+plt.ylabel("hinge loss")  # Label the vertical axis as hinge loss.
+plt.show()  # Display the figure in the notebook.
+```
+
+▶ What you'll see: A red point high on the hinge curve at margin $-3.5$.
+
+#### B4. Build one feature vector $\phi(x)$
+
+Goal: Convert raw toy-email measurements into a feature vector.
+
+Let a toy email have $4$ links and $1$ all-caps word. Use the feature map
+
+$$
+\phi(x)=\begin{bmatrix}1\\\text{links}\\\text{caps}\end{bmatrix}.
+$$
+
+Substitute the observed values:
+
+$$
+\phi(x)=\begin{bmatrix}1\\4\\1\end{bmatrix}.
+$$
+
+$$
+\boxed{\phi(x)=(1,4,1)}
+$$
+
+Interpretation: The first coordinate is the bias feature; it is always $1$.
+
+```python
+links_b4 = 4.0  # Store the observed number of links.
+caps_b4 = 1.0  # Store the observed number of all-caps words.
+phi_b4 = np.array([1.0, links_b4, caps_b4])  # Build the feature vector with a leading bias coordinate.
+print("phi:", phi_b4.astype(int).tolist())  # Print the vector, matching the boxed answer (1, 4, 1).
+```
+
+▶ What you'll see: The printed feature vector is `[1, 4, 1]`.
+
+👀 Takeaway: Feature maps turn raw observations into model-ready numbers.
+
+#### B5. Compute a margin $y\cdot s$
+
+Goal: Measure whether a score agrees with its true label.
+
+Use label
+
+$$
+y=+1
+$$
+
+and score
+
+$$
+s=2.25.
+$$
+
+The margin is
+
+$$
+m=y\cdot s=(+1)(2.25)=2.25.
+$$
+
+$$
+\boxed{m=2.25}
+$$
+
+Interpretation: Because the margin is positive, the sign prediction agrees with the label.
+
+```python
+y_b5 = 1.0  # Store the positive true label.
+score_b5 = 2.25  # Store the model score from the hand calculation.
+margin_b5 = y_b5 * score_b5  # Multiply label and score to compute the margin.
+print("margin:", margin_b5)  # Print the margin, matching the boxed answer 2.25.
+```
+
+▶ What you'll see: The printed margin is `2.25`.
+
+👀 Takeaway: A positive margin means the score has the correct sign.
+
+```python
+score_point_b5 = 2.25  # Store the worked score again so this visualization is self-contained.
+plt.axvline(0.0, color="black", linewidth=1)  # Draw the decision boundary at zero score.
+plt.scatter([score_point_b5], [0.0], color="tab:blue", zorder=3)  # Mark the worked score on the number line.
+plt.title("B5: positive score gives positive margin for y=+1")  # Add a title explaining the margin sign.
+plt.xlabel("score")  # Label the horizontal axis as score.
+plt.yticks([])  # Hide the unused vertical tick labels.
+plt.show()  # Display the one-dimensional score plot.
+```
+
+▶ What you'll see: The score lies to the positive side of the zero boundary.
+
+#### B6. Compute logistic loss for one labeled example
+
+Goal: Compute smooth logistic loss from a positive margin.
+
+Use margin
+
+$$
+m=2.25.
+$$
+
+Logistic loss is
+
+$$
+\operatorname{Loss}_{\text{logistic}}=\log(1+e^{-m}).
+$$
+
+Substitute:
+
+$$
+\operatorname{Loss}_{\text{logistic}}=\log(1+e^{-2.25})\approx 0.1002.
+$$
+
+$$
+\boxed{\operatorname{Loss}_{\text{logistic}}\approx 0.1002}
+$$
+
+Interpretation: A large positive margin gives a small but nonzero smooth penalty.
+
+```python
+margin_b6 = 2.25  # Store the same margin used in the hand calculation.
+logistic_b6 = float(np.log1p(np.exp(-margin_b6)))  # Compute log(1 + exp(-margin)) with NumPy.
+print("logistic_loss:", round(logistic_b6, 4))  # Print the rounded loss, matching the boxed answer 0.1002.
+```
+
+▶ What you'll see: The rounded logistic loss is `0.1002`.
+
+👀 Takeaway: Logistic loss shrinks smoothly as margin grows.
+
+```python
+margin_point_b6 = 2.25  # Store the worked margin again so this visualization is self-contained.
+logistic_point_b6 = float(np.log1p(np.exp(-margin_point_b6)))  # Compute the worked logistic loss again for the plotted point.
+margins_b6 = np.linspace(-4.0, 5.0, 200)  # Build a range of margins around the worked example.
+losses_b6 = np.log1p(np.exp(-margins_b6))  # Compute logistic loss for each margin.
+plt.plot(margins_b6, losses_b6)  # Draw the logistic-loss curve.
+plt.scatter([margin_point_b6], [logistic_point_b6], color="tab:red", zorder=3)  # Mark the worked margin and loss.
+plt.title("B6: logistic loss at margin 2.25")  # Add a title identifying the worked point.
+plt.xlabel("margin")  # Label the horizontal axis as margin.
+plt.ylabel("logistic loss")  # Label the vertical axis as logistic loss.
+plt.show()  # Display the figure in the notebook.
+```
+
+▶ What you'll see: A red point near the bottom of the smooth logistic curve.
+
+#### B7. Compute squared loss for one regression prediction
+
+Goal: Compute residual and squared error for one regression prediction.
+
+Use regression prediction
+
+$$
+f_w(x)=7.5
+$$
+
+and target
+
+$$
+y=9.
+$$
+
+First compute the residual:
+
+$$
+\operatorname{res}=f_w(x)-y=7.5-9=-1.5.
+$$
+
+Then square it:
+
+$$
+\operatorname{Loss}_{\text{squared}}=(-1.5)^2=2.25.
+$$
+
+$$
+\boxed{\operatorname{Loss}_{\text{squared}}=2.25}
+$$
+
+Interpretation: Squared loss ignores the sign of the residual and penalizes its size.
+
+```python
+prediction_b7 = 7.5  # Store the regression prediction from the hand calculation.
+target_b7 = 9.0  # Store the target value from the hand calculation.
+residual_b7 = prediction_b7 - target_b7  # Compute prediction minus target.
+squared_b7 = residual_b7 ** 2  # Square the residual to get squared loss.
+print("residual:", residual_b7)  # Print the residual, matching the hand value -1.5.
+print("squared_loss:", squared_b7)  # Print the squared loss, matching the boxed answer 2.25.
+```
+
+▶ What you'll see: The residual is `-1.5` and the squared loss is `2.25`.
+
+👀 Takeaway: Squared loss grows quadratically with residual size.
+
+```python
+residual_point_b7 = -1.5  # Store the worked residual again so this visualization is self-contained.
+squared_point_b7 = residual_point_b7 ** 2  # Compute the worked squared loss again for the plotted point.
+residuals_b7 = np.linspace(-3.0, 3.0, 200)  # Build residual values around the worked residual.
+losses_b7 = residuals_b7 ** 2  # Compute squared loss for each residual.
+plt.plot(residuals_b7, losses_b7)  # Draw the squared-loss curve.
+plt.scatter([residual_point_b7], [squared_point_b7], color="tab:red", zorder=3)  # Mark the worked residual and loss.
+plt.title("B7: squared loss at residual -1.5")  # Add a title identifying the worked point.
+plt.xlabel("residual")  # Label the horizontal axis as residual.
+plt.ylabel("squared loss")  # Label the vertical axis as squared loss.
+plt.show()  # Display the figure in the notebook.
+```
+
+▶ What you'll see: A red point on the parabola at residual $-1.5$.
+
+#### B8. Apply a quadratic feature map
+
+Goal: Add a nonlinear radial feature while keeping a linear feature vector.
+
+For input
+
+$$
+x=(2,-1),
+$$
+
+use the radial quadratic feature map
+
+$$
+\phi(x)=\begin{bmatrix}1\\x_1\\x_2\\x_1^2+x_2^2\end{bmatrix}.
+$$
+
+Compute the squared-radius feature:
+
+$$
+x_1^2+x_2^2=2^2+(-1)^2=5.
+$$
+
+So
+
+$$
+\boxed{\phi(x)=(1,2,-1,5)}.
+$$
+
+Interpretation: This is still a linear feature vector even though it contains a nonlinear measurement of the raw input.
+
+```python
+x_b8 = np.array([2.0, -1.0])  # Store the raw two-dimensional input point.
+r2_b8 = float(x_b8[0] ** 2 + x_b8[1] ** 2)  # Compute the squared-radius feature x1^2 + x2^2.
+phi_b8 = np.array([1.0, x_b8[0], x_b8[1], r2_b8])  # Build the radial quadratic feature vector.
+print("phi:", phi_b8.astype(int).tolist())  # Print the vector, matching the boxed answer (1, 2, -1, 5).
+```
+
+▶ What you'll see: The printed feature vector is `[1, 2, -1, 5]`.
+
+👀 Takeaway: Nonlinear raw measurements can be coordinates in a linear feature vector.
+
+#### B9. Classify two points and count errors
+
+Goal: Convert two scores to signs and count zero-one classification errors.
+
+Use scores and labels
+
+| Point | Score $s$ | Prediction $\operatorname{sign}(s)$ | True label $y$ |
+|---|---:|---:|---:|
+| A | $1.2$ | $+1$ | $+1$ |
+| B | $-0.4$ | $-1$ | $+1$ |
+
+Point A is correct because $+1=+1$. Point B is wrong because $-1\ne +1$.
+
+$$
+\boxed{\text{errors}=1\text{ out of }2}
+$$
+
+Interpretation: Zero-one error counts wrong signs, not how confident those signs were.
+
+```python
+scores_b9 = np.array([1.2, -0.4])  # Store the two scores from the table.
+labels_b9 = np.array([1, 1])  # Store the two true labels from the table.
+preds_b9 = np.where(scores_b9 > 0.0, 1, np.where(scores_b9 < 0.0, -1, 0))  # Convert scores into sign predictions.
+errors_b9 = int(np.sum(preds_b9 != labels_b9))  # Count how many predictions disagree with the labels.
+print("predictions:", preds_b9.tolist())  # Print the predictions +1 and -1 from the table.
+print("errors:", errors_b9, "out of", len(scores_b9))  # Print the error count, matching the boxed answer.
+```
+
+▶ What you'll see: The predictions are `[1, -1]` with `1 out of 2` errors.
+
+👀 Takeaway: Zero-one error is a count of sign mismatches.
+
+```python
+scores_plot_b9 = np.array([1.2, -0.4])  # Store the two scores again so this visualization is self-contained.
+labels_plot_b9 = np.array([1, 1])  # Store the two true labels again for correctness coloring.
+preds_plot_b9 = np.where(scores_plot_b9 > 0.0, 1, np.where(scores_plot_b9 < 0.0, -1, 0))  # Convert scores into sign predictions.
+xpos_b9 = np.arange(len(scores_plot_b9))  # Create one horizontal position for each point.
+colors_b9 = ["tab:blue" if preds_plot_b9[i] == labels_plot_b9[i] else "tab:red" for i in range(len(scores_plot_b9))]  # Color correct points blue and errors red.
+plt.axhline(0.0, color="black", linewidth=1)  # Draw the zero-score decision boundary.
+plt.scatter(xpos_b9, scores_plot_b9, c=colors_b9, s=80, zorder=3)  # Plot each point's score with correctness color.
+plt.xticks(xpos_b9, ["A", "B"])  # Label the two plotted points by name.
+plt.title("B9: one score has the wrong sign")  # Add a title describing the error count.
+plt.xlabel("point")  # Label the horizontal axis as point.
+plt.ylabel("score")  # Label the vertical axis as score.
+plt.show()  # Display the score plot in the notebook.
+```
+
+▶ What you'll see: Point B appears red below the zero boundary.
+
+#### B10. Compute the hinge-loss gradient for one point
+
+Goal: Compute the active hinge-loss subgradient for one feature vector.
+
+For one example, hinge loss is
+
+$$
+\max(1-yw\cdot\phi(x),0).
+$$
+
+If the margin is below $1$, a subgradient with respect to $w$ is
+
+$$
+-y\phi(x).
+$$
+
+Use
+
+$$
+y=-1,
+\qquad
+\phi(x)=\begin{bmatrix}1\\2\end{bmatrix},
+\qquad
+m=0.5<1.
+$$
+
+Therefore
+
+$$
+\nabla_w\operatorname{Loss}_{\text{hinge}}=-(-1)\begin{bmatrix}1\\2\end{bmatrix}=\begin{bmatrix}1\\2\end{bmatrix}.
+$$
+
+$$
+\boxed{\nabla_w\operatorname{Loss}_{\text{hinge}}=(1,2)}
+$$
+
+Interpretation: The gradient appears only because this example is still inside the margin band.
+
+```python
+y_b10 = -1.0  # Store the true label from the hand calculation.
+phi_b10 = np.array([1.0, 2.0])  # Store the feature vector from the hand calculation.
+margin_b10 = 0.5  # Store the stated margin, which is inside the hinge band.
+grad_b10 = -y_b10 * phi_b10 if margin_b10 < 1.0 else np.zeros_like(phi_b10)  # Use the active hinge subgradient rule.
+print("gradient:", grad_b10.astype(int).tolist())  # Print the gradient, matching the boxed answer (1, 2).
+```
+
+▶ What you'll see: The printed gradient is `[1, 2]`.
+
+👀 Takeaway: Active hinge examples push weights by $-y\phi(x)$.
+
 
 ### Data — swappable sources
 

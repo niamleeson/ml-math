@@ -537,6 +537,223 @@ plt.show()  # Render the highlighted argmax chart.
 
 ---
 
+
+#### B4. Do one Bellman backup for a single Q-value
+
+Goal: combine one immediate reward with the discounted expected value of successors.
+
+```python
+successor_values = {(0, 1): 0.3, (1, 0): 0.8}  # Store current V(s') estimates for two possible successors.
+transition_probs = {(0, 1): 0.75, (1, 0): 0.25}  # Store p(s'|s,a) for one action.
+reward = -0.04  # Store the immediate reward for this transition choice.
+gamma = 0.9  # Discount future values.
+expected_future = sum(transition_probs[s2] * successor_values[s2] for s2 in transition_probs)  # Average successors by probability.
+q_backup = reward + gamma * expected_future  # Apply the one-step Bellman Q backup.
+print(f"Q(s,a) = {reward:.2f} + {gamma:.1f} * {expected_future:.3f} = {q_backup:.3f}")  # Print the backup.
+```
+
+▶ What you'll see: one Q-value made from reward now plus discounted average value next.
+
+```python
+fig, ax = plt.subplots(figsize=(4.5, 3))  # Create a small contribution chart.
+ax.bar([str(s2) for s2 in transition_probs], [transition_probs[s2] * successor_values[s2] for s2 in transition_probs], color="#4C78A8")  # Plot each weighted successor.
+ax.set_title("B4 successor contributions")  # Label the primitive.
+ax.set_ylabel("p(s'|s,a) V(s')")  # Label the weighted-value axis.
+plt.show()  # Display the bars.
+```
+
+▶ What you'll see: each successor contributes probability times value.
+
+👀 **Takeaway:** a Bellman backup is a local expected one-step lookahead.
+
+---
+
+#### B5. Evaluate one fixed-policy action at one state
+
+Goal: read the value of the action chosen by a policy at one state.
+
+```python
+policy = {(2, 0): "right"}  # Define a tiny deterministic policy for one state.
+q_row = {"up": 0.10, "right": 0.42, "down": -0.05}  # Store action values for that state.
+state = (2, 0)  # Choose the state to evaluate.
+chosen_action = policy[state]  # Read the policy action.
+policy_value = q_row[chosen_action]  # Use the Q-value for the policy action.
+print(f"pi({state}) = {chosen_action}, so V_pi({state}) = {policy_value:.2f}")  # Print the one-state value.
+```
+
+▶ What you'll see: the policy's action determines $V_\pi(s)$.
+
+```python
+fig, ax = plt.subplots(figsize=(4.5, 3))  # Create a small action-value chart.
+ax.bar(list(q_row), list(q_row.values()), color=["orange" if a == chosen_action else "gray" for a in q_row])  # Highlight the policy action.
+ax.set_title("B5 fixed-policy value")  # Label the chart.
+ax.set_ylabel("Q(s, a)")  # Label the value axis.
+plt.show()  # Render the chart.
+```
+
+▶ What you'll see: the highlighted policy action supplies the state value.
+
+👀 **Takeaway:** policy evaluation follows the policy, even if another action has a different value.
+
+---
+
+#### B6. Compute an expected value over transition probabilities
+
+Goal: multiply each outcome value by its probability and add the pieces.
+
+```python
+outcomes = ["goal", "slip"]  # Name two possible outcomes.
+probabilities = np.array([0.8, 0.2])  # Store transition probabilities.
+values = np.array([1.0, -1.0])  # Store successor values.
+expected_value = float(np.dot(probabilities, values))  # Compute the probability-weighted average.
+print(f"E[V(s')] = 0.8*1.0 + 0.2*(-1.0) = {expected_value:.1f}")  # Print the expected value.
+```
+
+▶ What you'll see: the expected successor value is `0.6`.
+
+```python
+fig, ax = plt.subplots(figsize=(4.5, 3))  # Create a contribution chart.
+ax.bar(outcomes, probabilities * values, color=["#54A24B", "#E45756"])  # Plot weighted positive and negative pieces.
+ax.axhline(0, color="black", linewidth=1)  # Mark zero for the negative contribution.
+ax.set_title("B6 expected successor value")  # Label the primitive.
+ax.set_ylabel("probability × value")  # Label the axis.
+plt.show()  # Display the chart.
+```
+
+▶ What you'll see: the good outcome adds more than the slip subtracts.
+
+👀 **Takeaway:** stochastic transitions use weighted averages.
+
+---
+
+#### B7. Compare discount factors on one future reward
+
+Goal: see how $\gamma=0$ and $\gamma=0.9$ treat the same future reward.
+
+```python
+immediate = 1.0  # Store the immediate reward.
+future = 10.0  # Store a one-step-later reward.
+gammas = [0.0, 0.9]  # Compare no future value with strong future value.
+returns = [immediate + gamma * future for gamma in gammas]  # Compute each discounted return.
+for gamma, ret in zip(gammas, returns):  # Print both cases.
+    print(f"gamma={gamma:.1f}: return = {ret:.1f}")  # Show the effect of gamma.
+```
+
+▶ What you'll see: $\gamma=0$ ignores the future reward, while $\gamma=0.9$ mostly keeps it.
+
+```python
+fig, ax = plt.subplots(figsize=(4.5, 3))  # Create a comparison chart.
+ax.bar(["gamma=0", "gamma=0.9"], returns, color=["gray", "orange"])  # Plot both returns.
+ax.set_title("B7 discount factor effect")  # Label the chart.
+ax.set_ylabel("one-step return")  # Label the axis.
+plt.show()  # Display the comparison.
+```
+
+▶ What you'll see: the high-discount case has the larger return.
+
+👀 **Takeaway:** $\gamma$ controls how much tomorrow matters today.
+
+---
+
+#### B8. Apply one Q-learning update
+
+Goal: update one table entry from one sampled transition.
+
+```python
+q_old = 0.50  # Store current Q(s,a).
+alpha = 0.20  # Store the learning rate.
+reward = 1.00  # Store the observed reward.
+gamma = 0.90  # Store the discount factor.
+next_best = 0.80  # Store max_a' Q(s',a').
+target = reward + gamma * next_best  # Build the Q-learning target.
+q_new = (1 - alpha) * q_old + alpha * target  # Move the old estimate toward the target.
+print(f"target = {target:.2f}; new Q = {q_new:.3f}")  # Print the update result.
+```
+
+▶ What you'll see: the Q-value moves partway from `0.50` toward `1.72`.
+
+```python
+fig, ax = plt.subplots(figsize=(4.5, 3))  # Create a before/after chart.
+ax.bar(["old Q", "target", "new Q"], [q_old, target, q_new], color=["gray", "#54A24B", "orange"])  # Plot update pieces.
+ax.set_title("B8 one Q-learning update")  # Label the chart.
+ax.set_ylabel("value")  # Label the axis.
+plt.show()  # Display the chart.
+```
+
+▶ What you'll see: the new value is between the old estimate and the target.
+
+👀 **Takeaway:** Q-learning is an incremental correction controlled by $\alpha$.
+
+---
+
+#### B9. Choose one epsilon-greedy action
+
+Goal: flip one exploration coin before choosing an action.
+
+```python
+np.random.seed(7)  # Fix the random draw for reproducibility.
+actions = ["left", "right", "wait"]  # List legal actions.
+q_values = {"left": 0.1, "right": 0.9, "wait": 0.2}  # Store current action values.
+epsilon = 0.2  # Explore on 20 percent of decisions.
+coin = np.random.rand()  # Draw one exploration coin.
+if coin < epsilon:  # Explore if the coin falls below epsilon.
+    choice = actions[int(np.random.choice(len(actions)))]  # Choose a random legal action.
+    mode = "explore"  # Record the mode.
+else:  # Otherwise exploit.
+    choice = max(actions, key=lambda action: q_values[action])  # Choose the greedy action.
+    mode = "exploit"  # Record the mode.
+print(f"coin={coin:.3f}, epsilon={epsilon:.1f} -> {mode}: {choice}")  # Print the decision.
+```
+
+▶ What you'll see: one coin chooses exploration or exploitation.
+
+```python
+fig, ax = plt.subplots(figsize=(4.5, 1.4))  # Create a one-dimensional coin plot.
+ax.axvspan(0, epsilon, color="#F58518", alpha=0.35, label="explore")  # Shade the explore interval.
+ax.axvspan(epsilon, 1, color="#4C78A8", alpha=0.25, label="exploit")  # Shade the exploit interval.
+ax.axvline(coin, color="black", linewidth=2, label="coin")  # Mark the sampled coin.
+ax.set_xlim(0, 1)  # Keep the axis on probability scale.
+ax.set_yticks([])  # Hide the vertical axis.
+ax.set_title("B9 epsilon-greedy coin flip")  # Label the chart.
+ax.legend(loc="upper center", ncol=3)  # Show labels.
+plt.show()  # Display the plot.
+```
+
+▶ What you'll see: the coin lands in the explore or exploit interval.
+
+👀 **Takeaway:** epsilon-greedy randomizes before taking the greedy action.
+
+---
+
+#### B10. Check that transition probabilities sum to one
+
+Goal: verify that one action's outcome probabilities form a valid distribution.
+
+```python
+transition_row = {"intended": 0.8, "left slip": 0.1, "right slip": 0.1}  # Store outcomes for one stochastic action.
+prob_sum = sum(transition_row.values())  # Add the row probabilities.
+is_valid = np.isclose(prob_sum, 1.0)  # Check whether the total is one.
+print(f"sum p(s'|s,a) = {prob_sum:.1f}; valid distribution = {is_valid}")  # Report the check.
+```
+
+▶ What you'll see: the probabilities add to `1.0`.
+
+```python
+fig, ax = plt.subplots(figsize=(4.5, 3))  # Create a probability chart.
+ax.bar(list(transition_row), list(transition_row.values()), color="#4C78A8")  # Plot the outcome probabilities.
+ax.set_ylim(0, 1.0)  # Use probability scale.
+ax.set_title("B10 transition probabilities")  # Label the chart.
+ax.set_ylabel("probability")  # Label the axis.
+plt.xticks(rotation=15)  # Fit long labels.
+plt.show()  # Display the chart.
+```
+
+▶ What you'll see: the outcomes partition one unit of probability mass.
+
+👀 **Takeaway:** transition probabilities for a fixed $(s,a)$ must sum to one.
+
+---
+
 ### 🟡 Easy
 
 #### E1. Hand compute discounted utility on a 4-step path

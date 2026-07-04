@@ -19,12 +19,19 @@
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | | | | ~n |
 | B2 | | | | ~n |
 | B3 | | | | ~n |
+| B4 | | | | ~n |
+| B5 | | | | ~n |
+| B6 | | | | ~n |
+| B7 | | | | ~n |
+| B8 | | | | ~n |
+| B9 | | | | ~n |
+| B10 | | | | ~n |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

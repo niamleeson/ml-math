@@ -18,12 +18,19 @@ Object detection extends image classification by predicting both what objects ar
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Draw one bounding box on a blank grid | toy box coordinates $(1,1,4,3)$ | coordinate grid with one rectangle | ~2 |
 | B2 | Compute IoU for two tiny boxes | toy scalars: two $2\times2$ boxes overlapping by one cell | shaded intersection and union counts | ~3 |
 | B3 | Filter detections by confidence threshold | toy list of three scores and labels | printed kept/dropped rows | ~2 |
+| B4 | Compute one box area | toy corner box $(2,1,6,4)$ | printed width, height, and area | ~2 |
+| B5 | Compute intersection area of two boxes | two toy corner boxes | printed intersection box and area | ~2 |
+| B6 | Convert center coordinates to corners | toy center box $(5,4,2,6)$ | coordinate conversion annotation | ~2 |
+| B7 | Sort boxes by score | toy scores 0.42, 0.91, 0.73 | printed descending order | ~2 |
+| B8 | Decide overlap by an IoU threshold | toy IoU 0.62 with threshold 0.50 | yes/no overlap annotation | ~2 |
+| B9 | Clip a box to image bounds | toy out-of-bounds box on 14×10 image | before/after box coordinates | ~2 |
+| B10 | Count boxes above a threshold | toy scores with cutoff 0.50 | printed survivor count | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
@@ -45,7 +52,7 @@ Object detection extends image classification by predicting both what objects ar
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** notebooks/20-object-detection.ipynb
-- **Est. cell count:** ~90 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded with granular box/IoU/NMS visualizations)
+- **Est. cell count:** ~90 (💻 topic → all 20 examples (10 basics + 5 easy + 5 advanced) coded with granular box/IoU/NMS visualizations)
 - **Key libraries:** numpy, matplotlib, PIL/opencv-python, torch/torchvision or ultralytics, pandas, ipywidgets.
 - **Runtime:** CPU for small examples; GPU optional for faster pretrained detector inference.
 - **Failure/edge dataset included:** crowded shelf/birds in A4 — exposes missed small objects, overlapping boxes, and NMS threshold sensitivity.

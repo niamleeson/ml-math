@@ -18,12 +18,19 @@ Game playing plans against other agents, so values depend on what the opponent w
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Read the utility of one terminal leaf | toy terminal game state with utility `+3` | single leaf node labeled with `Utility(s)` | ~2 |
 | B2 | Backup one max node over two children | toy agent node with child values `1` and `5` | two-child tree with the max branch highlighted | ~2 |
 | B3 | Backup one min node over two children | toy opponent node with child values `4` and `-2` | two-child tree with the min branch highlighted | ~2 |
+| B4 | Score one nonterminal state with a static evaluation | one cutoff state with two feature counts | feature-score arithmetic | ~2 |
+| B5 | Pick the best move from backed-up values | three candidate moves with values `0`, `2`, `-1` | one-row move-value comparison | ~2 |
+| B6 | Prune one alpha-beta branch by comparing a bound | one min node with `α=4`, `β=3` | bound comparison showing prune | ~2 |
+| B7 | Read the terminal utility of a toy board | terminal X-win board outcome | outcome mapped to `+1` | ~2 |
+| B8 | Count nodes in a tiny game tree | depth-2 full binary tree | level count `1+2+4` | ~2 |
+| B9 | Check whether one state is terminal | toy board with no winner and one empty cell | predicate result before recursion | ~2 |
+| B10 | Average one expectimax chance node | two equally likely child values `6` and `2` | chance-node average calculation | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

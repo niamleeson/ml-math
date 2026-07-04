@@ -313,6 +313,107 @@ print("centered column means:", X_centered_b3.mean(axis=0))  # verify that cente
 
 👀 **Takeaway.** PCA finds variance directions after moving the data cloud to be centered at the origin.
 
+
+#### B4. Recompute one centroid mean
+
+**Goal.** Practice the k-means update step for one cluster.
+
+```python
+points_b4 = np.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])  # collect three points assigned to one cluster.
+centroid_b4 = points_b4.mean(axis=0)  # average each coordinate to recompute the cluster centroid.
+print("assigned points:\n", points_b4)  # show the points that belong to this cluster.
+print("new centroid:", centroid_b4)  # show the coordinate-wise mean.
+```
+
+👀 **Takeaway.** A centroid update is just a coordinate-wise mean of assigned points.
+
+#### B5. Compute total inertia for assigned points
+
+**Goal.** Add several squared point-to-centroid costs into the k-means objective.
+
+```python
+X_b5 = np.array([[0.0, 0.0], [1.0, 0.0], [4.0, 4.0]])  # define three tiny data points.
+labels_b5 = np.array([0, 0, 1])  # assign the first two points to centroid 0 and the last to centroid 1.
+centers_b5 = np.array([[0.0, 0.0], [5.0, 4.0]])  # define two fixed centroids.
+residuals_b5 = X_b5 - centers_b5[labels_b5]  # subtract each point's assigned centroid.
+per_point_b5 = np.sum(residuals_b5 ** 2, axis=1)  # compute each point's squared contribution.
+inertia_b5 = per_point_b5.sum()  # add contributions into total inertia.
+print("per-point squared costs:", per_point_b5)  # display the objective terms.
+print("total inertia:", inertia_b5)  # display the summed k-means loss.
+```
+
+👀 **Takeaway.** Inertia is the sum of all assigned squared distances.
+
+#### B6. Compute covariance of two centered features
+
+**Goal.** Practice the matrix PCA diagonalizes.
+
+```python
+X_b6 = np.array([[-1.0, -2.0], [0.0, 0.0], [1.0, 2.0]])  # define centered two-feature data.
+cov_b6 = (X_b6.T @ X_b6) / X_b6.shape[0]  # compute covariance using the PCA convention from the lesson.
+print("centered data:\n", X_b6)  # show the centered rows.
+print("covariance matrix:\n", cov_b6)  # show variances on the diagonal and covariance off diagonal.
+```
+
+👀 **Takeaway.** PCA uses covariance to measure how features vary together.
+
+#### B7. Project one point onto one axis
+
+**Goal.** Compute a one-dimensional PCA coordinate by a dot product.
+
+```python
+point_b7 = np.array([3.0, 4.0])  # define one centered point.
+axis_b7 = np.array([0.6, 0.8])  # define a unit direction to project onto.
+score_b7 = point_b7 @ axis_b7  # take a dot product to get the coordinate along the axis.
+print("point:", point_b7)  # show the original centered point.
+print("unit axis:", axis_b7)  # show the projection direction.
+print("projected coordinate:", score_b7)  # show the one-dimensional PCA-style score.
+```
+
+👀 **Takeaway.** Projection onto a principal component is a dot product with a unit axis.
+
+#### B8. Compute variance explained by one component
+
+**Goal.** Convert eigenvalues into explained-variance ratios.
+
+```python
+eigenvalues_b8 = np.array([6.0, 3.0, 1.0])  # list variances captured by three principal directions.
+ratios_b8 = eigenvalues_b8 / eigenvalues_b8.sum()  # divide each variance by total variance.
+print("eigenvalues:", eigenvalues_b8)  # show component variances.
+print("explained variance ratios:", ratios_b8)  # show the fraction captured by each component.
+print("PC1 percent:", ratios_b8[0] * 100)  # show the first component as a percent.
+```
+
+👀 **Takeaway.** Explained variance is a normalized share of total variance.
+
+#### B9. Run one k-means assignment-update iteration
+
+**Goal.** Combine one assignment step with one centroid update on a tiny dataset.
+
+```python
+X_b9 = np.array([[0.0, 0.0], [0.0, 2.0], [5.0, 5.0], [6.0, 5.0]])  # create four easy-to-see points.
+centers_b9 = np.array([[0.0, 1.0], [5.0, 4.0]])  # choose two initial centroids.
+labels_b9 = assign_to_centers(X_b9, centers_b9)  # assign every point to its nearest current centroid.
+updated_b9 = update_centers(X_b9, labels_b9, k=2, old_centers=centers_b9)  # move centroids to assigned means.
+print("labels after assignment:", labels_b9)  # show the hard cluster choices.
+print("updated centers:\n", updated_b9)  # show the centroids after one update.
+```
+
+👀 **Takeaway.** One k-means iteration is assignment followed by averaging.
+
+#### B10. Build a distance matrix for three points
+
+**Goal.** See all pairwise distances in one small table.
+
+```python
+X_b10 = np.array([[0.0, 0.0], [3.0, 4.0], [6.0, 8.0]])  # define three points with familiar 3-4-5 distances.
+diff_b10 = X_b10[:, None, :] - X_b10[None, :, :]  # broadcast each point against every other point.
+distance_matrix_b10 = np.sqrt(np.sum(diff_b10 ** 2, axis=2))  # convert squared coordinate differences to Euclidean distances.
+print("distance matrix:\n", distance_matrix_b10)  # display all pairwise distances.
+```
+
+👀 **Takeaway.** Distance matrices are built by comparing every point to every point.
+
 ### 🟡 Easy Examples
 
 #### E1. k-means from scratch on three clean blobs

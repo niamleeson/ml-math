@@ -458,6 +458,184 @@ bar_distribution(["D=0", "D=1"], posterior_b3, "B3: normalized posterior over Di
 
 ▶ What you'll see: a two-bar distribution where `D=0` has height `0.900` and `D=1` has height `0.100`.
 
+
+#### B4. Sum out one variable from a tiny factor
+
+Goal: marginalize one variable by adding rows that differ only in that variable.
+
+```python
+factor = {(0, 0): 0.12, (0, 1): 0.08, (1, 0): 0.18, (1, 1): 0.62}  # Store f(A,B) keyed by (A,B).
+marginal_a = {a: sum(value for (a_key, b_key), value in factor.items() if a_key == a) for a in [0, 1]}  # Sum over B for each A.
+print("Sum out B -> f(A):", marginal_a)  # Print the marginalized factor.
+```
+
+▶ What you'll see: the two rows for each value of $A$ are added together.
+
+```python
+bar_distribution(["A=0", "A=1"], [marginal_a[0], marginal_a[1]], "B4: marginal after summing out B")  # Visualize the marginal.
+```
+
+▶ What you'll see: a two-bar factor over $A$.
+
+👀 **Takeaway:** marginalization removes a variable by summing over its values.
+
+---
+
+#### B5. Compute one 3-node joint probability by the chain rule
+
+Goal: multiply local CPT entries for one complete assignment.
+
+```python
+prob_d = medical_bn["cpts"]["D"][()][1]  # Read P(D=1).
+prob_f = medical_bn["cpts"]["F"][(1,)][1]  # Read P(F=1 | D=1).
+prob_c = medical_bn["cpts"]["C"][(1,)][0]  # Read P(C=0 | D=1).
+joint = prob_d * prob_f * prob_c  # Multiply the local factors.
+print(f"P(D=1,F=1,C=0) = {prob_d:.2f} * {prob_f:.2f} * {prob_c:.2f} = {joint:.3f}")  # Print the joint row.
+```
+
+▶ What you'll see: one joint assignment probability from three CPT lookups.
+
+```python
+fig, ax = plt.subplots(figsize=(4.5, 3))  # Create a factor-product chart.
+ax.bar(["P(D)", "P(F|D)", "P(C|D)", "joint"], [prob_d, prob_f, prob_c, joint], color=["gray", "gray", "gray", "orange"])  # Compare local entries and product.
+ax.set_title("B5 BN chain-rule product")  # Label the chart.
+ax.set_ylabel("probability")  # Label the axis.
+plt.show()  # Display the chart.
+```
+
+▶ What you'll see: the joint probability is the product of the local pieces.
+
+👀 **Takeaway:** a BN factorizes one joint row into local CPT entries.
+
+---
+
+#### B6. Compute one conditional probability ratio
+
+Goal: use $P(A\mid B)=P(A,B)/P(B)$ for one pair of numbers.
+
+```python
+joint_ab = 0.06  # Store P(A=1,B=1).
+prob_b = 0.20  # Store P(B=1).
+conditional = joint_ab / prob_b  # Divide by the evidence probability.
+print(f"P(A=1 | B=1) = {joint_ab:.2f} / {prob_b:.2f} = {conditional:.2f}")  # Print the conditional.
+```
+
+▶ What you'll see: the conditional probability is `0.30`.
+
+```python
+bar_distribution(["joint", "evidence", "conditional"], [joint_ab, prob_b, conditional], "B6: conditional ratio", ylabel="value")  # Compare the ratio pieces.
+```
+
+▶ What you'll see: the conditional is a rescaled joint probability.
+
+👀 **Takeaway:** conditioning divides by the probability of the evidence.
+
+---
+
+#### B7. Do one Gibbs resample from local weights
+
+Goal: normalize local weights and draw one new value.
+
+```python
+np.random.seed(22136)  # Fix the sample for reproducibility.
+weights = np.array([0.30, 0.70])  # Store unnormalized local weights for X=0 and X=1.
+probs = normalize(weights)  # Convert weights to a conditional distribution.
+new_value = int(np.random.choice([0, 1], p=probs))  # Sample one new value.
+print(f"Gibbs conditional = {probs}; sampled X = {new_value}")  # Show probabilities and sample.
+```
+
+▶ What you'll see: one variable is resampled from its local conditional.
+
+```python
+bar_distribution(["X=0", "X=1"], probs, "B7: one Gibbs conditional")  # Visualize the sampling probabilities.
+```
+
+▶ What you'll see: the higher-weight value is more likely, but either value can be sampled.
+
+👀 **Takeaway:** Gibbs sampling samples from normalized local weights.
+
+---
+
+#### B8. Slice one factor to match evidence
+
+Goal: keep only factor rows that agree with observed evidence.
+
+```python
+factor = {(0, 0): 0.40, (0, 1): 0.10, (1, 0): 0.20, (1, 1): 0.30}  # Store f(A,B) keyed by (A,B).
+evidence = {"B": 1}  # Observe B=1.
+sliced = {a: value for (a, b), value in factor.items() if b == evidence["B"]}  # Keep rows matching the evidence.
+print("f(A, B=1):", sliced)  # Print the sliced factor over A.
+```
+
+▶ What you'll see: rows with `B=0` disappear.
+
+```python
+bar_distribution(["A=0", "A=1"], [sliced[0], sliced[1]], "B8: factor sliced by B=1", ylabel="factor value")  # Plot the remaining entries.
+```
+
+▶ What you'll see: only evidence-consistent entries remain.
+
+👀 **Takeaway:** evidence reduces a factor by deleting contradictory rows.
+
+---
+
+#### B9. Check one structural independence in a chain
+
+Goal: read a simple conditional independence from graph structure.
+
+```python
+parents_chain = {"A": [], "B": ["A"], "C": ["B"]}  # Store the chain A -> B -> C.
+is_independent = "B" in parents_chain["C"] and parents_chain["B"] == ["A"]  # Conditioning on B blocks the chain path.
+print(f"A is independent of C given B: {is_independent}")  # Print the structural check.
+```
+
+▶ What you'll see: observing the middle node blocks the only path from $A$ to $C$.
+
+```python
+fig, ax = plt.subplots(figsize=(4.5, 1.5))  # Create a tiny chain diagram.
+for x, label in zip([0, 1, 2], ["A", "B observed", "C"]):  # Draw the three variables.
+    ax.scatter([x], [0], s=900, color="#F58518" if "observed" in label else "white", edgecolor="black", zorder=2)  # Highlight B.
+    ax.text(x, 0, label, ha="center", va="center", fontsize=9)  # Label the node.
+ax.annotate("", xy=(0.85, 0), xytext=(0.15, 0), arrowprops=dict(arrowstyle="->"))  # Draw A to B.
+ax.annotate("", xy=(1.85, 0), xytext=(1.15, 0), arrowprops=dict(arrowstyle="->"))  # Draw B to C.
+ax.set_title("B9 chain blocked by observing B")  # Label the diagram.
+ax.axis("off")  # Hide axes.
+plt.show()  # Display the diagram.
+```
+
+▶ What you'll see: the observed middle node blocks the chain path.
+
+👀 **Takeaway:** in a chain, conditioning on the middle variable separates the endpoints.
+
+---
+
+#### B10. Compute one expected count for MLE
+
+Goal: add fractional responsibility to one CPT count.
+
+```python
+old_count = 3.0  # Store the current expected count.
+responsibility = 0.25  # Store the fractional probability of this hidden assignment.
+new_count = old_count + responsibility  # Add the fractional responsibility.
+print(f"expected count = {old_count:.2f} + {responsibility:.2f} = {new_count:.2f}")  # Print the count update.
+```
+
+▶ What you'll see: soft evidence increases the count by a fraction.
+
+```python
+fig, ax = plt.subplots(figsize=(4.5, 3))  # Create a before/after chart.
+ax.bar(["old", "responsibility", "new"], [old_count, responsibility, new_count], color=["gray", "#54A24B", "orange"])  # Plot count pieces.
+ax.set_title("B10 expected-count update")  # Label the primitive.
+ax.set_ylabel("count")  # Label the axis.
+plt.show()  # Render the chart.
+```
+
+▶ What you'll see: the updated expected count includes the fractional contribution.
+
+👀 **Takeaway:** hidden-variable MLE can count expected occurrences instead of hard occurrences.
+
+---
+
 ### 🟡 Easy
 
 #### E1. Hand-compute a 3-node medical posterior

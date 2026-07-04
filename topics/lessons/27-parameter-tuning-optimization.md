@@ -441,6 +441,225 @@ plt.show()  # Display the plot.
 
 ▶ What you'll see: both steps descend here, but the larger learning rate travels much farther and foreshadows overshooting on steeper losses.
 
+
+#### B4. One RMSprop scalar update
+
+Goal: compute one RMSprop denominator and one parameter update.
+
+By hand,
+
+$$
+s_1=0.9(0)+0.1(4^2)=1.6,
+\qquad
+w_1=2-0.1\frac{4}{\sqrt{1.6}+10^{-8}}\approx\boxed{1.684}.
+$$
+
+```python
+w0 = 2.0  # Start from the scalar parameter value.
+g = 4.0  # Use one positive gradient.
+s0 = 0.0  # Initialize the squared-gradient average at zero.
+beta = 0.9  # Use RMSprop's decay rate.
+alpha = 0.1  # Use a small learning rate.
+eps = 1e-8  # Add numerical protection in the denominator.
+s1 = beta * s0 + (1.0 - beta) * g ** 2  # Update the squared-gradient moving average.
+w1 = w0 - alpha * g / (np.sqrt(s1) + eps)  # Apply one RMSprop-scaled update.
+print(f"s1 = {s1:.3f}")  # Print the second-moment estimate.
+print(f"w1 = {w1:.3f}")  # Print the updated parameter.
+plt.figure()  # Create a number-line figure.
+plt.axhline(0.0, color="black", linewidth=1.0)  # Draw the number line.
+plt.scatter([w0], [0.0], s=120, label="before", color="black")  # Mark the starting value.
+plt.scatter([w1], [0.0], s=120, label="after RMSprop", color="white", edgecolor="black")  # Mark the updated value.
+plt.annotate("scaled step", xy=(w1, 0.0), xytext=(w0, 0.18), arrowprops={"arrowstyle": "->"})  # Show the update direction.
+plt.yticks([])  # Hide vertical ticks.
+plt.xlabel("w")  # Label the parameter axis.
+plt.title("B4: one RMSprop update")  # Title the plot.
+plt.legend()  # Show labels.
+plt.show()  # Display the plot.
+```
+
+▶ What you'll see: the large gradient also creates a large denominator, shrinking the effective step.
+
+#### B5. One Adam moment update
+
+Goal: compute Adam's first and second moments before applying the bias-corrected step.
+
+By hand for $t=1$,
+
+$$
+v_1=0.1g=0.4,\qquad s_1=0.001g^2=0.016,
+$$
+
+and bias correction gives $\hat v_1=4$, $\hat s_1=16$.
+
+```python
+g = 4.0  # Use one scalar gradient.
+beta1 = 0.9  # Use Adam's first-moment decay.
+beta2 = 0.999  # Use Adam's second-moment decay.
+v1 = beta1 * 0.0 + (1.0 - beta1) * g  # Compute the first-moment estimate.
+s1 = beta2 * 0.0 + (1.0 - beta2) * g ** 2  # Compute the second-moment estimate.
+v_hat = v1 / (1.0 - beta1)  # Bias-correct the first moment at t=1.
+s_hat = s1 / (1.0 - beta2)  # Bias-correct the second moment at t=1.
+print(f"v1 = {v1:.3f}, s1 = {s1:.3f}")  # Print raw moments.
+print(f"v_hat = {v_hat:.3f}, s_hat = {s_hat:.3f}")  # Print bias-corrected moments.
+plt.figure()  # Create a small comparison plot.
+plt.bar(["v1", "v_hat", "s1", "s_hat"], [v1, v_hat, s1, s_hat])  # Compare raw and corrected estimates.
+plt.title("B5: Adam moment estimates at the first step")  # Title the plot.
+plt.ylabel("value")  # Label the values.
+plt.show()  # Display the bars.
+```
+
+▶ What you'll see: raw Adam moments start small because they are averaged with zeros.
+
+#### B6. Step-decay learning rate at one epoch
+
+Goal: evaluate a learning-rate schedule at a single epoch.
+
+For $\alpha_0=0.1$, drop factor $\gamma=0.5$, every $k=5$ epochs, at epoch $12$,
+
+$$
+\alpha_{12}=0.1(0.5)^{\lfloor 12/5\rfloor}=0.1(0.5)^2=\boxed{0.025}.
+$$
+
+```python
+lr0 = 0.1  # Store the initial learning rate.
+gamma = 0.5  # Store the multiplicative drop factor.
+drop_every = 5  # Store how many epochs pass before each drop.
+epoch = 12  # Choose one epoch to evaluate.
+lr_epoch = lr0 * gamma ** (epoch // drop_every)  # Compute the step-decay learning rate.
+print(f"epoch = {epoch}")  # Print the epoch.
+print(f"learning rate = {lr_epoch:.3f}")  # Print the scheduled value.
+epochs = np.arange(0, 16)  # Create epochs for context.
+lrs = [lr0 * gamma ** (e // drop_every) for e in epochs]  # Compute the full staircase.
+plt.figure()  # Create the schedule plot.
+plt.step(epochs, lrs, where="post")  # Draw the step-decay curve.
+plt.scatter([epoch], [lr_epoch], s=100, color="black", label="chosen epoch")  # Mark the evaluated epoch.
+plt.xlabel("epoch")  # Label epoch axis.
+plt.ylabel("learning rate")  # Label learning-rate axis.
+plt.title("B6: one step-decay schedule value")  # Title the plot.
+plt.legend()  # Show marker label.
+plt.show()  # Display the plot.
+```
+
+▶ What you'll see: epoch 12 has passed two drop boundaries, so the learning rate is one quarter of the start.
+
+#### B7. Xavier initialization scale
+
+Goal: compute the Xavier uniform limit for one layer shape.
+
+For $n_{in}=4$ and $n_{out}=2$,
+
+$$
+\text{limit}=\sqrt{\frac{6}{4+2}}=\boxed{1.0}.
+$$
+
+```python
+n_in = 4  # Store the number of input units.
+n_out = 2  # Store the number of output units.
+limit = np.sqrt(6.0 / (n_in + n_out))  # Compute the Xavier uniform half-width.
+weights = rng.uniform(-limit, limit, size=(n_in, n_out))  # Sample a tiny weight matrix from that range.
+print(f"Xavier limit = {limit:.3f}")  # Print the allowed range endpoint.
+print("sample weights:\n", weights)  # Print one reproducible sample.
+plt.figure()  # Create a histogram figure.
+plt.hist(weights.ravel(), bins=6, edgecolor="black")  # Show sampled weights within the interval.
+plt.axvline(-limit, color="red", linestyle="--", label="limits")  # Mark lower limit.
+plt.axvline(limit, color="red", linestyle="--")  # Mark upper limit.
+plt.title("B7: Xavier uniform range")  # Title the plot.
+plt.legend()  # Show limit label.
+plt.show()  # Display the histogram.
+```
+
+▶ What you'll see: Xavier chooses a symmetric range from the layer's input and output sizes.
+
+#### B8. Gradient of a quadratic at one point
+
+Goal: compute $\nabla J(w)$ for the lesson's two-dimensional quadratic.
+
+For $J(w)=20w_1^2+w_2^2$ at $w=(1,-3)$,
+
+$$
+\nabla J(w)=(40w_1,2w_2)=\boxed{(40,-6)}.
+$$
+
+```python
+w = np.array([1.0, -3.0])  # Choose one point on the quadratic surface.
+grad = quadratic_grad(w)  # Compute the exact gradient using the setup helper.
+loss_value = quadratic_loss(w)  # Compute the loss value at the same point.
+print(f"w = {w}")  # Print the point.
+print(f"J(w) = {loss_value:.1f}")  # Print the scalar loss.
+print(f"gradient = {grad}")  # Print the gradient vector.
+plt.figure()  # Create a vector plot.
+plt.quiver([w[0]], [w[1]], [grad[0]], [grad[1]], angles="xy", scale_units="xy", scale=50, color="tab:red")  # Draw the gradient direction.
+plt.scatter([w[0]], [w[1]], color="black")  # Mark the point.
+plt.xlabel("w1")  # Label first parameter.
+plt.ylabel("w2")  # Label second parameter.
+plt.title("B8: gradient points uphill")  # Title the plot.
+plt.show()  # Display the vector.
+```
+
+▶ What you'll see: the first coordinate has a much larger gradient because the bowl is steeper in $w_1$.
+
+#### B9. Loss decrease after one small step
+
+Goal: verify that a small SGD step lowers the quadratic loss.
+
+Starting at $w=(1,1)$ with $\alpha=0.01$,
+
+$$
+w_1=w_0-\alpha\nabla J(w_0).
+$$
+
+```python
+w0 = np.array([1.0, 1.0])  # Choose a point where both gradient coordinates are positive.
+grad = quadratic_grad(w0)  # Compute the exact gradient at the starting point.
+alpha = 0.01  # Choose a small stable learning rate.
+w1 = w0 - alpha * grad  # Apply one SGD update.
+loss0 = quadratic_loss(w0)  # Evaluate loss before the update.
+loss1 = quadratic_loss(w1)  # Evaluate loss after the update.
+print(f"w0 = {w0}, J(w0) = {loss0:.3f}")  # Print the starting loss.
+print(f"w1 = {w1}, J(w1) = {loss1:.3f}")  # Print the new loss.
+plt.figure()  # Create a two-bar loss comparison.
+plt.bar(["before", "after"], [loss0, loss1], color=["tab:red", "tab:green"])  # Plot loss before and after.
+plt.ylabel("J(w)")  # Label the loss axis.
+plt.title("B9: one small step decreases loss")  # Title the check.
+plt.show()  # Display the bars.
+```
+
+▶ What you'll see: the loss drops after the update, confirming the step moved downhill for this learning rate.
+
+#### B10. Clip one gradient norm
+
+Goal: rescale a gradient vector whose norm is larger than a chosen threshold.
+
+For $g=(3,4)$ and threshold $2$,
+
+$$
+\lVert g\rVert_2=5,
+\qquad
+\tilde g=g\frac{2}{5}=\boxed{(1.2,1.6)}.
+$$
+
+```python
+g = np.array([3.0, 4.0])  # Store a gradient with norm five.
+max_norm = 2.0  # Choose the clipping threshold.
+norm = np.linalg.norm(g)  # Compute the L2 norm of the gradient.
+scale = min(1.0, max_norm / norm)  # Compute the clipping scale, capped at one.
+g_clipped = g * scale  # Apply norm clipping.
+print(f"original norm = {norm:.2f}")  # Print the original norm.
+print(f"scale = {scale:.2f}")  # Print the rescaling factor.
+print(f"clipped gradient = {g_clipped}")  # Print the clipped gradient.
+plt.figure()  # Create a vector comparison.
+plt.quiver([0, 0], [0, 0], [g[0], g_clipped[0]], [g[1], g_clipped[1]], angles="xy", scale_units="xy", scale=1, color=["tab:red", "tab:green"])  # Draw original and clipped gradients.
+plt.xlim(0, 3.5)  # Set horizontal range.
+plt.ylim(0, 4.5)  # Set vertical range.
+plt.xlabel("g1")  # Label first gradient coordinate.
+plt.ylabel("g2")  # Label second gradient coordinate.
+plt.title("B10: clipping preserves direction but limits length")  # Title the plot.
+plt.show()  # Display the vectors.
+```
+
+▶ What you'll see: clipping keeps the direction of the gradient but shortens its length to the threshold.
+
+
 ### 🟡 Easy
 
 #### E1. Hand-compute one SGD and momentum update on $J(w)=w^2$

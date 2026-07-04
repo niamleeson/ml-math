@@ -18,12 +18,19 @@ Support Vector Machines choose the separating hyperplane with the largest margin
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Compute one SVM score $w^Tx-b$ and its sign | toy scalars: one 2-D point, $w$, and $b$ | printed values | ~2 |
 | B2 | Check one margin constraint $y(w^Tx-b)\ge 1$ | toy scalars: one labeled point and separator | point vs margin line sketch | ~3 |
 | B3 | Evaluate one Gaussian kernel value $K(x,z)$ | toy scalars: two 2-D points and $\sigma$ | printed values | ~3 |
+| B4 | Compute the weight norm $\lVert w\rVert$ | toy vector: one $w$ | printed norm | ~2 |
+| B5 | Convert functional margin to geometric margin | toy scalars: margin and $\lVert w\rVert$ | printed geometric margin | ~2 |
+| B6 | Compute distance from one point to the boundary | toy 2-D point and separator | printed signed distance | ~3 |
+| B7 | Evaluate one hinge loss | toy scalar: one label and score | printed margin and loss | ~2 |
+| B8 | Compute one dot product $x^Tz$ | toy vectors | printed dot product | ~2 |
+| B9 | Scale $w,b$ and compare predictions | toy point and separator | printed original/scaled signs | ~3 |
+| B10 | Identify which of two points is the support vector | toy margin values for two points | printed closest candidate | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

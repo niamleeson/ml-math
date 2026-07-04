@@ -115,6 +115,125 @@ LSTM-style additive cell paths help long memory because $c^{<t>}=\Gamma_u\wideti
 
 ## 3. Worked Examples
 
+### Setup
+
+```python
+import numpy as np  # Import NumPy for arrays, linear algebra, and deterministic synthetic data.
+import matplotlib.pyplot as plt  # Import Matplotlib for all lesson visualizations.
+
+np.random.seed(23)  # Seed NumPy so all random examples are reproducible.
+
+plt.rcParams["figure.figsize"] = (8, 4)  # Use consistent figure sizing for notebook readability.
+plt.rcParams["axes.grid"] = True  # Add grids so trends and thresholds are easy to see.
+plt.rcParams["font.size"] = 11  # Set a readable font size for axes and legends.
+
+
+def sigmoid(z):  # Define the sigmoid used for gates and binary outputs.
+    z = np.asarray(z)  # Convert scalars or lists into arrays for uniform handling.
+    return 1.0 / (1.0 + np.exp(-np.clip(z, -60.0, 60.0)))  # Clip logits to avoid numerical overflow.
+
+
+def tanh(z):  # Define a tanh wrapper matching the mathematical notation.
+    return np.tanh(z)  # Call NumPy's stable hyperbolic tangent.
+
+
+def bce(y_true, y_prob):  # Define binary cross-entropy for toy classifiers.
+    eps = 1e-9  # Choose a tiny value to avoid log zero.
+    y_prob = np.clip(y_prob, eps, 1.0 - eps)  # Keep probabilities strictly inside (0, 1).
+    return -(y_true * np.log(y_prob) + (1.0 - y_true) * np.log(1.0 - y_prob))  # Return elementwise BCE.
+
+
+def softmax(logits):  # Define a stable softmax for character generation.
+    shifted = logits - np.max(logits)  # Subtract the maximum logit for numerical stability.
+    exp_values = np.exp(shifted)  # Exponentiate shifted logits.
+    return exp_values / np.sum(exp_values)  # Normalize exponentials into probabilities.
+```
+
+#### Data — swappable sources
+
+```python
+DATA_SOURCE = "copy"  # Options used below include "copy", "parity", "sentiment", "characters", and "tagging".
+
+
+def make_copy_data(n_samples=120, seq_len=30):  # Create delayed-copy examples that stress long memory.
+    X = np.zeros((n_samples, seq_len, 1))  # Allocate scalar input sequences.
+    y = np.zeros(n_samples)  # Allocate one binary target per sequence.
+    for i in range(n_samples):  # Fill each sequence independently.
+        bit = np.random.randint(0, 2)  # Sample the bit that must be remembered.
+        X[i, 0, 0] = bit  # Put the important bit at the first timestep.
+        X[i, -1, 0] = 1.0  # Put a marker at the final timestep.
+        y[i] = bit  # Make the label equal to the first bit.
+    return X, y  # Return inputs and targets.
+
+
+def make_parity_data(n_samples=120, seq_len=12):  # Create parity examples for sequence classification.
+    X = np.random.randint(0, 2, size=(n_samples, seq_len, 1)).astype(float)  # Draw binary sequences.
+    y = (X.sum(axis=(1, 2)) % 2).astype(float)  # Label odd sums as one and even sums as zero.
+    return X, y  # Return inputs and parity labels.
+
+
+def make_sentiment_data():  # Create a tiny offline sentiment corpus.
+    sentences = ["good clear useful", "great helpful", "love simple", "bad confusing", "terrible slow", "broken unclear", "good but slow", "bad but helpful"]  # Store short labeled phrases.
+    labels = np.array([1, 1, 1, 0, 0, 0, 1, 0], dtype=float)  # Encode positive as one and negative as zero.
+    vocab = sorted({word for sentence in sentences for word in sentence.split()})  # Build a sorted vocabulary.
+    word_to_id = {word: idx for idx, word in enumerate(vocab)}  # Map each word to a stable index.
+    max_len = max(len(sentence.split()) for sentence in sentences)  # Compute the padded sequence length.
+    X = np.zeros((len(sentences), max_len, len(vocab)))  # Allocate one-hot token sequences.
+    for i, sentence in enumerate(sentences):  # Convert every sentence to one-hot rows.
+        for t, word in enumerate(sentence.split()):  # Visit words in order.
+            X[i, t, word_to_id[word]] = 1.0  # Mark the active word coordinate.
+    return X, labels, vocab, sentences  # Return arrays and metadata.
+
+
+def make_character_data(text="hello recurrent neural networks learn letters ", seq_len=8):  # Create next-character windows.
+    chars = sorted(set(text))  # Build the character vocabulary.
+    char_to_id = {ch: idx for idx, ch in enumerate(chars)}  # Map characters to integer ids.
+    X = []  # Prepare a list of encoded windows.
+    y = []  # Prepare a list of next-character labels.
+    for start in range(len(text) - seq_len):  # Slide a fixed window through text.
+        window = text[start:start + seq_len]  # Extract an input window.
+        target = text[start + seq_len]  # Extract the next character after the window.
+        encoded = np.zeros((seq_len, len(chars)))  # Allocate one-hot rows for the window.
+        for t, ch in enumerate(window):  # Encode each character in the window.
+            encoded[t, char_to_id[ch]] = 1.0  # Mark the character coordinate.
+        X.append(encoded)  # Save the encoded input.
+        y.append(char_to_id[target])  # Save the next-character id.
+    return np.array(X), np.array(y), chars, char_to_id  # Return arrays and vocabulary.
+
+
+def make_tagging_data():  # Create a toy tagging corpus where future context helps.
+    sentences = [["bank", "approves", "loan"], ["river", "bank", "floods"], ["apple", "releases", "phone"], ["green", "apple", "falls"]]  # Store token sequences.
+    labels = [["ORG", "OTHER", "OTHER"], ["OTHER", "PLACE", "OTHER"], ["ORG", "OTHER", "OTHER"], ["OTHER", "FRUIT", "OTHER"]]  # Store token labels.
+    vocab = sorted({token for sentence in sentences for token in sentence})  # Build token vocabulary.
+    tagset = sorted({tag for row in labels for tag in row})  # Build tag vocabulary.
+    token_to_id = {token: idx for idx, token in enumerate(vocab)}  # Map tokens to indices.
+    tag_to_id = {tag: idx for idx, tag in enumerate(tagset)}  # Map tags to indices.
+    X = np.zeros((len(sentences), 3, len(vocab)))  # Allocate one-hot token arrays.
+    Y = np.zeros((len(sentences), 3), dtype=int)  # Allocate integer tag labels.
+    for i, sentence in enumerate(sentences):  # Encode each sentence.
+        for t, token in enumerate(sentence):  # Encode each token position.
+            X[i, t, token_to_id[token]] = 1.0  # Set token one-hot coordinate.
+            Y[i, t] = tag_to_id[labels[i][t]]  # Store the tag id.
+    return X, Y, vocab, tagset, sentences, labels  # Return data and metadata.
+
+copy_X, copy_y = make_copy_data()  # Materialize delayed-copy data.
+parity_X, parity_y = make_parity_data()  # Materialize parity data.
+sent_X, sent_y, sent_vocab, sent_sentences = make_sentiment_data()  # Materialize sentiment data.
+char_X, char_y, char_vocab, char_to_id = make_character_data()  # Materialize character data.
+tag_X, tag_Y, tag_vocab, tagset, tag_sentences, tag_labels = make_tagging_data()  # Materialize tagging data.
+
+print("copy", copy_X.shape, copy_y.shape)  # Show delayed-copy dimensions.
+print("parity", parity_X.shape, parity_y.shape)  # Show parity dimensions.
+print("sentiment", sent_X.shape, sent_vocab)  # Show sentiment dimensions and vocabulary.
+print("characters", char_X.shape, char_vocab)  # Show character dimensions and vocabulary.
+print("tagging", tag_X.shape, tagset)  # Show tagging dimensions and tag set.
+```
+
+▶ What you'll see: all datasets are small CPU-friendly arrays. The delayed-copy source intentionally stresses a vanilla RNN because the decisive bit appears at the first timestep but is predicted at the final timestep.
+
+👀 Every input has shape `(examples, timesteps, features)`.
+
+
 ### 🟢 Basics (warm-up)
 
 #### B1. One tanh RNN hidden-state update
@@ -146,6 +265,23 @@ $$
 \boxed{z^{<t>}=0.00},\qquad \boxed{a^{<t>}=0.00}.
 $$
 
+```python
+a_prev_b1 = 0.40  # set the previous hidden state from the worked example.
+x_t_b1 = 1.50  # set the current input from the worked example.
+w_aa_b1 = 0.50  # set the recurrent weight from the worked example.
+w_ax_b1 = -0.20  # set the input weight from the worked example.
+b_a_b1 = 0.10  # set the hidden bias from the worked example.
+z_t_b1 = w_aa_b1 * a_prev_b1 + w_ax_b1 * x_t_b1 + b_a_b1  # build the pre-activation.
+z_t_b1 = 0.0 if abs(z_t_b1) < 1e-12 else z_t_b1  # remove floating-point negative zero for display.
+a_t_b1 = np.tanh(z_t_b1)  # apply tanh to get the new hidden state.
+a_t_b1 = 0.0 if abs(a_t_b1) < 1e-12 else a_t_b1  # remove floating-point negative zero for display.
+print(f"z: {z_t_b1:.2f}, hidden: {a_t_b1:.2f}")  # show the boxed values.
+```
+
+▶ What you'll see: the pre-activation and hidden state are both 0.0.
+
+👀 Takeaway: tanh passes a zero pre-activation to a zero hidden state.
+
 #### B2. One sigmoid gate value
 
 Use $x^{<t>}=2$, $a^{<t-1>}=-1$, $w=0.70$, $u=0.30$, and $b=-0.20$.
@@ -175,6 +311,41 @@ $$
 $$
 
 meaning the gate is mostly open.
+
+```python
+x_t_b2 = 2.0  # set the current input from the worked example.
+a_prev_b2 = -1.0  # set the previous hidden state from the worked example.
+w_b2 = 0.70  # set the input weight from the worked example.
+u_b2 = 0.30  # set the recurrent weight from the worked example.
+b_b2 = -0.20  # set the gate bias from the worked example.
+z_b2 = w_b2 * x_t_b2 + u_b2 * a_prev_b2 + b_b2  # build the gate logit.
+gamma_b2 = 1 / (1 + np.exp(-z_b2))  # apply the sigmoid gate.
+print("gate value:", round(float(gamma_b2), 3))  # show the boxed gate value.
+```
+
+▶ What you'll see: the sigmoid gate value is 0.711.
+
+👀 Takeaway: positive gate logits produce mostly open gates.
+
+```python
+x_t_b2 = 2.0  # set the current input from the worked example.
+a_prev_b2 = -1.0  # set the previous hidden state from the worked example.
+w_b2 = 0.70  # set the input weight from the worked example.
+u_b2 = 0.30  # set the recurrent weight from the worked example.
+b_b2 = -0.20  # set the gate bias from the worked example.
+z_b2 = w_b2 * x_t_b2 + u_b2 * a_prev_b2 + b_b2  # rebuild the worked-example gate logit.
+gamma_b2 = 1 / (1 + np.exp(-z_b2))  # rebuild the worked-example gate activation.
+z_values_b2 = np.linspace(-4, 4, 200)  # create logits for a sigmoid curve.
+gate_values_b2 = 1 / (1 + np.exp(-z_values_b2))  # convert logits to gate activations.
+plt.plot(z_values_b2, gate_values_b2)  # draw the sigmoid activation curve.
+plt.scatter([z_b2], [gamma_b2], color="red")  # mark the worked-example gate value.
+plt.title("B2: sigmoid gate value")  # title the micro-visualization.
+plt.xlabel("logit z")  # label the horizontal axis.
+plt.ylabel("gate Γ")  # label the vertical axis.
+plt.show()  # display the figure.
+```
+
+▶ What you'll see: the worked gate sits above 0.5 on the sigmoid curve.
 
 #### B3. Unroll a length-3 scalar RNN
 
@@ -213,6 +384,398 @@ Thus
 $$
 \boxed{(a^{<1>},a^{<2>},a^{<3>})\approx(0.7616,0.3634,0.8280)}.
 $$
+
+```python
+a_prev_b3 = 0.0  # start from the initial hidden state.
+w_aa_b3 = 0.50  # set the recurrent weight from the worked example.
+w_ax_b3 = 1.00  # set the input weight from the worked example.
+b_a_b3 = 0.0  # set the hidden bias from the worked example.
+x_seq_b3 = np.array([1.0, 0.0, 1.0])  # build the three-step input sequence.
+a_values_b3 = []  # prepare a list to store hidden states.
+for x_t_b3 in x_seq_b3:  # unroll the scalar RNN across the sequence.
+    z_t_b3 = w_aa_b3 * a_prev_b3 + w_ax_b3 * x_t_b3 + b_a_b3  # compute this step's pre-activation.
+    a_prev_b3 = np.tanh(z_t_b3)  # compute this step's hidden state.
+    a_values_b3.append(float(a_prev_b3))  # save the hidden state for printing.
+formatted_values_b3 = ", ".join(f"{value_b3:.4f}" for value_b3 in a_values_b3)  # format values like the boxed tuple.
+print(f"hidden states: ({formatted_values_b3})")  # show the boxed tuple.
+```
+
+▶ What you'll see: the hidden states are [0.7616, 0.3634, 0.8280].
+
+👀 Takeaway: each hidden state depends on both the current input and the previous state.
+
+```python
+a_prev_b3 = 0.0  # start from the initial hidden state.
+w_aa_b3 = 0.50  # set the recurrent weight from the worked example.
+w_ax_b3 = 1.00  # set the input weight from the worked example.
+b_a_b3 = 0.0  # set the hidden bias from the worked example.
+x_seq_b3 = np.array([1.0, 0.0, 1.0])  # rebuild the three-step input sequence.
+a_values_b3 = []  # prepare a list to store hidden states.
+for x_t_b3 in x_seq_b3:  # unroll the scalar RNN across the sequence.
+    z_t_b3 = w_aa_b3 * a_prev_b3 + w_ax_b3 * x_t_b3 + b_a_b3  # compute this step's pre-activation.
+    a_prev_b3 = np.tanh(z_t_b3)  # compute this step's hidden state.
+    a_values_b3.append(float(a_prev_b3))  # save the hidden state for plotting.
+steps_b3 = np.arange(1, 4)  # create timestep labels.
+plt.plot(steps_b3, a_values_b3, marker="o")  # draw hidden-state evolution.
+plt.title("B3: scalar RNN hidden states")  # title the micro-visualization.
+plt.xlabel("timestep")  # label the horizontal axis.
+plt.ylabel("hidden state")  # label the vertical axis.
+plt.xticks(steps_b3)  # show integer timesteps.
+plt.show()  # display the figure.
+```
+
+▶ What you'll see: the hidden state dips when the middle input is 0 and rises again at the final 1.
+
+#### B4. Forget gate times previous cell memory
+
+Use previous cell memory $c^{<t-1>}=[2.0,-1.0,0.5]$ and forget gate $\Gamma_f=[0.9,0.1,0.6]$.
+
+$$
+\begin{aligned}
+\Gamma_f*c^{<t-1>}
+&=[0.9,0.1,0.6]*[2.0,-1.0,0.5]\\
+&=[0.9(2.0),0.1(-1.0),0.6(0.5)]\\
+&=[1.8,-0.1,0.3].
+\end{aligned}
+$$
+
+Therefore
+
+$$
+\boxed{\Gamma_f*c^{<t-1>}=[1.8,-0.1,0.3]}.
+$$
+
+Large forget-gate values keep memory; small values erase it.
+
+```python
+c_prev_b4 = np.array([2.0, -1.0, 0.5])  # build the previous cell-memory vector.
+gamma_f_b4 = np.array([0.9, 0.1, 0.6])  # build the forget-gate vector.
+kept_memory_b4 = gamma_f_b4 * c_prev_b4  # multiply gate and memory elementwise.
+print("kept memory:", np.round(kept_memory_b4, 1).tolist())  # show the boxed vector.
+```
+
+▶ What you'll see: the kept memory is [1.8, -0.1, 0.3].
+
+👀 Takeaway: forget gates scale each memory coordinate independently.
+
+```python
+c_prev_b4 = np.array([2.0, -1.0, 0.5])  # rebuild the previous cell-memory vector.
+gamma_f_b4 = np.array([0.9, 0.1, 0.6])  # rebuild the forget-gate vector.
+kept_memory_b4 = gamma_f_b4 * c_prev_b4  # rebuild the gated memory vector.
+indices_b4 = np.arange(len(c_prev_b4))  # create coordinate indices.
+plt.bar(indices_b4 - 0.15, c_prev_b4, width=0.3, label="previous c")  # plot previous memory values.
+plt.bar(indices_b4 + 0.15, kept_memory_b4, width=0.3, label="kept Γf*c")  # plot gated memory values.
+plt.title("B4: forget gate keeps memory")  # title the micro-visualization.
+plt.xlabel("memory coordinate")  # label the horizontal axis.
+plt.ylabel("value")  # label the vertical axis.
+plt.legend()  # show the legend.
+plt.show()  # display the figure.
+```
+
+▶ What you'll see: each bar shrinks according to its forget-gate value.
+
+#### B5. One GRU update-gate blend
+
+Use previous memory $c^{<t-1>}=0.20$, candidate memory $\widetilde c^{<t>}=0.90$, and update gate $\Gamma_u=0.75$.
+
+$$
+\begin{aligned}
+c^{<t>}
+&=\Gamma_u\widetilde c^{<t>}+(1-\Gamma_u)c^{<t-1>}\\
+&=(0.75)(0.90)+(1-0.75)(0.20)\\
+&=0.675+0.050\\
+&=0.725.
+\end{aligned}
+$$
+
+Thus
+
+$$
+\boxed{c^{<t>}=0.725}.
+$$
+
+The new state is mostly the candidate because the update gate is high.
+
+```python
+c_prev_b5 = 0.20  # set the previous memory from the worked example.
+c_tilde_b5 = 0.90  # set the candidate memory from the worked example.
+gamma_u_b5 = 0.75  # set the update gate from the worked example.
+candidate_part_b5 = gamma_u_b5 * c_tilde_b5  # compute the candidate contribution.
+previous_part_b5 = (1 - gamma_u_b5) * c_prev_b5  # compute the previous-memory contribution.
+c_t_b5 = candidate_part_b5 + previous_part_b5  # blend the two contributions.
+print("new state:", round(float(c_t_b5), 3))  # show the boxed state.
+```
+
+▶ What you'll see: the new GRU state is 0.725.
+
+👀 Takeaway: a high update gate pulls the state toward the candidate.
+
+```python
+c_prev_b5 = 0.20  # set the previous memory from the worked example.
+c_tilde_b5 = 0.90  # set the candidate memory from the worked example.
+gamma_u_b5 = 0.75  # set the update gate from the worked example.
+candidate_part_b5 = gamma_u_b5 * c_tilde_b5  # rebuild the candidate contribution.
+previous_part_b5 = (1 - gamma_u_b5) * c_prev_b5  # rebuild the previous-memory contribution.
+plt.bar(["candidate part", "previous part"], [candidate_part_b5, previous_part_b5])  # compare blend contributions.
+plt.title("B5: GRU update-gate blend")  # title the micro-visualization.
+plt.ylabel("contribution")  # label the vertical axis.
+plt.show()  # display the figure.
+```
+
+▶ What you'll see: the candidate contribution is much larger than the previous-state contribution.
+
+#### B6. One LSTM cell-state update
+
+Use $\Gamma_f=0.80$, $c^{<t-1>}=1.50$, $\Gamma_u=0.30$, and $\widetilde c^{<t>}=-0.40$.
+
+$$
+\begin{aligned}
+c^{<t>}
+&=\Gamma_f c^{<t-1>}+\Gamma_u\widetilde c^{<t>}\\
+&=(0.80)(1.50)+(0.30)(-0.40)\\
+&=1.20-0.12\\
+&=1.08.
+\end{aligned}
+$$
+
+So
+
+$$
+\boxed{c^{<t>}=1.08}.
+$$
+
+The old memory remains dominant because the forget gate is larger than the update gate.
+
+```python
+gamma_f_b6 = 0.80  # set the forget gate from the worked example.
+c_prev_b6 = 1.50  # set the previous cell state from the worked example.
+gamma_u_b6 = 0.30  # set the update gate from the worked example.
+c_tilde_b6 = -0.40  # set the candidate cell state from the worked example.
+forget_part_b6 = gamma_f_b6 * c_prev_b6  # compute retained old memory.
+update_part_b6 = gamma_u_b6 * c_tilde_b6  # compute added candidate memory.
+c_t_b6 = forget_part_b6 + update_part_b6  # combine both LSTM cell-state terms.
+print("cell state:", round(float(c_t_b6), 2))  # show the boxed cell state.
+```
+
+▶ What you'll see: the updated LSTM cell state is 1.08.
+
+👀 Takeaway: LSTM memory changes by adding a retained old part and a gated candidate part.
+
+```python
+gamma_f_b6 = 0.80  # set the forget gate from the worked example.
+c_prev_b6 = 1.50  # set the previous cell state from the worked example.
+gamma_u_b6 = 0.30  # set the update gate from the worked example.
+c_tilde_b6 = -0.40  # set the candidate cell state from the worked example.
+forget_part_b6 = gamma_f_b6 * c_prev_b6  # rebuild retained old memory.
+update_part_b6 = gamma_u_b6 * c_tilde_b6  # rebuild added candidate memory.
+c_t_b6 = forget_part_b6 + update_part_b6  # rebuild the new cell state.
+plt.bar(["forget part", "update part", "new c"], [forget_part_b6, update_part_b6, c_t_b6])  # visualize the signed update.
+plt.title("B6: LSTM cell-state update")  # title the micro-visualization.
+plt.ylabel("value")  # label the vertical axis.
+plt.show()  # display the figure.
+```
+
+▶ What you'll see: the positive forget part dominates the small negative update part.
+
+#### B7. LSTM output gate reveals hidden state
+
+Use output gate $\Gamma_o=0.60$ and cell state $c^{<t>}=1.08$.
+
+$$
+\begin{aligned}
+a^{<t>}
+&=\Gamma_o\tanh(c^{<t>})\\
+&=0.60\tanh(1.08)\\
+&\approx0.60(0.793)\\
+&\approx0.476.
+\end{aligned}
+$$
+
+Therefore
+
+$$
+\boxed{a^{<t>}\approx0.476}.
+$$
+
+The cell can store more than the hidden state exposes.
+
+```python
+gamma_o_b7 = 0.60  # set the output gate from the worked example.
+c_t_b7 = 1.08  # set the cell state from the worked example.
+tanh_c_b7 = np.tanh(c_t_b7)  # squash the cell state before exposure.
+a_t_b7 = gamma_o_b7 * tanh_c_b7  # apply the output gate to reveal hidden state.
+print("hidden state:", round(float(a_t_b7), 3))  # show the boxed hidden state.
+```
+
+▶ What you'll see: the exposed hidden state is 0.476.
+
+👀 Takeaway: the output gate controls how much stored cell information becomes visible.
+
+```python
+gamma_o_b7 = 0.60  # set the output gate from the worked example.
+c_t_b7 = 1.08  # set the cell state from the worked example.
+tanh_c_b7 = np.tanh(c_t_b7)  # rebuild the squashed cell state.
+a_t_b7 = gamma_o_b7 * tanh_c_b7  # rebuild the exposed hidden state.
+plt.bar(["tanh(c)", "Γo*tanh(c)"], [tanh_c_b7, a_t_b7])  # compare stored signal and exposed signal.
+plt.title("B7: output gate exposure")  # title the micro-visualization.
+plt.ylabel("value")  # label the vertical axis.
+plt.show()  # display the figure.
+```
+
+▶ What you'll see: the output gate lowers the visible hidden-state value below tanh(c).
+
+#### B8. Clip one exploding scalar gradient
+
+Use raw gradient $g=7.5$ and clipping threshold $C=2.0$.
+
+Because $|g|>C$, clip to the threshold while preserving the sign:
+
+$$
+\begin{aligned}
+g_{\text{clipped}}
+&=C\frac{g}{|g|}\\
+&=2.0\frac{7.5}{7.5}\\
+&=2.0.
+\end{aligned}
+$$
+
+Thus
+
+$$
+\boxed{g_{\text{clipped}}=2.0}.
+$$
+
+Clipping limits the update size without changing the descent direction in one dimension.
+
+```python
+g_b8 = 7.5  # set the raw gradient from the worked example.
+C_b8 = 2.0  # set the clipping threshold from the worked example.
+g_clipped_b8 = C_b8 * g_b8 / abs(g_b8) if abs(g_b8) > C_b8 else g_b8  # clip only if the gradient exceeds the threshold.
+print("clipped gradient:", round(float(g_clipped_b8), 1))  # show the boxed clipped gradient.
+```
+
+▶ What you'll see: the clipped gradient is 2.0.
+
+👀 Takeaway: clipping caps magnitude while preserving the gradient sign.
+
+#### B9. Count vanilla RNN parameters
+
+Use input size $n_x=4$, hidden size $n_a=3$, and output size $n_y=2$.
+
+The recurrent cell has
+
+$$
+W_{ax}: n_a n_x = 3\cdot4=12,
+\qquad
+W_{aa}: n_a n_a = 3\cdot3=9,
+\qquad
+b_a: n_a=3.
+$$
+
+The output layer has
+
+$$
+W_{ya}: n_y n_a = 2\cdot3=6,
+\qquad
+b_y: n_y=2.
+$$
+
+Therefore
+
+$$
+\begin{aligned}
+\text{total parameters}&=12+9+3+6+2\\
+&=32.
+\end{aligned}
+$$
+
+So
+
+$$
+\boxed{32\text{ trainable parameters}}.
+$$
+
+The same 32 parameters are reused at every timestep.
+
+```python
+n_x_b9 = 4  # set the input size from the worked example.
+n_a_b9 = 3  # set the hidden size from the worked example.
+n_y_b9 = 2  # set the output size from the worked example.
+w_ax_count_b9 = n_a_b9 * n_x_b9  # count input-to-hidden weights.
+w_aa_count_b9 = n_a_b9 * n_a_b9  # count hidden-to-hidden weights.
+b_a_count_b9 = n_a_b9  # count hidden biases.
+w_ya_count_b9 = n_y_b9 * n_a_b9  # count hidden-to-output weights.
+b_y_count_b9 = n_y_b9  # count output biases.
+total_params_b9 = w_ax_count_b9 + w_aa_count_b9 + b_a_count_b9 + w_ya_count_b9 + b_y_count_b9  # add every trainable parameter.
+print("trainable parameters:", total_params_b9)  # show the boxed count.
+```
+
+▶ What you'll see: the vanilla RNN has 32 trainable parameters.
+
+👀 Takeaway: recurrent weights are counted once because they are shared across timesteps.
+
+#### B10. One output probability from a hidden state
+
+Use hidden state $a^{<t>}=0.50$, output weight $w_{ya}=1.20$, and output bias $b_y=-0.40$.
+
+$$
+\begin{aligned}
+z_y^{<t>}
+&=w_{ya}a^{<t>}+b_y\\
+&=(1.20)(0.50)-0.40\\
+&=0.20.
+\end{aligned}
+$$
+
+Then
+
+$$
+\begin{aligned}
+\widehat y^{<t>}
+&=\sigma(0.20)\\
+&=\frac{1}{1+e^{-0.20}}\\
+&\approx0.550.
+\end{aligned}
+$$
+
+Thus
+
+$$
+\boxed{\widehat y^{<t>}\approx0.550}.
+$$
+
+A hidden state becomes a prediction only after an output layer.
+
+```python
+a_t_b10 = 0.50  # set the hidden state from the worked example.
+w_ya_b10 = 1.20  # set the output weight from the worked example.
+b_y_b10 = -0.40  # set the output bias from the worked example.
+z_y_b10 = w_ya_b10 * a_t_b10 + b_y_b10  # compute the output logit.
+y_hat_b10 = 1 / (1 + np.exp(-z_y_b10))  # convert the logit to a probability.
+print(f"output probability: {y_hat_b10:.3f}")  # show the boxed probability.
+```
+
+▶ What you'll see: the output probability is 0.550.
+
+👀 Takeaway: output layers translate hidden states into task predictions.
+
+```python
+a_t_b10 = 0.50  # set the hidden state from the worked example.
+w_ya_b10 = 1.20  # set the output weight from the worked example.
+b_y_b10 = -0.40  # set the output bias from the worked example.
+z_y_b10 = w_ya_b10 * a_t_b10 + b_y_b10  # rebuild the output logit.
+y_hat_b10 = 1 / (1 + np.exp(-z_y_b10))  # rebuild the output probability.
+z_values_b10 = np.linspace(-4, 4, 200)  # create logits for a probability curve.
+prob_values_b10 = 1 / (1 + np.exp(-z_values_b10))  # convert logits to probabilities.
+plt.plot(z_values_b10, prob_values_b10)  # draw the sigmoid output curve.
+plt.scatter([z_y_b10], [y_hat_b10], color="red")  # mark the worked-example prediction.
+plt.title("B10: hidden state to probability")  # title the micro-visualization.
+plt.xlabel("output logit")  # label the horizontal axis.
+plt.ylabel("probability")  # label the vertical axis.
+plt.show()  # display the figure.
+```
+
+▶ What you'll see: the example logit 0.20 maps to a probability slightly above 0.5.
 
 ### 🟡 Easy
 
@@ -393,124 +956,6 @@ $$
 $$
 \boxed{c^{<t>}\approx0.5275},\qquad \boxed{a^{<t>}\approx0.2783}.
 $$
-
-#### Setup
-
-```python
-import numpy as np  # Import NumPy for arrays, linear algebra, and deterministic synthetic data.
-import matplotlib.pyplot as plt  # Import Matplotlib for all lesson visualizations.
-
-np.random.seed(23)  # Seed NumPy so all random examples are reproducible.
-
-plt.rcParams["figure.figsize"] = (8, 4)  # Use consistent figure sizing for notebook readability.
-plt.rcParams["axes.grid"] = True  # Add grids so trends and thresholds are easy to see.
-plt.rcParams["font.size"] = 11  # Set a readable font size for axes and legends.
-
-
-def sigmoid(z):  # Define the sigmoid used for gates and binary outputs.
-    z = np.asarray(z)  # Convert scalars or lists into arrays for uniform handling.
-    return 1.0 / (1.0 + np.exp(-np.clip(z, -60.0, 60.0)))  # Clip logits to avoid numerical overflow.
-
-
-def tanh(z):  # Define a tanh wrapper matching the mathematical notation.
-    return np.tanh(z)  # Call NumPy's stable hyperbolic tangent.
-
-
-def bce(y_true, y_prob):  # Define binary cross-entropy for toy classifiers.
-    eps = 1e-9  # Choose a tiny value to avoid log zero.
-    y_prob = np.clip(y_prob, eps, 1.0 - eps)  # Keep probabilities strictly inside (0, 1).
-    return -(y_true * np.log(y_prob) + (1.0 - y_true) * np.log(1.0 - y_prob))  # Return elementwise BCE.
-
-
-def softmax(logits):  # Define a stable softmax for character generation.
-    shifted = logits - np.max(logits)  # Subtract the maximum logit for numerical stability.
-    exp_values = np.exp(shifted)  # Exponentiate shifted logits.
-    return exp_values / np.sum(exp_values)  # Normalize exponentials into probabilities.
-```
-
-#### Data — swappable sources
-
-```python
-DATA_SOURCE = "copy"  # Options used below include "copy", "parity", "sentiment", "characters", and "tagging".
-
-
-def make_copy_data(n_samples=120, seq_len=30):  # Create delayed-copy examples that stress long memory.
-    X = np.zeros((n_samples, seq_len, 1))  # Allocate scalar input sequences.
-    y = np.zeros(n_samples)  # Allocate one binary target per sequence.
-    for i in range(n_samples):  # Fill each sequence independently.
-        bit = np.random.randint(0, 2)  # Sample the bit that must be remembered.
-        X[i, 0, 0] = bit  # Put the important bit at the first timestep.
-        X[i, -1, 0] = 1.0  # Put a marker at the final timestep.
-        y[i] = bit  # Make the label equal to the first bit.
-    return X, y  # Return inputs and targets.
-
-
-def make_parity_data(n_samples=120, seq_len=12):  # Create parity examples for sequence classification.
-    X = np.random.randint(0, 2, size=(n_samples, seq_len, 1)).astype(float)  # Draw binary sequences.
-    y = (X.sum(axis=(1, 2)) % 2).astype(float)  # Label odd sums as one and even sums as zero.
-    return X, y  # Return inputs and parity labels.
-
-
-def make_sentiment_data():  # Create a tiny offline sentiment corpus.
-    sentences = ["good clear useful", "great helpful", "love simple", "bad confusing", "terrible slow", "broken unclear", "good but slow", "bad but helpful"]  # Store short labeled phrases.
-    labels = np.array([1, 1, 1, 0, 0, 0, 1, 0], dtype=float)  # Encode positive as one and negative as zero.
-    vocab = sorted({word for sentence in sentences for word in sentence.split()})  # Build a sorted vocabulary.
-    word_to_id = {word: idx for idx, word in enumerate(vocab)}  # Map each word to a stable index.
-    max_len = max(len(sentence.split()) for sentence in sentences)  # Compute the padded sequence length.
-    X = np.zeros((len(sentences), max_len, len(vocab)))  # Allocate one-hot token sequences.
-    for i, sentence in enumerate(sentences):  # Convert every sentence to one-hot rows.
-        for t, word in enumerate(sentence.split()):  # Visit words in order.
-            X[i, t, word_to_id[word]] = 1.0  # Mark the active word coordinate.
-    return X, labels, vocab, sentences  # Return arrays and metadata.
-
-
-def make_character_data(text="hello recurrent neural networks learn letters ", seq_len=8):  # Create next-character windows.
-    chars = sorted(set(text))  # Build the character vocabulary.
-    char_to_id = {ch: idx for idx, ch in enumerate(chars)}  # Map characters to integer ids.
-    X = []  # Prepare a list of encoded windows.
-    y = []  # Prepare a list of next-character labels.
-    for start in range(len(text) - seq_len):  # Slide a fixed window through text.
-        window = text[start:start + seq_len]  # Extract an input window.
-        target = text[start + seq_len]  # Extract the next character after the window.
-        encoded = np.zeros((seq_len, len(chars)))  # Allocate one-hot rows for the window.
-        for t, ch in enumerate(window):  # Encode each character in the window.
-            encoded[t, char_to_id[ch]] = 1.0  # Mark the character coordinate.
-        X.append(encoded)  # Save the encoded input.
-        y.append(char_to_id[target])  # Save the next-character id.
-    return np.array(X), np.array(y), chars, char_to_id  # Return arrays and vocabulary.
-
-
-def make_tagging_data():  # Create a toy tagging corpus where future context helps.
-    sentences = [["bank", "approves", "loan"], ["river", "bank", "floods"], ["apple", "releases", "phone"], ["green", "apple", "falls"]]  # Store token sequences.
-    labels = [["ORG", "OTHER", "OTHER"], ["OTHER", "PLACE", "OTHER"], ["ORG", "OTHER", "OTHER"], ["OTHER", "FRUIT", "OTHER"]]  # Store token labels.
-    vocab = sorted({token for sentence in sentences for token in sentence})  # Build token vocabulary.
-    tagset = sorted({tag for row in labels for tag in row})  # Build tag vocabulary.
-    token_to_id = {token: idx for idx, token in enumerate(vocab)}  # Map tokens to indices.
-    tag_to_id = {tag: idx for idx, tag in enumerate(tagset)}  # Map tags to indices.
-    X = np.zeros((len(sentences), 3, len(vocab)))  # Allocate one-hot token arrays.
-    Y = np.zeros((len(sentences), 3), dtype=int)  # Allocate integer tag labels.
-    for i, sentence in enumerate(sentences):  # Encode each sentence.
-        for t, token in enumerate(sentence):  # Encode each token position.
-            X[i, t, token_to_id[token]] = 1.0  # Set token one-hot coordinate.
-            Y[i, t] = tag_to_id[labels[i][t]]  # Store the tag id.
-    return X, Y, vocab, tagset, sentences, labels  # Return data and metadata.
-
-copy_X, copy_y = make_copy_data()  # Materialize delayed-copy data.
-parity_X, parity_y = make_parity_data()  # Materialize parity data.
-sent_X, sent_y, sent_vocab, sent_sentences = make_sentiment_data()  # Materialize sentiment data.
-char_X, char_y, char_vocab, char_to_id = make_character_data()  # Materialize character data.
-tag_X, tag_Y, tag_vocab, tagset, tag_sentences, tag_labels = make_tagging_data()  # Materialize tagging data.
-
-print("copy", copy_X.shape, copy_y.shape)  # Show delayed-copy dimensions.
-print("parity", parity_X.shape, parity_y.shape)  # Show parity dimensions.
-print("sentiment", sent_X.shape, sent_vocab)  # Show sentiment dimensions and vocabulary.
-print("characters", char_X.shape, char_vocab)  # Show character dimensions and vocabulary.
-print("tagging", tag_X.shape, tagset)  # Show tagging dimensions and tag set.
-```
-
-▶ What you'll see: all datasets are small CPU-friendly arrays. The delayed-copy source intentionally stresses a vanilla RNN because the decisive bit appears at the first timestep but is predicted at the final timestep.
-
-👀 Every input has shape `(examples, timesteps, features)`.
 
 #### E4. Sequence-shape “hello world”
 

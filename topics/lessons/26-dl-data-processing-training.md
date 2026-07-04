@@ -390,6 +390,165 @@ plt.show()  # render the plot.
 
 ▶ What you'll see: the weight moves left because the gradient is positive and gradient descent steps in the negative-gradient direction.
 
+
+#### B4. Min-max normalize one array
+
+**Goal.** Rescale a tiny feature array into the $[0,1]$ range.
+
+```python
+x_b4 = np.array([2.0, 4.0, 6.0, 10.0])  # create a small feature vector with a visible minimum and maximum.
+x_min_b4 = x_b4.min()  # compute the minimum value used as the new zero point.
+x_max_b4 = x_b4.max()  # compute the maximum value used as the new one point.
+x_scaled_b4 = (x_b4 - x_min_b4) / (x_max_b4 - x_min_b4)  # apply min-max normalization.
+print("raw values:", x_b4)  # show the input values.
+print("min, max:", x_min_b4, x_max_b4)  # show the fitted scaling endpoints.
+print("scaled values:", np.round(x_scaled_b4, 3))  # show the transformed values.
+plt.figure(figsize=(6.4, 2.2))  # create a compact dot-strip comparison.
+plt.scatter(x_b4, np.zeros_like(x_b4), s=90, label="raw")  # plot raw values.
+plt.scatter(x_scaled_b4, np.ones_like(x_scaled_b4), s=90, label="min-max")  # plot scaled values.
+plt.yticks([0, 1], ["raw", "scaled"])  # label strips.
+plt.title("B4: min-max normalization")  # title the warm-up.
+plt.legend()  # show strip labels.
+plt.show()  # render the comparison.
+```
+
+▶ What you'll see: the smallest value becomes 0, the largest becomes 1, and intermediate values keep their order.
+
+#### B5. One-hot encode three labels
+
+**Goal.** Convert integer class labels into one-hot rows for a multiclass loss.
+
+```python
+labels_b5 = np.array([2, 0, 1])  # store three class labels.
+num_classes_b5 = 3  # define the number of possible classes.
+one_hot_b5 = np.eye(num_classes_b5)[labels_b5]  # select one identity-matrix row per label.
+print("labels:", labels_b5)  # print integer labels.
+print("one-hot rows:\n", one_hot_b5.astype(int))  # print the encoded target matrix.
+plt.figure(figsize=(4.0, 3.0))  # create a small matrix plot.
+plt.imshow(one_hot_b5, cmap="Blues", vmin=0, vmax=1)  # display zeros and ones as colors.
+plt.xlabel("class")  # label class axis.
+plt.ylabel("example")  # label example axis.
+plt.title("B5: one-hot encoded labels")  # title the encoding.
+plt.colorbar()  # show the 0-to-1 scale.
+plt.show()  # render the matrix.
+```
+
+▶ What you'll see: each example has exactly one 1 in the column for its class.
+
+#### B6. Shuffle then batch indices
+
+**Goal.** Shuffle six example indices and split them into mini-batches of size two.
+
+```python
+indices_b6 = np.arange(6)  # create six example indices.
+shuffled_b6 = RNG.permutation(indices_b6)  # shuffle indices before batching.
+batches_b6 = [shuffled_b6[start:start + 2] for start in range(0, len(shuffled_b6), 2)]  # cut the shuffled order into batches.
+print("original indices:", indices_b6)  # show the dataset order.
+print("shuffled indices:", shuffled_b6)  # show the training order for this epoch.
+print("mini-batches:", batches_b6)  # show each batch of indices.
+plt.figure(figsize=(6.4, 2.0))  # create a timeline view.
+plt.scatter(np.arange(len(shuffled_b6)), shuffled_b6, s=100)  # plot which example appears at each training position.
+plt.xlabel("position in epoch")  # label the shuffled order axis.
+plt.ylabel("example index")  # label the example id axis.
+plt.title("B6: shuffled mini-batch order")  # title the batching primitive.
+plt.show()  # render the timeline.
+```
+
+▶ What you'll see: batching happens after shuffling, so neighboring examples in a batch are not just original neighbors.
+
+#### B7. One mini-batch mean gradient
+
+**Goal.** Average three per-example gradients into one mini-batch gradient.
+
+```python
+grads_b7 = np.array([0.4, 1.0, -0.2])  # store scalar gradients from three examples in a mini-batch.
+mean_grad_b7 = grads_b7.mean()  # average per-example gradients to get the batch gradient.
+print("per-example gradients:", grads_b7)  # show the individual contributions.
+print("mini-batch mean gradient:", round(mean_grad_b7, 3))  # show the gradient used for the update.
+plt.figure(figsize=(6.4, 3.0))  # create a small bar chart.
+plt.bar(["ex 1", "ex 2", "ex 3"], grads_b7, label="per-example")  # plot individual gradients.
+plt.axhline(mean_grad_b7, color="black", linestyle="--", label="batch mean")  # mark the average gradient.
+plt.ylabel("gradient")  # label the vertical axis.
+plt.title("B7: average gradients within a mini-batch")  # title the primitive.
+plt.legend()  # show the mean line label.
+plt.show()  # render the chart.
+```
+
+▶ What you'll see: the negative example gradient partly cancels the positive ones before the update is applied.
+
+#### B8. Horizontal flip a tiny image
+
+**Goal.** Apply one label-preserving horizontal flip to a small image-like array.
+
+```python
+image_b8 = np.array([[0.0, 0.2, 0.8], [0.1, 0.5, 1.0], [0.0, 0.3, 0.7]])  # create one tiny grayscale image.
+flipped_b8 = image_b8[:, ::-1]  # reverse the width axis to make a horizontal flip.
+print("original:\n", image_b8)  # print the original pixels.
+print("flipped:\n", flipped_b8)  # print the flipped pixels.
+fig, axes = plt.subplots(1, 2, figsize=(5.0, 2.5))  # create before-after image axes.
+axes[0].imshow(image_b8, cmap="gray", vmin=0, vmax=1)  # show original image.
+axes[0].set_title("original")  # label original.
+axes[1].imshow(flipped_b8, cmap="gray", vmin=0, vmax=1)  # show flipped image.
+axes[1].set_title("horizontal flip")  # label augmentation.
+for ax in axes:  # clean both image axes.
+    ax.axis("off")  # hide ticks.
+plt.suptitle("B8: one image augmentation")  # title the figure.
+plt.show()  # render the before-after images.
+```
+
+▶ What you'll see: columns swap left-to-right while pixel intensities are unchanged.
+
+#### B9. Batch-normalize one mini-batch
+
+**Goal.** Normalize one mini-batch of activations using its batch mean and variance.
+
+```python
+batch_b9 = np.array([1.0, 2.0, 5.0, 6.0])  # create one mini-batch of scalar activations.
+mu_b9 = batch_b9.mean()  # compute the batch mean.
+var_b9 = batch_b9.var()  # compute the batch variance.
+bn_b9 = (batch_b9 - mu_b9) / np.sqrt(var_b9 + EPS)  # apply the batch-normalization centering and scaling step.
+print("batch:", batch_b9)  # show raw activations.
+print("mean, variance:", round(mu_b9, 3), round(var_b9, 3))  # show batch statistics.
+print("normalized:", np.round(bn_b9, 3))  # show normalized activations.
+print("normalized mean/std:", round(bn_b9.mean(), 3), round(bn_b9.std(), 3))  # verify the result.
+plt.figure(figsize=(6.4, 3.0))  # create a before-after bar chart.
+plt.bar(np.arange(len(batch_b9)) - 0.18, batch_b9, width=0.36, label="raw")  # plot raw activations.
+plt.bar(np.arange(len(batch_b9)) + 0.18, bn_b9, width=0.36, label="batch norm")  # plot normalized activations.
+plt.title("B9: batch normalization primitive")  # title the warm-up.
+plt.legend()  # show labels.
+plt.show()  # render the bars.
+```
+
+▶ What you'll see: normalized activations have mean near zero and standard deviation near one.
+
+#### B10. Learning-rate times gradient update
+
+**Goal.** Compute the actual parameter change produced by a learning rate and a gradient.
+
+```python
+w_b10 = -0.5  # choose one scalar parameter.
+lr_b10 = 0.05  # choose a learning rate.
+grad_b10 = -3.0  # choose a scalar gradient.
+step_b10 = lr_b10 * grad_b10  # compute the signed amount subtracted from the weight.
+w_new_b10 = w_b10 - step_b10  # apply the gradient-descent update.
+print(f"old weight = {w_b10:.2f}")  # print the starting value.
+print(f"lr * gradient = {step_b10:.2f}")  # print the signed update term.
+print(f"new weight = {w_new_b10:.2f}")  # print the updated value.
+plt.figure(figsize=(6.4, 1.8))  # create a number-line plot.
+plt.hlines(0.0, -0.7, -0.2, color="gray", linewidth=2.0)  # draw the relevant weight interval.
+plt.scatter([w_b10], [0.0], s=120, label="before")  # mark the original weight.
+plt.scatter([w_new_b10], [0.0], s=120, label="after")  # mark the new weight.
+plt.annotate("subtract lr·grad", xy=(w_new_b10, 0.0), xytext=(w_b10, 0.08), arrowprops={"arrowstyle": "->"})  # draw the update arrow.
+plt.yticks([])  # hide vertical ticks.
+plt.xlabel("weight value")  # label the number line.
+plt.title("B10: learning-rate × gradient update")  # title the primitive.
+plt.legend()  # show before/after labels.
+plt.show()  # render the number line.
+```
+
+▶ What you'll see: because the gradient is negative, subtracting learning-rate times gradient moves the weight upward.
+
+
 ### 🟡 Easy Examples
 
 #### E1. Visualize image augmentations

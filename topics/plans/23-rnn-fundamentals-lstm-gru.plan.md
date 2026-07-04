@@ -25,12 +25,19 @@ forget, update, and reveal. Hook: "a sentence is not a bag of words — order an
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Compute one tanh RNN hidden-state update | toy scalar $x^{<t>}$, $a^{<t-1>}$, weights, and bias | printed affine value and tanh output | ~2 |
 | B2 | Compute one sigmoid gate value | toy scalar gate inputs $x^{<t>}$ and $a^{<t-1>}$ | printed logit and gate value on sigmoid curve | ~2 |
-| B3 | Clip one exploding scalar gradient | toy gradient value and clipping threshold | printed raw vs clipped gradient bar | ~2 |
+| B3 | Unroll a length-3 scalar RNN | tiny numeric sequence `[1, 0, 1]` | printed timestep-by-timestep hidden states | ~3 |
+| B4 | Multiply a forget gate by previous cell memory | toy vector forget gate and previous cell state | printed elementwise product | ~2 |
+| B5 | Compute one GRU update-gate blend | toy scalar previous memory, candidate, and update gate | printed blend terms and new state | ~2 |
+| B6 | Compute one LSTM cell-state update | toy scalar forget/update gates, old cell, and candidate | printed old-memory and new-candidate contributions | ~2 |
+| B7 | Apply an LSTM output gate to cell memory | toy scalar output gate and cell state | printed tanh cell value and hidden state | ~2 |
+| B8 | Clip one exploding scalar gradient | toy gradient value and clipping threshold | printed raw vs clipped gradient | ~2 |
+| B9 | Count vanilla RNN parameters | toy input, hidden, and output sizes | printed parameter formula and total | ~2 |
+| B10 | Compute one output probability from a hidden state | toy scalar hidden state, output weight, and bias | printed output logit and sigmoid probability | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

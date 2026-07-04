@@ -18,12 +18,19 @@ Unsupervised learning discovers latent structure without labels: k-means assigns
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Compute squared distance from one point to one centroid | toy 2-D point and centroid | printed coordinate differences | ~2 |
 | B2 | Assign one point to the nearest of two centroids | toy 2-D point and two centroids | tiny point-and-centroids plot | ~3 |
 | B3 | Center a tiny matrix column by column for PCA | tiny 3×2 matrix | printed mean and centered matrix | ~3 |
+| B4 | Recompute one centroid mean | toy assigned 2-D points | printed mean coordinates | ~2 |
+| B5 | Compute total inertia for assigned points | toy points, labels, centroids | printed per-point costs | ~3 |
+| B6 | Compute covariance of two centered features | tiny centered 3×2 matrix | printed covariance matrix | ~2 |
+| B7 | Project one point onto one axis | toy centered point and unit axis | printed projected coordinate | ~2 |
+| B8 | Compute variance explained by one component | toy eigenvalues | printed variance ratios | ~2 |
+| B9 | Run one k-means assignment-update iteration | four toy 2-D points | printed labels and updated centers | ~3 |
+| B10 | Build a distance matrix for three points | three toy 2-D points | printed pairwise distance table | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
@@ -45,7 +52,7 @@ Unsupervised learning discovers latent structure without labels: k-means assigns
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/31-unsupervised-learning-ai.ipynb
-- **Est. cell count:** ~82 (💻 topic → all 13 examples (3 basics + 5 easy + 5 advanced) coded with granular build↔see loops)
+- **Est. cell count:** ~110 (💻 topic → all 20 examples (10 basics + 5 easy + 5 advanced) coded with granular build↔see loops)
 - **Key libraries:** numpy, pandas, matplotlib, scikit-learn (`make_blobs`, `make_moons`, `load_digits`, `load_wine`, `KMeans`, `PCA`, `StandardScaler`, `silhouette_score`), ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `moons` in A1 — demonstrates that k-means' squared-distance/Voronoi geometry fails on non-convex crescent clusters.

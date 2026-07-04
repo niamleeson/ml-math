@@ -224,134 +224,6 @@ ICM is deterministic and can get trapped in local optima. Gibbs is stochastic an
 
 ## 3. Worked Examples
 
-### 🟢 Basics (warm-up)
-
-#### B1. Check one unary constraint on one assignment
-
-Goal: evaluate a single unary constraint before combining it with any other factor.
-
-Let
-
-$$
-X\in\{0,1,2\},
-\qquad
-f(X)=[X=1].
-$$
-
-Check the assignment $X=1$:
-
-$$
-f(1)=[1=1]=1.
-$$
-
-So the unary constraint is satisfied:
-
-$$
-\boxed{X=1\text{ passes the constraint}}.
-$$
-
-Check the assignment $X=2$:
-
-$$
-f(2)=[2=1]=0.
-$$
-
-So the unary constraint is violated:
-
-$$
-\boxed{X=2\text{ fails the constraint}}.
-$$
-
-#### B2. List the remaining domain after one assignment
-
-Let
-
-$$
-X,Y\in\{1,2,3\},
-\qquad
-c(X,Y)=[X<Y].
-$$
-
-Suppose we assign
-
-$$
-X=2.
-$$
-
-The remaining legal domain for $Y$ is
-
-$$
-\operatorname{Domain}'(Y)=\{y\in\{1,2,3\}:2<y\}.
-$$
-
-Check every value:
-
-$$
-y=1:\ 2<1\text{ is false},
-$$
-
-$$
-y=2:\ 2<2\text{ is false},
-$$
-
-$$
-y=3:\ 2<3\text{ is true}.
-$$
-
-Therefore
-
-$$
-\operatorname{Domain}'(Y)=\{3\}.
-$$
-
-The one-step lookahead conclusion is
-
-$$
-\boxed{X=2\Longrightarrow Y\text{ must be }3}.
-$$
-
-#### B3. Count conflicts in one toy coloring
-
-Consider a path graph
-
-$$
-A-B-C
-$$
-
-with the color assignment
-
-$$
-A=\text{red},\qquad B=\text{red},\qquad C=\text{blue}.
-$$
-
-The CSP constraint on each edge is “neighboring vertices must have different colors.” For edge $(A,B)$,
-
-$$
-A\ne B
-\quad\Longleftrightarrow\quad
-\text{red}\ne\text{red},
-$$
-
-which is false, so this edge contributes one conflict. For edge $(B,C)$,
-
-$$
-B\ne C
-\quad\Longleftrightarrow\quad
-\text{red}\ne\text{blue},
-$$
-
-which is true, so this edge contributes zero conflicts. Hence
-
-$$
-\#\text{conflicts}=1+0=1.
-$$
-
-The assignment is not consistent because at least one constraint is violated:
-
-$$
-\boxed{\text{one violated edge: }(A,B)}.
-$$
-
 ### Setup
 
 The remaining coded examples are designed to run top-to-bottom as a single notebook section on a CPU. They use a small shared CSP toolkit written from scratch. Optional packages are guarded so the examples still run if a package is unavailable.
@@ -416,6 +288,553 @@ def count_conflicts(edges, assignment):  # Count violated map-coloring edges in 
 def copy_domains(domains):  # Copy a domain dictionary without aliasing mutable sets.
     return {var: set(values) for var, values in domains.items()}  # Return a fresh set for every variable.
 ```
+
+
+### 🟢 Basics (warm-up)
+
+#### B1. Check one unary constraint on one assignment
+
+Goal: evaluate a single unary constraint before combining it with any other factor.
+
+Let
+
+$$
+X\in\{0,1,2\},
+\qquad
+f(X)=[X=1].
+$$
+
+Check the assignment $X=1$:
+
+$$
+f(1)=[1=1]=1.
+$$
+
+So the unary constraint is satisfied:
+
+$$
+\boxed{X=1\text{ passes the constraint}}.
+$$
+
+Check the assignment $X=2$:
+
+$$
+f(2)=[2=1]=0.
+$$
+
+So the unary constraint is violated:
+
+$$
+\boxed{X=2\text{ fails the constraint}}.
+$$
+
+Interpretation: a unary factor is a local filter that accepts $X=1$ and rejects every other value.
+
+```python
+assignment_b1 = {"X": 1}  # Build the first complete one-variable assignment.
+satisfied_b1 = assignment_b1["X"] == 1  # See whether the unary constraint f(X)=[X=1] is satisfied.
+print("X=1 passes unary constraint:", satisfied_b1)  # Print the same satisfied conclusion as the hand calculation.
+assignment_alt_b1 = {"X": 2}  # Build the second one-variable assignment from the pen-and-paper check.
+satisfied_alt_b1 = assignment_alt_b1["X"] == 1  # See whether X=2 satisfies the same unary constraint.
+print("X=2 passes unary constraint:", satisfied_alt_b1)  # Print the same failed conclusion as the hand calculation.
+```
+
+▶ What you'll see: $X=1$ prints `True`, while $X=2$ prints `False`.
+
+👀 Takeaway: unary constraints can be tested by evaluating one variable value at a time.
+
+#### B2. List the remaining domain after one assignment
+
+Goal: compute the legal values left for one neighbor after a variable is fixed.
+
+Let
+
+$$
+X,Y\in\{1,2,3\},
+\qquad
+c(X,Y)=[X<Y].
+$$
+
+Suppose we assign
+
+$$
+X=2.
+$$
+
+The remaining legal domain for $Y$ is
+
+$$
+\operatorname{Domain}'(Y)=\{y\in\{1,2,3\}:2<y\}.
+$$
+
+Check every value:
+
+$$
+y=1:\ 2<1\text{ is false},
+$$
+
+$$
+y=2:\ 2<2\text{ is false},
+$$
+
+$$
+y=3:\ 2<3\text{ is true}.
+$$
+
+Therefore
+
+$$
+\operatorname{Domain}'(Y)=\{3\}.
+$$
+
+The one-step lookahead conclusion is
+
+$$
+\boxed{X=2\Longrightarrow Y\text{ must be }3}.
+$$
+
+Interpretation: fixing $X=2$ prunes all $Y$ values except the one with support under $X<Y$.
+
+```python
+x_value_b2 = 2  # Build the assigned value X=2.
+y_domain_b2 = [1, 2, 3]  # Build the original domain for Y.
+remaining_y_b2 = [y for y in y_domain_b2 if x_value_b2 < y]  # See which Y values satisfy 2<Y.
+print("remaining Y domain after X=2:", remaining_y_b2)  # Print the same remaining domain {3} as the hand calculation.
+```
+
+▶ What you'll see: the remaining domain for $Y$ is `[3]`.
+
+👀 Takeaway: one assignment can immediately shrink a neighboring domain.
+
+```python
+y_values_b2 = np.array([1, 2, 3])  # Build numeric Y values for a tiny support picture.
+support_b2 = y_values_b2 > 2  # See which values are legal after assigning X=2.
+plt.figure(figsize=(4, 2.5))  # Build a compact figure for the domain table.
+plt.bar([str(y) for y in y_values_b2], support_b2.astype(int), color=["lightgray" if not ok else "tab:green" for ok in support_b2])  # See illegal values as gray bars and the supported value as green.
+plt.ylim(0, 1.2)  # Keep the boolean scale readable.
+plt.ylabel("legal?")  # Label the vertical axis as a legality indicator.
+plt.xlabel("candidate Y")  # Label the horizontal axis with candidate Y values.
+plt.title("B2: Remaining Y domain after X=2")  # Title the micro-visualization.
+plt.show()  # Display the figure.
+```
+
+▶ What you'll see: only the bar for $Y=3$ is marked legal.
+
+#### B3. Count conflicts in one toy coloring
+
+Goal: count how many binary edge constraints are violated by a complete assignment.
+
+Consider a path graph
+
+$$
+A-B-C
+$$
+
+with the color assignment
+
+$$
+A=\text{red},\qquad B=\text{red},\qquad C=\text{blue}.
+$$
+
+The CSP constraint on each edge is “neighboring vertices must have different colors.” For edge $(A,B)$,
+
+$$
+A\ne B
+\quad\Longleftrightarrow\quad
+\text{red}\ne\text{red},
+$$
+
+which is false, so this edge contributes one conflict. For edge $(B,C)$,
+
+$$
+B\ne C
+\quad\Longleftrightarrow\quad
+\text{red}\ne\text{blue},
+$$
+
+which is true, so this edge contributes zero conflicts. Hence
+
+$$
+\#\text{conflicts}=1+0=1.
+$$
+
+The assignment is not consistent because at least one constraint is violated:
+
+$$
+\boxed{\text{one violated edge: }(A,B)}.
+$$
+
+Interpretation: a coloring is inconsistent as soon as any edge has equal endpoint colors.
+
+```python
+assignment_b3 = {"A": "red", "B": "red", "C": "blue"}  # Build the same complete coloring from the hand example.
+edges_b3 = [("A", "B"), ("B", "C")]  # Build the two path constraints A-B-C.
+conflicts_b3 = sum(assignment_b3[u] == assignment_b3[v] for u, v in edges_b3)  # See how many edges violate the not-equal constraint.
+print("number of violated edges:", conflicts_b3)  # Print the same conflict count 1 as the hand calculation.
+```
+
+▶ What you'll see: the conflict count is `1`.
+
+👀 Takeaway: consistency requires every edge constraint to pass, not just most of them.
+
+```python
+assignment_viz_b3 = {"A": "red", "B": "red", "C": "blue"}  # Build the same coloring inside this graph cell.
+edges_viz_b3 = [("A", "B"), ("B", "C")]  # Build the path constraints inside this graph cell.
+positions_b3 = {"A": (0, 0), "B": (1, 0), "C": (2, 0)}  # Build fixed positions for the path graph.
+colors_b3 = {"red": "tab:red", "blue": "tab:blue"}  # Build plotting colors for the assigned labels.
+plt.figure(figsize=(4, 2))  # Build a compact graph sketch.
+for u_b3, v_b3 in edges_viz_b3:  # Iterate over the two constraint edges.
+    x1_b3, y1_b3 = positions_b3[u_b3]  # Read the first endpoint position.
+    x2_b3, y2_b3 = positions_b3[v_b3]  # Read the second endpoint position.
+    edge_color_b3 = "tab:red" if assignment_viz_b3[u_b3] == assignment_viz_b3[v_b3] else "black"  # See violated edges in red.
+    plt.plot([x1_b3, x2_b3], [y1_b3, y2_b3], color=edge_color_b3, linewidth=3)  # Draw the constraint edge.
+for node_b3, (x_b3, y_b3) in positions_b3.items():  # Iterate over graph variables.
+    plt.scatter([x_b3], [y_b3], s=700, color=colors_b3[assignment_viz_b3[node_b3]], edgecolor="black", zorder=2)  # Draw the assigned variable color.
+    plt.text(x_b3, y_b3, node_b3, ha="center", va="center", color="white", weight="bold", zorder=3)  # Label each variable.
+plt.title("B3: One violated edge on A-B-C")  # Title the graph sketch.
+plt.axis("off")  # Hide coordinate axes for a graph view.
+plt.show()  # Display the figure.
+```
+
+▶ What you'll see: the $A$-$B$ edge is highlighted red because both endpoints are red.
+
+#### B4. Check one binary constraint on two values
+
+Goal: evaluate one edge constraint by itself.
+
+Let
+
+$$
+c(A,B)=[A\ne B].
+$$
+
+For
+
+$$
+A=\text{red},
+\qquad
+B=\text{blue},
+$$
+
+we get
+
+$$
+c(A,B)=[\text{red}\ne\text{blue}]=1.
+$$
+
+Therefore
+
+$$
+\boxed{(A=\text{red},B=\text{blue})\text{ satisfies this edge}}.
+$$
+
+Interpretation: this binary factor only inspects the two endpoint values on its own edge.
+
+```python
+assignment_b4 = {"A": "red", "B": "blue"}  # Build the two-variable assignment from the hand example.
+satisfied_b4 = assignment_b4["A"] != assignment_b4["B"]  # See whether the binary constraint A!=B is satisfied.
+print("constraint A!=B satisfied:", satisfied_b4)  # Print the same satisfied conclusion as the hand calculation.
+```
+
+▶ What you'll see: the constraint check prints `True`.
+
+👀 Takeaway: a binary constraint can be tested as soon as both of its variables are assigned.
+
+#### B5. Check whether one value is consistent with assigned neighbors
+
+Goal: test one candidate value against current assignments.
+
+Suppose
+
+$$
+A=\text{red}
+$$
+
+is already assigned and we test
+
+$$
+B=\text{red}.
+$$
+
+The edge constraint $A\ne B$ gives
+
+$$
+\text{red}\ne\text{red},
+$$
+
+which is false. Hence
+
+$$
+\boxed{B=\text{red}\text{ is rejected}}.
+$$
+
+Interpretation: candidate values are discarded immediately when they conflict with an assigned neighbor.
+
+```python
+partial_assignment_b5 = {"A": "red"}  # Build the current partial assignment with A fixed.
+candidate_b5 = "red"  # Build the candidate value being tested for B.
+consistent_b5 = partial_assignment_b5["A"] != candidate_b5  # See whether B=red is compatible with A=red.
+print("candidate B=red accepted:", consistent_b5)  # Print False, matching the hand rejection.
+```
+
+▶ What you'll see: the candidate acceptance check prints `False`.
+
+👀 Takeaway: backtracking prunes a branch before recursion when a new value violates an assigned edge.
+
+#### B6. Compute the degree of one variable
+
+Goal: count constraints touching a variable.
+
+In the graph
+
+$$
+A-B-C,
+\qquad
+B-D,
+$$
+
+variable $B$ has neighbors
+
+$$
+\operatorname{Nbr}(B)=\{A,C,D\}.
+$$
+
+Therefore
+
+$$
+\boxed{\deg(B)=3}.
+$$
+
+Interpretation: degree counts how many binary constraints can directly involve a variable during search.
+
+```python
+edges_b6 = [("A", "B"), ("B", "C"), ("B", "D")]  # Build the three constraints touching the small graph.
+neighbors_b6 = sorted(v if u == "B" else u for u, v in edges_b6 if u == "B" or v == "B")  # See all variables adjacent to B.
+degree_b6 = len(neighbors_b6)  # Count B's neighbors to get its degree.
+print("neighbors of B:", neighbors_b6)  # Print the same neighbor set {A,C,D} as the hand calculation.
+print("degree of B:", degree_b6)  # Print the same degree 3 as the hand calculation.
+```
+
+▶ What you'll see: $B$ has neighbors `['A', 'C', 'D']` and degree `3`.
+
+👀 Takeaway: high-degree variables participate in more constraints and can trigger more pruning.
+
+```python
+edges_viz_b6 = [("A", "B"), ("B", "C"), ("B", "D")]  # Build the graph edges inside this degree chart cell.
+nodes_b6 = ["A", "B", "C", "D"]  # Build the variable list for degree counting.
+degrees_b6 = [sum(node_b6 in edge_b6 for edge_b6 in edges_viz_b6) for node_b6 in nodes_b6]  # See each variable's number of incident constraints.
+plt.figure(figsize=(4, 2.5))  # Build a compact degree bar chart.
+plt.bar(nodes_b6, degrees_b6, color=["tab:orange" if node_b6 == "B" else "lightgray" for node_b6 in nodes_b6])  # Highlight B's degree among all variables.
+plt.ylabel("degree")  # Label the vertical axis.
+plt.title("B6: Variable degrees")  # Title the bar chart.
+plt.show()  # Display the figure.
+```
+
+▶ What you'll see: $B$ has the tallest bar at degree $3$.
+
+#### B7. Pick the most-constrained variable
+
+Goal: choose the unassigned variable with the smallest remaining domain.
+
+Suppose
+
+$$
+\operatorname{Domain}'(X)=\{1,2,3\},
+\quad
+\operatorname{Domain}'(Y)=\{2\},
+\quad
+\operatorname{Domain}'(Z)=\{1,3\}.
+$$
+
+The domain sizes are $3,1,2$, so the smallest domain is $Y$:
+
+$$
+\boxed{Y}.
+$$
+
+Interpretation: the most-constrained-variable heuristic chooses the variable closest to failure.
+
+```python
+domains_b7 = {"X": [1, 2, 3], "Y": [2], "Z": [1, 3]}  # Build the remaining domains from the hand example.
+sizes_b7 = {var_b7: len(values_b7) for var_b7, values_b7 in domains_b7.items()}  # See each domain size.
+choice_b7 = min(sizes_b7, key=sizes_b7.get)  # Pick the variable with the smallest remaining domain.
+print("domain sizes:", sizes_b7)  # Print the same sizes 3, 1, and 2 as the hand calculation.
+print("most-constrained variable:", choice_b7)  # Print Y, matching the boxed result.
+```
+
+▶ What you'll see: the heuristic picks `Y`.
+
+👀 Takeaway: selecting the smallest domain first tends to expose contradictions early.
+
+```python
+domains_viz_b7 = {"X": [1, 2, 3], "Y": [2], "Z": [1, 3]}  # Build the remaining domains inside this chart cell.
+sizes_viz_b7 = {var_b7: len(values_b7) for var_b7, values_b7 in domains_viz_b7.items()}  # See each domain size for plotting.
+choice_viz_b7 = min(sizes_viz_b7, key=sizes_viz_b7.get)  # Pick the minimum-domain variable inside this chart cell.
+variables_b7 = list(sizes_viz_b7.keys())  # Build an ordered variable list for plotting.
+plt.figure(figsize=(4, 2.5))  # Build a compact domain-size chart.
+plt.bar(variables_b7, [sizes_viz_b7[var_b7] for var_b7 in variables_b7], color=["tab:green" if var_b7 == choice_viz_b7 else "lightgray" for var_b7 in variables_b7])  # Highlight the chosen minimum-domain variable.
+plt.ylabel("remaining values")  # Label the vertical axis.
+plt.title("B7: Most-constrained variable")  # Title the bar chart.
+plt.show()  # Display the figure.
+```
+
+▶ What you'll see: $Y$ is highlighted because it has only one remaining value.
+
+#### B8. Forward-check one neighbor domain
+
+Goal: prune neighbor values after one assignment.
+
+Let
+
+$$
+X,Y\in\{1,2,3\},
+\qquad
+c(X,Y)=[X<Y].
+$$
+
+After assigning $X=1$, the legal $Y$ values are those with $1<Y$:
+
+$$
+Y=1\text{ fails},
+\qquad
+Y=2\text{ passes},
+\qquad
+Y=3\text{ passes}.
+$$
+
+Thus
+
+$$
+\boxed{\operatorname{Domain}'(Y)=\{2,3\}}.
+$$
+
+Interpretation: forward checking removes only neighbor values that are incompatible with the new assignment.
+
+```python
+x_value_b8 = 1  # Build the assigned value X=1.
+y_domain_b8 = [1, 2, 3]  # Build Y's original domain.
+remaining_y_b8 = [y_b8 for y_b8 in y_domain_b8 if x_value_b8 < y_b8]  # See which Y values survive the constraint X<Y.
+print("remaining Y domain after forward checking:", remaining_y_b8)  # Print the same pruned domain {2,3} as the hand calculation.
+```
+
+▶ What you'll see: the forward-checked domain is `[2, 3]`.
+
+👀 Takeaway: forward checking is local lookahead from the latest assignment to its unassigned neighbors.
+
+```python
+x_value_viz_b8 = 1  # Build the assigned value inside this before-after chart cell.
+y_domain_viz_b8 = [1, 2, 3]  # Build Y's original domain inside this chart cell.
+remaining_y_viz_b8 = [y_b8 for y_b8 in y_domain_viz_b8 if x_value_viz_b8 < y_b8]  # See which Y values survive X<Y inside this chart cell.
+before_b8 = np.ones(len(y_domain_viz_b8), dtype=int)  # Build a before-vector where all Y values are initially legal.
+after_b8 = np.array([y_b8 in remaining_y_viz_b8 for y_b8 in y_domain_viz_b8], dtype=int)  # See the after-vector after pruning by X=1.
+indices_b8 = np.arange(len(y_domain_viz_b8))  # Build x-positions for grouped bars.
+plt.figure(figsize=(4.5, 2.5))  # Build a compact before-after chart.
+plt.bar(indices_b8 - 0.18, before_b8, width=0.36, label="before", color="lightgray")  # Show all original values as legal.
+plt.bar(indices_b8 + 0.18, after_b8, width=0.36, label="after", color="tab:green")  # Show only surviving values after forward checking.
+plt.xticks(indices_b8, [str(y_b8) for y_b8 in y_domain_viz_b8])  # Label bars by candidate Y values.
+plt.ylim(0, 1.2)  # Keep the boolean scale readable.
+plt.ylabel("in domain?")  # Label the vertical axis.
+plt.xlabel("candidate Y")  # Label the horizontal axis.
+plt.title("B8: Forward-checking Y after X=1")  # Title the chart.
+plt.legend()  # Display the before-after legend.
+plt.show()  # Display the figure.
+```
+
+▶ What you'll see: $Y=1$ disappears after forward checking, while $Y=2,3$ remain.
+
+#### B9. Test arc consistency for one arc
+
+Goal: remove unsupported values on one side of an arc.
+
+Let
+
+$$
+X,Y\in\{1,2\},
+\qquad
+c(X,Y)=[X<Y].
+$$
+
+For $X=1$, value $Y=2$ supports it. For $X=2$, no $Y\in\{1,2\}$ satisfies $2<Y$.
+
+Therefore
+
+$$
+\boxed{\operatorname{Domain}'(X)=\{1\}}.
+$$
+
+Interpretation: revising the arc $(X,Y)$ deletes each $X$ value with no supporting $Y$ value.
+
+```python
+x_domain_b9 = [1, 2]  # Build X's original domain.
+y_domain_b9 = [1, 2]  # Build Y's original domain.
+supports_b9 = {x_b9: [y_b9 for y_b9 in y_domain_b9 if x_b9 < y_b9] for x_b9 in x_domain_b9}  # See supporting Y values for each X value.
+revised_x_b9 = [x_b9 for x_b9, ys_b9 in supports_b9.items() if len(ys_b9) > 0]  # Keep only X values with at least one support.
+print("supports by X value:", supports_b9)  # Print that X=1 has support [2] and X=2 has none.
+print("revised X domain:", revised_x_b9)  # Print the same revised domain {1} as the hand calculation.
+```
+
+▶ What you'll see: $X=1$ has support, $X=2$ has no support, so the revised domain is `[1]`.
+
+👀 Takeaway: arc consistency is stricter than checking one chosen assignment because every remaining value must have support.
+
+```python
+x_domain_viz_b9 = [1, 2]  # Build X's original domain inside this support chart cell.
+y_domain_viz_b9 = [1, 2]  # Build Y's original domain inside this support chart cell.
+supports_viz_b9 = {x_b9: [y_b9 for y_b9 in y_domain_viz_b9 if x_b9 < y_b9] for x_b9 in x_domain_viz_b9}  # See supporting Y values inside this chart cell.
+support_counts_b9 = [len(supports_viz_b9[x_b9]) for x_b9 in x_domain_viz_b9]  # Build support counts for each X value.
+plt.figure(figsize=(4, 2.5))  # Build a compact support-count chart.
+plt.bar([str(x_b9) for x_b9 in x_domain_viz_b9], support_counts_b9, color=["tab:green" if count_b9 > 0 else "tab:red" for count_b9 in support_counts_b9])  # See supported values in green and unsupported values in red.
+plt.ylabel("# supporting Y values")  # Label the vertical axis.
+plt.xlabel("candidate X")  # Label the horizontal axis.
+plt.title("B9: Supports for arc (X,Y)")  # Title the chart.
+plt.show()  # Display the figure.
+```
+
+▶ What you'll see: $X=2$ has a zero-height red bar because it has no support.
+
+#### B10. Check whether a complete assignment satisfies all constraints
+
+Goal: verify every edge in a finished assignment.
+
+For path $A-B-C$, let
+
+$$
+A=\text{red},
+\qquad
+B=\text{green},
+\qquad
+C=\text{red}.
+$$
+
+Then
+
+$$
+A\ne B
+\quad\text{and}\quad
+B\ne C
+$$
+
+are both true. Therefore
+
+$$
+\boxed{\text{the complete assignment is a solution}}.
+$$
+
+Interpretation: a complete CSP assignment is a solution exactly when every listed constraint is satisfied.
+
+```python
+assignment_b10 = {"A": "red", "B": "green", "C": "red"}  # Build the complete path coloring from the hand example.
+edges_b10 = [("A", "B"), ("B", "C")]  # Build the two not-equal edge constraints.
+edge_results_b10 = {(u_b10, v_b10): assignment_b10[u_b10] != assignment_b10[v_b10] for u_b10, v_b10 in edges_b10}  # See whether each edge constraint is satisfied.
+solution_b10 = all(edge_results_b10.values())  # Combine all edge checks into one solution verdict.
+print("edge constraint results:", edge_results_b10)  # Print both edge checks as True, matching the hand calculation.
+print("complete assignment is a solution:", solution_b10)  # Print True, matching the boxed conclusion.
+```
+
+▶ What you'll see: both edge checks are `True`, so the complete assignment is a solution.
+
+👀 Takeaway: CSP satisfaction is an all-constraints conjunction.
+
 
 ### Data — swappable sources
 

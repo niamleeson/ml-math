@@ -85,14 +85,14 @@ Every lesson `.md` has up to 4 parts (Part 3/4 differ by example type; 🧮 nume
 | Concept / Framework | vocabulary + structure |
 | Tips | the technique + why it helps |
 
-**Part 3 — Worked Examples (3 basics + 5 easy + 5 advanced = 13), step-by-step university-lecture style.**
-The **basics (🟢)** are 3 atomic warm-ups that each exercise a *single* primitive of the topic (one distance, one update, one lookup, one probability) before the easy tier assembles them into a full method. Difficulty ramp: **🟢 basics → 🟡 easy → 🔴 advanced**.
-- 🧮 topics (no notebook): written as **pen-and-paper derivations** directly in the lesson `.md` (every step shown with reasoning).
-- 💻 and ⚖️ topics (have a notebook): **all 13** worked examples — coded examples *and* any pen-and-paper derivations — live **only in the notebook**. The lesson page does **not** repeat them; it just lists their titles (see Part 4).
+**Part 3 — Worked Examples (10 basics + 5 easy + 5 advanced = 20), step-by-step university-lecture style.**
+The **basics (🟢)** are 10 atomic warm-ups that each exercise a *single* primitive of the topic (one distance, one update, one lookup, one probability) before the easy tier assembles them into a full method. Difficulty ramp: **🟢 basics → 🟡 easy → 🔴 advanced**.
+- 🧮 topics (no notebook): written as **pen-and-paper derivations** directly in the lesson `.md` (every step shown with reasoning). Numeric topics have **no basics tier** (5 easy + 5 advanced only).
+- 💻 and ⚖️ topics (have a notebook): **all 20** worked examples — coded examples *and* any pen-and-paper derivations — live **only in the notebook**. The lesson page does **not** repeat them; it just lists their titles (see Part 4).
 
 **Part 4 — Hands-on: Google Colab** (💻 and ⚖️ only) — the lesson page's hands-on section is only an *Open in Colab* button (→ runnable `topics/notebooks/<NN>-<slug>.ipynb`) plus a short **index** of the examples inside. To avoid duplication, the **entire hands-on walkthrough — prose, code, plots, and pen-and-paper derivations — lives only in the notebook**; the lesson page keeps just Overview + Key Idea. Omitted entirely for 🧮 topics.
 
-*No separate Practice-Questions section — the 3 basics + 5 easy + 5 advanced worked examples in Part 3 are the practice for every lesson type.*
+*No separate Practice-Questions section — the 10 basics + 5 easy + 5 advanced worked examples in Part 3 are the practice for every lesson type.*
 
 ---
 
@@ -105,7 +105,7 @@ pure concept + granular worked examples + a live experiment.
 2. **§ Setup** (3 cells): pinned installs · imports + seed · reusable helpers
 3. **§ Concept recap** (2 cells): overview · key idea + core formula (LaTeX)
 4. **§ Data — swappable sources** (5 cells): explain toggle · `DATA_SOURCE` switch · explore · raw-data plot · "what to look for"
-5. **§ Worked Examples** — 🟢 3 basics + 🟡 5 easy + 🔴 5 advanced, each a **variable-length granular block** (see §3.3)
+5. **§ Worked Examples** — 🟢 10 basics + 🟡 5 easy + 🔴 5 advanced, each a **variable-length granular block** (see §3.3)
 6. **§ Interactive experiment** (3 cells): intro · `ipywidgets` sliders → live plot · prompts
 
 ### 3.1 Data-source conventions
@@ -178,7 +178,7 @@ Visualizations must fit the concept and what the code is doing:
 ## 4. Per-lesson plan format
 
 Each `topics/plans/<NN>-<slug>.plan.md` follows the template in `topics/plans/_TEMPLATE.plan.md`
-and records: metadata, the Part-2 focus, the concrete **13 worked-example designs (3 basics + 5 easy + 5 advanced)**
+and records: metadata, the Part-2 focus, the concrete **20 worked-example designs (10 basics + 5 easy + 5 advanced)**
 (title · data source · visualization · build-step granularity), and the notebook estimate. See `topics/plans/11-clustering.plan.md`
 for a fully worked reference.
 

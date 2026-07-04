@@ -292,6 +292,166 @@ plt.show()  # render the vote chart.
 
 👀 Takeaway: kNN classification is a local majority vote after neighbor selection.
 
+
+#### B4. Compute entropy for one label set
+
+**Goal.** Compute entropy from one small list of labels.
+
+```python
+labels_b4 = np.array([0, 0, 0, 1, 1, 2])  # store one mixed label set.
+classes_b4, counts_b4 = np.unique(labels_b4, return_counts=True)  # count labels per class.
+proportions_b4 = counts_b4 / counts_b4.sum()  # convert counts into probabilities.
+entropy_b4 = -np.sum(proportions_b4 * np.log(proportions_b4))  # compute entropy = -sum p log p.
+print("counts:", dict(zip(classes_b4.tolist(), counts_b4.tolist())))  # print class counts.
+print("proportions:", np.round(proportions_b4, 3))  # print class probabilities.
+print(f"entropy={entropy_b4:.3f}")  # print the impurity score.
+plt.figure(figsize=(5.4, 3.6))  # create a tiny class-count plot.
+plt.bar(classes_b4, counts_b4, color=COLORS[classes_b4])  # draw one bar per class.
+plt.title(f"B4: entropy = {entropy_b4:.3f}")  # title the plot with entropy.
+plt.xlabel("class")  # label class axis.
+plt.ylabel("count")  # label count axis.
+plt.show()  # render the label distribution.
+```
+
+▶ What you'll see: entropy is positive because more than one class appears.
+
+👀 Takeaway: entropy is another way to measure how mixed a node is.
+
+#### B5. Information gain from one candidate split
+
+**Goal.** Compare parent impurity to weighted child impurity for a single split.
+
+```python
+parent_counts_b5 = np.array([6, 4])  # store parent class counts.
+left_counts_b5 = np.array([5, 1])  # store left-child class counts.
+right_counts_b5 = np.array([1, 3])  # store right-child class counts.
+def gini_from_counts_b5(counts):  # define one local impurity helper.
+    p = counts / counts.sum()  # convert counts into proportions.
+    return 1.0 - np.sum(p ** 2)  # compute Gini impurity.
+parent_gini_b5 = gini_from_counts_b5(parent_counts_b5)  # compute parent impurity.
+left_gini_b5 = gini_from_counts_b5(left_counts_b5)  # compute left-child impurity.
+right_gini_b5 = gini_from_counts_b5(right_counts_b5)  # compute right-child impurity.
+weighted_child_b5 = (left_counts_b5.sum() * left_gini_b5 + right_counts_b5.sum() * right_gini_b5) / parent_counts_b5.sum()  # weight child impurities by child sizes.
+gain_b5 = parent_gini_b5 - weighted_child_b5  # compute impurity reduction.
+print(f"parent Gini={parent_gini_b5:.3f}")  # print parent impurity.
+print(f"weighted child Gini={weighted_child_b5:.3f}")  # print split cost.
+print(f"information gain={gain_b5:.3f}")  # print the improvement from splitting.
+```
+
+▶ What you'll see: the split reduces impurity, so information gain is positive.
+
+👀 Takeaway: tree splits are scored by how much impurity they remove.
+
+#### B6. Count the majority class in one node
+
+**Goal.** Find the class a leaf would predict from its training labels.
+
+```python
+node_labels_b6 = np.array([2, 2, 1, 2, 0, 1, 2])  # store labels that reached one leaf.
+classes_b6, counts_b6 = np.unique(node_labels_b6, return_counts=True)  # count examples per class.
+majority_b6 = classes_b6[np.argmax(counts_b6)]  # choose the most frequent class.
+print("leaf labels:", node_labels_b6)  # print the labels in the node.
+print("class counts:", dict(zip(classes_b6.tolist(), counts_b6.tolist())))  # print vote totals.
+print("leaf prediction:", int(majority_b6))  # print the majority-class prediction.
+plt.figure(figsize=(5.4, 3.6))  # create a small count plot.
+plt.bar(classes_b6, counts_b6, color=COLORS[classes_b6])  # draw class counts.
+plt.title(f"B6: leaf predicts class {majority_b6}")  # title the prediction.
+plt.xlabel("class")  # label class axis.
+plt.ylabel("count")  # label count axis.
+plt.show()  # render the majority count.
+```
+
+▶ What you'll see: class 2 appears most often and becomes the prediction.
+
+👀 Takeaway: a classification-tree leaf predicts by majority class.
+
+#### B7. Sort candidate neighbors by distance
+
+**Goal.** Rank already-computed distances from nearest to farthest.
+
+```python
+names_b7 = np.array(["A", "B", "C", "D"])  # name four candidate neighbors.
+distances_b7 = np.array([1.8, 0.7, 2.4, 1.1])  # store their distances to one query.
+order_b7 = np.argsort(distances_b7)  # sort indices by increasing distance.
+print(pd.DataFrame({"neighbor": names_b7[order_b7], "distance": distances_b7[order_b7]}))  # print nearest-to-farthest order.
+plt.figure(figsize=(5.4, 3.6))  # create a sorted-distance plot.
+plt.bar(names_b7[order_b7], distances_b7[order_b7], color="slateblue")  # draw bars in nearest-to-farthest order.
+plt.title("B7: neighbors sorted by distance")  # title the plot.
+plt.xlabel("neighbor")  # label neighbor axis.
+plt.ylabel("distance")  # label distance axis.
+plt.show()  # render sorted distances.
+```
+
+▶ What you'll see: the shortest distance appears first.
+
+👀 Takeaway: kNN selects neighbors from a distance ranking.
+
+#### B8. Select k-nearest labels for one query
+
+**Goal.** Slice the first $k$ labels after sorting neighbors by distance.
+
+```python
+labels_b8 = np.array([0, 1, 1, 0, 1])  # store labels for five candidate neighbors.
+distances_b8 = np.array([1.6, 0.4, 1.1, 2.0, 0.9])  # store their distances to one query.
+k_b8 = 3  # choose how many neighbors get to vote.
+order_b8 = np.argsort(distances_b8)  # rank candidates by distance.
+k_labels_b8 = labels_b8[order_b8[:k_b8]]  # keep labels of the nearest k candidates.
+print("sorted distances:", np.round(distances_b8[order_b8], 2))  # print ranked distances.
+print("k-nearest labels:", k_labels_b8)  # print labels that will vote.
+print("prediction:", np.bincount(k_labels_b8).argmax())  # print the majority among selected labels.
+```
+
+▶ What you'll see: only the three closest labels are used.
+
+👀 Takeaway: $k$ defines the local voting window.
+
+#### B9. Weighted Gini of two child nodes
+
+**Goal.** Combine two child impurities using their sample counts.
+
+```python
+left_counts_b9 = np.array([4, 1])  # store class counts in the left child.
+right_counts_b9 = np.array([2, 3])  # store class counts in the right child.
+def gini_from_counts_b9(counts):  # define a local Gini helper.
+    p = counts / counts.sum()  # convert counts to proportions.
+    return 1.0 - np.sum(p ** 2)  # compute Gini impurity.
+left_gini_b9 = gini_from_counts_b9(left_counts_b9)  # compute left-child impurity.
+right_gini_b9 = gini_from_counts_b9(right_counts_b9)  # compute right-child impurity.
+weighted_gini_b9 = (left_counts_b9.sum() * left_gini_b9 + right_counts_b9.sum() * right_gini_b9) / (left_counts_b9.sum() + right_counts_b9.sum())  # average by child size.
+print(f"left Gini={left_gini_b9:.3f}, right Gini={right_gini_b9:.3f}")  # print both child impurities.
+print(f"weighted child Gini={weighted_gini_b9:.3f}")  # print the split score.
+```
+
+▶ What you'll see: each child contributes in proportion to its size.
+
+👀 Takeaway: large impure children hurt a split score more than small ones.
+
+#### B10. Make one stump threshold decision
+
+**Goal.** Apply one threshold rule to classify a single point.
+
+```python
+feature_value_b10 = 2.7  # store one query's feature value.
+threshold_b10 = 2.0  # store the stump threshold.
+left_prediction_b10 = 0  # define the class predicted on the left branch.
+right_prediction_b10 = 1  # define the class predicted on the right branch.
+prediction_b10 = left_prediction_b10 if feature_value_b10 <= threshold_b10 else right_prediction_b10  # route through the split rule.
+print(f"if x <= {threshold_b10}, predict {left_prediction_b10}; otherwise predict {right_prediction_b10}")  # print the rule.
+print(f"query x={feature_value_b10} -> prediction {prediction_b10}")  # print the routed prediction.
+plt.figure(figsize=(5.6, 2.4))  # create a one-dimensional threshold plot.
+plt.axvline(threshold_b10, color="black", linestyle="--", label="threshold")  # draw the split threshold.
+plt.scatter([feature_value_b10], [0], s=120, color=COLORS[prediction_b10], label="query")  # draw the query point.
+plt.yticks([])  # hide the unused vertical axis.
+plt.xlabel("feature value")  # label the feature axis.
+plt.title("B10: one decision-stump threshold")  # title the plot.
+plt.legend()  # identify threshold and query.
+plt.show()  # render the threshold decision.
+```
+
+▶ What you'll see: the query falls to the right of the threshold and gets the right-side class.
+
+👀 Takeaway: a stump is one if/else decision.
+
 ### 🟡 Easy Examples
 
 #### E1. CART first split by Gini impurity

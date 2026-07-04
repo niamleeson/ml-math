@@ -382,6 +382,126 @@ print(f"P(x | y=k) = {p_x1_given_y_b3} * {p_x2_given_y_b3} = {likelihood_b3:.3f}
 
 ---
 
+
+#### B4. Compute one Gaussian pdf value
+
+Goal: evaluate one scalar Gaussian likelihood for a continuous feature.
+
+```python
+x_b4 = 1.0  # Store one scalar observation.
+mu_b4 = 0.0  # Store the Gaussian mean.
+sigma_b4 = 2.0  # Store the Gaussian standard deviation.
+pdf_b4 = (1.0 / (np.sqrt(2.0 * np.pi) * sigma_b4)) * np.exp(-0.5 * ((x_b4 - mu_b4) / sigma_b4) ** 2)  # Evaluate the one-dimensional Gaussian density.
+print(f"N({x_b4:.1f}; {mu_b4:.1f}, {sigma_b4:.1f}^2) = {pdf_b4:.4f}")  # Print the density height.
+```
+
+▶ What you'll see: one likelihood value for a continuous feature under one class Gaussian.
+
+👀 **Takeaway:** GDA likelihoods come from Gaussian density evaluations.
+
+---
+
+#### B5. Compute one class variance
+
+Goal: estimate one feature's within-class spread.
+
+```python
+class_values_b5 = np.array([1.0, 2.0, 4.0, 5.0])  # Store one feature's values inside a class.
+mean_b5 = class_values_b5.mean()  # Compute the class-conditional mean for that feature.
+variance_b5 = np.mean((class_values_b5 - mean_b5) ** 2)  # Average squared deviations using the MLE denominator m.
+print(f"class mean = {mean_b5:.2f}")  # Display the fitted class mean.
+print(f"class variance = {variance_b5:.2f}")  # Display the fitted class variance.
+```
+
+▶ What you'll see: the variance summarizes within-class spread around the class mean.
+
+👀 **Takeaway:** Gaussian generative models need both location and spread for each class distribution.
+
+---
+
+#### B6. Score one point with prior times likelihood
+
+Goal: compute one unnormalized Bayes numerator.
+
+```python
+prior_b6 = 0.40  # Store P(y=k) for one candidate class.
+likelihood_b6 = 0.18  # Store P(x | y=k) or a density value for the observed point.
+unnormalized_b6 = prior_b6 * likelihood_b6  # Multiply prior by likelihood to get an unnormalized posterior weight.
+print(f"prior * likelihood = {unnormalized_b6:.4f}")  # Display the Bayes numerator for one class.
+```
+
+▶ What you'll see: one class receives an unnormalized posterior weight before normalization.
+
+👀 **Takeaway:** Bayes classification compares prior-weighted likelihoods across classes.
+
+---
+
+#### B7. Normalize two posterior weights
+
+Goal: turn two unnormalized class scores into probabilities.
+
+```python
+weights_b7 = np.array([0.06, 0.14])  # Store two prior-times-likelihood weights.
+posteriors_b7 = weights_b7 / weights_b7.sum()  # Normalize weights so the two posterior probabilities sum to one.
+print(f"posterior probabilities = {posteriors_b7}")  # Display the normalized class probabilities.
+```
+
+▶ What you'll see: the larger unnormalized weight becomes the larger posterior probability.
+
+👀 **Takeaway:** posterior normalization divides each class score by the sum of all class scores.
+
+---
+
+#### B8. Multiply three Naive Bayes likelihoods
+
+Goal: combine three conditionally independent feature probabilities.
+
+```python
+feature_likelihoods_b8 = np.array([0.8, 0.5, 0.25])  # Store three conditionally independent feature likelihoods.
+nb_likelihood_b8 = np.prod(feature_likelihoods_b8)  # Multiply all terms under the Naive Bayes assumption.
+print(f"Naive Bayes likelihood = {nb_likelihood_b8:.3f}")  # Display the product likelihood.
+```
+
+▶ What you'll see: three modest probabilities can produce a much smaller joint likelihood.
+
+👀 **Takeaway:** Naive Bayes builds a joint score by multiplying simple feature-wise terms.
+
+---
+
+#### B9. Apply Laplace smoothing to one count
+
+Goal: avoid a zero probability for one unseen token.
+
+```python
+word_count_b9 = 0  # Store an unseen word count for one class.
+total_words_b9 = 12  # Store the total token count in that class.
+vocab_size_b9 = 5  # Store the vocabulary size used by the model.
+smoothed_b9 = (word_count_b9 + 1) / (total_words_b9 + vocab_size_b9)  # Add one pseudo-count to avoid zero probability.
+print(f"smoothed probability = {smoothed_b9:.3f}")  # Display the Laplace-smoothed estimate.
+```
+
+▶ What you'll see: an unseen word gets a small nonzero probability instead of zero.
+
+👀 **Takeaway:** Laplace smoothing prevents one missing count from erasing an entire document score.
+
+---
+
+#### B10. Choose the larger posterior with argmax
+
+Goal: convert posterior probabilities into one class prediction.
+
+```python
+posteriors_b10 = np.array([0.35, 0.65])  # Store posterior probabilities for classes 0 and 1.
+predicted_class_b10 = np.argmax(posteriors_b10)  # Select the class index with the largest posterior.
+print(f"predicted class = {predicted_class_b10}")  # Display the MAP classification decision.
+```
+
+▶ What you'll see: class $1$ is selected because its posterior probability is larger.
+
+👀 **Takeaway:** generative classifiers predict with the maximum posterior class.
+
+---
+
 ### 🟡 Easy
 
 #### E1. Estimate GDA class prior and means by hand

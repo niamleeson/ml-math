@@ -25,12 +25,19 @@ just word-by-word lookup."
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Softmax three attention scores | toy attention scores $e=[1,2,0]$ | printed values + 3-bar probability chart | ~2 |
 | B2 | One attention context weighted sum | three toy encoder activations and fixed attention weights | printed values + weighted-vector bars | ~3 |
 | B3 | Perplexity from three token probabilities | toy next-token probabilities | printed values + probability product trace | ~3 |
+| B4 | Scale one attention score by square-root dimension | one toy query-key pair with $d_k=4$ | printed raw vs scaled score | ~2 |
+| B5 | Attention weights over three keys | one query and three toy keys | printed values + 3-bar attention chart | ~2 |
+| B6 | Greedy next-token argmax | toy next-token probabilities | printed choice + probability bar chart | ~2 |
+| B7 | Bigram probability from counts | tiny bigram count table | printed numerator/denominator trace | ~2 |
+| B8 | Cross-entropy of one correct token | one correct-token probability | printed probability and negative log value | ~2 |
+| B9 | Temperature-scaled softmax | three toy logits and two temperatures | printed values + grouped probability bars | ~3 |
+| B10 | Length-normalized log score | three token log probabilities | printed raw vs normalized beam score | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

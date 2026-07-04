@@ -18,12 +18,19 @@ Regularization controls overfitting by changing what solutions are easy for the 
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Apply one dropout mask | toy activation vector and binary mask | printed values + before/mask/after bars | ~2 |
 | B2 | Compute only an L2 penalty | toy weight vector and $\lambda$ | printed values + penalty contribution bar | ~2 |
 | B3 | Read a train-vs-validation gap | toy train/validation loss numbers | printed values + two-point gap plot | ~2 |
+| B4 | Compute an L1 penalty | toy weight vector and $\lambda$ | printed values + absolute-weight bars | ~2 |
+| B5 | Gradient of an L2 penalty | toy weight vector and $\lambda$ | printed gradient + coordinate bars | ~2 |
+| B6 | Scale activations by keep probability | toy activations, mask, and keep probability | printed vectors + masked-vs-scaled bars | ~2 |
+| B7 | Early-stopping decision from validation history | toy validation-loss sequence | printed decision + validation curve with best epoch | ~3 |
+| B8 | Weight norm before and after one L2 step | toy weight vector and L2-only update | printed norms + before/after norm bars | ~3 |
+| B9 | Add a penalty to a base loss | toy base loss, weights, and $\lambda$ | printed components + stacked objective bar | ~2 |
+| B10 | Effect of lambda on one weight | one scalar weight with two $\lambda$ values | printed weights + shrinkage bars | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

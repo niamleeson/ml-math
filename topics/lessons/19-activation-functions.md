@@ -473,6 +473,158 @@ $$
 \boxed{\operatorname{softmax}(1,0,-1)\approx(0.6652,0.2447,0.0900)}
 $$
 
+
+#### B4. Compute tanh at zero
+
+Goal: evaluate one zero-centered activation value.
+
+```python
+z_b4 = np.array([0.0])  # Store the scalar pre-activation z=0.
+tanh_b4 = np.tanh(z_b4)[0]  # Apply NumPy's tanh function and extract the scalar.
+print(f"tanh(0) = {tanh_b4:.1f}")  # Print the activation value.
+```
+
+By formula,
+
+$$
+\tanh(0)=\frac{e^0-e^{-0}}{e^0+e^{-0}}=\frac{1-1}{1+1}=0.
+$$
+
+$$
+\boxed{\tanh(0)=0}
+$$
+
+#### B5. Compute one Leaky ReLU value
+
+Goal: evaluate the negative branch of Leaky ReLU.
+
+```python
+z_b5 = np.array([-3.0])  # Store a negative pre-activation value.
+value_b5 = leaky_relu(z_b5)[0]  # Apply Leaky ReLU with the lesson's EPSILON.
+print(f"LeakyReLU({z_b5[0]:.1f}) = {value_b5:.2f}")  # Print the forward value.
+```
+
+Since $z=-3<0$ and $\epsilon=0.01$,
+
+$$
+\operatorname{LeakyReLU}(-3)=0.01(-3)=-0.03.
+$$
+
+$$
+\boxed{\operatorname{LeakyReLU}(-3)=-0.03}
+$$
+
+#### B6. Compute one ELU value
+
+Goal: evaluate the negative exponential branch of ELU.
+
+```python
+z_b6 = np.array([-1.0])  # Store a negative pre-activation for the ELU branch.
+value_b6 = elu(z_b6)[0]  # Apply ELU with the lesson's ALPHA.
+print(f"ELU({z_b6[0]:.1f}) = {value_b6:.3f}")  # Print the forward value.
+```
+
+With $\alpha=1$ and $z=-1$,
+
+$$
+\operatorname{ELU}(-1)=e^{-1}-1\approx0.3679-1=-0.6321.
+$$
+
+$$
+\boxed{\operatorname{ELU}(-1)\approx-0.632}
+$$
+
+#### B7. Compute the sigmoid derivative at one point
+
+Goal: use $\sigma'(z)=\sigma(z)(1-\sigma(z))$ once.
+
+```python
+z_b7 = np.array([2.0])  # Choose one positive pre-activation.
+s_b7 = sigmoid(z_b7)[0]  # Compute sigmoid(z).
+d_b7 = sigmoid_derivative(z_b7)[0]  # Compute sigmoid'(z).
+print(f"sigmoid(2) = {s_b7:.4f}")  # Print the activation value.
+print(f"sigmoid'(2) = {d_b7:.4f}")  # Print the derivative value.
+```
+
+Using $\sigma(2)\approx0.8808$,
+
+$$
+\sigma'(2)=0.8808(1-0.8808)\approx0.1050.
+$$
+
+$$
+\boxed{\sigma'(2)\approx0.105}
+$$
+
+#### B8. Compute ReLU derivatives at two points
+
+Goal: compare the left and right slopes of ReLU.
+
+```python
+z_b8 = np.array([-1.0, 2.0])  # Store one negative and one positive pre-activation.
+deriv_b8 = relu_derivative(z_b8)  # Apply the practical ReLU derivative helper.
+print(dict(zip(z_b8, deriv_b8)))  # Print each z value with its slope.
+```
+
+The derivative rule gives
+
+$$
+\operatorname{ReLU}'(-1)=0,
+\qquad
+\operatorname{ReLU}'(2)=1.
+$$
+
+$$
+\boxed{\text{left slope }0,\quad\text{right slope }1}
+$$
+
+#### B9. Plot one activation over a grid
+
+Goal: draw one activation curve before comparing many curves.
+
+```python
+grid_b9 = np.linspace(-4.0, 4.0, 200)  # Create evenly spaced pre-activation values.
+values_b9 = np.tanh(grid_b9)  # Evaluate tanh on the whole grid.
+plt.figure()  # Create a fresh plot.
+plt.plot(grid_b9, values_b9, label="tanh(z)")  # Draw the activation curve.
+plt.axhline(0.0, color="black", linewidth=0.8)  # Mark the zero output line for reference.
+plt.title("B9: tanh over a grid")  # Title the plot.
+plt.xlabel("z")  # Label the pre-activation axis.
+plt.ylabel("tanh(z)")  # Label the activation axis.
+plt.legend()  # Show the curve label.
+plt.show()  # Render the plot.
+```
+
+▶ What you'll see: tanh is zero-centered and saturates near $-1$ and $1$.
+
+#### B10. Compare sigmoid and tanh at $z=-2$ and $z=2$
+
+Goal: evaluate two activations at symmetric inputs.
+
+```python
+z_b10 = np.array([-2.0, 2.0])  # Choose symmetric negative and positive pre-activations.
+sig_b10 = sigmoid(z_b10)  # Evaluate sigmoid at both points.
+tanh_b10 = np.tanh(z_b10)  # Evaluate tanh at both points.
+for z, s, t in zip(z_b10, sig_b10, tanh_b10):  # Print one comparison row per input.
+    print(f"z={z:+.0f}: sigmoid={s:.3f}, tanh={t:.3f}")  # Show both activation values.
+```
+
+The values are approximately
+
+$$
+\sigma(-2)=0.119,\quad \sigma(2)=0.881,
+$$
+
+while
+
+$$
+\tanh(-2)=-0.964,\quad \tanh(2)=0.964.
+$$
+
+$$
+\boxed{\text{sigmoid is positive; tanh is zero-centered.}}
+$$
+
 ### 🟡 Easy
 
 #### E1. Derive and evaluate sigmoid gradient

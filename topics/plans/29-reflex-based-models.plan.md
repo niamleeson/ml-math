@@ -18,12 +18,19 @@ Reflex-based models turn inputs into feature vectors, score them with weights, a
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Compute one linear score $w\cdot\phi(x)$ | toy scalars | printed contribution table | ~2 |
 | B2 | Convert one score into a sign prediction | toy scalars | printed values | ~2 |
 | B3 | Compute hinge loss for one labeled example | toy scalars | one-point margin/loss marker | ~3 |
+| B4 | Build one feature vector $\phi(x)$ | toy email features | printed vector | ~2 |
+| B5 | Compute a margin $y\cdot s$ | toy label and score | printed margin sign | ~2 |
+| B6 | Compute logistic loss for one labeled example | toy margin | printed smooth loss value | ~2 |
+| B7 | Compute squared loss for one regression prediction | toy prediction and target | printed residual/loss | ~2 |
+| B8 | Apply a quadratic feature map | toy 2-D point | printed transformed vector | ~2 |
+| B9 | Classify two points and count errors | toy scores/labels | tiny prediction table | ~2 |
+| B10 | Compute the hinge-loss gradient for one point | toy feature vector and label | printed subgradient | ~3 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
@@ -45,7 +52,7 @@ Reflex-based models turn inputs into feature vectors, score them with weights, a
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** topics/notebooks/29-reflex-based-models.ipynb
-- **Est. cell count:** ~82 (⚖️ topic → 3 basics + hand score/loss derivations + coded decision-boundary/loss visualizations)
+- **Est. cell count:** ~110 (⚖️ topic → 10 basics + hand score/loss derivations + coded decision-boundary/loss visualizations)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_circles`, `make_moons`, `KNeighborsClassifier`, `LogisticRegression`, regression utilities), ipywidgets
 - **Runtime:** CPU
 - **Failure/edge dataset included:** `make_moons` in A5 — shows a raw linear score cannot represent the curved boundary while k-NN/neural nets can.

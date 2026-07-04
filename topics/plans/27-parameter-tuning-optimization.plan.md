@@ -18,12 +18,19 @@ Optimization choices often decide whether the same neural network trains smoothl
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | One SGD scalar update | toy scalars $w=2$, $g=4$, $\alpha=0.1$ | printed values + number-line before/after | ~2 |
 | B2 | One momentum velocity update | toy scalars $v_0=0$, $g=4$, $\beta=0.9$ | printed values + velocity arrow | ~2 |
 | B3 | Compare two learning-rate steps | toy scalar gradient with two $\alpha$ values | printed values + two arrows on a 1-D loss curve | ~3 |
+| B4 | One RMSprop scalar update | toy scalars $w=2$, $g=4$, $s_0=0$ | printed denominator + number-line before/after | ~3 |
+| B5 | One Adam moment update | toy scalar gradient at $t=1$ | printed moments + raw-vs-corrected bar chart | ~3 |
+| B6 | Step-decay learning rate at one epoch | toy schedule values | printed learning rate + schedule plot | ~3 |
+| B7 | Xavier initialization scale | layer shape $n_{in}=4$, $n_{out}=2$ | printed limit + weight histogram | ~2 |
+| B8 | Gradient of a quadratic at one point | $J(w)=20w_1^2+w_2^2$, $w=(1,-3)$ | printed gradient + vector arrow | ~2 |
+| B9 | Loss decrease after one small step | one stable SGD step on the quadratic | printed before/after loss + loss bars | ~3 |
+| B10 | Clip one gradient norm | toy gradient $g=(3,4)$ and threshold 2 | printed norm/scale + vector comparison | ~3 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

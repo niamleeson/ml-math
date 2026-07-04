@@ -18,12 +18,19 @@ Trees, ensembles, and k-nearest neighbors are flexible non-parametric models tha
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Compute Gini impurity for one labeled node | toy class counts | printed values; tiny class-count bar | ~2 |
 | B2 | Measure distances from one query to candidate neighbors | tiny 2-D toy points | scatter with query-to-point distance segments | ~3 |
 | B3 | Majority vote from a short neighbor-label list | toy label list | printed values; vote-count bar | ~2 |
+| B4 | Compute entropy for one label set | toy label set | printed values; class-count bar | ~2 |
+| B5 | Information gain from one candidate split | toy parent/child class counts | printed values | ~2 |
+| B6 | Count the majority class in one node | toy node labels | printed values; vote-count bar | ~2 |
+| B7 | Sort candidate neighbors by distance | toy distance list | printed nearest-order table; sorted distance bars | ~2 |
+| B8 | Select k-nearest labels for one query | toy neighbor distances and labels | printed values | ~2 |
+| B9 | Weighted Gini of two child nodes | toy child class counts | printed values | ~2 |
+| B10 | Make one stump threshold decision | toy feature value and threshold | printed rule; one-dimensional threshold plot | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

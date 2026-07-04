@@ -324,6 +324,145 @@ for row, keep in zip(detections_b3, keep_mask_b3):  # inspect each toy detection
     print(f"{decision:4s} label={row[0]:>3s} score={float(row[1]):.2f}")  # print one row of the filtering result.
 ```
 
+
+#### B4. Compute one box area
+
+**Goal.** Measure the area of one corner-format box before comparing boxes.
+
+```python
+box_b4 = np.array([2.0, 1.0, 6.0, 4.0])  # Define one box as xmin, ymin, xmax, ymax.
+area_b4 = box_area(box_b4)  # Compute width times height with the reusable helper.
+print(f"area = {area_b4:.1f}")  # Print the scalar area.
+```
+
+The width is $6-2=4$ and the height is $4-1=3$, so the area is
+
+$$
+\boxed{4\cdot3=12}.
+$$
+
+#### B5. Compute intersection area of two boxes
+
+**Goal.** Find only the overlapping rectangle and measure its area.
+
+```python
+box_a_b5 = np.array([1.0, 1.0, 5.0, 4.0])  # Define the first box.
+box_b_b5 = np.array([3.0, 2.0, 6.0, 5.0])  # Define the second box.
+inter_b5 = intersection_box(box_a_b5, box_b_b5)  # Compute the intersection rectangle.
+area_b5 = box_area(inter_b5)  # Measure the intersection area.
+print("intersection box:", inter_b5)  # Print the overlap coordinates.
+print(f"intersection area = {area_b5:.1f}")  # Print the overlap area.
+```
+
+The overlap spans $x=3$ to $5$ and $y=2$ to $4$, so
+
+$$
+\boxed{|A\cap B|=(5-3)(4-2)=4}.
+$$
+
+#### B6. Convert center coordinates to corners
+
+**Goal.** Convert one detector-style $(b_x,b_y,b_w,b_h)$ box into drawable corners.
+
+```python
+center_b6 = np.array([5.0, 4.0, 2.0, 6.0])  # Store center x, center y, width, and height.
+xyxy_b6 = center_to_xyxy(center_b6)  # Convert to xmin, ymin, xmax, ymax.
+print("corner box:", xyxy_b6)  # Print the drawable box coordinates.
+```
+
+The corners are
+
+$$
+x_{\min}=5-1=4,\quad y_{\min}=4-3=1,
+$$
+
+$$
+x_{\max}=5+1=6,\quad y_{\max}=4+3=7.
+$$
+
+$$
+\boxed{(4,1,6,7)}
+$$
+
+#### B7. Sort boxes by score
+
+**Goal.** Order candidate detections from most confident to least confident.
+
+```python
+scores_b7 = np.array([0.42, 0.91, 0.73])  # Store three confidence scores.
+labels_b7 = np.array(["cat", "dog", "car"])  # Store the matching labels.
+order_b7 = np.argsort(scores_b7)[::-1]  # Sort indices by descending score.
+for idx in order_b7:  # Print detections in NMS selection order.
+    print(f"{labels_b7[idx]}: {scores_b7[idx]:.2f}")  # Show label and score.
+```
+
+The descending order is
+
+$$
+0.91>0.73>0.42,
+$$
+
+so the first selected candidate would be the dog box.
+
+#### B8. Decide overlap by an IoU threshold
+
+**Goal.** Turn a numeric IoU into a yes/no overlap decision.
+
+```python
+iou_b8 = 0.62  # Store one precomputed overlap score.
+threshold_b8 = 0.50  # Store the overlap threshold.
+overlap_b8 = iou_b8 >= threshold_b8  # Compare IoU against the threshold.
+print(f"IoU={iou_b8:.2f}, threshold={threshold_b8:.2f}, overlap? {overlap_b8}")  # Print the Boolean decision.
+```
+
+Since
+
+$$
+0.62\ge0.50,
+$$
+
+this pair is considered overlapping at the chosen threshold.
+
+$$
+\boxed{\text{overlap = yes}}
+$$
+
+#### B9. Clip a box to image bounds
+
+**Goal.** Keep a predicted box inside a $14\times10$ image.
+
+```python
+box_b9 = np.array([-1.0, 2.0, 15.0, 12.0])  # Define a box that spills outside the image bounds.
+clipped_b9 = box_b9.copy()  # Copy before clipping so the original remains visible.
+clipped_b9[[0, 2]] = np.clip(clipped_b9[[0, 2]], 0.0, IMAGE_W)  # Clip x coordinates into [0, IMAGE_W].
+clipped_b9[[1, 3]] = np.clip(clipped_b9[[1, 3]], 0.0, IMAGE_H)  # Clip y coordinates into [0, IMAGE_H].
+print("before:", box_b9)  # Print the out-of-bounds box.
+print("after: ", clipped_b9)  # Print the valid image-bounded box.
+```
+
+The clipped box is
+
+$$
+\boxed{(0,2,14,10)}.
+$$
+
+#### B10. Count boxes above a threshold
+
+**Goal.** Count how many candidate detections survive a confidence cutoff.
+
+```python
+scores_b10 = np.array([0.95, 0.20, 0.61, 0.49])  # Store four candidate confidence scores.
+threshold_b10 = 0.50  # Choose the cutoff.
+count_b10 = np.sum(scores_b10 >= threshold_b10)  # Count scores that pass the cutoff.
+print(f"boxes above {threshold_b10:.2f}: {count_b10}")  # Print the survivor count.
+```
+
+The scores above threshold are $0.95$ and $0.61$, so
+
+$$
+\boxed{2\text{ boxes pass the threshold}.}
+$$
+
 ### 🟡 Easy Examples
 
 #### E1. Draw one bounding box on an image

@@ -21,12 +21,19 @@ assumptions → very different groups" — motivate why the choice of algorithm 
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Squared distance from one point to one centroid | toy 2-D point and centroid | printed values; point-to-centroid segment | ~2 |
 | B2 | Assign one point to the nearer of two centroids | toy 2-D point and two centroids | scatter with two distance segments and chosen centroid highlighted | ~3 |
 | B3 | Update one centroid by averaging assigned points | tiny assigned point set | printed values; before/after centroid marker | ~3 |
+| B4 | Within-cluster sum of squares for one cluster | tiny assigned point set | printed values; point-to-centroid segments | ~2 |
+| B5 | Assign all points to nearest centroids once | tiny 2-D points and centroids | distance matrix; assignment scatter | ~3 |
+| B6 | Recompute all centroids once | tiny assigned point set | printed values; old/new centroid markers | ~3 |
+| B7 | Total inertia from assignments | tiny assignments and centroids | printed costs; cost bar chart | ~2 |
+| B8 | Standardize two features | toy two-feature matrix | printed values; before/after heatmap | ~2 |
+| B9 | Distance matrix for three points | toy 2-D points | printed matrix; distance heatmap | ~2 |
+| B10 | Centroid shift magnitude between iterations | toy old/new centroids | printed values; centroid-shift arrows | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

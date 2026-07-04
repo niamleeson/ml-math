@@ -471,6 +471,196 @@ plt.show()  # render the residual-add visual.
 
 👀 **Takeaway.** A residual block can preserve information by default and only learn changes that help.
 
+
+#### B4. Concatenate two feature maps like an Inception module
+
+**Goal.** Join parallel branch outputs along the channel axis.
+
+```python
+branch_a_b4 = np.ones((2, 2, 1))  # create a first branch with one channel.
+branch_b_b4 = np.full((2, 2, 2), 2.0)  # create a second branch with two channels.
+concat_b4 = np.concatenate([branch_a_b4, branch_b_b4], axis=-1)  # concatenate channels while keeping height and width.
+print("branch A shape:", branch_a_b4.shape)  # show the first branch shape.
+print("branch B shape:", branch_b_b4.shape)  # show the second branch shape.
+print("concatenated shape:", concat_b4.shape)  # show the combined channel count.
+```
+
+▶ What you'll see: a 2×2×1 tensor and a 2×2×2 tensor become one 2×2×3 tensor.
+
+```python
+plot_feature_grid(concat_b4, "B4: concatenated Inception-style channels", max_channels=3)  # visualize each output channel.
+```
+
+▶ What you'll see: the branch outputs remain separate channels in one larger tensor.
+
+👀 **Takeaway.** Inception combines parallel features by stacking channels, not by adding values.
+
+#### B5. Tiny generator forward pass from noise to vector
+
+**Goal.** Run one miniature GAN generator step with a linear map and tanh output.
+
+```python
+z_b5 = np.array([0.4, -1.0])  # create a two-dimensional noise vector.
+Wg_b5 = np.array([[1.0, -0.5, 0.3], [0.2, 0.7, -1.2]])  # map noise to three generated features.
+bg_b5 = np.array([0.1, -0.2, 0.0])  # add a generator bias.
+logits_b5 = z_b5 @ Wg_b5 + bg_b5  # compute the generator's pre-activation output.
+fake_b5 = np.tanh(logits_b5)  # squash generated values into a bounded range.
+print("noise z:", z_b5)  # print the input noise.
+print("generator logits:", logits_b5)  # print the linear output.
+print("fake sample:", fake_b5)  # print the generated vector.
+```
+
+▶ What you'll see: fixed noise becomes a structured fake vector through learned weights.
+
+```python
+plt.figure(figsize=(5, 3))  # create a small bar chart for the fake vector.
+plt.bar(["feature 0", "feature 1", "feature 2"], fake_b5, color="purple")  # plot generated feature values.
+plt.ylim(-1.0, 1.0)  # show the tanh output range.
+plt.title("B5 tiny generator output")  # title the generator primitive.
+plt.show()  # render the bar chart.
+```
+
+▶ What you'll see: tanh keeps each generated feature between −1 and 1.
+
+👀 **Takeaway.** A generator transforms random noise into a sample-shaped vector.
+
+#### B6. Discriminator score with a sigmoid
+
+**Goal.** Convert one discriminator logit into a real/fake probability.
+
+```python
+sample_b6 = np.array([0.3, -0.4, 0.8])  # create a toy sample vector.
+Wd_b6 = np.array([1.2, -0.7, 0.5])  # define discriminator weights.
+bd_b6 = -0.1  # define a discriminator bias.
+logit_b6 = float(sample_b6 @ Wd_b6 + bd_b6)  # compute the real/fake logit.
+score_b6 = float(sigmoid(logit_b6))  # squash the logit into a probability-like score.
+print(f"discriminator logit = {logit_b6:.3f}")  # print the raw score.
+print(f"D(x) = sigmoid(logit) = {score_b6:.3f}")  # print the probability.
+```
+
+▶ What you'll see: a positive logit produces a score above 0.5.
+
+```python
+xs_b6 = np.linspace(-5, 5, 200)  # create logit values for the sigmoid curve.
+plt.figure(figsize=(5, 3.5))  # create a compact curve plot.
+plt.plot(xs_b6, sigmoid(xs_b6), label="sigmoid")  # draw the discriminator squashing function.
+plt.scatter([logit_b6], [score_b6], s=90, color="crimson", label="sample score")  # mark the toy sample.
+plt.xlabel("logit")  # label the x-axis.
+plt.ylabel("D(x)")  # label the y-axis.
+plt.title("B6 discriminator score")  # title the plot.
+plt.legend()  # identify curve and sample.
+plt.show()  # render the sigmoid plot.
+```
+
+▶ What you'll see: the sigmoid maps any real-valued evidence into the interval (0, 1).
+
+👀 **Takeaway.** The discriminator's final sigmoid turns evidence into a realness score.
+
+#### B7. ReLU on a small activation volume
+
+**Goal.** Apply the CNN nonlinearity elementwise to a tiny volume.
+
+```python
+volume_b7 = np.array([[[-1.0, 0.5], [2.0, -0.2]], [[0.0, -3.0], [1.5, 0.7]]])  # create a 2×2×2 activation volume.
+relu_b7 = relu(volume_b7)  # zero out negative activations.
+print("before ReLU:\n", volume_b7)  # print raw activations.
+print("after ReLU:\n", relu_b7)  # print rectified activations.
+```
+
+▶ What you'll see: negative entries become zero while positive entries are unchanged.
+
+```python
+plot_feature_grid(relu_b7, "B7: ReLU output volume", max_channels=2)  # visualize the rectified channels.
+```
+
+▶ What you'll see: only positive evidence survives in the output maps.
+
+👀 **Takeaway.** ReLU is an elementwise gate that keeps positive activations.
+
+#### B8. Parameter savings from a $1\times1$ bottleneck
+
+**Goal.** Compare an expensive convolution branch with and without channel reduction.
+
+```python
+in_b8 = 64  # start with sixty-four input channels.
+bottleneck_b8 = 16  # reduce to sixteen channels before the expensive filter.
+out_b8 = 32  # produce thirty-two output channels.
+direct_b8 = conv_param_count(3, in_b8, out_b8, use_bias=False)  # count a direct 3×3 branch.
+with_bottleneck_b8 = conv_param_count(1, in_b8, bottleneck_b8, use_bias=False) + conv_param_count(3, bottleneck_b8, out_b8, use_bias=False)  # count 1×1 reduce plus 3×3 conv.
+saved_b8 = direct_b8 - with_bottleneck_b8  # compute saved parameters.
+print("direct 3×3 params:", direct_b8)  # print direct cost.
+print("1×1 bottleneck + 3×3 params:", with_bottleneck_b8)  # print bottleneck cost.
+print("parameters saved:", saved_b8)  # print savings.
+```
+
+▶ What you'll see: reducing channels first greatly lowers the 3×3 parameter count.
+
+```python
+plt.figure(figsize=(5, 3.5))  # create a comparison chart.
+plt.bar(["direct", "bottleneck"], [direct_b8, with_bottleneck_b8], color=["gray", "green"])  # compare parameter counts.
+plt.ylabel("parameters")  # label the count axis.
+plt.title("B8 bottleneck parameter savings")  # title the savings plot.
+plt.show()  # render the chart.
+```
+
+▶ What you'll see: the bottleneck branch is much smaller.
+
+👀 **Takeaway.** A $1\times1$ bottleneck is cheap and can make later spatial filters cheaper.
+
+#### B9. Batch-normalize one activation value
+
+**Goal.** Normalize a single activation using a batch mean, variance, scale, and shift.
+
+```python
+x_b9 = 3.0  # choose one activation value from a batch.
+mean_b9 = 2.0  # use the batch mean for this channel.
+var_b9 = 0.25  # use the batch variance for this channel.
+gamma_b9 = 1.5  # choose a learned scale.
+beta_b9 = -0.5  # choose a learned shift.
+normalized_b9 = (x_b9 - mean_b9) / np.sqrt(var_b9 + EPS)  # standardize the activation.
+y_b9 = gamma_b9 * normalized_b9 + beta_b9  # apply learned scale and shift.
+print(f"standardized value = {normalized_b9:.3f}")  # print normalized activation.
+print(f"batch-norm output = {y_b9:.3f}")  # print final batch-normalized value.
+```
+
+▶ What you'll see: batch norm first standardizes, then lets the layer learn a new scale and shift.
+
+```python
+plt.figure(figsize=(5, 3))  # create a tiny before/after chart.
+plt.bar(["raw x", "standardized", "BN output"], [x_b9, normalized_b9, y_b9], color=["steelblue", "orange", "green"])  # compare the three values.
+plt.title("B9 one batch-norm calculation")  # title the normalization primitive.
+plt.show()  # render the chart.
+```
+
+▶ What you'll see: the final value is not necessarily zero-mean because $\gamma$ and $\beta$ are learned.
+
+👀 **Takeaway.** Batch norm is standardization followed by a learnable affine transform.
+
+#### B10. Global average pool a feature map
+
+**Goal.** Collapse each channel to one average value before classification.
+
+```python
+feature_b10 = np.array([[[1.0, 2.0], [3.0, 0.0]], [[5.0, 4.0], [7.0, 6.0]]])  # create a 2×2×2 feature tensor.
+gap_b10 = feature_b10.mean(axis=(0, 1))  # average over height and width for each channel.
+print("feature tensor shape:", feature_b10.shape)  # print the input shape.
+print("global average pooled vector:", gap_b10)  # print one value per channel.
+```
+
+▶ What you'll see: a spatial feature map becomes a compact channel summary vector.
+
+```python
+plt.figure(figsize=(5, 3))  # create a small bar chart.
+plt.bar(["channel 0", "channel 1"], gap_b10, color="teal")  # show channel averages.
+plt.ylabel("average activation")  # label the average axis.
+plt.title("B10 global average pooling")  # title the pooling primitive.
+plt.show()  # render the pooled vector.
+```
+
+▶ What you'll see: each output is the mean activation over the whole spatial grid.
+
+👀 **Takeaway.** Global average pooling removes spatial dimensions while preserving channel summaries.
+
 ### 🟡 Easy Examples
 
 #### E1. Residual block forward pass on tiny feature maps

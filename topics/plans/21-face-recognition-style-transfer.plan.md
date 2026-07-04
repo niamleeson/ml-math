@@ -18,12 +18,19 @@ Cover two deep-vision methods that reuse learned representations: face systems c
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Cosine similarity between two face embeddings | two toy 3-D embedding vectors | printed values plus tiny angle sketch | ~2 |
 | B2 | L2 distance threshold decision for one face pair | one toy embedding pair and a fixed threshold | printed distance, threshold, and accept/reject label | ~2 |
 | B3 | Gram matrix of a 2×2 two-channel activation map | toy activation tensor | printed channel-correlation matrix heatmap | ~3 |
+| B4 | Normalize one face embedding to unit length | one toy 3-D embedding vector | raw vs normalized vector sketch and printed norms | ~2 |
+| B5 | Content loss between two tiny feature maps | two toy 2×2 feature maps | content/generated/difference heatmaps and printed loss | ~2 |
+| B6 | Style loss between two Gram matrices | two toy 2×2×2 activation tensors | side-by-side Gram heatmaps and Gram MSE | ~3 |
+| B7 | Find the nearest gallery embedding | three toy gallery embeddings plus one query | tiny embedding scatterplot and printed nearest identity | ~3 |
+| B8 | Triplet margin score for one anchor-positive-negative set | toy 2-D anchor, positive, and negative embeddings | triplet scatterplot and printed hinge loss | ~2 |
+| B9 | Compare all query-to-gallery distances | one toy query and four gallery embeddings | sorted distance bar chart and ranked table | ~2 |
+| B10 | Reject a nearest face match with a threshold | toy gallery-distance vector plus fixed threshold | distance bars with rejection threshold | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

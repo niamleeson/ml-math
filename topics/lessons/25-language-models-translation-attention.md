@@ -345,6 +345,149 @@ plot_bar(["token 1", "token 2", "token 3"], token_probs_b3, "B3: probability tra
 
 👀 **Takeaway.** Perplexity is low only when the model consistently assigns high probability to the observed tokens.
 
+
+#### B4. Scale one attention score by square-root dimension
+
+**Goal.** Compute the scaled dot-product score $q\cdot k / \sqrt{d_k}$ for one query-key pair.
+
+```python
+q_b4 = np.array([2.0, 1.0, -1.0, 0.5])  # define one four-dimensional decoder query.
+k_b4 = np.array([1.0, 0.0, 2.0, -1.0])  # define one matching encoder key.
+raw_score_b4 = float(q_b4 @ k_b4)  # compute the unscaled dot-product compatibility score.
+d_b4 = q_b4.size  # count the key dimension used in scaled dot-product attention.
+scaled_score_b4 = raw_score_b4 / math.sqrt(d_b4)  # divide by sqrt(d_k) to control score magnitude.
+print("raw q·k score:", round(raw_score_b4, 3))  # show the unscaled score.
+print("sqrt(d_k):", round(math.sqrt(d_b4), 3))  # show the scale factor.
+print("scaled score:", round(scaled_score_b4, 3))  # show the score passed to softmax.
+```
+
+▶ What you'll see: scaling halves the score here because the key dimension is four.
+
+👀 **Takeaway.** Scaled attention keeps large-dimensional dot products from making softmax too sharp too early.
+
+#### B5. Attention weights over three keys
+
+**Goal.** Use one query and three keys to produce an attention distribution over source positions.
+
+```python
+query_b5 = np.array([1.0, -1.0])  # choose one decoder query vector.
+keys_b5 = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, -1.0]])  # define three source-position keys.
+scores_b5 = keys_b5 @ query_b5  # score each key by its dot product with the query.
+weights_b5 = softmax(scores_b5)  # normalize the three scores into attention weights.
+print("scores:", np.round(scores_b5, 3))  # print compatibility scores before softmax.
+print("weights:", np.round(weights_b5, 3))  # print the resulting source-position weights.
+print("sum:", round(weights_b5.sum(), 3))  # verify the weights form a distribution.
+```
+
+```python
+plot_bar(["key 1", "key 2", "key 3"], weights_b5, "B5: attention weights over three keys", "attention weight", "teal")  # visualize focus over keys.
+```
+
+▶ What you'll see: the key most aligned with the query receives the largest probability mass.
+
+👀 **Takeaway.** Dot products rank the keys, and softmax turns that ranking into usable attention weights.
+
+#### B6. Greedy next-token argmax
+
+**Goal.** Pick the next token with the largest probability from one toy language-model distribution.
+
+```python
+tokens_b6 = np.array(["cat", "dog", "<eos>"])  # define three possible next tokens.
+probs_b6 = np.array([0.30, 0.55, 0.15])  # define a valid next-token probability distribution.
+best_idx_b6 = int(np.argmax(probs_b6))  # find the index of the largest probability.
+next_token_b6 = tokens_b6[best_idx_b6]  # map the winning index back to a token.
+print("tokens:", tokens_b6)  # show candidate tokens.
+print("probabilities:", probs_b6)  # show model probabilities.
+print("greedy choice:", next_token_b6)  # show the argmax token.
+```
+
+```python
+plot_bar(tokens_b6, probs_b6, "B6: greedy next-token choice", "probability", "mediumpurple")  # show why the chosen token wins.
+```
+
+▶ What you'll see: greedy decoding chooses `dog` because it has the largest local probability.
+
+👀 **Takeaway.** Greedy decoding is just repeated argmax over the next-token distribution.
+
+#### B7. Bigram probability from counts
+
+**Goal.** Estimate one bigram probability $P(\text{cats}\mid\text{like})$ from tiny count tables.
+
+```python
+bigram_counts_b7 = {("like", "cats"): 3, ("like", "dogs"): 1}  # store observed next-token counts after the word like.
+context_count_b7 = sum(bigram_counts_b7.values())  # count all times the context word like appears before another token.
+prob_cats_b7 = bigram_counts_b7[("like", "cats")] / context_count_b7  # divide matching bigram count by context count.
+print("count(like, cats):", bigram_counts_b7[("like", "cats")])  # print the numerator.
+print("count(like, *):", context_count_b7)  # print the denominator.
+print("P(cats | like):", prob_cats_b7)  # print the maximum-likelihood bigram probability.
+```
+
+▶ What you'll see: three of four continuations are `cats`, so the bigram probability is $0.75$.
+
+👀 **Takeaway.** A bigram model estimates the next word by counting what followed the previous word before.
+
+#### B8. Cross-entropy of one correct token
+
+**Goal.** Compute the negative log probability assigned to one observed next token.
+
+```python
+correct_prob_b8 = 0.25  # store the model probability assigned to the correct token.
+ce_b8 = -math.log(correct_prob_b8)  # compute one-token cross-entropy in nats.
+print("correct-token probability:", correct_prob_b8)  # print the probability input.
+print("one-token cross-entropy:", round(ce_b8, 3))  # print the surprise from that probability.
+```
+
+▶ What you'll see: assigning probability $0.25$ gives cross-entropy about $1.386$ nats.
+
+👀 **Takeaway.** Cross-entropy is high when the model assigns low probability to the token that actually appeared.
+
+#### B9. Temperature-scaled softmax
+
+**Goal.** Compare the same logits under a low temperature and a high temperature.
+
+```python
+logits_b9 = np.array([2.0, 1.0, 0.0])  # define three next-token logits.
+probs_cold_b9 = softmax(logits_b9, temperature=0.5)  # sharpen the distribution with a low temperature.
+probs_warm_b9 = softmax(logits_b9, temperature=2.0)  # smooth the distribution with a high temperature.
+print("T=0.5:", np.round(probs_cold_b9, 3))  # print the sharper probabilities.
+print("T=2.0:", np.round(probs_warm_b9, 3))  # print the smoother probabilities.
+```
+
+```python
+plt.figure(figsize=(6.5, 4.0))  # create a side-by-side bar comparison.
+x_b9 = np.arange(len(logits_b9))  # create one position per token.
+plt.bar(x_b9 - 0.18, probs_cold_b9, width=0.36, label="T=0.5")  # plot the low-temperature distribution.
+plt.bar(x_b9 + 0.18, probs_warm_b9, width=0.36, label="T=2.0")  # plot the high-temperature distribution.
+plt.xticks(x_b9, ["tok 1", "tok 2", "tok 3"])  # label candidate tokens.
+plt.ylabel("probability")  # label the softmax output.
+plt.title("B9: temperature changes softmax sharpness")  # title the comparison.
+plt.legend()  # show temperature labels.
+plt.show()  # render the bars.
+```
+
+▶ What you'll see: low temperature concentrates mass on the best token; high temperature spreads mass out.
+
+👀 **Takeaway.** Temperature controls randomness without changing the logit ranking.
+
+#### B10. Length-normalized log score
+
+**Goal.** Compute one normalized beam-search score from three token log probabilities.
+
+```python
+log_probs_b10 = np.log(np.array([0.8, 0.6, 0.5]))  # store log probabilities for three generated tokens.
+alpha_b10 = 0.7  # choose a length-normalization exponent.
+raw_score_b10 = float(log_probs_b10.sum())  # sum log probabilities for the whole candidate.
+norm_score_b10 = raw_score_b10 / (len(log_probs_b10) ** alpha_b10)  # divide by length^alpha to reduce short-output bias.
+print("log probabilities:", np.round(log_probs_b10, 3))  # print local log scores.
+print("raw log score:", round(raw_score_b10, 3))  # print the unnormalized sequence score.
+print("length-normalized score:", round(norm_score_b10, 3))  # print the adjusted score.
+```
+
+▶ What you'll see: normalization makes the total log score less harsh for a longer candidate.
+
+👀 **Takeaway.** Beam search often normalizes by length so short translations do not win only because they have fewer factors.
+
+
 ### 🟡 Easy Examples
 
 #### E1. Count an n-gram language model

@@ -28,12 +28,19 @@ conditional independence and explaining away.
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Look up one CPT entry | binary `Disease → Fever` CPT | CPT table cell highlighted for `P(Fever=1 | Disease=1)` | ~2 |
 | B2 | Multiply two factors for one assignment | toy BN factors `P(D)` and `P(Fever|D)` with `D=1,Fever=1` | printed factor values and product | ~2 |
 | B3 | Normalize a two-value posterior row | toy unnormalized weights `[0.18, 0.02]` | two-bar normalized distribution | ~2 |
+| B4 | Sum out one variable from a tiny factor | toy factor `f(A,B)` | marginal bar chart over `A` | ~3 |
+| B5 | Compute one 3-node joint probability by the chain rule | medical `D→F,C` CPT entries | local-factor/product bar chart | ~3 |
+| B6 | Compute one conditional probability ratio | toy `P(A,B)` and `P(B)` scalars | numerator/denominator/ratio bars | ~2 |
+| B7 | Do one Gibbs resample from local weights | two unnormalized local weights | Gibbs conditional bar chart | ~3 |
+| B8 | Slice one factor to match evidence | toy factor `f(A,B)` with evidence `B=1` | evidence-consistent factor bars | ~3 |
+| B9 | Check one structural independence in a chain | chain `A→B→C` with `B` observed | blocked-chain diagram | ~3 |
+| B10 | Compute one expected count for MLE | old count plus fractional responsibility | old/responsibility/new count bars | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

@@ -299,6 +299,208 @@ plt.show()  # render the centroid movement after printing the mean.
 
 👀 Takeaway: the update step moves each centroid to the average of its currently assigned points.
 
+
+#### B4. Within-cluster sum of squares for one cluster
+
+**Goal.** Add squared distances from assigned points to one centroid.
+
+```python
+points_b4 = np.array([[1.0, 1.0], [2.0, 1.5], [3.0, 2.0]])  # collect points assigned to one cluster.
+centroid_b4 = points_b4.mean(axis=0)  # compute the cluster center.
+squared_distances_b4 = np.sum((points_b4 - centroid_b4) ** 2, axis=1)  # compute one squared distance per point.
+wcss_b4 = squared_distances_b4.sum()  # sum costs to get within-cluster sum of squares.
+print("centroid:", centroid_b4)  # print the representative point.
+print("squared distances:", np.round(squared_distances_b4, 3))  # print per-point costs.
+print("WCSS:", round(float(wcss_b4), 3))  # print total cluster compactness cost.
+```
+
+▶ What you'll see: points near their centroid contribute small squared-distance costs.
+
+```python
+plt.figure(figsize=(5, 4))  # create a compact cluster plot.
+plt.scatter(points_b4[:, 0], points_b4[:, 1], s=90, color="slateblue", label="assigned points")  # draw assigned points.
+plt.scatter(centroid_b4[0], centroid_b4[1], s=220, marker="X", color="black", label="centroid")  # draw the centroid.
+for point in points_b4:  # connect each point to the centroid.
+    plt.plot([point[0], centroid_b4[0]], [point[1], centroid_b4[1]], color="gray", linestyle="--")  # show one contribution to WCSS.
+plt.title("B4: one-cluster WCSS")  # title the primitive.
+plt.legend()  # identify points and centroid.
+plt.show()  # render the cost geometry.
+```
+
+▶ What you'll see: each dashed segment contributes one squared distance to WCSS.
+
+👀 Takeaway: inertia is built from within-cluster squared-distance sums.
+
+#### B5. Assign all points to nearest centroids once
+
+**Goal.** Perform one assignment step for a tiny dataset.
+
+```python
+X_b5 = np.array([[0.0, 0.0], [0.5, 0.2], [4.0, 4.0], [4.5, 3.8]])  # create four toy points.
+centers_b5 = np.array([[0.0, 0.0], [4.0, 4.0]])  # choose two fixed centroids.
+distances_b5 = np.sum((X_b5[:, None, :] - centers_b5[None, :, :]) ** 2, axis=2)  # compute point-to-centroid squared distances.
+labels_b5 = np.argmin(distances_b5, axis=1)  # assign each point to its nearest centroid.
+print("distance matrix:\n", np.round(distances_b5, 2))  # print all assignment costs.
+print("assigned labels:", labels_b5)  # print one hard cluster label per point.
+```
+
+▶ What you'll see: the two left points choose centroid 0 and the two right points choose centroid 1.
+
+```python
+plot_2d_points(X_b5, labels_b5, centers_b5, title="B5: one full assignment step")  # visualize assignments.
+plt.show()  # render assignments and centroids.
+```
+
+▶ What you'll see: colors match the nearest centroid for every point.
+
+👀 Takeaway: a k-means assignment step is an `argmin` over a distance matrix.
+
+#### B6. Recompute all centroids once
+
+**Goal.** Average points in each assigned cluster to update every centroid.
+
+```python
+X_b6 = np.array([[0.0, 0.0], [1.0, 0.2], [4.0, 4.0], [5.0, 3.8]])  # create four assigned points.
+labels_b6 = np.array([0, 0, 1, 1])  # store current cluster assignments.
+old_centers_b6 = np.array([[0.0, 0.0], [4.0, 4.0]])  # store old centroids for comparison.
+new_centers_b6 = np.vstack([X_b6[labels_b6 == k].mean(axis=0) for k in np.unique(labels_b6)])  # compute one mean per cluster.
+print("old centers:\n", old_centers_b6)  # print starting centroids.
+print("new centers:\n", new_centers_b6)  # print updated centroids.
+```
+
+▶ What you'll see: each centroid moves to the average of its assigned points.
+
+```python
+plot_2d_points(X_b6, labels_b6, old_centers_b6, title="B6: old centroids before update")  # show old centers.
+plt.scatter(new_centers_b6[:, 0], new_centers_b6[:, 1], s=240, marker="P", color="red", label="new centers")  # overlay updated centers.
+plt.legend()  # identify old and new centers.
+plt.show()  # render the centroid update.
+```
+
+▶ What you'll see: red markers land at the middle of each colored cluster.
+
+👀 Takeaway: the update step recomputes centroids independently cluster by cluster.
+
+#### B7. Total inertia from assignments
+
+**Goal.** Sum every point's squared distance to its assigned centroid.
+
+```python
+X_b7 = np.array([[0.0, 0.0], [1.0, 0.2], [4.0, 4.0], [5.0, 3.8]])  # reuse a tiny assigned dataset.
+labels_b7 = np.array([0, 0, 1, 1])  # store cluster assignments.
+centers_b7 = np.array([[0.5, 0.1], [4.5, 3.9]])  # store current centroids.
+point_costs_b7 = np.sum((X_b7 - centers_b7[labels_b7]) ** 2, axis=1)  # compute assigned squared distance per point.
+inertia_b7 = point_costs_b7.sum()  # add costs to match the k-means objective.
+print("point costs:", np.round(point_costs_b7, 3))  # print per-example contributions.
+print("total inertia:", round(float(inertia_b7), 3))  # print total distortion.
+```
+
+▶ What you'll see: total inertia is the sum of the four printed point costs.
+
+```python
+plt.figure(figsize=(5, 3.4))  # create a cost bar chart.
+plt.bar(np.arange(len(point_costs_b7)), point_costs_b7, color="slateblue")  # draw one bar per point cost.
+plt.title(f"B7: total inertia = {inertia_b7:.2f}")  # title with total inertia.
+plt.xlabel("point index")  # label point axis.
+plt.ylabel("assigned squared distance")  # label cost axis.
+plt.show()  # render cost contributions.
+```
+
+▶ What you'll see: small bars indicate compact clusters.
+
+👀 Takeaway: k-means tries to reduce this total inertia at every iteration.
+
+#### B8. Standardize two features
+
+**Goal.** Put features with different units on comparable scales before distance calculations.
+
+```python
+X_b8 = np.array([[1.0, 100.0], [2.0, 140.0], [3.0, 180.0], [4.0, 220.0]])  # create two features with very different scales.
+means_b8 = X_b8.mean(axis=0)  # compute feature means.
+stds_b8 = X_b8.std(axis=0)  # compute feature standard deviations.
+X_scaled_b8 = (X_b8 - means_b8) / stds_b8  # standardize each column.
+print("means:", means_b8)  # print original centers.
+print("stds:", np.round(stds_b8, 3))  # print original spreads.
+print("scaled data:\n", np.round(X_scaled_b8, 3))  # print standardized values.
+```
+
+▶ What you'll see: both scaled columns now have mean 0 and standard deviation 1.
+
+```python
+fig, axes = plt.subplots(1, 2, figsize=(7, 3))  # create before/after panels.
+axes[0].imshow(X_b8, aspect="auto", cmap="Greys")  # show raw magnitudes.
+axes[0].set_title("raw features")  # label raw panel.
+axes[1].imshow(X_scaled_b8, aspect="auto", cmap="coolwarm")  # show standardized values.
+axes[1].set_title("standardized features")  # label scaled panel.
+for ax in axes:  # add consistent labels.
+    ax.set_xlabel("feature")  # label columns.
+    ax.set_ylabel("example")  # label rows.
+plt.tight_layout()  # avoid overlap.
+plt.show()  # render comparison.
+```
+
+▶ What you'll see: the large-unit feature no longer dominates after scaling.
+
+👀 Takeaway: Euclidean clustering depends on scale.
+
+#### B9. Distance matrix for three points
+
+**Goal.** Compute all pairwise Euclidean distances among three observations.
+
+```python
+X_b9 = np.array([[0.0, 0.0], [3.0, 4.0], [6.0, 0.0]])  # create three points with easy distances.
+diff_b9 = X_b9[:, None, :] - X_b9[None, :, :]  # subtract every point from every other point.
+distance_matrix_b9 = np.sqrt(np.sum(diff_b9 ** 2, axis=2))  # compute Euclidean distances.
+print("distance matrix:\n", np.round(distance_matrix_b9, 2))  # print all pairwise distances.
+```
+
+▶ What you'll see: zeros on the diagonal and symmetric off-diagonal distances.
+
+```python
+plt.figure(figsize=(4, 3.6))  # create a small heatmap.
+plt.imshow(distance_matrix_b9, cmap="Blues")  # show pairwise distances by color.
+plt.colorbar(label="distance")  # add a distance scale.
+plt.xticks([0, 1, 2])  # label point columns.
+plt.yticks([0, 1, 2])  # label point rows.
+plt.title("B9: pairwise distance matrix")  # title the heatmap.
+plt.show()  # render the matrix.
+```
+
+▶ What you'll see: point-to-itself distances are zero.
+
+👀 Takeaway: clustering methods often start from distance tables.
+
+#### B10. Centroid shift magnitude between iterations
+
+**Goal.** Measure how far centroids moved after one update.
+
+```python
+old_centers_b10 = np.array([[0.0, 0.0], [4.0, 4.0]])  # store centroids before the update.
+new_centers_b10 = np.array([[0.4, 0.1], [4.6, 3.7]])  # store centroids after the update.
+shift_vectors_b10 = new_centers_b10 - old_centers_b10  # compute movement vectors.
+shift_lengths_b10 = np.sqrt(np.sum(shift_vectors_b10 ** 2, axis=1))  # compute Euclidean movement per centroid.
+print("shift vectors:\n", np.round(shift_vectors_b10, 3))  # print coordinate movement.
+print("shift magnitudes:", np.round(shift_lengths_b10, 3))  # print movement lengths.
+print("largest shift:", round(float(shift_lengths_b10.max()), 3))  # print a convergence diagnostic.
+```
+
+▶ What you'll see: each centroid has a small movement length.
+
+```python
+plt.figure(figsize=(5, 4))  # create a before/after movement plot.
+plt.scatter(old_centers_b10[:, 0], old_centers_b10[:, 1], s=180, marker="X", color="gray", label="old")  # draw old centroids.
+plt.scatter(new_centers_b10[:, 0], new_centers_b10[:, 1], s=220, marker="X", color="black", label="new")  # draw new centroids.
+for old, new in zip(old_centers_b10, new_centers_b10):  # draw one movement arrow per centroid.
+    plt.arrow(old[0], old[1], new[0] - old[0], new[1] - old[1], width=0.02, color="black", length_includes_head=True)  # show shift direction.
+plt.title("B10: centroid shifts after one update")  # title the diagnostic.
+plt.legend()  # identify old and new markers.
+plt.show()  # render centroid movement.
+```
+
+▶ What you'll see: arrows show how much each centroid moved in one iteration.
+
+👀 Takeaway: tiny centroid shifts are one sign that k-means is converging.
+
 ### 🟡 Easy Examples
 
 #### E1. k-means on 3 clean blobs from scratch

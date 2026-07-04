@@ -228,6 +228,137 @@ Use them differently:
 
 ## 3. Worked Examples
 
+### Setup
+
+The next examples are coded. Run the Python blocks top-to-bottom. They use CPU-only NumPy, scikit-learn, and Matplotlib.
+
+```python
+# If this is running in a fresh notebook, install the required scientific Python stack quietly.
+# %pip install -q numpy pandas matplotlib scikit-learn ipywidgets
+```
+
+```python
+import numpy as np  # Import NumPy for arrays, random numbers, and numerical summaries.
+import pandas as pd  # Import pandas for compact validation tables and diagnostics tables.
+import matplotlib.pyplot as plt  # Import Matplotlib for train/validation curves and decision plots.
+from sklearn.base import clone  # Import clone so custom cross-validation refits a fresh estimator each fold.
+from sklearn.datasets import make_moons  # Import moons to create a nonlinear classification diagnostic dataset.
+from sklearn.datasets import load_breast_cancer  # Import a real classification dataset for nested CV.
+from sklearn.datasets import load_digits  # Import digits to inspect systematic classification errors.
+from sklearn.datasets import load_diabetes  # Import a built-in regression dataset for ablation analysis.
+from sklearn.linear_model import Ridge  # Import Ridge regression for L2 regularization examples.
+from sklearn.linear_model import Lasso  # Import Lasso regression for L1 regularization examples.
+from sklearn.linear_model import LogisticRegression  # Import logistic regression for low-complexity classification baselines.
+from sklearn.metrics import accuracy_score  # Import accuracy for classification train/test comparisons.
+from sklearn.metrics import confusion_matrix  # Import confusion matrices for error analysis.
+from sklearn.metrics import mean_squared_error  # Import MSE to evaluate regression models.
+from sklearn.model_selection import KFold  # Import KFold for honest fold generation.
+from sklearn.model_selection import StratifiedKFold  # Import stratified folds for class-balanced CV.
+from sklearn.model_selection import cross_val_score  # Import cross_val_score for comparison with manual CV.
+from sklearn.model_selection import train_test_split  # Import train_test_split for hold-out validation sets.
+from sklearn.pipeline import Pipeline  # Import Pipeline to prevent preprocessing leakage.
+from sklearn.preprocessing import PolynomialFeatures  # Import polynomial features to control model complexity.
+from sklearn.preprocessing import StandardScaler  # Import StandardScaler for regularized linear models.
+from sklearn.svm import SVC  # Import support vector classifiers for nonlinear decision boundaries.
+from sklearn.tree import DecisionTreeClassifier  # Import decision trees to demonstrate overfitting.
+from sklearn.impute import SimpleImputer  # Import SimpleImputer for the leakage demonstration.
+
+RANDOM_SEED = 7  # Fix a single seed so every split and plot is reproducible.
+rng = np.random.default_rng(RANDOM_SEED)  # Create one modern random number generator for synthetic data.
+np.random.seed(RANDOM_SEED)  # Also seed legacy NumPy calls used inside some libraries.
+plt.rcParams["figure.figsize"] = (7, 4)  # Use readable default figure sizes for notebook plots.
+plt.rcParams["axes.grid"] = True  # Add light grids so curve comparisons are easier to read.
+```
+
+```python
+def rmse(y_true, y_pred):  # Define a reusable root-mean-squared-error helper.
+    return np.sqrt(mean_squared_error(y_true, y_pred))  # Convert MSE to the original target scale.
+
+
+def plot_regression_fit(ax, model, x_grid, x_train, y_train, title):  # Define one plotting helper for fitted curves.
+    y_grid = model.predict(x_grid.reshape(-1, 1))  # Predict on a dense grid to draw a smooth fitted function.
+    ax.scatter(x_train, y_train, s=24, alpha=0.75, label="training data")  # Show noisy observations as points.
+    ax.plot(x_grid, y_grid, linewidth=2.5, label="model")  # Draw the fitted model as a curve.
+    ax.set_title(title)  # Label the panel with the model setting.
+    ax.set_xlabel("x")  # Label the horizontal axis.
+    ax.set_ylabel("y")  # Label the vertical axis.
+    ax.legend()  # Include a legend so points and model are distinguishable.
+
+
+def make_mesh(X, padding=0.6, step=0.03):  # Define a mesh helper for classification decision boundaries.
+    x_min = X[:, 0].min() - padding  # Extend the left plot boundary beyond the data.
+    x_max = X[:, 0].max() + padding  # Extend the right plot boundary beyond the data.
+    y_min = X[:, 1].min() - padding  # Extend the lower plot boundary beyond the data.
+    y_max = X[:, 1].max() + padding  # Extend the upper plot boundary beyond the data.
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, step), np.arange(y_min, y_max, step))  # Build the evaluation grid.
+    grid = np.c_[xx.ravel(), yy.ravel()]  # Flatten the grid into feature rows for prediction.
+    return xx, yy, grid  # Return mesh coordinates and model-ready rows.
+
+
+def plot_decision_boundary(ax, model, X, y, title):  # Define a helper that visualizes a classifier boundary.
+    xx, yy, grid = make_mesh(X)  # Build a dense mesh around the observed feature space.
+    labels = model.predict(grid).reshape(xx.shape)  # Predict a class for each mesh point and reshape for contours.
+    ax.contourf(xx, yy, labels, alpha=0.25, levels=[-0.5, 0.5, 1.5])  # Fill the two predicted regions lightly.
+    ax.scatter(X[:, 0], X[:, 1], c=y, s=25, edgecolor="k", linewidth=0.3)  # Overlay the observed labeled points.
+    ax.set_title(title)  # Add a diagnostic title.
+    ax.set_xlabel("feature 1")  # Label the first feature axis.
+    ax.set_ylabel("feature 2")  # Label the second feature axis.
+```
+
+#### Data — swappable sources
+
+This lesson uses synthetic and built-in datasets so it can run without network access. The `DATA_SOURCE` switch demonstrates how a notebook section can swap data while keeping the model-selection workflow unchanged.
+
+```python
+DATA_SOURCE = "noisy_quadratic"  # Choose "noisy_quadratic", "moons", "breast_cancer", "digits", or "california".
+
+
+def load_swappable_data(source=DATA_SOURCE):  # Define a data loader with one consistent interface.
+    if source == "noisy_quadratic":  # Use this branch for regression model-selection curves.
+        x = np.linspace(-3, 3, 90)  # Create evenly spaced one-dimensional inputs.
+        noise = rng.normal(0, 1.2, size=x.shape[0])  # Add Gaussian noise so validation matters.
+        y = 0.8 * x**2 - 0.5 * x + 2.0 + noise  # Generate a nonlinear quadratic target.
+        return x.reshape(-1, 1), y  # Return a two-dimensional feature matrix and target vector.
+    if source == "moons":  # Use this branch for nonlinear classification diagnostics.
+        X, y = make_moons(n_samples=350, noise=0.28, random_state=RANDOM_SEED)  # Generate interleaving moon classes.
+        return X, y  # Return features and class labels.
+    if source == "breast_cancer":  # Use this branch for real nested-CV classification.
+        data = load_breast_cancer()  # Load the built-in breast cancer dataset.
+        return data.data, data.target  # Return numeric features and binary labels.
+    if source == "digits":  # Use this branch for image-like error analysis.
+        data = load_digits()  # Load the built-in handwritten digit dataset.
+        return data.data, data.target  # Return flattened 8-by-8 images and labels.
+    if source == "california":  # Use this branch for regression ablation analysis.
+        data = load_diabetes()  # Load the built-in diabetes regression dataset without network access.
+        return data.data, data.target  # Return numeric features and regression targets.
+    raise ValueError("Unknown DATA_SOURCE")  # Fail loudly if the data source name is misspelled.
+
+X_preview, y_preview = load_swappable_data(DATA_SOURCE)  # Load the selected dataset for a quick sanity check.
+print(f"Data source: {DATA_SOURCE}")  # Print the chosen data source.
+print(f"Feature shape: {X_preview.shape}")  # Print the number of examples and features.
+print(f"Target shape: {y_preview.shape}")  # Print the target vector shape.
+```
+
+```python
+if DATA_SOURCE == "noisy_quadratic":  # Plot the regression dataset when that source is selected.
+    plt.figure()  # Create a new figure for the raw data.
+    plt.scatter(X_preview[:, 0], y_preview, s=28, alpha=0.8)  # Show the noisy quadratic observations.
+    plt.title("Raw data: noisy quadratic regression")  # Add a descriptive title.
+    plt.xlabel("x")  # Label the input axis.
+    plt.ylabel("y")  # Label the target axis.
+    plt.show()  # Display the plot.
+else:  # Plot the first two dimensions for any classification or tabular source.
+    plt.figure()  # Create a new figure for the raw feature view.
+    plt.scatter(X_preview[:, 0], X_preview[:, 1], c=y_preview, s=22, alpha=0.8)  # Color points by target value or class.
+    plt.title(f"Raw data preview: {DATA_SOURCE}")  # Add a title using the selected source name.
+    plt.xlabel("feature 1")  # Label the first feature axis.
+    plt.ylabel("feature 2")  # Label the second feature axis.
+    plt.show()  # Display the plot.
+```
+
+▶ What you'll see: the default source is a curved regression problem, which is perfect for watching underfitting become overfitting as polynomial degree increases.
+
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Split six examples into train and validation indices
@@ -284,6 +415,24 @@ $$
 \boxed{I_{\text{train}}=\{0,1,2,3\},\quad I_{\text{val}}=\{4,5\}.}
 $$
 
+Interpretation: the training and validation subsets use different examples, so validation can estimate held-out behavior.
+
+```python
+indices_b1 = np.arange(6)  # store the six example indices.
+train_b1 = indices_b1[:4]  # take the first four indices for training.
+val_b1 = indices_b1[4:]  # take the last two indices for validation.
+intersection_b1 = np.intersect1d(train_b1, val_b1)  # compute the overlap between train and validation.
+coverage_b1 = np.union1d(train_b1, val_b1)  # compute the covered indices after the split.
+print("train:", train_b1.tolist())  # print the training index set.
+print("validation:", val_b1.tolist())  # print the validation index set.
+print("disjoint:", intersection_b1.size == 0)  # print whether the sets are disjoint.
+print("covers all:", np.array_equal(coverage_b1, indices_b1))  # print whether the split covers all examples.
+```
+
+▶ What you'll see: train `[0, 1, 2, 3]`, validation `[4, 5]`, with disjoint and coverage checks both true.
+
+👀 Takeaway: a validation split should be separate from the training examples it evaluates.
+
 #### B2. Average two validation errors into one CV error
 
 **Problem.** A 2-fold cross-validation run gives validation errors
@@ -325,6 +474,19 @@ $$
 $$
 \boxed{\operatorname{CV}_2=0.25.}
 $$
+
+Interpretation: the cross-validation estimate summarizes the two held-out fold errors by averaging them.
+
+```python
+fold_errors_b2 = np.array([0.30, 0.20])  # store the two validation fold errors.
+cv_error_b2 = fold_errors_b2.mean()  # average the fold errors to match the formula.
+print("fold errors:", fold_errors_b2)  # print the intermediate fold errors.
+print(f"CV_2={cv_error_b2:.2f}")  # print the final cross-validation error.
+```
+
+▶ What you'll see: the two fold errors average to `CV_2=0.25`.
+
+👀 Takeaway: k-fold CV reports the mean validation error across folds.
 
 #### B3. Diagnose one train/validation error pair
 
@@ -384,6 +546,358 @@ Two standard remedies are stronger regularization and more training data.
 $$
 \boxed{\text{Main issue: high variance / overfitting; remedies: regularize and add data.}}
 $$
+
+Interpretation: a low training error with a large validation gap means the model fits training data better than held-out data.
+
+```python
+train_error_b3 = 0.02  # store the training error.
+val_error_b3 = 0.25  # store the validation error.
+gap_b3 = val_error_b3 - train_error_b3  # compute the generalization gap.
+diagnosis_b3 = "high variance / overfitting" if train_error_b3 < 0.05 and gap_b3 > 0.10 else "not high variance"  # apply the diagnostic rule.
+remedies_b3 = ["regularize", "add data"]  # store two standard remedies.
+print(f"gap={gap_b3:.2f}")  # print the computed gap.
+print("diagnosis:", diagnosis_b3)  # print the selected diagnosis.
+print("remedies:", remedies_b3)  # print the remedies from the math solution.
+```
+
+▶ What you'll see: the gap is `0.23`, so the printed diagnosis is high variance / overfitting.
+
+👀 Takeaway: a large held-out gap is the numerical signature of overfitting.
+
+#### B4. Split eight examples into train and test indices
+
+**Problem.** Eight examples are indexed
+
+$$
+0,1,2,3,4,5,6,7.
+$$
+
+Use the first six as training data and the last two as test data.
+
+**Solution.**
+
+Step 1: Put the first six indices into training.
+
+$$
+I_{\text{train}}=\{0,1,2,3,4,5\}.
+$$
+
+Step 2: Put the untouched final two indices into test.
+
+$$
+I_{\text{test}}=\{6,7\}.
+$$
+
+Step 3: Verify that no index appears in both sets.
+
+$$
+I_{\text{train}}\cap I_{\text{test}}=\varnothing.
+$$
+
+$$
+\boxed{I_{\text{train}}=\{0,1,2,3,4,5\},\quad I_{\text{test}}=\{6,7\}.}
+$$
+
+Interpretation: the test indices are held out from training so they can be used for a final audit only once.
+
+```python
+indices_b4 = np.arange(8)  # store the eight example indices.
+train_b4 = indices_b4[:6]  # take the first six indices for training.
+test_b4 = indices_b4[6:]  # take the last two indices for testing.
+overlap_b4 = np.intersect1d(train_b4, test_b4)  # compute any overlap between train and test.
+print("train:", train_b4.tolist())  # print the training index set.
+print("test:", test_b4.tolist())  # print the test index set.
+print("disjoint:", overlap_b4.size == 0)  # print whether the sets are disjoint.
+```
+
+▶ What you'll see: train `[0, 1, 2, 3, 4, 5]`, test `[6, 7]`, and a true disjointness check.
+
+👀 Takeaway: the test set must not share examples with the training set.
+
+#### B5. Compute train error vs test error
+
+**Problem.** A classifier makes $1$ mistake on $10$ training examples and $4$ mistakes on $10$ test examples. Compute both errors.
+
+**Solution.**
+
+Step 1: Training error is mistakes divided by training examples.
+
+$$
+E_{\text{train}}=\frac{1}{10}=0.10.
+$$
+
+Step 2: Test error is mistakes divided by test examples.
+
+$$
+E_{\text{test}}=\frac{4}{10}=0.40.
+$$
+
+Step 3: Compare the held-out error to the training error.
+
+$$
+E_{\text{test}}-E_{\text{train}}=0.40-0.10=0.30.
+$$
+
+$$
+\boxed{E_{\text{train}}=0.10,\quad E_{\text{test}}=0.40.}
+$$
+
+Interpretation: the test error is much larger than the training error, revealing weaker held-out performance.
+
+```python
+mistakes_b5 = np.array([1, 4])  # store training and test mistake counts.
+examples_b5 = np.array([10, 10])  # store training and test example counts.
+errors_b5 = mistakes_b5 / examples_b5  # divide mistakes by examples to compute errors.
+gap_b5 = errors_b5[1] - errors_b5[0]  # compute the test-minus-train error gap.
+print(f"E_train={errors_b5[0]:.2f}")  # print the training error.
+print(f"E_test={errors_b5[1]:.2f}")  # print the test error.
+print(f"gap={gap_b5:.2f}")  # print the held-out gap.
+```
+
+▶ What you'll see: `E_train=0.10`, `E_test=0.40`, and a gap of `0.30`.
+
+👀 Takeaway: comparing train and test error reveals how much performance drops on held-out data.
+
+#### B6. Make three fold index splits
+
+**Problem.** Six examples are indexed $0,1,2,3,4,5$. Split them into $3$ folds of equal size.
+
+**Solution.**
+
+Step 1: Since there are $6$ examples and $3$ folds, each fold has
+
+$$
+\frac{6}{3}=2
+$$
+
+examples.
+
+Step 2: Assign consecutive pairs to folds.
+
+$$
+F_1=\{0,1\},\qquad F_2=\{2,3\},\qquad F_3=\{4,5\}.
+$$
+
+Step 3: Check that the folds cover all examples without overlap.
+
+$$
+F_1\cup F_2\cup F_3=\{0,1,2,3,4,5\}.
+$$
+
+$$
+\boxed{F_1=\{0,1\},\ F_2=\{2,3\},\ F_3=\{4,5\}.}
+$$
+
+Interpretation: equal-sized folds partition the data so each example can serve as validation once.
+
+```python
+indices_b6 = np.arange(6)  # store the six example indices.
+folds_b6 = np.array_split(indices_b6, 3)  # split the indices into three equal folds.
+covered_b6 = np.concatenate(folds_b6)  # combine the folds to check coverage.
+fold_sizes_b6 = np.array([fold.size for fold in folds_b6])  # compute each fold size.
+print("folds:", [fold.tolist() for fold in folds_b6])  # print the three fold index sets.
+print("fold sizes:", fold_sizes_b6.tolist())  # print the fold sizes.
+print("covers all:", np.array_equal(covered_b6, indices_b6))  # print whether the folds cover all examples.
+```
+
+▶ What you'll see: folds `[[0, 1], [2, 3], [4, 5]]`, each with size 2.
+
+👀 Takeaway: cross-validation folds should cover the data without overlap.
+
+#### B7. Label one validation-curve point
+
+**Problem.** A validation curve at polynomial degree $d=1$ has
+
+$$
+E_{\text{train}}=0.34,\qquad E_{\text{val}}=0.36.
+$$
+
+Label the point as bias-like or variance-like.
+
+**Solution.**
+
+Step 1: The training error is high.
+
+$$
+E_{\text{train}}=0.34.
+$$
+
+Step 2: The validation error is also high and close to the training error.
+
+$$
+E_{\text{val}}-E_{\text{train}}=0.36-0.34=0.02.
+$$
+
+Step 3: High and close errors indicate the model is too simple.
+
+$$
+\text{high train error} + \text{small gap}\Longrightarrow \text{high bias / underfitting}.
+$$
+
+$$
+\boxed{\text{The point is bias-like / underfit.}}
+$$
+
+Interpretation: high, similar training and validation errors indicate the model is too simple rather than too flexible.
+
+```python
+train_error_b7 = 0.34  # store the training error at degree one.
+val_error_b7 = 0.36  # store the validation error at degree one.
+gap_b7 = val_error_b7 - train_error_b7  # compute the validation-minus-training gap.
+label_b7 = "bias-like / underfit" if train_error_b7 > 0.30 and gap_b7 < 0.05 else "variance-like"  # apply the validation-curve rule.
+print(f"E_train={train_error_b7:.2f}")  # print the training error.
+print(f"E_val={val_error_b7:.2f}")  # print the validation error.
+print(f"gap={gap_b7:.2f}")  # print the gap.
+print("label:", label_b7)  # print the final label.
+```
+
+▶ What you'll see: high errors with a tiny `0.02` gap produce the label bias-like / underfit.
+
+👀 Takeaway: high and close errors usually point to underfitting.
+
+#### B8. Show regularization $\lambda$ shrinking one weight
+
+**Problem.** A one-weight ridge-style update can be summarized as
+
+$$
+w_{\text{new}}=\frac{w_{\text{unregularized}}}{1+\lambda}.
+$$
+
+If $w_{\text{unregularized}}=6$ and $\lambda=2$, compute $w_{\text{new}}$.
+
+**Solution.**
+
+Step 1: Substitute the values.
+
+$$
+w_{\text{new}}=\frac{6}{1+2}.
+$$
+
+Step 2: Simplify the denominator.
+
+$$
+w_{\text{new}}=\frac{6}{3}=2.
+$$
+
+Step 3: Interpret the effect.
+
+$$
+|2|<|6|,
+$$
+
+so increasing regularization shrank the weight toward zero.
+
+$$
+\boxed{w_{\text{new}}=2.}
+$$
+
+Interpretation: the positive regularization strength divides the unregularized weight by a larger denominator.
+
+```python
+w_unregularized_b8 = 6.0  # store the unregularized weight.
+lambda_b8 = 2.0  # store the regularization strength.
+w_new_b8 = w_unregularized_b8 / (1.0 + lambda_b8)  # apply the ridge-style shrinkage formula.
+shrinkage_b8 = abs(w_new_b8) < abs(w_unregularized_b8)  # check whether the weight moved toward zero.
+print(f"w_unregularized={w_unregularized_b8:.0f}")  # print the starting weight.
+print(f"lambda={lambda_b8:.0f}")  # print the regularization strength.
+print(f"w_new={w_new_b8:.0f}")  # print the shrunken weight.
+print("shrank:", shrinkage_b8)  # print whether shrinkage occurred.
+```
+
+▶ What you'll see: `w_new=2`, which is smaller in magnitude than the original weight 6.
+
+👀 Takeaway: stronger regularization can shrink coefficients toward zero.
+
+#### B9. Read one learning-curve point
+
+**Problem.** A learning curve reports that at training size $m=50$,
+
+$$
+E_{\text{train}}(50)=0.08,
+\qquad
+E_{\text{val}}(50)=0.18.
+$$
+
+Compute the train-validation gap at this point.
+
+**Solution.**
+
+Step 1: Use the gap formula at a fixed training size.
+
+$$
+\text{gap}(m)=E_{\text{val}}(m)-E_{\text{train}}(m).
+$$
+
+Step 2: Substitute $m=50$.
+
+$$
+\text{gap}(50)=0.18-0.08=0.10.
+$$
+
+$$
+\boxed{\text{At }m=50,\text{ the gap is }0.10.}
+$$
+
+Interpretation: this learning-curve point has validation error ten percentage points above training error.
+
+```python
+m_b9 = 50  # store the training size for the learning-curve point.
+train_error_b9 = 0.08  # store the training error at that size.
+val_error_b9 = 0.18  # store the validation error at that size.
+gap_b9 = val_error_b9 - train_error_b9  # compute the train-validation gap.
+print(f"m={m_b9}")  # print the training size.
+print(f"E_train({m_b9})={train_error_b9:.2f}")  # print the training error.
+print(f"E_val({m_b9})={val_error_b9:.2f}")  # print the validation error.
+print(f"gap({m_b9})={gap_b9:.2f}")  # print the final gap.
+```
+
+▶ What you'll see: at `m=50`, the printed gap is `0.10`.
+
+👀 Takeaway: a learning-curve gap measures held-out error above training error at a fixed data size.
+
+#### B10. Pick best model by validation score
+
+**Problem.** Three candidate models have validation accuracies
+
+$$
+A:0.78,\qquad B:0.84,\qquad C:0.81.
+$$
+
+Which model should be selected before touching the test set?
+
+**Solution.**
+
+Step 1: Compare validation accuracies only.
+
+$$
+0.84>0.81>0.78.
+$$
+
+Step 2: The largest validation accuracy belongs to model $B$.
+
+Step 3: Keep the test set untouched until after this choice is made.
+
+$$
+\boxed{\text{Select model }B\text{ by validation accuracy.}}
+$$
+
+Interpretation: model selection uses validation performance for the choice while keeping the test set untouched.
+
+```python
+model_names_b10 = np.array(["A", "B", "C"])  # store the candidate model names.
+val_accuracies_b10 = np.array([0.78, 0.84, 0.81])  # store the validation accuracies.
+best_index_b10 = np.argmax(val_accuracies_b10)  # find the index of the largest validation accuracy.
+best_model_b10 = model_names_b10[best_index_b10]  # look up the model name at that index.
+best_accuracy_b10 = val_accuracies_b10[best_index_b10]  # look up the best validation accuracy.
+scores_b10 = {str(name): float(score) for name, score in zip(model_names_b10, val_accuracies_b10)}  # format scores for readable printing.
+print("validation accuracies:", scores_b10)  # print all candidate scores.
+print(f"best model={best_model_b10}")  # print the selected model.
+print(f"best validation accuracy={best_accuracy_b10:.2f}")  # print the selected validation score.
+```
+
+▶ What you'll see: model `B` is selected because its validation accuracy is `0.84`.
+
+👀 Takeaway: choose the model with the best validation score before evaluating on test data.
 
 ### 🟡 Easy
 
@@ -533,136 +1047,6 @@ $$
 $$
 \boxed{\operatorname{CV}_5=0.20.}
 $$
-
-#### Setup
-
-The next examples are coded. Run the Python blocks top-to-bottom. They use CPU-only NumPy, scikit-learn, and Matplotlib.
-
-```python
-# If this is running in a fresh notebook, install the required scientific Python stack quietly.
-# %pip install -q numpy pandas matplotlib scikit-learn ipywidgets
-```
-
-```python
-import numpy as np  # Import NumPy for arrays, random numbers, and numerical summaries.
-import pandas as pd  # Import pandas for compact validation tables and diagnostics tables.
-import matplotlib.pyplot as plt  # Import Matplotlib for train/validation curves and decision plots.
-from sklearn.base import clone  # Import clone so custom cross-validation refits a fresh estimator each fold.
-from sklearn.datasets import make_moons  # Import moons to create a nonlinear classification diagnostic dataset.
-from sklearn.datasets import load_breast_cancer  # Import a real classification dataset for nested CV.
-from sklearn.datasets import load_digits  # Import digits to inspect systematic classification errors.
-from sklearn.datasets import load_diabetes  # Import a built-in regression dataset for ablation analysis.
-from sklearn.linear_model import Ridge  # Import Ridge regression for L2 regularization examples.
-from sklearn.linear_model import Lasso  # Import Lasso regression for L1 regularization examples.
-from sklearn.linear_model import LogisticRegression  # Import logistic regression for low-complexity classification baselines.
-from sklearn.metrics import accuracy_score  # Import accuracy for classification train/test comparisons.
-from sklearn.metrics import confusion_matrix  # Import confusion matrices for error analysis.
-from sklearn.metrics import mean_squared_error  # Import MSE to evaluate regression models.
-from sklearn.model_selection import KFold  # Import KFold for honest fold generation.
-from sklearn.model_selection import StratifiedKFold  # Import stratified folds for class-balanced CV.
-from sklearn.model_selection import cross_val_score  # Import cross_val_score for comparison with manual CV.
-from sklearn.model_selection import train_test_split  # Import train_test_split for hold-out validation sets.
-from sklearn.pipeline import Pipeline  # Import Pipeline to prevent preprocessing leakage.
-from sklearn.preprocessing import PolynomialFeatures  # Import polynomial features to control model complexity.
-from sklearn.preprocessing import StandardScaler  # Import StandardScaler for regularized linear models.
-from sklearn.svm import SVC  # Import support vector classifiers for nonlinear decision boundaries.
-from sklearn.tree import DecisionTreeClassifier  # Import decision trees to demonstrate overfitting.
-from sklearn.impute import SimpleImputer  # Import SimpleImputer for the leakage demonstration.
-
-RANDOM_SEED = 7  # Fix a single seed so every split and plot is reproducible.
-rng = np.random.default_rng(RANDOM_SEED)  # Create one modern random number generator for synthetic data.
-np.random.seed(RANDOM_SEED)  # Also seed legacy NumPy calls used inside some libraries.
-plt.rcParams["figure.figsize"] = (7, 4)  # Use readable default figure sizes for notebook plots.
-plt.rcParams["axes.grid"] = True  # Add light grids so curve comparisons are easier to read.
-```
-
-```python
-def rmse(y_true, y_pred):  # Define a reusable root-mean-squared-error helper.
-    return np.sqrt(mean_squared_error(y_true, y_pred))  # Convert MSE to the original target scale.
-
-
-def plot_regression_fit(ax, model, x_grid, x_train, y_train, title):  # Define one plotting helper for fitted curves.
-    y_grid = model.predict(x_grid.reshape(-1, 1))  # Predict on a dense grid to draw a smooth fitted function.
-    ax.scatter(x_train, y_train, s=24, alpha=0.75, label="training data")  # Show noisy observations as points.
-    ax.plot(x_grid, y_grid, linewidth=2.5, label="model")  # Draw the fitted model as a curve.
-    ax.set_title(title)  # Label the panel with the model setting.
-    ax.set_xlabel("x")  # Label the horizontal axis.
-    ax.set_ylabel("y")  # Label the vertical axis.
-    ax.legend()  # Include a legend so points and model are distinguishable.
-
-
-def make_mesh(X, padding=0.6, step=0.03):  # Define a mesh helper for classification decision boundaries.
-    x_min = X[:, 0].min() - padding  # Extend the left plot boundary beyond the data.
-    x_max = X[:, 0].max() + padding  # Extend the right plot boundary beyond the data.
-    y_min = X[:, 1].min() - padding  # Extend the lower plot boundary beyond the data.
-    y_max = X[:, 1].max() + padding  # Extend the upper plot boundary beyond the data.
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, step), np.arange(y_min, y_max, step))  # Build the evaluation grid.
-    grid = np.c_[xx.ravel(), yy.ravel()]  # Flatten the grid into feature rows for prediction.
-    return xx, yy, grid  # Return mesh coordinates and model-ready rows.
-
-
-def plot_decision_boundary(ax, model, X, y, title):  # Define a helper that visualizes a classifier boundary.
-    xx, yy, grid = make_mesh(X)  # Build a dense mesh around the observed feature space.
-    labels = model.predict(grid).reshape(xx.shape)  # Predict a class for each mesh point and reshape for contours.
-    ax.contourf(xx, yy, labels, alpha=0.25, levels=[-0.5, 0.5, 1.5])  # Fill the two predicted regions lightly.
-    ax.scatter(X[:, 0], X[:, 1], c=y, s=25, edgecolor="k", linewidth=0.3)  # Overlay the observed labeled points.
-    ax.set_title(title)  # Add a diagnostic title.
-    ax.set_xlabel("feature 1")  # Label the first feature axis.
-    ax.set_ylabel("feature 2")  # Label the second feature axis.
-```
-
-#### Data — swappable sources
-
-This lesson uses synthetic and built-in datasets so it can run without network access. The `DATA_SOURCE` switch demonstrates how a notebook section can swap data while keeping the model-selection workflow unchanged.
-
-```python
-DATA_SOURCE = "noisy_quadratic"  # Choose "noisy_quadratic", "moons", "breast_cancer", "digits", or "california".
-
-
-def load_swappable_data(source=DATA_SOURCE):  # Define a data loader with one consistent interface.
-    if source == "noisy_quadratic":  # Use this branch for regression model-selection curves.
-        x = np.linspace(-3, 3, 90)  # Create evenly spaced one-dimensional inputs.
-        noise = rng.normal(0, 1.2, size=x.shape[0])  # Add Gaussian noise so validation matters.
-        y = 0.8 * x**2 - 0.5 * x + 2.0 + noise  # Generate a nonlinear quadratic target.
-        return x.reshape(-1, 1), y  # Return a two-dimensional feature matrix and target vector.
-    if source == "moons":  # Use this branch for nonlinear classification diagnostics.
-        X, y = make_moons(n_samples=350, noise=0.28, random_state=RANDOM_SEED)  # Generate interleaving moon classes.
-        return X, y  # Return features and class labels.
-    if source == "breast_cancer":  # Use this branch for real nested-CV classification.
-        data = load_breast_cancer()  # Load the built-in breast cancer dataset.
-        return data.data, data.target  # Return numeric features and binary labels.
-    if source == "digits":  # Use this branch for image-like error analysis.
-        data = load_digits()  # Load the built-in handwritten digit dataset.
-        return data.data, data.target  # Return flattened 8-by-8 images and labels.
-    if source == "california":  # Use this branch for regression ablation analysis.
-        data = load_diabetes()  # Load the built-in diabetes regression dataset without network access.
-        return data.data, data.target  # Return numeric features and regression targets.
-    raise ValueError("Unknown DATA_SOURCE")  # Fail loudly if the data source name is misspelled.
-
-X_preview, y_preview = load_swappable_data(DATA_SOURCE)  # Load the selected dataset for a quick sanity check.
-print(f"Data source: {DATA_SOURCE}")  # Print the chosen data source.
-print(f"Feature shape: {X_preview.shape}")  # Print the number of examples and features.
-print(f"Target shape: {y_preview.shape}")  # Print the target vector shape.
-```
-
-```python
-if DATA_SOURCE == "noisy_quadratic":  # Plot the regression dataset when that source is selected.
-    plt.figure()  # Create a new figure for the raw data.
-    plt.scatter(X_preview[:, 0], y_preview, s=28, alpha=0.8)  # Show the noisy quadratic observations.
-    plt.title("Raw data: noisy quadratic regression")  # Add a descriptive title.
-    plt.xlabel("x")  # Label the input axis.
-    plt.ylabel("y")  # Label the target axis.
-    plt.show()  # Display the plot.
-else:  # Plot the first two dimensions for any classification or tabular source.
-    plt.figure()  # Create a new figure for the raw feature view.
-    plt.scatter(X_preview[:, 0], X_preview[:, 1], c=y_preview, s=22, alpha=0.8)  # Color points by target value or class.
-    plt.title(f"Raw data preview: {DATA_SOURCE}")  # Add a title using the selected source name.
-    plt.xlabel("feature 1")  # Label the first feature axis.
-    plt.ylabel("feature 2")  # Label the second feature axis.
-    plt.show()  # Display the plot.
-```
-
-▶ What you'll see: the default source is a curved regression problem, which is perfect for watching underfitting become overfitting as polynomial degree increases.
 
 #### E3. Polynomial degree selection
 

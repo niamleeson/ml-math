@@ -535,6 +535,120 @@ print("2 tau^2 =", denominator_b3)
 print("weight =", weight_b3)
 ```
 
+
+#### B4. Build one design-matrix row $[1,x]$
+
+Goal: add the intercept coordinate to one raw feature value.
+
+```python
+x_raw_b4 = 3.2  # Store one scalar feature value before adding an intercept.
+x_row_b4 = np.array([1.0, x_raw_b4])  # Build the design-matrix row with x_0 = 1 first.
+print("design row =", x_row_b4)  # Display the row used by theta^T x.
+```
+
+▶ What you'll see: the raw feature becomes a two-entry row whose first entry is always $1$.
+
+👀 **Takeaway:** the intercept is learned by treating the constant $1$ as another feature.
+
+#### B5. Compute one residual $y-\widehat y$
+
+Goal: measure the signed error of one regression prediction.
+
+```python
+y_true_b5 = 6.0  # Store the observed target value.
+y_hat_b5 = 4.7  # Store one model prediction for that target.
+residual_b5 = y_true_b5 - y_hat_b5  # Subtract prediction from truth to get the signed residual.
+print(f"residual = {y_true_b5:.1f} - {y_hat_b5:.1f} = {residual_b5:.1f}")  # Display the residual calculation.
+```
+
+▶ What you'll see: a positive residual means the prediction is too low.
+
+👀 **Takeaway:** residuals keep the direction of the model's mistake.
+
+#### B6. Compute squared error for one prediction
+
+Goal: turn one prediction error into the squared loss used by least squares.
+
+```python
+y_true_b6 = 2.0  # Store one observed target.
+y_hat_b6 = 3.5  # Store one predicted target.
+error_b6 = y_hat_b6 - y_true_b6  # Compute prediction minus truth for the loss formula.
+squared_error_b6 = error_b6 ** 2  # Square the error so positive and negative misses both cost upward.
+print(f"squared error = ({y_hat_b6:.1f} - {y_true_b6:.1f})^2 = {squared_error_b6:.2f}")  # Display the loss contribution.
+```
+
+▶ What you'll see: an error of $1.5$ contributes $2.25$ to squared error.
+
+👀 **Takeaway:** least squares penalizes larger misses quadratically.
+
+#### B7. Take one LMS step for one point
+
+Goal: update $\theta$ once using one feature vector and one target.
+
+```python
+theta_b7 = np.array([0.5, 1.0])  # Store the current intercept and slope.
+x_b7 = np.array([1.0, 2.0])  # Store one training row with intercept included.
+y_b7 = 5.0  # Store the observed target for this one row.
+alpha_b7 = 0.1  # Choose a small learning rate for one update.
+pred_b7 = theta_b7 @ x_b7  # Predict with the current parameters.
+error_b7 = y_b7 - pred_b7  # Compute y - h_theta(x) for the LMS update direction.
+theta_new_b7 = theta_b7 + alpha_b7 * error_b7 * x_b7  # Apply theta <- theta + alpha error x.
+print(f"old theta = {theta_b7}")  # Display the parameters before the step.
+print(f"prediction = {pred_b7:.2f}, error = {error_b7:.2f}")  # Display the signal driving the update.
+print(f"new theta = {theta_new_b7}")  # Display the parameters after one step.
+```
+
+▶ What you'll see: both parameters increase because the prediction was below the target and both features are positive.
+
+👀 **Takeaway:** one LMS step nudges parameters in the direction that would reduce this point's error.
+
+#### B8. Compute MSE of three predictions
+
+Goal: average three squared prediction errors into one regression metric.
+
+```python
+y_true_b8 = np.array([1.0, 2.0, 4.0])  # Store three observed targets.
+y_hat_b8 = np.array([1.5, 1.8, 3.0])  # Store three model predictions.
+mse_b8 = mse(y_true_b8, y_hat_b8)  # Reuse the setup helper to average squared residuals.
+print(f"MSE = {mse_b8:.3f}")  # Display the mean squared error.
+```
+
+▶ What you'll see: the three errors collapse into one nonnegative score.
+
+👀 **Takeaway:** MSE summarizes typical squared regression error across examples.
+
+#### B9. Compute a tiny $X^TX$ matrix
+
+Goal: form the normal-equation matrix for two design rows.
+
+```python
+X_b9 = np.array([[1.0, 0.0], [1.0, 2.0]])  # Store two rows with intercept and one feature.
+xtx_b9 = X_b9.T @ X_b9  # Multiply X transpose by X to build the normal-equation matrix.
+print("X^T X =")  # Label the matrix output.
+print(xtx_b9)  # Display the computed 2-by-2 matrix.
+```
+
+▶ What you'll see: the intercept column contributes counts and feature sums to $X^TX$.
+
+👀 **Takeaway:** the normal equations start by summarizing feature-feature products.
+
+#### B10. Compute logistic loss for one labeled example
+
+Goal: evaluate $-[y\log p+(1-y)\log(1-p)]$ for one probability prediction.
+
+```python
+y_b10 = 1  # Store one binary label.
+z_b10 = 0.8  # Store the model's logit score for that example.
+p_b10 = sigmoid(z_b10)  # Convert the score into P(y=1 | x).
+loss_b10 = -(y_b10 * np.log(p_b10) + (1 - y_b10) * np.log(1 - p_b10))  # Compute one-example logistic loss.
+print(f"p = {p_b10:.3f}")  # Display the predicted probability.
+print(f"logistic loss = {loss_b10:.3f}")  # Display the loss for the true label.
+```
+
+▶ What you'll see: a confident correct probability gives a loss below $\log 2$.
+
+👀 **Takeaway:** logistic loss rewards assigning high probability to the observed class.
+
 ### 🟡 Easy
 
 #### E1. Pen-and-paper: fit a line with the normal equations

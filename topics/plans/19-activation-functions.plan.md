@@ -18,12 +18,19 @@ Activation functions inject nonlinearity into neural networks and shape how grad
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Evaluate one ReLU value and slope | toy scalar: $z=-2$ | printed value and derivative | ~2 |
 | B2 | Compute sigmoid at zero | toy scalar: $z=0$ | single plotted point on sigmoid axis | ~2 |
 | B3 | Softmax a three-score vector | toy logits $(1,0,-1)$ | probability bar chart with sum-to-one check | ~3 |
+| B4 | Compute tanh at zero | toy scalar: $z=0$ | printed zero-centered value | ~2 |
+| B5 | Compute one Leaky ReLU value | toy scalar: $z=-3$, $\epsilon=0.01$ | printed negative-branch value | ~2 |
+| B6 | Compute one ELU value | toy scalar: $z=-1$, $\alpha=1$ | printed exponential-branch value | ~2 |
+| B7 | Compute the sigmoid derivative at one point | toy scalar: $z=2$ | printed activation and derivative | ~2 |
+| B8 | Compute ReLU derivatives at two points | toy scalars: $z=-1,2$ | printed slope comparison | ~2 |
+| B9 | Plot one activation over a grid | generated grid $z\in[-4,4]$ | tanh curve | ~3 |
+| B10 | Compare sigmoid and tanh at $z=-2$ and $z=2$ | toy scalars: $z\in\{-2,2\}$ | small printed comparison table | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |
@@ -45,7 +52,7 @@ Activation functions inject nonlinearity into neural networks and shape how grad
 
 ## Part 4 — Colab Notebook
 - **Notebook file:** notebooks/19-activation-functions.ipynb
-- **Est. cell count:** ~78 (⚖️ topic → all 13 examples (3 basics + 5 easy + 5 advanced), from single activation evaluations to plots and small-network experiments)
+- **Est. cell count:** ~78 (⚖️ topic → all 20 examples (10 basics + 5 easy + 5 advanced), from single activation evaluations to plots and small-network experiments)
 - **Key libraries:** numpy, matplotlib, scikit-learn (`make_moons`), tensorflow/keras or torch, ipywidgets.
 - **Runtime:** CPU
 - **Failure/edge dataset included:** large negative initialization in A3 — demonstrates the dying ReLU problem; extreme logits in A5 demonstrate softmax overflow.

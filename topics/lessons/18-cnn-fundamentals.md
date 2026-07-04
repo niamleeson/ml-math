@@ -424,7 +424,22 @@ $$
 Y=6+(-2)=\boxed{4}.
 $$
 
-Takeaway: one convolution cell is just a weighted sum over one local patch.
+Interpretation: one convolution cell is just a weighted sum over one local patch.
+
+```python
+patch_b1 = np.array([[1, 2], [3, 4]])  # Store the same 2-by-2 image patch from the derivation.
+kernel_b1 = np.array([[1, 0], [-1, 2]])  # Store the same 2-by-2 filter from the derivation.
+products_b1 = patch_b1 * kernel_b1  # Multiply the patch and filter element by element.
+conv_b1 = np.sum(products_b1)  # Sum the elementwise products to get the no-bias convolution value.
+bias_b1 = -2  # Store the optional bias used in the second hand calculation.
+biased_conv_b1 = conv_b1 + bias_b1  # Add the bias to reproduce the biased result.
+print("conv output:", conv_b1)  # Print 6, matching the boxed no-bias answer.
+print("biased conv output:", biased_conv_b1)  # Print 4, matching the boxed biased answer.
+```
+
+▶ What you'll see: the no-bias output is 6 and the biased output is 4.
+
+👀 Takeaway: convolution is elementwise multiply, sum, then optional bias.
 
 #### B2. Compute one convolution output size
 
@@ -460,7 +475,21 @@ $$
 \boxed{3\times3}\text{ output cells.}
 $$
 
-Takeaway: the output size counts legal filter placements, not pixels directly.
+Interpretation: the output size counts legal filter placements, not pixels directly.
+
+```python
+input_size_b2 = 5  # Store the input height and width I from the derivation.
+filter_size_b2 = 3  # Store the filter size F from the derivation.
+stride_b2 = 1  # Store the stride S from the derivation.
+padding_b2 = 0  # Store the symmetric padding P from the derivation.
+output_size_b2 = (input_size_b2 - filter_size_b2 + 2 * padding_b2) // stride_b2 + 1  # Apply the output-size formula.
+output_shape_b2 = (output_size_b2, output_size_b2)  # Convert the scalar output size into a square spatial shape.
+print("output shape:", output_shape_b2)  # Print (3, 3), matching the boxed output cells.
+```
+
+▶ What you'll see: the valid convolution produces a 3-by-3 output grid.
+
+👀 Takeaway: the formula counts where a full filter can land.
 
 #### B3. Take one 2×2 max-pool value
 
@@ -503,7 +532,361 @@ $$
 \end{aligned}
 $$
 
-Takeaway: pooling summarizes a local region without learning new parameters.
+Interpretation: pooling summarizes a local region without learning new parameters.
+
+```python
+activation_patch_b3 = np.array([[-1, 5], [2, 3]])  # Store the same activation patch from the derivation.
+max_pool_b3 = np.max(activation_patch_b3)  # Take the largest value in the patch.
+avg_pool_b3 = np.mean(activation_patch_b3)  # Also compute the comparison average from the derivation.
+print("max-pool value:", max_pool_b3)  # Print 5, matching the boxed max-pool answer.
+print("average-pool comparison:", avg_pool_b3)  # Print 2.25, matching the handwritten comparison.
+```
+
+▶ What you'll see: max pooling returns 5 while average pooling would return 2.25.
+
+👀 Takeaway: max pooling keeps the strongest local activation.
+
+#### B4. Take one 2×2 average-pool value
+
+Goal: compute the average pooling value for one local patch.
+
+Let
+
+$$
+A=
+\begin{bmatrix}
+2 & 4\\
+6 & 8
+\end{bmatrix}.
+$$
+
+Average pooling returns the arithmetic mean:
+
+$$
+\operatorname{avgpool}(A)=\frac{2+4+6+8}{4}=\frac{20}{4}=5.
+$$
+
+So the pooled output cell is
+
+$$
+\boxed{5}.
+$$
+
+Interpretation: average pooling keeps the local average response, not the strongest response.
+
+```python
+activation_patch_b4 = np.array([[2, 4], [6, 8]])  # Store the same activation patch from the derivation.
+sum_b4 = np.sum(activation_patch_b4)  # Add all four patch values to reproduce the numerator 20.
+count_b4 = activation_patch_b4.size  # Count the four entries in the 2-by-2 patch.
+avg_pool_b4 = sum_b4 / count_b4  # Divide the sum by the count to compute the average-pool value.
+print("average-pool value:", avg_pool_b4)  # Print 5.0, matching the boxed answer.
+```
+
+▶ What you'll see: the average-pool value is 5.0.
+
+👀 Takeaway: average pooling preserves the local mean signal.
+
+#### B5. Count parameters in one convolution layer
+
+Goal: use the convolution parameter-count formula once.
+
+For filters of size $3\times3$, input channels $C=2$, and $K=4$ filters,
+
+$$
+\#\text{params}=(F\cdot F\cdot C+1)\cdot K.
+$$
+
+Substitute the values:
+
+$$
+(3\cdot3\cdot2+1)\cdot4=(18+1)\cdot4=76.
+$$
+
+The $+1$ is one bias per filter, so
+
+$$
+\boxed{76\text{ parameters}.}
+$$
+
+Interpretation: each filter spans every input channel and has its own bias.
+
+```python
+filter_height_b5 = 3  # Store the filter height from the derivation.
+filter_width_b5 = 3  # Store the filter width from the derivation.
+input_channels_b5 = 2  # Store the number of input channels C from the derivation.
+num_filters_b5 = 4  # Store the number of filters K from the derivation.
+weights_per_filter_b5 = filter_height_b5 * filter_width_b5 * input_channels_b5  # Count weights in one filter.
+params_per_filter_b5 = weights_per_filter_b5 + 1  # Add one bias for one filter.
+total_params_b5 = params_per_filter_b5 * num_filters_b5  # Repeat the per-filter parameters for all filters.
+print("conv parameters:", total_params_b5)  # Print 76, matching the boxed parameter count.
+```
+
+▶ What you'll see: the convolution layer has 76 trainable parameters.
+
+👀 Takeaway: channel-spanning filters make parameter counts multiply by channels.
+
+#### B6. Apply ReLU to a feature map
+
+Goal: keep positive feature responses and zero out negative responses.
+
+For the feature map
+
+$$
+Z=
+\begin{bmatrix}
+-2 & 1\\
+3 & -4
+\end{bmatrix},
+$$
+
+ReLU applies $\max(0,z)$ to each entry:
+
+$$
+\operatorname{ReLU}(Z)=
+\begin{bmatrix}
+\max(0,-2) & \max(0,1)\\
+\max(0,3) & \max(0,-4)
+\end{bmatrix}
+=
+\begin{bmatrix}
+0 & 1\\
+3 & 0
+\end{bmatrix}.
+$$
+
+Thus the activated feature map is
+
+$$
+\boxed{
+\begin{bmatrix}
+0 & 1\\
+3 & 0
+\end{bmatrix}}
+$$
+
+Interpretation: ReLU suppresses negative evidence while preserving positive evidence.
+
+```python
+feature_b6 = np.array([[-2.0, 1.0], [3.0, -4.0]])  # Store the same feature map from the derivation.
+relu_b6 = np.maximum(feature_b6, 0.0)  # Apply ReLU element by element using max(value, 0).
+print("ReLU feature map:")  # Label the printed activation map.
+print(relu_b6)  # Print [[0, 1], [3, 0]], matching the boxed result.
+```
+
+▶ What you'll see: negative entries become 0 while positive entries stay unchanged.
+
+👀 Takeaway: ReLU turns signed responses into nonnegative activations.
+
+```python
+feature_b6 = np.array([[-2.0, 1.0], [3.0, -4.0]])  # Recreate the same input feature map for this standalone visualization.
+relu_b6 = np.maximum(feature_b6, 0.0)  # Recompute the ReLU output so the cell is self-contained.
+plt.imshow(relu_b6)  # Display the activated feature map as a tiny image.
+plt.title("B6: ReLU feature map")  # Add a title identifying the basic and concept.
+plt.colorbar()  # Show the activation scale beside the image.
+plt.show()  # Render the figure in the notebook.
+```
+
+▶ What you'll see: a 2-by-2 heatmap where only the positive responses remain bright.
+
+#### B7. Compare stride effect on output size
+
+Goal: see how changing only the stride changes the number of filter placements.
+
+Use $I=7$, $F=3$, $P=0$.
+
+For stride $S=1$,
+
+$$
+O=\frac{7-3+0}{1}+1=5.
+$$
+
+For stride $S=2$,
+
+$$
+O=\frac{7-3+0}{2}+1=3.
+$$
+
+Thus the same input and filter produce
+
+$$
+\boxed{5\times5\text{ cells at }S=1\quad\text{but}\quad3\times3\text{ cells at }S=2.}
+$$
+
+Interpretation: larger stride samples fewer locations.
+
+```python
+input_size_b7 = 7  # Store the input height and width I from the derivation.
+filter_size_b7 = 3  # Store the filter size F from the derivation.
+padding_b7 = 0  # Store the valid-padding value P from the derivation.
+stride_one_b7 = 1  # Store the first stride value from the derivation.
+stride_two_b7 = 2  # Store the second stride value from the derivation.
+output_stride_one_b7 = (input_size_b7 - filter_size_b7 + 2 * padding_b7) // stride_one_b7 + 1  # Compute O for stride 1.
+output_stride_two_b7 = (input_size_b7 - filter_size_b7 + 2 * padding_b7) // stride_two_b7 + 1  # Compute O for stride 2.
+print("stride 1 output shape:", (output_stride_one_b7, output_stride_one_b7))  # Print (5, 5), matching the boxed result.
+print("stride 2 output shape:", (output_stride_two_b7, output_stride_two_b7))  # Print (3, 3), matching the boxed result.
+```
+
+▶ What you'll see: stride 1 gives 5-by-5 cells, while stride 2 gives 3-by-3 cells.
+
+👀 Takeaway: stride is a downsampling choice before pooling even happens.
+
+#### B8. Zero-pad a tiny matrix
+
+Goal: add a one-pixel border of zeros around a tiny image.
+
+By layout,
+
+$$
+\begin{bmatrix}
+1 & 2\\
+3 & 4
+\end{bmatrix}
+\longrightarrow
+\begin{bmatrix}
+0 & 0 & 0 & 0\\
+0 & 1 & 2 & 0\\
+0 & 3 & 4 & 0\\
+0 & 0 & 0 & 0
+\end{bmatrix}.
+$$
+
+So the padded image is
+
+$$
+\boxed{
+\begin{bmatrix}
+0 & 0 & 0 & 0\\
+0 & 1 & 2 & 0\\
+0 & 3 & 4 & 0\\
+0 & 0 & 0 & 0
+\end{bmatrix}}
+$$
+
+Interpretation: padding lets filters visit boundary pixels more symmetrically.
+
+```python
+image_b8 = np.array([[1.0, 2.0], [3.0, 4.0]])  # Store the same 2-by-2 image from the derivation.
+padded_b8 = np.pad(image_b8, ((1, 1), (1, 1)), mode="constant", constant_values=0.0)  # Add one zero row or column on every side.
+print("padded image:")  # Label the printed padded matrix.
+print(padded_b8)  # Print the 4-by-4 matrix, matching the boxed result.
+```
+
+▶ What you'll see: the original 2-by-2 image sits inside a 4-by-4 zero border.
+
+👀 Takeaway: zero-padding expands spatial size without inventing new pixel evidence.
+
+```python
+image_b8 = np.array([[1.0, 2.0], [3.0, 4.0]])  # Recreate the same input image for this standalone visualization.
+padded_b8 = np.pad(image_b8, ((1, 1), (1, 1)), mode="constant", constant_values=0.0)  # Recompute the padded image locally.
+plt.imshow(padded_b8)  # Display the padded matrix as a tiny image.
+plt.title("B8: zero-padded image")  # Add a title identifying the basic and concept.
+plt.colorbar()  # Show the pixel-value scale beside the image.
+plt.show()  # Render the figure in the notebook.
+```
+
+▶ What you'll see: a darker zero border surrounds the brighter original pixels.
+
+#### B9. Apply a vertical-edge filter to one patch
+
+Goal: detect a left-to-right intensity change in one $2\times2$ patch.
+
+Let
+
+$$
+X=
+\begin{bmatrix}
+0 & 3\\
+0 & 3
+\end{bmatrix},
+\qquad
+W=
+\begin{bmatrix}
+-1 & 1\\
+-1 & 1
+\end{bmatrix}.
+$$
+
+The filter response is
+
+$$
+\begin{aligned}
+Y
+&=(0)(-1)+(3)(1)+(0)(-1)+(3)(1)\\
+&=0+3+0+3\\
+&=6.
+\end{aligned}
+$$
+
+So
+
+$$
+\boxed{Y=6}.
+$$
+
+Interpretation: this filter responds positively when the right side is brighter than the left side.
+
+```python
+patch_b9 = np.array([[0, 3], [0, 3]])  # Store the same left-dark right-bright patch from the derivation.
+kernel_b9 = np.array([[-1, 1], [-1, 1]])  # Store the same vertical-edge filter from the derivation.
+products_b9 = patch_b9 * kernel_b9  # Multiply patch intensities by filter weights element by element.
+edge_response_b9 = np.sum(products_b9)  # Sum the products to get the vertical-edge response.
+print("vertical-edge response:", edge_response_b9)  # Print 6, matching the boxed answer.
+```
+
+▶ What you'll see: the right-brighter patch gives a positive edge response of 6.
+
+👀 Takeaway: edge filters compare opposite sides of a local patch.
+
+```python
+patch_b9 = np.array([[0, 3], [0, 3]])  # Recreate the same patch for this standalone visualization.
+kernel_b9 = np.array([[-1, 1], [-1, 1]])  # Recreate the same filter for this standalone visualization.
+products_b9 = patch_b9 * kernel_b9  # Recompute the signed elementwise contributions.
+plt.imshow(products_b9)  # Display the contribution map used in the sum.
+plt.title("B9: vertical-edge contributions")  # Add a title identifying the basic and concept.
+plt.colorbar()  # Show the signed contribution scale beside the image.
+plt.show()  # Render the figure in the notebook.
+```
+
+▶ What you'll see: positive contributions appear on the bright right side.
+
+#### B10. Flatten a small feature map length
+
+Goal: compute the vector length after flattening a feature tensor.
+
+A feature map with shape
+
+$$
+2\times3\times4
+$$
+
+has height $2$, width $3$, and channels $4$.
+
+Flattening keeps all values but removes the grid shape:
+
+$$
+N_{\text{flat}}=2\cdot3\cdot4=24.
+$$
+
+Therefore the flattened vector has length
+
+$$
+\boxed{24}.
+$$
+
+Interpretation: flattening changes the shape, not the number of activations.
+
+```python
+feature_tensor_b10 = np.arange(24).reshape(2, 3, 4)  # Create a tiny tensor with shape 2-by-3-by-4.
+flat_vector_b10 = feature_tensor_b10.reshape(-1)  # Flatten the tensor into one vector while keeping all entries.
+flat_length_b10 = flat_vector_b10.size  # Count the number of activations in the flattened vector.
+print("flattened length:", flat_length_b10)  # Print 24, matching the boxed answer.
+print("original shape:", feature_tensor_b10.shape)  # Print the original grid shape for comparison.
+print("flattened shape:", flat_vector_b10.shape)  # Print the one-dimensional vector shape after flattening.
+```
+
+▶ What you'll see: the 2-by-3-by-4 tensor becomes a length-24 vector.
+
+👀 Takeaway: flattening preserves activation count while discarding grid axes.
 
 ### 🟡 Easy
 

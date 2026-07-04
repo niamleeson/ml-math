@@ -441,6 +441,111 @@ draw_graph(basic_nodes, basic_edges, basic_pos, explored=basic_visited, current=
 
 👀 **Takeaway:** a visited set turns cyclic graphs into finite work by preventing already-expanded states from reentering the frontier.
 
+
+#### B4. Compute the path cost of a node list
+
+Goal: add the costs of entering cells along a short grid path.
+
+```python
+path_grid_b4, start_b4, goal_b4 = make_grid(3, 3, mud=[(0, 1)], start=(0, 0), goal=(0, 2))  # Put one mud cell on a tiny path.
+path_b4 = [(0, 0), (0, 1), (0, 2)]  # Define a path from start to goal through the mud cell.
+cost_b4 = path_cost_grid(path_grid_b4, path_b4)  # Sum entry costs for every state after the start.
+draw_grid(path_grid_b4, start_b4, goal_b4, path=path_b4, title="B4: path with one mud step")  # Highlight the evaluated path.
+print("path cost:", cost_b4)  # Print the scalar cost.
+```
+
+👀 **Takeaway:** path cost is an accumulated sum over the chosen transitions or entered cells.
+
+#### B5. Reconstruct a path from parent pointers
+
+Goal: walk backward from the goal to the start, then reverse the result.
+
+```python
+parent_b5 = {(0, 1): (0, 0), (1, 1): (0, 1), (1, 2): (1, 1)}  # Store one predecessor per discovered state.
+start_b5 = (0, 0)  # Define the start state.
+goal_b5 = (1, 2)  # Define the goal state.
+path_b5 = reconstruct_path(parent_b5, start_b5, goal_b5)  # Use the shared helper to rebuild the forward path.
+print("reconstructed path:", path_b5)  # Show the ordered start-to-goal route.
+```
+
+👀 **Takeaway:** parent pointers store enough information to recover the final route after search succeeds.
+
+#### B6. Compute a Manhattan heuristic value
+
+Goal: estimate grid distance by counting row and column separation.
+
+```python
+state_b6 = (1, 2)  # Choose a current grid state.
+goal_b6 = (4, 6)  # Choose a goal grid state.
+h_b6 = manhattan(state_b6, goal_b6)  # Add vertical and horizontal distance.
+print("state:", state_b6)  # Show the current state.
+print("goal:", goal_b6)  # Show the target state.
+print("Manhattan h(n):", h_b6)  # Show the heuristic estimate.
+```
+
+👀 **Takeaway:** Manhattan distance is a simple admissible estimate for four-neighbor unit-cost grids without obstacles.
+
+#### B7. Test whether a state is the goal
+
+Goal: reduce the stopping condition to one equality check.
+
+```python
+goal_b7 = (2, 2)  # Define the target state.
+candidates_b7 = [(0, 0), (2, 1), (2, 2)]  # List states that might be popped from a frontier.
+for state_b7 in candidates_b7:  # Check each candidate independently.
+    print(state_b7, "is goal?", state_b7 == goal_b7)  # Compare the candidate to the goal.
+```
+
+👀 **Takeaway:** search stops when the popped state satisfies the goal test.
+
+#### B8. Expand one node by pushing its neighbors
+
+Goal: pop one current node and add its valid neighbors to the frontier.
+
+```python
+grid_b8, start_b8, goal_b8 = make_grid(3, 3, walls=[(1, 1)], start=(0, 0), goal=(2, 2))  # Build a small grid with a blocked center.
+current_b8 = (1, 0)  # Choose one node to expand.
+frontier_b8 = deque()  # Start with an empty FIFO frontier.
+for nbr_b8 in grid_neighbors(grid_b8, current_b8):  # Generate valid neighbors of the current node.
+    frontier_b8.append(nbr_b8)  # Push each neighbor for future exploration.
+draw_grid(grid_b8, start_b8, goal_b8, current=current_b8, frontier=frontier_b8, title="B8: pushed valid neighbors")  # Visualize pushed neighbors.
+print("frontier after expansion:", list(frontier_b8))  # Print the resulting frontier.
+```
+
+👀 **Takeaway:** expansion turns one current state into zero or more future frontier states.
+
+#### B9. Pop the minimum-cost item from a priority queue
+
+Goal: use a heap to choose the frontier item with smallest priority.
+
+```python
+frontier_b9 = []  # Start an empty heap-backed priority queue.
+heapq.heappush(frontier_b9, (5, "A"))  # Push a higher-cost state.
+heapq.heappush(frontier_b9, (2, "B"))  # Push the current cheapest state.
+heapq.heappush(frontier_b9, (3, "C"))  # Push a middle-cost state.
+priority_b9, state_b9 = heapq.heappop(frontier_b9)  # Pop the state with smallest priority.
+print("popped:", state_b9, "with priority", priority_b9)  # Show the selected state.
+print("remaining heap:", frontier_b9)  # Show what remains in the priority queue.
+```
+
+👀 **Takeaway:** UCS and A* differ from BFS/DFS because they pop by numeric priority.
+
+#### B10. Count expanded nodes
+
+Goal: maintain a simple metric while a search loop runs.
+
+```python
+expanded_b10 = []  # Store states after they are popped and processed.
+for state_b10 in ["S", "A", "B", "G"]:  # Simulate four popped states.
+    expanded_b10.append(state_b10)  # Mark this state as expanded.
+    if state_b10 == "G":  # Stop once the goal is expanded.
+        break  # End the simulated search loop.
+print("expanded states:", expanded_b10)  # Show the processed order.
+print("expanded count:", len(expanded_b10))  # Count how much work the search did.
+```
+
+👀 **Takeaway:** expanded-node count is a compact way to compare search effort.
+
 ### 🟡 Easy Examples
 
 #### E1. BFS on an unweighted grid maze

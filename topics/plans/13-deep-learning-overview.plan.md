@@ -18,12 +18,19 @@ Deep learning stacks differentiable layers so models can learn representations i
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Compute one neuron's affine score $w^Tx+b$ | toy vectors | printed values; tiny weighted-input bar | ~2 |
 | B2 | Apply one activation to one scalar | toy scalar | printed values; point marked on sigmoid/ReLU curve | ~2 |
 | B3 | Compute binary cross-entropy for one prediction | toy label and predicted probability | printed values; loss point on curve | ~3 |
+| B4 | Apply ReLU and sigmoid to a vector | toy score vector | printed values; activation line plot | ~2 |
+| B5 | Compute MSE loss for three predictions | toy predictions and targets | printed values; squared-error bars | ~2 |
+| B6 | Softmax three logits | toy logits | printed values; probability bar chart | ~2 |
+| B7 | One-hot encode one label | toy class label | printed vector; one-hot bar chart | ~2 |
+| B8 | Derivative of sigmoid at one score | toy scalar score | printed values; derivative curve point | ~2 |
+| B9 | Count parameters in one dense layer | toy layer dimensions | printed values; weights-vs-biases bar | ~2 |
+| B10 | One gradient-descent weight update | toy weight, gradient, learning rate | printed values; before/after weight plot | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

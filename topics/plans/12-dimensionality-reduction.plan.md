@@ -18,12 +18,19 @@ Dimensionality reduction compresses high-dimensional data while preserving the s
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Center a tiny matrix column by column | toy 3×2 matrix | printed values; before/after mini heatmap | ~3 |
 | B2 | Compute covariance between two centered features | toy centered feature columns | printed values; tiny covariance heatmap | ~3 |
 | B3 | Project one point onto a given unit axis | toy 2-D point and unit vector | point, axis, and projected coordinate on a line | ~3 |
+| B4 | Compute variance of one feature | toy feature column | printed values; squared-deviation bars | ~2 |
+| B5 | Unit-normalize a vector | toy 2-D vector | printed values; original/unit vector arrows | ~2 |
+| B6 | Compute explained variance ratio | toy eigenvalues | printed values; ratio bar + cumulative line | ~2 |
+| B7 | Reconstruct one point from one component | toy mean, axis, coordinate | printed values; component-line reconstruction | ~2 |
+| B8 | Dot two orthonormal vectors | toy unit axes | printed values; perpendicular vector arrows | ~2 |
+| B9 | Total variance as covariance trace | toy covariance matrix | printed values; covariance heatmap | ~2 |
+| B10 | Eigenvalues of a 2×2 covariance matrix by formula | toy 2×2 covariance matrix | printed values; eigenvalue bars | ~2 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

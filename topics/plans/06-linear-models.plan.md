@@ -18,12 +18,19 @@ Linear models connect simple geometry (lines, planes, hyperplanes) to probabilit
 
 ## Part 3 — Worked Examples
 
-### 🟢 Basics (3)
+### 🟢 Basics (10)
 | # | Title | Data source | Visualization(s) | Build steps |
 |---|---|---|---|---|
 | B1 | Compute one linear score $\theta^Tx$ with an intercept | toy scalars: one feature vector and $\theta$ | printed values | ~2 |
 | B2 | Convert one score into a sigmoid probability $g(z)$ | toy scalars: one logit $z$ | sigmoid point on curve | ~2 |
 | B3 | Compute one locally weighted regression weight $w^{(i)}(x)$ | toy scalars: $x^{(i)}$, query $x$, and $\tau$ | printed values | ~3 |
+| B4 | Build one design-matrix row $[1,x]$ | toy scalar: one raw feature | printed row | ~2 |
+| B5 | Compute one residual $y-\widehat y$ | toy scalars: one target and prediction | printed residual | ~2 |
+| B6 | Compute squared error for one prediction | toy scalars: one target and prediction | printed squared error | ~2 |
+| B7 | Take one LMS step for one point | toy vector: one row, one target, one $\theta$ | printed old/new parameters | ~3 |
+| B8 | Compute MSE of three predictions | toy arrays: three targets and predictions | printed MSE | ~2 |
+| B9 | Compute a tiny $X^TX$ matrix | toy design matrix with two rows | printed matrix | ~2 |
+| B10 | Compute logistic loss for one labeled example | toy scalar: one logit and label | printed probability and loss | ~3 |
 
 ### 🟡 Easy (5)
 | # | Title | Data source | Visualization(s) | Build steps |

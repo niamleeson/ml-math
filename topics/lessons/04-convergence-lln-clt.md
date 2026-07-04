@@ -367,6 +367,117 @@ print(f"Z_n = {z_n:.4f}")  # Display the standardized value.
 
 ▶ What you'll see: the observed sum is one standard deviation above its mean, so $Z_n=1$. 👀
 
+
+#### B4. Compute the variance of a small sample
+
+Goal: measure the spread of four observations with the sample variance formula.
+
+```python
+values_b4 = np.array([2.0, 4.0, 4.0, 6.0])  # Store a tiny sample with visible deviations.
+mean_b4 = values_b4.mean()  # Compute the sample's center before measuring spread.
+deviations_b4 = values_b4 - mean_b4  # Subtract the mean from every observation.
+sample_variance_b4 = np.sum(deviations_b4 ** 2) / (len(values_b4) - 1)  # Divide squared deviations by n-1 for sample variance.
+print(f"mean = {mean_b4:.2f}")  # Display the center used for deviations.
+print(f"deviations = {deviations_b4}")  # Display each signed distance from the mean.
+print(f"sample variance = {sample_variance_b4:.2f}")  # Display the final spread estimate.
+```
+
+▶ What you'll see: the sample variance is positive because the observations do not all equal their mean.
+
+👀 **Takeaway:** variance is the average squared distance from the mean, with sample variance using $n-1$.
+
+#### B5. Standardize one observation into a z-score
+
+Goal: convert one raw value into the number of standard deviations above or below its mean.
+
+```python
+x_b5 = 74.0  # Store one observed value.
+mu_b5 = 70.0  # Store the population mean.
+sigma_b5 = 8.0  # Store the population standard deviation.
+z_b5 = (x_b5 - mu_b5) / sigma_b5  # Standardize by subtracting the mean and dividing by the standard deviation.
+print(f"z = ({x_b5:.1f} - {mu_b5:.1f}) / {sigma_b5:.1f} = {z_b5:.3f}")  # Display the z-score calculation.
+```
+
+▶ What you'll see: the value is half a standard deviation above the mean.
+
+👀 **Takeaway:** standardization puts raw values on a common mean-zero, variance-one scale.
+
+#### B6. Evaluate one Chebyshev bound
+
+Goal: bound the probability of being at least $k=2$ standard deviations from the mean.
+
+```python
+k_b6 = 2.0  # Choose the number of standard deviations away from the mean.
+chebyshev_bound_b6 = 1.0 / (k_b6 ** 2)  # Apply P(|X-mu| >= k sigma) <= 1/k^2.
+print(f"P(|X - mu| >= {k_b6:.0f} sigma) <= {chebyshev_bound_b6:.3f}")  # Print the distribution-free bound.
+```
+
+▶ What you'll see: Chebyshev guarantees the two-standard-deviation tail is at most $0.25$.
+
+👀 **Takeaway:** Chebyshev needs only a mean and variance, so its bound is conservative but universal.
+
+#### B7. Draw one Bernoulli sample mean
+
+Goal: simulate one tiny Bernoulli sample and average its zeros and ones.
+
+```python
+p_b7 = DATA_CONFIG["bernoulli"]["p"]  # Reuse the Bernoulli success probability from the lesson setup.
+draws_b7 = rng.binomial(1, p_b7, size=4)  # Draw four independent zero-one outcomes.
+mean_b7 = draws_b7.mean()  # Average the outcomes to estimate the success probability once.
+print(f"draws = {draws_b7}")  # Display the simulated Bernoulli outcomes.
+print(f"sample mean = {mean_b7:.3f}")  # Display the one-sample estimate.
+```
+
+▶ What you'll see: one four-flip average that may be above or below the true $p=0.6$.
+
+👀 **Takeaway:** a Bernoulli sample mean is just the fraction of successes in that sample.
+
+#### B8. Track running means of five observations
+
+Goal: update the sample mean after each new number arrives.
+
+```python
+numbers_b8 = np.array([3.0, 5.0, 4.0, 6.0, 2.0])  # Store five observations in arrival order.
+running_sums_b8 = np.cumsum(numbers_b8)  # Accumulate partial sums one observation at a time.
+running_counts_b8 = np.arange(1, len(numbers_b8) + 1)  # Count how many observations have arrived at each step.
+running_means_b8 = running_sums_b8 / running_counts_b8  # Divide each partial sum by its count.
+print(f"running means = {running_means_b8}")  # Display the mean after each observation.
+```
+
+▶ What you'll see: the running mean moves after every new observation and ends at the full-sample mean.
+
+👀 **Takeaway:** LLN simulations are built from repeated running-mean updates.
+
+#### B9. Compute one coin-flip proportion
+
+Goal: convert a short sequence of heads/tails into a success proportion.
+
+```python
+flips_b9 = np.array([1, 0, 1, 1, 0, 1])  # Encode heads as 1 and tails as 0.
+heads_b9 = flips_b9.sum()  # Count heads by summing the indicator values.
+proportion_b9 = heads_b9 / len(flips_b9)  # Divide heads by total flips.
+print(f"heads = {heads_b9} out of {len(flips_b9)}")  # Display the count ratio.
+print(f"proportion = {proportion_b9:.3f}")  # Display the empirical success probability.
+```
+
+▶ What you'll see: four heads in six flips gives a sample proportion of about $0.667$.
+
+👀 **Takeaway:** a coin-flip proportion is a Bernoulli sample mean in disguise.
+
+#### B10. Evaluate one normal density value
+
+Goal: compute the height of the standard normal curve at one point.
+
+```python
+z_b10 = 1.0  # Choose one standardized location on the horizontal axis.
+pdf_b10 = standard_normal_pdf(z_b10)  # Reuse the setup helper to evaluate the N(0,1) density.
+print(f"phi({z_b10:.1f}) = {pdf_b10:.4f}")  # Display the density height at z=1.
+```
+
+▶ What you'll see: the standard normal density at $z=1$ is about $0.2420$.
+
+👀 **Takeaway:** CLT overlays use normal density heights to draw the bell curve.
+
 ### 🟡 Easy
 
 #### E1. Pen-and-paper: Markov bound for a nonnegative variable
