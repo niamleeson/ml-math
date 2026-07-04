@@ -1,0 +1,49 @@
+# Lesson Plan — 12 Dimensionality Reduction: PCA & ICA
+
+| Field | Value |
+|---|---|
+| Source | CS 229 |
+| Content category | Method |
+| Example type | ⚖️ Both |
+| Colab notebook | Yes |
+| Est. lesson time | 45–60 min |
+| Source topic file | ../12-dimensionality-reduction.md |
+
+## Part 1 — Overview (plan)
+Dimensionality reduction compresses high-dimensional data while preserving the structure that matters. Hook: PCA finds directions of maximum variance, while ICA tries to recover independent hidden sources from mixed observations.
+
+## Part 2 — Key Idea (plan)
+- **Focus (per category = Method):** step-by-step algorithms for PCA and ICA, with the hand math on tiny matrices before scaling to real datasets.
+- **Core artifacts to present:** eigenvalue/eigenvector definition $Az=\lambda z$; spectral theorem $A=U\Lambda U^T$ for symmetric covariance matrices; PCA normalize→covariance→eigenvectors→project loop; explained variance ratio; reconstruction error; ICA mixing model $x=As$, unmixing matrix $W=A^{-1}$, likelihood $p(x)=\prod_i p_s(w_i^Tx)|W|$, and Bell-Sejnowski stochastic gradient update.
+
+## Part 3 — Worked Examples
+
+### 🟢 Easy (5)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| E1 | Hand-compute eigenvectors of a 2×2 covariance matrix | Pen-and-paper: $\Sigma=\begin{bmatrix}3&1\\1&3\end{bmatrix}$ | principal axes drawn on a 2-D ellipse; variance along each axis labeled | ~4 |
+| E2 | PCA projection by hand for four centered 2-D points | Pen-and-paper: $(2,0),(0,2),(-2,0),(0,-2)$ after scaling | original points + chosen unit vector + 1-D projected coordinates | ~4 |
+| E3 | PCA on a tilted Gaussian cloud | `gaussian_2d` synthetic | process: mean-centering and covariance heatmap; result: principal axes drawn over scatter | ~5 |
+| E4 | Explained variance on Iris | `iris` | scree plot / cumulative variance explained; 2-D PCA projection colored by species | ~4 |
+| E5 | Reconstruction from 1, 2, and 3 principal components | `digits` small image data | variance-explained curve; original vs reconstructed digit grid | ~5 |
+
+### 🔴 Advanced (5)
+| # | Title | Data source | Visualization(s) | Build steps |
+|---|---|---|---|---|
+| A1 | PCA failure: high variance is not always predictive | synthetic `variance_trap` with low-variance class signal | scatter with class labels; PC1/PC2 axes; classification accuracy before/after projection | ~6 |
+| A2 | Scaling changes PCA directions | `wine` raw vs standardized | raw/scaled covariance heatmaps; side-by-side principal axes or loading bars | ~6 |
+| A3 | ICA source separation for mixed signals | synthetic sine + square + sawtooth signals mixed by matrix $A$ | observed mixtures, recovered independent components, correlation-to-source heatmap | ~7 |
+| A4 | PCA denoising vs information loss | noisy `digits` | noise level panels; reconstruction error vs number of PCs; denoised image grid | ~7 |
+| A5 | Capstone: reduce a real dataset then inspect loadings | `breast_cancer` or `wine` | 2-D projection, loading biplot, cumulative variance, failure notes for overlapping classes | ~8 |
+
+## Part 4 — Colab Notebook
+- **Notebook file:** notebooks/12-dimensionality-reduction.ipynb
+- **Est. cell count:** ~72 (⚖️ topic → E1–E2 partly pen-and-paper in lesson; remaining examples coded with granular build↔see loops)
+- **Key libraries:** numpy, matplotlib, scikit-learn (`PCA`, `FastICA`, `StandardScaler`, `load_iris`, `load_digits`, `load_wine`, `load_breast_cancer`)
+- **Runtime:** CPU
+- **Failure/edge dataset included:** `variance_trap` in A1 — shows PCA can discard low-variance but label-relevant information.
+- **Signature visualizations:** principal axes drawn on scatterplots; variance-explained / scree curve; 2-D projection and reconstruction grids.
+
+## Part 5 — Practice Questions
+- **🟢 Easy (5) — themes:** identify eigenvalues/eigenvectors; compute a 2×2 covariance matrix; choose $k$ from cumulative explained variance; interpret a loading vector; distinguish PCA from ICA in one sentence.
+- **🔴 Hard (5) — themes:** prove covariance is symmetric so spectral theorem applies; derive PCA as variance maximization with a unit-norm constraint; compute reconstruction error after projection; diagnose when scaling changes the first PC; explain ICA identifiability assumptions and why Gaussian sources are problematic.
