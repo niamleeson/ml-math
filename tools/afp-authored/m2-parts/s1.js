@@ -4,7 +4,14 @@
    ../d0-m2-feature-engineering.js. Validate in isolation with:
      node tools/afp-check-part.js tools/afp-authored/m2-parts/s1.js
    LaTeX: double every backslash in JS strings; balance $…$; money is \\$.
-   No <i>/<em>, no emoji. */
+   No <i>/<em>, no emoji.
+
+   FORMULAS ARE OPTIONAL. `symbols`, `derivation`, and any $$…$$ display formula
+   are only for topics with genuine math (here: the point-in-time rule). For a
+   conceptual/engineering topic, write the definition as plain prose and OMIT
+   `symbols`/`derivation` rather than manufacturing notation to fill the template
+   (see M2.5, which is deliberately formula-free). Only `worked` needs a concrete
+   calculation; the rest may be prose when that is the honest presentation. */
 "use strict";
 
 module.exports = {

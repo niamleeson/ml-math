@@ -21,25 +21,9 @@ module.exports = {
     "<p>You now know how to build features that avoid leakage at training time. The final production problem is more subtle: the model may be trained on one feature definition and served with another. Nothing about the model weights is necessarily wrong; the input it receives at prediction time is not the same input it learned from.</p>" +
     "<p>The load-bearing idea is the <b>feature contract</b>. A feature is not just a column name like `campaign_click_rate`; it is a versioned function, a time rule, missing-value behavior, units, and freshness expectation. If training and serving both call the same contract, offline evaluation has a chance to mean something. If they use different code paths, windows, defaults, or clocks, the model is solving one problem in the notebook and a different one in production.</p>",
   definition:
-    "<p><b>Definition.</b> Let $\\phi_v$ be the version-$v$ feature function that maps the request-time history $H_t$ into a feature vector. For an example with freeze time $t$, the train/serve contract is</p>" +
-    "$$x^{\\text{train}}_t=\\phi_v(H_t)=x^{\\text{serve}}_t.$$" +
-    "<p><b>Train/serve skew</b> occurs when the offline value and the serving-time value differ for the same logical example at the same time: $x^{\\text{train}}_t \\neq x^{\\text{serve}}_t$. It is a feature-definition bug, not a modeling bug. <b>Drift</b> is different: the same contract still runs, but the population changes over time, so $P_t(x)$ differs from $P_{t+1}(x)$.</p>" +
-    "<p>Common skew sources are separate offline and online code paths, time-zone or unit mismatches, different missing defaults, aggregation windows that do not match, and stale online features. Feature stores reduce this risk by computing or declaring a feature once, serving it consistently offline and online, preserving point-in-time correctness, and versioning the contract so old training sets are reproducible. Logging feature values at serving time, then training after labels arrive, is the strongest practical test: the model trains on exactly what production served.</p>",
-  symbols: [
-    { sym: "$t$", desc: "the freeze time or request time for a prediction." },
-    { sym: "$H_t$", desc: "the event history and entity state available at time $t$." },
-    { sym: "$\\phi_v$", desc: "the versioned feature function, including code, window, units, defaults, and freshness rules." },
-    { sym: "$x^{\\text{train}}_t$", desc: "the feature vector materialized for training for the example at time $t$." },
-    { sym: "$x^{\\text{serve}}_t$", desc: "the feature vector computed or retrieved by the online serving path at the same time $t$." },
-    { sym: "$\\Delta f$", desc: "the prediction gap caused by feeding the model skewed feature values." }
-  ],
-  derivation: [
-    { do: "Write the training feature", result: "$x^{\\text{train}}_t=\\phi^{\\text{off}}(H_t)$", why: "offline jobs often use warehouse code and historical joins" },
-    { do: "Write the serving feature", result: "$x^{\\text{serve}}_t=\\phi^{\\text{on}}(H_t)$", why: "online systems often use a low-latency code path or cache" },
-    { do: "State the contract", result: "$\\phi^{\\text{off}}=\\phi^{\\text{on}}=\\phi_v$", why: "the same logical example must produce the same vector" },
-    { do: "Subtract predictions", result: "$\\Delta f=f(x^{\\text{train}}_t)-f(x^{\\text{serve}}_t)$", why: "a score gap appears even with fixed model weights" },
-    { do: "Separate drift", result: "$P_{\\text{July}}(x) \\neq P_{\\text{August}}(x)$ with the same $\\phi_v$", why: "population shift is monitored over time, while skew is an offline-online mismatch at one time" }
-  ],
+    "<p><b>Definition.</b> A feature has <b>train/serve skew</b> when the value computed for training differs from the value the online serving path computes for the same logical example at the same request time. It is a feature-definition bug, not a modeling bug: the model weights are fine, but the offline and online code paths disagree about what the feature means.</p>" +
+    "<p><b>Skew is not drift.</b> Skew is an offline-versus-online mismatch at a single point in time. Drift is a change in the data over time while the same feature definition keeps running, so this month's population differs from last month's. Skew is fixed by unifying the definition; drift is handled by monitoring and retraining.</p>" +
+    "<p><b>Common skew sources</b> are separate offline and online code paths, time-zone or unit mismatches, different defaults for missing values, aggregation windows that do not match, and stale online features. The durable fixes are to define each feature once and serve it consistently offline and online (a feature store), to version that definition so old training sets stay reproducible, and, as the strongest test, to log the exact feature values served in production and train on those, so the model learns from precisely what it will be given at serving time.</p>",
   worked: {
     problem: "An ads pCTR model is trained with `campaign_clicks_window` equal to clicks in the last 7 days, but the online feature service returns clicks in the last 1 day. The learned one-feature score is $s=-2+0.08c$. For one campaign at request time, the 7-day count is 120 and the 1-day count is 30. What score gap does skew create, and what fixes it?",
     skills: ["train/serve skew", "feature contracts", "score-gap arithmetic"],
@@ -49,7 +33,7 @@ module.exports = {
       { do: "Score the serving value", result: "$s_{1d}=-2+0.08(30)=0.4$", why: "production is feeding the model a different feature" },
       { do: "Subtract the scores", result: "$\\Delta s=7.6-0.4=7.2$", why: "the gap comes only from the mismatched window" },
       { do: "Identify the bug", result: "7-day offline window versus 1-day online window", why: "the same feature name hides two definitions" },
-      { do: "Fix the contract", result: "serve the versioned 7-day definition, or retrain and serve the versioned 1-day definition", why: "training and serving must call the same $\\phi_v$" },
+      { do: "Fix the contract", result: "serve the versioned 7-day definition, or retrain and serve the versioned 1-day definition", why: "training and serving must call the same feature function" },
       { do: "Log at serving", result: "store `campaign_clicks_window=120` beside the impression if 7-day is the contract", why: "future training can reuse exactly what production served" }
     ],
     verify: "After unifying on 7 days, both paths compute $-2+0.08(120)=7.6$; after unifying on 1 day and retraining, both paths use the 1-day value and the old 7.2-point mismatch disappears.",
@@ -140,7 +124,7 @@ module.exports = {
       "# M2.5 · Train/serve skew & the feature contract\n\n" +
       "_Curriculum · Domain 0 · ML Foundations · Feature engineering & leakage_\n\n" +
       "_Save a copy to your Drive_\n\n" +
-      "A feature contract says the same versioned function $\\phi_v$ must produce training and serving values: $x^{\\text{train}}_t=x^{\\text{serve}}_t$. In this notebook we intentionally break that contract with a 7-day offline window and a 1-day online window, then repair it." },
+      "A feature contract says training and serving must compute the same feature the same way for the same request. In this notebook we intentionally break that contract with a 7-day offline window and a 1-day online window, then repair it." },
     { t: "code", src:
       "import numpy as np\n" +
       "import pandas as pd\n" +
@@ -197,7 +181,7 @@ module.exports = {
       "print(\"max prediction gap:\", round(float(max_gap), 4))" },
     { t: "md", src:
       "## Assert the skew is real\n\n" +
-      "For the same served requests, offline and online predictions should match. They do not, because $\\phi^{\\text{off}}$ used 7 days and $\\phi^{\\text{on}}$ used 1 day." },
+      "For the same served requests, offline and online predictions should match. They do not, because the offline path used a 7-day window and the online path used a 1-day window." },
     { t: "code", src:
       "assert mean_gap > 0.04\n" +
       "assert max_gap > 0.10\n\n" +
