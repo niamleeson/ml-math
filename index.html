@@ -220,6 +220,7 @@
   #content .cs-lesson a.cs-colab-btn { display: inline-block; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: 600; font-size: 14px; color: #fff; background: #e8710a; border-radius: 8px; padding: 10px 16px; }
   #content .cs-lesson a.cs-colab-btn:hover { background: #c85c00; }
   /* Curriculum (AFP-AI Learning Guide) — self-contained monochrome lesson styles. */
+  #content .cur-meta { color: var(--ink-dim); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 14px; line-height: 1.5; margin: 6px 0 32px; }
   #content .cur-lesson { font-size: 18px; }
   #content .cur-lesson h2 { font-size: 24px; font-weight: 700; margin: 38px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); color: var(--ink); }
   #content .cur-lesson h3 { font-size: 20px; margin: 28px 0 8px; color: var(--ink); }
@@ -1924,7 +1925,7 @@ const App = (function () {
     const p = l.prevId && byId[l.prevId], n = l.nextId && byId[l.nextId];
     return `<div class="crumbs">${l.module}</div>` +
       `<h2 class="lesson-title">${l.title}</h2>` +
-      (l.meta ? `<p class="cs-meta">${l.meta}</p>` : "") +
+      (l.meta ? `<p class="cur-meta">${l.meta}</p>` : "") +
       `<div class="cur-lesson">${l.html}</div>` +
       `<div class="nav-row">` +
         `<button ${p ? `onclick="App.open('${l.prevId}')"` : "disabled"}><span>← Previous</span>${p ? p.title : ""}</button>` +
