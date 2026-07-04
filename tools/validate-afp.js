@@ -8,7 +8,7 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
-const SRC = path.join(__dirname, "afp-authored");
+const { SRC, allFiles, loadFiles, flatten } = require("./afp-lib.js");
 
 const EMOJI = /[\u2705\u274C\u2714\u2713\u26A0\u2757\u2728\uD83D\uD83C\uD83E]/;
 const ITALIC = /<i>|<\/i>|<em>|<\/em>/;
@@ -31,21 +31,36 @@ function stripStr(line) { return line.replace(/"[^"]*"/g, '""').replace(/'[^']*'
 const arg = process.argv[2];
 let files;
 if (arg && arg.endsWith(".js")) files = [path.resolve(arg)];
-else files = fs.readdirSync(SRC).filter(f => /\.js$/.test(f)).sort().map(f => path.join(SRC, f));
-let mods = [];
-files.forEach(f => { mods = mods.concat(require(f)); });
+else files = allFiles();
+let mods = loadFiles(files);
 const only = (arg && /^\d+$/.test(arg)) ? parseInt(arg, 10) : null;
 if (only) mods = mods.filter(m => m.m === only);
 
+// Flatten flat modules + sectioned modules into per-page lesson specs, then validate
+// each page. Sub-lessons inherit m/domain from their section and carry their own title.
+const specs = flatten(mods);
+
 let problems = [];
 const seen = new Set();
-for (const l of mods.sort((a, b) => a.m - b.m)) {
+for (const s of specs) {
+  // Section overview pages are not full lessons — check only their hub fields.
+  if (s.kind === "section") {
+    const o = s.data, errs = [];
+    if (!o.tagline) errs.push("section tagline missing");
+    if (!o.intro) errs.push("section intro missing");
+    if (!Array.isArray(o.mapsTo) || !o.mapsTo.length) errs.push("section mapsTo empty");
+    if (!Array.isArray(o.sublessons) || !o.sublessons.length) errs.push("section has no sub-lessons");
+    const bag = []; scanStrings(o, s.id, bag); errs.push(...bag);
+    if (errs.length) problems.push(`${s.id} "${s.title}":\n   - ${errs.join("\n   - ")}`);
+    continue;
+  }
+  const l = Object.assign({ m: s.m, domain: s.domain, title: s.title }, s.data);
   const errs = [];
-  const tag = `M${l.m}`;
+  const tag = s.id;
   if (l.m == null || l.m < 1 || l.m > 28) errs.push(`bad m=${l.m}`);
   if (l.domain == null || l.domain < 0 || l.domain > 6) errs.push(`bad domain=${l.domain}`);
-  if (seen.has(l.m)) errs.push(`duplicate module number`);
-  seen.add(l.m);
+  if (seen.has(s.id)) errs.push(`duplicate lesson id`);
+  seen.add(s.id);
 
   for (const f of ["title", "tagline", "skipIf", "mapsTo", "connections", "motivation",
     "definition", "worked", "practice", "applications", "applicationsClose", "takeaways",
@@ -96,9 +111,9 @@ for (const l of mods.sort((a, b) => a.m - b.m)) {
   if (errs.length) problems.push(`${tag} "${l.title || "?"}":\n   - ${errs.join("\n   - ")}`);
 }
 
-console.log(`Checked ${mods.length} AFP module(s)${only ? " (M" + only + ")" : ""}.`);
+console.log(`Checked ${specs.length} AFP lesson page(s) from ${mods.length} module(s)${only ? " (M" + only + ")" : ""}.`);
 if (problems.length) { console.log(`\nPROBLEMS (${problems.length}):\n` + problems.join("\n")); process.exit(1); }
-console.log("All authored AFP modules valid.");
+console.log("All authored AFP lessons valid.");
 
 // Also run the LaTeX backslash / currency scan so a single command gates both.
 try {

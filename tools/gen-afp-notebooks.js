@@ -12,11 +12,8 @@
 const fs = require("fs");
 const path = require("path");
 const ROOT = path.join(__dirname, "..");
-const SRC = path.join(__dirname, "afp-authored");
 const OUT = path.join(ROOT, "notebooks");
-
-const pad = (x) => String(x).padStart(2, "0");
-const mid = (m) => `afp-m${pad(m)}`;
+const { allFiles, loadFiles, flatten } = require("./afp-lib.js");
 
 function splitLines(s) {
   const lines = String(s).split("\n");
@@ -25,24 +22,25 @@ function splitLines(s) {
 function mdCell(src) { return { cell_type: "markdown", metadata: {}, source: splitLines(src) }; }
 function codeCell(src) { return { cell_type: "code", metadata: {}, execution_count: null, outputs: [], source: splitLines(src) }; }
 
-// Arg can be: a single authored .js file (only its notebooks), a notebook id (afp-m07), or nothing.
+// Arg can be: a single authored .js file (only its notebooks), a notebook id (afp-m07 / afp-m02-01), or nothing.
 const arg = process.argv[2];
 let files, ONLY = null;
 if (arg && arg.endsWith(".js")) files = [path.resolve(arg)];
-else { files = fs.readdirSync(SRC).filter(f => /\.js$/.test(f)).sort().map(f => path.join(SRC, f)); ONLY = arg || null; }
-let mods = [];
-files.forEach(f => { mods = mods.concat(require(f)); });
+else { files = allFiles(); ONLY = arg || null; }
+const specs = flatten(loadFiles(files));
 fs.mkdirSync(OUT, { recursive: true });
 
 let wrote = 0;
-mods.forEach(o => {
-  const id = mid(o.m);
+specs.forEach(s => {
+  const id = s.id;
   if (ONLY && id !== ONLY) return;
-  if (!Array.isArray(o.notebook) || !o.notebook.length) {
+  if (s.kind === "section") return;   // section overview pages have no notebook
+  const nbSpec = s.data.notebook;
+  if (!Array.isArray(nbSpec) || !nbSpec.length) {
     console.warn(`! ${id} has no notebook spec — skipped`);
     return;
   }
-  const cells = o.notebook.map(c => (c.t === "code" ? codeCell(c.src) : mdCell(c.src)));
+  const cells = nbSpec.map(c => (c.t === "code" ? codeCell(c.src) : mdCell(c.src)));
   const nb = {
     cells,
     metadata: {
@@ -58,3 +56,4 @@ mods.forEach(o => {
   wrote++;
 });
 console.log(`Wrote ${wrote} AFP notebook(s) to notebooks/`);
+

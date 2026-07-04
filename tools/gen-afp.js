@@ -24,21 +24,14 @@ const DOMAINS = {
   5: { module: "Domain 5 · Bandits & RL",                          book: "Curriculum · Bandits & RL" },
   6: { module: "Domain 6 · Optimization & Marketplace",            book: "Curriculum · Optimization & Marketplace" }
 };
+
+const { mid, allFiles, loadFiles, flatten } = require("./afp-lib.js");
+
 /* MODULE_ORDER must list the domain sections in this order (0..6). */
 const MODULE_ORDER = [0, 1, 2, 3, 4, 5, 6].map(d => DOMAINS[d].module);
 
-const pad = (x) => String(x).padStart(2, "0");
-const mid = (m) => `afp-m${pad(m)}`;
-
 /* --- load authored modules ------------------------------------------- */
-if (!fs.existsSync(SRC)) throw new Error("tools/afp-authored/ not found");
-let mods = [];
-fs.readdirSync(SRC).filter(f => /\.js$/.test(f)).sort().forEach(f => {
-  const arr = require(path.join(SRC, f));
-  if (!Array.isArray(arr)) throw new Error(`${f} must module.exports an array`);
-  mods = mods.concat(arr);
-});
-mods.sort((a, b) => a.m - b.m);
+const mods = loadFiles(allFiles());
 
 /* --- validate uniqueness / domain --------------------------------------- */
 const seen = new Set();
@@ -49,21 +42,24 @@ mods.forEach(o => {
   seen.add(o.m);
 });
 
-/* --- build the runtime lesson objects ---------------------------------- */
+/* --- build the runtime lesson objects (flat modules + sectioned sub-lessons) --- */
+const specs = flatten(mods);
 let prevId = null;
-const objs = mods.map(o => {
-  const d = DOMAINS[o.domain];
-  const data = Object.assign({}, o);
+const objs = specs.map(s => {
+  const d = DOMAINS[s.domain];
+  const data = Object.assign({}, s.data);
   delete data.notebook;   // notebooks are emitted separately; keep the lesson file lean
+  delete data.sub;
+  delete data.subtitle;
   delete data.m;
   delete data.domain;
   const lesson = Object.assign({
-    id: mid(o.m),
+    id: s.id,
     module: d.module,
     book: d.book,
-    title: `M${o.m} · ${o.title}`
+    title: s.title
   }, data);
-  lesson.title = `M${o.m} · ${o.title}`;
+  lesson.title = s.title;
   if (!lesson.prereqs && prevId) lesson.prereqs = [prevId];
   prevId = lesson.id;
   Object.keys(lesson).forEach(k => lesson[k] === undefined && delete lesson[k]);
@@ -88,5 +84,6 @@ fs.writeFileSync(path.join(__dirname, "afp-order.snippet.txt"),
 fs.writeFileSync(path.join(__dirname, "afp-includes.snippet.html"),
   `<!-- AFP-AI Learning Guide — generated track -->\n<script src="lessons/afp-ai.js"></script>\n`);
 
-console.log(`Wrote lessons/afp-ai.js — ${objs.length} modules (M${mods[0] ? mods[0].m : "?"}..M${mods.length ? mods[mods.length - 1].m : "?"}).`);
+console.log(`Wrote lessons/afp-ai.js — ${objs.length} lessons from ${mods.length} module(s) (M${mods[0] ? mods[0].m : "?"}..M${mods.length ? mods[mods.length - 1].m : "?"}).`);
+console.log("Sectioned modules:", mods.filter(m => Array.isArray(m.lessons)).map(m => `M${m.m}(${m.lessons.length})`).join(", ") || "none");
 console.log("Domains present:", [...new Set(mods.map(m => m.domain))].sort().join(", "));

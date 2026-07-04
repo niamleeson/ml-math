@@ -24,6 +24,8 @@ const A = ["approx","cdots","cdotp","cdot","ldots","times","dfrac","tfrac","frac
   "boldsymbol","leq","geq","neq","propto","equiv","forall","exists","operatorname","overline",
   "underline","widehat","widetilde","otimes","oplus","bigcup","bigcap","sum","prod","mapsto",
   "rightarrow","leftarrow"];
+// Group A matches a macro not immediately preceded by a backslash. Suffix-collisions
+// (e.g. "epsilon" inside "\varepsilon") are filtered in scan() via backslashedWord().
 const reA = new RegExp("(?<!\\\\)(" + A.join("|") + ")(?![a-z])", "g");
 // GROUP B — short / substring-prone macros (Greek 2-3 letters, function names,
 // relations). Guard against a preceding letter too ("\min" -> the inner "in" is not
@@ -32,8 +34,17 @@ const B = ["sinh","cosh","tanh","varphi","zeta","kappa","iota","ddot","tilde","d
   "log","ln","exp","max","min","det","dim","sin","cos","tan","sec","csc","cot","lim","sup",
   "inf","arg","deg","gcd","hat","bar","vec","dot","top","bot","int","oint","mid","phi","psi",
   "chi","rho","tau","nu","xi","mu","pi","eta","le","ge","ne","in","to"];
-const reB = new RegExp("(?<![A-Za-z\\\\])(" + B.join("|") + ")(?![A-Za-z])", "g");
+const reB = new RegExp("(?<!\\\\)(" + B.join("|") + ")(?![A-Za-z])", "g");
 const TEXTWRAP = /\\(?:text|operatorname|mathrm|mathit|mathsf|mathtt|textbf|textrm|textit)\s*\{[^{}]*\}/g;
+
+// A macro match at index `i` is legitimate (not a dropped backslash) when the
+// contiguous letter-run it belongs to is introduced by a backslash — i.e. it is
+// really "\varepsilon" (so the inner "epsilon" is fine) rather than a bare "wapprox".
+function backslashedWord(span, i) {
+  let k = i;
+  while (k > 0 && /[A-Za-z]/.test(span[k - 1])) k--;
+  return span[k - 1] === "\\";
+}
 
 function mathSpans(s) {
   const masked = String(s).replace(/\\\$/g, "  ");   // escaped \$ is a literal dollar, not a delimiter
@@ -66,10 +77,14 @@ function scan(val, p, bag) {
       const span = raw.replace(TEXTWRAP, "  ");
       let m;
       reA.lastIndex = 0;
-      while ((m = reA.exec(span))) bag.push(`${p}: bare "${m[1]}" (want \\\\${m[1]}) in "...${span.slice(Math.max(0, m.index - 6), m.index + m[1].length + 3)}..."`);
+      while ((m = reA.exec(span))) {
+        if (backslashedWord(span, m.index)) continue;
+        bag.push(`${p}: bare "${m[1]}" (want \\\\${m[1]}) in "...${span.slice(Math.max(0, m.index - 6), m.index + m[1].length + 3)}..."`);
+      }
       reB.lastIndex = 0;
       while ((m = reB.exec(span))) {
         if (span[m.index - 1] === "{" && (span[m.index - 2] === "_" || span[m.index - 2] === "^")) continue;
+        if (backslashedWord(span, m.index)) continue;
         bag.push(`${p}: bare "${m[1]}" (want \\\\${m[1]}) in "...${span.slice(Math.max(0, m.index - 6), m.index + m[1].length + 3)}..."`);
       }
     });
