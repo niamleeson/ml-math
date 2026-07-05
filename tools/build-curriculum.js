@@ -121,6 +121,16 @@ function convert(md) {
   html = html.replace(/\u0000m(\d+)\u0000/g, (m, n) => "$$" + disp[n] + "$$");
   html = html.replace(/\u0000j(\d+)\u0000/g, (m, n) => "<code>" + esc(icode[n]) + "</code>");
   html = html.replace(/\u0000x(\d+)\u0000/g, (m, n) => "$" + imath[n] + "$");
+  // Inline afp/assets images as base64 data URIs so no loose PNGs need committing
+  // (the repo git-ignores *.png; images stay regenerable via tools/gen-*.py).
+  html = html.replace(/<img alt="([^"]*)" src="(afp\/assets\/[^"]+)">/g, (m, alt, src) => {
+    try {
+      const ext = path.extname(src).slice(1).toLowerCase();
+      const mime = ext === "svg" ? "image/svg+xml" : "image/" + (ext === "jpg" ? "jpeg" : ext);
+      const b64 = fs.readFileSync(path.join(ROOT, src)).toString("base64");
+      return '<img alt="' + alt + '" src="data:' + mime + ";base64," + b64 + '">';
+    } catch (e) { console.warn("  ! missing image, keeping ref: " + src); return m; }
+  });
   // Drop the leading meta blockquote (shown as the app meta line instead).
   html = html.replace(/^\s*(?:<blockquote>[\s\S]*?<\/blockquote>\s*)+/, "");
   return { title, html: html.trim() };

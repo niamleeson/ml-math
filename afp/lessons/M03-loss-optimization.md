@@ -51,6 +51,42 @@ For regression, the label is continuous, so the common losses read the residual 
 | MAE | $\lvert r\rvert$ | outliers exist and should not dominate |
 | Huber | quadratic near zero, linear for large $\lvert r\rvert$ | you want smooth optimization plus outlier robustness |
 
+**Visualizing "Use when" — three pictures.** Each one makes a column of the table concrete.
+
+*1 · The loss shapes — who punishes a big error?*
+
+![MSE, MAE and Huber loss as a function of the residual](afp/assets/m3-loss-shapes.png)
+
+Near zero all three agree, but as the residual grows **MSE (red) shoots up quadratically** while **MAE (blue) rises only linearly**. That single fact *is* the "Use when": pick MSE when large errors *should* dominate the fit (punish them hard; noise ~Gaussian); pick MAE when a few outliers should *not* dominate. Huber (green) traces MSE near zero and MAE in the tails.
+
+*2 · The outlier tug-of-war — where does the fit land?*
+
+![Fitting a single constant to clustered points plus one outlier: the MSE fit is the mean and is dragged toward the outlier, while the MAE median and Huber fits stay with the bulk](afp/assets/m3-loss-outliers.png)
+
+Fit one constant to six clustered points plus an outlier at 60. The MSE-optimal constant is the **mean (17.9)** — dragged a third of the way to the outlier. The MAE-optimal constant is the **median (11.0)**, and Huber lands there too: both stay with the bulk. This is exactly why you reach for MAE/Huber when genuine outliers exist.
+
+*3 · The gradient — why Huber optimizes smoothly.*
+
+![Derivative of each loss: MSE slope is unbounded, MAE slope jumps discontinuously at zero, Huber slope is continuous through zero yet bounded](afp/assets/m3-loss-gradient.png)
+
+The optimizer steps by the loss's slope. **MSE's** slope $2r$ is smooth but unbounded, so one outlier yanks the step. **MAE's** slope is $\pm1$ with a discontinuous jump at 0, so it jitters near the optimum and carries no "how close am I" magnitude. **Huber's** slope is continuous through 0 (smooth, like MSE) yet clipped in the tails (bounded, like MAE) — smooth optimization *plus* robustness.
+
+Reproduce the tug-of-war (example 2) yourself:
+
+```python
+import numpy as np
+def huber(r, d=1.0):
+    a = np.abs(r)
+    return np.where(a <= d, 0.5 * r**2, d * (a - 0.5 * d))
+
+y = np.array([9, 10, 10, 11, 12, 13, 60.])                  # clustered points + one outlier
+c = np.linspace(8, 62, 20001)
+mse_fit = c[np.argmin([((y - t) ** 2).mean() for t in c])]  # = mean   ~ 17.9  (dragged)
+mae_fit = c[np.argmin([np.abs(y - t).mean() for t in c])]   # = median = 11.0  (robust)
+hub_fit = c[np.argmin([huber(y - t).mean()   for t in c])]  # ~ 11.0          (robust+smooth)
+print(mse_fit, mae_fit, hub_fit)
+```
+
 **Concrete loss examples — one per loss.**
 
 - **Log loss:** for a clicked impression, predicting $p=0.80$ costs $-\log(0.80)=0.223$; predicting $p=0.20$ costs $-\log(0.20)=1.609$.
