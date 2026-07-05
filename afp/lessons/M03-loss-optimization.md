@@ -3,24 +3,24 @@
 
 ## Overview
 
-Training a model means choosing what "wrong" costs, then using an optimizer to reduce that cost. A pCTR model is not trained by wishing for high AUC; it is trained by assigning loss to predicted probabilities, taking steps that reduce average loss, and controlling the model so it does not simply fit the training set.
+Training a model means choosing what "wrong" costs, then using an optimizer to reduce that cost. A pCTR (predicted click-through rate) model is not trained by wishing for high AUC (area under the ROC curve); it is trained by assigning loss to predicted probabilities, taking steps that reduce average loss, and controlling the model so it does not simply fit the training set.
 
 This module keeps the real math visible because the math is the explanation: log loss comes from the Bernoulli likelihood, gradients tell the optimizer which way is uphill, and L1/L2 penalties change the fitted weights.
 
 **By the end you can answer:**
 - What is a loss, and why minimize average loss over training examples?
 - How does Bernoulli likelihood lead to binary log loss, and what does log loss punish?
-- When should you use MSE, MAE, or Huber for regression?
+- When should you use MSE (mean squared error), MAE (mean absolute error), or Huber for regression?
 - What is a gradient, and what does the update $w \leftarrow w - \eta\nabla L(w)$ do?
 - What happens when the learning rate is too small or too large?
-- How do batch, stochastic, and mini-batch gradient descent differ, and what do momentum and Adam add?
+- How do batch, stochastic, and mini-batch gradient descent differ, and what do momentum and Adam (adaptive moment estimation) add?
 - How do L1 and L2 regularization differ in sparsity, shrinkage, and geometry?
 - How does regularization strength trade bias against variance?
 
 Three sub-lessons:
 
 - **M3.1 Loss functions** — empirical risk, log loss, and regression losses.
-- **M3.2 Gradient descent & the optimizer** — gradients, learning rates, SGD, momentum, and Adam.
+- **M3.2 Gradient descent & the optimizer** — gradients, learning rates, SGD (stochastic gradient descent), momentum, and Adam.
 - **M3.3 Regularization** — L1/L2 penalties and the bias–variance tradeoff.
 
 ---
@@ -103,7 +103,7 @@ $$v_t=\beta v_{t-1}+\nabla L(w_t),\qquad w_{t+1}=w_t-\eta v_t.$$
 
 **One training set, five optimizer variants.**
 
-- **Batch GD:** compute one gradient from all 1,000 impressions, then update once; stable, but each step reads the whole dataset.
+- **Batch GD (gradient descent):** compute one gradient from all 1,000 impressions, then update once; stable, but each step reads the whole dataset.
 - **SGD:** update after one impression, such as a single clicked row; cheap, but the step can point in a noisy direction.
 - **Mini-batch GD:** update after 128 impressions; the gradient is less noisy than one row and much cheaper than all rows.
 - **Momentum:** if five mini-batches in a row all push the bid weight upward, the velocity accumulates and moves faster along that consistent direction.
