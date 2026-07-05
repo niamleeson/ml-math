@@ -179,6 +179,41 @@ which often drives some weights exactly to zero, creating sparse models.
 
 The geometry intuition matters. L2's constraint shape is round, so optima tend to slide smoothly. L1's constraint shape has sharp corners on the axes, so the optimum often lands with one or more coefficients exactly zero. That is why L1 can act like feature selection for sparse campaign/category features, while L2 keeps correlated signals but dampens them.
 
+**A numbered walkthrough — watch regularization rescue an overfit model.** To build the intuition, fit a **degree-9 polynomial** to just **10 noisy points** from a gentle true curve, then watch what an L2 penalty does (reproduce it with the code below).
+
+![Degree-9 fit: with no penalty the curve oscillates wildly through every point; with L2 it smoothly tracks the true curve](afp/assets/m3-reg-fit.png)
+
+1. **Fit with no penalty ($\lambda = 0$).** With 10 free coefficients and 10 points, the polynomial threads *exactly* through every point — **training MSE = 0.0000**. Looks perfect.
+2. **Now look between the points (red curve).** To hit every *noisy* point, the curve swings violently up and down; on held-out points its **validation MSE = 42,335** — catastrophic. Training loss said "perfect," validation says "useless." That gap *is* overfitting (high variance).
+3. **Find the fingerprint — gigantic weights.** The largest fitted coefficient is **$|w| \approx 48{,}600{,}000$**. Those enormous, nearly-cancelling numbers are what let the curve wiggle hard enough to chase noise.
+
+![Coefficient magnitudes on a log scale: no-penalty weights reach tens of millions, L2 weights stay near single digits](afp/assets/m3-reg-coefs.png)
+
+4. **Make complexity cost something.** Add the L2 penalty: minimize $\text{loss} + \lambda\sum_j w_j^2$. Now every unit of weight has a price, so the optimizer keeps a big coefficient *only* if it lowers the loss more than it adds to the penalty. Noise-chasing wiggles stop being worth it.
+5. **Refit with a small $\lambda = 10^{-3}$.** The biggest weight collapses from **48.6 million → 4.6** (green bars). The fitted curve smooths back onto the true shape. Training MSE rises a hair (**0.0000 → 0.0079**) — but validation MSE plummets **42,335 → 0.023**. That trade — pay a little training fit, buy a huge drop in variance — is the entire point of regularization.
+6. **Sweep $\lambda$ and watch the U-curve.** Too small → still overfit; too large → the penalty crushes even useful weights toward 0 and the model **underfits** (nearly a flat line). Validation error is **U-shaped** in $\lambda$; the bottom here sits at **$\lambda \approx 1.2\times10^{-3}$**.
+
+![Train MSE rises monotonically with lambda while validation MSE is U-shaped, minimized near lambda 1e-3](afp/assets/m3-reg-ucurve.png)
+
+7. **L1 vs L2 on the same model.** L2 shrinks *all* weights smoothly toward zero. L1 ($\sum_j|w_j|$) instead drives the least-useful weights *exactly* to zero — here Lasso zeros out **5 of the 9** polynomial terms, giving a sparse model that also does feature selection.
+
+**The intuition in one line:** big weights are how a model memorizes noise; regularization makes the model *pay* for weight, so it keeps only the weights that genuinely earn their keep — trading a sliver of training fit for a large cut in variance.
+
+```python
+import numpy as np
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import LinearRegression, Ridge
+
+rng = np.random.default_rng(7)
+x = np.sort(rng.uniform(0, 1, 10))
+y = 0.5 + 0.45*np.sin(2*np.pi*x) + rng.normal(0, 0.12, 10)
+P = PolynomialFeatures(9, include_bias=False).fit_transform(x[:, None])
+
+lin   = LinearRegression().fit(P, y)   # max|w| ~ 4.9e7   → memorizes noise, val explodes
+ridge = Ridge(alpha=1e-3).fit(P, y)    # max|w| ~ 4.6     → smooth, val MSE collapses
+print("max weight:", abs(lin.coef_).max(), "->", round(abs(ridge.coef_).max(), 1))
+```
+
 **Same sparse ad model, two regularizers.**
 
 - **L1:** if `rare_region_X` has a tiny unstable weight, L1 can drive that coefficient exactly to 0, removing the feature from the linear score.
