@@ -22,6 +22,8 @@ Five sub-lessons:
 - **M2.4 Numeric & float features** — scaling, transforms, missing values.
 - **M2.5 Train/serve skew & the feature contract** — keeping offline == online.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M02-feature-engineering.ipynb" target="_blank" rel="noopener">▶ Open the runnable notebook (20 examples + visualizations) in Google Colab</a></p>
+
 ---
 
 ## M2.1 · Target leakage
@@ -126,7 +128,9 @@ The leaky feature correlates with the label; the as-of feature does not.
 
 ## M2.3 · Categorical features
 
-**The idea.** A categorical feature takes values from a finite set. **Nominal** has no order (campaign id, country); **ordinal** has a real order (small/medium/large) — order-preserving encoding is valid only then.
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M02-feature-engineering.ipynb" target="_blank" rel="noopener">▶ Open the runnable notebook (20 examples + visualizations) in Google Colab</a></p>
+
+**The idea.** A categorical feature takes values from a finite set. **Nominal** has no order (campaign id, country); **ordinal** has a real order (small/medium/large) — order-preserving encoding is valid only then. All snippets below use the notebook's synthetic ads table (`train`, `valid`) with `member_country`, `device`, `creative_size`, `campaign_id`, `bid`, `spend`, `dwell_secs`, and `clicked`.
 
 **Everyday analogy.** Turning labels into numbers a model can use. **Nominal** categories are like jersey colors — red/blue/green — where no color is "greater," so numbering them 1/2/3 fakes an order that isn't there (that's why nominal → one-hot, not label-encode). **Ordinal** categories are like T-shirt sizes S/M/L, where the order is real, so 1/2/3 is fine. **Target encoding** (replace a category with its average click rate) is like rating a new restaurant by its average review: trustworthy with 500 reviews, but with only 2 (both 5-star) you shouldn't crown it the city's best — you shrink toward the citywide average until it earns trust (smoothing), and you never count your own visit in its score (out-of-fold).
 
@@ -139,22 +143,128 @@ The leaky feature correlates with the label; the as-of feature does not.
 | Feature hashing | very high cardinality | collisions (fixed width) |
 | Embeddings | very high cardinality IDs | needs a model to learn them |
 
-**Which encoder, concretely.** Take five real ad features and watch each encoder land on the one it fits:
+**Golden rule:** fit the encoder on `train` only, then transform `valid` and serving rows. Target encoding needs the stricter rule: fit each training row's value out-of-fold, so the row's own label is never in its feature.
 
-- **One-hot → `device`** (3 values: iOS / Android / web) → 3 binary columns. Fine because cardinality is low.
-- **Ordinal → `creative_size`** (S / M / L) → 0 / 1 / 2 — valid *only* because the order is real.
-- **Count / frequency → `member_country`** (25 values) → replace "US" with its share, e.g. 0.42; watch for ties between equally-frequent countries.
-- **Target (mean) → `campaign_id`** (medium signal) → replace with the campaign's smoothed, out-of-fold click rate (below).
-- **Hashing → `campaign_id`** (80,000 values) → hash into 4,096 buckets; accept rare collisions to bound the width.
-- **Embeddings → `member_id`** (millions) → a learned 32-dim vector trained end-to-end with the model.
+**1 · One-hot encoding — nominal, low-cardinality (`device`; notebook #1).** Input: `valid.device.head()` contains `android`, `ios`, `web`. Code:
 
-**Smoothed target encoding** shrinks a category's mean toward the global mean so rare categories aren't trusted blindly:
+```python
+from sklearn.preprocessing import OneHotEncoder
+
+ohe = OneHotEncoder(sparse_output=False, handle_unknown="ignore")
+ohe.fit(train[["device"]])
+enc = ohe.transform(valid[["device"]])
+print(pd.DataFrame(enc, columns=ohe.get_feature_names_out(["device"])).head())
+```
+
+→ Output: 3 columns (`device_android`, `device_ios`, `device_web`); first rows are one 1.0 and two 0.0s. Use when a nominal feature has few values. Gotcha: one-hotting `campaign_id` creates hundreds/thousands of columns; use `handle_unknown="ignore"` for new serving categories.
+
+**2 · Ordinal encoding — real order only (`creative_size`; notebook #2).** Input: `S`, `M`, `L`. Code:
+
+```python
+from sklearn.preprocessing import OrdinalEncoder
+
+oe = OrdinalEncoder(categories=[["S", "M", "L"]])
+_ = oe.fit_transform(train[["creative_size"]])
+print("mapping:", dict(zip(["S", "M", "L"], [0, 1, 2])))
+```
+
+→ Output: `{'S': 0, 'M': 1, 'L': 2}`. Use when the order is genuine. Gotcha: for nominal IDs this invents fake distance/order.
+
+**3 · Label-encoding pitfall — fake order on a nominal feature (`device`; notebook #3).** Code:
+
+```python
+from sklearn.preprocessing import LabelEncoder
+
+le = LabelEncoder().fit(train["device"])
+print("fake ordering imposed:", dict(zip(le.classes_, le.transform(le.classes_))))
+```
+
+→ Output: `{'android': 0, 'ios': 1, 'web': 2}`. This tells a linear model that `web > ios > android`, which is not a product fact. Use only for labels or tree models that can tolerate arbitrary category codes; for features in linear/NN models, prefer one-hot, hashing, or embeddings.
+
+**4 · Frequency encoding — one popularity column (`member_country`; notebook #4).** Code:
+
+```python
+freq = train["member_country"].value_counts(normalize=True)
+valid_freq = valid["member_country"].map(freq).fillna(0.0)
+print(freq.round(3).head())
+```
+
+→ Output starts `US 0.307`, `IN 0.176`, `BR 0.117`, `GB 0.083`, `JP 0.070`. Use when category popularity is useful and you want one column. Gotcha: equally frequent categories collapse to the same value; unseen categories need a default (`0.0` here).
+
+**5 · Naive target encoding — reproduce the leak (`campaign_id`; notebook #11).** Code:
+
+```python
+global_mean = df.clicked.mean()
+leaky_map = df.groupby("campaign_id").clicked.mean()      # WRONG: uses every label
+df_leaky = df.assign(camp_te=df.campaign_id.map(leaky_map))
+print(df_leaky[["campaign_id", "clicked", "camp_te"]].head())
+```
+
+→ Output includes rare campaigns with `camp_te` near 0 or 1 because their own labels were included. Use this cell to recognize the bug, not in production. Gotcha: it leaks even before modeling; validation looks better than serving.
+
+**6 · Leakage-safe smoothed target encoding — out-of-fold (`campaign_id`; notebook #16).** Smoothed target encoding shrinks a category's mean toward the global mean so rare categories aren't trusted blindly:
 
 $$\hat{y}_c = \frac{n_c\,\bar{y}_c + m\,\bar{y}}{n_c + m}.$$
 
-It must be computed **out-of-fold** (encode each fold using the *other* folds' statistics), or it leaks the label.
+Code:
 
-**Worked example — target encoding that leaks vs one that doesn't.** With 25 kept countries and 80,000 campaign ids, one-hot adds **80,025** columns — impractical, so hash or embed campaign id. For target encoding: naive in-fold encoding of a rare campaign (2 rows, both clicked) gives $\hat{y}=1.0$ — a perfect predictor that vanishes out-of-fold. Smoothed OOF with $m=20,\ \bar{y}=0.06$: $\hat{y} = (2\cdot1.0 + 20\cdot0.06)/(2+20) = 0.145$ — honest.
+```python
+from sklearn.model_selection import StratifiedKFold
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+
+def smoothed_map(frame, m=20):
+    g = frame.groupby("campaign_id").clicked
+    gm = frame.clicked.mean()
+    return (g.count()*g.mean() + m*gm) / (g.count() + m), gm
+
+tr = train.reset_index(drop=True)
+oof = np.zeros(len(tr))
+for fit_idx, enc_idx in StratifiedKFold(5, shuffle=True, random_state=0).split(tr, tr.clicked):
+    m_map, gm = smoothed_map(tr.iloc[fit_idx])
+    oof[enc_idx] = tr.iloc[enc_idx].campaign_id.map(m_map).fillna(gm).to_numpy()
+print("OOF encoded shape:", oof.reshape(-1, 1).shape)
+```
+
+→ Output: `OOF encoded shape: (3000, 1)`; the notebook shows in-fold AUC `0.849` vs honest OOF AUC `0.528`. Use when a high-cardinality category has real signal. Gotcha: for validation/serving, fit the final map on all training rows only; never use validation labels.
+
+**7 · Feature hashing — fixed width for high cardinality (`campaign_id`; notebook #17).** Code:
+
+```python
+from sklearn.feature_extraction import FeatureHasher
+
+fh = FeatureHasher(n_features=256, input_type="string")
+buckets = np.asarray(fh.transform([[str(c)] for c in df.campaign_id]).argmax(axis=1)).ravel()
+print(len(np.unique(buckets)), "used buckets for", df.campaign_id.nunique(), "ids")
+```
+
+→ Output: `198 used buckets for 793 ids` (with 256 buckets). Use when IDs are many or the vocabulary changes. Gotcha: collisions are expected; increase `n_features` to trade memory for fewer collisions.
+
+**8 · Embeddings — dense learned ID vectors (`campaign_id`; notebook #18).** The notebook uses `TruncatedSVD` as a runnable stand-in for learned neural embeddings. Code:
+
+```python
+from sklearn.decomposition import TruncatedSVD
+from sklearn.preprocessing import OneHotEncoder
+
+ctx = OneHotEncoder(sparse_output=False).fit_transform(df[["member_country", "device", "creative_size"]])
+camp_codes, camp_uniques = pd.factorize(df.campaign_id)
+agg = np.zeros((len(camp_uniques), ctx.shape[1])); np.add.at(agg, camp_codes, ctx)
+emb = TruncatedSVD(n_components=2, random_state=0).fit_transform(agg)
+print("embedding shape (n_campaigns, dim):", emb.shape)
+```
+
+→ Output: `(793, 2)`. Use for very high-cardinality entities when the model can learn/share dense representations. Gotcha: embeddings need enough data and a training objective; cold-start IDs still need a fallback.
+
+**9 · Encoder bake-off — same model, honest validation (`campaign_id`; notebook #20).** The practical takeaway is not "always one-hot." In the notebook's same-model comparison, `frequency` and `target (OOF)` reach AUC `0.624` with **3 total columns** (`bid`, `spend`, encoded campaign) while one-hot gets AUC `0.591` with **780 columns**; hashing(64) gets `0.595` with 66 columns. Use the smallest encoding that matches validation and serving constraints.
+
+**Which encoder, concretely.**
+
+- **One-hot → `device`** (3 values: iOS / Android / web) → 3 binary columns.
+- **Ordinal → `creative_size`** (S / M / L) → 0 / 1 / 2 — valid only because the order is real.
+- **Frequency → `member_country`** (10 countries in the notebook) → replace "US" with its train share, about 0.307.
+- **Target → `campaign_id`** → smoothed, out-of-fold click rate.
+- **Hashing → `campaign_id`** → fixed buckets; accept collisions to bound width.
+- **Embeddings → `campaign_id` / `member_id`** → learned dense vector.
 
 **You'll be able to say:** *"Low cardinality → one-hot; ordinal only when order is real; medium → count or smoothed target encoding; very high (IDs) → hashing or embeddings. Target encoding must be out-of-fold and smoothed toward the global mean, or it leaks. Always keep an OOV and a missing bucket."*
 
@@ -162,21 +272,123 @@ It must be computed **out-of-fold** (encode each fold using the *other* folds' s
 
 ## M2.4 · Numeric & float features
 
-**The idea.** Raw numeric signals need scaling and, for skewed distributions, a transform — but **every fitted statistic must come from the training fold only.**
+**The idea.** Raw numeric signals need scaling and, for skewed distributions, a transform — but **every fitted statistic must come from the training fold only.** The ads notebook uses `bid` (bounded numeric), `spend` (heavy-tailed float), and `dwell_secs` (missing values).
 
 **Everyday analogy.** Putting different measurements on a common footing before comparing. Comparing income (0–1,000,000) against age (0–100) unscaled is like comparing one distance in millimeters and another in kilometers — the big-number feature drowns out the other, so you standardize both. A log transform is the earthquake Richter scale: it compresses a heavy tail so the few campaigns that spend 100× the rest don't dominate. And "compute the scale from training data only" is the same exam discipline from M1 — your ruler ($\mu, \sigma$) must be built without peeking at the test.
 
-- **Scaling:** z-score $z = \dfrac{x - \mu_{\text{train}}}{\sigma_{\text{train}}}$; min-max; robust (median/IQR) for outlier-heavy data. Linear and neural models need scaling; trees do not.
-- **Skew transforms:** `log1p`, Box-Cox, Yeo-Johnson (handles zeros/negatives). Ad-spend and engagement counts are heavy-tailed and almost always need one.
-- **Outliers:** winsorize/clip.
-- **Missing values:** impute (median/model) **and add a missingness-indicator column** — the fact that a value was missing is often signal.
+| Technique | Best for | Watch out for |
+|---|---|---|
+| StandardScaler | linear/NN models needing comparable units | fit $\mu,\sigma$ on train only |
+| MinMaxScaler | bounded inputs such as [0,1] | outliers squash the range |
+| RobustScaler | heavy-tailed numeric features | median/IQR still must be train-only |
+| `log1p` / power / quantile | skewed floats and counts | choose transforms valid for the input domain |
+| Impute + indicator | missing numeric values | missingness itself may be signal |
+| Binning / clipping | non-linearity and outliers | learn edges/caps on train only |
 
-**Worked example — fit on train only.** Train spend $\{0, 9, 99, 999\}$ → `log1p` → $\{0, 2.303, 4.605, 6.908\}$, a well-behaved feature. A validation campaign with spend 9999 becomes $\log(1{+}9999)=9.21$. Fitting the scaler on *all* rows (including that 9999) would shift $\mu,\sigma$ using validation data — train-test contamination. Fit on train, then apply.
+**1 · StandardScaler — z-score `bid` (notebook #5).** Scaling formula: $z = \dfrac{x - \mu_{\text{train}}}{\sigma_{\text{train}}}$. Code:
 
 ```python
-scaler.fit(X_train)          # statistics from train only
-X_val = scaler.transform(X_val)   # val never influences the fit
+from sklearn.preprocessing import StandardScaler
+
+sc = StandardScaler().fit(train[["bid"]])
+z_train = sc.transform(train[["bid"]]).ravel()
+print("train mean~0:", round(z_train.mean(), 3), " std~1:", round(z_train.std(), 3))
 ```
+
+→ Output: `train mean~0: -0.0  std~1: 1.0`. Use for linear/neural models. Gotcha: trees usually do not need it; fitting on all rows leaks validation statistics.
+
+**2 · Min–max scaling — `bid` into [0,1] (notebook #6).** Code:
+
+```python
+from sklearn.preprocessing import MinMaxScaler
+
+mm = MinMaxScaler().fit(train[["bid"]])
+mtr = mm.transform(train[["bid"]]).ravel()
+print("range:", round(mtr.min(), 3), "to", round(mtr.max(), 3))
+```
+
+→ Output: `range: 0.0 to 1.0`. Use when a downstream model or UI expects bounded inputs. Gotcha: one huge train value compresses everyone else; serving values outside the train range can transform below 0 or above 1.
+
+**3 · RobustScaler — median/IQR for `spend` (notebook #7).** Code:
+
+```python
+from sklearn.preprocessing import RobustScaler
+
+rob = RobustScaler().fit(train[["spend"]])
+rob_spend = rob.transform(train[["spend"]]).ravel()
+print("median after robust scaling:", round(np.median(rob_spend), 3))
+```
+
+→ Output: median is about `0.0`. Use for heavy-tailed spend or counts. Gotcha: it reduces outlier influence but does not remove impossible values; still fit only on train.
+
+**4 · `log1p` — compress heavy-tailed `spend` (notebook #8).** Code:
+
+```python
+log_spend = np.log1p(train["spend"])
+print("skew before:", round(train.spend.skew(), 2), " after:", round(log_spend.skew(), 2))
+```
+
+→ Output: `skew before: 2.0  after: -0.53`. Use for nonnegative spend, counts, and engagement. Gotcha: plain `log(x)` fails at zero; for negatives use Yeo-Johnson.
+
+**5 · Missing-value impute + indicator — `dwell_secs` (notebook #9).** Code:
+
+```python
+from sklearn.impute import SimpleImputer
+
+med = SimpleImputer(strategy="median").fit(train[["dwell_secs"]])
+dwell_missing = valid["dwell_secs"].isna().astype(int).to_numpy()
+print("median used:", round(med.statistics_[0], 2),
+      "| % missing in valid:", round(dwell_missing.mean(), 3))
+```
+
+→ Output: `median used: 30.41 | % missing in valid: 0.141`. Use whenever numeric values are absent. Gotcha: impute with train median, then add the missingness flag because "missing" can itself predict clicks.
+
+**6 · Binning — quantile buckets for `bid` (notebook #10).** Code:
+
+```python
+from sklearn.preprocessing import KBinsDiscretizer
+
+kb = KBinsDiscretizer(n_bins=4, encode="ordinal", strategy="quantile", subsample=None)
+train_bins = kb.fit_transform(train[["bid"]]).ravel().astype(int)
+print("quartile edges:", np.round(kb.bin_edges_[0], 2))
+```
+
+→ Output: `quartile edges: [ 0.5   3.42  6.39  9.23 11.99]`. Use for monotonic buckets or simple non-linearity in a linear model. Gotcha: edges are learned from train; serving values outside the edge range need a defined bucket behavior.
+
+**7 · PowerTransformer / Yeo-Johnson — make `spend` more Gaussian (notebook #13).** Code:
+
+```python
+from sklearn.preprocessing import PowerTransformer
+
+pt = PowerTransformer(method="yeo-johnson").fit(train[["spend"]])
+yj = pt.transform(train[["spend"]]).ravel()
+print("skew:", round(train.spend.skew(), 2), "->", round(pd.Series(yj).skew(), 2),
+      "| lambda:", round(pt.lambdas_[0], 3))
+```
+
+→ Output: `skew: 2.0 -> -0.04 | lambda: 0.201`. Use when a model benefits from roughly normal inputs. Gotcha: the learned lambda is a fitted statistic; train only.
+
+**8 · QuantileTransformer — rank-normalize `spend` (notebook #14).** Code:
+
+```python
+from sklearn.preprocessing import QuantileTransformer
+
+qt = QuantileTransformer(output_distribution="normal", n_quantiles=500, random_state=0)
+qs = qt.fit_transform(train[["spend"]]).ravel()
+print("quantile-normal shape:", qs.shape)
+```
+
+→ Output: `quantile-normal shape: (3000,)`. Use for stubborn distributions and outliers. Gotcha: it is nonlinear and rank-based, so it can wash out real distance; fit quantiles on train only.
+
+**9 · Winsorize / clip — cap extreme `spend` (notebook #15).** Code:
+
+```python
+lo, hi = np.percentile(train.spend, [1, 99])
+clipped = valid.spend.clip(lo, hi)
+print(f"clip to [{lo:.1f}, {hi:.1f}] | valid max {valid.spend.max():.1f} -> {clipped.max():.1f}")
+```
+
+→ Output: `clip to [0.4, 182.9] | valid max 311.1 -> 182.9`. Use before scaling or linear models when rare extremes dominate. Gotcha: choose caps on train only and monitor how many serving rows hit the cap.
 
 **You'll be able to say:** *"Standardize/min-max/robust-scale for linear and neural models (trees don't need it); log1p/Box-Cox/Yeo-Johnson for skew; winsorize outliers; impute and add a missingness indicator. Fit every statistic (μ, σ, quantiles, imputers) on the train fold only, then apply — fitting on all data leaks."*
 
@@ -190,7 +402,81 @@ X_val = scaler.transform(X_val)   # val never influences the fit
 
 **Skew is not drift.** Skew is an offline-vs-online mismatch *at one point in time*. **Drift** is the data changing *over time* under the same definition. Fix skew by unifying the definition; handle drift with monitoring and retraining. A common drift signal is **PSI** $= \sum_i (a_i - e_i)\log(a_i/e_i)$ between two distributions.
 
-**Sources of skew:** separate offline and online code paths, time-zone or unit mismatches, different missing defaults, aggregation windows that don't match, stale online features. The durable fixes: define each feature once and serve it consistently (a **feature store**), version the definition, and **log the served feature values** so training uses exactly what production used.
+**Prevention is practical: one object owns the feature definition.** Do not hand-normalize in notebooks and reimplement it in serving. Put preprocessing and the model in a `ColumnTransformer` / `Pipeline`; fit on train only; serialize/version that object; log the served feature vector so training can compare against what production actually used.
+
+**1 · ColumnTransformer — one train-only preprocessing definition (notebook #12).** Input: numeric `bid`, `spend`; categorical `device`, `member_country`, `creative_size`. Code:
+
+```python
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+num = ["bid", "spend"]
+cat = ["device", "member_country", "creative_size"]
+pre = ColumnTransformer([
+    ("num", StandardScaler(), num),
+    ("cat", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), cat),
+])
+Xtr = pre.fit_transform(train)
+Xva = pre.transform(valid)
+print("train matrix:", Xtr.shape, "| valid matrix:", Xva.shape)
+print("numeric cols:", len(num), "| one-hot cols:", Xtr.shape[1]-len(num))
+```
+
+→ Output: `train matrix: (3000, 18) | valid matrix: (1000, 18)` and `numeric cols: 2 | one-hot cols: 16`. Use when a table mixes numeric and categorical features. Gotcha: `fit_transform(valid)` would silently learn a different scaler/vocabulary; only `transform(valid)` is correct.
+
+**2 · Full leakage-safe Pipeline — preprocessing + model together (notebook #19).** Code:
+
+```python
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+
+num = ["bid", "spend", "dwell_secs"]; cat = ["device", "member_country", "creative_size"]
+pre = ColumnTransformer([
+    ("num", Pipeline([("impute", SimpleImputer(strategy="median")),
+                      ("scale", StandardScaler())]), num),
+    ("cat", OneHotEncoder(sparse_output=False, handle_unknown="ignore"), cat),
+])
+clf = Pipeline([("pre", pre), ("model", LogisticRegression(max_iter=1000))])
+clf.fit(train, train.clicked)
+auc = roc_auc_score(valid.clicked, clf.predict_proba(valid)[:, 1])
+print(f"honest valid AUC (fit on train only): {auc:.3f}")
+```
+
+→ Output: `honest valid AUC (fit on train only): 0.648`. Use this as the production shape: the same object transforms train, validation, batch scoring, and serving. Gotcha: if serving cannot run the exact object, export the fitted medians/scales/vocabulary with a version and test parity row-by-row.
+
+**3 · Feature logging — prove serving used the same values.** Log the request key, model version, feature-definition version, and final feature values/probability. Minimal offline shape:
+
+```python
+served = valid.head(3).copy()
+served["model_version"] = "m2-demo-v1"
+served["feature_def_version"] = "pre-v1"
+served["p_click"] = clf.predict_proba(served)[:, 1]
+print(served[["model_version", "feature_def_version", "p_click"]])
+```
+
+→ Output: 3 scored rows with the exact versions used. Use logs to train future datasets from served values, debug offline↔online gaps, and replay parity tests. Gotcha: logging raw features may contain sensitive data; apply your privacy/retention rules.
+
+**4 · PSI check — detect drift after skew is fixed.** PSI compares an expected distribution (train) to an actual one (valid/serving) under the same definition:
+
+```python
+def psi(expected, actual, bins=10):
+    edges = np.quantile(expected, np.linspace(0, 1, bins + 1))
+    edges[0], edges[-1] = -np.inf, np.inf
+    e = np.histogram(expected, edges)[0] / len(expected)
+    a = np.histogram(actual, edges)[0] / len(actual)
+    e, a = np.clip(e, 1e-6, None), np.clip(a, 1e-6, None)
+    return np.sum((a - e) * np.log(a / e))
+
+print("PSI spend train vs valid:", round(psi(train.spend, valid.spend), 3))
+```
+
+→ Output: `PSI spend train vs valid: 0.004` for this synthetic split (same generator); large PSI means drift or data-quality change, not necessarily skew. Use PSI after train/serve definitions are unified. Gotcha: PSI cannot tell you *why* distributions differ; pair it with feature logs.
+
+**Sources of skew:** separate offline and online code paths, time-zone or unit mismatches, different missing defaults, aggregation windows that don't match, stale online features. The durable fixes: define each feature once and serve it consistently (a **feature store** or shared transformer), version the definition, and **log the served feature values** so training uses exactly what production used.
 
 **Worked example — a window mismatch.** Training uses `campaign_clicks_window` = clicks in the last **7 days**, but the online service returns the last **1 day**. With a one-feature score $s = -2 + 0.08c$: a campaign with 120 clicks in 7 days scores $-2+0.08(120)=7.6$ offline, but 30 clicks in 1 day scores $-2+0.08(30)=0.4$ online — a **7.2 logit-point gap** from nothing but the window. The fix is not the model: unify on one window definition and serve it from one place.
 
