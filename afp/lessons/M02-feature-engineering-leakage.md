@@ -40,15 +40,25 @@ Five sub-lessons:
 | **Group leakage** | The same entity sits in both train and validation | One campaign's impressions split across train & val | Group-aware or time-based splits |
 | **Aggregation leakage** | A statistic computed over a span that includes the row's own future | Global `campaign_ctr` that includes this impression | Trailing windows; leave-one-out |
 
-**1 · Label leakage** — a feature is a function of the outcome. The tell is that the column only *exists* because the label happened: `was_charged_for_click`, `landing_page_view`, or a `campaign_total_clicks` total that already counts this impression's click. Offline AUC looks perfect because you handed the model the answer. *Prevention:* for every feature ask "does this value exist only because the label occurred?" — if yes, drop it.
+**One running example — watch each door open on the same three rows.** Three impressions of the *same* campaign C on Monday; we're predicting the **Clicked?** column:
 
-**2 · Look-ahead leakage** — the feature is real, but built from data observed *after* $t$. `campaign_clicks_24h_after` is the obvious case; the subtle one is joining an entity's *current* snapshot (the member's profile or the campaign's budget *today*) instead of its state as of the impression. The member added skills, the advertiser raised the budget — none of it was knowable at $t$. *Prevention:* as-of joins keyed on the freeze time (M2.2).
+| Impression | Time | Clicked? (label) |
+|---|---|---|
+| A | 09:00 | ✅ yes |
+| B | 10:00 | ❌ no |
+| C | 11:00 | ✅ yes |
 
-**3 · Train-test contamination** — the features are legitimate, but a **transform** saw data it shouldn't. Fitting a scaler, imputer, target-encoder, PCA, feature-selector, or vocabulary on the *full* table before splitting lets validation statistics bleed into training. The mean used for imputation, or the per-campaign target-encoding table, was computed partly from rows you're about to "test" on. *Prevention:* fit every transform on the training fold only and `transform` val/test — wrap it in a pipeline so this can't be forgotten (M2.3, M2.4).
+**1 · Label leakage** — a feature that *is* the outcome in disguise. Add `was_charged` (the advertiser is billed only when a click lands): A = 1, B = 0, C = 1 — byte-for-byte the label. Offline AUC = 1.0; at serving the column is always 0 because billing hasn't happened yet. *Tell:* the column only *exists* because the click did. *Fix:* ask "does this value exist only because the label occurred?" → drop it.
 
-**4 · Group leakage** — a random *row-level* split puts rows from the same entity (member, campaign, advertiser) in both train and validation, so the model memorizes the entity instead of generalizing. It learns "campaign 12345 clicks a lot," then collapses on genuinely new campaigns at serving. *Prevention:* split by group (`GroupKFold` on campaign/member) or, for streaming data, split by time.
+**2 · Look-ahead leakage** — a legitimate feature read from *after* $t$. Add "clicks on C in the next 60 min." For **B** (10:00) you look forward and catch **C**'s 11:00 click → B's feature = 1, a fact that did not exist at 10:00. The subtle version: joining an entity's *today* snapshot (the member's current profile, the campaign's current budget) instead of its state at $t$. *Fix:* as-of join — only events with `timestamp < t` (M2.2).
 
-**5 · Aggregation leakage** — a global or windowed statistic is computed over a span that includes the row's own future. `campaign_ctr = total_clicks / total_impressions` over the whole table includes *this* impression and later ones; a rolling window *centered* on $t$ peeks forward. *Prevention:* compute aggregates only over data strictly before $t$ (trailing/expanding windows with a shift) and exclude the current row (leave-one-out target encoding).
+**3 · Train-test contamination** — the features are fine, but a **transform** peeked. Z-score `bid` using $\mu,\sigma$ computed over **all three** rows, *then* split A, C → train / B → val. B's "normalized bid" was standardized using B's own value — the scaler already saw the validation row. Same bug for an imputer's mean, a target-encoding table, PCA, or a vocabulary. *Fix:* fit every transform on the **train fold only**, then apply to B; wrap it in a pipeline so it can't be forgotten (M2.4).
+
+**4 · Group leakage** — the same entity on both sides of the split. Random-split the rows: A, C → train, B → val. All three are campaign C, so the model just learns "C clicks ~67%" and recites 0.67 for B — looks predictive, then collapses on a genuinely new campaign at serving. *Fix:* keep all of C on one side (`GroupKFold` by campaign/member), or split by time.
+
+**5 · Aggregation leakage** — a summary that swallows the row itself or its future. Feature = C's CTR over the three rows = $2/3 = 0.67$, pasted on A, B, C alike. **B**'s 0.67 was built partly *from B's own outcome* (and from C's later click). Note the contrast with #2: this leaks **even with no clock** — B is simply inside its own average. *Fix:* aggregate only over rows strictly before $t$ **and** leave the current row out (leave-one-out; smooth for small counts, M2.3).
+
+*(The #2-vs-#5 distinction that trips people up: look-ahead is one row peeking* forward in time*; aggregation is one row peeking at* the crowd it belongs to *— including itself. A timestamp filter fixes #2; only leave-one-out fixes the self-inclusion in #5.)*
 
 **Detection signals:** an implausibly high offline metric (AUC near 1.0), a large offline-to-online gap, and one feature dominating importance.
 
