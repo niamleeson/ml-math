@@ -46,6 +46,14 @@ $$\text{price per click}=\frac{\text{next best value}}{\widehat{pCTR}_{winner}},
 
 capped by the winner's bid and floored by any reserve. In multi-slot Search Ads, **generalized second price (GSP)** ranks ads into slots; each advertiser pays enough to keep its position relative to the next ranked advertiser, adjusted for pCTR/quality and slot effects.
 
+**Auction types, concretely, on the same bidders.** Use one eligible Event Ads impression and the same calibrated values: A has pCTR 0.030 and bid 6.00 dollars, so value $0.180$; B has pCTR 0.020 and bid 8.00 dollars, so value $0.160$; C has pCTR 0.050 and bid 2.00 dollars, so value $0.100$.
+
+| Auction rule | Who wins / gets slots | What they pay |
+|---|---|---|
+| **First-price CPC** | A wins because $0.180$ is highest. | A pays its own bid, 6.00 dollars per click; expected spend per impression is $0.030\times6.00=0.180$. |
+| **Second-price-style single-slot CPC** | A wins because $0.180$ is highest. | A pays just enough to beat B's next value: $0.160/0.030=5.33$ dollars per click, below A's 6.00-dollar bid. |
+| **GSP Search Ads with two slots** | A gets slot 1, B gets slot 2, C is next. | A pays $0.160/0.030=5.33$ dollars per click; B pays $0.100/0.020=5.00$ dollars per click. |
+
 **Worked example — calibrated pCTR → value → allocation → payment.** An Event Ads impression has three eligible CPC advertisers:
 
 | Advertiser | Calibrated pCTR | Bid | Value = pCTR × bid |
@@ -163,6 +171,15 @@ A safe mental model is:
 $$\max\ \text{marketplace value}\quad \text{subject to budget, delivery, policy, quality, and member guardrails}.$$
 
 Do not treat every guardrail as just another score term. Some are hard constraints: an unapproved creative cannot serve; a frequency cap cannot be exceeded; a predicted hide-rate threshold may block or throttle inventory. Others are soft objectives that can be traded off after measurement.
+
+**Value / pacing / guaranteed delivery / guardrails, concretely.**
+
+| Marketplace piece | Concrete instance | Allocation consequence |
+|---|---|---|
+| **Value of impression** | Event Ads A has calibrated pCTR 0.030 and bid 6.00 dollars, so value is $0.180$; B has pCTR 0.020 and bid 8.00 dollars, so value is $0.160$. | Without other adjustments, A gets the impression because $0.180>0.160$. |
+| **Pacing** | A is ahead of its spend target, so its multiplier falls to 0.88; A's paced value becomes $0.88\times0.180=0.1584$. | B's unpaced $0.160$ can now win, preserving A's budget for later Event Ads opportunities. |
+| **Guaranteed delivery** | A reserved Event Ads sponsor needs 10 more impressions and forecasts only 12 remaining eligible impressions, so the allocator must deliver about $10/12=83.3\%$ of that remaining supply to satisfy $\sum_t x_t\ge10$. | The delivery constraint can reserve or prioritize eligible impressions even when a pure auction would choose another campaign. |
+| **Multi-objective / guardrails** | In Instream Ads, C has pCTR 0.050 and bid 5.00 dollars, value $0.250$, but predicted hide-rate is 0.8% against a hard 0.5% threshold. | C is filtered or throttled despite the highest click value; the auction proceeds with member-safe eligible ads such as A or B. |
 
 **End-to-end loop.** For Search Ads, Instream Ads, and Event Ads, the production loop is:
 

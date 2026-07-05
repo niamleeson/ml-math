@@ -115,6 +115,12 @@ Neural nets are powerful when the input has structure that benefits from learned
 | Training/serving cost | Often cheaper CPU training/serving | Often more tuning, accelerators, latency planning |
 | Extrapolation outside training range | Trees extrapolate poorly | NNs can extrapolate somewhat, but not guaranteed |
 
+**Shared pCTR task — pick each family when it fits.**
+
+- **Linear/logistic:** choose it for a 50k-row pCTR baseline with 20 clean features when you need calibrated probabilities, cheap serving, and coefficients you can inspect; add a `US_and_bid_gt_5` cross if that interaction matters.
+- **GBDT:** choose it for the same task after you have 1M tabular rows with bid thresholds, country×device effects, and campaign-age interactions; shallow boosted trees can learn those splits with little preprocessing.
+- **Neural net:** choose it when the task grows to hundreds of millions of impressions with sparse member IDs, advertiser IDs, creative text, and sequence history; embeddings and encoders can share signal across related IDs and content.
+
 **Worked example — two ads modeling choices.** Scenario A: 10k rows, 30 clean tabular columns, a few countries and campaign attributes. Start with logistic regression and GBDT. The GBDT is likely strong, cheap, and easier to debug.
 
 Scenario B: hundreds of millions of impressions with sparse member IDs, advertiser IDs, creative text, and sequence history. A neural model with embeddings and text/sequence encoders can share statistical strength across IDs and learn representations that a tabular GBDT would need awkward encodings to approximate.

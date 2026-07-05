@@ -73,6 +73,13 @@ print(softmax([4, 2, 0], temperature=2.0))
 
 **Top-p sampling.** Top-p, also called nucleus sampling, sorts tokens by probability and samples only from the smallest prefix whose cumulative probability is at least `p`. If probabilities are `[0.50, 0.25, 0.15, 0.10]` and `top_p=0.80`, the candidate set is the first three tokens because `0.50+0.25+0.15=0.90`. It removes the long tail while still allowing multiple plausible outputs.
 
+**Mechanics, concretely.**
+
+- **Tokens:** `"AI-powered"` might be split into pieces like `"AI"`, `"-"`, and `"powered"`; those pieces, not characters or necessarily whole words, are what count toward cost.
+- **Context window:** if a 128k-token model receives 127k tokens of policy evidence and you ask for a 2k-token answer, something must be shortened because input plus output cannot fit.
+- **Temperature:** for `Write one headline for an AI course`, `T=0` may repeatedly choose `"Learn AI faster"`; `T=1.2` may vary into `"Master practical AI this weekend"` or `"Build smarter with AI"`.
+- **Top-p:** with next-token probabilities `[course:0.50, class:0.25, bootcamp:0.15, banana:0.10]` and `top_p=0.80`, the sample set is `course/class/bootcamp` because their cumulative mass is `0.90`; `banana` is excluded.
+
 **Perplexity.** Perplexity measures how surprised the model is by a sequence. For average negative log-probability $L$, perplexity is:
 
 $$\text{perplexity}=\exp(L).$$
@@ -97,6 +104,13 @@ Lower perplexity means the model assigned higher probability to the observed tex
 - **Few-shot:** include input/output examples. Best when labels, tone, or formatting are product-specific.
 - **Chain-of-thought / reasoning prompts:** ask the model to reason through a hard task. In production, you usually want the model to use reasoning internally but return a concise final answer or structured result.
 - **Structured output:** specify JSON fields, allowed values, and validation rules.
+
+**Prompting patterns, concretely.**
+
+- **Zero-shot:** `Classify this query as commercial or not: "best crm software"` → the model answers directly with no examples.
+- **Few-shot:** show `User: "cheap flights" → {"intent":"travel_search"}` and `User: "draft ad copy" → {"intent":"create_ad_draft"}`, then ask for `"show campaigns in Canada"` so the label style is copied.
+- **Reasoning prompt:** for `Which campaign has higher ROI given spend and revenue?`, ask the model to compute internally and return only `{"winner":"campaign_b","reason":"higher ROI"}` rather than a long chain.
+- **Structured output:** require `{"intent": "...", "slots": {...}, "confidence": 0.0}` so code can parse fields instead of scraping prose.
 
 **Worked example — few-shot + JSON schema for query understanding.** Suppose Search Ads receives a natural-language request and needs a structured interpretation.
 

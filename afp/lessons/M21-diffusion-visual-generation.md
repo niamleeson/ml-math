@@ -28,6 +28,11 @@ Two sub-lessons:
 
 **Everyday analogy.** Imagine starting with a clear photo and adding a little TV static again and again until only noise remains. That is the forward process: the photo is $x_0$, each static layer is injected noise, and the noise schedule controls how fast the picture disappears. Generation runs the movie backward: start from static and repeatedly wipe away the predicted noise until a picture emerges.
 
+**Forward vs reverse, concretely.**
+
+- **Forward diffusion:** during training, take a clean Creative Intelligence product image latent $x_0$ and inject known Gaussian noise at timestep $t$ to create $x_t$. Example: with $\bar\alpha_t=0.64$, the training row is still recognizably the original concept but partially corrupted, and the model is told the exact noise $\epsilon$ that was added.
+- **Reverse diffusion:** during generation, start from random latent noise $x_T$ and repeatedly ask the denoiser what noise to remove. Example: for a prompt like "minimalist laptop ad, blue gradient," each reverse step makes the latent less like static and more like a coherent blue-background product mockup.
+
 A variance schedule chooses small noise levels $\beta_1,\ldots,\beta_T$, with
 
 $$\alpha_t = 1-\beta_t, \qquad \bar\alpha_t = \prod_{s=1}^t \alpha_s.$$
@@ -108,6 +113,11 @@ $$\hat\epsilon = 0.4 + 7(0.1-0.4) = -1.7.$$
 
 That shows both the power and danger of guidance: high $w$ can strongly push toward the prompt, but it can overshoot, producing artifacts, oversaturation, or lower diversity.
 
+**Guidance levels, concretely.**
+
+- **Low guidance scale:** with $w=1$ for "blue gradient, no text," the model nudges toward the prompt but still explores; one output may keep the laptop composition but use a gray background or add faint text-like marks. Use it when visual diversity and realism matter more than exact prompt obedience.
+- **High guidance scale:** with $w=15$, the same prompt is enforced aggressively; outputs are more likely to be blue and text-free, but the gradient may become oversaturated and several variants may look nearly identical. Use it when prompt adherence matters, then watch for artifacts and mode collapse.
+
 **Latent diffusion.** Pixel-space diffusion denoises full images. High-resolution pixels are expensive, so latent diffusion uses an autoencoder:
 
 1. VAE encoder maps image $x$ to a smaller latent $z$.
@@ -135,6 +145,11 @@ image = vae_decoder(z)
 For Creative Intelligence, this pipeline can generate candidate visual variants, background alternatives, or storyboard frames. Human and policy review still matter: the model can create plausible but off-brand, misleading, or policy-unsafe content.
 
 **Text-to-video.** Video diffusion extends the same denoising idea over space and time. Instead of one image latent grid, the model denoises frame tokens or spatiotemporal latents. The core difficulty is **temporal consistency**: the product, logo, person, or scene must remain coherent across frames while motion changes. Video systems may add temporal attention, motion modules, keyframe conditioning, or diffusion transformers (DiT-style token processing).
+
+**Text-to-image vs text-to-video, concretely.**
+
+- **Text-to-image:** generate one coherent creative mockup from a prompt, such as a single static "premium laptop on blue gradient" product image. The main checks are prompt adherence, visual quality, brand/policy safety, and image-level artifacts.
+- **Text-to-video:** generate a sequence, such as a 6-second Instream storyboard where the laptop opens, the logo stays fixed, and lighting changes smoothly. The main added checks are temporal consistency, motion plausibility, flicker, and compute cost across frames.
 
 **Worked example — guidance sweep for ad variants.** Generate ad-background concepts for the prompt "minimalist laptop ad, blue gradient, no text." At $w=1$, samples are diverse but some ignore the blue gradient. At $w=7$, most samples obey the prompt. At $w=15$, several samples become oversaturated and repetitive. The operating point is not "maximum guidance"; it is the scale that gives enough prompt adherence while preserving realism and diversity.
 

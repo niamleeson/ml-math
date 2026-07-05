@@ -40,6 +40,12 @@ Dot product rewards both angle and vector norm. Cosine removes norm and mostly r
 
 $$\tilde q=\frac{q}{\lVert q\rVert},\quad \tilde x=\frac{x}{\lVert x\rVert},\quad \tilde q^\top \tilde x=\cos(q,x).$$
 
+**Cosine vs dot product, concretely.** Use the same query $q=[1,0]$ so the difference is only the scoring rule:
+
+- **Dot product example:** broad creator $a=[10,0]$ scores $q^\top a=10$; niche creator $b=[0.8,0.6]$ scores $q^\top b=0.8$. Dot says $a$ is much stronger because its norm is large.
+- **Cosine example:** the same two items score $\cos(q,a)=1.0$ and $\cos(q,b)=0.8$. Cosine says $a$ is only 0.2 similarity points ahead because it ignores $a$'s 10× norm.
+- **Normalized-dot example:** after L2 normalization, $a$ becomes $[1,0]$ and $b$ is already unit length, so normalized dot returns exactly the cosine scores 1.0 and 0.8.
+
 **When the norm matters.** A norm can encode popularity, confidence, frequency, or calibration. That is useful only if the product wants it. In Search Ads, a high-norm ad vector may be a learned prior for broadly relevant ads. In semantic creator search, that same effect can bury niche but highly aligned creators. Normalize when you want semantic angle to dominate; keep dot-product norms when the model was intentionally trained to use magnitude.
 
 **ID vs text embeddings.** ID embeddings are learned lookup vectors. They are excellent for entities with repeated behavior: a creator with many impressions and responses, a campaign with long history, an ad account with stable preferences. They fail for cold-start entities because a new ID has little or no learned history. Text embeddings come from encoders over titles, bios, posts, job descriptions, and advertiser briefs. They generalize to unseen text, but they may miss platform-specific behavior such as which creators actually accept a collaboration or which ad wording converts for a vertical.
@@ -138,6 +144,16 @@ Recall is:
 $$\text{recall@}k=\frac{|\text{relevant items retrieved in top }k|}{|\text{all relevant items}|}.$$
 
 If 8 of 10 held-out positive creator matches appear in top-20, recall@20 is $0.80$.
+
+**Evaluation methods, concretely.** Each check answers a different question about the same embedding space:
+
+- **Alignment:** for a held-out accepted brief→creator pair, vectors $[1,0]$ and $[0.9,0.1]$ have squared distance $(1-0.9)^2+(0-0.1)^2=0.02$, so the positive pair is close.
+- **Uniformity:** if 100 unrelated creator vectors all sit within distance 0.05 of $[1,0]$, nearest-neighbor lists collapse to the same hubs; spread them so unrelated pairs are not all close.
+- **Retrieval recall@k:** if a brief has 10 relevant accepted creators and top-20 retrieval contains 8, recall@20 is $8/10=0.80$.
+- **Downstream lift:** adding the embedding to the ranker raises invite acceptance from 6.0% to 6.6% on an A/B slice, a 10% relative lift.
+- **Probing:** a logistic probe predicts creator language from frozen vectors at 92% accuracy; useful for coverage, but check it is not leaking protected or policy-sensitive labels.
+- **Qualitative neighbors:** for "B2B cybersecurity podcast host," top neighbors should be security/audio/B2B creators, not generic tech celebrities.
+- **Slice checks:** new creators at recall@20 = 0.52 versus established creators at 0.86 flags a cold-start representation gap.
 
 **Worked example — train signal to evaluation.** A Creator Marketplace embedding job has positive pairs `(advertiser brief, creator)` from accepted collaborations. Random creators are sampled as negatives. After training, the system evaluates 1,000 held-out briefs. For each brief, exact search over the candidate set returns top-20 creators; 8,000 of 10,000 held-out accepted creators appear in those lists, so recall@20 is 0.80.
 

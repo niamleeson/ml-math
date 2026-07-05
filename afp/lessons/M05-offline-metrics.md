@@ -45,6 +45,12 @@ $$F1=\frac{2\cdot \text{precision}\cdot \text{recall}}{\text{precision}+\text{re
 
 Precision asks: of what we called positive, how much was right? Recall asks: of all actual positives, how much did we catch? F1 is the harmonic mean, so it is high only when both are high.
 
+**Same confusion matrix, three metric examples.** If TP=8, FP=2, FN=4, TN=86:
+
+- **Precision:** $8/(8+2)=0.80$ — 8 of the 10 impressions predicted as clicks really clicked.
+- **Recall:** $8/(8+4)=0.67$ — the model caught 8 of the 12 actual clicks.
+- **F1:** $2(0.80)(0.67)/(0.80+0.67)\approx0.73$ — high only because both precision and recall are reasonably high.
+
 **Thresholds encode product cost.** Raising the threshold usually reduces predicted positives. False positives fall, so precision often rises; false negatives rise, so recall often falls. The right threshold depends on cost: spam blocking may require high precision; candidate generation may require high recall.
 
 **Worked example — compute by hand.** Suppose a thresholded click model gives TP=8, FP=2, FN=4, TN=86.
@@ -82,6 +88,14 @@ For ranked lists, different metrics answer different product questions:
 | AP / MAP | average precision at each relevant hit, then average over queries | multiple relevant items matter |
 | DCG@k | $\sum_{i=1}^{k}\frac{rel_i}{\log_2(i+1)}$ or gain-discount variant | graded relevance and top-k position matter |
 | NDCG@k | $DCG@k / IDCG@k$ | compare to the ideal ordering |
+
+**One ranked list, three ranking metric examples.** Suppose five creatives are scored in this order, with binary clicked labels and graded relevance: A `(click=0, rel=0)`, B `(1, 3)`, C `(1, 2)`, D `(0, 0)`, E `(1, 1)`.
+
+- **AUC:** there are $3\times2=6$ positive-negative pairs. B beats D, C beats D, and E beats neither negative above it, so 2 of 6 pairs are correctly ordered: $AUC=2/6=0.33$.
+- **MRR:** the first relevant/clicked creative is B at rank 2, so reciprocal rank is $1/2=0.50$ for this query.
+- **AP / MAP:** clicked creatives appear at ranks 2, 3, and 5, so $AP=(1/2+2/3+3/5)/3\approx0.59$; with one query, $MAP=0.59$.
+- **DCG@3:** model relevance is `[0,3,2]`, so $DCG@3=0+3/\log_2(3)+2/\log_2(4)\approx2.893$.
+- **NDCG@3:** ideal relevance `[3,2,0]` has $IDCG@3\approx4.262$, so $NDCG@3\approx2.893/4.262=0.68$.
 
 **Worked example — NDCG@3 by hand.** A ranked list has graded relevance `[3, 2, 0]`. Using the simple DCG form:
 

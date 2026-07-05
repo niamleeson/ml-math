@@ -32,6 +32,12 @@ Two sub-lessons:
 2. **Rerank:** reorder candidates with a stronger relevance model or product rules.
 3. **Generate:** answer using only the selected evidence, ideally with citations or traceable support.
 
+**Pipeline stages, concretely.** For `Can sponsored video creative be edited after launch?`:
+
+- **Retrieve:** pull chunks about sponsored video rules, campaign-budget edits, and billing setup as candidates.
+- **Rerank:** move the sponsored-video edit-restriction chunk above the budget chunk because it directly answers "creative edited after launch."
+- **Generate:** answer "No, create a new creative instead" and cite the sponsored-video chunk; if no chunk supports that claim, refuse.
+
 The failure it prevents is hallucination. A model without evidence may produce a fluent but unsupported answer. A grounded system can say, "I found supporting chunks A and B," or "I do not have enough evidence."
 
 **Chunking.** RAG quality starts before retrieval. Chunks should be small enough to retrieve precisely but large enough to contain complete facts. If a campaign policy's condition is in one chunk and its exception is in another, recall@1 may retrieve only half the truth. Overlap can help, but too much overlap wastes context.
@@ -41,6 +47,12 @@ The failure it prevents is hallucination. A model without evidence may produce a
 $$\cos(q,c)=\frac{q\cdot c}{\|q\|\|c\|}.$$
 
 Use this formula because it is the actual retrieval score in many vector systems, not because every RAG concept needs math.
+
+**Retrieval types, concretely.**
+
+- **Dense retrieval:** query `"can I edit sponsored video after launch"` embeds near a policy chunk saying `"sponsored video creative cannot be edited after launch"` even if the words are not identical.
+- **Sparse / BM25 retrieval:** query `"ERR_CAMPAIGN_BUDGET_TOO_LOW"` finds the exact error-code chunk because rare lexical matches dominate.
+- **Hybrid retrieval:** query `"video creative edit ERR_CREATIVE_LOCKED"` combines dense semantic match on "video creative edit" with sparse exact match on `ERR_CREATIVE_LOCKED`, then merges or reranks both result sets.
 
 **Retrieval recall.** If the gold evidence is in the top `k` retrieved chunks, recall@k for that query is 1; otherwise it is 0. Averaged over queries, recall@k tells you whether the retriever gives the generator a chance to be correct. If recall is low, prompting cannot reliably fix the system because the needed evidence never reaches the model.
 
@@ -123,6 +135,13 @@ The system needs to decide what action is requested, extract fields, validate th
   "fallback_reason": "string or null"
 }
 ```
+
+**Schema fields, concretely.** For `Find creators for AI in NYC with audience over 50k`:
+
+- **Intent:** `find_creator` — the action is search for creators, not estimate audience or find campaigns.
+- **Slots:** `topic=AI`, `location=NYC`, `min_audience_size=50000` — typed filters the backend can execute.
+- **Confidence:** `0.91` — high enough to run because the intent and slots are unambiguous.
+- **Fallback reason:** `null` — no clarification is needed; for `creators for java in NY`, this becomes the ambiguity message shown below.
 
 **Worked example — NL query to structured filter JSON.** User query:
 

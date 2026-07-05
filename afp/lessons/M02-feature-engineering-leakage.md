@@ -139,6 +139,15 @@ The leaky feature correlates with the label; the as-of feature does not.
 | Feature hashing | very high cardinality | collisions (fixed width) |
 | Embeddings | very high cardinality IDs | needs a model to learn them |
 
+**Which encoder, concretely.** Take five real ad features and watch each encoder land on the one it fits:
+
+- **One-hot → `device`** (3 values: iOS / Android / web) → 3 binary columns. Fine because cardinality is low.
+- **Ordinal → `creative_size`** (S / M / L) → 0 / 1 / 2 — valid *only* because the order is real.
+- **Count / frequency → `member_country`** (25 values) → replace "US" with its share, e.g. 0.42; watch for ties between equally-frequent countries.
+- **Target (mean) → `campaign_id`** (medium signal) → replace with the campaign's smoothed, out-of-fold click rate (below).
+- **Hashing → `campaign_id`** (80,000 values) → hash into 4,096 buckets; accept rare collisions to bound the width.
+- **Embeddings → `member_id`** (millions) → a learned 32-dim vector trained end-to-end with the model.
+
 **Smoothed target encoding** shrinks a category's mean toward the global mean so rare categories aren't trusted blindly:
 
 $$\hat{y}_c = \frac{n_c\,\bar{y}_c + m\,\bar{y}}{n_c + m}.$$

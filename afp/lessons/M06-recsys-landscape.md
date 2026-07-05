@@ -145,6 +145,14 @@ A useful break test is to shuffle history order. If quality barely changes, sequ
 - **Sequential:** recent order changes next action.
 - **Generative:** sequence-native retrieval research path with strong serving/eval controls.
 
+**Concrete use-it-when examples.**
+
+- **Neighborhood CF:** use it when a recruiter saved creator A and B, and creator C is frequently saved by the same recruiters; "because similar recruiters saved C" is the explanation.
+- **MF:** use it when a member and an ad can each be represented by learned 32-dim vectors, and their dot product retrieves ads similar in latent taste even without exact neighbor overlap.
+- **Two-tower:** use it when a 5M-item catalog must return 500 candidates in tens of milliseconds by precomputing item vectors and ANN-searching with the online member vector.
+- **Sequential:** use it when `wedding venue → catering → photographer` should retrieve event-service ads, while the same items shuffled would be less informative.
+- **Generative:** use it when a sequence-native model emits valid item-code candidates such as `event_services/photographer/*`, then a serving layer validates and reranks them.
+
 **You'll be able to say:** *"Two-tower retrieval scales because item embeddings are precomputed and searched by nearest neighbor. Sequential recommenders matter when ordered recent actions change intent. Generative retrieval emits item IDs or codes directly, which can unify retrieval with sequence modeling but adds serving, validity, and evaluation complexity. I pick the model family from catalog size, available signal, latency, cold-start pressure, and whether order matters."*
 
 ---

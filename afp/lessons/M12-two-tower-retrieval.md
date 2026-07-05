@@ -46,6 +46,13 @@ The architecture is useful because item vectors are independent of the live quer
 - sampled negatives from a candidate distribution,
 - hard negatives: plausible but wrong candidates, often retrieved by a previous model or lexical search.
 
+**Negative types, concretely.** For the query "Toronto fitness creators for a protein brand," each negative teaches a different contrast:
+
+- **Random negative:** a Seattle tax-accounting creator sampled uniformly from the corpus; clearly wrong, useful for broad separation.
+- **In-batch negative:** another row's positive creator, e.g. a Toronto vegan chef, reused as the negative for this query; cheap, but may be a false negative if the chef also fits the brand.
+- **Sampled negative:** a creator drawn from a popularity-weighted distribution, e.g. a high-impression lifestyle creator with sampling probability $Q=0.05$; use logQ correction if the sampler overrepresents such creators.
+- **Hard negative:** a Toronto fitness creator whose audience is teenagers while the brief requires B2B wellness buyers; plausible enough that the model must learn the audience mismatch.
+
 **In-batch softmax.** In a batch of $B$ positive pairs $(q_b,i_b)$, score every query against every item in the batch. For row $b$, item $b$ is the positive and the other $B-1$ items are negatives:
 
 $$p(i_b\mid q_b)=\frac{\exp(s(q_b,i_b))}{\sum_{j=1}^{B}\exp(s(q_b,i_j))}.$$
@@ -110,6 +117,17 @@ A typical serving funnel:
 5. ANN returns top $K$ candidates.
 6. Lightweight filters and dedupe run.
 7. Ranker reranks hundreds or thousands of candidates with richer features.
+
+**Training vs serving components, concretely.** The same towers appear in both phases, but their jobs differ:
+
+| Component | Training example | Serving example |
+|---|---|---|
+| **Query tower** | Embed a logged Search Ads request that clicked ad 42; gradients update from the loss | Embed the live request once, e.g. $f_q(q)=[0.6,0.8]$ |
+| **Item tower** | Embed positive ad 42 and negatives in the batch; gradients update item-side weights | Precompute ad 42's vector offline, e.g. $f_i(i)=[0.7,0.7]$, and publish it |
+| **Similarity score** | Dot scores feed the softmax, such as positive 4.0 vs hard negative 3.8 | ANN searches maximum inner product or cosine neighbors for the live query vector |
+| **Negatives / loss** | Random, in-batch, sampled, and hard negatives create training pressure | No negatives are sampled online; the index simply returns the highest-scoring candidates |
+| **Candidate filters** | Training labels or business rules filter false negatives before loss computation | Eligibility removes inactive, policy-blocked, exhausted, or out-of-market items before/after ANN |
+| **Ranker handoff** | Optional distillation labels can come from a cross-encoder or ranker | Retrieval returns, for example, top 500 candidates for the downstream ranker |
 
 Recall@k compares approximate retrieval to the relevant set or exact baseline:
 

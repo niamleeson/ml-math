@@ -52,6 +52,12 @@ assert score_b > score_a
 
 **Where M8 takes over.** This lesson explains why the output should be calibrated. M8 teaches how to measure and repair miscalibration with reliability diagrams, ECE, Platt scaling, and isotonic calibration.
 
+**Concrete response heads.**
+
+- **pCTR:** for a sponsored post impression, `pCTR=0.040` means about 4 clicks per 100 similar impressions.
+- **pVTR:** for a video ad, `pVTR=0.250` means about 25 complete or qualified views per 100 similar impressions under the chosen view definition.
+- **pLTR:** for a lead-gen ad, `pLTR=0.015` means about 15 leads per 1,000 similar impressions in the attribution window.
+
 Before handing a pCTR score to serving, check three things:
 
 - The label window matches the product decision window.
@@ -91,6 +97,12 @@ where item $i$ should outrank item $j$. If $s_i$ is already much larger, the los
 - **Pairwise:** create pairs `(clicked item > skipped item)` for each skipped item.
 - **Listwise:** evaluate the whole reordered slate with NDCG@k and put most pressure on moving the clicked/relevant item into the top positions.
 
+For the same slate `[A, B, C, D, E]` with only **E** clicked:
+
+- **Pointwise:** train labels `A=0, B=0, C=0, D=0, E=1`; E's example is positive even before comparing it to siblings.
+- **Pairwise:** train four preferences `E>A`, `E>B`, `E>C`, `E>D`; the model is punished when any skipped item scores above E.
+- **Listwise:** score the whole slate; moving E from rank 5 to rank 1 improves NDCG far more than swapping A and B at the top when both are irrelevant.
+
 ```python
 pairs = []
 for skipped in skipped_items:
@@ -115,6 +127,13 @@ A simple combined serving score is genuine only if each term has a meaningful un
 $$\text{score}=w_c\,p(\text{click})+w_d\,p(\text{dwell})+w_v\,\mathbb{E}[\text{value}]-w_q\,\text{risk}.$$
 
 The weights encode product value or business tradeoffs. The heads must be calibrated or normalized; raw dwell seconds can swamp click probability if you add them directly.
+
+**Concrete head combination.** For one Event Ad candidate:
+
+- **Click head:** `p(click)=0.030`; with $w_c=0.7$, it contributes `0.021`.
+- **Dwell/watch head:** `p(dwell)=0.120`; with $w_d=0.2$, it contributes `0.024`.
+- **Value head:** expected value `0.400` normalized units; with $w_v=0.1`, it contributes `0.040`.
+- **Risk/quality head:** risk `0.050`; with $w_q=0.3`, it subtracts `0.015`.
 
 **Common CTR-family architectures.**
 

@@ -161,6 +161,16 @@ delta_ref = logp_ref_chosen - logp_ref_rejected
 loss = -log_sigmoid(beta * (delta_theta - delta_ref))
 ```
 
+**RLHF vs DPO vs PPO — one shared summarizer scenario.** Suppose Creative Intelligence is tuning a model that summarizes why an Event Ad creative is weak. The prompt is: "Explain why this webinar ad underperforms and suggest a safer rewrite." Raters prefer output **A** because it names the weak hook and avoids unverifiable claims; they reject **B** because it is generic and over-promises attendance.
+
+| Method | What it optimizes | Pick it when... | Concrete instance |
+|---|---|---|---|
+| **RLHF pipeline** | A policy objective built from human preference data, usually a learned reward $r_\phi(x,y)$ plus a constraint to stay near $\pi_{\text{ref}}$ | You need an explicit, inspectable reward signal or multiple reward terms | Train $r_\phi$ so A scores above B, then optimize summaries for helpfulness + policy safety while penalizing drift from the SFT summarizer |
+| **PPO** | The sampled policy's expected reward with a clipped ratio and KL/reference penalty | You can sample online/offline rollouts and need tight control over update size | Generate fresh summaries, score them with the reward model, and use PPO so "more specific critique" improves without suddenly producing unsafe claims |
+| **DPO** | The chosen-vs-rejected log-probability gap relative to the reference, using pairs directly | You mostly have static preference pairs and want a supervised-like stable tuning loop | Feed the A-over-B pair to DPO so the tuned model assigns A a larger relative log probability than the SFT reference did, without training a separate reward model |
+
+The easy confusion: **RLHF is the overall preference-to-policy pipeline**, **PPO is one RL optimizer often used inside it**, and **DPO is an alternative preference loss that skips the explicit reward-model-and-RL loop**.
+
 **PPO vs DPO.**
 
 | Situation | Prefer PPO-style RLHF | Prefer DPO |

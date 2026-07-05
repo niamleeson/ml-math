@@ -43,6 +43,13 @@ For a pCTR model, one example might be one ad impression. The features include t
 | several categories can be true | multilabel classification | which topics describe this campaign? |
 | number on a scale | regression | expected conversion value or watch time |
 
+**Concrete label examples — one per task type.**
+
+- **Binary classification:** label `clicked_24h` is either 0 or 1; an impression with no click in 24h has $y=0$.
+- **Multiclass classification:** a creative-review label is exactly one of `{approved, needs_edit, rejected}`; a rejected ad gets only `rejected`, not the other two.
+- **Multilabel classification:** a campaign can be tagged `{B2B, hiring}` at the same time, so the label vector might be `[B2B=1, hiring=1, learning=0]`.
+- **Regression:** label `watch_seconds` is a number; a member who watches a video ad for 17.4 seconds has $y=17.4$.
+
 A **baseline** is the simple thing your model must beat. For classification it may be the majority class or a constant probability; for regression it may be the training mean. Baselines keep you honest: if 6% of impressions click, a model that predicts "no click" for every impression gets 94% accuracy, but it has learned nothing useful for ranking clicks.
 
 **Worked example — turn a product question into features→label.** Product question: "Will this sponsored update be clicked?"
@@ -85,6 +92,13 @@ an average loss on observed training examples. The real goal is low loss on new 
 | Temporal | the model will predict the future from the past | future information leaking backward |
 | Grouped | members, campaigns, companies, or creatives repeat | the same entity appearing in train and eval |
 
+**Same 12 impressions, four split choices.**
+
+- **Random:** shuffle all 12 rows and put 9 in train / 3 in validation when rows are IID; row 7 can land in validation even if row 8 is in train.
+- **Stratified:** if the 12 rows contain only 2 clicks, force each fold to keep roughly the same click rate instead of accidentally making a 3-row validation fold with 0 clicks.
+- **Temporal:** train on Monday–Wednesday impressions and validate on Thursday when production will score future traffic from past training.
+- **Grouped:** if campaign C has rows 1, 4, and 9, place all three on the same side so the model cannot recognize C in validation from C in train.
+
 For pCTR and campaign models, temporal and grouped thinking often matter more than a random split. If campaign 123 appears in both train and validation, a model may memorize that campaign rather than learn a pattern that transfers to future campaigns.
 
 **Worked example — why stratification and time matter.** Suppose you have 50,000 impressions and only 200 clicks. A naive random 1,000-row validation slice has an expected 4 clicks; by chance it may have 0, 1, or 2. A threshold decision tuned on that fold will be noisy. A stratified split keeps the positive rate close to the original rate in every fold.
@@ -120,6 +134,13 @@ Capacity is the model's ability to fit complex patterns. More capacity can reduc
 | good | bad | overfitting / high variance | regularize, simplify, get more data, fix leakage/split |
 | good | good | useful fit | compare to baseline and product metric |
 | bad | good | suspicious | check metric, data, split, or bug |
+
+**Concrete reads for each diagnosis row.**
+
+- **Bad train, bad validation:** train AUC 0.55 and validation AUC 0.54 on pCTR means the model barely beats random in either place → underfitting.
+- **Good train, bad validation:** train AUC 0.98 and validation AUC 0.64 means the model learned training-specific IDs/noise → overfitting or leakage/split trouble.
+- **Good train, good validation:** train AUC 0.80 and validation AUC 0.78 means the fit is useful enough to compare against the baseline and product metric.
+- **Bad train, good validation:** train AUC 0.52 and validation AUC 0.79 is not a miracle; check for a flipped metric, mislabeled split, leakage, or evaluation bug.
 
 A learning curve shows performance as training data grows. If validation improves as more data arrives and the gap shrinks, data helps. If both train and validation remain bad, the feature set or model family is probably missing signal.
 

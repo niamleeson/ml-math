@@ -33,6 +33,16 @@ $$(\mathcal S,\mathcal A,P,R,\gamma),$$
 
 where $\mathcal S$ is states, $\mathcal A$ is actions, $P(s'\mid s,a)$ is the transition probability, $R(s,a,s')$ is reward, and $\gamma$ discounts future reward.
 
+**MDP components, concretely for ads pacing.** One Instream Ads campaign has a daily budget and an objective to maximize qualified views without overspending.
+
+| Component | Concrete ads instance | Distinction from siblings |
+|---|---|---|
+| **State $s$** | At 2pm: 45% budget remaining, 60% of day elapsed, recent win rate 18%, conversion proxy 0.7% | What the controller knows before acting |
+| **Action $a$** | Choose bid multiplier 0.8, 1.0, or 1.2 for the next auction bucket | The controllable choice, not the outcome |
+| **Reward $R$** | Qualified-view value minus spend and pacing penalty, e.g. $5$ value $-3$ spend $-1$ penalty $=1$ | The score assigned after the transition |
+| **Transition $P(s'\mid s,a)$** | Multiplier 1.2 wins more auctions, so the next state is likely lower remaining budget and higher delivered views | How today's action changes tomorrow's state distribution |
+| **Policy $\pi(a\mid s)$** | In low-budget states choose 0.8 with high probability; in under-delivery states choose 1.2 more often | The decision rule mapping state to action probabilities |
+
 A trajectory is
 
 $$s_0,a_0,r_1,s_1,a_1,r_2,\ldots$$
@@ -166,6 +176,13 @@ for trajectory in rollouts(policy):
         loss += -log_prob(policy, a, s) * advantage
 ```
 
+**Value methods vs policy methods, concretely.**
+
+| Method family | What it learns | Concrete pacing instance | Pick it when... |
+|---|---|---|---|
+| **Value method** | $V(s)$ or $Q(s,a)$, then acts greedily or near-greedily from those values | Learn $Q(\text{45% budget left at 2pm},\ 1.2\text{x bid})$ and compare it with $Q$ for 0.8x and 1.0x | The action set is manageable and you want explicit estimates of long-term value per action |
+| **Policy method** | $\pi_\theta(a\mid s)$ directly | Increase the probability of 1.2x bidding in states where the full-day return beat the baseline, and decrease it when it caused late-day budget starvation | Actions are continuous/high-dimensional or you want a stochastic controller with direct constraints |
+
 **Bandit vs full RL.** A bandit suffices when the action affects only immediate reward for this request. Full RL is justified when the action changes future state.
 
 | Question | Bandit | Full RL |
@@ -177,6 +194,13 @@ for trajectory in rollouts(policy):
 | Evaluation | OPE/A-B | simulator, guardrails, sequential eval |
 
 **Small tradeoff example.** Choosing between two headlines for one impression is usually a contextual bandit: show one headline and observe click/no click. Pacing a $100 budget is sequential: spending $80 before noon changes the remaining action space for afternoon auctions.
+
+**Bandit vs full RL on the same pacing product.**
+
+| Framing | Concrete instance | Why this member fits |
+|---|---|---|
+| **Bandit** | For one eligible Event Ad impression, choose CTA text "Register now" vs "Save your seat" and observe a click | The chosen CTA does not materially change the future campaign state; feedback is mostly immediate for that request |
+| **Full RL** | At 9am choose an aggressive pacing multiplier that spends $80 of a $100 daily budget before noon | The action changes remaining budget, later auction eligibility, and the value of future actions, so the state transition matters |
 
 **Ads MDP framing.** For Instream/Event Ads pacing:
 

@@ -35,7 +35,20 @@ Two sub-lessons:
 | Strong teacher works but is too slow, costly, or large | Distill | Student imitates the teacher at lower serving cost |
 | Need more private/current facts | Retrieval / RAG first | Fine-tuning is a bad database |
 
+**Pick it when, concretely.**
+
+- **Prompt / few-shot prompt:** pick it when an Instream Ads judge already understands "safe vs unsafe," but needs the output as `{"label": "...", "reason": "..."}` and two examples to stop returning prose. No weights are updated; the cost is longer prompts and prompt maintenance.
+- **Fine-tune:** pick it when Creative Intelligence has 60k reviewed creatives and the model must consistently learn that "guaranteed results" maps to `policy_risk` even when the wording looks polished. Model behavior changes through training; the cost is dataset curation, training, validation, and adapter/model storage.
+- **Distill:** pick it when a large teacher gives excellent creative-quality labels but takes 900 ms per creative and serving needs 80 ms. The student is trained to imitate the teacher; the cost is generating teacher targets and accepting some quality loss for lower latency.
+- **Retrieval / RAG:** pick it when the answer depends on current policy text or advertiser-specific facts that change weekly. The model reads retrieved evidence at inference time; the cost is maintaining an index, not updating model weights.
+
 Full fine-tuning updates every weight in the model. That can work, but it is costly, storage-heavy, and easier to overfit. **Parameter-efficient fine-tuning (PEFT)** freezes most weights and learns a small set of task-specific parameters. **LoRA** is the common example.
+
+**Which adaptation updates what, concretely.**
+
+- **Full fine-tune:** update all weights of the base model. For a 7B-parameter creative-policy model, that means training and storing a full 7B-parameter checkpoint; pick it only when maximum quality justifies the compute/storage and you can tolerate higher overfit risk.
+- **LoRA / PEFT:** freeze the 7B base and train small low-rank adapters on selected matrices. If a $4096\times4096$ matrix uses rank $r=8$, that matrix trains 65,536 adapter parameters instead of 16,777,216 full-update parameters; pick it for stable ad taxonomy tasks that need many task-specific adapters cheaply.
+- **Prompt-tuning:** freeze the base model and learn a small set of soft prompt vectors prepended to the input. For example, learn 100 virtual tokens of width 4096, or 409,600 trainable parameters, to steer a fixed model toward an Instream creative-scoring rubric; pick it when you want very cheap task steering but less capacity than LoRA.
 
 For a frozen weight matrix $W \in \mathbb{R}^{d \times k}$, LoRA uses the adapted weight
 

@@ -51,6 +51,13 @@ For regression, the label is continuous, so the common losses read the residual 
 | MAE | $\lvert r\rvert$ | outliers exist and should not dominate |
 | Huber | quadratic near zero, linear for large $\lvert r\rvert$ | you want smooth optimization plus outlier robustness |
 
+**Concrete loss examples — one per loss.**
+
+- **Log loss:** for a clicked impression, predicting $p=0.80$ costs $-\log(0.80)=0.223$; predicting $p=0.20$ costs $-\log(0.20)=1.609$.
+- **MSE:** if predicted conversion value is $\hat{y}=30$ and actual is $y=20$, then $r=10$ and MSE costs $10^2=100$.
+- **MAE:** on the same residual $r=10$, MAE costs $|10|=10$, so the outlier is not squared.
+- **Huber:** with threshold $\delta=1$, residual $r=0.5$ costs $0.5r^2=0.125$, while residual $r=10$ costs $\delta(|r|-0.5\delta)=9.5$.
+
 **Worked example — log loss by hand.** For a clicked impression ($y=1$):
 
 | Predicted pCTR | Log loss | Interpretation |
@@ -94,6 +101,14 @@ $$v_t=\beta v_{t-1}+\nabla L(w_t),\qquad w_{t+1}=w_t-\eta v_t.$$
 
 **Adam** adapts per-parameter step sizes using moving averages of the first and second moments of gradients. In practice, it helps when features have different scales or sparse parameters update unevenly.
 
+**One training set, five optimizer variants.**
+
+- **Batch GD:** compute one gradient from all 1,000 impressions, then update once; stable, but each step reads the whole dataset.
+- **SGD:** update after one impression, such as a single clicked row; cheap, but the step can point in a noisy direction.
+- **Mini-batch GD:** update after 128 impressions; the gradient is less noisy than one row and much cheaper than all rows.
+- **Momentum:** if five mini-batches in a row all push the bid weight upward, the velocity accumulates and moves faster along that consistent direction.
+- **Adam:** if a rare `campaign_id` embedding receives sparse, uneven gradients while dense features update every batch, Adam gives each parameter its own adapted step scale.
+
 **Worked example — one step on a bowl.** Let $L(w)=(w-3)^2$. The derivative is $\nabla L(w)=2(w-3)$. At $w=0$, the gradient is $-6$.
 
 With $\eta=0.1$:
@@ -127,6 +142,11 @@ $$\Omega(w)=\sum_j |w_j|,$$
 which often drives some weights exactly to zero, creating sparse models.
 
 The geometry intuition matters. L2's constraint shape is round, so optima tend to slide smoothly. L1's constraint shape has sharp corners on the axes, so the optimum often lands with one or more coefficients exactly zero. That is why L1 can act like feature selection for sparse campaign/category features, while L2 keeps correlated signals but dampens them.
+
+**Same sparse ad model, two regularizers.**
+
+- **L1:** if `rare_region_X` has a tiny unstable weight, L1 can drive that coefficient exactly to 0, removing the feature from the linear score.
+- **L2:** if `bid` and `daily_budget` are both useful and correlated, L2 tends to keep both nonzero but smaller, such as shrinking weights 2.0 and 1.5 toward 1.2 and 0.9 rather than dropping one.
 
 **Worked example — same weights, different penalty.** For weights $[3,4]$:
 

@@ -83,6 +83,16 @@ Example: arm A has 10 successes and 90 failures, so with a Beta(1,1) prior it is
 | UCB | mean + confidence bonus | uncertainty-aware | bonus tuning matters |
 | Thompson | posterior sampling | natural randomized exploration | needs posterior/model choice |
 
+**ε-greedy vs LinUCB vs Thompson — same Creative Intelligence request.** Context: an Event Ads advertiser on mobile asks for a generated headline. Eligible arms are A = concise benefit, B = speaker-credential lead, C = urgency lead. Current estimates are A: 0.080 CTR from 1,000 impressions, B: 0.095 from 80, C: 0.070 from 40; the true best is unknown.
+
+| Method | Concrete explore/exploit choice on this context | Why it differs from siblings |
+|---|---|---|
+| **ε-greedy** | With $\epsilon=0.10$, exploit 90% of the time by choosing B because 0.095 is the largest mean; explore 10% by choosing A/B/C uniformly, e.g. C may get traffic despite looking worst | Exploration is blind random traffic, not uncertainty-targeted |
+| **LinUCB** | If B's contextual score is $0.095+0.010=0.105$ and C's is $0.070+0.050=0.120$, choose C for this mobile/webinar context | It explores the arm whose uncertainty is large for this specific feature vector $x$, not merely the arm with best mean |
+| **Thompson sampling** | Sample plausible CTRs, e.g. $\tilde\theta_A=0.081$, $\tilde\theta_B=0.089$, $\tilde\theta_C=0.112$; choose C on this round, then update C after observing click/no click | It randomizes according to posterior uncertainty; C sometimes wins because 40 impressions leave a wide posterior |
+
+**Regret, concretely.** If the true expected CTRs for this context were A = 0.080, B = 0.095, C = 0.110, then choosing B instead of C has one-impression expected regret $0.110-0.095=0.015$. Over 10,000 similar impressions, that is about 150 expected clicks left on the table while learning.
+
 **You'll be able to say:** *"A bandit repeatedly chooses an arm, observes only that arm's reward, and balances exploiting the current best estimate with exploring uncertain arms. Regret is reward lost relative to the best arm. ε-greedy explores randomly, UCB chooses mean plus uncertainty bonus, and Thompson sampling samples from each arm's posterior and plays the sampled winner."*
 
 ---

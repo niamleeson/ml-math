@@ -51,6 +51,20 @@ HNSW is often strong when high recall matters and memory is available. It can su
 
 **ScaNN.** ScaNN-style systems combine partitioning, vector quantization, asymmetric scoring, and a rerank step on a candidate set. The important pattern is partition → score compressed candidates → rerank a limited number with more accurate vectors. Anisotropic vector quantization spends accuracy where score errors matter most for maximum inner product search.
 
+**Graph vs quantization families, concretely.** These families save work in different ways:
+
+- **Graph family (HNSW):** store neighbor links; for a query near $[1,0]$, walk from a broad entry node to increasingly closer creator nodes until the local candidate set stabilizes.
+- **Partition family (IVF):** assign each vector to one coarse centroid; with 1,000 lists and `nprobe=10`, search about 1% of the corpus before rerank.
+- **Quantization family (PQ / IVF-PQ / ScaNN):** store compressed codes; a 768-d float32 vector is 3,072 bytes, while a 64-byte PQ code is 48× smaller before metadata and rerank vectors.
+
+**Method operating points, concretely.** On the same 5M-vector creator index with recall measured against exact top-50:
+
+| Method | What it is | Example operating point |
+|---|---|---|
+| **HNSW** | graph search through neighbor links | `efSearch=160` → recall@50 0.97, p95 22 ms, memory 18 GB; choose when recall beats memory pressure |
+| **IVF-PQ** | coarse partitions plus compressed vector codes | `nprobe=32` + 500 exact rerank → recall@50 0.94, p95 19 ms, memory 6 GB; choose under an 8 GB shard budget |
+| **ScaNN** | partition + anisotropic/vector quantization + reorder/rerank | 2,000 leaves, 80 probes, 1,000 reorder → recall@50 0.96, p95 17 ms, memory 9 GB; choose when the serving stack supports its MIPS-tuned rerank path |
+
 **Worked example — exact scan vs selected partitions.** A Creator Marketplace index has 10M creator vectors. Exact search compares the advertiser query to all 10M. IVF with 1,000 lists and `nprobe=10` searches about 100k vectors, then reranks. It may miss a niche creator if that creator sits in the 11th-nearest list, so recall must be measured against exact top-k.
 
 ```python

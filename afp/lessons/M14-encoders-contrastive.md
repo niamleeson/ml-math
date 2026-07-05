@@ -33,6 +33,13 @@ For Creator Marketplace AI:
 - dual encoder: embed advertiser brief and creator profile separately, retrieve top candidates;
 - cross-encoder: read the brief and one creator profile jointly, rerank the retrieved set.
 
+**Dual vs cross-encoder, concretely.** Same request: "B2B cybersecurity podcast hosts" over 1M creator profiles.
+
+| Encoder | Concrete serving use | Latency / accuracy contrast |
+|---|---|---|
+| **Dual encoder** | Embed the brief once and ANN-search precomputed creator vectors | ~15 ms to retrieve 500 candidates; recall@500 may be 0.93 because pairwise token interactions are approximated |
+| **Cross-encoder** | Read the brief together with one candidate profile and output a pair score | ~8 ms per pair; reranking 500 candidates costs ~4 s if run serially, but pair accuracy is higher because the model can compare exact phrases like "podcast host" and "cybersecurity" |
+
 Sentence encoders such as SBERT, E5, and IRPS-style encoders produce reusable text vectors. They usually combine a transformer backbone with pooling or a special token representation, optional normalization, and retrieval-specific fine-tuning.
 
 **Contrastive setup.** A training batch contains positive pairs $(q_i, d_i^+)$. The encoder scores every query against candidate documents or creators. With in-batch negatives, the other positives in the batch are treated as negatives for query $q_i$.
@@ -108,6 +115,12 @@ The model still has work to do. If the negative score were 0.2, the loss would b
 
 **In-batch contrastive vs triplet.** Triplet loss teaches one positive-negative comparison at a time. In-batch contrastive loss uses many negatives per query and gives the highest-scoring negatives the most pressure through the softmax denominator. It is often more sample-efficient, but it assumes other batch positives are valid negatives for this query.
 
+**Loss choices, concretely.** For query $q$ = "Spanish-speaking fintech creators" and positive $p$:
+
+- **InfoNCE / contrastive softmax:** scores `[3.0, 2.8, 0.2]` for `[positive, hard negative, easy negative]` give $p^+\approx0.53$, so the close hard negative keeps the loss high.
+- **Triplet loss:** with $s(q,p)=3.0$, $s(q,n)=2.8$, and margin $m=0.5$, loss is $\max(0,0.5+2.8-3.0)=0.3$.
+- **In-batch contrastive:** in a batch of 128 positive pairs, each query gets 127 other positives as negatives; if one other creator is an accepted alternate for the same brief, that row is a false-negative risk.
+
 **Why hard negatives raise the gradient.** In InfoNCE, a negative with high score contributes a large term $\exp(s(q,n)/\tau)$ to the denominator. That lowers the positive probability and increases loss. The model receives pressure to reduce that negative's score or increase the positive's score. Easy negatives have tiny exponentiated scores and contribute little.
 
 **Fine-tuning loop.** A practical encoder fine-tuning workflow:
@@ -120,6 +133,14 @@ The model still has work to do. If the negative score were 0.2, the loss would b
 6. Continue training with a mix of easy and hard negatives.
 7. Validate recall@k, slice recall, and qualitative neighbors.
 8. Refresh mined negatives as the model improves.
+
+**Hard-negative mining methods, concretely.** Each miner finds a different kind of plausible wrong item:
+
+- **BM25 miner:** for "Spanish fintech SMB creators," returns a creator who says "Spanish fintech" often but targets retail consumers, not SMB owners.
+- **Current-model miner:** the dual encoder retrieves a high-score creator with fintech posts but English-only content; close in vector space, wrong on language.
+- **Other retrieval model miner:** a graph-based audience-similarity model returns a finance creator whose audience overlaps but whose content is about personal budgeting.
+- **Cross-encoder miner:** the cross-encoder scores a candidate 0.82 because the text matches, but a business rule says the creator is outside the allowed region.
+- **Human/model filter:** reviewers or a stronger model remove an accepted alternate creator so it does not become a false negative.
 
 **Worked example — mining for Creator Marketplace AI.** Query: "Spanish-speaking fintech creators for small business owners." Positive: a creator with fintech content, Spanish posts, and SMB audience. Candidate negatives:
 
@@ -135,7 +156,7 @@ A good batch mixes easy negatives for stability and hard negatives for discrimin
 
 **Worked example — hard negative in the softmax.** Positive score is 3.0. Easy negative is 0.2. Hard negative is 2.8. At $\tau=1$:
 
-$$p^+=\frac{e^3}{e^3+e^{0.2}+e^{2.8}}\approx 0.54.$$
+$$p^+=\frac{e^3}{e^3+e^{0.2}+e^{2.8}}\approx 0.53.$$
 
 The hard negative receives almost as much probability mass as the positive. If the hard negative were removed, the positive probability would be about 0.94. That difference is the training signal.
 
@@ -148,7 +169,7 @@ def softmax(x):
 
 with_hard = softmax(np.array([3.0, 0.2, 2.8]))
 without_hard = softmax(np.array([3.0, 0.2]))
-print(round(with_hard[0], 2), round(without_hard[0], 2))  # 0.54 0.94
+print(round(with_hard[0], 2), round(without_hard[0], 2))  # 0.53 0.94
 ```
 
 **Validation checklist:**

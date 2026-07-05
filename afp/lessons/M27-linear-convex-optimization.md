@@ -30,6 +30,13 @@ Two sub-lessons:
 
 A set is **convex** if the line segment between any two feasible points stays feasible. A function is convex if its graph has no hidden valleys. Convexity matters because a local optimum is global, and solvers can certify that they found the best feasible answer. Linear programs are convex; convex quadratic programs are convex when the quadratic penalty matrix is positive semidefinite.
 
+**LP vs QP, concretely.**
+
+- **LP example:** choose divisible Event Ads allocations $x_A,x_B$ to maximize $2x_A+3x_B$ subject to truck-like capacities $x_A+2x_B\le10$ and $3x_A+x_B\le12$. Everything is linear: doubling an allocation doubles its value and capacity use.
+- **QP example:** choose pacing allocations that should stay near targets 5 and 5 while total eligible supply is only 8:
+  $$\min_{x_A,x_B}\ (x_A-5)^2+(x_B-5)^2\quad \text{s.t.}\quad x_A+x_B\le8,\ x_A,x_B\ge0.$$
+  The squared deviation is convex and penalizes being far from the target more than being slightly off; the optimum is $x_A=x_B=4$.
+
 The standard LP shape for this module is:
 
 $$\max_x\ c^T x\quad \text{s.t.}\quad Ax \le b,\ x \ge 0.$$
@@ -131,6 +138,11 @@ with a nonnegative dual variable $y_i$ for each constraint, the dual is:
 
 $$\min_y\ b^Ty\quad \text{s.t.}\quad A^Ty\ge c,\ y\ge0.$$
 
+**Primal vs dual, concretely.**
+
+- **Primal:** decide the actual allocation, e.g. $x_A=2.8,\ x_B=3.6$ in the Event Ads LP below, producing value $2(2.8)+3(3.6)=16.4$ while exactly using the budget and inventory capacities.
+- **Dual:** decide the resource prices that make every campaign's value covered, e.g. budget price $y=1.4$ and inventory price $z=0.2$. Those prices value the available resources at $10(1.4)+12(0.2)=16.4$, the same number as the primal optimum.
+
 **Weak duality** says any dual-feasible $y$ gives an upper bound on any primal-feasible $x$: $c^Tx \le b^Ty$. **Strong duality** says that, for LPs under the usual feasibility/boundedness conditions, the best primal value equals the best dual value. That equality is why dual prices are meaningful rather than just heuristic scores.
 
 **KKT conditions.** For convex problems, the Karush-Kuhn-Tucker conditions certify optimality:
@@ -145,6 +157,14 @@ For LPs, complementary slackness is especially memorable:
 $$y_i(b_i-a_i^Tx)=0.$$
 
 If resource $i$ has unused slack, its price is zero. If its price is positive, the resource is fully used.
+
+**Shadow price / KKT / complementary slackness on the same small LP.** In the Event Ads LP below, the primal solution is $x_A=2.8,\ x_B=3.6$ and both constraints are binding:
+
+| Concept | Concrete instance | What it tells you |
+|---|---|---|
+| **Shadow price** | The budget dual value is $y=1.4$; increasing budget RHS from 10 to 11 raises the optimum from 16.4 to 17.8. | One more unit of budget capacity is worth 1.4 expected-value units locally. |
+| **KKT certificate** | Primal feasibility holds; dual feasibility holds; stationarity holds because $A^T[y,z]=[1.4+3(0.2),\ 2(1.4)+0.2]=[2,3]=c$; complementary slackness holds. | These four checks certify that the allocation is globally optimal, not just visually good. |
+| **Complementary slackness** | Budget slack is $10-(2.8+2(3.6))=0$ and inventory slack is $12-(3(2.8)+3.6)=0$, so positive prices $y=1.4,\ z=0.2$ are allowed. A nonbinding frequency cap with 27 unused exposures would have price 0. | Scarce, fully used constraints can carry price; unused constraints cannot. |
 
 **Worked example — derive the dual and read shadow prices.** Use the M27.1 LP:
 

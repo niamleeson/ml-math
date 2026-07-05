@@ -35,6 +35,14 @@ Two sub-lessons:
 - **reference-based evaluation:** compare against a gold answer or policy;
 - **reference-free evaluation:** judge quality directly from the prompt and output.
 
+**Judge mode examples, concretely.**
+
+- **Pointwise scoring:** score one Instream creative from 1–5 for "clear, relevant, safe, compelling"; a single weak creative can receive 2 without being compared to another output.
+- **Pairwise preference:** show two generated headline variants for the same campaign and ask which is better; the output is `A`, `B`, `tie`, or `uncertain`.
+- **Rubric-based grading:** give separate 1–5 scores for clarity, factual support, policy safety, and brand fit, so a creative can be clear but unsafe.
+- **Reference-based evaluation:** compare a generated policy explanation against the approved policy answer and penalize missing required caveats.
+- **Reference-free evaluation:** judge whether a product-image prompt/output pair looks useful and non-misleading even when no gold image exists.
+
 Use a judge when human review is expensive and the task has a stable rubric. Do not use it as a replacement for deterministic checks when exact metrics exist: if a JSON schema, policy keyword, or unit test can decide the issue, use that first.
 
 **Rubric design is prose, not math.** A good rubric states the task, criteria, scale anchors, examples, disallowed shortcuts, and what to do when uncertain. For an Instream Ads creative-quality judge:
@@ -57,6 +65,11 @@ For numeric scores, use correlation to ask whether judge scores move with human 
 $$\kappa = \frac{p_o - p_e}{1-p_e},$$
 
 where $p_o$ is observed agreement and $p_e$ is expected agreement from the two raters' marginal label frequencies. $\kappa=1$ means perfect agreement, $\kappa=0$ means chance-level agreement under the marginals, and negative values mean worse than chance.
+
+**Raw agreement vs kappa, concretely.**
+
+- **Raw agreement / accuracy:** if humans and the judge match on 8 of 10 creative labels, raw agreement is $8/10=0.80$. It answers "how often did they match?" but ignores whether matching was easy because almost everything had the same label.
+- **Cohen's kappa:** if both raters' label frequencies imply chance agreement $p_e=0.50$ and observed agreement is $p_o=0.80$, then $\kappa=(0.80-0.50)/(1-0.50)=0.60$. It answers "how much better than chance under these marginals?"
 
 **Worked example — compute agreement by hand.** Suppose 20 creatives have human-majority labels `good`/`bad`. The judge matches the majority on 16, so
 
@@ -94,6 +107,12 @@ assert round(kappa, 2) == 0.60
 - **Position bias:** in pairwise judging, the first or second answer wins too often.
 - **Verbosity bias:** longer answers or creatives are rewarded even when humans prefer concise ones.
 - **Self-preference bias:** the judge prefers outputs from its own model family or style.
+
+**Bias examples, concretely.**
+
+- **Position bias:** run the same pair twice: `(A,B)` and `(B,A)`. If A wins in `(A,B)` but B wins in `(B,A)`, and this flip pattern repeats across many pairs, the detectable instance is "the first slot wins," not "the better creative wins."
+- **Verbosity bias:** humans prefer a concise two-sentence Instream ad description, but after appending harmless filler to the weaker answer, the judge flips to the longer one. The detectable instance is a length-only edit changing the winner without a human preference change.
+- **Self-preference bias:** blind source names and compare outputs from model family X vs Y. If a judge from family X prefers X outputs on slices where humans are tied or prefer Y, the detectable instance is source-family preference after controlling for content.
 
 Bias quantification should use concrete counterfactual tests, not vibes.
 

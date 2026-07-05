@@ -54,6 +54,11 @@ UMAP and t-SNE are nonlinear neighborhood visualizers. They are useful for explo
 | Local neighborhood visualization | UMAP or t-SNE | good for exploratory plots; visual clusters are hypotheses only |
 | Production features | Original features or PCA first | UMAP coordinates can be stochastic and parameter-sensitive |
 
+**PCA vs UMAP, concretely.**
+
+- **PCA → linear/global/variance.** If scaled campaign features have clicks, impressions, and dwell moving together, PCA may make PC1 a global engagement axis and show a small number of PCs capturing most variance. Use that reduced representation as a denoising or speed baseline because the projection is deterministic and loadings show which original features drive each axis.
+- **UMAP → nonlinear/local/visualization.** If campaigns form curved local neighborhoods — for example, gradual transitions from low-intent browsers to active searchers — UMAP can place nearby campaigns near each other in 2D for inspection. Do not treat the x/y coordinates, blob gaps, or blob sizes as calibrated distances; rerun across seeds and validate any downstream use against original features or PCA.
+
 **Worked example — feature-space visualization for campaigns.** Suppose each campaign has 80 scaled features: spend, impressions, clicks, conversions, video completions, hides, dwell, audience breadth, and historical quality metrics. PCA shows the first three PCs explain 82% of variance. PC1 loads on impressions/clicks/dwell, PC2 loads on spend and audience breadth, and PC3 loads on ad-hide rate. That tells you which axes dominate the feature table before you fit a supervised model or create cohorts.
 
 ```python
@@ -94,6 +99,14 @@ Different detectors encode different definitions of unusual:
 - **Isolation Forest:** random splits isolate rare points in fewer splits.
 - **LOF:** a point is anomalous if its local density is much lower than its neighbors' density.
 - **Mahalanobis distance:** a point is far from the center after accounting for covariance.
+
+**Which anomaly method, concretely.**
+
+- **PCA reconstruction error → off-subspace row.** If normal campaigns lie near a spend/impressions/clicks engagement plane, a row with ordinary spend and impressions but impossible feature combinations after a logging change can reconstruct poorly and get flagged by a large residual.
+- **Isolation Forest → globally rare combination.** If a campaign has very high spend, very low impressions, and high hide rate, random splits can isolate it quickly even without estimating covariance; flag it for review as a rare global pattern.
+- **LOF → sparse relative to peers.** If a new campaign looks ordinary globally but sits in a local neighborhood of similar objectives where all peers have much higher engagement, LOF can flag it because its local density is lower than its neighbors' density.
+- **Mahalanobis distance → covariance-shaped extreme.** If spend and impressions usually rise together, high spend with high impressions may be normal, but high spend with low impressions can be far from the covariance-shaped cloud and receive a large Mahalanobis score.
+- **PyOD → common-API comparison.** If the review team wants one weekly report, run several PyOD detectors on the same robust-scaled feature table, then compare their top-100 flags side by side before standardizing on the detector whose alerts are stable and useful.
 
 For PCA reconstruction, if $\hat{x}_i$ is the projection-reconstruction of $x_i$, a simple score is:
 

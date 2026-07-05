@@ -44,6 +44,12 @@ $$p=\sigma(as+b)=\frac{1}{1+e^{-(as+b)}}.$$
 
 Isotonic calibration fits a flexible monotone step function. Use Platt when the correction is smooth and sigmoid-shaped or data is limited. Use isotonic when you have enough calibration data and need a more flexible monotone curve.
 
+**Concrete calibration-method examples.**
+
+- **Platt scaling:** raw logit `s=2.0` is too confident on held-out ads; a fitted sigmoid with `a=0.5, b=-1.0` maps it to $\sigma(0)=0.50$.
+- **Isotonic calibration:** scores in the 0.20–0.30 bin actually click at 0.12, while 0.30–0.40 clicks at 0.18; a monotone step curve can map those bins to 0.12 and 0.18 without forcing a sigmoid shape.
+- **Temperature scaling:** logits `[2, 0]` are softened with `T=2` to `[1, 0]`; the top-class probability drops from about 0.88 to about 0.73 while the class order stays the same.
+
 ```python
 raw_scores = model.predict_proba(X_cal)[:, 1]
 calibrator.fit(raw_scores, y_cal)
@@ -82,6 +88,13 @@ A minimal calibration report includes:
 | Focal loss | Downweights easy examples | Many easy negatives | Tune carefully |
 | Oversampling positives | Training data balance | Simple baselines | Training prior changes |
 | Undersampling negatives | Fewer easy negatives | Speed, balance | Can discard useful negatives |
+
+**Concrete imbalance-technique examples.**
+
+- **Class weights:** with 1% positives, set positive weight 99 and negative weight 1 so one clicked impression contributes roughly as much loss as 99 unclicked impressions.
+- **Focal loss:** a negative ad impression already predicted at `p(click)=0.001` is easy, so with $\gamma=2$ its contribution is heavily downweighted compared with a confusing negative predicted at `p(click)=0.40`.
+- **Oversampling positives:** duplicate or resample clicked rows until a minibatch is 50/50; useful for learning a boundary, but the raw output must be recalibrated to the real 1% prior.
+- **Undersampling negatives:** keep all 10,000 clicks but sample 100,000 of 990,000 non-clicks to train faster; useful negatives are discarded unless the sampler is designed carefully.
 
 Weighted binary loss multiplies positive and negative terms by chosen weights. Focal loss adds a factor that reduces the contribution of easy examples:
 

@@ -34,6 +34,12 @@ For one attention head, each token has three learned projections:
 - **Key (K):** what this token offers for matching.
 - **Value (V):** the information this token contributes if attended to.
 
+**Q/K/V, concretely on the tiny example below.** For the query token `ads`, Q/K/V play three different roles:
+
+- **Q for `ads`** = `[1, 1]`: the current token's search request — "which tokens match both the search/ad side and the auction side?"
+- **K for each token** = `search:[1,0]`, `ads:[1,1]`, `auction:[0,1]`: the match labels that `ads` compares against, giving scores `[1,2,1]`.
+- **V for each token** = `search:10`, `ads:20`, `auction:30`: the actual payloads mixed after the weights are known; they produce `20.0`, not another match score.
+
 The central computation is scaled dot-product attention:
 
 $$\text{Attention}(Q,K,V)=\text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V.$$
@@ -122,6 +128,11 @@ The exact ordering differs by implementation, but the purpose is the same: atten
 - **Learned position embeddings:** each position has a trained vector added to the token vector.
 - **Sinusoidal position encodings:** deterministic sine/cosine waves at different frequencies.
 
+**Position methods, concretely.**
+
+- **Learned position embedding:** in a BERT-style ad-query classifier, position 1, 2, and 3 each have a learned vector, so `member clicked ad` and `ad clicked member` receive different added vectors even with the same words.
+- **Sinusoidal encoding:** in the original Transformer, position 7 always gets the same sine/cosine pattern in every batch, letting the model recognize relative offsets such as "the next token" without learning a separate vector for every position.
+
 The classic sinusoidal form includes terms like:
 
 $$PE(pos,2i)=\sin\left(pos/10000^{2i/d}\right),\quad PE(pos,2i+1)=\cos\left(pos/10000^{2i/d}\right).$$
@@ -148,6 +159,12 @@ Token 3 can attend to positions 1–3, but not position 4. This is the sequence-
 | Classify whether an ad query is commercial | Encoder | It can read the whole input bidirectionally. |
 | Generate ad copy or a creator outreach message | Decoder | It generates one token at a time with a causal mask. |
 | Translate a natural-language campaign request into a structured campaign draft | Encoder-decoder | The encoder reads the source request; the decoder generates the target sequence conditioned on it. |
+
+**Model families, concretely.**
+
+- **Encoder → BERT-class classifier:** use it to classify `"best crm software"` as commercial because the whole query can be read at once.
+- **Decoder → GPT-class generator:** use it to generate `"Try LinkedIn Ads for B2B growth..."` one token at a time for ad-copy drafting.
+- **Encoder-decoder → T5/BART-class converter:** use it to translate `"target AI founders in Canada with $500"` into a structured campaign draft, with the encoder reading the request and the decoder producing the target sequence.
 
 For retrieval and ranking, encoders are common because you want dense representations of complete inputs. For chat and code generation, decoders are common because next-token generation is the product behavior. Encoder-decoder models are natural when the input and output are separate sequences, such as translation or summarization.
 

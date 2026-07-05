@@ -47,6 +47,13 @@ The key vocabulary is:
 | In-batch | Other positives in batch | Efficient two-tower training | Batch defines distribution |
 | Hard negatives | Items model almost likes | Fine discrimination | False negatives, instability |
 
+**Concrete negative-sampling examples.**
+
+- **Uniform/random:** for one contacted creator, draw 20 creators uniformly from the eligible catalog; this may produce many obviously unrelated creators.
+- **Popularity:** draw negatives proportional to exposure count, so a creator shown 100× more often is sampled about 100× more often; this matches common confusions but overweights the head.
+- **In-batch:** in a batch of 128 brand→creator positives, use the other 127 creators as negatives for each brand; efficient, but the batch composition defines $Q(i)$.
+- **Hard negatives:** retrieve creators the current model scores highly but the brand did not contact; useful for fine distinctions, but some may be future positives.
+
 Popularity sampling may draw a head creator **100×** more often than a tail creator. That can be good for realism, but the loss must know the sampling distribution.
 
 **Sampling-bias correction.** If negatives are sampled from distribution $Q(i)$, logQ correction adjusts logits so the model does not learn that frequently sampled items are inherently more negative or more positive. A common correction subtracts the log sampling probability:
@@ -102,6 +109,12 @@ A small audit before training:
 | Position | Top-ranked items get more exposure | Model confuses visibility with preference |
 | Selection | Old policy chooses what can be observed | Unshown items look worse or invisible |
 | Delayed feedback | Positives arrive later | Fresh rows are mislabeled negative |
+
+**Concrete bias examples.**
+
+- **Position bias:** the same creator gets CTR 3% at rank 1 and 0.5% at rank 10 mostly because rank 1 is visible above the fold.
+- **Selection bias:** the old policy never shows new creators to enterprise brands, so logs contain no evidence that those brands might like them.
+- **Delayed feedback bias:** a brand views a creator on Monday and contacts on Friday; a Wednesday training snapshot would incorrectly mark that row negative.
 
 **Naive → break.** Compute observed CTR or recall directly from logged slates. Position 1 has high CTR, position 10 has low CTR. The model learns "position 1 items are better" even if they were clicked because they were visible. Or it evaluates a new creator poorly because the previous policy never showed that creator to relevant brands.
 

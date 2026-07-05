@@ -45,6 +45,13 @@ Cold-start bridges are deliberately boring:
 - Heuristics keep the product safe before labels arrive.
 - Exploration gives the system a fair chance to collect evidence.
 
+**Concrete cold vs warm handoff examples.**
+
+- **Cold item:** a new Event Ad has category, creative text, audience, and advertiser history but 0 impressions, so it starts from a category prior and safe pacing cap.
+- **Cold user:** a first-session member has no long-term history, so the ranker uses location, device, current query, and broad popularity instead of a member embedding.
+- **Cold system/marketplace:** a new creator marketplace surface has no reliable labels, so launch uses heuristics plus transferred representations while exploration collects unbiased logs.
+- **Warm item:** after the Event Ad reaches 1,000 impressions, 20+ clicks, and stable slice calibration, its learned CTR estimate gradually receives more weight than the prior.
+
 
 A genuine confidence blend combines the prior and learned estimate:
 
@@ -108,6 +115,11 @@ Check source-target fit explicitly:
 - Are labels measuring the same behavior?
 - Are calibration and base rates similar enough to reuse?
 - Does fine-tuning beat a scratch baseline on target validation?
+
+**Concrete reuse handoff examples.**
+
+- **Transfer:** initialize a new Event Ads model from a mature events-ranking model because both use audience, category, creative, and advertiser-history features; then fine-tune on the first 1k target labels.
+- **Distillation:** use a 40 ms cross-feature teacher offline to label launch traffic, then train a 5 ms student two-tower/ranker to serve the same early decisions until target labels mature.
 
 
 **Naive → break.** Train a target model from scratch with **1k labels**. It underfits and has unstable calibration. Or copy a source model blindly and get negative transfer because the source objective is shifted.

@@ -106,12 +106,26 @@ This matters for ads feature tables because real cohorts may be non-spherical: a
 | DBSCAN | arbitrary shapes, one density scale, explicit outliers | sensitive to `eps`; struggles with variable density | core/border/noise labels, noise rate |
 | HDBSCAN | variable-density, noisy exploratory cohorts | parameters still need review; small clusters may be unstable | cluster stability, noise rate, membership strengths |
 
+**Which clustering method, concretely.** Use the same 2-D axes — scaled search intent $x$ and scaled video completion $y$ — and choose the method whose assumption matches the scatter, not the one with the prettiest plot.
+
+| Method | Concrete "use it when..." instance | What distinguishes it from siblings |
+|---|---|---|
+| **k-means** | Use it when the points look like two compact, similar-size round blobs, e.g. $\{(0,0),(0,1),(1,0),(1,1)\}$ and $\{(5,5),(5,6),(6,5),(6,6)\}$. With $k=2$, the centroids land near $(0.5,0.5)$ and $(5.5,5.5)$. | Hard assignment to nearest center is reasonable because both cohorts are spherical and balanced. |
+| **GMM** | Use it when two cohorts overlap or stretch diagonally, e.g. one cloud along low-intent/high-video and another along mid-intent/mid-video, with a member at $(3.0,3.1)$ plausibly belonging partly to both. | The useful output is mixed responsibility across components plus elliptical covariance, not a forced nearest-centroid label. |
+| **HDBSCAN** | Use it when density varies and there is noise, e.g. a tight active-searcher patch near $(0,0)$, a looser video-browser patch spread from $(4,4)$ to $(7,5)$, and isolated points like $(10,0)$. | It can keep both dense and sparse cohorts while marking isolated rows as noise instead of forcing every point into $k$ clusters. |
+
 Validation without labels is triangulation. Internal scores help, but they do not define truth.
 
 - **Silhouette:** high when points are close to their own cluster and far from other clusters; can penalize non-convex clusters.
 - **Davies-Bouldin:** lower is better; it compares within-cluster scatter to between-cluster separation, so compact well-separated clusters score well.
 - **Stability:** rerun under seed changes, bootstrap samples, small feature perturbations, and time slices. Personas that disappear under tiny changes are weak hypotheses.
 - **Sanity checks:** cluster sizes, noise rate, feature summaries, slice concentration, and whether the cohorts support a real downstream decision.
+
+**How to read validation metrics, concretely.**
+
+- **Silhouette → separated vs boundary rows.** If k-means on three campaign cohorts gives high positive silhouette for most rows, they are closer to their own centroid than to alternatives; if the "light engager" slice has rows with $s_i < 0$, those rows fit another cohort better and need inspection.
+- **Davies-Bouldin → compact/separated tradeoff.** If $k=3$ has lower DB than $k=4$ on the same scaled features, read $k=3$ as more compact relative to between-cluster separation; still check sizes so one giant campaign-volume cluster is not dominating the score.
+- **Stability → hypothesis strength.** If bootstrap reruns keep the same cohort summaries and most sampled rows stay with an equivalent cluster, the personas are stronger hypotheses; if a small "premium video" cluster appears in one seed and vanishes in the next, treat it as unstable even if its internal score looked good.
 
 **Worked example — noisy audience shapes.** A two-moons dataset mimics a nonlinear audience path: members gradually move from browsing to active intent. k-means with $k=2$ cuts the moons into convex halves, even if the silhouette looks acceptable. DBSCAN with `eps=0.25, min_samples=5` can recover the curved dense regions and mark scattered points as noise. HDBSCAN can handle a denser "active searcher" moon and a sparser "video browser" moon without one global density threshold.
 

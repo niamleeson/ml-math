@@ -117,6 +117,16 @@ $$\hat V_{\text{DR}}=\frac1n\sum_{i=1}^n\left[\sum_a\pi_e(a\mid x_i)\hat q(x_i,a
 
 The first term is the model's guess for the target policy. The second term corrects the model using observed residuals on rows where logging gives information about the target policy.
 
+**Direct method vs IPS vs DR — one shared logged-bandit dataset.** Use the six-row table from M24.1 and the model predictions in the DR table below. The target policy is deterministic, so $\pi_e$ puts probability 1 on the listed target action and 0 on the other action.
+
+| Estimator | What it uses on these same rows | Concrete calculation | What the number means |
+|---|---|---|---|
+| **Direct method (DM)** | Only the reward model's prediction for the target action on each context | $(0.60+0.30+0.70+0.20+0.80+0.25)/6=2.85/6=0.475$ | Stable, but it trusts $\hat q$ even when logged rewards disagree |
+| **IPS** | Only logged rewards, propensities, and whether the logged action matches the target policy | Weighted rewards are $2,0,0,0,10,0$, so $12/6=2.0$ | Unbiased with support, but row 5's propensity 0.10 creates a huge weight |
+| **Doubly robust (DR)** | The DM prediction plus an IPS-weighted residual $w(r-\hat q)$ for the logged action | Contributions below sum to $4.05$, so $4.05/6=0.675$ | Keeps model stability while correcting the model where the log actually observed target-compatible actions |
+
+All three answer the same question — the target policy's value on this logged distribution — but each member of the set uses a different evidence source.
+
 **Worked example — DR on the same table.** Add model predictions.
 
 | row | logged | p | reward | target | w | $\hat q(x,target)$ | $\hat q(x,logged)$ | DR contribution |
