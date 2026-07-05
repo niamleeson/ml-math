@@ -26,6 +26,8 @@ Two sub-lessons:
 
 **The idea.** An embedding maps an entity to a vector: an ID, a query, a profile, a post, an ad, or a creator brief becomes a point in a learned space. The neighborhood around a point means "items the objective learned to score similarly," not "items that are truly the same." A creator can be near another creator because they share audience, topics, skills, past advertisers, or platform popularity — whichever signals the training data rewarded.
 
+**Everyday analogy.** Think of a map of cities where each dot is placed by travel patterns rather than by latitude and longitude. Cities with similar food, weather, and tourist behavior land near each other; in the embedding, creators, ads, or queries land near each other because the training objective saw similar evidence. A direction on the map can carry meaning too: in word embeddings, the classic "king − man + woman ≈ queen" says the gender direction is learned as a reusable offset. Evaluating the map means checking whether similar creators really land near each other for the product task, not just whether the picture looks neat.
+
 Dense dimensions are latent factors. Some may correlate with human concepts, but they are not guaranteed to be individually interpretable. Interpret the space through scores, neighbors, slices, and downstream behavior.
 
 The two most common scores are dot product and cosine similarity:
@@ -96,6 +98,8 @@ For established creators, ID vectors may capture real marketplace outcomes: who 
 ## M11.2 · Learning & evaluating embeddings
 
 **The idea.** Embedding learning chooses vectors so positives score higher than negatives. The positive relation depends on the method: words near each other in text, users interacting with items, queries leading to clicked ads, or advertiser briefs matching creators. The trained space is good only if it supports the task you will serve.
+
+**Everyday analogy.** Teaching an embedding is like arranging books in a store by how shoppers actually browse, not by publisher order. Books often bought together move onto nearby shelves; books shoppers never compare move apart. For Creator Marketplace, accepted brief→creator pairs are the "bought together" signal, and evaluation asks whether held-out good matches are easy to find from the learned shelf layout.
 
 **Skip-gram / word2vec.** A target word predicts nearby context words. With negative sampling, the model increases the score for observed target-context pairs and decreases scores for sampled non-context words. A common objective for one positive pair $(w,c)$ and negatives $n_i$ is:
 

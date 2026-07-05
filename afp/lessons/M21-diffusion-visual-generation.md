@@ -24,7 +24,11 @@ Two sub-lessons:
 
 ## M21.1 · Forward & reverse diffusion
 
-**The idea.** The forward process gradually corrupts a clean sample $x_0$ into a noisy sample $x_t$. A variance schedule chooses small noise levels $\beta_1,\ldots,\beta_T$, with
+**The idea.** The forward process gradually corrupts a clean sample $x_0$ into a noisy sample $x_t$.
+
+**Everyday analogy.** Imagine starting with a clear photo and adding a little TV static again and again until only noise remains. That is the forward process: the photo is $x_0$, each static layer is injected noise, and the noise schedule controls how fast the picture disappears. Generation runs the movie backward: start from static and repeatedly wipe away the predicted noise until a picture emerges.
+
+A variance schedule chooses small noise levels $\beta_1,\ldots,\beta_T$, with
 
 $$\alpha_t = 1-\beta_t, \qquad \bar\alpha_t = \prod_{s=1}^t \alpha_s.$$
 
@@ -81,7 +85,9 @@ Use diffusion when high-quality visual generation and controllability are worth 
 
 ## M21.2 · Conditioning, guidance & latent/text-to-image
 
-**The idea.** Unconditional diffusion learns to generate plausible samples. Creative tools need controlled samples: "a professional product image with blue background," "make this ad video more energetic," or "generate variants that keep the brand colors." Conditioning gives the denoiser extra information $c$, such as a text embedding, image embedding, mask, layout, or video context:
+**The idea.** Unconditional diffusion learns to generate plausible samples. Creative tools need controlled samples: "a professional product image with blue background," "make this ad video more energetic," or "generate variants that keep the brand colors." Conditioning gives the denoiser extra information $c$, such as a text embedding, image embedding, mask, layout, or video context.
+
+**Everyday analogy.** Think of a sketch artist slowly turning a smudged page into a finished drawing. Conditioning is the description you give them — "blue background, premium lighting, keep the laptop centered" — while guidance strength is how literally they obey it. Low guidance lets the artist improvise; high guidance pushes hard toward the prompt but can make the result stiff or unnatural.
 
 $$\epsilon_\theta(x_t,t,c).$$
 

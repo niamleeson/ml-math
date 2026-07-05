@@ -27,6 +27,8 @@ Two sub-lessons:
 
 **The idea.** LLM-as-judge uses a model to grade or compare outputs when exact labels are expensive, subjective, or slow to collect. Common modes are:
 
+**Everyday analogy.** Hiring an LLM judge is like hiring an essay grader for a large class. Before trusting their scores, you give them a rubric, compare their grades with expert human graders, and check whether they are reliable on different kinds of essays. The judge model maps to the grader, the rubric maps to grading instructions, and agreement metrics measure whether the grader is close enough to human truth.
+
 - **pointwise scoring:** rate one creative or answer on a 1–5 scale;
 - **pairwise preference:** choose which of two outputs is better;
 - **rubric-based grading:** score criteria such as clarity, factuality, safety, brand fit;
@@ -86,6 +88,8 @@ assert round(kappa, 2) == 0.60
 ## M22.2 · Detecting & correcting judge bias
 
 **The idea.** A judge can agree with humans on average and still be biased in a way that breaks product decisions. Three common biases matter for Creative Intelligence and Instream Ads:
+
+**Everyday analogy.** An essay grader can look accurate overall but still have bad habits: giving the first essay on the desk a higher grade, mistaking longer essays for better ones, or favoring essays written in their own style. The swap-order test is like re-grading the same two essays after swapping their order; if the winner flips just because position changed, the grader has position bias. In LLM judging, position, verbosity, and self-preference biases are those grading habits turned into measurable protocol failures.
 
 - **Position bias:** in pairwise judging, the first or second answer wins too often.
 - **Verbosity bias:** longer answers or creatives are rewarded even when humans prefer concise ones.

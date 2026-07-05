@@ -31,6 +31,8 @@ Three sub-lessons:
 
 A decision tree learns a sequence of splits: if bid is above a threshold, go right; otherwise left. Then maybe split by country, campaign age, or device. Each leaf predicts a value. Trees naturally capture thresholds and interactions because the meaning of a later split depends on earlier splits.
 
+**Everyday analogy.** A linear model is like using one straight ruler to estimate lunch cost: add 8 dollars for a sandwich, 3 for a drink, 2 for tax, and every factor contributes separately. A tree is like a cashier's decision chart: "if it is after 2pm, use the happy-hour menu; if the customer is a student, apply another rule." The ruler maps to additive weights; the decision chart maps to threshold splits whose later rules depend on earlier ones.
+
 **Linear needs crosses for interactions.** If clicks increase especially when `country=US` and `bid>5`, a linear model with only `country` and `bid` can learn a country effect and a bid effect, but not the special combination. Add a feature cross for `US_and_bid_gt_5`, and the linear model can represent it. A tree can learn the two-split rule directly.
 
 **Worked example — the interaction a line misses.** Suppose four campaign situations have this pattern:
@@ -53,6 +55,8 @@ A single tree is easy to inspect but high-variance: small data changes can chang
 ## M4.2 · Ensembles & GBDT
 
 **The idea.** Ensembles combine many weak or unstable models. **Bagging** trains many trees on resampled versions of the data and averages them. A random forest adds random feature selection at each split so the trees make different errors. Averaging reduces variance: one tree may be noisy, but many differently noisy trees are more stable.
+
+**Everyday analogy.** Think of proofreading a campaign brief with a room of junior editors. Bagging is asking many editors to review slightly different copies, then averaging their calls so one person's odd mistake does not dominate. Gradient boosting is a sequence of focused editing passes: the first editor fixes obvious errors, the next looks mainly at what remains wrong, and each small correction is added to the final draft.
 
 **Gradient boosting** builds trees sequentially. Start with a simple prediction. Fit the next small tree to the current errors or loss gradients. Add it with a shrinkage factor. Repeat. The model is additive:
 
@@ -97,6 +101,8 @@ If validation stops improving while train keeps improving, capacity is no longer
 **The idea.** A multilayer perceptron stacks learned linear transforms and nonlinear activations. One neuron looks like a learned weighted score passed through an activation; hidden layers compose many such units so the model can learn representations instead of relying only on hand-built feature crosses.
 
 Neural nets are powerful when the input has structure that benefits from learned representations: sparse member/ad IDs with embeddings, text, image, sequence behavior, or a model shared across related tasks. They also need more data, tuning, monitoring, and serving discipline than a simple linear model or many GBDT setups.
+
+**Everyday analogy.** Recognizing a song is easier if you build it up in layers: first hear beats, then riffs, then the chorus, then the full song identity. A neural net similarly learns low-level patterns in early layers and combines them into higher-level representations in later layers. For a tidy spreadsheet of lunch orders, a rule-based checklist may be enough; for raw audio, text, images, or huge sparse IDs, learned layers can discover structure you did not hand-code.
 
 **Decision guide.**
 

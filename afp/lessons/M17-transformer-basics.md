@@ -26,6 +26,8 @@ Two sub-lessons:
 
 **The idea.** Attention lets a token build a new representation by taking a weighted average of other token representations. Compared with an RNN, the path between two distant tokens is direct: token 1 can attend to token 50 in one operation instead of waiting for information to survive 49 recurrent updates.
 
+**Everyday analogy.** Imagine a dinner party where each word is a guest trying to understand its role in the conversation. The word `bank` listens more to `river` when the topic is fishing, but more to `money` when the topic is loans; those listening strengths are the attention weights. A **query** is what one guest is looking for, **keys** are everyone else's name-tags that say what they can help with, and **values** are the information the guest actually takes from the people it attends to.
+
 For one attention head, each token has three learned projections:
 
 - **Query (Q):** what this token is looking for.
@@ -102,6 +104,8 @@ In a LinkedIn ads or search setting, this is useful because relevance is not one
 ## M17.2 · Transformer blocks and model families
 
 **The idea.** Self-attention is powerful, but by itself it does not know order. If you shuffle the same token vectors, plain attention sees the same set of items. Transformers therefore add **position information** and wrap attention in a stable deep-learning block.
+
+**Everyday analogy.** A transformer without positions is like receiving a set of loose sentence magnets on a table: you can see all the words, but not which came first. **Positional encodings** are seat numbers taped to the magnets so "member clicked ad" stays different from "ad clicked member." An **encoder** is like a reader who can inspect the whole sentence at once, while a **decoder** is like a writer who must produce the next word using only the words already written.
 
 A standard transformer block contains:
 

@@ -25,6 +25,8 @@ Two sub-lessons:
 
 **The idea.** Reduce dimensionality when many features are correlated, noisy, expensive, or impossible to visualize directly. The tradeoff is information loss: a compressed representation may remove noise, but it may also remove rare signals. In ads, PCA can show that clicks, views, and dwell all load onto a general engagement axis; UMAP can help visualize neighborhoods of similar campaigns or members; neither should be treated as a final segmentation by itself.
 
+**Everyday analogy.** PCA is like photographing a 3D object from the angle that shows the most of its shape in one flat picture. The object is the original high-dimensional feature table, the camera angle is a principal component, and "most shape preserved" means the projection keeps as much variance as possible. UMAP is more like a subway map: it deliberately distorts exact distances and geography so nearby stops and neighborhoods are easy to see. That makes it useful for exploration, but not for measuring precise distances or proving that two plotted blobs are real classes.
+
 PCA is the linear, global baseline. Given centered data matrix $X$, compute the covariance matrix:
 
 $$\Sigma = \frac{1}{n-1}X^\top X.$$
@@ -83,6 +85,8 @@ If the first 5 PCs reach 90% cumulative explained variance, a 5D PCA representat
 ## M16.2 · Anomaly detection
 
 **The idea.** An anomaly is a row that scores unusual under a chosen reference pattern. It is not automatically fraud, policy violation, or a data bug. In ads, anomaly detection can flag campaigns with rare high-spend/low-engagement combinations, members with unusual feature vectors, broken logging rows, or cohorts that need human review.
+
+**Everyday analogy.** Anomaly detection is like looking at a scatter of normal credit-card purchases and spotting one transaction far away from the usual cloud. The row is the transaction, the features are things like amount, time, merchant, and location, and the anomaly score is how poorly it fits the normal pattern. Mahalanobis distance is the version that accounts for which directions usually vary together: an expensive hotel plus travel booking may be normal, while a smaller purchase with an impossible location/time combination may be far in covariance-scaled distance. A high score means "review this," not "this is definitely fraud."
 
 Different detectors encode different definitions of unusual:
 

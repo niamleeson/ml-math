@@ -29,6 +29,8 @@ Two sub-lessons:
 
 ANN indexes avoid scoring everything. They search a subset likely to contain the true nearest neighbors. The cost is recall loss: the approximate top-k may miss items that exact search would have returned.
 
+**Everyday analogy.** Finding the closest coffee shop by checking every shop in the city is exact, but slow. A good index is like using neighborhoods and landmarks to skip most streets: HNSW is a highway network of shortcuts between promising areas, while IVF-PQ is filing cabinets of coarse neighborhoods plus compressed shop summaries. The faster and smaller the guide, the more often it may miss the true closest shop, so you tune for the right recall, latency, and memory tradeoff.
+
 Recall@k is the core validation metric:
 
 $$\text{recall@}k=\frac{|\text{approx top-}k\cap\text{exact top-}k|}{k}.$$
@@ -89,6 +91,8 @@ print(round(recall10, 2))
 ## M13.2 · Tuning recall/latency/memory + hybrid retrieval
 
 **The idea.** ANN tuning is a systems tradeoff. You do not ask "which index is best?" in isolation. You ask which configuration meets recall, p95 latency, memory, build time, update freshness, filtering, and ranking constraints for the product.
+
+**Everyday analogy.** Choosing an ANN setting is like choosing a delivery route for a courier with a deadline and a backpack size. Taking every side street finds the perfect stop but misses the deadline; taking only highways is fast but may skip a small address. More maps, shortcuts, and notes improve success but use memory, so the chosen route is the cheapest one that finds enough right addresses on time.
 
 The correct worked example shape is S7: knob-sweep → tradeoff curve → operating point.
 

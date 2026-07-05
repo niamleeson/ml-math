@@ -26,6 +26,8 @@ Three sub-lessons:
 
 **The idea.** A score is calibrated if examples assigned probability 0.20 happen about 20% of the time. Calibration is about probability scale, not rank order. A reliability diagram bins predictions, then compares each bin's average predicted probability with its observed outcome rate.
 
+**Everyday analogy.** A weather forecaster who says "70% chance of rain" should be right about 70% of the time across many such days. If it rains only 30% of those days, the forecaster may still rank stormy days above sunny days, but the probability is dishonest. Calibration asks whether the number means what it says, which is crucial when another system treats it as expected value.
+
 Expected calibration error summarizes the bin gaps:
 
 $$\text{ECE}=\sum_{b=1}^{B}\frac{n_b}{n}\left|\text{acc}(b)-\text{conf}(b)\right|,$$
@@ -67,6 +69,8 @@ A minimal calibration report includes:
 ## M8.2 · Class imbalance (weights/focal/resampling)
 
 **The idea.** Sparse positives make naive training and naive metrics misleading. At **1% positives**, an always-negative model is **99% accurate** and has **zero recall**. For click prediction, rare positives also mean gradients can be dominated by easy negatives.
+
+**Everyday analogy.** Class imbalance is like trying to find the 6 people in a crowd of 100 who will click a link. A lazy guard can say "no one will click" and be right for most people, but they miss every person the product cares about. Weighting, focal loss, and resampling are ways to make the rare clickers loud enough during training without pretending the crowd is balanced.
 
 **Naive → break.** Train a classifier on 1% click labels with ordinary minibatches. It learns to predict near-zero for almost everything. Accuracy looks excellent, but PR-AUC, recall at useful thresholds, and downstream candidate discovery are poor.
 
@@ -110,6 +114,8 @@ The practical order is:
 ## M8.3 · Calibrating sparse slices & delayed feedback
 
 **The idea.** Global calibration can hide bad slices. A pCTR model may be calibrated overall while overpredicting in one country, underpredicting for new advertisers, or breaking on a sparse Event Ads segment. Sparse slices are noisy, and delayed feedback makes fresh labels look more negative than they really are.
+
+**Everyday analogy.** A restaurant's average review can be accurate overall while the new brunch menu has too few reviews to judge. If two early brunch diners complain, you should not rewrite the whole menu around those two ratings; you shrink that noisy slice toward the restaurant's broader evidence. Delayed feedback is like asking for reviews before diners finish eating: silence right now is not the same as a bad review.
 
 **Naive → break.** Calibrate every slice independently. A tiny slice has **2 clicks in 20 examples**, so observed CTR is **10%**. If the global rate is **5%**, a hard independent correction to 10% overreacts; with only 20 examples, the interval is wide.
 

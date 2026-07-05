@@ -30,6 +30,8 @@ Three sub-lessons:
 
 **The idea.** A score becomes a binary decision only after you choose a threshold. For pCTR, you might score every impression, then mark impressions above a threshold as "predicted click" for a downstream action. That threshold creates a confusion matrix:
 
+**Everyday analogy.** A spam filter assigns every email a suspiciousness score, but it only moves emails to spam after you choose a cutoff. Precision asks: of the emails it moved to spam, how many were truly spam? Recall asks: of all truly spam emails, how many did it catch? Raising the cutoff is like being stricter about accusations: fewer innocent emails get flagged, but more spam may slip through.
+
 | | Actual positive | Actual negative |
 |---|---:|---:|
 | Predicted positive | TP | FP |
@@ -62,6 +64,8 @@ Accuracy can mislead on rare clicks. If CTR is 1%, predicting "no click" for eve
 ## M5.2 · Ranking quality
 
 **The idea.** Many ML systems rank rather than make one fixed binary decision. ROC-AUC measures threshold-free binary ranking quality. AUC has a concrete interpretation: the probability that a randomly chosen positive example is scored above a randomly chosen negative example.
+
+**Everyday analogy.** Imagine a host sorting a stack of restaurant recommendations so the places Maya would love appear above the places she would skip. AUC asks how often one randomly chosen "loved it" restaurant is placed above one randomly chosen "skipped it" restaurant. NDCG asks whether the very best restaurants are near the top of page 1, because a perfect tenth result is much less useful than a perfect first result.
 
 ROC plots true positive rate versus false positive rate across thresholds:
 
@@ -98,6 +102,8 @@ For MRR, if the first relevant creative appears at rank 3, reciprocal rank is $1
 ## M5.3 · Designing an evaluation
 
 **The idea.** Ranking quality and calibration are different. Ranking asks whether higher-scored items are ordered ahead of lower-quality items. Calibration asks whether a score means what it says as a probability: among impressions scored around 0.08, about 8% should click.
+
+**Everyday analogy.** Two weather apps can both rank Saturday as rainier than Sunday, but calibration asks whether "80% chance of rain" really rains about 8 out of 10 such days. Ranking quality is the ordering of wetter versus drier days; calibration is the truthfulness of the probabilities themselves. Slice evaluation is checking that the app works in Seattle and Phoenix separately, not just on the national average.
 
 A reliability table makes calibration visible:
 

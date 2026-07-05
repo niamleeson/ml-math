@@ -26,6 +26,8 @@ Two sub-lessons:
 
 **The idea.** An optimization problem has **decision variables** (what you choose), an **objective** (what you maximize/minimize), and **constraints** (what must be true). For ads, the variables are usually allocation amounts: impressions to campaigns, campaigns to query slots, or delivery probabilities for eligible inventory.
 
+**Everyday analogy.** Packing a delivery truck is an optimization problem: choose how much of each divisible load to carry, maximize the total delivery value, and obey weight and volume limits. The **decision variables** are the load amounts, the **objective** is total value, and the **constraints** are the truck's capacity limits. If the feasible packing choices form the no-holes region of an LP, and a convex minimization objective looks like a smooth bowl with one bottom, a solver can certify the best answer rather than get stuck in a false minimum.
+
 A set is **convex** if the line segment between any two feasible points stays feasible. A function is convex if its graph has no hidden valleys. Convexity matters because a local optimum is global, and solvers can certify that they found the best feasible answer. Linear programs are convex; convex quadratic programs are convex when the quadratic penalty matrix is positive semidefinite.
 
 The standard LP shape for this module is:
@@ -118,6 +120,8 @@ choosing A → slot 1 and B → slot 2 gives $0.18+0.16=0.34$, better than A →
 ## M27.2 · Duality, shadow prices & KKT: what constraints are worth
 
 **The idea.** The dual turns constraints into prices. If a budget, inventory, delivery, or frequency constraint is tight, relaxing it can improve the objective; the corresponding **dual variable** is the marginal value of one more unit of that resource. In ads language, a dual value is a **shadow price** on scarce capacity.
+
+**Everyday analogy.** Go back to the delivery truck: if the truck is full by weight, one extra kilogram of capacity lets you add some extra package value, and that marginal gain is the **shadow price** of weight. If the truck still has unused volume, one more liter of volume is worth zero right now, because it is not the limiting constraint. The dual prices tell you what you would rationally pay to relax each tight limit by one unit.
 
 For the primal LP:
 

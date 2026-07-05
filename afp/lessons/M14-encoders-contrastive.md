@@ -26,6 +26,8 @@ Two sub-lessons:
 
 **The idea.** A dual encoder, also called a bi-encoder, embeds the query and item separately. It is the right shape for first-stage retrieval because item vectors can be precomputed and indexed. A cross-encoder reads the query and item together, allowing token-level interaction, but it must run once per pair. That makes it strong for reranking hundreds of candidates and too expensive for retrieving from millions.
 
+**Everyday analogy.** A dual encoder is like asking two people to fill out separate index cards — one for the request and one for the creator — then matching cards quickly by comparing their summaries. A cross-encoder is like putting the two people in the same room and reading the full conversation; it understands the pair better but must repeat that work for every pair. Contrastive training is the drill that pulls matching cards together and pushes mismatched cards apart.
+
 For Creator Marketplace AI:
 
 - dual encoder: embed advertiser brief and creator profile separately, retrieve top candidates;
@@ -89,6 +91,8 @@ assert loss05 < loss1
 ## M14.2 · Hard-negative mining & encoder fine-tuning
 
 **The idea.** Easy negatives teach broad separation. Hard negatives teach fine distinctions. A creator profile about "consumer fitness" is an easy negative for a B2B cybersecurity brief; a profile about "enterprise security webinars" that lacks the required audience or region is a hard negative. The hard negative is wrong, but plausible.
+
+**Everyday analogy.** Organizing a photo library by who appears in each photo is easy when the wrong examples are landscapes. The real learning happens with look-alikes: siblings, coworkers in similar uniforms, or blurry shots. Hard negatives are those tricky look-alikes — they force the encoder to notice the details that separate a true match from a plausible mismatch, while false negatives are photos of the same person mislabeled as different.
 
 **Triplet loss.** A triplet has anchor query $q$, positive item $p$, and negative item $n$. With similarity scores, a margin loss is:
 

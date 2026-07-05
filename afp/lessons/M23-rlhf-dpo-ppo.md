@@ -26,6 +26,8 @@ Two sub-lessons:
 
 **The idea.** RLHF usually has five steps.
 
+**Everyday analogy.** Training with RLHF is like teaching a dog new manners after it already knows basic commands. The SFT model is the dog that can sit and stay; human raters are the owners saying which behavior they prefer; the reward model learns what earns treats; and policy optimization nudges the dog toward treat-earning behavior without letting it forget the house rules. For a model, the "treat" is a learned reward score for helpful, safe, on-brand answers.
+
 1. Train or choose an SFT/reference policy $\pi_{\text{sft}}(y\mid x)$.
 2. Collect prompts and multiple candidate responses.
 3. Ask raters to choose a winner $y_w$ over a loser $y_l$ under a rubric.
@@ -103,6 +105,8 @@ for prompt, chosen, rejected in pairs:
 ## M23.2 · PPO vs DPO & designing an RL-tuning plan
 
 **The idea.** PPO-style RLHF uses the reward model as a scalar objective. The policy samples responses, receives reward, estimates an advantage $A_t$, and updates with a clipped probability ratio:
+
+**Everyday analogy.** PPO is like training that same dog with a leash: reward the better behavior, but do not let one enthusiastic step turn into a wild sprint away from everything it already learned. The reward model is the treat signal, the KL/reference penalty is "stay close to your old reliable behavior," and PPO's clip is the short leash on each update. DPO is the simpler coach who skips building a separate treat-meter and learns directly from pairs like "answer A was better than answer B."
 
 $$r_t(\theta)=\frac{\pi_\theta(a_t\mid s_t)}{\pi_{\text{old}}(a_t\mid s_t)},$$
 

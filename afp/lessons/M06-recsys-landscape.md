@@ -23,7 +23,11 @@ Two sub-lessons:
 
 ## M6.1 · The recommendation problem & the funnel
 
-**The idea.** A recommender maps a user, context, or request to a small ordered set of items from a much larger catalog. Production systems usually split that into a **retrieval→ranking funnel**:
+**The idea.** A recommender maps a user, context, or request to a small ordered set of items from a much larger catalog.
+
+**Everyday analogy.** Imagine walking into a giant bookstore and asking a clerk what to read next. They first pull one shelf of plausible books from millions of options, then sort that small pile by what seems best for you, then remove anything unavailable or inappropriate. Collaborative filtering is the clerk saying "people who liked what you liked also liked this," while matrix factorization is the clerk discovering hidden taste dimensions like mystery fan, romance reader, or beginner-friendly nonfiction.
+
+Production systems usually split that into a **retrieval→ranking funnel**:
 
 1. **Retrieval:** find hundreds or thousands of plausible candidates quickly.
 2. **Ranking:** score those candidates with richer features and a more expensive model.
@@ -93,6 +97,8 @@ Ask these checks before choosing CF or MF:
 ## M6.2 · Modern recommenders — two-tower, sequential, generative + when to use which
 
 **The idea.** Modern recommenders keep the funnel but change how candidates are represented and retrieved. The practical question is not "Which architecture is newest?" It is: **what must be computed online, what can be precomputed, and what signal does the model need?**
+
+**Everyday analogy.** A two-tower recommender is like a dating app that writes one profile summary for the member and one profile summary for each possible match, then quickly finds nearby summaries. Sequential recommendation is like noticing that someone searched "running shoes," then "10K training," then "hydration belt" — the order changes what they probably want next. Generative retrieval is closer to autocomplete: given the recent sequence, the system proposes the next item or item code directly, then serving checks that the suggestion is valid and safe.
 
 **Two-tower retrieval.** A two-tower model encodes the user/query/context on one side and the item on the other side. The item vectors can be precomputed; online serving computes the user vector and performs approximate nearest-neighbor search. That is why two-tower systems scale for large retrieval.
 

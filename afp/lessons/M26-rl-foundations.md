@@ -27,6 +27,8 @@ Two sub-lessons:
 
 **The idea.** A Markov Decision Process is
 
+**Everyday analogy.** Think of playing a video game. The state is the screen you see, actions are the buttons you can press, reward is the score or damage avoided, and the policy is your strategy for choosing buttons. The MDP is the game's rulebook: given the current screen and button, it describes what screen can come next and what reward you get.
+
 $$(\mathcal S,\mathcal A,P,R,\gamma),$$
 
 where $\mathcal S$ is states, $\mathcal A$ is actions, $P(s'\mid s,a)$ is the transition probability, $R(s,a,s')$ is reward, and $\gamma$ discounts future reward.
@@ -132,6 +134,8 @@ for s in states:
 ## M26.2 · Policy gradients & where RL fits ads
 
 **The idea.** Policy gradients optimize a parameterized policy $\pi_\theta(a\mid s)$ directly. REINFORCE uses
+
+**Everyday analogy.** Policy gradients are like adjusting your video-game strategy after a run: if jumping in a situation led to a better-than-expected score, you make jumping more likely next time; if it hurt your score, you make it less likely. The return is the run's outcome, the baseline is what you expected from that state, and the advantage is the surprise above or below expectation. A bandit is like a one-shot slot machine pull, while full RL is a game where today's move changes tomorrow's board.
 
 $$\nabla_\theta J(\theta)=\mathbb E[\nabla_\theta\log\pi_\theta(a_t\mid s_t)G_t].$$
 

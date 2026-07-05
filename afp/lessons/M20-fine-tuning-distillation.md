@@ -26,6 +26,8 @@ Two sub-lessons:
 
 **The idea.** Start with the cheapest change that addresses the real bottleneck.
 
+**Everyday analogy.** Prompting is like giving a capable coworker clearer instructions for a task they already know how to do. Fine-tuning is like a licensed doctor taking a short specialization course in sports medicine instead of re-attending all of medical school: the base knowledge stays, but behavior becomes specialized. LoRA is the lightweight version: add a few sticky-note corrections to a huge textbook instead of rewriting every page. Distillation is different — it is training an apprentice to imitate a master chef's dishes faster and cheaper.
+
 | Bottleneck | Best first move | Why |
 |---|---|---|
 | Model can do the task, but outputs need formatting, examples, or instructions | Prompt / few-shot prompt | No training, easy to change |
@@ -99,6 +101,8 @@ Full fine-tuning could chase the same labels, but LoRA stores a small adapter pe
 ## M20.2 · Distillation & running a classifier
 
 **The idea.** Distillation trains a smaller **student** model to imitate a stronger **teacher**. The teacher may be a large LLM, an ensemble, or a fine-tuned model that is too expensive to serve. Instead of training only on hard labels like `policy_risk`, the student learns from the teacher's full probability distribution — including which wrong classes are plausible.
+
+**Everyday analogy.** A master chef may make the best version of a dish, but is too slow and expensive to cook every cafeteria meal. Distillation is the chef training an apprentice to reproduce the important choices: not only "this is the final dish," but also "this sauce is close, that one is completely wrong." The teacher maps to the accurate large model, the student maps to the smaller serving model, and the soft preferences map to probability mass over plausible labels.
 
 Given teacher logits $z^{(T)}$ and student logits $z^{(S)}$, temperature $T$ softens probabilities:
 

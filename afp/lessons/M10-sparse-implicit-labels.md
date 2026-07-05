@@ -26,6 +26,8 @@ Two sub-lessons:
 
 PU learning treats the data as **positive + unlabeled**, not positive + true negative. The training pipeline must decide which unlabeled examples to compare against positives and must remember how those examples were sampled.
 
+**Everyday analogy.** If a shopper buys one cereal and ignores 200 others, that does not mean they disliked all 200. Many boxes were on a lower shelf, hidden behind a display, or never noticed. Implicit feedback treats the purchase as positive evidence and the missing purchases as unlabeled; negative sampling is choosing a few plausible comparisons without pretending every unchosen box is a thumbs-down.
+
 The key vocabulary is:
 
 - **Positive:** observed action, such as contact or save.
@@ -90,6 +92,8 @@ A small audit before training:
 ## M10.2 · Debiasing (position/selection/delayed, IPS)
 
 **The idea.** Implicit feedback is filtered by the old system. Items at top positions get more attention. Items never selected by the old policy have no chance to get clicked. Fresh positives may arrive after the training snapshot. These are not random missing labels; they are biased observations.
+
+**Everyday analogy.** A store's eye-level shelf gets more sales partly because it is eye-level, not because every product there is better. Products in the back room cannot be bought at all, and a customer who plans to return tomorrow has not failed to buy yet. Position bias, selection bias, and delayed feedback are those same effects in logs, so debiasing asks what would have happened under fairer exposure and enough time.
 
 **Three biases.**
 

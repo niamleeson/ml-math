@@ -32,6 +32,8 @@ Two sub-lessons:
 
 These break learned models because ID embeddings, historical rates, and collaborative signals are missing or unstable. The answer is not "turn off ML"; it is a controlled bridge from safe priors to learned evidence.
 
+**Everyday analogy.** A new employee has no track record at the company yet, so you start with their resume, interview notes, and the performance of similar hires. As they complete real projects, you trust their actual work history more and the resume less. Cold-start recommenders make the same handoff from content features and priors to behavioral evidence once enough interactions arrive.
+
 **Naive → break.** A new Event Ad receives **2 clicks / 20 impressions**, a raw CTR of **10%**. If the system treats that as a stable learned estimate, pacing may overallocate budget to a noisy early spike. If the learned-only model has no item history, it may also score the ad as zero or near-random.
 
 **Fix with content, priors, heuristics.** Start with features available at launch: event category, target audience, creative text, advertiser history, similar-event priors, and safe pacing rules. A category prior of **1.0%** CTR is less exciting than 2/20, but it is much more stable.
@@ -95,6 +97,8 @@ A decision guide:
 ## M9.2 · Transfer & distillation
 
 **The idea.** Transfer and distillation reuse signal, but they solve different problems. Transfer starts a target model from a source model or representation when target labels are scarce. Distillation trains a cheaper student to imitate a stronger teacher, often for latency, serving cost, or warm-start.
+
+**Everyday analogy.** Transfer is like a chef moving from one restaurant to a related cuisine: their knife skills and timing help, but they still need to adapt to the new menu. Distillation is like a senior expert training a fast junior to imitate their judgments on common cases, so the junior can make decisions quickly at the counter. Both reuse knowledge, but transfer initializes a related task while distillation compresses a teacher into a cheaper student.
 
 **When transfer helps.** Transfer helps when source and target share features, behavior, or representation. A model trained on mature event campaigns may help new Event Ads if the same audience, creative, and category signals matter. It can hurt when objectives differ: a source model optimized for clicks may transfer poorly to quality registrations or long-term value.
 

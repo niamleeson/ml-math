@@ -26,6 +26,8 @@ Two sub-lessons:
 
 **The idea.** Retrieval-augmented generation has three main steps:
 
+**Everyday analogy.** RAG is like taking an open-book exam instead of answering from memory. **Retrieval** finds the pages that look relevant, **reranking** puts the most useful page on top, and **generation** writes the answer using those pages as evidence. If the book has no solid support, the honest answer is "I don't know" rather than making up a fluent-sounding fact.
+
 1. **Retrieve:** find candidate chunks likely to contain evidence.
 2. **Rerank:** reorder candidates with a stronger relevance model or product rules.
 3. **Generate:** answer using only the selected evidence, ideally with citations or traceable support.
@@ -96,6 +98,8 @@ and retrieval returns only A2, the generator may miss the rule's subject. Fix by
 ## M19.2 · Query understanding
 
 **The idea.** Query understanding converts natural language into a structured representation that software can execute: an **intent**, typed **slots**, confidence, and fallback reason when needed. The pitfall is silently executing the wrong query.
+
+**Everyday analogy.** Query understanding is like a librarian turning "cheap flights to NYC next week" into shelf and catalog filters: destination = NYC, date range = next week, sort = price ascending. The **intent** is the action the user wants, the **slots** are the filled-in filters, and **confidence** says how sure the librarian is. If "NY" could mean city or state, a low-confidence fallback asks a clarifying question instead of booking the wrong trip.
 
 For Search Ads or Creator Marketplace, users often write short ambiguous requests:
 

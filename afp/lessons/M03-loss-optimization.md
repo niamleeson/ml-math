@@ -29,6 +29,8 @@ Three sub-lessons:
 
 **The idea.** A **loss** assigns a cost to one prediction. Training minimizes **empirical risk**, the average loss on the training examples:
 
+**Everyday analogy.** Imagine Alex predicting whether each friend will come to a picnic, then paying a penalty for every bad guess. Saying "I'm 99% sure Priya will come" and being wrong hurts much more than saying "I'm 55% sure" and being wrong; that is log loss punishing confident-but-wrong predictions. The loss is the per-guess penalty, and empirical risk is Alex's average penalty across all past invitations.
+
 $$\hat{R}(\theta) = \frac{1}{n}\sum_{i=1}^{n}\ell(f_\theta(x_i), y_i).$$
 
 For binary pCTR, the model predicts a probability $p$ that an impression will click, and the label $y$ is 0 or 1. The Bernoulli likelihood for one row is
@@ -73,6 +75,8 @@ $$w \leftarrow w - \eta\nabla L(w).$$
 
 The learning rate $\eta$ controls step size. Too small crawls. Too large overshoots the low-loss region, oscillates, or diverges.
 
+**Everyday analogy.** Hiking downhill in thick fog, you cannot see the valley, so you feel which way the ground slopes under your boots and step downhill. The slope you feel is the gradient, stepping opposite it is gradient descent, and your stride length is the learning rate. Tiny steps take forever; huge steps can carry you past the valley and up the other side.
+
 A training loop is simple in shape:
 
 ```python
@@ -107,6 +111,8 @@ On a pCTR model, the same principle shows up as curves: a moderate learning rate
 ## M3.3 · Regularization
 
 **The idea.** Regularization adds a penalty to the training objective so the model prefers simpler weights unless complexity clearly pays for itself:
+
+**Everyday analogy.** Picture each model weight attached to zero by a spring, while another force pulls it toward fitting the training data. L2 regularization is a smooth spring: large weights get pulled back harder, but many remain nonzero. L1 regularization is more like charging a flat tax per pound carried on a hike; small, barely useful items are dropped entirely, so weak weights become exactly zero.
 
 $$\min_w\ \frac{1}{n}\sum_{i=1}^{n}\ell(f_w(x_i), y_i)+\lambda\Omega(w).$$
 

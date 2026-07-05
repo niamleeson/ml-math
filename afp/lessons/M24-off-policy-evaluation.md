@@ -26,6 +26,8 @@ Two sub-lessons:
 
 **The idea.** A logged bandit row contains:
 
+**Everyday analogy.** Off-policy evaluation is like asking whether a new restaurant menu would have sold better using only receipts from the old menu. You cannot simply count old sales, because the old menu made some dishes easy to choose and others rare; the propensity is how likely the old menu was to show or promote each dish. IPS reweights each receipt by "how likely would the new menu have led to this same choice divided by how likely the old menu did?"
+
 | symbol | field | meaning |
 |---|---|---|
 | $x_i$ | context | features known before decision |
@@ -103,6 +105,8 @@ assert all(logging_propensity[target_probability > 0] > 0)
 ## M24.2 · Doubly Robust estimation
 
 **The idea.** A reward model $\hat q(x,a)$ predicts reward for each action. The direct-method target value for one row is
+
+**Everyday analogy.** Doubly Robust estimation is like judging that new menu with both a chef's sales forecast and the old receipts. The reward model is the chef's prediction for every dish under the new menu; the IPS correction says, "when the old receipt actually matches something the new menu would have done, use that real outcome to correct the forecast." It is called doubly robust because the estimate can still be good if either the forecast is decent or the propensities are decent.
 
 $$\hat v(x_i)=\sum_a\pi_e(a\mid x_i)\hat q(x_i,a).$$
 

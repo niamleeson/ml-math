@@ -26,6 +26,8 @@ Two sub-lessons:
 
 **The idea.** A $K$-armed bandit chooses an arm $a_t$ and observes reward $r_t$ only for that arm. The tension is:
 
+**Everyday analogy.** A doctor choosing among treatments faces the same explore/exploit tradeoff. Exploiting means prescribing the treatment that has worked best so far; exploring means trying a less-tested treatment often enough to learn whether it is actually better. Each treatment is an arm, the patient's outcome is the reward, and regret is the health benefit lost while learning compared with always using the best treatment.
+
 - **exploit:** choose the arm with the best current estimate;
 - **explore:** choose uncertain arms to learn whether they are better.
 
@@ -88,6 +90,8 @@ Example: arm A has 10 successes and 90 failures, so with a Beta(1,1) prior it is
 ## M25.2 · Contextual bandits & LinUCB
 
 **The idea.** A contextual bandit sees context $x_t$ before choosing action $a_t$. It can learn that different members, advertisers, requests, devices, or campaign objectives prefer different variants.
+
+**Everyday analogy.** The doctor example becomes contextual when the best treatment depends on the patient in front of them. Age, symptoms, allergies, and history are the context; the treatment is the action; the outcome is the reward; and methods like LinUCB or Thompson sampling try uncertain options in a principled way. Directive or variant selection has the same shape: context comes in, pick a variant, observe a reward later, and log the propensity.
 
 A logged row is
 

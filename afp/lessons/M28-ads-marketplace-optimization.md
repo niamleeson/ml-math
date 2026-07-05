@@ -30,6 +30,8 @@ $$\text{value}_{i,t}=\widehat{pCTR}_{i,t}\times \text{bid}_i.$$
 
 The probability must be **calibrated**. A score of 0.03 should mean roughly 3 clicks per 100 similar impressions, not merely "higher than another score." Calibration matters because allocation compares money across advertisers: Event Ads, Instream Ads, and Search Ads all need probabilities that behave like probabilities before multiplying by bids.
 
+**Everyday analogy.** Think of an eBay-style auction where bidders value the same item differently, but the winner pays just enough to beat the runner-up rather than their full willingness to pay. In ads, the "bidder's value for this exact item" is not just the bid; it is calibrated pCTR × bid, because an impression expected to click 3 times per 100 is worth more than one expected to click 1 time per 100 at the same bid. Calibration turns model output into a real probability, so the marketplace can compare advertisers in dollars-per-impression and allocate the slot to the highest expected value.
+
 A marketplace mechanism combines:
 
 - **Eligibility:** which campaigns can serve this impression.
@@ -93,6 +95,8 @@ so B pays about $5.00 per click, capped by B's $8.00 bid. Real production system
 ## M28.2 · Budget pacing & guaranteed delivery
 
 **The idea.** A winning auction rule is not enough. Campaigns have budgets over time, guaranteed deals have delivery obligations, and the platform has guardrails. **Budget pacing** is a feedback-control loop: compare actual cumulative spend with the target spend curve, then raise or lower a multiplier or delivery probability so the campaign neither burns budget too early nor underspends.
+
+**Everyday analogy.** Budget pacing is like rationing a week's groceries instead of eating everything by Tuesday: each day you compare what you have used with the target and tighten or loosen consumption. The **target spend curve** is the meal plan, **actual spend** is what has already been eaten, and the **multiplier** is the thermostat-like control that makes the campaign compete less when ahead or more when behind. Guaranteed delivery is the promised dinner you must serve no matter what, so the optimizer reserves enough eligible "ingredients" — impressions — to fulfill the commitment.
 
 A simple controller is:
 

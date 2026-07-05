@@ -25,6 +25,8 @@ Three sub-lessons:
 
 **The idea.** A pCTR model is a pointwise supervised model: each impression is a row, features describe the member, item/ad, context, and historical signals available at serve time, and the label says whether the click happened in the attribution window. pVTR is the same pattern for view-through, video view, or watch completion.
 
+**Everyday analogy.** Think of a ticket seller estimating the chance each passerby will buy a ticket. The estimate should mean an actual probability: among people scored 4%, about 4 out of 100 should buy. Ranking the most likely buyers is useful, but if the probabilities are inflated, multiplying by ticket price or budget makes the business decision wrong.
+
 For binary click labels, the standard pointwise objective is logloss:
 
 $$\ell(y,p)=-y\log p-(1-y)\log(1-p).$$
@@ -65,6 +67,8 @@ Before handing a pCTR score to serving, check three things:
 
 **The idea.** Ranking objectives differ by what a training example means.
 
+**Everyday analogy.** Grading essays can happen three ways. Pointwise grading scores each essay by itself, pairwise grading asks which of two essays is better, and listwise grading orders the whole stack from strongest to weakest. Ranking losses make the same choice: learn an absolute label, learn relative preferences, or optimize the full slate order.
+
 | Objective | Example says | Best when | Watch out |
 |---|---|---|---|
 | Pointwise | This item has label 0/1 or relevance r | Need probability or absolute label | May not optimize top-of-list ordering |
@@ -103,6 +107,8 @@ assert len(pairs) == len(skipped_items)
 ## M7.3 · Multi-objective ranking & CTR architectures
 
 **The idea.** Real rankers rarely optimize only clicks. A LinkedIn feed, ads, jobs, or Creator Marketplace ranker might care about click, dwell, conversion, predicted value, negative feedback, quality, diversity, and budget pacing. Modern architectures often share a backbone and emit multiple heads.
+
+**Everyday analogy.** A hiring committee does not choose a candidate from one number alone. One interviewer scores skills, another estimates culture fit, another checks compensation expectations, and the final decision weighs those signals with explicit tradeoffs. A multi-objective ranker does the same with click, dwell, value, and risk heads; the weights are a product decision, not an accidental scale mismatch.
 
 A simple combined serving score is genuine only if each term has a meaningful unit:
 

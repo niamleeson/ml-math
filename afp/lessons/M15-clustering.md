@@ -26,6 +26,8 @@ Two sub-lessons:
 
 **The idea.** Use clustering when labels are absent and the feature space makes distance meaningful. In ads, examples include grouping campaigns by engagement profile, finding member-interest cohorts, or creating tentative personas such as "high video engagement / low search intent." Do not use clustering when you already have a supervised target, when scale is arbitrary and unnormalized, or when the business question requires causality rather than exploratory grouping.
 
+**Everyday analogy.** Clustering is like sorting a mixed pile of laundry when no one gave you labels for the piles. You group items by similarity — color, fabric, thickness — and decide how many piles are useful for the chore. In that mapping, each sock or shirt is a data point, the color/fabric measurements are features, distance means "how similar," and a cluster is one pile you can summarize without pretending it is the only true way to sort laundry. k-means is the version where you pick $k$ pile-centers, assign each item to the nearest center, recenter each pile, and repeat; GMM is the softer version where a striped sock might be 70% "darks" and 30% "colors."
+
 For k-means, choose a number of clusters $k$ and find assignments $z_i \in \{1,\ldots,k\}$ and centroids $\mu_1,\ldots,\mu_k$ that minimize within-cluster squared distance:
 
 $$\min_{z,\mu}\sum_{i=1}^{n}\left\|x_i - \mu_{z_i}\right\|_2^2.$$
@@ -92,6 +94,8 @@ One row has GMM responsibilities $[0.52, 0.43, 0.05]$. That member is not cleanl
 ## M15.2 · Density clustering & validating without labels
 
 **The idea.** k-means and GMM assume compact centroid-like or Gaussian-like clusters. Density clustering asks a different question: which points live in dense regions, and which points are sparse enough to be noise? DBSCAN uses an $\epsilon$-neighborhood and `min_samples` to define core points, border points, and noise. HDBSCAN builds a density hierarchy, handles variable density better, and returns stable clusters plus noise without choosing $k$.
+
+**Everyday analogy.** Imagine the same laundry pile, but now some piles are huge and tightly packed, some are small and loose, and a few odd socks sit by themselves. Density clustering forms piles where many similar items are close together and leaves isolated odd socks as "noise" instead of forcing them into a bad pile. DBSCAN uses one rule for how close and how many items make a dense patch; HDBSCAN lets dense and sparse piles coexist and asks which piles stay stable across density levels. Validating without labels is checking whether the piles are tight, separated, stable when you reshuffle, and useful for the decision you need.
 
 This matters for ads feature tables because real cohorts may be non-spherical: a curved path from "low intent" to "high intent," a dense brand-loyal group inside a larger audience, or rare outlier campaigns that should not be forced into a persona.
 

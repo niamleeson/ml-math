@@ -27,6 +27,8 @@ Two sub-lessons:
 
 **The idea.** A language model turns text into tokens, looks at the current context, predicts a probability distribution over the next token, samples or selects one token, appends it, and repeats.
 
+**Everyday analogy.** Think of tokens as LEGO pieces of text: sometimes a whole word is one brick, sometimes a word is split into smaller bricks, and punctuation or spaces can be bricks too. The **context window** is the desk space that can hold only so many bricks at once; anything that falls off the desk cannot influence the next piece. **Temperature** is a creativity dial: low settings keep choosing the safest next brick, while higher settings allow more surprising but riskier choices.
+
 The core autoregressive statement is:
 
 $$P(x_t \mid x_{<t}),$$
@@ -86,6 +88,8 @@ Lower perplexity means the model assigned higher probability to the observed tex
 ## M18.2 · Prompting as an interface contract
 
 **The idea.** A prompt is the contract between your product and the model. A reliable prompt states the task, supplies necessary context, gives examples when the task is custom, specifies the output shape, and defines what to do when the model is uncertain.
+
+**Everyday analogy.** Prompting is like training a temp worker with a task card. **Zero-shot** is "please do this"; **few-shot** is showing a few completed forms before handing over a new one. **Structured output** is giving the worker a fill-in-the-blank form, such as a JSON schema, so downstream software knows exactly where to read the answer. Confidence and fallback rules are the instructions for when to ask a supervisor instead of guessing.
 
 **Prompting patterns.**
 

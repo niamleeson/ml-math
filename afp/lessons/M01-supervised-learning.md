@@ -30,6 +30,8 @@ Three sub-lessons:
 
 **The idea.** A supervised dataset is made of **examples**. Each example has **features** — information available before the prediction — and a **label** — the answer you later learn. A model learns a mapping from features to label from historical labeled examples, then applies that mapping to new examples whose labels are not yet known.
 
+**Everyday analogy.** Predicting whether a friend shows up to dinner. The **features** are what you know beforehand — did they RSVP, how far away they live, did they come last time. The **label** is what you find out afterward — did they actually show. You learn the pattern from past dinners (labeled examples) and apply it to the next invite. If they show up 90% of the time, the **baseline** is "always predict yes," and your model has to beat that to be worth anything. The answer's shape sets the task: "will they show?" is yes/no (classification); "how many minutes late?" is a number (regression).
+
 For a pCTR model, one example might be one ad impression. The features include the campaign, creative, member context, placement, device, time, and recent campaign history known before the impression is served. The label is whether the member clicked within the attribution window. The prediction time is the moment the ranking or auction system needs the score.
 
 **Task type comes from the label.**
@@ -65,6 +67,8 @@ Now compare three other tasks:
 ## M1.2 · The split discipline (train/val/test, honestly)
 
 **The idea.** A model can always look good on data it was allowed to learn from. Splits create roles: **train** is used to fit parameters, **validation** is used to choose features, hyperparameters, thresholds, and model versions, and **test** is read once at the end as an honest estimate of how the selected model generalizes.
+
+**Everyday analogy.** Studying for an exam. The **training set** is the practice problems you learn from. The **validation set** is a mock exam you use to decide what to study next and which strategy works. The **test set** is the real exam — you sit it once, and if you'd already seen those exact questions, your score would be a lie. Peeking at the test to pick your approach is like getting the real exam's answers during practice: your grade stops predicting how you'll do on genuinely new questions. And if the real exam is next month, drilling only last year's identical questions (a random split) won't tell you how you'll handle this year's — you need to rehearse on newer material (a temporal split).
 
 The genuine math idea is the gap between what you minimize and what you care about. Training minimizes empirical risk,
 
@@ -103,6 +107,8 @@ The test set is read only once because every time you choose the better model ba
 ## M1.3 · Over/underfitting & the bias–variance tradeoff
 
 **The idea.** **Underfitting** means the model is too simple or poorly trained to capture the signal: train and validation are both bad. **Overfitting** means the model captured training-specific noise: train is good but validation is much worse. The key signal is the train↔validation gap, not the training score by itself.
+
+**Everyday analogy.** Two students prepping from the same practice set. One *memorizes* the exact practice answers: perfect on the practice test (low train error), but bombs the real exam the moment questions are reworded (high validation error) — that's **overfitting**. The other barely studied and does badly on both practice and real exam — that's **underfitting**. The gap between practice and real-exam scores — not the practice score alone — tells you which student you're holding.
 
 Capacity is the model's ability to fit complex patterns. More capacity can reduce bias — missing real structure — but can increase variance — sensitivity to the particular sample. The **bias–variance tradeoff** is the practical tension between models that are too rigid and models that are too flexible for the data you have.
 

@@ -29,6 +29,8 @@ Two sub-lessons:
 - a query tower $f_q(q)$ for the request, such as a Creator Marketplace search query or a Search Ads request;
 - an item tower $f_i(i)$ for a creator, ad, document, or listing.
 
+**Everyday analogy.** Imagine a dating app with two questionnaires: one turns each member's preferences into a vector, and the other turns each profile into a vector. A match is a high dot product — their answers point in compatible directions. During training, the profile someone actually liked is the positive, while everyone else's profiles in the same mini-batch can serve as "wrong answers" for that member. The two questionnaires must produce coordinates in the same space, or the scores are meaningless.
+
 Both outputs live in the same vector space. The retrieval score is usually a dot product:
 
 $$s(q,i)=f_q(q)^\top f_i(i).$$
@@ -96,6 +98,8 @@ The correction changes how sampled observations represent the full corpus. The e
 ## M12.2 · Serving two-tower retrieval
 
 **The idea.** Serving works because the item tower is not request-dependent. The offline path computes item embeddings, validates them, builds an ANN index, and publishes it. The online path runs the query tower, searches the index, applies filters, and returns a candidate set for the downstream ranker.
+
+**Everyday analogy.** It is like printing a catalog before the store opens and keeping it behind the counter. Every product already has a card in the catalog (the precomputed item embedding), so when a shopper describes what they want, the clerk only translates that request into the same filing system and pulls likely cards. The ranker is the expert salesperson who then reads the short stack carefully. Bigger stacks give the salesperson more chances, but they cost more time.
 
 A typical serving funnel:
 

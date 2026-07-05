@@ -28,6 +28,8 @@ Five sub-lessons:
 
 **The idea.** Build a row at feature-freeze time $t$ from the history $H_t$ available then, giving features $x_t = \phi(H_t)$; the label $y_{t+\Delta}$ is observed later. The pipeline has **target leakage** if any coordinate of $x_t$ depends on $y_{t+\Delta}$ or on anything observed after $t$.
 
+**Everyday analogy.** Leakage is studying for an exam with a copy of the answer key mixed into your practice problems. You ace every practice test (offline AUC near 1.0), then fail the real exam (production), because in the real world the answer key isn't there. The whole job is to notice which "practice problems" are secretly the answer key in disguise — a feature you could not actually have known at prediction time.
+
 **The five forms.** Leakage is one bug — a feature that "knows the answer" — but it sneaks in through five distinct doors. Learn to name each one, because the *fix* is different for each.
 
 | Form | What leaks | Ads example | Prevention |
@@ -116,6 +118,8 @@ The leaky feature correlates with the label; the as-of feature does not.
 
 **The idea.** A categorical feature takes values from a finite set. **Nominal** has no order (campaign id, country); **ordinal** has a real order (small/medium/large) — order-preserving encoding is valid only then.
 
+**Everyday analogy.** Turning labels into numbers a model can use. **Nominal** categories are like jersey colors — red/blue/green — where no color is "greater," so numbering them 1/2/3 fakes an order that isn't there (that's why nominal → one-hot, not label-encode). **Ordinal** categories are like T-shirt sizes S/M/L, where the order is real, so 1/2/3 is fine. **Target encoding** (replace a category with its average click rate) is like rating a new restaurant by its average review: trustworthy with 500 reviews, but with only 2 (both 5-star) you shouldn't crown it the city's best — you shrink toward the citywide average until it earns trust (smoothing), and you never count your own visit in its score (out-of-fold).
+
 | Encoder | Best for | Watch out for |
 |---|---|---|
 | One-hot | low cardinality | dimensionality blow-up at high cardinality |
@@ -141,6 +145,8 @@ It must be computed **out-of-fold** (encode each fold using the *other* folds' s
 
 **The idea.** Raw numeric signals need scaling and, for skewed distributions, a transform — but **every fitted statistic must come from the training fold only.**
 
+**Everyday analogy.** Putting different measurements on a common footing before comparing. Comparing income (0–1,000,000) against age (0–100) unscaled is like comparing one distance in millimeters and another in kilometers — the big-number feature drowns out the other, so you standardize both. A log transform is the earthquake Richter scale: it compresses a heavy tail so the few campaigns that spend 100× the rest don't dominate. And "compute the scale from training data only" is the same exam discipline from M1 — your ruler ($\mu, \sigma$) must be built without peeking at the test.
+
 - **Scaling:** z-score $z = \dfrac{x - \mu_{\text{train}}}{\sigma_{\text{train}}}$; min-max; robust (median/IQR) for outlier-heavy data. Linear and neural models need scaling; trees do not.
 - **Skew transforms:** `log1p`, Box-Cox, Yeo-Johnson (handles zeros/negatives). Ad-spend and engagement counts are heavy-tailed and almost always need one.
 - **Outliers:** winsorize/clip.
@@ -160,6 +166,8 @@ X_val = scaler.transform(X_val)   # val never influences the fit
 ## M2.5 · Train/serve skew & the feature contract
 
 **The idea.** A feature has **train/serve skew** when the value computed for training differs from the value the online serving path computes for the same request. It is a **feature-definition bug**, not a modeling bug: the weights are fine, but the offline and online code paths disagree about what the feature means.
+
+**Everyday analogy.** A dish that tastes different from the cookbook photo — not because the chef is bad, but because the test kitchen measured "1 cup" differently than the line cook. Train/serve skew is exactly that: the model (chef) is fine, but the *offline* feature recipe and the *online* feature recipe disagree about what a feature means — e.g. "clicks in the last 7 days" versus "last 1 day." The fix isn't a better chef; it's one shared recipe card (a feature store) that both kitchens cook from.
 
 **Skew is not drift.** Skew is an offline-vs-online mismatch *at one point in time*. **Drift** is the data changing *over time* under the same definition. Fix skew by unifying the definition; handle drift with monitoring and retraining. A common drift signal is **PSI** $= \sum_i (a_i - e_i)\log(a_i/e_i)$ between two distributions.
 
