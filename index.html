@@ -683,6 +683,7 @@
   // Order the (merged) groups appear in the sidebar:
   window.MODULE_ORDER = [
     "AI Cheat Sheet",
+    "AI Cheat Sheet 2",
     "Foundations & Linear Algebra",
     "Probability & Statistics",
     "Practical Statistics",
@@ -755,6 +756,7 @@
 <!-- Content files. Plain <script src> works directly from file:// (no server needed). -->
 <!-- AI Cheat Sheet lessons (auto-generated from topics/lessons/*.md by tools/build-cheatsheet.js). -->
 <script src="lessons/cheatsheet.js"></script>
+<script src="lessons/cheatsheet2.js"></script>
 <script src="lessons/00-foundations.js"></script>
 <script src="lessons/01-probability.js"></script>
 <script src="lessons/02-ml.js"></script>
@@ -1453,7 +1455,7 @@ const App = (function () {
   //  • "Papers"  — the Capstones plus every "Papers · …" category.
   // (A third, "Math", is assigned per-lesson via the `superGroup` field.)
   function superGroupOf(name) {
-    if (name === "AI Cheat Sheet") return null;   // top-level standalone group, first in the nav
+    if (name === "AI Cheat Sheet" || name === "AI Cheat Sheet 2") return null;   // top-level standalone groups, first in the nav
     if (name === "Capstones" || /^Papers\s*·/.test(name)) return "Papers";
     const i = MODULE_ORDER.indexOf(name), cap = MODULE_ORDER.indexOf("Capstones");
     if (i !== -1 && cap !== -1 && i < cap) return "Course";
