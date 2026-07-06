@@ -624,7 +624,7 @@ $$
 Use difference of squares:
 
 $$
-(3-\lambda)^2-1^2=ig((3-\lambda)-1\big)\big((3-\lambda)+1\big)=0.
+(3-\lambda)^2-1^2=\big((3-\lambda)-1\big)\big((3-\lambda)+1\big)=0.
 $$
 
 Simplify both factors:
