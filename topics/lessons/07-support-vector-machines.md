@@ -338,6 +338,352 @@ plt.show()  # Render the raw-data plot.
 
 ---
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the SVM ideas from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline data, so every score, margin, loss, and kernel value is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us vectors, dot products, norms, and small matrix calculations.
+import matplotlib.pyplot as plt  # Matplotlib lets us see boundaries, margins, losses, and kernel similarity.
+np.random.seed(0)  # reproducibility.
+```
+
+#### 1. Linear decision rule: scores, signs, and margins
+
+An SVM starts with a signed score: $f(x)=w^\top x+b$. The sign gives the class prediction, while the labeled score $y f(x)$ says whether the point is correct and how far it is from the boundary in the model's current scaling. We compute both the functional margin $y(w^\top x+b)$ and the geometric margin:
+
+$$
+\frac{y(w^\top x+b)}{\lVert w\rVert}
+$$
+
+Dividing by $\lVert w\rVert$ matters because multiplying both $w$ and $b$ by 10 does not move the boundary, but it does multiply every raw score by 10. The norm removes that arbitrary scale and turns the score into an actual perpendicular distance.
+
+```python
+X_rule_w = np.array([[-2.0, -1.0], [-1.0, -2.0], [-1.0, -1.0], [1.0, 1.0], [2.0, 1.0], [1.0, 2.0]])  # create six separable 2-D points.
+y_rule_w = np.array([-1, -1, -1, 1, 1, 1])  # label the first three negative and the last three positive.
+w_rule_w = np.array([0.5, 0.5])  # choose a diagonal normal vector perpendicular to the boundary.
+b_rule_w = 0.0  # choose the intercept in the code convention f(x)=w^T x+b.
+print("points:\n", X_rule_w)  # inspect the tiny dataset.
+print("labels:", y_rule_w)  # inspect the class signs.
+print("w:", w_rule_w, "b:", b_rule_w)  # inspect the separator parameters.
+```
+▶ What you'll see: six points arranged in two diagonal classes, plus the hand-built separator parameters.
+
+```python
+score_rule_w = X_rule_w @ w_rule_w + b_rule_w  # compute f(x)=w^T x+b for every point at once.
+pred_rule_w = np.where(score_rule_w >= 0.0, 1, -1)  # convert score signs into SVM class predictions.
+print("scores:", np.round(score_rule_w, 3))  # print raw signed distances in arbitrary score units.
+print("predictions:", pred_rule_w)  # print the predicted class signs.
+print("correct?", pred_rule_w == y_rule_w)  # verify that the sign rule separates this toy data.
+```
+▶ What you'll see: negative points get negative scores, positive points get positive scores, and every prediction is correct.
+
+```python
+functional_rule_w = y_rule_w * score_rule_w  # compute y*f(x), positive when a point is correctly classified.
+norm_rule_w = max(np.linalg.norm(w_rule_w), 1e-12)  # guard against divide-by-zero before making distances.
+geometric_rule_w = functional_rule_w / norm_rule_w  # convert functional margins into perpendicular distances.
+print("functional margins:", np.round(functional_rule_w, 3))  # inspect scale-dependent confidence.
+print("||w||:", round(norm_rule_w, 3))  # inspect the scaling factor that controls distance conversion.
+print("geometric margins:", np.round(geometric_rule_w, 3))  # inspect true distances to the correct side.
+```
+▶ What you'll see: the closest points have functional margin 1 and geometric margin $1/\lVert w\rVert$.
+
+```python
+x_grid_rule_w = np.linspace(-3.0, 3.0, 200)  # create x-values for drawing the boundary and margin lines.
+safe_w2_rule_w = w_rule_w[1] if abs(w_rule_w[1]) > 1e-12 else 1e-12  # guard the line formula from vertical-boundary division.
+y_boundary_rule_w = -(w_rule_w[0] * x_grid_rule_w + b_rule_w) / safe_w2_rule_w  # solve w1*x+w2*y+b=0 for y.
+y_plus_rule_w = (1.0 - w_rule_w[0] * x_grid_rule_w - b_rule_w) / safe_w2_rule_w  # solve f(x)=+1 for the positive margin line.
+y_minus_rule_w = (-1.0 - w_rule_w[0] * x_grid_rule_w - b_rule_w) / safe_w2_rule_w  # solve f(x)=-1 for the negative margin line.
+plt.figure(figsize=(5.5, 4.2))  # create a compact geometry plot.
+plt.scatter(X_rule_w[y_rule_w == -1, 0], X_rule_w[y_rule_w == -1, 1], c="tab:blue", edgecolors="k", s=70, label="class -1")  # draw negative points.
+plt.scatter(X_rule_w[y_rule_w == 1, 0], X_rule_w[y_rule_w == 1, 1], c="tab:orange", edgecolors="k", s=70, label="class +1")  # draw positive points.
+plt.plot(x_grid_rule_w, y_boundary_rule_w, c="black", lw=2, label="f(x)=0")  # draw the decision boundary.
+plt.plot(x_grid_rule_w, y_plus_rule_w, c="black", ls="--", label="f(x)=+1")  # draw the positive margin.
+plt.plot(x_grid_rule_w, y_minus_rule_w, c="black", ls="--", label="f(x)=-1")  # draw the negative margin.
+plt.xlim(-3.0, 3.0)  # keep the horizontal range focused on the toy data.
+plt.ylim(-3.0, 3.0)  # keep the vertical range focused on the toy data.
+plt.xlabel("feature 1")  # label the horizontal coordinate.
+plt.ylabel("feature 2")  # label the vertical coordinate.
+plt.legend(loc="best")  # show classes, boundary, and margin-line meanings.
+plt.title("1: linear rule, boundary, and margins")  # give the plot a lesson-numbered title.
+plt.show()  # render the margin geometry.
+```
+▶ What you'll see: a diagonal decision boundary with two parallel margin lines touching the closest points.
+
+*Why it's done this way: SVMs separate by the sign of one linear score, then measure safety by the closest labeled score. The geometric margin divides out arbitrary scaling so "far from the boundary" means real Euclidean distance, not just a bigger choice of $w$ and $b$.*
+
+#### 2. Hard-margin SVM: maximize width by minimizing $\frac12\lVert w\rVert^2$
+
+For separable data, the hard-margin SVM chooses the separator with the widest empty buffer. In canonical scaling, every point must satisfy:
+
+$$
+y_i(w^\top x_i+b)\geq 1
+$$
+
+The two margin lines are $f(x)=+1$ and $f(x)=-1$, so their distance apart is:
+
+$$
+\frac{2}{\lVert w\rVert}
+$$
+
+Maximizing that width is the same as minimizing $\lVert w\rVert$, and $\frac12\lVert w\rVert^2$ is used because it is smooth, convex, and has the same minimizer.
+
+```python
+X_hard_w = X_rule_w.copy()  # reuse the same separable points so the hard-margin constraints are visible.
+y_hard_w = y_rule_w.copy()  # reuse the same labels.
+w_large_w = np.array([1.0, 1.0])  # choose a steeper-scaled separator with the same boundary direction.
+b_large_w = 0.0  # keep the boundary through the origin for easy comparison.
+score_large_w = X_hard_w @ w_large_w + b_large_w  # compute scores for the scaled separator.
+margin_large_w = y_hard_w * score_large_w  # compute hard-margin constraint values.
+print("large-scale functional margins:", np.round(margin_large_w, 3))  # inspect that all constraints exceed 1.
+print("large-scale min margin:", round(margin_large_w.min(), 3))  # inspect the closest constraint value.
+```
+▶ What you'll see: this separator classifies everything correctly, but its closest functional margin is larger than needed.
+
+```python
+scale_hard_w = max(margin_large_w.min(), 1e-12)  # find the factor needed to shrink the closest margin down to 1 safely.
+w_hard_w = w_large_w / scale_hard_w  # rescale w without moving the decision boundary.
+b_hard_w = b_large_w / scale_hard_w  # rescale b by the same amount so the boundary is unchanged.
+score_hard_w = X_hard_w @ w_hard_w + b_hard_w  # recompute scores after canonical scaling.
+constraint_hard_w = y_hard_w * score_hard_w  # recompute y*f(x), which should now have minimum 1.
+print("canonical w:", np.round(w_hard_w, 3), "canonical b:", round(b_hard_w, 3))  # inspect the canonical separator.
+print("canonical constraints:", np.round(constraint_hard_w, 3))  # verify y*f(x)>=1 for every point.
+```
+▶ What you'll see: the closest points land exactly at functional margin 1, which is the canonical SVM scaling.
+
+```python
+norm_large_w = max(np.linalg.norm(w_large_w), 1e-12)  # compute the norm of the over-scaled separator safely.
+norm_hard_w = max(np.linalg.norm(w_hard_w), 1e-12)  # compute the norm of the canonical separator safely.
+width_large_w = 2.0 / norm_large_w  # compute the over-scaled margin width.
+width_hard_w = 2.0 / norm_hard_w  # compute the canonical margin width.
+objective_large_w = 0.5 * norm_large_w ** 2  # compute 1/2||w||^2 for the over-scaled separator.
+objective_hard_w = 0.5 * norm_hard_w ** 2  # compute 1/2||w||^2 for the canonical separator.
+print("large width/objective:", round(width_large_w, 3), round(objective_large_w, 3))  # compare the worse scaling.
+print("canonical width/objective:", round(width_hard_w, 3), round(objective_hard_w, 3))  # compare the wider, smaller-norm scaling.
+```
+▶ What you'll see: shrinking to canonical scale increases the margin width and lowers $\frac12\lVert w\rVert^2$.
+
+```python
+x_grid_hard_w = np.linspace(-3.0, 3.0, 200)  # create x-values for the hard-margin plot.
+safe_w2_hard_w = w_hard_w[1] if abs(w_hard_w[1]) > 1e-12 else 1e-12  # guard against vertical-line division.
+y0_hard_w = -(w_hard_w[0] * x_grid_hard_w + b_hard_w) / safe_w2_hard_w  # draw f(x)=0.
+y1_hard_w = (1.0 - w_hard_w[0] * x_grid_hard_w - b_hard_w) / safe_w2_hard_w  # draw f(x)=+1.
+ym1_hard_w = (-1.0 - w_hard_w[0] * x_grid_hard_w - b_hard_w) / safe_w2_hard_w  # draw f(x)=-1.
+plt.figure(figsize=(5.5, 4.2))  # create the hard-margin figure.
+plt.scatter(X_hard_w[y_hard_w == -1, 0], X_hard_w[y_hard_w == -1, 1], c="tab:blue", edgecolors="k", s=70, label="class -1")  # draw negative class points.
+plt.scatter(X_hard_w[y_hard_w == 1, 0], X_hard_w[y_hard_w == 1, 1], c="tab:orange", edgecolors="k", s=70, label="class +1")  # draw positive class points.
+plt.plot(x_grid_hard_w, y0_hard_w, c="black", lw=2, label="boundary")  # draw the separating line.
+plt.plot(x_grid_hard_w, y1_hard_w, c="black", ls="--", label="margins")  # draw the upper margin.
+plt.plot(x_grid_hard_w, ym1_hard_w, c="black", ls="--")  # draw the lower margin.
+plt.annotate(f"width = {width_hard_w:.2f}", xy=(0.0, 1.0), xytext=(0.7, 1.7), arrowprops={"arrowstyle": "->"})  # mark the margin width numerically.
+plt.xlim(-3.0, 3.0)  # focus on the data horizontally.
+plt.ylim(-3.0, 3.0)  # focus on the data vertically.
+plt.xlabel("feature 1")  # label the horizontal axis.
+plt.ylabel("feature 2")  # label the vertical axis.
+plt.legend(loc="best")  # show boundary and class labels.
+plt.title("2: hard-margin width is 2 / ||w||")  # identify the hard-margin idea.
+plt.show()  # render the figure.
+```
+▶ What you'll see: the widest empty strip sits between the dashed lines, with closest points touching the strip edges.
+
+*Why it's done this way: the constraint $y_i(w^\top x_i+b)\geq 1$ fixes the otherwise arbitrary scale of the score. Once that scale is fixed, minimizing $\frac12\lVert w\rVert^2$ directly maximizes the geometric margin width.*
+
+#### 3. Soft margin: hinge loss, slack, and the $C$ tradeoff
+
+Real data overlap, so a perfect hard-margin separator may not exist or may be too brittle. Soft-margin SVMs introduce slack $\xi_i\geq 0$ so points can be inside the margin or even misclassified:
+
+$$
+y_i(w^\top x_i+b)\geq 1-\xi_i
+$$
+
+For a fixed separator, the smallest useful slack is exactly the hinge loss:
+
+$$
+\xi_i=\max(0,1-y_i f(x_i))
+$$
+
+The parameter $C$ controls how expensive these violations are: large $C$ punishes violations hard, while small $C$ accepts more violations to keep the margin wider.
+
+```python
+X_soft_w = np.array([[-2.0, -1.0], [-1.0, -2.0], [-0.2, 0.8], [0.3, -0.4], [1.0, 1.2], [2.0, 1.0]])  # create mostly separable points plus two awkward ones.
+y_soft_w = np.array([-1, -1, -1, 1, 1, 1])  # keep binary labels in {-1,+1}.
+w_soft_w = np.array([0.7, 0.6])  # choose a plausible but imperfect separator.
+b_soft_w = -0.05  # shift the separator slightly so some points violate the margin.
+score_soft_w = X_soft_w @ w_soft_w + b_soft_w  # compute f(x) for every soft-margin point.
+signed_soft_w = y_soft_w * score_soft_w  # compute y*f(x), the margin score used by hinge loss.
+print("signed margins y*f:", np.round(signed_soft_w, 3))  # inspect which points are safe, inside-margin, or wrong.
+```
+▶ What you'll see: some points have $y f(x)\geq 1$, some fall inside the margin, and possibly one is on the wrong side.
+
+```python
+hinge_soft_w = np.maximum(0.0, 1.0 - signed_soft_w)  # compute max(0, 1-y*f) point by point.
+slack_soft_w = hinge_soft_w.copy()  # interpret the same values as the minimum slack variables xi.
+status_soft_w = np.where(signed_soft_w >= 1.0, "safe", np.where(signed_soft_w > 0.0, "inside margin", "misclassified"))  # classify violation types.
+print("hinge/slack values:", np.round(slack_soft_w, 3))  # print each point's violation size.
+print("statuses:", status_soft_w)  # print the human-readable case for each point.
+```
+▶ What you'll see: safe points have zero loss, margin violators have fractional loss, and wrong-side points have loss above 1.
+
+```python
+C_values_soft_w = np.array([0.1, 1.0, 10.0])  # choose small, medium, and large violation penalties.
+regularizer_soft_w = 0.5 * np.sum(w_soft_w ** 2)  # compute the margin-size penalty 1/2||w||^2.
+objectives_soft_w = regularizer_soft_w + C_values_soft_w * np.sum(hinge_soft_w)  # compute soft-margin objective values.
+print("regularizer:", round(regularizer_soft_w, 3))  # inspect the margin part of the cost.
+print("sum hinge:", round(np.sum(hinge_soft_w), 3))  # inspect the total violation part.
+print("objectives for C=0.1,1,10:", np.round(objectives_soft_w, 3))  # see how C changes the cost pressure.
+```
+▶ What you'll see: the same violations become much more expensive as $C$ grows.
+
+```python
+s_grid_soft_w = np.linspace(-1.5, 2.5, 200)  # create signed-margin values y*f across a useful range.
+hinge_grid_soft_w = np.maximum(0.0, 1.0 - s_grid_soft_w)  # evaluate hinge loss on the grid.
+plt.figure(figsize=(5.5, 3.8))  # create a hinge-loss figure.
+plt.plot(s_grid_soft_w, hinge_grid_soft_w, c="crimson", lw=2, label="max(0, 1 - y f)")  # draw the hinge curve.
+plt.scatter(signed_soft_w, hinge_soft_w, c="black", s=55, zorder=3, label="toy points")  # place the actual examples on the curve.
+plt.axvline(1.0, c="gray", ls="--", label="margin threshold")  # mark where loss becomes zero.
+plt.axvline(0.0, c="gray", ls=":", label="decision boundary")  # mark where classification changes sign.
+plt.xlabel("signed margin y f(x)")  # label the horizontal axis with the SVM score.
+plt.ylabel("hinge loss")  # label the vertical loss axis.
+plt.legend(loc="best")  # show the curve and threshold meanings.
+plt.title("3: hinge loss charges margin violations")  # identify the soft-margin idea.
+plt.show()  # render the hinge-loss plot.
+```
+▶ What you'll see: a flat zero-loss region after $y f(x)=1$ and a linear penalty for every violation.
+
+*Why it's done this way: slack turns an impossible hard constraint into a measurable violation, and hinge loss is the smallest slack needed for each point. The single knob $C$ then trades margin width against how much the model cares about those violations.*
+
+#### 4. RBF kernel: distance becomes similarity for curved boundaries
+
+A linear SVM draws a straight boundary in the input plane. A kernel SVM instead compares a point to training points through a similarity function, and the RBF kernel is:
+
+$$
+k(x,z)=\exp(-\gamma\lVert x-z\rVert^2)
+$$
+
+This formula is near 1 when $x$ and $z$ are close and decays toward 0 as their squared distance grows. Because predictions can combine many local similarities, the final boundary can bend around nonlinear shapes without explicitly building the high-dimensional feature map.
+
+```python
+anchor_rbf_w = np.array([0.0, 0.0])  # choose one reference point z.
+query_rbf_w = np.array([[0.0, 0.0], [0.5, 0.0], [1.0, 0.0], [2.0, 0.0], [3.0, 0.0]])  # choose points at increasing distances.
+gamma_rbf_w = 0.8  # choose one RBF sharpness value.
+dist2_rbf_w = np.sum((query_rbf_w - anchor_rbf_w) ** 2, axis=1)  # compute squared distances ||x-z||^2.
+k_rbf_w = np.exp(-gamma_rbf_w * dist2_rbf_w)  # compute exp(-gamma||x-z||^2).
+print("squared distances:", np.round(dist2_rbf_w, 3))  # inspect the distance inputs to the kernel.
+print("RBF similarities:", np.round(k_rbf_w, 3))  # inspect the similarity outputs.
+```
+▶ What you'll see: identical points have similarity 1, and farther points quickly approach similarity 0.
+
+```python
+d_grid_rbf_w = np.linspace(0.0, 3.0, 200)  # create distances from zero to far away.
+gamma_slow_w = 0.2  # choose a small gamma for slow similarity decay.
+gamma_fast_w = 1.2  # choose a large gamma for fast similarity decay.
+k_slow_w = np.exp(-gamma_slow_w * d_grid_rbf_w ** 2)  # compute a broad RBF curve.
+k_fast_w = np.exp(-gamma_fast_w * d_grid_rbf_w ** 2)  # compute a narrow RBF curve.
+plt.figure(figsize=(5.5, 3.8))  # create the RBF decay figure.
+plt.plot(d_grid_rbf_w, k_slow_w, label=r"$\gamma=0.2$", lw=2)  # draw the smoother, wider kernel.
+plt.plot(d_grid_rbf_w, k_fast_w, label=r"$\gamma=1.2$", lw=2)  # draw the more local, sharper kernel.
+plt.xlabel("distance ||x - z||")  # label the distance axis.
+plt.ylabel("RBF similarity")  # label the kernel-value axis.
+plt.legend(loc="best")  # show which curve belongs to which gamma.
+plt.title("4: RBF similarity decays with distance")  # identify the RBF idea.
+plt.show()  # render the decay plot.
+```
+▶ What you'll see: larger $\gamma$ makes similarity vanish faster, which makes the model more local and wiggly.
+
+```python
+support_rbf_w = np.array([[0.0, 0.0], [1.2, 0.2], [-1.2, 0.2], [0.0, 1.4]])  # create four hand-chosen support-like centers.
+y_support_rbf_w = np.array([1, -1, -1, -1])  # make the center positive and surrounding points negative.
+alpha_rbf_w = np.array([1.8, 0.7, 0.7, 0.7])  # choose dual-like weights that combine local similarities.
+xx_rbf_w, yy_rbf_w = np.meshgrid(np.linspace(-2.0, 2.0, 160), np.linspace(-1.4, 2.4, 160))  # build a 2-D plotting grid.
+grid_rbf_w = np.c_[xx_rbf_w.ravel(), yy_rbf_w.ravel()]  # flatten the grid into point rows.
+dist2_grid_rbf_w = np.sum((grid_rbf_w[:, None, :] - support_rbf_w[None, :, :]) ** 2, axis=2)  # compute grid-to-support squared distances.
+K_grid_rbf_w = np.exp(-1.4 * dist2_grid_rbf_w)  # compute RBF similarities from every grid point to every support point.
+score_grid_rbf_w = K_grid_rbf_w @ (alpha_rbf_w * y_support_rbf_w)  # combine similarities into a kernel decision score.
+plt.figure(figsize=(5.2, 4.2))  # create the nonlinear-boundary figure.
+plt.contourf(xx_rbf_w, yy_rbf_w, score_grid_rbf_w.reshape(xx_rbf_w.shape), levels=[-10.0, 0.0, 10.0], colors=["tab:blue", "tab:orange"], alpha=0.18)  # shade negative and positive regions.
+plt.contour(xx_rbf_w, yy_rbf_w, score_grid_rbf_w.reshape(xx_rbf_w.shape), levels=[0.0], colors="black", linewidths=2)  # draw the curved zero-score boundary.
+plt.scatter(support_rbf_w[y_support_rbf_w == -1, 0], support_rbf_w[y_support_rbf_w == -1, 1], c="tab:blue", edgecolors="k", s=80, label="class -1")  # draw negative support-like points.
+plt.scatter(support_rbf_w[y_support_rbf_w == 1, 0], support_rbf_w[y_support_rbf_w == 1, 1], c="tab:orange", edgecolors="k", s=80, label="class +1")  # draw positive support-like points.
+plt.xlabel("feature 1")  # label the horizontal feature.
+plt.ylabel("feature 2")  # label the vertical feature.
+plt.legend(loc="best")  # show class meanings.
+plt.title("4: RBF combinations can bend the boundary")  # identify the curved-boundary takeaway.
+plt.show()  # render the hand-built kernel decision boundary.
+```
+▶ What you'll see: the zero-score contour curves around the central point instead of staying straight.
+
+*Why it's done this way: the RBF kernel converts distance into local similarity, so nearby support vectors influence a prediction strongly and faraway ones barely matter. Combining those local bumps gives nonlinear boundaries while the algorithm still works through dot-product-like kernel values.*
+
+#### 5. Support-vector sparsity: only margin points get nonzero $\alpha$
+
+The dual view writes the separator as a weighted sum of training points:
+
+$$
+w=\sum_i \alpha_i y_i x_i
+$$
+
+The key KKT condition is complementary slackness:
+
+$$
+\alpha_i\left[y_i(w^\top x_i+b)-1\right]=0
+$$
+
+If a point is strictly outside the margin, then $y_i(w^\top x_i+b)>1$, so the bracket is positive and the only way the product can be zero is $\alpha_i=0$. Points on the margin can have $\alpha_i>0$; those are the support vectors that define the boundary.
+
+```python
+X_sv_w = X_rule_w.copy()  # reuse the clean hard-margin data.
+y_sv_w = y_rule_w.copy()  # reuse the matching labels.
+w_sv_w = w_hard_w.copy()  # reuse the canonical separator from the hard-margin section.
+b_sv_w = b_hard_w  # reuse the canonical intercept.
+margin_sv_w = y_sv_w * (X_sv_w @ w_sv_w + b_sv_w)  # compute y*f(x) for every point.
+support_mask_sv_w = np.isclose(margin_sv_w, 1.0, atol=1e-9)  # identify points exactly on the margin.
+print("margins:", np.round(margin_sv_w, 3))  # inspect which points are on or outside the margin.
+print("support-vector mask:", support_mask_sv_w)  # show which points satisfy y*f(x)=1.
+```
+▶ What you'll see: only the two closest points sit exactly at margin value 1.
+
+```python
+alpha_sv_w = np.zeros(len(X_sv_w))  # start with zero dual weight on every point.
+alpha_sv_w[support_mask_sv_w] = 0.25  # assign nonzero weights only to the margin points in this symmetric toy.
+w_from_alpha_sv_w = np.sum((alpha_sv_w * y_sv_w)[:, None] * X_sv_w, axis=0)  # reconstruct w=sum alpha_i*y_i*x_i.
+print("alpha values:", alpha_sv_w)  # inspect sparsity directly.
+print("w from alpha:", np.round(w_from_alpha_sv_w, 3))  # verify the support vectors reconstruct the separator.
+print("original w:", np.round(w_sv_w, 3))  # compare against the canonical primal vector.
+```
+▶ What you'll see: four alpha values are zero, and the two support vectors alone rebuild $w$.
+
+```python
+kkt_product_sv_w = alpha_sv_w * (margin_sv_w - 1.0)  # compute alpha_i * (y_i*f_i - 1) for complementary slackness.
+print("KKT products:", np.round(kkt_product_sv_w, 10))  # verify the products are zero for all points.
+print("support-vector coordinates:\n", X_sv_w[support_mask_sv_w])  # print the boundary-defining points.
+```
+▶ What you'll see: every KKT product is zero, even though most points are ignored because their alpha is zero.
+
+```python
+x_grid_sv_w = np.linspace(-3.0, 3.0, 200)  # create x-values for the sparsity plot.
+safe_w2_sv_w = w_sv_w[1] if abs(w_sv_w[1]) > 1e-12 else 1e-12  # guard against vertical-boundary division.
+y0_sv_w = -(w_sv_w[0] * x_grid_sv_w + b_sv_w) / safe_w2_sv_w  # compute the decision boundary.
+y1_sv_w = (1.0 - w_sv_w[0] * x_grid_sv_w - b_sv_w) / safe_w2_sv_w  # compute the positive margin.
+ym1_sv_w = (-1.0 - w_sv_w[0] * x_grid_sv_w - b_sv_w) / safe_w2_sv_w  # compute the negative margin.
+plt.figure(figsize=(5.5, 4.2))  # create the support-vector plot.
+plt.scatter(X_sv_w[y_sv_w == -1, 0], X_sv_w[y_sv_w == -1, 1], c="tab:blue", edgecolors="k", s=70, label="class -1")  # draw negative points.
+plt.scatter(X_sv_w[y_sv_w == 1, 0], X_sv_w[y_sv_w == 1, 1], c="tab:orange", edgecolors="k", s=70, label="class +1")  # draw positive points.
+plt.scatter(X_sv_w[support_mask_sv_w, 0], X_sv_w[support_mask_sv_w, 1], s=220, facecolors="none", edgecolors="red", linewidths=2.2, label="support vectors")  # circle only support vectors.
+plt.plot(x_grid_sv_w, y0_sv_w, c="black", lw=2, label="boundary")  # draw the boundary.
+plt.plot(x_grid_sv_w, y1_sv_w, c="black", ls="--", label="margins")  # draw one margin.
+plt.plot(x_grid_sv_w, ym1_sv_w, c="black", ls="--")  # draw the other margin.
+plt.xlim(-3.0, 3.0)  # focus the horizontal range.
+plt.ylim(-3.0, 3.0)  # focus the vertical range.
+plt.xlabel("feature 1")  # label the horizontal axis.
+plt.ylabel("feature 2")  # label the vertical axis.
+plt.legend(loc="best")  # show support-vector and class labels.
+plt.title("5: support vectors define the SVM boundary")  # identify the sparsity idea.
+plt.show()  # render the support-vector geometry.
+```
+▶ What you'll see: the circled margin points define the boundary; the farther points do not affect $w$.
+
+*Why it's done this way: the dual/KKT conditions make SVMs sparse by construction. Training may look at every point, but prediction and the final boundary are governed only by points with nonzero $\alpha$ — the support vectors.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Compute one SVM score $w^Tx-b$ and its sign
