@@ -290,6 +290,452 @@ def copy_domains(domains):  # Copy a domain dictionary without aliasing mutable 
 ```
 
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up exercises, we will build the main CSP ideas from scratch in code. The whole walkthrough uses only NumPy + Matplotlib, tiny inline map-coloring data, and variable names ending in `_w` so nothing collides with later notebook cells. Each subsection starts with the plain-English idea, then prints small intermediate objects and draws the constraint graph or domain table.
+
+```python
+import numpy as np  # Use NumPy for tiny arrays, deterministic ordering, and simple numerical summaries.
+import matplotlib.pyplot as plt  # Use Matplotlib so each CSP state can be inspected visually.
+np.random.seed(22135)  # Fix randomness so local-search examples and printed traces are reproducible.
+```
+
+#### 1. Variables, domains, factors, and weights
+
+**What.** A CSP starts with variables, a domain for each variable, and factors that score whether a local choice is compatible. For map coloring, each region is a variable, each color is a value, and each edge factor returns $1$ when neighboring colors are different and $0$ when they are equal.
+
+**Why.** Writing constraints as factors lets one formula cover both hard CSPs and weighted factor graphs:
+
+$$
+\operatorname{Weight}(x)=\prod_j f_j(x).
+$$
+
+If any hard factor is $0$, the whole product becomes $0$, so that complete assignment is ruled out. We use this tiny map because every factor can be inspected by hand.
+
+```python
+variables_w = ["A", "B", "C", "D"]  # Name four small map regions so every assignment fits on screen.
+domain_w = ["red", "green", "blue"]  # Give every region the same three possible colors.
+domains_w = {var_w: list(domain_w) for var_w in variables_w}  # Store one domain list per variable for later pruning examples.
+edges_w = [("A", "B"), ("A", "C"), ("B", "C"), ("C", "D")]  # Connect adjacent regions that must have different colors.
+positions_w = {"A": (0.0, 1.0), "B": (-1.0, 0.0), "C": (1.0, 0.0), "D": (1.0, -1.0)}  # Fix node positions without NetworkX.
+palette_w = {"red": "#e74c3c", "green": "#2ecc71", "blue": "#3498db", None: "white"}  # Map color names to readable plot colors.
+print("variables:", variables_w)  # Inspect the variable set before defining constraints.
+print("domains:", domains_w)  # Inspect the allowed values for each variable.
+print("binary factors:", edges_w)  # Inspect which pairs receive not-equal factors.
+```
+
+```python
+def draw_graph_w(assignment_w=None, domains_to_show_w=None, title_w="CSP graph"):  # Define one small graph drawer reused throughout the walkthrough.
+    assignment_w = {} if assignment_w is None else assignment_w  # Treat missing assignments as an empty partial assignment.
+    domains_to_show_w = {} if domains_to_show_w is None else domains_to_show_w  # Treat missing domain labels as no annotations.
+    plt.figure(figsize=(5.2, 4.2))  # Create a compact figure that fits beside printed output.
+    for left_w, right_w in edges_w:  # Draw every binary factor as one edge.
+        x0_w, y0_w = positions_w[left_w]  # Read the left endpoint position.
+        x1_w, y1_w = positions_w[right_w]  # Read the right endpoint position.
+        plt.plot([x0_w, x1_w], [y0_w, y1_w], color="black", linewidth=1.5, zorder=1)  # Draw the constraint edge.
+    for var_w in variables_w:  # Draw every variable node after the edges.
+        x_w, y_w = positions_w[var_w]  # Read this variable's plotting position.
+        value_w = assignment_w.get(var_w, None)  # Look up the assigned color if one exists.
+        label_w = var_w if var_w not in domains_to_show_w else f"{var_w}\n{domains_to_show_w[var_w]}"  # Show a domain table inside nodes when requested.
+        plt.scatter([x_w], [y_w], s=1050, color=palette_w.get(value_w, "white"), edgecolor="black", zorder=2)  # Draw the region node.
+        plt.text(x_w, y_w, label_w, ha="center", va="center", fontsize=9, zorder=3)  # Label the node with its variable or domain.
+    plt.title(title_w)  # Title the figure with the subsection number.
+    plt.axis("off")  # Hide coordinate axes because this is a graph drawing.
+    plt.show()  # Render the constraint graph.
+
+draw_graph_w(title_w="1: variables, domains, and not-equal factors")  # Show the unassigned CSP structure.
+```
+
+▶ What you'll see: four region variables connected by black constraint edges. Each edge represents one factor that checks whether adjacent colors are different.
+
+```python
+def edge_factor_w(assignment_w, left_w, right_w):  # Define one hard binary factor for map coloring.
+    if left_w not in assignment_w or right_w not in assignment_w:  # Skip factors whose variables are not both assigned yet.
+        return 1.0  # Leave partial assignments neutral until the factor can be evaluated.
+    return 1.0 if assignment_w[left_w] != assignment_w[right_w] else 0.0  # Return one for legal neighbors and zero for a color clash.
+
+def unary_preference_w(assignment_w):  # Define a tiny weighted unary factor to show that factors need not be only zero or one.
+    if "A" not in assignment_w:  # Skip the preference until region A is assigned.
+        return 1.0  # Keep incomplete assignments neutral.
+    return 1.4 if assignment_w["A"] == "red" else 1.0  # Prefer A=red without making other colors illegal.
+
+def assignment_weight_w(assignment_w):  # Multiply all factor values to get the assignment weight.
+    factors_w = [edge_factor_w(assignment_w, left_w, right_w) for left_w, right_w in edges_w]  # Evaluate every binary factor.
+    factors_w.append(unary_preference_w(assignment_w))  # Add the soft unary preference factor.
+    return float(np.prod(factors_w)), factors_w  # Return the product and the visible factor list.
+
+good_assignment_w = {"A": "red", "B": "green", "C": "blue", "D": "green"}  # Build one valid coloring.
+bad_assignment_w = {"A": "red", "B": "red", "C": "blue", "D": "green"}  # Build one invalid coloring with A and B equal.
+for name_w, assignment_w in [("good", good_assignment_w), ("bad", bad_assignment_w)]:  # Compare the two assignments side by side.
+    weight_w, factors_w = assignment_weight_w(assignment_w)  # Compute the product of all local factors.
+    print(name_w, "factors =", factors_w, "weight =", weight_w)  # Show how one zero factor kills the whole product.
+```
+
+Hard constraints are encoded as $0/1$ compatibilities because multiplication makes one violation decisive. Weighted factors use positive values such as $1.4$ to express preferences without forbidding an assignment.
+
+*Why it's done this way: local factors make a global feasibility test decomposable, so later algorithms can inspect only the small part of the graph touched by a new assignment.*
+
+#### 2. Backtracking search with dependent factors and early pruning
+
+**What.** Backtracking assigns one variable at a time, checks any factor whose variables are now assigned, and undoes the choice when a violation appears.
+
+**Why.** A constraint such as $A \neq B$ is dependent on both $A$ and $B$; before both are assigned, it cannot fail. Once it fails, every completion below that partial assignment has weight $0$, so the whole subtree can be pruned.
+
+**Why this approach.** We deliberately use a fixed variable order first so the pruning behavior is visible before adding smarter ordering heuristics.
+
+```python
+def partial_is_consistent_w(assignment_w):  # Check all currently inspectable edge factors in a partial assignment.
+    for left_w, right_w in edges_w:  # Visit each dependent binary factor.
+        if left_w in assignment_w and right_w in assignment_w:  # Evaluate the factor only when both endpoints are assigned.
+            if assignment_w[left_w] == assignment_w[right_w]:  # Detect a violated not-equal constraint.
+                return False, (left_w, right_w)  # Report the failing edge for the search trace.
+    return True, None  # Report that no assigned edge currently violates a constraint.
+
+print("A factor is checked only after all variables in its scope are assigned.")  # Explain the dependency in the trace.
+print("Current partial assignment {'A': 'red'}:", partial_is_consistent_w({"A": "red"}))  # Show that A-B cannot be checked yet.
+print("After adding B='red':", partial_is_consistent_w({"A": "red", "B": "red"}))  # Show the first dependent factor failure.
+```
+
+```python
+trace_limit_w = 18  # Limit printed trace lines so the notebook stays readable.
+trace_count_w = 0  # Count how many trace lines have been printed.
+tries_w = 0  # Count how many value attempts the backtracking search makes.
+solution_w = None  # Store the first complete legal assignment when found.
+
+def backtrack_w(order_w, assignment_w):  # Define plain depth-first backtracking over a fixed variable order.
+    global trace_count_w, tries_w, solution_w  # Reuse the small counters defined outside the function.
+    if len(assignment_w) == len(order_w):  # Stop when every variable has a value.
+        solution_w = dict(assignment_w)  # Copy the complete solution for later plotting.
+        return True  # Signal success to all recursive callers.
+    var_w = order_w[len(assignment_w)]  # Choose the next variable by position in the fixed order.
+    for value_w in domains_w[var_w]:  # Try each possible color for that variable.
+        tries_w += 1  # Count this branch attempt.
+        assignment_w[var_w] = value_w  # Extend the partial assignment.
+        ok_w, failed_edge_w = partial_is_consistent_w(assignment_w)  # Check only factors that became inspectable.
+        if trace_count_w < trace_limit_w:  # Avoid flooding the output with repeated recursion details.
+            print("try", dict(assignment_w), "ok=", ok_w, "failed=", failed_edge_w)  # Print the current branch status.
+            trace_count_w += 1  # Record that one trace line was printed.
+        if ok_w and backtrack_w(order_w, assignment_w):  # Recurse only when no local factor has failed.
+            return True  # Stop after the first solution is found.
+        assignment_w.pop(var_w)  # Undo the choice before trying the next value.
+    return False  # Report failure if every value for this variable leads to contradiction.
+
+found_w = backtrack_w(variables_w, {})  # Run plain backtracking on the fixed order A, B, C, D.
+print("found:", found_w, "tries:", tries_w, "solution:", solution_w)  # Inspect the result and the amount of search.
+```
+
+```python
+draw_graph_w(assignment_w=solution_w, title_w="2: first solution found by backtracking")  # Visualize the complete legal coloring.
+```
+
+▶ What you'll see: the trace rejects branches as soon as an assigned edge has equal colors, and the final graph shows a legal coloring with adjacent regions different.
+
+Backtracking prunes a whole subtree because a failed hard factor contributes $0$ to every completion's product. No future assignment to unassigned variables can turn that $0$ back into $1$.
+
+*Why it's done this way: checking dependent factors immediately after they become evaluable is the cheapest way to avoid enumerating impossible completions.*
+
+#### 3. Forward checking
+
+**What.** Forward checking propagates a new assignment one step outward: after assigning $X=v$, it removes every neighbor value that is inconsistent with $v$.
+
+**Why.** Plain backtracking waits until a neighbor is assigned before noticing a clash. Forward checking can discover an empty future domain earlier, which means it backtracks before spending time on irrelevant branches.
+
+**Why this approach.** We use a deliberately tight set of domains so one bad choice visibly wipes out a neighbor's remaining values.
+
+```python
+fc_domains_start_w = {"A": ["red"], "B": ["red", "green"], "C": ["green"], "D": ["red", "blue"]}  # Create tight domains that will expose a wipeout.
+fc_assignment_w = {}  # Start with no assigned variables.
+print("starting domains:", fc_domains_start_w)  # Show the domain table before any propagation.
+draw_graph_w(domains_to_show_w=fc_domains_start_w, title_w="3: forward checking before assignment")  # Draw the initial domains on the graph.
+```
+
+▶ What you'll see: A has only red, C has only green, and B sits between them with red or green. That makes the next propagation easy to inspect.
+
+```python
+def forward_check_w(assignment_w, domains_now_w, var_w, value_w):  # Assign one value and prune inconsistent neighbor domains.
+    new_domains_w = {name_w: list(values_w) for name_w, values_w in domains_now_w.items()}  # Copy domains so failed branches do not mutate siblings.
+    new_domains_w[var_w] = [value_w]  # Record that the assigned variable now has a singleton domain.
+    removed_w = []  # Keep a visible list of values removed by propagation.
+    for left_w, right_w in edges_w:  # Inspect every binary factor touching the assigned variable.
+        neighbor_w = right_w if left_w == var_w else left_w if right_w == var_w else None  # Find the other endpoint when this edge is relevant.
+        if neighbor_w is not None and neighbor_w not in assignment_w:  # Prune only unassigned neighbors.
+            kept_w = []  # Build the neighbor's filtered domain.
+            for candidate_w in new_domains_w[neighbor_w]:  # Test each neighbor value against the new assignment.
+                legal_w = candidate_w != value_w  # Map coloring keeps only values different from the assigned color.
+                if legal_w:  # Preserve consistent values.
+                    kept_w.append(candidate_w)  # Add this value to the filtered domain.
+                else:  # Record inconsistent values for inspection.
+                    removed_w.append((neighbor_w, candidate_w, "conflicts with", var_w, value_w))  # Explain the exact removal.
+            new_domains_w[neighbor_w] = kept_w  # Replace the neighbor domain with the filtered domain.
+    return new_domains_w, removed_w  # Return the pruned domains and the explanation list.
+
+fc_assignment_w["A"] = "red"  # Choose A=red, the only value available for A.
+fc_domains_after_a_w, removed_after_a_w = forward_check_w(fc_assignment_w, fc_domains_start_w, "A", "red")  # Prune domains after A is assigned.
+print("removed after A=red:", removed_after_a_w)  # Show which future values were deleted.
+print("domains after A=red:", fc_domains_after_a_w)  # Inspect the remaining domains.
+```
+
+```python
+fc_assignment_w["B"] = "green"  # Try B=green after forward checking made B a singleton.
+fc_domains_after_b_w, removed_after_b_w = forward_check_w(fc_assignment_w, fc_domains_after_a_w, "B", "green")  # Propagate B's choice to neighbors.
+print("removed after B=green:", removed_after_b_w)  # Show that C=green is deleted.
+print("domains after B=green:", fc_domains_after_b_w)  # Inspect the domain table with the wipeout.
+print("wiped-out variables:", [var_w for var_w, values_w in fc_domains_after_b_w.items() if len(values_w) == 0])  # Detect dead ends immediately.
+draw_graph_w(assignment_w=fc_assignment_w, domains_to_show_w=fc_domains_after_b_w, title_w="3: forward checking detects a wiped-out domain")  # Visualize the early dead end.
+```
+
+▶ What you'll see: assigning A=red removes red from B, then assigning B=green removes green from C. Since C has no values left, the branch is impossible before C is explicitly assigned.
+
+Forward checking is still local: it only looks from the newly assigned variable to its immediate unassigned neighbors. That small propagation is often enough to find dead ends much earlier than plain backtracking.
+
+*Why it's done this way: copying and pruning domains gives each search branch its own future, so one failed choice can be undone cleanly without corrupting other branches.*
+
+#### 4. Arc consistency (AC-3)
+
+**What.** Arc consistency asks a stronger pre-search question: for every directed edge $X \to Y$, does each value of $X$ have at least one compatible value left in $Y$?
+
+**Why.** If a value has no support in a neighbor's domain, that value can never appear in a valid solution. AC-3 repeatedly removes unsupported values and rechecks affected arcs until no more changes occur.
+
+**Why this approach.** We run AC-3 on the same tight domains from forward checking so you can see pruning happen before any search assignment is chosen.
+
+```python
+ac_domains_w = {"A": ["red"], "B": ["red", "green"], "C": ["green"], "D": ["red", "blue"]}  # Reuse tight domains for pre-search propagation.
+arc_queue_w = [(left_w, right_w) for left_w, right_w in edges_w] + [(right_w, left_w) for left_w, right_w in edges_w]  # Create both directions of every constraint edge.
+print("initial AC-3 queue:", arc_queue_w)  # Inspect the directed arcs to be processed.
+draw_graph_w(domains_to_show_w=ac_domains_w, title_w="4: AC-3 before propagation")  # Draw domains before arc consistency.
+```
+
+▶ What you'll see: the same domain table appears, but no variables have been assigned by search. AC-3 will prune using only domain support.
+
+```python
+def revise_w(domains_now_w, xi_w, xj_w):  # Remove values of Xi that have no compatible value in Xj.
+    revised_w = False  # Track whether this arc caused any domain shrinkage.
+    kept_w = []  # Build Xi's new domain value by value.
+    for value_i_w in domains_now_w[xi_w]:  # Check each candidate value in Xi.
+        supported_w = any(value_i_w != value_j_w for value_j_w in domains_now_w[xj_w])  # Ask whether Xj has at least one different color.
+        if supported_w:  # Keep supported values.
+            kept_w.append(value_i_w)  # Preserve this Xi value.
+        else:  # Drop unsupported values.
+            print("remove", value_i_w, "from", xi_w, "because", xj_w, "has no compatible value")  # Explain the deletion.
+            revised_w = True  # Mark that this arc changed a domain.
+    domains_now_w[xi_w] = kept_w  # Store the revised Xi domain.
+    return revised_w  # Report whether neighbors must be reconsidered.
+
+def neighbors_w(var_w):  # List graph neighbors of one variable.
+    return [right_w if left_w == var_w else left_w for left_w, right_w in edges_w if left_w == var_w or right_w == var_w]  # Collect adjacent variables from the edge list.
+
+while arc_queue_w:  # Process arcs until propagation reaches a fixed point or a domain empties.
+    xi_w, xj_w = arc_queue_w.pop(0)  # Pop the next directed arc in FIFO order.
+    if revise_w(ac_domains_w, xi_w, xj_w):  # Revise Xi against Xj and react only when Xi shrinks.
+        print("domains now:", ac_domains_w)  # Print each shrink step so propagation is inspectable.
+        if len(ac_domains_w[xi_w]) == 0:  # Stop early if a contradiction is proven.
+            print("AC-3 found an empty domain at", xi_w)  # Report the failed variable.
+            break  # Leave the loop because no solution exists under these domains.
+        for xk_w in neighbors_w(xi_w):  # Recheck arcs from Xi's other neighbors.
+            if xk_w != xj_w:  # Avoid immediately adding the arc we just used in reverse.
+                arc_queue_w.append((xk_w, xi_w))  # Add the affected arc back to the queue.
+print("final AC-3 domains:", ac_domains_w)  # Inspect the final propagated domains.
+```
+
+```python
+draw_graph_w(domains_to_show_w=ac_domains_w, title_w="4: AC-3 propagated domains")  # Visualize the post-AC-3 domain table.
+```
+
+▶ What you'll see: AC-3 removes unsupported values and can prove a contradiction before the recursive search starts.
+
+Arc consistency is stronger than one-step forward checking because every domain deletion can trigger more deletions through neighboring arcs. It is still not a full solver, but it reduces the search space before branching.
+
+*Why it's done this way: AC-3 spends cheap local work up front so expensive search explores fewer values later.*
+
+#### 5. Dynamic variable and value ordering (MCV/LCV)
+
+**What.** Dynamic ordering changes the next branch based on the current state. MCV chooses the variable with the fewest legal remaining values; LCV tries the value that leaves the most options for neighbors.
+
+**Why.** MCV tends to expose failure quickly, while LCV tries to keep future domains large. Together they reduce branching by asking the most urgent question first and using the least damaging answer first.
+
+**Why this approach.** We compute the scores explicitly, then run the same backtracking solver with and without the heuristic choices.
+
+```python
+heuristic_domains_w = {"A": ["red"], "B": ["red", "green", "blue"], "C": ["green", "blue"], "D": ["red", "blue"]}  # Define uneven domains for visible MCV scores.
+heuristic_assignment_w = {"A": "red"}  # Pretend A has already been assigned by earlier search.
+remaining_vars_w = [var_w for var_w in variables_w if var_w not in heuristic_assignment_w]  # List variables still waiting for values.
+legal_domains_w = {}  # Store legal values after respecting assigned neighbors.
+for var_w in remaining_vars_w:  # Score each unassigned variable.
+    legal_values_w = []  # Build the values still compatible with the partial assignment.
+    for value_w in heuristic_domains_w[var_w]:  # Test each candidate value.
+        trial_w = dict(heuristic_assignment_w)  # Copy the current partial assignment.
+        trial_w[var_w] = value_w  # Add the candidate value for this variable.
+        if partial_is_consistent_w(trial_w)[0]:  # Keep only values that do not violate assigned edges.
+            legal_values_w.append(value_w)  # Add this legal value to the score table.
+    legal_domains_w[var_w] = legal_values_w  # Save the legal domain for MCV.
+print("legal domains after A=red:", legal_domains_w)  # Inspect the MCV inputs.
+print("MCV choice:", min(legal_domains_w, key=lambda var_w: len(legal_domains_w[var_w])))  # Pick the smallest legal domain.
+```
+
+```python
+mcv_choice_w = min(legal_domains_w, key=lambda var_w: len(legal_domains_w[var_w]))  # Select the most constrained variable.
+lcv_scores_w = {}  # Store how many neighbor options each value preserves.
+for value_w in legal_domains_w[mcv_choice_w]:  # Score each value for the chosen variable.
+    score_w = 0  # Count future values left for unassigned neighbors.
+    for neighbor_w in neighbors_w(mcv_choice_w):  # Inspect every graph neighbor.
+        if neighbor_w not in heuristic_assignment_w and neighbor_w != mcv_choice_w:  # Consider only future variables.
+            score_w += sum(candidate_w != value_w for candidate_w in heuristic_domains_w[neighbor_w])  # Count neighbor values that survive this choice.
+    lcv_scores_w[value_w] = score_w  # Store the preservation score.
+lcv_order_w = sorted(lcv_scores_w, key=lambda value_w: -lcv_scores_w[value_w])  # Try values with the largest preservation score first.
+print("LCV scores for", mcv_choice_w, ":", lcv_scores_w)  # Inspect least-constraining scores.
+print("LCV order:", lcv_order_w)  # Show the value order used by heuristic search.
+```
+
+```python
+def search_with_options_w(use_heuristics_w):  # Count attempts for fixed-order search versus MCV/LCV search.
+    search_vars_w = ["D", "C", "B", "A"]  # Use a deliberately poor fixed order so MCV has a visible chance to help.
+    search_domains_w = {"A": ["red"], "B": ["red", "green"], "C": ["green", "blue"], "D": ["red", "green", "blue"]}  # Give A the tightest domain for MCV.
+    attempts_w = {"count": 0}  # Store attempts in a mutable object visible to the nested function.
+    def choose_var_w(assignment_w):  # Choose the next variable for the current partial assignment.
+        open_vars_w = [var_w for var_w in search_vars_w if var_w not in assignment_w]  # List unassigned variables in the current search order.
+        if not use_heuristics_w:  # Use the original fixed order for the baseline.
+            return open_vars_w[0]  # Pick the first unassigned variable.
+        scores_w = []  # Build MCV scores for all open variables.
+        for var_w in open_vars_w:  # Evaluate each possible next variable.
+            legal_count_w = 0  # Count legal values under the current partial assignment.
+            for value_w in search_domains_w[var_w]:  # Try each domain value.
+                trial_w = dict(assignment_w)  # Copy the partial assignment.
+                trial_w[var_w] = value_w  # Add the candidate value.
+                legal_count_w += int(partial_is_consistent_w(trial_w)[0])  # Count it if assigned-edge constraints are still legal.
+            scores_w.append((legal_count_w, var_w))  # Store smaller counts as more constrained.
+        return min(scores_w)[1]  # Choose the variable with the fewest legal values.
+    def order_values_w(var_w, assignment_w):  # Choose the value order for one variable.
+        values_w = list(search_domains_w[var_w])  # Start from the ordinary domain order.
+        if not use_heuristics_w:  # Keep baseline ordering unchanged.
+            return values_w  # Return red, green, blue.
+        scored_values_w = []  # Build LCV scores.
+        for value_w in values_w:  # Score each candidate value.
+            score_w = 0  # Count neighbor values preserved.
+            for neighbor_w in neighbors_w(var_w):  # Inspect adjacent variables.
+                if neighbor_w not in assignment_w:  # Only future variables matter for LCV.
+                    score_w += sum(candidate_w != value_w for candidate_w in search_domains_w[neighbor_w])  # Count compatible neighbor values.
+            scored_values_w.append((-score_w, value_w))  # Negate so sorting puts larger preservation first.
+        return [value_w for _, value_w in sorted(scored_values_w)]  # Return least-constraining values first.
+    def recurse_w(assignment_w):  # Run the recursive search.
+        if len(assignment_w) == len(search_vars_w):  # Stop at a complete assignment.
+            return dict(assignment_w)  # Return a copy of the solution.
+        var_w = choose_var_w(assignment_w)  # Select the next variable dynamically or by fixed order.
+        for value_w in order_values_w(var_w, assignment_w):  # Try values in baseline or LCV order.
+            attempts_w["count"] += 1  # Count this branch attempt.
+            assignment_w[var_w] = value_w  # Extend the partial assignment.
+            if partial_is_consistent_w(assignment_w)[0]:  # Recurse only when no assigned edge fails.
+                result_w = recurse_w(assignment_w)  # Continue the search from this branch.
+                if result_w is not None:  # Stop after the first solution.
+                    return result_w  # Return the solution upward.
+            assignment_w.pop(var_w)  # Undo the attempted value.
+        return None  # Report failure for this branch.
+    return recurse_w({}), attempts_w["count"]  # Return the first solution and the number of attempts.
+
+baseline_solution_w, baseline_attempts_w = search_with_options_w(False)  # Run fixed-order search.
+heuristic_solution_w, heuristic_attempts_w = search_with_options_w(True)  # Run MCV/LCV search.
+print("fixed attempts:", baseline_attempts_w, "solution:", baseline_solution_w)  # Inspect baseline effort.
+print("MCV/LCV attempts:", heuristic_attempts_w, "solution:", heuristic_solution_w)  # Inspect heuristic effort.
+```
+
+```python
+plt.figure(figsize=(5, 3.5))  # Create a compact comparison plot.
+plt.bar(["fixed", "MCV+LCV"], [baseline_attempts_w, heuristic_attempts_w], color=["gray", "#8e44ad"])  # Plot search attempts for both strategies.
+plt.ylabel("value attempts before first solution")  # Label the effort metric.
+plt.title("5: ordering heuristics reduce branching")  # Title the plot with the subsection number.
+plt.show()  # Render the branching comparison.
+```
+
+▶ What you'll see: MCV identifies the most urgent variable from its legal-domain count, LCV ranks its values by neighbor flexibility, and the bar chart compares branch attempts.
+
+These heuristics do not change which assignments are legal; they change the order in which the same search space is explored. The benefit appears when a good order reaches contradictions or solutions with fewer attempted values.
+
+*Why it's done this way: dynamic ordering uses information already created by constraint checks, so it often saves branches at low extra cost.*
+
+#### 6. Local search: ICM, beam search, and Gibbs intuition
+
+**What.** Local search keeps complete assignments and improves or samples them instead of proving consistency by exhaustive branching. ICM greedily changes one variable to reduce local cost; beam search keeps the best $K$ partial assignments; Gibbs samples a value using local weights instead of always taking the best one.
+
+**Why.** These methods are useful when exact backtracking is too expensive or when factors are weighted rather than purely hard. They may be approximate, but they can find good low-cost assignments quickly.
+
+**Why this approach.** We use conflict count as the cost so the local-search objective is visible: fewer equal-color edges means a better coloring.
+
+```python
+def conflict_cost_w(assignment_w):  # Count violated not-equal edges in a complete assignment.
+    return sum(int(left_w in assignment_w and right_w in assignment_w and assignment_w[left_w] == assignment_w[right_w]) for left_w, right_w in edges_w)  # Add one cost unit for each assigned color clash.
+
+def best_local_value_w(assignment_w, var_w):  # Find the ICM replacement value for one variable.
+    scored_w = []  # Store cost for each possible replacement value.
+    for value_w in domain_w:  # Try every color for the selected variable.
+        trial_w = dict(assignment_w)  # Copy the current complete assignment.
+        trial_w[var_w] = value_w  # Replace only the selected variable.
+        scored_w.append((conflict_cost_w(trial_w), value_w))  # Score the resulting complete assignment.
+    return min(scored_w)  # Return the lowest-cost value and its cost.
+
+local_assignment_w = {var_w: "red" for var_w in variables_w}  # Start from a deliberately bad all-red coloring.
+cost_history_w = [conflict_cost_w(local_assignment_w)]  # Record the initial conflict count.
+print("start:", local_assignment_w, "cost:", cost_history_w[-1])  # Inspect the starting point.
+for sweep_w in range(2):  # Make two small ICM passes over the variables.
+    for var_w in variables_w:  # Update one variable at a time.
+        best_cost_w, best_value_w = best_local_value_w(local_assignment_w, var_w)  # Find the greedy local replacement.
+        local_assignment_w[var_w] = best_value_w  # Apply the best local update.
+        cost_history_w.append(best_cost_w)  # Save the new total conflict cost.
+        print("update", var_w, "->", best_value_w, "cost", best_cost_w, "assignment", local_assignment_w)  # Trace each greedy step.
+```
+
+```python
+draw_graph_w(assignment_w=local_assignment_w, title_w="6: ICM local-search coloring")  # Draw the final ICM assignment.
+```
+
+▶ What you'll see: ICM starts with several conflicts and greedily changes one region at a time until the map has fewer clashes, often reaching a legal coloring on this tiny graph.
+
+```python
+plt.figure(figsize=(5, 3.5))  # Create a small cost-history figure.
+plt.plot(np.arange(len(cost_history_w)), cost_history_w, marker="o", color="#d35400")  # Plot conflict cost after each local update.
+plt.xlabel("local update step")  # Label the horizontal axis.
+plt.ylabel("number of violated edges")  # Label the vertical axis.
+plt.title("6: ICM greedily lowers conflict cost")  # Title the plot with the subsection number.
+plt.show()  # Render the local-search trajectory.
+```
+
+▶ What you'll see: the cost curve drops as local updates remove equal-color neighbor pairs.
+
+```python
+beam_width_w = 2  # Keep only the two best partial assignments at each depth.
+beam_w = [({}, 0)]  # Start beam search with one empty assignment and zero current conflicts.
+for var_w in variables_w:  # Extend the beam one variable at a time.
+    candidates_w = []  # Store all one-step extensions of the current beam.
+    for partial_w, _ in beam_w:  # Expand every surviving partial assignment.
+        for value_w in domain_w:  # Try every value for the next variable.
+            extended_w = dict(partial_w)  # Copy the partial assignment.
+            extended_w[var_w] = value_w  # Add one new variable value.
+            score_w = conflict_cost_w(extended_w)  # Score conflicts among assigned variables.
+            candidates_w.append((extended_w, score_w))  # Store this candidate for pruning.
+    beam_w = sorted(candidates_w, key=lambda item_w: item_w[1])[:beam_width_w]  # Keep only the lowest-cost K candidates.
+    print("beam after", var_w, ":", beam_w)  # Inspect the surviving candidates after this layer.
+
+gibbs_var_w = "C"  # Pick one variable for a Gibbs-style conditional update.
+gibbs_base_w = dict(local_assignment_w)  # Start from the final local assignment.
+energies_w = []  # Store local costs for each candidate color.
+for value_w in domain_w:  # Score each possible value for the sampled variable.
+    trial_w = dict(gibbs_base_w)  # Copy the complete assignment.
+    trial_w[gibbs_var_w] = value_w  # Replace the selected variable.
+    energies_w.append(conflict_cost_w(trial_w))  # Store the resulting conflict cost.
+probabilities_w = np.exp(-np.array(energies_w, dtype=float))  # Convert lower costs into larger unnormalized probabilities.
+probabilities_w = probabilities_w / probabilities_w.sum()  # Normalize the Gibbs probabilities so they sum to one.
+print("Gibbs probabilities for C:", dict(zip(domain_w, np.round(probabilities_w, 3))))  # Show that non-best values can still have nonzero probability.
+```
+
+Beam search is a limited-width compromise: $K=1$ is greedy, larger $K$ keeps more alternatives, and unlimited $K$ becomes exhaustive by layers. Gibbs uses
+
+$$
+P(X_i=v\mid x_{-i}) \propto \exp(-\text{cost}(v)),
+$$
+
+so it may occasionally try non-best values and escape local traps that deterministic ICM would keep.
+
+*Why it's done this way: approximate methods trade completeness guarantees for speed, using local costs or a small beam to guide search when exact CSP solving is too large.*
+
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Check one unary constraint on one assignment

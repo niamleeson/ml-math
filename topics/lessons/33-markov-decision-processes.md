@@ -459,6 +459,345 @@ plot_values_policy(active_env, zero_values, title=f"Initial values for DATA_SOUR
 ---
 
 
+
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the main MDP ideas from scratch with only NumPy + Matplotlib. The data is a tiny 1-D chain MDP so every number is inspectable, and variables use a `_w` suffix so they do not collide with later examples. Each subsection starts with the idea, then makes the arithmetic visible before plotting what changed.
+
+```python
+import numpy as np  # Use NumPy for small arrays, vectorized sums, and seeded random choices in the walkthrough.
+import matplotlib.pyplot as plt  # Use Matplotlib so each dynamic-programming or learning step can be checked visually.
+np.random.seed(33)  # Fix randomness so the Q-learning and epsilon-greedy demonstrations are reproducible.
+```
+
+#### 1. Return and discounting: turn a reward stream into one number
+
+A trajectory gives rewards over time, but an agent needs one score for the whole future. The discounted return does that with
+
+$$
+G=\sum_{t=0}^{T-1}\gamma^t r_t.
+$$
+
+We build the sum term by term because discounting has two jobs: it makes far-future rewards count less, and when $\gamma<1$ it makes infinite reward sums finite. This approach lets you see exactly how a delayed reward changes as $\gamma$ changes.
+
+```python
+rewards_w = np.array([2.0, 0.0, 0.0, 10.0])  # Store a short reward stream with a small reward now and a larger reward later.
+gamma_one_w = 0.8  # Pick one discount factor to inspect term by term.
+times_w = np.arange(len(rewards_w))  # Create time indices t = 0, 1, 2, 3 for the powers of gamma.
+weights_w = gamma_one_w ** times_w  # Compute discount weights gamma^t for each reward time.
+terms_w = weights_w * rewards_w  # Multiply each reward by its discount weight to form the contribution to G.
+print("rewards:", rewards_w)  # Print the raw rewards before discounting.
+print("discount weights:", np.round(weights_w, 3))  # Print how strongly each time step is weighted.
+print("discounted terms:", np.round(terms_w, 3))  # Print each piece of the return sum.
+print("G at gamma=0.8:", round(float(np.sum(terms_w)), 3))  # Add the pieces to get the scalar return.
+```
+▶ What you'll see: the delayed reward of `10` is still useful, but it is reduced by $0.8^3$ before entering $G$.
+
+```python
+gammas_w = np.array([0.0, 0.25, 0.5, 0.8, 0.95, 0.99])  # Compare several discount factors from myopic to patient.
+returns_w = []  # Collect one discounted return per gamma value.
+for gamma_w in gammas_w:  # Sweep the discount factors one at a time.
+    powers_w = gamma_w ** times_w  # Compute gamma^t for this discount factor.
+    return_w = float(np.sum(powers_w * rewards_w))  # Sum the discounted rewards for this gamma.
+    returns_w.append(return_w)  # Save the result for printing and plotting.
+    print(f"gamma={gamma_w:.2f} -> G={return_w:.3f}")  # Print the numeric return so the trend is inspectable.
+```
+▶ What you'll see: $G$ grows as $\gamma$ increases because the delayed `10` is discounted less harshly.
+
+```python
+geom_gammas_w = np.array([0.5, 0.8, 0.95])  # Choose gamma values that make the infinite-series effect visible.
+for gamma_w in geom_gammas_w:  # Inspect each discount factor separately.
+    finite_sum_w = float(np.sum(gamma_w ** np.arange(20)))  # Approximate the first 20 terms of 1 + gamma + gamma^2 + ....
+    exact_sum_w = 1.0 / (1.0 - gamma_w)  # Use the geometric-series formula for the infinite sum when gamma < 1.
+    print(f"gamma={gamma_w:.2f}: first 20 terms {finite_sum_w:.3f}, infinite sum {exact_sum_w:.3f}")  # Compare finite and infinite totals.
+```
+Discounting makes an endless stream manageable because $1+\gamma+\gamma^2+\cdots=1/(1-\gamma)$ when $0\le\gamma<1$. It also encodes a preference for sooner rewards: the same $10$ is worth $10$ now but only $\gamma^3\cdot 10$ three steps later.
+▶ What you'll see: the infinite sum is finite for each $\gamma<1$, but it gets larger as $\gamma$ approaches 1.
+
+```python
+plt.figure(figsize=(5.5, 3.2))  # Create a compact figure for return sensitivity.
+plt.plot(gammas_w, returns_w, marker="o", linewidth=2)  # Plot the discounted return as gamma changes.
+plt.xlabel("discount factor gamma")  # Label the horizontal axis with the planning parameter.
+plt.ylabel("discounted return G")  # Label the vertical axis with the trajectory score.
+plt.title("1: return grows as delayed rewards matter more")  # Title the plot with the subsection number.
+plt.grid(True, alpha=0.3)  # Add a light grid so the increase is easy to read.
+plt.show()  # Render the return-vs-gamma figure.
+```
+▶ What you'll see: a rising curve; larger $\gamma$ means the future reward contributes more to the total return.
+
+*Why it's done this way: computing every discounted term first makes the return formula concrete, then sweeping $\gamma$ shows both interpretations of discounting — finite infinite-horizon sums and a tunable preference for sooner payoff.*
+
+#### 2. Bellman equation and policy evaluation: solve the value fixed point
+
+For a fixed policy $\pi$, the value of a state is the expected immediate reward plus discounted value of the next state:
+
+$$
+V_\pi(s)=\sum_{s'}P(s'\mid s,\pi(s))\left[r(s,\pi(s),s')+\gamma V_\pi(s')\right].
+$$
+
+This is a fixed-point equation because the unknown value appears on both sides. We evaluate a simple "always move right" policy by repeatedly applying the Bellman backup until the values stop changing.
+
+```python
+n_states_w = 4  # Use a tiny chain with states 0, 1, 2, and terminal state 3.
+terminal_w = 3  # Mark the rightmost state as terminal.
+gamma_eval_w = 0.9  # Use a high discount factor so future terminal reward propagates leftward.
+policy_w = np.array([1, 1, 1, -1])  # Encode the fixed policy: action 1 means move right, terminal has no action.
+next_right_w = np.array([1, 2, 3, 3])  # Store the deterministic successor when moving right from each state.
+reward_right_w = np.array([-0.1, -0.1, 1.0, 0.0])  # Store step costs and the reward for entering the terminal state.
+V_eval_w = np.zeros(n_states_w)  # Initialize every state's value to zero before policy evaluation.
+print("initial V:", np.round(V_eval_w, 3))  # Print the starting value function.
+```
+▶ What you'll see: all values start at zero, so no state has learned about the terminal reward yet.
+
+```python
+history_eval_w = [V_eval_w.copy()]  # Store each sweep so we can plot convergence.
+for sweep_w in range(6):  # Run a few synchronous Bellman sweeps.
+    old_V_w = V_eval_w.copy()  # Freeze the previous values so all states update from the same old estimate.
+    for state_w in range(n_states_w):  # Visit each state in the chain.
+        if state_w == terminal_w:  # Keep the terminal state's continuation value fixed.
+            V_eval_w[state_w] = 0.0  # Terminal states have zero future value after arrival.
+        else:  # Evaluate the policy action for a nonterminal state.
+            next_state_w = next_right_w[state_w]  # Look up the next state under the fixed right action.
+            reward_w = reward_right_w[state_w]  # Look up the immediate reward for that transition.
+            V_eval_w[state_w] = reward_w + gamma_eval_w * old_V_w[next_state_w]  # Apply the Bellman expectation backup.
+    history_eval_w.append(V_eval_w.copy())  # Save the values after this sweep.
+    print(f"sweep {sweep_w + 1}:", np.round(V_eval_w, 3))  # Print values so convergence is visible.
+```
+▶ What you'll see: the terminal reward reaches state 2 first, then backs up to states 1 and 0 over later sweeps.
+
+```python
+bellman_check_w = reward_right_w[0] + gamma_eval_w * V_eval_w[next_right_w[0]]  # Recompute the right side for state 0.
+print("left side V(0):", round(float(V_eval_w[0]), 3))  # Print the converged value estimate at state 0.
+print("right side r + gamma V(next):", round(float(bellman_check_w), 3))  # Print the Bellman backup value for comparison.
+```
+The fixed point is reached when applying the update no longer changes $V_\pi$. At that point the left side and right side agree, so the value function is self-consistent with the policy's future behavior.
+▶ What you'll see: the two numbers match after the reward has fully propagated through the short chain.
+
+```python
+history_eval_w = np.array(history_eval_w)  # Convert saved sweeps to an array for plotting.
+plt.figure(figsize=(5.8, 3.2))  # Create a compact convergence plot.
+for state_w in range(n_states_w):  # Plot one curve per state.
+    plt.plot(history_eval_w[:, state_w], marker="o", label=f"V({state_w})")  # Show how that state's value changes by sweep.
+plt.xlabel("Bellman sweep")  # Label the x-axis with the dynamic-programming iteration.
+plt.ylabel("value under fixed policy")  # Label the y-axis with the evaluated state value.
+plt.title("2: policy evaluation converges to Bellman fixed point")  # Title the plot with the subsection number.
+plt.legend()  # Show which curve belongs to which state.
+plt.grid(True, alpha=0.3)  # Add a light grid for readability.
+plt.show()  # Render the convergence figure.
+```
+▶ What you'll see: state values flatten once the fixed policy's future reward has backed up to every predecessor.
+
+*Why it's done this way: synchronous Bellman sweeps make the circular definition operational — start with guesses, repeatedly apply the expectation equation, and stop when the guesses are unchanged by the equation that defines them.*
+
+#### 3. Value iteration: use the max backup to find the optimal value
+
+Policy evaluation answers "how good is this policy?" Value iteration answers "what is the best policy?" by replacing the policy action with a maximization:
+
+$$
+V_*(s)=\max_a\sum_{s'}P(s'\mid s,a)\left[r(s,a,s')+\gamma V_*(s')\right].
+$$
+
+The $\max$ matters because each backup assumes the agent will choose the best available action from the current state. We build left/right actions on the same chain, then extract the greedy policy from the final values.
+
+```python
+actions_w = np.array([-1, 1])  # Encode action 0 as left (-1) and action 1 as right (+1).
+action_names_w = np.array(["L", "R"])  # Store readable action labels for printing the greedy policy.
+gamma_vi_w = 0.9  # Use the same discount factor so value iteration is comparable to policy evaluation.
+V_vi_w = np.zeros(n_states_w)  # Initialize optimal values to zero before Bellman optimality backups.
+print("actions:", action_names_w)  # Print the two available actions.
+print("initial optimal-value guess:", V_vi_w)  # Print the starting values.
+```
+▶ What you'll see: value iteration starts with no preference because every value is initially zero.
+
+```python
+history_vi_w = [V_vi_w.copy()]  # Store value snapshots for convergence plotting.
+deltas_vi_w = []  # Store the largest value change per sweep.
+for sweep_w in range(8):  # Run enough sweeps for this short chain to settle.
+    old_V_w = V_vi_w.copy()  # Freeze previous values for a synchronous optimality update.
+    for state_w in range(n_states_w):  # Visit every state.
+        if state_w == terminal_w:  # Handle the terminal state separately.
+            V_vi_w[state_w] = 0.0  # Terminal continuation value remains zero.
+        else:  # Compute action candidates for a nonterminal state.
+            q_values_w = []  # Collect one one-step lookahead value per action.
+            for move_w in actions_w:  # Try left and right.
+                next_state_w = int(np.clip(state_w + move_w, 0, terminal_w))  # Move in the chain while staying inside bounds.
+                reward_w = 1.0 if next_state_w == terminal_w else -0.1  # Give +1 for entering terminal and -0.1 otherwise.
+                q_values_w.append(reward_w + gamma_vi_w * old_V_w[next_state_w])  # Add immediate reward plus discounted continuation.
+            V_vi_w[state_w] = float(np.max(q_values_w))  # Keep the best action value as the optimal value estimate.
+    delta_w = float(np.max(np.abs(V_vi_w - old_V_w)))  # Measure the largest change this sweep.
+    deltas_vi_w.append(delta_w)  # Save the convergence diagnostic.
+    history_vi_w.append(V_vi_w.copy())  # Save the value snapshot.
+    print(f"sweep {sweep_w + 1}: V={np.round(V_vi_w, 3)}, delta={delta_w:.3f}")  # Print the update progress.
+```
+▶ What you'll see: the best terminal reward backs up through the chain, and the largest change eventually becomes zero.
+
+```python
+policy_vi_w = []  # Collect the greedy action for each nonterminal state.
+for state_w in range(n_states_w - 1):  # Extract actions only for nonterminal states.
+    q_values_w = []  # Store action values under the final V estimate.
+    for move_w in actions_w:  # Compare left and right from this state.
+        next_state_w = int(np.clip(state_w + move_w, 0, terminal_w))  # Compute the deterministic successor.
+        reward_w = 1.0 if next_state_w == terminal_w else -0.1  # Compute the immediate reward.
+        q_values_w.append(reward_w + gamma_vi_w * V_vi_w[next_state_w])  # Compute the one-step lookahead value.
+    best_index_w = int(np.argmax(q_values_w))  # Select the action with the largest backed-up value.
+    policy_vi_w.append(action_names_w[best_index_w])  # Save the readable greedy action.
+    print(f"state {state_w}: Q(L/R)={np.round(q_values_w, 3)} -> greedy {action_names_w[best_index_w]}")  # Print the policy extraction.
+```
+The optimality backup is the same expectation calculation as policy evaluation, but with a maximization over actions. That $\max$ turns evaluation into control: it asks what value is possible if the agent chooses optimally now and then continues optimally.
+▶ What you'll see: every nonterminal state chooses `R`, moving toward the terminal reward despite the step cost.
+
+```python
+history_vi_w = np.array(history_vi_w)  # Convert snapshots to an array for plotting.
+fig_w, ax_w = plt.subplots(1, 2, figsize=(8.5, 3.2))  # Create side-by-side panels for values and convergence.
+for state_w in range(n_states_w):  # Draw one value curve per state.
+    ax_w[0].plot(history_vi_w[:, state_w], marker="o", label=f"V({state_w})")  # Plot value estimates over sweeps.
+ax_w[0].set_title("3: optimal values by sweep")  # Title the first panel with the subsection number.
+ax_w[0].set_xlabel("sweep")  # Label the sweep axis.
+ax_w[0].set_ylabel("value")  # Label the value axis.
+ax_w[0].legend()  # Show state labels.
+ax_w[1].plot(deltas_vi_w, marker="o", color="crimson")  # Plot the maximum update size per sweep.
+ax_w[1].set_title("3: Bellman error shrinks")  # Title the second panel.
+ax_w[1].set_xlabel("sweep")  # Label the sweep axis.
+ax_w[1].set_ylabel("max |new - old|")  # Label the convergence diagnostic.
+plt.tight_layout()  # Prevent labels from overlapping.
+plt.show()  # Render the value-iteration figure.
+```
+▶ What you'll see: value curves stabilize and the update size drops to zero once the optimal values have propagated.
+
+*Why it's done this way: computing every action backup before taking `max` exposes the control step directly — value iteration is policy evaluation plus the assumption that future choices will be greedy with respect to the best value found so far.*
+
+#### 4. Q-learning: learn action values from sampled transitions without a model
+
+Planning used a transition model. Q-learning instead updates from experience tuples $(s,a,r,s')$:
+
+$$
+Q(s,a)\leftarrow Q(s,a)+\alpha\left[r+\gamma\max_{a'}Q(s',a')-Q(s,a)\right].
+$$
+
+The bracketed term is a temporal-difference error: a new bootstrapped target minus the current estimate. We simulate transitions on the chain so the update can be inspected without ever storing transition probabilities.
+
+```python
+Q_w = np.zeros((n_states_w, len(actions_w)))  # Initialize a tabular Q-value for every state-action pair.
+alpha_w = 0.5  # Use a large learning rate so changes are visible in a short run.
+gamma_q_w = 0.9  # Use the same discount factor as planning.
+epsilon_q_w = 0.3  # Explore sometimes so both actions can be sampled.
+state_q_w = 0  # Start each demonstration episode at the left edge of the chain.
+print("initial Q table:\n", Q_w)  # Print the all-zero action-value table.
+```
+▶ What you'll see: Q-learning begins with no model and no value estimates, just a table of zeros.
+
+```python
+for step_w in range(12):  # Run a small number of sampled transitions.
+    if np.random.rand() < epsilon_q_w:  # Explore with probability epsilon.
+        action_index_w = int(np.random.choice(len(actions_w)))  # Pick a random action index when exploring.
+    else:  # Exploit otherwise.
+        action_index_w = int(np.argmax(Q_w[state_q_w]))  # Pick the currently greedy action for the current state.
+    next_state_w = int(np.clip(state_q_w + actions_w[action_index_w], 0, terminal_w))  # Simulate the chosen move in the chain.
+    reward_w = 1.0 if next_state_w == terminal_w else -0.1  # Observe the sampled reward after the move.
+    best_next_w = 0.0 if next_state_w == terminal_w else float(np.max(Q_w[next_state_w]))  # Bootstrap from the best next action value.
+    target_w = reward_w + gamma_q_w * best_next_w  # Build the TD target r + gamma max Q(s', a').
+    td_error_w = target_w - Q_w[state_q_w, action_index_w]  # Compare the target to the current estimate.
+    Q_w[state_q_w, action_index_w] += alpha_w * td_error_w  # Move the estimate partway toward the target.
+    print(f"step {step_w + 1}: s={state_q_w}, a={action_names_w[action_index_w]}, r={reward_w:.1f}, s'={next_state_w}, target={target_w:.3f}, Q={np.round(Q_w, 3)}")  # Print the full update.
+    state_q_w = 0 if next_state_w == terminal_w else next_state_w  # Reset after terminal, otherwise continue from the successor.
+```
+▶ What you'll see: the right action near the terminal learns first, then earlier state-action values start bootstrapping from it.
+
+```python
+manual_state_w = 1  # Choose one state-action pair for a transparent TD arithmetic check.
+manual_action_w = 1  # Choose the right action for that state.
+manual_next_w = int(np.clip(manual_state_w + actions_w[manual_action_w], 0, terminal_w))  # Compute the sampled successor.
+manual_reward_w = 1.0 if manual_next_w == terminal_w else -0.1  # Compute the sampled reward.
+manual_target_w = manual_reward_w + gamma_q_w * np.max(Q_w[manual_next_w])  # Build the bootstrapped target from the current Q table.
+print("current Q(s,a):", round(float(Q_w[manual_state_w, manual_action_w]), 3))  # Print the estimate before another hypothetical update.
+print("TD target:", round(float(manual_target_w), 3))  # Print the model-free target.
+print("TD error:", round(float(manual_target_w - Q_w[manual_state_w, manual_action_w]), 3))  # Print the correction signal.
+```
+Q-learning needs no transition model because it uses the one successor actually sampled. It still looks ahead by bootstrapping from $\max_{a'}Q(s',a')$, which is why information can propagate backward from rewarding states.
+▶ What you'll see: the target is built from one observed reward plus the current best estimate for the next state.
+
+```python
+plt.figure(figsize=(5.5, 3.2))  # Create a compact heatmap for learned action values.
+plt.imshow(Q_w, cmap="viridis", aspect="auto")  # Display the Q table as colors.
+plt.colorbar(label="Q value")  # Add a colorbar so magnitudes are readable.
+plt.xticks(range(len(actions_w)), action_names_w)  # Label columns by action name.
+plt.yticks(range(n_states_w), [f"state {state_w}" for state_w in range(n_states_w)])  # Label rows by state.
+plt.title("4: Q-learning table after sampled TD updates")  # Title the figure with the subsection number.
+plt.xlabel("action")  # Label the action axis.
+plt.ylabel("state")  # Label the state axis.
+plt.show()  # Render the Q-value heatmap.
+```
+▶ What you'll see: actions that move toward the terminal reward become brighter than unhelpful actions.
+
+*Why it's done this way: each update uses only sampled experience plus the current table, so the algorithm can learn when $P(s'\mid s,a)$ and rewards are not known in advance; the TD target is the bridge from raw samples to long-term value.*
+
+#### 5. Epsilon-greedy exploration: balance trying and trusting
+
+A greedy learner always picks the action with the largest current $Q$, but early estimates can be wrong. Epsilon-greedy fixes that by choosing the greedy action with probability $1-\epsilon$ and a random action with probability $\epsilon$:
+
+$$
+\pi_{\text{act}}(s)=
+\begin{cases}
+\operatorname*{argmax}_a Q(s,a) & \text{with probability }1-\epsilon\\
+\text{random action} & \text{with probability }\epsilon.
+\end{cases}
+$$
+
+We hold one state's Q-values fixed and vary $\epsilon$ so the exploration/exploitation tradeoff is visible directly.
+
+```python
+q_choice_w = np.array([0.2, 1.0])  # Create one state's action values where right is currently greedy.
+greedy_index_w = int(np.argmax(q_choice_w))  # Find the greedy action index from the Q values.
+epsilons_w = np.array([0.0, 0.1, 0.3, 0.7, 1.0])  # Try exploration rates from never explore to always random.
+n_trials_w = 2000  # Use enough repeated choices to estimate action probabilities smoothly.
+print("Q values for one state:", q_choice_w)  # Print the fixed action values.
+print("greedy action:", action_names_w[greedy_index_w])  # Print which action exploitation would choose.
+```
+▶ What you'll see: action `R` is greedy because its current Q-value is larger.
+
+```python
+greedy_rates_w = []  # Store the fraction of choices that equal the greedy action.
+random_rates_w = []  # Store the requested random-choice probability epsilon for comparison.
+for epsilon_w in epsilons_w:  # Evaluate each exploration rate.
+    choices_w = []  # Collect sampled action indices for this epsilon.
+    for trial_w in range(n_trials_w):  # Repeat many action selections.
+        if np.random.rand() < epsilon_w:  # Explore with probability epsilon.
+            chosen_w = int(np.random.choice(len(q_choice_w)))  # Choose uniformly at random from actions.
+        else:  # Exploit with probability 1 - epsilon.
+            chosen_w = greedy_index_w  # Choose the current greedy action.
+        choices_w.append(chosen_w)  # Store the sampled action.
+    choices_w = np.array(choices_w)  # Convert sampled choices to an array for counting.
+    greedy_rate_w = float(np.mean(choices_w == greedy_index_w))  # Measure how often the final chosen action was greedy.
+    greedy_rates_w.append(greedy_rate_w)  # Save the empirical greedy-action rate.
+    random_rates_w.append(float(epsilon_w))  # Save epsilon itself as the requested exploration rate.
+    print(f"epsilon={epsilon_w:.1f}: chose greedy action {greedy_rate_w:.3f} of the time")  # Print the empirical tradeoff.
+```
+▶ What you'll see: higher $\epsilon$ means fewer purely greedy selections, although random exploration can still sometimes pick the greedy action by chance.
+
+```python
+expected_greedy_w = (1.0 - epsilons_w) + epsilons_w / len(q_choice_w)  # Compute P(greedy action) when random choice has two actions.
+print("expected greedy-action rates:", np.round(expected_greedy_w, 3))  # Print the theoretical rates for comparison.
+print("empirical greedy-action rates:", np.round(greedy_rates_w, 3))  # Print the simulated rates.
+```
+The chosen action is greedy with probability $(1-\epsilon)+\epsilon/|A|$ because the random branch also has a $1/|A|$ chance of selecting the greedy action. Exploration is necessary because actions with low current estimates might only look bad because they have not been tried enough.
+▶ What you'll see: empirical rates closely match the simple probability calculation.
+
+```python
+plt.figure(figsize=(5.8, 3.2))  # Create a compact tradeoff figure.
+plt.plot(epsilons_w, greedy_rates_w, marker="o", label="empirical greedy-action rate")  # Plot simulated greedy-action frequency.
+plt.plot(epsilons_w, expected_greedy_w, linestyle="--", label="expected greedy-action rate")  # Plot the theoretical rate.
+plt.plot(epsilons_w, random_rates_w, marker="s", label="requested exploration rate")  # Plot epsilon itself as the exploration knob.
+plt.xlabel("epsilon")  # Label the exploration-rate axis.
+plt.ylabel("probability")  # Label the probability axis.
+plt.title("5: epsilon-greedy trades exploration for exploitation")  # Title the plot with the subsection number.
+plt.legend()  # Show which curve is which.
+plt.grid(True, alpha=0.3)  # Add a light grid for readability.
+plt.show()  # Render the epsilon-greedy plot.
+```
+▶ What you'll see: as $\epsilon$ rises, the learner explores more and relies less on the current greedy action.
+
+*Why it's done this way: epsilon-greedy keeps the policy simple but prevents early Q-value mistakes from locking the learner into one action forever; decreasing or tuning $\epsilon$ controls how much evidence the learner gathers before trusting exploitation.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Look up the immediate reward for one transition

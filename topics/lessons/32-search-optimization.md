@@ -361,6 +361,375 @@ draw_grid(grid, start, goal, title=f"Raw problem: {PROBLEM}")  # Plot the chosen
 
 ▶ What you'll see: the raw grid before search; walls are black, weighted mud cells are brown when present, start is blue, and goal is purple.
 
+
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build each search idea from scratch with tiny hand-built graphs. The code uses only NumPy + Matplotlib plus `deque` and `heapq`, so every frontier, explored set, and path is visible. Variables use `_w` suffixes so this walkthrough stays separate from the examples below.
+
+```python
+import numpy as np  # Use NumPy for tiny coordinate arrays and deterministic numeric inspection.
+import matplotlib.pyplot as plt  # Use Matplotlib because every search algorithm is easier to understand as a plotted graph.
+from collections import deque  # Use deque because BFS needs a first-in-first-out frontier with cheap pops from the left.
+import heapq  # Use heapq because UCS and A* need a minimum-priority frontier.
+np.random.seed(0)  # Seed NumPy so any later tiny random choices remain reproducible.
+```
+
+#### 1. Tree search versus graph search
+
+**What:** tree search expands paths, while graph search expands states. On a graph with a cycle, the same state can appear again and again as a different action sequence.
+
+**Why:** if the state graph has cycles, tree search without memory can keep re-expanding repeated states or even loop forever. Graph search adds an explored set so each state is expanded at most once.
+
+**Why this approach:** we use a three-node cycle because it is the smallest example where the difference is impossible to miss.
+
+```python
+cycle_graph_w = {"A": ["B"], "B": ["C"], "C": ["A", "D"], "D": []}  # Define a tiny directed graph where A -> B -> C -> A creates a cycle.
+pos_cycle_w = {"A": np.array([0.0, 1.0]), "B": np.array([1.2, 1.0]), "C": np.array([1.2, 0.0]), "D": np.array([2.4, 0.0])}  # Store hand-picked coordinates for plotting the graph.
+edges_cycle_w = [(src_w, dst_w) for src_w, nbrs_w in cycle_graph_w.items() for dst_w in nbrs_w]  # Flatten the adjacency dict into edge pairs for drawing.
+print("Cycle graph:", cycle_graph_w)  # Print the adjacency list so the repeated state route is inspectable before plotting.
+```
+
+```python
+def draw_graph_w(graph_w, pos_w, title_w, path_w=None, explored_w=None, frontier_w=None, current_w=None):  # Define one small graph drawer reused by all walkthrough sections.
+    path_w = [] if path_w is None else list(path_w)  # Normalize the highlighted path so edge checks are simple.
+    explored_w = set() if explored_w is None else set(explored_w)  # Normalize explored states for node coloring.
+    frontier_w = set() if frontier_w is None else set(frontier_w)  # Normalize frontier states for node coloring.
+    fig_w, ax_w = plt.subplots(figsize=(6.5, 4.0))  # Create a compact figure that still leaves room for labels.
+    for src_w, nbrs_w in graph_w.items():  # Draw every outgoing edge from each state.
+        for dst_item_w in nbrs_w:  # Loop through successors, which may be plain nodes or (node, cost) pairs.
+            dst_w = dst_item_w[0] if isinstance(dst_item_w, tuple) else dst_item_w  # Extract the destination name from either edge format.
+            cost_w = dst_item_w[1] if isinstance(dst_item_w, tuple) else None  # Extract the cost label only when this is a weighted edge.
+            on_path_w = any(path_w[i_w] == src_w and path_w[i_w + 1] == dst_w for i_w in range(len(path_w) - 1))  # Test whether this directed edge belongs to the highlighted path.
+            color_w = "limegreen" if on_path_w else "0.55"  # Use green for the answer path and gray for all other edges.
+            ax_w.annotate("", xy=pos_w[dst_w], xytext=pos_w[src_w], arrowprops=dict(arrowstyle="->", color=color_w, lw=2.2))  # Draw the directed edge as an arrow.
+            if cost_w is not None:  # Add a numeric label only for weighted examples.
+                mid_w = (pos_w[src_w] + pos_w[dst_w]) / 2.0  # Compute the midpoint where the cost label should sit.
+                ax_w.text(mid_w[0], mid_w[1], str(cost_w), fontsize=9, bbox=dict(facecolor="white", edgecolor="none", alpha=0.8))  # Print the edge cost on a white background.
+    for node_w in graph_w:  # Draw each state after edges so nodes sit on top.
+        color_w = "tomato" if node_w == current_w else "gold" if node_w in frontier_w else "lightskyblue" if node_w in explored_w else "white"  # Encode current, frontier, explored, and unseen states by color.
+        ax_w.scatter(pos_w[node_w][0], pos_w[node_w][1], s=850, color=color_w, edgecolor="black", zorder=3)  # Plot the state as a large labeled circle.
+        ax_w.text(pos_w[node_w][0], pos_w[node_w][1], node_w, ha="center", va="center", fontsize=11, weight="bold", zorder=4)  # Put the state name inside the circle.
+    ax_w.set_title(title_w)  # Title the plot with the subsection number and idea.
+    ax_w.axis("off")  # Hide axes because the coordinates are only a graph layout.
+    plt.show()  # Render the graph immediately in notebook order.
+```
+
+▶ What you'll see: no plot yet; this cell defines the shared drawing helper for all tiny graphs below.
+
+```python
+tree_frontier_w = [["A"]]  # Start tree search with one path rather than one state.
+tree_expansions_w = []  # Store every path popped from the frontier so repetition becomes visible.
+for step_w in range(8):  # Limit the loop to eight expansions so the demonstration cannot run forever.
+    path_w = tree_frontier_w.pop(0)  # Pop the oldest path to mimic breadth-first tree search.
+    state_w = path_w[-1]  # Read the current state as the last state on that path.
+    tree_expansions_w.append(path_w)  # Record the expanded path for inspection.
+    for nxt_w in cycle_graph_w[state_w]:  # Extend the current path by every successor state.
+        tree_frontier_w.append(path_w + [nxt_w])  # Add a new path even if its final state was seen before.
+print("Tree-search path expansions:", tree_expansions_w)  # Show that A, B, C, A, ... can keep reappearing as longer paths.
+print("Frontier after 8 bounded expansions:", tree_frontier_w)  # Show that the cycle keeps generating more path work.
+```
+
+```python
+graph_frontier_w = deque(["A"])  # Start graph search with states in a queue rather than paths only.
+graph_explored_w = set()  # Create an explored set so repeated states are not expanded again.
+graph_order_w = []  # Store the state expansion order for comparison with tree search.
+while graph_frontier_w:  # Continue until every reachable state has been handled once.
+    state_w = graph_frontier_w.popleft()  # Pop the oldest frontier state.
+    if state_w in graph_explored_w:  # Skip a state if an earlier path already expanded it.
+        continue  # Avoid re-expanding a state reached through the cycle.
+    graph_explored_w.add(state_w)  # Mark this state as expanded.
+    graph_order_w.append(state_w)  # Record the clean graph-search order.
+    for nxt_w in cycle_graph_w[state_w]:  # Inspect successors of the current state.
+        if nxt_w not in graph_explored_w and nxt_w not in graph_frontier_w:  # Add only genuinely pending states.
+            graph_frontier_w.append(nxt_w)  # Queue the unseen successor for later expansion.
+print("Graph-search expansion order:", graph_order_w)  # Print each state once because the explored set blocks the cycle.
+```
+
+```python
+draw_graph_w(cycle_graph_w, pos_cycle_w, "1: graph search uses explored states to stop a cycle", path_w=["A", "B", "C", "D"], explored_w=graph_order_w, current_w="D")  # Draw the cycle and highlight the successful path to D.
+```
+
+▶ What you'll see: the cycle edge points back to `A`, but the explored set colors states once instead of letting the search re-expand them forever.
+
+A tree-search node is a whole path such as $(A,B,C,A)$, so a cycle creates infinitely many distinct paths. A graph-search node is the state `A`, `B`, `C`, or `D`, so the explored set makes the finite state space explicit.
+
+*Why it's done this way: the smallest cyclic graph isolates the reason graph search needs memory without hiding the issue inside a large maze.*
+
+#### 2. Breadth-first search (BFS)
+
+**What:** BFS explores states level by level using a FIFO queue.
+
+**Why:** when every edge has the same cost, the first time BFS reaches a goal it has used the fewest edges.
+
+**Why this approach:** we use an unweighted branching graph so queue order, levels, and the fewest-edges path can all be printed directly.
+
+```python
+bfs_graph_w = {"S": ["A", "B"], "A": ["C", "D"], "B": ["E"], "C": [], "D": ["G"], "E": ["G"], "G": []}  # Define an unweighted graph with two routes to G.
+pos_bfs_w = {"S": np.array([0.0, 0.5]), "A": np.array([1.1, 1.1]), "B": np.array([1.1, -0.1]), "C": np.array([2.2, 1.5]), "D": np.array([2.2, 0.8]), "E": np.array([2.2, -0.2]), "G": np.array([3.3, 0.25])}  # Position nodes in visible BFS layers.
+print("BFS graph:", bfs_graph_w)  # Print the tiny graph before running the queue.
+```
+
+```python
+bfs_frontier_w = deque(["S"])  # Put the start state in a FIFO queue.
+bfs_parent_w = {"S": None}  # Remember how each state was first reached so the final path can be reconstructed.
+bfs_order_w = []  # Store expansion order to prove the level-by-level behavior.
+while bfs_frontier_w:  # Keep expanding until the queue is empty or the goal is found.
+    state_w = bfs_frontier_w.popleft()  # Remove the oldest state, which is the shallowest pending state.
+    bfs_order_w.append(state_w)  # Record the expansion before adding children.
+    print("pop", state_w, "frontier now", list(bfs_frontier_w))  # Print the queue after the pop so FIFO behavior is visible.
+    if state_w == "G":  # Stop as soon as the goal is popped.
+        break  # The popped goal is guaranteed to have the fewest edges in an unweighted graph.
+    for nxt_w in bfs_graph_w[state_w]:  # Visit successors in the listed action order.
+        if nxt_w not in bfs_parent_w:  # Add each state only the first time BFS discovers it.
+            bfs_parent_w[nxt_w] = state_w  # Store the predecessor used by the fewest-edge discovery.
+            bfs_frontier_w.append(nxt_w)  # Push the successor to the back of the queue.
+            print("  push", nxt_w, "frontier becomes", list(bfs_frontier_w))  # Print each push so levels can be followed.
+print("BFS expansion order:", bfs_order_w)  # Summarize the completed level order.
+```
+
+```python
+bfs_path_w = []  # Prepare a list for the reconstructed route from S to G.
+state_w = "G"  # Start backtracking from the goal.
+while state_w is not None:  # Follow parent pointers until the start marker is reached.
+    bfs_path_w.append(state_w)  # Add the current state to the reversed path.
+    state_w = bfs_parent_w[state_w]  # Move one predecessor closer to the start.
+bfs_path_w = bfs_path_w[::-1]  # Reverse the backtracked path so it runs from start to goal.
+print("Fewest-edges BFS path:", bfs_path_w)  # Print the path that BFS discovered first.
+print("Number of edges:", len(bfs_path_w) - 1)  # Count edges as path length minus one state.
+```
+
+```python
+draw_graph_w(bfs_graph_w, pos_bfs_w, "2: BFS expands by levels and finds fewest edges", path_w=bfs_path_w, explored_w=bfs_order_w, current_w="G")  # Draw BFS layers and the discovered route.
+```
+
+▶ What you'll see: nodes closer to `S` are explored before deeper nodes, and the highlighted route to `G` has the fewest edges.
+
+If every edge cost is the same constant $c\geq0$, minimizing total cost is the same as minimizing the number of edges. The FIFO queue enforces that all depth-$d$ states are popped before any depth-$(d+1)$ state.
+
+*Why it's done this way: a queue is the simplest data structure that preserves discovery order, which is exactly what level-by-level search needs.*
+
+#### 3. Depth-first search (DFS)
+
+**What:** DFS explores one branch as deeply as possible before backing up.
+
+**Why:** DFS can reach deep solutions using little frontier memory, but it does not guarantee the fewest-edges path.
+
+**Why this approach:** we reuse the BFS graph so the contrast is only the frontier rule: stack instead of queue.
+
+```python
+dfs_stack_w = ["S"]  # Put the start state on a LIFO stack.
+dfs_parent_w = {"S": None}  # Store first-discovery parents so the found path can be reconstructed.
+dfs_order_w = []  # Track the order states are popped from the stack.
+while dfs_stack_w:  # Continue until the stack is empty or the goal is found.
+    state_w = dfs_stack_w.pop()  # Pop the newest state, which drives depth-first behavior.
+    dfs_order_w.append(state_w)  # Record the expansion order for comparison with BFS.
+    print("pop", state_w, "stack now", list(dfs_stack_w))  # Print the stack after each pop.
+    if state_w == "G":  # Stop when DFS reaches the goal.
+        break  # This goal path is the first deep route found, not necessarily the shallowest route.
+    for nxt_w in reversed(bfs_graph_w[state_w]):  # Reverse successor order so the leftmost listed child is explored first.
+        if nxt_w not in dfs_parent_w:  # Discover each state once to keep this as graph DFS.
+            dfs_parent_w[nxt_w] = state_w  # Store how the successor was first reached.
+            dfs_stack_w.append(nxt_w)  # Push the successor onto the top of the stack.
+            print("  push", nxt_w, "stack becomes", list(dfs_stack_w))  # Print the new stack so LIFO behavior is visible.
+print("DFS expansion order:", dfs_order_w)  # Summarize how DFS dives before sweeping across levels.
+```
+
+```python
+dfs_path_w = []  # Prepare a list for the reconstructed DFS route.
+state_w = "G"  # Start parent backtracking at the goal.
+while state_w is not None:  # Keep following parents until the start marker is reached.
+    dfs_path_w.append(state_w)  # Add the current state to the reversed answer.
+    state_w = dfs_parent_w[state_w]  # Move to the predecessor chosen by DFS.
+dfs_path_w = dfs_path_w[::-1]  # Reverse the answer so it reads from S to G.
+print("DFS first-found path:", dfs_path_w)  # Print the path found by depth-first exploration.
+print("BFS order for contrast:", bfs_order_w)  # Reprint BFS order from the previous subsection for side-by-side comparison.
+print("DFS order for contrast:", dfs_order_w)  # Print DFS order to show the different frontier discipline.
+```
+
+```python
+draw_graph_w(bfs_graph_w, pos_bfs_w, "3: DFS follows one branch before backtracking", path_w=dfs_path_w, explored_w=dfs_order_w, current_w="G")  # Draw the first route DFS reaches.
+```
+
+▶ What you'll see: DFS goes down the `S -> A -> C` side before exploring all nodes at the same depth, unlike BFS.
+
+DFS changes only one ingredient from BFS: the frontier is LIFO instead of FIFO. That small data-structure change replaces level order with deep-first order.
+
+*Why it's done this way: reusing the same graph makes the stack-versus-queue effect visible without changing the problem itself.*
+
+#### 4. Dynamic programming on a DAG
+
+**What:** on a directed acyclic graph (DAG), dynamic programming computes the best future cost of each state once and reuses it.
+
+**Why:** acyclicity gives a safe order: when we evaluate a state, all states after it can already have known values.
+
+**Why this approach:** we hand-build a small weighted DAG and evaluate the recurrence
+$\operatorname{FutureCost}(s)=\min_a[\operatorname{Cost}(s,a)+\operatorname{FutureCost}(\operatorname{Succ}(s,a))]$
+from the goal backward.
+
+```python
+dag_graph_w = {"S": [("A", 2), ("B", 5)], "A": [("C", 2), ("D", 4)], "B": [("D", 1)], "C": [("G", 3)], "D": [("G", 1)], "G": []}  # Define a weighted DAG with shared subproblems C, D, and G.
+pos_dag_w = {"S": np.array([0.0, 0.5]), "A": np.array([1.1, 1.1]), "B": np.array([1.1, -0.1]), "C": np.array([2.2, 1.1]), "D": np.array([2.2, -0.1]), "G": np.array([3.3, 0.5])}  # Arrange the DAG from left to right so arrows never need to point backward.
+topo_w = ["S", "A", "B", "C", "D", "G"]  # Give a topological order where every edge points from earlier to later.
+print("Topological order:", topo_w)  # Print the order that makes bottom-up DP possible.
+```
+
+```python
+future_cost_w = {"G": 0}  # Set the base case because the goal has zero remaining cost.
+choice_w = {"G": None}  # Store the best successor chosen by the recurrence.
+for state_w in reversed(topo_w[:-1]):  # Sweep backward so successors already have FutureCost values.
+    candidates_w = []  # Collect candidate cost-to-go values for this state.
+    for nxt_w, cost_w in dag_graph_w[state_w]:  # Evaluate each action from the current state.
+        total_w = cost_w + future_cost_w[nxt_w]  # Add immediate edge cost to the already-known future cost.
+        candidates_w.append((total_w, nxt_w))  # Store both the numeric value and the successor that achieved it.
+        print(state_w, "->", nxt_w, "cost", cost_w, "+ FutureCost", future_cost_w[nxt_w], "=", total_w)  # Print the recurrence term explicitly.
+    best_total_w, best_next_w = min(candidates_w)  # Choose the minimum candidate just like the DP recurrence.
+    future_cost_w[state_w] = best_total_w  # Memoize the best value for later predecessors.
+    choice_w[state_w] = best_next_w  # Memoize the argmin so the path can be reconstructed.
+print("FutureCost values:", future_cost_w)  # Print the final value table.
+```
+
+```python
+dp_path_w = ["S"]  # Start the optimal DAG path at S.
+while dp_path_w[-1] != "G":  # Follow best choices until the goal is reached.
+    dp_path_w.append(choice_w[dp_path_w[-1]])  # Append the successor selected by the DP argmin.
+print("DP shortest path:", dp_path_w)  # Print the optimal path recovered from choices.
+print("DP shortest cost:", future_cost_w["S"])  # Print the minimum cost from the start.
+```
+
+```python
+draw_graph_w(dag_graph_w, pos_dag_w, "4: DP on a DAG reuses future costs", path_w=dp_path_w, explored_w=future_cost_w.keys(), current_w="S")  # Draw the weighted DAG and highlight the DP-optimal route.
+```
+
+▶ What you'll see: the graph flows left to right, and the highlighted path follows the smallest memoized future costs.
+
+The recurrence is valid here because there is no cycle that would make a state's value depend on itself. In a DAG, reversed topological order guarantees every successor value is available before its predecessor is computed.
+
+*Why it's done this way: evaluating the graph backward turns exponential repeated suffix searches into one value lookup per state.*
+
+#### 5. Uniform-cost search (UCS)
+
+**What:** UCS expands the state with the smallest cumulative past cost $g(s)$.
+
+**Why:** with non-negative edge costs, once a state is popped from the priority queue, no later path can reach it more cheaply.
+
+**Why this approach:** we use a weighted graph where the fewest-edge route is not the cheapest route, so cost priority matters.
+
+```python
+ucs_graph_w = {"S": [("A", 1), ("B", 4)], "A": [("C", 2), ("G", 7)], "B": [("G", 2)], "C": [("G", 2)], "G": []}  # Define a weighted graph where S-A-C-G costs 5 and S-B-G costs 6.
+pos_ucs_w = {"S": np.array([0.0, 0.4]), "A": np.array([1.1, 1.0]), "B": np.array([1.1, -0.2]), "C": np.array([2.2, 1.0]), "G": np.array([3.3, 0.4])}  # Place nodes so alternate routes are easy to compare.
+print("Weighted UCS graph:", ucs_graph_w)  # Print the weighted adjacency list before using the heap.
+```
+
+```python
+ucs_heap_w = [(0, "S")]  # Initialize the priority queue with cumulative cost zero at the start.
+ucs_best_w = {"S": 0}  # Store the best known cumulative cost to each discovered state.
+ucs_parent_w = {"S": None}  # Store predecessors for the final path.
+ucs_explored_w = []  # Record pop order to show increasing cumulative cost.
+while ucs_heap_w:  # Continue until the cheapest pending state is the goal.
+    cost_w, state_w = heapq.heappop(ucs_heap_w)  # Pop the state with least cumulative cost.
+    if cost_w != ucs_best_w[state_w]:  # Ignore stale heap entries created before a better route was found.
+        continue  # Skip outdated work without changing correctness.
+    ucs_explored_w.append(state_w)  # Record the state whose cost is now finalized.
+    print("pop", state_w, "with g =", cost_w)  # Print the exact priority that caused this expansion.
+    if state_w == "G":  # Stop when the goal is popped.
+        break  # The goal cost is optimal because all remaining priorities are no smaller.
+    for nxt_w, edge_cost_w in ucs_graph_w[state_w]:  # Relax every outgoing edge.
+        new_cost_w = cost_w + edge_cost_w  # Compute the new cumulative path cost.
+        if new_cost_w < ucs_best_w.get(nxt_w, np.inf):  # Keep the update only if it improves the best known cost.
+            ucs_best_w[nxt_w] = new_cost_w  # Save the improved cumulative cost.
+            ucs_parent_w[nxt_w] = state_w  # Save the predecessor that produced the improvement.
+            heapq.heappush(ucs_heap_w, (new_cost_w, nxt_w))  # Push the improved state into the priority queue.
+            print("  push", nxt_w, "with g =", new_cost_w)  # Print each relaxation so the heap priorities are visible.
+print("Final best costs:", ucs_best_w)  # Print the finalized and discovered costs.
+```
+
+```python
+ucs_path_w = []  # Prepare to reconstruct the UCS route.
+state_w = "G"  # Start at the goal.
+while state_w is not None:  # Follow parent pointers to the start.
+    ucs_path_w.append(state_w)  # Add the current state to the reversed path.
+    state_w = ucs_parent_w[state_w]  # Move to the predecessor found by relaxation.
+ucs_path_w = ucs_path_w[::-1]  # Reverse the route to read from S to G.
+print("UCS optimal path:", ucs_path_w)  # Print the cheapest route.
+print("UCS optimal cost:", ucs_best_w["G"])  # Print the total cost of that route.
+```
+
+```python
+draw_graph_w(ucs_graph_w, pos_ucs_w, "5: UCS expands least cumulative cost first", path_w=ucs_path_w, explored_w=ucs_explored_w, current_w="G")  # Draw the weighted graph and UCS result.
+```
+
+▶ What you'll see: UCS reaches `A` before `B` because `g(A)=1`, then still chooses the cheapest total route through `C`.
+
+Non-negative costs are essential: after UCS pops the smallest $g(s)$, any alternate route must add costs $\geq0$ to some not-yet-smaller frontier priority. Therefore that popped cost cannot be improved later.
+
+*Why it's done this way: the heap stores exactly the theorem's priority, so the printed pop sequence is the proof idea in miniature.*
+
+#### 6. A* search, heuristics, and relaxation-derived heuristics
+
+**What:** A* expands the state with smallest $f(s)=g(s)+h(s)$, where $g(s)$ is past cost and $h(s)$ estimates future cost.
+
+**Why:** an informative admissible heuristic can avoid states that UCS must inspect, while still preserving optimality when $h(s)\leq$ the true remaining cost.
+
+**Why this approach:** we reuse the UCS graph, compute true future costs as a perfect heuristic, and compare UCS pops with A* pops.
+
+```python
+true_future_w = {"G": 0, "C": 2, "B": 2, "A": 4, "S": 5}  # Store exact remaining costs, which are admissible because h(s) equals the true cost-to-go.
+relaxed_h_w = {state_w: max(0, true_future_w[state_w] - 1) for state_w in true_future_w}  # Create a weaker relaxation-style heuristic by subtracting one unit of constraint/cost.
+zero_h_w = {state_w: 0 for state_w in true_future_w}  # Store the zero heuristic, which makes A* behave like UCS.
+print("Zero heuristic:", zero_h_w)  # Print the baseline h values.
+print("Relaxation-derived heuristic:", relaxed_h_w)  # Print the easier-problem h values.
+print("Perfect admissible heuristic:", true_future_w)  # Print the most informative admissible h values.
+```
+
+```python
+def astar_w(graph_w, heuristic_w, start_w="S", goal_w="G"):  # Define a compact A* routine for comparing heuristics.
+    heap_w = [(heuristic_w[start_w], 0, start_w)]  # Prioritize the start by f = g + h.
+    best_g_w = {start_w: 0}  # Track the best cumulative cost found so far.
+    parent_w = {start_w: None}  # Track predecessors for path reconstruction.
+    pop_order_w = []  # Record expanded states so we can compare work.
+    while heap_w:  # Continue while some frontier state remains.
+        f_w, g_w, state_w = heapq.heappop(heap_w)  # Pop the lowest estimated total cost.
+        if g_w != best_g_w[state_w]:  # Skip stale entries whose g value is no longer best.
+            continue  # Keep the heap implementation simple without explicit decrease-key.
+        pop_order_w.append(state_w)  # Record this finalized expansion.
+        print("pop", state_w, "g =", g_w, "h =", heuristic_w[state_w], "f =", f_w)  # Print the A* priority decomposition.
+        if state_w == goal_w:  # Stop when the goal is selected for expansion.
+            break  # With an admissible and consistent heuristic here, this path is optimal.
+        for nxt_w, edge_cost_w in graph_w[state_w]:  # Relax every outgoing edge.
+            new_g_w = g_w + edge_cost_w  # Add the edge cost to the known past cost.
+            if new_g_w < best_g_w.get(nxt_w, np.inf):  # Update only if this path improves the best known g.
+                best_g_w[nxt_w] = new_g_w  # Save the improved past cost.
+                parent_w[nxt_w] = state_w  # Save the predecessor for path recovery.
+                heapq.heappush(heap_w, (new_g_w + heuristic_w[nxt_w], new_g_w, nxt_w))  # Push priority f = g + h.
+                print("  push", nxt_w, "g =", new_g_w, "h =", heuristic_w[nxt_w], "f =", new_g_w + heuristic_w[nxt_w])  # Print each frontier update.
+    path_w = []  # Prepare the reconstructed route.
+    state_w = goal_w  # Backtrack from the goal.
+    while state_w is not None:  # Follow parents until the start marker is reached.
+        path_w.append(state_w)  # Add the current state to the reversed route.
+        state_w = parent_w[state_w]  # Move one step toward the start.
+    return path_w[::-1], best_g_w[goal_w], pop_order_w  # Return the path, optimal cost, and expansion order.
+```
+
+```python
+print("A* with zero h, equivalent to UCS:")  # Label the baseline run.
+astar_zero_path_w, astar_zero_cost_w, astar_zero_order_w = astar_w(ucs_graph_w, zero_h_w)  # Run A* with h = 0 to reproduce UCS behavior.
+print("A* with perfect h:")  # Label the informative run.
+astar_path_w, astar_cost_w, astar_order_w = astar_w(ucs_graph_w, true_future_w)  # Run A* with exact remaining costs.
+print("Zero-h expansions:", astar_zero_order_w)  # Print the baseline expansion order.
+print("Perfect-h expansions:", astar_order_w)  # Print the shorter informed expansion order.
+print("A* path and cost:", astar_path_w, astar_cost_w)  # Print the optimal route and total cost.
+```
+
+```python
+draw_graph_w(ucs_graph_w, pos_ucs_w, "6: A* uses g + h to focus the frontier", path_w=astar_path_w, explored_w=astar_order_w, current_w="G")  # Draw the A* expansions and final path.
+```
+
+▶ What you'll see: the perfect heuristic focuses A* on the optimal route and expands fewer states than the zero heuristic/UCS baseline.
+
+Admissibility means $h(s)\leq\operatorname{FutureCost}(s)$, so the heuristic never over-promises how cheap the rest of the path can be. Relaxation-derived heuristics get this property by solving an easier problem whose constraints or costs make the remaining path no more expensive than the original.
+
+*Why it's done this way: comparing $h=0$, a relaxed heuristic, and exact future costs shows that A* is UCS plus increasingly useful lower-bound information.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. List valid neighbors of one grid cell

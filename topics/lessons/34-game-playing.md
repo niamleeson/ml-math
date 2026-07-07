@@ -398,6 +398,348 @@ plot_board(near_end_board, title="Data preview: near-end tic-tac-toe")  # Visual
 ▶ What you'll see: a near-end tic-tac-toe state with three empty cells. The coded examples will ask which empty cell X should choose, then compare exact minimax, alpha-beta pruning, and depth-limited evaluation.
 
 
+
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the game-playing ideas from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib, `math.inf`, and tiny inline game trees, so every backed-up value, bound, expectation, and equilibrium check is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy stores tiny payoff tables and makes weighted expectations easy to inspect.
+import matplotlib.pyplot as plt  # Matplotlib lets us draw each small game tree or payoff table as we build it.
+from math import inf  # Infinity gives clean initial best values and alpha-beta bounds without extra packages.
+np.random.seed(221)  # Seeding keeps any small visual jitter or future random choices reproducible.
+```
+
+#### 1. Minimax value recursion: back up optimal adversarial play
+
+Minimax assigns a value $V(s)$ to every state by using utility at leaves, $\max$ at the agent's turns, and $\min$ at the opponent's turns:
+
+$$
+V(s)=
+\begin{cases}
+\operatorname{Utility}(s), & s \text{ is terminal},\\
+\max_a V(\operatorname{Succ}(s,a)), & \operatorname{Player}(s)=\text{agent},\\
+\min_a V(\operatorname{Succ}(s,a)), & \operatorname{Player}(s)=\text{opp}.
+\end{cases}
+$$
+
+The alternating $\max/\min$ models optimal adversarial play: our agent chooses the best child, while the opponent chooses the child that is worst for us. We use a depth-2 hand-built tree so every leaf and backed-up value can be checked by eye.
+
+```python
+tree_minimax_w = {"player": "max", "children": {"Left": {"player": "min", "children": {"L1": 3, "L2": 5}}, "Right": {"player": "min", "children": {"R1": 2, "R2": 9}}}}  # Build a depth-2 game tree with utilities at leaves.
+print("root player:", tree_minimax_w["player"])  # Inspect whose turn it is at the root.
+print("root actions:", list(tree_minimax_w["children"].keys()))  # Inspect the two available root actions.
+print("leaf utilities:", tree_minimax_w["children"])  # Inspect the tiny nested tree before recursion.
+```
+▶ What you'll see: a root max node, two min children, and four terminal utilities.
+
+```python
+def minimax_value_w(node_w, name_w="root", depth_w=0):  # Define recursive minimax on nested dictionaries and numeric leaves.
+    indent_w = "  " * depth_w  # Indent trace lines so parent-child structure is readable.
+    if isinstance(node_w, (int, float)):  # Stop recursion when a terminal utility is reached.
+        print(f"{indent_w}{name_w}: leaf utility {node_w}")  # Print the leaf value used directly by V(s).
+        return float(node_w)  # Return the terminal utility as the backed-up value.
+    child_values_w = []  # Collect backed-up values from every legal action.
+    for action_w, child_w in node_w["children"].items():  # Recurse through each successor state.
+        child_values_w.append(minimax_value_w(child_w, action_w, depth_w + 1))  # Save the child's backed-up value.
+    if node_w["player"] == "max":  # Use max backup at the agent's decision node.
+        value_w = max(child_values_w)  # Choose the best value available to the agent.
+    else:  # Use min backup at the opponent's decision node.
+        value_w = min(child_values_w)  # Choose the value the adversary can force against us.
+    print(f"{indent_w}{name_w}: {node_w['player']} backs up {child_values_w} -> {value_w}")  # Show the local recurrence step.
+    return value_w  # Return the backed-up value to the parent.
+root_minimax_value_w = minimax_value_w(tree_minimax_w)  # Run minimax from the root.
+print("root minimax value:", root_minimax_value_w)  # Inspect the final game value.
+```
+▶ What you'll see: leaves print first, min nodes back up 3 and 2, then the root max backs up value 3.
+
+```python
+child_names_minimax_w = list(tree_minimax_w["children"].keys())  # Keep root action labels in a stable order.
+child_values_minimax_w = [minimax_value_w(tree_minimax_w["children"][name_w], name_w) for name_w in child_names_minimax_w]  # Recompute each child value for a compact bar plot.
+plt.figure(figsize=(5.5, 3.6))  # Create a compact visual summary of root choices.
+plt.bar(child_names_minimax_w, child_values_minimax_w, color=["tab:blue", "tab:orange"])  # Draw one bar for each action's backed-up value.
+plt.axhline(root_minimax_value_w, color="black", linestyle="--", label="root value")  # Mark the value selected by the max root.
+plt.ylabel("backed-up value")  # Label the numeric minimax values.
+plt.title("1: minimax child values")  # Title the figure with the subsection number.
+plt.legend()  # Explain the dashed root-value line.
+plt.show()  # Render the bar chart.
+```
+▶ What you'll see: the `Left` action wins because the opponent can hold it to 3, while `Right` can be held to 2.
+
+```python
+pos_minimax_w = {"root": (0.0, 2.0), "Left": (-1.0, 1.0), "Right": (1.0, 1.0), "L1": (-1.4, 0.0), "L2": (-0.6, 0.0), "R1": (0.6, 0.0), "R2": (1.4, 0.0)}  # Manually place the tiny tree nodes.
+labels_minimax_w = {"root": f"max\\nV={root_minimax_value_w:g}", "Left": f"min\\nV={child_values_minimax_w[0]:g}", "Right": f"min\\nV={child_values_minimax_w[1]:g}", "L1": "3", "L2": "5", "R1": "2", "R2": "9"}  # Label internal values and leaf utilities.
+edges_minimax_w = [("root", "Left"), ("root", "Right"), ("Left", "L1"), ("Left", "L2"), ("Right", "R1"), ("Right", "R2")]  # List parent-child edges.
+plt.figure(figsize=(6.0, 4.0))  # Create a readable tree drawing.
+for parent_w, child_w in edges_minimax_w:  # Draw every tree edge.
+    plt.plot([pos_minimax_w[parent_w][0], pos_minimax_w[child_w][0]], [pos_minimax_w[parent_w][1], pos_minimax_w[child_w][1]], color="gray")  # Connect parent and child positions.
+for node_name_w, (x_w, y_w) in pos_minimax_w.items():  # Draw every node label.
+    plt.scatter(x_w, y_w, s=900, color="white", edgecolor="black", zorder=3)  # Draw a circular node marker.
+    plt.text(x_w, y_w, labels_minimax_w[node_name_w], ha="center", va="center", fontsize=9)  # Put the value text inside the node.
+plt.axis("off")  # Hide axes because this is a tree, not coordinate data.
+plt.title("1: minimax tree with backed-up values")  # Title the figure with the subsection number.
+plt.show()  # Render the game-tree diagram.
+```
+▶ What you'll see: the min layers choose the smaller leaf under each action, then the root chooses the larger of those backed-up values.
+
+*Why it's done this way: recursion mirrors the game tree exactly, and alternating $\max$ with $\min$ encodes the assumption that both players choose optimally for their own objectives.*
+
+#### 2. Alpha-beta pruning: skip branches that cannot change the answer
+
+Alpha-beta pruning computes the same minimax value while tracking bounds. The value $\alpha$ is the best already guaranteed to a max ancestor, and $\beta$ is the best already guaranteed to a min ancestor. Once $\alpha\geq\beta$, a branch is proven unable to change an ancestor's decision, so search can stop there without changing the result.
+
+```python
+tree_ab_w = {"player": "max", "children": {"A": {"player": "min", "children": {"A1": 3, "A2": 5}}, "B": {"player": "min", "children": {"B1": 2, "B2": 100}}}}  # Build a tree where ordering creates a visible cutoff.
+plain_count_ab_w = 0  # Initialize a counter for plain minimax node visits.
+def plain_minimax_count_w(node_w):  # Define plain minimax with a visit counter.
+    global plain_count_ab_w  # Use one notebook-level counter for easy inspection.
+    plain_count_ab_w += 1  # Count the current node visit.
+    if isinstance(node_w, (int, float)):  # Check whether this node is terminal.
+        return float(node_w)  # Return terminal utility.
+    values_w = [plain_minimax_count_w(child_w) for child_w in node_w["children"].values()]  # Evaluate every child without pruning.
+    return max(values_w) if node_w["player"] == "max" else min(values_w)  # Apply the ordinary minimax backup.
+plain_value_ab_w = plain_minimax_count_w(tree_ab_w)  # Run full minimax on the alpha-beta example tree.
+print("plain minimax value:", plain_value_ab_w)  # Inspect the exact value.
+print("plain nodes visited:", plain_count_ab_w)  # Inspect the full-search node count.
+```
+▶ What you'll see: plain minimax visits every internal node and every leaf.
+
+```python
+ab_count_w = 0  # Initialize the alpha-beta visit counter.
+pruned_edges_w = []  # Store pruned branch names for inspection and plotting.
+def alphabeta_w(node_w, alpha_w=-inf, beta_w=inf, name_w="root", depth_w=0):  # Define alpha-beta minimax with explicit bounds.
+    global ab_count_w  # Use one notebook-level counter for alpha-beta visits.
+    ab_count_w += 1  # Count the current visited node.
+    indent_w = "  " * depth_w  # Indent trace output by depth.
+    if isinstance(node_w, (int, float)):  # Stop at terminal utilities.
+        print(f"{indent_w}{name_w}: leaf {node_w} with alpha={alpha_w:g}, beta={beta_w:g}")  # Print the leaf and current bounds.
+        return float(node_w)  # Return the terminal utility.
+    if node_w["player"] == "max":  # Handle an agent node.
+        value_w = -inf  # Start below every possible child value.
+        for action_w, child_w in node_w["children"].items():  # Visit children from left to right.
+            value_w = max(value_w, alphabeta_w(child_w, alpha_w, beta_w, action_w, depth_w + 1))  # Improve the max value with this child.
+            alpha_w = max(alpha_w, value_w)  # Update the best guarantee for max.
+            print(f"{indent_w}{name_w}: max sees {action_w}, value={value_w:g}, alpha={alpha_w:g}, beta={beta_w:g}")  # Show the new bound state.
+            if alpha_w >= beta_w:  # Check whether a beta cutoff is possible.
+                pruned_edges_w.extend(list(node_w["children"].keys())[list(node_w["children"].keys()).index(action_w) + 1:])  # Record unvisited siblings.
+                break  # Stop because later children cannot improve the ancestor's choice.
+        return value_w  # Return the backed-up max value.
+    value_w = inf  # Start above every possible child value at a min node.
+    for action_w, child_w in node_w["children"].items():  # Visit opponent children from left to right.
+        value_w = min(value_w, alphabeta_w(child_w, alpha_w, beta_w, action_w, depth_w + 1))  # Improve the min value with this child.
+        beta_w = min(beta_w, value_w)  # Update the best guarantee for min.
+        print(f"{indent_w}{name_w}: min sees {action_w}, value={value_w:g}, alpha={alpha_w:g}, beta={beta_w:g}")  # Show the new bound state.
+        if alpha_w >= beta_w:  # Check whether an alpha cutoff is possible.
+            pruned_edges_w.extend(list(node_w["children"].keys())[list(node_w["children"].keys()).index(action_w) + 1:])  # Record unvisited siblings.
+            break  # Stop because max already has an option at least this good.
+    return value_w  # Return the backed-up min value.
+ab_value_w = alphabeta_w(tree_ab_w)  # Run alpha-beta from the root.
+print("alpha-beta value:", ab_value_w)  # Verify the value matches plain minimax.
+print("alpha-beta nodes visited:", ab_count_w)  # Inspect the smaller node count.
+print("pruned branches:", pruned_edges_w)  # Show which branch was skipped.
+```
+▶ What you'll see: after seeing `B1=2`, the min node `B` cannot beat root's existing value 3, so `B2` is pruned.
+
+```python
+plt.figure(figsize=(5.5, 3.6))  # Create a compact node-count comparison.
+plt.bar(["plain minimax", "alpha-beta"], [plain_count_ab_w, ab_count_w], color=["tab:gray", "tab:green"])  # Compare visited nodes directly.
+plt.ylabel("nodes visited")  # Label the count axis.
+plt.title("2: alpha-beta visits fewer nodes")  # Title the figure with the subsection number.
+for i_w, count_w in enumerate([plain_count_ab_w, ab_count_w]):  # Annotate each bar with its count.
+    plt.text(i_w, count_w + 0.1, str(count_w), ha="center")  # Put the count above the bar.
+plt.show()  # Render the comparison.
+```
+▶ What you'll see: alpha-beta returns the same value while visiting fewer nodes than plain minimax.
+
+```python
+pos_ab_w = {"root": (0.0, 2.0), "A": (-1.0, 1.0), "B": (1.0, 1.0), "A1": (-1.4, 0.0), "A2": (-0.6, 0.0), "B1": (0.6, 0.0), "B2": (1.4, 0.0)}  # Place the alpha-beta tree nodes.
+labels_ab_w = {"root": "max", "A": "min\\nV=3", "B": "min\\ncut", "A1": "3", "A2": "5", "B1": "2", "B2": "100\\npruned"}  # Label the branch where pruning happens.
+edges_ab_w = [("root", "A"), ("root", "B"), ("A", "A1"), ("A", "A2"), ("B", "B1"), ("B", "B2")]  # List every tree edge.
+plt.figure(figsize=(6.0, 4.0))  # Create a tree visualization.
+for parent_w, child_w in edges_ab_w:  # Draw each edge with pruning highlighted.
+    style_w = "--" if child_w == "B2" else "-"  # Use a dashed edge for the pruned child.
+    color_w = "tab:red" if child_w == "B2" else "gray"  # Color the pruned edge red.
+    plt.plot([pos_ab_w[parent_w][0], pos_ab_w[child_w][0]], [pos_ab_w[parent_w][1], pos_ab_w[child_w][1]], linestyle=style_w, color=color_w)  # Draw the edge.
+for node_name_w, (x_w, y_w) in pos_ab_w.items():  # Draw each node.
+    color_w = "mistyrose" if node_name_w == "B2" else "white"  # Shade the pruned leaf.
+    plt.scatter(x_w, y_w, s=900, color=color_w, edgecolor="black", zorder=3)  # Draw the node marker.
+    plt.text(x_w, y_w, labels_ab_w[node_name_w], ha="center", va="center", fontsize=9)  # Add the label.
+plt.axis("off")  # Hide coordinate axes.
+plt.title("2: alpha-beta prunes a proven-worse branch")  # Title the figure with the subsection number.
+plt.show()  # Render the pruning diagram.
+```
+▶ What you'll see: the `B2` edge is dashed because its value cannot rescue action `B` after `B1` already gives 2.
+
+*Why it's done this way: alpha-beta keeps the minimax recurrence but adds proof-carrying bounds, so it saves computation only when a branch is already unable to affect the final backed-up choice.*
+
+#### 3. Expectimax: replace an adversary with a chance model
+
+Expectimax is for settings where the next actor is stochastic rather than perfectly adversarial. At a chance node, the backup is an expectation instead of a minimum:
+
+$$
+V(s)=\sum_a p(a\mid s) V(\operatorname{Succ}(s,a)).
+$$
+
+Use minimax when the opponent is actively trying to minimize your utility; use expectimax when the next outcome follows known probabilities, such as dice rolls or a fixed random policy.
+
+```python
+tree_expect_w = {"player": "max", "children": {"Safe": 4, "Risky": {"player": "chance", "children": {"low": {"prob": 0.25, "value": -8}, "high": {"prob": 0.75, "value": 8}}}}}  # Build a tree with one chance node.
+print("safe utility:", tree_expect_w["children"]["Safe"])  # Inspect the deterministic safe action.
+print("risky outcomes:", tree_expect_w["children"]["Risky"]["children"])  # Inspect the probabilities and utilities.
+```
+▶ What you'll see: the risky action has a bad low outcome and a good high outcome with specified probabilities.
+
+```python
+def expectimax_w(node_w, name_w="root", depth_w=0):  # Define expectimax recursion on dictionaries and numeric leaves.
+    indent_w = "  " * depth_w  # Indent trace output by depth.
+    if isinstance(node_w, (int, float)):  # Stop at a deterministic terminal utility.
+        print(f"{indent_w}{name_w}: leaf {node_w}")  # Print the leaf utility.
+        return float(node_w)  # Return the terminal value.
+    if node_w["player"] == "chance":  # Handle a stochastic node.
+        total_w = 0.0  # Initialize the weighted sum.
+        for outcome_w, payload_w in node_w["children"].items():  # Loop over possible outcomes.
+            contribution_w = payload_w["prob"] * expectimax_w(payload_w["value"], outcome_w, depth_w + 1)  # Compute p times child value.
+            print(f"{indent_w}{outcome_w}: contribution {contribution_w:g}")  # Show the weighted contribution.
+            total_w += contribution_w  # Add this outcome to the expectation.
+        print(f"{indent_w}{name_w}: chance expectation -> {total_w:g}")  # Print the expected value.
+        return total_w  # Return the chance backup.
+    values_w = {action_w: expectimax_w(child_w, action_w, depth_w + 1) for action_w, child_w in node_w["children"].items()}  # Evaluate each action.
+    best_w = max(values_w.values())  # Choose the best expected value at the max root.
+    print(f"{indent_w}{name_w}: max over {values_w} -> {best_w:g}")  # Print the max backup.
+    return best_w  # Return the expectimax value.
+root_expect_w = expectimax_w(tree_expect_w)  # Run expectimax from the root.
+print("root expectimax value:", root_expect_w)  # Inspect the final expected value.
+```
+▶ What you'll see: the risky action backs up $0.25(-8)+0.75(8)=4$, tying the safe action.
+
+```python
+probs_expect_w = np.array([0.25, 0.75])  # Store the chance probabilities in outcome order.
+outcomes_expect_w = np.array([-8.0, 8.0])  # Store the corresponding utilities.
+weighted_expect_w = probs_expect_w * outcomes_expect_w  # Compute each contribution to the expectation.
+print("probabilities:", probs_expect_w)  # Inspect p(a|s).
+print("utilities:", outcomes_expect_w)  # Inspect V(Succ(s,a)).
+print("p * utility:", weighted_expect_w)  # Inspect the terms inside the sum.
+print("sum:", weighted_expect_w.sum())  # Inspect the final expected value.
+```
+▶ What you'll see: the negative and positive weighted terms add to the risky action's expected value.
+
+```python
+plt.figure(figsize=(5.8, 3.8))  # Create a bar chart for expectimax arithmetic.
+plt.bar(["Safe", "Risky expected"], [4.0, weighted_expect_w.sum()], color=["tab:blue", "tab:purple"])  # Compare deterministic and expected action values.
+plt.scatter([1, 1], outcomes_expect_w, s=90, color=["tab:red", "tab:green"], zorder=3, label="risky outcomes")  # Overlay the risky low and high utilities.
+plt.ylabel("value")  # Label the backed-up values.
+plt.title("3: expectimax uses weighted chance values")  # Title the figure with the subsection number.
+plt.legend()  # Explain the outcome markers.
+plt.show()  # Render the expectimax figure.
+```
+▶ What you'll see: the risky action's bar is an average of its low and high outcome dots, not the minimum dot.
+
+*Why it's done this way: chance nodes are not choosing against us, so replacing $\min$ with $\sum pV$ matches the data-generating process instead of assuming a hostile opponent.*
+
+#### 4. Evaluation functions and depth limits: stop search and estimate
+
+Full-width game search grows exponentially with depth, so practical agents often stop at a cutoff and apply an evaluation function. The depth-limited value uses exact utility at real leaves, but at cutoff states it substitutes a heuristic estimate $\operatorname{Eval}(s)$; the tradeoff is faster decisions with values that depend on heuristic quality.
+
+```python
+tree_eval_w = {"player": "max", "features": np.array([0.0, 0.0]), "children": {"Attack": {"player": "min", "features": np.array([2.0, -1.0]), "children": {"block": 1, "miss": 6}}, "Defend": {"player": "min", "features": np.array([0.5, 1.5]), "children": {"press": 2, "wait": 3}}}}  # Build a tree with features at internal states.
+weights_eval_w = np.array([1.5, 1.0])  # Weight feature 0 as material/position and feature 1 as safety.
+print("cutoff features for Attack:", tree_eval_w["children"]["Attack"]["features"])  # Inspect one cutoff state's features.
+print("cutoff features for Defend:", tree_eval_w["children"]["Defend"]["features"])  # Inspect the other cutoff state's features.
+print("evaluation weights:", weights_eval_w)  # Inspect the heuristic's linear weights.
+```
+▶ What you'll see: each depth-1 state has two hand-built features that will stand in for deeper search.
+
+```python
+def eval_state_w(node_w):  # Define a simple heuristic evaluation function.
+    value_w = float(node_w["features"] @ weights_eval_w)  # Compute a weighted feature score.
+    print("Eval(features=", node_w["features"], ") =", value_w)  # Print the transparent heuristic calculation.
+    return value_w  # Return the heuristic estimate.
+def depth_limited_w(node_w, depth_left_w, name_w="root"):  # Define minimax with a depth cutoff.
+    if isinstance(node_w, (int, float)):  # Use exact utility at true terminal leaves.
+        return float(node_w)  # Return the terminal payoff.
+    if depth_left_w == 0:  # Stop search at the cutoff depth.
+        return eval_state_w(node_w)  # Replace unknown subtree value with the heuristic estimate.
+    child_values_w = [depth_limited_w(child_w, depth_left_w - 1, action_w) for action_w, child_w in node_w["children"].items()]  # Evaluate visible children.
+    value_w = max(child_values_w) if node_w["player"] == "max" else min(child_values_w)  # Back up using the player type.
+    print(name_w, "backs up", child_values_w, "->", value_w)  # Print the backed-up value at this depth.
+    return value_w  # Return the depth-limited value.
+value_depth1_w = depth_limited_w(tree_eval_w, 1)  # Search only one move, then evaluate.
+value_depth2_w = depth_limited_w(tree_eval_w, 2)  # Search to terminal leaves for comparison.
+print("depth-1 heuristic value:", value_depth1_w)  # Inspect the cutoff-based value.
+print("depth-2 exact value:", value_depth2_w)  # Inspect the deeper exact value.
+```
+▶ What you'll see: the shallow value comes from feature estimates, while the deeper value comes from terminal utilities.
+
+```python
+actions_eval_w = list(tree_eval_w["children"].keys())  # Store root actions in display order.
+heuristic_values_eval_w = [eval_state_w(tree_eval_w["children"][action_w]) for action_w in actions_eval_w]  # Compute cutoff estimates for each child.
+exact_values_eval_w = [min(tree_eval_w["children"][action_w]["children"].values()) for action_w in actions_eval_w]  # Compute exact min backups one level deeper.
+print("actions:", actions_eval_w)  # Inspect action order.
+print("heuristic child values:", heuristic_values_eval_w)  # Inspect depth-limited child estimates.
+print("exact child values:", exact_values_eval_w)  # Inspect deeper backed-up child values.
+```
+▶ What you'll see: the heuristic ranking can differ from the exact deeper ranking when the estimate is imperfect.
+
+```python
+x_eval_w = np.arange(len(actions_eval_w))  # Create x positions for grouped bars.
+width_eval_w = 0.35  # Choose a small offset for side-by-side bars.
+plt.figure(figsize=(6.0, 3.8))  # Create a grouped comparison figure.
+plt.bar(x_eval_w - width_eval_w / 2, heuristic_values_eval_w, width_eval_w, label="depth cutoff Eval(s)", color="tab:cyan")  # Draw heuristic cutoff values.
+plt.bar(x_eval_w + width_eval_w / 2, exact_values_eval_w, width_eval_w, label="deeper minimax value", color="tab:orange")  # Draw exact deeper values.
+plt.xticks(x_eval_w, actions_eval_w)  # Label each root action.
+plt.ylabel("backed-up value")  # Label the value axis.
+plt.title("4: depth-limited evaluation versus deeper search")  # Title the figure with the subsection number.
+plt.legend()  # Explain the two bar groups.
+plt.show()  # Render the tradeoff plot.
+```
+▶ What you'll see: depth-limited search is cheaper, but its selected action depends on how well `Eval(s)` predicts deeper outcomes.
+
+*Why it's done this way: a cutoff controls computation, and a heuristic evaluation injects domain knowledge so the agent can still compare nonterminal states.*
+
+#### 5. Simultaneous games and Nash equilibrium: best responses meet
+
+In a simultaneous game, players choose actions at the same time, so there is no game tree order to recurse through. A pure-strategy Nash equilibrium is a cell where each player is choosing a best response to the other; mixed strategies generalize this by randomizing so opponents are indifferent among actions in support.
+
+```python
+row_payoff_nash_w = np.array([[2.0, 0.0], [1.0, 1.0]])  # Store row player's payoff matrix.
+col_payoff_nash_w = np.array([[2.0, 3.0], [0.0, 1.0]])  # Store column player's payoff matrix.
+row_actions_nash_w = ["Up", "Down"]  # Name row strategies.
+col_actions_nash_w = ["Left", "Right"]  # Name column strategies.
+print("row payoff matrix:\n", row_payoff_nash_w)  # Inspect row utilities.
+print("column payoff matrix:\n", col_payoff_nash_w)  # Inspect column utilities.
+```
+▶ What you'll see: each cell has one payoff for the row player and one payoff for the column player.
+
+```python
+row_best_nash_w = row_payoff_nash_w == row_payoff_nash_w.max(axis=0, keepdims=True)  # Mark row best responses within each column.
+col_best_nash_w = col_payoff_nash_w == col_payoff_nash_w.max(axis=1, keepdims=True)  # Mark column best responses within each row.
+nash_cells_w = row_best_nash_w & col_best_nash_w  # Identify cells where both players best respond.
+print("row best responses:\n", row_best_nash_w)  # Inspect row player's best-response markers.
+print("column best responses:\n", col_best_nash_w)  # Inspect column player's best-response markers.
+print("pure Nash cells:\n", nash_cells_w)  # Inspect cells satisfying both conditions.
+```
+▶ What you'll see: `Down, Right` is marked by both players, so it is a pure-strategy Nash equilibrium.
+
+```python
+plt.figure(figsize=(5.0, 4.0))  # Create a payoff-matrix figure.
+plt.imshow(nash_cells_w.astype(float), cmap="Greens", vmin=0.0, vmax=1.0)  # Shade equilibrium cells.
+for i_w in range(row_payoff_nash_w.shape[0]):  # Loop over row strategies.
+    for j_w in range(row_payoff_nash_w.shape[1]):  # Loop over column strategies.
+        text_w = f"({row_payoff_nash_w[i_w, j_w]:.0f}, {col_payoff_nash_w[i_w, j_w]:.0f})"  # Format the payoff pair.
+        mark_w = "★" if nash_cells_w[i_w, j_w] else ""  # Add a star only at Nash cells.
+        plt.text(j_w, i_w, text_w + mark_w, ha="center", va="center", fontsize=12)  # Annotate the matrix cell.
+plt.xticks(np.arange(len(col_actions_nash_w)), col_actions_nash_w)  # Label column strategies.
+plt.yticks(np.arange(len(row_actions_nash_w)), row_actions_nash_w)  # Label row strategies.
+plt.xlabel("column player action")  # Label the horizontal player.
+plt.ylabel("row player action")  # Label the vertical player.
+plt.title("5: simultaneous game pure Nash equilibrium")  # Title the figure with the subsection number.
+plt.colorbar(label="both best respond")  # Add a legend for highlighted cells.
+plt.show()  # Render the payoff table.
+```
+▶ What you'll see: the starred cell is stable because neither player can improve by changing only their own action.
+
+*Why it's done this way: simultaneous games require checking mutual best responses rather than backing up a turn-taking tree; when no pure cell exists, mixed-strategy Nash equilibria use probabilities to balance incentives.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Read the utility of one terminal leaf

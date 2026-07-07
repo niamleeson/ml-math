@@ -234,6 +234,246 @@ plt.show()  # render the raw data before any algorithm is applied.
 
 ▶ What you'll see: `blobs` shows compact groups, `iris` shows partially separated real measurements, and `moons` shows curved clusters that k-means will split poorly.
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the two core unsupervised-learning ideas from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline data, so every assignment, centroid, covariance entry, eigenvector, projection, and variance ratio is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us arrays, distances, means, covariance matrices, and eigenvectors.
+import matplotlib.pyplot as plt  # Matplotlib lets us see clusters, distortion curves, PCA directions, and projections.
+np.random.seed(221)  # fix randomness so every printed value and figure is reproducible.
+```
+
+#### 1. k-means: assign $\rightarrow$ update loop
+
+k-means starts with centroids, assigns each point to the nearest centroid, then moves each centroid to the mean of the points assigned to it. We build the loop by hand because the important idea is not the code length; it is that both steps reduce the same distortion
+
+$$
+J=\sum_i \lVert x^{(i)}-\mu_{c^{(i)}}\rVert^2.
+$$
+
+The mean is the optimal centroid for squared distance because differentiating $\sum_i \lVert x^{(i)}-\mu\rVert^2$ with respect to $\mu$ gives $2m\mu-2\sum_i x^{(i)}=0$, so $\mu=\frac{1}{m}\sum_i x^{(i)}$. The assignment step chooses the best centroid with $\mu$ fixed, and the update step chooses the best $\mu$ with assignments fixed, so the distortion cannot increase.
+
+```python
+X_loop_w = np.array([[0.8, 1.0], [1.2, 0.7], [1.0, 1.3], [4.7, 4.9], [5.2, 5.1], [4.9, 5.4]])  # create two tiny 2-D blobs.
+centroids_loop_w = np.array([[0.0, 0.0], [6.0, 6.0]])  # start with deliberately imperfect centroids so movement is visible.
+print("points:\n", X_loop_w)  # inspect the raw unlabeled data.
+print("initial centroids:\n", centroids_loop_w)  # inspect the starting representatives.
+```
+▶ What you'll see: six unlabeled points in two obvious groups, with two centroids that begin outside the group centers.
+
+```python
+distances_loop_w = np.sum((X_loop_w[:, None, :] - centroids_loop_w[None, :, :]) ** 2, axis=2)  # compute squared distance from every point to every centroid.
+assignments_loop_w = np.argmin(distances_loop_w, axis=1)  # assign each point to the centroid with the smallest squared distance.
+print("squared distances (points x centroids):\n", np.round(distances_loop_w, 3))  # inspect the assignment evidence.
+print("assignments:", assignments_loop_w)  # inspect the chosen cluster index for each point.
+```
+▶ What you'll see: each row has two costs, and the smaller cost determines whether the point joins cluster 0 or cluster 1.
+
+```python
+updated_loop_w = np.array([X_loop_w[assignments_loop_w == j].mean(axis=0) for j in range(2)])  # update each centroid to the mean of its assigned points.
+old_J_loop_w = float(np.sum((X_loop_w - centroids_loop_w[assignments_loop_w]) ** 2))  # compute distortion with old centroids and fixed assignments.
+new_J_loop_w = float(np.sum((X_loop_w - updated_loop_w[assignments_loop_w]) ** 2))  # compute distortion after the mean update.
+print("updated centroids:\n", np.round(updated_loop_w, 3))  # inspect where the means land.
+print("J before update:", round(old_J_loop_w, 3))  # print the cost before moving centroids.
+print("J after update :", round(new_J_loop_w, 3))  # print the cost after moving centroids.
+```
+▶ What you'll see: centroids jump to the middle of their assigned points, and distortion drops immediately.
+
+```python
+centroids_run_w = np.array([[0.0, 0.0], [6.0, 6.0]])  # restart from the same initial centroids for a full recorded run.
+history_loop_w = []  # store the distortion after each full assign-update iteration.
+for step_loop_w in range(5):  # run a few iterations because this tiny dataset converges quickly.
+    distances_run_w = np.sum((X_loop_w[:, None, :] - centroids_run_w[None, :, :]) ** 2, axis=2)  # recompute all squared distances.
+    labels_run_w = np.argmin(distances_run_w, axis=1)  # assign points to their nearest current centroid.
+    centroids_run_w = np.array([X_loop_w[labels_run_w == j].mean(axis=0) for j in range(2)])  # update centroids to assigned means.
+    history_loop_w.append(float(np.sum((X_loop_w - centroids_run_w[labels_run_w]) ** 2)))  # record the new distortion value.
+print("distortion per iteration:", np.round(history_loop_w, 3))  # verify the values are non-increasing.
+print("final centroids:\n", np.round(centroids_run_w, 3))  # inspect the final cluster representatives.
+```
+▶ What you'll see: the distortion decreases and then flattens once the assignments stop changing.
+
+```python
+fig_loop_w, ax_loop_w = plt.subplots(1, 2, figsize=(8.0, 3.4))  # create one panel for clusters and one for the cost curve.
+ax_loop_w[0].scatter(X_loop_w[:, 0], X_loop_w[:, 1], c=labels_run_w, cmap="viridis", s=90, edgecolors="black")  # draw points colored by final assignment.
+ax_loop_w[0].scatter(centroids_run_w[:, 0], centroids_run_w[:, 1], marker="X", s=220, c="red", edgecolors="white", label="centroids")  # draw final centroids.
+ax_loop_w[0].set_title("1: k-means final clusters")  # title the cluster geometry panel.
+ax_loop_w[0].set_xlabel("feature 1")  # label the horizontal feature.
+ax_loop_w[0].set_ylabel("feature 2")  # label the vertical feature.
+ax_loop_w[0].legend()  # show the centroid marker meaning.
+ax_loop_w[1].plot(range(1, len(history_loop_w) + 1), history_loop_w, marker="o", color="purple")  # draw distortion across iterations.
+ax_loop_w[1].set_title("1: distortion decreases")  # title the cost panel.
+ax_loop_w[1].set_xlabel("iteration")  # label the iteration axis.
+ax_loop_w[1].set_ylabel("distortion J")  # label the objective value.
+plt.tight_layout()  # keep the two panels from overlapping.
+plt.show()  # render the k-means loop figure.
+```
+▶ What you'll see: two compact clusters with red centroids, plus a distortion curve that only moves downward or stays flat.
+
+*Why it's done this way: k-means is coordinate descent on the squared-distance objective — nearest-centroid assignment is optimal for fixed centroids, and the mean is optimal for fixed assignments — so each loop monotonically lowers distortion until a local minimum is reached.*
+
+#### 2. Choosing $k$: inertia and the elbow
+
+The number of clusters $k$ is a modeling choice, not something k-means discovers by itself. We compute the inertia
+
+$$
+\sum_i \lVert x^{(i)}-\mu_{c^{(i)}}\rVert^2
+$$
+
+for $k=1,2,3,4,5$ to see how the within-cluster sum of squares changes. Inertia always drops as $k$ increases because extra centroids give the optimizer more freedom: it can always imitate the smaller-$k$ solution and ignore the extra center, or use it to reduce distances further. The elbow is the point where the next centroid buys much less improvement, suggesting a useful tradeoff between simplicity and fit.
+
+```python
+X_elbow_w = np.array([[0.0, 0.2], [0.4, -0.1], [-0.3, 0.0], [3.0, 3.2], [3.4, 2.9], [2.8, 3.1], [6.0, 0.2], [6.3, -0.2], [5.7, 0.0]])  # create three tiny 2-D groups.
+print("candidate data shape:", X_elbow_w.shape)  # inspect the small dataset size.
+print("first three points:\n", X_elbow_w[:3])  # inspect one visible blob.
+```
+▶ What you'll see: nine points arranged as three small groups, but still with no labels supplied to the algorithm.
+
+```python
+def run_kmeans_elbow_w(X_input_w, k_input_w, steps_input_w=8):  # define a small deterministic k-means helper for elbow testing.
+    centers_input_w = X_input_w[np.linspace(0, len(X_input_w) - 1, k_input_w, dtype=int)].copy()  # initialize centers from spread-out data points.
+    for iter_input_w in range(steps_input_w):  # repeat assign-update enough times for this tiny dataset.
+        dist_input_w = np.sum((X_input_w[:, None, :] - centers_input_w[None, :, :]) ** 2, axis=2)  # compute squared distances to centers.
+        labels_input_w = np.argmin(dist_input_w, axis=1)  # assign each point to its closest center.
+        centers_input_w = np.array([X_input_w[labels_input_w == j].mean(axis=0) if np.any(labels_input_w == j) else centers_input_w[j] for j in range(k_input_w)])  # update nonempty centers to means.
+    inertia_input_w = float(np.sum((X_input_w - centers_input_w[labels_input_w]) ** 2))  # compute final within-cluster sum of squares.
+    return inertia_input_w, centers_input_w, labels_input_w  # return the score and fitted clustering.
+```
+
+```python
+ks_elbow_w = np.arange(1, 6)  # test k values from 1 through 5.
+inertias_elbow_w = []  # collect one inertia value per k.
+for k_elbow_w in ks_elbow_w:  # loop over candidate cluster counts.
+    inertia_elbow_w, centers_elbow_w, labels_elbow_w = run_kmeans_elbow_w(X_elbow_w, k_elbow_w)  # fit the scratch k-means helper.
+    inertias_elbow_w.append(inertia_elbow_w)  # store the final inertia.
+    print("k =", k_elbow_w, "inertia =", round(inertia_elbow_w, 3))  # inspect the score for this k.
+```
+▶ What you'll see: inertia falls for every larger $k$, with a large improvement up to the natural cluster count and smaller gains afterward.
+
+```python
+best3_inertia_w, best3_centers_w, best3_labels_w = run_kmeans_elbow_w(X_elbow_w, 3)  # compute the k=3 solution for visualization.
+fig_elbow_w, ax_elbow_w = plt.subplots(1, 2, figsize=(8.2, 3.4))  # create one panel for clusters and one for the elbow curve.
+ax_elbow_w[0].scatter(X_elbow_w[:, 0], X_elbow_w[:, 1], c=best3_labels_w, cmap="tab10", s=90, edgecolors="black")  # draw the k=3 cluster assignments.
+ax_elbow_w[0].scatter(best3_centers_w[:, 0], best3_centers_w[:, 1], marker="X", s=220, c="red", edgecolors="white")  # draw the k=3 centroids.
+ax_elbow_w[0].set_title("2: k=3 clustering")  # title the fitted clustering panel.
+ax_elbow_w[0].set_xlabel("feature 1")  # label the horizontal feature.
+ax_elbow_w[0].set_ylabel("feature 2")  # label the vertical feature.
+ax_elbow_w[1].plot(ks_elbow_w, inertias_elbow_w, marker="o", color="darkorange")  # draw inertia as a function of k.
+ax_elbow_w[1].set_title("2: elbow in inertia")  # title the elbow panel.
+ax_elbow_w[1].set_xlabel("number of clusters k")  # label the model-complexity axis.
+ax_elbow_w[1].set_ylabel("total inertia")  # label the within-cluster squared error.
+ax_elbow_w[1].set_xticks(ks_elbow_w)  # show each tested k as a tick.
+plt.tight_layout()  # keep subplot labels readable.
+plt.show()  # render the elbow figure.
+```
+▶ What you'll see: the left plot shows three natural groups, while the right plot bends sharply around $k=3$.
+
+*Why it's done this way: inertia is the exact k-means objective, so plotting it against $k$ reveals how much objective improvement each extra centroid buys; the elbow chooses the smallest $k$ after the biggest gains have already been captured.*
+
+#### 3. PCA: centering, covariance, and eigenvectors
+
+PCA first centers every feature because variance should describe spread around the data mean, not distance from the origin. For centered data matrix $X$, the covariance matrix is
+
+$$
+\Sigma=\frac{1}{m}X^\top X.
+$$
+
+An eigenvector $u$ of $\Sigma$ points in a direction whose variance is $u^\top\Sigma u$; the largest eigenvalue $\lambda_1$ gives the largest possible variance over all unit directions. That is why the top eigenvector is the maximum-variance direction.
+
+```python
+t_base_w = np.linspace(-2.0, 2.0, 9)  # create one latent coordinate that will drive correlation.
+X_pca_w = np.column_stack([t_base_w, 0.75 * t_base_w + np.array([-0.3, 0.1, -0.1, 0.2, 0.0, -0.2, 0.1, -0.1, 0.3])])  # build a small correlated 2-D cloud.
+mean_pca_w = X_pca_w.mean(axis=0)  # compute the feature means for centering.
+X_centered_w = X_pca_w - mean_pca_w  # subtract the mean so PCA studies spread around zero.
+print("feature mean:", np.round(mean_pca_w, 3))  # inspect the center of the cloud.
+print("first centered rows:\n", np.round(X_centered_w[:3], 3))  # inspect centered coordinates.
+```
+▶ What you'll see: the centered rows are the original points shifted so the cloud has mean zero.
+
+```python
+Sigma_pca_w = (X_centered_w.T @ X_centered_w) / len(X_centered_w)  # compute the 2x2 covariance matrix from scratch.
+eigvals_pca_w, eigvecs_pca_w = np.linalg.eigh(Sigma_pca_w)  # eigen-decompose the symmetric covariance matrix.
+order_pca_w = np.argsort(eigvals_pca_w)[::-1]  # sort eigenvalues from largest to smallest.
+eigvals_pca_w = eigvals_pca_w[order_pca_w]  # reorder eigenvalues so lambda_1 comes first.
+eigvecs_pca_w = eigvecs_pca_w[:, order_pca_w]  # reorder matching eigenvectors.
+print("Sigma:\n", np.round(Sigma_pca_w, 3))  # inspect covariance entries.
+print("eigenvalues:", np.round(eigvals_pca_w, 3))  # inspect variances along principal directions.
+print("eigenvectors:\n", np.round(eigvecs_pca_w, 3))  # inspect the principal directions as columns.
+```
+▶ What you'll see: one eigenvalue is much larger, matching the long direction of the correlated cloud.
+
+```python
+origin_pca_w = mean_pca_w  # draw eigenvectors starting at the original data mean.
+scale1_pca_w = np.sqrt(eigvals_pca_w[0])  # scale the first eigenvector by one standard deviation.
+scale2_pca_w = np.sqrt(eigvals_pca_w[1])  # scale the second eigenvector by one standard deviation.
+plt.figure(figsize=(5.4, 4.4))  # create a square-ish PCA geometry plot.
+plt.scatter(X_pca_w[:, 0], X_pca_w[:, 1], s=80, color="slateblue", edgecolors="black", label="data")  # draw the correlated cloud.
+plt.scatter(origin_pca_w[0], origin_pca_w[1], s=120, color="black", marker="+", label="mean")  # draw the data mean.
+plt.arrow(origin_pca_w[0], origin_pca_w[1], scale1_pca_w * eigvecs_pca_w[0, 0], scale1_pca_w * eigvecs_pca_w[1, 0], width=0.025, color="crimson", length_includes_head=True, label="PC1")  # draw the top eigenvector scaled by sqrt(lambda_1).
+plt.arrow(origin_pca_w[0], origin_pca_w[1], scale2_pca_w * eigvecs_pca_w[0, 1], scale2_pca_w * eigvecs_pca_w[1, 1], width=0.025, color="darkgreen", length_includes_head=True, label="PC2")  # draw the second eigenvector scaled by sqrt(lambda_2).
+plt.title("3: PCA eigenvectors scaled by sqrt(lambda)")  # title the covariance-eigenvector plot.
+plt.xlabel("feature 1")  # label the horizontal feature.
+plt.ylabel("feature 2")  # label the vertical feature.
+plt.axis("equal")  # use equal units so directions and lengths are not distorted.
+plt.legend()  # show data, mean, and principal-component labels.
+plt.show()  # render the eigenvector figure.
+```
+▶ What you'll see: the red vector follows the long axis of the cloud, and the green vector points across the short axis.
+
+*Why it's done this way: centering makes covariance measure spread, $\Sigma$ summarizes all pairwise feature co-movement, and eigenvectors reveal the orthogonal directions where that spread is largest and smallest.*
+
+#### 4. PCA: projection and variance explained
+
+After PCA finds the top direction $u_1$, a one-dimensional representation is just the dot product of each centered point with that direction:
+
+$$
+y_i=x_i^\top u_1.
+$$
+
+The eigenvalue $\lambda_1$ is the variance captured because $\operatorname{Var}(Xu_1)=u_1^\top\Sigma u_1=\lambda_1$ when $u_1$ is a unit eigenvector. The explained-variance ratio in two dimensions is therefore $\frac{\lambda_1}{\lambda_1+\lambda_2}$.
+
+```python
+u1_proj_w = eigvecs_pca_w[:, 0]  # choose the top eigenvector from the previous PCA subsection.
+scores_proj_w = X_centered_w @ u1_proj_w  # project each centered point onto the one-dimensional PC1 axis.
+reconstructed_proj_w = np.outer(scores_proj_w, u1_proj_w) + mean_pca_w  # map 1-D scores back to the original 2-D space for plotting.
+ratio_proj_w = eigvals_pca_w[0] / np.sum(eigvals_pca_w)  # compute lambda_1 divided by total variance.
+print("PC1 direction:", np.round(u1_proj_w, 3))  # inspect the projection direction.
+print("1-D scores:", np.round(scores_proj_w, 3))  # inspect the compressed coordinate for each point.
+print("variance explained by PC1:", round(ratio_proj_w, 3))  # inspect the fraction of variance captured.
+```
+▶ What you'll see: each 2-D point becomes one scalar score, and PC1 captures most of the variance.
+
+```python
+captured_variance_w = float(np.var(scores_proj_w))  # compute the variance of the projected scores directly.
+print("variance of projected scores:", round(captured_variance_w, 3))  # inspect the empirical variance after projection.
+print("lambda_1:", round(float(eigvals_pca_w[0]), 3))  # compare it to the top eigenvalue.
+print("match?", np.allclose(captured_variance_w, eigvals_pca_w[0]))  # verify eigenvalue equals captured variance under 1/m covariance.
+```
+▶ What you'll see: the projected-score variance matches $\lambda_1$, confirming what the eigenvalue means.
+
+```python
+fig_proj_w, ax_proj_w = plt.subplots(1, 2, figsize=(8.4, 3.6))  # create one panel for 2-D projection and one for 1-D scores.
+ax_proj_w[0].scatter(X_pca_w[:, 0], X_pca_w[:, 1], s=70, color="slateblue", edgecolors="black", label="original")  # draw original points.
+ax_proj_w[0].scatter(reconstructed_proj_w[:, 0], reconstructed_proj_w[:, 1], s=55, color="crimson", label="on PC1")  # draw points after projection back to the PC1 line.
+for i_proj_w in range(len(X_pca_w)):  # connect each original point to its PC1 reconstruction.
+    ax_proj_w[0].plot([X_pca_w[i_proj_w, 0], reconstructed_proj_w[i_proj_w, 0]], [X_pca_w[i_proj_w, 1], reconstructed_proj_w[i_proj_w, 1]], color="gray", alpha=0.45)  # show the information lost by 1-D projection.
+ax_proj_w[0].set_title("4: projection onto PC1")  # title the 2-D projection panel.
+ax_proj_w[0].set_xlabel("feature 1")  # label the horizontal feature.
+ax_proj_w[0].set_ylabel("feature 2")  # label the vertical feature.
+ax_proj_w[0].axis("equal")  # preserve geometric distances.
+ax_proj_w[0].legend()  # identify original and projected points.
+ax_proj_w[1].scatter(scores_proj_w, np.zeros_like(scores_proj_w), s=80, color="crimson", edgecolors="black")  # draw the compressed data on a one-dimensional axis.
+ax_proj_w[1].axhline(0.0, color="black", linewidth=1)  # draw the PC1 number line.
+ax_proj_w[1].set_yticks([])  # hide the meaningless vertical coordinate.
+ax_proj_w[1].set_xlabel("PC1 score")  # label the compressed coordinate.
+ax_proj_w[1].set_title(f"4: 1-D projection, {ratio_proj_w:.0%} variance")  # title the one-dimensional representation.
+plt.tight_layout()  # prevent panel labels from overlapping.
+plt.show()  # render the PCA projection figure.
+```
+▶ What you'll see: each point drops onto the PC1 line, and the right panel shows the resulting one-dimensional coordinates.
+
+*Why it's done this way: projecting onto the top eigenvector keeps the direction with maximum variance, and the eigenvalue ratio tells us exactly how much of the original spread survives in the compressed representation.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Compute squared distance from one point to one centroid

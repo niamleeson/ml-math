@@ -346,6 +346,321 @@ print("Active variables:", bn["variables"])  # Print the variables so the learne
 print("Parent sets:", bn["parents"])  # Print the parent sets as a text version of the DAG.
 ```
 
+
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the core Bayesian-network ideas from scratch. Each step uses only NumPy + Matplotlib, tiny inline data, and `_w` variables so this walkthrough does not collide with the rest of the lesson. The running example is the classic network Rain $\to$ WetGrass and Sprinkler $\to$ WetGrass.
+
+```python
+import numpy as np  # Use NumPy for tiny probability tables, enumeration, and reproducible sampling.
+import matplotlib.pyplot as plt  # Use Matplotlib so every graph, distribution, and convergence trace is visible.
+np.random.seed(22136)  # Fix randomness so the printed samples and figures are reproducible every run.
+```
+
+#### 1. DAG, parents, and CPTs
+
+**What:** A Bayesian network starts with a DAG: each node is a random variable, and each arrow points from a direct cause or information source to a direct effect. **Why:** the graph tells us which local CPTs we need to store instead of storing one huge joint table. **Why this approach:** we build dictionaries first because a tiny explicit representation makes every lookup inspectable.
+
+```python
+variables_w = ["R", "S", "W"]  # Name Rain, Sprinkler, and WetGrass as compact binary variables.
+parents_w = {"R": [], "S": [], "W": ["R", "S"]}  # Store the parent set for each node in the DAG.
+edges_w = [("R", "W"), ("S", "W")]  # Store each directed edge as a parent-child pair for plotting.
+positions_w = {"R": (0.0, 1.0), "S": (2.0, 1.0), "W": (1.0, 0.0)}  # Choose fixed coordinates for a readable DAG.
+print("Variables:", variables_w)  # Print the nodes so the network scope is explicit.
+print("Parents:", parents_w)  # Print parent sets because CPT rows are keyed by parent assignments.
+```
+
+```python
+cpts_w = {  # Store one local conditional probability table per node.
+    "R": {(): {0: 0.80, 1: 0.20}},  # Store P(Rain) with no parent key because Rain is a root.
+    "S": {(): {0: 0.60, 1: 0.40}},  # Store P(Sprinkler) with no parent key because Sprinkler is a root.
+    "W": {(0, 0): {0: 0.95, 1: 0.05}, (0, 1): {0: 0.30, 1: 0.70}, (1, 0): {0: 0.20, 1: 0.80}, (1, 1): {0: 0.05, 1: 0.95}},  # Store P(WetGrass | Rain, Sprinkler).
+}  # End the CPT dictionary.
+for node_w in variables_w:  # Visit each node so every local table is visible.
+    print(node_w, cpts_w[node_w])  # Print the CPT for the current node.
+```
+
+```python
+fig_w, ax_w = plt.subplots(figsize=(5, 3.5))  # Create a compact figure for the DAG.
+for parent_w, child_w in edges_w:  # Draw each arrow from parent to child.
+    ax_w.annotate("", xy=positions_w[child_w], xytext=positions_w[parent_w], arrowprops={"arrowstyle": "->", "lw": 2})  # Add one directed dependency arrow.
+for node_w, (x_w, y_w) in positions_w.items():  # Draw each variable node at its fixed position.
+    ax_w.scatter([x_w], [y_w], s=1400, c="white", edgecolors="black", linewidths=2, zorder=3)  # Draw a white circular node.
+    ax_w.text(x_w, y_w, node_w, ha="center", va="center", fontsize=13, weight="bold", zorder=4)  # Label the node with its variable name.
+ax_w.set_title("1: DAG and parent sets")  # Title the figure with the subsection number.
+ax_w.set_xlim(-0.5, 2.5)  # Fix horizontal limits so the graph is stable.
+ax_w.set_ylim(-0.4, 1.4)  # Fix vertical limits so the graph is stable.
+ax_w.axis("off")  # Hide numeric axes because the picture is structural.
+plt.show()  # Display the DAG.
+```
+
+▶ What you'll see: Rain and Sprinkler both point into WetGrass. The arrows encode direct dependencies: once the values of Rain and Sprinkler are known, WetGrass uses only its local CPT row.
+
+The key local normalization rule is $\sum_x P(X=x\mid Parents(X)=pa)=1$ for every parent assignment. Here each row of each CPT sums to one, so every local table is a valid conditional distribution.
+
+*Why it's done this way: dictionaries make the graph-to-CPT connection literal: parent sets choose the key, and the node value chooses the probability inside that row.*
+
+#### 2. Factorized joint distribution
+
+**What:** A Bayesian network multiplies one local CPT entry per node to get one full assignment probability. **Why:** the DAG asserts that the joint distribution can be written as $\prod_i P(X_i\mid Parents(X_i))$. **Why this approach:** we compute one assignment by hand, then enumerate all assignments to verify that the factorized joint is a normalized probability distribution.
+
+```python
+def parent_key_w(node_w, assignment_w):  # Define a helper that extracts a node's parent values in parent-list order.
+    return tuple(assignment_w[parent_w] for parent_w in parents_w[node_w])  # Return the tuple used as the CPT row key.
+def local_prob_w(node_w, value_w, assignment_w):  # Define a helper that reads one CPT entry.
+    return cpts_w[node_w][parent_key_w(node_w, assignment_w)][value_w]  # Look up P(node=value | parents) from the correct row.
+def joint_prob_w(assignment_w):  # Define the factorized joint probability for one full assignment.
+    prob_w = 1.0  # Start the product at one because probabilities multiply.
+    for node_w in variables_w:  # Multiply one local term for each node.
+        prob_w *= local_prob_w(node_w, assignment_w[node_w], assignment_w)  # Apply P(node | parents) for the assignment.
+    return prob_w  # Return the completed product.
+def assignments_w():  # Define an iterator over every binary assignment.
+    for r_w in [0, 1]:  # Try both Rain values.
+        for s_w in [0, 1]:  # Try both Sprinkler values.
+            for wet_w in [0, 1]:  # Try both WetGrass values.
+                yield {"R": r_w, "S": s_w, "W": wet_w}  # Yield one complete assignment dictionary.
+```
+
+```python
+example_w = {"R": 1, "S": 0, "W": 1}  # Choose one inspectable assignment: rainy, sprinkler off, grass wet.
+terms_w = [local_prob_w(node_w, example_w[node_w], example_w) for node_w in variables_w]  # Collect the three local factors.
+print("Assignment:", example_w)  # Print the assignment being scored.
+print("Local factors P(R), P(S), P(W|R,S):", terms_w)  # Print each multiplied term.
+print("Joint product:", np.prod(terms_w))  # Multiply the local factors directly for comparison.
+print("joint_prob_w:", joint_prob_w(example_w))  # Print the helper result to verify it matches.
+```
+
+```python
+joint_rows_w = [(a_w, joint_prob_w(a_w)) for a_w in assignments_w()]  # Build the full joint by enumeration for checking only.
+total_joint_w = sum(prob_w for _, prob_w in joint_rows_w)  # Sum all eight probabilities to test normalization.
+for assignment_w, prob_w in joint_rows_w:  # Print each row because the table is tiny.
+    print(assignment_w, "->", round(prob_w, 4))  # Show each assignment probability rounded for readability.
+print("Total probability:", round(total_joint_w, 6))  # Verify that the factorized joint sums to one.
+```
+
+```python
+labels_w = [f"R{a_w['R']}S{a_w['S']}W{a_w['W']}" for a_w, _ in joint_rows_w]  # Create compact labels for all joint rows.
+probs_w = [prob_w for _, prob_w in joint_rows_w]  # Extract the joint probabilities for plotting.
+plt.figure(figsize=(7, 3.5))  # Create a wide figure so eight bars are readable.
+plt.bar(labels_w, probs_w, color="#4C78A8")  # Plot each full assignment probability as one bar.
+plt.xticks(rotation=45, ha="right")  # Rotate labels so assignment names do not overlap.
+plt.ylabel("Joint probability")  # Label the probability axis.
+plt.title("2: Factorized joint over all assignments")  # Title the figure with the subsection number.
+plt.tight_layout()  # Fit the rotated labels inside the figure.
+plt.show()  # Display the full joint distribution.
+```
+
+▶ What you'll see: all eight joint probabilities are nonnegative and sum to `1.0`. A full table for three binary variables has $2^3=8$ rows, while this network stores two root priors plus four rows for $P(W\mid R,S)$; for larger sparse DAGs, the savings grow exponentially.
+
+*Why it's done this way: multiplying local terms lets the graph decide which probabilities are needed, so we never hand-write a separate probability for every global state.*
+
+#### 3. Conditional independence
+
+**What:** The graph says a node is independent of its non-descendants after conditioning on its parents. **Why:** this is the assumption that makes a local CPT enough. **Why this approach:** we compare probabilities numerically, so the d-separation statement becomes an equality students can inspect.
+
+```python
+def marginal_prob_w(target_w, target_value_w, evidence_w=None):  # Define a small enumerator for P(target=value, evidence) or P(evidence).
+    evidence_w = {} if evidence_w is None else evidence_w  # Use empty evidence when none is supplied.
+    total_w = 0.0  # Accumulate matching joint probabilities.
+    for assignment_w in assignments_w():  # Visit every full assignment in the tiny network.
+        if assignment_w[target_w] == target_value_w and all(assignment_w[k_w] == v_w for k_w, v_w in evidence_w.items()):  # Keep rows matching target and evidence.
+            total_w += joint_prob_w(assignment_w)  # Add the matching joint probability.
+    return total_w  # Return the summed probability.
+def evidence_prob_w(evidence_w):  # Define a helper for P(evidence).
+    total_w = 0.0  # Accumulate matching rows.
+    for assignment_w in assignments_w():  # Visit every full assignment.
+        if all(assignment_w[k_w] == v_w for k_w, v_w in evidence_w.items()):  # Keep rows consistent with evidence.
+            total_w += joint_prob_w(assignment_w)  # Add the matching joint probability.
+    return total_w  # Return the evidence probability.
+def conditional_prob_w(target_w, target_value_w, evidence_w):  # Define P(target=value | evidence).
+    return marginal_prob_w(target_w, target_value_w, evidence_w) / evidence_prob_w(evidence_w)  # Divide joint-with-evidence by evidence probability.
+```
+
+```python
+p_sprinkler_w = marginal_prob_w("S", 1)  # Compute P(S=1) with no evidence.
+p_sprinkler_given_rain_w = conditional_prob_w("S", 1, {"R": 1})  # Compute P(S=1 | R=1).
+p_sprinkler_given_no_rain_w = conditional_prob_w("S", 1, {"R": 0})  # Compute P(S=1 | R=0).
+print("P(S=1):", round(p_sprinkler_w, 4))  # Print the root prior for Sprinkler.
+print("P(S=1 | R=1):", round(p_sprinkler_given_rain_w, 4))  # Print Sprinkler probability after observing Rain.
+print("P(S=1 | R=0):", round(p_sprinkler_given_no_rain_w, 4))  # Print Sprinkler probability after observing no Rain.
+```
+
+```python
+values_w = [p_sprinkler_w, p_sprinkler_given_rain_w, p_sprinkler_given_no_rain_w]  # Collect the three probabilities for comparison.
+labels_w = ["P(S=1)", "P(S=1 | R=1)", "P(S=1 | R=0)"]  # Label each comparison bar.
+plt.figure(figsize=(6.5, 3.5))  # Create a compact comparison figure.
+plt.bar(labels_w, values_w, color=["#4C78A8", "#F58518", "#54A24B"])  # Draw one bar per probability.
+plt.ylim(0, 1)  # Keep the y-axis on the probability scale.
+plt.ylabel("Probability")  # Label the vertical axis.
+plt.title("3: Conditional independence of root nodes")  # Title the figure with the subsection number.
+for index_w, value_w in enumerate(values_w):  # Annotate each bar with its numeric value.
+    plt.text(index_w, value_w + 0.03, f"{value_w:.2f}", ha="center")  # Place the rounded probability above the bar.
+plt.show()  # Display the independence comparison.
+```
+
+▶ What you'll see: all three bars are equal at `0.40`, so $P(S=1\mid R)=P(S=1)$. In d-separation language, the only path between Rain and Sprinkler is the collider $R\to W\leftarrow S$, and that path is blocked unless WetGrass or a descendant of WetGrass is observed.
+
+*Why it's done this way: comparing conditional probabilities directly turns the graph statement "independent given parents" into a numerical equality.*
+
+#### 4. Exact inference by enumeration
+
+**What:** Exact inference computes $P(Query\mid Evidence)$ by summing the joint over hidden variables and normalizing. **Why:** hidden variables are unknown, so every value they could have must contribute. **Why this approach:** we explicitly print the numerator terms and denominator terms for $P(R=1\mid W=1)$.
+
+```python
+query_values_w = [0, 1]  # Consider both possible Rain values for normalization.
+evidence_w = {"W": 1}  # Observe that the grass is wet.
+enum_scores_w = []  # Store one unnormalized score for each Rain value.
+for rain_value_w in query_values_w:  # Loop over Rain=0 and Rain=1.
+    score_w = 0.0  # Start the hidden-variable sum for this Rain value.
+    print("Rain value", rain_value_w)  # Print which numerator branch is being computed.
+    for sprinkler_value_w in [0, 1]:  # Sum over the hidden Sprinkler variable.
+        assignment_w = {"R": rain_value_w, "S": sprinkler_value_w, "W": 1}  # Create one full assignment consistent with evidence.
+        term_w = joint_prob_w(assignment_w)  # Compute the joint probability for this hidden setting.
+        score_w += term_w  # Add the term to the unnormalized score.
+        print("  hidden S=", sprinkler_value_w, "joint term=", round(term_w, 5))  # Print the term being summed.
+    enum_scores_w.append(score_w)  # Store the completed score for this Rain value.
+print("Unnormalized scores:", np.round(enum_scores_w, 5))  # Print P(R, W=1) for each Rain value.
+```
+
+```python
+enum_posterior_w = np.array(enum_scores_w) / np.sum(enum_scores_w)  # Normalize scores so they sum to one over Rain.
+print("Normalizer P(W=1):", round(float(np.sum(enum_scores_w)), 5))  # Print the evidence probability used as the denominator.
+print("P(R=0 | W=1), P(R=1 | W=1):", np.round(enum_posterior_w, 5))  # Print the posterior distribution.
+```
+
+```python
+plt.figure(figsize=(5, 3.5))  # Create a small posterior bar chart.
+plt.bar(["R=0", "R=1"], enum_posterior_w, color=["#4C78A8", "#F58518"])  # Plot the normalized Rain posterior.
+plt.ylim(0, 1)  # Keep the axis on the probability scale.
+plt.ylabel("Posterior probability")  # Label the vertical axis.
+plt.title("4: Enumeration posterior P(R | W=1)")  # Title the figure with the subsection number.
+for index_w, value_w in enumerate(enum_posterior_w):  # Annotate the two posterior bars.
+    plt.text(index_w, value_w + 0.03, f"{value_w:.3f}", ha="center")  # Print each probability above its bar.
+plt.show()  # Display the exact posterior.
+```
+
+▶ What you'll see: the hidden Sprinkler terms are summed once for `R=0` and once for `R=1`, then the two scores are divided by their total. The formula is $P(R\mid W)=\frac{P(R,W)}{\sum_r P(r,W)}$, where each $P(r,W)$ still contains a $\sum_s$ over Sprinkler.
+
+*Why it's done this way: summing removes hidden variables from the joint, and normalizing converts compatible joint mass into a conditional distribution over the query.*
+
+#### 5. Variable elimination
+
+**What:** Variable elimination computes the same posterior but pushes sums inward through small factors. **Why:** it avoids repeatedly rebuilding the whole joint table when only a few variables interact with the hidden variable. **Why this approach:** we eliminate Sprinkler by multiplying only the factors that mention it, then summing it out.
+
+```python
+phi_r_w = {0: cpts_w["R"][()][0], 1: cpts_w["R"][()][1]}  # Keep the Rain prior factor.
+phi_s_w = {0: cpts_w["S"][()][0], 1: cpts_w["S"][()][1]}  # Keep the Sprinkler prior factor.
+phi_w_given_rs_w = {(r_w, s_w): cpts_w["W"][(r_w, s_w)][1] for r_w in [0, 1] for s_w in [0, 1]}  # Restrict WetGrass evidence to W=1.
+print("phi_R:", phi_r_w)  # Print the Rain factor.
+print("phi_S:", phi_s_w)  # Print the Sprinkler factor.
+print("phi_W evidence factor:", phi_w_given_rs_w)  # Print P(W=1 | R,S) as a two-parent factor.
+```
+
+```python
+message_to_r_w = {}  # Store the result of eliminating Sprinkler as a factor over Rain.
+term_count_ve_w = 0  # Count the number of product terms touched by variable elimination.
+for rain_value_w in [0, 1]:  # Compute one message entry for each Rain value.
+    total_w = 0.0  # Start the sum over Sprinkler for this Rain value.
+    pieces_w = []  # Keep printed pieces for inspection.
+    for sprinkler_value_w in [0, 1]:  # Eliminate the hidden Sprinkler variable.
+        product_w = phi_s_w[sprinkler_value_w] * phi_w_given_rs_w[(rain_value_w, sprinkler_value_w)]  # Multiply only factors containing Sprinkler.
+        total_w += product_w  # Add the product into the message.
+        term_count_ve_w += 1  # Count this local product term.
+        pieces_w.append(round(product_w, 5))  # Store a readable product value.
+    message_to_r_w[rain_value_w] = total_w  # Save m(R)=sum_S phi_S(S) phi_W(W=1|R,S).
+    print("message for R=", rain_value_w, "pieces", pieces_w, "sum", round(total_w, 5))  # Print the eliminated factor entry.
+print("VE local products touched:", term_count_ve_w)  # Print the work count for the elimination step.
+```
+
+```python
+ve_scores_w = np.array([phi_r_w[r_w] * message_to_r_w[r_w] for r_w in [0, 1]])  # Multiply the remaining Rain prior by the message.
+ve_posterior_w = ve_scores_w / ve_scores_w.sum()  # Normalize over Rain to get the posterior.
+print("VE unnormalized scores:", np.round(ve_scores_w, 5))  # Print P(R,W=1) from variable elimination.
+print("VE posterior:", np.round(ve_posterior_w, 5))  # Print the normalized posterior.
+print("Matches enumeration:", np.allclose(ve_posterior_w, enum_posterior_w))  # Verify the result equals enumeration.
+```
+
+```python
+plt.figure(figsize=(5.5, 3.5))  # Create a comparison figure for enumeration and VE.
+width_w = 0.35  # Choose a small offset so paired bars are side by side.
+x_w = np.arange(2)  # Create x positions for Rain=0 and Rain=1.
+plt.bar(x_w - width_w / 2, enum_posterior_w, width_w, label="enumeration", color="#4C78A8")  # Plot enumeration posterior bars.
+plt.bar(x_w + width_w / 2, ve_posterior_w, width_w, label="variable elimination", color="#F58518")  # Plot VE posterior bars.
+plt.xticks(x_w, ["R=0", "R=1"])  # Label each query value.
+plt.ylim(0, 1)  # Keep probabilities on a common scale.
+plt.ylabel("Posterior probability")  # Label the vertical axis.
+plt.title("5: Variable elimination matches enumeration")  # Title the figure with the subsection number.
+plt.legend()  # Show which bars came from which method.
+plt.show()  # Display the comparison.
+```
+
+▶ What you'll see: variable elimination produces the same two posterior probabilities as enumeration. The benefit is structural: in larger networks, a good elimination order keeps intermediate factors small instead of expanding a full $2^n$ joint table.
+
+*Why it's done this way: summing out one hidden variable immediately reuses a compact message, so later steps work with smaller factors rather than repeated full assignments.*
+
+#### 6. Gibbs sampling and learning CPTs
+
+**What:** Gibbs sampling approximates a posterior by repeatedly resampling each non-evidence variable from its full conditional distribution. **Why:** exact sums can be too large, but local Markov-blanket calculations are often cheap. **Why this approach:** we clamp $W=1$, sample Rain and Sprinkler, and watch the running estimate of $P(R=1\mid W=1)$ converge toward the exact answer.
+
+```python
+def full_conditional_w(node_w, state_w, evidence_w):  # Define P(node | all other current variables) up to normalization.
+    weights_w = []  # Store one unnormalized weight for each candidate value.
+    for value_w in [0, 1]:  # Try both binary values for the selected node.
+        candidate_w = dict(state_w)  # Copy the current full assignment.
+        candidate_w[node_w] = value_w  # Replace only the selected node with the candidate value.
+        if node_w in evidence_w and evidence_w[node_w] != value_w:  # Disallow changing clamped evidence variables.
+            weights_w.append(0.0)  # Give impossible evidence-inconsistent values zero weight.
+        else:  # Score candidate values that respect evidence.
+            weights_w.append(joint_prob_w(candidate_w))  # Use the full joint here because the network is tiny.
+    weights_w = np.array(weights_w, dtype=float)  # Convert weights to a NumPy array for normalization.
+    return weights_w / weights_w.sum()  # Normalize the two weights into a conditional distribution.
+```
+
+```python
+rng_w = np.random.default_rng(22136)  # Create a seeded generator for Gibbs sampling.
+state_w = {"R": 0, "S": 0, "W": 1}  # Initialize a complete assignment consistent with the evidence W=1.
+samples_w = []  # Store Rain samples after burn-in.
+running_estimates_w = []  # Store the running estimate of P(R=1 | W=1).
+burn_in_w = 50  # Skip early samples so the chain can move away from its initial state.
+num_sweeps_w = 1200  # Run enough short sweeps to show convergence in a tiny model.
+for sweep_w in range(num_sweeps_w):  # Repeat Gibbs sweeps.
+    for node_w in ["R", "S"]:  # Resample non-evidence variables while keeping W fixed.
+        probs_w = full_conditional_w(node_w, state_w, {"W": 1})  # Compute the full conditional for the selected variable.
+        state_w[node_w] = int(rng_w.choice([0, 1], p=probs_w))  # Draw the new binary value from that conditional.
+    if sweep_w >= burn_in_w:  # Record samples only after burn-in.
+        samples_w.append(state_w["R"])  # Store the current Rain value.
+        running_estimates_w.append(np.mean(samples_w))  # Update the running empirical probability of Rain.
+print("Final Gibbs state:", state_w)  # Print the last state for inspection.
+print("Gibbs estimate P(R=1 | W=1):", round(running_estimates_w[-1], 4))  # Print the approximate posterior.
+print("Exact P(R=1 | W=1):", round(float(enum_posterior_w[1]), 4))  # Print the exact value for comparison.
+```
+
+```python
+plt.figure(figsize=(7, 3.5))  # Create a convergence trace figure.
+plt.plot(running_estimates_w, color="#4C78A8", label="Gibbs running estimate")  # Plot the empirical estimate over retained samples.
+plt.axhline(enum_posterior_w[1], color="#E45756", linestyle="--", label="exact posterior")  # Add the exact posterior as a reference line.
+plt.xlabel("Retained sample index")  # Label the horizontal axis.
+plt.ylabel("Estimated P(R=1 | W=1)")  # Label the vertical axis.
+plt.title("6: Gibbs sampling convergence")  # Title the figure with the subsection number.
+plt.legend()  # Show the sampled and exact curves.
+plt.show()  # Display the convergence plot.
+```
+
+```python
+observed_rows_w = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1], [1, 0, 1], [0, 0, 0]])  # Create tiny fully observed rows [R,S,W].
+lambda_w = 1.0  # Use one Laplace pseudo-count per binary outcome.
+for parent_values_w in [(0, 0), (0, 1), (1, 0), (1, 1)]:  # Estimate each row of P(W | R,S).
+    mask_w = np.all(observed_rows_w[:, :2] == np.array(parent_values_w), axis=1)  # Select rows with the current parent assignment.
+    count_w0 = np.sum(observed_rows_w[mask_w, 2] == 0)  # Count observed WetGrass=0 values.
+    count_w1 = np.sum(observed_rows_w[mask_w, 2] == 1)  # Count observed WetGrass=1 values.
+    smoothed_w = np.array([count_w0 + lambda_w, count_w1 + lambda_w]) / (count_w0 + count_w1 + 2 * lambda_w)  # Apply Laplace smoothing.
+    print("parents R,S=", parent_values_w, "counts", [int(count_w0), int(count_w1)], "smoothed P(W=0/1)=", np.round(smoothed_w, 3))  # Print the learned row.
+```
+
+▶ What you'll see: the running Gibbs estimate jitters but tends toward the exact posterior line. CPT learning from complete data is just normalized counts; Laplace smoothing uses $\frac{N(x,pa)+\lambda}{\sum_{x'}N(x',pa)+\lambda |Domain(X)|}$ so unseen outcomes do not receive probability zero.
+
+*Why it's done this way: Gibbs uses local resampling to trade exact computation for sample-based approximation, while smoothed counting gives a simple data-driven way to fill CPT rows.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Look up one CPT entry

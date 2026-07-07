@@ -222,6 +222,370 @@ plt.show()  # Display the data plot before the worked coded examples.
 ▶ What you'll see: a separable but not perfect two-class toy dataset. Later examples reuse it so optimizer behavior, not changing data, explains most differences.
 
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the SGD and fine-tuning ideas from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline data, so every update, gradient, loss, and trajectory is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us arrays, dot products, gradients, and reproducible toy data.
+import matplotlib.pyplot as plt  # Matplotlib lets us see optimizer paths, loss curves, and fine-tuning shifts.
+np.random.seed(30)  # Fix the seed so every printed number and plotted trajectory is reproducible.
+```
+
+#### 1. Batch vs stochastic updates: one exact average versus one noisy sample
+
+Gradient descent needs a direction that lowers loss. Full-batch gradient descent computes the average gradient over every example, while SGD uses one example as a cheap estimate of that average. We build both on a tiny regression problem so the stochastic direction is visibly noisier but much cheaper and more frequent.
+
+For squared error on one example, $\frac{1}{2}(\theta^\top x-y)^2$, the gradient is $(\theta^\top x-y)x$. Full-batch GD averages that gradient:
+
+$$
+\nabla J(\theta)=\frac{1}{n}\sum_{i=1}^n(\theta^\top x_i-y_i)x_i.
+$$
+
+```python
+X_batch_w = np.array([[1.0, -2.0], [1.0, -1.0], [1.0, 0.0], [1.0, 1.0], [1.0, 2.0]])  # Add a bias column and one scalar feature.
+y_batch_w = np.array([-3.1, -1.0, 0.9, 3.2, 5.1])  # Create tiny linear-regression targets near y=1+2x.
+theta_batch_w = np.array([0.0, 0.0])  # Start from a deliberately bad intercept and slope.
+print("X:\n", X_batch_w)  # Inspect the design matrix used by both batch and stochastic updates.
+print("y:", y_batch_w)  # Inspect the target values.
+print("start theta:", theta_batch_w)  # Inspect the initial parameters before any update.
+```
+▶ What you'll see: five inspectable examples, each with a bias feature and one input feature.
+
+```python
+pred_batch_w = X_batch_w @ theta_batch_w  # Predict with the starting weights for all examples at once.
+err_batch_w = pred_batch_w - y_batch_w  # Compute residuals, the signed mistakes that drive squared-error gradients.
+grad_each_w = err_batch_w[:, None] * X_batch_w  # Compute one gradient row per example using (prediction - target) * x.
+grad_full_w = grad_each_w.mean(axis=0)  # Average all example gradients to get the full-batch direction.
+grad_one_w = grad_each_w[4]  # Pick one example's gradient as a stochastic estimate of the full gradient.
+print("per-example gradients:\n", np.round(grad_each_w, 3))  # Inspect how much each example disagrees.
+print("full-batch gradient:", np.round(grad_full_w, 3))  # Inspect the exact average direction.
+print("single-example gradient:", np.round(grad_one_w, 3))  # Inspect the noisy one-example estimate.
+```
+▶ What you'll see: the single-example gradient points roughly downhill but does not equal the full average.
+
+```python
+eta_batch_w = 0.12  # Choose a modest learning rate shared by both methods.
+theta_full_next_w = theta_batch_w - eta_batch_w * grad_full_w  # Take one full-batch update.
+theta_one_next_w = theta_batch_w - eta_batch_w * grad_one_w  # Take one stochastic update from the selected example.
+print("theta after full-batch step:", np.round(theta_full_next_w, 3))  # Inspect the stable average step.
+print("theta after one SGD step:", np.round(theta_one_next_w, 3))  # Inspect the noisier but cheaper step.
+print("gradient difference:", np.round(grad_one_w - grad_full_w, 3))  # Inspect the noise in the stochastic estimate.
+```
+▶ What you'll see: both steps move away from zero, but the stochastic step overreacts to the sampled point.
+
+```python
+def mse_batch_w(theta_w):  # Define mean squared error for the tiny regression problem.
+    return float(np.mean((X_batch_w @ theta_w - y_batch_w) ** 2))  # Return average squared residual size.
+theta_gd_w = np.array([0.0, 0.0])  # Initialize the full-batch trajectory.
+theta_sgd_w = np.array([0.0, 0.0])  # Initialize the stochastic trajectory.
+traj_gd_w = [theta_gd_w.copy()]  # Store full-batch parameter positions for plotting.
+traj_sgd_w = [theta_sgd_w.copy()]  # Store stochastic parameter positions for plotting.
+loss_gd_w = [mse_batch_w(theta_gd_w)]  # Store full-batch losses for inspection.
+loss_sgd_w = [mse_batch_w(theta_sgd_w)]  # Store stochastic losses measured on the full dataset.
+for step_w in range(18):  # Run a few cheap updates so the path shape is visible.
+    grad_gd_w = ((X_batch_w @ theta_gd_w - y_batch_w)[:, None] * X_batch_w).mean(axis=0)  # Compute exact batch gradient.
+    theta_gd_w = theta_gd_w - eta_batch_w * grad_gd_w  # Move once using the full average.
+    idx_w = step_w % len(y_batch_w)  # Cycle through examples to make deterministic SGD noise.
+    grad_sgd_w = (X_batch_w[idx_w] @ theta_sgd_w - y_batch_w[idx_w]) * X_batch_w[idx_w]  # Compute one-example gradient.
+    theta_sgd_w = theta_sgd_w - eta_batch_w * grad_sgd_w  # Move once using the stochastic estimate.
+    traj_gd_w.append(theta_gd_w.copy())  # Save the full-batch position.
+    traj_sgd_w.append(theta_sgd_w.copy())  # Save the stochastic position.
+    loss_gd_w.append(mse_batch_w(theta_gd_w))  # Save full-batch loss after the step.
+    loss_sgd_w.append(mse_batch_w(theta_sgd_w))  # Save stochastic path loss after the step.
+print("final GD theta/loss:", np.round(theta_gd_w, 3), round(loss_gd_w[-1], 3))  # Inspect final full-batch result.
+print("final SGD theta/loss:", np.round(theta_sgd_w, 3), round(loss_sgd_w[-1], 3))  # Inspect final stochastic result.
+```
+▶ What you'll see: GD moves smoothly, while SGD wiggles because each update listens to one example.
+
+```python
+traj_gd_w = np.array(traj_gd_w)  # Convert the saved full-batch path to an array for plotting.
+traj_sgd_w = np.array(traj_sgd_w)  # Convert the saved stochastic path to an array for plotting.
+plt.figure(figsize=(6.0, 4.2))  # Create a compact trajectory figure.
+plt.plot(traj_gd_w[:, 0], traj_gd_w[:, 1], marker="o", label="full-batch GD")  # Plot the stable average-gradient path.
+plt.plot(traj_sgd_w[:, 0], traj_sgd_w[:, 1], marker="x", label="SGD one-example updates")  # Plot the noisy stochastic path.
+plt.scatter([1.0], [2.0], c="black", s=80, label="true-ish weights")  # Mark the target intercept and slope for orientation.
+plt.xlabel("intercept")  # Label the first parameter axis.
+plt.ylabel("slope")  # Label the second parameter axis.
+plt.legend(loc="best")  # Show which curve is which.
+plt.title("1: batch updates are smooth, SGD updates are noisy")  # Title the required figure for this concept.
+plt.show()  # Render the optimizer trajectories.
+```
+▶ What you'll see: the batch path is smoother, while the SGD path zigzags around the same downhill trend.
+
+*Why it's done this way: SGD trades a noisy estimate of $\nabla J$ for cheap, frequent updates. That noise can wobble, but it lets large models learn without waiting for a full pass through all data before every step.*
+
+#### 2. Learning-rate behavior: too small, useful, and too large $\eta$
+
+The learning rate $\eta$ controls how far each gradient step moves. On the simple bowl $J(w)=w^2$, the gradient is $\nabla J(w)=2w$, so the update is $w\leftarrow w-\eta(2w)$. We use this one-dimensional bowl because the three behaviors are impossible to miss: crawl, converge, or explode.
+
+```python
+w0_lr_w = 5.0  # Start far from the minimum at w=0.
+etas_lr_w = {"too small": 0.05, "good": 0.35, "too large": 1.10}  # Compare three step sizes on the same bowl.
+steps_lr_w = 16  # Use enough steps to reveal slow convergence or divergence.
+print("objective: J(w)=w^2")  # State the bowl being optimized.
+print("gradient: 2w")  # State the exact derivative used below.
+print("learning rates:", etas_lr_w)  # Inspect the three eta values.
+```
+▶ What you'll see: all three runs start from the same point and differ only in $\eta$.
+
+```python
+paths_lr_w = {}  # Store parameter paths by learning-rate label.
+losses_lr_w = {}  # Store objective values by learning-rate label.
+for name_w, eta_lr_w in etas_lr_w.items():  # Run one trajectory for each learning rate.
+    w_lr_w = w0_lr_w  # Reset to the same starting point for a fair comparison.
+    path_lr_w = [w_lr_w]  # Record the starting parameter.
+    loss_lr_w = [w_lr_w ** 2]  # Record the starting loss.
+    for step_w in range(steps_lr_w):  # Apply repeated gradient-descent updates.
+        grad_lr_w = 2.0 * w_lr_w  # Compute the gradient of w^2.
+        w_lr_w = w_lr_w - eta_lr_w * grad_lr_w  # Move by eta times the gradient.
+        path_lr_w.append(w_lr_w)  # Save the new parameter value.
+        loss_lr_w.append(w_lr_w ** 2)  # Save the new objective value.
+    paths_lr_w[name_w] = np.array(path_lr_w)  # Convert the path to an array for plotting.
+    losses_lr_w[name_w] = np.array(loss_lr_w)  # Convert the losses to an array for plotting.
+    print(name_w, "final w/loss:", round(w_lr_w, 3), round(loss_lr_w[-1], 3))  # Inspect each outcome.
+```
+▶ What you'll see: the small $\eta$ still has loss left, the good $\eta$ shrinks near zero, and the large $\eta$ grows.
+
+```python
+w_grid_lr_w = np.linspace(-7.0, 7.0, 240)  # Create a horizontal grid for drawing the bowl.
+plt.figure(figsize=(6.0, 4.2))  # Create the bowl-and-steps figure.
+plt.plot(w_grid_lr_w, w_grid_lr_w ** 2, c="lightgray", lw=3, label="J(w)=w^2")  # Draw the quadratic objective.
+for name_w, path_lr_w in paths_lr_w.items():  # Plot each learning-rate path on top of the bowl.
+    clipped_w = np.clip(path_lr_w, -7.0, 7.0)  # Clip only the display so diverging points stay on the axes.
+    plt.plot(clipped_w, clipped_w ** 2, marker="o", label=name_w)  # Draw the sequence of visited losses.
+plt.xlabel("w")  # Label the parameter axis.
+plt.ylabel("J(w)")  # Label the objective axis.
+plt.ylim(0.0, 55.0)  # Keep the view focused on the useful part of the bowl.
+plt.legend(loc="best")  # Show which path belongs to each eta.
+plt.title("2: learning-rate behavior on a quadratic bowl")  # Title the required figure for this concept.
+plt.show()  # Render the step-size comparison.
+```
+▶ What you'll see: tiny steps crawl, useful steps descend, and too-large steps bounce outward.
+
+```python
+plt.figure(figsize=(6.0, 3.6))  # Create a loss-over-time figure.
+for name_w, loss_lr_w in losses_lr_w.items():  # Plot the loss history for each learning rate.
+    plt.plot(range(len(loss_lr_w)), loss_lr_w, marker="o", label=name_w)  # Draw loss versus update number.
+plt.yscale("log")  # Use a log scale so slow and diverging behavior fit together.
+plt.xlabel("update step")  # Label the update index.
+plt.ylabel("loss J(w)")  # Label the loss scale.
+plt.legend(loc="best")  # Show the three step-size cases.
+plt.title("2: loss curves reveal crawl, convergence, and divergence")  # Give this inspectable plot a clear title.
+plt.show()  # Render the loss curves.
+```
+▶ What you'll see: the good learning rate drops fastest without exploding; the large one increases after overshooting.
+
+*Why it's done this way: $\eta$ is a step-size tradeoff. Small values are safe but slow, while large values can jump across the minimum so far that the next gradient is even bigger.*
+
+#### 3. Logistic prediction and gradients: from $\sigma(w\cdot x+b)$ to one update
+
+Logistic regression converts a linear score into a probability with $\sigma(z)=\frac{1}{1+e^{-z}}$. For binary log-loss, the gradient with respect to $w$ is $(\hat{y}-y)x$, which says: if the probability is too high, move against the active features; if it is too low, move with them. We compute every piece before taking one SGD step.
+
+```python
+x_log_w = np.array([1.4, -0.6])  # Define one two-feature training example.
+y_log_w = 1.0  # Give the example a positive binary label.
+w_log_w = np.array([0.2, -0.4])  # Start with a small logistic weight vector.
+b_log_w = -0.1  # Start with a small bias term.
+eta_log_w = 0.5  # Choose a visible one-step learning rate.
+print("x:", x_log_w, "y:", y_log_w)  # Inspect the example and label.
+print("start w,b:", w_log_w, b_log_w)  # Inspect the initial model parameters.
+```
+▶ What you'll see: one fully inspectable labeled example and starting logistic model.
+
+```python
+z_log_w = float(w_log_w @ x_log_w + b_log_w)  # Compute the linear score w dot x plus bias.
+yhat_log_w = 1.0 / (1.0 + np.exp(-z_log_w))  # Apply the sigmoid sigma(z) to get a probability.
+eps_log_w = 1e-12  # Guard log(0) in the log-loss calculation.
+loss_log_w = -(y_log_w * np.log(yhat_log_w + eps_log_w) + (1.0 - y_log_w) * np.log(1.0 - yhat_log_w + eps_log_w))  # Compute binary log-loss.
+print("z = w·x + b:", round(z_log_w, 4))  # Inspect the raw score.
+print("y_hat = sigma(z):", round(yhat_log_w, 4))  # Inspect the predicted probability.
+print("log-loss:", round(float(loss_log_w), 4))  # Inspect the loss before the update.
+```
+▶ What you'll see: a score, a probability between 0 and 1, and the corresponding log-loss.
+
+```python
+grad_w_log_w = (yhat_log_w - y_log_w) * x_log_w  # Compute the logistic gradient for weights.
+grad_b_log_w = yhat_log_w - y_log_w  # Compute the logistic gradient for the bias.
+print("prediction error y_hat - y:", round(float(yhat_log_w - y_log_w), 4))  # Inspect the scalar error factor.
+print("gradient wrt w:", np.round(grad_w_log_w, 4))  # Inspect (y_hat - y) times each feature.
+print("gradient wrt b:", round(float(grad_b_log_w), 4))  # Inspect the bias gradient.
+```
+The factor $(\hat{y}-y)$ is negative here because the model underpredicts a positive example. Subtracting the gradient therefore increases weights aligned with positive features, which raises $z$ and lowers the log-loss.
+▶ What you'll see: the gradient direction is built from one scalar error times the feature vector.
+
+```python
+w_log_next_w = w_log_w - eta_log_w * grad_w_log_w  # Take one SGD step on the weights.
+b_log_next_w = b_log_w - eta_log_w * grad_b_log_w  # Take one SGD step on the bias.
+z_log_next_w = float(w_log_next_w @ x_log_w + b_log_next_w)  # Recompute the score after the update.
+yhat_log_next_w = 1.0 / (1.0 + np.exp(-z_log_next_w))  # Recompute the probability after the update.
+loss_log_next_w = -(y_log_w * np.log(yhat_log_next_w + eps_log_w) + (1.0 - y_log_w) * np.log(1.0 - yhat_log_next_w + eps_log_w))  # Recompute guarded log-loss.
+print("new w,b:", np.round(w_log_next_w, 4), round(float(b_log_next_w), 4))  # Inspect updated parameters.
+print("new y_hat/loss:", round(float(yhat_log_next_w), 4), round(float(loss_log_next_w), 4))  # Confirm the probability improves and loss falls.
+```
+▶ What you'll see: one step increases the positive-class probability and lowers the loss.
+
+```python
+line_log_w = np.linspace(-3.0, 3.0, 240)  # Create possible score values for plotting sigmoid and loss point.
+sig_log_w = 1.0 / (1.0 + np.exp(-line_log_w))  # Compute sigmoid values across the score grid.
+plt.figure(figsize=(6.0, 4.0))  # Create a figure for the logistic transformation.
+plt.plot(line_log_w, sig_log_w, label=r"$\sigma(z)$")  # Draw the sigmoid curve.
+plt.scatter([z_log_w, z_log_next_w], [yhat_log_w, yhat_log_next_w], c=["crimson", "seagreen"], s=80, label="before/after step")  # Mark prediction before and after one step.
+plt.axhline(y_log_w, c="gray", ls="--", label="target y=1")  # Show the target probability for a positive label.
+plt.xlabel("score z")  # Label the score axis.
+plt.ylabel("predicted probability")  # Label the probability axis.
+plt.legend(loc="best")  # Identify the curve and update points.
+plt.title("3: logistic step moves prediction toward the label")  # Title the required figure for this concept.
+plt.show()  # Render the logistic prediction plot.
+```
+▶ What you'll see: the after-update point moves upward on the sigmoid, closer to the positive label.
+
+*Why it's done this way: the compact gradient $(\hat{y}-y)x$ combines model error with feature responsibility. Subtracting it changes $w\cdot x+b$ in the direction that makes the observed label less surprising.*
+
+#### 4. Hypothesis class and fine-tuning: reuse features, adjust only the head
+
+A pretrained model can be viewed as a fixed feature map $r_{\theta_{\text{base}}}(x)$ followed by a small trainable head $h_{\theta_{\text{head}}}$. Fine-tuning often starts by freezing the base and moving only the head, or by using a small learning rate so useful pretrained structure is not destroyed. We simulate that with hand-built features and a pretrained-looking weight vector.
+
+```python
+X_ft_w = np.array([[-1.5, -1.0], [-1.0, -0.4], [-0.2, 0.2], [0.4, 0.8], [1.0, 1.2], [1.6, 1.0]])  # Create tiny target-domain inputs.
+Phi_ft_w = np.c_[X_ft_w[:, 0], X_ft_w[:, 1], X_ft_w[:, 0] * X_ft_w[:, 1]]  # Build fixed base features, including an interaction.
+y_ft_w = np.array([0.0, 0.0, 0.0, 1.0, 1.0, 1.0])  # Define target labels for the new task.
+w_pre_ft_w = np.array([1.2, 0.9, -0.15])  # Pretend these head weights came from pretraining.
+b_pre_ft_w = -0.1  # Pretend this bias came from pretraining.
+print("fixed features Phi:\n", np.round(Phi_ft_w, 3))  # Inspect the frozen representation.
+print("pretrained-looking head:", w_pre_ft_w, "bias:", b_pre_ft_w)  # Inspect the head that will be fine-tuned.
+```
+▶ What you'll see: the base features are computed once, while only the head parameters are trainable.
+
+```python
+def sigmoid_ft_w(z_w):  # Define a local sigmoid helper for the fine-tuning example.
+    return 1.0 / (1.0 + np.exp(-z_w))  # Convert scores into probabilities.
+def logloss_ft_w(w_w, b_w):  # Define average binary log-loss for the fixed-feature head.
+    p_w = sigmoid_ft_w(Phi_ft_w @ w_w + b_w)  # Predict probabilities from frozen features and current head.
+    eps_w = 1e-12  # Guard log(0) so the loss stays finite.
+    return float(np.mean(-(y_ft_w * np.log(p_w + eps_w) + (1.0 - y_ft_w) * np.log(1.0 - p_w + eps_w))))  # Average guarded log-loss.
+print("initial fine-tuning loss:", round(logloss_ft_w(w_pre_ft_w, b_pre_ft_w), 4))  # Inspect the pretrained head before adaptation.
+```
+▶ What you'll see: the pretrained head is plausible but not perfectly adapted to the new data.
+
+```python
+w_head_ft_w = w_pre_ft_w.copy()  # Copy the pretrained head so fine-tuning starts from learned structure.
+b_head_ft_w = float(b_pre_ft_w)  # Copy the pretrained bias.
+eta_ft_w = 0.08  # Use a small learning rate to make a gentle target-domain adjustment.
+losses_ft_w = [logloss_ft_w(w_head_ft_w, b_head_ft_w)]  # Store losses during fine-tuning.
+for step_w in range(25):  # Run a short head-only fine-tuning loop.
+    p_ft_w = sigmoid_ft_w(Phi_ft_w @ w_head_ft_w + b_head_ft_w)  # Predict with the current head.
+    grad_head_ft_w = ((p_ft_w - y_ft_w)[:, None] * Phi_ft_w).mean(axis=0)  # Compute gradient only for head weights.
+    grad_bias_ft_w = float(np.mean(p_ft_w - y_ft_w))  # Compute gradient only for the head bias.
+    w_head_ft_w = w_head_ft_w - eta_ft_w * grad_head_ft_w  # Update the trainable head weights.
+    b_head_ft_w = b_head_ft_w - eta_ft_w * grad_bias_ft_w  # Update the trainable head bias.
+    losses_ft_w.append(logloss_ft_w(w_head_ft_w, b_head_ft_w))  # Record the target-domain loss.
+print("fine-tuned head:", np.round(w_head_ft_w, 4), "bias:", round(b_head_ft_w, 4))  # Inspect the adapted head.
+print("weight change:", np.round(w_head_ft_w - w_pre_ft_w, 4))  # Inspect the small parameter adjustment.
+print("loss before/after:", round(losses_ft_w[0], 4), round(losses_ft_w[-1], 4))  # Confirm the target loss improved.
+```
+▶ What you'll see: only the last-layer weights move, and they move by a small amount.
+
+```python
+score_pre_ft_w = Phi_ft_w @ w_pre_ft_w + b_pre_ft_w  # Compute pretrained scores on the target data.
+score_new_ft_w = Phi_ft_w @ w_head_ft_w + b_head_ft_w  # Compute fine-tuned scores on the same frozen features.
+plt.figure(figsize=(6.0, 4.0))  # Create a figure showing the adaptation.
+plt.scatter(score_pre_ft_w, score_new_ft_w, c=y_ft_w, cmap="coolwarm", edgecolors="k", s=80)  # Compare before and after scores for each example.
+plt.plot([score_pre_ft_w.min() - 0.2, score_pre_ft_w.max() + 0.2], [score_pre_ft_w.min() - 0.2, score_pre_ft_w.max() + 0.2], c="gray", ls="--", label="no change")  # Draw a reference line.
+plt.xlabel("pretrained head score")  # Label the before-fine-tuning axis.
+plt.ylabel("fine-tuned head score")  # Label the after-fine-tuning axis.
+plt.legend(loc="best")  # Show the no-change reference.
+plt.title("4: fine-tuning makes a small head adjustment")  # Title the required figure for this concept.
+plt.show()  # Render the score-shift plot.
+```
+▶ What you'll see: points move slightly off the no-change line because the head adapts while features stay fixed.
+
+```python
+plt.figure(figsize=(6.0, 3.5))  # Create a second compact fine-tuning diagnostic.
+plt.plot(range(len(losses_ft_w)), losses_ft_w, marker="o", color="purple")  # Plot target-domain loss during head-only updates.
+plt.xlabel("head-only update")  # Label the update count.
+plt.ylabel("average log-loss")  # Label the fine-tuning objective.
+plt.title("4: small learning-rate fine-tuning lowers target loss")  # Title the loss curve.
+plt.show()  # Render the fine-tuning loss curve.
+```
+▶ What you'll see: the target-domain loss decreases smoothly because the small learning rate preserves the pretrained starting point.
+
+*Why it's done this way: fine-tuning reuses learned features instead of relearning them from a tiny target dataset. Freezing the base and nudging the head keeps the hypothesis class small enough to adapt without immediately forgetting useful structure.*
+
+#### 5. SGD pseudocode in practice: shuffle, mini-batch, update, repeat
+
+The pseudocode becomes real by shuffling data each epoch, slicing mini-batches, computing average loss and gradients on each mini-batch, and updating trainable weights. One epoch means one full pass through the training set. We implement the loop directly so every variable in the pseudocode has a concrete NumPy counterpart.
+
+```python
+X_loop_raw_w = np.array([[-2.0, -1.0], [-1.5, -0.7], [-0.8, -1.1], [-0.2, 0.4], [0.5, 0.8], [1.0, 1.1], [1.4, 0.7], [2.0, 1.5]])  # Create a tiny binary dataset.
+y_loop_w = np.array([0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0])  # Create labels aligned with the rows.
+X_loop_w = np.c_[np.ones(len(X_loop_raw_w)), X_loop_raw_w]  # Add a bias column so the bias is learned as weight 0.
+w_loop_w = np.zeros(X_loop_w.shape[1])  # Initialize logistic weights to zero.
+eta_loop_w = 0.4  # Choose a learning rate for mini-batch SGD.
+batch_size_loop_w = 2  # Use mini-batches of two examples so multiple updates happen per epoch.
+print("X with bias:\n", X_loop_w)  # Inspect the training matrix.
+print("initial weights:", w_loop_w)  # Inspect the trainable parameters.
+```
+▶ What you'll see: eight examples, three trainable weights, and mini-batches of size two.
+
+```python
+def loss_loop_w(w_w):  # Define full-dataset logistic loss for monitoring the SGD loop.
+    p_w = 1.0 / (1.0 + np.exp(-(X_loop_w @ w_w)))  # Predict probabilities for all examples.
+    eps_w = 1e-12  # Guard log(0) for numerical safety.
+    return float(np.mean(-(y_loop_w * np.log(p_w + eps_w) + (1.0 - y_loop_w) * np.log(1.0 - p_w + eps_w))))  # Return average log-loss.
+print("initial full loss:", round(loss_loop_w(w_loop_w), 4))  # Inspect the loss before training.
+```
+▶ What you'll see: zero weights predict 0.5 for every row, giving the baseline logistic loss.
+
+```python
+rng_loop_w = np.random.default_rng(30)  # Create a seeded generator for reproducible shuffling.
+loss_history_loop_w = [loss_loop_w(w_loop_w)]  # Store full-dataset loss after each mini-batch update.
+order_first_epoch_w = None  # Save the first shuffle order so we can inspect what one epoch means.
+for epoch_w in range(8):  # Repeat several epochs, where each epoch is one pass through all rows.
+    order_loop_w = rng_loop_w.permutation(len(y_loop_w))  # Shuffle example indices at the start of the epoch.
+    if epoch_w == 0:  # Check whether this is the first epoch.
+        order_first_epoch_w = order_loop_w.copy()  # Save the first epoch's order for printing.
+    for start_w in range(0, len(y_loop_w), batch_size_loop_w):  # Step through consecutive mini-batches.
+        batch_idx_w = order_loop_w[start_w:start_w + batch_size_loop_w]  # Select this mini-batch's shuffled indices.
+        Xb_loop_w = X_loop_w[batch_idx_w]  # Gather the mini-batch feature rows.
+        yb_loop_w = y_loop_w[batch_idx_w]  # Gather the mini-batch labels.
+        p_loop_w = 1.0 / (1.0 + np.exp(-(Xb_loop_w @ w_loop_w)))  # Predict probabilities on the mini-batch.
+        grad_loop_w = ((p_loop_w - yb_loop_w)[:, None] * Xb_loop_w).mean(axis=0)  # Average mini-batch logistic gradients.
+        w_loop_w = w_loop_w - eta_loop_w * grad_loop_w  # Apply the SGD update to trainable weights.
+        loss_history_loop_w.append(loss_loop_w(w_loop_w))  # Monitor full loss after this mini-batch update.
+print("first epoch shuffled order:", order_first_epoch_w)  # Inspect the shuffled pass through the data.
+print("final weights:", np.round(w_loop_w, 4))  # Inspect the trained parameters.
+print("final loss:", round(loss_history_loop_w[-1], 4))  # Inspect the final monitored loss.
+```
+▶ What you'll see: each epoch visits every example once in shuffled order, and each mini-batch causes one update.
+
+```python
+plt.figure(figsize=(6.0, 3.8))  # Create the practical SGD training figure.
+plt.plot(range(len(loss_history_loop_w)), loss_history_loop_w, marker="o", color="seagreen")  # Plot monitored loss after each mini-batch update.
+plt.xlabel("mini-batch update")  # Label the update number.
+plt.ylabel("full-dataset log-loss")  # Label the monitored loss.
+plt.title("5: SGD loop lowers loss over shuffled mini-batches")  # Title the required figure for this concept.
+plt.show()  # Render the loss curve.
+```
+▶ What you'll see: the loss generally trends downward, with small bumps possible because mini-batches are noisy.
+
+```python
+xx_loop_w, yy_loop_w = np.meshgrid(np.linspace(-2.5, 2.5, 120), np.linspace(-1.6, 1.8, 120))  # Build a grid for visualizing the learned classifier.
+grid_loop_w = np.c_[np.ones(xx_loop_w.size), xx_loop_w.ravel(), yy_loop_w.ravel()]  # Add a bias column to every grid point.
+prob_grid_loop_w = 1.0 / (1.0 + np.exp(-(grid_loop_w @ w_loop_w)))  # Predict probabilities on the grid.
+plt.figure(figsize=(5.5, 4.2))  # Create the classifier visualization.
+plt.contourf(xx_loop_w, yy_loop_w, prob_grid_loop_w.reshape(xx_loop_w.shape), levels=[0.0, 0.5, 1.0], colors=["tab:blue", "tab:orange"], alpha=0.18)  # Shade predicted classes.
+plt.contour(xx_loop_w, yy_loop_w, prob_grid_loop_w.reshape(xx_loop_w.shape), levels=[0.5], colors="black", linewidths=2)  # Draw the 0.5 decision boundary.
+plt.scatter(X_loop_raw_w[:, 0], X_loop_raw_w[:, 1], c=y_loop_w, cmap="coolwarm", edgecolors="k", s=80)  # Plot the training examples.
+plt.xlabel("feature 1")  # Label the first feature axis.
+plt.ylabel("feature 2")  # Label the second feature axis.
+plt.title("5: mini-batch SGD learns a logistic boundary")  # Title the final visual check.
+plt.show()  # Render the learned boundary.
+```
+▶ What you'll see: the learned boundary separates the tiny classes after repeated shuffled mini-batch updates.
+
+*Why it's done this way: the pseudocode's shuffle → mini-batch → gradient → update loop makes SGD scalable. Shuffling prevents repeated ordering bias, mini-batches make gradients cheap, and one epoch simply means every example has had one chance to influence the weights.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Apply one scalar SGD update $w\leftarrow w-\eta g$

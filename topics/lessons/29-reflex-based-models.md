@@ -320,6 +320,252 @@ def nn_scores(X, params):  # Compute signed neural-network scores from trained p
 ```
 
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build every reflex-model idea from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline data, so every feature, score, loss, and fitted line is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us arrays, dot products, feature maps, and small least-squares solves.
+import matplotlib.pyplot as plt  # Matplotlib lets us see scores, boundaries, losses, residuals, and feature-map effects.
+np.random.seed(0)  # fix randomness so every printed value and figure is reproducible.
+```
+
+#### 1. Features and scores: turn raw inputs into useful measurements
+
+A reflex model does not score the raw object directly; it first maps $x$ into features $\phi(x)$ that expose useful measurements. Then a linear score $s=w\cdot\phi(x)$ adds weighted feature contributions, so the sign or size of the score becomes the prediction signal. We build a tiny polynomial feature map because it shows why features matter: a linear score in feature space can still curve as the raw input changes.
+
+```python
+x_raw_w = np.array([-2.0, -1.0, 0.0, 1.0, 2.0])  # choose five one-dimensional raw inputs small enough to inspect.
+Phi_score_w = np.column_stack([np.ones_like(x_raw_w), x_raw_w, x_raw_w ** 2])  # build phi(x)=[1,x,x^2] for every input.
+w_score_w = np.array([-0.5, 1.2, 0.4])  # choose weights for bias, linear trend, and quadratic curvature.
+print("raw x:", x_raw_w)  # inspect the inputs before feature engineering.
+print("phi(x) rows:\n", Phi_score_w)  # inspect the feature vectors the model actually sees.
+```
+▶ What you'll see: each scalar input becomes a three-number feature vector with a bias, raw value, and squared value.
+
+```python
+contrib_score_w = Phi_score_w * w_score_w  # compute each feature's separate weighted contribution.
+score_score_w = Phi_score_w @ w_score_w  # add contributions with w dot phi(x) to get one score per input.
+print("feature contributions:\n", np.round(contrib_score_w, 2))  # inspect which features push scores up or down.
+print("scores:", np.round(score_score_w, 2))  # inspect the final weighted sums.
+```
+The dot product is shorthand for adding aligned contributions:
+
+$$
+w\cdot\phi(x)=\sum_j w_j\phi_j(x).
+$$
+
+This matters because the model is still linear in $\phi(x)$, but $\phi(x)$ itself can contain non-linear measurements such as $x^2$.
+▶ What you'll see: negative and positive feature contributions combine into one scalar score for each input.
+
+```python
+x_grid_score_w = np.linspace(-3.0, 3.0, 200)  # sample many raw inputs so the score curve is smooth.
+Phi_grid_score_w = np.column_stack([np.ones_like(x_grid_score_w), x_grid_score_w, x_grid_score_w ** 2])  # map each grid input to phi(x).
+score_grid_score_w = Phi_grid_score_w @ w_score_w  # compute w dot phi(x) across the grid.
+plt.figure(figsize=(5.5, 3.8))  # create a compact score plot.
+plt.plot(x_grid_score_w, score_grid_score_w, lw=2, c="purple", label="score")  # draw how the score changes with raw x.
+plt.scatter(x_raw_w, score_score_w, c="black", zorder=3, label="tiny data")  # mark the inspectable inputs from above.
+plt.axhline(0.0, c="gray", ls="--", label="score = 0")  # show the sign-changing threshold.
+plt.xlabel("raw input x")  # label the raw input axis.
+plt.ylabel(r"score $w\cdot\phi(x)$")  # label the weighted-sum axis.
+plt.legend(loc="best")  # show curve and point meanings.
+plt.title("1: feature map makes a curved score")  # title the concept figure.
+plt.show()  # render the score curve.
+```
+▶ What you'll see: a curved score as a function of raw $x$, even though the model is linear in the chosen features.
+
+*Why it's done this way: features decide what patterns the weighted sum can express. Adding $x^2$ gives a linear model one controlled non-linear measurement without changing the simple score formula.*
+
+#### 2. Linear classification: predict from the sign of the score
+
+Binary linear classification uses the score sign: predict $+1$ when $w\cdot\phi(x)>0$ and $-1$ when it is below zero. The decision boundary is where the score is exactly zero, and the margin $y\,w\cdot\phi(x)$ says whether the true label is on the correct side and how confidently. We use raw 2-D features plus a bias so the boundary is a line we can draw by hand.
+
+```python
+X_class_w = np.array([[-2.0, -1.0], [-1.5, 0.2], [-0.8, -1.2], [0.8, 1.1], [1.4, 0.4], [2.0, 1.6]])  # create six small 2-D examples.
+y_class_w = np.array([-1, -1, -1, 1, 1, 1])  # assign negative labels to the left group and positive labels to the right group.
+Phi_class_w = np.column_stack([np.ones(X_class_w.shape[0]), X_class_w])  # build phi(x)=[1,x1,x2] with a bias column.
+w_class_w = np.array([-0.1, 1.0, 0.8])  # choose a linear separator in feature space.
+print("points:\n", X_class_w)  # inspect the raw coordinates.
+print("weights:", w_class_w)  # inspect the bias and two feature weights.
+```
+▶ What you'll see: two small point groups and one chosen separating weight vector.
+
+```python
+score_class_w = Phi_class_w @ w_class_w  # compute one score for every point.
+pred_class_w = np.where(score_class_w >= 0.0, 1, -1)  # classify by the sign of the score.
+margin_class_w = y_class_w * score_class_w  # compute labeled margins y times score.
+print("scores:", np.round(score_class_w, 3))  # inspect signed distances in score units.
+print("predictions:", pred_class_w)  # inspect the predicted labels.
+print("margins:", np.round(margin_class_w, 3))  # inspect correctness and confidence at once.
+```
+A positive margin means the score sign matches the label; a negative margin means the sign is wrong. Larger positive margins are safer because the point can move farther before crossing the zero-score boundary.
+▶ What you'll see: correctly classified points have positive margins, with larger numbers farther from the boundary in score units.
+
+```python
+x_line_class_w = np.linspace(-2.5, 2.5, 200)  # create x1 coordinates for the boundary line.
+y_line_class_w = -(w_class_w[0] + w_class_w[1] * x_line_class_w) / w_class_w[2]  # solve w0+w1*x1+w2*x2=0 for x2.
+plt.figure(figsize=(5.5, 4.2))  # create the classification geometry figure.
+plt.scatter(X_class_w[y_class_w == -1, 0], X_class_w[y_class_w == -1, 1], c="tab:red", edgecolors="k", s=75, label="y=-1")  # draw negative examples.
+plt.scatter(X_class_w[y_class_w == 1, 0], X_class_w[y_class_w == 1, 1], c="tab:blue", edgecolors="k", s=75, label="y=+1")  # draw positive examples.
+plt.plot(x_line_class_w, y_line_class_w, c="black", lw=2, label="score = 0")  # draw the decision boundary.
+plt.xlim(-2.6, 2.6)  # keep the horizontal view around the tiny data.
+plt.ylim(-2.0, 2.2)  # keep the vertical view around the tiny data.
+plt.xlabel("x1")  # label the first raw feature.
+plt.ylabel("x2")  # label the second raw feature.
+plt.legend(loc="best")  # show class and boundary meanings.
+plt.title("2: linear classification by score sign")  # title the concept figure.
+plt.show()  # render the boundary plot.
+```
+▶ What you'll see: a straight zero-score line separating the negative and positive points.
+
+*Why it's done this way: a single score gives both a class decision and a confidence-like margin. Drawing the zero-score set makes the abstract sign rule visible as a boundary in input space.*
+
+#### 3. Classification losses: penalize wrong or not-confident-enough scores
+
+For labels $y\in\{-1,+1\}$, both hinge and logistic loss depend on the margin $m=y\cdot\text{score}$. Hinge loss is $\max(0,1-m)$, which becomes exactly zero after margin 1; logistic loss is $\log(1+e^{-m})$, which is smooth and keeps shrinking as margin grows. We compare them over the same score range because both punish confident-wrong predictions most strongly, but they differ in whether they stop charging confident-correct examples.
+
+```python
+score_loss_w = np.linspace(-4.0, 4.0, 9)  # choose inspectable raw scores for a positive-labeled example.
+y_loss_w = 1.0  # use y=+1 so the margin equals the score for this first table.
+margin_loss_w = y_loss_w * score_loss_w  # compute y times score.
+hinge_loss_w = np.maximum(0.0, 1.0 - margin_loss_w)  # compute max(0,1-margin) pointwise.
+logistic_loss_w = np.logaddexp(0.0, -margin_loss_w)  # compute log(1+exp(-margin)) stably.
+print("scores:", np.round(score_loss_w, 2))  # inspect the score grid.
+print("hinge:", np.round(hinge_loss_w, 3))  # inspect hinge penalties.
+print("logistic:", np.round(logistic_loss_w, 3))  # inspect logistic penalties.
+```
+▶ What you'll see: large negative scores create large losses, while large positive scores create small losses.
+
+```python
+example_scores_loss_w = np.array([-2.0, 0.4, 1.8])  # choose one wrong, one correct-but-small, and one confident-correct score.
+example_labels_loss_w = np.array([1.0, 1.0, 1.0])  # keep labels positive so cases are easy to read.
+example_margins_loss_w = example_labels_loss_w * example_scores_loss_w  # compute margins for the examples.
+example_hinge_loss_w = np.maximum(0.0, 1.0 - example_margins_loss_w)  # compute hinge losses.
+example_logistic_loss_w = np.logaddexp(0.0, -example_margins_loss_w)  # compute logistic losses.
+print("example margins:", example_margins_loss_w)  # inspect the three cases.
+print("example hinge/logistic:\n", np.round(np.column_stack([example_hinge_loss_w, example_logistic_loss_w]), 3))  # compare both losses side by side.
+```
+The margin, not the raw score alone, is what matters: a score of $-2$ is good for label $-1$ but bad for label $+1$. Multiplying by $y$ turns "good for my class" into positive numbers for both classes.
+▶ What you'll see: confident-wrong has the biggest penalty, while hinge gives zero to the margin-1-or-better point.
+
+```python
+margin_grid_loss_w = np.linspace(-4.0, 4.0, 300)  # create a smooth margin range.
+hinge_grid_loss_w = np.maximum(0.0, 1.0 - margin_grid_loss_w)  # evaluate hinge loss on the grid.
+logistic_grid_loss_w = np.logaddexp(0.0, -margin_grid_loss_w)  # evaluate logistic loss on the grid.
+plt.figure(figsize=(5.5, 3.8))  # create the loss comparison figure.
+plt.plot(margin_grid_loss_w, hinge_grid_loss_w, lw=2, label="hinge")  # draw the piecewise-linear hinge curve.
+plt.plot(margin_grid_loss_w, logistic_grid_loss_w, lw=2, label="logistic")  # draw the smooth logistic curve.
+plt.axvline(0.0, c="gray", ls=":", label="decision boundary")  # mark wrong versus correct sign.
+plt.axvline(1.0, c="gray", ls="--", label="hinge zero point")  # mark the hinge margin threshold.
+plt.xlabel(r"margin $y\cdot\mathrm{score}$")  # label the margin axis.
+plt.ylabel("loss")  # label the loss axis.
+plt.legend(loc="best")  # show curve meanings.
+plt.title("3: hinge and logistic loss vs margin")  # title the concept figure.
+plt.show()  # render the loss plot.
+```
+▶ What you'll see: both losses are high for negative margins; hinge becomes flat at margin 1, while logistic decays smoothly.
+
+*Why it's done this way: zero-one correctness is too abrupt to optimize directly, so hinge and logistic provide usable penalties. They focus training on examples that are wrong or not confidently right, with hinge emphasizing a margin threshold and logistic giving a smooth gradient everywhere.*
+
+#### 4. Linear regression and training loss: fit weights by shrinking residuals
+
+For regression, the same score becomes a numeric prediction instead of a class sign. A linear model with features $\phi(x)=[1,x]$ predicts $\hat y=w\cdot\phi(x)$, and squared training loss averages the squared residuals $\hat y-y$. We fit the line by the least-squares normal equation because it is the direct from-scratch solution for minimizing squared residuals on a tiny design matrix.
+
+```python
+x_reg_w = np.array([-2.0, -1.0, 0.0, 1.0, 2.0, 3.0])  # create six one-dimensional training inputs.
+y_reg_w = np.array([-1.1, 0.1, 0.9, 2.2, 2.8, 4.1])  # create noisy targets that roughly follow a line.
+Phi_reg_w = np.column_stack([np.ones_like(x_reg_w), x_reg_w])  # build phi(x)=[1,x] for intercept and slope.
+print("design matrix:\n", Phi_reg_w)  # inspect the regression features.
+print("targets:", y_reg_w)  # inspect the numeric labels.
+```
+▶ What you'll see: each input has a bias feature and one raw coordinate, paired with a real-valued target.
+
+```python
+w_reg_w = np.linalg.pinv(Phi_reg_w.T @ Phi_reg_w) @ Phi_reg_w.T @ y_reg_w  # solve the least-squares normal equation.
+y_hat_reg_w = Phi_reg_w @ w_reg_w  # compute fitted predictions on the training inputs.
+resid_reg_w = y_hat_reg_w - y_reg_w  # compute residuals as prediction minus target.
+mean_loss_reg_w = np.mean(resid_reg_w ** 2)  # average squared residuals to get training loss.
+print("fitted weights [intercept, slope]:", np.round(w_reg_w, 3))  # inspect the learned line.
+print("residuals:", np.round(resid_reg_w, 3))  # inspect the remaining errors.
+print("mean squared training loss:", round(mean_loss_reg_w, 4))  # inspect the objective value.
+```
+The normal equation comes from setting the gradient of squared loss to zero. Squaring residuals makes positive and negative errors both count, and it penalizes large misses more than small ones.
+▶ What you'll see: a fitted intercept and slope, plus residuals whose squares average to the printed training loss.
+
+```python
+x_grid_reg_w = np.linspace(-2.4, 3.4, 200)  # create a smooth x-range for the fitted line.
+Phi_grid_reg_w = np.column_stack([np.ones_like(x_grid_reg_w), x_grid_reg_w])  # build design rows for the grid.
+y_grid_reg_w = Phi_grid_reg_w @ w_reg_w  # compute line predictions across the grid.
+plt.figure(figsize=(5.8, 4.0))  # create the regression figure.
+plt.scatter(x_reg_w, y_reg_w, c="black", s=70, label="data")  # draw observed training points.
+plt.plot(x_grid_reg_w, y_grid_reg_w, c="tab:green", lw=2, label="least-squares fit")  # draw the fitted line.
+plt.vlines(x_reg_w, y_reg_w, y_hat_reg_w, colors="crimson", linestyles="--", label="residuals")  # draw vertical prediction errors.
+plt.xlabel("x")  # label the input axis.
+plt.ylabel("y")  # label the target axis.
+plt.legend(loc="best")  # show data, line, and residual meanings.
+plt.title("4: linear regression fit and residuals")  # title the concept figure.
+plt.show()  # render the regression plot.
+```
+▶ What you'll see: the line balances the points, and dashed vertical segments show the residuals being squared in the loss.
+
+*Why it's done this way: squared loss turns fitting into a smooth average-error objective with a closed-form solution for linear features. Plotting residuals shows exactly what the training loss is averaging.*
+
+#### 5. Linear versus non-linear predictors: change the feature map to change the boundary
+
+A predictor is linear in its chosen features, not necessarily linear in the original raw input. XOR-like data cannot be separated by one raw-input line, but the product feature $x_1x_2$ makes the class pattern visible to a linear score. We compare a raw linear attempt with a quadratic-style feature map to show that feature maps buy non-linear power while keeping the score formula $w\cdot\phi(x)$.
+
+```python
+X_xor_w = np.array([[-1.0, -1.0], [-1.0, 1.0], [1.0, -1.0], [1.0, 1.0]])  # create the four XOR corners.
+y_xor_w = np.array([1, -1, -1, 1])  # label same-sign corners positive and opposite-sign corners negative.
+Phi_linear_xor_w = np.column_stack([np.ones(X_xor_w.shape[0]), X_xor_w])  # build raw linear features [1,x1,x2].
+w_linear_xor_w = np.linalg.pinv(Phi_linear_xor_w) @ y_xor_w  # find the least-squares linear classifier scores.
+score_linear_xor_w = Phi_linear_xor_w @ w_linear_xor_w  # compute raw-linear scores.
+pred_linear_xor_w = np.where(score_linear_xor_w >= 0.0, 1, -1)  # convert scores to labels.
+print("raw-linear weights:", np.round(w_linear_xor_w, 3))  # inspect the best raw linear weights.
+print("raw-linear predictions:", pred_linear_xor_w)  # inspect the failed signs.
+```
+▶ What you'll see: the raw linear model collapses toward zero scores and cannot get all four XOR labels right.
+
+```python
+Phi_quad_xor_w = np.column_stack([np.ones(X_xor_w.shape[0]), X_xor_w, X_xor_w[:, 0] * X_xor_w[:, 1]])  # add the interaction feature x1*x2.
+w_quad_xor_w = np.linalg.pinv(Phi_quad_xor_w) @ y_xor_w  # fit a linear score in the expanded feature space.
+score_quad_xor_w = Phi_quad_xor_w @ w_quad_xor_w  # compute expanded-feature scores.
+pred_quad_xor_w = np.where(score_quad_xor_w >= 0.0, 1, -1)  # convert expanded scores to labels.
+print("expanded weights [bias,x1,x2,x1*x2]:", np.round(w_quad_xor_w, 3))  # inspect the learned interaction rule.
+print("expanded predictions:", pred_quad_xor_w)  # inspect that the XOR signs are now correct.
+```
+The feature $x_1x_2$ is positive in the same-sign quadrants and negative in the opposite-sign quadrants. A linear score on that feature can therefore draw a nonlinear boundary in the original $(x_1,x_2)$ plane.
+▶ What you'll see: the expanded feature map separates the four points because the interaction feature matches the XOR pattern.
+
+```python
+grid_axis_xor_w = np.linspace(-1.6, 1.6, 180)  # create grid coordinates for both boundary plots.
+xx_xor_w, yy_xor_w = np.meshgrid(grid_axis_xor_w, grid_axis_xor_w)  # build a square input grid.
+grid_xor_w = np.c_[xx_xor_w.ravel(), yy_xor_w.ravel()]  # flatten the grid into two-column raw inputs.
+Phi_grid_linear_xor_w = np.column_stack([np.ones(grid_xor_w.shape[0]), grid_xor_w])  # build raw linear grid features.
+Phi_grid_quad_xor_w = np.column_stack([np.ones(grid_xor_w.shape[0]), grid_xor_w, grid_xor_w[:, 0] * grid_xor_w[:, 1]])  # build expanded grid features.
+score_grid_linear_xor_w = (Phi_grid_linear_xor_w @ w_linear_xor_w).reshape(xx_xor_w.shape)  # reshape raw-linear scores for contouring.
+score_grid_quad_xor_w = (Phi_grid_quad_xor_w @ w_quad_xor_w).reshape(xx_xor_w.shape)  # reshape expanded-feature scores for contouring.
+fig_xor_w, ax_xor_w = plt.subplots(1, 2, figsize=(8.5, 3.8))  # create side-by-side comparison axes.
+ax_xor_w[0].contourf(xx_xor_w, yy_xor_w, score_grid_linear_xor_w, levels=[-10.0, 0.0, 10.0], colors=["tab:red", "tab:blue"], alpha=0.18)  # shade raw-linear regions.
+ax_xor_w[0].contour(xx_xor_w, yy_xor_w, score_grid_linear_xor_w, levels=[0.0], colors="black")  # draw raw-linear boundary.
+ax_xor_w[1].contourf(xx_xor_w, yy_xor_w, score_grid_quad_xor_w, levels=[-10.0, 0.0, 10.0], colors=["tab:red", "tab:blue"], alpha=0.18)  # shade expanded-feature regions.
+ax_xor_w[1].contour(xx_xor_w, yy_xor_w, score_grid_quad_xor_w, levels=[0.0], colors="black")  # draw expanded-feature boundary.
+for axis_xor_w in ax_xor_w:  # decorate both panels in the same way.
+    axis_xor_w.scatter(X_xor_w[y_xor_w == -1, 0], X_xor_w[y_xor_w == -1, 1], c="tab:red", edgecolors="k", s=75, label="y=-1")  # draw negative XOR points.
+    axis_xor_w.scatter(X_xor_w[y_xor_w == 1, 0], X_xor_w[y_xor_w == 1, 1], c="tab:blue", edgecolors="k", s=75, label="y=+1")  # draw positive XOR points.
+    axis_xor_w.set_xlabel("x1")  # label the first coordinate.
+    axis_xor_w.set_ylabel("x2")  # label the second coordinate.
+ax_xor_w[0].set_title("5: raw linear features fail")  # title the raw-feature panel.
+ax_xor_w[1].set_title("5: interaction feature separates")  # title the expanded-feature panel.
+ax_xor_w[1].legend(loc="best")  # show labels once to avoid clutter.
+plt.tight_layout()  # prevent panel labels from overlapping.
+plt.show()  # render the comparison.
+```
+▶ What you'll see: the raw linear boundary cannot isolate diagonal classes, while the interaction feature creates quadrant-style separation.
+
+*Why it's done this way: changing $\phi$ changes the geometry a linear score can express. A nonlinear feature map can make raw-space patterns separable without abandoning the simple weighted-sum predictor.*
+
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Compute one linear score $w\cdot\phi(x)$
