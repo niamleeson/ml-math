@@ -20,11 +20,15 @@ Three sub-lessons:
 - **M8.2 Class imbalance** — weights, focal loss, resampling, and recalibration.
 - **M8.3 Sparse slices & delayed feedback** — shrink small groups and respect label timing.
 
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M08-calibration-imbalance.ipynb" target="_blank" rel="noopener">▶ Open the runnable calibration &amp; class-imbalance notebook in Google Colab</a></p>
+
 ---
 
 ## M8.1 · Calibration (definition, ECE, Platt vs isotonic; why it feeds pCTR×bid)
 
 **The idea.** A score is calibrated if examples assigned probability 0.20 happen about 20% of the time. Calibration is about probability scale, not rank order. A reliability diagram bins predictions, then compares each bin's average predicted probability with its observed outcome rate.
+
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M08-calibration-imbalance.ipynb" target="_blank" rel="noopener">▶ Run it: reliability diagram, ECE, and Platt vs isotonic in Google Colab</a></p>
 
 **Everyday analogy.** A weather forecaster who says "70% chance of rain" should be right about 70% of the time across many such days. If it rains only 30% of those days, the forecaster may still rank stormy days above sunny days, but the probability is dishonest. Calibration asks whether the number means what it says, which is crucial when another system treats it as expected value.
 
