@@ -128,8 +128,6 @@ The leaky feature correlates with the label; the as-of feature does not.
 
 ## M2.3 · Categorical features
 
-<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M02-feature-engineering.ipynb" target="_blank" rel="noopener">▶ Open the runnable notebook (20 examples + visualizations) in Google Colab</a></p>
-
 **The idea.** A categorical feature takes values from a finite set. **Nominal** has no order (campaign id, country); **ordinal** has a real order (small/medium/large) — order-preserving encoding is valid only then. All snippets below use the notebook's synthetic ads table (`train`, `valid`) with `member_country`, `device`, `creative_size`, `campaign_id`, `bid`, `spend`, `dwell_secs`, and `clicked`.
 
 **Everyday analogy.** Turning labels into numbers a model can use. **Nominal** categories are like jersey colors — red/blue/green — where no color is "greater," so numbering them 1/2/3 fakes an order that isn't there (that's why nominal → one-hot, not label-encode). **Ordinal** categories are like T-shirt sizes S/M/L, where the order is real, so 1/2/3 is fine. **Target encoding** (replace a category with its average click rate) is like rating a new restaurant by its average review: trustworthy with 500 reviews, but with only 2 (both 5-star) you shouldn't crown it the city's best — you shrink toward the citywide average until it earns trust (smoothing), and you never count your own visit in its score (out-of-fold).

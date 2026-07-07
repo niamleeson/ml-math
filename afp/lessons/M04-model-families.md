@@ -29,8 +29,6 @@ Three sub-lessons:
 
 ## M4.1 · From linear to trees
 
-<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M04-model-families.ipynb" target="_blank" rel="noopener">▶ Open the runnable notebook (20 examples + visualizations) in Google Colab</a></p>
-
 **The idea.** Linear regression and logistic regression score an additive weighted sum of features. Logistic regression turns that score into a probability for classification. The strength is clarity: each coefficient has a direction and magnitude, training is reliable, and serving is cheap. The limit is also clear: a purely additive model does not discover nonlinear thresholds or feature interactions unless you provide them.
 
 A decision tree learns a sequence of splits: if bid is above a threshold, go right; otherwise left. Then maybe split by country, campaign age, or device. Each leaf predicts a value. Trees naturally capture thresholds and interactions because the meaning of a later split depends on earlier splits.

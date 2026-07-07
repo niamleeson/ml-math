@@ -35,9 +35,6 @@ Three sub-lessons:
 
 ## M7.1 · pCTR/pVTR models & the calibration link
 
-<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M07-ranking-ctr-family.ipynb" target="_blank" rel="noopener">▶ Open the runnable pCTR pipeline notebook in Google Colab</a></p>
-
-
 **The idea.** A pCTR model is a pointwise supervised model: each impression is a row, features describe the member, item/ad, context, and historical signals available at serve time, and the label says whether the click happened in the attribution window. pVTR is the same pattern for view-through, video view, or watch completion.
 
 **Everyday analogy.** Think of a ticket seller estimating the chance each passerby will buy a ticket. The estimate should mean an actual probability: among people scored 4%, about 4 out of 100 should buy. Ranking the most likely buyers is useful, but if the probabilities are inflated, multiplying by ticket price or budget makes the business decision wrong.

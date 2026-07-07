@@ -25,8 +25,6 @@ Two sub-lessons:
 
 ## M6.1 · The recommendation problem & the funnel
 
-<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M06-recsys-landscape.ipynb" target="_blank" rel="noopener">▶ Open the runnable notebook (20 examples + visualizations) in Google Colab</a></p>
-
 **The idea.** A recommender maps a user, context, or request to a small ordered set of items from a much larger catalog.
 
 **Everyday analogy.** Imagine walking into a giant bookstore and asking a clerk what to read next. They first pull one shelf of plausible books from millions of options, then sort that small pile by what seems best for you, then remove anything unavailable or inappropriate. Collaborative filtering is the clerk saying "people who liked what you liked also liked this," while matrix factorization is the clerk discovering hidden taste dimensions like mystery fan, romance reader, or beginner-friendly nonfiction.
