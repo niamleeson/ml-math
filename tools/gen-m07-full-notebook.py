@@ -2,15 +2,15 @@
 """Generate afp/notebooks/M07-full-ranking-pipeline.ipynb.
 
 A fully runnable, VERY beginner-friendly Colab notebook that builds the shape of a
-real production ad ranker: ONE shared-bottom multi-task model that predicts THREE
-outcomes at once -- CTR (click), VTR (video view), LTR (lead/conversion) -- using
+real production ad ranker: ONE shared-bottom multi-task model (in PyTorch) that predicts
+THREE outcomes at once -- CTR (click), VTR (video view), LTR (lead/conversion) -- using
 user-history features, then combines the heads into a serving score.
 
-Granular: many small cells, plain-language explanations of every idea, logging
-(training loss curve, per-head AUC), lots of visualizations, a history ablation
-that proves history helps, and per-head proof graphs.
+Granular: many small cells, plain-language explanations of every idea (including the
+model choice), logging (per-epoch loss curves, per-head AUC), lots of visualizations, a
+history ablation that proves history helps, and per-head proof graphs.
 
-Colab-preinstalled libraries only (pandas/numpy/scikit-learn/matplotlib).
+Colab-preinstalled libraries only (pandas/numpy/scikit-learn/matplotlib/torch).
 
 Run: python3 tools/gen-m07-full-notebook.py
 """
@@ -213,52 +213,91 @@ print("standardized. train feature means (should be ~0):", np.round(Xtr.mean(0),
 
 # =================================================================== THE MODEL
 md(r"""
-## Step 9 · The shared-bottom multi-task model — what it is
+## Step 9 · Choose the model — why **shared-bottom multi-task** (in PyTorch)
 
-We use one neural network:
-- a **shared body** (hidden layers) that reads the 7 features and builds an internal
-  representation, then
-- **three output heads**, one each for click / view / lead.
+**The model choice.** We must predict **three** related things (click, view, lead). Two
+options:
+- train **three separate models** — simple, but you learn the common patterns three times
+  and pay to train/serve three networks;
+- train **one shared-bottom multi-task model** — a single **shared body** (hidden layers)
+  that learns the patterns common to all three tasks, then **three small heads**, one per
+  task, that specialize.
 
-Why share? The three tasks have a lot in common (a relevant ad from a favored category tends
-to do well on all of them), so a shared body learns those common patterns once, and each
-head specializes. In scikit-learn we get this "for free" by giving the network a **3-column
-label** `Y` — it trains one shared network with three outputs (this is literally
-shared-bottom multi-task). Lesson M7.3's MMoE/PLE are fancier versions of this same idea.
+We pick **shared-bottom** because the three outcomes overlap a lot (a relevant ad from a
+favored category tends to do well on all of them), so sharing is cheaper *and* usually
+more accurate (each task benefits from the others' data). It's the standard **starting
+point** for multi-task ranking — lesson M7.3's **MMoE/PLE** are upgrades for when the
+tasks start to *fight* each other.
+
+**In PyTorch** we write it directly: a shared `body`, then a list of one-output `heads`.
 """)
 code(r"""
-from sklearn.neural_network import MLPClassifier
-model = MLPClassifier(hidden_layer_sizes=(32, 16),   # the shared body: 7 -> 32 -> 16 -> 3 heads
-                      max_iter=400, random_state=0)
-print("model: 7 features -> shared layers (32, 16) -> 3 heads (CTR, VTR, LTR)")
+import torch, torch.nn as nn
+torch.manual_seed(0)
+
+class SharedBottomRanker(nn.Module):
+    def __init__(self, n_features, n_tasks=3):
+        super().__init__()
+        self.body  = nn.Sequential(               # the SHARED body: 7 -> 32 -> 16
+            nn.Linear(n_features, 32), nn.ReLU(),
+            nn.Linear(32, 16), nn.ReLU())
+        self.heads = nn.ModuleList([nn.Linear(16, 1) for _ in range(n_tasks)])  # one head per task
+    def forward(self, x):
+        z = self.body(x)                          # shared representation
+        return torch.cat([h(z) for h in self.heads], dim=1)   # (batch, 3) logits: CTR, VTR, LTR
+
+model = SharedBottomRanker(len(features))
+print("model: 7 features -> shared (32, 16) -> 3 heads (CTR, VTR, LTR)")
+print("total learnable numbers:", sum(p.numel() for p in model.parameters()))
 """)
 
 md(r"""
 ## Step 10 · Train it — and log the learning
 
-`.fit` runs the training loop. The network keeps a **loss curve** — the error after each
-pass over the data — which we plot so you can *see* it learn (dropping fast, then leveling
-off). We also print how many passes it took.
+We run the PyTorch training loop ourselves so we can **log** it. Each **epoch**: predict,
+measure the error on **all three heads** (summed **BCE** log loss), let autograd compute
+gradients (`loss.backward()`), and step (`optimizer.step()`). We print the total and
+per-head loss every 50 epochs and store them for a curve.
 """)
 code(r"""
-model.fit(Xtr, Ytr)                           # train the shared-bottom multi-task model
-print("training finished in", model.n_iter_, "passes over the data")
-print("loss went from", round(model.loss_curve_[0], 3), "to", round(model.loss_curve_[-1], 3))
+Xtr_t = torch.tensor(Xtr, dtype=torch.float32)
+Ytr_t = torch.tensor(Ytr, dtype=torch.float32)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+loss_fn = nn.BCEWithLogitsLoss()
 
-plt.figure(figsize=(6, 3.4))
-plt.plot(model.loss_curve_, color=RED, lw=2)
-plt.xlabel("training pass (epoch)"); plt.ylabel("training loss")
-plt.title("the shared model learning all three tasks at once"); plt.show()
+total_hist, task_hist = [], []
+print("epoch |  total | CTR   VTR   LTR")
+for epoch in range(300):
+    model.train(); optimizer.zero_grad()
+    logits = model(Xtr_t)
+    per_task = [loss_fn(logits[:, k], Ytr_t[:, k]) for k in range(3)]   # one loss per head
+    loss = sum(per_task)                          # shared model optimizes all three at once
+    loss.backward(); optimizer.step()
+    total_hist.append(loss.item()); task_hist.append([l.item() for l in per_task])
+    if epoch % 50 == 0:
+        p = [l.item() for l in per_task]
+        print(f"{epoch:5d} | {loss.item():.3f} | {p[0]:.3f} {p[1]:.3f} {p[2]:.3f}")
+print("done. final total loss:", round(total_hist[-1], 3))
+
+task_hist = np.array(task_hist)
+fig, ax = plt.subplots(1, 2, figsize=(11, 3.2))
+ax[0].plot(total_hist, color="black", lw=2); ax[0].set_title("total loss"); ax[0].set_xlabel("epoch")
+for k, (name, c) in enumerate(zip(HEADS, HEAD_COLORS)):
+    ax[1].plot(task_hist[:, k], color=c, lw=2, label=name)
+ax[1].set_title("loss per head"); ax[1].set_xlabel("epoch"); ax[1].legend(); plt.show()
 """)
 
 # =================================================================== PREDICT
 md(r"""
 ## Step 11 · Predict all three probabilities on unseen impressions
 
-The model outputs three probabilities per impression: pCTR, pVTR, pLTR. We look at a few.
+We switch the model to eval mode, predict under `torch.no_grad()` (no training), and apply
+`torch.sigmoid` to turn each head's score into a probability: pCTR, pVTR, pLTR.
 """)
 code(r"""
-proba = model.predict_proba(Xte)             # shape (n_test, 3): [pCTR, pVTR, pLTR]
+model.eval()
+with torch.no_grad():
+    proba = torch.sigmoid(model(torch.tensor(Xte, dtype=torch.float32))).numpy()  # (n_test, 3)
 pred = pd.DataFrame(proba, columns=["pCTR", "pVTR", "pLTR"]).round(3)
 pred["clicked"], pred["viewed"], pred["lead"] = Yte[:,0], Yte[:,1], Yte[:,2]
 print("predictions on impressions the model never saw:")
@@ -355,12 +394,23 @@ If history carries real signal, every head's AUC should **drop** without it. Thi
 justify a feature's cost in a real system.
 """)
 code(r"""
-no_hist = ["relevance", "ad_quality", "price", "position", "is_video"]   # drop hist_affinity, hist_len
-Xtr_nh = StandardScaler().fit(X[tr][:, :5]).transform(X[tr][:, :5])
-sc_nh  = StandardScaler().fit(X[tr][:, :5])
-Xtr_nh, Xte_nh = sc_nh.transform(X[tr][:, :5]), sc_nh.transform(X[te][:, :5])
-model_nh = MLPClassifier(hidden_layer_sizes=(32,16), max_iter=400, random_state=0).fit(Xtr_nh, Ytr)
-proba_nh = model_nh.predict_proba(Xte_nh)
+# drop the two history features (columns 5, 6), standardize, retrain the SAME architecture in torch
+Xtr_nh_raw, Xte_nh_raw = X[tr][:, :5], X[te][:, :5]
+sc_nh = StandardScaler().fit(Xtr_nh_raw)
+Xtr_nh = torch.tensor(sc_nh.transform(Xtr_nh_raw), dtype=torch.float32)
+Xte_nh = torch.tensor(sc_nh.transform(Xte_nh_raw), dtype=torch.float32)
+
+torch.manual_seed(0)
+model_nh = SharedBottomRanker(5)                       # same model, 5 features (no history)
+opt_nh = torch.optim.Adam(model_nh.parameters(), lr=0.01)
+for epoch in range(300):
+    model_nh.train(); opt_nh.zero_grad()
+    lg = model_nh(Xtr_nh)
+    loss = sum(loss_fn(lg[:, k], Ytr_t[:, k]) for k in range(3))
+    loss.backward(); opt_nh.step()
+model_nh.eval()
+with torch.no_grad():
+    proba_nh = torch.sigmoid(model_nh(Xte_nh)).numpy()
 aucs_nh = [roc_auc_score(Yte[:,k], proba_nh[:,k]) for k in range(3)]
 
 print(f"{'head':<5} {'with history':>13} {'without':>9} {'drop':>7}")

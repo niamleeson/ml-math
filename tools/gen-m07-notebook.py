@@ -3,14 +3,14 @@
 
 A fully runnable, beginner-friendly Colab notebook that builds ONE complete
 pCTR (predicted Click-Through Rate) model end-to-end on simple synthetic ad
-data. GRANULAR version: small steps, lots of logging (we train the model
-from scratch with a loop that prints the loss as it learns), many
+data. GRANULAR version: small steps, lots of logging (we train a PyTorch
+logistic-regression model with a loop that prints the loss as it learns), many
 visualizations, and a set of proof graphs at the end.
 
 Because the data is synthetic we know each impression's TRUE click probability
 and the TRUE rule behind clicks, so we can prove the model recovered both.
 
-Colab-preinstalled libraries only (pandas/numpy/scikit-learn/matplotlib).
+Colab-preinstalled libraries only (pandas/numpy/scikit-learn/matplotlib/torch).
 
 Run: python3 tools/gen-m07-notebook.py
 """
@@ -30,14 +30,15 @@ We build one **pCTR** model. "pCTR" = **predicted Click-Through Rate**: for each
 show a person, predict the *probability they click it* (a number from 0 to 1, e.g.
 `0.04` = "about a 4% chance"). Ad systems rank ads by this probability (times the bid).
 
-**What makes this notebook different:** it's *granular*. We don't call one magic
-`.fit()` — we build the model **from scratch** and **watch it learn**, printing the
-error going down each step. Every stage has a picture and a short plain-English "why."
+**What makes this notebook different:** it's *granular*. Instead of one magic `.fit()`,
+we build the model in **PyTorch** and **watch it learn**, printing the error going down
+each step. We also **explain the model choice** (why logistic regression for pCTR). Every
+stage has a picture and a short plain-English "why."
 
-**Roadmap:** make data → look at it → split → **standardize** → build the math
-(sigmoid, loss, gradient) → **train with a logged loop** → check it recovered the true
-rule → predict → measure ranking (AUC) → measure honesty (calibration) → rank ads →
-`pCTR × bid` → **four proof graphs**.
+**Roadmap:** make data → look at it → split → **standardize** → **choose & build the
+model (logistic regression in PyTorch)** → **train with a logged loop** → check it
+recovered the true rule → predict → measure ranking (AUC) → measure honesty (calibration)
+→ rank ads → `pCTR × bid` → **four proof graphs**.
 
 Run each cell with **Shift+Enter**. Read the text first — it explains the cell below it.
 """)
@@ -186,78 +187,73 @@ for f, m, s in zip(features, mu, sd):
 
 # =================================================================== THE MATH
 md(r"""
-## Step 5 · The three pieces of math (in plain words)
+## Step 5 · Choose the model — why **logistic regression** (in PyTorch)
 
-A pCTR model has just three parts. We'll write each as a tiny function.
+**The model choice.** We need to output a **probability** (0–1) for a yes/no event
+(click / no-click). The simplest, most reliable tool for exactly that is **logistic
+regression**. Why it's the right default for pCTR:
+- it outputs a **calibrated probability**, not just a yes/no — and ad auctions need the
+  actual number (they multiply pCTR × bid);
+- it's **interpretable** — one weight per feature tells you each feature's effect and sign;
+- it's **cheap and stable** to train and serve, so it's the baseline every ad team starts
+  with and must beat before reaching for anything fancier.
 
-1. **Sigmoid** — turns any score into a probability between 0 and 1. Big positive score →
-   near 1; big negative → near 0; score of 0 → 0.5.
-   $$\sigma(z)=\frac{1}{1+e^{-z}}$$
-2. **Log loss** — how *wrong* a predicted probability is. It punishes being confident **and**
-   wrong very hard (predicting 0.99 when there was no click hurts a lot).
-   $$\ell=-\big[y\log p+(1-y)\log(1-p)\big]$$
-3. **Gradient** — which direction to nudge each weight to make the loss smaller. For this
-   model it's beautifully simple: **(prediction − actual) × feature**.
+**In PyTorch, logistic regression is literally one layer:** `nn.Linear(4, 1)` holds the
+four weights + a bias and produces a **score**; we turn that score into a probability with
+the **sigmoid**. We don't hand-derive the math anymore — PyTorch's **autograd** computes
+the gradients and **Adam** takes the steps for us. `BCEWithLogitsLoss` is the log loss
+(it applies the sigmoid internally, which is numerically safer).
 """)
 code(r"""
-def sigmoid(z):
-    return 1 / (1 + np.exp(-z))
+import torch, torch.nn as nn
+torch.manual_seed(0)
 
-def log_loss(y, p):
-    p = np.clip(p, 1e-9, 1 - 1e-9)               # avoid log(0)
-    return -np.mean(y*np.log(p) + (1-y)*np.log(1-p))
+# logistic regression = ONE linear layer: 4 features in -> 1 score out
+model = nn.Linear(4, 1)
+loss_fn = nn.BCEWithLogitsLoss()          # = log loss (applies sigmoid inside, safely)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.05)   # does the gradient steps for us
 
-# quick sanity check so we trust these functions
-print("sigmoid(0)   =", sigmoid(0.0), "  (a score of 0 means 50/50)")
-print("sigmoid(+4)  =", round(sigmoid(4.0), 3), " (high score -> near 1)")
-print("sigmoid(-4)  =", round(sigmoid(-4.0), 3), " (low score  -> near 0)")
-print("log_loss when we predict 0.99 but there was NO click:", round(log_loss(np.array([0]), np.array([0.99])), 2), "(ouch)")
+print("model:", model)
+print("it holds", sum(p.numel() for p in model.parameters()), "numbers: 4 weights + 1 bias")
 """)
 
 # =================================================================== TRAIN (LOGGED)
 md(r"""
 ## Step 6 · Train the model — and watch it learn (logging!)
 
-This is the heart of the notebook. "Training" = start with all weights at 0, and repeat:
-1. **predict** every impression's click probability with the current weights,
-2. measure how wrong we are (**log loss**),
-3. compute the **gradient** and take a small step to reduce the loss,
-4. repeat for many rounds (*epochs*).
+Training repeats a simple loop for many rounds (*epochs*):
+1. **predict** every impression's score with the current weights,
+2. measure how wrong we are with **log loss**,
+3. `loss.backward()` — PyTorch computes the gradients automatically (autograd),
+4. `optimizer.step()` — nudge every weight downhill.
 
-We **print the loss every 300 epochs** so you can literally see it going down — that's the
-model learning. The step size (`lr`) controls how big each nudge is.
+We **print the loss every 50 epochs** so you can watch it fall — that's the model
+learning. First we turn our standardized arrays into PyTorch **tensors** (the arrays the
+network consumes).
 """)
 code(r"""
-n_features = Xtr.shape[1]
-w = np.zeros(n_features)      # one weight per feature, all start at 0
-b = 0.0                       # the bias / intercept
-lr = 0.3                      # learning rate = step size
-epochs = 3000
+X_train_t = torch.tensor(Xtr, dtype=torch.float32)          # standardized train features
+y_train_t = torch.tensor(y_train, dtype=torch.float32).unsqueeze(1)
 
 loss_history = []
-print("epoch |  loss   | weights (relevance, position, ad_quality, is_mobile)")
-for epoch in range(epochs):
-    p = sigmoid(Xtr @ w + b)          # 1) predict
-    loss = log_loss(y_train, p)       # 2) how wrong?
-    loss_history.append(loss)
-
-    error = p - y_train               # 3) gradient = (prediction - actual) * feature
-    grad_w = Xtr.T @ error / len(y_train)
-    grad_b = error.mean()
-    w -= lr * grad_w                  # 4) step downhill
-    b -= lr * grad_b
-
-    if epoch % 300 == 0:
-        print(f"{epoch:5d} | {loss:.4f} | {np.round(w, 2)}")
-print(f"{epochs:5d} | {loss_history[-1]:.4f} | {np.round(w, 2)}   <- final")
+print("epoch |  loss")
+for epoch in range(400):
+    optimizer.zero_grad()                 # reset last round's gradients
+    logits = model(X_train_t)             # 1) predict a score per impression
+    loss = loss_fn(logits, y_train_t)     # 2) how wrong? (log loss)
+    loss.backward()                       # 3) autograd computes the gradients
+    optimizer.step()                      # 4) step every weight downhill
+    loss_history.append(loss.item())
+    if epoch % 50 == 0:
+        print(f"{epoch:5d} | {loss.item():.4f}")
+print(f"{400:5d} | {loss_history[-1]:.4f}   <- final")
 """)
 
 md(r"""
 ## Step 7 · The learning curve
 
-The numbers above, as a picture. A healthy training run shows the loss dropping fast at
-first, then flattening as the model runs out of things to learn. A flat line at the end
-means "done."
+The numbers above, as a picture. A healthy run drops fast at first, then flattens as the
+model runs out of things to learn. A flat line at the end means "done."
 """)
 code(r"""
 plt.figure(figsize=(6, 3.4))
@@ -270,14 +266,16 @@ print("loss went from", round(loss_history[0], 3), "to", round(loss_history[-1],
 md(r"""
 ## Step 8 · Did it recover the TRUE rule?
 
-We trained on **standardized** features, so the weights are in that scaled space. To
-compare with the true rule from Step 1b, we convert them back to the original scale
-(`weight / std`). If our model worked, these should land close to the true weights we
-secretly used. This is a direct proof the model learned the real pattern from examples
-alone.
+We trained on **standardized** features, so the learned weights are in that scaled space.
+We pull them out of the PyTorch layer (`model.weight`, `model.bias`) and convert them back
+to the original scale (`weight / std`) to compare with the true rule from Step 1b. If the
+model worked, these land close to the true weights we secretly used — a direct proof it
+learned the real pattern from examples alone.
 """)
 code(r"""
-w_raw = w / sd                            # convert standardized weights back to original scale
+w = model.weight.detach().numpy().ravel()   # the 4 learned weights (standardized space)
+b = float(model.bias.detach())
+w_raw = w / sd                              # convert back to the original feature scale
 b_raw = b - (w * mu / sd).sum()
 
 print(f"{'feature':<11} {'learned':>9} {'true':>7}")
@@ -297,11 +295,14 @@ plt.ylabel("weight"); plt.legend(); plt.title("the model recovered the real rule
 md(r"""
 ## Step 9 · Make predictions on unseen impressions
 
-Now use the trained weights to predict click probabilities for the **test** set — data the
-model never saw. `sigmoid(features · weights + bias)` gives a probability per impression.
+Now use the trained model to predict click probabilities for the **test** set — data the
+model never saw. We wrap it in `torch.no_grad()` (we're only predicting, not training) and
+apply `torch.sigmoid` to turn the model's score into a probability.
 """)
 code(r"""
-pred_pctr = sigmoid(Xte @ w + b)          # predicted click probability, 0..1
+with torch.no_grad():
+    scores = model(torch.tensor(Xte, dtype=torch.float32))     # scores on unseen test data
+    pred_pctr = torch.sigmoid(scores).numpy().ravel()          # -> probabilities 0..1
 show = pd.DataFrame(X_test, columns=features)
 show["predicted_pctr"] = pred_pctr.round(3)
 show["actually_clicked"] = y_test
@@ -436,15 +437,21 @@ md(r"""
 ---
 ## What you just did
 
-You built a **pCTR model from scratch** and watched every step:
+You built a **pCTR model in PyTorch** and watched every step:
 1. Made data with features + a click label.
 2. Explored it; split train/test; **standardized** features.
-3. Wrote the **sigmoid, log loss, and gradient** yourself.
-4. **Trained** with a loop, logging the loss as it fell (Steps 6–7).
+3. **Chose logistic regression** and built it as one `nn.Linear` layer (Step 5).
+4. **Trained** with a PyTorch loop, logging the loss as it fell (Steps 6–7).
 5. Proved it **recovered the true rule** (Step 8).
 6. Predicted, then measured **ranking (AUC)** and **honesty (calibration)**.
 7. Ranked ads and combined **pCTR × bid** for the auction.
 8. Confirmed correctness with **four proof graphs**.
+
+**Why logistic regression here?** It outputs a *calibrated probability* (what auctions
+need), it's *interpretable* (one weight per feature), and it's the *cheap, stable
+baseline* every ad team starts from. Using PyTorch means the exact same training loop
+scales up to the deep models in M7.3 — you just swap the one `nn.Linear` for a bigger
+network.
 
 **Where this sits in M7:** this was a single **pointwise pCTR** head (M7.1). M7.2 adds
 pairwise/listwise ranking; M7.3 adds multi-objective heads (click + dwell + value) and CTR
