@@ -19,9 +19,16 @@ Three sub-lessons:
 - **M7.2 Learning-to-rank** — pointwise, pairwise, listwise objectives.
 - **M7.3 Multi-objective ranking & CTR architectures** — heads, crosses, and serving scores.
 
+**Run the full pipeline yourself.** This companion notebook builds a complete pCTR ranking pipeline end-to-end on simple example data — make data → train/test split → train a pCTR model → predict → check ranking (AUC) and calibration → rank ads → combine pCTR × bid — with plain-language, step-by-step explanations for a new ML student, and ends with graphs that prove the predictions are correct.
+
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M07-ranking-ctr-family.ipynb" target="_blank" rel="noopener">▶ Open the runnable pCTR pipeline notebook in Google Colab</a></p>
+
 ---
 
 ## M7.1 · pCTR/pVTR models & the calibration link
+
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M07-ranking-ctr-family.ipynb" target="_blank" rel="noopener">▶ Open the runnable pCTR pipeline notebook in Google Colab</a></p>
+
 
 **The idea.** A pCTR model is a pointwise supervised model: each impression is a row, features describe the member, item/ad, context, and historical signals available at serve time, and the label says whether the click happened in the attribution window. pVTR is the same pattern for view-through, video view, or watch completion.
 
