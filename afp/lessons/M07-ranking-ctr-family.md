@@ -27,6 +27,10 @@ Three sub-lessons:
 
 <p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M07-full-ranking-pipeline.ipynb" target="_blank" rel="noopener">▶ Open the full multi-task pipeline notebook (CTR + VTR + LTR + history) in Google Colab</a></p>
 
+**Then implement the real architectures.** This third notebook implements the M7.3 "common default path" in actual **PyTorch** — **DIN** attention over user history, a **DCN-V2** cross network, an **MMoE** multi-task tower with CTR/VTR/LTR heads, **position-as-feature** debiasing, and **MMR re-ranking** — with a plain-language explanation, print logging, and a visualization for every component (you get to *see* DIN's attention focus and MMoE's experts specialize).
+
+<p class="cur-colab"><a class="cur-colab-btn" href="https://colab.research.google.com/github/niamleeson/ml-math/blob/main/afp/notebooks/M07-production-architecture.ipynb" target="_blank" rel="noopener">▶ Open the production-architecture notebook (DIN + DCN + MMoE + re-ranking) in Google Colab</a></p>
+
 ---
 
 ## M7.1 · pCTR/pVTR models & the calibration link
