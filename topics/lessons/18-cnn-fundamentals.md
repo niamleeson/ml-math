@@ -379,6 +379,282 @@ plt.show()  # Render the figure in the notebook.
 
 👀 Look for sharp changes in intensity. Those are the locations where edge filters should produce strong positive or negative activations.
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the CNN pipeline from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline image arrays, so every patch, feature map, shape, and parameter count is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us tiny images, filters, loops, dot products, and dense-layer math.
+import matplotlib.pyplot as plt  # Matplotlib lets us inspect images, filters, feature maps, and parameter counts.
+np.random.seed(18)  # fix randomness so every printed value and figure is reproducible.
+```
+
+#### 1. Convolution: slide a local filter and sum elementwise products
+
+A convolution places the same small filter over many local image patches. At each location, it multiplies the patch and filter element by element, then sums the products:
+
+$$
+Y_{u,v}=\sum_{a=0}^{F-1}\sum_{b=0}^{F-1}X_{u+a,v+b}W_{a,b}.
+$$
+
+We build the operation by hand because the key idea is local pattern matching: a vertical-edge filter has negative weights on the left and positive weights on the right, so it lights up where pixel intensity changes sharply left-to-right.
+
+```python
+image_conv_w = np.array([[0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.], [0., 0., 0., 1., 1., 1.]])  # create a tiny image with a vertical dark-to-bright edge.
+filter_conv_w = np.array([[-1., 0., 1.], [-1., 0., 1.], [-1., 0., 1.]])  # create a 3×3 vertical-edge detector.
+print("input image shape:", image_conv_w.shape)  # inspect the image size before sliding.
+print("filter shape:", filter_conv_w.shape)  # inspect the filter size used at each local patch.
+print("top-left 3×3 patch:\n", image_conv_w[:3, :3])  # inspect one patch before multiplying.
+```
+▶ What you'll see: a 6×6 image whose right half is bright, plus a 3×3 filter with negative-left and positive-right columns.
+
+```python
+patch0_conv_w = image_conv_w[0:3, 2:5]  # choose a patch that straddles the vertical edge.
+products0_conv_w = patch0_conv_w * filter_conv_w  # multiply the patch and filter element by element.
+score0_conv_w = np.sum(products0_conv_w)  # sum all products to make one output activation.
+print("edge patch:\n", patch0_conv_w)  # print the local pixels seen by the filter.
+print("elementwise products:\n", products0_conv_w)  # print every contribution to the dot product.
+print("one convolution score:", score0_conv_w)  # print the scalar activation for this patch.
+```
+▶ What you'll see: the patch crossing the edge gives a large positive score because bright pixels align with positive weights.
+
+```python
+def conv2d_valid_w(image_w, filt_w):  # define valid 2-D convolution so the filter only visits fully covered patches.
+    out_h_w = image_w.shape[0] - filt_w.shape[0] + 1  # compute how many vertical positions fit.
+    out_w_w = image_w.shape[1] - filt_w.shape[1] + 1  # compute how many horizontal positions fit.
+    out_w = np.zeros((out_h_w, out_w_w), dtype=float)  # allocate the feature map that will store one score per patch.
+    for i_w in range(out_h_w):  # slide the filter down the image.
+        for j_w in range(out_w_w):  # slide the filter across the image.
+            patch_w = image_w[i_w:i_w + filt_w.shape[0], j_w:j_w + filt_w.shape[1]]  # extract the current local patch.
+            out_w[i_w, j_w] = np.sum(patch_w * filt_w)  # compute the elementwise-product-sum for that patch.
+    return out_w  # return the complete feature map.
+feature_conv_w = conv2d_valid_w(image_conv_w, filter_conv_w)  # apply the hand-built convolution.
+print("feature map shape:", feature_conv_w.shape)  # inspect the output size after valid convolution.
+print("feature map:\n", feature_conv_w)  # inspect where the filter responds strongly.
+```
+▶ What you'll see: the largest activations appear in columns where the 3×3 window crosses the vertical edge.
+
+```python
+fig_conv_w, ax_conv_w = plt.subplots(1, 3, figsize=(9, 3))  # create panels for input, filter, and output.
+ax_conv_w[0].imshow(image_conv_w, cmap="gray", vmin=0, vmax=1)  # show the tiny input image.
+ax_conv_w[0].set_title("1: input image")  # title the input panel.
+ax_conv_w[1].imshow(filter_conv_w, cmap="coolwarm")  # show negative and positive filter weights.
+ax_conv_w[1].set_title("1: vertical-edge filter")  # title the filter panel.
+ax_conv_w[2].imshow(feature_conv_w, cmap="magma")  # show the activation feature map.
+ax_conv_w[2].set_title("1: convolution feature map")  # title the output panel.
+plt.tight_layout()  # keep labels from overlapping.
+plt.show()  # render the convolution figure.
+```
+▶ What you'll see: the output feature map glows at the vertical edge, showing that the filter detected the local pattern wherever it appeared.
+
+*Why it's done this way: convolution reuses one local detector across the whole image, so the model can find the same edge pattern at many positions without learning a separate weight for every pixel location.*
+
+#### 2. Stride, padding, and the output-size formula
+
+Stride $S$ controls how far the filter jumps between neighboring windows; padding $P$ adds zeros around the image so boundary pixels can be used. For one spatial dimension, the output length is:
+
+$$
+O=\left\lfloor\frac{W-F+2P}{S}\right\rfloor+1.
+$$
+
+We compute stride and padding with the same filter so only the movement rule changes. This makes the shape effect visible: larger stride shrinks the map, while padding often preserves more boundary information.
+
+```python
+def conv2d_stride_pad_w(image_w, filt_w, stride_w=1, pad_w=0):  # define convolution with explicit stride and zero padding.
+    padded_w = np.pad(image_w, pad_width=pad_w, mode="constant", constant_values=0)  # surround the image with zeros when pad_w is positive.
+    out_h_w = (padded_w.shape[0] - filt_w.shape[0]) // stride_w + 1  # compute output height with integer floor division.
+    out_wide_w = (padded_w.shape[1] - filt_w.shape[1]) // stride_w + 1  # compute output width with integer floor division.
+    out_w = np.zeros((out_h_w, out_wide_w), dtype=float)  # allocate the strided feature map.
+    for i_w in range(out_h_w):  # loop over output rows.
+        for j_w in range(out_wide_w):  # loop over output columns.
+            r_w = i_w * stride_w  # convert output row to input-window row start.
+            c_w = j_w * stride_w  # convert output column to input-window column start.
+            patch_w = padded_w[r_w:r_w + filt_w.shape[0], c_w:c_w + filt_w.shape[1]]  # extract the current padded patch.
+            out_w[i_w, j_w] = np.sum(patch_w * filt_w)  # store one convolution score.
+    return out_w, padded_w  # return both the feature map and padded image for inspection.
+valid_s1_w, padded_s1_w = conv2d_stride_pad_w(image_conv_w, filter_conv_w, stride_w=1, pad_w=0)  # compute valid stride-1 convolution.
+stride2_w, padded_s2_w = conv2d_stride_pad_w(image_conv_w, filter_conv_w, stride_w=2, pad_w=0)  # compute valid stride-2 convolution.
+pad1_w, padded_p1_w = conv2d_stride_pad_w(image_conv_w, filter_conv_w, stride_w=1, pad_w=1)  # compute padded stride-1 convolution.
+print("stride 1, pad 0 shape:", valid_s1_w.shape)  # inspect the baseline output shape.
+print("stride 2, pad 0 shape:", stride2_w.shape)  # inspect the downsampled output shape.
+print("stride 1, pad 1 shape:", pad1_w.shape)  # inspect the boundary-preserving output shape.
+```
+▶ What you'll see: stride 2 produces fewer positions, while padding by 1 restores the 6×6 spatial size for this 3×3, stride-1 case.
+
+```python
+fig_sp_w, ax_sp_w = plt.subplots(1, 4, figsize=(11, 3))  # create panels comparing the movement rules.
+ax_sp_w[0].imshow(padded_p1_w, cmap="gray", vmin=0, vmax=1)  # show the zero-padded image.
+ax_sp_w[0].set_title("2: padded input")  # title the padded input.
+ax_sp_w[1].imshow(valid_s1_w, cmap="magma")  # show ordinary valid convolution.
+ax_sp_w[1].set_title("2: S=1, P=0")  # title the baseline output.
+ax_sp_w[2].imshow(stride2_w, cmap="magma")  # show strided convolution output.
+ax_sp_w[2].set_title("2: S=2, P=0")  # title the strided output.
+ax_sp_w[3].imshow(pad1_w, cmap="magma")  # show padded convolution output.
+ax_sp_w[3].set_title("2: S=1, P=1")  # title the padded output.
+plt.tight_layout()  # keep the four panels readable.
+plt.show()  # render the stride and padding comparison.
+```
+▶ What you'll see: the stride-2 map is smaller and coarser; the padded map is larger because edge-centered windows are now legal.
+
+```python
+def out_size_w(W_w, F_w, P_w, S_w):  # implement the CNN output-size formula for one dimension.
+    return int(np.floor((W_w - F_w + 2 * P_w) / S_w) + 1)  # compute floor((W-F+2P)/S)+1 exactly.
+cases_w = [(6, 3, 0, 1), (6, 3, 0, 2), (6, 3, 1, 1), (7, 3, 1, 2)]  # choose several inspectable shape cases.
+for W_w, F_w, P_w, S_w in cases_w:  # verify each formula case.
+    print((W_w, F_w, P_w, S_w), "->", out_size_w(W_w, F_w, P_w, S_w))  # print the predicted output length.
+print("matches computed shapes:", out_size_w(6, 3, 0, 1) == valid_s1_w.shape[0], out_size_w(6, 3, 0, 2) == stride2_w.shape[0], out_size_w(6, 3, 1, 1) == pad1_w.shape[0])  # verify formula against actual loops.
+```
+The formula counts legal starting positions for the filter. Padding increases the effective input from $W$ to $W+2P$, and stride keeps only every $S$-th legal start, hence the floor.
+▶ What you'll see: the printed formula values match the feature-map shapes computed by the nested loops.
+
+*Why it's done this way: stride and padding are simple indexing choices, but they control CNN memory, speed, and boundary behavior, so the formula lets you predict shapes before building the layer.*
+
+#### 3. Pooling: summarize nearby activations by hand
+
+Pooling replaces each small window of a feature map with a summary value. Max pooling keeps the strongest evidence for a feature, while average pooling keeps the local mean response. We build both by hand because pooling is easiest to understand as a deliberate shrink-and-summarize operation, not as a learned layer.
+
+```python
+feature_pool_w = np.array([[0., 1., 2., 1.], [1., 6., 5., 2.], [0., 4., 7., 3.], [1., 2., 2., 0.]])  # create a tiny activation map with strong nearby responses.
+print("feature map before pooling:\n", feature_pool_w)  # inspect the map we will summarize.
+print("top-left 2×2 window:\n", feature_pool_w[:2, :2])  # inspect one pooling window.
+print("max:", np.max(feature_pool_w[:2, :2]), "average:", np.mean(feature_pool_w[:2, :2]))  # compare the two summaries for one window.
+```
+▶ What you'll see: one 2×2 window reduces to either its strongest activation or its mean activation.
+
+```python
+def pool2d_w(feature_w, size_w=2, stride_w=2, mode_w="max"):  # define non-overlapping 2-D pooling from scratch.
+    out_h_w = (feature_w.shape[0] - size_w) // stride_w + 1  # compute pooled height.
+    out_wide_w = (feature_w.shape[1] - size_w) // stride_w + 1  # compute pooled width.
+    out_w = np.zeros((out_h_w, out_wide_w), dtype=float)  # allocate the pooled output.
+    for i_w in range(out_h_w):  # loop over pooling rows.
+        for j_w in range(out_wide_w):  # loop over pooling columns.
+            r_w = i_w * stride_w  # compute source row start.
+            c_w = j_w * stride_w  # compute source column start.
+            window_w = feature_w[r_w:r_w + size_w, c_w:c_w + size_w]  # extract the local pooling window.
+            out_w[i_w, j_w] = np.max(window_w) if mode_w == "max" else np.mean(window_w)  # store max or average summary.
+    return out_w  # return the downsampled map.
+max_pool_w = pool2d_w(feature_pool_w, size_w=2, stride_w=2, mode_w="max")  # compute max pooling by hand.
+avg_pool_w = pool2d_w(feature_pool_w, size_w=2, stride_w=2, mode_w="avg")  # compute average pooling by hand.
+print("max-pooled map:\n", max_pool_w)  # inspect strongest local evidence.
+print("average-pooled map:\n", avg_pool_w)  # inspect local mean evidence.
+```
+▶ What you'll see: both outputs are 2×2, but max pooling preserves peaks more aggressively than average pooling.
+
+```python
+shifted_pool_w = np.roll(feature_pool_w, shift=1, axis=1)  # shift activations one pixel right to mimic a small translation.
+max_shifted_w = pool2d_w(shifted_pool_w, size_w=2, stride_w=2, mode_w="max")  # pool the shifted map.
+print("max pooled original:\n", max_pool_w)  # print the original pooled map.
+print("max pooled shifted:\n", max_shifted_w)  # print the shifted pooled map.
+```
+Pooling gives limited translation tolerance because nearby shifts often land in the same pooling window and keep a similar summary. It is not full invariance, but it reduces sensitivity to exact pixel location.
+▶ What you'll see: the pooled maps remain coarser and more similar than the unpooled maps after a small shift.
+
+```python
+fig_pool_w, ax_pool_w = plt.subplots(1, 3, figsize=(9, 3))  # create panels for before and after pooling.
+ax_pool_w[0].imshow(feature_pool_w, cmap="magma")  # show the original feature map.
+ax_pool_w[0].set_title("3: feature map")  # title the original panel.
+ax_pool_w[1].imshow(max_pool_w, cmap="magma")  # show the max-pooled map.
+ax_pool_w[1].set_title("3: max pool")  # title the max-pooling panel.
+ax_pool_w[2].imshow(avg_pool_w, cmap="magma")  # show the average-pooled map.
+ax_pool_w[2].set_title("3: average pool")  # title the average-pooling panel.
+plt.tight_layout()  # keep panels readable.
+plt.show()  # render the pooling comparison.
+```
+▶ What you'll see: pooling shrinks the spatial grid while retaining either peak evidence or average evidence from each region.
+
+*Why it's done this way: pooling reduces computation and adds small-shift tolerance by summarizing local neighborhoods, letting later layers reason about whether evidence exists nearby rather than at one exact pixel.*
+
+#### 4. Flatten, fully connected layers, and parameter counting
+
+After convolution and pooling, a CNN often flattens feature maps into one vector and applies a dense layer. The dense layer computes $z=xW+b$, while parameter counts reveal why convolution is efficient:
+
+$$
+\text{conv params}=F\times F\times C_{\text{in}}\times C_{\text{out}}+C_{\text{out}},
+\qquad
+\text{dense params}=N_{\text{in}}\times N_{\text{out}}+N_{\text{out}}.
+$$
+
+We use tiny numbers so every weight and shape can be checked directly.
+
+```python
+feature_fc_w = np.array([[[1.0, 0.0], [2.0, 1.0]], [[0.0, 3.0], [1.0, 2.0]]])  # create a 2×2×2 stack of feature maps.
+flat_fc_w = feature_fc_w.reshape(-1)  # flatten spatial positions and channels into one vector.
+W_fc_w = np.array([[0.2, -0.1, 0.3], [0.0, 0.4, -0.2], [0.1, 0.2, 0.1], [-0.3, 0.1, 0.5], [0.2, 0.0, -0.4], [0.1, -0.2, 0.2], [0.3, 0.3, 0.0], [-0.1, 0.2, 0.4]])  # create dense weights from 8 inputs to 3 outputs.
+b_fc_w = np.array([0.1, -0.2, 0.05])  # create one bias per dense output.
+print("feature stack shape:", feature_fc_w.shape)  # inspect height, width, and channels.
+print("flattened vector:", flat_fc_w)  # inspect the vector passed to the dense layer.
+```
+▶ What you'll see: the 2×2×2 feature stack becomes an 8-number vector.
+
+```python
+logits_fc_w = flat_fc_w @ W_fc_w + b_fc_w  # apply the dense layer by matrix multiplication plus bias.
+print("dense weight shape:", W_fc_w.shape)  # inspect in_features × out_features.
+print("dense logits:", np.round(logits_fc_w, 3))  # inspect the three output scores.
+```
+▶ What you'll see: the flattened vector produces three class-like scores through one dense matrix multiply.
+
+```python
+conv_params_w = 3 * 3 * 1 * 4 + 4  # count a 3×3 conv from 1 input channel to 4 output filters plus 4 biases.
+dense_from_image_w = 6 * 6 * 4 + 4  # count a hypothetical dense layer directly from a 6×6 image to 4 outputs plus biases.
+dense_after_flat_w = flat_fc_w.size * logits_fc_w.size + logits_fc_w.size  # count this tiny flatten-to-dense layer.
+print("conv params:", conv_params_w)  # print shared convolution parameter count.
+print("dense from raw 6×6 image to 4 units:", dense_from_image_w)  # print unshared dense count for comparison.
+print("tiny dense after flatten params:", dense_after_flat_w)  # print this example's dense count.
+```
+A convolution has far fewer parameters because one $F\times F$ filter is reused at every spatial location. A dense layer uses a separate weight for each input-output pair, so parameter count grows with the whole flattened image size.
+▶ What you'll see: the convolution count is much smaller than connecting every raw pixel to every output unit.
+
+```python
+param_names_w = ["3×3 conv", "dense raw", "tiny FC"]  # name the three parameter counts.
+param_counts_w = [conv_params_w, dense_from_image_w, dense_after_flat_w]  # collect counts for plotting.
+plt.figure(figsize=(6, 3.2))  # create a compact bar chart.
+plt.bar(param_names_w, param_counts_w, color=["seagreen", "tomato", "slateblue"])  # compare parameter counts visually.
+plt.ylabel("number of parameters")  # label the count axis.
+plt.title("4: parameter counts — shared conv vs dense")  # title the parameter-count figure.
+plt.show()  # render the bar chart.
+```
+▶ What you'll see: the dense raw-image connection uses many more weights than the shared convolution filter.
+
+*Why it's done this way: CNNs first use shared local filters to extract spatial evidence cheaply, then flatten only after the maps are smaller and more meaningful, keeping dense layers from exploding in parameter count.*
+
+#### 5. Receptive field: stacked 3×3 filters see a larger input region
+
+A neuron's receptive field is the region of the original input that can influence it. One 3×3 convolution sees a 3×3 patch; stacking another 3×3 convolution on top lets a second-layer cell depend on neighboring first-layer cells, which together cover a 5×5 input region. We trace this with masks because it makes the geometry explicit without using any framework.
+
+```python
+input_rf_w = np.arange(49, dtype=float).reshape(7, 7)  # create a 7×7 image whose entries identify positions.
+center_mask_rf_w = np.zeros((5, 5), dtype=float)  # create a first-layer feature-map mask for positions used by one second-layer cell.
+center_mask_rf_w[1:4, 1:4] = 1.0  # mark the 3×3 first-layer positions touched by a second 3×3 filter.
+print("input shape:", input_rf_w.shape)  # inspect the original image size.
+print("first conv output shape from 7×7 with 3×3 valid:", (5, 5))  # inspect the first feature-map size.
+print("second-layer 3×3 positions:\n", center_mask_rf_w)  # inspect which first-layer cells are used.
+```
+▶ What you'll see: a second-layer center cell reads a 3×3 neighborhood of first-layer cells.
+
+```python
+input_mask_rf_w = np.zeros_like(input_rf_w)  # allocate a mask over original input pixels.
+for i_w in range(1, 4):  # loop over first-layer rows used by the second-layer cell.
+    for j_w in range(1, 4):  # loop over first-layer columns used by the second-layer cell.
+        input_mask_rf_w[i_w:i_w + 3, j_w:j_w + 3] = 1.0  # mark the 3×3 original patch behind each first-layer cell.
+print("input pixels that can affect the second-layer center:\n", input_mask_rf_w.astype(int))  # inspect the combined receptive field mask.
+print("receptive field size:", int(input_mask_rf_w.sum()), "pixels = 5 × 5")  # verify the combined region size.
+```
+The region grows from 3×3 to 5×5 because the second filter combines first-layer cells whose own 3×3 input patches overlap. With stride 1, each extra 3×3 layer adds one pixel of reach on every side.
+▶ What you'll see: the highlighted original pixels form one contiguous 5×5 square.
+
+```python
+fig_rf_w, ax_rf_w = plt.subplots(1, 2, figsize=(7, 3))  # create panels for first-layer and input-space masks.
+ax_rf_w[0].imshow(center_mask_rf_w, cmap="gray", vmin=0, vmax=1)  # show the selected first-layer 3×3 neighborhood.
+ax_rf_w[0].set_title("5: second conv reads 3×3 map cells")  # title the first-layer mask.
+ax_rf_w[1].imshow(input_mask_rf_w, cmap="gray", vmin=0, vmax=1)  # show the original pixels covered by those cells.
+ax_rf_w[1].set_title("5: original receptive field is 5×5")  # title the input-space mask.
+plt.tight_layout()  # keep panels readable.
+plt.show()  # render the receptive-field figure.
+```
+▶ What you'll see: a compact 3×3 dependency in feature-map space expands to a 5×5 dependency in input-image space.
+
+*Why it's done this way: stacking small filters keeps each layer cheap while increasing the input area that deeper neurons can combine, which is how CNNs build large-pattern understanding from local operations.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Multiply one 2×2 image patch by one 2×2 filter

@@ -295,6 +295,282 @@ plt.show()  # render the plot.
 
 ▶ What you'll see: `blobs` is close to linearly separable, while `moons`, `circles`, and `xor` require nonlinear boundaries.
 
+
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the deep-learning Key Idea from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline data, so every affine score, activation, loss, gradient factor, and update is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us vectors, matrix multiplies, stable logs, and reproducible tiny arrays.
+import matplotlib.pyplot as plt  # Matplotlib lets us see activations, hidden units, losses, gradients, and training progress.
+np.random.seed(229)  # fix the seed so every printed value and plot in this walkthrough is reproducible.
+```
+
+#### 1. The neuron: affine score plus activation
+
+A neuron first compresses an input vector into one affine score, $z=w^\top x+b$, then applies a nonlinear activation such as $\sigma(z)=\frac{1}{1+e^{-z}}$ or $\max(0,z)$. We build one unit by hand because the split matters: the affine part learns a weighted direction, while the activation lets stacked neurons bend decision boundaries instead of staying linear.
+
+```python
+x_neuron_w = np.array([1.2, -0.7, 0.5])  # choose one tiny three-feature input vector.
+w_neuron_w = np.array([0.8, -1.1, 0.4])  # choose one learnable weight per input feature.
+b_neuron_w = -0.2  # choose one learnable bias that shifts the score.
+parts_neuron_w = w_neuron_w * x_neuron_w  # compute each feature's contribution before adding them.
+z_neuron_w = float(np.sum(parts_neuron_w) + b_neuron_w)  # compute z=w^T x+b as one scalar score.
+print("feature contributions:", np.round(parts_neuron_w, 3))  # inspect how each input pushes the neuron.
+print("bias:", round(b_neuron_w, 3))  # inspect the intercept term.
+print("affine score z:", round(z_neuron_w, 3))  # inspect the raw pre-activation score.
+```
+▶ What you'll see: each feature contributes a signed amount, then the bias shifts the final score.
+
+```python
+sigmoid_neuron_w = 1.0 / (1.0 + np.exp(-z_neuron_w))  # squash the score into a probability-like value between 0 and 1.
+relu_neuron_w = np.maximum(0.0, z_neuron_w)  # keep positive scores and zero out negative scores.
+print("sigmoid activation:", round(sigmoid_neuron_w, 3))  # inspect the smooth probability-style activation.
+print("ReLU activation:", round(relu_neuron_w, 3))  # inspect the piecewise-linear activation.
+```
+▶ What you'll see: the same affine score becomes different activations depending on the chosen nonlinearity.
+
+```python
+z_grid_neuron_w = np.linspace(-6.0, 6.0, 300)  # create input scores for plotting activation shapes.
+sigmoid_grid_neuron_w = 1.0 / (1.0 + np.exp(-z_grid_neuron_w))  # evaluate sigmoid on the score grid.
+relu_grid_neuron_w = np.maximum(0.0, z_grid_neuron_w)  # evaluate ReLU on the score grid.
+plt.figure(figsize=(5.8, 3.8))  # create a compact activation figure.
+plt.plot(z_grid_neuron_w, sigmoid_grid_neuron_w, label=r"$\sigma(z)$", lw=2)  # draw the sigmoid curve.
+plt.plot(z_grid_neuron_w, relu_grid_neuron_w, label="ReLU(z)", lw=2)  # draw the ReLU curve.
+plt.scatter([z_neuron_w], [sigmoid_neuron_w], c="black", s=60, zorder=3, label="our sigmoid output")  # mark the hand-computed neuron.
+plt.xlabel("affine score z")  # label the horizontal axis.
+plt.ylabel("activation")  # label the vertical axis.
+plt.legend(loc="best")  # show which curve is which.
+plt.title("1: neuron activation curves")  # title the subsection figure.
+plt.show()  # render the activation plot.
+```
+▶ What you'll see: sigmoid smoothly saturates between 0 and 1, while ReLU is flat for negative scores and linear for positive scores.
+
+*Why it's done this way: separating $w^\top x+b$ from the activation makes the learnable linear evidence visible before the nonlinearity transforms it. Deep networks repeat this simple unit many times so small learned scores become flexible functions.*
+
+#### 2. A layer and forward pass through a small net
+
+A layer is several neurons evaluated side by side: $z^{[1]}=xW^{[1]}+b^{[1]}$, then $a^{[1]}=g(z^{[1]})$. A tiny two-layer network uses hidden ReLU units to create intermediate features, then an output sigmoid unit to turn those features into $\hat y$. We use one example so every matrix shape and intermediate value can be printed.
+
+```python
+x_forward_w = np.array([[0.6, -1.0]])  # store one example as a 1x2 row so matrix products keep batch shape.
+W1_forward_w = np.array([[0.7, -0.4, 0.2], [-0.5, 0.9, 0.8]])  # create input-to-hidden weights with shape 2x3.
+b1_forward_w = np.array([[0.1, -0.2, 0.05]])  # create one bias for each of the three hidden neurons.
+W2_forward_w = np.array([[1.1], [-0.8], [0.6]])  # create hidden-to-output weights with shape 3x1.
+b2_forward_w = np.array([[-0.1]])  # create one output bias.
+print("x shape:", x_forward_w.shape)  # inspect the input batch shape.
+print("W1 shape:", W1_forward_w.shape)  # inspect the first weight matrix shape.
+print("W2 shape:", W2_forward_w.shape)  # inspect the second weight matrix shape.
+```
+▶ What you'll see: the shapes line up as input $1\times2$, hidden weights $2\times3$, and output weights $3\times1$.
+
+```python
+z1_forward_w = x_forward_w @ W1_forward_w + b1_forward_w  # compute hidden affine scores for all three hidden units.
+a1_forward_w = np.maximum(0.0, z1_forward_w)  # apply ReLU to create hidden activations.
+print("hidden scores z1:", np.round(z1_forward_w, 3))  # inspect the pre-activation hidden values.
+print("hidden activations a1:", np.round(a1_forward_w, 3))  # inspect which hidden units are active after ReLU.
+```
+▶ What you'll see: negative hidden scores become zero, while positive scores pass through unchanged.
+
+```python
+z2_forward_w = a1_forward_w @ W2_forward_w + b2_forward_w  # combine hidden activations into one output score.
+yhat_forward_w = 1.0 / (1.0 + np.exp(-z2_forward_w))  # apply sigmoid to convert the score into a probability.
+print("output score z2:", np.round(z2_forward_w, 3))  # inspect the final affine score.
+print("predicted probability y_hat:", np.round(yhat_forward_w, 3))  # inspect the network prediction.
+```
+▶ What you'll see: the hidden features feed one output neuron that returns a class-one probability.
+
+```python
+plt.figure(figsize=(5.6, 3.6))  # create a hidden-activation bar chart.
+plt.bar(["h1", "h2", "h3"], a1_forward_w.ravel(), color="slateblue")  # draw one bar per hidden neuron.
+plt.ylabel("ReLU activation")  # label the activation magnitude axis.
+plt.ylim(0.0, max(1.0, float(a1_forward_w.max()) + 0.2))  # keep the vertical range readable.
+plt.title("2: hidden activations in a tiny net")  # title the subsection figure.
+plt.show()  # render the hidden-layer plot.
+```
+▶ What you'll see: only hidden units with positive scores send signal forward to the output unit.
+
+*Why it's done this way: writing the forward pass as matrix products evaluates all neurons in a layer at once, which is both readable and fast. The hidden activations are useful because later layers learn from these transformed features rather than from raw inputs alone.*
+
+#### 3. Loss functions: measuring prediction error
+
+A loss turns predictions into one scalar training objective. Mean squared error measures squared distance, binary cross-entropy measures the negative log-likelihood of a Bernoulli label, and softmax cross-entropy does the same for multiclass probabilities. We compute all three because deep learning is mostly "choose a differentiable loss, then reduce it by gradients."
+
+```python
+y_reg_loss_w = np.array([2.0, -1.0, 0.5])  # choose tiny regression targets.
+yhat_reg_loss_w = np.array([1.6, -0.4, 0.8])  # choose tiny regression predictions.
+mse_loss_w = np.mean((yhat_reg_loss_w - y_reg_loss_w) ** 2)  # compute mean squared error.
+print("squared errors:", np.round((yhat_reg_loss_w - y_reg_loss_w) ** 2, 3))  # inspect each regression penalty.
+print("MSE:", round(float(mse_loss_w), 3))  # inspect the average squared penalty.
+```
+▶ What you'll see: larger regression misses contribute quadratically more to the average loss.
+
+```python
+y_bin_loss_w = np.array([1.0, 0.0, 1.0])  # choose three binary labels.
+yhat_bin_loss_w = np.array([0.9, 0.2, 0.4])  # choose three predicted class-one probabilities.
+p_bin_loss_w = np.clip(yhat_bin_loss_w, 1e-9, 1.0 - 1e-9)  # guard log(0) by clipping probabilities safely.
+bce_terms_loss_w = -(y_bin_loss_w * np.log(p_bin_loss_w) + (1.0 - y_bin_loss_w) * np.log(1.0 - p_bin_loss_w))  # compute each binary cross-entropy term.
+bce_loss_w = np.mean(bce_terms_loss_w)  # average the binary cross-entropy terms.
+print("BCE terms:", np.round(bce_terms_loss_w, 3))  # inspect which binary examples are costly.
+print("BCE:", round(float(bce_loss_w), 3))  # inspect the average binary classification loss.
+```
+▶ What you'll see: a correct confident probability has small loss, while a weak or wrong probability costs more.
+
+```python
+logits_loss_w = np.array([[2.0, 0.5, -1.0]])  # choose one row of three class scores.
+y_class_loss_w = 0  # choose the correct class index.
+shifted_loss_w = logits_loss_w - logits_loss_w.max(axis=1, keepdims=True)  # subtract the max for stable exponentials.
+exp_loss_w = np.exp(shifted_loss_w)  # exponentiate shifted logits.
+softmax_loss_w = exp_loss_w / exp_loss_w.sum(axis=1, keepdims=True)  # normalize scores into class probabilities.
+sce_loss_w = -np.log(np.clip(softmax_loss_w[0, y_class_loss_w], 1e-9, 1.0))  # compute softmax cross-entropy for the correct class.
+print("softmax probabilities:", np.round(softmax_loss_w, 3))  # inspect the multiclass probability distribution.
+print("softmax cross-entropy:", round(float(sce_loss_w), 3))  # inspect the negative log probability of the true class.
+```
+▶ What you'll see: the loss is small when the true class receives high softmax probability.
+
+```python
+prob_grid_loss_w = np.linspace(0.001, 0.999, 300)  # create candidate probabilities while avoiding exact 0 and 1.
+ce_true1_loss_w = -np.log(prob_grid_loss_w)  # compute BCE when the true label is 1.
+ce_true0_loss_w = -np.log(1.0 - prob_grid_loss_w)  # compute BCE when the true label is 0.
+plt.figure(figsize=(5.8, 3.8))  # create a cross-entropy curve figure.
+plt.plot(prob_grid_loss_w, ce_true1_loss_w, label="true y=1", lw=2)  # draw loss for positive labels.
+plt.plot(prob_grid_loss_w, ce_true0_loss_w, label="true y=0", lw=2)  # draw loss for negative labels.
+plt.ylim(0.0, 7.0)  # focus on the interpretable part of the steep curve.
+plt.xlabel(r"predicted probability $\hat y$")  # label the probability axis.
+plt.ylabel("cross-entropy loss")  # label the loss axis.
+plt.legend(loc="best")  # show which curve belongs to which label.
+plt.title("3: cross-entropy punishes confident-wrong")  # title the subsection figure.
+plt.show()  # render the cross-entropy plot.
+```
+▶ What you'll see: cross-entropy explodes when the model is very confident in the wrong class.
+
+*Why it's done this way: losses translate prediction quality into one number that optimization can minimize. Cross-entropy is especially useful for classification because it rewards calibrated probabilities and strongly penalizes confident wrong answers.*
+
+#### 4. Backpropagation: chain-rule gradients through one logistic neuron
+
+Backpropagation is organized chain rule. For one logistic neuron with $\hat y=\sigma(z)$ and $z=w^\top x+b$, the weight gradient factors as
+
+$$
+\frac{\partial L}{\partial w}=\frac{\partial L}{\partial \hat y}\frac{\partial \hat y}{\partial z}\frac{\partial z}{\partial w}.
+$$
+
+We compute each local derivative because backprop works by reusing these local pieces layer after layer.
+
+```python
+x_backprop_w = np.array([1.5, -0.5])  # choose one two-feature training example.
+y_backprop_w = 1.0  # choose the binary target label.
+w_backprop_w = np.array([0.4, -0.3])  # choose current neuron weights.
+b_backprop_w = 0.1  # choose the current bias.
+z_backprop_w = float(w_backprop_w @ x_backprop_w + b_backprop_w)  # compute the affine score.
+yhat_backprop_w = 1.0 / (1.0 + np.exp(-z_backprop_w))  # compute the sigmoid prediction.
+loss_backprop_w = -(y_backprop_w * np.log(np.clip(yhat_backprop_w, 1e-9, 1.0)) + (1.0 - y_backprop_w) * np.log(np.clip(1.0 - yhat_backprop_w, 1e-9, 1.0)))  # compute binary cross-entropy safely.
+print("z:", round(z_backprop_w, 3))  # inspect the pre-activation score.
+print("y_hat:", round(float(yhat_backprop_w), 3))  # inspect the predicted probability.
+print("loss:", round(float(loss_backprop_w), 3))  # inspect the scalar objective value.
+```
+▶ What you'll see: the neuron predicts a probability, then binary cross-entropy turns it into a loss.
+
+```python
+dL_dyhat_backprop_w = -y_backprop_w / np.clip(yhat_backprop_w, 1e-9, 1.0) + (1.0 - y_backprop_w) / np.clip(1.0 - yhat_backprop_w, 1e-9, 1.0)  # compute dL/dy_hat for BCE.
+dyhat_dz_backprop_w = yhat_backprop_w * (1.0 - yhat_backprop_w)  # compute d sigmoid(z)/dz.
+dz_dw_backprop_w = x_backprop_w.copy()  # compute dz/dw, which equals the input vector.
+dL_dw_backprop_w = dL_dyhat_backprop_w * dyhat_dz_backprop_w * dz_dw_backprop_w  # multiply local derivatives by the chain rule.
+print("dL/dy_hat:", round(float(dL_dyhat_backprop_w), 3))  # inspect the loss sensitivity to the prediction.
+print("dy_hat/dz:", round(float(dyhat_dz_backprop_w), 3))  # inspect the sigmoid local slope.
+print("dz/dw:", np.round(dz_dw_backprop_w, 3))  # inspect how each weight changes z.
+print("dL/dw:", np.round(dL_dw_backprop_w, 3))  # inspect the final weight gradient.
+```
+The chain rule composes local derivatives because a small change in $w$ first changes $z$, that change alters $\hat y$, and that altered prediction changes $L$. Multiplying the local rates gives the total rate from the parameter to the loss.
+▶ What you'll see: each printed factor has a clear local meaning, and their product is the gradient for each weight.
+
+```python
+eps_backprop_w = 1e-5  # choose a tiny finite-difference step.
+w_plus_backprop_w = w_backprop_w.copy()  # copy weights for a positive perturbation.
+w_plus_backprop_w[0] = w_plus_backprop_w[0] + eps_backprop_w  # nudge the first weight upward.
+z_plus_backprop_w = float(w_plus_backprop_w @ x_backprop_w + b_backprop_w)  # recompute the perturbed score.
+yhat_plus_backprop_w = 1.0 / (1.0 + np.exp(-z_plus_backprop_w))  # recompute the perturbed prediction.
+loss_plus_backprop_w = -np.log(np.clip(yhat_plus_backprop_w, 1e-9, 1.0))  # compute the perturbed loss for y=1.
+finite_diff_backprop_w = (loss_plus_backprop_w - loss_backprop_w) / eps_backprop_w  # estimate the first gradient numerically.
+print("analytic dL/dw0:", round(float(dL_dw_backprop_w[0]), 5))  # print the chain-rule gradient for weight zero.
+print("finite-diff dL/dw0:", round(float(finite_diff_backprop_w), 5))  # print the numerical check for weight zero.
+```
+▶ What you'll see: the finite-difference estimate closely matches the chain-rule derivative.
+
+```python
+factor_names_backprop_w = ["dL/dŷ", "dŷ/dz", "dz/dw0", "dL/dw0"]  # name the scalar factors for the first weight.
+factor_values_backprop_w = [float(dL_dyhat_backprop_w), float(dyhat_dz_backprop_w), float(dz_dw_backprop_w[0]), float(dL_dw_backprop_w[0])]  # collect the factor values.
+plt.figure(figsize=(6.0, 3.8))  # create a derivative-factor figure.
+plt.bar(factor_names_backprop_w, factor_values_backprop_w, color=["tab:red", "tab:green", "tab:blue", "tab:purple"])  # draw one bar per derivative piece.
+plt.axhline(0.0, color="black", linewidth=1.0)  # mark the zero-gradient baseline.
+plt.ylabel("value")  # label the value axis.
+plt.title("4: chain-rule derivative factors")  # title the subsection figure.
+plt.show()  # render the derivative plot.
+```
+▶ What you'll see: the final gradient inherits its sign and scale from the local derivative factors.
+
+*Why it's done this way: backprop avoids re-deriving a whole network derivative from scratch by caching forward values and multiplying local derivatives backward. That makes gradients for many layers systematic, efficient, and inspectable.*
+
+#### 5. Gradient-descent update: move parameters downhill
+
+Once backprop gives a gradient, gradient descent applies $w\leftarrow w-\eta\frac{\partial L}{\partial w}$. The minus sign matters: the gradient points uphill, so subtracting a learning-rate-scaled gradient nudges the parameter toward lower loss. We train one logistic neuron for a few steps to watch that happen numerically and visually.
+
+```python
+x_update_w = np.array([1.0, 2.0])  # choose one small input vector.
+y_update_w = 1.0  # choose a positive target label.
+w_update_w = np.array([-0.6, 0.2])  # start with weights that are not yet ideal.
+b_update_w = -0.1  # start with a bias that is not yet ideal.
+eta_update_w = 0.35  # choose a modest learning rate.
+z_update_w = float(w_update_w @ x_update_w + b_update_w)  # compute the current affine score.
+yhat_update_w = 1.0 / (1.0 + np.exp(-z_update_w))  # compute the current probability.
+loss_update_w = -np.log(np.clip(yhat_update_w, 1e-9, 1.0))  # compute BCE for y=1 with log safety.
+grad_w_update_w = (yhat_update_w - y_update_w) * x_update_w  # compute the sigmoid+BCE weight gradient.
+grad_b_update_w = yhat_update_w - y_update_w  # compute the sigmoid+BCE bias gradient.
+print("before update w:", np.round(w_update_w, 3), "b:", round(b_update_w, 3), "loss:", round(float(loss_update_w), 3))  # inspect the starting point.
+print("gradient w:", np.round(grad_w_update_w, 3), "gradient b:", round(float(grad_b_update_w), 3))  # inspect the downhill information.
+```
+▶ What you'll see: the gradient reports how each parameter should change to reduce the current loss.
+
+```python
+w_one_update_w = w_update_w - eta_update_w * grad_w_update_w  # apply one weight update w <- w - eta*dL/dw.
+b_one_update_w = b_update_w - eta_update_w * grad_b_update_w  # apply one bias update b <- b - eta*dL/db.
+z_one_update_w = float(w_one_update_w @ x_update_w + b_one_update_w)  # recompute the score after one update.
+yhat_one_update_w = 1.0 / (1.0 + np.exp(-z_one_update_w))  # recompute the probability after one update.
+loss_one_update_w = -np.log(np.clip(yhat_one_update_w, 1e-9, 1.0))  # recompute BCE after one update.
+print("after one update w:", np.round(w_one_update_w, 3), "b:", round(float(b_one_update_w), 3))  # inspect the changed parameters.
+print("loss after one update:", round(float(loss_one_update_w), 3))  # inspect whether the loss dropped.
+```
+▶ What you'll see: the prediction moves toward the target class and the loss decreases after one update.
+
+```python
+w_loop_update_w = w_update_w.copy()  # reset weights to the original starting point.
+b_loop_update_w = float(b_update_w)  # reset bias to the original starting point.
+losses_update_w = []  # collect loss values over repeated updates.
+for step_update_w in range(12):  # run a dozen simple gradient-descent steps.
+    z_loop_update_w = float(w_loop_update_w @ x_update_w + b_loop_update_w)  # compute the current score.
+    yhat_loop_update_w = 1.0 / (1.0 + np.exp(-z_loop_update_w))  # compute the current probability.
+    loss_loop_update_w = -np.log(np.clip(yhat_loop_update_w, 1e-9, 1.0))  # compute the current BCE loss.
+    losses_update_w.append(float(loss_loop_update_w))  # store the current loss before updating.
+    grad_w_loop_update_w = (yhat_loop_update_w - y_update_w) * x_update_w  # compute the current weight gradient.
+    grad_b_loop_update_w = yhat_loop_update_w - y_update_w  # compute the current bias gradient.
+    w_loop_update_w = w_loop_update_w - eta_update_w * grad_w_loop_update_w  # update weights downhill.
+    b_loop_update_w = b_loop_update_w - eta_update_w * grad_b_loop_update_w  # update bias downhill.
+print("losses:", np.round(losses_update_w, 3))  # inspect the loss trace across steps.
+print("final w:", np.round(w_loop_update_w, 3), "final b:", round(float(b_loop_update_w), 3))  # inspect the final parameters.
+```
+▶ What you'll see: each update usually makes the single-example loss smaller than before.
+
+```python
+plt.figure(figsize=(5.8, 3.8))  # create a training-progress figure.
+plt.plot(range(len(losses_update_w)), losses_update_w, marker="o", lw=2, color="darkorange")  # draw loss versus update step.
+plt.xlabel("gradient-descent step")  # label the horizontal axis.
+plt.ylabel("binary cross-entropy")  # label the loss axis.
+plt.title("5: gradient descent lowers loss")  # title the subsection figure.
+plt.show()  # render the loss-decrease plot.
+```
+▶ What you'll see: the loss curve slopes downward as repeated updates move the neuron toward the target.
+
+*Why it's done this way: each update uses the local slope to make a small, controlled downhill move instead of guessing new parameters. Repeating forward pass, loss, backprop, and update is the core training loop for deep networks of any size.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Compute one neuron's affine score $w^Tx+b$

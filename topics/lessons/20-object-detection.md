@@ -256,6 +256,318 @@ plt.show()  # render the annotated scene.
 
 ▶ What you'll see: a simple image-like canvas with coordinate axes and labeled ground-truth boxes. The `crowded_shelf` option contains many small, close objects where duplicate suppression can become too aggressive.
 
+
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the object-detection ideas from scratch with only NumPy + Matplotlib. The data are tiny and inline, every variable uses a `_w` suffix to avoid colliding with later notebook examples, and each code cell prints or draws an inspectable intermediate result. The goal is to make every geometric step visible before any larger helper functions or model-style examples appear.
+
+```python
+import numpy as np  # use NumPy because boxes, scores, and class probabilities are small numeric arrays.
+import matplotlib.pyplot as plt  # use Matplotlib because detection geometry is easiest to verify visually.
+from matplotlib.patches import Rectangle  # use Rectangle patches to draw predicted and target boxes directly.
+np.random.seed(230)  # seed randomness so every tiny score table and plot remains reproducible.
+```
+
+#### 1. Bounding-box representation: corners and center-size describe the same rectangle
+
+A bounding box says *where* an object is. Corner form $(x_1,y_1,x_2,y_2)$ is direct for drawing and overlap math, while center-size form $(c_x,c_y,w,h)$ is direct for predicting offsets around grid cells and anchors. We use both because detection models usually predict center/size adjustments, then convert to corners for visualization and IoU.
+
+```python
+box_xyxy_w = np.array([2.0, 1.5, 7.0, 5.5])  # define one box as left, top, right, and bottom corners.
+cx_w = (box_xyxy_w[0] + box_xyxy_w[2]) / 2.0  # average x corners to find the horizontal center.
+cy_w = (box_xyxy_w[1] + box_xyxy_w[3]) / 2.0  # average y corners to find the vertical center.
+width_w = box_xyxy_w[2] - box_xyxy_w[0]  # subtract left from right to get box width.
+height_w = box_xyxy_w[3] - box_xyxy_w[1]  # subtract top from bottom to get box height.
+box_cxcywh_w = np.array([cx_w, cy_w, width_w, height_w])  # store the equivalent center-size representation.
+print("corner form (x1, y1, x2, y2):", box_xyxy_w)  # inspect the coordinate form used for clipping and drawing.
+print("center-size form (cx, cy, w, h):", box_cxcywh_w)  # inspect the coordinate form often predicted by detectors.
+```
+
+```python
+back_x1_w = box_cxcywh_w[0] - box_cxcywh_w[2] / 2.0  # move half a width left from the center.
+back_y1_w = box_cxcywh_w[1] - box_cxcywh_w[3] / 2.0  # move half a height up from the center.
+back_x2_w = box_cxcywh_w[0] + box_cxcywh_w[2] / 2.0  # move half a width right from the center.
+back_y2_w = box_cxcywh_w[1] + box_cxcywh_w[3] / 2.0  # move half a height down from the center.
+box_roundtrip_w = np.array([back_x1_w, back_y1_w, back_x2_w, back_y2_w])  # rebuild the corner-format box from center-size values.
+print("converted back to corners:", box_roundtrip_w)  # verify the conversion recovers the original rectangle.
+print("same as original:", np.allclose(box_xyxy_w, box_roundtrip_w))  # check equality with floating-point tolerance.
+```
+
+```python
+fig_w, ax_w = plt.subplots(figsize=(6, 4))  # create one axes object so the rectangle can be inspected.
+ax_w.set_title("1: Bounding-box representation")  # title the figure with the subsection number and concept.
+ax_w.set_xlim(0, 10)  # show a ten-unit image width.
+ax_w.set_ylim(0, 7)  # show a seven-unit image height.
+ax_w.invert_yaxis()  # match image coordinates where larger y values are lower on the canvas.
+ax_w.grid(True, alpha=0.3)  # add a light grid so coordinates can be read off the plot.
+rect_w = Rectangle((box_xyxy_w[0], box_xyxy_w[1]), width_w, height_w, fill=False, edgecolor="tab:blue", linewidth=2)  # create the visible box patch from corner plus size values.
+ax_w.add_patch(rect_w)  # draw the rectangle on the axes.
+ax_w.scatter([cx_w], [cy_w], color="tab:red", zorder=3)  # mark the center because anchors predict offsets from centers.
+ax_w.text(cx_w + 0.15, cy_w, "center", color="tab:red")  # label the center point for interpretation.
+ax_w.set_xlabel("x coordinate")  # label the horizontal image coordinate.
+ax_w.set_ylabel("y coordinate")  # label the vertical image coordinate.
+plt.show()  # render the box and its center.
+```
+
+▶ What you'll see: a single rectangle with a red center point. The corners define the drawn extent, while the center and size summarize the same geometry compactly.
+
+The conversion is just averaging and differencing: $c_x=\frac{x_1+x_2}{2}$, $c_y=\frac{y_1+y_2}{2}$, $w=x_2-x_1$, and $h=y_2-y_1$. Center/size form is convenient for anchors because a model can predict small shifts and scale changes around a preset shape instead of predicting every absolute corner independently.
+
+*Why it's done this way: corner coordinates make exact geometry easy, while center/size coordinates make anchor-relative prediction stable and local.*
+
+#### 2. Intersection over Union: overlap divided by total covered area
+
+Intersection over Union (IoU) measures *how well* a predicted box overlaps a target box. We clip the intersection width and height at zero so non-overlapping boxes never produce negative area. Then we divide intersection area by union area so the score is normalized between $0$ and $1$ regardless of the absolute box sizes.
+
+$$
+\operatorname{IoU}(A,B)=\frac{|A\cap B|}{|A\cup B|}
+$$
+
+```python
+box_a_w = np.array([1.0, 1.0, 6.0, 5.0])  # define a target-like box in corner format.
+box_b_w = np.array([4.0, 3.0, 9.0, 6.5])  # define a predicted-like box that partially overlaps the target.
+left_w = max(box_a_w[0], box_b_w[0])  # choose the larger left edge for the intersection.
+top_w = max(box_a_w[1], box_b_w[1])  # choose the larger top edge for the intersection.
+right_w = min(box_a_w[2], box_b_w[2])  # choose the smaller right edge for the intersection.
+bottom_w = min(box_a_w[3], box_b_w[3])  # choose the smaller bottom edge for the intersection.
+inter_width_w = max(0.0, right_w - left_w)  # clip the overlap width at zero.
+inter_height_w = max(0.0, bottom_w - top_w)  # clip the overlap height at zero.
+inter_area_w = inter_width_w * inter_height_w  # multiply clipped width and height to get intersection area.
+print("intersection corners:", np.array([left_w, top_w, right_w, bottom_w]))  # inspect the clipped overlap rectangle.
+print("intersection size and area:", inter_width_w, inter_height_w, inter_area_w)  # inspect the overlap dimensions and area.
+```
+
+```python
+area_a_w = (box_a_w[2] - box_a_w[0]) * (box_a_w[3] - box_a_w[1])  # compute target box area.
+area_b_w = (box_b_w[2] - box_b_w[0]) * (box_b_w[3] - box_b_w[1])  # compute predicted box area.
+union_area_w = area_a_w + area_b_w - inter_area_w  # add areas and subtract the overlap counted twice.
+iou_w = inter_area_w / union_area_w  # divide overlap by union to get normalized localization quality.
+print("area A:", area_a_w)  # inspect the first box area.
+print("area B:", area_b_w)  # inspect the second box area.
+print("union area:", union_area_w)  # inspect the denominator of IoU.
+print("IoU:", round(iou_w, 3))  # inspect the final overlap score.
+```
+
+```python
+fig_w, ax_w = plt.subplots(figsize=(6.5, 4.5))  # create a figure for the two boxes and their overlap.
+ax_w.set_title("2: Intersection over Union")  # title the figure with the subsection number and concept.
+ax_w.set_xlim(0, 10)  # show the full toy image width.
+ax_w.set_ylim(0, 8)  # show the full toy image height.
+ax_w.invert_yaxis()  # use image-style y coordinates.
+ax_w.grid(True, alpha=0.3)  # add a grid for coordinate inspection.
+ax_w.add_patch(Rectangle((box_a_w[0], box_a_w[1]), box_a_w[2] - box_a_w[0], box_a_w[3] - box_a_w[1], fill=False, edgecolor="tab:blue", linewidth=2, label="box A"))  # draw the first box.
+ax_w.add_patch(Rectangle((box_b_w[0], box_b_w[1]), box_b_w[2] - box_b_w[0], box_b_w[3] - box_b_w[1], fill=False, edgecolor="tab:orange", linewidth=2, label="box B"))  # draw the second box.
+ax_w.add_patch(Rectangle((left_w, top_w), inter_width_w, inter_height_w, facecolor="tab:green", alpha=0.35, edgecolor="tab:green", label="overlap"))  # shade the intersection area.
+ax_w.legend(loc="lower right")  # show which outline belongs to which box.
+ax_w.set_xlabel("x coordinate")  # label the horizontal coordinate.
+ax_w.set_ylabel("y coordinate")  # label the vertical coordinate.
+plt.show()  # render the IoU geometry.
+```
+
+▶ What you'll see: two rectangles and a shaded green overlap. The printed values show exactly how the numerator and denominator of IoU are built.
+
+The union formula $|A\cup B|=|A|+|B|-|A\cap B|$ subtracts the overlap once because it was counted in both individual areas. IoU measures overlap quality independent of box size because both the intersection and union scale together when the same geometry is enlarged.
+
+*Why it's done this way: IoU turns raw pixel or coordinate overlap into a comparable $0$-to-$1$ quality score for small and large objects alike.*
+
+#### 3. Anchor boxes: preset shapes at one grid cell
+
+Anchor boxes are predefined shapes centered at a grid location. Instead of predicting an absolute box from nothing, a detector predicts offsets such as "move this anchor slightly right" or "make this anchor taller." This approach gives each grid cell several shape hypotheses, which helps one cell handle square, wide, and tall objects.
+
+```python
+grid_cell_center_w = np.array([5.0, 4.0])  # choose the center of one grid cell in image coordinates.
+anchor_sizes_w = np.array([[2.0, 2.0], [4.0, 1.6], [1.4, 4.0]])  # define square, wide, and tall anchor widths and heights.
+anchor_names_w = ["square", "wide", "tall"]  # name each preset shape for readable output.
+anchor_boxes_w = []  # prepare a list that will hold corner-format anchor boxes.
+for size_w in anchor_sizes_w:  # loop over each preset width-height pair.
+    x1_w = grid_cell_center_w[0] - size_w[0] / 2.0  # convert anchor width to a left corner.
+    y1_w = grid_cell_center_w[1] - size_w[1] / 2.0  # convert anchor height to a top corner.
+    x2_w = grid_cell_center_w[0] + size_w[0] / 2.0  # convert anchor width to a right corner.
+    y2_w = grid_cell_center_w[1] + size_w[1] / 2.0  # convert anchor height to a bottom corner.
+    anchor_boxes_w.append([x1_w, y1_w, x2_w, y2_w])  # store the corner-format anchor for later drawing.
+anchor_boxes_w = np.array(anchor_boxes_w)  # convert the list to an array for compact printing and indexing.
+print("grid cell center:", grid_cell_center_w)  # inspect the shared center of all anchors.
+print("anchor boxes as corners:\n", np.round(anchor_boxes_w, 2))  # inspect the resulting preset boxes.
+```
+
+```python
+target_box_w = np.array([3.6, 2.1, 6.6, 5.7])  # define a target object near the same cell.
+target_center_w = np.array([(target_box_w[0] + target_box_w[2]) / 2.0, (target_box_w[1] + target_box_w[3]) / 2.0])  # compute the target center.
+target_size_w = np.array([target_box_w[2] - target_box_w[0], target_box_w[3] - target_box_w[1]])  # compute the target width and height.
+anchor_offset_w = target_center_w - grid_cell_center_w  # compute the center shift a model would learn.
+anchor_scale_w = target_size_w / anchor_sizes_w[2]  # compare the target size with the tall anchor size.
+print("target center shift from cell:", np.round(anchor_offset_w, 2))  # inspect the offset instead of absolute target corners.
+print("target size divided by tall anchor size:", np.round(anchor_scale_w, 2))  # inspect a simple scale adjustment relative to one anchor.
+```
+
+```python
+fig_w, ax_w = plt.subplots(figsize=(6.5, 5))  # create a figure for anchors at one cell.
+ax_w.set_title("3: Anchor boxes at one grid cell")  # title the figure with the subsection number and concept.
+ax_w.set_xlim(0, 10)  # show the toy image width.
+ax_w.set_ylim(0, 8)  # show the toy image height.
+ax_w.invert_yaxis()  # match image-coordinate orientation.
+ax_w.grid(True, alpha=0.3)  # add a light coordinate grid.
+colors_w = ["tab:blue", "tab:orange", "tab:green"]  # choose one color per anchor shape.
+for idx_w, anchor_w in enumerate(anchor_boxes_w):  # draw each preset anchor at the same grid center.
+    ax_w.add_patch(Rectangle((anchor_w[0], anchor_w[1]), anchor_w[2] - anchor_w[0], anchor_w[3] - anchor_w[1], fill=False, edgecolor=colors_w[idx_w], linewidth=2, label=anchor_names_w[idx_w]))  # add the anchor rectangle.
+ax_w.add_patch(Rectangle((target_box_w[0], target_box_w[1]), target_box_w[2] - target_box_w[0], target_box_w[3] - target_box_w[1], fill=False, edgecolor="black", linewidth=2, linestyle="--", label="target"))  # draw a nearby target box for comparison.
+ax_w.scatter([grid_cell_center_w[0]], [grid_cell_center_w[1]], color="black", zorder=3)  # mark the cell center shared by anchors.
+ax_w.legend(loc="lower right")  # show the anchor shape names.
+ax_w.set_xlabel("x coordinate")  # label the horizontal coordinate.
+ax_w.set_ylabel("y coordinate")  # label the vertical coordinate.
+plt.show()  # render anchors and target.
+```
+
+▶ What you'll see: three differently shaped boxes centered on the same grid point, plus a dashed target box nearby. The tall anchor is already close in shape, so the predicted correction can be small.
+
+Predefined anchors turn box prediction into a residual problem: learn offsets and scale changes from a useful default. That is usually easier than forcing the network to learn every possible object shape from the same unconstrained output.
+
+*Why it's done this way: anchors provide multiple shape priors at each location, so the detector specializes each prediction head around a nearby default box.*
+
+#### 4. Non-max suppression: keep the best box and remove duplicate overlaps
+
+Raw detectors often produce several high-scoring boxes around the same object. Non-max suppression (NMS) sorts boxes by score, keeps the strongest remaining box, and suppresses lower-scoring boxes whose IoU with it is above a threshold. The process is greedy, but it is simple, fast, and effective for removing duplicate detections.
+
+```python
+nms_boxes_w = np.array([[1.0, 1.0, 5.0, 4.5], [1.4, 1.2, 5.2, 4.6], [6.4, 1.3, 9.2, 4.2], [1.1, 1.5, 4.8, 4.2]])  # define three overlapping boxes and one separate box.
+nms_scores_w = np.array([0.92, 0.84, 0.76, 0.67])  # assign detector confidence scores to the boxes.
+nms_order_w = np.argsort(-nms_scores_w)  # sort indexes from highest score to lowest score.
+print("boxes sorted by score:", nms_order_w)  # inspect the greedy processing order.
+print("sorted scores:", nms_scores_w[nms_order_w])  # inspect the confidence values in that order.
+```
+
+```python
+def nms_iou_w(box_one_w, box_two_w):  # define a tiny IoU helper used only in this walkthrough.
+    ix1_w = max(box_one_w[0], box_two_w[0])  # choose the left edge of the overlap.
+    iy1_w = max(box_one_w[1], box_two_w[1])  # choose the top edge of the overlap.
+    ix2_w = min(box_one_w[2], box_two_w[2])  # choose the right edge of the overlap.
+    iy2_w = min(box_one_w[3], box_two_w[3])  # choose the bottom edge of the overlap.
+    iw_w = max(0.0, ix2_w - ix1_w)  # clip overlap width at zero.
+    ih_w = max(0.0, iy2_w - iy1_w)  # clip overlap height at zero.
+    inter_w = iw_w * ih_w  # compute the intersection area.
+    area_one_w = (box_one_w[2] - box_one_w[0]) * (box_one_w[3] - box_one_w[1])  # compute the first box area.
+    area_two_w = (box_two_w[2] - box_two_w[0]) * (box_two_w[3] - box_two_w[1])  # compute the second box area.
+    return inter_w / (area_one_w + area_two_w - inter_w)  # return intersection divided by union.
+nms_threshold_w = 0.45  # set the overlap threshold above which lower-scoring boxes are treated as duplicates.
+keep_w = []  # collect kept box indexes.
+remaining_w = list(nms_order_w)  # start with all boxes sorted by descending score.
+while remaining_w:  # keep looping until every candidate is kept or suppressed.
+    current_w = remaining_w.pop(0)  # take the highest-scoring remaining box.
+    keep_w.append(current_w)  # keep that box as the representative detection.
+    survivors_w = []  # collect lower-scoring boxes that are not duplicates of the kept box.
+    for candidate_w in remaining_w:  # compare each remaining box against the current kept box.
+        overlap_w = nms_iou_w(nms_boxes_w[current_w], nms_boxes_w[candidate_w])  # compute IoU with the current kept box.
+        print("compare kept", current_w, "to candidate", candidate_w, "IoU=", round(overlap_w, 3))  # inspect each suppression decision.
+        if overlap_w <= nms_threshold_w:  # keep the candidate only if overlap is not too high.
+            survivors_w.append(candidate_w)  # preserve this candidate for later greedy steps.
+    remaining_w = survivors_w  # continue with only unsuppressed boxes.
+print("kept indexes after NMS:", keep_w)  # inspect the final selected detections.
+```
+
+```python
+fig_w, axes_w = plt.subplots(1, 2, figsize=(10, 4), sharex=True, sharey=True)  # create side-by-side before and after views.
+for ax_w, title_w, indexes_w in zip(axes_w, ["before NMS", "after NMS"], [range(len(nms_boxes_w)), keep_w]):  # loop over the two panels.
+    ax_w.set_title("4: Non-max suppression — " + title_w)  # title each panel with the subsection number and state.
+    ax_w.set_xlim(0, 10)  # show the toy image width.
+    ax_w.set_ylim(0, 6)  # show the toy image height.
+    ax_w.invert_yaxis()  # match image-coordinate orientation.
+    ax_w.grid(True, alpha=0.3)  # add a light grid for reading coordinates.
+    for idx_w in indexes_w:  # draw either all boxes or just the kept boxes.
+        box_w = nms_boxes_w[idx_w]  # select the current box.
+        color_w = "tab:red" if idx_w in keep_w else "gray"  # highlight boxes kept by NMS.
+        ax_w.add_patch(Rectangle((box_w[0], box_w[1]), box_w[2] - box_w[0], box_w[3] - box_w[1], fill=False, edgecolor=color_w, linewidth=2))  # draw the candidate or kept box.
+        ax_w.text(box_w[0], box_w[1] - 0.1, f"{idx_w}: {nms_scores_w[idx_w]:.2f}", color=color_w)  # annotate the index and score.
+    ax_w.set_xlabel("x coordinate")  # label the horizontal coordinate.
+axes_w[0].set_ylabel("y coordinate")  # label the vertical coordinate on the left panel.
+plt.show()  # render the before-and-after NMS comparison.
+```
+
+▶ What you'll see: the left panel contains duplicate boxes clustered around one object, while the right panel keeps the highest-scoring representative and the separate object.
+
+NMS removes duplicates because boxes with high IoU are usually alternative predictions for the same object. Running it per class avoids suppressing a dog box just because a person box overlaps it.
+
+*Why it's done this way: NMS converts many redundant local guesses into a smaller final set by trusting the highest score within each overlap group.*
+
+#### 5. YOLO-style detection pipeline: one pass from grid-cell prediction to final boxes
+
+A YOLO-style detector divides the image into a grid and predicts boxes, objectness, and class probabilities in one forward pass. In this tiny numeric example, one grid cell emits two anchor predictions. We convert center-size predictions to corners, multiply objectness by class probability for confidence, threshold weak predictions, and run NMS on the survivors.
+
+```python
+grid_shape_w = np.array([2, 2])  # define a tiny two-by-two grid for the conceptual image.
+cell_size_w = np.array([5.0, 4.0])  # make each cell five units wide and four units high.
+cell_index_w = np.array([1, 0])  # choose row 1 and column 0 as the cell responsible for a visible object.
+cell_origin_w = np.array([cell_index_w[1] * cell_size_w[0], cell_index_w[0] * cell_size_w[1]])  # convert the grid cell index to an image-coordinate origin.
+local_centers_w = np.array([[0.52, 0.46], [0.55, 0.50]])  # predict two center locations as fractions inside the cell.
+pred_sizes_w = np.array([[2.5, 2.0], [2.8, 2.1]])  # predict two absolute width-height pairs for two anchors.
+objectness_w = np.array([0.91, 0.74])  # predict whether each anchor contains an object.
+class_probs_w = np.array([[0.12, 0.88], [0.18, 0.82]])  # predict class probabilities for [cat, dog].
+centers_image_w = cell_origin_w + local_centers_w * cell_size_w  # convert local grid predictions to image-coordinate centers.
+print("cell origin:", cell_origin_w)  # inspect where the chosen grid cell starts.
+print("predicted centers in image coordinates:\n", np.round(centers_image_w, 2))  # inspect the decoded center points.
+```
+
+```python
+pipeline_boxes_w = np.column_stack([centers_image_w[:, 0] - pred_sizes_w[:, 0] / 2.0, centers_image_w[:, 1] - pred_sizes_w[:, 1] / 2.0, centers_image_w[:, 0] + pred_sizes_w[:, 0] / 2.0, centers_image_w[:, 1] + pred_sizes_w[:, 1] / 2.0])  # decode center-size predictions into corner boxes.
+class_names_w = np.array(["cat", "dog"])  # define the class-name lookup for the two class probabilities.
+best_class_w = np.argmax(class_probs_w, axis=1)  # choose the most likely class for each anchor prediction.
+confidence_w = objectness_w * class_probs_w[np.arange(len(objectness_w)), best_class_w]  # combine objectness and class probability into final confidence.
+mask_w = confidence_w >= 0.50  # filter out predictions below the confidence threshold.
+filtered_boxes_w = pipeline_boxes_w[mask_w]  # keep only boxes with enough confidence.
+filtered_scores_w = confidence_w[mask_w]  # keep the matching confidence scores.
+filtered_classes_w = class_names_w[best_class_w[mask_w]]  # keep the matching class names.
+print("decoded boxes:\n", np.round(pipeline_boxes_w, 2))  # inspect decoded corner boxes.
+print("confidence scores:", np.round(confidence_w, 3))  # inspect objectness times class probability.
+print("kept after confidence threshold:", filtered_classes_w)  # inspect which labels survive filtering.
+```
+
+```python
+yolo_order_w = np.argsort(-filtered_scores_w)  # sort filtered predictions by descending confidence.
+yolo_keep_w = []  # collect kept filtered indexes after NMS.
+yolo_remaining_w = list(yolo_order_w)  # initialize the greedy NMS queue.
+while yolo_remaining_w:  # process candidates until none remain.
+    current_w = yolo_remaining_w.pop(0)  # choose the highest-confidence remaining prediction.
+    yolo_keep_w.append(current_w)  # keep it as a final detection.
+    next_remaining_w = []  # collect candidates not suppressed by the current detection.
+    for candidate_w in yolo_remaining_w:  # compare same-class lower-confidence predictions.
+        same_class_w = filtered_classes_w[candidate_w] == filtered_classes_w[current_w]  # suppress only duplicate predictions of the same class.
+        overlap_w = nms_iou_w(filtered_boxes_w[current_w], filtered_boxes_w[candidate_w])  # compute overlap with the kept detection.
+        print("YOLO NMS compare", current_w, candidate_w, "same class", same_class_w, "IoU", round(overlap_w, 3))  # inspect the duplicate decision.
+        if (not same_class_w) or overlap_w <= 0.45:  # preserve different classes or low-overlap same-class boxes.
+            next_remaining_w.append(candidate_w)  # keep this candidate for possible later selection.
+    yolo_remaining_w = next_remaining_w  # replace the queue with unsuppressed candidates.
+final_boxes_w = filtered_boxes_w[yolo_keep_w]  # select final box coordinates.
+final_scores_w = filtered_scores_w[yolo_keep_w]  # select final confidence scores.
+final_classes_w = filtered_classes_w[yolo_keep_w]  # select final class labels.
+print("final detections:", list(zip(final_classes_w, np.round(final_scores_w, 3))))  # inspect final labels and confidences.
+```
+
+```python
+fig_w, ax_w = plt.subplots(figsize=(7, 5))  # create a figure for the YOLO-style final output.
+ax_w.set_title("5: YOLO-style detection pipeline")  # title the figure with the subsection number and concept.
+ax_w.set_xlim(0, grid_shape_w[1] * cell_size_w[0])  # set width from the number of grid columns.
+ax_w.set_ylim(0, grid_shape_w[0] * cell_size_w[1])  # set height from the number of grid rows.
+ax_w.invert_yaxis()  # match image-coordinate orientation.
+ax_w.grid(True, alpha=0.35)  # show grid lines for the conceptual detector layout.
+for col_w in range(grid_shape_w[1] + 1):  # draw vertical grid-cell boundaries.
+    ax_w.axvline(col_w * cell_size_w[0], color="black", linewidth=0.8, alpha=0.4)  # add one vertical boundary line.
+for row_w in range(grid_shape_w[0] + 1):  # draw horizontal grid-cell boundaries.
+    ax_w.axhline(row_w * cell_size_w[1], color="black", linewidth=0.8, alpha=0.4)  # add one horizontal boundary line.
+for idx_w, box_w in enumerate(final_boxes_w):  # draw each final detection after thresholding and NMS.
+    ax_w.add_patch(Rectangle((box_w[0], box_w[1]), box_w[2] - box_w[0], box_w[3] - box_w[1], fill=False, edgecolor="tab:purple", linewidth=2))  # draw the final detected box.
+    ax_w.text(box_w[0], box_w[1] - 0.15, f"{final_classes_w[idx_w]} {final_scores_w[idx_w]:.2f}", color="tab:purple")  # label the final class and score.
+ax_w.scatter(centers_image_w[:, 0], centers_image_w[:, 1], color="tab:orange", zorder=3, label="raw centers")  # show raw predicted centers before NMS.
+ax_w.legend(loc="lower right")  # identify the raw center markers.
+ax_w.set_xlabel("x coordinate")  # label the horizontal coordinate.
+ax_w.set_ylabel("y coordinate")  # label the vertical coordinate.
+plt.show()  # render the final pipeline output.
+```
+
+▶ What you'll see: a small grid, two raw anchor centers in one cell, and the final high-confidence detection after duplicate suppression.
+
+The single-pass grid idea is that every cell predicts a fixed number of candidate boxes and scores at once, so detection becomes one dense tensor calculation followed by filtering and NMS. Confidence is commonly read as objectness $\times$ class probability because a box should score high only when it both contains an object and assigns that object to a likely class.
+
+*Why it's done this way: YOLO-style detection makes localization and classification a single dense prediction problem, then uses thresholding and NMS to turn the grid tensor into final boxes.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Draw one bounding box on a blank grid

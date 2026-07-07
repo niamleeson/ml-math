@@ -327,6 +327,232 @@ else:  # Preview nonnumeric sources by printing documents.
 
 👀 **Takeaway:** generative models are assumption-driven, so the data source should make the assumption visible.
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the generative-learning ideas from scratch, one small step at a time. Everything here uses only NumPy + Matplotlib and tiny inline data, so every likelihood, prior, posterior, and boundary is inspectable. Variables carry a `_w` suffix so they never collide with the examples below.
+
+```python
+import numpy as np  # NumPy gives us arrays, exponentials, products, and linear algebra for tiny from-scratch models.
+import matplotlib.pyplot as plt  # Matplotlib lets us see densities, class means, and decision boundaries directly.
+np.random.seed(8)  # Fix the seed so all printed values and plots stay reproducible.
+```
+
+#### 1. Generative vs discriminative: model how each class could have produced $x$
+
+A discriminative model learns $P(y\mid x)$ or a boundary directly. A generative model instead learns $P(x\mid y)P(y)$, then turns those ingredients into a posterior with Bayes' rule:
+
+$$
+P(y=k\mid x)=\frac{P(x\mid y=k)P(y=k)}{\sum_c P(x\mid y=c)P(y=c)}.
+$$
+
+We build a 1-D two-class Gaussian example because the likelihoods can be printed as numbers and plotted as curves. The boundary appears where the two unnormalized scores $P(x\mid y)P(y)$ are equal.
+
+```python
+x_gen_w = np.array([-2.2, -1.4, -0.9, 0.8, 1.4, 2.1])  # Create tiny one-dimensional observations from two visible groups.
+y_gen_w = np.array([0, 0, 0, 1, 1, 1])  # Label the left group class 0 and the right group class 1.
+mu_gen_w = np.array([x_gen_w[y_gen_w == 0].mean(), x_gen_w[y_gen_w == 1].mean()])  # Estimate each class mean from its own points.
+var_gen_w = np.array([np.var(x_gen_w[y_gen_w == 0]), np.var(x_gen_w[y_gen_w == 1])]) + 1e-6  # Estimate class variances and add a tiny guard.
+prior_gen_w = np.array([np.mean(y_gen_w == 0), np.mean(y_gen_w == 1)])  # Estimate class priors from label frequencies.
+print("class means:", np.round(mu_gen_w, 3))  # Inspect where each class distribution is centered.
+print("class variances:", np.round(var_gen_w, 3))  # Inspect each class spread used by the Gaussian likelihood.
+print("class priors:", np.round(prior_gen_w, 3))  # Inspect how often each class appeared.
+```
+▶ What you'll see: two class means on opposite sides of zero, similar priors, and positive variances.
+
+```python
+def normal_pdf_gen_w(x_w, mean_w, var_w):  # Define the 1-D Gaussian density used for P(x|y).
+    safe_var_w = max(float(var_w), 1e-12)  # Guard against division by zero if a class has no spread.
+    return np.exp(-0.5 * (x_w - mean_w) ** 2 / safe_var_w) / np.sqrt(2.0 * np.pi * safe_var_w)  # Evaluate the Gaussian formula.
+x_new_gen_w = 0.2  # Choose one test point near the middle so the posterior is not obvious by inspection.
+lik_gen_w = np.array([normal_pdf_gen_w(x_new_gen_w, mu_gen_w[k], var_gen_w[k]) for k in [0, 1]])  # Compute P(x_new|y=k).
+score_gen_w = lik_gen_w * prior_gen_w  # Multiply likelihoods by priors to get unnormalized posterior scores.
+post_gen_w = score_gen_w / max(score_gen_w.sum(), 1e-12)  # Normalize scores into P(y|x) with a zero-sum guard.
+print("likelihoods P(x|y):", np.round(lik_gen_w, 4))  # Inspect class-conditional evidence for the test point.
+print("scores P(x|y)P(y):", np.round(score_gen_w, 4))  # Inspect the generative scores before normalization.
+print("posterior P(y|x):", np.round(post_gen_w, 4))  # Inspect the Bayes-rule posterior.
+```
+Bayes' rule is the bridge: generative ingredients answer "how likely was this $x$ under each class story?" and normalization converts those scores into comparable probabilities that sum to one.
+▶ What you'll see: the posterior favors the class whose Gaussian assigns more density to `x_new_gen_w` after the prior is included.
+
+```python
+x_grid_gen_w = np.linspace(-3.0, 3.0, 300)  # Create a dense 1-D grid for plotting densities and the boundary.
+dens0_gen_w = normal_pdf_gen_w(x_grid_gen_w, mu_gen_w[0], var_gen_w[0])  # Evaluate the class-0 density across the grid.
+dens1_gen_w = normal_pdf_gen_w(x_grid_gen_w, mu_gen_w[1], var_gen_w[1])  # Evaluate the class-1 density across the grid.
+score0_gen_w = dens0_gen_w * prior_gen_w[0]  # Compute class-0 unnormalized posterior scores on the grid.
+score1_gen_w = dens1_gen_w * prior_gen_w[1]  # Compute class-1 unnormalized posterior scores on the grid.
+boundary_gen_w = x_grid_gen_w[np.argmin(np.abs(score0_gen_w - score1_gen_w))]  # Find where the two scores are closest.
+print("decision boundary x ≈", round(float(boundary_gen_w), 3))  # Print the point where the classifier switches classes.
+```
+▶ What you'll see: a boundary between the two class means, where the two generative scores are nearly tied.
+
+```python
+plt.figure(figsize=(6.5, 4.0))  # Create one compact figure for densities and the decision boundary.
+plt.plot(x_grid_gen_w, dens0_gen_w, label="P(x|y=0)", color="tab:blue")  # Draw the class-0 Gaussian density.
+plt.plot(x_grid_gen_w, dens1_gen_w, label="P(x|y=1)", color="tab:orange")  # Draw the class-1 Gaussian density.
+plt.axvline(boundary_gen_w, color="black", linestyle="--", label="Bayes boundary")  # Mark the score-tie decision boundary.
+plt.scatter(x_gen_w[y_gen_w == 0], np.zeros(np.sum(y_gen_w == 0)), color="tab:blue", edgecolors="k", s=70)  # Show class-0 training points.
+plt.scatter(x_gen_w[y_gen_w == 1], np.zeros(np.sum(y_gen_w == 1)), color="tab:orange", edgecolors="k", s=70)  # Show class-1 training points.
+plt.xlabel("one feature x")  # Label the horizontal feature axis.
+plt.ylabel("density")  # Label the vertical density axis.
+plt.title("1: generative densities and Bayes boundary")  # Title the subsection plot with its concept number.
+plt.legend(loc="best")  # Show which curve belongs to each class.
+plt.show()  # Render the density plot.
+```
+▶ What you'll see: two class-conditional bell curves and a vertical boundary where Bayes' rule switches the predicted class.
+
+*Why it's done this way: generative classification separates modeling from decision-making — first estimate $P(x\mid y)$ and $P(y)$, then let Bayes' rule produce $P(y\mid x)$ only when a prediction is needed.*
+
+#### 2. Gaussian Discriminant Analysis: fit shared-covariance Gaussians by hand
+
+GDA assumes each class is Gaussian but both classes share one covariance matrix: $x\mid y=k\sim\mathcal N(\mu_k,\Sigma)$. We compute $\mu_0$, $\mu_1$, $\Sigma$, and the class priors from tiny 2-D labeled data so every matrix entry is visible. A shared $\Sigma$ matters because the quadratic $x^T\Sigma^{-1}x$ terms cancel in the log odds, leaving a linear boundary.
+
+```python
+X_gda_w = np.array([[-2.0, -1.0], [-1.2, -0.4], [-0.8, -1.4], [0.9, 0.8], [1.5, 1.0], [1.9, 1.8]])  # Create tiny 2-D labeled data.
+y_gda_w = np.array([0, 0, 0, 1, 1, 1])  # Store binary class labels for the six points.
+prior_gda_w = np.array([np.mean(y_gda_w == 0), np.mean(y_gda_w == 1)])  # Estimate P(y=k) by counting labels.
+mu_gda_w = np.vstack([X_gda_w[y_gda_w == k].mean(axis=0) for k in [0, 1]])  # Estimate each class mean by averaging its rows.
+print("priors:", np.round(prior_gda_w, 3))  # Inspect the class frequencies.
+print("means:\n", np.round(mu_gda_w, 3))  # Inspect the two fitted Gaussian centers.
+```
+▶ What you'll see: class 0 has a lower-left mean and class 1 has an upper-right mean.
+
+```python
+resid_gda_w = X_gda_w - mu_gda_w[y_gda_w]  # Subtract each point's own class mean to form residuals.
+Sigma_gda_w = resid_gda_w.T @ resid_gda_w / X_gda_w.shape[0]  # Compute the shared covariance MLE with denominator m.
+Sigma_gda_w = Sigma_gda_w + 1e-6 * np.eye(2)  # Add tiny diagonal jitter so inversion is always safe.
+inv_gda_w = np.linalg.inv(Sigma_gda_w)  # Invert the covariance for Gaussian scoring.
+print("residuals:\n", np.round(resid_gda_w, 3))  # Inspect centered deviations that feed the covariance.
+print("shared covariance:\n", np.round(Sigma_gda_w, 3))  # Inspect the fitted shared spread and tilt.
+```
+The covariance pools both classes after centering each by its own mean. Pooling is the modeling assumption that both class clouds have the same shape, only shifted to different locations.
+▶ What you'll see: residuals around each class mean and one covariance matrix shared by both classes.
+
+```python
+def mvn_pdf_gda_w(x_w, mean_w, cov_w):  # Define a two-dimensional Gaussian density for one point.
+    safe_cov_w = cov_w + 1e-9 * np.eye(cov_w.shape[0])  # Add a tiny guard against singular covariance matrices.
+    inv_w = np.linalg.inv(safe_cov_w)  # Compute the inverse covariance for the Mahalanobis distance.
+    sign_w, logdet_w = np.linalg.slogdet(safe_cov_w)  # Compute the log determinant stably.
+    diff_w = x_w - mean_w  # Center the point at the class mean.
+    quad_w = diff_w @ inv_w @ diff_w  # Compute squared Mahalanobis distance.
+    return float(np.exp(-0.5 * (2.0 * np.log(2.0 * np.pi) + logdet_w + quad_w)))  # Return the Gaussian density.
+x_new_gda_w = np.array([0.2, 0.1])  # Choose a new point near the middle of the two classes.
+lik_gda_w = np.array([mvn_pdf_gda_w(x_new_gda_w, mu_gda_w[k], Sigma_gda_w) for k in [0, 1]])  # Compute P(x_new|y=k).
+score_gda_w = lik_gda_w * prior_gda_w  # Multiply likelihoods by priors for unnormalized posterior scores.
+post_gda_w = score_gda_w / max(score_gda_w.sum(), 1e-12)  # Normalize scores into posterior probabilities safely.
+print("likelihoods:", np.round(lik_gda_w, 5))  # Inspect class Gaussian densities for the new point.
+print("scores:", np.round(score_gda_w, 5))  # Inspect likelihood times prior for each class.
+print("posterior:", np.round(post_gda_w, 4))  # Inspect the normalized GDA posterior.
+```
+▶ What you'll see: the new point is scored by both Gaussian stories, then classified by the larger normalized score.
+
+```python
+grid_x_gda_w = np.linspace(-3.0, 3.0, 180)  # Create horizontal grid coordinates for the boundary plot.
+grid_y_gda_w = np.linspace(-2.5, 2.7, 180)  # Create vertical grid coordinates for the boundary plot.
+xx_gda_w, yy_gda_w = np.meshgrid(grid_x_gda_w, grid_y_gda_w)  # Build a rectangular plotting mesh.
+grid_gda_w = np.column_stack([xx_gda_w.ravel(), yy_gda_w.ravel()])  # Flatten the mesh into point rows.
+log_prior_gda_w = np.log(np.maximum(prior_gda_w, 1e-12))  # Take guarded log priors to avoid log(0).
+logodds_gda_w = []  # Allocate a list for log posterior odds values on the grid.
+for point_gda_w in grid_gda_w:  # Loop through grid points so each formula line stays readable.
+    quad0_gda_w = (point_gda_w - mu_gda_w[0]) @ inv_gda_w @ (point_gda_w - mu_gda_w[0])  # Score distance to class 0.
+    quad1_gda_w = (point_gda_w - mu_gda_w[1]) @ inv_gda_w @ (point_gda_w - mu_gda_w[1])  # Score distance to class 1.
+    logodds_gda_w.append(log_prior_gda_w[1] - log_prior_gda_w[0] - 0.5 * quad1_gda_w + 0.5 * quad0_gda_w)  # Store log score1/score0.
+logodds_gda_w = np.array(logodds_gda_w).reshape(xx_gda_w.shape)  # Reshape log odds back to the mesh.
+plt.figure(figsize=(6.0, 4.8))  # Create a compact GDA geometry figure.
+plt.scatter(X_gda_w[y_gda_w == 0, 0], X_gda_w[y_gda_w == 0, 1], color="tab:blue", edgecolors="k", s=70, label="class 0")  # Plot class-0 points.
+plt.scatter(X_gda_w[y_gda_w == 1, 0], X_gda_w[y_gda_w == 1, 1], color="tab:orange", edgecolors="k", s=70, label="class 1")  # Plot class-1 points.
+plt.scatter(mu_gda_w[:, 0], mu_gda_w[:, 1], color="black", marker="X", s=150, label="means")  # Mark the fitted class means.
+plt.contour(xx_gda_w, yy_gda_w, logodds_gda_w, levels=[0.0], colors="black", linewidths=2.0)  # Draw the linear decision boundary.
+plt.xlabel("feature 1")  # Label the first coordinate.
+plt.ylabel("feature 2")  # Label the second coordinate.
+plt.title("2: GDA shared covariance gives a linear boundary")  # Title the subsection plot with its concept number.
+plt.legend(loc="best")  # Show classes and means.
+plt.show()  # Render the GDA boundary plot.
+```
+▶ What you'll see: points, class means, and an almost straight contour where the class log odds equal zero.
+
+*Why it's done this way: GDA estimates one Gaussian per class but ties their shape through a shared $\Sigma$; that shared shape cancels the quadratic terms in the log-odds algebra, so the remaining classifier is linear in $x$.*
+
+#### 3. Naive Bayes: multiply small conditional likelihoods without estimating the full joint
+
+Naive Bayes assumes conditional independence, so a feature vector score factors as:
+
+$$
+P(x\mid y)=\prod_j P(x_j\mid y).
+$$
+
+That assumption is strong but practical: with three binary features, a full joint table needs many class-specific combinations, while Naive Bayes only needs one small table per feature. We include Laplace smoothing because one unseen feature value should not make an entire class score collapse to zero.
+
+```python
+X_nb_w = np.array([[1, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 1], [0, 0, 0], [0, 1, 1]])  # Create six rows with three binary features.
+y_nb_w = np.array([1, 1, 1, 0, 0, 0])  # Label rows as class 1 or class 0.
+feature_names_nb_w = ["contains_free", "contains_win", "contains_meeting"]  # Name features to make printed tables readable.
+prior_nb_w = np.array([np.mean(y_nb_w == 0), np.mean(y_nb_w == 1)])  # Estimate class priors from label counts.
+x_new_nb_w = np.array([1, 0, 1])  # Choose a new document-like binary feature vector to classify.
+print("features:", feature_names_nb_w)  # Inspect the feature order used in the arrays.
+print("priors:", np.round(prior_nb_w, 3))  # Inspect P(y=0) and P(y=1).
+print("new x:", x_new_nb_w)  # Inspect the example that will be scored.
+```
+▶ What you'll see: a tiny binary feature table, balanced priors, and one new vector to classify.
+
+```python
+lik_unsmoothed_nb_w = np.zeros((2, X_nb_w.shape[1], 2))  # Allocate P(x_j=value|y=k) for two classes, features, and values.
+for k_nb_w in [0, 1]:  # Loop over class labels.
+    rows_nb_w = X_nb_w[y_nb_w == k_nb_w]  # Select training rows from the current class.
+    for j_nb_w in range(X_nb_w.shape[1]):  # Loop over feature columns.
+        for value_nb_w in [0, 1]:  # Loop over the two possible binary values.
+            lik_unsmoothed_nb_w[k_nb_w, j_nb_w, value_nb_w] = np.mean(rows_nb_w[:, j_nb_w] == value_nb_w)  # Count value frequency in class k.
+print("P(feature=1|class) unsmoothed:\n", np.round(lik_unsmoothed_nb_w[:, :, 1], 3))  # Inspect value-1 likelihoods by class and feature.
+```
+▶ What you'll see: at least one zero likelihood, meaning one class never saw a particular feature value.
+
+```python
+score_unsmoothed_nb_w = prior_nb_w.copy()  # Start each class score at its prior probability.
+for k_nb_w in [0, 1]:  # Loop over classes to multiply feature likelihoods.
+    pieces_nb_w = [lik_unsmoothed_nb_w[k_nb_w, j_nb_w, x_new_nb_w[j_nb_w]] for j_nb_w in range(X_nb_w.shape[1])]  # Gather P(x_j|y=k) pieces.
+    score_unsmoothed_nb_w[k_nb_w] *= np.prod(pieces_nb_w)  # Apply the Naive Bayes product for this class.
+    print("class", k_nb_w, "pieces", np.round(pieces_nb_w, 3), "score", round(float(score_unsmoothed_nb_w[k_nb_w]), 6))  # Inspect product factors.
+post_unsmoothed_nb_w = score_unsmoothed_nb_w / max(score_unsmoothed_nb_w.sum(), 1e-12)  # Normalize with a guard against all-zero scores.
+print("unsmoothed posterior:", np.round(post_unsmoothed_nb_w, 4))  # Inspect how a zero piece can dominate the result.
+```
+The product $\prod_j P(x_j\mid y)$ is what makes the model tractable: we multiply a few one-feature probabilities instead of estimating every feature combination jointly. But one zero factor turns the whole product into zero, which is why smoothing is not optional in sparse data.
+▶ What you'll see: a class score can become exactly zero when any required feature value was never observed for that class.
+
+```python
+lik_smooth_nb_w = np.zeros_like(lik_unsmoothed_nb_w)  # Allocate the Laplace-smoothed likelihood table.
+for k_nb_w in [0, 1]:  # Loop over classes for smoothed counting.
+    rows_nb_w = X_nb_w[y_nb_w == k_nb_w]  # Select rows from the current class.
+    denom_nb_w = rows_nb_w.shape[0] + 2.0  # Add two pseudo-counts because each binary feature has two values.
+    for j_nb_w in range(X_nb_w.shape[1]):  # Loop over feature columns.
+        for value_nb_w in [0, 1]:  # Loop over feature values.
+            count_nb_w = np.sum(rows_nb_w[:, j_nb_w] == value_nb_w)  # Count observed rows with this value.
+            lik_smooth_nb_w[k_nb_w, j_nb_w, value_nb_w] = (count_nb_w + 1.0) / denom_nb_w  # Add-one smoothing prevents zeros.
+score_smooth_nb_w = prior_nb_w.copy()  # Start smoothed class scores at the same priors.
+for k_nb_w in [0, 1]:  # Loop over classes to compute smoothed scores.
+    pieces_nb_w = [lik_smooth_nb_w[k_nb_w, j_nb_w, x_new_nb_w[j_nb_w]] for j_nb_w in range(X_nb_w.shape[1])]  # Gather smoothed likelihood pieces.
+    score_smooth_nb_w[k_nb_w] *= np.prod(pieces_nb_w)  # Multiply independent feature likelihoods and the prior.
+post_smooth_nb_w = score_smooth_nb_w / max(score_smooth_nb_w.sum(), 1e-12)  # Normalize smoothed scores into a posterior.
+print("P(feature=1|class) smoothed:\n", np.round(lik_smooth_nb_w[:, :, 1], 3))  # Inspect that all probabilities are now nonzero.
+print("smoothed scores:", np.round(score_smooth_nb_w, 6))  # Inspect class scores after smoothing.
+print("smoothed posterior:", np.round(post_smooth_nb_w, 4))  # Inspect the final posterior distribution.
+```
+▶ What you'll see: no likelihood is zero, so both classes keep a nonzero posterior score.
+
+```python
+x_pos_nb_w = np.arange(X_nb_w.shape[1])  # Create one bar position for each feature.
+plt.figure(figsize=(6.5, 4.0))  # Create a readable likelihood comparison figure.
+plt.bar(x_pos_nb_w - 0.18, lik_smooth_nb_w[0, :, 1], width=0.36, label="P(feature=1|y=0)", color="tab:blue")  # Plot smoothed class-0 feature probabilities.
+plt.bar(x_pos_nb_w + 0.18, lik_smooth_nb_w[1, :, 1], width=0.36, label="P(feature=1|y=1)", color="tab:orange")  # Plot smoothed class-1 feature probabilities.
+plt.xticks(x_pos_nb_w, feature_names_nb_w, rotation=15)  # Label bars with feature names.
+plt.ylabel("smoothed likelihood")  # Label the probability axis.
+plt.title("3: Naive Bayes likelihoods after Laplace smoothing")  # Title the subsection plot with its concept number.
+plt.legend(loc="best")  # Show which bars belong to each class.
+plt.tight_layout()  # Fit rotated feature labels inside the figure.
+plt.show()  # Render the Naive Bayes likelihood plot.
+```
+▶ What you'll see: one small likelihood table per feature, with add-one smoothing keeping every bar above zero.
+
+*Why it's done this way: the conditional-independence assumption changes an impossible joint-estimation problem into a product of small counts, and Laplace smoothing keeps one missing count from erasing an otherwise plausible class.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Estimate one Bernoulli class prior $\widehat\phi$

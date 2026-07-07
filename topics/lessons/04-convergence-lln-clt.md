@@ -308,6 +308,267 @@ print(f"Preview sample = {preview}")  # Print a few raw values to make the data-
 summarize_array("Preview", preview)  # Print a compact summary of the preview values.
 ```
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build every convergence idea from scratch, one small simulation at a time. Each concept uses only NumPy + Matplotlib, tiny inline arrays or repeated draws, and `_w`-suffixed variables so nothing collides with the examples below. The goal is to print the quantities that the theorem talks about, then plot the same quantity so the limiting behavior is visible.
+
+```python
+import numpy as np  # NumPy gives us random draws, vectorized means, variances, and probability calculations.
+import matplotlib.pyplot as plt  # Matplotlib lets us see loose bounds, shrinking averages, and normal approximations.
+np.random.seed(0)  # A fixed seed makes every simulation, printout, and plot reproducible.
+```
+
+#### 1. Markov and Chebyshev: loose but guaranteed tail bounds
+
+Markov bounds the right tail of any nonnegative random variable using only its mean: if too much probability lived above $a$, the average would have to be at least that much mass times $a$. Chebyshev applies the same idea to the nonnegative squared deviation $(X-\mu)^2$, so variance becomes a distribution-free bound on how often values can sit far from the mean. We use an exponential distribution because its true tail is easy to compute, letting us compare the real probability, the simulation, and the bound side by side.
+
+```python
+mean_markov_w = 1.0  # Choose X ~ Exponential(mean 1), so E[X] is known exactly.
+a_markov_w = 3.0  # Ask for the right-tail event X >= 3.
+true_tail_markov_w = np.exp(-a_markov_w / mean_markov_w)  # Use the exact exponential tail P(X >= a)=exp(-a/mean).
+bound_markov_w = mean_markov_w / a_markov_w  # Compute Markov's bound E[X]/a.
+print("true P(X >= a):", round(true_tail_markov_w, 4))  # Print the actual tail probability.
+print("Markov bound E[X]/a:", round(bound_markov_w, 4))  # Print the guaranteed upper bound.
+```
+▶ What you'll see: the bound is above the true probability, but it is noticeably loose.
+
+```python
+samples_markov_w = np.random.exponential(scale=mean_markov_w, size=20000)  # Simulate many nonnegative observations from the same distribution.
+est_tail_markov_w = np.mean(samples_markov_w >= a_markov_w)  # Estimate P(X >= a) by counting simulated exceedances.
+print("simulated P(X >= a):", round(est_tail_markov_w, 4))  # Print the Monte Carlo estimate for comparison.
+print("bound still valid?", est_tail_markov_w <= bound_markov_w)  # Check that the simulated tail sits below Markov's bound.
+```
+▶ What you'll see: the simulation lands near the true tail and below the bound.
+
+```python
+mu_cheb_w = 1.0  # The exponential mean is mu=1.
+sigma2_cheb_w = 1.0  # The exponential variance is sigma^2=1.
+c_cheb_w = 2.0  # The event |X - mu| >= 2 equals X >= 3 here because X is nonnegative.
+true_tail_cheb_w = np.exp(-(mu_cheb_w + c_cheb_w))  # Compute the exact probability of X >= 3.
+bound_cheb_w = sigma2_cheb_w / (c_cheb_w ** 2)  # Compute Chebyshev's variance-based bound sigma^2/c^2.
+est_tail_cheb_w = np.mean(np.abs(samples_markov_w - mu_cheb_w) >= c_cheb_w)  # Estimate the same two-sided deviation probability.
+print("true P(|X-mu| >= c):", round(true_tail_cheb_w, 4))  # Print the exact deviation probability.
+print("simulated P(|X-mu| >= c):", round(est_tail_cheb_w, 4))  # Print the simulated deviation probability.
+print("Chebyshev bound sigma^2/c^2:", round(bound_cheb_w, 4))  # Print the Chebyshev upper bound.
+```
+Chebyshev is often loose because it knows only the variance, not the distribution's shape. Its strength is that it works for every finite-variance distribution, even when the tail is not exponential.
+▶ What you'll see: Chebyshev is valid but even more conservative than the exact exponential calculation.
+
+```python
+labels_bounds_w = ["Markov\\ntrue", "Markov\\nbound", "Chebyshev\\ntrue", "Chebyshev\\nbound"]  # Name each bar in the comparison.
+heights_bounds_w = [true_tail_markov_w, bound_markov_w, true_tail_cheb_w, bound_cheb_w]  # Store true probabilities and bounds.
+colors_bounds_w = ["tab:blue", "tab:orange", "tab:blue", "tab:orange"]  # Use blue for truth and orange for bounds.
+plt.figure(figsize=(6.2, 3.8))  # Create a compact bar chart.
+plt.bar(labels_bounds_w, heights_bounds_w, color=colors_bounds_w, edgecolor="black")  # Draw the true probabilities beside their upper bounds.
+plt.ylabel("probability")  # Label the probability scale.
+plt.title("1: Markov and Chebyshev are loose upper bounds")  # Title the figure with the concept number.
+plt.ylim(0.0, 0.38)  # Leave space above the tallest bound.
+plt.show()  # Render the comparison.
+```
+▶ What you'll see: each orange bound bar sits above its blue true-probability bar, showing valid but loose guarantees.
+
+*Why it's done this way: the examples separate truth, simulation, and theorem so you can see what the inequalities promise. Markov uses only mass times threshold, while Chebyshev applies Markov to squared distance from the mean so variance controls spread.*
+
+#### 2. Sample mean and WLLN: averaging makes variance shrink like $\sigma^2/n$
+
+The sample mean $\bar X_n$ is still random, but independence makes its variance shrink because averaging divides the sum by $n$. Variances of independent draws add to $n\sigma^2$, then the factor $(1/n)^2$ from the average leaves $\sigma^2/n$, so the mean concentrates around $\mu$. We simulate $n=1,10,100,1000$ to watch the distribution of averages tighten.
+
+```python
+mu_mean_w = 1.0  # Use Exponential(1), whose population mean is 1.
+sigma2_mean_w = 1.0  # Use its variance sigma^2=1.
+n_values_mean_w = np.array([1, 10, 100, 1000])  # Compare small to large sample sizes.
+trials_mean_w = 5000  # Repeat each experiment many times to estimate the sampling distribution.
+draws_mean_w = np.random.exponential(scale=mu_mean_w, size=(trials_mean_w, n_values_mean_w.max()))  # Draw all observations once up to the largest n.
+print("n values:", n_values_mean_w)  # Print the sample sizes being compared.
+print("population mean mu:", mu_mean_w)  # Print the target value predicted by the WLLN.
+```
+▶ What you'll see: the code sets up repeated averages for four growing sample sizes.
+
+```python
+means_by_n_w = np.column_stack([draws_mean_w[:, :n_w].mean(axis=1) for n_w in n_values_mean_w])  # Compute one sample mean per trial and n.
+emp_mean_w = means_by_n_w.mean(axis=0)  # Estimate E[bar X_n] from the repeated sample means.
+emp_var_w = means_by_n_w.var(axis=0, ddof=1)  # Estimate Var(bar X_n) from repeated sample means.
+theory_var_w = sigma2_mean_w / n_values_mean_w  # Compute the theoretical sigma^2/n curve.
+print("estimated E[bar X_n]:", np.round(emp_mean_w, 4))  # Show that the sample mean remains centered near mu.
+print("estimated Var(bar X_n):", np.round(emp_var_w, 5))  # Show empirical variance shrinking.
+print("theory sigma^2/n:", np.round(theory_var_w, 5))  # Show the exact variance shrinkage formula.
+```
+The $\sigma^2/n$ shrinkage is the engine of the WLLN: once the variance of $\bar X_n$ goes to zero, Chebyshev forces the probability of being far from $\mu$ to go to zero too.
+▶ What you'll see: the empirical variances closely follow $1/n$.
+
+```python
+one_path_mean_w = np.random.exponential(scale=mu_mean_w, size=1000)  # Draw one long sequence to watch a single running average.
+running_mean_w = np.cumsum(one_path_mean_w) / np.arange(1, len(one_path_mean_w) + 1)  # Convert cumulative sums into running sample means.
+print("first five running means:", np.round(running_mean_w[:5], 3))  # Print early noisy averages.
+print("last running mean:", round(running_mean_w[-1], 3))  # Print the final average after 1000 draws.
+```
+▶ What you'll see: early averages jump around, while the final average is much closer to $\mu=1$.
+
+```python
+plt.figure(figsize=(6.4, 3.8))  # Create a running-average figure.
+plt.plot(np.arange(1, len(running_mean_w) + 1), running_mean_w, color="tab:blue", lw=1.5, label="running sample mean")  # Plot the path of bar X_n.
+plt.axhline(mu_mean_w, color="black", ls="--", label="population mean mu")  # Mark the value the WLLN predicts.
+plt.xlabel("n")  # Label the sample size axis.
+plt.ylabel("running mean")  # Label the average value axis.
+plt.legend(loc="best")  # Show the meaning of the line and target.
+plt.title("2: running sample mean settles near mu")  # Title the convergence plot.
+plt.show()  # Render the plot.
+```
+▶ What you'll see: the running average is noisy at first, then settles around the horizontal line at $\mu$.
+
+```python
+plt.figure(figsize=(6.4, 3.8))  # Create a variance-shrinkage figure.
+plt.loglog(n_values_mean_w, emp_var_w, marker="o", label="simulated Var(bar X_n)")  # Plot empirical variance on log-log axes.
+plt.loglog(n_values_mean_w, theory_var_w, marker="s", label="theory sigma^2/n")  # Plot the exact 1/n formula for comparison.
+plt.xlabel("n")  # Label the sample size axis.
+plt.ylabel("variance of sample mean")  # Label the variance axis.
+plt.legend(loc="best")  # Show simulated versus theoretical curves.
+plt.title("2: variance shrinks like sigma^2 / n")  # Title the variance plot.
+plt.show()  # Render the shrinkage plot.
+```
+▶ What you'll see: the simulated variance falls almost exactly along the $\sigma^2/n$ reference curve.
+
+*Why it's done this way: one plot shows a single average stabilizing, while the other shows the reason it stabilizes across many repetitions. The WLLN is concentration caused by independent averaging, not magic cancellation in one lucky run.*
+
+#### 3. Convergence in probability: the error probability goes to zero
+
+Convergence in probability asks a direct question: for a fixed tolerance $\epsilon$, how often is $\bar X_n$ still more than $\epsilon$ away from $\mu$? The WLLN says this probability must go to zero for every positive $\epsilon$. We estimate that probability by simulation, then compare it to Chebyshev's conservative upper bound.
+
+```python
+epsilon_prob_w = 0.12  # Choose a visible tolerance around the true mean.
+n_values_prob_w = np.array([5, 10, 25, 50, 100, 250, 500, 1000])  # Use increasing sample sizes.
+trials_prob_w = 6000  # Use many trials to estimate probabilities stably.
+mu_prob_w = 0.5  # Use Uniform(0,1), whose mean is 1/2.
+sigma2_prob_w = 1.0 / 12.0  # Use Uniform(0,1), whose variance is 1/12.
+draws_prob_w = np.random.uniform(0.0, 1.0, size=(trials_prob_w, n_values_prob_w.max()))  # Draw all uniform samples up to the largest n.
+print("epsilon:", epsilon_prob_w)  # Print the tolerance defining the convergence event.
+print("target mu:", mu_prob_w)  # Print the value being approached in probability.
+```
+▶ What you'll see: the experiment fixes one tolerance and many sample sizes.
+
+```python
+prob_error_w = []  # Store estimated P(|bar X_n - mu| > epsilon) for each n.
+for n_prob_w in n_values_prob_w:  # Loop over sample sizes.
+    means_prob_w = draws_prob_w[:, :n_prob_w].mean(axis=1)  # Compute trial-by-trial sample means for this n.
+    prob_error_w.append(np.mean(np.abs(means_prob_w - mu_prob_w) > epsilon_prob_w))  # Estimate the exceedance probability.
+prob_error_w = np.array(prob_error_w)  # Convert the list to an array for plotting.
+cheb_prob_w = sigma2_prob_w / (n_values_prob_w * epsilon_prob_w ** 2)  # Compute Chebyshev's WLLN upper bound.
+cheb_prob_w = np.minimum(1.0, cheb_prob_w)  # Clip the bound at 1 because probabilities cannot exceed 1.
+print("estimated error probabilities:", np.round(prob_error_w, 4))  # Print the simulated convergence-in-probability values.
+print("Chebyshev upper bounds:", np.round(cheb_prob_w, 4))  # Print the conservative theorem bounds.
+```
+▶ What you'll see: the estimated probability drops toward zero as $n$ grows.
+
+```python
+plt.figure(figsize=(6.4, 3.8))  # Create the convergence-in-probability figure.
+plt.plot(n_values_prob_w, prob_error_w, marker="o", lw=2, label="simulated probability")  # Plot estimated P(|bar X_n-mu| > epsilon).
+plt.plot(n_values_prob_w, cheb_prob_w, marker="s", ls="--", label="Chebyshev bound")  # Plot the distribution-free upper bound.
+plt.xlabel("n")  # Label the sample size axis.
+plt.ylabel("P(|bar X_n - mu| > epsilon)")  # Label the probability being driven to zero.
+plt.ylim(-0.02, 1.02)  # Keep the probability scale readable.
+plt.legend(loc="best")  # Show simulated values versus the bound.
+plt.title("3: convergence in probability means tail probability vanishes")  # Title the convergence plot.
+plt.show()  # Render the figure.
+```
+▶ What you'll see: the simulated error probability rapidly approaches zero, while Chebyshev stays valid but loose.
+
+*Why it's done this way: convergence in probability is not a statement about one path forever; it is a statement about the probability of missing by more than any fixed tolerance. Simulating many independent repeats estimates exactly that probability.*
+
+#### 4. Central Limit Theorem: standardized averages become normal
+
+The CLT looks at the remaining fluctuation after the WLLN has already centered the average near $\mu$. The right scale is $\sqrt{n}$ because the standard deviation of $\bar X_n$ is $\sigma/\sqrt{n}$, so multiplying $\bar X_n-\mu$ by $\sqrt{n}/\sigma$ keeps a non-degenerate amount of spread. We use exponential data, which are skewed and non-normal, to show that the standardized sample mean still approaches the standard normal shape.
+
+```python
+mu_clt_w = 1.0  # Exponential(1) has mean 1.
+sigma_clt_w = 1.0  # Exponential(1) has standard deviation 1.
+n_values_clt_w = np.array([1, 5, 30])  # Compare a raw draw, a small average, and a larger average.
+trials_clt_w = 12000  # Use many repetitions so histograms are smooth.
+x_grid_clt_w = np.linspace(-4.0, 4.0, 400)  # Create x-values for the standard normal curve.
+normal_pdf_clt_w = (1.0 / np.sqrt(2.0 * np.pi)) * np.exp(-0.5 * x_grid_clt_w ** 2)  # Compute the N(0,1) density using NumPy only.
+print("CLT source distribution:", "Exponential(1), skewed and non-normal")  # Print the non-normal source choice.
+print("n values:", n_values_clt_w)  # Print the sample sizes used in the CLT comparison.
+```
+▶ What you'll see: the setup explicitly standardizes a skewed source distribution.
+
+```python
+z_by_n_clt_w = []  # Store standardized sample means for each n.
+for n_clt_w in n_values_clt_w:  # Loop over the sample sizes.
+    draws_clt_w = np.random.exponential(scale=mu_clt_w, size=(trials_clt_w, n_clt_w))  # Draw trials of n exponential observations.
+    means_clt_w = draws_clt_w.mean(axis=1)  # Compute one sample mean per trial.
+    z_clt_w = np.sqrt(n_clt_w) * (means_clt_w - mu_clt_w) / sigma_clt_w  # Standardize using sqrt(n)(bar X_n-mu)/sigma.
+    z_by_n_clt_w.append(z_clt_w)  # Store the standardized values.
+    print("n=", n_clt_w, "mean/std:", round(z_clt_w.mean(), 3), round(z_clt_w.std(ddof=1), 3))  # Print whether the standardized values are near mean 0 and sd 1.
+```
+The standardization matters: without $\sqrt{n}$, the sample-mean fluctuations collapse to zero; with $\sqrt{n}$, the CLT reveals their stable bell-shaped limit.
+▶ What you'll see: standardized means have roughly mean 0 and standard deviation 1, especially as $n$ grows.
+
+```python
+fig_clt_w, axes_clt_w = plt.subplots(1, 3, figsize=(10.5, 3.4), sharey=True)  # Create one histogram per sample size.
+for ax_clt_w, n_clt_w, z_clt_w in zip(axes_clt_w, n_values_clt_w, z_by_n_clt_w):  # Loop through axes, n values, and standardized samples.
+    ax_clt_w.hist(z_clt_w, bins=45, density=True, alpha=0.65, color="tab:blue", edgecolor="white")  # Plot the simulated density of standardized means.
+    ax_clt_w.plot(x_grid_clt_w, normal_pdf_clt_w, color="black", lw=2, label="N(0,1)")  # Overlay the standard normal density.
+    ax_clt_w.set_title(f"n={n_clt_w}")  # Label each panel by sample size.
+    ax_clt_w.set_xlabel("standardized mean")  # Label the standardized variable.
+axes_clt_w[0].set_ylabel("density")  # Label the shared density axis once.
+axes_clt_w[0].legend(loc="best")  # Show the normal-curve label.
+fig_clt_w.suptitle("4: CLT turns standardized means normal")  # Title the full figure with the concept number.
+plt.tight_layout()  # Prevent labels and titles from overlapping.
+plt.show()  # Render the CLT comparison.
+```
+▶ What you'll see: the $n=1$ histogram is skewed, but by $n=30$ it closely tracks the standard normal curve.
+
+*Why it's done this way: the source data are deliberately non-normal so the normal shape cannot be blamed on the input. Centering by $\mu$ and scaling by $\sigma/\sqrt{n}$ exposes the universal CLT fluctuation scale.*
+
+#### 5. De Moivre--Laplace: a binomial pmf becomes a normal curve
+
+A binomial random variable is a sum of $n$ independent Bernoulli$(p)$ variables, so it is a direct CLT example with mean $np$ and variance $np(1-p)$. De Moivre--Laplace says that for large $n$, the discrete binomial probabilities are well approximated by the continuous normal density with that same mean and variance. We compute the binomial pmf by recursion, then overlay the matching normal approximation for two different $n$ values.
+
+```python
+p_binom_w = 0.35  # Choose a success probability not too close to 0 or 1.
+n_values_binom_w = np.array([20, 100])  # Compare a moderate binomial with a larger one.
+print("p:", p_binom_w)  # Print the Bernoulli success probability.
+print("n values:", n_values_binom_w)  # Print the binomial sizes being compared.
+```
+▶ What you'll see: the approximation test uses the same $p$ and two growing values of $n$.
+
+```python
+pmfs_binom_w = []  # Store exact binomial pmfs for each n.
+approxs_binom_w = []  # Store normal-approximation heights for each n.
+ks_binom_w = []  # Store integer support values for each n.
+for n_binom_w in n_values_binom_w:  # Loop over binomial sizes.
+    k_binom_w = np.arange(n_binom_w + 1)  # Create support k=0,...,n.
+    pmf_binom_w = np.empty(n_binom_w + 1)  # Allocate space for exact binomial probabilities.
+    pmf_binom_w[0] = (1.0 - p_binom_w) ** n_binom_w  # Start recursion at P(X=0).
+    for k_step_w in range(n_binom_w):  # Recursively move from P(X=k) to P(X=k+1).
+        pmf_binom_w[k_step_w + 1] = pmf_binom_w[k_step_w] * (n_binom_w - k_step_w) / (k_step_w + 1) * p_binom_w / (1.0 - p_binom_w)  # Use the binomial probability ratio.
+    mu_binom_w = n_binom_w * p_binom_w  # Compute the binomial mean np.
+    sigma_binom_w = np.sqrt(n_binom_w * p_binom_w * (1.0 - p_binom_w))  # Compute the binomial standard deviation sqrt(np(1-p)).
+    approx_binom_w = (1.0 / (sigma_binom_w * np.sqrt(2.0 * np.pi))) * np.exp(-0.5 * ((k_binom_w - mu_binom_w) / sigma_binom_w) ** 2)  # Evaluate the matching normal density at integer k.
+    pmfs_binom_w.append(pmf_binom_w)  # Store the exact pmf.
+    approxs_binom_w.append(approx_binom_w)  # Store the normal approximation.
+    ks_binom_w.append(k_binom_w)  # Store the integer support.
+    print("n=", n_binom_w, "pmf sum:", round(pmf_binom_w.sum(), 6), "max abs diff:", round(np.max(np.abs(pmf_binom_w - approx_binom_w)), 4))  # Print pmf validity and approximation error.
+```
+The normal curve is continuous while the binomial is discrete, so the cleanest probability approximation uses continuity correction; this plot uses density heights at integer $k$ to make the shape match visually. The fit improves because the binomial sum contains more independent Bernoulli pieces as $n$ grows.
+▶ What you'll see: the exact pmf sums to 1, and the largest pointwise difference is smaller for larger $n$.
+
+```python
+fig_binom_w, axes_binom_w = plt.subplots(1, 2, figsize=(10.0, 3.8))  # Create one panel for each n.
+for ax_binom_w, n_binom_w, k_binom_w, pmf_binom_w, approx_binom_w in zip(axes_binom_w, n_values_binom_w, ks_binom_w, pmfs_binom_w, approxs_binom_w):  # Loop over panels and stored curves.
+    ax_binom_w.bar(k_binom_w, pmf_binom_w, width=0.85, alpha=0.65, color="tab:blue", label="Binomial pmf")  # Draw exact discrete probabilities.
+    ax_binom_w.plot(k_binom_w, approx_binom_w, color="black", lw=2, label="Normal approx")  # Overlay the matching normal density heights.
+    ax_binom_w.set_xlabel("k successes")  # Label the success-count axis.
+    ax_binom_w.set_ylabel("probability / density")  # Label the vertical scale.
+    ax_binom_w.set_title(f"n={n_binom_w}, p={p_binom_w}")  # Label each panel by binomial parameters.
+    ax_binom_w.legend(loc="best")  # Show the exact and approximating curves.
+fig_binom_w.suptitle("5: De Moivre-Laplace binomial to normal")  # Title the full figure with the concept number.
+plt.tight_layout()  # Keep panel labels readable.
+plt.show()  # Render the binomial-normal overlays.
+```
+▶ What you'll see: the normal curve is rough for $n=20$ but hugs the binomial bars much better for $n=100$.
+
+*Why it's done this way: building the pmf recursively makes the binomial probabilities inspectable without SciPy, and overlaying the matched normal shows De Moivre--Laplace as the CLT for Bernoulli sums. The same mean $np$ centers the curve, and the same variance $np(1-p)$ sets its width.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Compute one sample mean $M_n$ from three observations

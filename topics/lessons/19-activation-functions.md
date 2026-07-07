@@ -343,6 +343,255 @@ plt.show()  # Render the data-source plot.
 
 ▶ What you'll see: for `two_moons`, the classes are not linearly separable, which makes activation choice visible in the decision-boundary example.
 
+### 📖 Concept walkthrough — build each idea from scratch
+
+Before the warm-up examples, we build the main activation-function ideas from scratch with tiny NumPy arrays and direct Matplotlib plots. The goal is to see both the forward shape $g(z)$ and the backward slope $g'(z)$, because neural networks learn through both. Variables use a `_w` suffix so this walkthrough does not collide with the later notebook examples.
+
+```python
+import numpy as np  # Use NumPy so every activation and derivative can be computed element by element on arrays.
+import matplotlib.pyplot as plt  # Use Matplotlib so the forward curves and gradient curves are visible, not just printed.
+np.random.seed(23019)  # Seed randomness so any sampled values in the walkthrough are reproducible.
+```
+
+#### 1. Saturating activations: sigmoid and tanh
+
+**What:** Sigmoid maps real numbers to $(0,1)$, while $\tanh$ maps real numbers to $(-1,1)$. **Why:** these bounded outputs are useful when we want probabilities or centered hidden features. **Why this approach:** we implement the formulas directly, inspect a few tail values, then plot both curves and their derivatives so saturation is visible.
+
+The sigmoid function is
+
+$$
+\sigma(z)=\frac{1}{1+\exp(-z)},
+$$
+
+and its derivative is $\sigma'(z)=\sigma(z)(1-\sigma(z))$. The tanh derivative is $\frac{d}{dz}\tanh(z)=1-\tanh^2(z)$. Both derivatives become tiny in the tails, which means the unit changes very little when $z$ is already very negative or very positive.
+
+```python
+def sigmoid_w(z_w):  # Define sigmoid from the formula so the forward computation is explicit.
+    return 1.0 / (1.0 + np.exp(-z_w))  # Return sigma(z)=1/(1+exp(-z)) using NumPy's vectorized exponential.
+
+def sigmoid_derivative_w(z_w):  # Define the sigmoid derivative as its own helper for backprop inspection.
+    s_w = sigmoid_w(z_w)  # Reuse the sigmoid value because sigma'(z)=sigma(z)(1-sigma(z)).
+    return s_w * (1.0 - s_w)  # Return the elementwise derivative, whose largest possible value is 0.25.
+
+def tanh_derivative_w(z_w):  # Define the tanh derivative as its own helper for comparison.
+    t_w = np.tanh(z_w)  # Compute tanh(z) once so the derivative formula stays readable.
+    return 1.0 - t_w**2  # Return 1-tanh(z)^2, which also shrinks toward zero in both tails.
+```
+
+```python
+z_probe_w = np.array([-8.0, -2.0, 0.0, 2.0, 8.0])  # Choose center and tail inputs so saturation can be inspected numerically.
+sigmoid_values_w = sigmoid_w(z_probe_w)  # Compute sigmoid outputs for each probe input.
+sigmoid_slopes_w = sigmoid_derivative_w(z_probe_w)  # Compute sigmoid slopes to see where gradients survive.
+tanh_values_w = np.tanh(z_probe_w)  # Compute tanh outputs for the same probe inputs.
+tanh_slopes_w = tanh_derivative_w(z_probe_w)  # Compute tanh slopes to compare tail behavior.
+print("z:", z_probe_w)  # Print the inspected pre-activation values.
+print("sigmoid(z):", np.round(sigmoid_values_w, 4))  # Print sigmoid outputs, which approach 0 and 1 in the tails.
+print("sigmoid'(z):", np.round(sigmoid_slopes_w, 6))  # Print sigmoid derivatives, which approach 0 in the tails.
+print("tanh(z):", np.round(tanh_values_w, 4))  # Print tanh outputs, which approach -1 and 1 in the tails.
+print("tanh'(z):", np.round(tanh_slopes_w, 6))  # Print tanh derivatives, which also approach 0 in the tails.
+```
+
+▶ What you'll see: at $z=-8$ and $z=8$, the activation values are near their bounds and the derivative values are almost zero.
+
+```python
+z_grid_w = np.linspace(-8.0, 8.0, 500)  # Create a dense grid so the S-curves and derivative curves look smooth.
+plt.figure(figsize=(8, 4.8))  # Create a readable figure for two activations and two derivative curves.
+plt.plot(z_grid_w, sigmoid_w(z_grid_w), label="sigmoid")  # Plot the bounded sigmoid S-curve.
+plt.plot(z_grid_w, np.tanh(z_grid_w), label="tanh")  # Plot the zero-centered tanh S-curve.
+plt.plot(z_grid_w, sigmoid_derivative_w(z_grid_w), "--", label="sigmoid derivative")  # Plot sigmoid slopes to show saturation.
+plt.plot(z_grid_w, tanh_derivative_w(z_grid_w), "--", label="tanh derivative")  # Plot tanh slopes to show saturation.
+plt.axhline(0.0, color="black", linewidth=0.8)  # Draw the zero line so tanh centering and derivative baselines are clear.
+plt.title("1: Sigmoid and tanh saturation")  # Title the figure with the subsection number.
+plt.xlabel("z")  # Label the pre-activation input axis.
+plt.ylabel("activation or derivative")  # Label the shared value axis for outputs and slopes.
+plt.legend()  # Show which line corresponds to each function or derivative.
+plt.show()  # Render the saturation plot.
+```
+
+▶ What you'll see: the solid curves flatten in both tails, and the dashed derivative curves collapse toward zero in the same regions.
+
+*Why it's done this way: direct formulas plus tail probes make the forward saturation and backward gradient shrinkage inspectable without any neural-network machinery.*
+
+#### 2. ReLU family: ReLU, Leaky ReLU, and ELU
+
+**What:** ReLU keeps positive inputs linear and clips negative inputs to zero; Leaky ReLU and ELU keep a nonzero or smooth negative branch. **Why:** the positive linear branch avoids saturation for $z>0$, while the modified negative branches reduce the dead-unit problem. **Why this approach:** we implement all three functions and derivatives side by side so the difference is just the branch rule.
+
+ReLU is $\operatorname{ReLU}(z)=\max(0,z)$, so its positive-side derivative is $1$ instead of a small saturated number. A dead ReLU happens when a unit stays in the $z<0$ region, where the derivative is $0$; Leaky ReLU uses a small slope there, and ELU uses $\alpha\exp(z)$ on the negative branch.
+
+```python
+epsilon_w = 0.05  # Choose a visible Leaky ReLU negative slope for the walkthrough plot.
+alpha_w = 1.0  # Choose the common ELU alpha value that makes the curve smooth at zero.
+
+def relu_w(z_w):  # Define ReLU directly from max(0,z).
+    return np.maximum(0.0, z_w)  # Return zero for negative inputs and z for positive inputs.
+
+def relu_derivative_w(z_w):  # Define the practical ReLU derivative used in many implementations.
+    return (z_w > 0.0).astype(float)  # Return 1 on positive inputs and 0 otherwise, using 0 as the subgradient at zero.
+
+def leaky_relu_w(z_w, epsilon=epsilon_w):  # Define Leaky ReLU with a configurable negative slope.
+    return np.where(z_w > 0.0, z_w, epsilon * z_w)  # Return z on the right and epsilon*z on the left.
+
+def leaky_relu_derivative_w(z_w, epsilon=epsilon_w):  # Define the Leaky ReLU derivative.
+    return np.where(z_w > 0.0, 1.0, epsilon)  # Return 1 on the right and the small leak slope on the left.
+
+def elu_w(z_w, alpha=alpha_w):  # Define ELU with a configurable alpha value.
+    return np.where(z_w >= 0.0, z_w, alpha * (np.exp(z_w) - 1.0))  # Return z on the right and alpha(exp(z)-1) on the left.
+
+def elu_derivative_w(z_w, alpha=alpha_w):  # Define the ELU derivative.
+    return np.where(z_w >= 0.0, 1.0, alpha * np.exp(z_w))  # Return 1 on the right and alpha*exp(z) on the left.
+```
+
+```python
+z_relu_probe_w = np.array([-3.0, -0.5, 0.0, 0.5, 3.0])  # Choose negative, zero, and positive inputs to expose each branch.
+print("z:", z_relu_probe_w)  # Print the branch-test inputs.
+print("ReLU:", np.round(relu_w(z_relu_probe_w), 3))  # Print ReLU outputs to show clipping below zero.
+print("ReLU':", np.round(relu_derivative_w(z_relu_probe_w), 3))  # Print ReLU slopes to show the zero-gradient negative side.
+print("Leaky ReLU:", np.round(leaky_relu_w(z_relu_probe_w), 3))  # Print Leaky ReLU outputs to show the small negative branch.
+print("Leaky ReLU':", np.round(leaky_relu_derivative_w(z_relu_probe_w), 3))  # Print Leaky ReLU slopes to show nonzero negative gradients.
+print("ELU:", np.round(elu_w(z_relu_probe_w), 3))  # Print ELU outputs to show the smooth negative curve.
+print("ELU':", np.round(elu_derivative_w(z_relu_probe_w), 3))  # Print ELU slopes to show the positive but shrinking negative gradient.
+```
+
+▶ What you'll see: ReLU has exact zero output and zero slope for negative inputs, while Leaky ReLU and ELU still pass some gradient on the negative side.
+
+```python
+z_relu_grid_w = np.linspace(-4.0, 4.0, 500)  # Create a grid wide enough to compare negative and positive branches.
+plt.figure(figsize=(8, 4.8))  # Create a readable figure for the three activation curves.
+plt.plot(z_relu_grid_w, relu_w(z_relu_grid_w), label="ReLU")  # Plot the piecewise-linear ReLU curve.
+plt.plot(z_relu_grid_w, leaky_relu_w(z_relu_grid_w), label="Leaky ReLU")  # Plot the leaky version with a small negative slope.
+plt.plot(z_relu_grid_w, elu_w(z_relu_grid_w), label="ELU")  # Plot the ELU curve with its smooth negative branch.
+plt.axhline(0.0, color="black", linewidth=0.8)  # Draw the zero output level for reference.
+plt.axvline(0.0, color="black", linewidth=0.8)  # Draw the branch point where each activation changes rule.
+plt.title("2: ReLU family activations")  # Title the figure with the subsection number.
+plt.xlabel("z")  # Label the pre-activation input axis.
+plt.ylabel("g(z)")  # Label the activation output axis.
+plt.legend()  # Show which curve belongs to each activation.
+plt.show()  # Render the ReLU-family activation plot.
+```
+
+▶ What you'll see: all three activations are linear for positive inputs, but they behave differently for negative inputs.
+
+```python
+plt.figure(figsize=(8, 4.8))  # Create a second figure focused on gradients.
+plt.plot(z_relu_grid_w, relu_derivative_w(z_relu_grid_w), label="ReLU derivative")  # Plot ReLU's zero-or-one derivative.
+plt.plot(z_relu_grid_w, leaky_relu_derivative_w(z_relu_grid_w), label="Leaky ReLU derivative")  # Plot the leaky derivative with a nonzero left side.
+plt.plot(z_relu_grid_w, elu_derivative_w(z_relu_grid_w), label="ELU derivative")  # Plot ELU's smooth negative derivative.
+plt.title("2: ReLU family derivatives")  # Title the derivative figure with the subsection number.
+plt.xlabel("z")  # Label the pre-activation input axis.
+plt.ylabel("g'(z)")  # Label the gradient multiplier axis.
+plt.legend()  # Show which derivative curve belongs to each activation.
+plt.show()  # Render the derivative comparison plot.
+```
+
+▶ What you'll see: ReLU preserves a derivative of $1$ for $z>0$, while Leaky ReLU and ELU avoid the fully flat negative-side derivative.
+
+*Why it's done this way: comparing branch outputs and branch slopes together shows why ReLU trains well on positive activations and why Leaky ReLU or ELU can recover gradient flow when units drift negative.*
+
+#### 3. Softmax as stable normalized exponentials
+
+**What:** Softmax converts a vector of logits into positive probabilities that sum to one. **Why:** multiclass neural networks need a differentiable way to turn arbitrary scores into a probability distribution. **Why this approach:** we subtract the maximum logit before exponentiating, then verify that the probabilities are unchanged except for improved numerical safety.
+
+Softmax is
+
+$$
+p_i=\frac{\exp(x_i)}{\sum_j \exp(x_j)}.
+$$
+
+Subtracting $\max_j x_j$ does not change the result because it multiplies every numerator and the denominator by the same constant factor. It prevents overflow because the largest shifted logit is $0$, so the largest exponential is $\exp(0)=1$.
+
+```python
+def stable_softmax_w(logits_w):  # Define a stable softmax helper for one vector of logits.
+    logits_w = np.asarray(logits_w, dtype=float)  # Convert the input to floating point so exponentials and division are safe.
+    shifted_w = logits_w - np.max(logits_w)  # Subtract the largest logit so no exponent is larger than exp(0).
+    exp_shifted_w = np.exp(shifted_w)  # Exponentiate the shifted logits after the overflow guard.
+    probabilities_w = exp_shifted_w / np.sum(exp_shifted_w)  # Normalize by the sum so the outputs add to one.
+    return probabilities_w, shifted_w, exp_shifted_w  # Return intermediates so each step can be inspected.
+```
+
+```python
+logits_w = np.array([12.0, 8.0, 3.0, -2.0])  # Create four class scores with one clearly largest class.
+probabilities_w, shifted_logits_w, exp_shifted_w = stable_softmax_w(logits_w)  # Compute stable softmax and keep intermediates.
+print("logits:", logits_w)  # Print the original scores before stabilization.
+print("shifted logits:", shifted_logits_w)  # Print scores after subtracting the maximum logit.
+print("exp(shifted):", np.round(exp_shifted_w, 6))  # Print exponentials after shifting to show they are bounded by 1.
+print("softmax:", np.round(probabilities_w, 6))  # Print the final probability vector.
+print("sum:", np.round(np.sum(probabilities_w), 6))  # Print the normalization check, which should be 1.
+```
+
+▶ What you'll see: the largest logit becomes shifted value $0$, its exponential is $1$, and the final probabilities sum to exactly one up to rounding.
+
+```python
+same_shift_w = 1000.0  # Choose a huge constant shift that would make naive exponentials unsafe.
+prob_original_w, _, _ = stable_softmax_w(logits_w)  # Compute stable softmax on the original logits.
+prob_shifted_w, _, _ = stable_softmax_w(logits_w + same_shift_w)  # Compute stable softmax after adding the same huge constant to every logit.
+print("softmax(original):", np.round(prob_original_w, 6))  # Print the original stable probabilities.
+print("softmax(original + 1000):", np.round(prob_shifted_w, 6))  # Print the shifted stable probabilities.
+print("maximum absolute difference:", np.max(np.abs(prob_original_w - prob_shifted_w)))  # Print the numerical invariance check.
+```
+
+```python
+plt.figure(figsize=(7, 4.5))  # Create a readable probability bar chart.
+plt.bar(["class 0", "class 1", "class 2", "class 3"], probabilities_w, color=["#4c72b0", "#55a868", "#c44e52", "#8172b3"])  # Draw one bar for each softmax probability.
+plt.ylim(0.0, 1.0)  # Use probability-scale vertical limits.
+plt.title("3: Stable softmax probabilities")  # Title the figure with the subsection number.
+plt.ylabel("probability")  # Label the probability axis.
+plt.show()  # Render the softmax bar plot.
+```
+
+▶ What you'll see: the highest logit receives the largest probability, lower logits receive smaller positive probabilities, and the bars form a distribution.
+
+*Why it's done this way: subtracting the maximum is a mathematically invisible rewrite of softmax that turns a fragile exponential calculation into a safe one.*
+
+#### 4. Vanishing gradients through a deep chain
+
+**What:** A deep network multiplies many local derivatives during backpropagation. **Why:** if those derivatives are repeatedly small, the product reaching early layers can become nearly zero. **Why this approach:** we multiply simple derivative values directly so the vanishing-gradient mechanism is visible before adding weights, losses, or optimizers.
+
+For a depth-$L$ scalar chain, the chain rule gives
+
+$$
+\frac{\partial a_L}{\partial a_0}=\prod_{\ell=1}^L g'(z_\ell).
+$$
+
+Because $\sigma'(z)\le \frac{1}{4}$ for every $z$, even the best-case sigmoid chain is bounded by $(0.25)^L$. ReLU helps on active positive paths because its derivative is $1$, so the product can remain $1$ instead of shrinking.
+
+```python
+depths_w = np.arange(1, 31)  # Create depths from 1 to 30 so the product can be tracked layer by layer.
+best_sigmoid_products_w = 0.25 ** depths_w  # Compute the largest possible sigmoid derivative product at each depth.
+active_relu_products_w = np.ones_like(depths_w, dtype=float)  # Compute the derivative product for an all-active ReLU chain.
+print("first five sigmoid products:", best_sigmoid_products_w[:5])  # Print early products so the shrinkage starts visibly.
+print("sigmoid product at depth 30:", best_sigmoid_products_w[-1])  # Print the deep product to show how tiny it becomes.
+print("ReLU product at depth 30:", active_relu_products_w[-1])  # Print the active ReLU product for contrast.
+```
+
+▶ What you'll see: multiplying values no larger than $0.25$ quickly makes the sigmoid product tiny, while the active ReLU product stays at $1$.
+
+```python
+z_chain_w = np.linspace(-4.0, 4.0, 30)  # Create a deterministic sequence of pre-activations across a hypothetical deep chain.
+sigmoid_chain_slopes_w = sigmoid_derivative_w(z_chain_w)  # Compute the sigmoid derivative at every layer in the chain.
+sigmoid_chain_products_w = np.cumprod(sigmoid_chain_slopes_w)  # Multiply derivatives cumulatively to simulate backprop to earlier layers.
+relu_chain_slopes_w = relu_derivative_w(np.ones_like(z_chain_w))  # Use positive ReLU pre-activations so every active derivative is 1.
+relu_chain_products_w = np.cumprod(relu_chain_slopes_w)  # Multiply active ReLU derivatives cumulatively for comparison.
+print("sample sigmoid slopes:", np.round(sigmoid_chain_slopes_w[[0, 10, 20, 29]], 6))  # Print representative sigmoid slopes from the chain.
+print("final sigmoid chain product:", sigmoid_chain_products_w[-1])  # Print the final chain product after all layers.
+print("final active ReLU chain product:", relu_chain_products_w[-1])  # Print the final active ReLU product after all layers.
+```
+
+```python
+plt.figure(figsize=(8, 4.8))  # Create a readable figure for gradient products over depth.
+plt.semilogy(depths_w, best_sigmoid_products_w, marker="o", label="sigmoid best-case $(0.25)^L$")  # Plot sigmoid products on a log scale so tiny values remain visible.
+plt.semilogy(depths_w, active_relu_products_w, marker="s", label="active ReLU product")  # Plot the all-active ReLU product for contrast.
+plt.semilogy(depths_w, sigmoid_chain_products_w, marker=".", label="sample sigmoid chain")  # Plot the products from the deterministic sigmoid chain.
+plt.title("4: Vanishing gradients with depth")  # Title the figure with the subsection number.
+plt.xlabel("depth L")  # Label the horizontal axis as network depth.
+plt.ylabel("gradient product")  # Label the vertical axis as the cumulative chain-rule multiplier.
+plt.legend()  # Show which curve corresponds to each gradient-product scenario.
+plt.show()  # Render the vanishing-gradient plot.
+```
+
+▶ What you'll see: the sigmoid products fall rapidly toward zero as depth increases, while an active ReLU path stays flat at $1$.
+
+*Why it's done this way: multiplying derivatives directly isolates the chain-rule bottleneck, making clear why saturated sigmoid or tanh units can stall early-layer learning and why active ReLU units preserve gradient flow.*
+
 ### 🟢 Basics (warm-up)
 
 #### B1. Evaluate one ReLU value and slope
